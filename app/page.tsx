@@ -98,16 +98,8 @@ export default function Home() {
         color: "text",
       })}
     >
-      <div
-        className={css({
-          background:
-            "radial-gradient(circle at 15% -10%, rgba(224,123,83,0.35) 0%, transparent 45%), linear-gradient(180deg, #fffaf7 0%, #faf9f7 100%)",
-          paddingBottom: "10",
-        })}
-      >
-        <Header />
-        <HeroSpotlight />
-      </div>
+      <Header />
+      <HeroSpotlight />
 
       <main
         className={container({

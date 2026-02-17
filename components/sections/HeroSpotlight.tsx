@@ -39,36 +39,10 @@ export function HeroSpotlight() {
         position: "relative",
         overflow: "hidden",
         bg: "light",
-        borderRadius: "3xl",
         px: { base: "4", md: "10" },
         py: { base: "10", md: "14" },
-        mt: "6",
       })}
     >
-      <div
-        className={css({
-          position: "absolute",
-          insetX: "-10%",
-          top: "-30%",
-          height: "360px",
-          borderRadius: "full",
-          bg: "linear-gradient(120deg, rgba(224,123,83,0.35), transparent 60%)",
-          filter: "blur(30px)",
-          pointerEvents: "none",
-        })}
-      />
-      <div
-        className={css({
-          position: "absolute",
-          insetY: "-15%",
-          right: "-20%",
-          width: "420px",
-          borderRadius: "full",
-          bg: "linear-gradient(180deg, rgba(248,181,0,0.35), transparent 70%)",
-          filter: "blur(40px)",
-          pointerEvents: "none",
-        })}
-      />
       <div className={css({ maxWidth: "1200px", marginX: "auto" })}>
         <div
           className={grid({
@@ -88,6 +62,7 @@ export function HeroSpotlight() {
               fontSize: "xs",
               fontWeight: "600",
               color: "white",
+              boxShadow: "0 4px 12px rgba(224,123,83,0.35)",
             })}
           >
             🌟 Neues Erlebnis

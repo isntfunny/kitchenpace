@@ -4,30 +4,7 @@ import Image from "next/image";
 import { css } from "styled-system/css";
 import { grid } from "styled-system/patterns";
 import * as React from "react";
-import { Button } from "../atoms/Button";
 import { Heading, Text } from "../atoms/Typography";
-import { WeeklyPlanDialog } from "../features/WeeklyPlanDialog";
-
-const stats = [
-  {
-    label: "Spuren",
-    value: "6",
-    detail: "Phasen für perfekte Flows",
-    color: "#e07b53",
-  },
-  {
-    label: "Parallel",
-    value: "∞",
-    detail: "Kreativität ohne Grenzen",
-    color: "#f8b500",
-  },
-  {
-    label: "Smart",
-    value: "100%",
-    detail: "Auto-Layout & KI-Tags",
-    color: "#00b894",
-  },
-];
 
 export function HeroSpotlight() {
   return (
@@ -60,64 +37,14 @@ export function HeroSpotlight() {
               color: "white",
             })}
           >
-            🌟 Nie zuvor gesehen
+            🌟 Neu gedacht
           </div>
           <Heading as="h1" size="xl" className={css({ mt: "4", maxW: "48ch" })}>
-            Rezepte visualisiert wie ein Flussdiagramm
+            Kochen ist nicht immer Schritt für Schritt
           </Heading>
           <Text size="lg" color="muted" className={css({ mt: "4", maxW: "46ch" })}>
-            Während andere dir Zutatenlisten geben, zeigen wir den Flow: Parallele Spuren für Kochen, Backen, Vorbereiten – alle Schritte verzweigt, zeitlich perfekt aufeinander abgestimmt.
+            Manchmal kocht die Soße, während du das Gemüse schneidest. Hier siehst du auf einen Blick, was gleichzeitig läuft – ohne lange Listen durchzulesen.
           </Text>
-          <div
-            className={css({
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "3",
-              mt: "6",
-            })}
-          >
-            <Button variant="primary" size="lg">
-              Inspiration starten
-            </Button>
-            <WeeklyPlanDialog />
-          </div>
-          <div
-            className={grid({
-              columns: { base: 1, md: 3 },
-              gap: "3",
-              mt: "6",
-            })}
-          >
-            {stats.map((stat) => (
-              <div
-                key={stat.label}
-                className={css({
-                  padding: "4",
-                  _hover: {
-                    transform: "translateY(-2px)",
-                  },
-                  transition: "transform 200ms ease",
-                })}
-              >
-                <Text size="sm" className={css({ color: stat.color, fontWeight: "600" })}>
-                  {stat.label}
-                </Text>
-                <Text
-                  size="lg"
-                  className={css({
-                    fontWeight: "700",
-                    color: stat.color,
-                    mt: "1",
-                  })}
-                >
-                  {stat.value}
-                </Text>
-                <Text size="sm" color="muted">
-                  {stat.detail}
-                </Text>
-              </div>
-            ))}
-          </div>
         </div>
         <div
           className={css({
@@ -130,7 +57,7 @@ export function HeroSpotlight() {
         >
           <Image
             src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1000&q=80"
-            alt="KUC Recipe Flow Editor"
+            alt="Rezeptübersicht"
             fill
             sizes="(max-width: 1024px) 100vw, 480px"
             className={css({ objectFit: "cover" })}
@@ -142,35 +69,6 @@ export function HeroSpotlight() {
               bg: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)",
             })}
           />
-              <div
-                className={css({
-                  _hover: {
-                    transform: "translateY(-2px)",
-                  },
-                  transition: "transform 200ms ease",
-                })}
-              >
-            <div
-              className={css({
-                display: "inline-flex",
-                bg: "rgba(255,255,255,0.2)",
-                backdropFilter: "blur(8px)",
-                borderRadius: "full",
-                padding: "4px 12px",
-                fontSize: "xs",
-                fontWeight: "600",
-                color: "white",
-              })}
-            >
-              🔥 KUC Editor
-            </div>
-            <Text size="lg" className={css({ fontWeight: "600", mt: "2" })}>
-              Verzweigung & Parallelansicht
-            </Text>
-            <Text size="sm" color="primary" className={css({ mt: "1" })}>
-              Spuren für jede Kochphase
-            </Text>
-          </div>
         </div>
       </div>
     </div>

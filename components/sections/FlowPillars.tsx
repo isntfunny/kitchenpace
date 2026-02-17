@@ -7,24 +7,24 @@ import { Heading, Text } from "../atoms/Typography";
 
 const pillars = [
   {
-    title: "6 Flow-Spuren",
+    title: "Parallele Schritte",
     description:
-      "Vorbereitung, Kochen, Backen, Warten, Würzen, Servieren – jede Phase bekommt ihren eigenen Raum.",
-    icon: "🛤️",
+      "Sieh auf einen Blick, welche Schritte gleichzeitig laufen können – ohne lange Listen durchzulesen.",
+    icon: "⏲️",
     color: "#e07b53",
   },
   {
-    title: "Unendlich verzweigt",
+    title: "Klar strukturiert",
     description:
-      "Parallele Pfade, die sich treffen. Alle Wege führen zum perfekten Teller – garantiert.",
-    icon: "🔀",
+      "Jeder Schritt hat seinen Platz. Du behältst den Überblick, auch wenn mehrere Töpfe auf dem Herd stehen.",
+    icon: "📋",
     color: "#6c5ce7",
   },
   {
-    title: "Ein Klick, fertig",
+    title: "Einfach verständlich",
     description:
-      "Auto-Layout ordnet alles – smart, schnell, schön. Du fokussierst dich aufs Kochen.",
-    icon: "⚡",
+      "Keine komplizierten Erklärungen. Du siehst sofort, was als nächstes zu tun ist.",
+    icon: "✨",
     color: "#00b894",
   },
 ];
@@ -39,25 +39,11 @@ export function FlowPillars() {
       })}
     >
       <div>
-        <div
-          className={css({
-            display: "inline-flex",
-            bg: "#6c5ce7",
-            borderRadius: "full",
-            padding: "4px 14px",
-            fontSize: "xs",
-            fontWeight: "600",
-            color: "white",
-            marginBottom: "3",
-          })}
-        >
-          ✨ Das Herzstück
-        </div>
         <Heading as="h2" size="lg" className={css({ mt: "3" })}>
-          Rezepte, die atmen
+          So einfach geht's
         </Heading>
         <Text size="sm" color="muted" className={css({ mt: "2", maxW: "48ch" })}>
-          Vergiss Listen. Willkommen im Flow – wo jeder Schritt sichtbar wird und Kochen zur Choreografie.
+          Rezepte, die zeigen statt erklären.
         </Text>
       </div>
       <div

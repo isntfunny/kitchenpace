@@ -47,7 +47,7 @@ export function HeroSpotlight() {
             Kochen ist nicht immer Schritt für Schritt
           </Heading>
           <Text size="lg" color="muted" className={css({ mt: "4", maxW: "46ch" })}>
-            Manchmal kocht die Soße, während du das Gemüse schneidest. Hier siehst du auf einen Blick, was gleichzeitig läuft – ohne lange Listen durchzulesen.
+            Manchmal kocht die Soße, während du das Gemüse schneidest. Hier siehst du auf einen Blick, was gleichzeitig läuft – ohne lange Listen durchzulesen. Parallele Spuren zeigen dir alle Kochphasen: Vorbereiten, Kochen, Backen, Würzen. Alle Schritte verzweigt und zeitlich perfekt aufeinander abgestimmt.
           </Text>
         </div>
         <div

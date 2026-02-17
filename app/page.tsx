@@ -98,11 +98,13 @@ export default function Home() {
       })}
     >
       <Header />
+
       <HeroSpotlight />
 
       <main
-        className={container({
+        className={css({
           maxW: "1400px",
+          mx: "auto",
           px: { base: "4", md: "6" },
           py: { base: "6", md: "8" },
         })}

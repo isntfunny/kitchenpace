@@ -26,7 +26,9 @@ export function Header() {
         top: 0,
         zIndex: 20,
         bg: "#fffcf9",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+        boxShadow: "0 4px 20px rgba(224,123,83,0.15)",
+        borderBottom: "2px solid",
+        borderColor: "#f8b500",
       })}
     >
       <div

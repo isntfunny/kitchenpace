@@ -1,5 +1,6 @@
 "use client";
 
+import { css } from "styled-system/css";
 import { grid } from "styled-system/patterns";
 import { Section } from "../features/Section";
 import { RecipeCard } from "../features/RecipeCard";
@@ -44,18 +45,23 @@ const topRatedRecipes = [
 ];
 
 export function TopRated() {
+  const actionClass = css({
+    fontFamily: "body",
+    fontSize: "sm",
+    fontWeight: "500",
+    color: "primary",
+    letterSpacing: "wide",
+    _hover: {
+      color: "primary-dark",
+    },
+  });
+
   return (
     <Section
       title="Top Bewertet"
+      description="Gib den beliebtesten Rezepten Raum – mit klarer Struktur und minimalem Dekor."
       action={
-        <a
-          href="#"
-          style={{
-            fontFamily: "var(--font-inter)",
-            fontSize: "0.875rem",
-            color: "#e07b53",
-          }}
-        >
+        <a href="#" className={actionClass}>
           Alle anzeigen →
         </a>
       }

@@ -139,6 +139,7 @@ export function FitsNow() {
   return (
     <Section
       title="Passt zu jetzt"
+      description="Lass dein Tagesgefühl entscheiden. Mobil optimierte Filter liefern sofort passende Rezepte."
       action={
         <Select value={selectedTime} onValueChange={setSelectedTime}>
           <SelectTrigger>
@@ -156,7 +157,7 @@ export function FitsNow() {
     >
       <div
         className={grid({
-          columns: { base: 1, sm: 2, md: 4 },
+          columns: { base: 1, md: 2, xl: 3 },
           gap: "6",
         })}
       >

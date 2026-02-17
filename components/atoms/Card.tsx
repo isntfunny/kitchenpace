@@ -10,20 +10,22 @@ interface CardProps {
 }
 
 const baseCardClass = css({
-  bg: "white",
-  borderRadius: "lg",
+  bg: "surface",
+  borderRadius: "2xl",
   overflow: "hidden",
-  boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
-  transition: "all 200ms ease-in-out",
+  border: "1px solid",
+  borderColor: "rgba(0,0,0,0.06)",
+  transition: "border-color 180ms ease",
   cursor: "pointer",
   _hover: {
-    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)",
-    transform: "translateY(-2px)",
+    borderColor: "primary",
   },
 });
 
-const combineClasses = (...classes: Array<string | undefined>) =>
-  classes.filter(Boolean).join(" ");
+const combineClasses = (...classes: Array<string | undefined | unknown>) =>
+  classes
+    .filter((cls): cls is string => typeof cls === "string" && cls.length > 0)
+    .join(" ");
 
 export function Card({ children, className }: CardProps) {
   return <div className={combineClasses(baseCardClass, className)}>{children}</div>;

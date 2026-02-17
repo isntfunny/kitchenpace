@@ -10,7 +10,6 @@ interface SectionProps {
   description?: string;
   children: React.ReactNode;
   action?: React.ReactNode;
-  variant?: "default" | "soft";
   titleColor?: string;
 }
 
@@ -19,15 +18,12 @@ export function Section({
   description,
   children,
   action,
-  variant = "default",
   titleColor,
 }: SectionProps) {
   return (
     <section
       className={css({
-        py: "10",
-        borderTop: variant === "soft" ? "1px solid" : undefined,
-        borderColor: variant === "soft" ? "rgba(0,0,0,0.04)" : undefined,
+        py: "6",
       })}
     >
       <div
@@ -36,7 +32,7 @@ export function Section({
           justify: "space-between",
           align: "flex-start",
           gap: "3",
-          mb: "5",
+          mb: "4",
         })}
       >
         <div>

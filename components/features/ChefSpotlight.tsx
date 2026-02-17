@@ -8,41 +8,14 @@ import { Heading, Text } from "../atoms/Typography";
 
 export function ChefSpotlight() {
   return (
-    <div
-      className={css({
-        borderRadius: "2xl",
-        border: "2px solid",
-        borderColor: "rgba(224,123,83,0.25)",
-        p: "5",
-        mb: "5",
-        background: "linear-gradient(135deg, #fff5f0 0%, #fff9f6 40%, #fffcf8 100%)",
-        position: "relative",
-        overflow: "hidden",
-        boxShadow: "0 8px 32px rgba(224,123,83,0.1)",
-      })}
-    >
-      <div
-        className={css({
-          position: "absolute",
-          top: "-30px",
-          right: "-30px",
-          width: "120px",
-          height: "120px",
-          borderRadius: "full",
-          background: "linear-gradient(135deg, rgba(248,181,0,0.4), rgba(224,123,83,0.25))",
-          filter: "blur(25px)",
-        })}
-      />
-
+    <div>
       <div
         className={css({
           mb: "3",
-          position: "relative",
           display: "inline-flex",
-          background: "linear-gradient(135deg, #f8b500 0%, #e07b53 100%)",
+          bg: "#f8b500",
           borderRadius: "full",
           padding: "4px 12px",
-          boxShadow: "0 4px 12px rgba(224,123,83,0.3)",
         })}
       >
         <span
@@ -56,17 +29,16 @@ export function ChefSpotlight() {
         </span>
       </div>
 
-      <div className={flex({ gap: "3", align: "center", mb: "3", position: "relative" })}>
+      <div className={flex({ gap: "3", align: "center", mb: "3" })}>
         <div
           className={css({
             position: "relative",
-            width: "64px",
-            height: "64px",
+            width: "56px",
+            height: "56px",
             borderRadius: "full",
             overflow: "hidden",
-            border: "3px solid",
+            border: "2px solid",
             borderColor: "#f8b500",
-            boxShadow: "0 6px 20px rgba(248,181,0,0.4)",
           })}
         >
           <Image
@@ -92,7 +64,6 @@ export function ChefSpotlight() {
           mb: "3",
           fontStyle: "italic",
           color: "text-muted",
-          position: "relative",
         })}
       >
         &ldquo;Ich liebe es, traditionelle Gerichte mit modernen Akzenten zu
@@ -105,7 +76,6 @@ export function ChefSpotlight() {
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
           gap: "2",
-          position: "relative",
         })}
       >
         {[1, 2, 3].map((i) => (
@@ -116,9 +86,6 @@ export function ChefSpotlight() {
               aspectRatio: "1",
               borderRadius: "lg",
               overflow: "hidden",
-              border: "2px solid",
-              borderColor: "white",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
             })}
           >
             <Image
@@ -133,22 +100,6 @@ export function ChefSpotlight() {
               fill
               className={css({ objectFit: "cover" })}
             />
-            <div
-              className={css({
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(180deg, transparent 50%, rgba(224,123,83,0.9))",
-                opacity: 0,
-                _hover: {
-                  opacity: 1,
-                },
-                transition: "opacity 200ms ease",
-                display: "grid",
-                placeItems: "center",
-              })}
-            >
-              <span className={css({ color: "white", fontSize: "lg" })}>👁️</span>
-            </div>
           </div>
         ))}
       </div>

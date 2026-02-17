@@ -19,12 +19,8 @@ const trendingTags = [
 
 export function TrendingTags() {
   return (
-    <div
-      className={css({
-        mb: "5",
-      })}
-    >
-      <div className={css({ mb: "4" })}>
+    <div>
+      <div className={css({ mb: "3" })}>
         <Heading
           as="h3"
           size="md"
@@ -39,7 +35,7 @@ export function TrendingTags() {
         className={css({
           display: "flex",
           flexWrap: "wrap",
-          gap: "2.5",
+          gap: "2",
         })}
       >
         {trendingTags.map((item) => (
@@ -49,33 +45,30 @@ export function TrendingTags() {
               display: "inline-flex",
               alignItems: "center",
               gap: "1.5",
-              px: "3.5",
-              py: "2",
+              px: "3",
+              py: "1.5",
               borderRadius: "full",
               fontSize: "sm",
               fontFamily: "body",
               fontWeight: "500",
-              bg: "white",
+              bg: "transparent",
               color: "text",
-              border: "2px solid",
-              borderColor: `${item.color}40`,
+              border: "1px solid",
+              borderColor: "rgba(0,0,0,0.1)",
               cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
               _hover: {
                 bg: item.color,
                 color: "white",
                 borderColor: item.color,
-                transform: "translateY(-2px)",
-                boxShadow: `0 6px 16px ${item.color}50`,
               },
-              transition: "all 200ms ease",
+              transition: "all 150ms ease",
             })}
           >
             <span>{item.tag}</span>
             <span
               className={css({
                 fontSize: "0.65rem",
-                bg: "rgba(0,0,0,0.08)",
+                bg: "rgba(0,0,0,0.1)",
                 px: "1.5",
                 py: "0.5",
                 borderRadius: "full",

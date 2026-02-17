@@ -73,22 +73,22 @@ const mockActivities: Activity[] = [
 const activityConfig = {
   comment: {
     icon: "💬",
-    bg: "linear-gradient(135deg, #ff7675 0%, #e07b53 100%)",
+    bg: "#ff7675",
     color: "white",
   },
   rating: {
     icon: "⭐",
-    bg: "linear-gradient(135deg, #fdcb6e 0%, #f8b500 100%)",
+    bg: "#f8b500",
     color: "#2d3436",
   },
   save: {
     icon: "🔖",
-    bg: "linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)",
+    bg: "#74b9ff",
     color: "white",
   },
   share: {
     icon: "📤",
-    bg: "linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)",
+    bg: "#a29bfe",
     color: "white",
   },
 };

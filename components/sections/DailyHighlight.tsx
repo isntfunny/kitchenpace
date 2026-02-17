@@ -4,30 +4,45 @@ import Image from "next/image";
 import { css } from "styled-system/css";
 import { flex, grid } from "styled-system/patterns";
 import { Heading, Text } from "../atoms/Typography";
-import { Badge } from "../atoms/Badge";
 import { Button } from "../atoms/Button";
 
 export function DailyHighlight() {
   return (
     <section
       className={css({
-        py: "12",
+        py: "8",
       })}
     >
       <div
         className={css({
           borderRadius: "3xl",
-          border: "1px solid",
-          borderColor: "rgba(0,0,0,0.05)",
-          padding: { base: "6", md: "8" },
-          background: "surface",
+          border: "2px solid",
+          borderColor: "rgba(248,181,0,0.3)",
+          padding: { base: "5", md: "7" },
+          background: "linear-gradient(135deg, #fff9f0 0%, #fff5e6 50%, #fff9f7 100%)",
+          position: "relative",
+          overflow: "hidden",
         })}
       >
+        <div
+          className={css({
+            position: "absolute",
+            top: "-50%",
+            right: "-10%",
+            width: "300px",
+            height: "300px",
+            borderRadius: "full",
+            background: "linear-gradient(135deg, rgba(248,181,0,0.2), rgba(224,123,83,0.1))",
+            filter: "blur(60px)",
+            pointerEvents: "none",
+          })}
+        />
         <div
           className={grid({
             columns: { base: 1, md: 2 },
             gap: "8",
             alignItems: "center",
+            position: "relative",
           })}
         >
           <div
@@ -36,6 +51,9 @@ export function DailyHighlight() {
               aspectRatio: "4/3",
               borderRadius: "2xl",
               overflow: "hidden",
+              border: "3px solid",
+              borderColor: "white",
+              boxShadow: "0 12px 40px rgba(224,123,83,0.25)",
             })}
           >
             <Image
@@ -49,13 +67,37 @@ export function DailyHighlight() {
               className={css({
                 position: "absolute",
                 inset: 0,
-                bg: "linear-gradient(180deg, rgba(224,123,83,0.1), rgba(0,0,0,0.6))",
+                bg: "linear-gradient(180deg, transparent 40%, rgba(224,123,83,0.8))",
               })}
             />
+            <div
+              className={css({
+                position: "absolute",
+                bottom: "4",
+                left: "4",
+                display: "inline-flex",
+                background: "linear-gradient(135deg, #f8b500 0%, #e07b53 100%)",
+                borderRadius: "full",
+                padding: "6px 16px",
+                fontSize: "sm",
+                fontWeight: "700",
+                color: "white",
+                boxShadow: "0 4px 12px rgba(224,123,83,0.4)",
+              })}
+            >
+              🔥 Tageshighlight
+            </div>
           </div>
           <div>
-            <Badge variant="accent">Tageshighlight</Badge>
-            <Heading as="h1" size="lg" className={css({ mt: "4" })}>
+            <Heading
+              as="h1"
+              size="lg"
+              className={css({
+                background: "linear-gradient(90deg, #e07b53, #f8b500)",
+                backgroundClip: "text",
+                color: "transparent",
+              })}
+            >
               Sommerliche Quinoa-Bowl
             </Heading>
             <Text size="lg" color="muted" className={css({ mt: "3", maxW: "40ch" })}>
@@ -73,7 +115,7 @@ export function DailyHighlight() {
                 Rezept ansehen
               </Button>
               <Button variant="ghost" size="md">
-                Speichern
+                🔖 Speichern
               </Button>
             </div>
           </div>

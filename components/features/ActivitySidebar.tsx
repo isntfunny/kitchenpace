@@ -70,26 +70,47 @@ const mockActivities: Activity[] = [
   },
 ];
 
+const activityConfig = {
+  comment: {
+    icon: "💬",
+    bg: "linear-gradient(135deg, #e07b53 0%, #c4623d 100%)",
+    color: "white",
+  },
+  rating: {
+    icon: "⭐",
+    bg: "linear-gradient(135deg, #f8b500 0%, #d4a017 100%)",
+    color: "#2d3436",
+  },
+  save: {
+    icon: "🔖",
+    bg: "linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)",
+    color: "white",
+  },
+  share: {
+    icon: "📤",
+    bg: "linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)",
+    color: "white",
+  },
+};
+
 function ActivityIcon({ type }: { type: Activity["type"] }) {
-  const icons = {
-    comment: "💬",
-    rating: "⭐",
-    save: "🔖",
-    share: "📤",
-  };
+  const config = activityConfig[type];
   return (
     <span
       className={css({
-        fontSize: "sm",
+        fontSize: "md",
         display: "grid",
         placeItems: "center",
-        width: "28px",
-        height: "28px",
+        width: "36px",
+        height: "36px",
         borderRadius: "full",
-        bg: "rgba(224,123,83,0.1)",
+        background: config.bg,
+        color: config.color,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+        flexShrink: 0,
       })}
     >
-      {icons[type]}
+      {config.icon}
     </span>
   );
 }
@@ -112,7 +133,12 @@ function ActivityText({ activity }: { activity: Activity }) {
       </Text>
       <Text
         size="sm"
-        className={css({ color: "primary", fontWeight: "500" })}
+        className={css({
+          background: "linear-gradient(90deg, #e07b53, #f8b500)",
+          backgroundClip: "text",
+          color: "transparent",
+          fontWeight: "600",
+        })}
       >
         {activity.recipe}
       </Text>
@@ -122,7 +148,14 @@ function ActivityText({ activity }: { activity: Activity }) {
         </Text>
       )}
       {activity.rating && (
-        <Text size="sm" className={css({ mt: "1", fontSize: "0.75rem" })}>
+        <Text
+          size="sm"
+          className={css({
+            mt: "1",
+            fontSize: "0.75rem",
+            color: "#f8b500",
+          })}
+        >
           {"★".repeat(activity.rating)}
           {"☆".repeat(5 - activity.rating)}
         </Text>
@@ -135,19 +168,27 @@ export function ActivitySidebar() {
   return (
     <aside
       className={css({
-        bg: "surface",
         borderRadius: "2xl",
         border: "1px solid",
-        borderColor: "rgba(0,0,0,0.05)",
+        borderColor: "rgba(224,123,83,0.2)",
         p: "5",
         height: "fit-content",
         position: "sticky",
         top: "100px",
+        background: "linear-gradient(180deg, #fff9f6 0%, #faf9f7 100%)",
       })}
     >
       <div className={css({ mb: "4" })}>
-        <Heading as="h3" size="md">
-          Aktivität
+        <Heading
+          as="h3"
+          size="md"
+          className={css({
+            background: "linear-gradient(90deg, #e07b53, #f8b500)",
+            backgroundClip: "text",
+            color: "transparent",
+          })}
+        >
+          Aktivität 🔥
         </Heading>
         <Text size="sm" color="muted" className={css({ fontSize: "0.75rem" })}>
           Was passiert gerade in der Community
@@ -161,11 +202,21 @@ export function ActivitySidebar() {
             className={css({
               display: "flex",
               gap: "3",
-              pb: index < mockActivities.length - 1 ? "4" : "0",
+              p: "3",
+              pb: index < mockActivities.length - 1 ? "3" : "3",
+              borderRadius: "xl",
+              background:
+                index === 0
+                  ? "linear-gradient(135deg, rgba(224,123,83,0.08) 0%, rgba(248,181,0,0.08) 100%)"
+                  : "transparent",
               borderBottom:
                 index < mockActivities.length - 1
                   ? "1px solid rgba(0,0,0,0.05)"
                   : "none",
+              _hover: {
+                background: "rgba(224,123,83,0.05)",
+              },
+              transition: "background 150ms ease",
             })}
           >
             <ActivityIcon type={activity.type} />
@@ -183,17 +234,22 @@ export function ActivitySidebar() {
         className={css({
           width: "100%",
           mt: "4",
-          py: "2",
+          py: "2.5",
           textAlign: "center",
           fontSize: "sm",
-          color: "primary",
-          bg: "transparent",
+          fontWeight: "600",
+          color: "white",
+          background: "linear-gradient(135deg, #e07b53 0%, #f8b500 100%)",
           border: "none",
           cursor: "pointer",
-          borderRadius: "md",
+          borderRadius: "xl",
+          boxShadow: "0 4px 12px rgba(224,123,83,0.3)",
           _hover: {
-            bg: "rgba(224,123,83,0.08)",
+            background: "linear-gradient(135deg, #c4623d 0%, #d4a017 100%)",
+            transform: "translateY(-1px)",
+            boxShadow: "0 6px 16px rgba(224,123,83,0.4)",
           },
+          transition: "all 200ms ease",
         })}
       >
         Mehr Aktivitäten →

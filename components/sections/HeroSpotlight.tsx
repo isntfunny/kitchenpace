@@ -4,15 +4,32 @@ import Image from "next/image";
 import { css } from "styled-system/css";
 import { grid } from "styled-system/patterns";
 import * as React from "react";
-import { Badge } from "../atoms/Badge";
 import { Button } from "../atoms/Button";
 import { Heading, Text } from "../atoms/Typography";
 import { WeeklyPlanDialog } from "../features/WeeklyPlanDialog";
 
 const stats = [
-  { label: "Inspirationen", value: "1.200+", detail: "handverlesene Rezepte" },
-  { label: "Zeitsparer", value: "20 Min.", detail: "durchschnittliche Vorbereitung" },
-  { label: "Community", value: "980", detail: "aktive Köch:innen diesen Monat" },
+  {
+    label: "Inspirationen",
+    value: "1.200+",
+    detail: "handverlesene Rezepte",
+    color: "#e07b53",
+    bg: "linear-gradient(135deg, rgba(224,123,83,0.15) 0%, rgba(224,123,83,0.05) 100%)",
+  },
+  {
+    label: "Zeitsparer",
+    value: "20 Min.",
+    detail: "durchschnittliche Vorbereitung",
+    color: "#f8b500",
+    bg: "linear-gradient(135deg, rgba(248,181,0,0.15) 0%, rgba(248,181,0,0.05) 100%)",
+  },
+  {
+    label: "Community",
+    value: "980",
+    detail: "aktive Köch:innen",
+    color: "#00b894",
+    bg: "linear-gradient(135deg, rgba(0,184,148,0.15) 0%, rgba(0,184,148,0.05) 100%)",
+  },
 ];
 
 export function HeroSpotlight() {
@@ -62,7 +79,19 @@ export function HeroSpotlight() {
           })}
         >
         <div>
-          <Badge variant="accent">Neues Erlebnis</Badge>
+          <div
+            className={css({
+              display: "inline-flex",
+              background: "linear-gradient(135deg, #f8b500 0%, #e07b53 100%)",
+              borderRadius: "full",
+              padding: "4px 14px",
+              fontSize: "xs",
+              fontWeight: "600",
+              color: "white",
+            })}
+          >
+            🌟 Neues Erlebnis
+          </div>
           <Heading as="h1" size="xl" className={css({ mt: "4", maxW: "48ch" })}>
             KüchenTakt verbindet Wochenrhythmus mit kulinarischer Ästhetik
           </Heading>
@@ -95,16 +124,29 @@ export function HeroSpotlight() {
                 key={stat.label}
                 className={css({
                   borderRadius: "xl",
-                  border: "1px solid",
-                  borderColor: "rgba(0,0,0,0.04)",
+                  border: "2px solid",
+                  borderColor: `${stat.color}30`,
                   padding: "4",
-                  bg: "surface",
+                  background: stat.bg,
+                  _hover: {
+                    borderColor: stat.color,
+                    transform: "translateY(-2px)",
+                    boxShadow: `0 8px 24px ${stat.color}20`,
+                  },
+                  transition: "all 200ms ease",
                 })}
               >
-                <Text size="sm" color="muted">
+                <Text size="sm" className={css({ color: stat.color, fontWeight: "600" })}>
                   {stat.label}
                 </Text>
-                <Text size="lg" className={css({ fontWeight: "700" })}>
+                <Text
+                  size="lg"
+                  className={css({
+                    fontWeight: "700",
+                    color: stat.color,
+                    mt: "1",
+                  })}
+                >
                   {stat.value}
                 </Text>
                 <Text size="sm" color="muted">
@@ -147,7 +189,21 @@ export function HeroSpotlight() {
               color: "white",
             })}
           >
-            <Badge variant="outline">Tageshighlight</Badge>
+            <div
+              className={css({
+                display: "inline-flex",
+                background: "rgba(255,255,255,0.2)",
+                backdropFilter: "blur(8px)",
+                borderRadius: "full",
+                padding: "4px 12px",
+                fontSize: "xs",
+                fontWeight: "600",
+                color: "white",
+                border: "1px solid rgba(255,255,255,0.3)",
+              })}
+            >
+              🔥 Tageshighlight
+            </div>
             <Text size="lg" className={css({ fontWeight: "600", mt: "2" })}>
               Zitrusrauch & Mandelcrisp
             </Text>

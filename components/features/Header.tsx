@@ -24,9 +24,7 @@ export function Header() {
         position: "sticky",
         top: 0,
         zIndex: 20,
-        bg: "light",
-        borderBottom: "1px solid",
-        borderColor: "rgba(0,0,0,0.05)",
+        background: "linear-gradient(180deg, #fff8f5 0%, #faf9f7 100%)",
       })}
     >
       <div

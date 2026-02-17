@@ -111,49 +111,138 @@ export default function Home() {
         <FlowPillars />
 
         <div
-          className={grid({
-            columns: { base: 1, lg: 12 },
-            gap: "6",
-            mt: "8",
+          className={css({
+            borderRadius: "3xl",
+            background: "linear-gradient(135deg, rgba(224,123,83,0.08) 0%, rgba(248,181,0,0.06) 50%, rgba(0,184,148,0.04) 100%)",
+            padding: "6",
+            marginTop: "8",
+            border: "2px solid",
+            borderColor: "rgba(224,123,83,0.15)",
           })}
         >
-          <div className={css({ lg: { gridColumn: "span 8" } })}>
-            <DailyHighlight />
+          <div
+            className={grid({
+              columns: { base: 1, lg: 12 },
+              gap: "6",
+            })}
+          >
+            <div className={css({ lg: { gridColumn: "span 8" } })}>
+              <DailyHighlight />
 
-            <HorizontalRecipeScroll
-              recipes={quickPickRecipes}
-              title="Schnelle Rezepte"
-            />
+              <div
+                className={css({
+                  borderRadius: "2xl",
+                  background: "white",
+                  padding: "5",
+                  marginTop: "6",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+                })}
+              >
+                <HorizontalRecipeScroll
+                  recipes={quickPickRecipes}
+                  title="Schnelle Rezepte"
+                />
+              </div>
 
-            <FitsNow />
+              <div
+                className={css({
+                  borderRadius: "2xl",
+                  background: "linear-gradient(135deg, rgba(0,184,148,0.08) 0%, rgba(0,206,201,0.06) 100%)",
+                  padding: "5",
+                  marginTop: "6",
+                  border: "2px solid",
+                  borderColor: "rgba(0,184,148,0.2)",
+                })}
+              >
+                <FitsNow />
+              </div>
 
-            <HorizontalRecipeScroll
-              recipes={sweetToothRecipes}
-              title="Für den süßen Hunger"
-            />
-          </div>
+              <div
+                className={css({
+                  borderRadius: "2xl",
+                  background: "linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(224,123,83,0.06) 100%)",
+                  padding: "5",
+                  marginTop: "6",
+                  border: "2px solid",
+                  borderColor: "rgba(253,121,168,0.2)",
+                })}
+              >
+                <HorizontalRecipeScroll
+                  recipes={sweetToothRecipes}
+                  title="Für den süßen Hunger"
+                />
+              </div>
+            </div>
 
-          <div className={css({ lg: { gridColumn: "span 4" } })}>
-            <TrendingTags />
-            <ChefSpotlight />
-            <QuickTips />
-            <ActivitySidebar />
+            <div className={css({ lg: { gridColumn: "span 4" } })}>
+              <TrendingTags />
+              <div
+                className={css({
+                  marginTop: "5",
+                })}
+              >
+                <ChefSpotlight />
+              </div>
+              <div
+                className={css({
+                  marginTop: "5",
+                })}
+              >
+                <QuickTips />
+              </div>
+              <div
+                className={css({
+                  marginTop: "5",
+                })}
+              >
+                <ActivitySidebar />
+              </div>
+            </div>
           </div>
         </div>
       </main>
 
       <footer
         className={css({
-          py: "8",
-          borderTop: "1px solid",
-          borderColor: "rgba(0,0,0,0.05)",
+          py: "10",
+          marginTop: "8",
+          background: "linear-gradient(180deg, #faf9f7 0%, #fff5f0 100%)",
+          borderTop: "2px solid",
+          borderColor: "rgba(224,123,83,0.15)",
           textAlign: "center",
           fontFamily: "body",
           fontSize: "sm",
           color: "text-muted",
         })}
       >
-        © 2026 KüchenTakt · Produkte mit Gefühl entdecken
+        <div
+          className={css({
+            maxWidth: "600px",
+            margin: "0 auto",
+            padding: "0 4",
+          })}
+        >
+          <div
+            className={css({
+              fontSize: "2xl",
+              marginBottom: "3",
+            })}
+          >
+            🍳
+          </div>
+          <div
+            className={css({
+              fontWeight: "600",
+              color: "text",
+              marginBottom: "2",
+            })}
+          >
+            KüchenTakt
+          </div>
+          <div>
+            © 2026 KüchenTakt · Produkte mit Gefühl entdecken
+          </div>
+        </div>
       </footer>
     </div>
   );

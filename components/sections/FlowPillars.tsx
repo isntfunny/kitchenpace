@@ -7,28 +7,25 @@ import { Heading, Text } from "../atoms/Typography";
 
 const pillars = [
   {
-    title: "Palette der Woche",
+    title: "Spurensystem",
     description:
-      "Wähle ein Farbthema, das deine Rezepte und deine Küche miteinander verzahnt. Darin spiegeln wir Zutaten, Texturen und Licht.",
-    icon: "🎨",
+      "6 definierte Kochphasen: Vorbereitung, Kochen, Backen, Warten, Würzen, Servieren. Jede Spur hat ihre eigene Y-Position.",
+    icon: "🛤️",
     color: "#e07b53",
-    bg: "linear-gradient(135deg, rgba(224,123,83,0.12) 0%, rgba(224,123,83,0.04) 100%)",
   },
   {
-    title: "Moodboard Stories",
+    title: "Verzweigung & Parallelität",
     description:
-      "Sammle kurze Texturen, Zutaten und Aromen, die deine Gäste auf eine Reise mitnehmen – perfekt für mobile Moodboards.",
-    icon: "📚",
+      "Erstelle parallele Pfade mit Verzweigungen. Das System validiert automatisch, dass alle Wege zum Servieren führen.",
+    icon: "🔀",
     color: "#6c5ce7",
-    bg: "linear-gradient(135deg, rgba(108,92,231,0.12) 0%, rgba(108,92,231,0.04) 100%)",
   },
   {
-    title: "Saisonale Akzente",
+    title: "Auto-Layout",
     description:
-      "Hinterlege jede Woche eine neue Zutat, um saisonale Nuancen in Farbe, Geschmack und Story zu feiern.",
-    icon: "🌱",
+      "Dagre-basierte automatische Anordnung. Ein Klick genügt, um alle Schritte optimal in den Spuren zu verteilen.",
+    icon: "⚡",
     color: "#00b894",
-    bg: "linear-gradient(135deg, rgba(0,184,148,0.12) 0%, rgba(0,184,148,0.04) 100%)",
   },
 ];
 
@@ -36,18 +33,14 @@ export function FlowPillars() {
   return (
     <section
       className={css({
-        borderRadius: "3xl",
-        border: "1px solid",
-        borderColor: "rgba(0,0,0,0.04)",
         padding: { base: "6", md: "8" },
-        background: "white",
       })}
     >
       <div>
         <div
           className={css({
             display: "inline-flex",
-            background: "linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%)",
+            bg: "#6c5ce7",
             borderRadius: "full",
             padding: "4px 14px",
             fontSize: "xs",
@@ -56,14 +49,14 @@ export function FlowPillars() {
             marginBottom: "3",
           })}
         >
-          ✨ Design Konzept
+          ✨ KUC Konzept
         </div>
         <Heading as="h2" size="lg" className={css({ mt: "3" })}>
-          Mobiles Storytelling, klar verpackt
+          Rezeptflüsse neu gedacht
         </Heading>
         <Text size="sm" color="muted" className={css({ mt: "2", maxW: "48ch" })}>
-          Der erste Eindruck erzeugt Kontext. Wir bauen eine klare, mobile-sensible Struktur, die mit Farbe,
-          Rhythmus und Raum arbeitet, ohne in klassische Card-Layouts zu verfallen.
+          Der KUC Editor visualisiert Rezepte als verzweigte Flüsse mit parallelen Spuren.
+          Keine linearen Listen mehr – sondern ein interaktives Diagramm deiner Kochschritte.
         </Text>
       </div>
       <div
@@ -77,21 +70,15 @@ export function FlowPillars() {
           <div
             key={pillar.title}
             className={css({
-              borderRadius: "2xl",
               padding: "5",
-              background: pillar.bg,
-              border: "2px solid",
-              borderColor: `${pillar.color}25`,
-              minHeight: "200px",
+              minHeight: "180px",
               display: "flex",
               flexDirection: "column",
               gap: "3",
               _hover: {
-                borderColor: pillar.color,
                 transform: "translateY(-4px)",
-                boxShadow: `0 12px 32px ${pillar.color}25`,
               },
-              transition: "all 250ms ease",
+              transition: "transform 250ms ease",
             })}
           >
             <span
@@ -102,10 +89,8 @@ export function FlowPillars() {
                 display: "grid",
                 placeItems: "center",
                 fontSize: "xl",
-                background: "white",
-                border: "2px solid",
-                borderColor: pillar.color,
-                boxShadow: `0 4px 12px ${pillar.color}30`,
+                background: pillar.color,
+                color: "white",
               })}
             >
               {pillar.icon}

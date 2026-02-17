@@ -21,13 +21,7 @@ export function TrendingTags() {
   return (
     <div
       className={css({
-        borderRadius: "2xl",
-        border: "2px solid",
-        borderColor: "rgba(248,181,0,0.3)",
-        p: "5",
         mb: "5",
-        background: "linear-gradient(135deg, #fffdf5 0%, #fff9e6 50%, #fff8f0 100%)",
-        boxShadow: "0 8px 32px rgba(248,181,0,0.12)",
       })}
     >
       <div className={css({ mb: "4" })}>

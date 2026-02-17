@@ -106,7 +106,6 @@ function ActivityIcon({ type }: { type: Activity["type"] }) {
         borderRadius: "full",
         background: config.bg,
         color: config.color,
-        boxShadow: "0 6px 16px rgba(0,0,0,0.2)",
         flexShrink: 0,
       })}
     >
@@ -166,15 +165,9 @@ export function ActivitySidebar() {
   return (
     <aside
       className={css({
-        borderRadius: "2xl",
-        border: "2px solid",
-        borderColor: "rgba(224,123,83,0.25)",
-        p: "5",
         height: "fit-content",
         position: "sticky",
         top: "100px",
-        background: "linear-gradient(180deg, #fff5ef 0%, #fff9f6 50%, #faf9f7 100%)",
-        boxShadow: "0 8px 32px rgba(224,123,83,0.1)",
       })}
     >
       <div className={css({ mb: "4" })}>
@@ -192,26 +185,17 @@ export function ActivitySidebar() {
         </Text>
       </div>
 
-      <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
-        {mockActivities.map((activity, index) => (
+      <div className={css({ display: "flex", flexDirection: "column", gap: "3" })}>
+        {mockActivities.map((activity) => (
           <div
             key={activity.id}
             className={css({
               display: "flex",
               gap: "3",
               p: "3",
-              pb: index < mockActivities.length - 1 ? "3" : "3",
               borderRadius: "xl",
-              background:
-                index === 0
-                  ? "linear-gradient(135deg, rgba(224,123,83,0.12) 0%, rgba(248,181,0,0.1) 100%)"
-                  : "rgba(255,255,255,0.5)",
-              borderBottom:
-                index < mockActivities.length - 1
-                  ? "1px solid rgba(0,0,0,0.05)"
-                  : "none",
               _hover: {
-                background: "rgba(224,123,83,0.08)",
+                bg: "rgba(224,123,83,0.05)",
               },
               transition: "background 150ms ease",
             })}
@@ -236,15 +220,13 @@ export function ActivitySidebar() {
           fontSize: "sm",
           fontWeight: "600",
           color: "white",
-          background: "linear-gradient(135deg, #e07b53 0%, #f8b500 100%)",
+          background: "#e07b53",
           border: "none",
           cursor: "pointer",
           borderRadius: "xl",
-          boxShadow: "0 6px 20px rgba(224,123,83,0.35)",
           _hover: {
-            background: "linear-gradient(135deg, #c4623d 0%, #d4a017 100%)",
+            background: "#c4623d",
             transform: "translateY(-2px)",
-            boxShadow: "0 8px 24px rgba(224,123,83,0.45)",
           },
           transition: "all 200ms ease",
         })}

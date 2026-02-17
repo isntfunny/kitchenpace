@@ -94,7 +94,7 @@ export default function Home() {
     <div
       className={css({
         minH: "100vh",
-        bg: "light",
+        bg: "#faf9f7",
         color: "text",
       })}
     >
@@ -112,12 +112,7 @@ export default function Home() {
 
         <div
           className={css({
-            borderRadius: "3xl",
-            background: "linear-gradient(135deg, rgba(224,123,83,0.08) 0%, rgba(248,181,0,0.06) 50%, rgba(0,184,148,0.04) 100%)",
-            padding: "6",
             marginTop: "8",
-            border: "2px solid",
-            borderColor: "rgba(224,123,83,0.15)",
           })}
         >
           <div
@@ -131,11 +126,7 @@ export default function Home() {
 
               <div
                 className={css({
-                  borderRadius: "2xl",
-                  background: "white",
-                  padding: "5",
                   marginTop: "6",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
                 })}
               >
                 <HorizontalRecipeScroll
@@ -146,12 +137,7 @@ export default function Home() {
 
               <div
                 className={css({
-                  borderRadius: "2xl",
-                  background: "linear-gradient(135deg, rgba(0,184,148,0.08) 0%, rgba(0,206,201,0.06) 100%)",
-                  padding: "5",
                   marginTop: "6",
-                  border: "2px solid",
-                  borderColor: "rgba(0,184,148,0.2)",
                 })}
               >
                 <FitsNow />
@@ -159,12 +145,7 @@ export default function Home() {
 
               <div
                 className={css({
-                  borderRadius: "2xl",
-                  background: "linear-gradient(135deg, rgba(253,121,168,0.08) 0%, rgba(224,123,83,0.06) 100%)",
-                  padding: "5",
                   marginTop: "6",
-                  border: "2px solid",
-                  borderColor: "rgba(253,121,168,0.2)",
                 })}
               >
                 <HorizontalRecipeScroll
@@ -206,9 +187,6 @@ export default function Home() {
         className={css({
           py: "10",
           marginTop: "8",
-          background: "linear-gradient(180deg, #faf9f7 0%, #fff5f0 100%)",
-          borderTop: "2px solid",
-          borderColor: "rgba(224,123,83,0.15)",
           textAlign: "center",
           fontFamily: "body",
           fontSize: "sm",

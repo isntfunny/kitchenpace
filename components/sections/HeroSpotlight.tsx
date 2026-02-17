@@ -10,25 +10,22 @@ import { WeeklyPlanDialog } from "../features/WeeklyPlanDialog";
 
 const stats = [
   {
-    label: "Inspirationen",
-    value: "1.200+",
-    detail: "handverlesene Rezepte",
+    label: "Spuren",
+    value: "6",
+    detail: "definierte Kochphasen",
     color: "#e07b53",
-    bg: "linear-gradient(135deg, rgba(224,123,83,0.15) 0%, rgba(224,123,83,0.05) 100%)",
   },
   {
-    label: "Zeitsparer",
-    value: "20 Min.",
-    detail: "durchschnittliche Vorbereitung",
+    label: "Parallel",
+    value: "∞",
+    detail: "Verzweigungen möglich",
     color: "#f8b500",
-    bg: "linear-gradient(135deg, rgba(248,181,0,0.15) 0%, rgba(248,181,0,0.05) 100%)",
   },
   {
-    label: "Community",
-    value: "980",
-    detail: "aktive Köch:innen",
+    label: "Validiert",
+    value: "100%",
+    detail: "automatische Prüfung",
     color: "#00b894",
-    bg: "linear-gradient(135deg, rgba(0,184,148,0.15) 0%, rgba(0,184,148,0.05) 100%)",
   },
 ];
 
@@ -38,7 +35,6 @@ export function HeroSpotlight() {
       className={css({
         position: "relative",
         overflow: "hidden",
-        bg: "light",
         px: { base: "4", md: "10" },
         py: { base: "10", md: "14" },
       })}
@@ -56,23 +52,21 @@ export function HeroSpotlight() {
           <div
             className={css({
               display: "inline-flex",
-              background: "linear-gradient(135deg, #f8b500 0%, #e07b53 100%)",
+              bg: "#e07b53",
               borderRadius: "full",
               padding: "4px 14px",
               fontSize: "xs",
               fontWeight: "600",
               color: "white",
-              boxShadow: "0 4px 12px rgba(224,123,83,0.35)",
             })}
           >
-            🌟 Neues Erlebnis
+            🌟 Innovatives Konzept
           </div>
           <Heading as="h1" size="xl" className={css({ mt: "4", maxW: "48ch" })}>
-            KüchenTakt verbindet Wochenrhythmus mit kulinarischer Ästhetik
+            KUC – Koch Umströmungs Control
           </Heading>
           <Text size="lg" color="muted" className={css({ mt: "4", maxW: "46ch" })}>
-            Smarte Filter, Tageshighlights und ein Moodboard für deine Küche erlauben dir,
-            jede Woche einen neuen Takt festzulegen – mobil, smart und mit ganz viel Gefühl.
+            Verzweigte Rezeptflüsse mit parallelen Spuren. Visualisiere Vorbereitung, Kochen, Backen und mehr als eigene Bahnen – mit automatischem Layout und Validierung.
           </Text>
           <div
             className={css({
@@ -98,17 +92,11 @@ export function HeroSpotlight() {
               <div
                 key={stat.label}
                 className={css({
-                  borderRadius: "xl",
-                  border: "2px solid",
-                  borderColor: `${stat.color}30`,
                   padding: "4",
-                  background: stat.bg,
                   _hover: {
-                    borderColor: stat.color,
                     transform: "translateY(-2px)",
-                    boxShadow: `0 8px 24px ${stat.color}20`,
                   },
-                  transition: "all 200ms ease",
+                  transition: "transform 200ms ease",
                 })}
               >
                 <Text size="sm" className={css({ color: stat.color, fontWeight: "600" })}>
@@ -136,14 +124,12 @@ export function HeroSpotlight() {
             position: "relative",
             borderRadius: "3xl",
             overflow: "hidden",
-            border: "1px solid",
-            borderColor: "rgba(0,0,0,0.06)",
             minHeight: "320px",
           })}
         >
           <Image
-            src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000&q=80"
-            alt="Moodboard Hero"
+            src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1000&q=80"
+            alt="KUC Recipe Flow Editor"
             fill
             sizes="(max-width: 1024px) 100vw, 480px"
             className={css({ objectFit: "cover" })}
@@ -155,35 +141,33 @@ export function HeroSpotlight() {
               bg: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)",
             })}
           />
-          <div
-            className={css({
-              position: "absolute",
-              bottom: "4",
-              left: "4",
-              right: "4",
-              color: "white",
-            })}
-          >
+              <div
+                className={css({
+                  _hover: {
+                    transform: "translateY(-2px)",
+                  },
+                  transition: "transform 200ms ease",
+                })}
+              >
             <div
               className={css({
                 display: "inline-flex",
-                background: "rgba(255,255,255,0.2)",
+                bg: "rgba(255,255,255,0.2)",
                 backdropFilter: "blur(8px)",
                 borderRadius: "full",
                 padding: "4px 12px",
                 fontSize: "xs",
                 fontWeight: "600",
                 color: "white",
-                border: "1px solid rgba(255,255,255,0.3)",
               })}
             >
-              🔥 Tageshighlight
+              🔥 KUC Editor
             </div>
             <Text size="lg" className={css({ fontWeight: "600", mt: "2" })}>
-              Zitrusrauch & Mandelcrisp
+              Verzweigung & Parallelansicht
             </Text>
             <Text size="sm" color="primary" className={css({ mt: "1" })}>
-              Für laue Abende und lange Gespräche
+              Spuren für jede Kochphase
             </Text>
           </div>
         </div>

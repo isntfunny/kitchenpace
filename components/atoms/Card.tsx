@@ -10,15 +10,12 @@ interface CardProps {
 }
 
 const baseCardClass = css({
-  bg: "surface",
   borderRadius: "2xl",
   overflow: "hidden",
-  border: "1px solid",
-  borderColor: "rgba(0,0,0,0.06)",
-  transition: "border-color 180ms ease",
+  transition: "transform 180ms ease",
   cursor: "pointer",
   _hover: {
-    borderColor: "primary",
+    transform: "translateY(-4px)",
   },
 });
 

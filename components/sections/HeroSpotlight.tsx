@@ -8,26 +8,25 @@ import { Heading, Text } from "../atoms/Typography";
 
 export function HeroSpotlight() {
   return (
-    <section
-      className={css({
-        position: "relative",
-        overflow: "hidden",
-        px: { base: "4", md: "10" },
-        py: { base: "8", md: "12" },
-        bg: "#fffcf9",
-        borderRadius: "2xl",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
-        mx: { base: "4", md: "6" },
-        mt: "4",
-      })}
-    >
-      <div className={css({ maxWidth: "1200px", marginX: "auto" })}>
+    <div className={css({ px: { base: "4", md: "6" }, mt: "4" })}>
+      <section
+        className={css({
+          position: "relative",
+          overflow: "hidden",
+          px: { base: "6", md: "8" },
+          py: { base: "8", md: "10" },
+          bg: "#fffcf9",
+          borderRadius: "2xl",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+          maxWidth: "1400px",
+          marginX: "auto",
+        })}
+      >
         <div
           className={grid({
             columns: { base: 1, lg: 2 },
             gap: "10",
             alignItems: "center",
-            position: "relative",
           })}
         >
         <div>
@@ -75,8 +74,8 @@ export function HeroSpotlight() {
             })}
           />
         </div>
-      </div>
+        </div>
+      </section>
     </div>
-  </section>
   );
 }

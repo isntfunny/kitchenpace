@@ -5,6 +5,7 @@ import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import * as React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { RecipeTabs } from "./RecipeTabs";
 
 const categories = [
   { name: "Frühstück", icon: "🍳" },
@@ -17,12 +18,12 @@ const categories = [
   { name: "Backen", icon: "🥖" },
 ];
 
-const pinnedRecipes = [
+const initialPinned = [
   { id: "1", title: "Omas Kartoffelsuppe", emoji: "🥔" },
   { id: "2", title: "Schnelles Carbonara", emoji: "🍝" },
 ];
 
-const recentRecipes = [
+const initialRecent = [
   { id: "3", title: "Avocado-Toast", emoji: "🥑" },
   { id: "4", title: "Griechischer Salat", emoji: "🥗" },
   { id: "5", title: "Schokoladenmousse", emoji: "🍫" },
@@ -286,113 +287,7 @@ export function Header() {
         </div>
       </div>
 
-      <div
-        className={css({
-          maxW: "1400px",
-          marginX: "auto",
-          width: "100%",
-          px: { base: "4", md: "6" },
-          py: "2",
-          display: "flex",
-          alignItems: "center",
-          gap: "4",
-          overflowX: "auto",
-          scrollbarWidth: "none",
-          "&::-webkitScrollbar": {
-            display: "none",
-          },
-        })}
-      >
-        <span
-          className={css({
-            fontSize: "xs",
-            fontWeight: "600",
-            color: "text-muted",
-            textTransform: "uppercase",
-            letterSpacing: "wide",
-            flexShrink: 0,
-          })}
-        >
-          Zuletzt
-        </span>
-
-        {pinnedRecipes.map((recipe) => (
-          <a
-            key={recipe.id}
-            href="#"
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "2",
-              px: "3",
-              py: "1.5",
-              borderRadius: "full",
-              bg: "rgba(248,181,0,0.15)",
-              border: "1px solid",
-              borderColor: "rgba(248,181,0,0.3)",
-              fontSize: "sm",
-              fontWeight: "500",
-              color: "text",
-              flexShrink: 0,
-              transition: "all 150ms ease",
-              cursor: "pointer",
-              _hover: {
-                bg: "rgba(248,181,0,0.25)",
-                borderColor: "#f8b500",
-              },
-            })}
-          >
-            <span>{recipe.emoji}</span>
-            <span className={css({ whiteSpace: "nowrap" })}>{recipe.title}</span>
-            <span
-              className={css({
-                fontSize: "xs",
-                color: "text-muted",
-                marginLeft: "1",
-              })}
-            >
-              ×
-            </span>
-          </a>
-        ))}
-
-        <div
-          className={css({
-            width: "1px",
-            height: "20px",
-            bg: "rgba(0,0,0,0.1)",
-            flexShrink: 0,
-          })}
-        />
-
-        {recentRecipes.map((recipe) => (
-          <a
-            key={recipe.id}
-            href="#"
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "2",
-              px: "3",
-              py: "1.5",
-              borderRadius: "full",
-              fontSize: "sm",
-              fontWeight: "400",
-              color: "text-muted",
-              flexShrink: 0,
-              transition: "all 150ms ease",
-              cursor: "pointer",
-              _hover: {
-                color: "text",
-                bg: "rgba(0,0,0,0.03)",
-              },
-            })}
-          >
-            <span>{recipe.emoji}</span>
-            <span className={css({ whiteSpace: "nowrap" })}>{recipe.title}</span>
-          </a>
-        ))}
-      </div>
+      <RecipeTabs initialPinned={initialPinned} initialRecent={initialRecent} />
     </header>
   );
 }

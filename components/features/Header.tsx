@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import * as React from "react";
@@ -46,36 +47,18 @@ export function Header() {
           className={css({
             display: "flex",
             alignItems: "center",
-            gap: "2",
+            gap: "3",
           })}
         >
-          <span
+          <Image
+            src="/kitchenpace.png"
+            alt="KüchenTakt Logo"
+            width={120}
+            height={47}
             className={css({
-              width: "42px",
-              height: "42px",
-              borderRadius: "full",
-              background: "linear-gradient(135deg, #e07b53 0%, #f8b500 100%)",
-              color: "white",
-              display: "grid",
-              placeItems: "center",
-              fontFamily: "heading",
-              fontWeight: "700",
-              fontSize: "lg",
-              boxShadow: "0 4px 12px rgba(224,123,83,0.35)",
+              objectFit: "contain",
             })}
-          >
-            KT
-          </span>
-          <span
-            className={css({
-              fontFamily: "heading",
-              fontSize: { base: "xl", md: "2xl" },
-              fontWeight: "700",
-              color: "text",
-            })}
-          >
-            KüchenTakt
-          </span>
+          />
         </div>
         <nav
           className={flex({

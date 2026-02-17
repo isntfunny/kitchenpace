@@ -35,7 +35,7 @@ export function HorizontalRecipeScroll({
   title,
 }: HorizontalRecipeScrollProps) {
   return (
-    <div className={css({ mb: "8" })}>
+    <div className={css({ p: "5", borderRadius: "2xl", bg: "#fffcf9", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" })}>
       <Heading
         as="h2"
         size="lg"

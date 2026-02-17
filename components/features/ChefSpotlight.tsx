@@ -8,7 +8,14 @@ import { Heading, Text } from "../atoms/Typography";
 
 export function ChefSpotlight() {
   return (
-    <div>
+    <div
+      className={css({
+        p: "5",
+        borderRadius: "2xl",
+        bg: "#fffcf9",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+      })}
+    >
       <div
         className={css({
           mb: "3",

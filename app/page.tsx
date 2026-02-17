@@ -113,10 +113,6 @@ export default function Home() {
         <div
           className={css({
             marginTop: "6",
-            borderRadius: "2xl",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
-            bg: "#fffcf9",
-            p: "6",
           })}
         >
           <div

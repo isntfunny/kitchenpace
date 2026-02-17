@@ -1,0 +1,40 @@
+{
+  "name": "kitchenpace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "panda": "panda codegen --config ./panda.config.ts",
+    "predev": "npm run panda",
+    "prebuild": "npm run panda",
+    "postinstall": "npm run panda",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@pandacss/dev": "^1.8.2",
+    "@prisma/client": "^7.4.0",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-select": "^2.2.6",
+    "@styled-system/css": "^5.1.5",
+    "dotenv": "^17.3.1",
+    "next": "16.1.6",
+    "postcss": "^8.5.6",
+    "prisma": "^7.4.0",
+    "radix-ui": "^1.4.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "styled-system": "^5.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.33",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "typescript": "^5"
+  }
+}

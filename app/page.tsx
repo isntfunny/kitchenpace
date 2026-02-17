@@ -114,9 +114,8 @@ export default function Home() {
           className={css({
             marginTop: "6",
             borderRadius: "2xl",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-            bg: "rgba(255,255,255,0.6)",
-            backdropFilter: "blur(4px)",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+            bg: "#fffcf9",
             p: "6",
           })}
         >
@@ -196,9 +195,8 @@ export default function Home() {
           fontFamily: "body",
           fontSize: "sm",
           color: "text-muted",
-          background: "rgba(255,255,255,0.5)",
-          backdropFilter: "blur(8px)",
-          boxShadow: "0 -1px 3px rgba(0,0,0,0.02)",
+          bg: "#fffcf9",
+          boxShadow: "0 -4px 24px rgba(0,0,0,0.04)",
         })}
       >
         <div

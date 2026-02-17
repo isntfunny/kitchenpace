@@ -24,9 +24,8 @@ export function Header() {
         position: "sticky",
         top: 0,
         zIndex: 20,
-        background: "rgba(255,255,255,0.9)",
-        backdropFilter: "blur(8px)",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        bg: "#fffcf9",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
       })}
     >
       <div

@@ -12,19 +12,19 @@ const stats = [
   {
     label: "Spuren",
     value: "6",
-    detail: "definierte Kochphasen",
+    detail: "Phasen für perfekte Flows",
     color: "#e07b53",
   },
   {
     label: "Parallel",
     value: "∞",
-    detail: "Verzweigungen möglich",
+    detail: "Kreativität ohne Grenzen",
     color: "#f8b500",
   },
   {
-    label: "Validiert",
+    label: "Smart",
     value: "100%",
-    detail: "automatische Prüfung",
+    detail: "Auto-Layout & KI-Tags",
     color: "#00b894",
   },
 ];
@@ -60,13 +60,13 @@ export function HeroSpotlight() {
               color: "white",
             })}
           >
-            🌟 Innovatives Konzept
+            🌟 Nie zuvor gesehen
           </div>
           <Heading as="h1" size="xl" className={css({ mt: "4", maxW: "48ch" })}>
-            KUC – Koch Umströmungs Control
+            Rezepte visualisiert wie ein Flussdiagramm
           </Heading>
           <Text size="lg" color="muted" className={css({ mt: "4", maxW: "46ch" })}>
-            Verzweigte Rezeptflüsse mit parallelen Spuren. Visualisiere Vorbereitung, Kochen, Backen und mehr als eigene Bahnen – mit automatischem Layout und Validierung.
+            Während andere dir Zutatenlisten geben, zeigen wir den Flow: Parallele Spuren für Kochen, Backen, Vorbereiten – alle Schritte verzweigt, zeitlich perfekt aufeinander abgestimmt.
           </Text>
           <div
             className={css({

@@ -60,8 +60,7 @@ export function DailyHighlight() {
             Sommerliche Quinoa-Bowl
           </Heading>
           <Text size="md" color="muted" className={css({ mt: "2", maxW: "40ch" })}>
-            Ein erfrischendes Gericht mit frischem Gemüse, cremiger Avocado und einem
-            Zitronen-Dressing – leicht, sonnig und bereit für dein nächstes Picknick.
+            Frisch, bunt, sonnig – mit cremiger Avocado und Zitronen-Kick. Perfekt für jetzt.
           </Text>
         </div>
       </div>

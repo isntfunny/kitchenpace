@@ -7,23 +7,23 @@ import { Heading, Text } from "../atoms/Typography";
 
 const pillars = [
   {
-    title: "Spurensystem",
+    title: "6 Flow-Spuren",
     description:
-      "6 definierte Kochphasen: Vorbereitung, Kochen, Backen, Warten, Würzen, Servieren. Jede Spur hat ihre eigene Y-Position.",
+      "Vorbereitung, Kochen, Backen, Warten, Würzen, Servieren – jede Phase bekommt ihren eigenen Raum.",
     icon: "🛤️",
     color: "#e07b53",
   },
   {
-    title: "Verzweigung & Parallelität",
+    title: "Unendlich verzweigt",
     description:
-      "Erstelle parallele Pfade mit Verzweigungen. Das System validiert automatisch, dass alle Wege zum Servieren führen.",
+      "Parallele Pfade, die sich treffen. Alle Wege führen zum perfekten Teller – garantiert.",
     icon: "🔀",
     color: "#6c5ce7",
   },
   {
-    title: "Auto-Layout",
+    title: "Ein Klick, fertig",
     description:
-      "Dagre-basierte automatische Anordnung. Ein Klick genügt, um alle Schritte optimal in den Spuren zu verteilen.",
+      "Auto-Layout ordnet alles – smart, schnell, schön. Du fokussierst dich aufs Kochen.",
     icon: "⚡",
     color: "#00b894",
   },
@@ -51,14 +51,13 @@ export function FlowPillars() {
             marginBottom: "3",
           })}
         >
-          ✨ KUC Konzept
+          ✨ Das Herzstück
         </div>
         <Heading as="h2" size="lg" className={css({ mt: "3" })}>
-          Rezeptflüsse neu gedacht
+          Rezepte, die atmen
         </Heading>
         <Text size="sm" color="muted" className={css({ mt: "2", maxW: "48ch" })}>
-          Der KUC Editor visualisiert Rezepte als verzweigte Flüsse mit parallelen Spuren.
-          Keine linearen Listen mehr – sondern ein interaktives Diagramm deiner Kochschritte.
+          Vergiss Listen. Willkommen im Flow – wo jeder Schritt sichtbar wird und Kochen zur Choreografie.
         </Text>
       </div>
       <div

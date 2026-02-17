@@ -139,7 +139,7 @@ export function FitsNow() {
   return (
     <Section
       title="🎯 Passt zu jetzt"
-      description="Lass dein Tagesgefühl entscheiden. Mobil optimierte Filter liefern sofort passende Rezepte."
+      description="Tagesgefühl trifft Rezept – sofort, schnell, perfekt abgestimmt."
       action={
         <Select value={selectedTime} onValueChange={setSelectedTime}>
           <SelectTrigger>

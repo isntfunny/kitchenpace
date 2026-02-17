@@ -28,8 +28,10 @@ export default function RootLayout({
     <html lang="de">
       <body className={`${playfair.variable} ${inter.variable}`} style={{ 
         background: `
-          radial-gradient(circle 600px at 30% 20%, rgba(224,123,83,0.25) 0%, transparent 50%),
-          linear-gradient(180deg, #f5ede3 0%, #e8ddd0 100%)
+          radial-gradient(ellipse 100% 80% at 0% 100%, rgba(224,123,83,0.2) 0%, transparent 50%),
+          radial-gradient(ellipse 80% 100% at 100% 0%, rgba(108,92,231,0.15) 0%, transparent 50%),
+          radial-gradient(ellipse 60% 40% at 50% 80%, rgba(248,181,0,0.12) 0%, transparent 50%),
+          linear-gradient(180deg, #f8f5f0 0%, #f0ebe3 50%, #e8e2d9 100%)
         `,
         margin: 0,
         minHeight: "100vh",

@@ -39,14 +39,6 @@ export function FlowPillars() {
         bg: "#fffcf9",
       })}
     >
-      <div>
-        <Heading as="h2" size="lg" className={css({ mt: "3" })}>
-          So einfach geht&apos;s
-        </Heading>
-        <Text size="sm" color="muted" className={css({ mt: "2", maxW: "48ch" })}>
-          Rezepte, die zeigen statt erklären.
-        </Text>
-      </div>
       <div
         className={grid({
           columns: { base: 1, md: 3 },

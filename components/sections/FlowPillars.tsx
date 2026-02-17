@@ -9,21 +9,21 @@ const pillars = [
   {
     title: "Parallele Schritte",
     description:
-      "Sieh auf einen Blick, welche Schritte gleichzeitig laufen können – ohne lange Listen durchzulesen.",
+      "Die Sauce reduziert sich, das Gemüse röstet im Ofen – was früher ein mentales Puzzle war, wird zur klaren visuellen Wahrheit. Du siehst sofort, welche Schritte gleichzeitig laufen und was du in Wartezeiten erledigen kannst. Keine Panik mehr, kein 'Oh nein, das hätte ich vor 20 Minuten starten sollen!' – die Synchronisation ist bereits durchdacht.",
     icon: "⏲️",
     color: "#e07b53",
   },
   {
     title: "Klar strukturiert",
     description:
-      "Jeder Schritt hat seinen Platz. Du behältst den Überblick, auch wenn mehrere Töpfe auf dem Herd stehen.",
+      "Vom Chaos zur kristallklaren Struktur: Jeder Schritt hat seinen Platz, seine Priorität, seinen Moment. Du siehst den kritischen Pfad – wo du aufmerksam sein musst und wo du entspannen kannst. Auch wenn drei Töpfe brodeln und der Timer piept, behältst du den Überblick. Nicht mehr jonglieren und improvisieren – der Flow ist bereits da.",
     icon: "📋",
     color: "#6c5ce7",
   },
   {
     title: "Einfach verständlich",
     description:
-      "Keine komplizierten Erklärungen. Du siehst sofort, was als nächstes zu tun ist.",
+      "Keine kognitive Überlastung mehr. Die Visualisierung zeigt dir von Anfang an die gesamte Landkarte deines Kochabenteuers. Du siehst sofort, was als nächstes kommt, wo du stehst und wie alles zusammenfließt. Statt gestresst zwischen Herd und Schneidebrett zu rennen, befindest du dich im Flow – entspannt, kontrolliert, genussvoll.",
     icon: "✨",
     color: "#00b894",
   },

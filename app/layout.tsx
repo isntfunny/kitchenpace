@@ -33,6 +33,7 @@ export default function RootLayout({
           radial-gradient(ellipse 60% 40% at 50% 80%, rgba(248,181,0,0.12) 0%, transparent 50%),
           linear-gradient(180deg, #f8f5f0 0%, #f0ebe3 50%, #e8e2d9 100%)
         `,
+        backgroundAttachment: "fixed",
         margin: 0,
         minHeight: "100vh",
       }}>

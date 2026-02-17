@@ -93,9 +93,7 @@ export function DailyHighlight() {
               as="h1"
               size="lg"
               className={css({
-                background: "linear-gradient(90deg, #e07b53, #f8b500)",
-                backgroundClip: "text",
-                color: "transparent",
+                color: "text",
               })}
             >
               Sommerliche Quinoa-Bowl

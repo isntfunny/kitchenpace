@@ -140,7 +140,6 @@ export function FitsNow() {
     <Section
       title="🎯 Passt zu jetzt"
       description="Lass dein Tagesgefühl entscheiden. Mobil optimierte Filter liefern sofort passende Rezepte."
-      titleColor="linear-gradient(90deg, #00b894, #00cec9)"
       action={
         <Select value={selectedTime} onValueChange={setSelectedTime}>
           <SelectTrigger>

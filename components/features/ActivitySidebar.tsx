@@ -73,12 +73,12 @@ const mockActivities: Activity[] = [
 const activityConfig = {
   comment: {
     icon: "💬",
-    bg: "linear-gradient(135deg, #e07b53 0%, #c4623d 100%)",
+    bg: "linear-gradient(135deg, #ff7675 0%, #e07b53 100%)",
     color: "white",
   },
   rating: {
     icon: "⭐",
-    bg: "linear-gradient(135deg, #f8b500 0%, #d4a017 100%)",
+    bg: "linear-gradient(135deg, #fdcb6e 0%, #f8b500 100%)",
     color: "#2d3436",
   },
   save: {
@@ -101,12 +101,12 @@ function ActivityIcon({ type }: { type: Activity["type"] }) {
         fontSize: "md",
         display: "grid",
         placeItems: "center",
-        width: "36px",
-        height: "36px",
+        width: "40px",
+        height: "40px",
         borderRadius: "full",
         background: config.bg,
         color: config.color,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+        boxShadow: "0 6px 16px rgba(0,0,0,0.2)",
         flexShrink: 0,
       })}
     >
@@ -125,7 +125,7 @@ function ActivityText({ activity }: { activity: Activity }) {
 
   return (
     <div>
-      <Text size="sm" className={css({ fontWeight: "600" })}>
+      <Text size="sm" className={css({ fontWeight: "600", color: "text" })}>
         {activity.user}{" "}
         <span className={css({ fontWeight: "400", color: "text-muted" })}>
           {actionText[activity.type]}
@@ -134,9 +134,7 @@ function ActivityText({ activity }: { activity: Activity }) {
       <Text
         size="sm"
         className={css({
-          background: "linear-gradient(90deg, #e07b53, #f8b500)",
-          backgroundClip: "text",
-          color: "transparent",
+          color: "primary",
           fontWeight: "600",
         })}
       >
@@ -169,13 +167,14 @@ export function ActivitySidebar() {
     <aside
       className={css({
         borderRadius: "2xl",
-        border: "1px solid",
-        borderColor: "rgba(224,123,83,0.2)",
+        border: "2px solid",
+        borderColor: "rgba(224,123,83,0.25)",
         p: "5",
         height: "fit-content",
         position: "sticky",
         top: "100px",
-        background: "linear-gradient(180deg, #fff9f6 0%, #faf9f7 100%)",
+        background: "linear-gradient(180deg, #fff5ef 0%, #fff9f6 50%, #faf9f7 100%)",
+        boxShadow: "0 8px 32px rgba(224,123,83,0.1)",
       })}
     >
       <div className={css({ mb: "4" })}>
@@ -183,9 +182,7 @@ export function ActivitySidebar() {
           as="h3"
           size="md"
           className={css({
-            background: "linear-gradient(90deg, #e07b53, #f8b500)",
-            backgroundClip: "text",
-            color: "transparent",
+            color: "primary",
           })}
         >
           Aktivität 🔥
@@ -207,14 +204,14 @@ export function ActivitySidebar() {
               borderRadius: "xl",
               background:
                 index === 0
-                  ? "linear-gradient(135deg, rgba(224,123,83,0.08) 0%, rgba(248,181,0,0.08) 100%)"
-                  : "transparent",
+                  ? "linear-gradient(135deg, rgba(224,123,83,0.12) 0%, rgba(248,181,0,0.1) 100%)"
+                  : "rgba(255,255,255,0.5)",
               borderBottom:
                 index < mockActivities.length - 1
                   ? "1px solid rgba(0,0,0,0.05)"
                   : "none",
               _hover: {
-                background: "rgba(224,123,83,0.05)",
+                background: "rgba(224,123,83,0.08)",
               },
               transition: "background 150ms ease",
             })}
@@ -243,11 +240,11 @@ export function ActivitySidebar() {
           border: "none",
           cursor: "pointer",
           borderRadius: "xl",
-          boxShadow: "0 4px 12px rgba(224,123,83,0.3)",
+          boxShadow: "0 6px 20px rgba(224,123,83,0.35)",
           _hover: {
             background: "linear-gradient(135deg, #c4623d 0%, #d4a017 100%)",
-            transform: "translateY(-1px)",
-            boxShadow: "0 6px 16px rgba(224,123,83,0.4)",
+            transform: "translateY(-2px)",
+            boxShadow: "0 8px 24px rgba(224,123,83,0.45)",
           },
           transition: "all 200ms ease",
         })}

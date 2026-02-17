@@ -41,9 +41,7 @@ export function HorizontalRecipeScroll({
         size="lg"
         className={css({
           mb: "4",
-          background: "linear-gradient(90deg, #e07b53, #f8b500)",
-          backgroundClip: "text",
-          color: "transparent",
+          color: "text",
         })}
       >
         {title}

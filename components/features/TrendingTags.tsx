@@ -22,11 +22,12 @@ export function TrendingTags() {
     <div
       className={css({
         borderRadius: "2xl",
-        border: "1px solid",
+        border: "2px solid",
         borderColor: "rgba(248,181,0,0.3)",
         p: "5",
         mb: "5",
-        background: "linear-gradient(135deg, #fffef8 0%, #fff9f0 100%)",
+        background: "linear-gradient(135deg, #fffdf5 0%, #fff9e6 50%, #fff8f0 100%)",
+        boxShadow: "0 8px 32px rgba(248,181,0,0.12)",
       })}
     >
       <div className={css({ mb: "4" })}>
@@ -34,9 +35,7 @@ export function TrendingTags() {
           as="h3"
           size="md"
           className={css({
-            background: "linear-gradient(90deg, #f8b500, #e07b53)",
-            backgroundClip: "text",
-            color: "transparent",
+            color: "primary",
           })}
         >
           Trending 🔥
@@ -63,9 +62,9 @@ export function TrendingTags() {
               fontFamily: "body",
               fontWeight: "500",
               bg: "white",
-              color: item.color,
+              color: "text",
               border: "2px solid",
-              borderColor: `${item.color}30`,
+              borderColor: `${item.color}40`,
               cursor: "pointer",
               boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
               _hover: {
@@ -73,7 +72,7 @@ export function TrendingTags() {
                 color: "white",
                 borderColor: item.color,
                 transform: "translateY(-2px)",
-                boxShadow: `0 4px 12px ${item.color}40`,
+                boxShadow: `0 6px 16px ${item.color}50`,
               },
               transition: "all 200ms ease",
             })}

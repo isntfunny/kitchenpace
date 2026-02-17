@@ -5,32 +5,32 @@ import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import * as React from "react";
 import { Heading, Text } from "../atoms/Typography";
-import { Badge } from "../atoms/Badge";
 
 export function ChefSpotlight() {
   return (
     <div
       className={css({
         borderRadius: "2xl",
-        border: "1px solid",
-        borderColor: "rgba(224,123,83,0.2)",
+        border: "2px solid",
+        borderColor: "rgba(224,123,83,0.25)",
         p: "5",
         mb: "5",
-        background: "linear-gradient(135deg, #fff5f0 0%, #fff9f7 50%, #fffcf8 100%)",
+        background: "linear-gradient(135deg, #fff5f0 0%, #fff9f6 40%, #fffcf8 100%)",
         position: "relative",
         overflow: "hidden",
+        boxShadow: "0 8px 32px rgba(224,123,83,0.1)",
       })}
     >
       <div
         className={css({
           position: "absolute",
-          top: "-20px",
-          right: "-20px",
-          width: "100px",
-          height: "100px",
+          top: "-30px",
+          right: "-30px",
+          width: "120px",
+          height: "120px",
           borderRadius: "full",
-          background: "linear-gradient(135deg, rgba(248,181,0,0.3), rgba(224,123,83,0.2))",
-          filter: "blur(20px)",
+          background: "linear-gradient(135deg, rgba(248,181,0,0.4), rgba(224,123,83,0.25))",
+          filter: "blur(25px)",
         })}
       />
 
@@ -41,7 +41,8 @@ export function ChefSpotlight() {
           display: "inline-flex",
           background: "linear-gradient(135deg, #f8b500 0%, #e07b53 100%)",
           borderRadius: "full",
-          padding: "2px 12px",
+          padding: "4px 12px",
+          boxShadow: "0 4px 12px rgba(224,123,83,0.3)",
         })}
       >
         <span
@@ -65,7 +66,7 @@ export function ChefSpotlight() {
             overflow: "hidden",
             border: "3px solid",
             borderColor: "#f8b500",
-            boxShadow: "0 4px 15px rgba(248,181,0,0.4)",
+            boxShadow: "0 6px 20px rgba(248,181,0,0.4)",
           })}
         >
           <Image
@@ -76,7 +77,7 @@ export function ChefSpotlight() {
           />
         </div>
         <div>
-          <Heading as="h4" size="sm" className={css({ color: "#e07b53" })}>
+          <Heading as="h4" size="sm">
             Julia Weber
           </Heading>
           <Text size="sm" color="muted">
@@ -90,7 +91,7 @@ export function ChefSpotlight() {
         className={css({
           mb: "3",
           fontStyle: "italic",
-          color: "#636e72",
+          color: "text-muted",
           position: "relative",
         })}
       >
@@ -117,7 +118,7 @@ export function ChefSpotlight() {
               overflow: "hidden",
               border: "2px solid",
               borderColor: "white",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
             })}
           >
             <Image
@@ -136,7 +137,7 @@ export function ChefSpotlight() {
               className={css({
                 position: "absolute",
                 inset: 0,
-                background: "linear-gradient(180deg, transparent 50%, rgba(224,123,83,0.8))",
+                background: "linear-gradient(180deg, transparent 50%, rgba(224,123,83,0.9))",
                 opacity: 0,
                 _hover: {
                   opacity: 1,

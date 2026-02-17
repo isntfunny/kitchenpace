@@ -94,7 +94,6 @@ export default function Home() {
     <div
       className={css({
         minH: "100vh",
-        bg: "#faf9f7",
         color: "text",
       })}
     >

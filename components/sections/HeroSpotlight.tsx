@@ -8,27 +8,25 @@ import { Heading, Text } from "../atoms/Typography";
 
 export function HeroSpotlight() {
   return (
-    <div className={css({ px: { base: "4", md: "6" }, mt: "4" })}>
-      <section
-        className={css({
-          position: "relative",
-          overflow: "hidden",
-          px: { base: "6", md: "8" },
-          py: { base: "8", md: "10" },
-          bg: "#fffcf9",
-          borderRadius: "2xl",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
-          maxWidth: "1400px",
-          marginX: "auto",
+    <section
+      className={css({
+        position: "relative",
+        overflow: "hidden",
+        px: { base: "4", md: "6" },
+        py: { base: "8", md: "10" },
+        bg: "#fffcf9",
+        borderRadius: "2xl",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+        mb: "6",
+      })}
+    >
+      <div
+        className={grid({
+          columns: { base: 1, lg: 2 },
+          gap: "10",
+          alignItems: "center",
         })}
       >
-        <div
-          className={grid({
-            columns: { base: 1, lg: 2 },
-            gap: "10",
-            alignItems: "center",
-          })}
-        >
         <div>
           <div
             className={css({
@@ -47,7 +45,7 @@ export function HeroSpotlight() {
             Kochen ist nicht immer Schritt für Schritt
           </Heading>
           <Text size="lg" color="muted" className={css({ mt: "4", maxW: "46ch" })}>
-            Manchmal kocht die Soße, während du das Gemüse schneidest. Hier siehst du auf einen Blick, was gleichzeitig läuft – ohne lange Listen durchzulesen. Parallele Spuren zeigen dir alle Kochphasen: Vorbereiten, Kochen, Backen, Würzen. Alle Schritte verzweigt und zeitlich perfekt aufeinander abgestimmt.
+            Manchmal kocht die Soße, während du das Gemüse schneidest. Hier siehst du auf einen Blick, was gleichzeitig läuft – ohne lange Listen durchzulesen.
           </Text>
         </div>
         <div
@@ -74,8 +72,7 @@ export function HeroSpotlight() {
             })}
           />
         </div>
-        </div>
-      </section>
-    </div>
+      </div>
+    </section>
   );
 }

@@ -41,7 +41,7 @@ export function FlowPillars() {
     >
       <div>
         <Heading as="h2" size="lg" className={css({ mt: "3" })}>
-          So einfach geht's
+          So einfach geht&apos;s
         </Heading>
         <Text size="sm" color="muted" className={css({ mt: "2", maxW: "48ch" })}>
           Rezepte, die zeigen statt erklären.

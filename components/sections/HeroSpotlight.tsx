@@ -104,7 +104,7 @@ export function HeroSpotlight() {
                 <Text size="sm" color="muted">
                   {stat.label}
                 </Text>
-                <Text size="xl" className={css({ fontWeight: "700" })}>
+                <Text size="lg" className={css({ fontWeight: "700" })}>
                   {stat.value}
                 </Text>
                 <Text size="sm" color="muted">

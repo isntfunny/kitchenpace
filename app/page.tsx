@@ -115,6 +115,8 @@ export default function Home() {
             marginTop: "6",
             borderRadius: "2xl",
             boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+            bg: "rgba(255,255,255,0.6)",
+            backdropFilter: "blur(4px)",
             p: "6",
           })}
         >

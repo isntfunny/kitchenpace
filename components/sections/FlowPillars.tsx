@@ -36,6 +36,8 @@ export function FlowPillars() {
         padding: { base: "6", md: "8" },
         borderRadius: "2xl",
         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        bg: "rgba(255,255,255,0.6)",
+        backdropFilter: "blur(4px)",
       })}
     >
       <div>

@@ -34,6 +34,8 @@ export function FlowPillars() {
     <section
       className={css({
         padding: { base: "6", md: "8" },
+        borderRadius: "2xl",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
       })}
     >
       <div>

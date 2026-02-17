@@ -112,7 +112,10 @@ export default function Home() {
 
         <div
           className={css({
-            marginTop: "8",
+            marginTop: "6",
+            borderRadius: "2xl",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+            p: "6",
           })}
         >
           <div
@@ -185,12 +188,15 @@ export default function Home() {
 
       <footer
         className={css({
-          py: "10",
-          marginTop: "8",
+          py: "8",
+          mt: "8",
           textAlign: "center",
           fontFamily: "body",
           fontSize: "sm",
           color: "text-muted",
+          background: "rgba(255,255,255,0.5)",
+          backdropFilter: "blur(8px)",
+          boxShadow: "0 -1px 3px rgba(0,0,0,0.02)",
         })}
       >
         <div

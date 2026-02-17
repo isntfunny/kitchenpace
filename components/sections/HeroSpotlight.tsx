@@ -122,9 +122,10 @@ export function HeroSpotlight() {
         <div
           className={css({
             position: "relative",
-            borderRadius: "3xl",
+            borderRadius: "2xl",
             overflow: "hidden",
             minHeight: "320px",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
           })}
         >
           <Image

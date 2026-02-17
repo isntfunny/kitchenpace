@@ -26,7 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body className={`${playfair.variable} ${inter.variable}`} style={{ backgroundColor: "#faf9f7", margin: 0 }}>
+      <body className={`${playfair.variable} ${inter.variable}`} style={{ 
+        background: "linear-gradient(135deg, #faf9f7 0%, #fff8f0 25%, #f8fffc 50%, #faf5ff 75%, #faf9f7 100%)",
+        margin: 0 
+      }}>
         {children}
       </body>
     </html>

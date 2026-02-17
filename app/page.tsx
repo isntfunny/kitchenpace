@@ -99,7 +99,6 @@ export default function Home() {
     >
       <Header />
 
-      <HeroSpotlight />
 
       <main
         className={css({
@@ -109,6 +108,8 @@ export default function Home() {
           py: { base: "6", md: "8" },
         })}
       >
+        <HeroSpotlight />
+
         <FlowPillars />
 
         <div

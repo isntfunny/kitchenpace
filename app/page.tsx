@@ -1,5 +1,5 @@
 import { css } from "styled-system/css";
-import { container, grid } from "styled-system/patterns";
+import { grid } from "styled-system/patterns";
 import { Header } from "@/components/features/Header";
 import { ActivitySidebar } from "@/components/features/ActivitySidebar";
 import { TrendingTags } from "@/components/features/TrendingTags";

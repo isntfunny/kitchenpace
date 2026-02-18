@@ -36,10 +36,6 @@ export function RecipeTabs({
     }
   };
 
-  const addToRecent = (recipe: RecipeTab) => {
-    setRecent([recipe, ...recent.filter(r => r.id !== recipe.id)].slice(0, 5));
-  };
-
   return (
     <div
       className={css({

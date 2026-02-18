@@ -1,11 +1,9 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
-import * as React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { HeaderAuth } from "./HeaderAuth";
 import { RecipeTabs } from "./RecipeTabs";
 
 const categories = [
@@ -30,7 +28,7 @@ const initialRecent = [
   { id: "5", title: "Schokoladenmousse", emoji: "🍫" },
 ];
 
-export function Header() {
+export async function Header() {
   return (
     <header
       className={css({
@@ -260,29 +258,7 @@ export function Header() {
               <span className={css({ display: { base: "none", md: "inline" } })}>Favoriten</span>
             </a>
 
-            <Link
-              href="/profile"
-              className={css({
-                fontFamily: "body",
-                fontSize: "sm",
-                fontWeight: "500",
-                color: "text",
-                px: "3",
-                py: "2",
-                borderRadius: "lg",
-                display: "flex",
-                alignItems: "center",
-                gap: "1.5",
-                transition: "all 150ms ease",
-                _hover: {
-                  bg: "rgba(224,123,83,0.08)",
-                  color: "primary",
-                },
-              })}
-            >
-              <span>👤</span>
-              <span className={css({ display: { base: "none", md: "inline" } })}>Profil</span>
-            </Link>
+            <HeaderAuth />
 
             <a
               href="#"

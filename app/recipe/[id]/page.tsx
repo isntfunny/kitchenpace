@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { css } from "styled-system/css";
 import { flex, grid, container } from "styled-system/patterns";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
-import { Header } from "@/components/features/Header";
+
 
 interface Ingredient {
   name: string;
@@ -18,6 +19,26 @@ interface Ingredient {
 interface Step {
   order: number;
   description: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  bio: string;
+  recipeCount: number;
+  followerCount: number;
+}
+
+interface Activity {
+  id: string;
+  user: {
+    name: string;
+    avatar: string;
+  };
+  action: string;
+  timestamp: string;
+  content?: string;
 }
 
 interface Recipe {
@@ -34,7 +55,72 @@ interface Recipe {
   ingredients: Ingredient[];
   steps: Step[];
   tags: string[];
+  authorId: string;
 }
+
+const users: Record<string, User> = {
+  "user-1": {
+    id: "user-1",
+    name: "Maria Rossi",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
+    bio: "Passionierte Hobbyköchin aus Italien. Ich liebe es, traditionelle Familienrezepte zu teilen.",
+    recipeCount: 47,
+    followerCount: 1234,
+  },
+  "user-2": {
+    id: "user-2",
+    name: "Alex Koch",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
+    bio: "Koch mit Leidenschaft für mediterrane Küche. Gesund und lecker ist mein Motto!",
+    recipeCount: 23,
+    followerCount: 567,
+  },
+};
+
+const activities: Record<string, Activity[]> = {
+  "pasta-aglio": [
+    {
+      id: "act-1",
+      user: { name: "Lisa M.", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80" },
+      action: "hat das Rezept ausprobiert",
+      timestamp: "Vor 2 Stunden",
+      content: "Super einfach und lecker! Meine Familie war begeistert.",
+    },
+    {
+      id: "act-2",
+      user: { name: "Thomas B.", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80" },
+      action: "hat das Rezept gespeichert",
+      timestamp: "Vor 5 Stunden",
+    },
+    {
+      id: "act-3",
+      user: { name: "Sarah K.", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80" },
+      action: "hat ein Foto hochgeladen",
+      timestamp: "Gestern",
+    },
+    {
+      id: "act-4",
+      user: { name: "Mike R.", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80" },
+      action: "hat 5 Sterne gegeben",
+      timestamp: "Vor 2 Tagen",
+    },
+  ],
+  "greek-salad": [
+    {
+      id: "act-1",
+      user: { name: "Anna S.", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80" },
+      action: "hat das Rezept ausprobiert",
+      timestamp: "Vor 1 Stunde",
+      content: "Perfekt für den Sommer! Sehr erfrischend.",
+    },
+    {
+      id: "act-2",
+      user: { name: "Peter W.", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&q=80" },
+      action: "hat das Rezept geteilt",
+      timestamp: "Vor 3 Stunden",
+    },
+  ],
+};
 
 const recipes: Record<string, Recipe> = {
   "pasta-aglio": {
@@ -48,6 +134,7 @@ const recipes: Record<string, Recipe> = {
     cookTime: 10,
     servings: 2,
     difficulty: "Einfach",
+    authorId: "user-1",
     ingredients: [
       { name: "Spaghetti", amount: 200, unit: "g" },
       { name: "Knoblauchzehen", amount: 4, unit: "Stück" },
@@ -79,6 +166,7 @@ const recipes: Record<string, Recipe> = {
     cookTime: 0,
     servings: 4,
     difficulty: "Einfach",
+    authorId: "user-2",
     ingredients: [
       { name: "Tomaten", amount: 4, unit: "Stück" },
       { name: "Gurke", amount: 1, unit: "Stück" },
@@ -102,17 +190,20 @@ const recipes: Record<string, Recipe> = {
 
 export default function RecipeDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const recipeId = params.id as string;
   const recipe = recipes[recipeId];
+  const author = recipe ? users[recipe.authorId] : null;
+  const recipeActivities = recipe ? activities[recipeId] || [] : [];
   
   const [servings, setServings] = useState(recipe?.servings || 2);
   const [isSaved, setIsSaved] = useState(false);
   const [checkedSteps, setCheckedSteps] = useState<number[]>([]);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   if (!recipe) {
     return (
       <div className={css({ minH: "100vh", color: "text" })}>
-        <Header />
         <main className={container({ maxW: "1400px", mx: "auto", px: "4", py: "8" })}>
           <div className={css({ textAlign: "center", py: "20" })}>
             <h1 className={css({ fontFamily: "heading", fontSize: "3xl", mb: "4" })}>
@@ -146,12 +237,22 @@ export default function RecipeDetailPage() {
     window.print();
   };
 
+  const handleTagClick = (tag: string) => {
+    router.push(`/?tag=${encodeURIComponent(tag)}`);
+  };
+
+  const handleCategoryClick = (category: string) => {
+    router.push(`/?category=${encodeURIComponent(category)}`);
+  };
+
+  const handleDifficultyClick = (difficulty: string) => {
+    router.push(`/?difficulty=${encodeURIComponent(difficulty)}`);
+  };
+
   const totalTime = recipe.prepTime + recipe.cookTime;
 
   return (
     <div className={css({ minH: "100vh", color: "text" })}>
-      <Header />
-      
       <main className={container({ maxW: "1400px", mx: "auto", px: { base: "4", md: "6" }, py: "8" })}>
         {/* Hero Section */}
         <div className={css({ mb: "8" })}>
@@ -173,17 +274,31 @@ export default function RecipeDetailPage() {
             {/* Info */}
             <div className={css({ display: "flex", flexDirection: "column", justifyContent: "center" })}>
               <div className={flex({ gap: "2", mb: "4", flexWrap: "wrap" })}>
-                <Badge>{recipe.category}</Badge>
-                <span className={css({ 
-                  px: "3", 
-                  py: "1", 
-                  bg: "light", 
-                  borderRadius: "full",
-                  fontSize: "sm",
-                  fontFamily: "body"
-                })}>
+                <button
+                  onClick={() => handleCategoryClick(recipe.category)}
+                  className={css({ 
+                    cursor: "pointer",
+                    _hover: { opacity: 0.8 }
+                  })}
+                >
+                  <Badge>{recipe.category}</Badge>
+                </button>
+                <button
+                  onClick={() => handleDifficultyClick(recipe.difficulty)}
+                  className={css({ 
+                    px: "3", 
+                    py: "1", 
+                    bg: "light", 
+                    borderRadius: "full",
+                    fontSize: "sm",
+                    fontFamily: "body",
+                    cursor: "pointer",
+                    transition: "all 150ms ease",
+                    _hover: { bg: "#e8e2d9" }
+                  })}
+                >
                   {recipe.difficulty}
-                </span>
+                </button>
               </div>
 
               <h1 className={css({ fontFamily: "heading", fontSize: "4xl", fontWeight: "700", mb: "4" })}>
@@ -229,13 +344,19 @@ export default function RecipeDetailPage() {
               {/* Tags */}
               <div className={flex({ gap: "2", mt: "4", flexWrap: "wrap" })}>
                 {recipe.tags.map(tag => (
-                  <span key={tag} className={css({ 
-                    fontSize: "sm", 
-                    color: "text-muted",
-                    fontFamily: "body"
-                  })}>
+                  <button
+                    key={tag}
+                    onClick={() => handleTagClick(tag)}
+                    className={css({ 
+                      fontSize: "sm", 
+                      color: "primary",
+                      fontFamily: "body",
+                      cursor: "pointer",
+                      _hover: { textDecoration: "underline" }
+                    })}
+                  >
                     #{tag}
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -387,7 +508,205 @@ export default function RecipeDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Author Profile Section */}
+        {author && (
+          <div className={css({ mt: "12" })}>
+            <h2 className={css({ fontFamily: "heading", fontSize: "2xl", fontWeight: "600", mb: "6" })}>
+              Über den Autor
+            </h2>
+            <div className={css({ bg: "white", borderRadius: "2xl", p: "6", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" })}>
+              <div className={flex({ gap: "6", align: "flex-start", direction: { base: "column", sm: "row" } })}>
+                <Link href={`/user/${author.id}`}>
+                  <div className={css({ 
+                    position: "relative", 
+                    w: "20", 
+                    h: "20", 
+                    borderRadius: "full", 
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    _hover: { opacity: 0.9 }
+                  })}>
+                    <Image
+                      src={author.avatar}
+                      alt={author.name}
+                      fill
+                      sizes="80px"
+                      className={css({ objectFit: "cover" })}
+                    />
+                  </div>
+                </Link>
+                
+                <div className={css({ flex: 1 })}>
+                  <div className={flex({ justify: "space-between", align: "flex-start", wrap: "wrap", gap: "4" })}>
+                    <div>
+                      <Link href={`/user/${author.id}`}>
+                        <h3 className={css({ 
+                          fontFamily: "heading", 
+                          fontSize: "xl", 
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          _hover: { color: "primary" }
+                        })}>
+                          {author.name}
+                        </h3>
+                      </Link>
+                      <p className={css({ fontFamily: "body", color: "text-muted", mt: "2", maxW: "600px" })}>
+                        {author.bio}
+                      </p>
+                    </div>
+                    
+                    <Button
+                      variant={isFollowing ? "secondary" : "primary"}
+                      size="sm"
+                      onClick={() => setIsFollowing(!isFollowing)}
+                    >
+                      {isFollowing ? "✓ Folgst du" : "+ Folgen"}
+                    </Button>
+                  </div>
+                  
+                  <div className={flex({ gap: "6", mt: "4" })}>
+                    <div className={css({ textAlign: "center" })}>
+                      <div className={css({ fontFamily: "heading", fontWeight: "600", fontSize: "lg" })}>
+                        {author.recipeCount}
+                      </div>
+                      <div className={css({ fontSize: "sm", color: "text-muted", fontFamily: "body" })}>
+                        Rezepte
+                      </div>
+                    </div>
+                    <div className={css({ textAlign: "center" })}>
+                      <div className={css({ fontFamily: "heading", fontWeight: "600", fontSize: "lg" })}>
+                        {author.followerCount.toLocaleString()}
+                      </div>
+                      <div className={css({ fontSize: "sm", color: "text-muted", fontFamily: "body" })}>
+                        Follower
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Activity Feed Section */}
+        {recipeActivities.length > 0 && (
+          <div className={css({ mt: "12" })}>
+            <h2 className={css({ fontFamily: "heading", fontSize: "2xl", fontWeight: "600", mb: "6" })}>
+              Aktivitäten
+            </h2>
+            <div className={css({ bg: "white", borderRadius: "2xl", p: "6", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" })}>
+              <div className={css({ spaceY: "4" })}>
+                {recipeActivities.map((activity) => (
+                  <div 
+                    key={activity.id} 
+                    className={flex({ 
+                      gap: "4", 
+                      align: "flex-start",
+                      p: "4",
+                      bg: "light",
+                      borderRadius: "xl"
+                    })}
+                  >
+                    <div className={css({ 
+                      position: "relative", 
+                      w: "12", 
+                      h: "12", 
+                      borderRadius: "full", 
+                      overflow: "hidden",
+                      flexShrink: 0
+                    })}>
+                      <Image
+                        src={activity.user.avatar}
+                        alt={activity.user.name}
+                        fill
+                        sizes="48px"
+                        className={css({ objectFit: "cover" })}
+                      />
+                    </div>
+                    
+                    <div className={css({ flex: 1 })}>
+                      <div className={flex({ gap: "2", align: "baseline", wrap: "wrap" })}>
+                        <span className={css({ fontFamily: "heading", fontWeight: "600" })}>
+                          {activity.user.name}
+                        </span>
+                        <span className={css({ fontFamily: "body", color: "text-muted" })}>
+                          {activity.action}
+                        </span>
+                        <span className={css({ fontSize: "sm", color: "text-muted", fontFamily: "body" })}>
+                          • {activity.timestamp}
+                        </span>
+                      </div>
+                      
+                      {activity.content && (
+                        <p className={css({ 
+                          fontFamily: "body", 
+                          mt: "2",
+                          p: "3",
+                          bg: "white",
+                          borderRadius: "lg",
+                          fontStyle: "italic"
+                        })}>
+                          "{activity.content}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className={css({ textAlign: "center", mt: "6" })}>
+                <Button variant="ghost" size="sm">
+                  Alle Aktivitäten anzeigen
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* Footer */}
+      <footer
+        className={css({
+          py: "8",
+          mt: "8",
+          textAlign: "center",
+          fontFamily: "body",
+          fontSize: "sm",
+          color: "text-muted",
+          bg: "#fffcf9",
+          boxShadow: "0 -4px 24px rgba(0,0,0,0.04)",
+        })}
+      >
+        <div
+          className={css({
+            maxWidth: "600px",
+            margin: "0 auto",
+            padding: "0 4",
+          })}
+        >
+          <div
+            className={css({
+              fontSize: "2xl",
+              marginBottom: "3",
+            })}
+          >
+            🍳
+          </div>
+          <div
+            className={css({
+              fontWeight: "600",
+              color: "text",
+              marginBottom: "2",
+            })}
+          >
+            KüchenTakt
+          </div>
+          <div>
+            © 2026 KüchenTakt · Produkte mit Gefühl entdecken
+          </div>
+        </div>
+      </footer>
 
       {/* Print Styles */}
       <style jsx global>{`

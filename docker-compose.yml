@@ -25,6 +25,7 @@ services:
       dockerfile: Dockerfile
       args:
         DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
+        DEBUG: ${DEBUG:-0}
     container_name: kitchenpace-app
     depends_on:
       postgres:
@@ -32,6 +33,10 @@ services:
     environment:
       DATABASE_URL: postgresql://kitchenpace:${POSTGRES_PASSWORD:-kitchenpace_secret}@postgres:5432/kitchenpace
       NODE_ENV: production
+      DEBUG: ${DEBUG:-0}
+      # NextAuth (set these in Coolify environment variables)
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-in-production}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
     restart: unless-stopped
 
 volumes:

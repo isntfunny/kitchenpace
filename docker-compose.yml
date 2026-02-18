@@ -10,6 +10,9 @@ services:
       POSTGRES_DB: kitchenpace
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+    ports:
+      - "64000:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U kitchenpace -d kitchenpace"]
       interval: 10s

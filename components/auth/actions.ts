@@ -1,11 +1,11 @@
 "use server";
 
-import { signIn as authSignIn, signOut as authSignOut } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 export async function handleSignIn() {
-  await authSignIn("credentials", { callbackUrl: "/" });
+  redirect("/auth/signin");
 }
 
 export async function handleSignOut() {
-  await authSignOut({ callbackUrl: "/" });
+  redirect("/auth/signout");
 }

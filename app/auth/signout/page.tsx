@@ -1,8 +1,7 @@
-import { signOut } from "@logto/next/server-actions";
-import { css } from "styled-system/css";
+"use client";
 
-import SignOutButton from "@/components/auth/SignOutButton";
-import { LOGTO_SIGN_OUT_CALLBACK_URL, logtoConfig } from "@/app/logto";
+import { handleSignOut } from "@/components/auth/actions";
+import { css } from "styled-system/css";
 
 const SignOutPage = () => {
   return (
@@ -33,16 +32,35 @@ const SignOutPage = () => {
           Abmelden
         </h1>
         <p className={css({ color: "text-muted", mb: "6" })}>
-          Du wirst von Logto abgemeldet und zurück zur Startseite geleitet.
+          Du wirst abgemeldet und zur Startseite geleitet.
         </p>
-        <SignOutButton
-          label="Jetzt abmelden"
-          onSignOut={async () => {
-            "use server";
-
-            await signOut(logtoConfig, LOGTO_SIGN_OUT_CALLBACK_URL);
-          }}
-        />
+        <button
+          type="button"
+          onClick={() => handleSignOut()}
+          className={css({
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "2",
+            px: "6",
+            py: "3",
+            borderRadius: "full",
+            fontFamily: "body",
+            fontWeight: "600",
+            fontSize: "md",
+            color: "white",
+            background: "linear-gradient(135deg, #e07b53 0%, #f8b500 100%)",
+            border: "none",
+            cursor: "pointer",
+            transition: "transform 150ms ease, box-shadow 150ms ease",
+            _hover: {
+              transform: "translateY(-1px)",
+              boxShadow: "0 10px 30px rgba(224,123,83,0.35)",
+            },
+          })}
+        >
+          Jetzt abmelden
+        </button>
       </div>
     </div>
   );

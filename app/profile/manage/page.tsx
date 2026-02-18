@@ -1,9 +1,9 @@
-import { getLogtoContext } from "@logto/next/server-actions";
+import { getServerSession } from "next-auth/next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { css } from "styled-system/css";
 
-import { logtoConfig } from "@/app/logto";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const actions = [
   {
@@ -13,7 +13,7 @@ const actions = [
   },
   {
     title: "Passwort ändern",
-    description: "Wechsle regelmäßig dein Logto-Passwort.",
+    description: "Ändere dein Passwort für KüchenTakt.",
     href: "/auth/password/edit",
   },
   {
@@ -29,8 +29,8 @@ const actions = [
 ];
 
 const ManageProfilePage = async () => {
-  const { isAuthenticated } = await getLogtoContext(logtoConfig);
-  if (!isAuthenticated) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
     redirect("/auth/signin");
   }
 

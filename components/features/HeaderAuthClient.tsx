@@ -1,6 +1,6 @@
 "use client";
 
-import { handleSignIn } from "@/components/auth/actions";
+import { handleSignIn, handleSignOut } from "@/components/auth/actions";
 import Image from "next/image";
 import Link from "next/link";
 import { css } from "styled-system/css";
@@ -144,8 +144,8 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
             />
 
             <DropdownMenu.Item asChild>
-              <Link
-                href="/auth/signout"
+              <button
+                onClick={() => handleSignOut()}
                 className={css({
                   display: "flex",
                   alignItems: "center",
@@ -159,6 +159,9 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                   outline: "none",
                   cursor: "pointer",
                   transition: "all 150ms ease",
+                  width: "100%",
+                  border: "none",
+                  background: "transparent",
                   _hover: {
                     background: "rgba(224,123,83,0.08)",
                   },
@@ -166,7 +169,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
               >
                 <span>🚪</span>
                 <span>Abmelden</span>
-              </Link>
+              </button>
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
@@ -176,7 +179,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
 
   return (
     <button
-      onClick={handleSignIn}
+      onClick={() => handleSignIn()}
       className={css({
         fontFamily: "body",
         fontSize: "sm",

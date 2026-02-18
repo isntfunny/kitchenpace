@@ -1,10 +1,43 @@
-import { signIn } from "@logto/next/server-actions";
+"use client";
+
+import { signIn } from "next-auth/react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { css } from "styled-system/css";
 
-import SignInButton from "@/components/auth/SignInButton";
-import { LOGTO_CALLBACK_URL, logtoConfig } from "@/app/logto";
+export default function SignInPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const SignInPage = () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Ungültige E-Mail oder Passwort");
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    } catch {
+      setError("Ein Fehler ist aufgetreten");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div
       className={css({
@@ -46,17 +79,118 @@ const SignInPage = () => {
         >
           Melde dich an, um deine persönlichen KüchenTakt-Empfehlungen zu verwalten.
         </p>
-        <SignInButton
-          label="Anmelden"
-          onSignIn={async () => {
-            "use server";
 
-            await signIn(logtoConfig, { redirectUri: LOGTO_CALLBACK_URL });
-          }}
-        />
+        <form onSubmit={handleSubmit} className={css({ display: "flex", flexDir: "column", gap: "4" })}>
+          <label className={css({ textAlign: "left", fontWeight: "600", fontSize: "sm" })}>
+            E-Mail
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="deine@email.de"
+              required
+              className={css({
+                display: "block",
+                width: "100%",
+                marginTop: "1",
+                padding: "3",
+                borderRadius: "xl",
+                border: "1px solid rgba(224,123,83,0.4)",
+                fontSize: "md",
+                outline: "none",
+                _focus: {
+                  borderColor: "#e07b53",
+                  boxShadow: "0 0 0 3px rgba(224,123,83,0.15)",
+                },
+              })}
+            />
+          </label>
+
+          <label className={css({ textAlign: "left", fontWeight: "600", fontSize: "sm" })}>
+            Passwort
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              className={css({
+                display: "block",
+                width: "100%",
+                marginTop: "1",
+                padding: "3",
+                borderRadius: "xl",
+                border: "1px solid rgba(224,123,83,0.4)",
+                fontSize: "md",
+                outline: "none",
+                _focus: {
+                  borderColor: "#e07b53",
+                  boxShadow: "0 0 0 3px rgba(224,123,83,0.15)",
+                },
+              })}
+            />
+          </label>
+
+          {error && (
+            <p className={css({ color: "red.500", fontSize: "sm" })}>{error}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={css({
+              marginTop: "2",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "2",
+              px: "6",
+              py: "3",
+              borderRadius: "full",
+              fontFamily: "body",
+              fontWeight: "600",
+              fontSize: "md",
+              color: "white",
+              background: "linear-gradient(135deg, #e07b53 0%, #f8b500 100%)",
+              border: "none",
+              cursor: loading ? "not-allowed" : "pointer",
+              opacity: loading ? 0.7 : 1,
+              transition: "transform 150ms ease, box-shadow 150ms ease",
+              _hover: loading ? {} : {
+                transform: "translateY(-1px)",
+                boxShadow: "0 10px 30px rgba(224,123,83,0.35)",
+              },
+            })}
+          >
+            {loading ? "Anmeldung..." : "Anmelden"}
+          </button>
+        </form>
+
+        <div className={css({ marginTop: "6", display: "flex", flexDir: "column", gap: "2" })}>
+          <Link
+            href="/auth/forgot-password"
+            className={css({
+              color: "text-muted",
+              fontSize: "sm",
+              textDecoration: "none",
+              _hover: { color: "#e07b53" },
+            })}
+          >
+            Passwort vergessen?
+          </Link>
+          <Link
+            href="/auth/register"
+            className={css({
+              color: "text-muted",
+              fontSize: "sm",
+              textDecoration: "none",
+              _hover: { color: "#e07b53" },
+            })}
+          >
+            Noch kein Konto? <span className={css({ color: "#e07b53", fontWeight: "600" })}>Registrieren</span>
+          </Link>
+        </div>
       </div>
     </div>
   );
-};
-
-export default SignInPage;
+}

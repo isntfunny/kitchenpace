@@ -1,13 +1,13 @@
 "use client";
 
+import { handleSignOut } from "@/components/auth/actions";
 import { css } from "styled-system/css";
 
 type Props = {
-  onSignOut: () => Promise<void>;
   label?: string;
 };
 
-const SignOutButton = ({ onSignOut, label = "Sign Out" }: Props) => {
+const SignOutButton = ({ label = "Sign Out" }: Props) => {
   return (
     <button
       type="button"
@@ -34,7 +34,7 @@ const SignOutButton = ({ onSignOut, label = "Sign Out" }: Props) => {
         },
       })}
       onClick={() => {
-        onSignOut();
+        handleSignOut();
       }}
     >
       {label}

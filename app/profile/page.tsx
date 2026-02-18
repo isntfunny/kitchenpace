@@ -1,23 +1,23 @@
-import { signOut, getLogtoContext } from "@logto/next/server-actions";
+import { getServerSession } from "next-auth/next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { css } from "styled-system/css";
 
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import SignOutButton from "@/components/auth/SignOutButton";
-import { LOGTO_SIGN_OUT_CALLBACK_URL, logtoConfig } from "@/app/logto";
 import { getOrCreateProfile } from "@/lib/profile";
 
 const ProfilePage = async () => {
-  const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+  const session = await getServerSession(authOptions);
 
-  if (!isAuthenticated || !claims?.sub) {
+  if (!session?.user?.id) {
     redirect("/auth/signin");
   }
 
   const profile = await getOrCreateProfile(
-    claims.sub,
-    (claims.email as string | undefined) ?? "",
+    session.user.id,
+    session.user.email ?? "",
   );
 
   return (
@@ -104,18 +104,11 @@ const ProfilePage = async () => {
             >
               <span>Nickname: {profile.nickname ?? "–"}</span>
               <span>•</span>
-              <span>Email: {(claims.email as string | undefined) ?? "–"}</span>
+              <span>Email: {session.user.email ?? "–"}</span>
             </div>
           </div>
 
-          <SignOutButton
-            label="Abmelden"
-            onSignOut={async () => {
-              "use server";
-
-              await signOut(logtoConfig, LOGTO_SIGN_OUT_CALLBACK_URL);
-            }}
-          />
+          <SignOutButton label="Abmelden" />
         </div>
 
         <div

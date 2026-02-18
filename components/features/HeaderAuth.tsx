@@ -1,21 +1,21 @@
-import { getLogtoContext } from "@logto/next/server-actions";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { logtoConfig } from "@/app/logto";
 import { HeaderAuthClient } from "./HeaderAuthClient";
 
 export async function HeaderAuth() {
-  const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+  const session = await getServerSession(authOptions);
   
   let profile = null;
-  if (isAuthenticated && claims?.sub) {
+  if (session?.user?.id) {
     profile = await prisma.profile.findUnique({
-      where: { userId: claims.sub },
+      where: { userId: session.user.id },
     });
   }
 
   return (
     <HeaderAuthClient 
-      isAuthenticated={isAuthenticated} 
+      isAuthenticated={!!session} 
       profile={profile ? {
         photoUrl: profile.photoUrl,
         nickname: profile.nickname,

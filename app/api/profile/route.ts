@@ -1,7 +1,7 @@
-import { getLogtoContext } from "@logto/next/server-actions";
+import { getServerSession } from "next-auth/next";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { logtoConfig } from "@/app/logto";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getOrCreateProfile, upsertProfile } from "@/lib/profile";
 
 const MAX_NICKNAME_LENGTH = 32;
@@ -22,15 +22,15 @@ const sanitizeString = (value: unknown, maxLength: number): string | null => {
 };
 
 const requireSession = async () => {
-  const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+  const session = await getServerSession(authOptions);
 
-  if (!isAuthenticated || !claims?.sub) {
+  if (!session?.user?.id) {
     return null;
   }
 
   return {
-    userId: claims.sub,
-    email: (claims.email as string | undefined) ?? "",
+    userId: session.user.id,
+    email: session.user.email ?? "",
   };
 };
 

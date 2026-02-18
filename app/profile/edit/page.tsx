@@ -1,9 +1,9 @@
-import { getLogtoContext } from "@logto/next/server-actions";
+import { getServerSession } from "next-auth/next";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { css } from "styled-system/css";
 
-import { logtoConfig } from "@/app/logto";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getOrCreateProfile, upsertProfile } from "@/lib/profile";
 
 const MAX_NICKNAME_LENGTH = 32;
@@ -19,27 +19,32 @@ const clamp = (value: string | null, maxLength: number) => {
 };
 
 const ProfileEditPage = async () => {
-  const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+  const session = await getServerSession(authOptions);
 
-  if (!isAuthenticated || !claims?.sub) {
+  if (!session?.user?.id) {
     redirect("/auth/signin");
   }
 
   const profile = await getOrCreateProfile(
-    claims.sub,
-    (claims.email as string | undefined) ?? "",
+    session.user.id,
+    session.user.email ?? "",
   );
 
   const handleSubmit = async (formData: FormData) => {
     "use server";
+
+    const currentSession = await getServerSession(authOptions);
+    if (!currentSession?.user?.id) {
+      redirect("/auth/signin");
+    }
 
     const nickname = clamp((formData.get("nickname") as string)?.trim() ?? null, MAX_NICKNAME_LENGTH);
     const teaser = clamp((formData.get("teaser") as string)?.trim() ?? null, MAX_TEASER_LENGTH);
     const photoUrl = clamp((formData.get("photoUrl") as string)?.trim() ?? null, MAX_PHOTO_URL_LENGTH);
 
     await upsertProfile({
-      userId: claims.sub!,
-      email: (claims.email as string | undefined) ?? "",
+      userId: currentSession.user.id,
+      email: currentSession.user.email ?? "",
       data: {
         nickname,
         teaser,

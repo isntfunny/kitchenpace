@@ -1,9 +1,11 @@
 "use client";
 
+import { handleSignIn } from "@/components/auth/actions";
 import Image from "next/image";
 import Link from "next/link";
 import { css } from "styled-system/css";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { logtoConfig, LOGTO_CALLBACK_URL } from "@/app/logto";
 
 interface HeaderAuthClientProps {
   isAuthenticated: boolean;
@@ -174,8 +176,8 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
   }
 
   return (
-    <Link
-      href="/auth/signin"
+    <button
+      onClick={handleSignIn}
       className={css({
         fontFamily: "body",
         fontSize: "sm",
@@ -188,7 +190,8 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
         display: "flex",
         alignItems: "center",
         gap: "1.5",
-        textDecoration: "none",
+        border: "none",
+        cursor: "pointer",
         transition: "all 150ms ease",
         _hover: {
           transform: "translateY(-1px)",
@@ -197,7 +200,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
       })}
     >
       <span>🔑</span>
-      <span className={css({ display: { base: "none", md: "inline" } })}>Anmelden</span>
-    </Link>
+      <span>Anmelden</span>
+    </button>
   );
 }

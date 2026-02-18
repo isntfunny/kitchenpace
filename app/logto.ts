@@ -7,7 +7,7 @@ type RuntimeEnv = typeof globalThis & {
 const runtimeEnv = globalThis as RuntimeEnv;
 const cookieSecure = runtimeEnv.process?.env?.NODE_ENV === "production";
 
-const baseUrl = "https://xn--kchentakt-q9a.de";
+const baseUrl = "https://beta.xn--kchentakt-q9a.de";
 const endpoint = "https://login.xn--kchentakt-q9a.de/";
 
 export const logtoConfig: LogtoNextConfig = {

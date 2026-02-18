@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./api/auth/[...nextauth]/route";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -19,11 +22,13 @@ export const metadata: Metadata = {
   description: "Entdecke, erstelle und teile köstliche Rezepte",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="de">
       <body className={`${playfair.variable} ${inter.variable}`} style={{ 
@@ -37,7 +42,9 @@ export default function RootLayout({
         margin: 0,
         minHeight: "100vh",
       }}>
-        {children}
+        <AuthProvider session={session}>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

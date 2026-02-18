@@ -1,9 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { HeaderAuth } from "./HeaderAuth";
 import { RecipeTabs } from "./RecipeTabs";
+import { HeaderAuth } from "./HeaderAuth";
 
 const categories = [
   { name: "Frühstück", icon: "🍳" },

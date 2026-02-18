@@ -6,7 +6,7 @@
   "scripts": {
     "panda": "panda codegen --config ./panda.config.ts",
     "predev": "npm run panda",
-    "prebuild": "npm run panda",
+    "prebuild": "npm run panda && npx prisma generate",
     "postinstall": "npm run panda",
     "dev": "next dev",
     "build": "next build",

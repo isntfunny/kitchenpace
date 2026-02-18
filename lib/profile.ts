@@ -1,4 +1,4 @@
-import type { Profile } from "@/prisma/generated/prisma/client";
+import type { Profile } from "@prisma/client";
 
 import { prisma } from "./prisma";
 

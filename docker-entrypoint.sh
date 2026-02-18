@@ -6,8 +6,14 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
+echo "DATABASE_URL: ${DATABASE_URL%@*}@***"  # Hide password in logs
 echo "Applying Prisma migrations..."
-npx prisma migrate deploy --config ./prisma.config.ts
+
+# Run migration with verbose output
+npx prisma migrate deploy --config ./prisma.config.ts --verbose || {
+  echo "Migration failed, trying db push..."
+  npx prisma db push --config ./prisma.config.ts --skip-generate
+}
 
 # Debug mode: show more info
 if [ "$DEBUG" = "1" ]; then

@@ -82,18 +82,6 @@ export async function Header() {
                 bg: "rgba(0,0,0,0.1)",
               })}
             />
-            <div
-              className={css({
-                display: { base: "none", lg: "flex" },
-                alignItems: "center",
-                gap: "1",
-                color: "text-muted",
-                fontSize: "sm",
-              })}
-            >
-              <span>🍳</span>
-              <span className={css({ fontWeight: "500" })}>1.200+ Rezepte</span>
-            </div>
           </div>
 
           <div

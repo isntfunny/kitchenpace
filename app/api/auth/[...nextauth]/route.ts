@@ -1,12 +1,10 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcrypt";
 
 import { prisma } from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   providers: [
     CredentialsProvider({
       name: "Email & Password",
@@ -15,7 +13,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       authorize: async (credentials) => {
-        if (!credentials?.email || !credentials.password) {
+        if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
@@ -33,7 +31,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        return { id: user.id, email: user.email, name: user.name };
+        return { 
+          id: user.id, 
+          email: user.email, 
+          name: user.name,
+          image: user.image,
+        };
       },
     }),
   ],
@@ -41,6 +44,9 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: "/auth/signin",
+  },
   callbacks: {
     session: ({ session, token }) => {
       if (session.user && token.sub) {

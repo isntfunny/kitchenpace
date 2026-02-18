@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { css } from "styled-system/css";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { logtoConfig, LOGTO_CALLBACK_URL } from "@/app/logto";
 
 interface HeaderAuthClientProps {
   isAuthenticated: boolean;

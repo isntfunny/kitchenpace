@@ -647,7 +647,7 @@ export default function RecipeDetailPage() {
                           borderRadius: "lg",
                           fontStyle: "italic"
                         })}>
-                          "{activity.content}"
+                          &ldquo;{activity.content}&rdquo;
                         </p>
                       )}
                     </div>

@@ -8,6 +8,7 @@ import { css } from "styled-system/css";
 import { flex, grid, container } from "styled-system/patterns";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
+import { Header } from "@/components/features/Header";
 
 
 interface Ingredient {
@@ -253,6 +254,7 @@ export default function RecipeDetailPage() {
 
   return (
     <div className={css({ minH: "100vh", color: "text" })}>
+      <Header />
       <main className={container({ maxW: "1400px", mx: "auto", px: { base: "4", md: "6" }, py: "8" })}>
         {/* Hero Section */}
         <div className={css({ mb: "8" })}>

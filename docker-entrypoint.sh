@@ -9,10 +9,10 @@ fi
 echo "DATABASE_URL: ${DATABASE_URL%@*}@***"  # Hide password in logs
 echo "Applying Prisma migrations..."
 
-# Run migration with verbose output
-npx prisma migrate deploy --config ./prisma.config.ts --verbose || {
+# Run migration
+npx prisma migrate deploy || {
   echo "Migration failed, trying db push..."
-  npx prisma db push --config ./prisma.config.ts --skip-generate
+  npx prisma db push
 }
 
 # Debug mode: show more info

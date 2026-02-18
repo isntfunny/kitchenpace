@@ -12,11 +12,11 @@ const endpoint = "https://login.xn--kchentakt-q9a.de/";
 
 export const logtoConfig: LogtoNextConfig = {
   endpoint,
-  appId: "wyf1bzl7k0fhyg29aig6e",
-  appSecret: "wUKLX1zXaDkn3f938C9bdDud55OrbkEX",
+  appId: 'by4bb4wrabzukzhyxm9i6',
+  appSecret: 'LELLDIPrxMVn3b05JP1PS5tezlfunDlD',
   baseUrl,
-  cookieSecret: "BZJiu9WEZ0ZlZyfQijhX7qD8R70AAsEG",
-  cookieSecure,
+  cookieSecret: 'tswsMT5ZjKKgIgjKrlQB07ZO9JPIWv8X',
+  cookieSecure: process.env.NODE_ENV === 'production',
 };
 
 export const LOGTO_CALLBACK_PATH = "/logto/callback";

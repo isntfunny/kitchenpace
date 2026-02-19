@@ -110,8 +110,15 @@ function RecipeFlowInner({ flowSteps, completedSteps = [] }: { flowSteps: FlowSt
           }
         });
       } else if (index > 0) {
-        const prevStep = flowSteps[index - 1];
-        if (!prevStep.parallelWith?.includes(step.order)) {
+        const canConnect = flowSteps.slice(0, index).every((prev) => {
+          if (prev.parallelWith?.includes(step.order)) {
+            return false;
+          }
+          return true;
+        });
+        
+        if (canConnect) {
+          const prevStep = flowSteps[index - 1];
           flowEdges.push({
             id: `edge-${prevStep.order}-${step.order}`,
             source: `step-${prevStep.order}`,
@@ -215,7 +222,7 @@ function RecipeFlowInner({ flowSteps, completedSteps = [] }: { flowSteps: FlowSt
       ref={reactFlowRef}
       className={css({
         width: "100%",
-        minHeight: "500px",
+        height: "600px",
         borderRadius: "16px",
         overflow: "hidden",
         border: "1px solid #e0e0e0",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,12 +18,139 @@ type RecipeDetailClientProps = {
   recipeActivities: Activity[];
 };
 
+// Debug: Track component renders
+let globalRenderCount = 0;
+const renderLog: Array<{ time: number; stack: string }> = [];
+
 export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeDetailClientProps) {
+  // State declarations MUST come first
   const router = useRouter();
   const [servings, setServings] = useState(recipe.servings);
   const [isSaved, setIsSaved] = useState(false);
   const [checkedSteps, setCheckedSteps] = useState<number[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
+
+  // Debug refs
+  const renderCountRef = useRef(0);
+  const mountTimeRef = useRef(Date.now());
+  const imageLoadCountRef = useRef(0);
+  const prevServingsRef = useRef(recipe.servings);
+  const prevIsSavedRef = useRef(false);
+  const prevCheckedStepsRef = useRef<number[]>([]);
+  const prevIsFollowingRef = useRef(false);
+
+  renderCountRef.current += 1;
+  globalRenderCount += 1;
+
+  // Debug: Log every render
+  useEffect(() => {
+    const now = Date.now();
+    const timeSinceMount = now - mountTimeRef.current;
+    const stack = new Error().stack || "";
+    
+    console.log(`[DEBUG] RecipeDetailClient render #${renderCountRef.current} (global #${globalRenderCount}) at +${timeSinceMount}ms`);
+    renderLog.push({ time: timeSinceMount, stack });
+    
+    // Warn if rendering too frequently
+    if (renderLog.length > 1) {
+      const lastRender = renderLog[renderLog.length - 2];
+      const timeSinceLastRender = timeSinceMount - lastRender.time;
+      if (timeSinceLastRender < 100) {
+        console.warn(`[DEBUG] RAPID RE-RENDER! Only ${timeSinceLastRender}ms since last render`);
+        console.warn("[DEBUG] Previous render stack:", lastRender.stack.split("\n").slice(0, 5).join("\n"));
+      }
+    }
+  });
+
+  // Debug: Monitor DOM mutations on the image container
+  useEffect(() => {
+    const imgContainer = document.querySelector('[data-debug-image-container]');
+    if (!imgContainer) return;
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        console.log("[DEBUG] DOM Mutation:", {
+          type: mutation.type,
+          target: (mutation.target as Element).tagName,
+          attributeName: mutation.attributeName,
+          time: Date.now() - mountTimeRef.current,
+        });
+        
+        // Log if an img element was added/removed
+        if (mutation.type === "childList") {
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof HTMLImageElement) {
+              console.warn("[DEBUG] IMG ELEMENT ADDED:", node.src);
+              imageLoadCountRef.current += 1;
+              console.warn(`[DEBUG] Total image loads: ${imageLoadCountRef.current}`);
+            }
+          });
+        }
+      });
+    });
+
+    observer.observe(imgContainer, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeOldValue: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Debug: Monitor all image load events on the page
+  useEffect(() => {
+    const handleImageLoad = (e: Event) => {
+      const img = e.target as HTMLImageElement;
+      if (img.src.includes("unsplash")) {
+        imageLoadCountRef.current += 1;
+        console.log(`[DEBUG] Image loaded: ${img.src.substring(0, 60)}... (load #${imageLoadCountRef.current})`);
+      }
+    };
+
+    const handleImageError = (e: Event) => {
+      const img = e.target as HTMLImageElement;
+      console.error("[DEBUG] Image error:", img.src);
+    };
+
+    document.addEventListener("load", handleImageLoad, true);
+    document.addEventListener("error", handleImageError, true);
+
+    return () => {
+      document.removeEventListener("load", handleImageLoad, true);
+      document.removeEventListener("error", handleImageError, true);
+    };
+  }, []);
+
+  // Debug: Log state changes
+  useEffect(() => {
+    if (prevServingsRef.current !== servings) {
+      console.log(`[DEBUG] servings changed: ${prevServingsRef.current} -> ${servings}`);
+    }
+    prevServingsRef.current = servings;
+  }, [servings]);
+
+  useEffect(() => {
+    if (prevIsSavedRef.current !== isSaved) {
+      console.log(`[DEBUG] isSaved changed: ${prevIsSavedRef.current} -> ${isSaved}`);
+    }
+    prevIsSavedRef.current = isSaved;
+  }, [isSaved]);
+
+  useEffect(() => {
+    if (JSON.stringify(prevCheckedStepsRef.current) !== JSON.stringify(checkedSteps)) {
+      console.log(`[DEBUG] checkedSteps changed:`, checkedSteps);
+    }
+    prevCheckedStepsRef.current = checkedSteps;
+  }, [checkedSteps]);
+
+  useEffect(() => {
+    if (prevIsFollowingRef.current !== isFollowing) {
+      console.log(`[DEBUG] isFollowing changed: ${prevIsFollowingRef.current} -> ${isFollowing}`);
+    }
+    prevIsFollowingRef.current = isFollowing;
+  }, [isFollowing]);
 
   const totalTime = recipe.prepTime + recipe.cookTime;
 
@@ -60,7 +187,7 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
       <main className={container({ maxW: "1400px", mx: "auto", px: { base: "4", md: "6" }, py: "8" })}>
         <div className={css({ mb: "8" })}>
           <div className={grid({ columns: { base: 1, lg: 2 }, gap: "8" })}>
-            <div className={css({ position: "relative", borderRadius: "2xl", overflow: "hidden" })}>
+            <div className={css({ position: "relative", borderRadius: "2xl", overflow: "hidden" })} data-debug-image-container>
               <div className={css({ aspectRatio: "4/3", position: "relative" })}>
                 <Image
                   src={recipe.image}

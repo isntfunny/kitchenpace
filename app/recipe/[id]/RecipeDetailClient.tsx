@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { css } from "styled-system/css";
 import { flex, grid, container } from "styled-system/patterns";
@@ -61,15 +60,12 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
         <div className={css({ mb: "8" })}>
           <div className={grid({ columns: { base: 1, lg: 2 }, gap: "8" })}>
             <div className={css({ position: "relative", borderRadius: "2xl", overflow: "hidden" })}>
-              <div className={css({ aspectRatio: "4/3", position: "relative" })}>
-                <Image
+              <div className={css({ aspectRatio: "4/3", position: "relative", width: "100%" })}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={recipe.image}
                   alt={recipe.title}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className={css({ objectFit: "cover" })}
-                  priority
-                  unoptimized={recipe.image.includes("unsplash.com")}
+                  style={{ objectFit: "cover", width: "100%", height: "100%" }}
                 />
               </div>
             </div>
@@ -305,7 +301,6 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                 <Link href={`/user/${author.id}`}>
                   <div
                     className={css({
-                      position: "relative",
                       width: "80px",
                       height: "80px",
                       borderRadius: "full",
@@ -314,13 +309,11 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                       _hover: { opacity: 0.9 },
                     })}
                   >
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={author.avatar}
                       alt={author.name}
-                      fill
-                      sizes="80px"
-                      className={css({ objectFit: "cover" })}
-                      unoptimized={author.avatar.includes("unsplash.com")}
+                      style={{ objectFit: "cover", width: "100%", height: "100%" }}
                     />
                   </div>
                 </Link>
@@ -399,7 +392,6 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                   >
                     <div
                       className={css({
-                        position: "relative",
                         width: "48px",
                         height: "48px",
                         borderRadius: "full",
@@ -407,13 +399,11 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                         flexShrink: 0,
                       })}
                     >
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={activity.user.avatar}
                         alt={activity.user.name}
-                        fill
-                        sizes="48px"
-                        className={css({ objectFit: "cover" })}
-                        unoptimized={activity.user.avatar.includes("unsplash.com")}
+                        style={{ objectFit: "cover", width: "100%", height: "100%" }}
                       />
                     </div>
                     <div className={css({ flex: 1 })}>

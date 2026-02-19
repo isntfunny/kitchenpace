@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { css } from "styled-system/css";
 import { LANES, type FlowStep } from "@/app/recipe/[id]/data";
 
@@ -21,163 +21,199 @@ interface StepCardProps {
   step: FlowStep;
   isCompleted: boolean;
   isActive: boolean;
-  isLast: boolean;
+  isJustCompleted: boolean;
+  hasParallelLink: boolean;
   onToggleComplete: () => void;
   onClick: () => void;
 }
 
-function StepCard({ step, isCompleted, isActive, isLast, onToggleComplete, onClick }: StepCardProps) {
+function StepCard({ step, isCompleted, isActive, isJustCompleted, hasParallelLink, onToggleComplete, onClick }: StepCardProps) {
   const lane = LANES.find((l) => l.id === step.laneId);
-  
+
   return (
-    <div className={css({ display: "flex", gap: "16px" })}>
-      <div className={css({ display: "flex", flexDirection: "column", alignItems: "center" })}>
-        <button
-          onClick={onToggleComplete}
-          className={css({
-            width: "40px",
-            height: "40px",
-            borderRadius: "full",
-            border: isCompleted ? "none" : "2px solid #ddd",
-            backgroundColor: isCompleted ? "#4caf50" : "white",
-            color: isCompleted ? "white" : "#999",
-            fontSize: "18px",
-            fontWeight: "600",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 0.2s ease",
-            _hover: {
-              transform: "scale(1.1)",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-            },
-          })}
-        >
-          {isCompleted ? "✓" : step.order}
-        </button>
-        
-        {!isLast && (
-          <div
-            className={css({
-              width: "2px",
-              flex: "1",
-              minHeight: "40px",
-              backgroundColor: isCompleted ? "#4caf50" : "#e0e0e0",
-              marginTop: "8px",
-              transition: "background-color 0.3s ease",
-            })}
-          />
-        )}
-      </div>
-      
-      <div
-        onClick={onClick}
-        className={css({
-          flex: "1",
-          marginBottom: isLast ? "0" : "24px",
-        })}
-      >
+    <div
+      onClick={onClick}
+      className={css({
+        padding: "16px",
+        borderRadius: "16px",
+        backgroundColor: isCompleted ? "#f0f9f0" : lane?.color || "#f5f5f5",
+        border: isActive
+          ? "2px solid #2196f3"
+          : isCompleted
+            ? "2px solid #4caf50"
+            : "2px solid transparent",
+        boxShadow: isActive
+          ? "0 4px 20px rgba(33, 150, 243, 0.25)"
+          : "0 2px 8px rgba(0,0,0,0.08)",
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        _hover: {
+          transform: "translateY(-2px)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+        },
+        position: "relative",
+        overflow: "hidden",
+        animation: isJustCompleted ? "cardComplete 600ms ease-out" : "none",
+      })}
+    >
+      {hasParallelLink && (
         <div
           className={css({
-            padding: "16px 20px",
-            borderRadius: "16px",
-            backgroundColor: isCompleted ? "#f0f9f0" : lane?.color || "#f5f5f5",
-            border: isActive 
-              ? "2px solid #2196f3" 
-              : isCompleted 
-                ? "2px solid #4caf50" 
-                : "2px solid transparent",
-            boxShadow: isActive 
-              ? "0 4px 20px rgba(33, 150, 243, 0.25)" 
-              : "0 2px 8px rgba(0,0,0,0.08)",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            _hover: {
-              transform: "translateX(4px)",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-            },
+            position: "absolute",
+            top: "0",
+            left: "16px",
+            right: "16px",
+            height: "6px",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            color: "#7aa56b",
           })}
         >
+          <span
+            className={css({
+              width: "6px",
+              height: "6px",
+              borderRadius: "full",
+              backgroundColor: "#7aa56b",
+            })}
+          />
+          <div
+            className={css({
+              flex: "1",
+              borderTop: "2px dashed #a5c99c",
+              opacity: 0.7,
+            })}
+          />
+          <span
+            className={css({
+              width: "6px",
+              height: "6px",
+              borderRadius: "full",
+              backgroundColor: "#7aa56b",
+            })}
+          />
+        </div>
+      )}
+      <div
+        className={css({
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "10px",
+          marginTop: hasParallelLink ? "6px" : "0",
+        })}
+      >
+        <div className={css({ display: "flex", alignItems: "center", gap: "10px" })}>
+          <span className={css({ fontSize: "22px" })}>{getStepEmoji(step.type)}</span>
+          <span
+            className={css({
+              fontSize: "12px",
+              fontWeight: "600",
+              color: "#666",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            })}
+          >
+            {lane?.label || step.laneId}
+          </span>
+        </div>
+        {step.duration && (
           <div
             className={css({
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "8px",
+              gap: "4px",
+              fontSize: "12px",
+              color: "#888",
+              backgroundColor: "rgba(255,255,255,0.7)",
+              padding: "4px 10px",
+              borderRadius: "20px",
             })}
           >
-            <div className={css({ display: "flex", alignItems: "center", gap: "10px" })}>
-              <span className={css({ fontSize: "24px" })}>{getStepEmoji(step.type)}</span>
-              <span
-                className={css({
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  color: "#666",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                })}
-              >
-                {lane?.label || step.laneId}
-              </span>
-            </div>
-            {step.duration && (
-              <div
-                className={css({
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  fontSize: "13px",
-                  color: "#888",
-                  backgroundColor: "rgba(255,255,255,0.7)",
-                  padding: "4px 10px",
-                  borderRadius: "20px",
-                })}
-              >
-                <span>⏱️</span>
-                <span>{step.duration} Min.</span>
-              </div>
-            )}
+            <span>⏱️</span>
+            <span>{step.duration} Min.</span>
           </div>
-          
+        )}
+      </div>
+
+      <div
+        className={css({
+          fontSize: "14px",
+          fontWeight: "500",
+          color: isCompleted ? "#666" : "#333",
+          lineHeight: "1.5",
+          textDecoration: isCompleted ? "line-through" : "none",
+        })}
+      >
+        {step.description}
+      </div>
+
+      <div
+        className={css({
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginTop: "12px",
+        })}
+      >
+        {isActive && (
           <div
             className={css({
-              fontSize: "15px",
+              fontSize: "12px",
+              color: "#2196f3",
               fontWeight: "500",
-              color: isCompleted ? "#666" : "#333",
-              lineHeight: "1.5",
-              textDecoration: isCompleted ? "line-through" : "none",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
             })}
           >
-            {step.description}
-          </div>
-          
-          {isActive && (
-            <div
+            <span
               className={css({
-                marginTop: "12px",
-                fontSize: "12px",
-                color: "#2196f3",
-                fontWeight: "500",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
+                width: "8px",
+                height: "8px",
+                borderRadius: "full",
+                backgroundColor: "#2196f3",
+                animation: "pulse 1.5s infinite",
               })}
-            >
-              <span
-                className={css({
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "full",
-                  backgroundColor: "#2196f3",
-                  animation: "pulse 1.5s infinite",
-                })}
-              />
-              Klicke für Details
-            </div>
-          )}
-        </div>
+            />
+            Klicke für Details
+          </div>
+        )}
+        <button
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleComplete();
+          }}
+          className={css({
+            marginLeft: "auto",
+            padding: "6px 10px",
+            borderRadius: "999px",
+            border: isCompleted ? "none" : "1px solid #ddd",
+            backgroundColor: isCompleted ? "#4caf50" : "white",
+            color: isCompleted ? "white" : "#666",
+            fontSize: "12px",
+            fontWeight: "600",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            _hover: {
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+            },
+          })}
+        >
+          {isCompleted ? "✓ Erledigt" : "Als erledigt"}
+        </button>
       </div>
+      <div
+        className={css({
+          position: "absolute",
+          inset: "0",
+          pointerEvents: "none",
+          opacity: isJustCompleted ? 1 : 0,
+          background: "linear-gradient(120deg, rgba(76,175,80,0.15), rgba(76,175,80,0))",
+          animation: isJustCompleted ? "completeGlow 600ms ease-out" : "none",
+        })}
+      />
     </div>
   );
 }
@@ -356,13 +392,17 @@ export function RecipeFlow({
 }) {
   const [completed, setCompleted] = useState<number[]>(completedSteps);
   const [selectedStep, setSelectedStep] = useState<FlowStep | null>(null);
+  const [lastCompleted, setLastCompleted] = useState<number | null>(null);
 
   const toggleComplete = (order: number) => {
-    setCompleted((prev) => 
-      prev.includes(order) 
-        ? prev.filter((o) => o !== order)
-        : [...prev, order]
-    );
+    setCompleted((prev) => {
+      const next = prev.includes(order) ? prev.filter((o) => o !== order) : [...prev, order];
+      if (!prev.includes(order)) {
+        setLastCompleted(order);
+        setTimeout(() => setLastCompleted(null), 700);
+      }
+      return next;
+    });
   };
 
   const getActiveStep = () => {
@@ -371,6 +411,20 @@ export function RecipeFlow({
   };
 
   const activeStep = getActiveStep();
+  const lanesWithSteps = LANES.map((lane) => ({
+    ...lane,
+    steps: flowSteps.filter((step) => step.laneId === lane.id).sort((a, b) => a.order - b.order),
+  })).filter((lane) => lane.steps.length > 0);
+  const parallelOrders = useMemo(() => {
+    const linked = new Set<number>();
+    flowSteps.forEach((step) => {
+      if (step.parallelWith && step.parallelWith.length > 0) {
+        linked.add(step.order);
+        step.parallelWith.forEach((order) => linked.add(order));
+      }
+    });
+    return linked;
+  }, [flowSteps]);
 
   return (
     <div
@@ -381,6 +435,17 @@ export function RecipeFlow({
         padding: "24px",
       })}
     >
+      <style jsx global>{`
+        @keyframes cardComplete {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.02); }
+          100% { transform: scale(1); }
+        }
+        @keyframes completeGlow {
+          0% { opacity: 0.9; }
+          100% { opacity: 0; }
+        }
+      `}</style>
       <div
         className={css({
           display: "flex",
@@ -435,20 +500,79 @@ export function RecipeFlow({
 
       <div
         className={css({
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: "20px",
+          alignItems: "start",
           position: "relative",
-          paddingLeft: "8px",
         })}
       >
-        {flowSteps.map((step, index) => (
-          <StepCard
-            key={step.order}
-            step={step}
-            isCompleted={completed.includes(step.order)}
-            isActive={step.order === activeStep}
-            isLast={index === flowSteps.length - 1}
-            onToggleComplete={() => toggleComplete(step.order)}
-            onClick={() => setSelectedStep(step)}
-          />
+        {lanesWithSteps.map((lane) => (
+          <div
+            key={lane.id}
+            className={css({
+              backgroundColor: "white",
+              borderRadius: "16px",
+              border: "1px solid #eee",
+              padding: "14px",
+              minHeight: "100%",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+              position: "relative",
+            })}
+          >
+            <div
+              className={css({
+                position: "absolute",
+                top: "54px",
+                bottom: "18px",
+                left: "18px",
+                width: "2px",
+                background: "linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.02))",
+              })}
+            />
+            <div
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "14px",
+              })}
+            >
+              <div
+                className={css({
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  color: "#333",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.6px",
+                })}
+              >
+                {lane.label}
+              </div>
+              <div
+                className={css({
+                  width: "14px",
+                  height: "14px",
+                  borderRadius: "4px",
+                  backgroundColor: lane.color,
+                })}
+              />
+            </div>
+            <div className={css({ display: "flex", flexDirection: "column", gap: "12px", position: "relative" })}>
+              {lane.steps.map((step) => (
+                <StepCard
+                  key={step.order}
+                  step={step}
+                  isCompleted={completed.includes(step.order)}
+                  isActive={step.order === activeStep}
+                  isJustCompleted={step.order === lastCompleted}
+                  hasParallelLink={parallelOrders.has(step.order)}
+                  onToggleComplete={() => toggleComplete(step.order)}
+                  onClick={() => setSelectedStep(step)}
+                />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 

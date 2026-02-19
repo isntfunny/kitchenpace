@@ -45,6 +45,7 @@ export function CardImage({ src, alt }: { src: string; alt: string }) {
         className={css({
           objectFit: "cover",
         })}
+        unoptimized={src.includes("unsplash.com")}
       />
     </div>
   );

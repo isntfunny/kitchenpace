@@ -69,6 +69,7 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className={css({ objectFit: "cover" })}
                   priority
+                  unoptimized={recipe.image.includes("unsplash.com")}
                 />
               </div>
             </div>
@@ -319,6 +320,7 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                       fill
                       sizes="80px"
                       className={css({ objectFit: "cover" })}
+                      unoptimized={author.avatar.includes("unsplash.com")}
                     />
                   </div>
                 </Link>
@@ -411,6 +413,7 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                         fill
                         sizes="48px"
                         className={css({ objectFit: "cover" })}
+                        unoptimized={activity.user.avatar.includes("unsplash.com")}
                       />
                     </div>
                     <div className={css({ flex: 1 })}>

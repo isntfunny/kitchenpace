@@ -32,25 +32,34 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
 
   // Debug refs
   const renderCountRef = useRef(0);
-  const mountTimeRef = useRef(Date.now());
+  const mountTimeRef = useRef(0);
   const imageLoadCountRef = useRef(0);
   const prevServingsRef = useRef(recipe.servings);
   const prevIsSavedRef = useRef(false);
   const prevCheckedStepsRef = useRef<number[]>([]);
   const prevIsFollowingRef = useRef(false);
-
-  renderCountRef.current += 1;
-  globalRenderCount += 1;
+  const globalRenderCountRef = useRef(0);
 
   // Debug: Log every render
   useEffect(() => {
+    renderCountRef.current += 1;
+
+    if (mountTimeRef.current === 0) {
+      mountTimeRef.current = Date.now();
+    }
+
+    globalRenderCount += 1;
+    globalRenderCountRef.current = globalRenderCount;
+
     const now = Date.now();
     const timeSinceMount = now - mountTimeRef.current;
     const stack = new Error().stack || "";
-    
-    console.log(`[DEBUG] RecipeDetailClient render #${renderCountRef.current} (global #${globalRenderCount}) at +${timeSinceMount}ms`);
+
+    console.log(
+      `[DEBUG] RecipeDetailClient render #${renderCountRef.current} (global #${globalRenderCountRef.current}) at +${timeSinceMount}ms`,
+    );
     renderLog.push({ time: timeSinceMount, stack });
-    
+
     // Warn if rendering too frequently
     if (renderLog.length > 1) {
       const lastRender = renderLog[renderLog.length - 2];
@@ -73,7 +82,7 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
           type: mutation.type,
           target: (mutation.target as Element).tagName,
           attributeName: mutation.attributeName,
-          time: Date.now() - mountTimeRef.current,
+          time: Date.now() - (mountTimeRef.current || Date.now()),
         });
         
         // Log if an img element was added/removed

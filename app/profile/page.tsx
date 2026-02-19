@@ -6,6 +6,7 @@ import { css } from "styled-system/css";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import SignOutButton from "@/components/auth/SignOutButton";
+import { PageShell } from "@/components/layouts/PageShell";
 import { getOrCreateProfile } from "@/lib/profile";
 
 const ProfilePage = async () => {
@@ -21,26 +22,24 @@ const ProfilePage = async () => {
   );
 
   return (
-    <section
-      className={css({
-        minH: "100vh",
-        background: "#fff7f1",
-        px: { base: "4", md: "8" },
-        py: { base: "8", md: "14" },
-        fontFamily: "body",
-        color: "text",
-      })}
-    >
-      <div
+    <PageShell>
+      <section
         className={css({
-          maxW: "5xl",
-          margin: "0 auto",
-          background: "white",
-          borderRadius: "3xl",
-          boxShadow: "0 40px 120px rgba(224,123,83,0.25)",
-          padding: { base: "8", md: "14" },
+          paddingY: { base: "8", md: "10" },
+          fontFamily: "body",
+          color: "text",
         })}
       >
+        <div
+          className={css({
+            maxWidth: "5xl",
+            margin: "0 auto",
+            background: "surface.elevated",
+            borderRadius: "3xl",
+            boxShadow: "0 40px 120px rgba(224,123,83,0.25)",
+            padding: { base: "8", md: "14" },
+          })}
+        >
         <div
           className={css({
             display: "flex",
@@ -161,6 +160,7 @@ const ProfilePage = async () => {
         </div>
       </div>
     </section>
+  </PageShell>
   );
 };
 

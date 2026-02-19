@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { css } from "styled-system/css";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { PageShell } from "@/components/layouts/PageShell";
 
 const actions = [
   {
@@ -35,62 +36,61 @@ const ManageProfilePage = async () => {
   }
 
   return (
-    <section
-      className={css({
-        minH: "100vh",
-        background: "#fffbf8",
-        px: { base: "4", md: "8" },
-        py: { base: "8", md: "16" },
-        fontFamily: "body",
-      })}
-    >
-      <div className={css({ maxW: "960px", margin: "0 auto" })}>
-        <header className={css({ textAlign: "center", mb: "10" })}>
-          <p className={css({ textTransform: "uppercase", color: "text-muted", mb: "2" })}>
-            Verwaltung
-          </p>
-          <h1 className={css({ fontSize: "4xl", fontWeight: "800" })}>
-            Dein KüchenTakt Konto
-          </h1>
-          <p className={css({ color: "text-muted", mt: "3" })}>
-            Alle Sicherheits- und Kontoaktionen an einem Ort.
-          </p>
-        </header>
+    <PageShell>
+      <section
+        className={css({
+          paddingY: { base: "8", md: "10" },
+          fontFamily: "body",
+        })}
+      >
+        <div className={css({ maxW: "960px", marginX: "auto" })}>
+          <header className={css({ textAlign: "center", mb: "10" })}>
+            <p className={css({ textTransform: "uppercase", color: "text-muted", mb: "2" })}>
+              Verwaltung
+            </p>
+            <h1 className={css({ fontSize: "4xl", fontWeight: "800" })}>
+              Dein KüchenTakt Konto
+            </h1>
+            <p className={css({ color: "text-muted", mt: "3" })}>
+              Alle Sicherheits- und Kontoaktionen an einem Ort.
+            </p>
+          </header>
 
-        <div
-          className={css({
-            display: "grid",
-            gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" },
-            gap: "6",
-          })}
-        >
-          {actions.map((action) => (
-            <Link
-              key={action.title}
-              href={action.href}
-              className={css({
-                borderRadius: "2xl",
-                padding: "6",
-                border: "1px solid rgba(224,123,83,0.25)",
-                background: "white",
-                textDecoration: "none",
-                color: "inherit",
-                transition: "transform 150ms ease, box-shadow 150ms ease",
-                _hover: {
-                  transform: "translateY(-3px)",
-                  boxShadow: "0 20px 50px rgba(224,123,83,0.15)",
-                },
-              })}
-            >
-              <h2 className={css({ fontSize: "xl", fontWeight: "700", mb: "2" })}>
-                {action.title}
-              </h2>
-              <p className={css({ color: "text-muted" })}>{action.description}</p>
-            </Link>
-          ))}
+          <div
+            className={css({
+              display: "grid",
+              gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" },
+              gap: "6",
+            })}
+          >
+            {actions.map((action) => (
+              <Link
+                key={action.title}
+                href={action.href}
+                className={css({
+                  borderRadius: "2xl",
+                  padding: "6",
+                  border: "1px solid rgba(224,123,83,0.25)",
+                  background: "white",
+                  textDecoration: "none",
+                  color: "inherit",
+                  transition: "transform 150ms ease, box-shadow 150ms ease",
+                  _hover: {
+                    transform: "translateY(-3px)",
+                    boxShadow: "0 20px 50px rgba(224,123,83,0.15)",
+                  },
+                })}
+              >
+                <h2 className={css({ fontSize: "xl", fontWeight: "700", mb: "2" })}>
+                  {action.title}
+                </h2>
+                <p className={css({ color: "text-muted" })}>{action.description}</p>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </PageShell>
   );
 };
 

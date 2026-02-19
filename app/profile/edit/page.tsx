@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { css } from "styled-system/css";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { PageShell } from "@/components/layouts/PageShell";
 import { getOrCreateProfile, upsertProfile } from "@/lib/profile";
 
 const MAX_NICKNAME_LENGTH = 32;
@@ -57,25 +58,25 @@ const ProfileEditPage = async () => {
   };
 
   return (
-    <section
-      className={css({
-        minH: "100vh",
-        background: "#fff4ec",
-        px: { base: "4", md: "8" },
-        py: { base: "8", md: "14" },
-        fontFamily: "body",
-      })}
-    >
-      <div
+    <PageShell>
+      <section
         className={css({
-          maxW: "760px",
-          margin: "0 auto",
-          background: "white",
-          padding: { base: "6", md: "10" },
-          borderRadius: "3xl",
-          boxShadow: "0 35px 90px rgba(224,123,83,0.25)",
+          paddingY: { base: "8", md: "10" },
+          display: "flex",
+          justifyContent: "center",
+          fontFamily: "body",
         })}
       >
+        <div
+          className={css({
+            width: "100%",
+            maxWidth: "760px",
+            background: "white",
+            padding: { base: "6", md: "10" },
+            borderRadius: "3xl",
+            boxShadow: "0 35px 90px rgba(224,123,83,0.25)",
+          })}
+        >
         <h1 className={css({ fontSize: "3xl", fontWeight: "800", mb: "2" })}>
           Profil bearbeiten
         </h1>
@@ -173,6 +174,7 @@ const ProfileEditPage = async () => {
         </form>
       </div>
     </section>
+  </PageShell>
   );
 };
 

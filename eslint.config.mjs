@@ -12,9 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Generated helpers & prototype flow editor
+    // Generated helpers
     "styled-system/**",
-    "react-flow-prototype/**",
   ]),
 ]);
 

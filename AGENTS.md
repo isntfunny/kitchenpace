@@ -82,16 +82,6 @@ Exploring React Flow capabilities for the KitchenPace project.
    - **Option B: Custom Lane Node** - Full custom implementation
    - **Option C: Fixed Y-Positions** - Simplest approach, use fixed Y-coordinates per lane (RECOMMENDED for MVP)
 
-3. **Prototype exists at:** `/root/projects/kitchenpace/react-flow-prototype/`
-
-### Prototype Features (Already Implemented)
-- Auto-layout with Dagre
-- Drag between lanes with automatic snapping
-- Automatic reconnection when nodes are deleted
-- Validation - all paths must lead to "Servieren (+)"
-- Lane-based buttons outside the canvas
-- Visual lane labels in the canvas
-
 ### Lane Configuration
 ```typescript
 const LANES = [
@@ -105,7 +95,7 @@ const LANES = [
 ```
 
 ### Validation Logic
-The prototype includes validation to ensure all paths lead to the "Servieren" node using BFS traversal.
+The flow editor includes validation to ensure all paths lead to the "Servieren" node using BFS traversal.
 
 ### (+)-Button Implementation
 Buttons should be placed OUTSIDE React Flow canvas with `className="nodrag"` if placed inside custom nodes.
@@ -215,7 +205,7 @@ interface FlowNode {
 
 ### For Recipe Editor (Future - from KUC-1)
 
-Based on the prototype, the recipe editor should:
+Based on the recipe detail implementation, the recipe editor should:
 1. Use **Option C (Fixed Y-Positions)** for lane handling
 2. Place **(+)-Buttons outside the canvas** in a sidebar
 3. Use **Dagre** for auto-layout
@@ -244,8 +234,7 @@ Based on the prototype, the recipe editor should:
 - The client component `RecipeDetailClient` handles the rendering
 - Current recipe data is in `/root/projects/kitchenpace/app/recipe/[id]/data.ts`
 - Components are in `/root/projects/kitchenpace/components/`
-- A React Flow prototype exists at `/root/projects/kitchenpace/react-flow-prototype/`
-- New React Flow components should be added in `components/flow/` or similar
+- React Flow components are in `components/flow/`
 
 ## Development Commands
 
@@ -268,6 +257,6 @@ From KUC-10:
 
 2. **Alternative Consideration**: For true BPMN-style swimlanes, consider switching to bpmn-js or JsPlumb in the future.
 
-3. **MVP Approach**: For KUC-10 (recipe detail view), start simple - linear steps can be displayed as a vertical flow. For KUC-1 (recipe editor), use the prototype as a reference.
+3. **MVP Approach**: For KUC-10 (recipe detail view), the flow visualization is implemented using React Flow with custom nodes. For KUC-1 (recipe editor), use the current implementation as a reference.
 
 4. **State Management**: Consider using Zustand for managing flow state (nodes, edges, lanes) with undo/redo support.

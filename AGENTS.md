@@ -263,12 +263,6 @@ From KUC-10:
 
 ## Development Setup
 
-### Node.js Version
-This project requires Node.js 24 (or 22). Use nvm to manage versions:
-```bash
-nvm use 24
-```
-
 ### npm install Issues
 If `npm install` doesn't install devDependencies (eslint, husky, etc.), use:
 ```bash

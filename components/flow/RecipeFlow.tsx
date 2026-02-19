@@ -1,28 +1,24 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import {
   ReactFlow,
   Background,
   Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Connection,
-  Node,
-  Edge,
   MarkerType,
   BackgroundVariant,
   Panel,
+  ReactFlowProvider,
+  useReactFlow,
+  Node,
 } from "@xyflow/react";
 import dagre from "dagre";
 import "@xyflow/react/dist/style.css";
 import { css } from "styled-system/css";
 import { LANES, type FlowStep, type Lane } from "@/app/recipe/[id]/data";
 
-const nodeWidth = 200;
-const nodeHeight = 80;
+const nodeWidth = 220;
+const nodeHeight = 90;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const dagreGraph: any = new (dagre as any).graphlib.Graph();
@@ -43,15 +39,11 @@ const getStepEmoji = (type: string): string => {
   return emojis[type] || "📝";
 };
 
-const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = "TB") => {
-  dagreGraph.setGraph({ rankdir: direction });
+const getLayoutedElements = (nodes: Node[], direction = "TB") => {
+  dagreGraph.setGraph({ rankdir: direction, nodesep: 50, ranksep: 80 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
   });
 
   dagre.layout(dagreGraph);
@@ -67,20 +59,16 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = "TB") => 
     };
   });
 
-  return { nodes: layoutedNodes, edges };
+  return layoutedNodes;
 };
 
-interface RecipeFlowProps {
-  flowSteps: FlowStep[];
-  completedSteps?: number[];
-  onStepClick?: (step: FlowStep) => void;
-}
-
-export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: RecipeFlowProps) {
+function RecipeFlowInner({ flowSteps, completedSteps = [] }: { flowSteps: FlowStep[]; completedSteps?: number[] }) {
   const [selectedStep, setSelectedStep] = useState<FlowStep | null>(null);
+  const reactFlowRef = useRef<HTMLDivElement>(null);
+  const { fitView } = useReactFlow();
 
-  const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
-    const nodes: Node[] = flowSteps.map((step) => {
+  const nodes = useMemo(() => {
+    const baseNodes: Node[] = flowSteps.map((step) => {
       const lane = getLaneById(step.laneId);
       const isCompleted = completedSteps.includes(step.order);
 
@@ -96,69 +84,51 @@ export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: Reci
           laneColor: lane?.color || "#f5f5f5",
           isCompleted,
           order: step.order,
+          onClick: () => {
+            setSelectedStep(step);
+          },
         },
       };
     });
 
-    const edges: Edge[] = [];
+    return getLayoutedElements(baseNodes);
+  }, [flowSteps, completedSteps]);
+
+  const edges = useMemo(() => {
+    const flowEdges: { id: string; source: string; target: string }[] = [];
+    
     flowSteps.forEach((step, index) => {
       if (step.parallelWith && step.parallelWith.length > 0) {
         step.parallelWith.forEach((parallelOrder) => {
           const parallelStep = flowSteps.find((s) => s.order === parallelOrder);
           if (parallelStep) {
-            edges.push({
+            flowEdges.push({
               id: `edge-${parallelOrder}-${step.order}`,
               source: `step-${parallelOrder}`,
               target: `step-${step.order}`,
-              type: "smoothstep",
-              markerEnd: {
-                type: MarkerType.ArrowClosed,
-                color: "#888",
-              },
-              style: { stroke: "#888", strokeWidth: 2 },
-              animated: false,
             });
           }
         });
       } else if (index > 0) {
         const prevStep = flowSteps[index - 1];
         if (!prevStep.parallelWith?.includes(step.order)) {
-          edges.push({
+          flowEdges.push({
             id: `edge-${prevStep.order}-${step.order}`,
             source: `step-${prevStep.order}`,
             target: `step-${step.order}`,
-            type: "smoothstep",
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              color: "#888",
-            },
-            style: { stroke: "#888", strokeWidth: 2 },
           });
         }
       }
     });
 
-    return getLayoutedElements(nodes, edges);
-  }, [flowSteps, completedSteps]);
+    return flowEdges;
+  }, [flowSteps]);
 
-  const [nodes, , onNodesChange] = useNodesState(layoutedNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
-
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
-  );
-
-  const onNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
-      const step = flowSteps.find((s) => s.order === node.data.order);
-      if (step) {
-        setSelectedStep(step);
-        onStepClick?.(step);
-      }
-    },
-    [flowSteps, onStepClick],
-  );
+  useEffect(() => {
+    setTimeout(() => {
+      fitView({ padding: 0.3, duration: 0 });
+    }, 100);
+  }, [fitView, flowSteps]);
 
   const nodeTypes = useMemo(
     () => ({
@@ -171,13 +141,15 @@ export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: Reci
           laneColor: string;
           isCompleted: boolean;
           order: number;
+          onClick: () => void;
         };
 
         return (
           <div
+            onClick={stepData.onClick}
             className={css({
-              width: "200px",
-              padding: "12px",
+              width: "220px",
+              padding: "14px",
               borderRadius: "12px",
               backgroundColor: stepData.isCompleted ? "#e8f5e9" : stepData.laneColor,
               border: stepData.isCompleted ? "2px solid #4caf50" : "2px solid #ddd",
@@ -200,8 +172,8 @@ export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: Reci
             >
               <span
                 className={css({
-                  width: "24px",
-                  height: "24px",
+                  width: "26px",
+                  height: "26px",
                   borderRadius: "full",
                   backgroundColor: stepData.isCompleted ? "#4caf50" : "#666",
                   color: "white",
@@ -214,13 +186,7 @@ export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: Reci
               >
                 {stepData.isCompleted ? "✓" : stepData.order}
               </span>
-              <span
-                className={css({
-                  fontSize: "18px",
-                })}
-              >
-                {getStepEmoji(stepData.type)}
-              </span>
+              <span className={css({ fontSize: "20px" })}>{getStepEmoji(stepData.type)}</span>
             </div>
             <div
               className={css({
@@ -233,13 +199,7 @@ export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: Reci
               {stepData.label}
             </div>
             {stepData.duration && (
-              <div
-                className={css({
-                  fontSize: "11px",
-                  color: "#666",
-                  marginTop: "4px",
-                })}
-              >
+              <div className={css({ fontSize: "11px", color: "#666", marginTop: "4px" })}>
                 ⏱️ {stepData.duration} Min.
               </div>
             )}
@@ -252,9 +212,10 @@ export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: Reci
 
   return (
     <div
+      ref={reactFlowRef}
       className={css({
         width: "100%",
-        height: "600px",
+        minHeight: "500px",
         borderRadius: "16px",
         overflow: "hidden",
         border: "1px solid #e0e0e0",
@@ -263,26 +224,22 @@ export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: Reci
     >
       <ReactFlow
         nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeClick={onNodeClick}
+        edges={edges.map((e) => ({
+          id: e.id,
+          source: e.source,
+          target: e.target,
+          type: "smoothstep",
+          markerEnd: { type: MarkerType.ArrowClosed, color: "#888" },
+          style: { stroke: "#888", strokeWidth: 2 },
+        }))}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: 0.3 }}
         attributionPosition="bottom-left"
+        proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#ddd" />
         <Controls
-          className={css({
-            borderRadius: "8px",
-            overflow: "hidden",
-          })}
-        />
-        <MiniMap
-          nodeColor={(node) => (node.data?.isCompleted ? "#4caf50" : "#ddd")}
-          maskColor="rgba(0,0,0,0.1)"
           className={css({
             borderRadius: "8px",
             overflow: "hidden",
@@ -299,13 +256,7 @@ export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: Reci
             })}
           >
             <strong>🗺️ Koch-Flow</strong>
-            <div
-              className={css({
-                fontSize: "12px",
-                color: "#666",
-                marginTop: "4px",
-              })}
-            >
+            <div className={css({ fontSize: "12px", color: "#666", marginTop: "4px" })}>
               Klicke auf einen Schritt für Details
             </div>
           </div>
@@ -373,12 +324,7 @@ export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: Reci
           >
             <div className={css({ display: "flex", alignItems: "center", gap: "8px" })}>
               <span className={css({ fontSize: "20px" })}>{getStepEmoji(selectedStep.type)}</span>
-              <span
-                className={css({
-                  fontWeight: "600",
-                  fontSize: "16px",
-                })}
-              >
+              <span className={css({ fontWeight: "600", fontSize: "16px" })}>
                 Schritt {selectedStep.order}
               </span>
             </div>
@@ -407,5 +353,18 @@ export function RecipeFlow({ flowSteps, completedSteps = [], onStepClick }: Reci
         </div>
       )}
     </div>
+  );
+}
+
+interface RecipeFlowProps {
+  flowSteps: FlowStep[];
+  completedSteps?: number[];
+}
+
+export function RecipeFlow({ flowSteps, completedSteps = [] }: RecipeFlowProps) {
+  return (
+    <ReactFlowProvider>
+      <RecipeFlowInner flowSteps={flowSteps} completedSteps={completedSteps} />
+    </ReactFlowProvider>
   );
 }

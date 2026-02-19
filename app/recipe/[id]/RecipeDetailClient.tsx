@@ -9,6 +9,7 @@ import { flex, grid, container } from "styled-system/patterns";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
 import { Header } from "@/components/features/Header";
+import { RecipeFlow } from "@/components/flow/RecipeFlow";
 
 import type { Recipe, User, Activity } from "./data";
 
@@ -27,7 +28,6 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
   const router = useRouter();
   const [servings, setServings] = useState(recipe.servings);
   const [isSaved, setIsSaved] = useState(false);
-  const [checkedSteps, setCheckedSteps] = useState<number[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
 
   // Debug refs
@@ -36,7 +36,6 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
   const imageLoadCountRef = useRef(0);
   const prevServingsRef = useRef(recipe.servings);
   const prevIsSavedRef = useRef(false);
-  const prevCheckedStepsRef = useRef<number[]>([]);
   const prevIsFollowingRef = useRef(false);
   const globalRenderCountRef = useRef(0);
 
@@ -148,13 +147,6 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
   }, [isSaved]);
 
   useEffect(() => {
-    if (JSON.stringify(prevCheckedStepsRef.current) !== JSON.stringify(checkedSteps)) {
-      console.log(`[DEBUG] checkedSteps changed:`, checkedSteps);
-    }
-    prevCheckedStepsRef.current = checkedSteps;
-  }, [checkedSteps]);
-
-  useEffect(() => {
     if (prevIsFollowingRef.current !== isFollowing) {
       console.log(`[DEBUG] isFollowing changed: ${prevIsFollowingRef.current} -> ${isFollowing}`);
     }
@@ -166,12 +158,6 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
   const formatAmount = (amount: number): string => {
     const scaled = amount * (servings / recipe.servings);
     return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
-  };
-
-  const toggleStep = (stepOrder: number) => {
-    setCheckedSteps((prev) =>
-      prev.includes(stepOrder) ? prev.filter((step) => step !== stepOrder) : [...prev, stepOrder],
-    );
   };
 
   const handleTagClick = (tag: string) => {
@@ -371,62 +357,7 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                 Zubereitung
               </h2>
 
-              <div className={css({ spaceY: "4" })}>
-                {recipe.steps.map((step) => (
-                  <div
-                    key={step.order}
-                    onClick={() => toggleStep(step.order)}
-                    className={css({
-                      display: "flex",
-                      gap: "4",
-                      p: "4",
-                      borderRadius: "xl",
-                      cursor: "pointer",
-                      transition: "all 150ms ease",
-                      bg: checkedSteps.includes(step.order) ? "green.50" : "light",
-                      opacity: checkedSteps.includes(step.order) ? 0.7 : 1,
-                      _hover: { bg: checkedSteps.includes(step.order) ? "green.100" : "#e8e2d9" },
-                    })}
-                  >
-                    <div
-                      className={css({
-                        w: "10",
-                        h: "10",
-                        borderRadius: "full",
-                        bg: checkedSteps.includes(step.order) ? "green.500" : "primary",
-                        color: "white",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: "600",
-                        flexShrink: 0,
-                        fontFamily: "heading",
-                      })}
-                    >
-                      {checkedSteps.includes(step.order) ? "✓" : step.order}
-                    </div>
-                    <div className={css({ flex: 1, pt: "2" })}>
-                      <p
-                        className={css({
-                          fontFamily: "body",
-                          lineHeight: "relaxed",
-                          textDecoration: checkedSteps.includes(step.order) ? "line-through" : "none",
-                        })}
-                      >
-                        {step.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {checkedSteps.length === recipe.steps.length && (
-                <div className={css({ mt: "6", p: "4", bg: "green.50", borderRadius: "xl", textAlign: "center" })}>
-                  <p className={css({ fontFamily: "heading", color: "green.700", fontSize: "lg" })}>
-                    🎉 Guten Appetit! Das Rezept ist fertig.
-                  </p>
-                </div>
-              )}
+              <RecipeFlow flowSteps={recipe.flowSteps || []} completedSteps={[]} />
             </div>
           </div>
         </div>

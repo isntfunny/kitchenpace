@@ -4,10 +4,31 @@ export interface Ingredient {
   unit: string;
 }
 
-export interface Step {
+export type StepType = "vorbereitung" | "kochen" | "backen" | "warten" | "wuerzen" | "zusammenfuehren" | "servieren";
+
+export interface FlowStep {
   order: number;
   description: string;
+  type: StepType;
+  duration?: number;
+  laneId: string;
+  parallelWith?: number[];
 }
+
+export interface Lane {
+  id: string;
+  label: string;
+  color: string;
+  yPosition: number;
+  isFinal?: boolean;
+}
+
+export const LANES: Lane[] = [
+  { id: "vorbereitung", label: "Vorbereitung", color: "#e3f2fd", yPosition: 0 },
+  { id: "kochen", label: "Kochen", color: "#fff3e0", yPosition: 300 },
+  { id: "warten", label: "Warten", color: "#f3e5f5", yPosition: 600 },
+  { id: "servieren", label: "Servieren", color: "#ffebee", yPosition: 900, isFinal: true },
+];
 
 export interface User {
   id: string;
@@ -41,7 +62,7 @@ export interface Recipe {
   servings: number;
   difficulty: "Einfach" | "Mittel" | "Schwer";
   ingredients: Ingredient[];
-  steps: Step[];
+  flowSteps: FlowStep[];
   tags: string[];
   authorId: string;
 }
@@ -132,14 +153,15 @@ export const recipes: Record<string, Recipe> = {
       { name: "Parmesan", amount: 30, unit: "g" },
       { name: "Salz", amount: 1, unit: "Prise" },
     ],
-    steps: [
-      { order: 1, description: "Wasser in einem großen Topf zum Kochen bringen und salzen." },
-      { order: 2, description: "Spaghetti nach Packungsanweisung al dente kochen." },
-      { order: 3, description: "Währenddessen Knoblauch in dünne Scheiben schneiden." },
-      { order: 4, description: "Olivenöl in einer großen Pfanne erhitzen, Knoblauch und Chili hinzufügen." },
-      { order: 5, description: "Bei mittlerer Hitze goldbraun anbraten (nicht verbrennen lassen)." },
-      { order: 6, description: "Gekochte Pasta mit etwas Nudelwasser zur Pfanne geben und gut vermengen." },
-      { order: 7, description: "Mit gehackter Petersilie und Parmesan servieren." },
+    flowSteps: [
+      { order: 1, description: "Wasser aufsetzen", type: "kochen", duration: 5, laneId: "kochen" },
+      { order: 2, description: "Knoblauch schneiden", type: "vorbereitung", duration: 2, laneId: "vorbereitung", parallelWith: [1] },
+      { order: 3, description: "Spaghetti kochen", type: "kochen", duration: 8, laneId: "kochen" },
+      { order: 4, description: "Öl erhitzen", type: "kochen", duration: 1, laneId: "kochen", parallelWith: [3] },
+      { order: 5, description: "Knoblauch & Chili anbraten", type: "kochen", duration: 2, laneId: "kochen" },
+      { order: 6, description: "Nudeln abgießen & mischen", type: "zusammenfuehren", duration: 1, laneId: "kochen" },
+      { order: 7, description: "Kurz ziehen lassen", type: "warten", duration: 1, laneId: "warten" },
+      { order: 8, description: "Servieren", type: "servieren", duration: 1, laneId: "servieren" },
     ],
     tags: ["Italienisch", "Schnell", "Vegetarisch"],
   },
@@ -164,13 +186,13 @@ export const recipes: Record<string, Recipe> = {
       { name: "Olivenöl", amount: 3, unit: "EL" },
       { name: "Oregano", amount: 1, unit: "TL" },
     ],
-    steps: [
-      { order: 1, description: "Tomaten in große Würfel schneiden." },
-      { order: 2, description: "Gurke in Scheiben, Zwiebel in Ringe schneiden." },
-      { order: 3, description: "Alle Gemüse in eine große Schüssel geben." },
-      { order: 4, description: "Feta in Würfel schneiden und darüber verteilen." },
-      { order: 5, description: "Oliven hinzufügen und alles vermischen." },
-      { order: 6, description: "Mit Olivenöl und Oregano dressen." },
+    flowSteps: [
+      { order: 1, description: "Tomaten schneiden", type: "vorbereitung", duration: 3, laneId: "vorbereitung" },
+      { order: 2, description: "Gurke & Zwiebel schneiden", type: "vorbereitung", duration: 3, laneId: "vorbereitung", parallelWith: [1] },
+      { order: 3, description: "Gemüse mischen", type: "zusammenfuehren", duration: 2, laneId: "vorbereitung" },
+      { order: 4, description: "Feta schneiden", type: "vorbereitung", duration: 1, laneId: "vorbereitung" },
+      { order: 5, description: "Alles zusammenführen", type: "zusammenfuehren", duration: 2, laneId: "vorbereitung" },
+      { order: 6, description: "Servieren", type: "servieren", duration: 1, laneId: "servieren" },
     ],
     tags: ["Mediterran", "Gesund", "Vegetarisch"],
   },

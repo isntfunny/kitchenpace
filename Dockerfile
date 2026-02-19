@@ -31,6 +31,8 @@ COPY --chown=nextjs:nodejs . .
 
 RUN npx prisma generate
 
+RUN chown -R nextjs:nodejs /app
+
 RUN chmod +x ./docker-entrypoint.sh || true
 
 USER nextjs

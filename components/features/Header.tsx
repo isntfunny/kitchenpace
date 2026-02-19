@@ -29,7 +29,7 @@ const initialRecent = [
   { id: "5", title: "Schokoladenmousse", emoji: "🍫" },
 ];
 
-export async function Header() {
+export function Header() {
   return (
     <header
       className={css({

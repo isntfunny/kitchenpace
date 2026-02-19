@@ -112,9 +112,9 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
   useEffect(() => {
     const handleImageLoad = (e: Event) => {
       const img = e.target as HTMLImageElement;
-      if (img.src.includes("unsplash")) {
+      if (img.src?.includes("unsplash")) {
         imageLoadCountRef.current += 1;
-        console.log(`[DEBUG] Image loaded: ${img.src.substring(0, 60)}... (load #${imageLoadCountRef.current})`);
+        console.log(`[DEBUG] Image loaded: ${img.src?.substring(0, 60)}... (load #${imageLoadCountRef.current})`);
       }
     };
 
@@ -502,7 +502,7 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                     </div>
                     <div className={css({ textAlign: "center" })}>
                       <div className={css({ fontFamily: "heading", fontWeight: "600", fontSize: "lg" })}>
-                        {author.followerCount.toLocaleString()}
+                        {author.followerCount.toLocaleString("de-DE")}
                       </div>
                       <div className={css({ fontSize: "sm", color: "text-muted", fontFamily: "body" })}>
                         Follower

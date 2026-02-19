@@ -260,3 +260,28 @@ From KUC-10:
 3. **MVP Approach**: For KUC-10 (recipe detail view), the flow visualization is implemented using React Flow with custom nodes. For KUC-1 (recipe editor), use the current implementation as a reference.
 
 4. **State Management**: Consider using Zustand for managing flow state (nodes, edges, lanes) with undo/redo support.
+
+## Development Setup
+
+### Node.js Version
+This project requires Node.js 24 (or 22). Use nvm to manage versions:
+```bash
+nvm use 24
+```
+
+### npm install Issues
+If `npm install` doesn't install devDependencies (eslint, husky, etc.), use:
+```bash
+npm install --include=dev
+```
+
+This is needed when npm's `save-dev` config is set to `false` or when dependencies appear missing after installation.
+
+### Husky Setup
+Husky is configured with a pre-commit lint hook (`.husky/pre-commit`). After cloning, run:
+```bash
+npm install
+npx husky install
+```
+Or simply ensure `npm install --include=dev` is used. The `prepare` script in package.json should handle this automatically.
+

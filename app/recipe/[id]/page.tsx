@@ -5,10 +5,12 @@ import { container } from "styled-system/patterns";
 import { RecipeDetailClient } from "./RecipeDetailClient";
 import { getActivitiesForRecipe, getAuthorById, getRecipeById, Recipe } from "./data";
 
+type RecipePageParams = {
+  id: string;
+};
+
 type RecipePageProps = {
-  params: {
-    id: string;
-  };
+  params: RecipePageParams | Promise<RecipePageParams>;
 };
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://kitchenpace.app").replace(/\/$/, "");
@@ -38,7 +40,8 @@ const buildRecipeMetadata = (recipe: Recipe): Metadata => ({
 });
 
 export async function generateMetadata({ params }: RecipePageProps): Promise<Metadata> {
-  const recipe = getRecipeById(params.id);
+  const resolvedParams = await params;
+  const recipe = getRecipeById(resolvedParams.id);
   if (!recipe) {
     return {
       title: "Rezept nicht gefunden | KüchenTakt",
@@ -49,8 +52,9 @@ export async function generateMetadata({ params }: RecipePageProps): Promise<Met
   return buildRecipeMetadata(recipe);
 }
 
-export default function RecipePage({ params }: RecipePageProps) {
-  const recipe = getRecipeById(params.id);
+export default async function RecipePage({ params }: RecipePageProps) {
+  const resolvedParams = await params;
+  const recipe = getRecipeById(resolvedParams.id);
 
   if (!recipe) {
     return (

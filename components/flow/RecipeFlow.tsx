@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { css } from "styled-system/css";
 import { LANES, type FlowStep } from "@/app/recipe/[id]/data";
 
@@ -393,6 +393,8 @@ export function RecipeFlow({
   const [completed, setCompleted] = useState<number[]>(completedSteps);
   const [selectedStep, setSelectedStep] = useState<FlowStep | null>(null);
   const [lastCompleted, setLastCompleted] = useState<number | null>(null);
+  const [activeLaneIndex, setActiveLaneIndex] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const toggleComplete = (order: number) => {
     setCompleted((prev) => {
@@ -425,6 +427,21 @@ export function RecipeFlow({
     });
     return linked;
   }, [flowSteps]);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const scrollLeft = scrollRef.current.scrollLeft;
+      const laneWidth = 280;
+      const newIndex = Math.round(scrollLeft / laneWidth);
+      setActiveLaneIndex(Math.min(newIndex, lanesWithSteps.length - 1));
+    }
+  };
+
+  const scrollToLane = (index: number) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ left: index * 280, behavior: "smooth" });
+    }
+  };
 
   return (
     <div
@@ -499,6 +516,8 @@ export function RecipeFlow({
       </div>
 
       <div
+        ref={scrollRef}
+        onScroll={handleScroll}
         className={css({
           display: "flex",
           gap: "20px",
@@ -585,6 +604,103 @@ export function RecipeFlow({
           </div>
         ))}
       </div>
+
+      {lanesWithSteps.length > 1 && (
+        <div
+          className={css({
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "12px",
+            marginTop: "8px",
+            "@media (min-width: 768px)": {
+              display: "none",
+            },
+          })}
+        >
+          <div
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            })}
+          >
+            {lanesWithSteps.map((lane, index) => (
+              <button
+                key={lane.id}
+                onClick={() => scrollToLane(index)}
+                className={css({
+                  width: index === activeLaneIndex ? "24px" : "8px",
+                  height: "8px",
+                  borderRadius: "4px",
+                  border: "none",
+                  backgroundColor: index === activeLaneIndex ? "#4caf50" : "#ddd",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                })}
+              />
+            ))}
+          </div>
+          <div
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+              maxWidth: "300px",
+              padding: "0 20px",
+            })}
+          >
+            <button
+              onClick={() => scrollToLane(Math.max(0, activeLaneIndex - 1))}
+              disabled={activeLaneIndex === 0}
+              className={css({
+                width: "32px",
+                height: "32px",
+                borderRadius: "full",
+                border: "none",
+                backgroundColor: activeLaneIndex === 0 ? "#f5f5f5" : "white",
+                color: activeLaneIndex === 0 ? "#ccc" : "#666",
+                fontSize: "16px",
+                cursor: activeLaneIndex === 0 ? "default" : "pointer",
+                boxShadow: activeLaneIndex === 0 ? "none" : "0 2px 8px rgba(0,0,0,0.1)",
+                transition: "all 0.2s ease",
+                _hover: activeLaneIndex === 0 ? {} : { transform: "scale(1.1)" },
+              })}
+            >
+              ←
+            </button>
+            <span
+              className={css({
+                fontSize: "12px",
+                color: "#888",
+                fontWeight: "500",
+              })}
+            >
+              {lanesWithSteps[activeLaneIndex]?.label}
+            </span>
+            <button
+              onClick={() => scrollToLane(Math.min(lanesWithSteps.length - 1, activeLaneIndex + 1))}
+              disabled={activeLaneIndex === lanesWithSteps.length - 1}
+              className={css({
+                width: "32px",
+                height: "32px",
+                borderRadius: "full",
+                border: "none",
+                backgroundColor: activeLaneIndex === lanesWithSteps.length - 1 ? "#f5f5f5" : "white",
+                color: activeLaneIndex === lanesWithSteps.length - 1 ? "#ccc" : "#666",
+                fontSize: "16px",
+                cursor: activeLaneIndex === lanesWithSteps.length - 1 ? "default" : "pointer",
+                boxShadow: activeLaneIndex === lanesWithSteps.length - 1 ? "none" : "0 2px 8px rgba(0,0,0,0.1)",
+                transition: "all 0.2s ease",
+                _hover: activeLaneIndex === lanesWithSteps.length - 1 ? {} : { transform: "scale(1.1)" },
+              })}
+            >
+              →
+            </button>
+          </div>
+        </div>
+      )}
 
       {completed.length === flowSteps.length && flowSteps.length > 0 && (
         <div

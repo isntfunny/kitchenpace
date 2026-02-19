@@ -1,4 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KitchenPace - Vom Chaos zur Klarheit
+
+Stell dir vor, du öffnest ein Rezept und siehst nicht mehr diese endlose, ermüdende Liste von Schritten, die dich durch einen linearen Prozess zwingen. Stattdessen erblickst du eine **lebendige, fließende Visualisierung** deines gesamten Kochprozesses - wie eine Choreographie, wie ein Tanz in der Küche.
+
+## Die Vision
+
+Jeder kennt es: Du stehst in der Küche, drei Töpfe brodeln, der Timer piept, du weißt nicht mehr, was als nächstes kommt, und plötzlich brennt die Sauce an, während das Gemüse noch roh ist. **Kochen fühlt sich oft wie kontrolliertes Chaos an**.
+
+**KitchenPace** verwandelt dieses Chaos in **kristallklare Struktur**. Es nimmt die Komplexität des gleichzeitigen Kochens und macht sie *sichtbar*, *verständlich*, *beherrschbar*.
+
+### Das Chaos beherrschen
+
+Traditionelle Rezepte sind wie eine To-Do-Liste ohne Prioritäten. Sie geben dir nicht das große Bild. Du stolperst von Schritt zu Schritt und merkst zu spät: "Oh, das hätte ich vor 20 Minuten vorbereiten sollen!"
+
+**KitchenPace zeigt dir von Anfang an die gesamte Landschaft**:
+
+- **Überblick statt Überforderung**: Du siehst *sofort*, was parallel läuft, was aufeinander wartet, wo die Engpässe sind
+- **Mentale Klarheit**: Dein Gehirn muss nicht mehr jonglieren und improvisieren - der Flow ist bereits durchdacht
+- **Kontrolle zurückgewinnen**: Keine Panik mehr, kein "Oh nein, ich hab vergessen...!" - alles hat seinen Platz, seinen Moment
+
+### Was macht es so besonders?
+
+Jedes Rezept wird zu einer **visuellen Landkarte deines Kochabenteuers**:
+
+- **Parallele Welten werden sichtbar**: Die Sauce reduziert sich? Perfekt - die Visualisierung zeigt dir *genau*, was du in dieser Zeit parallel erledigen kannst. Das Gemüse röstet im Ofen? Der Graph zeigt: "Jetzt hast du 15 Minuten für die Beilage."
+
+- **Struktur in der Gleichzeitigkeit**: Was früher ein mentales Puzzle war - "Wann muss ich was starten, damit alles gleichzeitig fertig ist?" - wird zur klaren, visuellen Wahrheit. Du siehst die Synchronisation.
+
+- **Der kritische Pfad wird erkennbar**: Wie bei einem Projektplan siehst du: *Das* ist der zeitkritische Strang. *Das* kann warten. *Hier* muss ich aufmerksam sein, *dort* kann ich entspannen.
+
+- **Intuitive Nodes**: Jede Aktion hat ihr eigenes visuelles Symbol. "Würzen" sieht anders aus als "Köcheln lassen" oder "Scharf anbraten". Dein Gehirn erfasst den Flow sofort - keine kognitive Überlastung mehr.
+
+- **Der große Moment**: Alle Verzweigungen münden am Ende in diesem einen, magischen Punkt - dem fertigen Gericht. Du siehst, wie alles zusammenkommt. Das Chaos ordnet sich.
+
+## Warum ist das revolutionär?
+
+**KitchenPace bringt die Logik von Projektmanagement in die Küche** - aber auf schöne, intuitive Weise. Es nimmt das implizite Wissen von Profiköchen ("Die machen ja immer mehrere Sachen gleichzeitig!") und macht es **explizit und zugänglich**.
+
+Profis haben diese Struktur im Kopf. Sie *sehen* den Flow. Sie haben gelernt, das Chaos zu strukturieren. **KitchenPace gibt jedem diese Superkraft**.
+
+### Von Stress zu Flow
+
+Statt gestresst zwischen Herd, Schneidebrett und Backofen hin- und herzurennen, befindest du dich plötzlich im **Flow**. Du weißt immer, wo du stehst. Du weißt, was als nächstes kommt. Du hast die Kontrolle.
+
+Das ist nicht nur effizienter - **es macht Kochen wieder zu dem, was es sein sollte: Entspannend, kreativ, genussvoll**.
+
+## Die Zukunft
+
+Stell dir vor:
+- **Adaptive Komplexität**: Das Rezept passt sich an deine Küche an - zwei Herdplatten? Der Flow reorganisiert sich automatisch
+- **Echtzeit-Orientierung**: Du markierst Schritte als erledigt, und die Visualisierung zeigt dir sofort: "Du bist hier, das kommt als nächstes"
+- **Zeitmanagement visuell**: Timer direkt in den Nodes - du siehst, wie viel Zeit jeder Strang noch braucht
+- **Chaos-zu-Struktur für alle**: Auch komplexeste Menüs mit vier Gängen werden plötzlich machbar, weil du die Struktur *siehst*
+
+**KitchenPace** ist dein **Kompass im Küchenchaos**. Es verwandelt Überforderung in Übersicht, Stress in Struktur, Panik in Plan.
+
+---
+
+Das ist nicht einfach eine weitere Rezept-App. Das ist **der Paradigmenwechsel**: Vom linearen Denken zum **strukturierten, visuellen Kochflow**. 
+
+**Endlich Ordnung im schönsten Chaos der Welt.** 🎯✨
 
 ## Getting Started
 
@@ -19,18 +79,3 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

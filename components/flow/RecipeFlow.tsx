@@ -500,11 +500,18 @@ export function RecipeFlow({
 
       <div
         className={css({
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          display: "flex",
           gap: "20px",
           alignItems: "start",
           position: "relative",
+          overflowX: "auto",
+          paddingBottom: "16px",
+          scrollSnapType: "x mandatory",
+          "@media (min-width: 768px)": {
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            overflowX: "visible",
+          },
         })}
       >
         {lanesWithSteps.map((lane) => (
@@ -518,6 +525,9 @@ export function RecipeFlow({
               minHeight: "100%",
               boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
               position: "relative",
+              minWidth: "260px",
+              flexShrink: 0,
+              scrollSnapAlign: "start",
             })}
           >
             <div

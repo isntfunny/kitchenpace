@@ -52,6 +52,11 @@ export async function generateMetadata({ params }: RecipePageProps): Promise<Met
   return buildRecipeMetadata(recipe);
 }
 
+export async function generateStaticParams() {
+  const { recipes } = await import("./data");
+  return Object.keys(recipes).map((id) => ({ id }));
+}
+
 export default async function RecipePage({ params }: RecipePageProps) {
   const resolvedParams = await params;
   const recipe = getRecipeById(resolvedParams.id);

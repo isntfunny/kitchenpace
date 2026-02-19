@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { css } from "styled-system/css";
 import * as React from "react";
 
@@ -31,20 +32,20 @@ export function CardImage({ src, alt }: { src: string; alt: string }) {
   return (
     <div
       className={css({
+        position: "relative",
         aspectRatio: "16/10",
         overflow: "hidden",
-        width: "100%",
       })}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src={src}
         alt={alt}
-        style={{
+        fill
+        sizes="(max-width: 768px) 100vw, 400px"
+        className={css({
           objectFit: "cover",
-          width: "100%",
-          height: "100%",
-        }}
+        })}
+        unoptimized={src.includes("unsplash.com")}
       />
     </div>
   );

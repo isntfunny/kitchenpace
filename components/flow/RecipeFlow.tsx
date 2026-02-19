@@ -1,30 +1,8 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
-import {
-  ReactFlow,
-  Background,
-  Controls,
-  MarkerType,
-  BackgroundVariant,
-  Panel,
-  ReactFlowProvider,
-  useReactFlow,
-  Node,
-} from "@xyflow/react";
-import dagre from "dagre";
-import "@xyflow/react/dist/style.css";
+import { useState } from "react";
 import { css } from "styled-system/css";
-import { LANES, type FlowStep, type Lane } from "@/app/recipe/[id]/data";
-
-const nodeWidth = 220;
-const nodeHeight = 90;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const dagreGraph: any = new (dagre as any).graphlib.Graph();
-dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-const getLaneById = (id: string): Lane | undefined => LANES.find((lane) => lane.id === id);
+import { LANES, type FlowStep } from "@/app/recipe/[id]/data";
 
 const getStepEmoji = (type: string): string => {
   const emojis: Record<string, string> = {
@@ -39,339 +17,470 @@ const getStepEmoji = (type: string): string => {
   return emojis[type] || "📝";
 };
 
-const getLayoutedElements = (nodes: Node[], direction = "TB") => {
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 50, ranksep: 80 });
+interface StepCardProps {
+  step: FlowStep;
+  isCompleted: boolean;
+  isActive: boolean;
+  isLast: boolean;
+  onToggleComplete: () => void;
+  onClick: () => void;
+}
 
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  dagre.layout(dagreGraph);
-
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    return {
-      ...node,
-      position: {
-        x: nodeWithPosition.x - nodeWidth / 2,
-        y: nodeWithPosition.y - nodeHeight / 2,
-      },
-    };
-  });
-
-  return layoutedNodes;
-};
-
-function RecipeFlowInner({ flowSteps, completedSteps = [] }: { flowSteps: FlowStep[]; completedSteps?: number[] }) {
-  const [selectedStep, setSelectedStep] = useState<FlowStep | null>(null);
-  const reactFlowRef = useRef<HTMLDivElement>(null);
-  const { fitView } = useReactFlow();
-
-  const nodes = useMemo(() => {
-    const baseNodes: Node[] = flowSteps.map((step) => {
-      const lane = getLaneById(step.laneId);
-      const isCompleted = completedSteps.includes(step.order);
-
-      return {
-        id: `step-${step.order}`,
-        type: "recipeNode",
-        position: { x: 0, y: 0 },
-        data: {
-          label: step.description,
-          type: step.type,
-          duration: step.duration,
-          lane: lane?.label || step.laneId,
-          laneColor: lane?.color || "#f5f5f5",
-          isCompleted,
-          order: step.order,
-          onClick: () => {
-            setSelectedStep(step);
-          },
-        },
-      };
-    });
-
-    return getLayoutedElements(baseNodes);
-  }, [flowSteps, completedSteps]);
-
-  const edges = useMemo(() => {
-    const flowEdges: { id: string; source: string; target: string }[] = [];
-    
-    flowSteps.forEach((step, index) => {
-      if (step.parallelWith && step.parallelWith.length > 0) {
-        step.parallelWith.forEach((parallelOrder) => {
-          const parallelStep = flowSteps.find((s) => s.order === parallelOrder);
-          if (parallelStep) {
-            flowEdges.push({
-              id: `edge-${parallelOrder}-${step.order}`,
-              source: `step-${parallelOrder}`,
-              target: `step-${step.order}`,
-            });
-          }
-        });
-      } else if (index > 0) {
-        const canConnect = flowSteps.slice(0, index).every((prev) => {
-          if (prev.parallelWith?.includes(step.order)) {
-            return false;
-          }
-          return true;
-        });
-        
-        if (canConnect) {
-          const prevStep = flowSteps[index - 1];
-          flowEdges.push({
-            id: `edge-${prevStep.order}-${step.order}`,
-            source: `step-${prevStep.order}`,
-            target: `step-${step.order}`,
-          });
-        }
-      }
-    });
-
-    return flowEdges;
-  }, [flowSteps]);
-
-  useEffect(() => {
-    setTimeout(() => {
-      fitView({ padding: 0.3, duration: 0 });
-    }, 100);
-  }, [fitView, flowSteps]);
-
-  const nodeTypes = useMemo(
-    () => ({
-      recipeNode: ({ data }: { data: Record<string, unknown> }) => {
-        const stepData = data as {
-          label: string;
-          type: string;
-          duration?: number;
-          lane: string;
-          laneColor: string;
-          isCompleted: boolean;
-          order: number;
-          onClick: () => void;
-        };
-
-        return (
-          <div
-            onClick={stepData.onClick}
-            className={css({
-              width: "220px",
-              padding: "14px",
-              borderRadius: "12px",
-              backgroundColor: stepData.isCompleted ? "#e8f5e9" : stepData.laneColor,
-              border: stepData.isCompleted ? "2px solid #4caf50" : "2px solid #ddd",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-              _hover: {
-                transform: "scale(1.02)",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-              },
-            })}
-          >
-            <div
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                marginBottom: "6px",
-              })}
-            >
-              <span
-                className={css({
-                  width: "26px",
-                  height: "26px",
-                  borderRadius: "full",
-                  backgroundColor: stepData.isCompleted ? "#4caf50" : "#666",
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                })}
-              >
-                {stepData.isCompleted ? "✓" : stepData.order}
-              </span>
-              <span className={css({ fontSize: "20px" })}>{getStepEmoji(stepData.type)}</span>
-            </div>
-            <div
-              className={css({
-                fontSize: "13px",
-                fontWeight: "500",
-                lineHeight: "1.3",
-                color: "#333",
-              })}
-            >
-              {stepData.label}
-            </div>
-            {stepData.duration && (
-              <div className={css({ fontSize: "11px", color: "#666", marginTop: "4px" })}>
-                ⏱️ {stepData.duration} Min.
-              </div>
-            )}
-          </div>
-        );
-      },
-    }),
-    [],
-  );
-
+function StepCard({ step, isCompleted, isActive, isLast, onToggleComplete, onClick }: StepCardProps) {
+  const lane = LANES.find((l) => l.id === step.laneId);
+  
   return (
-    <div
-      ref={reactFlowRef}
-      className={css({
-        width: "100%",
-        height: "600px",
-        borderRadius: "16px",
-        overflow: "hidden",
-        border: "1px solid #e0e0e0",
-        backgroundColor: "#fafafa",
-      })}
-    >
-      <ReactFlow
-        nodes={nodes}
-        edges={edges.map((e) => ({
-          id: e.id,
-          source: e.source,
-          target: e.target,
-          type: "smoothstep",
-          markerEnd: { type: MarkerType.ArrowClosed, color: "#888" },
-          style: { stroke: "#888", strokeWidth: 2 },
-        }))}
-        nodeTypes={nodeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.3 }}
-        attributionPosition="bottom-left"
-        proOptions={{ hideAttribution: true }}
-      >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#ddd" />
-        <Controls
+    <div className={css({ display: "flex", gap: "16px" })}>
+      <div className={css({ display: "flex", flexDirection: "column", alignItems: "center" })}>
+        <button
+          onClick={onToggleComplete}
           className={css({
-            borderRadius: "8px",
-            overflow: "hidden",
+            width: "40px",
+            height: "40px",
+            borderRadius: "full",
+            border: isCompleted ? "none" : "2px solid #ddd",
+            backgroundColor: isCompleted ? "#4caf50" : "white",
+            color: isCompleted ? "white" : "#999",
+            fontSize: "18px",
+            fontWeight: "600",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.2s ease",
+            _hover: {
+              transform: "scale(1.1)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            },
           })}
-        />
-        <Panel position="top-left">
+        >
+          {isCompleted ? "✓" : step.order}
+        </button>
+        
+        {!isLast && (
           <div
             className={css({
-              backgroundColor: "white",
-              padding: "12px 16px",
-              borderRadius: "8px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              fontSize: "14px",
+              width: "2px",
+              flex: "1",
+              minHeight: "40px",
+              backgroundColor: isCompleted ? "#4caf50" : "#e0e0e0",
+              marginTop: "8px",
+              transition: "background-color 0.3s ease",
             })}
-          >
-            <strong>🗺️ Koch-Flow</strong>
-            <div className={css({ fontSize: "12px", color: "#666", marginTop: "4px" })}>
-              Klicke auf einen Schritt für Details
-            </div>
-          </div>
-        </Panel>
-        <Panel position="top-right">
-          <div
-            className={css({
-              display: "flex",
-              gap: "8px",
-              flexWrap: "wrap",
-              maxWidth: "300px",
-            })}
-          >
-            {LANES.map((lane) => (
-              <div
-                key={lane.id}
-                className={css({
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  backgroundColor: "white",
-                  padding: "4px 8px",
-                  borderRadius: "6px",
-                  fontSize: "11px",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
-                })}
-              >
-                <div
-                  className={css({
-                    width: "12px",
-                    height: "12px",
-                    borderRadius: "3px",
-                    backgroundColor: lane.color,
-                  })}
-                />
-                {lane.label}
-              </div>
-            ))}
-          </div>
-        </Panel>
-      </ReactFlow>
-
-      {selectedStep && (
+          />
+        )}
+      </div>
+      
+      <div
+        onClick={onClick}
+        className={css({
+          flex: "1",
+          marginBottom: isLast ? "0" : "24px",
+        })}
+      >
         <div
           className={css({
-            position: "absolute",
-            bottom: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            backgroundColor: "white",
-            padding: "16px 24px",
-            borderRadius: "12px",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-            maxWidth: "400px",
-            zIndex: 100,
+            padding: "16px 20px",
+            borderRadius: "16px",
+            backgroundColor: isCompleted ? "#f0f9f0" : lane?.color || "#f5f5f5",
+            border: isActive 
+              ? "2px solid #2196f3" 
+              : isCompleted 
+                ? "2px solid #4caf50" 
+                : "2px solid transparent",
+            boxShadow: isActive 
+              ? "0 4px 20px rgba(33, 150, 243, 0.25)" 
+              : "0 2px 8px rgba(0,0,0,0.08)",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            _hover: {
+              transform: "translateX(4px)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+            },
           })}
         >
           <div
             className={css({
               display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
+              justifyContent: "space-between",
               marginBottom: "8px",
             })}
           >
-            <div className={css({ display: "flex", alignItems: "center", gap: "8px" })}>
-              <span className={css({ fontSize: "20px" })}>{getStepEmoji(selectedStep.type)}</span>
-              <span className={css({ fontWeight: "600", fontSize: "16px" })}>
-                Schritt {selectedStep.order}
+            <div className={css({ display: "flex", alignItems: "center", gap: "10px" })}>
+              <span className={css({ fontSize: "24px" })}>{getStepEmoji(step.type)}</span>
+              <span
+                className={css({
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  color: "#666",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                })}
+              >
+                {lane?.label || step.laneId}
               </span>
             </div>
-            <button
-              onClick={() => setSelectedStep(null)}
+            {step.duration && (
+              <div
+                className={css({
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  fontSize: "13px",
+                  color: "#888",
+                  backgroundColor: "rgba(255,255,255,0.7)",
+                  padding: "4px 10px",
+                  borderRadius: "20px",
+                })}
+              >
+                <span>⏱️</span>
+                <span>{step.duration} Min.</span>
+              </div>
+            )}
+          </div>
+          
+          <div
+            className={css({
+              fontSize: "15px",
+              fontWeight: "500",
+              color: isCompleted ? "#666" : "#333",
+              lineHeight: "1.5",
+              textDecoration: isCompleted ? "line-through" : "none",
+            })}
+          >
+            {step.description}
+          </div>
+          
+          {isActive && (
+            <div
               className={css({
-                background: "none",
-                border: "none",
-                fontSize: "20px",
-                cursor: "pointer",
-                color: "#999",
+                marginTop: "12px",
+                fontSize: "12px",
+                color: "#2196f3",
+                fontWeight: "500",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
               })}
             >
-              ×
-            </button>
-          </div>
-          <p className={css({ color: "#333", lineHeight: "1.5" })}>{selectedStep.description}</p>
-          {selectedStep.duration && (
-            <div className={css({ marginTop: "8px", color: "#666", fontSize: "14px" })}>
-              ⏱️ Dauer: ca. {selectedStep.duration} Minuten
+              <span
+                className={css({
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "full",
+                  backgroundColor: "#2196f3",
+                  animation: "pulse 1.5s infinite",
+                })}
+              />
+              Klicke für Details
             </div>
           )}
-          <div className={css({ marginTop: "8px", fontSize: "12px", color: "#999" })}>
-            📍 {LANES.find((l) => l.id === selectedStep.laneId)?.label}
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
-interface RecipeFlowProps {
-  flowSteps: FlowStep[];
-  completedSteps?: number[];
+interface StepDetailModalProps {
+  step: FlowStep;
+  isCompleted: boolean;
+  onToggleComplete: () => void;
+  onClose: () => void;
 }
 
-export function RecipeFlow({ flowSteps, completedSteps = [] }: RecipeFlowProps) {
+function StepDetailModal({ step, isCompleted, onToggleComplete, onClose }: StepDetailModalProps) {
+  const lane = LANES.find((l) => l.id === step.laneId);
+  
   return (
-    <ReactFlowProvider>
-      <RecipeFlowInner flowSteps={flowSteps} completedSteps={completedSteps} />
-    </ReactFlowProvider>
+    <div
+      className={css({
+        position: "fixed",
+        inset: "0",
+        backgroundColor: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: "20px",
+      })}
+      onClick={onClose}
+    >
+      <div
+        className={css({
+          backgroundColor: "white",
+          borderRadius: "20px",
+          padding: "24px",
+          maxWidth: "450px",
+          width: "100%",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+        })}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className={css({
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: "16px",
+          })}
+        >
+          <div className={css({ display: "flex", alignItems: "center", gap: "12px" })}>
+            <span className={css({ fontSize: "36px" })}>{getStepEmoji(step.type)}</span>
+            <div>
+              <div
+                className={css({
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  color: "#666",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                })}
+              >
+                {lane?.label}
+              </div>
+              <div
+                className={css({
+                  fontSize: "20px",
+                  fontWeight: "700",
+                  color: "#333",
+                })}
+              >
+                Schritt {step.order}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className={css({
+              background: "none",
+              border: "none",
+              fontSize: "28px",
+              cursor: "pointer",
+              color: "#999",
+              lineHeight: "1",
+              _hover: { color: "#333" },
+            })}
+          >
+            ×
+          </button>
+        </div>
+        
+        <p
+          className={css({
+            fontSize: "16px",
+            lineHeight: "1.7",
+            color: "#333",
+            marginBottom: "20px",
+          })}
+        >
+          {step.description}
+        </p>
+        
+        <div
+          className={css({
+            display: "flex",
+            gap: "12px",
+            flexWrap: "wrap",
+            marginBottom: "24px",
+          })}
+        >
+          {step.duration && (
+            <div
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                backgroundColor: "#f5f5f5",
+                padding: "8px 14px",
+                borderRadius: "10px",
+                fontSize: "14px",
+                color: "#666",
+              })}
+            >
+              <span>⏱️</span>
+              <span>ca. {step.duration} Minuten</span>
+            </div>
+          )}
+          {step.type && (
+            <div
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                backgroundColor: "#f5f5f5",
+                padding: "8px 14px",
+                borderRadius: "10px",
+                fontSize: "14px",
+                color: "#666",
+              })}
+            >
+              <span>🏷️</span>
+              <span style={{ textTransform: 'capitalize' }}>{step.type}</span>
+            </div>
+          )}
+        </div>
+        
+        <button
+          onClick={onToggleComplete}
+          className={css({
+            width: "100%",
+            padding: "14px 20px",
+            borderRadius: "12px",
+            border: "none",
+            fontSize: "16px",
+            fontWeight: "600",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            backgroundColor: isCompleted ? "#f5f5f5" : "#4caf50",
+            color: isCompleted ? "#666" : "white",
+            _hover: {
+              transform: "translateY(-2px)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            },
+          })}
+        >
+          {isCompleted ? "✓ Bereits erledigt - Rückgängig machen" : "✓ Als erledigt markieren"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function RecipeFlow({ 
+  flowSteps, 
+  completedSteps = [],
+}: { 
+  flowSteps: FlowStep[]; 
+  completedSteps?: number[];
+}) {
+  const [completed, setCompleted] = useState<number[]>(completedSteps);
+  const [selectedStep, setSelectedStep] = useState<FlowStep | null>(null);
+
+  const toggleComplete = (order: number) => {
+    setCompleted((prev) => 
+      prev.includes(order) 
+        ? prev.filter((o) => o !== order)
+        : [...prev, order]
+    );
+  };
+
+  const getActiveStep = () => {
+    const firstIncomplete = flowSteps.find((step) => !completed.includes(step.order));
+    return firstIncomplete?.order ?? null;
+  };
+
+  const activeStep = getActiveStep();
+
+  return (
+    <div
+      className={css({
+        width: "100%",
+        maxWidth: "700px",
+        margin: "0 auto",
+        padding: "24px",
+      })}
+    >
+      <div
+        className={css({
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "24px",
+          padding: "16px 20px",
+          backgroundColor: "white",
+          borderRadius: "12px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        })}
+      >
+        <div>
+          <div className={css({ fontSize: "18px", fontWeight: "700", color: "#333" })}>
+            🗺️ Koch-Flow
+          </div>
+          <div className={css({ fontSize: "13px", color: "#666", marginTop: "2px" })}>
+            {completed.length} von {flowSteps.length} Schritten erledigt
+          </div>
+        </div>
+        <div
+          className={css({
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          })}
+        >
+          <div
+            className={css({
+              width: "120px",
+              height: "8px",
+              backgroundColor: "#e0e0e0",
+              borderRadius: "4px",
+              overflow: "hidden",
+            })}
+          >
+            <div
+              className={css({
+                height: "100%",
+                backgroundColor: "#4caf50",
+                borderRadius: "4px",
+                transition: "width 0.3s ease",
+              })}
+              style={{ width: `${(completed.length / flowSteps.length) * 100}%` }}
+            />
+          </div>
+          <span className={css({ fontSize: "14px", fontWeight: "600", color: "#4caf50" })}>
+            {Math.round((completed.length / flowSteps.length) * 100)}%
+          </span>
+        </div>
+      </div>
+
+      <div
+        className={css({
+          position: "relative",
+          paddingLeft: "8px",
+        })}
+      >
+        {flowSteps.map((step, index) => (
+          <StepCard
+            key={step.order}
+            step={step}
+            isCompleted={completed.includes(step.order)}
+            isActive={step.order === activeStep}
+            isLast={index === flowSteps.length - 1}
+            onToggleComplete={() => toggleComplete(step.order)}
+            onClick={() => setSelectedStep(step)}
+          />
+        ))}
+      </div>
+
+      {completed.length === flowSteps.length && flowSteps.length > 0 && (
+        <div
+          className={css({
+            marginTop: "24px",
+            padding: "24px",
+            backgroundColor: "#e8f5e9",
+            borderRadius: "16px",
+            textAlign: "center",
+            border: "2px solid #4caf50",
+          })}
+        >
+          <div className={css({ fontSize: "36px", marginBottom: "8px" })}>🎉</div>
+          <div className={css({ fontSize: "20px", fontWeight: "700", color: "#2e7d32" })}>
+            Fertig!
+          </div>
+          <div className={css({ fontSize: "14px", color: "#666", marginTop: "4px" })}>
+            Du hast alle Schritte gemeistert. Guten Appetit!
+          </div>
+        </div>
+      )}
+
+      {selectedStep && (
+        <StepDetailModal
+          step={selectedStep}
+          isCompleted={completed.includes(selectedStep.order)}
+          onToggleComplete={() => toggleComplete(selectedStep.order)}
+          onClose={() => setSelectedStep(null)}
+        />
+      )}
+    </div>
   );
 }

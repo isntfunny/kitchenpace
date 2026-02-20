@@ -421,12 +421,8 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
         : css({
               width: '100%',
               margin: '0 auto',
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: '400px',
               backgroundColor: '#fafafa',
               borderRadius: '12px',
-              overflow: 'hidden',
           });
 
     return (
@@ -532,10 +528,11 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
             <div
                 ref={containerRef}
                 className={css({
-                    flex: 1,
-                    overflow: 'auto',
+                    flex: isCookingMode ? 1 : 'none',
+                    overflow: isCookingMode ? 'auto' : 'visible',
                     position: 'relative',
                     padding: '24px',
+                    height: isCookingMode ? 'auto' : bounds.height,
                 })}
             >
                 <svg

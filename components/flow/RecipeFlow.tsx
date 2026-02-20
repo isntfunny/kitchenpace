@@ -101,7 +101,7 @@ function StepCard({ step, isCompleted, isActive, isJustCompleted, hasParallelLin
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "10px",
-          marginTop: hasParallelLink ? "6px" : "0",
+          marginTop: hasParallelLink ? "12px" : "0",
         })}
       >
         <div className={css({ display: "flex", alignItems: "center", gap: "10px" })}>
@@ -216,6 +216,14 @@ function StepCard({ step, isCompleted, isActive, isJustCompleted, hasParallelLin
       />
     </div>
   );
+}
+
+interface PositionedStep {
+  step: FlowStep;
+  row: number;
+  column: number;
+  hasTopConnector: boolean;
+  hasBottomConnector: boolean;
 }
 
 interface StepDetailModalProps {
@@ -443,6 +451,32 @@ export function RecipeFlow({
     }
   };
 
+  const laneIndexMap = new Map(lanesWithSteps.map((lane, index) => [lane.id, index]));
+  const orderedSteps = [...flowSteps].sort((a, b) => a.order - b.order);
+
+  const positionedSteps: PositionedStep[] = orderedSteps.map((step, idx) => ({
+    step,
+    row: idx + 1,
+    column: (laneIndexMap.get(step.laneId) ?? 0) + 1,
+    hasTopConnector: false,
+    hasBottomConnector: false,
+  }));
+
+  const laneToPositioned = new Map<string, PositionedStep[]>();
+  positionedSteps.forEach((record) => {
+    if (!laneToPositioned.has(record.step.laneId)) {
+      laneToPositioned.set(record.step.laneId, []);
+    }
+    laneToPositioned.get(record.step.laneId)?.push(record);
+  });
+
+  laneToPositioned.forEach((list) => {
+    list.forEach((record, index) => {
+      record.hasTopConnector = index > 0;
+      record.hasBottomConnector = index < list.length - 1;
+    });
+  });
+
   return (
     <div
       className={css({
@@ -516,93 +550,105 @@ export function RecipeFlow({
       </div>
 
       <div
-        ref={scrollRef}
-        onScroll={handleScroll}
         className={css({
-          display: "flex",
-          gap: "20px",
-          alignItems: "start",
-          position: "relative",
           overflowX: "auto",
           paddingBottom: "16px",
-          scrollSnapType: "x mandatory",
-          "@media (min-width: 768px)": {
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            overflowX: "visible",
-          },
         })}
+        ref={scrollRef}
+        onScroll={handleScroll}
       >
-        {lanesWithSteps.map((lane) => (
-          <div
-            key={lane.id}
-            className={css({
-              backgroundColor: "white",
-              borderRadius: "16px",
-              border: "1px solid #eee",
-              padding: "14px",
-              minHeight: "100%",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-              position: "relative",
-              minWidth: "260px",
-              flexShrink: 0,
-              scrollSnapAlign: "start",
-            })}
-          >
+        <div
+          className={css({
+            display: "grid",
+            gap: "24px",
+            gridAutoRows: "minmax(160px, auto)",
+            position: "relative",
+          })}
+          style={{
+            gridTemplateColumns: `repeat(${lanesWithSteps.length}, minmax(240px, 1fr))`,
+            minWidth: lanesWithSteps.length > 1 ? `${lanesWithSteps.length * 260}px` : "auto",
+          }}
+        >
+          {lanesWithSteps.map((lane, index) => (
             <div
+              key={lane.id}
               className={css({
-                position: "absolute",
-                top: "54px",
-                bottom: "18px",
-                left: "18px",
-                width: "2px",
-                background: "linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.02))",
+                position: "sticky",
+                top: "0",
+                zIndex: 2,
+                pointerEvents: "none",
               })}
-            />
-            <div
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "14px",
-              })}
+              style={{ gridColumn: index + 1, gridRow: 1 }}
             >
               <div
                 className={css({
-                  fontSize: "13px",
-                  fontWeight: "700",
-                  color: "#333",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingBottom: "8px",
+                  borderBottom: "1px dashed #e0e0e0",
+                  marginBottom: "8px",
                 })}
               >
-                {lane.label}
-              </div>
-              <div
-                className={css({
-                  width: "14px",
-                  height: "14px",
-                  borderRadius: "4px",
-                  backgroundColor: lane.color,
-                })}
-              />
-            </div>
-            <div className={css({ display: "flex", flexDirection: "column", gap: "12px", position: "relative" })}>
-              {lane.steps.map((step) => (
-                <StepCard
-                  key={step.order}
-                  step={step}
-                  isCompleted={completed.includes(step.order)}
-                  isActive={step.order === activeStep}
-                  isJustCompleted={step.order === lastCompleted}
-                  hasParallelLink={parallelOrders.has(step.order)}
-                  onToggleComplete={() => toggleComplete(step.order)}
-                  onClick={() => setSelectedStep(step)}
+                <span className={css({ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", color: "#666" })}>
+                  {lane.label}
+                </span>
+                <span
+                  className={css({
+                    width: "12px",
+                    height: "12px",
+                    borderRadius: "3px",
+                    backgroundColor: lane.color,
+                  })}
                 />
-              ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+
+          {positionedSteps.map((record) => (
+            <div
+              key={record.step.order}
+              className={css({ position: "relative" })}
+              style={{ gridColumn: record.column, gridRow: record.row + 1 }}
+            >
+              {record.hasTopConnector && (
+                <div
+                  className={css({
+                    position: "absolute",
+                    top: "-24px",
+                    left: "calc(50% - 1px)",
+                    width: "2px",
+                    height: "24px",
+                    backgroundColor: "#cfd8dc",
+                    zIndex: 0,
+                  })}
+                />
+              )}
+              <StepCard
+                step={record.step}
+                isCompleted={completed.includes(record.step.order)}
+                isActive={record.step.order === activeStep}
+                isJustCompleted={record.step.order === lastCompleted}
+                hasParallelLink={parallelOrders.has(record.step.order)}
+                onToggleComplete={() => toggleComplete(record.step.order)}
+                onClick={() => setSelectedStep(record.step)}
+              />
+              {record.hasBottomConnector && (
+                <div
+                  className={css({
+                    position: "absolute",
+                    bottom: "-24px",
+                    left: "calc(50% - 1px)",
+                    width: "2px",
+                    height: "24px",
+                    backgroundColor: "#cfd8dc",
+                    zIndex: 0,
+                  })}
+                />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {lanesWithSteps.length > 1 && (

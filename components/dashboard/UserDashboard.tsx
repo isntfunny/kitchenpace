@@ -27,11 +27,11 @@ const defaultStats: DashboardStatCard[] = [
     { id: '4', label: 'Bewertungen', value: 34, icon: '⭐', color: '#f8b500' },
 ];
 
-export function UserDashboard({ 
-    userName = 'KüchenFan', 
+export function UserDashboard({
+    userName = 'KüchenFan',
     userEmail = 'user@example.com',
     userPhoto,
-    stats = defaultStats 
+    stats = defaultStats,
 }: UserDashboardProps) {
     return (
         <div

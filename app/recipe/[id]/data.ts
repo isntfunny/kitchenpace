@@ -550,3 +550,62 @@ export const recipes: Record<string, Recipe> = {
 export const getRecipeById = (id: string) => recipes[id];
 export const getAuthorById = (id: string) => users[id];
 export const getActivitiesForRecipe = (id: string) => activities[id] ?? [];
+export const getRecipesByAuthor = (authorId: string) =>
+    Object.values(recipes).filter((r) => r.authorId === authorId);
+export const getUserById = (id: string) => users[id];
+
+export const userActivities: Activity[] = [
+    {
+        id: 'ua-1',
+        user: {
+            name: 'Maria Rossi',
+            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
+        },
+        action: 'hat ein neues Rezept veröffentlicht',
+        timestamp: 'Vor 3 Tagen',
+        content: 'Pasta Aglio e Olio',
+    },
+    {
+        id: 'ua-2',
+        user: {
+            name: 'Maria Rossi',
+            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
+        },
+        action: 'hat eine Bewertung abgegeben',
+        timestamp: 'Vor 5 Tagen',
+        content: '★ ★ ★ ★ ★ zu Rinderfondue',
+    },
+    {
+        id: 'ua-3',
+        user: {
+            name: 'Maria Rossi',
+            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
+        },
+        action: 'hat ein Rezept ausprobiert',
+        timestamp: 'Vor 1 Woche',
+        content: 'Spaghetti Carbonara - super lecker!',
+    },
+    {
+        id: 'ua-4',
+        user: {
+            name: 'Alex Koch',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+        },
+        action: 'hat ein neues Rezept veröffentlicht',
+        timestamp: 'Vor 2 Tagen',
+        content: 'Entenbrust mit Spätzle',
+    },
+    {
+        id: 'ua-5',
+        user: {
+            name: 'Alex Koch',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+        },
+        action: 'hat kommentiert',
+        timestamp: 'Vor 4 Tagen',
+        content: 'Tolles Rezept! Die Soße war perfekt.',
+    },
+];
+
+export const getUserActivities = (userId: string) =>
+    userActivities.filter((a) => a.user.name === users[userId]?.name);

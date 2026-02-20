@@ -56,6 +56,7 @@ function StepCard({ step, isCompleted, isActive, isJustCompleted, hasParallelLin
         position: "relative",
         overflow: "hidden",
         animation: isJustCompleted ? "cardComplete 600ms ease-out" : "none",
+        zIndex: 2,
       })}
     >
       {hasParallelLink && (
@@ -408,11 +409,14 @@ export function RecipeFlow({
   const [scrollSize, setScrollSize] = useState({ width: 0, height: 0 });
   const scrollRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef(new Map<number, HTMLDivElement>());
-  const mergeEdges = useMemo(() => {
+  const flowEdges = useMemo(() => {
     const edges: { source: number; target: number }[] = [];
     flowSteps.forEach((step) => {
       step.parallelWith?.forEach((prev) => {
         edges.push({ source: prev, target: step.order });
+      });
+      step.nextSteps?.forEach((next) => {
+        edges.push({ source: step.order, target: next });
       });
     });
     return edges;
@@ -619,7 +623,7 @@ export function RecipeFlow({
               })}
               viewBox={`0 0 ${scrollSize.width} ${scrollSize.height}`}
             >
-              {mergeEdges.map((edge, index) => {
+              {flowEdges.map((edge: { source: number; target: number }, index: number) => {
                 const source = nodeRects[edge.source];
                 const target = nodeRects[edge.target];
                 if (!source || !target) {

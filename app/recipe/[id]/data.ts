@@ -13,6 +13,7 @@ export interface FlowStep {
   duration?: number;
   laneId: string;
   parallelWith?: number[];
+  nextSteps?: number[];
 }
 
 interface FlowStepDefinition {
@@ -22,6 +23,7 @@ interface FlowStepDefinition {
   duration?: number;
   laneId: string;
   parallelWithIds?: string[];
+  nextStepIds?: string[];
 }
 
 const buildFlowSteps = (definitions: FlowStepDefinition[]): FlowStep[] => {
@@ -39,6 +41,9 @@ const buildFlowSteps = (definitions: FlowStepDefinition[]): FlowStep[] => {
     laneId: def.laneId,
     parallelWith: def.parallelWithIds
       ?.map((parallelId) => idToOrder.get(parallelId))
+      .filter((value): value is number => typeof value === "number"),
+    nextSteps: def.nextStepIds
+      ?.map((nextId) => idToOrder.get(nextId))
       .filter((value): value is number => typeof value === "number"),
   }));
 };
@@ -182,7 +187,14 @@ export const recipes: Record<string, Recipe> = {
       { name: "Salz", amount: 1, unit: "Prise" },
     ],
     flowSteps: buildFlowSteps([
-      { id: "wasser", description: "Wasser aufsetzen", type: "kochen", duration: 5, laneId: "kochen" },
+      {
+        id: "wasser",
+        description: "Wasser aufsetzen",
+        type: "kochen",
+        duration: 5,
+        laneId: "kochen",
+        nextStepIds: ["knoblauch", "nudeln"],
+      },
       {
         id: "knoblauch",
         description: "Knoblauch schneiden",
@@ -190,8 +202,16 @@ export const recipes: Record<string, Recipe> = {
         duration: 2,
         laneId: "vorbereitung",
         parallelWithIds: ["wasser"],
+        nextStepIds: ["oel"],
       },
-      { id: "nudeln", description: "Spaghetti kochen", type: "kochen", duration: 8, laneId: "kochen" },
+      {
+        id: "nudeln",
+        description: "Spaghetti kochen",
+        type: "kochen",
+        duration: 8,
+        laneId: "kochen",
+        nextStepIds: ["oel"],
+      },
       {
         id: "oel",
         description: "Öl erhitzen",
@@ -199,11 +219,39 @@ export const recipes: Record<string, Recipe> = {
         duration: 1,
         laneId: "kochen",
         parallelWithIds: ["nudeln"],
+        nextStepIds: ["anbraten"],
       },
-      { id: "anbraten", description: "Knoblauch & Chili anbraten", type: "kochen", duration: 2, laneId: "kochen" },
-      { id: "mischen", description: "Nudeln abgießen & mischen", type: "zusammenfuehren", duration: 1, laneId: "kochen" },
-      { id: "ziehen", description: "Kurz ziehen lassen", type: "warten", duration: 1, laneId: "warten" },
-      { id: "servieren", description: "Servieren", type: "servieren", duration: 1, laneId: "servieren" },
+      {
+        id: "anbraten",
+        description: "Knoblauch & Chili anbraten",
+        type: "kochen",
+        duration: 2,
+        laneId: "kochen",
+        nextStepIds: ["mischen"],
+      },
+      {
+        id: "mischen",
+        description: "Nudeln abgießen & mischen",
+        type: "zusammenfuehren",
+        duration: 1,
+        laneId: "kochen",
+        nextStepIds: ["ziehen"],
+      },
+      {
+        id: "ziehen",
+        description: "Kurz ziehen lassen",
+        type: "warten",
+        duration: 1,
+        laneId: "warten",
+        nextStepIds: ["servieren"],
+      },
+      {
+        id: "servieren",
+        description: "Servieren",
+        type: "servieren",
+        duration: 1,
+        laneId: "servieren",
+      },
     ]),
     tags: ["Italienisch", "Schnell", "Vegetarisch"],
   },
@@ -229,7 +277,14 @@ export const recipes: Record<string, Recipe> = {
       { name: "Oregano", amount: 1, unit: "TL" },
     ],
     flowSteps: buildFlowSteps([
-      { id: "tomaten", description: "Tomaten schneiden", type: "vorbereitung", duration: 3, laneId: "vorbereitung" },
+      {
+        id: "tomaten",
+        description: "Tomaten schneiden",
+        type: "vorbereitung",
+        duration: 3,
+        laneId: "vorbereitung",
+        nextStepIds: ["gurken"],
+      },
       {
         id: "gurken",
         description: "Gurke & Zwiebel schneiden",
@@ -237,11 +292,39 @@ export const recipes: Record<string, Recipe> = {
         duration: 3,
         laneId: "vorbereitung",
         parallelWithIds: ["tomaten"],
+        nextStepIds: ["mixen"],
       },
-      { id: "mixen", description: "Gemüse mischen", type: "zusammenfuehren", duration: 2, laneId: "vorbereitung" },
-      { id: "feta", description: "Feta schneiden", type: "vorbereitung", duration: 1, laneId: "vorbereitung" },
-      { id: "alles", description: "Alles zusammenführen", type: "zusammenfuehren", duration: 2, laneId: "vorbereitung" },
-      { id: "servieren-greek", description: "Servieren", type: "servieren", duration: 1, laneId: "servieren" },
+      {
+        id: "mixen",
+        description: "Gemüse mischen",
+        type: "zusammenfuehren",
+        duration: 2,
+        laneId: "vorbereitung",
+        nextStepIds: ["feta"],
+      },
+      {
+        id: "feta",
+        description: "Feta schneiden",
+        type: "vorbereitung",
+        duration: 1,
+        laneId: "vorbereitung",
+        nextStepIds: ["alles"],
+      },
+      {
+        id: "alles",
+        description: "Alles zusammenführen",
+        type: "zusammenfuehren",
+        duration: 2,
+        laneId: "vorbereitung",
+        nextStepIds: ["servieren-greek"],
+      },
+      {
+        id: "servieren-greek",
+        description: "Servieren",
+        type: "servieren",
+        duration: 1,
+        laneId: "servieren",
+      },
     ]),
     tags: ["Mediterran", "Gesund", "Vegetarisch"],
   },
@@ -264,7 +347,14 @@ export const recipes: Record<string, Recipe> = {
       { name: "Rotwein", amount: 100, unit: "ml" },
     ],
     flowSteps: buildFlowSteps([
-      { id: "start", description: "Start: Alle Zutaten bereitlegen", type: "vorbereitung", duration: 5, laneId: "vorbereitung" },
+      {
+        id: "start",
+        description: "Start: Alle Zutaten bereitlegen",
+        type: "vorbereitung",
+        duration: 5,
+        laneId: "vorbereitung",
+        nextStepIds: ["ente", "spaetzle-teig", "schalotten"],
+      },
       {
         id: "ente",
         description: "Ente einschneiden und würzen",
@@ -272,6 +362,7 @@ export const recipes: Record<string, Recipe> = {
         duration: 5,
         laneId: "vorbereitung",
         parallelWithIds: ["start"],
+        nextStepIds: ["sear-duck"],
       },
       {
         id: "spaetzle-teig",
@@ -280,6 +371,7 @@ export const recipes: Record<string, Recipe> = {
         duration: 10,
         laneId: "vorbereitung",
         parallelWithIds: ["start"],
+        nextStepIds: ["rest-batter"],
       },
       {
         id: "schalotten",
@@ -288,21 +380,109 @@ export const recipes: Record<string, Recipe> = {
         duration: 3,
         laneId: "vorbereitung",
         parallelWithIds: ["start"],
+        nextStepIds: ["saute-shallots"],
       },
-      { id: "anschwitzen", description: "Schalotten anschwitzen", type: "kochen", duration: 5, laneId: "kochen" },
-      { id: "teig-ruhen", description: "Teig ruhen lassen", type: "warten", duration: 15, laneId: "warten" },
-      { id: "wasser", description: "Wasser mit Salz zum Kochen bringen", type: "kochen", duration: 10, laneId: "kochen" },
-      { id: "spaetzle-kochen", description: "Spätzle kochen", type: "kochen", duration: 8, laneId: "kochen" },
-      { id: "fond", description: "Rotwein ablöschen & Fond reduzieren", type: "kochen", duration: 10, laneId: "kochen" },
       {
-        id: "zusammen",
-        description: "Alle Komponenten zusammenführen",
-        type: "zusammenfuehren",
-        duration: 4,
+        id: "sear-duck",
+        description: "Ente anbraten",
+        type: "kochen",
+        duration: 15,
         laneId: "kochen",
-        parallelWithIds: ["anschwitzen", "teig-ruhen", "wasser", "spaetzle-kochen", "fond"],
+        nextStepIds: ["rest-duck"],
       },
-      { id: "servieren-duck", description: "Servieren", type: "servieren", duration: 2, laneId: "servieren" },
+      {
+        id: "rest-duck",
+        description: "Ente ruhen",
+        type: "warten",
+        duration: 10,
+        laneId: "warten",
+        nextStepIds: ["slice-duck"],
+      },
+      {
+        id: "slice-duck",
+        description: "Ente aufschneiden",
+        type: "vorbereitung",
+        duration: 2,
+        laneId: "vorbereitung",
+        nextStepIds: ["combine"],
+      },
+      {
+        id: "rest-batter",
+        description: "Teig ruhen",
+        type: "warten",
+        duration: 15,
+        laneId: "warten",
+        nextStepIds: ["boil-water"],
+      },
+      {
+        id: "boil-water",
+        description: "Wasser kochen",
+        type: "kochen",
+        duration: 10,
+        laneId: "kochen",
+        nextStepIds: ["cook-spaetzle"],
+      },
+      {
+        id: "cook-spaetzle",
+        description: "Spätzle kochen",
+        type: "kochen",
+        duration: 8,
+        laneId: "kochen",
+        nextStepIds: ["saute-spaetzle"],
+      },
+      {
+        id: "saute-spaetzle",
+        description: "Spätzle schwenken",
+        type: "kochen",
+        duration: 5,
+        laneId: "kochen",
+        nextStepIds: ["combine"],
+      },
+      {
+        id: "saute-shallots",
+        description: "Schalotten dünsten",
+        type: "kochen",
+        duration: 5,
+        laneId: "kochen",
+        nextStepIds: ["deglaze"],
+      },
+      {
+        id: "deglaze",
+        description: "Ablöschen",
+        type: "kochen",
+        duration: 10,
+        laneId: "kochen",
+        nextStepIds: ["add-stock"],
+      },
+      {
+        id: "add-stock",
+        description: "Fond zugeben",
+        type: "kochen",
+        duration: 15,
+        laneId: "kochen",
+        nextStepIds: ["finish-sauce"],
+      },
+      {
+        id: "finish-sauce",
+        description: "Soße abschmecken",
+        type: "wuerzen",
+        duration: 3,
+        laneId: "kochen",
+        nextStepIds: ["combine"],
+      },
+      {
+        id: "combine",
+        description: "Anrichten",
+        type: "zusammenfuehren",
+        laneId: "kochen",
+        nextStepIds: ["serve"],
+      },
+      {
+        id: "serve",
+        description: "Servieren",
+        type: "servieren",
+        laneId: "servieren",
+      },
     ]),
     tags: ["Mock", "Parallele Schritte", "Demo"],
   },

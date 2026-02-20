@@ -357,7 +357,7 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                 Zubereitung
               </h2>
 
-              <RecipeFlow flowSteps={recipe.flowSteps || []} completedSteps={[]} />
+              <RecipeFlow nodes={recipe.flow.nodes} edges={recipe.flow.edges} />
             </div>
           </div>
         </div>

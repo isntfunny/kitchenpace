@@ -1,43 +1,68 @@
 "use client";
 
-import { useMemo, useState, useRef, useLayoutEffect, useCallback } from "react";
+import { useMemo, useState, useRef } from "react";
 import { css } from "styled-system/css";
-import { LANES, type FlowStep } from "@/app/recipe/[id]/data";
+import type { FlowNode, FlowEdge } from "@/app/recipe/[id]/data";
 
-const getStepEmoji = (type: string): string => {
+const NODE_WIDTH = 200;
+const NODE_HEIGHT = 100;
+const NODE_GAP_X = 80;
+const NODE_GAP_Y = 30;
+
+const getTypeEmoji = (type: string): string => {
   const emojis: Record<string, string> = {
-    vorbereitung: "🥗",
-    kochen: "🍳",
-    backen: "🥖",
-    warten: "⏱️",
-    wuerzen: "🧂",
-    zusammenfuehren: "🔗",
-    servieren: "✨",
+    prep: "🔪",
+    cook: "🍳",
+    wait: "⏱️",
+    season: "🧂",
+    combine: "🍽️",
+    serve: "✨",
   };
   return emojis[type] || "📝";
 };
 
-interface StepCardProps {
-  step: FlowStep;
+const getTypeColor = (type: string): string => {
+  const colors: Record<string, string> = {
+    prep: "#e3f2fd",
+    cook: "#fff3e0",
+    wait: "#f3e5f5",
+    season: "#e8f5e9",
+    combine: "#fce4ec",
+    serve: "#ffebee",
+  };
+  return colors[type] || "#f5f5f5";
+};
+
+const getTypeLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    prep: "Vorbereitung",
+    cook: "Kochen",
+    wait: "Warten",
+    season: "Würzen",
+    combine: "Anrichten",
+    serve: "Servieren",
+  };
+  return labels[type] || type;
+};
+
+interface NodeCardProps {
+  node: FlowNode;
   isCompleted: boolean;
   isActive: boolean;
   isJustCompleted: boolean;
   onToggleComplete: () => void;
   onClick: () => void;
-  cardRef?: (element: HTMLDivElement | null) => void;
 }
 
-function StepCard({ step, isCompleted, isActive, isJustCompleted, onToggleComplete, onClick, cardRef }: StepCardProps) {
-  const lane = LANES.find((l) => l.id === step.laneId);
-
+function NodeCard({ node, isCompleted, isActive, isJustCompleted, onToggleComplete, onClick }: NodeCardProps) {
   return (
     <div
       onClick={onClick}
-      ref={cardRef}
       className={css({
+        width: `${NODE_WIDTH}px`,
         padding: "16px",
         borderRadius: "16px",
-        backgroundColor: isCompleted ? "#f0f9f0" : lane?.color || "#f5f5f5",
+        backgroundColor: isCompleted ? "#f0f9f0" : getTypeColor(node.type),
         border: isActive
           ? "2px solid #2196f3"
           : isCompleted
@@ -63,38 +88,34 @@ function StepCard({ step, isCompleted, isActive, isJustCompleted, onToggleComple
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "10px",
+          marginBottom: "8px",
         })}
       >
-        <div className={css({ display: "flex", alignItems: "center", gap: "10px" })}>
-          <span className={css({ fontSize: "22px" })}>{getStepEmoji(step.type)}</span>
+        <div className={css({ display: "flex", alignItems: "center", gap: "8px" })}>
+          <span className={css({ fontSize: "20px" })}>{getTypeEmoji(node.type)}</span>
           <span
             className={css({
-              fontSize: "12px",
+              fontSize: "11px",
               fontWeight: "600",
               color: "#666",
               textTransform: "uppercase",
               letterSpacing: "0.5px",
             })}
           >
-            {lane?.label || step.laneId}
+            {getTypeLabel(node.type)}
           </span>
         </div>
-        {step.duration && (
+        {node.duration && (
           <div
             className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              fontSize: "12px",
+              fontSize: "11px",
               color: "#888",
               backgroundColor: "rgba(255,255,255,0.7)",
-              padding: "4px 10px",
-              borderRadius: "20px",
+              padding: "3px 8px",
+              borderRadius: "12px",
             })}
           >
-            <span>⏱️</span>
-            <span>{step.duration} Min.</span>
+            {node.duration} Min.
           </div>
         )}
       </div>
@@ -102,70 +123,81 @@ function StepCard({ step, isCompleted, isActive, isJustCompleted, onToggleComple
       <div
         className={css({
           fontSize: "14px",
-          fontWeight: "500",
+          fontWeight: "600",
           color: isCompleted ? "#666" : "#333",
-          lineHeight: "1.5",
+          marginBottom: "4px",
+        })}
+      >
+        {node.label}
+      </div>
+
+      <div
+        className={css({
+          fontSize: "12px",
+          color: isCompleted ? "#888" : "#666",
+          lineHeight: "1.4",
           textDecoration: isCompleted ? "line-through" : "none",
         })}
       >
-        {step.description}
+        {node.description}
       </div>
 
       <div
         className={css({
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          marginTop: "12px",
+          justifyContent: "flex-end",
+          marginTop: "10px",
         })}
       >
         {isActive && (
           <div
             className={css({
-              fontSize: "12px",
+              fontSize: "11px",
               color: "#2196f3",
               fontWeight: "500",
               display: "flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "4px",
+              marginRight: "8px",
             })}
           >
             <span
               className={css({
-                width: "8px",
-                height: "8px",
+                width: "6px",
+                height: "6px",
                 borderRadius: "full",
                 backgroundColor: "#2196f3",
                 animation: "pulse 1.5s infinite",
               })}
             />
-            Klicke für Details
+            Details
           </div>
         )}
         <button
-          onClick={(event) => {
-            event.stopPropagation();
+          onClick={(e) => {
+            e.stopPropagation();
             onToggleComplete();
           }}
           className={css({
-            marginLeft: "auto",
-            padding: "6px 10px",
+            padding: "5px 10px",
             borderRadius: "999px",
             border: isCompleted ? "none" : "1px solid #ddd",
             backgroundColor: isCompleted ? "#4caf50" : "white",
             color: isCompleted ? "white" : "#666",
-            fontSize: "12px",
+            fontSize: "11px",
             fontWeight: "600",
             cursor: "pointer",
             transition: "all 0.2s ease",
             _hover: {
-              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
             },
           })}
         >
-          {isCompleted ? "✓ Erledigt" : "Als erledigt"}
+          {isCompleted ? "✓" : "Fertig"}
         </button>
       </div>
+
       <div
         className={css({
           position: "absolute",
@@ -180,22 +212,14 @@ function StepCard({ step, isCompleted, isActive, isJustCompleted, onToggleComple
   );
 }
 
-interface PositionedStep {
-  step: FlowStep;
-  row: number;
-  column: number;
-}
-
-interface StepDetailModalProps {
-  step: FlowStep;
+interface NodeDetailModalProps {
+  node: FlowNode;
   isCompleted: boolean;
   onToggleComplete: () => void;
   onClose: () => void;
 }
 
-function StepDetailModal({ step, isCompleted, onToggleComplete, onClose }: StepDetailModalProps) {
-  const lane = LANES.find((l) => l.id === step.laneId);
-  
+function NodeDetailModal({ node, isCompleted, onToggleComplete, onClose }: NodeDetailModalProps) {
   return (
     <div
       className={css({
@@ -215,7 +239,7 @@ function StepDetailModal({ step, isCompleted, onToggleComplete, onClose }: StepD
           backgroundColor: "white",
           borderRadius: "20px",
           padding: "24px",
-          maxWidth: "450px",
+          maxWidth: "400px",
           width: "100%",
           boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
         })}
@@ -230,27 +254,26 @@ function StepDetailModal({ step, isCompleted, onToggleComplete, onClose }: StepD
           })}
         >
           <div className={css({ display: "flex", alignItems: "center", gap: "12px" })}>
-            <span className={css({ fontSize: "36px" })}>{getStepEmoji(step.type)}</span>
+            <span className={css({ fontSize: "32px" })}>{getTypeEmoji(node.type)}</span>
             <div>
               <div
                 className={css({
-                  fontSize: "12px",
+                  fontSize: "11px",
                   fontWeight: "600",
                   color: "#666",
                   textTransform: "uppercase",
-                  letterSpacing: "0.5px",
                 })}
               >
-                {lane?.label}
+                {getTypeLabel(node.type)}
               </div>
               <div
                 className={css({
-                  fontSize: "20px",
+                  fontSize: "18px",
                   fontWeight: "700",
                   color: "#333",
                 })}
               >
-                Schritt {step.order}
+                {node.label}
               </div>
             </div>
           </div>
@@ -259,7 +282,7 @@ function StepDetailModal({ step, isCompleted, onToggleComplete, onClose }: StepD
             className={css({
               background: "none",
               border: "none",
-              fontSize: "28px",
+              fontSize: "24px",
               cursor: "pointer",
               color: "#999",
               lineHeight: "1",
@@ -272,197 +295,103 @@ function StepDetailModal({ step, isCompleted, onToggleComplete, onClose }: StepD
         
         <p
           className={css({
-            fontSize: "16px",
-            lineHeight: "1.7",
+            fontSize: "15px",
+            lineHeight: "1.6",
             color: "#333",
-            marginBottom: "20px",
+            marginBottom: "16px",
           })}
         >
-          {step.description}
+          {node.description}
         </p>
         
-        <div
-          className={css({
-            display: "flex",
-            gap: "12px",
-            flexWrap: "wrap",
-            marginBottom: "24px",
-          })}
-        >
-          {step.duration && (
-            <div
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                backgroundColor: "#f5f5f5",
-                padding: "8px 14px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                color: "#666",
-              })}
-            >
-              <span>⏱️</span>
-              <span>ca. {step.duration} Minuten</span>
-            </div>
-          )}
-          {step.type && (
-            <div
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                backgroundColor: "#f5f5f5",
-                padding: "8px 14px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                color: "#666",
-              })}
-            >
-              <span>🏷️</span>
-              <span style={{ textTransform: 'capitalize' }}>{step.type}</span>
-            </div>
-          )}
-        </div>
+        {node.duration && (
+          <div
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              backgroundColor: "#f5f5f5",
+              padding: "8px 12px",
+              borderRadius: "8px",
+              fontSize: "14px",
+              color: "#666",
+              marginBottom: "16px",
+            })}
+          >
+            <span>⏱️</span>
+            <span>ca. {node.duration} Minuten</span>
+          </div>
+        )}
         
         <button
           onClick={onToggleComplete}
           className={css({
             width: "100%",
-            padding: "14px 20px",
-            borderRadius: "12px",
+            padding: "12px 16px",
+            borderRadius: "10px",
             border: "none",
-            fontSize: "16px",
+            fontSize: "15px",
             fontWeight: "600",
             cursor: "pointer",
             transition: "all 0.2s ease",
             backgroundColor: isCompleted ? "#f5f5f5" : "#4caf50",
             color: isCompleted ? "#666" : "white",
             _hover: {
-              transform: "translateY(-2px)",
+              transform: "translateY(-1px)",
               boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             },
           })}
         >
-          {isCompleted ? "✓ Bereits erledigt - Rückgängig machen" : "✓ Als erledigt markieren"}
+          {isCompleted ? "✓ Rückgängig machen" : "✓ Als erledigt markieren"}
         </button>
       </div>
     </div>
   );
 }
 
-export function RecipeFlow({ 
-  flowSteps, 
-  completedSteps = [],
-}: { 
-  flowSteps: FlowStep[]; 
-  completedSteps?: number[];
-}) {
-  const [completed, setCompleted] = useState<number[]>(completedSteps);
-  const [selectedStep, setSelectedStep] = useState<FlowStep | null>(null);
-  const [lastCompleted, setLastCompleted] = useState<number | null>(null);
+interface RecipeFlowProps {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+}
+
+export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);
+  const [lastCompleted, setLastCompleted] = useState<string | null>(null);
   const [isCookingMode, setIsCookingMode] = useState(false);
-  const [nodeRects, setNodeRects] = useState<Record<number, { x: number; y: number; width: number; height: number }>>({});
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
   const containerRef = useRef<HTMLDivElement>(null);
-  const stepRefs = useRef(new Map<number, HTMLDivElement>());
 
-  const flowEdges = useMemo(() => {
-    const edges: { source: number; target: number }[] = [];
-    flowSteps.forEach((step) => {
-      step.parallelWith?.forEach((prev) => {
-        edges.push({ source: prev, target: step.order });
-      });
-      step.nextSteps?.forEach((next) => {
-        edges.push({ source: step.order, target: next });
-      });
-    });
-    return edges;
-  }, [flowSteps]);
+  const getActiveNode = () => {
+    return nodes.find((n) => !completed.has(n.id))?.id ?? null;
+  };
 
-  const { positionedSteps, totalColumns } = useMemo(() => {
-    const orderedSteps = [...flowSteps].sort((a, b) => a.order - b.order);
-    if (orderedSteps.length === 0) return { positionedSteps: [], totalColumns: 1 };
+  const activeNode = getActiveNode();
 
-    const firstStep = orderedSteps[0];
-    const lastStep = orderedSteps[orderedSteps.length - 1];
-
-    const intermediateSteps = orderedSteps.slice(1, -1);
-    const laneIds = [...new Set(intermediateSteps.map((s) => s.laneId))];
-    const laneToColumn = new Map(laneIds.map((laneId, index) => [laneId, index + 1]));
-
-    const totalColumns = Math.max(3, laneIds.length + 2);
-    const centerColumn = Math.ceil(totalColumns / 2);
-
-    const positioned: PositionedStep[] = orderedSteps.map((step, index) => {
-      let column: number;
-      
-      if (step.order === firstStep.order || step.order === lastStep.order) {
-        column = centerColumn;
-      } else {
-        column = (laneToColumn.get(step.laneId) ?? 1);
-        if (totalColumns > 3) {
-          column = column;
-        }
-      }
-
-      return {
-        step,
-        row: index + 1,
-        column,
-      };
-    });
-
-    return { positionedSteps: positioned, totalColumns };
-  }, [flowSteps]);
-
-  const updateLayout = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const containerRect = container.getBoundingClientRect();
-    const nextRects: Record<number, { x: number; y: number; width: number; height: number }> = {};
-    
-    stepRefs.current.forEach((el, order) => {
-      const rect = el.getBoundingClientRect();
-      nextRects[order] = {
-        x: rect.left - containerRect.left,
-        y: rect.top - containerRect.top,
-        width: rect.width,
-        height: rect.height,
-      };
-    });
-    
-    setNodeRects(nextRects);
-    setContainerSize({ width: container.scrollWidth, height: container.scrollHeight });
-  }, []);
-
-  useLayoutEffect(() => {
-    const frame = requestAnimationFrame(updateLayout);
-    window.addEventListener("resize", updateLayout);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("resize", updateLayout);
-    };
-  }, [updateLayout, flowSteps, isCookingMode]);
-
-  const toggleComplete = (order: number) => {
+  const toggleComplete = (id: string) => {
     setCompleted((prev) => {
-      const next = prev.includes(order) ? prev.filter((o) => o !== order) : [...prev, order];
-      if (!prev.includes(order)) {
-        setLastCompleted(order);
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+        setLastCompleted(id);
         setTimeout(() => setLastCompleted(null), 700);
       }
       return next;
     });
   };
 
-  const getActiveStep = () => {
-    const firstIncomplete = flowSteps.find((step) => !completed.includes(step.order));
-    return firstIncomplete?.order ?? null;
-  };
-
-  const activeStep = getActiveStep();
+  const bounds = useMemo(() => {
+    if (nodes.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0, width: 600, height: 400 };
+    const xs = nodes.map((n) => n.position.x);
+    const ys = nodes.map((n) => n.position.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs) + NODE_WIDTH;
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys) + NODE_HEIGHT;
+    return { minX, maxX, minY, maxY, width: maxX - minX + NODE_GAP_X * 2, height: maxY - minY + NODE_GAP_Y * 2 };
+  }, [nodes]);
 
   const containerStyles = isCookingMode
     ? css({
@@ -470,14 +399,12 @@ export function RecipeFlow({
         inset: "0",
         zIndex: 999,
         backgroundColor: "#fafafa",
-        padding: "24px",
-        overflow: "auto",
+        display: "flex",
+        flexDirection: "column",
       })
     : css({
         width: "100%",
-        maxWidth: "900px",
         margin: "0 auto",
-        padding: "24px",
       });
 
   return (
@@ -493,49 +420,34 @@ export function RecipeFlow({
           100% { opacity: 0; }
         }
       `}</style>
-      
+
       <div
         className={css({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "24px",
           padding: "16px 20px",
           backgroundColor: "white",
-          borderRadius: "12px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-          flexWrap: "wrap",
-          gap: "12px",
+          borderBottom: "1px solid #eee",
+          flexShrink: 0,
         })}
       >
         <div>
-          <div className={css({ fontSize: "18px", fontWeight: "700", color: "#333" })}>
+          <div className={css({ fontSize: "16px", fontWeight: "700", color: "#333" })}>
             🗺️ Koch-Flow
           </div>
-          <div className={css({ fontSize: "13px", color: "#666", marginTop: "2px" })}>
-            {completed.length} von {flowSteps.length} Schritten erledigt
+          <div className={css({ fontSize: "12px", color: "#666" })}>
+            {completed.size} von {nodes.length} erledigt
           </div>
         </div>
-        <div
-          className={css({
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-          })}
-        >
-          <div
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            })}
-          >
+        <div className={css({ display: "flex", alignItems: "center", gap: "12px" })}>
+          <div className={css({ display: "flex", alignItems: "center", gap: "6px" })}>
             <div
               className={css({
-                width: "100px",
-                height: "8px",
+                width: "80px",
+                height: "6px",
                 backgroundColor: "#e0e0e0",
-                borderRadius: "4px",
+                borderRadius: "3px",
                 overflow: "hidden",
               })}
             >
@@ -543,14 +455,14 @@ export function RecipeFlow({
                 className={css({
                   height: "100%",
                   backgroundColor: "#4caf50",
-                  borderRadius: "4px",
+                  borderRadius: "3px",
                   transition: "width 0.3s ease",
                 })}
-                style={{ width: `${(completed.length / flowSteps.length) * 100}%` }}
+                style={{ width: `${(completed.size / nodes.length) * 100}%` }}
               />
             </div>
-            <span className={css({ fontSize: "14px", fontWeight: "600", color: "#4caf50" })}>
-              {Math.round((completed.length / flowSteps.length) * 100)}%
+            <span className={css({ fontSize: "12px", fontWeight: "600", color: "#4caf50" })}>
+              {Math.round((completed.size / nodes.length) * 100)}%
             </span>
           </div>
           <button
@@ -559,22 +471,22 @@ export function RecipeFlow({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              padding: "10px 16px",
-              borderRadius: "10px",
+              padding: "8px 14px",
+              borderRadius: "8px",
               border: isCookingMode ? "2px solid #4caf50" : "1px solid #ddd",
               backgroundColor: isCookingMode ? "#e8f5e9" : "white",
               color: isCookingMode ? "#2e7d32" : "#666",
-              fontSize: "14px",
+              fontSize: "13px",
               fontWeight: "600",
               cursor: "pointer",
               transition: "all 0.2s ease",
               _hover: {
                 transform: "translateY(-1px)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
               },
             })}
           >
-            {isCookingMode ? "✕ Schließen" : "🍳 Kochmodus"}
+            {isCookingMode ? "✕" : "🍳"} Kochmodus
           </button>
         </div>
       </div>
@@ -582,114 +494,103 @@ export function RecipeFlow({
       <div
         ref={containerRef}
         className={css({
-          paddingBottom: "16px",
+          flex: 1,
+          overflow: "auto",
           position: "relative",
+          padding: "24px",
         })}
       >
-        {containerSize.width > 0 && (
-          <svg
-            width={containerSize.width}
-            height={containerSize.height}
-            className={css({
-              position: "absolute",
-              top: 0,
-              left: 0,
-              pointerEvents: "none",
-              zIndex: 0,
-            })}
-            viewBox={`0 0 ${containerSize.width} ${containerSize.height}`}
-          >
-            {flowEdges.map((edge: { source: number; target: number }, index: number) => {
-              const source = nodeRects[edge.source];
-              const target = nodeRects[edge.target];
-              if (!source || !target) return null;
-              
-              const startX = source.x + source.width / 2;
-              const startY = source.y + source.height;
-              const endX = target.x + target.width / 2;
-              const endY = target.y;
-              const midY = startY + (endY - startY) / 2;
-              const path = `M ${startX} ${startY} C ${startX} ${midY} ${endX} ${midY} ${endX} ${endY}`;
-              
-              return (
-                <path
-                  key={`${edge.source}-${edge.target}-${index}`}
-                  d={path}
-                  fill="none"
-                  stroke="rgba(122,165,107,0.6)"
-                  strokeWidth={2}
-                  strokeDasharray="6 6"
-                  strokeLinecap="round"
-                />
-              );
-            })}
-          </svg>
-        )}
+        <svg
+          width={bounds.width}
+          height={bounds.height}
+          className={css({
+            position: "absolute",
+            top: 0,
+            left: 0,
+            pointerEvents: "none",
+            zIndex: 0,
+          })}
+          viewBox={`0 0 ${bounds.width} ${bounds.height}`}
+        >
+          {edges.map((edge) => {
+            const source = nodes.find((n) => n.id === edge.source);
+            const target = nodes.find((n) => n.id === edge.target);
+            if (!source || !target) return null;
+
+            const startX = source.position.x - bounds.minX + NODE_WIDTH / 2 + NODE_GAP_X;
+            const startY = source.position.y - bounds.minY + NODE_HEIGHT + NODE_GAP_Y;
+            const endX = target.position.x - bounds.minX + NODE_WIDTH / 2 + NODE_GAP_X;
+            const endY = target.position.y - bounds.minY + NODE_GAP_Y;
+
+            const midY = startY + (endY - startY) / 2;
+            const path = `M ${startX} ${startY} C ${startX} ${midY} ${endX} ${midY} ${endX} ${endY}`;
+
+            return (
+              <path
+                key={edge.id}
+                d={path}
+                fill="none"
+                stroke="rgba(122,165,107,0.5)"
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                strokeLinecap="round"
+              />
+            );
+          })}
+        </svg>
 
         <div
           className={css({
-            display: "grid",
-            gap: "24px",
             position: "relative",
-            zIndex: 1,
+            width: bounds.width,
+            height: bounds.height,
           })}
-          style={{
-            gridTemplateColumns: `repeat(${totalColumns}, minmax(180px, 1fr))`,
-            gridAutoRows: "minmax(120px, auto)",
-          }}
         >
-          {positionedSteps.map((record) => (
+          {nodes.map((node) => (
             <div
-              key={record.step.order}
-              style={{ gridColumn: record.column, gridRow: record.row }}
+              key={node.id}
+              style={{
+                position: "absolute",
+                left: node.position.x - bounds.minX + NODE_GAP_X,
+                top: node.position.y - bounds.minY + NODE_GAP_Y,
+              }}
             >
-              <StepCard
-                step={record.step}
-                isCompleted={completed.includes(record.step.order)}
-                isActive={record.step.order === activeStep}
-                isJustCompleted={record.step.order === lastCompleted}
-                onToggleComplete={() => toggleComplete(record.step.order)}
-                onClick={() => setSelectedStep(record.step)}
-                cardRef={(el) => {
-                  if (el) {
-                    stepRefs.current.set(record.step.order, el);
-                  } else {
-                    stepRefs.current.delete(record.step.order);
-                  }
-                }}
+              <NodeCard
+                node={node}
+                isCompleted={completed.has(node.id)}
+                isActive={node.id === activeNode}
+                isJustCompleted={node.id === lastCompleted}
+                onToggleComplete={() => toggleComplete(node.id)}
+                onClick={() => setSelectedNode(node)}
               />
             </div>
           ))}
         </div>
       </div>
 
-      {completed.length === flowSteps.length && flowSteps.length > 0 && (
+      {completed.size === nodes.length && nodes.length > 0 && (
         <div
           className={css({
-            marginTop: "24px",
-            padding: "24px",
+            padding: "16px",
             backgroundColor: "#e8f5e9",
-            borderRadius: "16px",
+            borderTop: "2px solid #4caf50",
             textAlign: "center",
-            border: "2px solid #4caf50",
+            flexShrink: 0,
           })}
         >
-          <div className={css({ fontSize: "36px", marginBottom: "8px" })}>🎉</div>
-          <div className={css({ fontSize: "20px", fontWeight: "700", color: "#2e7d32" })}>
-            Fertig!
-          </div>
-          <div className={css({ fontSize: "14px", color: "#666", marginTop: "4px" })}>
-            Du hast alle Schritte gemeistert. Guten Appetit!
+          <div className={css({ fontSize: "24px", marginBottom: "4px" })}>🎉</div>
+          <div className={css({ fontSize: "16px", fontWeight: "700", color: "#2e7d32" })}>
+            Fertig! Guten Appetit!
           </div>
         </div>
       )}
 
-      {selectedStep && (
-        <StepDetailModal
-          step={selectedStep}
-          isCompleted={completed.includes(selectedStep.order)}
-          onToggleComplete={() => toggleComplete(selectedStep.order)}
-          onClose={() => setSelectedStep(null)}
+      {selectedNode && (
+        <NodeDetailModal
+          node={selectedNode}
+          isCompleted={completed.has(selectedNode.id)}
+          onToggleComplete={() => toggleComplete(selectedNode.id)}
+          onClose={() => setSelectedNode(null)}
         />
       )}
     </div>

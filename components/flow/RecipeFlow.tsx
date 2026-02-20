@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useLayoutEffect, useCallback } from "react";
 import { css } from "styled-system/css";
 import { LANES, type FlowStep } from "@/app/recipe/[id]/data";
 
@@ -25,14 +25,16 @@ interface StepCardProps {
   hasParallelLink: boolean;
   onToggleComplete: () => void;
   onClick: () => void;
+  cardRef?: (element: HTMLDivElement | null) => void;
 }
 
-function StepCard({ step, isCompleted, isActive, isJustCompleted, hasParallelLink, onToggleComplete, onClick }: StepCardProps) {
+function StepCard({ step, isCompleted, isActive, isJustCompleted, hasParallelLink, onToggleComplete, onClick, cardRef }: StepCardProps) {
   const lane = LANES.find((l) => l.id === step.laneId);
 
   return (
     <div
       onClick={onClick}
+      ref={cardRef}
       className={css({
         padding: "16px",
         borderRadius: "16px",
@@ -402,7 +404,45 @@ export function RecipeFlow({
   const [selectedStep, setSelectedStep] = useState<FlowStep | null>(null);
   const [lastCompleted, setLastCompleted] = useState<number | null>(null);
   const [activeLaneIndex, setActiveLaneIndex] = useState(0);
+  const [nodeRects, setNodeRects] = useState<Record<number, { x: number; y: number; width: number; height: number }>>({});
+  const [scrollSize, setScrollSize] = useState({ width: 0, height: 0 });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const stepRefs = useRef(new Map<number, HTMLDivElement>());
+  const mergeEdges = useMemo(() => {
+    const edges: { source: number; target: number }[] = [];
+    flowSteps.forEach((step) => {
+      step.parallelWith?.forEach((prev) => {
+        edges.push({ source: prev, target: step.order });
+      });
+    });
+    return edges;
+  }, [flowSteps]);
+  const updateLayout = useCallback(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const containerRect = container.getBoundingClientRect();
+    const nextRects: Record<number, { x: number; y: number; width: number; height: number }> = {};
+    stepRefs.current.forEach((el, order) => {
+      const rect = el.getBoundingClientRect();
+      nextRects[order] = {
+        x: rect.left - containerRect.left + container.scrollLeft,
+        y: rect.top - containerRect.top + container.scrollTop,
+        width: rect.width,
+        height: rect.height,
+      };
+    });
+    setNodeRects(nextRects);
+    setScrollSize({ width: container.scrollWidth, height: container.scrollHeight });
+  }, []);
+
+  useLayoutEffect(() => {
+    const frame = requestAnimationFrame(updateLayout);
+    window.addEventListener("resize", updateLayout);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateLayout);
+    };
+  }, [updateLayout, flowSteps]);
 
   const toggleComplete = (order: number) => {
     setCompleted((prev) => {
@@ -551,103 +591,125 @@ export function RecipeFlow({
 
       <div
         className={css({
-          overflowX: "auto",
           paddingBottom: "16px",
+          position: "relative",
         })}
-        ref={scrollRef}
-        onScroll={handleScroll}
       >
         <div
+          ref={scrollRef}
+          onScroll={() => {
+            handleScroll();
+            updateLayout();
+          }}
           className={css({
-            display: "grid",
-            gap: "24px",
-            gridAutoRows: "minmax(160px, auto)",
+            overflowX: "auto",
             position: "relative",
           })}
-          style={{
-            gridTemplateColumns: `repeat(${lanesWithSteps.length}, minmax(240px, 1fr))`,
-            minWidth: lanesWithSteps.length > 1 ? `${lanesWithSteps.length * 260}px` : "auto",
-          }}
         >
-          {lanesWithSteps.map((lane, index) => (
-            <div
-              key={lane.id}
+          {scrollSize.width > 0 && (
+            <svg
+              width={scrollSize.width}
+              height={scrollSize.height}
               className={css({
-                position: "sticky",
-                top: "0",
-                zIndex: 2,
+                position: "absolute",
+                top: 0,
+                left: 0,
                 pointerEvents: "none",
+                zIndex: 0,
               })}
-              style={{ gridColumn: index + 1, gridRow: 1 }}
+              viewBox={`0 0 ${scrollSize.width} ${scrollSize.height}`}
             >
-              <div
-                className={css({
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingBottom: "8px",
-                  borderBottom: "1px dashed #e0e0e0",
-                  marginBottom: "8px",
-                })}
-              >
-                <span className={css({ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", color: "#666" })}>
-                  {lane.label}
-                </span>
-                <span
-                  className={css({
-                    width: "12px",
-                    height: "12px",
-                    borderRadius: "3px",
-                    backgroundColor: lane.color,
-                  })}
-                />
-              </div>
-            </div>
-          ))}
+              {mergeEdges.map((edge, index) => {
+                const source = nodeRects[edge.source];
+                const target = nodeRects[edge.target];
+                if (!source || !target) {
+                  return null;
+                }
+                const startX = source.x + source.width / 2;
+                const startY = source.y + source.height;
+                const endX = target.x + target.width / 2;
+                const endY = target.y;
+                const midY = startY + (endY - startY) / 2;
+                const path = `M ${startX} ${startY} C ${startX} ${midY} ${endX} ${midY} ${endX} ${endY}`;
+                return (
+                  <path
+                    key={`${edge.source}-${edge.target}-${index}`}
+                    d={path}
+                    fill="none"
+                    stroke="rgba(122,165,107,0.8)"
+                    strokeWidth={2}
+                    strokeDasharray="6 6"
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+            </svg>
+          )}
 
-          {positionedSteps.map((record) => (
-            <div
-              key={record.step.order}
-              className={css({ position: "relative" })}
-              style={{ gridColumn: record.column, gridRow: record.row + 1 }}
-            >
-              {record.hasTopConnector && (
-                <div
-                  className={css({
-                    position: "absolute",
-                    top: "-24px",
-                    left: "calc(50% - 1px)",
-                    width: "2px",
-                    height: "24px",
-                    backgroundColor: "#cfd8dc",
-                    zIndex: 0,
-                  })}
+          <div
+            className={css({
+              display: "grid",
+              gap: "24px",
+              gridAutoRows: "minmax(160px, auto)",
+              position: "relative",
+              zIndex: 1,
+            })}
+            style={{
+              gridTemplateColumns: `repeat(${lanesWithSteps.length}, minmax(240px, 1fr))`,
+              minWidth: lanesWithSteps.length > 1 ? `${lanesWithSteps.length * 260}px` : "auto",
+            }}
+          >
+            {positionedSteps.map((record) => (
+              <div
+                key={record.step.order}
+                className={css({ position: "relative" })}
+                style={{ gridColumn: record.column, gridRow: record.row + 1 }}
+              >
+                {record.hasTopConnector && (
+                  <div
+                    className={css({
+                      position: "absolute",
+                      top: "-24px",
+                      left: "calc(50% - 1px)",
+                      width: "2px",
+                      height: "24px",
+                      backgroundColor: "#cfd8dc",
+                      zIndex: 0,
+                    })}
+                  />
+                )}
+                <StepCard
+                  step={record.step}
+                  isCompleted={completed.includes(record.step.order)}
+                  isActive={record.step.order === activeStep}
+                  isJustCompleted={record.step.order === lastCompleted}
+                  hasParallelLink={parallelOrders.has(record.step.order)}
+                  onToggleComplete={() => toggleComplete(record.step.order)}
+                  onClick={() => setSelectedStep(record.step)}
+                  cardRef={(el) => {
+                    if (el) {
+                      stepRefs.current.set(record.step.order, el);
+                    } else {
+                      stepRefs.current.delete(record.step.order);
+                    }
+                  }}
                 />
-              )}
-              <StepCard
-                step={record.step}
-                isCompleted={completed.includes(record.step.order)}
-                isActive={record.step.order === activeStep}
-                isJustCompleted={record.step.order === lastCompleted}
-                hasParallelLink={parallelOrders.has(record.step.order)}
-                onToggleComplete={() => toggleComplete(record.step.order)}
-                onClick={() => setSelectedStep(record.step)}
-              />
-              {record.hasBottomConnector && (
-                <div
-                  className={css({
-                    position: "absolute",
-                    bottom: "-24px",
-                    left: "calc(50% - 1px)",
-                    width: "2px",
-                    height: "24px",
-                    backgroundColor: "#cfd8dc",
-                    zIndex: 0,
-                  })}
-                />
-              )}
-            </div>
-          ))}
+                {record.hasBottomConnector && (
+                  <div
+                    className={css({
+                      position: "absolute",
+                      bottom: "-24px",
+                      left: "calc(50% - 1px)",
+                      width: "2px",
+                      height: "24px",
+                      backgroundColor: "#cfd8dc",
+                      zIndex: 0,
+                    })}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -716,15 +778,15 @@ export function RecipeFlow({
             >
               ←
             </button>
-            <span
-              className={css({
-                fontSize: "12px",
-                color: "#888",
-                fontWeight: "500",
-              })}
-            >
-              {lanesWithSteps[activeLaneIndex]?.label}
-            </span>
+              <span
+                className={css({
+                  fontSize: "12px",
+                  color: "#888",
+                  fontWeight: "500",
+                })}
+              >
+                Flow {activeLaneIndex + 1}
+              </span>
             <button
               onClick={() => scrollToLane(Math.min(lanesWithSteps.length - 1, activeLaneIndex + 1))}
               disabled={activeLaneIndex === lanesWithSteps.length - 1}

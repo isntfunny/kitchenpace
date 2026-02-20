@@ -8,7 +8,7 @@ import { css } from 'styled-system/css';
 const NODE_WIDTH = 200;
 const NODE_HEIGHT = 100;
 const NODE_GAP_X = 80;
-const NODE_GAP_Y = 30;
+const NODE_GAP_Y = 60;
 
 const getTypeEmoji = (type: string): string => {
     const emojis: Record<string, string> = {
@@ -421,6 +421,12 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
         : css({
               width: '100%',
               margin: '0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '400px',
+              backgroundColor: '#fafafa',
+              borderRadius: '12px',
+              overflow: 'hidden',
           });
 
     return (

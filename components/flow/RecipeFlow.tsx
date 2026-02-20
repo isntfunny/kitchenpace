@@ -22,13 +22,12 @@ interface StepCardProps {
   isCompleted: boolean;
   isActive: boolean;
   isJustCompleted: boolean;
-  hasParallelLink: boolean;
   onToggleComplete: () => void;
   onClick: () => void;
   cardRef?: (element: HTMLDivElement | null) => void;
 }
 
-function StepCard({ step, isCompleted, isActive, isJustCompleted, hasParallelLink, onToggleComplete, onClick, cardRef }: StepCardProps) {
+function StepCard({ step, isCompleted, isActive, isJustCompleted, onToggleComplete, onClick, cardRef }: StepCardProps) {
   const lane = LANES.find((l) => l.id === step.laneId);
 
   return (
@@ -59,52 +58,12 @@ function StepCard({ step, isCompleted, isActive, isJustCompleted, hasParallelLin
         zIndex: 2,
       })}
     >
-      {hasParallelLink && (
-        <div
-          className={css({
-            position: "absolute",
-            top: "0",
-            left: "16px",
-            right: "16px",
-            height: "6px",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            color: "#7aa56b",
-          })}
-        >
-          <span
-            className={css({
-              width: "6px",
-              height: "6px",
-              borderRadius: "full",
-              backgroundColor: "#7aa56b",
-            })}
-          />
-          <div
-            className={css({
-              flex: "1",
-              borderTop: "2px dashed #a5c99c",
-              opacity: 0.7,
-            })}
-          />
-          <span
-            className={css({
-              width: "6px",
-              height: "6px",
-              borderRadius: "full",
-              backgroundColor: "#7aa56b",
-            })}
-          />
-        </div>
-      )}
       <div
         className={css({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "10px",
-          marginTop: hasParallelLink ? "12px" : "0",
         })}
       >
         <div className={css({ display: "flex", alignItems: "center", gap: "10px" })}>
@@ -225,8 +184,6 @@ interface PositionedStep {
   step: FlowStep;
   row: number;
   column: number;
-  hasTopConnector: boolean;
-  hasBottomConnector: boolean;
 }
 
 interface StepDetailModalProps {
@@ -404,11 +361,12 @@ export function RecipeFlow({
   const [completed, setCompleted] = useState<number[]>(completedSteps);
   const [selectedStep, setSelectedStep] = useState<FlowStep | null>(null);
   const [lastCompleted, setLastCompleted] = useState<number | null>(null);
-  const [activeLaneIndex, setActiveLaneIndex] = useState(0);
+  const [isCookingMode, setIsCookingMode] = useState(false);
   const [nodeRects, setNodeRects] = useState<Record<number, { x: number; y: number; width: number; height: number }>>({});
-  const [scrollSize, setScrollSize] = useState({ width: 0, height: 0 });
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef(new Map<number, HTMLDivElement>());
+
   const flowEdges = useMemo(() => {
     const edges: { source: number; target: number }[] = [];
     flowSteps.forEach((step) => {
@@ -421,22 +379,62 @@ export function RecipeFlow({
     });
     return edges;
   }, [flowSteps]);
+
+  const { positionedSteps, totalColumns } = useMemo(() => {
+    const orderedSteps = [...flowSteps].sort((a, b) => a.order - b.order);
+    if (orderedSteps.length === 0) return { positionedSteps: [], totalColumns: 1 };
+
+    const firstStep = orderedSteps[0];
+    const lastStep = orderedSteps[orderedSteps.length - 1];
+
+    const intermediateSteps = orderedSteps.slice(1, -1);
+    const laneIds = [...new Set(intermediateSteps.map((s) => s.laneId))];
+    const laneToColumn = new Map(laneIds.map((laneId, index) => [laneId, index + 1]));
+
+    const totalColumns = Math.max(3, laneIds.length + 2);
+    const centerColumn = Math.ceil(totalColumns / 2);
+
+    const positioned: PositionedStep[] = orderedSteps.map((step, index) => {
+      let column: number;
+      
+      if (step.order === firstStep.order || step.order === lastStep.order) {
+        column = centerColumn;
+      } else {
+        column = (laneToColumn.get(step.laneId) ?? 1);
+        if (totalColumns > 3) {
+          column = column;
+        }
+      }
+
+      return {
+        step,
+        row: index + 1,
+        column,
+      };
+    });
+
+    return { positionedSteps: positioned, totalColumns };
+  }, [flowSteps]);
+
   const updateLayout = useCallback(() => {
-    const container = scrollRef.current;
+    const container = containerRef.current;
     if (!container) return;
+    
     const containerRect = container.getBoundingClientRect();
     const nextRects: Record<number, { x: number; y: number; width: number; height: number }> = {};
+    
     stepRefs.current.forEach((el, order) => {
       const rect = el.getBoundingClientRect();
       nextRects[order] = {
-        x: rect.left - containerRect.left + container.scrollLeft,
-        y: rect.top - containerRect.top + container.scrollTop,
+        x: rect.left - containerRect.left,
+        y: rect.top - containerRect.top,
         width: rect.width,
         height: rect.height,
       };
     });
+    
     setNodeRects(nextRects);
-    setScrollSize({ width: container.scrollWidth, height: container.scrollHeight });
+    setContainerSize({ width: container.scrollWidth, height: container.scrollHeight });
   }, []);
 
   useLayoutEffect(() => {
@@ -446,7 +444,7 @@ export function RecipeFlow({
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", updateLayout);
     };
-  }, [updateLayout, flowSteps]);
+  }, [updateLayout, flowSteps, isCookingMode]);
 
   const toggleComplete = (order: number) => {
     setCompleted((prev) => {
@@ -465,71 +463,25 @@ export function RecipeFlow({
   };
 
   const activeStep = getActiveStep();
-  const lanesWithSteps = LANES.map((lane) => ({
-    ...lane,
-    steps: flowSteps.filter((step) => step.laneId === lane.id).sort((a, b) => a.order - b.order),
-  })).filter((lane) => lane.steps.length > 0);
-  const parallelOrders = useMemo(() => {
-    const linked = new Set<number>();
-    flowSteps.forEach((step) => {
-      if (step.parallelWith && step.parallelWith.length > 0) {
-        linked.add(step.order);
-        step.parallelWith.forEach((order) => linked.add(order));
-      }
-    });
-    return linked;
-  }, [flowSteps]);
 
-  const handleScroll = () => {
-    if (scrollRef.current) {
-      const scrollLeft = scrollRef.current.scrollLeft;
-      const laneWidth = 280;
-      const newIndex = Math.round(scrollLeft / laneWidth);
-      setActiveLaneIndex(Math.min(newIndex, lanesWithSteps.length - 1));
-    }
-  };
-
-  const scrollToLane = (index: number) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ left: index * 280, behavior: "smooth" });
-    }
-  };
-
-  const laneIndexMap = new Map(lanesWithSteps.map((lane, index) => [lane.id, index]));
-  const orderedSteps = [...flowSteps].sort((a, b) => a.order - b.order);
-
-  const positionedSteps: PositionedStep[] = orderedSteps.map((step, idx) => ({
-    step,
-    row: idx + 1,
-    column: (laneIndexMap.get(step.laneId) ?? 0) + 1,
-    hasTopConnector: false,
-    hasBottomConnector: false,
-  }));
-
-  const laneToPositioned = new Map<string, PositionedStep[]>();
-  positionedSteps.forEach((record) => {
-    if (!laneToPositioned.has(record.step.laneId)) {
-      laneToPositioned.set(record.step.laneId, []);
-    }
-    laneToPositioned.get(record.step.laneId)?.push(record);
-  });
-
-  laneToPositioned.forEach((list) => {
-    list.forEach((record, index) => {
-      record.hasTopConnector = index > 0;
-      record.hasBottomConnector = index < list.length - 1;
-    });
-  });
-
-  return (
-    <div
-      className={css({
+  const containerStyles = isCookingMode
+    ? css({
+        position: "fixed",
+        inset: "0",
+        zIndex: 999,
+        backgroundColor: "#fafafa",
+        padding: "24px",
+        overflow: "auto",
+      })
+    : css({
         width: "100%",
-        maxWidth: "700px",
+        maxWidth: "900px",
         margin: "0 auto",
         padding: "24px",
-      })}
-    >
+      });
+
+  return (
+    <div className={containerStyles}>
       <style jsx global>{`
         @keyframes cardComplete {
           0% { transform: scale(1); }
@@ -541,6 +493,7 @@ export function RecipeFlow({
           100% { opacity: 0; }
         }
       `}</style>
+      
       <div
         className={css({
           display: "flex",
@@ -551,6 +504,8 @@ export function RecipeFlow({
           backgroundColor: "white",
           borderRadius: "12px",
           boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          flexWrap: "wrap",
+          gap: "12px",
         })}
       >
         <div>
@@ -565,169 +520,7 @@ export function RecipeFlow({
           className={css({
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-          })}
-        >
-          <div
-            className={css({
-              width: "120px",
-              height: "8px",
-              backgroundColor: "#e0e0e0",
-              borderRadius: "4px",
-              overflow: "hidden",
-            })}
-          >
-            <div
-              className={css({
-                height: "100%",
-                backgroundColor: "#4caf50",
-                borderRadius: "4px",
-                transition: "width 0.3s ease",
-              })}
-              style={{ width: `${(completed.length / flowSteps.length) * 100}%` }}
-            />
-          </div>
-          <span className={css({ fontSize: "14px", fontWeight: "600", color: "#4caf50" })}>
-            {Math.round((completed.length / flowSteps.length) * 100)}%
-          </span>
-        </div>
-      </div>
-
-      <div
-        className={css({
-          paddingBottom: "16px",
-          position: "relative",
-        })}
-      >
-        <div
-          ref={scrollRef}
-          onScroll={() => {
-            handleScroll();
-            updateLayout();
-          }}
-          className={css({
-            overflowX: "auto",
-            position: "relative",
-          })}
-        >
-          {scrollSize.width > 0 && (
-            <svg
-              width={scrollSize.width}
-              height={scrollSize.height}
-              className={css({
-                position: "absolute",
-                top: 0,
-                left: 0,
-                pointerEvents: "none",
-                zIndex: 0,
-              })}
-              viewBox={`0 0 ${scrollSize.width} ${scrollSize.height}`}
-            >
-              {flowEdges.map((edge: { source: number; target: number }, index: number) => {
-                const source = nodeRects[edge.source];
-                const target = nodeRects[edge.target];
-                if (!source || !target) {
-                  return null;
-                }
-                const startX = source.x + source.width / 2;
-                const startY = source.y + source.height;
-                const endX = target.x + target.width / 2;
-                const endY = target.y;
-                const midY = startY + (endY - startY) / 2;
-                const path = `M ${startX} ${startY} C ${startX} ${midY} ${endX} ${midY} ${endX} ${endY}`;
-                return (
-                  <path
-                    key={`${edge.source}-${edge.target}-${index}`}
-                    d={path}
-                    fill="none"
-                    stroke="rgba(122,165,107,0.8)"
-                    strokeWidth={2}
-                    strokeDasharray="6 6"
-                    strokeLinecap="round"
-                  />
-                );
-              })}
-            </svg>
-          )}
-
-          <div
-            className={css({
-              display: "grid",
-              gap: "24px",
-              gridAutoRows: "minmax(160px, auto)",
-              position: "relative",
-              zIndex: 1,
-            })}
-            style={{
-              gridTemplateColumns: `repeat(${lanesWithSteps.length}, minmax(240px, 1fr))`,
-              minWidth: lanesWithSteps.length > 1 ? `${lanesWithSteps.length * 260}px` : "auto",
-            }}
-          >
-            {positionedSteps.map((record) => (
-              <div
-                key={record.step.order}
-                className={css({ position: "relative" })}
-                style={{ gridColumn: record.column, gridRow: record.row + 1 }}
-              >
-                {record.hasTopConnector && (
-                  <div
-                    className={css({
-                      position: "absolute",
-                      top: "-24px",
-                      left: "calc(50% - 1px)",
-                      width: "2px",
-                      height: "24px",
-                      backgroundColor: "#cfd8dc",
-                      zIndex: 0,
-                    })}
-                  />
-                )}
-                <StepCard
-                  step={record.step}
-                  isCompleted={completed.includes(record.step.order)}
-                  isActive={record.step.order === activeStep}
-                  isJustCompleted={record.step.order === lastCompleted}
-                  hasParallelLink={parallelOrders.has(record.step.order)}
-                  onToggleComplete={() => toggleComplete(record.step.order)}
-                  onClick={() => setSelectedStep(record.step)}
-                  cardRef={(el) => {
-                    if (el) {
-                      stepRefs.current.set(record.step.order, el);
-                    } else {
-                      stepRefs.current.delete(record.step.order);
-                    }
-                  }}
-                />
-                {record.hasBottomConnector && (
-                  <div
-                    className={css({
-                      position: "absolute",
-                      bottom: "-24px",
-                      left: "calc(50% - 1px)",
-                      width: "2px",
-                      height: "24px",
-                      backgroundColor: "#cfd8dc",
-                      zIndex: 0,
-                    })}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {lanesWithSteps.length > 1 && (
-        <div
-          className={css({
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
             gap: "12px",
-            marginTop: "8px",
-            "@media (min-width: 768px)": {
-              display: "none",
-            },
           })}
         >
           <div
@@ -737,82 +530,138 @@ export function RecipeFlow({
               gap: "8px",
             })}
           >
-            {lanesWithSteps.map((lane, index) => (
-              <button
-                key={lane.id}
-                onClick={() => scrollToLane(index)}
+            <div
+              className={css({
+                width: "100px",
+                height: "8px",
+                backgroundColor: "#e0e0e0",
+                borderRadius: "4px",
+                overflow: "hidden",
+              })}
+            >
+              <div
                 className={css({
-                  width: index === activeLaneIndex ? "24px" : "8px",
-                  height: "8px",
+                  height: "100%",
+                  backgroundColor: "#4caf50",
                   borderRadius: "4px",
-                  border: "none",
-                  backgroundColor: index === activeLaneIndex ? "#4caf50" : "#ddd",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
+                  transition: "width 0.3s ease",
                 })}
+                style={{ width: `${(completed.length / flowSteps.length) * 100}%` }}
               />
-            ))}
+            </div>
+            <span className={css({ fontSize: "14px", fontWeight: "600", color: "#4caf50" })}>
+              {Math.round((completed.length / flowSteps.length) * 100)}%
+            </span>
           </div>
-          <div
+          <button
+            onClick={() => setIsCookingMode(!isCookingMode)}
             className={css({
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              width: "100%",
-              maxWidth: "300px",
-              padding: "0 20px",
+              gap: "6px",
+              padding: "10px 16px",
+              borderRadius: "10px",
+              border: isCookingMode ? "2px solid #4caf50" : "1px solid #ddd",
+              backgroundColor: isCookingMode ? "#e8f5e9" : "white",
+              color: isCookingMode ? "#2e7d32" : "#666",
+              fontSize: "14px",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              _hover: {
+                transform: "translateY(-1px)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              },
             })}
           >
-            <button
-              onClick={() => scrollToLane(Math.max(0, activeLaneIndex - 1))}
-              disabled={activeLaneIndex === 0}
-              className={css({
-                width: "32px",
-                height: "32px",
-                borderRadius: "full",
-                border: "none",
-                backgroundColor: activeLaneIndex === 0 ? "#f5f5f5" : "white",
-                color: activeLaneIndex === 0 ? "#ccc" : "#666",
-                fontSize: "16px",
-                cursor: activeLaneIndex === 0 ? "default" : "pointer",
-                boxShadow: activeLaneIndex === 0 ? "none" : "0 2px 8px rgba(0,0,0,0.1)",
-                transition: "all 0.2s ease",
-                _hover: activeLaneIndex === 0 ? {} : { transform: "scale(1.1)" },
-              })}
-            >
-              ←
-            </button>
-              <span
-                className={css({
-                  fontSize: "12px",
-                  color: "#888",
-                  fontWeight: "500",
-                })}
-              >
-                Flow {activeLaneIndex + 1}
-              </span>
-            <button
-              onClick={() => scrollToLane(Math.min(lanesWithSteps.length - 1, activeLaneIndex + 1))}
-              disabled={activeLaneIndex === lanesWithSteps.length - 1}
-              className={css({
-                width: "32px",
-                height: "32px",
-                borderRadius: "full",
-                border: "none",
-                backgroundColor: activeLaneIndex === lanesWithSteps.length - 1 ? "#f5f5f5" : "white",
-                color: activeLaneIndex === lanesWithSteps.length - 1 ? "#ccc" : "#666",
-                fontSize: "16px",
-                cursor: activeLaneIndex === lanesWithSteps.length - 1 ? "default" : "pointer",
-                boxShadow: activeLaneIndex === lanesWithSteps.length - 1 ? "none" : "0 2px 8px rgba(0,0,0,0.1)",
-                transition: "all 0.2s ease",
-                _hover: activeLaneIndex === lanesWithSteps.length - 1 ? {} : { transform: "scale(1.1)" },
-              })}
-            >
-              →
-            </button>
-          </div>
+            {isCookingMode ? "✕ Schließen" : "🍳 Kochmodus"}
+          </button>
         </div>
-      )}
+      </div>
+
+      <div
+        ref={containerRef}
+        className={css({
+          paddingBottom: "16px",
+          position: "relative",
+        })}
+      >
+        {containerSize.width > 0 && (
+          <svg
+            width={containerSize.width}
+            height={containerSize.height}
+            className={css({
+              position: "absolute",
+              top: 0,
+              left: 0,
+              pointerEvents: "none",
+              zIndex: 0,
+            })}
+            viewBox={`0 0 ${containerSize.width} ${containerSize.height}`}
+          >
+            {flowEdges.map((edge: { source: number; target: number }, index: number) => {
+              const source = nodeRects[edge.source];
+              const target = nodeRects[edge.target];
+              if (!source || !target) return null;
+              
+              const startX = source.x + source.width / 2;
+              const startY = source.y + source.height;
+              const endX = target.x + target.width / 2;
+              const endY = target.y;
+              const midY = startY + (endY - startY) / 2;
+              const path = `M ${startX} ${startY} C ${startX} ${midY} ${endX} ${midY} ${endX} ${endY}`;
+              
+              return (
+                <path
+                  key={`${edge.source}-${edge.target}-${index}`}
+                  d={path}
+                  fill="none"
+                  stroke="rgba(122,165,107,0.6)"
+                  strokeWidth={2}
+                  strokeDasharray="6 6"
+                  strokeLinecap="round"
+                />
+              );
+            })}
+          </svg>
+        )}
+
+        <div
+          className={css({
+            display: "grid",
+            gap: "24px",
+            position: "relative",
+            zIndex: 1,
+          })}
+          style={{
+            gridTemplateColumns: `repeat(${totalColumns}, minmax(180px, 1fr))`,
+            gridAutoRows: "minmax(120px, auto)",
+          }}
+        >
+          {positionedSteps.map((record) => (
+            <div
+              key={record.step.order}
+              style={{ gridColumn: record.column, gridRow: record.row }}
+            >
+              <StepCard
+                step={record.step}
+                isCompleted={completed.includes(record.step.order)}
+                isActive={record.step.order === activeStep}
+                isJustCompleted={record.step.order === lastCompleted}
+                onToggleComplete={() => toggleComplete(record.step.order)}
+                onClick={() => setSelectedStep(record.step)}
+                cardRef={(el) => {
+                  if (el) {
+                    stepRefs.current.set(record.step.order, el);
+                  } else {
+                    stepRefs.current.delete(record.step.order);
+                  }
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
 
       {completed.length === flowSteps.length && flowSteps.length > 0 && (
         <div

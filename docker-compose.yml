@@ -1,43 +1,43 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: kitchenpace-db
-    environment:
-      POSTGRES_USER: kitchenpace
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kitchenpace_secret}
-      POSTGRES_DB: kitchenpace
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    postgres:
+        image: postgres:16-alpine
+        container_name: kitchenpace-db
+        environment:
+            POSTGRES_USER: kitchenpace
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kitchenpace_secret}
+            POSTGRES_DB: kitchenpace
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
 
-    ports:
-      - "64000:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kitchenpace -d kitchenpace"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+        ports:
+            - '64000:5432'
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U kitchenpace -d kitchenpace']
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
-        DEBUG: ${DEBUG:-0}
-    container_name: kitchenpace-app
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://kitchenpace:${POSTGRES_PASSWORD:-kitchenpace_secret}@postgres:5432/kitchenpace
-      NODE_ENV: development
-      DEBUG: ${DEBUG:-0}
-      # NextAuth (set these in Coolify environment variables)
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-in-production}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
-    restart: unless-stopped
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
+                DEBUG: ${DEBUG:-0}
+        container_name: kitchenpace-app
+        depends_on:
+            postgres:
+                condition: service_healthy
+        environment:
+            DATABASE_URL: postgresql://kitchenpace:${POSTGRES_PASSWORD:-kitchenpace_secret}@postgres:5432/kitchenpace
+            NODE_ENV: development
+            DEBUG: ${DEBUG:-0}
+            # NextAuth (set these in Coolify environment variables)
+            NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-in-production}
+            NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+        restart: unless-stopped
 
 volumes:
-  postgres_data:
+    postgres_data:

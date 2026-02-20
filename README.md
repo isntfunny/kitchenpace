@@ -6,7 +6,7 @@ Stell dir vor, du öffnest ein Rezept und siehst nicht mehr diese endlose, ermü
 
 Jeder kennt es: Du stehst in der Küche, drei Töpfe brodeln, der Timer piept, du weißt nicht mehr, was als nächstes kommt, und plötzlich brennt die Sauce an, während das Gemüse noch roh ist. **Kochen fühlt sich oft wie kontrolliertes Chaos an**.
 
-**KitchenPace** verwandelt dieses Chaos in **kristallklare Struktur**. Es nimmt die Komplexität des gleichzeitigen Kochens und macht sie *sichtbar*, *verständlich*, *beherrschbar*.
+**KitchenPace** verwandelt dieses Chaos in **kristallklare Struktur**. Es nimmt die Komplexität des gleichzeitigen Kochens und macht sie _sichtbar_, _verständlich_, _beherrschbar_.
 
 ### Das Chaos beherrschen
 
@@ -14,7 +14,7 @@ Traditionelle Rezepte sind wie eine To-Do-Liste ohne Prioritäten. Sie geben dir
 
 **KitchenPace zeigt dir von Anfang an die gesamte Landschaft**:
 
-- **Überblick statt Überforderung**: Du siehst *sofort*, was parallel läuft, was aufeinander wartet, wo die Engpässe sind
+- **Überblick statt Überforderung**: Du siehst _sofort_, was parallel läuft, was aufeinander wartet, wo die Engpässe sind
 - **Mentale Klarheit**: Dein Gehirn muss nicht mehr jonglieren und improvisieren - der Flow ist bereits durchdacht
 - **Kontrolle zurückgewinnen**: Keine Panik mehr, kein "Oh nein, ich hab vergessen...!" - alles hat seinen Platz, seinen Moment
 
@@ -22,11 +22,11 @@ Traditionelle Rezepte sind wie eine To-Do-Liste ohne Prioritäten. Sie geben dir
 
 Jedes Rezept wird zu einer **visuellen Landkarte deines Kochabenteuers**:
 
-- **Parallele Welten werden sichtbar**: Die Sauce reduziert sich? Perfekt - die Visualisierung zeigt dir *genau*, was du in dieser Zeit parallel erledigen kannst. Das Gemüse röstet im Ofen? Der Graph zeigt: "Jetzt hast du 15 Minuten für die Beilage."
+- **Parallele Welten werden sichtbar**: Die Sauce reduziert sich? Perfekt - die Visualisierung zeigt dir _genau_, was du in dieser Zeit parallel erledigen kannst. Das Gemüse röstet im Ofen? Der Graph zeigt: "Jetzt hast du 15 Minuten für die Beilage."
 
 - **Struktur in der Gleichzeitigkeit**: Was früher ein mentales Puzzle war - "Wann muss ich was starten, damit alles gleichzeitig fertig ist?" - wird zur klaren, visuellen Wahrheit. Du siehst die Synchronisation.
 
-- **Der kritische Pfad wird erkennbar**: Wie bei einem Projektplan siehst du: *Das* ist der zeitkritische Strang. *Das* kann warten. *Hier* muss ich aufmerksam sein, *dort* kann ich entspannen.
+- **Der kritische Pfad wird erkennbar**: Wie bei einem Projektplan siehst du: _Das_ ist der zeitkritische Strang. _Das_ kann warten. _Hier_ muss ich aufmerksam sein, _dort_ kann ich entspannen.
 
 - **Intuitive Nodes**: Jede Aktion hat ihr eigenes visuelles Symbol. "Würzen" sieht anders aus als "Köcheln lassen" oder "Scharf anbraten". Dein Gehirn erfasst den Flow sofort - keine kognitive Überlastung mehr.
 
@@ -36,7 +36,7 @@ Jedes Rezept wird zu einer **visuellen Landkarte deines Kochabenteuers**:
 
 **KitchenPace bringt die Logik von Projektmanagement in die Küche** - aber auf schöne, intuitive Weise. Es nimmt das implizite Wissen von Profiköchen ("Die machen ja immer mehrere Sachen gleichzeitig!") und macht es **explizit und zugänglich**.
 
-Profis haben diese Struktur im Kopf. Sie *sehen* den Flow. Sie haben gelernt, das Chaos zu strukturieren. **KitchenPace gibt jedem diese Superkraft**.
+Profis haben diese Struktur im Kopf. Sie _sehen_ den Flow. Sie haben gelernt, das Chaos zu strukturieren. **KitchenPace gibt jedem diese Superkraft**.
 
 ### Von Stress zu Flow
 
@@ -47,16 +47,17 @@ Das ist nicht nur effizienter - **es macht Kochen wieder zu dem, was es sein sol
 ## Die Zukunft
 
 Stell dir vor:
+
 - **Adaptive Komplexität**: Das Rezept passt sich an deine Küche an - zwei Herdplatten? Der Flow reorganisiert sich automatisch
 - **Echtzeit-Orientierung**: Du markierst Schritte als erledigt, und die Visualisierung zeigt dir sofort: "Du bist hier, das kommt als nächstes"
 - **Zeitmanagement visuell**: Timer direkt in den Nodes - du siehst, wie viel Zeit jeder Strang noch braucht
-- **Chaos-zu-Struktur für alle**: Auch komplexeste Menüs mit vier Gängen werden plötzlich machbar, weil du die Struktur *siehst*
+- **Chaos-zu-Struktur für alle**: Auch komplexeste Menüs mit vier Gängen werden plötzlich machbar, weil du die Struktur _siehst_
 
 **KitchenPace** ist dein **Kompass im Küchenchaos**. Es verwandelt Überforderung in Übersicht, Stress in Struktur, Panik in Plan.
 
 ---
 
-Das ist nicht einfach eine weitere Rezept-App. Das ist **der Paradigmenwechsel**: Vom linearen Denken zum **strukturierten, visuellen Kochflow**. 
+Das ist nicht einfach eine weitere Rezept-App. Das ist **der Paradigmenwechsel**: Vom linearen Denken zum **strukturierten, visuellen Kochflow**.
 
 **Endlich Ordnung im schönsten Chaos der Welt.** 🎯✨
 

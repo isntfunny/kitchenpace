@@ -1,81 +1,88 @@
-import { Metadata } from "next";
-import { css } from "styled-system/css";
-import { container } from "styled-system/patterns";
+import { Metadata } from 'next';
 
-import { RecipeDetailClient } from "./RecipeDetailClient";
-import { getActivitiesForRecipe, getAuthorById, getRecipeById, Recipe } from "./data";
+import { css } from 'styled-system/css';
+import { container } from 'styled-system/patterns';
+
+import { getActivitiesForRecipe, getAuthorById, getRecipeById, Recipe } from './data';
+import { RecipeDetailClient } from './RecipeDetailClient';
 
 type RecipePageParams = {
-  id: string;
+    id: string;
 };
 
 type RecipePageProps = {
-  params: RecipePageParams | Promise<RecipePageParams>;
+    params: RecipePageParams | Promise<RecipePageParams>;
 };
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://kitchenpace.app").replace(/\/$/, "");
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
 
 const buildRecipeMetadata = (recipe: Recipe): Metadata => ({
-  title: `${recipe.title} | KüchenTakt`,
-  description: recipe.description,
-  openGraph: {
     title: `${recipe.title} | KüchenTakt`,
     description: recipe.description,
-    url: `${SITE_URL}/recipe/${recipe.id}`,
-    siteName: "KüchenTakt",
-    type: "article",
-    images: [
-      {
-        url: recipe.image,
-        alt: recipe.title,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${recipe.title} | KüchenTakt`,
-    description: recipe.description,
-    images: [recipe.image],
-  },
+    openGraph: {
+        title: `${recipe.title} | KüchenTakt`,
+        description: recipe.description,
+        url: `${SITE_URL}/recipe/${recipe.id}`,
+        siteName: 'KüchenTakt',
+        type: 'article',
+        images: [
+            {
+                url: recipe.image,
+                alt: recipe.title,
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: `${recipe.title} | KüchenTakt`,
+        description: recipe.description,
+        images: [recipe.image],
+    },
 });
 
 export async function generateMetadata({ params }: RecipePageProps): Promise<Metadata> {
-  const resolvedParams = await params;
-  const recipe = getRecipeById(resolvedParams.id);
-  if (!recipe) {
-    return {
-      title: "Rezept nicht gefunden | KüchenTakt",
-      description: "Das gewünschte Rezept konnte nicht gefunden werden.",
-    };
-  }
+    const resolvedParams = await params;
+    const recipe = getRecipeById(resolvedParams.id);
+    if (!recipe) {
+        return {
+            title: 'Rezept nicht gefunden | KüchenTakt',
+            description: 'Das gewünschte Rezept konnte nicht gefunden werden.',
+        };
+    }
 
-  return buildRecipeMetadata(recipe);
+    return buildRecipeMetadata(recipe);
 }
 
 export async function generateStaticParams() {
-  const { recipes } = await import("./data");
-  return Object.keys(recipes).map((id) => ({ id }));
+    const { recipes } = await import('./data');
+    return Object.keys(recipes).map((id) => ({ id }));
 }
 
 export default async function RecipePage({ params }: RecipePageProps) {
-  const resolvedParams = await params;
-  const recipe = getRecipeById(resolvedParams.id);
+    const resolvedParams = await params;
+    const recipe = getRecipeById(resolvedParams.id);
 
-  if (!recipe) {
+    if (!recipe) {
+        return (
+            <div className={css({ minH: '100vh', color: 'text' })}>
+                <main className={container({ maxW: '1400px', mx: 'auto', px: '4', py: '8' })}>
+                    <div className={css({ textAlign: 'center', py: '20' })}>
+                        <h1 className={css({ fontFamily: 'heading', fontSize: '3xl', mb: '4' })}>
+                            Rezept nicht gefunden
+                        </h1>
+                        <p className={css({ color: 'text-muted' })}>
+                            Das gesuchte Rezept existiert leider nicht.
+                        </p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    const author = getAuthorById(recipe.authorId);
+    const recipeActivities = getActivitiesForRecipe(recipe.id);
+
     return (
-      <div className={css({ minH: "100vh", color: "text" })}>
-        <main className={container({ maxW: "1400px", mx: "auto", px: "4", py: "8" })}>
-          <div className={css({ textAlign: "center", py: "20" })}>
-            <h1 className={css({ fontFamily: "heading", fontSize: "3xl", mb: "4" })}>Rezept nicht gefunden</h1>
-            <p className={css({ color: "text-muted" })}>Das gesuchte Rezept existiert leider nicht.</p>
-          </div>
-        </main>
-      </div>
+        <RecipeDetailClient recipe={recipe} author={author} recipeActivities={recipeActivities} />
     );
-  }
-
-  const author = getAuthorById(recipe.authorId);
-  const recipeActivities = getActivitiesForRecipe(recipe.id);
-
-  return <RecipeDetailClient recipe={recipe} author={author} recipeActivities={recipeActivities} />;
 }

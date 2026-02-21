@@ -24,7 +24,6 @@ export function FitsNow() {
     const [loading, setLoading] = useState(true);
     const fetchKeyRef = useRef(0);
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => {
         let cancelled = false;
 

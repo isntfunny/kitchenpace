@@ -2,6 +2,7 @@
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
@@ -257,8 +258,8 @@ export function Header() {
 
                         <HeaderAuth />
 
-                        <a
-                            href="#"
+                        <Link
+                            href="/recipe/create"
                             className={css({
                                 fontFamily: 'body',
                                 fontSize: 'sm',
@@ -282,7 +283,7 @@ export function Header() {
                             <span className={css({ display: { base: 'none', md: 'inline' } })}>
                                 Rezept
                             </span>
-                        </a>
+                        </Link>
                     </nav>
                 </div>
             </div>

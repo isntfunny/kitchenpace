@@ -486,11 +486,166 @@ async function main() {
             authorId: createdUsers[3].id,
             tags: ['einfach', 'schnell'],
         },
+        {
+            id: 'recipe-8',
+            title: 'Entenbrust mit Spätzle und Soße',
+            slug: 'entenbrust-spatzle-sosse',
+            description:
+                'Klassisches deutsches Gericht: Rosa gebratene Entenbrust mit hausgemachten Spätzle und einer reichhaltigen Rotweinsoße.',
+            imageUrl: 'https://images.unsplash.com/photo-1600891964092-4316c2880322?w=800&q=80',
+            servings: 4,
+            prepTime: 30,
+            cookTime: 45,
+            difficulty: Difficulty.HARD,
+            rating: 4.9,
+            ratingCount: 35,
+            viewCount: 180,
+            cookCount: 20,
+            categoryId: hauptgericht?.id,
+            authorId: createdUsers[1].id,
+            tags: ['festlich', 'gefluegel', 'deutsch'],
+            flowNodes: [
+                {
+                    id: 'start',
+                    type: 'prep',
+                    label: 'Start',
+                    description: 'Alle Zutaten bereitstellen',
+                    position: { x: 280, y: 0 },
+                },
+                {
+                    id: 'score-duck',
+                    type: 'prep',
+                    label: 'Ente einschneiden',
+                    description: 'Haut rautenförmig einschneiden',
+                    duration: 5,
+                    position: { x: 0, y: 150 },
+                },
+                {
+                    id: 'sear-duck',
+                    type: 'cook',
+                    label: 'Ente anbraten',
+                    description: 'Hautseite nach unten',
+                    duration: 15,
+                    position: { x: 0, y: 320 },
+                },
+                {
+                    id: 'rest-duck',
+                    type: 'wait',
+                    label: 'Ente ruhen',
+                    duration: 10,
+                    position: { x: 0, y: 490 },
+                },
+                {
+                    id: 'slice-duck',
+                    type: 'prep',
+                    label: 'Ente aufschneiden',
+                    duration: 2,
+                    position: { x: 0, y: 660 },
+                },
+                {
+                    id: 'make-batter',
+                    type: 'prep',
+                    label: 'Spätzleteig',
+                    duration: 10,
+                    position: { x: 280, y: 150 },
+                },
+                {
+                    id: 'rest-batter',
+                    type: 'wait',
+                    label: 'Teig ruhen',
+                    duration: 15,
+                    position: { x: 280, y: 320 },
+                },
+                {
+                    id: 'boil-water',
+                    type: 'cook',
+                    label: 'Wasser kochen',
+                    duration: 10,
+                    position: { x: 280, y: 490 },
+                },
+                {
+                    id: 'cook-spaetzle',
+                    type: 'cook',
+                    label: 'Spätzle kochen',
+                    duration: 8,
+                    position: { x: 280, y: 660 },
+                },
+                {
+                    id: 'saute-spaetzle',
+                    type: 'cook',
+                    label: 'Spätzle schwenken',
+                    duration: 5,
+                    position: { x: 280, y: 830 },
+                },
+                {
+                    id: 'prep-shallots',
+                    type: 'prep',
+                    label: 'Schalotten',
+                    duration: 3,
+                    position: { x: 560, y: 150 },
+                },
+                {
+                    id: 'saute-shallots',
+                    type: 'cook',
+                    label: 'Schalotten dünsten',
+                    duration: 5,
+                    position: { x: 560, y: 320 },
+                },
+                {
+                    id: 'deglaze',
+                    type: 'cook',
+                    label: 'Ablöschen',
+                    duration: 10,
+                    position: { x: 560, y: 490 },
+                },
+                {
+                    id: 'add-stock',
+                    type: 'cook',
+                    label: 'Fond zugeben',
+                    duration: 15,
+                    position: { x: 560, y: 660 },
+                },
+                {
+                    id: 'finish-sauce',
+                    type: 'season',
+                    label: 'Soße abschmecken',
+                    duration: 3,
+                    position: { x: 560, y: 830 },
+                },
+                {
+                    id: 'combine',
+                    type: 'combine',
+                    label: 'Anrichten',
+                    position: { x: 280, y: 1000 },
+                },
+                { id: 'serve', type: 'serve', label: 'Servieren', position: { x: 280, y: 1170 } },
+            ],
+            flowEdges: [
+                { id: 'e1', source: 'start', target: 'score-duck' },
+                { id: 'e2', source: 'start', target: 'make-batter' },
+                { id: 'e3', source: 'start', target: 'prep-shallots' },
+                { id: 'e4', source: 'score-duck', target: 'sear-duck' },
+                { id: 'e5', source: 'sear-duck', target: 'rest-duck' },
+                { id: 'e6', source: 'rest-duck', target: 'slice-duck' },
+                { id: 'e7', source: 'slice-duck', target: 'combine' },
+                { id: 'e8', source: 'make-batter', target: 'rest-batter' },
+                { id: 'e9', source: 'rest-batter', target: 'boil-water' },
+                { id: 'e10', source: 'boil-water', target: 'cook-spaetzle' },
+                { id: 'e11', source: 'cook-spaetzle', target: 'saute-spaetzle' },
+                { id: 'e12', source: 'saute-spaetzle', target: 'combine' },
+                { id: 'e13', source: 'prep-shallots', target: 'saute-shallots' },
+                { id: 'e14', source: 'saute-shallots', target: 'deglaze' },
+                { id: 'e15', source: 'deglaze', target: 'add-stock' },
+                { id: 'e16', source: 'add-stock', target: 'finish-sauce' },
+                { id: 'e17', source: 'finish-sauce', target: 'combine' },
+                { id: 'e18', source: 'combine', target: 'serve' },
+            ],
+        },
     ];
 
     const createdRecipes = [];
     for (const r of recipesData) {
-        const { tags: _tags, categoryId, authorId, ...recipeData } = r;
+        const { tags: _tags, categoryId, authorId, flowNodes, flowEdges, ...recipeData } = r;
         const recipe = await prisma.recipe.upsert({
             where: { id: r.id },
             update: {},
@@ -501,6 +656,8 @@ async function main() {
                 status: 'PUBLISHED',
                 publishedAt: new Date(),
                 totalTime: r.prepTime + r.cookTime,
+                flowNodes: flowNodes as any,
+                flowEdges: flowEdges as any,
             } as any,
         });
         createdRecipes.push({ recipe, tags: r.tags });
@@ -662,6 +819,11 @@ async function main() {
         { recipeId: 'recipe-5', userId: createdUsers[2].id, rating: 4 },
         { recipeId: 'recipe-6', userId: createdUsers[0].id, rating: 5 },
         { recipeId: 'recipe-6', userId: createdUsers[1].id, rating: 5 },
+        // Recipe-8 (Entenbrust) ratings
+        { recipeId: 'recipe-8', userId: createdUsers[0].id, rating: 5 },
+        { recipeId: 'recipe-8', userId: createdUsers[2].id, rating: 5 },
+        { recipeId: 'recipe-8', userId: createdUsers[3].id, rating: 4 },
+        { recipeId: 'recipe-8', userId: createdUsers[4].id, rating: 5 },
     ];
 
     for (const r of ratingsData) {
@@ -682,6 +844,10 @@ async function main() {
         { recipeId: 'recipe-3', userId: createdUsers[0].id },
         { recipeId: 'recipe-6', userId: createdUsers[0].id },
         { recipeId: 'recipe-6', userId: createdUsers[1].id },
+        // Recipe-8 (Entenbrust) favorites
+        { recipeId: 'recipe-8', userId: createdUsers[0].id },
+        { recipeId: 'recipe-8', userId: createdUsers[2].id },
+        { recipeId: 'recipe-8', userId: createdUsers[3].id },
     ];
 
     for (const f of favoritesData) {
@@ -778,6 +944,31 @@ async function main() {
             userId: createdUsers[3].id,
             type: ActivityType.RECIPE_CREATED,
             targetId: 'recipe-7',
+            targetType: 'recipe',
+        },
+        // Recipe-8 (Entenbrust) activities
+        {
+            userId: createdUsers[1].id,
+            type: ActivityType.RECIPE_CREATED,
+            targetId: 'recipe-8',
+            targetType: 'recipe',
+        },
+        {
+            userId: createdUsers[0].id,
+            type: ActivityType.RECIPE_COOKED,
+            targetId: 'recipe-8',
+            targetType: 'recipe',
+        },
+        {
+            userId: createdUsers[2].id,
+            type: ActivityType.RECIPE_RATED,
+            targetId: 'recipe-8',
+            targetType: 'recipe',
+        },
+        {
+            userId: createdUsers[3].id,
+            type: ActivityType.RECIPE_FAVORITED,
+            targetId: 'recipe-8',
             targetType: 'recipe',
         },
     ];
@@ -926,6 +1117,12 @@ async function main() {
         { userId: createdUsers[0].id, recipeId: 'recipe-2' },
         { userId: createdUsers[0].id, recipeId: 'recipe-6' },
         { userId: createdUsers[1].id, recipeId: 'recipe-3' },
+        // Recipe-8 (Entenbrust) view history - lots of views!
+        { userId: createdUsers[0].id, recipeId: 'recipe-8' },
+        { userId: createdUsers[1].id, recipeId: 'recipe-8' },
+        { userId: createdUsers[2].id, recipeId: 'recipe-8' },
+        { userId: createdUsers[3].id, recipeId: 'recipe-8' },
+        { userId: createdUsers[4].id, recipeId: 'recipe-8' },
     ];
 
     for (const vh of viewHistoryData) {

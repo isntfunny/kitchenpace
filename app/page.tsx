@@ -1,7 +1,7 @@
 import { ActivitySidebar } from '@/components/features/ActivitySidebar';
 import { ChefSpotlight } from '@/components/features/ChefSpotlight';
 import { Header } from '@/components/features/Header';
-import { HorizontalRecipeScroll } from '@/components/features/HorizontalRecipeScroll';
+import { RecipeScrollServer } from '@/components/features/RecipeScrollServer';
 import { QuickTips } from '@/components/features/QuickTips';
 import { TrendingTags } from '@/components/features/TrendingTags';
 import { DailyHighlight } from '@/components/sections/DailyHighlight';
@@ -10,84 +10,6 @@ import { FlowPillars } from '@/components/sections/FlowPillars';
 import { HeroSpotlight } from '@/components/sections/HeroSpotlight';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
-
-const quickPickRecipes = [
-    {
-        id: 'qp1',
-        title: 'Pasta Aglio e Olio',
-        category: 'Hauptgericht',
-        rating: 4.8,
-        time: '15 Min.',
-        image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&q=80',
-    },
-    {
-        id: 'qp2',
-        title: 'Greek Salad',
-        category: 'Beilage',
-        rating: 4.7,
-        time: '10 Min.',
-        image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&q=80',
-    },
-    {
-        id: 'qp3',
-        title: 'Avocado Toast',
-        category: 'Frühstück',
-        rating: 4.6,
-        time: '5 Min.',
-        image: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&q=80',
-    },
-    {
-        id: 'qp4',
-        title: 'Caprese',
-        category: 'Vorspeise',
-        rating: 4.9,
-        time: '5 Min.',
-        image: 'https://images.unsplash.com/photo-1529312266912-b33cf6227e24?w=400&q=80',
-    },
-    {
-        id: 'qp5',
-        title: 'Omelette',
-        category: 'Frühstück',
-        rating: 4.5,
-        time: '10 Min.',
-        image: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?w=400&q=80',
-    },
-];
-
-const sweetToothRecipes = [
-    {
-        id: 'st1',
-        title: 'Chocolate Mousse',
-        category: 'Dessert',
-        rating: 4.9,
-        time: '20 Min.',
-        image: 'https://images.unsplash.com/photo-1511381939415-e44015466834?w=400&q=80',
-    },
-    {
-        id: 'st2',
-        title: 'Berry Tart',
-        category: 'Dessert',
-        rating: 4.8,
-        time: '45 Min.',
-        image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&q=80',
-    },
-    {
-        id: 'st3',
-        title: 'Pancakes',
-        category: 'Frühstück',
-        rating: 4.7,
-        time: '15 Min.',
-        image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&q=80',
-    },
-    {
-        id: 'st4',
-        title: 'Apple Crumble',
-        category: 'Dessert',
-        rating: 4.8,
-        time: '35 Min.',
-        image: 'https://images.unsplash.com/photo-1568571780765-9276ac8b75a2?w=400&q=80',
-    },
-];
 
 export default function Home() {
     return (
@@ -130,10 +52,7 @@ export default function Home() {
                                     marginTop: '6',
                                 })}
                             >
-                                <HorizontalRecipeScroll
-                                    recipes={quickPickRecipes}
-                                    title="Schnelle Rezepte"
-                                />
+                                <RecipeScrollServer title="Neuste Rezepte" />
                             </div>
 
                             <div
@@ -149,10 +68,7 @@ export default function Home() {
                                     marginTop: '6',
                                 })}
                             >
-                                <HorizontalRecipeScroll
-                                    recipes={sweetToothRecipes}
-                                    title="Für den süßen Hunger"
-                                />
+                                <RecipeScrollServer title="Top Rated" />
                             </div>
                         </div>
 

@@ -1,9 +1,10 @@
-import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth/next';
 
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { PageShell } from '@/components/layouts/PageShell';
 import { getOrCreateProfile } from '@/lib/profile';
+
 import { ProfileEditClient } from './ProfileEditClient';
 
 export default async function ProfileEditPage() {

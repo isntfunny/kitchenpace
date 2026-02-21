@@ -479,7 +479,8 @@ const recipes = [
     },
 ];
 
-const ingredients = [
+// Ingredients data (for future use with RecipeIngredient)
+const _ingredients = [
     { name: 'Spaghetti', slug: 'spaghetti', category: 'SONSTIGES', units: ['g', 'kg'] },
     { name: 'Pancetta', slug: 'pancetta', category: 'FLEISCH', units: ['g'] },
     { name: 'Eggs', slug: 'eggs', category: 'MILCHPRODUKTE', units: ['whole', 'Stück'] },
@@ -613,7 +614,7 @@ export async function seedDatabase() {
     ];
 
     for (const recipe of recipeData) {
-        const { flowNodes, flowEdges, categoryId, ...rest } = recipe;
+        const { categoryId, ...rest } = recipe;
         const created = await prisma.recipe.upsert({
             where: { id: recipe.id },
             update: {},

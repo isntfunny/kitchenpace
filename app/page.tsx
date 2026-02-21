@@ -1,8 +1,8 @@
 import { ActivitySidebar } from '@/components/features/ActivitySidebar';
 import { ChefSpotlight } from '@/components/features/ChefSpotlight';
 import { Header } from '@/components/features/Header';
-import { RecipeScrollServer } from '@/components/features/RecipeScrollServer';
 import { QuickTips } from '@/components/features/QuickTips';
+import { RecipeScrollServer } from '@/components/features/RecipeScrollServer';
 import { TrendingTags } from '@/components/features/TrendingTags';
 import { DailyHighlight } from '@/components/sections/DailyHighlight';
 import { FitsNow } from '@/components/sections/FitsNow';

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { getRecipes, type RecipeCardData } from './actions';
 import { HorizontalRecipeScroll } from './HorizontalRecipeScroll';
 

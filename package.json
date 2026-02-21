@@ -15,9 +15,19 @@
         "lint:fix": "eslint --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "prepare": "husky"
+        "prepare": "husky",
+        "db:generate": "prisma generate",
+        "db:push": "prisma db push",
+        "db:migrate": "prisma migrate dev",
+        "db:seed": "tsx prisma/seed.ts",
+        "db:reset": "prisma migrate reset --force && npm run db:seed"
+    },
+    "prisma": {
+        "seed": "tsx prisma/seed.ts"
     },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.995.0",
+        "@aws-sdk/lib-storage": "^3.995.0",
         "@next-auth/prisma-adapter": "^1.0.7",
         "@pandacss/dev": "^1.8.2",
         "@prisma/adapter-pg": "^7.4.0",
@@ -44,7 +54,7 @@
     "devDependencies": {
         "@types/bcrypt": "^6.0.0",
         "@types/dagre": "^0.7.53",
-        "@types/node": "20.19.33",
+        "@types/node": "^20.19.33",
         "@types/pg": "^8.16.0",
         "@types/react": "^19",
         "@types/react-dom": "^19",
@@ -57,6 +67,7 @@
         "eslint-plugin-unused-imports": "^4.4.1",
         "husky": "^9.1.7",
         "prettier": "^3.8.1",
+        "tsx": "^4.21.0",
         "typescript": "^5"
     }
 }

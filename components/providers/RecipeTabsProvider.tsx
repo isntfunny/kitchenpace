@@ -237,10 +237,21 @@ export function RecipeTabsProvider({
 
     const unpinRecipe = useCallback(
         async (recipeId: string) => {
-            setTabs((prev) => ({
-                pinned: prev.pinned.filter((item) => item.id !== recipeId),
-                recent: prev.recent,
-            }));
+            setTabs((prev) => {
+                const unpinnedRecipe = prev.pinned.find((item) => item.id === recipeId);
+                const isInRecent = prev.recent.some((item) => item.id === recipeId);
+
+                // Add back to recent if it was removed when pinning and not already there
+                let newRecent = prev.recent;
+                if (unpinnedRecipe && !isInRecent) {
+                    newRecent = [unpinnedRecipe, ...prev.recent].slice(0, MAX_RECENT);
+                }
+
+                return {
+                    pinned: prev.pinned.filter((item) => item.id !== recipeId),
+                    recent: newRecent,
+                };
+            });
             if (isAuthenticated) {
                 await fetch(`/api/pinned-favorites/${recipeId}`, { method: 'DELETE' });
             }
@@ -251,18 +262,13 @@ export function RecipeTabsProvider({
     const addToRecent = useCallback(
         async (recipe: RecipeTabItem) => {
             const normalized = withDefaultEmoji(recipe);
-            setTabs((prev) => {
-                if (prev.recent[0]?.id === recipe.id) {
-                    return prev;
-                }
-                return {
-                    ...prev,
-                    recent: [
-                        normalized,
-                        ...prev.recent.filter((item) => item.id !== recipe.id),
-                    ].slice(0, MAX_RECENT),
-                };
-            });
+            setTabs((prev) => ({
+                ...prev,
+                recent: [normalized, ...prev.recent.filter((item) => item.id !== recipe.id)].slice(
+                    0,
+                    MAX_RECENT,
+                ),
+            }));
             if (isAuthenticated) {
                 await fetch('/api/recent-recipes', {
                     method: 'POST',

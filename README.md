@@ -80,3 +80,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Fresh Development Builds
+
+For standalone development builds that should ship with a clean database, run:
+
+```bash
+npm run build:dev-seed
+```
+
+This sets `DEBUG=1`, performs a production build, then reruns Prisma code generation, truncates and rebuilds the schema, and finally reseeds the database so you always work against a fresh dataset. It is intentionally separate from `npm run dev` and only skips database operations on that build command.

@@ -135,12 +135,18 @@ model Profile {
   followerCount  Int      @default(0)
   followingCount Int      @default(0)
   recipeCount    Int      @default(0)
+  ratingsPublic   Boolean  @default(true)
+  followsPublic   Boolean  @default(true)
+  favoritesPublic Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
 ```
 
-**Design Decision:** Cached counts for performance (updated via triggers/application logic).
+**Design Decision:**
+
+- Cached counts for performance (updated via triggers/application logic)
+- Three privacy toggles (`ratingsPublic`, `followsPublic`, `favoritesPublic`) let users decide what activity is visible to others
 
 **Usage in Components:**
 
@@ -183,12 +189,10 @@ model Recipe {
 }
 ```
 
-**Design Decision:** `flowNodes` and `flowEdges` stored as JSON rather than separate tables because:
+**Design Decision:**
 
-1. Flow diagrams are tightly coupled - edges reference node IDs
-2. No need to query individual nodes independently
-3. Simpler serialization/deserialization for React Flow
-4. Allows flexible node structure without migrations
+1. `flowNodes` and `flowEdges` stored as JSON rather than separate tables because the data is tightly coupled, queried together, and needs to evolve quickly without schema churn.
+2. `rating`, `ratingCount`, `viewCount`, and `cookCount` stay on the recipe for fast sorting/filtering, but every rating, view, and cook is also logged in normalized tables to allow per-user history and rebuilding the aggregates when needed.
 
 **Flow Node Structure (Frontend TypeScript):**
 
@@ -538,11 +542,25 @@ model UserViewHistory {
   userId    String
   recipeId  String
   viewedAt  DateTime @default(now())
-  @@unique([userId, recipeId, viewedAt])
 }
 ```
 
-**Usage:** "Recently viewed" section, recommendation engine.
+**Usage:** Append-only per-user view log powering "Recently viewed", personalized recommendations, frequency tracking, and analytics.
+
+#### UserCookHistory
+
+```prisma
+model UserCookHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  recipeId  String
+  cookedAt  DateTime @default(now())
+  servings  Int?
+  notes     String?
+}
+```
+
+**Usage:** Tracks each time a user cooks a recipe so we can show cook streaks, rebuild `cookCount`, and highlight favorite dishes.
 
 ---
 
@@ -673,3 +691,5 @@ npm run db:reset
 6. **Max 3 Pinned Favorites:** KUC-5 requirement - limited to 3 for submenu UI.
 
 7. **MealPlan → ShoppingList:** Shopping list can be auto-generated from meal plan recipes.
+
+8. **Event Logs + Aggregates:** Keep `rating`, `viewCount`, `cookCount` on `Recipe` for fast ordering, but also store every rating/view/cook event in their own tables so per-user history and analytics stay accurate.

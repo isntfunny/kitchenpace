@@ -121,6 +121,8 @@ model User {
   emailVerified   DateTime?
   image           String?
   hashedPassword  String?
+  resetToken      String?
+  resetTokenExpiry DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -139,6 +141,7 @@ model User {
   shoppingLists  ShoppingList[]
   activities     ActivityLog[]
   viewHistory    UserViewHistory[]
+  cookHistory    UserCookHistory[]
   pinnedFavorites PinnedFavorite[]
 }
 
@@ -153,6 +156,10 @@ model Profile {
   followerCount  Int      @default(0)
   followingCount Int      @default(0)
   recipeCount    Int      @default(0)
+  ratingsPublic   Boolean  @default(true)
+  followsPublic   Boolean  @default(true)
+  favoritesPublic Boolean  @default(true)
+  showInActivity  Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -205,6 +212,7 @@ model Recipe {
   mealPlanRecipes MealPlanRecipe[]
   shoppingItems ShoppingItem[]
   userViewHistory UserViewHistory[]
+  cookHistory  UserCookHistory[]
   pinnedFavorites PinnedFavorite[]
 
   @@index([authorId])
@@ -477,10 +485,25 @@ model UserViewHistory {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, recipeId])
   @@index([userId])
-  @@index([userId, viewedAt])
   @@index([recipeId])
+  @@index([userId, viewedAt])
+}
+
+model UserCookHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  recipeId  String
+  cookedAt  DateTime @default(now())
+  servings  Int?
+  notes     String?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([recipeId])
+  @@index([userId, cookedAt])
 }
 
 // ============================================

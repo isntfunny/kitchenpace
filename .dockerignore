@@ -12,3 +12,4 @@ build
 coverage
 .turbo
 .eslintcache
+.s3cfg

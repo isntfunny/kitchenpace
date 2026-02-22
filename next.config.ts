@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         remotePatterns: [
             {
                 protocol: 'https',
+                hostname: 'cdn.isntfunny.de',
+            },
+            {
+                protocol: 'https',
                 hostname: 'images.unsplash.com',
             },
         ],

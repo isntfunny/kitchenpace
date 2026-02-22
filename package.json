@@ -19,11 +19,13 @@
         "db:generate": "prisma generate",
         "db:push": "prisma db push",
         "db:migrate": "prisma migrate dev",
-        "db:seed": "tsx prisma/seed.ts",
-        "db:reset": "prisma migrate reset --force && npm run db:seed"
+        "db:seed": "tsx lib/seed.ts",
+        "db:reset": "prisma migrate reset --force && npx prisma db push --accept-data-loss && npm run db:seed",
+        "db:fresh": "npm run db:generate && npm run db:reset",
+        "build:dev-seed": "DEBUG=1 npm run build && npm run db:fresh"
     },
     "prisma": {
-        "seed": "tsx prisma/seed.ts"
+        "seed": "tsx lib/seed.ts"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.995.0",
@@ -55,9 +57,10 @@
         "@types/bcrypt": "^6.0.0",
         "@types/dagre": "^0.7.53",
         "@types/node": "^20.19.33",
+        "@types/nodemailer": "^7.0.11",
         "@types/pg": "^8.16.0",
-        "@types/react": "^19",
-        "@types/react-dom": "^19",
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.2.3",
         "@typescript-eslint/eslint-plugin": "^8.56.0",
         "eslint": "^9.39.2",
         "eslint-config-next": "^16.1.6",

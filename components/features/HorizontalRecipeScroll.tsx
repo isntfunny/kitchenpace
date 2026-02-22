@@ -4,8 +4,8 @@ import * as React from 'react';
 
 import { css } from 'styled-system/css';
 
-import { Heading, Text } from '../atoms/Typography';
 import { SmartImage } from '../atoms/SmartImage';
+import { Heading, Text } from '../atoms/Typography';
 
 interface Recipe {
     id: string;

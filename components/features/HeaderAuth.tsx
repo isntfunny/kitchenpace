@@ -7,8 +7,9 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 
 import { handleSignIn, handleSignOut } from '@/components/auth/actions';
-import { SmartImage } from '../atoms/SmartImage';
 import { css } from 'styled-system/css';
+
+import { SmartImage } from '../atoms/SmartImage';
 
 interface Profile {
     photoUrl: string | null;

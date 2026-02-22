@@ -22,6 +22,8 @@ import { HeroSpotlight } from '@/components/sections/HeroSpotlight';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
+export const revalidate = 60;
+
 export default async function Home() {
     const [
         featuredRecipe,

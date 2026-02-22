@@ -6,6 +6,8 @@ import { container } from 'styled-system/patterns';
 
 import { RecipeDetailClient } from './RecipeDetailClient';
 
+export const revalidate = 60;
+
 type RecipePageParams = {
     id: string;
 };

@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
+
 import { SmartImage } from '../atoms/SmartImage';
 
 interface Recipe {

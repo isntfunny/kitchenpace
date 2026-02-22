@@ -2,6 +2,7 @@
 
 import Image, { ImageProps } from 'next/image';
 import { useState } from 'react';
+
 import { getThumbnailUrl, extractKeyFromUrl, ThumbnailOptions } from '@/lib/thumbnail';
 
 interface SmartImageProps extends Omit<ImageProps, 'src' | 'width' | 'height'> {

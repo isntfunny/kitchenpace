@@ -6,9 +6,10 @@ import Link from 'next/link';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
+import { SmartImage } from '../atoms/SmartImage';
+
 import { HeaderAuth } from './HeaderAuth';
 import { RecipeTabs } from './RecipeTabs';
-import { SmartImage } from '../atoms/SmartImage';
 
 const categories = [
     { name: 'Frühstück', icon: '🍳' },

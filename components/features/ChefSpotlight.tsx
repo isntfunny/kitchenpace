@@ -2,8 +2,8 @@ import type { ChefSpotlightData } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
-import { Heading, Text } from '../atoms/Typography';
 import { SmartImage } from '../atoms/SmartImage';
+import { Heading, Text } from '../atoms/Typography';
 
 interface ChefSpotlightProps {
     chef: ChefSpotlightData | null;

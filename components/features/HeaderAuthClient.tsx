@@ -4,8 +4,9 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import Link from 'next/link';
 
 import { handleSignIn, handleSignOut } from '@/components/auth/actions';
-import { SmartImage } from '../atoms/SmartImage';
 import { css } from 'styled-system/css';
+
+import { SmartImage } from '../atoms/SmartImage';
 
 interface HeaderAuthClientProps {
     isAuthenticated: boolean;

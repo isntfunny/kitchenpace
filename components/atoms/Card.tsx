@@ -3,6 +3,7 @@
 import * as React from 'react';
 
 import { css } from 'styled-system/css';
+
 import { SmartImage } from './SmartImage';
 
 interface CardProps {

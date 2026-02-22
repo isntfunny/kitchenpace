@@ -6,10 +6,10 @@ import { useState, useEffect, useRef } from 'react';
 
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
+import { SmartImage } from '@/components/atoms/SmartImage';
 import { Header } from '@/components/features/Header';
 import { RecipeFlow } from '@/components/flow/RecipeFlow';
 import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
-import { SmartImage } from '@/components/atoms/SmartImage';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
 

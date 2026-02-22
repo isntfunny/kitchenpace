@@ -5,8 +5,8 @@ import * as React from 'react';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
-import { Heading, Text } from '../atoms/Typography';
 import { SmartImage } from '../atoms/SmartImage';
+import { Heading, Text } from '../atoms/Typography';
 
 export function HeroSpotlight() {
     return (

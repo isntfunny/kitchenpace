@@ -1,6 +1,7 @@
 'use client';
 
 import { css } from 'styled-system/css';
+
 import { SmartImage } from '../atoms/SmartImage';
 
 interface DashboardWelcomeProps {

@@ -47,58 +47,47 @@ interface UserProfileClientProps {
 // Avatar size constant for consistent sizing
 const AVATAR_SIZE = 140;
 
-// Activity type configurations
-const ACTIVITY_CONFIG: Record<
-    string,
-    { icon: string; label: string; bgColor: string; iconColor: string }
-> = {
+// Activity type configurations - supports {recipe} placeholder
+const ACTIVITY_CONFIG: Record<string, { icon: string; template: string[]; bgColor: string }> = {
     RECIPE_CREATED: {
         icon: '✍️',
-        label: 'hat ein Rezept erstellt',
+        template: ['hat das Rezept', 'erstellt'],
         bgColor: '#f3e8ff',
-        iconColor: '#7c3aed',
     },
     RECIPE_COOKED: {
         icon: '🔥',
-        label: 'hat gekocht',
+        template: ['hat', 'gekocht'],
         bgColor: '#fef3c7',
-        iconColor: '#d97706',
     },
     RECIPE_RATED: {
         icon: '⭐',
-        label: 'hat bewertet',
+        template: ['hat', 'bewertet'],
         bgColor: '#fef9c3',
-        iconColor: '#ca8a04',
     },
     RECIPE_COMMENTED: {
         icon: '💬',
-        label: 'hat kommentiert',
+        template: ['hat', 'kommentiert'],
         bgColor: '#fce7f3',
-        iconColor: '#db2777',
     },
     RECIPE_FAVORITED: {
         icon: '🔖',
-        label: 'hat gespeichert',
+        template: ['hat', 'gespeichert'],
         bgColor: '#dbeafe',
-        iconColor: '#2563eb',
     },
     USER_FOLLOWED: {
         icon: '🤝',
-        label: 'ist jetzt Follower',
+        template: ['ist jetzt Follower'],
         bgColor: '#d1fae5',
-        iconColor: '#059669',
     },
     SHOPPING_LIST_CREATED: {
         icon: '🛒',
-        label: 'hat eine Einkaufsliste erstellt',
+        template: ['hat eine Einkaufsliste erstellt'],
         bgColor: '#fef3c7',
-        iconColor: '#d97706',
     },
     MEAL_PLAN_CREATED: {
         icon: '📅',
-        label: 'hat einen Essensplan erstellt',
+        template: ['hat einen Essensplan erstellt'],
         bgColor: '#e0e7ff',
-        iconColor: '#4f46e5',
     },
 };
 
@@ -374,10 +363,16 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
                                     {activities.map((activity, index) => {
                                         const config = ACTIVITY_CONFIG[activity.type] ?? {
                                             icon: '📋',
-                                            label: 'war aktiv',
+                                            template: ['war aktiv'],
                                             bgColor: '#f3f4f6',
-                                            iconColor: '#6b7280',
                                         };
+
+                                        // Build the activity text
+                                        // If template has 2 parts, recipe goes between them
+                                        // If template has 1 part, it's a standalone action (no recipe)
+                                        const hasRecipe =
+                                            activity.recipeTitle && config.template.length === 2;
+
                                         return (
                                             <div
                                                 key={activity.id}
@@ -428,31 +423,34 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
                                                             >
                                                                 {user.name}
                                                             </span>{' '}
-                                                            <span
-                                                                className={css({
-                                                                    color: 'text-muted',
-                                                                })}
-                                                            >
-                                                                {config.label}
-                                                            </span>
+                                                            {hasRecipe ? (
+                                                                <>
+                                                                    {config.template[0]}{' '}
+                                                                    <Link
+                                                                        href={`/recipe/${activity.recipeSlug ?? activity.targetId}`}
+                                                                        className={css({
+                                                                            color: 'primary',
+                                                                            fontWeight: '500',
+                                                                            _hover: {
+                                                                                textDecoration:
+                                                                                    'underline',
+                                                                            },
+                                                                        })}
+                                                                    >
+                                                                        {activity.recipeTitle}
+                                                                    </Link>{' '}
+                                                                    {config.template[1]}
+                                                                </>
+                                                            ) : (
+                                                                <span
+                                                                    className={css({
+                                                                        color: 'text-muted',
+                                                                    })}
+                                                                >
+                                                                    {config.template[0]}
+                                                                </span>
+                                                            )}
                                                         </p>
-                                                        {activity.recipeTitle && (
-                                                            <Link
-                                                                href={`/recipe/${activity.recipeSlug ?? activity.targetId}`}
-                                                                className={css({
-                                                                    fontSize: 'sm',
-                                                                    color: 'primary',
-                                                                    mt: '1',
-                                                                    display: 'block',
-                                                                    truncate: true,
-                                                                    _hover: {
-                                                                        textDecoration: 'underline',
-                                                                    },
-                                                                })}
-                                                            >
-                                                                {activity.recipeTitle}
-                                                            </Link>
-                                                        )}
                                                         <p
                                                             className={css({
                                                                 fontSize: 'xs',

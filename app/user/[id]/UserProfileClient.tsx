@@ -1,10 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { Badge } from '@/components/atoms/Badge';
-import { Card, CardImage, CardContent, CardTitle, CardDescription } from '@/components/atoms/Card';
+import { SmartImage } from '@/components/atoms/SmartImage';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
@@ -23,6 +22,10 @@ export interface UserProfileActivity {
     id: string;
     type: string;
     timeAgo: string;
+    targetId: string | null;
+    targetType: string | null;
+    recipeTitle: string | null;
+    recipeSlug: string | null;
     metadata: Record<string, unknown> | null;
 }
 
@@ -41,46 +44,77 @@ interface UserProfileClientProps {
     user: UserProfileData;
 }
 
+// Avatar size constant for consistent sizing
+const AVATAR_SIZE = 140;
+
+// Activity type configurations
+const ACTIVITY_CONFIG: Record<
+    string,
+    { icon: string; label: string; bgColor: string; iconColor: string }
+> = {
+    RECIPE_CREATED: {
+        icon: '✍️',
+        label: 'hat ein Rezept erstellt',
+        bgColor: '#f3e8ff',
+        iconColor: '#7c3aed',
+    },
+    RECIPE_COOKED: {
+        icon: '🔥',
+        label: 'hat gekocht',
+        bgColor: '#fef3c7',
+        iconColor: '#d97706',
+    },
+    RECIPE_RATED: {
+        icon: '⭐',
+        label: 'hat bewertet',
+        bgColor: '#fef9c3',
+        iconColor: '#ca8a04',
+    },
+    RECIPE_COMMENTED: {
+        icon: '💬',
+        label: 'hat kommentiert',
+        bgColor: '#fce7f3',
+        iconColor: '#db2777',
+    },
+    RECIPE_FAVORITED: {
+        icon: '🔖',
+        label: 'hat gespeichert',
+        bgColor: '#dbeafe',
+        iconColor: '#2563eb',
+    },
+    USER_FOLLOWED: {
+        icon: '🤝',
+        label: 'ist jetzt Follower',
+        bgColor: '#d1fae5',
+        iconColor: '#059669',
+    },
+    SHOPPING_LIST_CREATED: {
+        icon: '🛒',
+        label: 'hat eine Einkaufsliste erstellt',
+        bgColor: '#fef3c7',
+        iconColor: '#d97706',
+    },
+    MEAL_PLAN_CREATED: {
+        icon: '📅',
+        label: 'hat einen Essensplan erstellt',
+        bgColor: '#e0e7ff',
+        iconColor: '#4f46e5',
+    },
+};
+
 export function UserProfileClient({ user }: UserProfileClientProps) {
     const { recipes, activities } = user;
 
-    // Get activity label based on type
-    const getActivityLabel = (type: string): string => {
-        const labels: Record<string, string> = {
-            RECIPE_CREATED: 'hat ein Rezept erstellt',
-            RECIPE_COOKED: 'hat gekocht',
-            RECIPE_RATED: 'hat bewertet',
-            RECIPE_COMMENTED: 'hat kommentiert',
-            RECIPE_FAVORITED: 'hat gespeichert',
-            USER_FOLLOWED: 'ist jetzt Follower',
-            SHOPPING_LIST_CREATED: 'hat eine Einkaufsliste erstellt',
-            MEAL_PLAN_CREATED: 'hat einen Essensplan erstellt',
-        };
-        return labels[type] ?? 'war aktiv';
-    };
-
-    // Get activity icon based on type
-    const getActivityIcon = (type: string): string => {
-        const icons: Record<string, string> = {
-            RECIPE_CREATED: '✍️',
-            RECIPE_COOKED: '🔥',
-            RECIPE_RATED: '⭐',
-            RECIPE_COMMENTED: '💬',
-            RECIPE_FAVORITED: '🔖',
-            USER_FOLLOWED: '🤝',
-            SHOPPING_LIST_CREATED: '🛒',
-            MEAL_PLAN_CREATED: '📅',
-        };
-        return icons[type] ?? '📋';
-    };
-
     return (
-        <div className={css({ minH: '100vh', bg: '#fffcf9' })}>
+        <div className={css({ minH: '100vh', bg: 'background' })}>
+            {/* Profile Header */}
             <div
                 className={css({
-                    background: 'linear-gradient(180deg, #fff7f1 0%, #fffcf9 100%)',
-                    pt: { base: '8', md: '12' },
-                    pb: '12',
+                    bg: 'linear-gradient(135deg, #fff7f0 0%, #ffede0 50%, #fff7f0 100%)',
+                    pt: { base: '6', md: '10' },
+                    pb: { base: '8', md: '12' },
+                    borderBottom: '1px solid',
+                    borderColor: 'gray.100',
                 })}
             >
                 <div
@@ -94,119 +128,187 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
                         className={flex({
                             direction: { base: 'column', md: 'row' },
                             align: { base: 'center', md: 'flex-start' },
-                            gap: { base: '6', md: '10' },
-                            textAlign: { base: 'center', md: 'left' },
+                            gap: { base: '6', md: '8' },
                         })}
                     >
-                        <div>
-                            {user.avatar ? (
-                                <Image
-                                    src={user.avatar}
-                                    alt={user.name}
-                                    width={160}
-                                    height={160}
-                                    unoptimized
-                                    className={css({
-                                        borderRadius: '50%',
-                                        objectFit: 'cover',
-                                        border: '6px solid #fff',
-                                        boxShadow: '0 15px 40px rgba(0,0,0,0.15)',
-                                    })}
-                                />
-                            ) : (
-                                <div
-                                    className={css({
-                                        width: '160px',
-                                        height: '160px',
-                                        borderRadius: '50%',
-                                        background: 'linear-gradient(135deg, #ffe5d1, #ffc89e)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '4xl',
-                                        fontWeight: '700',
-                                    })}
-                                >
-                                    {user.name.slice(0, 2).toUpperCase()}
-                                </div>
-                            )}
+                        {/* Avatar Container - Fixed 1:1 ratio circle */}
+                        <div
+                            className={css({
+                                position: 'relative',
+                                flexShrink: 0,
+                            })}
+                        >
+                            <div
+                                className={css({
+                                    width: `${AVATAR_SIZE}px`,
+                                    height: `${AVATAR_SIZE}px`,
+                                    borderRadius: '50%',
+                                    overflow: 'hidden',
+                                    border: '4px solid white',
+                                    boxShadow:
+                                        '0 8px 24px rgba(224, 123, 83, 0.2), 0 2px 8px rgba(0,0,0,0.08)',
+                                    bg: 'white',
+                                })}
+                            >
+                                {user.avatar ? (
+                                    <SmartImage
+                                        src={user.avatar}
+                                        alt={user.name}
+                                        width={AVATAR_SIZE}
+                                        height={AVATAR_SIZE}
+                                        className={css({
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover',
+                                            display: 'block',
+                                        })}
+                                    />
+                                ) : (
+                                    <div
+                                        className={css({
+                                            width: '100%',
+                                            height: '100%',
+                                            background:
+                                                'linear-gradient(135deg, #e07b53 0%, #c4623d 100%)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '3xl',
+                                            fontWeight: '700',
+                                            color: 'white',
+                                            fontFamily: 'heading',
+                                        })}
+                                    >
+                                        {user.name.slice(0, 2).toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+                            {/* Online indicator or badge could go here */}
                         </div>
 
-                        <div className={css({ flex: 1, maxW: '600px' })}>
+                        {/* Profile Info */}
+                        <div
+                            className={css({
+                                flex: 1,
+                                textAlign: { base: 'center', md: 'left' },
+                            })}
+                        >
                             <p
                                 className={css({
-                                    color: 'text-muted',
-                                    letterSpacing: 'widest',
-                                    fontSize: 'sm',
-                                    mb: '1',
+                                    color: 'primary',
+                                    fontSize: 'xs',
+                                    fontWeight: '600',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.1em',
+                                    mb: '2',
                                 })}
                             >
                                 Koch-Profil
                             </p>
                             <h1
                                 className={css({
-                                    fontSize: { base: '3xl', md: '4xl' },
+                                    fontSize: { base: '2xl', md: '3xl', lg: '4xl' },
                                     fontWeight: '800',
+                                    fontFamily: 'heading',
+                                    color: 'text',
                                     mb: '3',
+                                    lineHeight: '1.2',
                                 })}
                             >
                                 {user.name}
                             </h1>
-                            <p
-                                className={css({
-                                    color: 'text-muted',
-                                    mb: '4',
-                                    lineHeight: '1.8',
-                                    fontSize: 'lg',
-                                })}
-                            >
-                                {user.bio}
-                            </p>
+                            {user.bio && (
+                                <p
+                                    className={css({
+                                        color: 'text-muted',
+                                        fontSize: { base: 'sm', md: 'base' },
+                                        lineHeight: '1.7',
+                                        mb: '5',
+                                        maxW: { base: 'full', md: '500px' },
+                                        mx: { base: 'auto', md: '0' },
+                                    })}
+                                >
+                                    {user.bio}
+                                </p>
+                            )}
+
+                            {/* Stats Row */}
                             <div
                                 className={flex({
-                                    gap: '6',
+                                    gap: { base: '6', md: '8' },
                                     justify: { base: 'center', md: 'flex-start' },
-                                    color: 'text-muted',
-                                    fontSize: 'sm',
+                                    flexWrap: 'wrap',
                                 })}
                             >
-                                <span className={css({ fontWeight: '600', color: 'text' })}>
-                                    {user.recipeCount} Rezepte
-                                </span>
-                                <span className={css({ fontWeight: '600', color: 'text' })}>
-                                    {user.followerCount} Follower
-                                </span>
+                                <StatItem value={user.recipeCount} label="Rezepte" />
+                                <StatItem value={user.followerCount} label="Follower" />
+                                {recipes.length > 0 && (
+                                    <StatItem
+                                        value={
+                                            recipes.reduce((sum, r) => sum + r.rating, 0) /
+                                            recipes.length
+                                        }
+                                        label="⭐ Ø Rating"
+                                        isDecimal
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* Main Content */}
             <main
                 className={css({
                     maxW: '1000px',
                     mx: 'auto',
                     px: { base: '4', md: '6' },
-                    py: '8',
+                    py: { base: '6', md: '8' },
                 })}
             >
                 <div
                     className={css({
                         display: 'grid',
-                        gridTemplateColumns: { base: '1fr', lg: '2fr 1fr' },
-                        gap: '8',
+                        gridTemplateColumns: { base: '1fr', lg: '1fr 320px' },
+                        gap: { base: '8', lg: '10' },
                     })}
                 >
+                    {/* Recipes Section */}
                     <div>
-                        <h2
-                            className={css({
-                                fontSize: 'xl',
-                                fontWeight: '700',
-                                mb: '4',
+                        <div
+                            className={flex({
+                                justify: 'space-between',
+                                align: 'center',
+                                mb: '5',
                             })}
                         >
-                            Rezepte von {user.name}
-                        </h2>
+                            <h2
+                                className={css({
+                                    fontSize: 'lg',
+                                    fontWeight: '700',
+                                    color: 'text',
+                                    fontFamily: 'heading',
+                                })}
+                            >
+                                Rezepte
+                            </h2>
+                            {recipes.length > 0 && (
+                                <span
+                                    className={css({
+                                        fontSize: 'sm',
+                                        color: 'text-muted',
+                                        bg: 'gray.100',
+                                        px: '3',
+                                        py: '1',
+                                        borderRadius: 'full',
+                                    })}
+                                >
+                                    {user.recipeCount} insgesamt
+                                </span>
+                            )}
+                        </div>
+
                         {recipes.length > 0 ? (
                             <div
                                 className={grid({
@@ -215,163 +317,325 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
                                 })}
                             >
                                 {recipes.map((recipe) => (
-                                    <Link
-                                        key={recipe.id}
-                                        href={`/recipe/${recipe.id}`}
-                                        className={css({
-                                            textDecoration: 'none',
-                                            color: 'inherit',
-                                        })}
-                                    >
-                                        <Card>
-                                            <CardImage src={recipe.image} alt={recipe.title} />
-                                            <CardContent>
-                                                <Badge>{recipe.category}</Badge>
-                                                <div className={css({ mt: '2' })}>
-                                                    <CardTitle>{recipe.title}</CardTitle>
-                                                    <CardDescription>
-                                                        {recipe.description}
-                                                    </CardDescription>
-                                                </div>
-                                                <div
-                                                    className={flex({
-                                                        justify: 'space-between',
-                                                        align: 'center',
-                                                        mt: '3',
-                                                        fontFamily: 'body',
-                                                        fontSize: 'sm',
-                                                        color: 'text-muted',
-                                                    })}
-                                                >
-                                                    <span>★ {recipe.rating}</span>
-                                                    <span>
-                                                        {recipe.prepTime + recipe.cookTime} Min.
-                                                    </span>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </Link>
+                                    <RecipeCard key={recipe.id} recipe={recipe} />
                                 ))}
                             </div>
                         ) : (
-                            <p className={css({ color: 'text-muted' })}>
-                                Noch keine Rezepte veröffentlicht.
-                            </p>
+                            <div
+                                className={css({
+                                    bg: 'surface.elevated',
+                                    borderRadius: 'xl',
+                                    p: '8',
+                                    textAlign: 'center',
+                                    border: '1px dashed',
+                                    borderColor: 'gray.200',
+                                })}
+                            >
+                                <div
+                                    className={css({
+                                        fontSize: '3xl',
+                                        mb: '3',
+                                    })}
+                                >
+                                    🍳
+                                </div>
+                                <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                                    {user.name} hat noch keine Rezepte veröffentlicht.
+                                </p>
+                            </div>
                         )}
                     </div>
 
+                    {/* Activity Sidebar */}
                     <div>
                         <h2
                             className={css({
-                                fontSize: 'xl',
+                                fontSize: 'lg',
                                 fontWeight: '700',
-                                mb: '4',
+                                color: 'text',
+                                fontFamily: 'heading',
+                                mb: '5',
                             })}
                         >
-                            Letzte Aktivitäten
+                            Aktivitäten
                         </h2>
-                        <div
-                            className={css({
-                                bg: 'white',
-                                borderRadius: '2xl',
-                                p: '4',
-                                boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-                            })}
-                        >
-                            {activities.length > 0 ? (
-                                <div
-                                    className={flex({
-                                        direction: 'column',
-                                        gap: '4',
-                                    })}
-                                >
-                                    {activities.map((activity) => (
-                                        <div
-                                            key={activity.id}
-                                            className={css({
-                                                pb: '4',
-                                                borderBottom: '1px solid',
-                                                borderColor: 'gray.100',
-                                                '&:last-child': {
-                                                    pb: '0',
-                                                    borderBottom: 'none',
-                                                },
-                                            })}
-                                        >
+
+                        {activities.length > 0 ? (
+                            <div
+                                className={css({
+                                    bg: 'surface.elevated',
+                                    borderRadius: 'xl',
+                                    boxShadow:
+                                        '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
+                                    overflow: 'hidden',
+                                })}
+                            >
+                                <div className={flex({ direction: 'column' })}>
+                                    {activities.map((activity, index) => {
+                                        const config = ACTIVITY_CONFIG[activity.type] ?? {
+                                            icon: '📋',
+                                            label: 'war aktiv',
+                                            bgColor: '#f3f4f6',
+                                            iconColor: '#6b7280',
+                                        };
+                                        return (
                                             <div
-                                                className={flex({
-                                                    align: 'center',
-                                                    gap: '3',
-                                                    mb: '2',
+                                                key={activity.id}
+                                                className={css({
+                                                    p: '4',
+                                                    borderBottom:
+                                                        index < activities.length - 1
+                                                            ? '1px solid'
+                                                            : 'none',
+                                                    borderColor: 'gray.100',
+                                                    _hover: { bg: 'gray.50' },
+                                                    transition: 'background 0.15s',
                                                 })}
                                             >
                                                 <div
-                                                    className={css({
-                                                        width: '32px',
-                                                        height: '32px',
-                                                        borderRadius: '50%',
-                                                        bg: 'gray.100',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        fontSize: 'lg',
+                                                    className={flex({
+                                                        align: 'flex-start',
+                                                        gap: '3',
                                                     })}
                                                 >
-                                                    {getActivityIcon(activity.type)}
-                                                </div>
-                                                <div
-                                                    className={css({
-                                                        fontSize: 'sm',
-                                                        fontFamily: 'body',
-                                                    })}
-                                                >
-                                                    <span
+                                                    <div
                                                         className={css({
-                                                            fontWeight: '600',
+                                                            width: '36px',
+                                                            height: '36px',
+                                                            borderRadius: 'lg',
+                                                            bg: config.bgColor,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: 'lg',
+                                                            flexShrink: 0,
                                                         })}
                                                     >
-                                                        {user.name}
-                                                    </span>{' '}
-                                                    {getActivityLabel(activity.type)}
+                                                        {config.icon}
+                                                    </div>
+                                                    <div className={css({ flex: 1, minW: 0 })}>
+                                                        <p
+                                                            className={css({
+                                                                fontSize: 'sm',
+                                                                color: 'text',
+                                                                lineHeight: '1.5',
+                                                            })}
+                                                        >
+                                                            <span
+                                                                className={css({
+                                                                    fontWeight: '600',
+                                                                })}
+                                                            >
+                                                                {user.name}
+                                                            </span>{' '}
+                                                            <span
+                                                                className={css({
+                                                                    color: 'text-muted',
+                                                                })}
+                                                            >
+                                                                {config.label}
+                                                            </span>
+                                                        </p>
+                                                        {activity.recipeTitle && (
+                                                            <Link
+                                                                href={`/recipe/${activity.recipeSlug ?? activity.targetId}`}
+                                                                className={css({
+                                                                    fontSize: 'sm',
+                                                                    color: 'primary',
+                                                                    mt: '1',
+                                                                    display: 'block',
+                                                                    truncate: true,
+                                                                    _hover: {
+                                                                        textDecoration: 'underline',
+                                                                    },
+                                                                })}
+                                                            >
+                                                                {activity.recipeTitle}
+                                                            </Link>
+                                                        )}
+                                                        <p
+                                                            className={css({
+                                                                fontSize: 'xs',
+                                                                color: 'text-muted',
+                                                                mt: '1',
+                                                            })}
+                                                        >
+                                                            {activity.timeAgo}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            {activity.metadata &&
-                                                typeof activity.metadata === 'object' &&
-                                                'recipeTitle' in activity.metadata && (
-                                                    <p
-                                                        className={css({
-                                                            fontSize: 'sm',
-                                                            color: 'text-muted',
-                                                            pl: '11',
-                                                            fontFamily: 'body',
-                                                        })}
-                                                    >
-                                                        {String(activity.metadata.recipeTitle)}
-                                                    </p>
-                                                )}
-                                            <p
-                                                className={css({
-                                                    fontSize: 'xs',
-                                                    color: 'text-muted',
-                                                    pl: '11',
-                                                    mt: '1',
-                                                    fontFamily: 'body',
-                                                })}
-                                            >
-                                                {activity.timeAgo}
-                                            </p>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
-                            ) : (
+                            </div>
+                        ) : (
+                            <div
+                                className={css({
+                                    bg: 'surface.elevated',
+                                    borderRadius: 'xl',
+                                    p: '6',
+                                    textAlign: 'center',
+                                    border: '1px dashed',
+                                    borderColor: 'gray.200',
+                                })}
+                            >
+                                <div className={css({ fontSize: '2xl', mb: '2' })}>📝</div>
                                 <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
-                                    Keine Aktivitäten.
+                                    Noch keine Aktivitäten.
                                 </p>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
         </div>
+    );
+}
+
+// Stat Item Component
+function StatItem({
+    value,
+    label,
+    isDecimal = false,
+}: {
+    value: number;
+    label: string;
+    isDecimal?: boolean;
+}) {
+    return (
+        <div
+            className={css({
+                textAlign: 'center',
+            })}
+        >
+            <div
+                className={css({
+                    fontSize: { base: 'xl', md: '2xl' },
+                    fontWeight: '800',
+                    color: 'text',
+                    fontFamily: 'heading',
+                })}
+            >
+                {isDecimal ? value.toFixed(1) : value}
+            </div>
+            <div
+                className={css({
+                    fontSize: 'xs',
+                    color: 'text-muted',
+                    fontWeight: '500',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                })}
+            >
+                {label}
+            </div>
+        </div>
+    );
+}
+
+// Recipe Card Component
+function RecipeCard({ recipe }: { recipe: UserProfileRecipe }) {
+    const totalTime = recipe.prepTime + recipe.cookTime;
+
+    return (
+        <Link
+            href={`/recipe/${recipe.id}`}
+            className={css({
+                display: 'block',
+                textDecoration: 'none',
+                color: 'inherit',
+                bg: 'surface.elevated',
+                borderRadius: 'xl',
+                overflow: 'hidden',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                _hover: {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.04)',
+                },
+            })}
+        >
+            {/* Recipe Image */}
+            <div
+                className={css({
+                    position: 'relative',
+                    aspectRatio: '16/10',
+                    overflow: 'hidden',
+                })}
+            >
+                <SmartImage
+                    src={recipe.image}
+                    alt={recipe.title}
+                    fill
+                    className={css({
+                        objectFit: 'cover',
+                        transition: 'transform 0.3s',
+                    })}
+                />
+                <div
+                    className={css({
+                        position: 'absolute',
+                        top: '3',
+                        left: '3',
+                    })}
+                >
+                    <Badge>{recipe.category}</Badge>
+                </div>
+            </div>
+
+            {/* Recipe Content */}
+            <div className={css({ p: '4' })}>
+                <h3
+                    className={css({
+                        fontSize: 'base',
+                        fontWeight: '700',
+                        fontFamily: 'heading',
+                        color: 'text',
+                        mb: '1',
+                        lineClamp: 1,
+                    })}
+                >
+                    {recipe.title}
+                </h3>
+                <p
+                    className={css({
+                        fontSize: 'sm',
+                        color: 'text-muted',
+                        lineClamp: 2,
+                        mb: '3',
+                        lineHeight: '1.5',
+                    })}
+                >
+                    {recipe.description}
+                </p>
+
+                {/* Recipe Meta */}
+                <div
+                    className={flex({
+                        justify: 'space-between',
+                        align: 'center',
+                        fontSize: 'xs',
+                        color: 'text-muted',
+                    })}
+                >
+                    <div
+                        className={flex({
+                            align: 'center',
+                            gap: '1',
+                        })}
+                    >
+                        <span className={css({ color: '#f8b500' })}>★</span>
+                        <span className={css({ fontWeight: '600' })}>
+                            {recipe.rating.toFixed(1)}
+                        </span>
+                    </div>
+                    <div className={flex({ align: 'center', gap: '1' })}>
+                        <span>⏱</span>
+                        <span>{totalTime} Min.</span>
+                    </div>
+                </div>
+            </div>
+        </Link>
     );
 }

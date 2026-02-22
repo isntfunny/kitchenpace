@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import { useState } from 'react';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
+import { SmartImage } from '../atoms/SmartImage';
 
 interface Recipe {
     id: string;
@@ -69,7 +69,7 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
                     aspectRatio: '4/3',
                 })}
             >
-                <Image
+                <SmartImage
                     src={recipe.image}
                     alt={recipe.title}
                     fill

@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
@@ -10,6 +9,7 @@ import { Button } from '@/components/atoms/Button';
 import { Header } from '@/components/features/Header';
 import { RecipeFlow } from '@/components/flow/RecipeFlow';
 import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
+import { SmartImage } from '@/components/atoms/SmartImage';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
 
@@ -21,10 +21,6 @@ type RecipeDetailClientProps = {
     recipeActivities: Activity[];
 };
 
-// Debug: Track component renders
-let globalRenderCount = 0;
-const renderLog: Array<{ time: number; stack: string }> = [];
-
 export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeDetailClientProps) {
     // State declarations MUST come first
     const router = useRouter();
@@ -33,13 +29,53 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
     const [isFollowing, setIsFollowing] = useState(false);
 
     // Recipe tabs context for tracking views
-    const { addToRecent } = useRecipeTabs();
+    const recipeTabs = useRecipeTabs();
+    const { addToRecent } = recipeTabs;
+
+    // Debug: Track what changed between renders
+    const prevPropsRef = useRef({ recipe, author, recipeActivities });
+    const prevContextRef = useRef(recipeTabs);
+    const renderCountRef = useRef(0);
+
+    useEffect(() => {
+        renderCountRef.current += 1;
+        const changes: string[] = [];
+
+        // Check props changes
+        if (prevPropsRef.current.recipe !== recipe) changes.push('recipe prop');
+        if (prevPropsRef.current.author !== author) changes.push('author prop');
+        if (prevPropsRef.current.recipeActivities !== recipeActivities)
+            changes.push('recipeActivities prop');
+
+        // Check context changes
+        if (prevContextRef.current.pinned !== recipeTabs.pinned) changes.push('context.pinned');
+        if (prevContextRef.current.recent !== recipeTabs.recent) changes.push('context.recent');
+        if (prevContextRef.current.isLoading !== recipeTabs.isLoading)
+            changes.push('context.isLoading');
+        if (prevContextRef.current.isAuthenticated !== recipeTabs.isAuthenticated)
+            changes.push('context.isAuthenticated');
+
+        // Check state changes
+        if (renderCountRef.current > 1) {
+            console.log(
+                `[DEBUG] Render #${renderCountRef.current} - Changes: ${changes.length > 0 ? changes.join(', ') : 'unknown (state/internal)'}`,
+            );
+        } else {
+            console.log(`[DEBUG] Render #${renderCountRef.current} - Initial mount`);
+        }
+
+        prevPropsRef.current = { recipe, author, recipeActivities };
+        prevContextRef.current = recipeTabs;
+    });
 
     // Track recipe view - only once per recipe
     const trackedRef = useRef<string | null>(null);
     useEffect(() => {
         if (trackedRef.current === recipe.id) return;
         trackedRef.current = recipe.id;
+
+        // Skip if already the first recent item
+        if (recipeTabs.recent[0]?.id === recipe.id) return;
 
         addToRecent({
             id: recipe.id,
@@ -57,140 +93,9 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
         recipe.prepTime,
         recipe.cookTime,
         recipe.difficulty,
+        recipeTabs.recent,
         addToRecent,
     ]);
-
-    // Debug refs
-    const renderCountRef = useRef(0);
-    const mountTimeRef = useRef(0);
-    const imageLoadCountRef = useRef(0);
-    const prevServingsRef = useRef(recipe.servings);
-    const prevIsSavedRef = useRef(false);
-    const prevIsFollowingRef = useRef(false);
-    const globalRenderCountRef = useRef(0);
-
-    // Debug: Log every render
-    useEffect(() => {
-        renderCountRef.current += 1;
-
-        if (mountTimeRef.current === 0) {
-            mountTimeRef.current = Date.now();
-        }
-
-        globalRenderCount += 1;
-        globalRenderCountRef.current = globalRenderCount;
-
-        const now = Date.now();
-        const timeSinceMount = now - mountTimeRef.current;
-        const stack = new Error().stack || '';
-
-        console.log(
-            `[DEBUG] RecipeDetailClient render #${renderCountRef.current} (global #${globalRenderCountRef.current}) at +${timeSinceMount}ms`,
-        );
-        renderLog.push({ time: timeSinceMount, stack });
-
-        // Warn if rendering too frequently
-        if (renderLog.length > 1) {
-            const lastRender = renderLog[renderLog.length - 2];
-            const timeSinceLastRender = timeSinceMount - lastRender.time;
-            if (timeSinceLastRender < 100) {
-                console.warn(
-                    `[DEBUG] RAPID RE-RENDER! Only ${timeSinceLastRender}ms since last render`,
-                );
-                console.warn(
-                    '[DEBUG] Previous render stack:',
-                    lastRender.stack.split('\n').slice(0, 5).join('\n'),
-                );
-            }
-        }
-    });
-
-    // Debug: Monitor DOM mutations on the image container
-    useEffect(() => {
-        const imgContainer = document.querySelector('[data-debug-image-container]');
-        if (!imgContainer) return;
-
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                console.log('[DEBUG] DOM Mutation:', {
-                    type: mutation.type,
-                    target: (mutation.target as Element).tagName,
-                    attributeName: mutation.attributeName,
-                    time: Date.now() - (mountTimeRef.current || Date.now()),
-                });
-
-                // Log if an img element was added/removed
-                if (mutation.type === 'childList') {
-                    mutation.addedNodes.forEach((node) => {
-                        if (node instanceof HTMLImageElement) {
-                            console.warn('[DEBUG] IMG ELEMENT ADDED:', node.src);
-                            imageLoadCountRef.current += 1;
-                            console.warn(`[DEBUG] Total image loads: ${imageLoadCountRef.current}`);
-                        }
-                    });
-                }
-            });
-        });
-
-        observer.observe(imgContainer, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeOldValue: true,
-        });
-
-        return () => observer.disconnect();
-    }, []);
-
-    // Debug: Monitor all image load events on the page
-    useEffect(() => {
-        const handleImageLoad = (e: Event) => {
-            const img = e.target as HTMLImageElement;
-            if (img.src?.includes('unsplash')) {
-                imageLoadCountRef.current += 1;
-                console.log(
-                    `[DEBUG] Image loaded: ${img.src?.substring(0, 60)}... (load #${imageLoadCountRef.current})`,
-                );
-            }
-        };
-
-        const handleImageError = (e: Event) => {
-            const img = e.target as HTMLImageElement;
-            console.error('[DEBUG] Image error:', img.src);
-        };
-
-        document.addEventListener('load', handleImageLoad, true);
-        document.addEventListener('error', handleImageError, true);
-
-        return () => {
-            document.removeEventListener('load', handleImageLoad, true);
-            document.removeEventListener('error', handleImageError, true);
-        };
-    }, []);
-
-    // Debug: Log state changes
-    useEffect(() => {
-        if (prevServingsRef.current !== servings) {
-            console.log(`[DEBUG] servings changed: ${prevServingsRef.current} -> ${servings}`);
-        }
-        prevServingsRef.current = servings;
-    }, [servings]);
-
-    useEffect(() => {
-        if (prevIsSavedRef.current !== isSaved) {
-            console.log(`[DEBUG] isSaved changed: ${prevIsSavedRef.current} -> ${isSaved}`);
-        }
-        prevIsSavedRef.current = isSaved;
-    }, [isSaved]);
-
-    useEffect(() => {
-        if (prevIsFollowingRef.current !== isFollowing) {
-            console.log(
-                `[DEBUG] isFollowing changed: ${prevIsFollowingRef.current} -> ${isFollowing}`,
-            );
-        }
-        prevIsFollowingRef.current = isFollowing;
-    }, [isFollowing]);
 
     const totalTime = recipe.prepTime + recipe.cookTime;
 
@@ -237,14 +142,13 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                             data-debug-image-container
                         >
                             <div className={css({ aspectRatio: '4/3', position: 'relative' })}>
-                                <Image
+                                <SmartImage
                                     src={recipe.image}
                                     alt={recipe.title}
                                     fill
                                     sizes="(max-width: 1024px) 100vw, 50vw"
                                     className={css({ objectFit: 'cover' })}
                                     priority
-                                    unoptimized={recipe.image.includes('unsplash.com')}
                                 />
                             </div>
                         </div>
@@ -596,13 +500,12 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                                             _hover: { opacity: 0.9 },
                                         })}
                                     >
-                                        <Image
+                                        <SmartImage
                                             src={author.avatar}
                                             alt={author.name}
                                             fill
                                             sizes="80px"
                                             className={css({ objectFit: 'cover' })}
-                                            unoptimized={author.avatar.includes('unsplash.com')}
                                         />
                                     </div>
                                 </Link>
@@ -741,15 +644,12 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                                                 flexShrink: 0,
                                             })}
                                         >
-                                            <Image
+                                            <SmartImage
                                                 src={activity.user.avatar}
                                                 alt={activity.user.name}
                                                 fill
                                                 sizes="48px"
                                                 className={css({ objectFit: 'cover' })}
-                                                unoptimized={activity.user.avatar.includes(
-                                                    'unsplash.com',
-                                                )}
                                             />
                                         </div>
                                         <div className={css({ flex: 1 })}>

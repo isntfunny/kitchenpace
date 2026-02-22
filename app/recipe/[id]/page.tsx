@@ -87,18 +87,11 @@ export default async function RecipePage({ params }: RecipePageProps) {
         );
     }
 
-    const author = recipe.author
-        ? {
-              id: recipe.author.id,
-              name: recipe.author.name,
-              avatar: recipe.author.avatar || '',
-              bio: recipe.author.bio || '',
-              recipeCount: 0,
-              followerCount: 0,
-          }
-        : null;
-
     return (
-        <RecipeDetailClient recipe={recipe as any} author={author as any} recipeActivities={[]} />
+        <RecipeDetailClient
+            recipe={recipe as any}
+            author={recipe.author as any}
+            recipeActivities={[]}
+        />
     );
 }

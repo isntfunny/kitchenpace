@@ -1,9 +1,8 @@
 'use client';
 
-import Image from 'next/image';
-
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
+import { SmartImage } from '../atoms/SmartImage';
 
 interface DashboardStatCard {
     id: string;
@@ -169,12 +168,11 @@ export function UserDashboard({
                                 })}
                             >
                                 {userPhoto ? (
-                                    <Image
+                                    <SmartImage
                                         src={userPhoto}
                                         alt={userName}
                                         width={80}
                                         height={80}
-                                        unoptimized
                                         className={css({
                                             borderRadius: 'full',
                                             objectFit: 'cover',

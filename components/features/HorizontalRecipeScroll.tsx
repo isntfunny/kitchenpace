@@ -1,11 +1,11 @@
 'use client';
 
-import Image from 'next/image';
 import * as React from 'react';
 
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';
+import { SmartImage } from '../atoms/SmartImage';
 
 interface Recipe {
     id: string;
@@ -94,7 +94,7 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                                     aspectRatio: '16/10',
                                 })}
                             >
-                                <Image
+                                <SmartImage
                                     src={recipe.image}
                                     alt={recipe.title}
                                     fill

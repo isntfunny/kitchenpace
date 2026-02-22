@@ -1,9 +1,8 @@
-import Image from 'next/image';
-
 import type { RecipeCardData } from '@/app/actions/recipes';
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';
+import { SmartImage } from '../atoms/SmartImage';
 
 interface DailyHighlightProps {
     recipe: RecipeCardData | null;
@@ -38,7 +37,7 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                                 overflow: 'hidden',
                             })}
                         >
-                            <Image
+                            <SmartImage
                                 src={recipe.image}
                                 alt={recipe.title}
                                 fill
@@ -91,7 +90,7 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                             overflow: 'hidden',
                         })}
                     >
-                        <Image
+                        <SmartImage
                             src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80"
                             alt="Daily Highlight"
                             fill

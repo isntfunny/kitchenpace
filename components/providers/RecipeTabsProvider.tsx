@@ -251,13 +251,18 @@ export function RecipeTabsProvider({
     const addToRecent = useCallback(
         async (recipe: RecipeTabItem) => {
             const normalized = withDefaultEmoji(recipe);
-            setTabs((prev) => ({
-                ...prev,
-                recent: [normalized, ...prev.recent.filter((item) => item.id !== recipe.id)].slice(
-                    0,
-                    MAX_RECENT,
-                ),
-            }));
+            setTabs((prev) => {
+                if (prev.recent[0]?.id === recipe.id) {
+                    return prev;
+                }
+                return {
+                    ...prev,
+                    recent: [
+                        normalized,
+                        ...prev.recent.filter((item) => item.id !== recipe.id),
+                    ].slice(0, MAX_RECENT),
+                };
+            });
             if (isAuthenticated) {
                 await fetch('/api/recent-recipes', {
                     method: 'POST',

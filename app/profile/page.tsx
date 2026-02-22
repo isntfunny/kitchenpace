@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
@@ -8,6 +7,7 @@ import SignOutButton from '@/components/auth/SignOutButton';
 import { PageShell } from '@/components/layouts/PageShell';
 import { getOrCreateProfile } from '@/lib/profile';
 import { css } from 'styled-system/css';
+import { SmartImage } from '@/components/atoms/SmartImage';
 
 const ProfilePage = async () => {
     const session = await getServerSession(authOptions);
@@ -47,12 +47,11 @@ const ProfilePage = async () => {
                     >
                         <div>
                             {profile.photoUrl ? (
-                                <Image
+                                <SmartImage
                                     src={profile.photoUrl}
                                     alt={profile.nickname ?? 'Profilfoto'}
                                     width={160}
                                     height={160}
-                                    unoptimized
                                     className={css({
                                         borderRadius: '50%',
                                         objectFit: 'cover',

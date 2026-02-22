@@ -1,7 +1,6 @@
 'use client';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { css } from 'styled-system/css';
@@ -9,6 +8,7 @@ import { flex } from 'styled-system/patterns';
 
 import { HeaderAuth } from './HeaderAuth';
 import { RecipeTabs } from './RecipeTabs';
+import { SmartImage } from '../atoms/SmartImage';
 
 const categories = [
     { name: 'Frühstück', icon: '🍳' },
@@ -60,7 +60,7 @@ export function Header() {
                         })}
                     >
                         <Link href="/">
-                            <Image
+                            <SmartImage
                                 src="/kitchenpace.png"
                                 alt="KüchenTakt Logo"
                                 width={100}

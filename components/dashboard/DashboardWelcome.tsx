@@ -1,8 +1,7 @@
 'use client';
 
-import Image from 'next/image';
-
 import { css } from 'styled-system/css';
+import { SmartImage } from '../atoms/SmartImage';
 
 interface DashboardWelcomeProps {
     userName?: string;
@@ -155,12 +154,11 @@ export function DashboardWelcome({ userName = 'KüchenFan', userPhoto }: Dashboa
                         </span>
                     </div>
                     {userPhoto ? (
-                        <Image
+                        <SmartImage
                             src={userPhoto}
                             alt={userName}
                             width={64}
                             height={64}
-                            unoptimized
                             className={css({
                                 borderRadius: 'full',
                                 objectFit: 'cover',

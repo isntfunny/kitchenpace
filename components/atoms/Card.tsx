@@ -1,9 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import * as React from 'react';
 
 import { css } from 'styled-system/css';
+import { SmartImage } from './SmartImage';
 
 interface CardProps {
     children: React.ReactNode;
@@ -36,7 +36,7 @@ export function CardImage({ src, alt }: { src: string; alt: string }) {
                 overflow: 'hidden',
             })}
         >
-            <Image
+            <SmartImage
                 src={src}
                 alt={alt}
                 fill
@@ -44,7 +44,6 @@ export function CardImage({ src, alt }: { src: string; alt: string }) {
                 className={css({
                     objectFit: 'cover',
                 })}
-                unoptimized={src.includes('unsplash.com')}
             />
         </div>
     );

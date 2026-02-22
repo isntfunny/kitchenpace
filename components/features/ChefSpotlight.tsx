@@ -1,10 +1,9 @@
-import Image from 'next/image';
-
 import type { ChefSpotlightData } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
 import { Heading, Text } from '../atoms/Typography';
+import { SmartImage } from '../atoms/SmartImage';
 
 interface ChefSpotlightProps {
     chef: ChefSpotlightData | null;
@@ -72,7 +71,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                         borderColor: '#f8b500',
                     })}
                 >
-                    <Image
+                    <SmartImage
                         src={avatar}
                         alt={displayName}
                         fill
@@ -112,7 +111,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                                 overflow: 'hidden',
                             })}
                         >
-                            <Image
+                            <SmartImage
                                 src={recipe.image}
                                 alt={recipe.title}
                                 fill

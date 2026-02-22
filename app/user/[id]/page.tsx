@@ -48,6 +48,8 @@ async function getUserProfile(userId: string): Promise<UserProfileData | null> {
                     id: true,
                     type: true,
                     createdAt: true,
+                    targetId: true,
+                    targetType: true,
                     metadata: true,
                 },
             },
@@ -55,6 +57,21 @@ async function getUserProfile(userId: string): Promise<UserProfileData | null> {
     });
 
     if (!user) return null;
+
+    // Fetch recipe details for recipe-related activities
+    const recipeIds = user.activities
+        .filter((a) => a.targetType === 'recipe' && a.targetId)
+        .map((a) => a.targetId as string);
+
+    const recipes =
+        recipeIds.length > 0
+            ? await prisma.recipe.findMany({
+                  where: { id: { in: recipeIds } },
+                  select: { id: true, title: true, slug: true },
+              })
+            : [];
+
+    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
 
     // Format time ago on server side
     const formatTimeAgo = (date: Date): string => {
@@ -88,12 +105,19 @@ async function getUserProfile(userId: string): Promise<UserProfileData | null> {
             prepTime: recipe.prepTime,
             cookTime: recipe.cookTime,
         })),
-        activities: user.activities.map((activity) => ({
-            id: activity.id,
-            type: activity.type,
-            timeAgo: formatTimeAgo(activity.createdAt),
-            metadata: activity.metadata as Record<string, unknown> | null,
-        })),
+        activities: user.activities.map((activity) => {
+            const recipe = activity.targetId ? recipeMap.get(activity.targetId) : null;
+            return {
+                id: activity.id,
+                type: activity.type,
+                timeAgo: formatTimeAgo(activity.createdAt),
+                targetId: activity.targetId,
+                targetType: activity.targetType,
+                recipeTitle: recipe?.title ?? null,
+                recipeSlug: recipe?.slug ?? null,
+                metadata: activity.metadata as Record<string, unknown> | null,
+            };
+        }),
     };
 }
 

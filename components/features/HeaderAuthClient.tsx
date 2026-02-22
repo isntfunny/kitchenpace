@@ -1,10 +1,10 @@
 'use client';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { handleSignIn, handleSignOut } from '@/components/auth/actions';
+import { SmartImage } from '../atoms/SmartImage';
 import { css } from 'styled-system/css';
 
 interface HeaderAuthClientProps {
@@ -38,7 +38,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                         })}
                     >
                         {profile?.photoUrl ? (
-                            <Image
+                            <SmartImage
                                 src={profile.photoUrl}
                                 alt={profile.nickname || 'Profil'}
                                 width={32}

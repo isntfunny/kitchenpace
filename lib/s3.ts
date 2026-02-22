@@ -1,4 +1,4 @@
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 
 const s3Client = new S3Client({
@@ -69,6 +69,28 @@ export async function deleteFile(key: string): Promise<void> {
     });
 
     await s3Client.send(command);
+}
+
+export async function getFileBuffer(key: string): Promise<Buffer> {
+    const command = new GetObjectCommand({
+        Bucket: BUCKET,
+        Key: key,
+    });
+
+    const response = await s3Client.send(command);
+
+    if (!response.Body) {
+        throw new Error('Empty response from S3');
+    }
+
+    const stream = response.Body as AsyncIterable<Uint8Array>;
+    const chunks: Uint8Array[] = [];
+
+    for await (const chunk of stream) {
+        chunks.push(chunk);
+    }
+
+    return Buffer.concat(chunks);
 }
 
 export async function getFileUrl(key: string): Promise<string> {

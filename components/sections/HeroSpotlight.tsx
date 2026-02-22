@@ -1,12 +1,12 @@
 'use client';
 
-import Image from 'next/image';
 import * as React from 'react';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
 import { Heading, Text } from '../atoms/Typography';
+import { SmartImage } from '../atoms/SmartImage';
 
 export function HeroSpotlight() {
     return (
@@ -60,7 +60,7 @@ export function HeroSpotlight() {
                         boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                     })}
                 >
-                    <Image
+                    <SmartImage
                         src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1000&q=80"
                         alt="Rezeptübersicht"
                         fill

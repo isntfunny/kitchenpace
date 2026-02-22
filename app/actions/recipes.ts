@@ -5,6 +5,8 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&q=80';
+const DEFAULT_AUTHOR_AVATAR =
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80';
 
 export interface RecipeCardData {
     id: string;
@@ -133,8 +135,10 @@ export interface RecipeDetailData {
     author: {
         id: string;
         name: string;
-        avatar: string | null;
+        avatar: string;
         bio: string | null;
+        recipeCount: number;
+        followerCount: number;
     } | null;
 }
 
@@ -198,8 +202,10 @@ export async function fetchRecipeBySlug(slugOrId: string): Promise<RecipeDetailD
             ? {
                   id: recipe.author.id,
                   name: recipe.author.name || 'Unbekannt',
-                  avatar: recipe.author.profile?.photoUrl || null,
+                  avatar: recipe.author.profile?.photoUrl || DEFAULT_AUTHOR_AVATAR,
                   bio: recipe.author.profile?.bio || null,
+                  recipeCount: recipe.author.profile?.recipeCount ?? 0,
+                  followerCount: recipe.author.profile?.followerCount ?? 0,
               }
             : null,
     };

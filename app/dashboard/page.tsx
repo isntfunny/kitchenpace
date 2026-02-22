@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { UserDashboard as UserDashboardComponent } from '@/components/dashboard/UserDashboard';
 import { Header } from '@/components/features/Header';
+import { RecipeTabs } from '@/components/features/RecipeTabs';
 import { getOrCreateProfile } from '@/lib/profile';
 
 export default async function DashboardPage() {
@@ -18,6 +19,7 @@ export default async function DashboardPage() {
     return (
         <>
             <Header />
+            <RecipeTabs />
             <UserDashboardComponent
                 userName={profile.nickname ?? 'KüchenFan'}
                 userEmail={session.user.email ?? ''}

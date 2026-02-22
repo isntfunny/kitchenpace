@@ -8,6 +8,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { SmartImage } from '@/components/atoms/SmartImage';
 import { Header } from '@/components/features/Header';
+import { RecipeTabs } from '@/components/features/RecipeTabs';
 import { RecipeFlow } from '@/components/flow/RecipeFlow';
 import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
 import { css } from 'styled-system/css';
@@ -123,6 +124,7 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
     return (
         <div className={css({ minH: '100vh', color: 'text' })}>
             <Header />
+            <RecipeTabs />
             <main
                 className={container({
                     maxW: '1400px',
@@ -148,7 +150,6 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                                     fill
                                     sizes="(max-width: 1024px) 100vw, 50vw"
                                     className={css({ objectFit: 'cover' })}
-                                    priority
                                 />
                             </div>
                         </div>

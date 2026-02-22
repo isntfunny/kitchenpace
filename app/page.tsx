@@ -14,7 +14,6 @@ import { ChefSpotlight } from '@/components/features/ChefSpotlight';
 import { Header } from '@/components/features/Header';
 import { QuickTips } from '@/components/features/QuickTips';
 import { RecipeScrollServer } from '@/components/features/RecipeScrollServer';
-import { RecipeTabs } from '@/components/features/RecipeTabs';
 import { TrendingTags } from '@/components/features/TrendingTags';
 import { DailyHighlight } from '@/components/sections/DailyHighlight';
 import { FitsNow } from '@/components/sections/FitsNow';
@@ -52,7 +51,6 @@ export default async function Home() {
             })}
         >
             <Header />
-            <RecipeTabs />
 
             <main
                 className={css({

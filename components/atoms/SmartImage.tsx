@@ -33,9 +33,9 @@ export function SmartImage({
     className,
     onLoad,
     onError,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     sizes: _sizes,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     priority: _priority,
 }: SmartImageProps) {
     const [error, setError] = useState(false);

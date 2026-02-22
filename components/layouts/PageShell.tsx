@@ -3,7 +3,6 @@
 import { ReactNode } from 'react';
 
 import { Header } from '@/components/features/Header';
-import { RecipeTabs } from '@/components/features/RecipeTabs';
 import { css } from 'styled-system/css';
 
 type PageShellProps = {
@@ -20,7 +19,6 @@ export function PageShell({ children }: PageShellProps) {
             })}
         >
             <Header />
-            <RecipeTabs />
             <main
                 className={css({
                     maxWidth: '1400px',

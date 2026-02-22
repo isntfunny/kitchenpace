@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
-import smartcrop from 'smartcrop';
 
 import { getFileBuffer, BUCKET, s3Client } from '@/lib/s3';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SmartCropInput = any;
 
 interface ThumbnailParams {
     width?: number;
@@ -97,19 +93,10 @@ export async function GET(request: NextRequest) {
 
         const imageBuffer = await getFileBuffer(key);
 
-        const cropResult = await smartcrop.crop(imageBuffer as SmartCropInput, { width, height });
-        const crop = cropResult.topCrop;
-
         const processor = sharp(imageBuffer)
-            .extract({
-                left: Math.round(crop.x),
-                top: Math.round(crop.y),
-                width: Math.round(crop.width),
-                height: Math.round(crop.height),
-            })
             .resize(width, height, {
                 fit: 'cover',
-                position: 'center',
+                position: 'entropy',
             })
             .webp({ quality });
 

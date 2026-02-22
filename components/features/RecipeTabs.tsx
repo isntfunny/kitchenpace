@@ -276,6 +276,10 @@ export function RecipeTabs({ initialPinned = [], initialRecent = [] }: RecipeTab
                 '&::-webkitScrollbar': {
                     display: 'none',
                 },
+                background: '#fff',
+                borderTop: '1px solid rgba(0,0,0,0.08)',
+                borderBottom: '1px solid rgba(0,0,0,0.08)',
+                boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
             })}
         >
             <span

@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from 'next/font/google';
 import { getServerSession } from 'next-auth/next';
 
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import { RecipeTabsProvider } from '@/components/providers/RecipeTabsProvider';
 
 import { authOptions } from './api/auth/[...nextauth]/route';
 import './globals.css';
@@ -47,7 +48,9 @@ export default async function RootLayout({
                     minHeight: '100vh',
                 }}
             >
-                <AuthProvider session={session}>{children}</AuthProvider>
+                <AuthProvider session={session}>
+                    <RecipeTabsProvider isAuthenticated={!!session}>{children}</RecipeTabsProvider>
+                </AuthProvider>
             </body>
         </html>
     );

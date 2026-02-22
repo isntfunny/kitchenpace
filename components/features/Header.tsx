@@ -21,17 +21,6 @@ const categories = [
     { name: 'Backen', icon: '🥖' },
 ];
 
-const initialPinned = [
-    { id: '1', title: 'Omas Kartoffelsuppe', emoji: '🥔' },
-    { id: '2', title: 'Schnelles Carbonara', emoji: '🍝' },
-];
-
-const initialRecent = [
-    { id: '3', title: 'Avocado-Toast', emoji: '🥑' },
-    { id: '4', title: 'Griechischer Salat', emoji: '🥗' },
-    { id: '5', title: 'Schokoladenmousse', emoji: '🍫' },
-];
-
 export function Header() {
     return (
         <header
@@ -70,15 +59,17 @@ export function Header() {
                             flex: '0 0 auto',
                         })}
                     >
-                        <Image
-                            src="/kitchenpace.png"
-                            alt="KüchenTakt Logo"
-                            width={100}
-                            height={39}
-                            className={css({
-                                objectFit: 'contain',
-                            })}
-                        />
+                        <Link href="/">
+                            <Image
+                                src="/kitchenpace.png"
+                                alt="KüchenTakt Logo"
+                                width={100}
+                                height={39}
+                                className={css({
+                                    objectFit: 'contain',
+                                })}
+                            />
+                        </Link>
                         <div
                             className={css({
                                 display: { base: 'none', lg: 'block' },
@@ -288,7 +279,7 @@ export function Header() {
                 </div>
             </div>
 
-            <RecipeTabs initialPinned={initialPinned} initialRecent={initialRecent} />
+            <RecipeTabs />
         </header>
     );
 }

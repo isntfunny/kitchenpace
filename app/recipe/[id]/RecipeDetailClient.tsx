@@ -9,6 +9,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { Header } from '@/components/features/Header';
 import { RecipeFlow } from '@/components/flow/RecipeFlow';
+import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
 
@@ -30,6 +31,34 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
     const [servings, setServings] = useState(recipe.servings);
     const [isSaved, setIsSaved] = useState(false);
     const [isFollowing, setIsFollowing] = useState(false);
+
+    // Recipe tabs context for tracking views
+    const { addToRecent } = useRecipeTabs();
+
+    // Track recipe view - only once per recipe
+    const trackedRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (trackedRef.current === recipe.id) return;
+        trackedRef.current = recipe.id;
+
+        addToRecent({
+            id: recipe.id,
+            title: recipe.title,
+            slug: recipe.id,
+            imageUrl: recipe.image,
+            prepTime: recipe.prepTime,
+            cookTime: recipe.cookTime,
+            difficulty: recipe.difficulty,
+        });
+    }, [
+        recipe.id,
+        recipe.title,
+        recipe.image,
+        recipe.prepTime,
+        recipe.cookTime,
+        recipe.difficulty,
+        addToRecent,
+    ]);
 
     // Debug refs
     const renderCountRef = useRef(0);

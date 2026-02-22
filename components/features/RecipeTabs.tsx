@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import * as React from 'react';
 
+import { SmartImage } from '@/components/atoms/SmartImage';
 import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
 import type { RecipeTabItem } from '@/components/providers/RecipeTabsProvider';
 import { css } from 'styled-system/css';
-
 interface HoverPreviewProps {
     recipe: RecipeTabItem;
     position: 'left' | 'right';
@@ -65,9 +65,11 @@ function HoverPreview({ recipe, position }: HoverPreviewProps) {
                     })}
                 >
                     {recipe.imageUrl ? (
-                        <img
+                        <SmartImage
                             src={recipe.imageUrl}
                             alt={recipe.title}
+                            width={240}
+                            height={120}
                             className={css({
                                 width: '100%',
                                 height: '120px',
@@ -256,6 +258,7 @@ export function RecipeTabs({ initialPinned = [], initialRecent = [] }: RecipeTab
     const unpinnedRecent = displayRecent
         .filter((r) => !displayPinned.some((p) => p.id === r.id))
         .slice(0, RECENT_DISPLAY_LIMIT);
+    const hasEntries = hasPinned || hasRecent;
 
     return (
         <div
@@ -312,14 +315,27 @@ export function RecipeTabs({ initialPinned = [], initialRecent = [] }: RecipeTab
                 </>
             )}
 
-            {unpinnedRecent.map((recipe) => (
-                <RecipeChip
-                    key={recipe.id}
-                    recipe={recipe}
-                    isPinned={false}
-                    onPinToggle={() => handlePinToggle(recipe, false)}
-                />
-            ))}
+            {hasEntries ? (
+                unpinnedRecent.map((recipe) => (
+                    <RecipeChip
+                        key={recipe.id}
+                        recipe={recipe}
+                        isPinned={false}
+                        onPinToggle={() => handlePinToggle(recipe, false)}
+                    />
+                ))
+            ) : (
+                <span
+                    className={css({
+                        fontSize: 'sm',
+                        color: 'text-muted',
+                        opacity: 0.7,
+                        whiteSpace: 'nowrap',
+                    })}
+                >
+                    Noch keine letzten Rezepte
+                </span>
+            )}
         </div>
     );
 }

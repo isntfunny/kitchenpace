@@ -3,7 +3,6 @@
 import Link from 'next/link';
 
 import { Badge } from '@/components/atoms/Badge';
-import { SmartImage } from '@/components/atoms/SmartImage';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
@@ -140,11 +139,9 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
                                 })}
                             >
                                 {user.avatar ? (
-                                    <SmartImage
+                                    <img
                                         src={user.avatar}
                                         alt={user.name}
-                                        width={AVATAR_SIZE}
-                                        height={AVATAR_SIZE}
                                         className={css({
                                             width: '100%',
                                             height: '100%',
@@ -562,11 +559,12 @@ function RecipeCard({ recipe }: { recipe: UserProfileRecipe }) {
                     overflow: 'hidden',
                 })}
             >
-                <SmartImage
+                <img
                     src={recipe.image}
                     alt={recipe.title}
-                    fill
                     className={css({
+                        width: '100%',
+                        height: '100%',
                         objectFit: 'cover',
                         transition: 'transform 0.3s',
                     })}

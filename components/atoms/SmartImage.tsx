@@ -1,27 +1,42 @@
 'use client';
 
-import Image, { ImageProps } from 'next/image';
 import { useState } from 'react';
 
 import { getThumbnailUrl, extractKeyFromUrl, ThumbnailOptions } from '@/lib/thumbnail';
+import { css, cx } from 'styled-system/css';
 
-interface SmartImageProps extends Omit<ImageProps, 'src' | 'width' | 'height'> {
+interface SmartImageProps {
     src: string;
+    alt?: string;
     width?: number;
     height?: number;
+    fill?: boolean;
     thumbnailOptions?: ThumbnailOptions;
     fallback?: string;
+    className?: string;
+    onLoad?: () => void;
+    onError?: () => void;
+    /** @deprecated Ignored - kept for backwards compatibility */
+    sizes?: string;
+    /** @deprecated Ignored - kept for backwards compatibility */
+    priority?: boolean;
 }
 
 export function SmartImage({
     src,
+    alt = '',
     width = 400,
     height = 300,
+    fill,
     thumbnailOptions,
     fallback = '/placeholder.jpg',
-    alt,
-    fill,
-    ...props
+    className,
+    onLoad,
+    onError,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    sizes: _sizes,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    priority: _priority,
 }: SmartImageProps) {
     const [error, setError] = useState(false);
 
@@ -36,40 +51,46 @@ export function SmartImage({
 
     const handleError = () => {
         setError(true);
+        onError?.();
     };
 
-    if (!src || error) {
-        return fill ? (
-            <Image src={fallback} alt={alt || ''} fill {...props} />
-        ) : (
-            <Image src={fallback} width={width} height={height} alt={alt || ''} {...props} />
-        );
-    }
+    const handleLoad = () => {
+        onLoad?.();
+    };
 
-    const isExternal = src.startsWith('http') && !thumbnailSrc.includes('/api/thumbnail');
+    const currentSrc = !src || error ? fallback : thumbnailSrc;
 
     if (fill) {
         return (
-            <Image
-                src={isExternal ? src : thumbnailSrc}
-                alt={alt || ''}
-                fill
+            <img
+                src={currentSrc}
+                alt={alt}
+                onLoad={handleLoad}
                 onError={handleError}
-                unoptimized={isExternal}
-                {...props}
+                className={cx(
+                    css({
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                    }),
+                    className,
+                )}
             />
         );
     }
 
     return (
-        <Image
-            src={isExternal ? src : thumbnailSrc}
+        <img
+            src={currentSrc}
+            alt={alt}
             width={width}
             height={height}
-            alt={alt || ''}
+            onLoad={handleLoad}
             onError={handleError}
-            unoptimized={isExternal}
-            {...props}
+            className={className}
         />
     );
 }

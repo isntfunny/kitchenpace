@@ -8,7 +8,6 @@ import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { SmartImage } from '@/components/atoms/SmartImage';
 import { Header } from '@/components/features/Header';
-import { RecipeTabs } from '@/components/features/RecipeTabs';
 import { RecipeFlow } from '@/components/flow/RecipeFlow';
 import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
 import { css } from 'styled-system/css';
@@ -30,53 +29,13 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
     const [isFollowing, setIsFollowing] = useState(false);
 
     // Recipe tabs context for tracking views
-    const recipeTabs = useRecipeTabs();
-    const { addToRecent } = recipeTabs;
-
-    // Debug: Track what changed between renders
-    const prevPropsRef = useRef({ recipe, author, recipeActivities });
-    const prevContextRef = useRef(recipeTabs);
-    const renderCountRef = useRef(0);
-
-    useEffect(() => {
-        renderCountRef.current += 1;
-        const changes: string[] = [];
-
-        // Check props changes
-        if (prevPropsRef.current.recipe !== recipe) changes.push('recipe prop');
-        if (prevPropsRef.current.author !== author) changes.push('author prop');
-        if (prevPropsRef.current.recipeActivities !== recipeActivities)
-            changes.push('recipeActivities prop');
-
-        // Check context changes
-        if (prevContextRef.current.pinned !== recipeTabs.pinned) changes.push('context.pinned');
-        if (prevContextRef.current.recent !== recipeTabs.recent) changes.push('context.recent');
-        if (prevContextRef.current.isLoading !== recipeTabs.isLoading)
-            changes.push('context.isLoading');
-        if (prevContextRef.current.isAuthenticated !== recipeTabs.isAuthenticated)
-            changes.push('context.isAuthenticated');
-
-        // Check state changes
-        if (renderCountRef.current > 1) {
-            console.log(
-                `[DEBUG] Render #${renderCountRef.current} - Changes: ${changes.length > 0 ? changes.join(', ') : 'unknown (state/internal)'}`,
-            );
-        } else {
-            console.log(`[DEBUG] Render #${renderCountRef.current} - Initial mount`);
-        }
-
-        prevPropsRef.current = { recipe, author, recipeActivities };
-        prevContextRef.current = recipeTabs;
-    });
+    const { addToRecent } = useRecipeTabs();
 
     // Track recipe view - only once per recipe
     const trackedRef = useRef<string | null>(null);
     useEffect(() => {
         if (trackedRef.current === recipe.id) return;
         trackedRef.current = recipe.id;
-
-        // Skip if already the first recent item
-        if (recipeTabs.recent[0]?.id === recipe.id) return;
 
         addToRecent({
             id: recipe.id,
@@ -94,7 +53,6 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
         recipe.prepTime,
         recipe.cookTime,
         recipe.difficulty,
-        recipeTabs.recent,
         addToRecent,
     ]);
 
@@ -124,7 +82,6 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
     return (
         <div className={css({ minH: '100vh', color: 'text' })}>
             <Header />
-            <RecipeTabs />
             <main
                 className={container({
                     maxW: '1400px',

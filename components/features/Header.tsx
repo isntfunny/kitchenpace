@@ -9,6 +9,7 @@ import { flex } from 'styled-system/patterns';
 import { SmartImage } from '../atoms/SmartImage';
 
 import { HeaderAuth } from './HeaderAuth';
+import { RecipeTabs } from './RecipeTabs';
 
 const categories = [
     { name: 'Frühstück', icon: '🍳' },
@@ -278,6 +279,8 @@ export function Header() {
                     </nav>
                 </div>
             </div>
+
+            <RecipeTabs />
         </header>
     );
 }

@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { PageShell } from '@/components/layouts/PageShell';
 import { css } from 'styled-system/css';
 
-export default function NewPasswordPage() {
+function NewPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const token = searchParams.get('token');
@@ -300,5 +300,39 @@ export default function NewPasswordPage() {
                 </div>
             </section>
         </PageShell>
+    );
+}
+
+export default function NewPasswordPage() {
+    return (
+        <Suspense
+            fallback={
+                <PageShell>
+                    <div
+                        className={css({
+                            paddingY: { base: '8', md: '12' },
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            minHeight: '50vh',
+                        })}
+                    >
+                        <div
+                            className={css({
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                border: '3px solid',
+                                borderColor: 'rgba(224,123,83,0.3)',
+                                borderTopColor: '#e07b53',
+                                animation: 'spin 1s linear infinite',
+                            })}
+                        />
+                    </div>
+                </PageShell>
+            }
+        >
+            <NewPasswordForm />
+        </Suspense>
     );
 }

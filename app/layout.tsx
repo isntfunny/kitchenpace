@@ -1,11 +1,9 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
-import { getServerSession } from 'next-auth/next';
 
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { RecipeTabsProvider } from '@/components/providers/RecipeTabsProvider';
 
-import { authOptions } from './api/auth/[...nextauth]/route';
 import './globals.css';
 
 const playfair = Playfair_Display({
@@ -30,8 +28,6 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const session = await getServerSession(authOptions);
-
     return (
         <html lang="de">
             <body
@@ -48,8 +44,8 @@ export default async function RootLayout({
                     minHeight: '100vh',
                 }}
             >
-                <AuthProvider session={session}>
-                    <RecipeTabsProvider isAuthenticated={!!session}>{children}</RecipeTabsProvider>
+                <AuthProvider>
+                    <RecipeTabsProvider>{children}</RecipeTabsProvider>
                 </AuthProvider>
             </body>
         </html>

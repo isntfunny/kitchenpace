@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 export interface RecipeTabItem {
     id: string;
@@ -64,13 +65,9 @@ function withDefaultEmoji(recipe: RecipeTabItem): RecipeTabItem {
     };
 }
 
-export function RecipeTabsProvider({
-    children,
-    isAuthenticated,
-}: {
-    children: React.ReactNode;
-    isAuthenticated: boolean;
-}) {
+export function RecipeTabsProvider({ children }: { children: React.ReactNode }) {
+    const { data: session, status } = useSession();
+    const isAuthenticated = status === 'authenticated' && !!session;
     const [tabs, setTabs] = useState<RecipeTabsState>({ pinned: [], recent: [] });
     const [isLoading, setIsLoading] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);

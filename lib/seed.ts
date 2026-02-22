@@ -255,6 +255,74 @@ async function main() {
             units: ['tbsp', 'g'],
         },
         { name: 'Thymian', slug: 'thymian', category: ShoppingCategory.GEWURZE, units: ['Zweige'] },
+        { name: 'Limette', slug: 'limette', category: ShoppingCategory.OBST, units: ['Stück'] },
+        {
+            name: 'Grüne Currypaste',
+            slug: 'gruen-currypaste',
+            category: ShoppingCategory.GEWURZE,
+            units: ['tbsp', 'g'],
+        },
+        {
+            name: 'Mascarpone',
+            slug: 'mascarpone',
+            category: ShoppingCategory.MILCHPRODUKTE,
+            units: ['g'],
+        },
+        { name: 'Espresso', slug: 'espresso', category: ShoppingCategory.GETRAENKE, units: ['ml'] },
+        {
+            name: 'Löffelbiskuit',
+            slug: 'loeffelbiskuit',
+            category: ShoppingCategory.BACKEN,
+            units: ['g', 'Stück'],
+        },
+        { name: 'Kakao', slug: 'kakao', category: ShoppingCategory.BACKEN, units: ['g'] },
+        { name: 'Brot', slug: 'brot', category: ShoppingCategory.SONSTIGES, units: ['Scheiben'] },
+        { name: 'Avocado', slug: 'avocado', category: ShoppingCategory.OBST, units: ['Stück'] },
+        { name: 'Chili', slug: 'chili', category: ShoppingCategory.GEWURZE, units: ['Stück', 'g'] },
+        {
+            name: 'Gurke',
+            slug: 'gurke',
+            category: ShoppingCategory.GEMUESE,
+            units: ['Stück', 'g'],
+        },
+        {
+            name: 'Oliven',
+            slug: 'oliven',
+            category: ShoppingCategory.GEMUESE,
+            units: ['g', 'Stück'],
+        },
+        { name: 'Feta', slug: 'feta', category: ShoppingCategory.MILCHPRODUKTE, units: ['g'] },
+        {
+            name: 'Oregano',
+            slug: 'oregano',
+            category: ShoppingCategory.GEWURZE,
+            units: ['tsp', 'Bund'],
+        },
+        {
+            name: 'Rindfleisch',
+            slug: 'rindfleisch',
+            category: ShoppingCategory.FLEISCH,
+            units: ['g'],
+        },
+        {
+            name: 'Champignons',
+            slug: 'champignons',
+            category: ShoppingCategory.GEMUESE,
+            units: ['g'],
+        },
+        {
+            name: 'Karotten',
+            slug: 'karotten',
+            category: ShoppingCategory.GEMUESE,
+            units: ['Stück', 'g'],
+        },
+        {
+            name: 'Beerenmischung',
+            slug: 'beerenmischung',
+            category: ShoppingCategory.OBST,
+            units: ['g'],
+        },
+        { name: 'Gelatine', slug: 'gelatine', category: ShoppingCategory.BACKEN, units: ['g'] },
     ];
 
     for (const ing of ingredientsData) {
@@ -953,6 +1021,188 @@ async function main() {
             { ingredient: 'zucker', amount: '30', unit: 'g', notes: null, position: 3 },
             { ingredient: 'butter', amount: '30', unit: 'g', notes: 'geschmolzen', position: 4 },
         ],
+        'recipe-8': [
+            { ingredient: 'entenbrust', amount: '800', unit: 'g', notes: 'mit Haut', position: 0 },
+            {
+                ingredient: 'orangen',
+                amount: '3',
+                unit: 'Stück',
+                notes: 'Saft & Zesten',
+                position: 1,
+            },
+            { ingredient: 'rotwein', amount: '250', unit: 'ml', notes: null, position: 2 },
+            { ingredient: 'honig', amount: '2', unit: 'tbsp', notes: null, position: 3 },
+            { ingredient: 'thymian', amount: '4', unit: 'Zweige', notes: null, position: 4 },
+            { ingredient: 'mehl', amount: '300', unit: 'g', notes: 'für Spätzle', position: 5 },
+            {
+                ingredient: 'eier',
+                amount: '3',
+                unit: 'Stück',
+                notes: 'Zimmertemperatur',
+                position: 6,
+            },
+            { ingredient: 'milch', amount: '150', unit: 'ml', notes: null, position: 7 },
+            { ingredient: 'salz', amount: '1', unit: 'tsp', notes: null, position: 8 },
+            { ingredient: 'butter', amount: '40', unit: 'g', notes: 'für Spätzle', position: 9 },
+            { ingredient: 'zwiebel', amount: '1', unit: 'Stück', notes: 'gewürfelt', position: 10 },
+            {
+                ingredient: 'knoblauch',
+                amount: '2',
+                unit: 'Zehen',
+                notes: 'gepresst',
+                position: 11,
+            },
+        ],
+        'recipe-9': [
+            {
+                ingredient: 'haehnchenbrust',
+                amount: '400',
+                unit: 'g',
+                notes: 'in Streifen',
+                position: 0,
+            },
+            { ingredient: 'kokosmilch', amount: '400', unit: 'ml', notes: null, position: 1 },
+            { ingredient: 'paprika', amount: '2', unit: 'Stück', notes: 'bunt', position: 2 },
+            { ingredient: 'brokkoli', amount: '200', unit: 'g', notes: 'Röschen', position: 3 },
+            { ingredient: 'ingwer', amount: '5', unit: 'g', notes: 'gerieben', position: 4 },
+            { ingredient: 'knoblauch', amount: '3', unit: 'Zehen', notes: 'gehackt', position: 5 },
+            { ingredient: 'gruen-currypaste', amount: '2', unit: 'tbsp', notes: null, position: 6 },
+            { ingredient: 'sesamoel', amount: '2', unit: 'tbsp', notes: null, position: 7 },
+            { ingredient: 'sojasauc', amount: '3', unit: 'tbsp', notes: null, position: 8 },
+            {
+                ingredient: 'limette',
+                amount: '1',
+                unit: 'Stück',
+                notes: 'Saft & Zesten',
+                position: 9,
+            },
+            { ingredient: 'zucker', amount: '1', unit: 'tbsp', notes: null, position: 10 },
+        ],
+        'recipe-10': [
+            { ingredient: 'mascarpone', amount: '500', unit: 'g', notes: null, position: 0 },
+            { ingredient: 'espresso', amount: '250', unit: 'ml', notes: 'stark', position: 1 },
+            { ingredient: 'zucker', amount: '100', unit: 'g', notes: null, position: 2 },
+            { ingredient: 'loeffelbiskuit', amount: '200', unit: 'g', notes: null, position: 3 },
+            { ingredient: 'kakao', amount: '15', unit: 'g', notes: 'zum Bestäuben', position: 4 },
+            { ingredient: 'eier', amount: '3', unit: 'Stück', notes: 'getrennt', position: 5 },
+            { ingredient: 'vanilleextrakt', amount: '1', unit: 'tsp', notes: null, position: 6 },
+            {
+                ingredient: 'schlagsahne',
+                amount: '200',
+                unit: 'ml',
+                notes: 'steif geschlagen',
+                position: 7,
+            },
+        ],
+        'recipe-11': [
+            {
+                ingredient: 'brot',
+                amount: '4',
+                unit: 'Scheiben',
+                notes: 'leicht geröstet',
+                position: 0,
+            },
+            { ingredient: 'avocado', amount: '2', unit: 'Stück', notes: 'reif', position: 1 },
+            { ingredient: 'eier', amount: '2', unit: 'Stück', notes: 'pochiert', position: 2 },
+            { ingredient: 'chili', amount: '1', unit: 'Stück', notes: 'in Ringen', position: 3 },
+            { ingredient: 'limette', amount: '1', unit: 'Stück', notes: 'Saft', position: 4 },
+            { ingredient: 'olivenoel', amount: '1', unit: 'tbsp', notes: null, position: 5 },
+            { ingredient: 'salz', amount: '1', unit: 'tsp', notes: null, position: 6 },
+            {
+                ingredient: 'schwarzer-pfeffer',
+                amount: '1',
+                unit: 'tsp',
+                notes: 'frisch gemahlen',
+                position: 7,
+            },
+        ],
+        'recipe-12': [
+            { ingredient: 'gurke', amount: '1', unit: 'Stück', notes: 'in Scheiben', position: 0 },
+            { ingredient: 'oliven', amount: '100', unit: 'g', notes: 'entsteint', position: 1 },
+            { ingredient: 'feta', amount: '150', unit: 'g', notes: 'gewürfelt', position: 2 },
+            { ingredient: 'tomaten', amount: '250', unit: 'g', notes: 'cherry', position: 3 },
+            { ingredient: 'zwiebel', amount: '1', unit: 'Stück', notes: 'halbringe', position: 4 },
+            { ingredient: 'oregano', amount: '1', unit: 'tsp', notes: 'frisch', position: 5 },
+            { ingredient: 'olivenoel', amount: '3', unit: 'tbsp', notes: null, position: 6 },
+            { ingredient: 'salz', amount: '1', unit: 'tsp', notes: null, position: 7 },
+            {
+                ingredient: 'schwarzer-pfeffer',
+                amount: '1',
+                unit: 'tsp',
+                notes: 'frisch gemahlen',
+                position: 8,
+            },
+        ],
+        'recipe-13': [
+            { ingredient: 'rindfleisch', amount: '800', unit: 'g', notes: 'Schulter', position: 0 },
+            { ingredient: 'rotwein', amount: '500', unit: 'ml', notes: null, position: 1 },
+            {
+                ingredient: 'karotten',
+                amount: '3',
+                unit: 'Stück',
+                notes: 'in Scheiben',
+                position: 2,
+            },
+            { ingredient: 'zwiebel', amount: '2', unit: 'Stück', notes: 'groß', position: 3 },
+            { ingredient: 'knoblauch', amount: '4', unit: 'Zehen', notes: 'gehackt', position: 4 },
+            {
+                ingredient: 'champignons',
+                amount: '200',
+                unit: 'g',
+                notes: 'geviertelt',
+                position: 5,
+            },
+            { ingredient: 'pancetta', amount: '150', unit: 'g', notes: 'gewürfelt', position: 6 },
+            { ingredient: 'thymian', amount: '6', unit: 'Zweige', notes: null, position: 7 },
+            { ingredient: 'salz', amount: '1', unit: 'tsp', notes: null, position: 8 },
+            {
+                ingredient: 'schwarzer-pfeffer',
+                amount: '1',
+                unit: 'tsp',
+                notes: 'frisch gemahlen',
+                position: 9,
+            },
+        ],
+        'recipe-14': [
+            {
+                ingredient: 'beerenmischung',
+                amount: '400',
+                unit: 'g',
+                notes: 'frisch oder TK',
+                position: 0,
+            },
+            { ingredient: 'frischkaese', amount: '400', unit: 'g', notes: null, position: 1 },
+            {
+                ingredient: 'sahne',
+                amount: '200',
+                unit: 'ml',
+                notes: 'steif geschlagen',
+                position: 2,
+            },
+            { ingredient: 'zucker', amount: '150', unit: 'g', notes: null, position: 3 },
+            { ingredient: 'vanilleextrakt', amount: '1', unit: 'tsp', notes: null, position: 4 },
+            {
+                ingredient: 'gelatine',
+                amount: '8',
+                unit: 'g',
+                notes: 'in kaltem Wasser eingeweicht',
+                position: 5,
+            },
+            {
+                ingredient: 'butter',
+                amount: '100',
+                unit: 'g',
+                notes: 'geschmolzen für Boden',
+                position: 6,
+            },
+            { ingredient: 'mehl', amount: '180', unit: 'g', notes: 'für Boden', position: 7 },
+            { ingredient: 'eier', amount: '3', unit: 'Stück', notes: null, position: 8 },
+        ],
+        'recipe-15': [
+            { ingredient: 'mehl', amount: '100', unit: 'g', notes: null, position: 0 },
+            { ingredient: 'salz', amount: '1', unit: 'tsp', notes: null, position: 1 },
+            { ingredient: 'butter', amount: '20', unit: 'g', notes: 'zimmerwarm', position: 2 },
+        ],
     };
 
     for (const [recipeId, ingredients] of Object.entries(recipeIngredientsMap)) {
@@ -1151,7 +1401,6 @@ async function main() {
     // FOLLOWS - Extended
     // ============================================
     const followsData = [
-        // Maria (0) follows and is followed
         { followerId: createdUsers[0].id, followingId: createdUsers[1].id },
         { followerId: createdUsers[1].id, followingId: createdUsers[0].id },
         { followerId: createdUsers[2].id, followingId: createdUsers[0].id },
@@ -1159,26 +1408,32 @@ async function main() {
         { followerId: createdUsers[4].id, followingId: createdUsers[0].id },
         { followerId: createdUsers[5].id, followingId: createdUsers[0].id },
         { followerId: createdUsers[8].id, followingId: createdUsers[0].id },
-        // Alex (1) follows and is followed
-        { followerId: createdUsers[0].id, followingId: createdUsers[1].id },
-        { followerId: createdUsers[2].id, followingId: createdUsers[1].id },
+        { followerId: createdUsers[1].id, followingId: createdUsers[5].id },
+        { followerId: createdUsers[5].id, followingId: createdUsers[1].id },
         { followerId: createdUsers[6].id, followingId: createdUsers[1].id },
         { followerId: createdUsers[7].id, followingId: createdUsers[1].id },
-        // Chef (2) follows some
-        { followerId: createdUsers[3].id, followingId: createdUsers[2].id },
-        { followerId: createdUsers[5].id, followingId: createdUsers[2].id },
-        // Emma (3) is popular
+        { followerId: createdUsers[9].id, followingId: createdUsers[1].id },
+        { followerId: createdUsers[2].id, followingId: createdUsers[3].id },
         { followerId: createdUsers[4].id, followingId: createdUsers[3].id },
         { followerId: createdUsers[6].id, followingId: createdUsers[3].id },
-        { followerId: createdUsers[9].id, followingId: createdUsers[3].id },
-        // Lukas (4) follows
-        { followerId: createdUsers[7].id, followingId: createdUsers[4].id },
-        { followerId: createdUsers[9].id, followingId: createdUsers[4].id },
-        // More cross follows
+        { followerId: createdUsers[8].id, followingId: createdUsers[3].id },
+        { followerId: createdUsers[0].id, followingId: createdUsers[3].id },
+        { followerId: createdUsers[7].id, followingId: createdUsers[3].id },
+        { followerId: createdUsers[8].id, followingId: createdUsers[4].id },
+        { followerId: createdUsers[5].id, followingId: createdUsers[7].id },
+        { followerId: createdUsers[9].id, followingId: createdUsers[7].id },
+        { followerId: createdUsers[7].id, followingId: createdUsers[9].id },
         { followerId: createdUsers[5].id, followingId: createdUsers[6].id },
         { followerId: createdUsers[6].id, followingId: createdUsers[5].id },
-        { followerId: createdUsers[7].id, followingId: createdUsers[9].id },
-        { followerId: createdUsers[8].id, followingId: createdUsers[7].id },
+        { followerId: createdUsers[8].id, followingId: createdUsers[5].id },
+        { followerId: createdUsers[5].id, followingId: createdUsers[8].id },
+        { followerId: createdUsers[4].id, followingId: createdUsers[2].id },
+        { followerId: createdUsers[0].id, followingId: createdUsers[4].id },
+        { followerId: createdUsers[2].id, followingId: createdUsers[4].id },
+        { followerId: createdUsers[9].id, followingId: createdUsers[5].id },
+        { followerId: createdUsers[3].id, followingId: createdUsers[5].id },
+        { followerId: createdUsers[1].id, followingId: createdUsers[3].id },
+        { followerId: createdUsers[8].id, followingId: createdUsers[1].id },
     ];
 
     for (const fl of followsData) {
@@ -1191,6 +1446,20 @@ async function main() {
         });
     }
     console.log('✅ Created follows');
+
+    // ============================================
+    // PROFILE METRICS - keep social stats realistic
+    // ============================================
+    for (const user of createdUsers) {
+        const followerCount = await prisma.follow.count({ where: { followingId: user.id } });
+        const followingCount = await prisma.follow.count({ where: { followerId: user.id } });
+        const recipeCount = await prisma.recipe.count({ where: { authorId: user.id } });
+        await prisma.profile.update({
+            where: { userId: user.id },
+            data: { followerCount, followingCount, recipeCount },
+        });
+    }
+    console.log('✅ Synced profile stats');
 
     // ============================================
     // COMMENTS - Extended

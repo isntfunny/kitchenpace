@@ -3,19 +3,77 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { User, Recipe, Activity } from '@/app/recipe/[id]/data';
 import { Badge } from '@/components/atoms/Badge';
 import { Card, CardImage, CardContent, CardTitle, CardDescription } from '@/components/atoms/Card';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
-interface UserProfileClientProps {
-    user: User;
-    recipes: Recipe[];
-    activities: Activity[];
+export interface UserProfileRecipe {
+    id: string;
+    title: string;
+    description: string;
+    image: string;
+    category: string;
+    rating: number;
+    prepTime: number;
+    cookTime: number;
 }
 
-export function UserProfileClient({ user, recipes, activities }: UserProfileClientProps) {
+export interface UserProfileActivity {
+    id: string;
+    type: string;
+    timeAgo: string;
+    metadata: Record<string, unknown> | null;
+}
+
+export interface UserProfileData {
+    id: string;
+    name: string;
+    avatar: string | null;
+    bio: string | null;
+    recipeCount: number;
+    followerCount: number;
+    recipes: UserProfileRecipe[];
+    activities: UserProfileActivity[];
+}
+
+interface UserProfileClientProps {
+    user: UserProfileData;
+}
+
+export function UserProfileClient({ user }: UserProfileClientProps) {
+    const { recipes, activities } = user;
+
+    // Get activity label based on type
+    const getActivityLabel = (type: string): string => {
+        const labels: Record<string, string> = {
+            RECIPE_CREATED: 'hat ein Rezept erstellt',
+            RECIPE_COOKED: 'hat gekocht',
+            RECIPE_RATED: 'hat bewertet',
+            RECIPE_COMMENTED: 'hat kommentiert',
+            RECIPE_FAVORITED: 'hat gespeichert',
+            USER_FOLLOWED: 'ist jetzt Follower',
+            SHOPPING_LIST_CREATED: 'hat eine Einkaufsliste erstellt',
+            MEAL_PLAN_CREATED: 'hat einen Essensplan erstellt',
+        };
+        return labels[type] ?? 'war aktiv';
+    };
+
+    // Get activity icon based on type
+    const getActivityIcon = (type: string): string => {
+        const icons: Record<string, string> = {
+            RECIPE_CREATED: '✍️',
+            RECIPE_COOKED: '🔥',
+            RECIPE_RATED: '⭐',
+            RECIPE_COMMENTED: '💬',
+            RECIPE_FAVORITED: '🔖',
+            USER_FOLLOWED: '🤝',
+            SHOPPING_LIST_CREATED: '🛒',
+            MEAL_PLAN_CREATED: '📅',
+        };
+        return icons[type] ?? '📋';
+    };
+
     return (
         <div className={css({ minH: '100vh', bg: '#fffcf9' })}>
             <div
@@ -247,17 +305,20 @@ export function UserProfileClient({ user, recipes, activities }: UserProfileClie
                                                     mb: '2',
                                                 })}
                                             >
-                                                <Image
-                                                    src={activity.user.avatar}
-                                                    alt={activity.user.name}
-                                                    width={32}
-                                                    height={32}
-                                                    unoptimized
+                                                <div
                                                     className={css({
+                                                        width: '32px',
+                                                        height: '32px',
                                                         borderRadius: '50%',
-                                                        objectFit: 'cover',
+                                                        bg: 'gray.100',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: 'lg',
                                                     })}
-                                                />
+                                                >
+                                                    {getActivityIcon(activity.type)}
+                                                </div>
                                                 <div
                                                     className={css({
                                                         fontSize: 'sm',
@@ -269,23 +330,25 @@ export function UserProfileClient({ user, recipes, activities }: UserProfileClie
                                                             fontWeight: '600',
                                                         })}
                                                     >
-                                                        {activity.user.name}
+                                                        {user.name}
                                                     </span>{' '}
-                                                    {activity.action}
+                                                    {getActivityLabel(activity.type)}
                                                 </div>
                                             </div>
-                                            {activity.content && (
-                                                <p
-                                                    className={css({
-                                                        fontSize: 'sm',
-                                                        color: 'text-muted',
-                                                        pl: '11',
-                                                        fontFamily: 'body',
-                                                    })}
-                                                >
-                                                    {activity.content}
-                                                </p>
-                                            )}
+                                            {activity.metadata &&
+                                                typeof activity.metadata === 'object' &&
+                                                'recipeTitle' in activity.metadata && (
+                                                    <p
+                                                        className={css({
+                                                            fontSize: 'sm',
+                                                            color: 'text-muted',
+                                                            pl: '11',
+                                                            fontFamily: 'body',
+                                                        })}
+                                                    >
+                                                        {String(activity.metadata.recipeTitle)}
+                                                    </p>
+                                                )}
                                             <p
                                                 className={css({
                                                     fontSize: 'xs',
@@ -295,7 +358,7 @@ export function UserProfileClient({ user, recipes, activities }: UserProfileClie
                                                     fontFamily: 'body',
                                                 })}
                                             >
-                                                {activity.timestamp}
+                                                {activity.timeAgo}
                                             </p>
                                         </div>
                                     ))}

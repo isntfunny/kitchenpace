@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 
-import { getUserById, getRecipesByAuthor, getUserActivities } from '@/app/recipe/[id]/data';
+import { prisma } from '@/lib/prisma';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
 
-import { UserProfileClient } from './UserProfileClient';
+import { UserProfileClient, type UserProfileData } from './UserProfileClient';
 
 type UserProfileParams = {
     id: string;
@@ -19,9 +19,87 @@ const buildUserMetadata = (name: string): Metadata => ({
     description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
 });
 
+async function getUserProfile(userId: string): Promise<UserProfileData | null> {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+            profile: true,
+            recipes: {
+                where: { publishedAt: { not: null } },
+                orderBy: { createdAt: 'desc' },
+                take: 12,
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    imageUrl: true,
+                    rating: true,
+                    prepTime: true,
+                    cookTime: true,
+                    category: {
+                        select: { name: true },
+                    },
+                },
+            },
+            activities: {
+                orderBy: { createdAt: 'desc' },
+                take: 10,
+                select: {
+                    id: true,
+                    type: true,
+                    createdAt: true,
+                    metadata: true,
+                },
+            },
+        },
+    });
+
+    if (!user) return null;
+
+    // Format time ago on server side
+    const formatTimeAgo = (date: Date): string => {
+        const diff = Date.now() - new Date(date).getTime();
+        const minutes = Math.floor(diff / 60000);
+
+        if (minutes < 1) return 'Jetzt';
+        if (minutes < 60) return `${minutes} Min.`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} Std.`;
+        const days = Math.floor(hours / 24);
+        return `${days} Tg.`;
+    };
+
+    return {
+        id: user.id,
+        name: user.name ?? user.profile?.nickname ?? 'Unbekannt',
+        avatar: user.profile?.photoUrl ?? user.image ?? null,
+        bio: user.profile?.bio ?? null,
+        recipeCount: user.profile?.recipeCount ?? user.recipes.length,
+        followerCount: user.profile?.followerCount ?? 0,
+        recipes: user.recipes.map((recipe) => ({
+            id: recipe.id,
+            title: recipe.title,
+            description: recipe.description ?? '',
+            image:
+                recipe.imageUrl ??
+                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80',
+            category: recipe.category?.name ?? 'Allgemein',
+            rating: recipe.rating ?? 0,
+            prepTime: recipe.prepTime,
+            cookTime: recipe.cookTime,
+        })),
+        activities: user.activities.map((activity) => ({
+            id: activity.id,
+            type: activity.type,
+            timeAgo: formatTimeAgo(activity.createdAt),
+            metadata: activity.metadata as Record<string, unknown> | null,
+        })),
+    };
+}
+
 export async function generateMetadata({ params }: UserProfileProps): Promise<Metadata> {
     const resolvedParams = await params;
-    const user = getUserById(resolvedParams.id);
+    const user = await getUserProfile(resolvedParams.id);
     if (!user) {
         return {
             title: 'Benutzer nicht gefunden | KüchenTakt',
@@ -30,14 +108,9 @@ export async function generateMetadata({ params }: UserProfileProps): Promise<Me
     return buildUserMetadata(user.name);
 }
 
-export async function generateStaticParams() {
-    const { users } = await import('@/app/recipe/[id]/data');
-    return Object.keys(users).map((id) => ({ id }));
-}
-
 export default async function UserProfilePage({ params }: UserProfileProps) {
     const resolvedParams = await params;
-    const user = getUserById(resolvedParams.id);
+    const user = await getUserProfile(resolvedParams.id);
 
     if (!user) {
         return (
@@ -56,8 +129,5 @@ export default async function UserProfilePage({ params }: UserProfileProps) {
         );
     }
 
-    const recipes = getRecipesByAuthor(resolvedParams.id);
-    const activities = getUserActivities(resolvedParams.id);
-
-    return <UserProfileClient user={user} recipes={recipes} activities={activities} />;
+    return <UserProfileClient user={user} />;
 }

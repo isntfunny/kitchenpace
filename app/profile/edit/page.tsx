@@ -16,6 +16,10 @@ export default async function ProfileEditPage() {
 
     const profile = await getOrCreateProfile(session.user.id, session.user.email ?? '');
 
+    if (!profile) {
+        redirect('/auth/signin');
+    }
+
     return (
         <PageShell>
             <ProfileEditClient profile={profile} />

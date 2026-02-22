@@ -10,6 +10,11 @@ type ProfileFields = Partial<Pick<Profile, 'nickname' | 'teaser' | 'photoUrl'>> 
 };
 
 export const getOrCreateProfile = async (userId: string, email: string) => {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+        return null;
+    }
+
     return prisma.profile.upsert({
         where: { userId },
         create: {

@@ -18,6 +18,10 @@ const ProfilePage = async () => {
 
     const profile = await getOrCreateProfile(session.user.id, session.user.email ?? '');
 
+    if (!profile) {
+        redirect('/auth/signin');
+    }
+
     return (
         <PageShell>
             <section

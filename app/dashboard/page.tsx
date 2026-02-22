@@ -15,6 +15,10 @@ export default async function DashboardPage() {
 
     const profile = await getOrCreateProfile(session.user.id, session.user.email ?? '');
 
+    if (!profile) {
+        redirect('/auth/signin');
+    }
+
     return (
         <>
             <Header />

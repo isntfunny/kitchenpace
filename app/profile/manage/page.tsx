@@ -46,10 +46,13 @@ const ManageProfilePage = async () => {
         redirect('/auth/signin');
     }
 
-    const profile = (await getOrCreateProfile(
-        session.user.id,
-        session.user.email ?? '',
-    )) as PrivacyReadyProfile;
+    const profile = await getOrCreateProfile(session.user.id, session.user.email ?? '');
+
+    if (!profile) {
+        redirect('/auth/signin');
+    }
+
+    const privacyReadyProfile = profile as PrivacyReadyProfile;
 
     return (
         <PageShell>
@@ -81,10 +84,10 @@ const ManageProfilePage = async () => {
                     <div className={css({ mb: '10' })}>
                         <PrivacySettingsCard
                             profile={{
-                                showInActivity: profile.showInActivity,
-                                ratingsPublic: profile.ratingsPublic,
-                                followsPublic: profile.followsPublic,
-                                favoritesPublic: profile.favoritesPublic,
+                                showInActivity: privacyReadyProfile.showInActivity,
+                                ratingsPublic: privacyReadyProfile.ratingsPublic,
+                                followsPublic: privacyReadyProfile.followsPublic,
+                                favoritesPublic: privacyReadyProfile.favoritesPublic,
                             }}
                         />
                     </div>

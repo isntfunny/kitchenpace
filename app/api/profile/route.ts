@@ -59,6 +59,11 @@ export async function GET() {
     }
 
     const profile = await getOrCreateProfile(session.userId, session.email);
+
+    if (!profile) {
+        return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
     return NextResponse.json({ profile });
 }
 

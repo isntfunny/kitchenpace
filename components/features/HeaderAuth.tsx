@@ -27,7 +27,14 @@ export function HeaderAuth() {
             fetch('/api/auth/profile')
                 .then((res) => res.json())
                 .then((data) => {
+                    if (data.needsSignOut) {
+                        handleSignOut();
+                        return;
+                    }
                     setProfile(data.profile);
+                })
+                .catch(() => {
+                    setProfile(null);
                 })
                 .finally(() => {
                     setProfileLoading(false);

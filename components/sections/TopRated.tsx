@@ -9,6 +9,7 @@ import { Section } from '../features/Section';
 const topRatedRecipes = [
     {
         id: '5',
+        slug: 'klassisches-tiramisu',
         title: 'Klassisches Tiramisu',
         description: 'Das Original-Rezept aus Italien',
         image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&q=80',
@@ -18,6 +19,7 @@ const topRatedRecipes = [
     },
     {
         id: '6',
+        slug: 'sushi-platter',
         title: 'Sushi Platter',
         description: 'Selbstgemachte Maki und Nigiri Variationen',
         image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&q=80',
@@ -27,6 +29,7 @@ const topRatedRecipes = [
     },
     {
         id: '7',
+        slug: 'steak-mit-gemuese',
         title: 'Steak mit Gemüse',
         description: 'Perfekt gebratenes Steak mit saisonalem Gemüse',
         image: 'https://images.unsplash.com/photo-1546833998-877b37c2e5c6?w=400&q=80',
@@ -36,6 +39,7 @@ const topRatedRecipes = [
     },
     {
         id: '8',
+        slug: 'matcha-latte',
         title: 'Matcha Latte',
         description: 'Cremiger Matcha mit Hafermilch',
         image: 'https://images.unsplash.com/photo-1515825838458-f2a94b20105a?w=400&q=80',

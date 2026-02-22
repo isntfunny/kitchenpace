@@ -1,25 +1,33 @@
-'use client';
-
-import * as React from 'react';
-
+import type { TrendingTagData } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 
 import { Heading } from '../atoms/Typography';
 
-const trendingTags = [
-    { tag: 'Schnell', count: 234, color: '#e07b53' },
-    { tag: 'Vegetarisch', count: 189, color: '#00b894' },
-    { tag: 'Meal Prep', count: 156, color: '#0984e3' },
-    { tag: 'Low Carb', count: 142, color: '#6c5ce7' },
-    { tag: 'Frühling', count: 128, color: '#fdcb6e' },
-    { tag: 'Gesund', count: 115, color: '#00cec9' },
-    { tag: 'One Pot', count: 98, color: '#e17055' },
-    { tag: 'Nachmittag', count: 87, color: '#fd79a8' },
-    { tag: 'Einfach', count: 76, color: '#a29bfe' },
-    { tag: 'Sommer', count: 65, color: '#fab1a0' },
-];
+interface TrendingTagsProps {
+    tags: TrendingTagData[];
+}
 
-export function TrendingTags() {
+export function TrendingTags({ tags }: TrendingTagsProps) {
+    if (tags.length === 0) {
+        return (
+            <div
+                className={css({
+                    p: '5',
+                    borderRadius: '2xl',
+                    bg: '#fffcf9',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                })}
+            >
+                <Heading as="h3" size="md" className={css({ color: 'primary', mb: '3' })}>
+                    Trending 🔥
+                </Heading>
+                <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                    Aktuell keine Tags verfügbar.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div
             className={css({
@@ -30,13 +38,7 @@ export function TrendingTags() {
             })}
         >
             <div className={css({ mb: '3' })}>
-                <Heading
-                    as="h3"
-                    size="md"
-                    className={css({
-                        color: 'primary',
-                    })}
-                >
+                <Heading as="h3" size="md" className={css({ color: 'primary' })}>
                     Trending 🔥
                 </Heading>
             </div>
@@ -47,7 +49,7 @@ export function TrendingTags() {
                     gap: '2',
                 })}
             >
-                {trendingTags.map((item) => (
+                {tags.map((item) => (
                     <button
                         key={item.tag}
                         className={css({

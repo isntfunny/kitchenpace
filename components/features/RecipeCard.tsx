@@ -8,6 +8,7 @@ import { Card, CardImage, CardContent, CardTitle, CardDescription } from '../ato
 
 interface Recipe {
     id: string;
+    slug: string;
     title: string;
     description: string;
     image: string;
@@ -22,33 +23,35 @@ interface RecipeCardProps {
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
     return (
-        <Card>
-            <CardImage src={recipe.image} alt={recipe.title} />
-            <CardContent>
-                <Badge>{recipe.category}</Badge>
-                <div className={css({ mt: '2' })}>
-                    <CardTitle>{recipe.title}</CardTitle>
-                    <CardDescription>{recipe.description}</CardDescription>
-                </div>
-                <div
-                    className={flex({
-                        justify: 'space-between',
-                        align: 'center',
-                        mt: '3',
-                        fontFamily: 'body',
-                        fontSize: 'sm',
-                        color: 'text-muted',
-                    })}
-                >
-                    {recipe.rating && (
-                        <span className={flex({ align: 'center', gap: '1' })}>
-                            <span>★</span>
-                            <span>{recipe.rating}</span>
-                        </span>
-                    )}
-                    {recipe.time && <span>{recipe.time}</span>}
-                </div>
-            </CardContent>
-        </Card>
+        <a href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none' })}>
+            <Card>
+                <CardImage src={recipe.image} alt={recipe.title} />
+                <CardContent>
+                    <Badge>{recipe.category}</Badge>
+                    <div className={css({ mt: '2' })}>
+                        <CardTitle>{recipe.title}</CardTitle>
+                        <CardDescription>{recipe.description}</CardDescription>
+                    </div>
+                    <div
+                        className={flex({
+                            justify: 'space-between',
+                            align: 'center',
+                            mt: '3',
+                            fontFamily: 'body',
+                            fontSize: 'sm',
+                            color: 'text-muted',
+                        })}
+                    >
+                        {recipe.rating && (
+                            <span className={flex({ align: 'center', gap: '1' })}>
+                                <span>★</span>
+                                <span>{recipe.rating}</span>
+                            </span>
+                        )}
+                        {recipe.time && <span>{recipe.time}</span>}
+                    </div>
+                </CardContent>
+            </Card>
+        </a>
     );
 }

@@ -1,3 +1,14 @@
+import {
+    fetchChefSpotlight,
+    fetchQuickTips,
+    fetchRecentActivities,
+    fetchTrendingTags,
+} from '@/app/actions/community';
+import {
+    fetchFeaturedRecipe,
+    fetchNewestRecipes,
+    fetchTopRatedRecipes,
+} from '@/app/actions/recipes';
 import { ActivitySidebar } from '@/components/features/ActivitySidebar';
 import { ChefSpotlight } from '@/components/features/ChefSpotlight';
 import { Header } from '@/components/features/Header';
@@ -11,7 +22,25 @@ import { HeroSpotlight } from '@/components/sections/HeroSpotlight';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
-export default function Home() {
+export default async function Home() {
+    const [
+        featuredRecipe,
+        newestRecipes,
+        topRatedRecipes,
+        trendingTags,
+        chefSpotlight,
+        quickTips,
+        recentActivities,
+    ] = await Promise.all([
+        fetchFeaturedRecipe(),
+        fetchNewestRecipes(),
+        fetchTopRatedRecipes(),
+        fetchTrendingTags(),
+        fetchChefSpotlight(),
+        fetchQuickTips(),
+        fetchRecentActivities(),
+    ]);
+
     return (
         <div
             className={css({
@@ -45,14 +74,17 @@ export default function Home() {
                         })}
                     >
                         <div className={css({ lg: { gridColumn: 'span 8' } })}>
-                            <DailyHighlight />
+                            <DailyHighlight recipe={featuredRecipe} />
 
                             <div
                                 className={css({
                                     marginTop: '6',
                                 })}
                             >
-                                <RecipeScrollServer title="Neuste Rezepte" />
+                                <RecipeScrollServer
+                                    title="Neuste Rezepte"
+                                    recipes={newestRecipes}
+                                />
                             </div>
 
                             <div
@@ -68,32 +100,32 @@ export default function Home() {
                                     marginTop: '6',
                                 })}
                             >
-                                <RecipeScrollServer title="Top Rated" />
+                                <RecipeScrollServer title="Top Rated" recipes={topRatedRecipes} />
                             </div>
                         </div>
 
                         <div className={css({ lg: { gridColumn: 'span 4' } })}>
-                            <TrendingTags />
+                            <TrendingTags tags={trendingTags} />
                             <div
                                 className={css({
                                     marginTop: '5',
                                 })}
                             >
-                                <ChefSpotlight />
+                                <ChefSpotlight chef={chefSpotlight} />
                             </div>
                             <div
                                 className={css({
                                     marginTop: '5',
                                 })}
                             >
-                                <QuickTips />
+                                <QuickTips tips={quickTips} />
                             </div>
                             <div
                                 className={css({
                                     marginTop: '5',
                                 })}
                             >
-                                <ActivitySidebar />
+                                <ActivitySidebar activities={recentActivities} />
                             </div>
                         </div>
                     </div>

@@ -1,9 +1,9 @@
 import { Metadata } from 'next';
 
+import { fetchRecipeBySlug } from '@/app/actions/recipes';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
 
-import { getActivitiesForRecipe, getAuthorById, getRecipeById, Recipe } from './data';
 import { RecipeDetailClient } from './RecipeDetailClient';
 
 type RecipePageParams = {
@@ -16,33 +16,7 @@ type RecipePageProps = {
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
 
-const buildRecipeMetadata = (recipe: Recipe): Metadata => ({
-    title: `${recipe.title} | KüchenTakt`,
-    description: recipe.description,
-    openGraph: {
-        title: `${recipe.title} | KüchenTakt`,
-        description: recipe.description,
-        url: `${SITE_URL}/recipe/${recipe.id}`,
-        siteName: 'KüchenTakt',
-        type: 'article',
-        images: [
-            {
-                url: recipe.image,
-                alt: recipe.title,
-            },
-        ],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: `${recipe.title} | KüchenTakt`,
-        description: recipe.description,
-        images: [recipe.image],
-    },
-});
-
-export async function generateMetadata({ params }: RecipePageProps): Promise<Metadata> {
-    const resolvedParams = await params;
-    const recipe = getRecipeById(resolvedParams.id);
+const buildRecipeMetadata = (recipe: Awaited<ReturnType<typeof fetchRecipeBySlug>>): Metadata => {
     if (!recipe) {
         return {
             title: 'Rezept nicht gefunden | KüchenTakt',
@@ -50,17 +24,51 @@ export async function generateMetadata({ params }: RecipePageProps): Promise<Met
         };
     }
 
+    return {
+        title: `${recipe.title} | KüchenTakt`,
+        description: recipe.description,
+        openGraph: {
+            title: `${recipe.title} | KüchenTakt`,
+            description: recipe.description,
+            url: `${SITE_URL}/recipe/${recipe.id}`,
+            siteName: 'KüchenTakt',
+            type: 'article',
+            images: [
+                {
+                    url: recipe.image,
+                    alt: recipe.title,
+                },
+            ],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${recipe.title} | KüchenTakt`,
+            description: recipe.description,
+            images: [recipe.image],
+        },
+    };
+};
+
+export async function generateMetadata({ params }: RecipePageProps): Promise<Metadata> {
+    const resolvedParams = await params;
+    const recipe = await fetchRecipeBySlug(resolvedParams.id);
     return buildRecipeMetadata(recipe);
 }
 
 export async function generateStaticParams() {
-    const { recipes } = await import('./data');
-    return Object.keys(recipes).map((id) => ({ id }));
+    const { prisma } = await import('@/lib/prisma');
+    const recipes = await prisma.recipe.findMany({
+        where: { publishedAt: { not: null } },
+        select: { slug: true },
+        take: 100,
+    });
+
+    return recipes.map((recipe) => ({ id: recipe.slug }));
 }
 
 export default async function RecipePage({ params }: RecipePageProps) {
     const resolvedParams = await params;
-    const recipe = getRecipeById(resolvedParams.id);
+    const recipe = await fetchRecipeBySlug(resolvedParams.id);
 
     if (!recipe) {
         return (
@@ -79,10 +87,18 @@ export default async function RecipePage({ params }: RecipePageProps) {
         );
     }
 
-    const author = getAuthorById(recipe.authorId);
-    const recipeActivities = getActivitiesForRecipe(recipe.id);
+    const author = recipe.author
+        ? {
+              id: recipe.author.id,
+              name: recipe.author.name,
+              avatar: recipe.author.avatar || '',
+              bio: recipe.author.bio || '',
+              recipeCount: 0,
+              followerCount: 0,
+          }
+        : null;
 
     return (
-        <RecipeDetailClient recipe={recipe} author={author} recipeActivities={recipeActivities} />
+        <RecipeDetailClient recipe={recipe as any} author={author as any} recipeActivities={[]} />
     );
 }

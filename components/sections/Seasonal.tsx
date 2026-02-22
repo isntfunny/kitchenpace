@@ -9,6 +9,7 @@ import { Section } from '../features/Section';
 const seasonalRecipes = [
     {
         id: 's1',
+        slug: 'spargelrisotto',
         title: 'Spargelrisotto',
         description: 'Cremiges Risotto mit frischem Spargel',
         image: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=400&q=80',
@@ -18,6 +19,7 @@ const seasonalRecipes = [
     },
     {
         id: 's2',
+        slug: 'erdbeertorte',
         title: 'Erdbeertorte',
         description: 'Leichte Torte mit frischen Erdbeeren',
         image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&q=80',
@@ -27,6 +29,7 @@ const seasonalRecipes = [
     },
     {
         id: 's3',
+        slug: 'gruener-spargel',
         title: 'Grüner Spargel',
         description: 'Gegrillter Spargel mit Hollandaise',
         image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&q=80',
@@ -36,6 +39,7 @@ const seasonalRecipes = [
     },
     {
         id: 's4',
+        slug: 'rhabarberkompott',
         title: 'Rhabarberkompott',
         description: 'Süß-saures Kompott mit Vanille',
         image: 'https://images.unsplash.com/photo-1606923829579-0cb981a83e2e?w=400&q=80',

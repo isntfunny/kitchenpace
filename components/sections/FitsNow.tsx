@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 
+import { fetchRecipesByTime, type RecipeCardData } from '@/app/actions/recipes';
 import { css } from 'styled-system/css';
-import { grid } from 'styled-system/patterns';
 
-import { getRecipesByTime, type RecipeCardData } from '../features/actions';
 import { RecipeCard } from '../features/RecipeCard';
 import { Section } from '../features/Section';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../features/Select';
@@ -27,7 +26,8 @@ export function FitsNow() {
     useEffect(() => {
         let cancelled = false;
 
-        getRecipesByTime(selectedTime).then((data) => {
+        // Load 3 recipes for responsive display
+        fetchRecipesByTime(selectedTime, 3).then((data: RecipeCardData[]) => {
             if (!cancelled) {
                 setRecipes(data);
                 setLoading(false);
@@ -72,8 +72,13 @@ export function FitsNow() {
                 </div>
             ) : (
                 <div
-                    className={grid({
-                        columns: { base: 1, md: 2, xl: 3 },
+                    className={css({
+                        display: 'grid',
+                        gridTemplateColumns: {
+                            base: '1fr', // 1 on mobile
+                            sm: 'repeat(2, 1fr)', // 2 on small screens
+                            lg: 'repeat(3, 1fr)', // 3 on desktop
+                        },
                         gap: '6',
                     })}
                 >
@@ -82,6 +87,7 @@ export function FitsNow() {
                             key={recipe.id}
                             recipe={{
                                 id: recipe.id,
+                                slug: recipe.slug,
                                 title: recipe.title,
                                 description: recipe.description || '',
                                 image: recipe.image,

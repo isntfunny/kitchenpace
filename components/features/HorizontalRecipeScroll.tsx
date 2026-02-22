@@ -9,6 +9,7 @@ import { Heading, Text } from '../atoms/Typography';
 
 interface Recipe {
     id: string;
+    slug: string;
     title: string;
     category: string;
     rating: number;
@@ -65,8 +66,9 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                 {recipes.map((recipe) => {
                     const categoryColor = categoryColors[recipe.category] || '#e07b53';
                     return (
-                        <div
+                        <a
                             key={recipe.id}
+                            href={`/recipe/${recipe.slug}`}
                             className={css({
                                 flex: '0 0 auto',
                                 width: '200px',
@@ -77,6 +79,8 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                                 overflow: 'hidden',
                                 cursor: 'pointer',
                                 transition: 'all 200ms ease',
+                                textDecoration: 'none',
+                                display: 'block',
                                 _hover: {
                                     transform: 'translateY(-4px)',
                                     borderColor: categoryColor,
@@ -134,7 +138,7 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                                     <span>{recipe.time}</span>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     );
                 })}
             </div>

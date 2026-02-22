@@ -9,6 +9,7 @@ import { Section } from '../features/Section';
 const newestRecipes = [
     {
         id: '1',
+        slug: 'mediterraner-salat',
         title: 'Mediterraner Salat',
         description: 'Frischer Salat mit Feta, Oliven und Tomaten',
         image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&q=80',
@@ -18,6 +19,7 @@ const newestRecipes = [
     },
     {
         id: '2',
+        slug: 'pasta-al-pesto',
         title: 'Pasta al Pesto',
         description: 'Hausgemachtes Pesto mit Basilikum und Pinienkernen',
         image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&q=80',
@@ -27,6 +29,7 @@ const newestRecipes = [
     },
     {
         id: '3',
+        slug: 'smoothie-bowl',
         title: 'Smoothie Bowl',
         description: 'Energiegeladene Bowl mit Beeren und Superfoods',
         image: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=400&q=80',
@@ -36,6 +39,7 @@ const newestRecipes = [
     },
     {
         id: '4',
+        slug: 'grillgemuese',
         title: 'Grillgemüse',
         description: 'Buntes Gemüse vom Grill mit Kräuteröl',
         image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&q=80',

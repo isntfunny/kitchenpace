@@ -1,56 +1,29 @@
-'use client';
+import type { RecipeCardData } from '@/app/actions/recipes';
+import { css } from 'styled-system/css';
 
-import { useEffect, useState } from 'react';
-
-import { getRecipes, type RecipeCardData } from './actions';
 import { HorizontalRecipeScroll } from './HorizontalRecipeScroll';
 
 interface RecipeScrollProps {
     title: string;
+    recipes: RecipeCardData[];
 }
 
-export function RecipeScrollServer({ title }: RecipeScrollProps) {
-    const [recipes, setRecipes] = useState<RecipeCardData[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        getRecipes().then((data) => {
-            setRecipes(data);
-            setLoading(false);
-        });
-    }, []);
-
-    if (loading) {
-        return (
-            <div
-                style={{
-                    padding: '2rem',
-                    textAlign: 'center',
-                    background: '#fffcf9',
-                    borderRadius: '1rem',
-                    marginTop: '1.5rem',
-                }}
-            >
-                Lade Rezepte...
-            </div>
-        );
-    }
-
+export function RecipeScrollServer({ title, recipes }: RecipeScrollProps) {
     if (recipes.length === 0) {
         return (
             <div
-                style={{
-                    padding: '2rem',
+                className={css({
+                    p: '5',
+                    borderRadius: '2xl',
+                    bg: '#fffcf9',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                     textAlign: 'center',
-                    background: '#fffcf9',
-                    borderRadius: '1rem',
-                    marginTop: '1.5rem',
-                }}
+                })}
             >
                 Keine Rezepte gefunden.
             </div>
         );
     }
 
-    return <HorizontalRecipeScroll recipes={recipes} title={title} />;
+    return <HorizontalRecipeScroll title={title} recipes={recipes} />;
 }

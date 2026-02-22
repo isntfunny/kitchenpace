@@ -8,6 +8,7 @@ import { grid } from 'styled-system/patterns';
 
 interface Recipe {
     id: string;
+    slug: string;
     title: string;
     image: string;
     rating: number;

@@ -1,14 +1,41 @@
-'use client';
-
 import Image from 'next/image';
-import * as React from 'react';
 
+import type { ChefSpotlightData } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
 import { Heading, Text } from '../atoms/Typography';
 
-export function ChefSpotlight() {
+interface ChefSpotlightProps {
+    chef: ChefSpotlightData | null;
+}
+
+export function ChefSpotlight({ chef }: ChefSpotlightProps) {
+    if (!chef) {
+        return (
+            <div
+                className={css({
+                    p: '5',
+                    borderRadius: '2xl',
+                    bg: '#fffcf9',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                })}
+            >
+                <div className={css({ mb: '2', fontWeight: '600', color: 'text' })}>
+                    Chef des Monats
+                </div>
+                <Text size="sm" color="muted">
+                    Wir sammeln gerade noch Daten – bald zeigen wir dir einen Kochhelden aus der
+                    Community.
+                </Text>
+            </div>
+        );
+    }
+
+    const displayName = chef.name || chef.nickname || 'Chef des Monats';
+    const avatar =
+        chef.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
+
     return (
         <div
             className={css({
@@ -24,18 +51,13 @@ export function ChefSpotlight() {
                     display: 'inline-flex',
                     bg: '#f8b500',
                     borderRadius: 'full',
-                    padding: '4px 12px',
+                    px: '3',
+                    py: '1',
                 })}
             >
-                <span
-                    className={css({
-                        fontSize: 'xs',
-                        fontWeight: '600',
-                        color: 'white',
-                    })}
-                >
+                <Text size="sm" className={css({ fontWeight: '600', color: 'white' })}>
                     ⭐ Chef des Monats
-                </span>
+                </Text>
             </div>
 
             <div className={flex({ gap: '3', align: 'center', mb: '3' })}>
@@ -51,33 +73,27 @@ export function ChefSpotlight() {
                     })}
                 >
                     <Image
-                        src="https://images.unsplash.com/photo-1583394293214-28ez8ac94e4a?w=200&q=80"
-                        alt="Chef des Monats"
+                        src={avatar}
+                        alt={displayName}
                         fill
                         className={css({ objectFit: 'cover' })}
                     />
                 </div>
                 <div>
                     <Heading as="h4" size="sm">
-                        Julia Weber
+                        {displayName}
                     </Heading>
                     <Text size="sm" color="muted">
-                        127 Rezepte · {'⭐'.repeat(5)}
+                        {chef.followerCount} Follower · {chef.recipeCount} Rezepte
                     </Text>
                 </div>
             </div>
 
-            <Text
-                size="sm"
-                className={css({
-                    mb: '3',
-                    fontStyle: 'italic',
-                    color: 'text-muted',
-                })}
-            >
-                &ldquo;Ich liebe es, traditionelle Gerichte mit modernen Akzenten zu verbinden. Mein
-                Fokus liegt auf saisonalen Zutaten und nachhaltiger Küche.&rdquo;
-            </Text>
+            {chef.bio && (
+                <Text size="sm" color="muted" className={css({ mb: '3', fontStyle: 'italic' })}>
+                    &ldquo;{chef.bio}&rdquo;
+                </Text>
+            )}
 
             <div
                 className={css({
@@ -86,29 +102,24 @@ export function ChefSpotlight() {
                     gap: '2',
                 })}
             >
-                {[1, 2, 3].map((i) => (
-                    <div
-                        key={i}
-                        className={css({
-                            position: 'relative',
-                            aspectRatio: '1',
-                            borderRadius: 'lg',
-                            overflow: 'hidden',
-                        })}
-                    >
-                        <Image
-                            src={`https://images.unsplash.com/photo-${
-                                i === 1
-                                    ? '1495521821757-a1efb6729352'
-                                    : i === 2
-                                      ? '1476224203421-9ac1ecb1efc2'
-                                      : '1467003909585-63c6385e3d9a'
-                            }?w=150&q=80`}
-                            alt={`Rezept ${i}`}
-                            fill
-                            className={css({ objectFit: 'cover' })}
-                        />
-                    </div>
+                {chef.topRecipes.map((recipe) => (
+                    <a href={`/recipe/${recipe.slug}`} key={recipe.id}>
+                        <div
+                            className={css({
+                                position: 'relative',
+                                aspectRatio: '1',
+                                borderRadius: 'lg',
+                                overflow: 'hidden',
+                            })}
+                        >
+                            <Image
+                                src={recipe.image}
+                                alt={recipe.title}
+                                fill
+                                className={css({ objectFit: 'cover' })}
+                            />
+                        </div>
+                    </a>
                 ))}
             </div>
         </div>

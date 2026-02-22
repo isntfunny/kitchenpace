@@ -1,10 +1,21 @@
+import type { Profile } from '@prisma/client';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
 
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { PageShell } from '@/components/layouts/PageShell';
+import { getOrCreateProfile } from '@/lib/profile';
 import { css } from 'styled-system/css';
+
+import { PrivacySettingsCard } from './PrivacySettingsCard';
+
+type PrivacyReadyProfile = Profile & {
+    ratingsPublic: boolean;
+    followsPublic: boolean;
+    favoritesPublic: boolean;
+    showInActivity: boolean;
+};
 
 const actions = [
     {
@@ -35,6 +46,11 @@ const ManageProfilePage = async () => {
         redirect('/auth/signin');
     }
 
+    const profile = (await getOrCreateProfile(
+        session.user.id,
+        session.user.email ?? '',
+    )) as PrivacyReadyProfile;
+
     return (
         <PageShell>
             <section
@@ -61,6 +77,17 @@ const ManageProfilePage = async () => {
                             Alle Sicherheits- und Kontoaktionen an einem Ort.
                         </p>
                     </header>
+
+                    <div className={css({ mb: '10' })}>
+                        <PrivacySettingsCard
+                            profile={{
+                                showInActivity: profile.showInActivity,
+                                ratingsPublic: profile.ratingsPublic,
+                                followsPublic: profile.followsPublic,
+                                favoritesPublic: profile.favoritesPublic,
+                            }}
+                        />
+                    </div>
 
                     <div
                         className={css({

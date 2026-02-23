@@ -224,18 +224,10 @@ function RecipeChip({
     );
 }
 
-interface RecipeTabsProps {
-    initialPinned?: RecipeTabItem[];
-    initialRecent?: RecipeTabItem[];
-}
-
 const RECENT_DISPLAY_LIMIT = 5;
 
-export function RecipeTabs({ initialPinned = [], initialRecent = [] }: RecipeTabsProps) {
+export function RecipeTabs() {
     const { pinned, recent, pinRecipe, unpinRecipe, isLoading } = useRecipeTabs();
-
-    const displayPinned = pinned.length > 0 ? pinned : initialPinned;
-    const displayRecent = recent.length > 0 ? recent : initialRecent;
 
     const handlePinToggle = (recipe: RecipeTabItem, currentlyPinned: boolean) => {
         if (isLoading) return;
@@ -246,11 +238,11 @@ export function RecipeTabs({ initialPinned = [], initialRecent = [] }: RecipeTab
         }
     };
 
-    const hasPinned = displayPinned.length > 0;
-    const hasRecent = displayRecent.length > 0;
+    const hasPinned = pinned.length > 0;
+    const hasRecent = recent.length > 0;
 
-    const unpinnedRecent = displayRecent
-        .filter((r) => !displayPinned.some((p) => p.id === r.id))
+    const unpinnedRecent = recent
+        .filter((r) => !pinned.some((p) => p.id === r.id))
         .slice(0, RECENT_DISPLAY_LIMIT);
     const hasEntries = hasPinned || unpinnedRecent.length > 0;
 
@@ -291,7 +283,7 @@ export function RecipeTabs({ initialPinned = [], initialRecent = [] }: RecipeTab
 
             {hasPinned && (
                 <>
-                    {displayPinned.map((recipe) => (
+                    {pinned.map((recipe) => (
                         <RecipeChip
                             key={recipe.id}
                             recipe={recipe}
@@ -300,7 +292,7 @@ export function RecipeTabs({ initialPinned = [], initialRecent = [] }: RecipeTab
                         />
                     ))}
 
-                    {(hasRecent || displayPinned.length < 3) && (
+                    {(hasRecent || pinned.length < 3) && (
                         <div
                             className={css({
                                 width: '1px',

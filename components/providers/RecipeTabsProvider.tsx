@@ -12,6 +12,9 @@ export interface RecipeTabItem {
     prepTime?: number;
     cookTime?: number;
     difficulty?: string;
+    position?: number;
+    viewedAt?: string;
+    pinned?: boolean;
 }
 
 interface RecipeTabsContextValue {
@@ -28,6 +31,9 @@ interface RecipeTabsContextValue {
 const STORAGE_KEY = 'kitchenpace_recipe_tabs';
 const MAX_PINNED = 3;
 const MAX_RECENT = 5;
+const API_BASE = '/api/recipe-tabs';
+const PINNED_API = `${API_BASE}/pinned`;
+const RECENT_API = `${API_BASE}/recent`;
 
 type RecipeTabsState = {
     pinned: RecipeTabItem[];
@@ -67,17 +73,6 @@ function withDefaultEmoji(recipe: RecipeTabItem): RecipeTabItem {
 
 const emptyTabs: RecipeTabsState = { pinned: [], recent: [] };
 
-type RecentEntry = RecipeTabItem & { pinned?: boolean };
-
-function buildTabs(entries: RecentEntry[]): RecipeTabsState {
-    const pinned = entries
-        .filter((entry) => entry.pinned)
-        .slice(0, MAX_PINNED)
-        .map(withDefaultEmoji);
-    const recent = entries.filter((entry) => !entry.pinned).map(withDefaultEmoji);
-    return { pinned, recent };
-}
-
 export function RecipeTabsProvider({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated' && !!session?.user?.id;
@@ -102,12 +97,37 @@ export function RecipeTabsProvider({ children }: { children: React.ReactNode }) 
         if (!isAuthenticated) return;
         setIsLoading(true);
         try {
-            const response = await fetch('/api/recent-recipes');
-            if (!response.ok) {
-                throw new Error(`Failed to load recipe history (${response.status})`);
+            const [pinnedResponse, recentResponse] = await Promise.all([
+                fetch(PINNED_API),
+                fetch(RECENT_API),
+            ]);
+
+            if (!pinnedResponse.ok) {
+                throw new Error(`Failed to load pinned recipes (${pinnedResponse.status})`);
             }
-            const entries: RecentEntry[] = await response.json();
-            updateTabs(() => buildTabs(entries));
+
+            if (!recentResponse.ok) {
+                throw new Error(`Failed to load recent recipes (${recentResponse.status})`);
+            }
+
+            const pinnedEntries: RecipeTabItem[] = await pinnedResponse.json();
+            const recentEntries: RecipeTabItem[] = await recentResponse.json();
+
+            const normalizedPinned = pinnedEntries
+                .map(withDefaultEmoji)
+                .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+            const pinnedIds = new Set(normalizedPinned.map((entry) => entry.id));
+
+            const normalizedRecent = recentEntries
+                .filter((entry) => !pinnedIds.has(entry.id))
+                .map(withDefaultEmoji)
+                .slice(0, MAX_RECENT);
+
+            updateTabs(() => ({
+                pinned: normalizedPinned,
+                recent: normalizedRecent,
+            }));
         } catch (error) {
             console.error('Failed to refresh recipe tabs', error);
         } finally {
@@ -119,18 +139,26 @@ export function RecipeTabsProvider({ children }: { children: React.ReactNode }) 
         const stored = loadFromStorage();
         try {
             for (const recipe of stored.pinned.slice(0, MAX_PINNED)) {
-                await fetch('/api/pinned-favorites', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ recipeId: recipe.id }),
-                });
+                try {
+                    await fetch(PINNED_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ recipeId: recipe.id }),
+                    });
+                } catch (error) {
+                    console.error('Failed to migrate pinned recipe', error);
+                }
             }
             for (const recipe of stored.recent.slice(0, MAX_RECENT)) {
-                await fetch('/api/recent-recipes', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ recipeId: recipe.id }),
-                });
+                try {
+                    await fetch(RECENT_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ recipeId: recipe.id }),
+                    });
+                } catch (error) {
+                    console.error('Failed to migrate recent recipe', error);
+                }
             }
         } finally {
             saveToStorage(emptyTabs);
@@ -160,29 +188,32 @@ export function RecipeTabsProvider({ children }: { children: React.ReactNode }) 
     const pinRecipe = useCallback(
         async (recipe: RecipeTabItem) => {
             const normalized = withDefaultEmoji(recipe);
-            updateTabs((prev) => {
-                if (
-                    prev.pinned.length >= MAX_PINNED ||
-                    prev.pinned.some((item) => item.id === recipe.id)
-                ) {
-                    return prev;
-                }
-                return {
-                    pinned: [...prev.pinned, normalized],
-                    recent: prev.recent.filter((item) => item.id !== recipe.id),
-                };
-            });
 
             if (!isAuthenticated) {
+                updateTabs((prev) => {
+                    if (
+                        prev.pinned.length >= MAX_PINNED ||
+                        prev.pinned.some((item) => item.id === recipe.id)
+                    ) {
+                        return prev;
+                    }
+                    return {
+                        pinned: [...prev.pinned, normalized],
+                        recent: prev.recent.filter((item) => item.id !== recipe.id),
+                    };
+                });
                 return;
             }
 
             try {
-                await fetch('/api/pinned-favorites', {
+                const response = await fetch(PINNED_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ recipeId: recipe.id }),
                 });
+                if (!response.ok) {
+                    throw new Error(`Failed to pin recipe (${response.status})`);
+                }
             } catch (error) {
                 console.error('Failed to pin recipe', error);
             } finally {
@@ -194,17 +225,19 @@ export function RecipeTabsProvider({ children }: { children: React.ReactNode }) 
 
     const unpinRecipe = useCallback(
         async (recipeId: string) => {
-            updateTabs((prev) => ({
-                pinned: prev.pinned.filter((item) => item.id !== recipeId),
-                recent: prev.recent,
-            }));
-
             if (!isAuthenticated) {
+                updateTabs((prev) => ({
+                    pinned: prev.pinned.filter((item) => item.id !== recipeId),
+                    recent: prev.recent,
+                }));
                 return;
             }
 
             try {
-                await fetch(`/api/pinned-favorites/${recipeId}`, { method: 'DELETE' });
+                const response = await fetch(`${PINNED_API}/${recipeId}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    throw new Error(`Failed to unpin recipe (${response.status})`);
+                }
             } catch (error) {
                 console.error('Failed to unpin recipe', error);
             } finally {
@@ -230,7 +263,7 @@ export function RecipeTabsProvider({ children }: { children: React.ReactNode }) 
             }
 
             try {
-                const response = await fetch('/api/recent-recipes', {
+                const response = await fetch(RECENT_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ recipeId: recipe.id }),

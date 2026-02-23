@@ -8,6 +8,7 @@ import { logAuth } from '@/lib/auth-logger';
 import { getOrCreateProfile } from '@/lib/profile';
 import { css } from 'styled-system/css';
 
+import { EmailSettingsCard } from './EmailSettingsCard';
 import { PrivacySettingsCard } from './PrivacySettingsCard';
 
 type PrivacyReadyProfile = Profile & {
@@ -94,6 +95,10 @@ const ManageProfilePage = async () => {
                                 favoritesPublic: privacyReadyProfile.favoritesPublic,
                             }}
                         />
+                    </div>
+
+                    <div className={css({ mb: '10' })}>
+                        <EmailSettingsCard />
                     </div>
 
                     <div

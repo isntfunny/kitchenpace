@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
-import { UserDashboard as UserDashboardComponent } from '@/components/dashboard/UserDashboard';
-import { Header } from '@/components/features/Header';
+import { UserDashboard } from '@/components/dashboard/UserDashboard';
+import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { logAuth } from '@/lib/auth-logger';
 import { getOrCreateProfile } from '@/lib/profile';
@@ -24,13 +24,12 @@ export default async function DashboardPage() {
     }
 
     return (
-        <>
-            <Header />
-            <UserDashboardComponent
+        <PageShell>
+            <UserDashboard
                 userName={profile.nickname ?? 'KüchenFan'}
                 userEmail={session.user.email ?? ''}
                 userPhoto={profile.photoUrl ?? undefined}
             />
-        </>
+        </PageShell>
     );
 }

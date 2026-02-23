@@ -266,15 +266,25 @@ export function RecipeTabsProvider({ children }: { children: React.ReactNode }) 
                     MAX_RECENT,
                 ),
             }));
-            if (isAuthenticated) {
-                await fetch('/api/recent-recipes', {
+            if (!isAuthenticated) return;
+
+            try {
+                const response = await fetch('/api/recent-recipes', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ recipeId: recipe.id }),
                 });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to track recent recipe (${response.status})`);
+                }
+            } catch (error) {
+                console.error('Failed to track recipe view', error);
+            } finally {
+                await refreshData();
             }
         },
-        [isAuthenticated],
+        [isAuthenticated, refreshData],
     );
 
     const contextValue = useMemo(

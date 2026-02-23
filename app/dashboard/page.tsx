@@ -1,21 +1,25 @@
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth/next';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { UserDashboard as UserDashboardComponent } from '@/components/dashboard/UserDashboard';
 import { Header } from '@/components/features/Header';
+import { getServerAuthSession, logMissingSession } from '@/lib/auth';
+import { logAuth } from '@/lib/auth-logger';
 import { getOrCreateProfile } from '@/lib/profile';
 
 export default async function DashboardPage() {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession('dashboard');
 
     if (!session?.user?.id) {
+        logMissingSession(session, 'dashboard');
         redirect('/auth/signin');
     }
 
     const profile = await getOrCreateProfile(session.user.id, session.user.email ?? '');
 
     if (!profile) {
+        logAuth('warn', 'dashboard: profile missing', {
+            userId: session.user.id,
+        });
         redirect('/auth/signin');
     }
 

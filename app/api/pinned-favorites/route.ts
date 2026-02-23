@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getServerAuthSession, logMissingSession } from '@/lib/auth';
+import { logAuth } from '@/lib/auth-logger';
 import { prisma } from '@/lib/prisma';
 
 const MAX_PINNED = 3;
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession('api/pinned-favorites:GET');
 
     if (!session?.user?.id) {
+        logMissingSession(session, 'api/pinned-favorites:GET');
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -35,9 +36,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession('api/pinned-favorites:POST');
 
     if (!session?.user?.id) {
+        logMissingSession(session, 'api/pinned-favorites:POST');
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -85,6 +87,11 @@ export async function POST(request: Request) {
                 },
             },
         },
+    });
+
+    logAuth('info', 'POST /api/pinned-favorites: pinned recipe', {
+        userId: session.user.id,
+        recipeId,
     });
 
     return NextResponse.json(pinnedFavorite, { status: 201 });

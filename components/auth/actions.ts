@@ -1,10 +1,9 @@
-'use server';
+'use client';
 
 import { signOut } from 'next-auth/react';
-import { redirect } from 'next/navigation';
 
-export async function handleSignIn() {
-    redirect('/auth/signin');
+export function handleSignIn() {
+    window.location.href = '/auth/signin';
 }
 
 export async function handleSignOut() {

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getServerAuthSession, logMissingSession } from '@/lib/auth';
+import { logAuth } from '@/lib/auth-logger';
 import { getOrCreateProfile, upsertProfile } from '@/lib/profile';
 
 const MAX_NICKNAME_LENGTH = 32;
@@ -40,9 +40,10 @@ const sanitizeBoolean = (value: unknown): boolean | undefined => {
 };
 
 const requireSession = async () => {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession('api/profile');
 
     if (!session?.user?.id) {
+        logMissingSession(session, 'api/profile');
         return null;
     }
 
@@ -55,12 +56,16 @@ const requireSession = async () => {
 export async function GET() {
     const session = await requireSession();
     if (!session) {
+        logAuth('warn', 'GET /api/profile: unauthorized');
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     const profile = await getOrCreateProfile(session.userId, session.email);
 
     if (!profile) {
+        logAuth('warn', 'GET /api/profile: profile not found', {
+            userId: session.userId,
+        });
         return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
 
@@ -70,6 +75,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
     const session = await requireSession();
     if (!session) {
+        logAuth('warn', 'PUT /api/profile: unauthorized');
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
@@ -109,6 +115,10 @@ export async function PUT(request: NextRequest) {
         userId: session.userId,
         email: session.email,
         data: profileUpdates,
+    });
+
+    logAuth('info', 'PUT /api/profile: profile updated', {
+        userId: session.userId,
     });
 
     return NextResponse.json({ profile });

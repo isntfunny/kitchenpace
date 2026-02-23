@@ -1,18 +1,18 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth/next';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { SmartImage } from '@/components/atoms/SmartImage';
 import SignOutButton from '@/components/auth/SignOutButton';
 import { PageShell } from '@/components/layouts/PageShell';
+import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { getOrCreateProfile } from '@/lib/profile';
 import { css } from 'styled-system/css';
 
 const ProfilePage = async () => {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession('profile/page');
 
     if (!session?.user?.id) {
+        logMissingSession(session, 'profile/page');
         redirect('/auth/signin');
     }
 

@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getServerAuthSession, logMissingSession } from '@/lib/auth';
+import { logAuth } from '@/lib/auth-logger';
 import { prisma } from '@/lib/prisma';
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession('api/pinned-favorites:DELETE');
 
     if (!session?.user?.id) {
+        logMissingSession(session, 'api/pinned-favorites:DELETE');
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -37,6 +38,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
             },
         }),
     ]);
+
+    logAuth('info', 'DELETE /api/pinned-favorites: removed pinned recipe', {
+        userId: session.user.id,
+        recipeId: pinnedFavorite.recipeId,
+    });
 
     return NextResponse.json({ success: true });
 }

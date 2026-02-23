@@ -1,10 +1,9 @@
 'use client';
 
-/* eslint-disable react-hooks/set-state-in-effect */
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { handleSignIn, handleSignOut } from '@/components/auth/actions';
 import { css } from 'styled-system/css';
@@ -20,32 +19,104 @@ export function HeaderAuth() {
     const { data: session, status } = useSession();
     const [profile, setProfile] = useState<Profile | null>(null);
     const [profileLoading, setProfileLoading] = useState(true);
+    const signOutTriggeredRef = useRef(false);
+
+    const authDebugEnabled =
+        process.env.NEXT_PUBLIC_AUTH_DEBUG === '1' || process.env.NODE_ENV !== 'production';
 
     useEffect(() => {
-        if (session?.user?.id) {
-            setProfileLoading(true);
-            fetch('/api/auth/profile')
-                .then((res) => res.json())
-                .then((data) => {
-                    if (data.needsSignOut) {
-                        handleSignOut();
-                        return;
-                    }
-                    setProfile(data.profile);
-                })
-                .catch(() => {
-                    setProfile(null);
-                })
-                .finally(() => {
-                    setProfileLoading(false);
-                });
-        } else {
+        if (!authDebugEnabled) return;
+        console.debug('[auth][HeaderAuth] session status changed', {
+            status,
+            userId: session?.user?.id ?? null,
+        });
+    }, [status, session?.user?.id, authDebugEnabled]);
+
+    useEffect(() => {
+        if (!session?.user?.id) {
+            if (authDebugEnabled) {
+                console.debug('[auth][HeaderAuth] session missing, clearing profile');
+            }
             setProfile(null);
             setProfileLoading(false);
+            signOutTriggeredRef.current = false;
+            return;
         }
-    }, [session]);
 
-    const isAuthenticated = status === 'authenticated' && session;
+        if (session?.user?.id) {
+            signOutTriggeredRef.current = false;
+            setProfileLoading(true);
+            const controller = new AbortController();
+
+            const loadProfile = async () => {
+                try {
+                    if (authDebugEnabled) {
+                        console.debug('[auth][HeaderAuth] fetching /api/auth/profile');
+                    }
+
+                    const response = await fetch('/api/auth/profile', {
+                        method: 'GET',
+                        cache: 'no-store',
+                        credentials: 'same-origin',
+                        signal: controller.signal,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        if (authDebugEnabled) {
+                            console.warn('[auth][HeaderAuth] profile fetch failed', {
+                                status: response.status,
+                                body: data,
+                            });
+                        }
+                        setProfile(null);
+                        return;
+                    }
+
+                    if (data.needsSignOut) {
+                        if (authDebugEnabled) {
+                            console.warn('[auth][HeaderAuth] server requested sign-out', data);
+                        }
+
+                        if (!signOutTriggeredRef.current) {
+                            signOutTriggeredRef.current = true;
+                            handleSignOut();
+                        }
+                        return;
+                    }
+
+                    setProfile(data.profile);
+
+                    if (authDebugEnabled) {
+                        console.debug('[auth][HeaderAuth] profile loaded', data.profile);
+                    }
+                } catch (error) {
+                    if (controller.signal.aborted) {
+                        return;
+                    }
+
+                    if (authDebugEnabled) {
+                        console.error('[auth][HeaderAuth] profile fetch error', error);
+                    }
+                    setProfile(null);
+                } finally {
+                    setProfileLoading(false);
+                }
+            };
+
+            void loadProfile();
+
+            return () => {
+                controller.abort();
+            };
+        }
+    }, [session?.user?.id, authDebugEnabled]);
+
+    const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
     const isLoading = status === 'loading' || profileLoading;
 
     if (isLoading) {

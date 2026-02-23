@@ -1,15 +1,16 @@
 import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getServerAuthSession, logMissingSession } from '@/lib/auth';
+import { logAuth } from '@/lib/auth-logger';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getServerAuthSession('api/auth/update-password');
 
         if (!session?.user?.id) {
+            logMissingSession(session, 'api/auth/update-password');
             return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
         }
 
@@ -52,9 +53,15 @@ export async function POST(request: Request) {
             },
         });
 
+        logAuth('info', 'POST /api/auth/update-password: success', {
+            userId: session.user.id,
+        });
+
         return NextResponse.json({ message: 'Passwort erfolgreich aktualisiert' }, { status: 200 });
     } catch (error) {
-        console.error('Update password error:', error);
+        logAuth('error', 'POST /api/auth/update-password failed', {
+            message: error instanceof Error ? error.message : String(error),
+        });
         return NextResponse.json({ error: 'Ein Fehler ist aufgetreten' }, { status: 500 });
     }
 }

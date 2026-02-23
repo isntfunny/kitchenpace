@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getServerAuthSession, logMissingSession } from '@/lib/auth';
+import { logAuth } from '@/lib/auth-logger';
 import { prisma } from '@/lib/prisma';
 
 const MAX_RECENT = 10;
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession('api/recent-recipes:GET');
 
     if (!session?.user?.id) {
+        logMissingSession(session, 'api/recent-recipes:GET');
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -49,9 +50,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getServerAuthSession('api/recent-recipes:POST');
 
         if (!session?.user?.id) {
+            logMissingSession(session, 'api/recent-recipes:POST');
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -108,9 +110,16 @@ export async function POST(request: Request) {
             });
         }
 
+        logAuth('info', 'POST /api/recent-recipes: tracked view', {
+            userId: session.user.id,
+            recipeId,
+        });
+
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error('Error in POST /api/recent-recipes:', error);
+        logAuth('error', 'POST /api/recent-recipes failed', {
+            message: error instanceof Error ? error.message : String(error),
+        });
         return NextResponse.json(
             { error: 'Internal Server Error', details: String(error) },
             { status: 500 },

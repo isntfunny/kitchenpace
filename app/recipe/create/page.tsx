@@ -1,15 +1,15 @@
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth/next';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { PageShell } from '@/components/layouts/PageShell';
 import { getAllCategories, getAllTags } from '@/components/recipe/actions';
 import { RecipeForm } from '@/components/recipe/RecipeForm';
+import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 
 export default async function CreateRecipePage() {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession('recipe/create');
 
     if (!session?.user?.id) {
+        logMissingSession(session, 'recipe/create');
         redirect('/auth/signin');
     }
 

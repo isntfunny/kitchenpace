@@ -6,16 +6,9 @@ import { prisma } from '@/lib/prisma';
 
 const MAX_PINNED = 3;
 
-export async function GET() {
-    const session = await getServerAuthSession('api/pinned-favorites:GET');
-
-    if (!session?.user?.id) {
-        logMissingSession(session, 'api/pinned-favorites:GET');
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const pinnedFavorites = await prisma.pinnedFavorite.findMany({
-        where: { userId: session.user.id },
+async function buildPinnedResponse(userId: string) {
+    const pinnedEntries = await prisma.userViewHistory.findMany({
+        where: { userId, pinned: true },
         include: {
             recipe: {
                 select: {
@@ -29,10 +22,33 @@ export async function GET() {
                 },
             },
         },
-        orderBy: { position: 'asc' },
+        orderBy: { viewedAt: 'desc' },
+        take: MAX_PINNED,
     });
 
-    return NextResponse.json(pinnedFavorites);
+    return pinnedEntries.map((entry) => ({
+        id: entry.recipe.id,
+        title: entry.recipe.title,
+        slug: entry.recipe.slug,
+        imageUrl: entry.recipe.imageUrl,
+        prepTime: entry.recipe.prepTime,
+        cookTime: entry.recipe.cookTime,
+        difficulty: entry.recipe.difficulty,
+        pinned: entry.pinned,
+        viewedAt: entry.viewedAt,
+    }));
+}
+
+export async function GET() {
+    const session = await getServerAuthSession('api/pinned-favorites:GET');
+
+    if (!session?.user?.id) {
+        logMissingSession(session, 'api/pinned-favorites:GET');
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const pinned = await buildPinnedResponse(session.user.id);
+    return NextResponse.json(pinned);
 }
 
 export async function POST(request: Request) {
@@ -50,49 +66,43 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'recipeId is required' }, { status: 400 });
     }
 
-    const existingCount = await prisma.pinnedFavorite.count({
-        where: { userId: session.user.id },
+    const recipe = await prisma.recipe.findUnique({
+        where: { id: recipeId },
+        select: { id: true },
     });
 
-    if (existingCount >= MAX_PINNED) {
+    if (!recipe) {
+        return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
+    }
+
+    const pinnedCount = await prisma.userViewHistory.count({
+        where: { userId: session.user.id, pinned: true },
+    });
+
+    if (pinnedCount >= MAX_PINNED) {
         return NextResponse.json(
             { error: `Maximum ${MAX_PINNED} pinned favorites allowed` },
             { status: 400 },
         );
     }
 
-    const existing = await prisma.pinnedFavorite.findFirst({
-        where: { userId: session.user.id, recipeId },
-    });
-
-    if (existing) {
-        return NextResponse.json({ error: 'Recipe already pinned' }, { status: 400 });
-    }
-
-    const position = existingCount;
-
-    const pinnedFavorite = await prisma.pinnedFavorite.create({
-        data: {
+    await prisma.userViewHistory.upsert({
+        where: { userId_recipeId: { userId: session.user.id, recipeId } },
+        update: { pinned: true, viewedAt: new Date() },
+        create: {
             userId: session.user.id,
             recipeId,
-            position,
-        },
-        include: {
-            recipe: {
-                select: {
-                    id: true,
-                    title: true,
-                    slug: true,
-                    imageUrl: true,
-                },
-            },
+            viewedAt: new Date(),
+            pinned: true,
         },
     });
+
+    const pinned = await buildPinnedResponse(session.user.id);
 
     logAuth('info', 'POST /api/pinned-favorites: pinned recipe', {
         userId: session.user.id,
         recipeId,
     });
 
-    return NextResponse.json(pinnedFavorite, { status: 201 });
+    return NextResponse.json(pinned, { status: 201 });
 }

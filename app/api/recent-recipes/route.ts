@@ -4,7 +4,7 @@ import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { logAuth } from '@/lib/auth-logger';
 import { prisma } from '@/lib/prisma';
 
-const MAX_RECENT = 10;
+const MAX_RECENT = 5;
 
 async function loadRecentRecipes(userId: string) {
     const recentViews = await prisma.userViewHistory.findMany({
@@ -22,9 +22,8 @@ async function loadRecentRecipes(userId: string) {
                 },
             },
         },
-        orderBy: { viewedAt: 'desc' },
+        orderBy: [{ pinned: 'desc' }, { viewedAt: 'desc' }],
         take: MAX_RECENT,
-        distinct: ['recipeId'],
     });
 
     return recentViews.map((view) => ({
@@ -36,6 +35,7 @@ async function loadRecentRecipes(userId: string) {
         cookTime: view.recipe.cookTime,
         difficulty: view.recipe.difficulty,
         viewedAt: view.viewedAt,
+        pinned: view.pinned,
     }));
 }
 
@@ -76,42 +76,15 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
         }
 
-        const existing = await prisma.userViewHistory.findFirst({
-            where: { userId: session.user.id, recipeId },
+        await prisma.userViewHistory.upsert({
+            where: { userId_recipeId: { userId: session.user.id, recipeId } },
+            update: { viewedAt: new Date() },
+            create: {
+                userId: session.user.id,
+                recipeId,
+                viewedAt: new Date(),
+            },
         });
-
-        if (existing) {
-            await prisma.userViewHistory.update({
-                where: { id: existing.id },
-                data: { viewedAt: new Date() },
-            });
-        } else {
-            await prisma.userViewHistory.create({
-                data: {
-                    userId: session.user.id,
-                    recipeId,
-                    viewedAt: new Date(),
-                },
-            });
-        }
-
-        const count = await prisma.userViewHistory.count({
-            where: { userId: session.user.id },
-        });
-
-        if (count > MAX_RECENT * 2) {
-            const toDelete = await prisma.userViewHistory.findMany({
-                where: { userId: session.user.id },
-                orderBy: { viewedAt: 'asc' },
-                take: count - MAX_RECENT,
-                select: { id: true },
-            });
-
-            const idsToDelete = toDelete.map((t) => t.id);
-            await prisma.userViewHistory.deleteMany({
-                where: { id: { in: idsToDelete } },
-            });
-        }
 
         const recent = await loadRecentRecipes(session.user.id);
 

@@ -65,20 +65,18 @@ function withDefaultEmoji(recipe: RecipeTabItem): RecipeTabItem {
     };
 }
 
-function mapPinnedEntry(entry: { recipe: RecipeTabItem }): RecipeTabItem {
-    return withDefaultEmoji({
-        id: entry.recipe.id,
-        title: entry.recipe.title,
-        slug: entry.recipe.slug,
-        imageUrl: entry.recipe.imageUrl,
-        prepTime: entry.recipe.prepTime,
-        cookTime: entry.recipe.cookTime,
-        difficulty: entry.recipe.difficulty,
-        emoji: entry.recipe.emoji,
-    });
-}
-
 const emptyTabs: RecipeTabsState = { pinned: [], recent: [] };
+
+type RecentEntry = RecipeTabItem & { pinned?: boolean };
+
+function buildTabs(entries: RecentEntry[]): RecipeTabsState {
+    const pinned = entries
+        .filter((entry) => entry.pinned)
+        .slice(0, MAX_PINNED)
+        .map(withDefaultEmoji);
+    const recent = entries.filter((entry) => !entry.pinned).map(withDefaultEmoji);
+    return { pinned, recent };
+}
 
 export function RecipeTabsProvider({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
@@ -104,24 +102,18 @@ export function RecipeTabsProvider({ children }: { children: React.ReactNode }) 
         if (!isAuthenticated) return;
         setIsLoading(true);
         try {
-            const [pinnedRes, recentRes] = await Promise.all([
-                fetch('/api/pinned-favorites'),
-                fetch('/api/recent-recipes'),
-            ]);
-            const pinnedData = pinnedRes.ok ? await pinnedRes.json() : [];
-            const recentData = recentRes.ok ? await recentRes.json() : [];
-            setTabs({
-                pinned: (pinnedData as Array<{ recipe: RecipeTabItem }>).map((entry) =>
-                    mapPinnedEntry(entry),
-                ),
-                recent: (recentData as RecipeTabItem[]).map((entry) => withDefaultEmoji(entry)),
-            });
+            const response = await fetch('/api/recent-recipes');
+            if (!response.ok) {
+                throw new Error(`Failed to load recipe history (${response.status})`);
+            }
+            const entries: RecentEntry[] = await response.json();
+            updateTabs(() => buildTabs(entries));
         } catch (error) {
             console.error('Failed to refresh recipe tabs', error);
         } finally {
             setIsLoading(false);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, updateTabs]);
 
     const migrateLocalData = useCallback(async () => {
         const stored = loadFromStorage();
@@ -247,11 +239,12 @@ export function RecipeTabsProvider({ children }: { children: React.ReactNode }) 
                 if (!response.ok) {
                     throw new Error(`Failed to log recipe view (${response.status})`);
                 }
+                await refreshData();
             } catch (error) {
                 console.error('Failed to track recipe view', error);
             }
         },
-        [isAuthenticated, updateTabs],
+        [isAuthenticated, refreshData, updateTabs],
     );
 
     const contextValue = useMemo(

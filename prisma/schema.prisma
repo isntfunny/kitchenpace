@@ -481,10 +481,12 @@ model UserViewHistory {
   userId    String
   recipeId  String
   viewedAt  DateTime @default(now())
+  pinned    Boolean  @default(false)
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, recipeId])
   @@index([userId])
   @@index([recipeId])
   @@index([userId, viewedAt])

@@ -249,11 +249,9 @@ export function RecipeTabsProvider({ children }: { children: React.ReactNode }) 
                 }
             } catch (error) {
                 console.error('Failed to track recipe view', error);
-            } finally {
-                await refreshData();
             }
         },
-        [isAuthenticated, refreshData, updateTabs],
+        [isAuthenticated, updateTabs],
     );
 
     const contextValue = useMemo(

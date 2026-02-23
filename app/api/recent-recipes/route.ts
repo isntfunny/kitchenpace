@@ -6,16 +6,9 @@ import { prisma } from '@/lib/prisma';
 
 const MAX_RECENT = 10;
 
-export async function GET() {
-    const session = await getServerAuthSession('api/recent-recipes:GET');
-
-    if (!session?.user?.id) {
-        logMissingSession(session, 'api/recent-recipes:GET');
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+async function loadRecentRecipes(userId: string) {
     const recentViews = await prisma.userViewHistory.findMany({
-        where: { userId: session.user.id },
+        where: { userId },
         include: {
             recipe: {
                 select: {
@@ -34,7 +27,7 @@ export async function GET() {
         distinct: ['recipeId'],
     });
 
-    const recent = recentViews.map((view) => ({
+    return recentViews.map((view) => ({
         id: view.recipe.id,
         title: view.recipe.title,
         slug: view.recipe.slug,
@@ -44,7 +37,17 @@ export async function GET() {
         difficulty: view.recipe.difficulty,
         viewedAt: view.viewedAt,
     }));
+}
 
+export async function GET() {
+    const session = await getServerAuthSession('api/recent-recipes:GET');
+
+    if (!session?.user?.id) {
+        logMissingSession(session, 'api/recent-recipes:GET');
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const recent = await loadRecentRecipes(session.user.id);
     return NextResponse.json(recent);
 }
 
@@ -110,12 +113,14 @@ export async function POST(request: Request) {
             });
         }
 
+        const recent = await loadRecentRecipes(session.user.id);
+
         logAuth('info', 'POST /api/recent-recipes: tracked view', {
             userId: session.user.id,
             recipeId,
         });
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ recent });
     } catch (error) {
         logAuth('error', 'POST /api/recent-recipes failed', {
             message: error instanceof Error ? error.message : String(error),

@@ -47,6 +47,11 @@ export const authOptions: NextAuthOptions = {
                         return null;
                     }
 
+                    if (!user.isActive) {
+                        logAuth('warn', 'authorize: account not activated', { userId: user.id });
+                        throw new Error('AccountNotActivated');
+                    }
+
                     logAuth('info', 'authorize: success', { userId: user.id });
 
                     return {
@@ -77,6 +82,7 @@ export const authOptions: NextAuthOptions = {
     pages: {
         signIn: '/auth/signin',
         signOut: '/auth/signout',
+        error: '/auth/error',
     },
     callbacks: {
         jwt: async ({ token, user, trigger, session }) => {

@@ -121,6 +121,8 @@ model User {
   emailVerified   DateTime?
   image           String?
   hashedPassword  String?
+  isActive        Boolean   @default(false) // Must be activated via email
+  activationToken String?
   resetToken      String?
   resetTokenExpiry DateTime?
   createdAt       DateTime  @default(now())

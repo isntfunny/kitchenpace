@@ -1,6 +1,9 @@
+import { randomBytes } from 'crypto';
+
 import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
 
+import { sendActivationEmail } from '@/lib/email';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: Request) {
@@ -22,36 +25,67 @@ export async function POST(request: Request) {
             );
         }
 
+        const normalizedEmail = email.toLowerCase().trim();
+
         const existingUser = await prisma.user.findUnique({
-            where: { email: email.toLowerCase() },
+            where: { email: normalizedEmail },
         });
 
         if (existingUser) {
-            return NextResponse.json(
-                { message: 'Ein Konto mit dieser E-Mail existiert bereits' },
-                { status: 400 },
-            );
+            if (existingUser.isActive) {
+                return NextResponse.json(
+                    { message: 'Ein Konto mit dieser E-Mail existiert bereits' },
+                    { status: 400 },
+                );
+            }
+
+            const activationToken = randomBytes(32).toString('hex');
+
+            const hashedPassword = await bcrypt.hash(password, 12);
+
+            await prisma.user.update({
+                where: { id: existingUser.id },
+                data: {
+                    hashedPassword,
+                    activationToken,
+                },
+            });
+
+            await sendActivationEmail(normalizedEmail, activationToken);
+
+            return NextResponse.json({
+                success: true,
+                message: 'Aktivierungsmail erneut gesendet',
+            });
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
+        const activationToken = randomBytes(32).toString('hex');
 
         const user = await prisma.user.create({
             data: {
-                email: email.toLowerCase(),
+                email: normalizedEmail,
                 name: name || null,
                 hashedPassword,
+                isActive: false,
+                activationToken,
             },
         });
 
         await prisma.profile.create({
             data: {
                 userId: user.id,
-                email: email.toLowerCase(),
+                email: normalizedEmail,
                 nickname: name || null,
             },
         });
 
-        return NextResponse.json({ success: true });
+        await sendActivationEmail(normalizedEmail, activationToken);
+
+        return NextResponse.json({
+            success: true,
+            message: 'Bitte aktiviere dein Konto über den Link in der E-Mail',
+        });
     } catch (error) {
         console.error('Registration error:', error);
         return NextResponse.json({ message: 'Ein Fehler ist aufgetreten' }, { status: 500 });

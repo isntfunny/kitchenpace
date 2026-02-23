@@ -249,13 +249,10 @@ export function RecipeTabs({ initialPinned = [], initialRecent = [] }: RecipeTab
     const hasPinned = displayPinned.length > 0;
     const hasRecent = displayRecent.length > 0;
 
-    if (!hasPinned && !hasRecent) {
-        return null;
-    }
-
     const unpinnedRecent = displayRecent
         .filter((r) => !displayPinned.some((p) => p.id === r.id))
         .slice(0, RECENT_DISPLAY_LIMIT);
+    const hasEntries = hasPinned || unpinnedRecent.length > 0;
 
     return (
         <div
@@ -273,6 +270,10 @@ export function RecipeTabs({ initialPinned = [], initialRecent = [] }: RecipeTab
                 '&::-webkitScrollbar': {
                     display: 'none',
                 },
+                background: '#fff',
+                borderTop: '1px solid rgba(0,0,0,0.08)',
+                borderBottom: '1px solid rgba(0,0,0,0.08)',
+                boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
             })}
         >
             <span
@@ -312,14 +313,27 @@ export function RecipeTabs({ initialPinned = [], initialRecent = [] }: RecipeTab
                 </>
             )}
 
-            {unpinnedRecent.map((recipe) => (
-                <RecipeChip
-                    key={recipe.id}
-                    recipe={recipe}
-                    isPinned={false}
-                    onPinToggle={() => handlePinToggle(recipe, false)}
-                />
-            ))}
+            {hasEntries ? (
+                unpinnedRecent.map((recipe) => (
+                    <RecipeChip
+                        key={recipe.id}
+                        recipe={recipe}
+                        isPinned={false}
+                        onPinToggle={() => handlePinToggle(recipe, false)}
+                    />
+                ))
+            ) : (
+                <span
+                    className={css({
+                        fontSize: 'sm',
+                        color: 'text-muted',
+                        opacity: 0.7,
+                        whiteSpace: 'nowrap',
+                    })}
+                >
+                    Noch keine letzten Rezepte – öffne ein Rezept, um es hier abzulegen
+                </span>
+            )}
         </div>
     );
 }

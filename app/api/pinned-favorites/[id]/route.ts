@@ -14,34 +14,22 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     const { id } = await params;
 
-    const pinnedFavorite = await prisma.pinnedFavorite.findFirst({
+    const history = await prisma.userViewHistory.findFirst({
         where: { id, userId: session.user.id },
     });
 
-    if (!pinnedFavorite) {
+    if (!history) {
         return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    const deletedPosition = pinnedFavorite.position;
-
-    await prisma.$transaction([
-        prisma.pinnedFavorite.delete({
-            where: { id },
-        }),
-        prisma.pinnedFavorite.updateMany({
-            where: {
-                userId: session.user.id,
-                position: { gt: deletedPosition },
-            },
-            data: {
-                position: { decrement: 1 },
-            },
-        }),
-    ]);
+    await prisma.userViewHistory.update({
+        where: { id: history.id },
+        data: { pinned: false },
+    });
 
     logAuth('info', 'DELETE /api/pinned-favorites: removed pinned recipe', {
         userId: session.user.id,
-        recipeId: pinnedFavorite.recipeId,
+        recipeId: history.recipeId,
     });
 
     return NextResponse.json({ success: true });

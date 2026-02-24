@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 
-type CategoryOption = {
+export type CategoryOption = {
     slug: string;
     name: string;
 };

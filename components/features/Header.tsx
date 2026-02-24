@@ -3,6 +3,7 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import Link from 'next/link';
 
+import { HeaderSearch } from '@/components/search/HeaderSearch';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -87,7 +88,9 @@ export function Header() {
                             maxW: '400px',
                             display: { base: 'none', md: 'block' },
                         })}
-                    ></div>
+                    >
+                        <HeaderSearch />
+                    </div>
 
                     <nav
                         className={flex({

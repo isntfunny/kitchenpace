@@ -10,7 +10,7 @@ interface Recipe {
     id: string;
     slug: string;
     title: string;
-    description: string;
+    description?: string;
     image: string;
     category: string;
     rating?: number;
@@ -30,7 +30,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
                     <Badge>{recipe.category}</Badge>
                     <div className={css({ mt: '2' })}>
                         <CardTitle>{recipe.title}</CardTitle>
-                        <CardDescription>{recipe.description}</CardDescription>
+                        <CardDescription>{recipe.description ?? ''}</CardDescription>
                     </div>
                     <div
                         className={flex({

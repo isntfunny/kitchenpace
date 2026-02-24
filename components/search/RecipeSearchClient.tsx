@@ -1,0 +1,155 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
+import { useEffect, useState, type FC } from 'react';
+
+import type { CategoryOption } from '@/app/actions/filters';
+import type { RecipeCardData } from '@/app/actions/recipes';
+import { Button } from '@/components/atoms/Button';
+import { RecipeCard } from '@/components/features/RecipeCard';
+import { buildRecipeFilterQuery } from '@/lib/recipeFilters';
+import type { RecipeFilterSearchParams } from '@/lib/recipeFilters';
+import { css } from 'styled-system/css';
+
+import { ActiveFilters } from './ActiveFilters';
+import { FilterSidebar } from './FilterSidebar';
+import { useRecipeSearch } from './useRecipeSearch';
+
+type FilterOptions = {
+    tags: string[];
+    ingredients: string[];
+    categories: CategoryOption[];
+};
+
+type RecipeSearchClientProps = {
+    initialFilters: RecipeFilterSearchParams;
+    filterOptions: FilterOptions;
+};
+
+export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
+    initialFilters,
+    filterOptions,
+}) => {
+    const [filters, setFilters] = useState(initialFilters);
+    const { data, meta, loading, error } = useRecipeSearch(filters);
+    const pathname = usePathname();
+
+    useEffect(() => {
+        setFilters(initialFilters);
+    }, [initialFilters]);
+
+    const updateFilters = (next: Partial<RecipeFilterSearchParams>) => {
+        setFilters((prev) => ({
+            ...prev,
+            ...next,
+            page: 1,
+        }));
+    };
+
+    const resetFilters = () => {
+        setFilters((prev) => ({
+            ...prev,
+            tags: [],
+            mealTypes: [],
+            cuisines: [],
+            ingredients: [],
+            excludeIngredients: [],
+            difficulty: [],
+            timeOfDay: [],
+            minTotalTime: undefined,
+            maxTotalTime: undefined,
+            minPrepTime: undefined,
+            maxPrepTime: undefined,
+            minCookTime: undefined,
+            maxCookTime: undefined,
+            minRating: undefined,
+            minCookCount: undefined,
+            page: 1,
+        }));
+    };
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const params = buildRecipeFilterQuery(filters).toString();
+        const next = params ? `${pathname}?${params}` : pathname;
+        window.history.replaceState(null, '', next);
+    }, [filters, pathname]);
+
+    const totalResults = meta?.total ?? 0;
+
+    return (
+        <div
+            className={css({
+                display: 'grid',
+                gridTemplateColumns: { base: '1fr', lg: '320px 1fr' },
+                gap: '6',
+                paddingTop: '5',
+                paddingBottom: '10',
+            })}
+        >
+            <div className={css({ position: 'sticky', top: '96px' })}>
+                <FilterSidebar
+                    filters={filters}
+                    options={filterOptions}
+                    onFiltersChange={updateFilters}
+                />
+            </div>
+
+            <section className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
+                <header
+                    className={css({
+                        display: 'flex',
+                        flexDirection: { base: 'column', md: 'row' },
+                        justifyContent: 'space-between',
+                        alignItems: { base: 'flex-start', md: 'center' },
+                        gap: '3',
+                    })}
+                >
+                    <div>
+                        <p className={css({ fontSize: 'lg', fontWeight: '600', color: 'text' })}>
+                            Rezepte filtern
+                        </p>
+                        <p className={css({ fontSize: 'sm', color: 'text-muted' })}>
+                            {totalResults} Ergebnisse gefunden
+                        </p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={resetFilters}>
+                        Filter zurücksetzen
+                    </Button>
+                </header>
+
+                <ActiveFilters filters={filters} onRemove={updateFilters} />
+
+                {error && (
+                    <div className={css({ color: 'text-muted', fontSize: 'sm' })}>{error}</div>
+                )}
+
+                {loading ? (
+                    <div className={css({ fontSize: 'sm', color: 'text-muted' })}>
+                        Lädt Rezepte…
+                    </div>
+                ) : data.length === 0 ? (
+                    <div className={css({ fontSize: 'sm', color: 'text-muted' })}>
+                        Keine Rezepte mit den aktuellen Filtern gefunden.
+                    </div>
+                ) : (
+                    <div
+                        className={css({
+                            display: 'grid',
+                            gridTemplateColumns: {
+                                base: '1fr',
+                                sm: 'repeat(2, minmax(0, 1fr))',
+                                lg: 'repeat(3, minmax(0, 1fr))',
+                            },
+                            gap: '5',
+                        })}
+                    >
+                        {data.map((recipe: RecipeCardData) => (
+                            <RecipeCard key={recipe.id} recipe={recipe} />
+                        ))}
+                    </div>
+                )}
+            </section>
+        </div>
+    );
+};

@@ -1,11 +1,9 @@
 import type { Prisma } from '@prisma/client';
 import { NextResponse, type NextRequest } from 'next/server';
 
-
+import type { RecipeCardData } from '@/app/actions/recipes';
 import { prisma } from '@/lib/prisma';
-
-const DEFAULT_LIMIT = 24;
-const DEFAULT_PAGE = 1;
+import { parseRecipeFilterParams, RECIPE_FILTER_DEFAULT_LIMIT } from '@/lib/recipeFilters';
 
 const TOTAL_TIME_MAX = 180;
 
@@ -17,37 +15,9 @@ const TIME_OF_DAY_RANGES: Record<string, Partial<{ min: number; max: number }>> 
     snack: { min: 0, max: 20 },
 };
 
-const VALID_DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'];
-
-type RecipeCard = {
-    id: string;
-    slug: string;
-    title: string;
-    category: string;
-    rating: number;
-    time: string;
-    image: string;
-    description: string;
-};
-
-function parseList(params: URLSearchParams, key: string): string[] {
-    return params
-        .getAll(key)
-        .flatMap((value) => value.split(','))
-        .map((value) => value.trim())
-        .filter((value) => value.length > 0);
-}
-
-function parseNumber(params: URLSearchParams, key: string): number | undefined {
-    const value = params.get(key);
-    if (!value) return undefined;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
-}
-
 function mapRecipeToCard(
     recipe: Prisma.RecipeGetPayload<{ include: { category: true } }>,
-): RecipeCard {
+): RecipeCardData {
     const totalTime = recipe.totalTime ?? (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
 
     return {
@@ -64,38 +34,34 @@ function mapRecipeToCard(
     };
 }
 
+function ensureValidDifficulty(value: string): value is 'EASY' | 'MEDIUM' | 'HARD' {
+    return ['EASY', 'MEDIUM', 'HARD'].includes(value);
+}
+
 export async function GET(request: NextRequest) {
     try {
-        const url = new URL(request.url);
-        const params = url.searchParams;
-        const query = params.get('query')?.trim();
-
-        const tags = parseList(params, 'tags');
-        const mealTypes = parseList(params, 'mealTypes');
-        const cuisines = parseList(params, 'cuisines');
-        const ingredients = parseList(params, 'ingredients');
-        const excludeIngredients = parseList(params, 'excludeIngredients');
-        const difficulties = parseList(params, 'difficulty')
-            .map((value) => value.toUpperCase())
-            .filter((value) => VALID_DIFFICULTIES.includes(value));
-
-        const minTotalTime = parseNumber(params, 'minTotalTime');
-        const maxTotalTime = parseNumber(params, 'maxTotalTime');
-        const minPrepTime = parseNumber(params, 'minPrepTime');
-        const maxPrepTime = parseNumber(params, 'maxPrepTime');
-        const minCookTime = parseNumber(params, 'minCookTime');
-        const maxCookTime = parseNumber(params, 'maxCookTime');
-
-        const timeOfDay = parseList(params, 'timeOfDay');
-
-        const rawPage = Number(params.get('page'));
-        const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : DEFAULT_PAGE;
-        const rawLimit = Number(params.get('limit'));
-        const limit = Number.isFinite(rawLimit)
-            ? Math.min(Math.max(1, rawLimit), 48)
-            : DEFAULT_LIMIT;
-        const filterModeParam = params.get('mode')?.toLowerCase();
-        const filterMode: 'and' | 'or' = filterModeParam === 'or' ? 'or' : 'and';
+        const filters = parseRecipeFilterParams(new URL(request.url).searchParams);
+        const {
+            query,
+            tags = [],
+            mealTypes = [],
+            cuisines = [],
+            ingredients = [],
+            excludeIngredients = [],
+            difficulty = [],
+            timeOfDay = [],
+            minTotalTime,
+            maxTotalTime,
+            minPrepTime,
+            maxPrepTime,
+            minCookTime,
+            maxCookTime,
+            minRating,
+            minCookCount,
+            page = 1,
+            limit = RECIPE_FILTER_DEFAULT_LIMIT,
+            filterMode = 'and',
+        } = filters;
 
         const tagFilters = Array.from(new Set([...tags, ...mealTypes, ...cuisines]));
 
@@ -149,8 +115,9 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        if (difficulties.length > 0) {
-            clauses.push({ difficulty: { in: difficulties as Array<'EASY' | 'MEDIUM' | 'HARD'> } });
+        const validDifficulties = difficulty.filter(ensureValidDifficulty);
+        if (validDifficulties.length > 0) {
+            clauses.push({ difficulty: { in: validDifficulties } });
         }
 
         if (typeof minTotalTime === 'number') {
@@ -175,6 +142,14 @@ export async function GET(request: NextRequest) {
 
         if (typeof maxCookTime === 'number') {
             clauses.push({ cookTime: { lte: maxCookTime } });
+        }
+
+        if (typeof minRating === 'number') {
+            clauses.push({ rating: { gte: minRating } });
+        }
+
+        if (typeof minCookCount === 'number') {
+            clauses.push({ cookCount: { gte: minCookCount } });
         }
 
         const ranges = timeOfDay

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 
-import { buildRecipeFilterHref } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -26,16 +25,11 @@ interface RecipeCardProps {
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
     return (
-        <a href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none' })}>
+        <Link href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none' })}>
             <Card>
                 <CardImage src={recipe.image} alt={recipe.title} />
                 <CardContent>
-                    <Link
-                        href={buildRecipeFilterHref({ cuisines: [recipe.category] })}
-                        className={css({ textDecoration: 'none' })}
-                    >
-                        <Badge>{recipe.category}</Badge>
-                    </Link>
+                    <Badge>{recipe.category}</Badge>
                     <div className={css({ mt: '2' })}>
                         <CardTitle>{recipe.title}</CardTitle>
                         <CardDescription>{recipe.description ?? ''}</CardDescription>
@@ -60,6 +54,6 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
                     </div>
                 </CardContent>
             </Card>
-        </a>
+        </Link>
     );
 }

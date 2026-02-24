@@ -27,6 +27,7 @@ import type { Recipe, User, Activity } from './data';
 type CookImageItem = {
     id: string;
     imageUrl: string;
+    imageKey?: string | null;
     caption: string | null;
     createdAt: Date;
     user: {
@@ -35,6 +36,13 @@ type CookImageItem = {
         nickname: string | null;
         avatar: string | null;
     };
+};
+
+type HeroImage = {
+    src: string;
+    thumbKey?: string | null;
+    title: string;
+    subtitle?: string;
 };
 
 type RecipeDetailClientProps = {
@@ -127,19 +135,21 @@ export function RecipeDetailClient({
         };
     }, [recipe.slug]);
 
-    const heroImages = useMemo(() => {
-        const primary = {
+    const heroImages = useMemo<HeroImage[]>(() => {
+        const primary: HeroImage = {
             src: recipe.image,
+            thumbKey: recipe.imageKey ?? null,
             title: recipe.title,
             subtitle: 'Rezeptbild',
         };
         const extras = cookImages.map((img) => ({
             src: img.imageUrl,
+            thumbKey: img.imageKey ?? null,
             title: img.user.name || img.user.nickname || 'Küchenfreund',
             subtitle: img.caption || 'Gekochtes Foto',
         }));
         return [primary, ...extras];
-    }, [cookImages, recipe.image, recipe.title]);
+    }, [cookImages, recipe.image, recipe.imageKey, recipe.title]);
 
     const heroCount = Math.max(1, heroImages.length);
     const normalizedHeroIndex = heroCount ? heroIndex % heroCount : 0;
@@ -400,40 +410,62 @@ export function RecipeDetailClient({
                                 )}
                             </div>
                             <div
-                                className={grid({
-                                    columns: { base: 3, sm: 4 },
+                                className={css({
+                                    display: 'flex',
                                     gap: '2',
+                                    overflowX: 'auto',
+                                    pb: '2',
+                                    maxW: '100%',
+                                    lg: {
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                                        overflowX: 'visible',
+                                    },
                                 })}
                             >
-                                {heroImages.map((img, idx) => (
-                                    <button
-                                        key={`${idx}-${img.src}`}
-                                        type="button"
-                                        onClick={() => setHeroIndex(idx)}
-                                        className={css({
-                                            borderRadius: 'lg',
-                                            border: '2px solid',
-                                            borderColor:
-                                                idx === normalizedHeroIndex
-                                                    ? 'primary'
-                                                    : 'transparent',
-                                            padding: 0,
-                                            aspectRatio: '1',
-                                            overflow: 'hidden',
-                                            cursor: 'pointer',
-                                        })}
-                                    >
-                                        <div
+                                {heroImages.map((img, idx) => {
+                                    const thumbUrl = img.thumbKey
+                                        ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=200&height=200&fit=cover&quality=75`
+                                        : img.src;
+                                    return (
+                                        <button
+                                            key={`${idx}-${img.src}`}
+                                            type="button"
+                                            onClick={() => setHeroIndex(idx)}
                                             className={css({
-                                                width: '100%',
-                                                height: '100%',
-                                                backgroundImage: `url(${img.src})`,
-                                                backgroundSize: 'cover',
-                                                backgroundPosition: 'center',
+                                                borderRadius: 'lg',
+                                                border: '2px solid',
+                                                borderColor:
+                                                    idx === normalizedHeroIndex
+                                                        ? 'primary'
+                                                        : 'transparent',
+                                                padding: 0,
+                                                minWidth: { base: '72px', lg: 'auto' },
+                                                width: '72px',
+                                                height: '72px',
+                                                flex: { base: '0 0 auto', lg: 'initial' },
+                                                overflow: 'hidden',
+                                                cursor: 'pointer',
                                             })}
-                                        />
-                                    </button>
-                                ))}
+                                        >
+                                            <div
+                                                className={css({
+                                                    position: 'relative',
+                                                    width: '100%',
+                                                    height: '100%',
+                                                })}
+                                            >
+                                                <Image
+                                                    src={thumbUrl}
+                                                    alt={img.title}
+                                                    fill
+                                                    sizes="72px"
+                                                    style={{ objectFit: 'cover' }}
+                                                />
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 

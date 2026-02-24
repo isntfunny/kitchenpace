@@ -16,6 +16,7 @@ export interface RecipeCardData {
     rating: number;
     time: string;
     image: string;
+    imageKey?: string | null;
     description?: string;
 }
 
@@ -102,6 +103,7 @@ export interface RecipeDetailData {
     title: string;
     description: string;
     image: string;
+    imageKey?: string | null;
     category: string;
     rating: number;
     prepTime: number;
@@ -263,6 +265,7 @@ export async function fetchRecipeBySlug(
         favoriteCount,
         ratingCount: recipe.ratingCount ?? 0,
         cookCount: recipe.cookCount ?? 0,
+        imageKey: recipe.imageKey ?? null,
         viewer: viewerId
             ? {
                   id: viewerId,

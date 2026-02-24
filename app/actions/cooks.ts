@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 export interface CookImageData {
     id: string;
     imageUrl: string;
+    imageKey?: string | null;
     caption: string | null;
     createdAt: Date;
     user: {
@@ -38,6 +39,7 @@ export async function fetchRecipeCookImages(recipeId: string): Promise<CookImage
     return images.map((img) => ({
         id: img.id,
         imageUrl: img.imageUrl,
+        imageKey: img.imageKey ?? null,
         caption: img.caption,
         createdAt: img.createdAt,
         user: {

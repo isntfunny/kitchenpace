@@ -102,6 +102,7 @@ export function Header() {
                         <DropdownMenu.Root>
                             <DropdownMenu.Trigger asChild>
                                 <button
+                                    suppressHydrationWarning
                                     className={css({
                                         fontFamily: 'body',
                                         fontSize: 'sm',

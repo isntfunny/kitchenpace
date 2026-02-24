@@ -46,16 +46,6 @@ export async function GET(request: NextRequest) {
 
     try {
         const filters = parseRecipeFilterParams(new URL(request.url).searchParams);
-        log.debug('Parsed filters', { filters });
-
-        const sampleRecipes = await prisma.recipe.findMany({
-            where: { publishedAt: { not: null } },
-            take: 5,
-            select: { title: true, category: { select: { name: true } } },
-        });
-        log.debug('Sample recipe categories', {
-            recipes: sampleRecipes.map((r) => ({ title: r.title, category: r.category?.name })),
-        });
 
         const {
             query,
@@ -99,30 +89,29 @@ export async function GET(request: NextRequest) {
         }
 
         if (tags.length > 0) {
-            clauses.push({
+            const tagConditions = tags.map((tag) => ({
                 tags: {
                     some: {
                         tag: {
-                            name: {
-                                in: tags,
-                                mode: 'insensitive',
-                            },
+                            name: { equals: tag },
                         },
                     },
                 },
-            });
+            }));
+            clauses.push({ OR: tagConditions });
         }
 
         if (ingredients.length > 0) {
-            clauses.push({
+            const ingredientConditions = ingredients.map((ing) => ({
                 recipeIngredients: {
                     some: {
                         ingredient: {
-                            name: { in: ingredients, mode: 'insensitive' },
+                            name: { equals: ing },
                         },
                     },
                 },
-            });
+            }));
+            clauses.push({ OR: ingredientConditions });
         }
 
         if (excludeIngredients.length > 0) {
@@ -205,12 +194,6 @@ export async function GET(request: NextRequest) {
 
         const skip = Math.max(0, page - 1) * limit;
 
-        log.debug('Executing query', { where: JSON.stringify(where), skip, limit });
-
-        const rawQuery =
-            await prisma.$queryRaw`SELECT r.id, r.title, c.name as cat_name FROM "Recipe" r LEFT JOIN "Category" c ON r."categoryId" = c.id WHERE r."publishedAt" IS NOT NULL AND c.name ILIKE ANY(ARRAY[${mealTypes[0]}]) LIMIT 5`;
-        log.debug('Raw SQL test', { rawQuery });
-
         const [recipes, total] = await Promise.all([
             prisma.recipe.findMany({
                 where,
@@ -230,8 +213,6 @@ export async function GET(request: NextRequest) {
                 limit,
             },
         };
-
-        log.debug('Filter response', { recipeCount: recipes.length, total, page, limit });
 
         return NextResponse.json(payload);
     } catch (error) {

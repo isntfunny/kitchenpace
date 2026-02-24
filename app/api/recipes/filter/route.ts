@@ -89,29 +89,31 @@ export async function GET(request: NextRequest) {
         }
 
         if (tags.length > 0) {
-            const tagConditions = tags.map((tag) => ({
-                tags: {
-                    some: {
-                        tag: {
-                            name: { equals: tag },
+            clauses.push({
+                AND: tags.map((tag) => ({
+                    tags: {
+                        some: {
+                            tag: {
+                                name: { equals: tag },
+                            },
                         },
                     },
-                },
-            }));
-            clauses.push({ OR: tagConditions });
+                })),
+            });
         }
 
         if (ingredients.length > 0) {
-            const ingredientConditions = ingredients.map((ing) => ({
-                recipeIngredients: {
-                    some: {
-                        ingredient: {
-                            name: { equals: ing },
+            clauses.push({
+                AND: ingredients.map((ing) => ({
+                    recipeIngredients: {
+                        some: {
+                            ingredient: {
+                                name: { equals: ing },
+                            },
                         },
                     },
-                },
-            }));
-            clauses.push({ OR: ingredientConditions });
+                })),
+            });
         }
 
         if (excludeIngredients.length > 0) {

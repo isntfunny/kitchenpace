@@ -87,50 +87,7 @@ export function Header() {
                             maxW: '400px',
                             display: { base: 'none', md: 'block' },
                         })}
-                    >
-                        <div
-                            className={css({
-                                position: 'relative',
-                            })}
-                        >
-                            <input
-                                type="text"
-                                placeholder="Was möchtest du kochen?"
-                                className={css({
-                                    width: '100%',
-                                    padding: '2.5',
-                                    paddingLeft: '10',
-                                    borderRadius: 'full',
-                                    border: '1px solid',
-                                    borderColor: 'rgba(224,123,83,0.3)',
-                                    background: 'white',
-                                    fontSize: 'sm',
-                                    fontFamily: 'body',
-                                    outline: 'none',
-                                    transition: 'all 150ms ease',
-                                    _placeholder: {
-                                        color: 'text-muted',
-                                    },
-                                    _focus: {
-                                        borderColor: '#e07b53',
-                                        boxShadow: '0 0 0 3px rgba(224,123,83,0.1)',
-                                    },
-                                })}
-                            />
-                            <span
-                                className={css({
-                                    position: 'absolute',
-                                    right: '3',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    fontSize: 'lg',
-                                    pointerEvents: 'none',
-                                })}
-                            >
-                                🔍
-                            </span>
-                        </div>
-                    </div>
+                    ></div>
 
                     <nav
                         className={flex({

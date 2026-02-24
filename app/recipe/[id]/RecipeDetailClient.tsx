@@ -1,8 +1,9 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 
@@ -73,6 +74,7 @@ export function RecipeDetailClient({
     const [hasCooked, setHasCooked] = useState(initialViewer?.hasCooked ?? false);
     const [uploadedImage, setUploadedImage] = useState<File | null>(null);
     const [cookNotes, setCookNotes] = useState('');
+    const [heroIndex, setHeroIndex] = useState(0);
     const [viewerId, setViewerId] = useState(initialViewer?.id ?? null);
 
     useEffect(() => {
@@ -124,6 +126,27 @@ export function RecipeDetailClient({
             active = false;
         };
     }, [recipe.slug]);
+
+    const heroImages = useMemo(() => {
+        const primary = {
+            src: recipe.image,
+            title: recipe.title,
+            subtitle: 'Rezeptbild',
+        };
+        const extras = cookImages.map((img) => ({
+            src: img.imageUrl,
+            title: img.user.name || img.user.nickname || 'Küchenfreund',
+            subtitle: img.caption || 'Gekochtes Foto',
+        }));
+        return [primary, ...extras];
+    }, [cookImages, recipe.image, recipe.title]);
+
+    const heroCount = Math.max(1, heroImages.length);
+    const normalizedHeroIndex = heroCount ? heroIndex % heroCount : 0;
+    const heroMeta = heroImages[normalizedHeroIndex];
+
+    const handleHeroNext = () => setHeroIndex((prev) => (prev + 1) % heroCount);
+    const handleHeroPrev = () => setHeroIndex((prev) => (prev - 1 + heroCount) % heroCount);
 
     // Recipe tabs context for tracking views
     const { addToRecent } = useRecipeTabs();
@@ -282,17 +305,135 @@ export function RecipeDetailClient({
                                 position: 'relative',
                                 borderRadius: '2xl',
                                 overflow: 'hidden',
+                                bg: 'black',
                             })}
                             data-debug-image-container
                         >
-                            <div className={css({ aspectRatio: '4/3', position: 'relative' })}>
-                                <SmartImage
-                                    src={recipe.image}
-                                    alt={recipe.title}
+                            <div
+                                className={css({
+                                    aspectRatio: '4/3',
+                                    position: 'relative',
+                                    cursor: 'pointer',
+                                })}
+                                onClick={() => {
+                                    setLightboxIndex(normalizedHeroIndex);
+                                    setLightboxOpen(true);
+                                }}
+                            >
+                                <Image
+                                    src={heroMeta?.src || recipe.image}
+                                    alt={heroMeta?.title ?? recipe.title}
                                     fill
                                     sizes="(max-width: 1024px) 100vw, 50vw"
-                                    className={css({ objectFit: 'cover' })}
+                                    style={{ objectFit: 'cover' }}
                                 />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleHeroPrev}
+                                aria-label="Vorheriges Bild"
+                                className={css({
+                                    position: 'absolute',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    left: '2',
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: 'full',
+                                    border: 'none',
+                                    bg: 'rgba(0,0,0,0.4)',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                })}
+                            >
+                                ‹
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleHeroNext}
+                                aria-label="Nächstes Bild"
+                                className={css({
+                                    position: 'absolute',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    right: '2',
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: 'full',
+                                    border: 'none',
+                                    bg: 'rgba(0,0,0,0.4)',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                })}
+                            >
+                                ›
+                            </button>
+                        </div>
+
+                        <div className={css({ mt: '3' })}>
+                            <div
+                                className={flex({
+                                    justify: 'space-between',
+                                    align: 'center',
+                                    mb: '2',
+                                })}
+                            >
+                                <span
+                                    className={css({
+                                        fontSize: 'sm',
+                                        color: 'text-muted',
+                                        fontFamily: 'body',
+                                    })}
+                                >
+                                    {heroMeta?.subtitle ?? 'Galerie'} ({normalizedHeroIndex + 1}/
+                                    {heroCount})
+                                </span>
+                                {heroCount > 1 && (
+                                    <span
+                                        className={css({
+                                            fontSize: 'xs',
+                                            color: 'text-muted',
+                                        })}
+                                    >
+                                        Tippe oder swipere über das Bild
+                                    </span>
+                                )}
+                            </div>
+                            <div
+                                className={grid({
+                                    columns: { base: 3, sm: 4 },
+                                    gap: '2',
+                                })}
+                            >
+                                {heroImages.map((img, idx) => (
+                                    <button
+                                        key={`${idx}-${img.src}`}
+                                        type="button"
+                                        onClick={() => setHeroIndex(idx)}
+                                        className={css({
+                                            borderRadius: 'lg',
+                                            border: '2px solid',
+                                            borderColor:
+                                                idx === normalizedHeroIndex
+                                                    ? 'primary'
+                                                    : 'transparent',
+                                            padding: 0,
+                                            aspectRatio: '1',
+                                            overflow: 'hidden',
+                                            cursor: 'pointer',
+                                        })}
+                                    >
+                                        <div
+                                            className={css({
+                                                width: '100%',
+                                                height: '100%',
+                                                backgroundImage: `url(${img.src})`,
+                                                backgroundSize: 'cover',
+                                                backgroundPosition: 'center',
+                                            })}
+                                        />
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
@@ -702,93 +843,6 @@ export function RecipeDetailClient({
                                     </button>
                                 ))}
                             </div>
-
-                            {cookImages.length > 0 && (
-                                <div
-                                    className={css({
-                                        mt: '6',
-                                        pt: '6',
-                                        borderTop: '1px solid',
-                                        borderColor: 'gray.100',
-                                    })}
-                                >
-                                    <h3
-                                        className={css({
-                                            fontSize: 'lg',
-                                            fontWeight: '700',
-                                            fontFamily: 'heading',
-                                            mb: '4',
-                                        })}
-                                    >
-                                        Gekochte Gerichte ({cookImages.length})
-                                    </h3>
-                                    <div
-                                        className={grid({
-                                            columns: { base: 2, sm: 3, md: 4 },
-                                            gap: '3',
-                                        })}
-                                    >
-                                        {cookImages.slice(0, 8).map((img, idx) => (
-                                            <button
-                                                key={img.id}
-                                                onClick={() => {
-                                                    setLightboxIndex(idx);
-                                                    setLightboxOpen(true);
-                                                }}
-                                                className={css({
-                                                    position: 'relative',
-                                                    aspectRatio: '1',
-                                                    borderRadius: 'lg',
-                                                    overflow: 'hidden',
-                                                    cursor: 'pointer',
-                                                    border: '2px solid',
-                                                    borderColor: 'transparent',
-                                                    transition: 'all 150ms ease',
-                                                    _hover: {
-                                                        borderColor: 'primary',
-                                                        transform: 'scale(1.02)',
-                                                    },
-                                                })}
-                                            >
-                                                <img
-                                                    src={img.imageUrl}
-                                                    alt={`Gekocht von ${img.user.name || img.user.nickname || 'User'}`}
-                                                    className={css({
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'cover',
-                                                    })}
-                                                />
-                                            </button>
-                                        ))}
-                                        {cookImages.length > 8 && (
-                                            <button
-                                                onClick={() => {
-                                                    setLightboxIndex(0);
-                                                    setLightboxOpen(true);
-                                                }}
-                                                className={css({
-                                                    aspectRatio: '1',
-                                                    borderRadius: 'lg',
-                                                    bg: 'light',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: 'lg',
-                                                    fontWeight: '600',
-                                                    color: 'text-muted',
-                                                    cursor: 'pointer',
-                                                    _hover: {
-                                                        bg: 'gray.200',
-                                                    },
-                                                })}
-                                            >
-                                                +{cookImages.length - 8}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -1172,10 +1226,10 @@ export function RecipeDetailClient({
                 open={lightboxOpen}
                 close={() => setLightboxOpen(false)}
                 index={lightboxIndex}
-                slides={cookImages.map((img) => ({
-                    src: img.imageUrl,
-                    title: img.user.name || img.user.nickname || 'User',
-                    description: img.caption || undefined,
+                slides={heroImages.map((img) => ({
+                    src: img.src,
+                    title: img.title,
+                    description: img.subtitle || undefined,
                 }))}
                 styles={{
                     container: {

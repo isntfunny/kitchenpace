@@ -90,14 +90,12 @@ export async function GET(request: NextRequest) {
         }
 
         if (mealTypes.length > 0) {
-            clauses.push({
+            const categoryConditions = mealTypes.map((mealType) => ({
                 category: {
-                    name: {
-                        in: mealTypes,
-                        mode: 'insensitive',
-                    },
+                    name: { equals: mealType },
                 },
-            });
+            }));
+            clauses.push({ OR: categoryConditions });
         }
 
         if (tags.length > 0) {

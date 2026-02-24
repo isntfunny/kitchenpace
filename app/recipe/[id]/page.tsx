@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 
 import { fetchRecipeBySlug } from '@/app/actions/recipes';
+import { fetchRecipeCookImages } from '@/app/actions/cooks';
 import { getServerAuthSession } from '@/lib/auth';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
@@ -71,7 +72,10 @@ export async function generateStaticParams() {
 
 export default async function RecipePage({ params }: RecipePageProps) {
     const resolvedParams = await params;
-    const [session] = await Promise.all([getServerAuthSession('recipe-page')]);
+    const [session, cookImages] = await Promise.all([
+        getServerAuthSession('recipe-page'),
+        fetchRecipeCookImages(resolvedParams.id),
+    ]);
     const recipe = await fetchRecipeBySlug(resolvedParams.id, session?.user?.id);
 
     if (!recipe) {
@@ -96,6 +100,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
             recipe={recipe as any}
             author={recipe.author as any}
             recipeActivities={[]}
+            cookImages={cookImages}
         />
     );
 }

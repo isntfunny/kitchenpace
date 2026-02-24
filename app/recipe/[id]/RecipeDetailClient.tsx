@@ -1,8 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useTransition } from 'react';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
 
 import {
     rateRecipeAction,
@@ -21,15 +24,36 @@ import { flex, grid, container } from 'styled-system/patterns';
 
 import type { Recipe, User, Activity } from './data';
 
+type CookImageItem = {
+    id: string;
+    imageUrl: string;
+    caption: string | null;
+    createdAt: Date;
+    user: {
+        id: string;
+        name: string | null;
+        nickname: string | null;
+        avatar: string | null;
+    };
+};
+
 type RecipeDetailClientProps = {
     recipe: Recipe;
     author: User | null;
     recipeActivities: Activity[];
+    cookImages?: CookImageItem[];
 };
 
-export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeDetailClientProps) {
+export function RecipeDetailClient({
+    recipe,
+    author,
+    recipeActivities,
+    cookImages = [],
+}: RecipeDetailClientProps) {
     // State declarations MUST come first
     const router = useRouter();
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
     const [servings, setServings] = useState(recipe.servings);
     const [favoriteState, setFavoriteState] = useState({
         isFavorite: recipe.viewer?.isFavorite ?? false,
@@ -504,6 +528,93 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                                     </button>
                                 ))}
                             </div>
+
+                            {cookImages.length > 0 && (
+                                <div
+                                    className={css({
+                                        mt: '6',
+                                        pt: '6',
+                                        borderTop: '1px solid',
+                                        borderColor: 'gray.100',
+                                    })}
+                                >
+                                    <h3
+                                        className={css({
+                                            fontSize: 'lg',
+                                            fontWeight: '700',
+                                            fontFamily: 'heading',
+                                            mb: '4',
+                                        })}
+                                    >
+                                        Gekochte Gerichte ({cookImages.length})
+                                    </h3>
+                                    <div
+                                        className={grid({
+                                            columns: { base: 2, sm: 3, md: 4 },
+                                            gap: '3',
+                                        })}
+                                    >
+                                        {cookImages.slice(0, 8).map((img, idx) => (
+                                            <button
+                                                key={img.id}
+                                                onClick={() => {
+                                                    setLightboxIndex(idx);
+                                                    setLightboxOpen(true);
+                                                }}
+                                                className={css({
+                                                    position: 'relative',
+                                                    aspectRatio: '1',
+                                                    borderRadius: 'lg',
+                                                    overflow: 'hidden',
+                                                    cursor: 'pointer',
+                                                    border: '2px solid',
+                                                    borderColor: 'transparent',
+                                                    transition: 'all 150ms ease',
+                                                    _hover: {
+                                                        borderColor: 'primary',
+                                                        transform: 'scale(1.02)',
+                                                    },
+                                                })}
+                                            >
+                                                <img
+                                                    src={img.imageUrl}
+                                                    alt={`Gekocht von ${img.user.name || img.user.nickname || 'User'}`}
+                                                    className={css({
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover',
+                                                    })}
+                                                />
+                                            </button>
+                                        ))}
+                                        {cookImages.length > 8 && (
+                                            <button
+                                                onClick={() => {
+                                                    setLightboxIndex(0);
+                                                    setLightboxOpen(true);
+                                                }}
+                                                className={css({
+                                                    aspectRatio: '1',
+                                                    borderRadius: 'lg',
+                                                    bg: 'light',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: 'lg',
+                                                    fontWeight: '600',
+                                                    color: 'text-muted',
+                                                    cursor: 'pointer',
+                                                    _hover: {
+                                                        bg: 'gray.200',
+                                                    },
+                                                })}
+                                            >
+                                                +{cookImages.length - 8}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -1002,6 +1113,23 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                     </div>
                 </div>
             )}
+
+            <Lightbox
+                open={lightboxOpen}
+                close={() => setLightboxOpen(false)}
+                index={lightboxIndex}
+                slides={cookImages.map((img) => ({
+                    src: img.imageUrl,
+                    title: img.user.name || img.user.nickname || 'User',
+                    description: img.caption || undefined,
+                }))}
+                styles={{
+                    container: {
+                        backgroundColor: 'rgba(0,0,0,0.95)',
+                    },
+                }}
+                carousel={{ preload: 2 }}
+            />
         </div>
     );
 }

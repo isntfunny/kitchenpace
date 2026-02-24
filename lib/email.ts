@@ -9,7 +9,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
     const emailPort = process.env.EMAIL_PORT;
     const emailUser = process.env.EMAIL_USER;
     const emailFrom = process.env.EMAIL_FROM;
-    const isDevelopment = process.env.NODE_ENV === 'development' || !emailHost;
+    const hasSmtpConfig = Boolean(emailHost && emailUser && process.env.EMAIL_PASS);
 
     console.log('[EMAIL] Starting email send...');
     console.log('[EMAIL] Environment:', process.env.NODE_ENV);
@@ -20,8 +20,8 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
     console.log('[EMAIL] To:', to);
     console.log('[EMAIL] Subject:', subject);
 
-    if (isDevelopment) {
-        console.log('[EMAIL] === Development Mode - Email logged only ===');
+    if (!hasSmtpConfig) {
+        console.log('[EMAIL] === No SMTP configured - Email logged only ===');
         console.log(`[EMAIL] Body preview: ${html.substring(0, 200)}...`);
         console.log('[EMAIL] ==============================================');
         return true;

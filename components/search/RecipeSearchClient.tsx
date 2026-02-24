@@ -31,6 +31,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     filterOptions,
 }) => {
     const [filters, setFilters] = useState(initialFilters);
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
     const { data, meta, loading, error } = useRecipeSearch(filters);
     const pathname = usePathname();
 
@@ -87,7 +88,13 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                 paddingBottom: '10',
             })}
         >
-            <div className={css({ position: 'sticky', top: '96px' })}>
+            <div
+                className={css({
+                    display: { base: 'none', lg: 'block' },
+                    position: 'sticky',
+                    top: '96px',
+                })}
+            >
                 <FilterSidebar
                     filters={filters}
                     options={filterOptions}
@@ -113,10 +120,59 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                             {totalResults} Ergebnisse gefunden
                         </p>
                     </div>
+                    <button
+                        type="button"
+                        onClick={() => setShowMobileFilters((prev) => !prev)}
+                        className={css({
+                            display: { base: 'inline-flex', lg: 'none' },
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2',
+                            px: '4',
+                            py: '2',
+                            borderRadius: 'full',
+                            border: '1px solid',
+                            borderColor: 'rgba(0,0,0,0.15)',
+                            background: 'white',
+                            fontFamily: 'body',
+                            fontSize: 'sm',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 150ms ease',
+                            _hover: {
+                                borderColor: 'rgba(224,123,83,0.6)',
+                            },
+                        })}
+                    >
+                        Filter {showMobileFilters ? 'verbergen' : 'anzeigen'}
+                    </button>
                     <Button variant="ghost" size="sm" onClick={resetFilters}>
                         Filter zurücksetzen
                     </Button>
                 </header>
+
+                {showMobileFilters && (
+                    <div
+                        className={css({
+                            display: { base: 'block', lg: 'none' },
+                            bg: 'white',
+                            borderRadius: '2xl',
+                            border: '1px solid',
+                            borderColor: 'rgba(0,0,0,0.08)',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.06)',
+                            padding: '4',
+                        })}
+                    >
+                        <FilterSidebar
+                            filters={filters}
+                            options={filterOptions}
+                            onFiltersChange={(next) => {
+                                updateFilters(next);
+                                setShowMobileFilters(false);
+                            }}
+                        />
+                    </div>
+                )}
 
                 <ActiveFilters filters={filters} onRemove={updateFilters} />
 

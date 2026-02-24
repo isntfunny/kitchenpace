@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
-import { fetchRecipeBySlug } from '@/app/actions/recipes';
 import { fetchRecipeCookImages } from '@/app/actions/cooks';
+import { fetchRecipeBySlug } from '@/app/actions/recipes';
 import { getServerAuthSession } from '@/lib/auth';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';

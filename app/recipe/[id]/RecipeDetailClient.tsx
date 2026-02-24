@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
@@ -511,6 +510,140 @@ export function RecipeDetailClient({
                                 </Button>
                             </div>
 
+                            {showCookDialog && (
+                                <div
+                                    className={css({
+                                        mt: '4',
+                                        p: '5',
+                                        bg: 'surface.elevated',
+                                        borderRadius: 'xl',
+                                        border: '1px solid',
+                                        borderColor: 'gray.200',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                                    })}
+                                >
+                                    <h3
+                                        className={css({
+                                            fontSize: 'base',
+                                            fontWeight: '700',
+                                            fontFamily: 'heading',
+                                            mb: '3',
+                                        })}
+                                    >
+                                        🍳 Als gekocht markieren
+                                    </h3>
+
+                                    <div
+                                        className={css({
+                                            border: '2px dashed',
+                                            borderColor: 'gray.300',
+                                            borderRadius: 'lg',
+                                            p: '6',
+                                            textAlign: 'center',
+                                            cursor: 'pointer',
+                                            transition: 'all 150ms ease',
+                                            bg: 'gray.50',
+                                            _hover: {
+                                                borderColor: 'primary',
+                                                bg: 'rgba(224,123,83,0.05)',
+                                            },
+                                        })}
+                                        onClick={() =>
+                                            document.getElementById('cook-image-input')?.click()
+                                        }
+                                    >
+                                        <input
+                                            id="cook-image-input"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) =>
+                                                setUploadedImage(e.target.files?.[0] ?? null)
+                                            }
+                                            className={css({ display: 'none' })}
+                                        />
+                                        {uploadedImage ? (
+                                            <div className={css({})}>
+                                                <div
+                                                    className={css({
+                                                        fontSize: 'xl',
+                                                        mb: '2',
+                                                    })}
+                                                >
+                                                    ✅
+                                                </div>
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'sm',
+                                                        fontWeight: '500',
+                                                    })}
+                                                >
+                                                    {uploadedImage.name}
+                                                </p>
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'xs',
+                                                        color: 'text-muted',
+                                                        mt: '1',
+                                                    })}
+                                                >
+                                                    Klicken zum Ändern
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className={css({})}>
+                                                <div
+                                                    className={css({
+                                                        fontSize: '2xl',
+                                                        mb: '2',
+                                                    })}
+                                                >
+                                                    📷
+                                                </div>
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'sm',
+                                                        fontWeight: '500',
+                                                    })}
+                                                >
+                                                    Bild hierher ziehen oder klicken
+                                                </p>
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'xs',
+                                                        color: 'text-muted',
+                                                        mt: '1',
+                                                    })}
+                                                >
+                                                    Optional - du kannst auch ohne Bild fortfahren
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className={flex({ gap: '3', mt: '4' })}>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setShowCookDialog(false);
+                                                setUploadedImage(null);
+                                                setCookNotes('');
+                                            }}
+                                        >
+                                            Abbrechen
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="primary"
+                                            onClick={handleSubmitCook}
+                                            disabled={isCookPending}
+                                        >
+                                            {isCookPending ? 'Speichern...' : 'Absenden'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className={flex({ gap: '2', mt: '4', flexWrap: 'wrap' })}>
                                 {recipe.tags.map((tag) => (
                                     <button
@@ -993,126 +1126,6 @@ export function RecipeDetailClient({
                     </div>
                 )}
             </main>
-
-            {showCookDialog && (
-                <div
-                    className={css({
-                        position: 'fixed',
-                        inset: 0,
-                        bg: 'rgba(0,0,0,0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1000,
-                    })}
-                    onClick={() => setShowCookDialog(false)}
-                >
-                    <div
-                        className={css({
-                            bg: 'white',
-                            borderRadius: '2xl',
-                            p: '6',
-                            maxW: '400px',
-                            w: '90%',
-                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                        })}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h2
-                            className={css({
-                                fontSize: 'xl',
-                                fontWeight: '700',
-                                fontFamily: 'heading',
-                                mb: '4',
-                            })}
-                        >
-                            🍳 Rezept als gekocht markieren
-                        </h2>
-
-                        <div className={css({ mb: '4' })}>
-                            <label
-                                className={css({
-                                    display: 'block',
-                                    fontSize: 'sm',
-                                    fontWeight: '500',
-                                    mb: '2',
-                                })}
-                            >
-                                Foto hochladen (optional)
-                            </label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => setUploadedImage(e.target.files?.[0] ?? null)}
-                                className={css({
-                                    w: 'full',
-                                    p: '2',
-                                    border: '1px solid',
-                                    borderColor: 'border',
-                                    borderRadius: 'md',
-                                })}
-                            />
-                            {uploadedImage && (
-                                <p
-                                    className={css({
-                                        fontSize: 'sm',
-                                        color: 'text-muted',
-                                        mt: '1',
-                                    })}
-                                >
-                                    {uploadedImage.name}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className={css({ mb: '4' })}>
-                            <label
-                                className={css({
-                                    display: 'block',
-                                    fontSize: 'sm',
-                                    fontWeight: '500',
-                                    mb: '2',
-                                })}
-                            >
-                                Notizen (optional)
-                            </label>
-                            <textarea
-                                value={cookNotes}
-                                onChange={(e) => setCookNotes(e.target.value)}
-                                placeholder="Wie war es? Änderungen am Rezept?"
-                                className={css({
-                                    w: 'full',
-                                    p: '3',
-                                    border: '1px solid',
-                                    borderColor: 'border',
-                                    borderRadius: 'md',
-                                    fontFamily: 'body',
-                                    minH: '80px',
-                                    resize: 'vertical',
-                                })}
-                            />
-                        </div>
-
-                        <div className={flex({ gap: '3', justify: 'flex-end' })}>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={() => setShowCookDialog(false)}
-                            >
-                                Abbrechen
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="primary"
-                                onClick={handleSubmitCook}
-                                disabled={isCookPending}
-                            >
-                                {isCookPending ? 'Speichern...' : 'Speichern'}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <Lightbox
                 open={lightboxOpen}

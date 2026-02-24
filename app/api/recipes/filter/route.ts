@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import type { RecipeCardData } from '@/app/actions/recipes';
@@ -55,6 +55,21 @@ export async function GET(request: NextRequest) {
     try {
         const filters = parseRecipeFilterParams(new URL(request.url).searchParams);
         log.debug('Parsed filters', { filters });
+
+        const [allCategories, sampleRecipes] = await Promise.all([
+            prisma.category.findMany({ select: { name: true } }),
+            prisma.recipe.findMany({
+                where: { publishedAt: { not: null } },
+                take: 5,
+                select: { title: true, category: { select: { name: true } } },
+            }),
+        ]);
+
+        log.debug('Available categories', { categories: allCategories.map((c) => c.name) });
+        log.debug('Sample recipe categories', {
+            recipes: sampleRecipes.map((r) => ({ title: r.title, category: r.category?.name })),
+        });
+
         const {
             query,
             tags = [],

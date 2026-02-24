@@ -18,14 +18,6 @@ const TIME_OF_DAY_RANGES: Record<string, Partial<{ min: number; max: number }>> 
     snack: { min: 0, max: 20 },
 };
 
-const MEAL_TYPE_TO_CATEGORY: Record<string, string[]> = {
-    Frühstück: ['Frühstück'],
-    Mittagessen: ['Hauptgericht'],
-    Abendessen: ['Hauptgericht'],
-    Snack: ['Beilage'],
-    Dessert: ['Dessert'],
-};
-
 function mapRecipeToCard(
     recipe: Prisma.RecipeGetPayload<{ include: { category: true } }>,
 ): RecipeCardData {
@@ -91,17 +83,14 @@ export async function GET(request: NextRequest) {
         }
 
         if (mealTypes.length > 0) {
-            const categoryNames = mealTypes.flatMap((meal) => MEAL_TYPE_TO_CATEGORY[meal] ?? []);
-            if (categoryNames.length > 0) {
-                clauses.push({
-                    category: {
-                        name: {
-                            in: categoryNames,
-                            mode: 'insensitive',
-                        },
+            clauses.push({
+                category: {
+                    name: {
+                        in: mealTypes,
+                        mode: 'insensitive',
                     },
-                });
-            }
+                },
+            });
         }
 
         if (cuisines.length > 0) {

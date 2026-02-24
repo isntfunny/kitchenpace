@@ -296,11 +296,7 @@ export async function markRecipeCookedAction(
     options?: {
         servings?: number;
         notes?: string;
-        imageData?: {
-            buffer: Buffer;
-            filename: string;
-            contentType: string;
-        };
+        image?: Blob | null;
     },
 ) {
     const viewer = await requireAuth('markRecipeCookedAction');
@@ -317,14 +313,12 @@ export async function markRecipeCookedAction(
     let imageUrl: string | undefined;
     let imageKey: string | undefined;
 
-    if (options?.imageData) {
+    if (options?.image) {
         const { uploadFile } = await import('@/lib/s3');
-        const result = await uploadFile(
-            options.imageData.buffer,
-            options.imageData.filename,
-            options.imageData.contentType,
-            'cook',
-        );
+        const arrayBuffer = await options.image.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const file = options.image as File;
+        const result = await uploadFile(buffer, file.name, file.type, 'cook');
         imageUrl = result.url;
         imageKey = result.key;
     }

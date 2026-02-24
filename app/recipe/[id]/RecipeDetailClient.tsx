@@ -245,19 +245,9 @@ export function RecipeDetailClient({
 
         startCookTransition(async () => {
             try {
-                const imageBuffer = uploadedImage
-                    ? Buffer.from(await uploadedImage.arrayBuffer())
-                    : undefined;
-
                 const result = await markRecipeCookedAction(recipe.id, {
                     notes: cookNotes || undefined,
-                    imageData: imageBuffer
-                        ? {
-                              buffer: imageBuffer,
-                              filename: uploadedImage!.name,
-                              contentType: uploadedImage!.type,
-                          }
-                        : undefined,
+                    image: uploadedImage,
                 });
 
                 if (result.hasImage) {

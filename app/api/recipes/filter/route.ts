@@ -51,7 +51,6 @@ export async function GET(request: NextRequest) {
             query,
             tags = [],
             mealTypes = [],
-            cuisines = [],
             ingredients = [],
             excludeIngredients = [],
             difficulty = [],
@@ -68,8 +67,6 @@ export async function GET(request: NextRequest) {
             limit = RECIPE_FILTER_DEFAULT_LIMIT,
             filterMode = 'and',
         } = filters;
-
-        const tagFilters = Array.from(new Set([...tags]));
 
         const clauses: Prisma.RecipeWhereInput[] = [];
 
@@ -93,24 +90,13 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        if (cuisines.length > 0) {
-            clauses.push({
-                category: {
-                    name: {
-                        in: cuisines,
-                        mode: 'insensitive',
-                    },
-                },
-            });
-        }
-
-        if (tagFilters.length > 0) {
+        if (tags.length > 0) {
             clauses.push({
                 tags: {
                     some: {
                         tag: {
                             name: {
-                                in: tagFilters,
+                                in: tags,
                                 mode: 'insensitive',
                             },
                         },

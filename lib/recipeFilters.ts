@@ -3,7 +3,6 @@ type MaybeNumber = number | undefined;
 const MultiValueKeys = [
     'tags',
     'mealTypes',
-    'cuisines',
     'ingredients',
     'excludeIngredients',
     'difficulty',
@@ -29,7 +28,6 @@ export type RecipeFilterParams = {
     query?: string;
     tags?: string[];
     mealTypes?: string[];
-    cuisines?: string[];
     ingredients?: string[];
     excludeIngredients?: string[];
     difficulty?: string[];
@@ -92,7 +90,6 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
         query: params.get('query')?.trim() || undefined,
         tags: multi.tags,
         mealTypes: multi.mealTypes,
-        cuisines: multi.cuisines,
         ingredients: multi.ingredients,
         excludeIngredients: multi.excludeIngredients,
         difficulty: multi.difficulty.map((difficulty) => difficulty.toUpperCase()),
@@ -133,7 +130,6 @@ export function buildRecipeFilterQuery(filters: RecipeFilterSearchParams): URLSe
 
     appendArray(params, 'tags', filters.tags);
     appendArray(params, 'mealTypes', filters.mealTypes);
-    appendArray(params, 'cuisines', filters.cuisines);
     appendArray(params, 'ingredients', filters.ingredients);
     appendArray(params, 'excludeIngredients', filters.excludeIngredients);
     appendArray(

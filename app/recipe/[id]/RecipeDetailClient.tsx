@@ -208,7 +208,7 @@ export function RecipeDetailClient({
     };
 
     const handleCategoryClick = (category: string) => {
-        router.push(buildRecipeFilterHref({ cuisines: [category] }));
+        router.push(buildRecipeFilterHref({ mealTypes: [category] }));
     };
 
     const handleDifficultyClick = (difficulty: string) => {

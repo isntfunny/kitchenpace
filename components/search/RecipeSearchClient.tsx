@@ -52,7 +52,6 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
             ...prev,
             tags: [],
             mealTypes: [],
-            cuisines: [],
             ingredients: [],
             excludeIngredients: [],
             difficulty: [],

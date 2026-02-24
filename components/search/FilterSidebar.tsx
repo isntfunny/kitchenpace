@@ -106,7 +106,6 @@ const Chip = ({
 type ArrayFieldKey =
     | 'tags'
     | 'mealTypes'
-    | 'cuisines'
     | 'ingredients'
     | 'excludeIngredients'
     | 'difficulty'
@@ -240,19 +239,6 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                             onClick={() => toggleArray('mealTypes', option.value)}
                         >
                             {option.label}
-                        </Chip>
-                    ))}
-                </div>
-            </CollapsibleSection>
-            <CollapsibleSection title="Küche & Region" description="Regionale Zutaten und Aromen">
-                <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
-                    {options.categories.map((category) => (
-                        <Chip
-                            key={category.slug}
-                            active={(filters.cuisines ?? []).includes(category.name)}
-                            onClick={() => toggleArray('cuisines', category.name)}
-                        >
-                            {category.name}
                         </Chip>
                     ))}
                 </div>

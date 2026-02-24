@@ -158,7 +158,7 @@ export function Header() {
                                             <DropdownMenu.Item key={category.name} asChild>
                                                 <Link
                                                     href={buildRecipeFilterHref({
-                                                        cuisines: [category.name],
+                                                        mealTypes: [category.name],
                                                     })}
                                                     className={css({
                                                         display: 'flex',

@@ -75,17 +75,6 @@ export function ActiveFilters({ filters, onRemove }: ActiveFiltersProps) {
         });
     });
 
-    (filters.cuisines ?? []).forEach((cuisine) => {
-        push({
-            id: `cuisine-${cuisine}`,
-            label: `Küche: ${cuisine}`,
-            onRemove: () =>
-                onRemove({
-                    cuisines: (filters.cuisines ?? []).filter((entry) => entry !== cuisine),
-                }),
-        });
-    });
-
     (filters.ingredients ?? []).forEach((ingredient) => {
         push({
             id: `ingredient-${ingredient}`,

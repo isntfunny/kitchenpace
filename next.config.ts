@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
                 hostname: 'images.unsplash.com',
             },
         ],
+        localPatterns: [
+            {
+                pathname: '/api/thumbnail**',
+            },
+        ],
     },
     turbopack: {
         resolveAlias: {

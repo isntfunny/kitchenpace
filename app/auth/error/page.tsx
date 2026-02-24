@@ -3,10 +3,12 @@ import { PageShell } from '@/components/layouts/PageShell';
 import { css } from 'styled-system/css';
 
 type AuthErrorPageProps = {
-    searchParams: { error?: string };
+    searchParams: Promise<{ error?: string }>;
 };
 
-export default function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
+export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
+    const { error } = await searchParams;
+
     return (
         <PageShell>
             <section
@@ -29,7 +31,7 @@ export default function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
                         textAlign: 'center',
                     })}
                 >
-                    <AuthErrorClient error={searchParams.error ?? null} />
+                    <AuthErrorClient error={error ?? null} />
                 </div>
             </section>
         </PageShell>

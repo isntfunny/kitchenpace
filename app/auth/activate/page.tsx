@@ -1,9 +1,10 @@
 import ActivateClient from '@/components/auth/ActivateClient';
 
 type ActivatePageProps = {
-    searchParams: { token?: string };
+    searchParams: Promise<{ token?: string }>;
 };
 
-export default function ActivatePage({ searchParams }: ActivatePageProps) {
-    return <ActivateClient token={searchParams.token ?? null} />;
+export default async function ActivatePage({ searchParams }: ActivatePageProps) {
+    const { token } = await searchParams;
+    return <ActivateClient token={token ?? null} />;
 }

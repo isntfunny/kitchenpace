@@ -41,7 +41,6 @@ function ensureValidDifficulty(value: string): value is 'EASY' | 'MEDIUM' | 'HAR
 export async function GET(request: NextRequest) {
     try {
         const filters = parseRecipeFilterParams(new URL(request.url).searchParams);
-        console.log('[filter] incoming filters:', JSON.stringify(filters));
         const {
             query,
             tags = [],
@@ -64,7 +63,7 @@ export async function GET(request: NextRequest) {
             filterMode = 'and',
         } = filters;
 
-        const tagFilters = Array.from(new Set([...tags, ...mealTypes, ...cuisines]));
+        const tagFilters = Array.from(new Set([...tags, ...mealTypes]));
 
         const clauses: Prisma.RecipeWhereInput[] = [];
 
@@ -74,6 +73,17 @@ export async function GET(request: NextRequest) {
                     { title: { contains: query, mode: 'insensitive' } },
                     { description: { contains: query, mode: 'insensitive' } },
                 ],
+            });
+        }
+
+        if (cuisines.length > 0) {
+            clauses.push({
+                category: {
+                    name: {
+                        in: cuisines,
+                        mode: 'insensitive',
+                    },
+                },
             });
         }
 
@@ -184,8 +194,6 @@ export async function GET(request: NextRequest) {
 
         const skip = Math.max(0, page - 1) * limit;
 
-        console.log('[filter] final where clause:', JSON.stringify(where));
-
         const [recipes, total] = await Promise.all([
             prisma.recipe.findMany({
                 where,
@@ -205,8 +213,6 @@ export async function GET(request: NextRequest) {
                 limit,
             },
         };
-
-        console.log('[filter] results:', { total, recipeCount: recipes.length });
 
         return NextResponse.json(payload);
     } catch (error) {

@@ -1,8 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState, useTransition } from 'react';
 
+import { toggleFollowAction } from '@/app/actions/social';
 import { Badge } from '@/components/atoms/Badge';
+import { Button } from '@/components/atoms/Button';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
@@ -41,6 +45,11 @@ export interface UserProfileData {
 
 interface UserProfileClientProps {
     user: UserProfileData;
+    viewer?: {
+        id: string;
+        isSelf: boolean;
+        isFollowing: boolean;
+    };
 }
 
 // Avatar size constant for consistent sizing
@@ -90,8 +99,38 @@ const ACTIVITY_CONFIG: Record<string, { icon: string; template: string[]; bgColo
     },
 };
 
-export function UserProfileClient({ user }: UserProfileClientProps) {
+export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
+    const router = useRouter();
     const { recipes, activities } = user;
+    const [followerTotal, setFollowerTotal] = useState(user.followerCount);
+    const [isFollowing, setIsFollowing] = useState(viewer?.isFollowing ?? false);
+    const [isPending, startTransition] = useTransition();
+    const viewerId = viewer?.id ?? null;
+    const showFollowButton = !viewer?.isSelf;
+
+    const requireAuth = () => {
+        if (viewerId) {
+            return true;
+        }
+        const callback = typeof window !== 'undefined' ? window.location.pathname : '/profile';
+        router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callback)}`);
+        return false;
+    };
+
+    const handleFollowToggle = () => {
+        if (!showFollowButton) return;
+        if (!requireAuth()) return;
+
+        startTransition(async () => {
+            try {
+                const result = await toggleFollowAction(user.id);
+                setIsFollowing(result.isFollowing);
+                setFollowerTotal(result.followerCount);
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    };
 
     return (
         <div className={css({ minH: '100vh', bg: 'background' })}>
@@ -227,7 +266,7 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
                                 })}
                             >
                                 <StatItem value={user.recipeCount} label="Rezepte" />
-                                <StatItem value={user.followerCount} label="Follower" />
+                                <StatItem value={followerTotal} label="Follower" />
                                 {recipes.length > 0 && (
                                     <StatItem
                                         value={
@@ -239,6 +278,25 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
                                     />
                                 )}
                             </div>
+
+                            {showFollowButton && (
+                                <div
+                                    className={css({
+                                        mt: '5',
+                                        display: 'flex',
+                                        justifyContent: { base: 'center', md: 'flex-start' },
+                                    })}
+                                >
+                                    <Button
+                                        type="button"
+                                        variant={isFollowing ? 'secondary' : 'primary'}
+                                        onClick={handleFollowToggle}
+                                        disabled={isPending}
+                                    >
+                                        {isFollowing ? '✓ Folgst du' : '+ Folgen'}
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

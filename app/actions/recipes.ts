@@ -140,9 +140,22 @@ export interface RecipeDetailData {
         recipeCount: number;
         followerCount: number;
     } | null;
+    favoriteCount: number;
+    ratingCount: number;
+    viewer?: {
+        id: string;
+        isFavorite: boolean;
+        rating: number | null;
+        isFollowingAuthor: boolean;
+        canFollow: boolean;
+        isAuthor: boolean;
+    };
 }
 
-export async function fetchRecipeBySlug(slugOrId: string): Promise<RecipeDetailData | null> {
+export async function fetchRecipeBySlug(
+    slugOrId: string,
+    viewerId?: string,
+): Promise<RecipeDetailData | null> {
     const recipe = await prisma.recipe.findFirst({
         where: {
             OR: [{ slug: slugOrId }, { id: slugOrId }],
@@ -166,6 +179,38 @@ export async function fetchRecipeBySlug(slugOrId: string): Promise<RecipeDetailD
     if (!recipe) {
         return null;
     }
+
+    const viewerPromise = viewerId
+        ? Promise.all([
+              prisma.favorite.findUnique({
+                  where: {
+                      recipeId_userId: { recipeId: recipe.id, userId: viewerId },
+                  },
+              }),
+              prisma.userRating.findUnique({
+                  where: {
+                      recipeId_userId: { recipeId: recipe.id, userId: viewerId },
+                  },
+              }),
+              recipe.authorId && recipe.authorId !== viewerId
+                  ? prisma.follow.findUnique({
+                        where: {
+                            followerId_followingId: {
+                                followerId: viewerId,
+                                followingId: recipe.authorId,
+                            },
+                        },
+                    })
+                  : Promise.resolve(null),
+          ])
+        : null;
+
+    const [favoriteCount, viewerData] = await Promise.all([
+        prisma.favorite.count({ where: { recipeId: recipe.id } }),
+        viewerPromise,
+    ]);
+
+    const [favorite, rating, follow] = viewerData ?? [];
 
     const difficultyMap: Record<string, 'Einfach' | 'Mittel' | 'Schwer'> = {
         EASY: 'Einfach',
@@ -208,5 +253,17 @@ export async function fetchRecipeBySlug(slugOrId: string): Promise<RecipeDetailD
                   followerCount: recipe.author.profile?.followerCount ?? 0,
               }
             : null,
+        favoriteCount,
+        ratingCount: recipe.ratingCount ?? 0,
+        viewer: viewerId
+            ? {
+                  id: viewerId,
+                  isFavorite: Boolean(favorite),
+                  rating: rating?.rating ?? null,
+                  isFollowingAuthor: Boolean(follow),
+                  canFollow: recipe.authorId !== viewerId,
+                  isAuthor: recipe.authorId === viewerId,
+              }
+            : undefined,
     };
 }

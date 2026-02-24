@@ -61,6 +61,16 @@ export interface Recipe {
     flow: RecipeFlow;
     tags: string[];
     authorId: string;
+    favoriteCount?: number;
+    ratingCount?: number;
+    viewer?: {
+        id: string;
+        isFavorite: boolean;
+        rating: number | null;
+        isFollowingAuthor: boolean;
+        canFollow: boolean;
+        isAuthor: boolean;
+    };
 }
 
 export const users: Record<string, User> = {

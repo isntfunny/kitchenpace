@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 
 import { fetchRecipeBySlug } from '@/app/actions/recipes';
+import { getServerAuthSession } from '@/lib/auth';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
 
@@ -70,7 +71,8 @@ export async function generateStaticParams() {
 
 export default async function RecipePage({ params }: RecipePageProps) {
     const resolvedParams = await params;
-    const recipe = await fetchRecipeBySlug(resolvedParams.id);
+    const [session] = await Promise.all([getServerAuthSession('recipe-page')]);
+    const recipe = await fetchRecipeBySlug(resolvedParams.id, session?.user?.id);
 
     if (!recipe) {
         return (

@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 
+import { getServerAuthSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
@@ -134,7 +135,10 @@ export async function generateMetadata({ params }: UserProfileProps): Promise<Me
 
 export default async function UserProfilePage({ params }: UserProfileProps) {
     const resolvedParams = await params;
-    const user = await getUserProfile(resolvedParams.id);
+    const [session, user] = await Promise.all([
+        getServerAuthSession('user-profile-page'),
+        getUserProfile(resolvedParams.id),
+    ]);
 
     if (!user) {
         return (
@@ -153,5 +157,24 @@ export default async function UserProfilePage({ params }: UserProfileProps) {
         );
     }
 
-    return <UserProfileClient user={user} />;
+    let viewer: { id: string; isSelf: boolean; isFollowing: boolean } | undefined;
+
+    if (session?.user?.id) {
+        const viewerId = session.user.id;
+        if (viewerId === user.id) {
+            viewer = { id: viewerId, isSelf: true, isFollowing: false };
+        } else {
+            const follow = await prisma.follow.findUnique({
+                where: {
+                    followerId_followingId: {
+                        followerId: viewerId,
+                        followingId: user.id,
+                    },
+                },
+            });
+            viewer = { id: viewerId, isSelf: false, isFollowing: Boolean(follow) };
+        }
+    }
+
+    return <UserProfileClient user={user} viewer={viewer} />;
 }

@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useTransition } from 'react';
 
+import { rateRecipeAction, toggleFavoriteAction, toggleFollowAction } from '@/app/actions/social';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { SmartImage } from '@/components/atoms/SmartImage';
@@ -25,8 +26,19 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
     // State declarations MUST come first
     const router = useRouter();
     const [servings, setServings] = useState(recipe.servings);
-    const [isSaved, setIsSaved] = useState(false);
-    const [isFollowing, setIsFollowing] = useState(false);
+    const [favoriteState, setFavoriteState] = useState({
+        isFavorite: recipe.viewer?.isFavorite ?? false,
+        count: recipe.favoriteCount ?? 0,
+    });
+    const [isFollowing, setIsFollowing] = useState(recipe.viewer?.isFollowingAuthor ?? false);
+    const [authorFollowers, setAuthorFollowers] = useState(author?.followerCount ?? 0);
+    const [viewerRating, setViewerRating] = useState<number | null>(recipe.viewer?.rating ?? null);
+    const [averageRating, setAverageRating] = useState(recipe.rating ?? 0);
+    const [ratingCount, setRatingCount] = useState(recipe.ratingCount ?? 0);
+    const [isFavoritePending, startFavoriteTransition] = useTransition();
+    const [isFollowPending, startFollowTransition] = useTransition();
+    const [isRatingPending, startRatingTransition] = useTransition();
+    const viewerId = recipe.viewer?.id ?? null;
 
     // Recipe tabs context for tracking views
     const { addToRecent } = useRecipeTabs();
@@ -57,6 +69,9 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
     ]);
 
     const totalTime = recipe.prepTime + recipe.cookTime;
+    const starValues = [1, 2, 3, 4, 5] as const;
+    const activeStarValue = viewerRating ?? Math.round(averageRating || 0);
+    const ratingLabel = ratingCount === 1 ? 'Bewertung' : 'Bewertungen';
 
     const formatAmount = (amount: number): string => {
         const scaled = amount * (servings / recipe.servings);
@@ -77,6 +92,62 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
 
     const handlePrint = () => {
         window.print();
+    };
+
+    const requireAuth = () => {
+        if (viewerId) {
+            return true;
+        }
+
+        const callback = typeof window !== 'undefined' ? window.location.pathname : '/';
+        router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callback)}`);
+        return false;
+    };
+
+    const handleFavoriteToggle = () => {
+        if (!requireAuth()) return;
+
+        startFavoriteTransition(async () => {
+            try {
+                const result = await toggleFavoriteAction(recipe.id);
+                setFavoriteState({
+                    isFavorite: result.isFavorite,
+                    count: result.favoriteCount,
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    };
+
+    const handleFollowToggle = () => {
+        if (!author || author.id === viewerId) return;
+        if (!requireAuth()) return;
+
+        startFollowTransition(async () => {
+            try {
+                const result = await toggleFollowAction(author.id, { recipeId: recipe.id });
+                setIsFollowing(result.isFollowing);
+                setAuthorFollowers(result.followerCount);
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    };
+
+    const handleRatingSelect = (value: number) => {
+        if (!requireAuth()) return;
+
+        startRatingTransition(async () => {
+            try {
+                const result = await rateRecipeAction(recipe.id, value);
+                setViewerRating(result.rating);
+                setAverageRating(result.average);
+                setRatingCount(result.count);
+            } catch (error) {
+                console.error(error);
+            }
+        });
     };
 
     return (
@@ -249,14 +320,111 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                                 </div>
                             </div>
 
-                            <div className={flex({ gap: '3', flexWrap: 'wrap' })}>
-                                <Button
-                                    variant={isSaved ? 'secondary' : 'primary'}
-                                    onClick={() => setIsSaved(!isSaved)}
+                            <div
+                                className={css({
+                                    mb: '6',
+                                    borderRadius: 'xl',
+                                    p: '5',
+                                    bg: 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(255,246,236,0.9))',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(224,123,83,0.2)',
+                                    boxShadow: '0 8px 30px rgba(224,123,83,0.12)',
+                                })}
+                            >
+                                <div
+                                    className={flex({
+                                        align: 'center',
+                                        gap: { base: '4', md: '6' },
+                                        flexWrap: 'wrap',
+                                        mb: '4',
+                                    })}
                                 >
-                                    {isSaved ? '📌 Gespeichert' : '📌 Speichern'}
+                                    <div
+                                        className={css({
+                                            fontSize: { base: '3xl', md: '4xl' },
+                                            fontFamily: 'heading',
+                                            fontWeight: '700',
+                                            color: 'primary',
+                                        })}
+                                    >
+                                        {averageRating.toFixed(1)} ★
+                                    </div>
+                                    <div
+                                        className={css({
+                                            fontFamily: 'body',
+                                            color: 'text-muted',
+                                        })}
+                                    >
+                                        {ratingCount} {ratingLabel}
+                                    </div>
+                                </div>
+                                <div
+                                    className={flex({
+                                        gap: '2',
+                                        align: 'center',
+                                        flexWrap: 'wrap',
+                                    })}
+                                >
+                                    {starValues.map((value) => (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            onClick={() => handleRatingSelect(value)}
+                                            disabled={isRatingPending}
+                                            className={css({
+                                                width: '48px',
+                                                height: '48px',
+                                                borderRadius: 'full',
+                                                border: 'none',
+                                                background:
+                                                    value <= activeStarValue
+                                                        ? 'rgba(224,123,83,0.9)'
+                                                        : 'rgba(255,255,255,0.6)',
+                                                color:
+                                                    value <= activeStarValue
+                                                        ? 'white'
+                                                        : 'rgba(224,123,83,0.7)',
+                                                fontSize: 'lg',
+                                                cursor: 'pointer',
+                                                transition: 'all 150ms ease',
+                                                boxShadow:
+                                                    value <= activeStarValue
+                                                        ? '0 6px 16px rgba(224,123,83,0.35)'
+                                                        : 'inset 0 0 0 1px rgba(224,123,83,0.2)',
+                                                _hover: {
+                                                    transform: 'translateY(-1px)',
+                                                },
+                                            })}
+                                        >
+                                            {value <= activeStarValue ? '★' : '☆'}
+                                        </button>
+                                    ))}
+                                    <span
+                                        className={css({
+                                            fontSize: 'sm',
+                                            color: 'text-muted',
+                                            fontFamily: 'body',
+                                            ml: { base: 0, md: '3' },
+                                        })}
+                                    >
+                                        {viewerRating
+                                            ? `Deine Bewertung: ${viewerRating}★`
+                                            : 'Jetzt bewerten und Feedback geben'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className={flex({ gap: '3', flexWrap: 'wrap', align: 'center' })}>
+                                <Button
+                                    type="button"
+                                    variant={favoriteState.isFavorite ? 'secondary' : 'primary'}
+                                    onClick={handleFavoriteToggle}
+                                    disabled={isFavoritePending}
+                                >
+                                    {favoriteState.isFavorite ? '❤️ Favorit' : '♡ Speichern'} ·{' '}
+                                    {favoriteState.count}
                                 </Button>
-                                <Button variant="ghost" onClick={handlePrint}>
+                                <Button type="button" variant="ghost" onClick={handlePrint}>
                                     🖨️ Drucken
                                 </Button>
                             </div>
@@ -504,9 +672,11 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                                         </div>
 
                                         <Button
+                                            type="button"
                                             variant={isFollowing ? 'secondary' : 'primary'}
                                             size="sm"
-                                            onClick={() => setIsFollowing(!isFollowing)}
+                                            onClick={handleFollowToggle}
+                                            disabled={isFollowPending || author?.id === viewerId}
                                         >
                                             {isFollowing ? '✓ Folgst du' : '+ Folgen'}
                                         </Button>
@@ -541,7 +711,7 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                                                     fontSize: 'lg',
                                                 })}
                                             >
-                                                {author.followerCount.toLocaleString('de-DE')}
+                                                {authorFollowers.toLocaleString('de-DE')}
                                             </div>
                                             <div
                                                 className={css({

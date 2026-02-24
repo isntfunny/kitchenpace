@@ -207,7 +207,11 @@ export async function GET(request: NextRequest) {
 
         const skip = Math.max(0, page - 1) * limit;
 
-        log.debug('Executing query', { where, skip, limit });
+        log.debug('Executing query', { where: JSON.stringify(where), skip, limit });
+
+        const rawQuery =
+            await prisma.$queryRaw`SELECT r.id, r.title, c.name as cat_name FROM "Recipe" r LEFT JOIN "Category" c ON r."categoryId" = c.id WHERE r."publishedAt" IS NOT NULL AND c.name ILIKE ANY(ARRAY[${mealTypes[0]}]) LIMIT 5`;
+        log.debug('Raw SQL test', { rawQuery });
 
         const [recipes, total] = await Promise.all([
             prisma.recipe.findMany({

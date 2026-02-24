@@ -76,6 +76,15 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         window.history.replaceState(null, '', next);
     }, [filters, pathname]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = showMobileFilters ? 'hidden' : originalOverflow;
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [showMobileFilters]);
+
     const totalResults = meta?.total ?? 0;
 
     return (
@@ -120,57 +129,101 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                             {totalResults} Ergebnisse gefunden
                         </p>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => setShowMobileFilters((prev) => !prev)}
-                        className={css({
-                            display: { base: 'inline-flex', lg: 'none' },
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '2',
-                            px: '4',
-                            py: '2',
-                            borderRadius: 'full',
-                            border: '1px solid',
-                            borderColor: 'rgba(0,0,0,0.15)',
-                            background: 'white',
-                            fontFamily: 'body',
-                            fontSize: 'sm',
-                            fontWeight: '500',
-                            cursor: 'pointer',
-                            transition: 'all 150ms ease',
-                            _hover: {
-                                borderColor: 'rgba(224,123,83,0.6)',
-                            },
-                        })}
-                    >
-                        Filter {showMobileFilters ? 'verbergen' : 'anzeigen'}
-                    </button>
-                    <Button variant="ghost" size="sm" onClick={resetFilters}>
-                        Filter zurücksetzen
-                    </Button>
+                    <div className={css({ display: 'flex', gap: '2', alignItems: 'center' })}>
+                        <button
+                            type="button"
+                            onClick={() => setShowMobileFilters((prev) => !prev)}
+                            className={css({
+                                display: { base: 'inline-flex', lg: 'none' },
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '2',
+                                px: '4',
+                                py: '2',
+                                borderRadius: 'full',
+                                border: '1px solid',
+                                borderColor: 'rgba(0,0,0,0.15)',
+                                background: 'white',
+                                fontFamily: 'body',
+                                fontSize: 'sm',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                transition: 'all 150ms ease',
+                                _hover: {
+                                    borderColor: 'rgba(224,123,83,0.6)',
+                                },
+                            })}
+                        >
+                            Filter {showMobileFilters ? 'verbergen' : 'anzeigen'}
+                        </button>
+                        <Button variant="ghost" size="sm" onClick={resetFilters}>
+                            Filter zurücksetzen
+                        </Button>
+                    </div>
                 </header>
 
                 {showMobileFilters && (
                     <div
                         className={css({
-                            display: { base: 'block', lg: 'none' },
-                            bg: 'white',
-                            borderRadius: '2xl',
-                            border: '1px solid',
-                            borderColor: 'rgba(0,0,0,0.08)',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.06)',
+                            position: 'fixed',
+                            inset: 0,
+                            zIndex: 60,
+                            bg: 'rgba(0,0,0,0.35)',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'flex-start',
                             padding: '4',
                         })}
                     >
-                        <FilterSidebar
-                            filters={filters}
-                            options={filterOptions}
-                            onFiltersChange={(next) => {
-                                updateFilters(next);
-                                setShowMobileFilters(false);
-                            }}
-                        />
+                        <div
+                            className={css({
+                                width: '100%',
+                                maxW: '480px',
+                                bg: 'white',
+                                borderRadius: '2xl',
+                                border: '1px solid',
+                                borderColor: 'rgba(0,0,0,0.08)',
+                                boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
+                                maxHeight: 'calc(100vh - 32px)',
+                                overflowY: 'auto',
+                            })}
+                        >
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    px: '4',
+                                    py: '3',
+                                    borderBottom: '1px solid',
+                                    borderColor: 'rgba(0,0,0,0.08)',
+                                })}
+                            >
+                                <span className={css({ fontWeight: '600' })}>Filter</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMobileFilters(false)}
+                                    className={css({
+                                        border: 'none',
+                                        background: 'transparent',
+                                        fontSize: 'sm',
+                                        fontWeight: '600',
+                                        color: 'primary',
+                                        cursor: 'pointer',
+                                        padding: 0,
+                                    })}
+                                >
+                                    Schließen
+                                </button>
+                            </div>
+                            <div className={css({ padding: '4' })}>
+                                <FilterSidebar
+                                    filters={filters}
+                                    options={filterOptions}
+                                    onFiltersChange={updateFilters}
+                                />
+                            </div>
+                        </div>
                     </div>
                 )}
 

@@ -38,7 +38,7 @@ const DIFFICULTY_OPTIONS = [
     { value: 'HARD', label: 'Schwer' },
 ];
 
-const Section = ({
+const CollapsibleSection = ({
     title,
     description,
     children,
@@ -47,25 +47,27 @@ const Section = ({
     description?: string;
     children: ReactNode;
 }) => (
-    <div className={css({ mb: '5' })}>
-        <div
-            className={css({ fontSize: 'sm', fontWeight: '600', color: 'text', marginBottom: '1' })}
+    <details open className={css({ mb: '5' })}>
+        <summary
+            className={css({
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: 'sm',
+                color: 'text',
+                listStyle: 'none',
+                _marker: { display: 'none' },
+            })}
         >
-            {title}
-        </div>
-        {description && (
-            <p
-                className={css({
-                    fontSize: 'xs',
-                    color: 'text-muted',
-                    marginBottom: '2',
-                })}
-            >
-                {description}
-            </p>
-        )}
-        {children}
-    </div>
+            <span>{title}</span>
+            {description && (
+                <span className={css({ fontSize: 'xs', color: 'text-muted' })}>{description}</span>
+            )}
+        </summary>
+        <div className={css({ pt: '2' })}>{children}</div>
+    </details>
 );
 
 const Chip = ({
@@ -216,7 +218,7 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                 boxShadow: '0 20px 40px rgba(0,0,0,0.06)',
             })}
         >
-            <Section title="Tags">
+            <CollapsibleSection title="Tags">
                 <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
                     {options.tags.map((tag) => (
                         <Chip
@@ -228,8 +230,8 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         </Chip>
                     ))}
                 </div>
-            </Section>
-            <Section title="Mahlzeit" description="Abgestimmt auf deinen Rhythmus">
+            </CollapsibleSection>
+            <CollapsibleSection title="Mahlzeit" description="Abgestimmt auf deinen Rhythmus">
                 <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
                     {MEAL_TYPE_OPTIONS.map((option) => (
                         <Chip
@@ -241,8 +243,8 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         </Chip>
                     ))}
                 </div>
-            </Section>
-            <Section title="Küche & Region" description="Regionale Zutaten und Aromen">
+            </CollapsibleSection>
+            <CollapsibleSection title="Küche & Region" description="Regionale Zutaten und Aromen">
                 <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
                     {options.categories.map((category) => (
                         <Chip
@@ -254,8 +256,11 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         </Chip>
                     ))}
                 </div>
-            </Section>
-            <Section title="Zutaten" description="Nur Gerichte mit den richtigen Zutaten">
+            </CollapsibleSection>
+            <CollapsibleSection
+                title="Zutaten"
+                description="Nur Gerichte mit den richtigen Zutaten"
+            >
                 <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
                     <div className={css({ display: 'flex', gap: '2' })}>
                         <input
@@ -327,8 +332,8 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         ))}
                     </div>
                 </div>
-            </Section>
-            <Section title="Enthält nicht">
+            </CollapsibleSection>
+            <CollapsibleSection title="Enthält nicht">
                 <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
                     <div className={css({ display: 'flex', gap: '2' })}>
                         <input
@@ -400,8 +405,8 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         ))}
                     </div>
                 </div>
-            </Section>
-            <Section title="Schwierigkeit">
+            </CollapsibleSection>
+            <CollapsibleSection title="Schwierigkeit">
                 <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
                     {DIFFICULTY_OPTIONS.map((option) => (
                         <Chip
@@ -413,8 +418,11 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         </Chip>
                     ))}
                 </div>
-            </Section>
-            <Section title="Tageszeit & Dauer" description="Zeitfenster schnell auswählen">
+            </CollapsibleSection>
+            <CollapsibleSection
+                title="Tageszeit & Dauer"
+                description="Zeitfenster schnell auswählen"
+            >
                 <div
                     className={css({
                         display: 'flex',
@@ -471,8 +479,8 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         />
                     </div>
                 </div>
-            </Section>
-            <Section title="Bewertung & Beliebt">
+            </CollapsibleSection>
+            <CollapsibleSection title="Bewertung & Beliebt">
                 <div className={css({ display: 'grid', gap: '3' })}>
                     <NumberInput
                         label="Min. Bewertung"
@@ -487,7 +495,7 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         onChange={(value) => onFiltersChange({ minCookCount: value })}
                     />
                 </div>
-            </Section>
+            </CollapsibleSection>
         </div>
     );
 }

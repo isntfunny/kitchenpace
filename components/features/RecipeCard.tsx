@@ -1,5 +1,8 @@
 'use client';
 
+import Link from 'next/link';
+
+import { buildRecipeFilterHref } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -27,7 +30,12 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
             <Card>
                 <CardImage src={recipe.image} alt={recipe.title} />
                 <CardContent>
-                    <Badge>{recipe.category}</Badge>
+                    <Link
+                        href={buildRecipeFilterHref({ cuisines: [recipe.category] })}
+                        className={css({ textDecoration: 'none' })}
+                    >
+                        <Badge>{recipe.category}</Badge>
+                    </Link>
                     <div className={css({ mt: '2' })}>
                         <CardTitle>{recipe.title}</CardTitle>
                         <CardDescription>{recipe.description ?? ''}</CardDescription>

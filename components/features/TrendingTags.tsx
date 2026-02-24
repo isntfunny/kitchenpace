@@ -1,4 +1,7 @@
+import Link from 'next/link';
+
 import type { TrendingTagData } from '@/app/actions/community';
+import { buildRecipeFilterHref } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 
 import { Heading } from '../atoms/Typography';
@@ -50,8 +53,9 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                 })}
             >
                 {tags.map((item) => (
-                    <button
+                    <Link
                         key={item.tag}
+                        href={buildRecipeFilterHref({ tags: [item.tag] })}
                         className={css({
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -73,6 +77,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                                 borderColor: item.color,
                             },
                             transition: 'all 150ms ease',
+                            textDecoration: 'none',
                         })}
                     >
                         <span>{item.tag}</span>
@@ -87,7 +92,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                         >
                             {item.count}
                         </span>
-                    </button>
+                    </Link>
                 ))}
             </div>
         </div>

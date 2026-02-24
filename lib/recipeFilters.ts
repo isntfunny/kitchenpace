@@ -173,4 +173,9 @@ export function buildRecipeFilterQuery(filters: RecipeFilterSearchParams): URLSe
     return params;
 }
 
+export function buildRecipeFilterHref(filters: Partial<RecipeFilterSearchParams>) {
+    const params = buildRecipeFilterQuery(filters as RecipeFilterSearchParams).toString();
+    return params ? `/recipes?${params}` : '/recipes';
+}
+
 export { DEFAULT_LIMIT as RECIPE_FILTER_DEFAULT_LIMIT, DEFAULT_PAGE as RECIPE_FILTER_DEFAULT_PAGE };

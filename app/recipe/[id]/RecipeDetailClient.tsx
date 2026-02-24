@@ -19,6 +19,7 @@ import { SmartImage } from '@/components/atoms/SmartImage';
 import { Header } from '@/components/features/Header';
 import { RecipeFlow } from '@/components/flow/RecipeFlow';
 import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
+import { buildRecipeFilterHref } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
 
@@ -50,6 +51,12 @@ type RecipeDetailClientProps = {
     author: User | null;
     recipeActivities: Activity[];
     cookImages?: CookImageItem[];
+};
+
+const difficultyFilterMap: Record<string, 'EASY' | 'MEDIUM' | 'HARD'> = {
+    Einfach: 'EASY',
+    Mittel: 'MEDIUM',
+    Schwer: 'HARD',
 };
 
 export function RecipeDetailClient({
@@ -197,15 +204,20 @@ export function RecipeDetailClient({
     };
 
     const handleTagClick = (tag: string) => {
-        router.push(`/?tag=${encodeURIComponent(tag)}`);
+        router.push(buildRecipeFilterHref({ tags: [tag] }));
     };
 
     const handleCategoryClick = (category: string) => {
-        router.push(`/?category=${encodeURIComponent(category)}`);
+        router.push(buildRecipeFilterHref({ cuisines: [category] }));
     };
 
     const handleDifficultyClick = (difficulty: string) => {
-        router.push(`/?difficulty=${encodeURIComponent(difficulty)}`);
+        const filterValue = difficultyFilterMap[difficulty];
+        if (!filterValue) {
+            return;
+        }
+
+        router.push(buildRecipeFilterHref({ difficulty: [filterValue] }));
     };
 
     const handlePrint = () => {

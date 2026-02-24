@@ -4,6 +4,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import Link from 'next/link';
 
 import { HeaderSearch } from '@/components/search/HeaderSearch';
+import { buildRecipeFilterHref } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -154,27 +155,33 @@ export function Header() {
                                         })}
                                     >
                                         {categories.map((category) => (
-                                            <DropdownMenu.Item
-                                                key={category.name}
-                                                className={css({
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '2',
-                                                    padding: '3',
-                                                    borderRadius: 'lg',
-                                                    cursor: 'pointer',
-                                                    fontSize: 'sm',
-                                                    fontFamily: 'body',
-                                                    outline: 'none',
-                                                    transition: 'all 150ms ease',
-                                                    _hover: {
-                                                        background: 'rgba(224,123,83,0.08)',
-                                                        transform: 'translateX(2px)',
-                                                    },
-                                                })}
-                                            >
-                                                <span>{category.icon}</span>
-                                                <span>{category.name}</span>
+                                            <DropdownMenu.Item key={category.name} asChild>
+                                                <Link
+                                                    href={buildRecipeFilterHref({
+                                                        cuisines: [category.name],
+                                                    })}
+                                                    className={css({
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '2',
+                                                        padding: '3',
+                                                        borderRadius: 'lg',
+                                                        cursor: 'pointer',
+                                                        fontSize: 'sm',
+                                                        fontFamily: 'body',
+                                                        outline: 'none',
+                                                        transition: 'all 150ms ease',
+                                                        textDecoration: 'none',
+                                                        color: 'text',
+                                                        _hover: {
+                                                            background: 'rgba(224,123,83,0.08)',
+                                                            transform: 'translateX(2px)',
+                                                        },
+                                                    })}
+                                                >
+                                                    <span>{category.icon}</span>
+                                                    <span>{category.name}</span>
+                                                </Link>
                                             </DropdownMenu.Item>
                                         ))}
                                     </div>

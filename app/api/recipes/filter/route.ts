@@ -47,6 +47,16 @@ export async function GET(request: NextRequest) {
     try {
         const filters = parseRecipeFilterParams(new URL(request.url).searchParams);
         log.debug('Parsed filters', { filters });
+
+        const sampleRecipes = await prisma.recipe.findMany({
+            where: { publishedAt: { not: null } },
+            take: 5,
+            select: { title: true, category: { select: { name: true } } },
+        });
+        log.debug('Sample recipe categories', {
+            recipes: sampleRecipes.map((r) => ({ title: r.title, category: r.category?.name })),
+        });
+
         const {
             query,
             tags = [],

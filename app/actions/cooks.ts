@@ -16,9 +16,20 @@ export interface CookImageData {
     };
 }
 
-export async function fetchRecipeCookImages(recipeId: string): Promise<CookImageData[]> {
+export async function fetchRecipeCookImages(slugOrId: string): Promise<CookImageData[]> {
+    const recipe = await prisma.recipe.findFirst({
+        where: {
+            OR: [{ slug: slugOrId }, { id: slugOrId }],
+        },
+        select: { id: true },
+    });
+
+    if (!recipe) {
+        return [];
+    }
+
     const images = await prisma.cookImage.findMany({
-        where: { recipeId },
+        where: { recipeId: recipe.id },
         orderBy: { createdAt: 'desc' },
         include: {
             user: {

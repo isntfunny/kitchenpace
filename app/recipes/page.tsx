@@ -8,10 +8,11 @@ import { RecipeSearchClient } from '@/components/search/RecipeSearchClient';
 import { parseRecipeFilterParams } from '@/lib/recipeFilters';
 
 type RecipesPageProps = {
-    searchParams?: Record<string, string | string[] | undefined>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const toURLSearchParams = (params?: RecipesPageProps['searchParams']) => {
+const toURLSearchParams = async (searchParams: RecipesPageProps['searchParams']) => {
+    const params = await searchParams;
     const search = new URLSearchParams();
 
     if (!params) {
@@ -38,7 +39,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
         fetchFilterCategories(),
     ]);
 
-    const initialFilters = parseRecipeFilterParams(toURLSearchParams(searchParams));
+    const initialFilters = parseRecipeFilterParams(await toURLSearchParams(searchParams));
 
     return (
         <PageShell>

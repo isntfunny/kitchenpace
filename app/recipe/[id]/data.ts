@@ -48,6 +48,7 @@ export interface Activity {
 
 export interface Recipe {
     id: string;
+    slug: string;
     title: string;
     description: string;
     image: string;
@@ -113,6 +114,7 @@ export const activities: Record<string, Activity[]> = {
 export const recipes: Record<string, Recipe> = {
     'pasta-aglio': {
         id: 'pasta-aglio',
+        slug: 'pasta-aglio',
         title: 'Pasta Aglio e Olio',
         description: 'Ein klassisches italienisches Gericht mit Knoblauch, Olivenöl und Chili.',
         image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800&q=80',
@@ -199,6 +201,7 @@ export const recipes: Record<string, Recipe> = {
     },
     entenbrust: {
         id: 'entenbrust',
+        slug: 'entenbrust',
         title: 'Entenbrust mit Spätzle und Soße',
         description:
             'Klassisches deutsches Gericht: Rosa gebratene Entenbrust mit hausgemachten Spätzle und einer reichhaltigen Rotweinsoße.',
@@ -381,6 +384,7 @@ export const recipes: Record<string, Recipe> = {
     },
     'parallel-duck': {
         id: 'parallel-duck',
+        slug: 'parallel-duck',
         title: 'Duck Flow Demo',
         description:
             'Mocked cooking workflow mit drei parallelen Vorbereitungen, die in einem Schlussschritt zusammenlaufen.',

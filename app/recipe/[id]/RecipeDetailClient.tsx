@@ -54,13 +54,14 @@ export function RecipeDetailClient({
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
     const [servings, setServings] = useState(recipe.servings);
+    const initialViewer = recipe.viewer ?? null;
     const [favoriteState, setFavoriteState] = useState({
-        isFavorite: recipe.viewer?.isFavorite ?? false,
+        isFavorite: initialViewer?.isFavorite ?? false,
         count: recipe.favoriteCount ?? 0,
     });
-    const [isFollowing, setIsFollowing] = useState(recipe.viewer?.isFollowingAuthor ?? false);
+    const [isFollowing, setIsFollowing] = useState(initialViewer?.isFollowingAuthor ?? false);
     const [authorFollowers, setAuthorFollowers] = useState(author?.followerCount ?? 0);
-    const [viewerRating, setViewerRating] = useState<number | null>(recipe.viewer?.rating ?? null);
+    const [viewerRating, setViewerRating] = useState<number | null>(initialViewer?.rating ?? null);
     const [averageRating, setAverageRating] = useState(recipe.rating ?? 0);
     const [ratingCount, setRatingCount] = useState(recipe.ratingCount ?? 0);
     const [isFavoritePending, startFavoriteTransition] = useTransition();
@@ -69,10 +70,60 @@ export function RecipeDetailClient({
     const [isCookPending, startCookTransition] = useTransition();
     const [showCookDialog, setShowCookDialog] = useState(false);
     const [cookCount, setCookCount] = useState(recipe.cookCount ?? 0);
-    const [hasCooked, setHasCooked] = useState(recipe.viewer?.hasCooked ?? false);
+    const [hasCooked, setHasCooked] = useState(initialViewer?.hasCooked ?? false);
     const [uploadedImage, setUploadedImage] = useState<File | null>(null);
     const [cookNotes, setCookNotes] = useState('');
-    const viewerId = recipe.viewer?.id ?? null;
+    const [viewerId, setViewerId] = useState(initialViewer?.id ?? null);
+
+    useEffect(() => {
+        let active = true;
+
+        const loadViewer = async () => {
+            try {
+                const response = await fetch(`/api/recipe/${recipe.slug}/viewer`, {
+                    credentials: 'include',
+                });
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = (await response.json()) as { viewer: Recipe['viewer'] | null };
+                if (!active) {
+                    return;
+                }
+
+                const viewer = data.viewer;
+                if (!viewer) {
+                    setViewerId(null);
+                    setIsFollowing(false);
+                    setViewerRating(null);
+                    setHasCooked(false);
+                    setFavoriteState((state) => ({
+                        ...state,
+                        isFavorite: false,
+                    }));
+                    return;
+                }
+
+                setViewerId(viewer.id);
+                setIsFollowing(viewer.isFollowingAuthor ?? false);
+                setViewerRating(viewer.rating ?? null);
+                setHasCooked(viewer.hasCooked ?? false);
+                setFavoriteState((state) => ({
+                    ...state,
+                    isFavorite: viewer.isFavorite ?? false,
+                }));
+            } catch (error) {
+                console.error('Failed to load viewer info', error);
+            }
+        };
+
+        loadViewer();
+
+        return () => {
+            active = false;
+        };
+    }, [recipe.slug]);
 
     // Recipe tabs context for tracking views
     const { addToRecent } = useRecipeTabs();

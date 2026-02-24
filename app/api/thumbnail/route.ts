@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 
+import { createLogger } from '@/lib/logger';
 import { getFileBuffer, BUCKET, s3Client } from '@/lib/s3';
+
+const log = createLogger('thumbnail');
 
 interface ThumbnailParams {
     width?: number;
@@ -112,7 +115,12 @@ export async function GET(request: NextRequest) {
             },
         });
     } catch (error) {
-        console.error('Thumbnail error:', error);
+        log.error('Thumbnail generation failed', {
+            key,
+            width,
+            height,
+            error: error instanceof Error ? error.message : String(error),
+        });
         return NextResponse.json({ error: 'Failed to process image' }, { status: 500 });
     }
 }

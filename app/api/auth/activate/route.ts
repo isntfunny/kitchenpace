@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 
+import { createLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
+
+const log = createLogger('auth-activate');
 
 export async function POST(request: Request) {
     try {
@@ -33,12 +36,16 @@ export async function POST(request: Request) {
             },
         });
 
+        log.info('User activated', { userId: user.id, email: user.email });
+
         return NextResponse.json({
             success: true,
             message: 'Konto erfolgreich aktiviert!',
         });
     } catch (error) {
-        console.error('Activation error:', error);
+        log.error('Activation failed', {
+            error: error instanceof Error ? error.message : String(error),
+        });
         return NextResponse.json({ message: 'Ein Fehler ist aufgetreten' }, { status: 500 });
     }
 }

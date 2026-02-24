@@ -3,7 +3,10 @@ import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 
 import { sendPasswordResetEmail } from '@/lib/email';
+import { createLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
+
+const log = createLogger('auth-forgot-password');
 
 export async function POST(request: Request) {
     try {
@@ -41,12 +44,16 @@ export async function POST(request: Request) {
 
         await sendPasswordResetEmail(user.email!, resetToken);
 
+        log.info('Password reset requested', { userId: user.id, email: user.email });
+
         return NextResponse.json(
             { message: 'Falls ein Konto mit dieser E-Mail existiert, wurde eine E-Mail gesendet.' },
             { status: 200 },
         );
     } catch (error) {
-        console.error('Forgot password error:', error);
+        log.error('Forgot password failed', {
+            error: error instanceof Error ? error.message : String(error),
+        });
         return NextResponse.json({ error: 'Ein Fehler ist aufgetreten' }, { status: 500 });
     }
 }

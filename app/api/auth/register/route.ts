@@ -4,7 +4,10 @@ import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
 
 import { sendActivationEmail } from '@/lib/email';
+import { createLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
+
+const log = createLogger('auth-register');
 
 export async function POST(request: Request) {
     try {
@@ -53,6 +56,8 @@ export async function POST(request: Request) {
 
             await sendActivationEmail(normalizedEmail, activationToken);
 
+            log.info('Resent activation email', { email: normalizedEmail });
+
             return NextResponse.json({
                 success: true,
                 message: 'Aktivierungsmail erneut gesendet',
@@ -82,12 +87,16 @@ export async function POST(request: Request) {
 
         await sendActivationEmail(normalizedEmail, activationToken);
 
+        log.info('New user registered', { userId: user.id, email: normalizedEmail });
+
         return NextResponse.json({
             success: true,
             message: 'Bitte aktiviere dein Konto über den Link in der E-Mail',
         });
     } catch (error) {
-        console.error('Registration error:', error);
+        log.error('Registration failed', {
+            error: error instanceof Error ? error.message : String(error),
+        });
         return NextResponse.json({ message: 'Ein Fehler ist aufgetreten' }, { status: 500 });
     }
 }

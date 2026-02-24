@@ -1,3 +1,7 @@
+import { createLogger } from './logger';
+
+const log = createLogger('email');
+
 interface SendEmailOptions {
     to: string;
     subject: string;
@@ -6,31 +10,22 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions): Promise<boolean> {
     const emailHost = process.env.EMAIL_HOST;
-    const emailPort = process.env.EMAIL_PORT;
     const emailUser = process.env.EMAIL_USER;
     const emailFrom = process.env.EMAIL_FROM;
     const hasSmtpConfig = Boolean(emailHost && emailUser && process.env.EMAIL_PASS);
 
-    console.log('[EMAIL] Starting email send...');
-    console.log('[EMAIL] Environment:', process.env.NODE_ENV);
-    console.log('[EMAIL] EMAIL_HOST:', emailHost || '(not set)');
-    console.log('[EMAIL] EMAIL_PORT:', emailPort || '587 (default)');
-    console.log('[EMAIL] EMAIL_USER:', emailUser || '(not set)');
-    console.log('[EMAIL] EMAIL_FROM:', emailFrom || '(not set)');
-    console.log('[EMAIL] To:', to);
-    console.log('[EMAIL] Subject:', subject);
+    log.debug('Starting email send', { to, subject, hasSmtpConfig, emailHost, emailFrom });
 
     if (!hasSmtpConfig) {
-        console.log('[EMAIL] === No SMTP configured - Email logged only ===');
-        console.log(`[EMAIL] Body preview: ${html.substring(0, 200)}...`);
-        console.log('[EMAIL] ==============================================');
+        log.warn('No SMTP configured - email logged only', {
+            to,
+            bodyPreview: html.substring(0, 200),
+        });
         return true;
     }
 
     try {
         const nodemailer = await import('nodemailer');
-
-        console.log('[EMAIL] Creating transporter...');
 
         const transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST,
@@ -42,11 +37,8 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
             },
         });
 
-        console.log('[EMAIL] Verifying transporter connection...');
         await transporter.verify();
-        console.log('[EMAIL] Transporter verified successfully');
 
-        console.log('[EMAIL] Sending email...');
         const result = await transporter.sendMail({
             from: process.env.EMAIL_FROM,
             to,
@@ -54,17 +46,14 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
             html,
         });
 
-        console.log('[EMAIL] Email sent successfully!');
-        console.log('[EMAIL] Message ID:', result.messageId);
-        console.log('[EMAIL] Response:', result.response);
+        log.info('Email sent successfully', { to, messageId: result.messageId });
 
         return true;
     } catch (error) {
-        console.error('[EMAIL] Failed to send email:', error);
-        console.error(
-            '[EMAIL] Error details:',
-            JSON.stringify(error, Object.getOwnPropertyNames(error)),
-        );
+        log.error('Failed to send email', {
+            to,
+            error: error instanceof Error ? error.message : String(error),
+        });
         return false;
     }
 }

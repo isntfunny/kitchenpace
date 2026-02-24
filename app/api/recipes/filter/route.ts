@@ -2,8 +2,11 @@ import type { Prisma } from '@prisma/client';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import type { RecipeCardData } from '@/app/actions/recipes';
+import { createLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 import { parseRecipeFilterParams, RECIPE_FILTER_DEFAULT_LIMIT } from '@/lib/recipeFilters';
+
+const log = createLogger('filter');
 
 const TOTAL_TIME_MAX = 180;
 
@@ -47,8 +50,11 @@ function ensureValidDifficulty(value: string): value is 'EASY' | 'MEDIUM' | 'HAR
 }
 
 export async function GET(request: NextRequest) {
+    log.debug('Filter request received', { url: request.url });
+
     try {
         const filters = parseRecipeFilterParams(new URL(request.url).searchParams);
+        log.debug('Parsed filters', { filters });
         const {
             query,
             tags = [],
@@ -216,6 +222,8 @@ export async function GET(request: NextRequest) {
 
         const skip = Math.max(0, page - 1) * limit;
 
+        log.debug('Executing query', { where, skip, limit });
+
         const [recipes, total] = await Promise.all([
             prisma.recipe.findMany({
                 where,
@@ -236,9 +244,13 @@ export async function GET(request: NextRequest) {
             },
         };
 
+        log.debug('Filter response', { recipeCount: recipes.length, total, page, limit });
+
         return NextResponse.json(payload);
     } catch (error) {
-        console.error('recipe filter api error', error);
+        log.error('Filter request failed', {
+            error: error instanceof Error ? error.message : String(error),
+        });
         return NextResponse.json({ error: 'Fehler beim Laden der Rezepte' }, { status: 500 });
     }
 }

@@ -145,6 +145,7 @@ model User {
   viewHistory    UserViewHistory[]
   cookHistory    UserCookHistory[]
   pinnedFavorites PinnedFavorite[]
+  cookImages     CookImage[]
 }
 
 model Profile {
@@ -216,6 +217,7 @@ model Recipe {
   userViewHistory UserViewHistory[]
   cookHistory  UserCookHistory[]
   pinnedFavorites PinnedFavorite[]
+  cookImages   CookImage[]
 
   @@index([authorId])
   @@index([categoryId])
@@ -501,6 +503,8 @@ model UserCookHistory {
   cookedAt  DateTime @default(now())
   servings  Int?
   notes     String?
+  imageUrl  String?  // User's photo of the cooked meal
+  imageKey  String?  // S3 key for the image
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
@@ -508,6 +512,28 @@ model UserCookHistory {
   @@index([userId])
   @@index([recipeId])
   @@index([userId, cookedAt])
+}
+
+// ============================================
+// COOK IMAGES (User-submitted photos)
+// ============================================
+
+model CookImage {
+  id          String   @id @default(cuid())
+  recipeId    String
+  userId      String
+  imageUrl    String
+  imageKey    String?  // S3 key for the image
+  blurhash    String?
+  caption     String?
+  createdAt   DateTime @default(now())
+
+  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 // ============================================

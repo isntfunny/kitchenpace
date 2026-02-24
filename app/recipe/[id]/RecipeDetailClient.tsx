@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useTransition } from 'react';
 
-import { rateRecipeAction, toggleFavoriteAction, toggleFollowAction } from '@/app/actions/social';
+import {
+    rateRecipeAction,
+    toggleFavoriteAction,
+    toggleFollowAction,
+    markRecipeCookedAction,
+} from '@/app/actions/social';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { SmartImage } from '@/components/atoms/SmartImage';
@@ -38,6 +43,12 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
     const [isFavoritePending, startFavoriteTransition] = useTransition();
     const [isFollowPending, startFollowTransition] = useTransition();
     const [isRatingPending, startRatingTransition] = useTransition();
+    const [isCookPending, startCookTransition] = useTransition();
+    const [showCookDialog, setShowCookDialog] = useState(false);
+    const [cookCount, setCookCount] = useState(recipe.cookCount ?? 0);
+    const [hasCooked, setHasCooked] = useState(recipe.viewer?.hasCooked ?? false);
+    const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+    const [cookNotes, setCookNotes] = useState('');
     const viewerId = recipe.viewer?.id ?? null;
 
     // Recipe tabs context for tracking views
@@ -144,6 +155,45 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                 setViewerRating(result.rating);
                 setAverageRating(result.average);
                 setRatingCount(result.count);
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    };
+
+    const handleMarkCooked = () => {
+        if (!requireAuth()) return;
+        setShowCookDialog(true);
+    };
+
+    const handleSubmitCook = async () => {
+        if (!requireAuth()) return;
+
+        startCookTransition(async () => {
+            try {
+                const imageBuffer = uploadedImage
+                    ? Buffer.from(await uploadedImage.arrayBuffer())
+                    : undefined;
+
+                const result = await markRecipeCookedAction(recipe.id, {
+                    notes: cookNotes || undefined,
+                    imageData: imageBuffer
+                        ? {
+                              buffer: imageBuffer,
+                              filename: uploadedImage!.name,
+                              contentType: uploadedImage!.type,
+                          }
+                        : undefined,
+                });
+
+                if (result.hasImage) {
+                    router.refresh();
+                }
+                setHasCooked(true);
+                setCookCount(result.cookCount);
+                setShowCookDialog(false);
+                setUploadedImage(null);
+                setCookNotes('');
             } catch (error) {
                 console.error(error);
             }
@@ -423,6 +473,14 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                                 >
                                     {favoriteState.isFavorite ? '❤️ Favorit' : '♡ Speichern'} ·{' '}
                                     {favoriteState.count}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={hasCooked ? 'secondary' : 'primary'}
+                                    onClick={handleMarkCooked}
+                                    disabled={isCookPending}
+                                >
+                                    {hasCooked ? '✅ Gekocht' : '🍳 Gekocht'} · {cookCount}
                                 </Button>
                                 <Button type="button" variant="ghost" onClick={handlePrint}>
                                     🖨️ Drucken
@@ -824,6 +882,126 @@ export function RecipeDetailClient({ recipe, author, recipeActivities }: RecipeD
                     </div>
                 )}
             </main>
+
+            {showCookDialog && (
+                <div
+                    className={css({
+                        position: 'fixed',
+                        inset: 0,
+                        bg: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                    })}
+                    onClick={() => setShowCookDialog(false)}
+                >
+                    <div
+                        className={css({
+                            bg: 'white',
+                            borderRadius: '2xl',
+                            p: '6',
+                            maxW: '400px',
+                            w: '90%',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                        })}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2
+                            className={css({
+                                fontSize: 'xl',
+                                fontWeight: '700',
+                                fontFamily: 'heading',
+                                mb: '4',
+                            })}
+                        >
+                            🍳 Rezept als gekocht markieren
+                        </h2>
+
+                        <div className={css({ mb: '4' })}>
+                            <label
+                                className={css({
+                                    display: 'block',
+                                    fontSize: 'sm',
+                                    fontWeight: '500',
+                                    mb: '2',
+                                })}
+                            >
+                                Foto hochladen (optional)
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setUploadedImage(e.target.files?.[0] ?? null)}
+                                className={css({
+                                    w: 'full',
+                                    p: '2',
+                                    border: '1px solid',
+                                    borderColor: 'border',
+                                    borderRadius: 'md',
+                                })}
+                            />
+                            {uploadedImage && (
+                                <p
+                                    className={css({
+                                        fontSize: 'sm',
+                                        color: 'text-muted',
+                                        mt: '1',
+                                    })}
+                                >
+                                    {uploadedImage.name}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className={css({ mb: '4' })}>
+                            <label
+                                className={css({
+                                    display: 'block',
+                                    fontSize: 'sm',
+                                    fontWeight: '500',
+                                    mb: '2',
+                                })}
+                            >
+                                Notizen (optional)
+                            </label>
+                            <textarea
+                                value={cookNotes}
+                                onChange={(e) => setCookNotes(e.target.value)}
+                                placeholder="Wie war es? Änderungen am Rezept?"
+                                className={css({
+                                    w: 'full',
+                                    p: '3',
+                                    border: '1px solid',
+                                    borderColor: 'border',
+                                    borderRadius: 'md',
+                                    fontFamily: 'body',
+                                    minH: '80px',
+                                    resize: 'vertical',
+                                })}
+                            />
+                        </div>
+
+                        <div className={flex({ gap: '3', justify: 'flex-end' })}>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setShowCookDialog(false)}
+                            >
+                                Abbrechen
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="primary"
+                                onClick={handleSubmitCook}
+                                disabled={isCookPending}
+                            >
+                                {isCookPending ? 'Speichern...' : 'Speichern'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -290,3 +290,112 @@ export async function toggleFollowAction(targetUserId: string, options?: { recip
         followerCount,
     };
 }
+
+export async function markRecipeCookedAction(
+    recipeId: string,
+    options?: {
+        servings?: number;
+        notes?: string;
+        imageData?: {
+            buffer: Buffer;
+            filename: string;
+            contentType: string;
+        };
+    },
+) {
+    const viewer = await requireAuth('markRecipeCookedAction');
+
+    const recipe = await prisma.recipe.findUnique({
+        where: { id: recipeId },
+        select: { id: true, slug: true, title: true, authorId: true, cookCount: true },
+    });
+
+    if (!recipe) {
+        throw new Error('RECIPE_NOT_FOUND');
+    }
+
+    let imageUrl: string | undefined;
+    let imageKey: string | undefined;
+
+    if (options?.imageData) {
+        const { uploadFile } = await import('@/lib/s3');
+        const result = await uploadFile(
+            options.imageData.buffer,
+            options.imageData.filename,
+            options.imageData.contentType,
+            'cook',
+        );
+        imageUrl = result.url;
+        imageKey = result.key;
+    }
+
+    const hasImage = Boolean(imageUrl);
+
+    const cookHistory = await prisma.userCookHistory.create({
+        data: {
+            userId: viewer.id,
+            recipeId,
+            servings: options?.servings,
+            notes: options?.notes,
+            imageUrl,
+            imageKey,
+        },
+    });
+
+    if (hasImage) {
+        await prisma.cookImage.create({
+            data: {
+                userId: viewer.id,
+                recipeId,
+                imageUrl: imageUrl!,
+                imageKey,
+            },
+        });
+    }
+
+    await prisma.recipe.update({
+        where: { id: recipeId },
+        data: {
+            cookCount: { increment: 1 },
+        },
+    });
+
+    await prisma.activityLog.create({
+        data: {
+            userId: viewer.id,
+            type: ActivityType.RECIPE_COOKED,
+            targetId: recipeId,
+            targetType: 'recipe',
+            metadata: {
+                servings: options?.servings,
+                notes: options?.notes,
+                hasImage: Boolean(imageUrl),
+            },
+        },
+    });
+
+    if (recipe.authorId && recipe.authorId !== viewer.id) {
+        await prisma.notification.create({
+            data: {
+                userId: recipe.authorId,
+                type: NotificationType.RECIPE_LIKE,
+                title: 'Rezept gekocht',
+                message: `${viewer.name ?? 'Ein Koch'} hat ${recipe.title} gekocht${
+                    imageUrl ? ' und ein Foto geteilt' : ''
+                }`,
+                data: { recipeId, userId: viewer.id },
+            },
+        });
+    }
+
+    for (const path of buildRecipePaths(recipeId, recipe.slug)) {
+        revalidatePath(path);
+    }
+
+    return {
+        success: true,
+        cookId: cookHistory.id,
+        hasImage: Boolean(imageUrl),
+        cookCount: (recipe.cookCount ?? 0) + 1,
+    };
+}

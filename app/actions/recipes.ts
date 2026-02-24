@@ -142,6 +142,7 @@ export interface RecipeDetailData {
     } | null;
     favoriteCount: number;
     ratingCount: number;
+    cookCount: number;
     viewer?: {
         id: string;
         isFavorite: boolean;
@@ -149,6 +150,7 @@ export interface RecipeDetailData {
         isFollowingAuthor: boolean;
         canFollow: boolean;
         isAuthor: boolean;
+        hasCooked: boolean;
     };
 }
 
@@ -202,6 +204,11 @@ export async function fetchRecipeBySlug(
                         },
                     })
                   : Promise.resolve(null),
+              viewerId
+                  ? prisma.userCookHistory.findFirst({
+                        where: { recipeId: recipe.id, userId: viewerId },
+                    })
+                  : Promise.resolve(null),
           ])
         : null;
 
@@ -210,7 +217,7 @@ export async function fetchRecipeBySlug(
         viewerPromise,
     ]);
 
-    const [favorite, rating, follow] = viewerData ?? [];
+    const [favorite, rating, follow, cookHistory] = viewerData ?? [];
 
     const difficultyMap: Record<string, 'Einfach' | 'Mittel' | 'Schwer'> = {
         EASY: 'Einfach',
@@ -255,6 +262,7 @@ export async function fetchRecipeBySlug(
             : null,
         favoriteCount,
         ratingCount: recipe.ratingCount ?? 0,
+        cookCount: recipe.cookCount ?? 0,
         viewer: viewerId
             ? {
                   id: viewerId,
@@ -263,6 +271,7 @@ export async function fetchRecipeBySlug(
                   isFollowingAuthor: Boolean(follow),
                   canFollow: recipe.authorId !== viewerId,
                   isAuthor: recipe.authorId === viewerId,
+                  hasCooked: Boolean(cookHistory),
               }
             : undefined,
     };

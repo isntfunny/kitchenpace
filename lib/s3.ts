@@ -13,13 +13,14 @@ const s3Client = new S3Client({
 
 const BUCKET = process.env.S3_BUCKET || 'kitchenpace';
 
-export type UploadType = 'profile' | 'recipe' | 'comment';
+export type UploadType = 'profile' | 'recipe' | 'comment' | 'cook';
 
 const getFolder = (type: UploadType): string => {
     const folders: Record<UploadType, string> = {
         profile: 'profiles',
         recipe: 'recipes',
         comment: 'comments',
+        cook: 'cooks',
     };
     return folders[type];
 };

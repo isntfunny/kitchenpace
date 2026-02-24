@@ -63,6 +63,7 @@ export interface Recipe {
     authorId: string;
     favoriteCount?: number;
     ratingCount?: number;
+    cookCount?: number;
     viewer?: {
         id: string;
         isFavorite: boolean;
@@ -70,6 +71,7 @@ export interface Recipe {
         isFollowingAuthor: boolean;
         canFollow: boolean;
         isAuthor: boolean;
+        hasCooked: boolean;
     };
 }
 

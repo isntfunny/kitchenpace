@@ -3,10 +3,11 @@ import { NextResponse } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_request: Request, { params }: Params) {
-    if (!params?.id) {
+    const resolvedParams = await params;
+    if (!resolvedParams?.id) {
         return NextResponse.json({ viewer: null });
     }
 
@@ -19,7 +20,7 @@ export async function GET(_request: Request, { params }: Params) {
 
     const recipe = await prisma.recipe.findFirst({
         where: {
-            OR: [{ slug: params.id }, { id: params.id }],
+            OR: [{ slug: resolvedParams.id }, { id: resolvedParams.id }],
             publishedAt: { not: null },
         },
         select: {

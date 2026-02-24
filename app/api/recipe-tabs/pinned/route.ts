@@ -1,41 +1,9 @@
 import { NextResponse } from 'next/server';
 
+import { fetchPinnedEntries, markHistoryPinned, MAX_PINNED } from '@/app/api/recipe-tabs/helpers';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { logAuth } from '@/lib/auth-logger';
 import { prisma } from '@/lib/prisma';
-
-const MAX_PINNED = 3;
-
-async function buildPinnedResponse(userId: string) {
-    const pinnedEntries = await prisma.pinnedFavorite.findMany({
-        where: { userId },
-        include: {
-            recipe: {
-                select: {
-                    id: true,
-                    title: true,
-                    slug: true,
-                    imageUrl: true,
-                    prepTime: true,
-                    cookTime: true,
-                    difficulty: true,
-                },
-            },
-        },
-        orderBy: { position: 'asc' },
-    });
-
-    return pinnedEntries.map((entry) => ({
-        id: entry.recipe.id,
-        title: entry.recipe.title,
-        slug: entry.recipe.slug,
-        imageUrl: entry.recipe.imageUrl,
-        prepTime: entry.recipe.prepTime,
-        cookTime: entry.recipe.cookTime,
-        difficulty: entry.recipe.difficulty,
-        position: entry.position,
-    }));
-}
 
 export async function GET() {
     const session = await getServerAuthSession('api/recipe-tabs/pinned:GET');
@@ -45,7 +13,7 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const pinned = await buildPinnedResponse(session.user.id);
+    const { entries: pinned } = await fetchPinnedEntries(session.user.id);
     return NextResponse.json(pinned);
 }
 
@@ -73,14 +41,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
     }
 
-    const existingPinned = await prisma.pinnedFavorite.findMany({
-        where: { userId: session.user.id },
-        orderBy: { position: 'asc' },
-    });
+    const { entries: existingPinned, source } = await fetchPinnedEntries(session.user.id);
 
-    if (existingPinned.some((entry) => entry.recipeId === recipeId)) {
-        const pinned = await buildPinnedResponse(session.user.id);
-        return NextResponse.json(pinned);
+    if (existingPinned.some((entry) => entry.id === recipeId)) {
+        return NextResponse.json(existingPinned);
     }
 
     if (existingPinned.length >= MAX_PINNED) {
@@ -90,15 +54,15 @@ export async function POST(request: Request) {
         );
     }
 
-    const usedSlots = new Set(existingPinned.map((entry) => entry.position));
-    const availablePosition = [0, 1, 2].find((slot) => !usedSlots.has(slot));
+    if (source === 'table') {
+        const usedSlots = new Set(existingPinned.map((entry) => entry.position));
+        const availablePosition = [0, 1, 2].find((slot) => !usedSlots.has(slot));
 
-    if (availablePosition === undefined) {
-        return NextResponse.json({ error: 'No pinned slots available' }, { status: 400 });
-    }
+        if (availablePosition === undefined) {
+            return NextResponse.json({ error: 'No pinned slots available' }, { status: 400 });
+        }
 
-    await prisma.$transaction(async (tx) => {
-        await tx.pinnedFavorite.create({
+        await prisma.pinnedFavorite.create({
             data: {
                 userId: session.user.id,
                 recipeId,
@@ -106,27 +70,12 @@ export async function POST(request: Request) {
             },
         });
 
-        const history = await tx.userViewHistory.findFirst({
-            where: { userId: session.user.id, recipeId },
-        });
+        await markHistoryPinned(session.user.id, recipeId, true);
+    } else {
+        await markHistoryPinned(session.user.id, recipeId, true);
+    }
 
-        if (history) {
-            await tx.userViewHistory.update({
-                where: { id: history.id },
-                data: { viewedAt: new Date() },
-            });
-        } else {
-            await tx.userViewHistory.create({
-                data: {
-                    userId: session.user.id,
-                    recipeId,
-                    viewedAt: new Date(),
-                },
-            });
-        }
-    });
-
-    const pinned = await buildPinnedResponse(session.user.id);
+    const { entries: pinned } = await fetchPinnedEntries(session.user.id);
 
     logAuth('info', 'POST /api/recipe-tabs/pinned: pinned recipe', {
         userId: session.user.id,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { fetchPinnedIds } from '@/app/api/recipe-tabs/helpers';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { logAuth } from '@/lib/auth-logger';
 import { prisma } from '@/lib/prisma';
@@ -7,14 +8,7 @@ import { prisma } from '@/lib/prisma';
 const MAX_RECENT = 5;
 
 async function loadRecentRecipes(userId: string) {
-    const pinnedIds = new Set(
-        (
-            await prisma.pinnedFavorite.findMany({
-                where: { userId },
-                select: { recipeId: true },
-            })
-        ).map((entry) => entry.recipeId),
-    );
+    const pinnedIds = await fetchPinnedIds(userId);
 
     const recentViews = await prisma.userViewHistory.findMany({
         where: { userId },

@@ -1,20 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 
 import { PageShell } from '@/components/layouts/PageShell';
 import { css } from 'styled-system/css';
 
 export default function RegisterPage() {
-    const router = useRouter();
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -47,14 +45,13 @@ export default function RegisterPage() {
                 return;
             }
 
-            await signIn('credentials', {
-                email,
-                password,
-                redirect: false,
-            });
-
-            router.push('/');
-            router.refresh();
+            setSuccessMessage(
+                data.message || 'Registrierung erfolgreich – bitte prüfe deine E-Mails.',
+            );
+            setEmail('');
+            setName('');
+            setPassword('');
+            setConfirmPassword('');
         } catch {
             setError('Ein Fehler ist aufgetreten');
         } finally {
@@ -257,6 +254,12 @@ export default function RegisterPage() {
                         >
                             {loading ? 'Registrierung...' : 'Jetzt registrieren'}
                         </button>
+
+                        {successMessage && (
+                            <p className={css({ color: 'green.600', fontSize: 'sm' })}>
+                                {successMessage}
+                            </p>
+                        )}
                     </form>
 
                     <div className={css({ marginTop: '6', textAlign: 'center' })}>

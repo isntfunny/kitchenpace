@@ -65,7 +65,13 @@ export async function fetchFilterIngredients(limit = 24): Promise<string[]> {
 
 export async function fetchFilterCategories(): Promise<CategoryOption[]> {
     const categories = await prisma.category.findMany({
-        where: { recipes: { some: { publishedAt: { not: null } } } },
+        where: {
+            recipes: {
+                some: {
+                    recipe: { publishedAt: { not: null } },
+                },
+            },
+        },
         orderBy: { name: 'asc' },
         select: { slug: true, name: true },
     });

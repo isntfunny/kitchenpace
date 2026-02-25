@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 
 import { Heading, Text } from '@/components/atoms/Typography';
 import { PageShell } from '@/components/layouts/PageShell';
-import { getAllCategories, getAllTags } from '@/components/recipe/actions';
+import { getAllCategories, getAllTags, getTagFacets } from '@/components/recipe/actions';
 import { RecipeForm } from '@/components/recipe/RecipeForm';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { css } from 'styled-system/css';
@@ -23,7 +23,11 @@ export default async function CreateRecipePage() {
         redirect('/auth/signin');
     }
 
-    const [categories, tags] = await Promise.all([getAllCategories(), getAllTags()]);
+    const [categories, tags, tagFacets] = await Promise.all([
+        getAllCategories(),
+        getAllTags(),
+        getTagFacets(),
+    ]);
 
     return (
         <PageShell>
@@ -37,7 +41,12 @@ export default async function CreateRecipePage() {
                     </Text>
                 </div>
                 <div className={formWrapperClass}>
-                    <RecipeForm categories={categories} tags={tags} authorId={session.user.id} />
+                    <RecipeForm
+                        categories={categories}
+                        tags={tags}
+                        tagFacets={tagFacets}
+                        authorId={session.user.id}
+                    />
                 </div>
             </div>
         </PageShell>

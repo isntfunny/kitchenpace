@@ -293,6 +293,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                             <FilterSidebar
                                 filters={filters}
                                 options={filterOptions}
+                                facets={facets}
                                 onFiltersChange={updateFilters}
                             />
                         </div>

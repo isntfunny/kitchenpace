@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
+import { useEffect, useMemo, useState } from 'react';
 
 import { FileUpload } from '@/components/features/FileUpload';
 import { css, cx } from 'styled-system/css';
@@ -9,6 +9,8 @@ import { grid, stack } from 'styled-system/patterns';
 
 import { searchIngredients } from '../recipe/actions';
 import { createIngredient, createRecipe } from '../recipe/createActions';
+
+import type { TagFacet } from './types';
 
 interface Category {
     id: string;
@@ -18,7 +20,7 @@ interface Category {
 interface Tag {
     id: string;
     name: string;
-    count: number;
+    count?: number;
 }
 
 interface IngredientSearchResult {
@@ -41,8 +43,11 @@ interface AddedIngredient {
 interface RecipeFormProps {
     categories: Category[];
     tags: Tag[];
+    tagFacets?: TagFacet[];
     authorId: string;
 }
+
+type TagWithCount = Tag & { count: number; selected: boolean };
 
 const formStackClass = stack({
     gap: '6',
@@ -51,6 +56,8 @@ const formStackClass = stack({
 const sectionStackClass = stack({
     gap: '3',
 });
+
+const normalizeTag = (value: string) => value.trim().toLowerCase();
 
 const tagSearchInputClass = css({
     width: '100%',
@@ -120,7 +127,7 @@ const tagCountZeroClass = css({
     fontWeight: '500',
 });
 
-export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
+export function RecipeForm({ categories, tags, tagFacets, authorId }: RecipeFormProps) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [imageUrl, setImageUrl] = useState('');
@@ -157,12 +164,29 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
         return () => clearTimeout(timer);
     }, [ingredientQuery]);
 
+    const tagFacetCountMap = useMemo(() => {
+        const map = new Map<string, number>();
+        tagFacets?.forEach((facet: TagFacet) => {
+            const normalized = normalizeTag(facet.key);
+            map.set(facet.key, facet.count);
+            map.set(normalized, facet.count);
+        });
+        return map;
+    }, [tagFacets]);
+
     const sortedTags = useMemo(() => {
         const normalizedQuery = tagQuery.toLowerCase().trim();
-        const tagPool = tags.map((tag) => ({
-            ...tag,
-            selected: selectedTags.includes(tag.id),
-        }));
+        const tagPool: TagWithCount[] = tags.map((tag) => {
+            const normalizedName = normalizeTag(tag.name);
+            const facetCount =
+                tagFacetCountMap.get(tag.name) ?? tagFacetCountMap.get(normalizedName);
+            const resolvedCount = facetCount ?? tag.count ?? 0;
+            return {
+                ...tag,
+                count: resolvedCount,
+                selected: selectedTags.includes(tag.id),
+            };
+        });
         const filtered = normalizedQuery
             ? tagPool.filter((tag) => tag.name.toLowerCase().includes(normalizedQuery))
             : tagPool;
@@ -173,7 +197,7 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
             if (a.count !== b.count) return b.count - a.count;
             return a.name.localeCompare(b.name);
         });
-    }, [selectedTags, tagQuery, tags]);
+    }, [selectedTags, tagQuery, tags, tagFacetCountMap]);
 
     const handleAddIngredient = (ing: IngredientSearchResult) => {
         setIngredients([

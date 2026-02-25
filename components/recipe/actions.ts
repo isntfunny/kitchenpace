@@ -1,6 +1,9 @@
 'use server';
 
+import { opensearchClient, OPENSEARCH_INDEX } from '@/lib/opensearch/client';
 import { prisma } from '@/lib/prisma';
+
+import type { TagFacet } from './types';
 
 export interface IngredientSearchResult {
     id: string;
@@ -54,3 +57,29 @@ export async function getAllTags() {
         count: tag._count.recipes,
     }));
 }
+
+export async function getTagFacets(): Promise<TagFacet[]> {
+    const response = await opensearchClient.search({
+        index: OPENSEARCH_INDEX,
+        body: {
+            size: 0,
+            aggs: {
+                tags: {
+                    terms: {
+                        field: 'tags',
+                        size: 120,
+                    },
+                },
+            },
+        },
+    });
+
+    type TagBucket = { key: string | number; doc_count: number };
+    const buckets = response.body.aggregations?.tags?.buckets ?? [];
+    return buckets.map((bucket: TagBucket) => ({
+        key: String(bucket.key),
+        count: bucket.doc_count,
+    }));
+}
+
+export type { TagFacet };

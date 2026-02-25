@@ -1,8 +1,8 @@
-'use client';
+import { saveAs } from 'file-saver';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { useMemo, useRef, useState } from 'react';
 
-import { useMemo, useState, useRef } from 'react';
-
-import type { FlowNode, FlowEdge } from '@/app/recipe/[id]/data';
 import { css } from 'styled-system/css';
 
 const NODE_WIDTH = 200;
@@ -10,14 +10,23 @@ const NODE_HEIGHT = 100;
 const NODE_GAP_X = 80;
 const NODE_GAP_Y = 60;
 
+const LANES = [
+    { id: 'vorbereitung', label: 'Vorbereitung', color: '#e3f2fd', y: 100 },
+    { id: 'kochen', label: 'Kochen', color: '#fff3e0', y: 280 },
+    { id: 'backen', label: 'Backen', color: '#fce4ec', y: 460 },
+    { id: 'warten', label: 'Warten', color: '#f3e5f5', y: 640 },
+    { id: 'wuerzen', label: 'Würzen', color: '#e8f5e9', y: 820 },
+    { id: 'servieren', label: 'Servieren', color: '#ffebee', y: 1000 },
+];
+
 const getTypeEmoji = (type: string): string => {
     const emojis: Record<string, string> = {
         prep: '🔪',
-        cook: '🍳',
+        cook: '🔥',
         wait: '⏱️',
-        season: '🧂',
+        season: '🥘',
         combine: '🍽️',
-        serve: '✨',
+        serve: '🎉',
     };
     return emojis[type] || '📝';
 };
@@ -248,7 +257,7 @@ function NodeDetailModal({ node, isCompleted, onToggleComplete, onClose }: NodeD
                     borderRadius: '20px',
                     padding: '24px',
                     maxWidth: '400px',
-                    width: '100%',
+                    width: '100',
                     boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
                 })}
                 onClick={(e) => e.stopPropagation()}
@@ -326,7 +335,7 @@ function NodeDetailModal({ node, isCompleted, onToggleComplete, onClose }: NodeD
                             marginBottom: '16px',
                         })}
                     >
-                        <span>⏱️</span>
+                        ⏱️
                         <span>ca. {node.duration} Minuten</span>
                     </div>
                 )}
@@ -367,6 +376,7 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
     const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);
     const [lastCompleted, setLastCompleted] = useState<string | null>(null);
     const [isCookingMode, setIsCookingMode] = useState(false);
+    const [isZoomed, setIsZoomed] = useState(false);
 
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -390,15 +400,81 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
         });
     };
 
+    const handleExport = (format: 'png' | 'pdf') => {
+        if (!containerRef.current) return;
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        if (!context) return;
+
+        // Create a temporary container to render the flow
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.top = '-9999px';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.width = '100%';
+        tempContainer.style.height = 'auto';
+        tempContainer.style.backgroundColor = 'white';
+
+        document.body.appendChild(tempContainer);
+
+        // Clone the flow content
+        const clone = containerRef.current.cloneNode(true);
+        tempContainer.appendChild(clone);
+
+        // Wait for rendering
+        setTimeout(() => {
+            const { width, height } = tempContainer.getBoundingClientRect();
+            canvas.width = width * window.devicePixelRatio;
+            canvas.height = height * window.devicePixelRatio;
+
+            context.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            // Render the cloned content to canvas
+            html2canvas(clone, {
+                canvas: canvas,
+                scale: 2,
+                backgroundColor: 'white',
+            }).then((canvas) => {
+                if (format === 'png') {
+                    canvas.toBlob((blob) => {
+                        saveAs(blob, 'rezept-flow.png');
+                    });
+                } else {
+                    // Convert canvas to PDF
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF({
+                        orientation: 'l',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height],
+                    });
+                    pdf.addImage(imgData, 'PNG', 0, 0);
+                    pdf.save('rezept-flow.pdf');
+                }
+
+                // Clean up
+                document.body.removeChild(tempContainer);
+            });
+        }, 100);
+    };
+
+    const handleZoom = (zoomIn: boolean) => {
+        setIsZoomed(zoomIn);
+        // Implement zoom logic here - this would require more complex state management
+        // For now, we'll just toggle a class that could be used for zoom styles
+    };
+
     const bounds = useMemo(() => {
         if (nodes.length === 0)
             return { minX: 0, maxX: 0, minY: 0, maxY: 0, width: 600, height: 400 };
+
         const xs = nodes.map((n) => n.position.x);
         const ys = nodes.map((n) => n.position.y);
         const minX = Math.min(...xs);
         const maxX = Math.max(...xs) + NODE_WIDTH;
         const minY = Math.min(...ys);
         const maxY = Math.max(...ys) + NODE_HEIGHT;
+
         return {
             minX,
             maxX,
@@ -447,19 +523,110 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                         opacity: 0;
                     }
                 }
+                .lane-label {
+                    position: absolute;
+                    left: -40px;
+                    top: 50%;
+                    transform: translateY(-50%) rotate(-90deg);
+                    transform-origin: center;
+                    color: white;
+                    font-weight: 600;
+                    font-size: 12px;
+                    text-align: center;
+                    width: 200px;
+                    background: rgba(0, 0, 0, 0.3);
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    pointer-events: none;
+                }
+                .flow-controls {
+                    display: flex;
+                    gap: 8px;
+                    padding: 12px;
+                    background: white;
+                    border-bottom: 1px solid #eee;
+                }
+                .flow-controls button {
+                    padding: 8px 12px;
+                    border: 1px solid #ddd;
+                    background: white;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+                .flow-controls button:hover {
+                    background: #f5f5f5;
+                    border-color: #999;
+                }
+                .flow-controls button.active {
+                    background: #2196f3;
+                    color: white;
+                    border-color: #2196f3;
+                }
+                .mobile-controls {
+                    display: none;
+                }
+                @media (max-width: 768px) {
+                    .mobile-controls {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 12px;
+                    }
+                    .flow-controls {
+                        display: none;
+                    }
+                }
             `}</style>
 
-            <div
-                className={css({
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '16px 20px',
-                    backgroundColor: 'white',
-                    borderBottom: '1px solid #eee',
-                    flexShrink: 0,
-                })}
-            >
+            {/* Mobile Controls */}
+            <div className="mobile-controls">
+                <div>
+                    <div className={css({ fontSize: '14px', fontWeight: '600', color: '#333' })}>
+                        🗺️ Koch-Flow
+                    </div>
+                    <div className={css({ fontSize: '11px', color: '#666' })}>
+                        {completed.size} von {nodes.length} erledigt
+                    </div>
+                </div>
+                <div className={css({ display: 'flex', gap: '6px' })}>
+                    <button
+                        onClick={() => setIsCookingMode(!isCookingMode)}
+                        className={css({
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            border: isCookingMode ? '2px solid #4caf50' : '1px solid #ddd',
+                            backgroundColor: isCookingMode ? '#e8f5e9' : 'white',
+                            color: isCookingMode ? '#2e7d32' : '#666',
+                            fontSize: '11px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                        })}
+                    >
+                        {isCookingMode ? '✕' : '👨‍🦰'} Kochmodus
+                    </button>
+                    <button
+                        onClick={() => handleZoom(!isZoomed)}
+                        className={css({
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid #ddd',
+                            backgroundColor: 'white',
+                            color: '#666',
+                            fontSize: '11px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                        })}
+                    >
+                        {isZoomed ? '🔄' : '👁️'}
+                    </button>
+                </div>
+            </div>
+
+            {/* Desktop Controls */}
+            <div className="flow-controls">
                 <div>
                     <div className={css({ fontSize: '16px', fontWeight: '700', color: '#333' })}>
                         🗺️ Koch-Flow
@@ -520,7 +687,76 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                             },
                         })}
                     >
-                        {isCookingMode ? '✕' : '🍳'} Kochmodus
+                        {isCookingMode ? '✕' : '👨‍🦰'} Kochmodus
+                    </button>
+                    <button
+                        onClick={() => handleZoom(!isZoomed)}
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            border: '1px solid #ddd',
+                            backgroundColor: 'white',
+                            color: '#666',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            _hover: {
+                                transform: 'translateY(-1px)',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                            },
+                        })}
+                    >
+                        {isZoomed ? '🔄' : '👁️'} {isZoomed ? 'Zoom aus' : 'Zoom'}
+                    </button>
+                    <button
+                        onClick={() => handleExport('png')}
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            border: '1px solid #ddd',
+                            backgroundColor: 'white',
+                            color: '#666',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            _hover: {
+                                transform: 'translateY(-1px)',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                            },
+                        })}
+                    >
+                        📥 PNG
+                    </button>
+                    <button
+                        onClick={() => handleExport('pdf')}
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            border: '1px solid #ddd',
+                            backgroundColor: 'white',
+                            color: '#666',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            _hover: {
+                                transform: 'translateY(-1px)',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                            },
+                        })}
+                    >
+                        📄 PDF
                     </button>
                 </div>
             </div>
@@ -535,6 +771,56 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                     height: isCookingMode ? 'auto' : bounds.height,
                 })}
             >
+                {/* Background for lanes */}
+                <div
+                    className={css({
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        pointerEvents: 'none',
+                        zIndex: 1,
+                    })}
+                >
+                    {LANES.map((lane) => (
+                        <div
+                            key={lane.id}
+                            className={css({
+                                position: 'absolute',
+                                top: lane.y,
+                                left: 0,
+                                right: 0,
+                                height: 200,
+                                backgroundColor: lane.color,
+                                opacity: 0.8,
+                                borderRadius: '12px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            })}
+                        />
+                    ))}
+                </div>
+
+                {/* Lane Labels */}
+                <div
+                    className={css({
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        pointerEvents: 'none',
+                        zIndex: 2,
+                    })}
+                >
+                    {LANES.map((lane) => (
+                        <div key={lane.id} className="lane-label" style={{ top: lane.y + 100 }}>
+                            {lane.label}
+                        </div>
+                    ))}
+                </div>
+
+                {/* SVG Edges */}
                 <svg
                     width={bounds.width}
                     height={bounds.height}
@@ -575,11 +861,13 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                     })}
                 </svg>
 
+                {/* Nodes */}
                 <div
                     className={css({
                         position: 'relative',
                         width: bounds.width,
                         height: bounds.height,
+                        zIndex: 3,
                     })}
                 >
                     {nodes.map((node) => (

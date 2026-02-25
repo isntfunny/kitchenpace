@@ -14,7 +14,7 @@
         "isolatedModules": true,
         "jsx": "react-jsx",
         "incremental": true,
-        "types": ["node", "react", "react-dom", "bcrypt", "nodemailer"],
+        "types": ["react", "react-dom"],
         "plugins": [
             {
                 "name": "next"

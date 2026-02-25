@@ -441,6 +441,9 @@ const RangeControl = ({
     );
 };
 
+const findCount = (collection?: Array<{ key: string; count: number }>, key?: string) =>
+    collection?.find((entry) => entry.key === key)?.count ?? 0;
+
 export function FilterSidebar({ filters, options, facets, onFiltersChange }: FilterSidebarProps) {
     const [ingredientQuery, setIngredientQuery] = useState('');
     const [excludeQuery, setExcludeQuery] = useState('');
@@ -508,9 +511,6 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
             setExcludeQuery('');
         }
     };
-
-    const findCount = (collection?: Array<{ key: string; count: number }>, key?: string) =>
-        collection?.find((entry) => entry.key === key)?.count ?? 0;
 
     return (
         <div

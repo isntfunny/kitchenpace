@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
+import { OpenPanelComponent } from '@openpanel/nextjs';
 
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { RecipeTabsProvider } from '@/components/providers/RecipeTabsProvider';
@@ -19,8 +20,53 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-    title: 'KüchenTakt - Deine Rezepte im Takt',
-    description: 'Entdecke, erstelle und teile köstliche Rezepte',
+    title: {
+        default: 'KüchenTakt - Deine Rezepte im Takt',
+        template: '%s | KüchenTakt',
+    },
+    description:
+        'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen. Koche effizient mit parallelen Aufgaben und Zeitangaben.',
+    keywords: ['Rezepte', 'Kochen', 'Backen', 'Küche', 'Essen', 'Rezept teilen', 'Koch-Tipps'],
+    authors: [{ name: 'KüchenTakt' }],
+    creator: 'KüchenTakt',
+    publisher: 'KüchenTakt',
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app'),
+    openGraph: {
+        type: 'website',
+        locale: 'de_DE',
+        url: 'https://kitchenpace.app',
+        siteName: 'KüchenTakt',
+        title: 'KüchenTakt - Deine Rezepte im Takt',
+        description:
+            'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen. Koche effizient mit parallelen Aufgaben und Zeitangaben.',
+        images: [
+            {
+                url: '/og-image.png',
+                width: 1200,
+                height: 630,
+                alt: 'KüchenTakt - Rezepte im Takt',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'KüchenTakt - Deine Rezepte im Takt',
+        description:
+            'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen.',
+        creator: '@kuechentakt',
+        images: ['/og-image.png'],
+    },
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+        },
+    },
 };
 
 export default async function RootLayout({
@@ -44,6 +90,10 @@ export default async function RootLayout({
                     minHeight: '100vh',
                 }}
             >
+                <OpenPanelComponent
+                    clientId={process.env.OPENPANEL_ID || ''}
+                    trackScreenViews={true}
+                />
                 <AuthProvider>
                     <RecipeTabsProvider>{children}</RecipeTabsProvider>
                 </AuthProvider>

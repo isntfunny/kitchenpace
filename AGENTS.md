@@ -301,6 +301,16 @@ npm install --include=dev
 
 This is needed when npm's `save-dev` config is set to `false` or when dependencies appear missing after installation.
 
+### Package Not Showing in npm list
+
+If a package is in package.json but `npm list` shows it as not installed, try:
+
+```bash
+rm -rf node_modules && npm install --include=dev
+```
+
+This clean reinstall often fixes issues where packages exist in package.json but don't appear in node_modules.
+
 ### Husky Setup
 
 Husky is configured with a pre-commit lint hook (`.husky/pre-commit`). After cloning, run:

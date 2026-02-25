@@ -63,6 +63,7 @@
         "yet-another-react-lightbox": "^3.29.1"
     },
     "devDependencies": {
+        "@openpanel/nextjs": "^1.1.4",
         "@types/bcrypt": "^6.0.0",
         "@types/dagre": "^0.7.53",
         "@types/node": "20.19.33",

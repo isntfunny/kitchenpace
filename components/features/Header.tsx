@@ -198,8 +198,8 @@ export function Header() {
                             </DropdownMenu.Portal>
                         </DropdownMenu.Root>
 
-                        <a
-                            href="#"
+                        <Link
+                            href="/favorites"
                             className={css({
                                 fontFamily: 'body',
                                 fontSize: 'sm',
@@ -212,6 +212,7 @@ export function Header() {
                                 alignItems: 'center',
                                 gap: '1.5',
                                 transition: 'all 150ms ease',
+                                textDecoration: 'none',
                                 _hover: {
                                     bg: 'rgba(224,123,83,0.08)',
                                     color: 'primary',
@@ -222,7 +223,7 @@ export function Header() {
                             <span className={css({ display: { base: 'none', md: 'inline' } })}>
                                 Favoriten
                             </span>
-                        </a>
+                        </Link>
 
                         <HeaderAuth />
 

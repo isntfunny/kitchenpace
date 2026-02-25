@@ -63,8 +63,6 @@ const FILTER_SECTION_IDS = {
     rating: 'rating',
 } as const;
 
-const ALL_FILTER_SECTION_IDS = Object.values(FILTER_SECTION_IDS);
-
 const accordionRootClass = css({
     display: 'flex',
     flexDirection: 'column',
@@ -181,6 +179,39 @@ const chipRemoveIconClass = css({
     opacity: 0.85,
 });
 
+const tagSearchInputClass = css({
+    width: '100%',
+    borderRadius: 'lg',
+    border: '1px solid',
+    borderColor: 'light',
+    background: 'surface',
+    px: '3',
+    py: '2',
+    fontSize: 'sm',
+    marginBottom: '2',
+    '&::placeholder': {
+        color: 'text-muted',
+    },
+});
+
+const tagScrollContainerClass = css({
+    maxHeight: '200px',
+    overflowY: 'auto',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '2',
+    '&::-webkit-scrollbar': {
+        width: '6px',
+    },
+    '&::-webkit-scrollbar-track': {
+        background: 'transparent',
+    },
+    '&::-webkit-scrollbar-thumb': {
+        background: 'light',
+        borderRadius: 'full',
+    },
+});
+
 const removableChipClass = cx(
     chipItemClass,
     css({
@@ -192,10 +223,13 @@ const removableChipClass = cx(
 );
 
 const sliderRootClass = css({
+    position: 'relative',
     width: '100%',
     display: 'flex',
     alignItems: 'center',
     height: '10',
+    touchAction: 'none',
+    userSelect: 'none',
 });
 
 const sliderTrackClass = css({
@@ -410,8 +444,29 @@ const RangeControl = ({
 export function FilterSidebar({ filters, options, facets, onFiltersChange }: FilterSidebarProps) {
     const [ingredientQuery, setIngredientQuery] = useState('');
     const [excludeQuery, setExcludeQuery] = useState('');
+    const [tagQuery, setTagQuery] = useState('');
     const ingredients = options.ingredients;
     const tags = options.tags;
+
+    // Sort and filter tags by count (descending), then searchable
+    const tagFacets = facets?.tags;
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
+    const sortedTags = useMemo(() => {
+        const tagData = tags.map((tag) => ({
+            name: tag,
+            count: findCount(tagFacets, tag),
+        }));
+
+        // If there's a search query, filter first
+        let filtered = tagData;
+        if (tagQuery.trim()) {
+            const query = tagQuery.toLowerCase().trim();
+            filtered = tagData.filter((t) => t.name.toLowerCase().includes(query));
+        }
+
+        // Sort by count descending
+        return filtered.sort((a, b) => b.count - a.count);
+    }, [tags, tagFacets, tagQuery]);
 
     const ingredientSuggestions = useMemo(() => {
         const query = ingredientQuery.toLowerCase().trim();
@@ -465,7 +520,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
         >
             <Accordion.Root
                 type="multiple"
-                defaultValue={ALL_FILTER_SECTION_IDS}
+                defaultValue={[FILTER_SECTION_IDS.tags]}
                 className={accordionRootClass}
             >
                 <FilterSection
@@ -473,29 +528,44 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     title="Tags"
                     description="Beliebte Themen"
                 >
-                    <ToggleGroup.Root
-                        type="multiple"
-                        className={chipGroupClass}
-                        aria-label="Tags filtern"
-                        value={filters.tags ?? []}
-                        onValueChange={(next) =>
-                            onFiltersChange({ tags: next } as Partial<RecipeFilterSearchParams>)
-                        }
-                    >
-                        {tags.map((tag) => {
-                            const count = findCount(facets?.tags, tag);
-                            return (
-                                <ToggleGroup.Item
-                                    key={`tag-${tag}`}
-                                    value={tag}
-                                    className={chipItemClass}
-                                >
-                                    <span>{tag}</span>
-                                    {count > 0 && <span className={chipBadgeClass}>{count}</span>}
-                                </ToggleGroup.Item>
-                            );
-                        })}
-                    </ToggleGroup.Root>
+                    <input
+                        type="text"
+                        value={tagQuery}
+                        onChange={(e) => setTagQuery(e.target.value)}
+                        placeholder="Tags suchen..."
+                        className={tagSearchInputClass}
+                    />
+                    <div className={tagScrollContainerClass}>
+                        <ToggleGroup.Root
+                            type="multiple"
+                            className={css({
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '2',
+                                width: '100%',
+                            })}
+                            aria-label="Tags filtern"
+                            value={filters.tags ?? []}
+                            onValueChange={(next) =>
+                                onFiltersChange({ tags: next } as Partial<RecipeFilterSearchParams>)
+                            }
+                        >
+                            {sortedTags.map((tag) => {
+                                return (
+                                    <ToggleGroup.Item
+                                        key={`tag-${tag.name}`}
+                                        value={tag.name}
+                                        className={chipItemClass}
+                                    >
+                                        <span>{tag.name}</span>
+                                        {tag.count > 0 && (
+                                            <span className={chipBadgeClass}>{tag.count}</span>
+                                        )}
+                                    </ToggleGroup.Item>
+                                );
+                            })}
+                        </ToggleGroup.Root>
+                    </div>
                 </FilterSection>
 
                 <FilterSection

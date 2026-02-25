@@ -332,7 +332,7 @@ export function HeaderAuth() {
             })}
         >
             <span>🔑</span>
-            <span>Anmelden</span>
+            <span className={css({ display: { base: 'none', md: 'inline' } })}>Anmelden</span>
         </button>
     );
 }

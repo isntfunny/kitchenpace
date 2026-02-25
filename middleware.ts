@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const OPENPANEL_ID = process.env.OPENPANEL_ID;
 const OPENPANEL_TOKEN = process.env.OPENPANEL_TOKEN;
-const OPENPANEL_API_URL = process.env.OPENPANEL_API_URL || 'https://panel.tretz.dev/api/v1/ingest';
+const OPENPANEL_API_URL = process.env.OPENPANEL_API_URL || 'https://actions.isntfunny.de/';
 
 export async function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;

@@ -90,3 +90,19 @@ npm run build:dev-seed
 ```
 
 This sets `DEBUG=1`, performs a production build, then reruns Prisma code generation, truncates and rebuilds the schema, and finally reseeds the database so you always work against a fresh dataset. It is intentionally separate from `npm run dev` and only skips database operations on that build command.
+
+## OpenSearch index & ingestion
+
+The repository now includes an embedded OpenSearch cluster alongside PostgreSQL in `docker-compose.yml`. An additional `opensearch-sync` worker keeps the `recipes` index up to date:
+
+- **Typed mappings** for keywords, categories, numeric fields, and timestamps so aggregations and histograms work out of the box
+- **Batch ingestion** that upserts published recipes and deletes archived ones in chunks via `scripts/opensearch/ingest.ts`
+- **Watch mode** with a ~15s poll that can also be run once for ad-hoc reindexing (`npm run opensearch:sync -- --once`)
+
+Start everything during development with:
+
+```bash
+docker compose up --build
+```
+
+OpenSearch will be reachable at `http://localhost:9200` and the background worker automatically refreshes filters, tag counts, and duration distributions so the UI can show accurate counts. When you reset your database or import new recipes, rerun `npm run opensearch:sync` to rebuild the index.

@@ -22,7 +22,9 @@
         "db:seed": "tsx lib/seed.ts",
         "db:reset": "prisma migrate reset --force && npx prisma db push --accept-data-loss && npm run db:seed",
         "db:fresh": "npm run db:generate && npm run db:reset",
-        "build:dev-seed": "DEBUG=1 npm run build && npm run db:fresh"
+        "build:dev-seed": "DEBUG=1 npm run build && npm run db:fresh",
+        "opensearch:sync": "tsx scripts/opensearch/ingest.ts",
+        "opensearch:sync:once": "npm run opensearch:sync -- --once"
     },
     "prisma": {
         "seed": "tsx lib/seed.ts"
@@ -34,6 +36,7 @@
         "@pandacss/dev": "^1.8.2",
         "@prisma/adapter-pg": "^7.4.0",
         "@prisma/client": "^7.4.0",
+        "@opensearch-project/opensearch": "^2.11.0",
         "@radix-ui/react-dialog": "^1.1.15",
         "@radix-ui/react-dropdown-menu": "^2.1.16",
         "@radix-ui/react-select": "^2.2.6",

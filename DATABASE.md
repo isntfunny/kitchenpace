@@ -4,6 +4,10 @@
 
 This document describes the PostgreSQL database schema for KitchenPace (KüchenTakt), a recipe application that transforms traditional linear recipes into interactive visual flow diagrams.
 
+## Search index layer
+
+While PostgreSQL remains the source of truth, an OpenSearch cluster (available via `docker-compose`) mirrors the published `Recipe` data so that filters, tag counts, and numeric distributions can be answered without expensive Prisma joins. A background sync job (`npm run opensearch:sync`) performs batch upserts/deletes and keeps the `recipes` index aligned with the published data in near real time.
+
 ## Project Context
 
 ### Technology Stack

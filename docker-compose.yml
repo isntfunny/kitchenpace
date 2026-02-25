@@ -19,6 +19,33 @@ services:
             timeout: 5s
             retries: 5
 
+    opensearch:
+        image: opensearchproject/opensearch:2.10.1
+        container_name: kitchenpace-opensearch
+        environment:
+            discovery.type: single-node
+            plugins.security.disabled: 'true'
+            OPENSEARCH_JAVA_OPTS: '-Xms512m -Xmx512m'
+            bootstrap.memory_lock: 'true'
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        ports:
+            - '9200:9200'
+            - '9600:9600'
+        volumes:
+            - opensearch_data:/usr/share/opensearch/data
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'curl -fsSL http://localhost:9200/_cluster/health | grep -q "\"status\""',
+                ]
+            interval: 15s
+            timeout: 5s
+            retries: 5
+
     app:
         build:
             context: .
@@ -30,6 +57,8 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
+            opensearch:
+                condition: service_healthy
         environment:
             DATABASE_URL: postgresql://kitchenpace:${POSTGRES_PASSWORD:-kitchenpace_secret}@postgres:5432/kitchenpace
             NODE_ENV: development
@@ -37,7 +66,30 @@ services:
             # NextAuth (set these in Coolify environment variables)
             NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-in-production}
             NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+            OPENSEARCH_URL: http://opensearch:9200
+            OPENSEARCH_INDEX: recipes
         restart: unless-stopped
+
+    opensearch-sync:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: kitchenpace-opensearch-sync
+        depends_on:
+            postgres:
+                condition: service_healthy
+            opensearch:
+                condition: service_healthy
+        command: ['npm', 'run', 'opensearch:sync']
+        restart: unless-stopped
+        environment:
+            DATABASE_URL: postgresql://kitchenpace:${POSTGRES_PASSWORD:-kitchenpace_secret}@postgres:5432/kitchenpace
+            NODE_ENV: development
+            OPENSEARCH_URL: http://opensearch:9200
+            OPENSEARCH_INDEX: recipes
+            OPENSEARCH_BATCH_SIZE: 200
+            OPENSEARCH_SYNC_INTERVAL: 15000
 
 volumes:
     postgres_data:
+    opensearch_data:

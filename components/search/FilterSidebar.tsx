@@ -38,7 +38,7 @@ const DIFFICULTY_OPTIONS = [
     { value: 'HARD', label: 'Schwer' },
 ];
 
-const CollapsibleSection = ({
+const FilterSection = ({
     title,
     description,
     children,
@@ -47,27 +47,24 @@ const CollapsibleSection = ({
     description?: string;
     children: ReactNode;
 }) => (
-    <details open className={css({ mb: '5' })}>
-        <summary
-            className={css({
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1',
-                cursor: 'pointer',
-                fontWeight: '600',
-                fontSize: 'sm',
-                color: 'text',
-                listStyle: 'none',
-                _marker: { display: 'none' },
-            })}
-        >
-            <span>{title}</span>
+    <section className={css({ display: 'flex', flexDirection: 'column', gap: '2.5' })}>
+        <div className={css({ display: 'flex', flexDirection: 'column', gap: '0.5' })}>
+            <p
+                className={css({
+                    fontSize: 'xs',
+                    letterSpacing: 'widest',
+                    color: 'text-muted',
+                    textTransform: 'uppercase',
+                })}
+            >
+                {title}
+            </p>
             {description && (
-                <span className={css({ fontSize: 'xs', color: 'text-muted' })}>{description}</span>
+                <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{description}</p>
             )}
-        </summary>
-        <div className={css({ pt: '2' })}>{children}</div>
-    </details>
+        </div>
+        <div>{children}</div>
+    </section>
 );
 
 const Chip = ({
@@ -83,33 +80,28 @@ const Chip = ({
         type="button"
         onClick={onClick}
         className={css({
-            borderRadius: 'full',
+            borderRadius: '999px',
             px: '3',
-            py: '1.5',
+            py: '2',
+            minHeight: '44px',
             fontSize: 'xs',
             border: '1px solid',
-            borderColor: active ? '#e07b53' : 'rgba(0,0,0,0.1)',
-            background: active ? 'rgba(224,123,83,0.15)' : 'white',
+            borderColor: active ? 'primary-dark' : 'light',
+            background: active ? 'primary' : 'surface',
+            color: active ? 'light' : 'text',
             fontFamily: 'body',
             cursor: 'pointer',
-            transition: 'all 150ms ease',
-            color: active ? 'primary' : 'text',
+            transition: 'border 150ms ease, box-shadow 150ms ease',
             _hover: {
-                borderColor: '#e07b53',
+                borderColor: 'primary-dark',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.08)',
             },
         })}
+        aria-pressed={active || undefined}
     >
         {children}
     </button>
 );
-
-type ArrayFieldKey =
-    | 'tags'
-    | 'mealTypes'
-    | 'ingredients'
-    | 'excludeIngredients'
-    | 'difficulty'
-    | 'timeOfDay';
 
 const NumberInput = ({
     label,
@@ -122,8 +114,16 @@ const NumberInput = ({
     placeholder?: string;
     onChange: (next?: number) => void;
 }) => (
-    <label className={css({ display: 'flex', flexDirection: 'column', fontSize: 'xs', gap: '1' })}>
-        <span className={css({ color: 'text-muted' })}>{label}</span>
+    <label
+        className={css({
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1',
+            fontSize: 'xs',
+            color: 'text-muted',
+        })}
+    >
+        <span>{label}</span>
         <input
             type="number"
             min={0}
@@ -142,10 +142,10 @@ const NumberInput = ({
             className={css({
                 borderRadius: 'lg',
                 border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.1)',
-                background: 'white',
+                borderColor: 'light',
+                background: 'surface',
                 px: '3',
-                py: '2',
+                py: '2.5',
                 fontSize: 'sm',
                 fontFamily: 'body',
             })}
@@ -156,32 +156,35 @@ const NumberInput = ({
 export function FilterSidebar({ filters, options, onFiltersChange }: FilterSidebarProps) {
     const [ingredientQuery, setIngredientQuery] = useState('');
     const [excludeQuery, setExcludeQuery] = useState('');
+    const tags = options.tags;
+    const ingredients = options.ingredients;
 
     const ingredientSuggestions = useMemo(() => {
         const query = ingredientQuery.toLowerCase().trim();
-        return options.ingredients
+        return ingredients
             .filter(
                 (name) =>
                     name.toLowerCase().includes(query) &&
                     !(filters.ingredients ?? []).includes(name),
             )
             .slice(0, 6);
-    }, [ingredientQuery, options.ingredients, filters.ingredients]);
+    }, [ingredientQuery, ingredients, filters.ingredients]);
 
     const excludeSuggestions = useMemo(() => {
         const query = excludeQuery.toLowerCase().trim();
-        return options.ingredients
+        return ingredients
             .filter(
                 (name) =>
                     name.toLowerCase().includes(query) &&
                     !(filters.excludeIngredients ?? []).includes(name),
             )
             .slice(0, 6);
-    }, [excludeQuery, options.ingredients, filters.excludeIngredients]);
+    }, [excludeQuery, ingredients, filters.excludeIngredients]);
 
-    const getArrayValues = (field: ArrayFieldKey) => (filters[field] as string[] | undefined) ?? [];
+    const getArrayValues = (field: keyof RecipeFilterSearchParams): string[] =>
+        (filters[field] as string[] | undefined) ?? [];
 
-    const toggleArray = (field: ArrayFieldKey, value: string) => {
+    const toggleArray = (field: keyof RecipeFilterSearchParams, value: string) => {
         const current = getArrayValues(field);
         const next = current.includes(value)
             ? current.filter((entry) => entry !== value)
@@ -195,11 +198,14 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
         const existing = filters[field] ?? [];
         if (existing.includes(trimmed)) return;
         onFiltersChange({ [field]: [...existing, trimmed] });
-        if (field === 'ingredients') setIngredientQuery('');
-        else setExcludeQuery('');
+        if (field === 'ingredients') {
+            setIngredientQuery('');
+        } else {
+            setExcludeQuery('');
+        }
     };
 
-    const removeFromArray = (field: ArrayFieldKey, value: string) => {
+    const removeFromArray = (field: keyof RecipeFilterSearchParams, value: string) => {
         const current = getArrayValues(field);
         onFiltersChange({
             [field]: current.filter((entry) => entry !== value),
@@ -212,14 +218,18 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                 padding: '5',
                 borderRadius: '2xl',
                 border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.08)',
-                background: 'white',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.06)',
+                borderColor: 'light',
+                background: 'surface.elevated',
+                boxShadow: '0 24px 60px rgba(45,52,54,0.12)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4',
+                width: 'full',
             })}
         >
-            <CollapsibleSection title="Tags">
+            <FilterSection title="Tags" description="Beliebte Themen">
                 <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
-                    {options.tags.map((tag) => (
+                    {tags.map((tag) => (
                         <Chip
                             key={`tag-${tag}`}
                             active={(filters.tags ?? []).includes(tag)}
@@ -229,8 +239,9 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         </Chip>
                     ))}
                 </div>
-            </CollapsibleSection>
-            <CollapsibleSection title="Mahlzeit" description="Abgestimmt auf deinen Rhythmus">
+            </FilterSection>
+
+            <FilterSection title="Mahlzeit" description="Abgestimmt auf deinen Rhythmus">
                 <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
                     {MEAL_TYPE_OPTIONS.map((option) => (
                         <Chip
@@ -242,12 +253,10 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         </Chip>
                     ))}
                 </div>
-            </CollapsibleSection>
-            <CollapsibleSection
-                title="Zutaten"
-                description="Nur Gerichte mit den richtigen Zutaten"
-            >
-                <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
+            </FilterSection>
+
+            <FilterSection title="Zutaten" description="Nur Gerichte mit den richtigen Zutaten">
+                <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
                     <div className={css({ display: 'flex', gap: '2' })}>
                         <input
                             type="text"
@@ -264,9 +273,11 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                                 flex: 1,
                                 borderRadius: 'lg',
                                 border: '1px solid',
-                                borderColor: 'rgba(0,0,0,0.1)',
+                                borderColor: 'light',
+                                background: 'surface',
                                 px: '3',
-                                py: '2',
+                                py: '2.5',
+                                fontSize: 'sm',
                             })}
                         />
                         <button
@@ -275,9 +286,9 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                             className={css({
                                 borderRadius: 'lg',
                                 background: 'primary',
-                                color: 'white',
+                                color: 'light',
                                 px: '4',
-                                py: '2',
+                                py: '2.5',
                                 fontSize: 'sm',
                                 fontWeight: '600',
                             })}
@@ -286,7 +297,7 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         </button>
                     </div>
                     {ingredientSuggestions.length > 0 && (
-                        <div className={css({ display: 'grid', gap: '1' })}>
+                        <div className={css({ display: 'grid', gap: '2' })}>
                             {ingredientSuggestions.map((name) => (
                                 <button
                                     type="button"
@@ -296,10 +307,10 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                                         textAlign: 'left',
                                         fontSize: 'xs',
                                         color: 'text-muted',
-                                        padding: '1',
+                                        padding: '2',
                                         borderRadius: 'md',
                                         border: '1px solid',
-                                        borderColor: 'rgba(0,0,0,0.08)',
+                                        borderColor: 'light',
                                     })}
                                 >
                                     {name}
@@ -318,9 +329,10 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         ))}
                     </div>
                 </div>
-            </CollapsibleSection>
-            <CollapsibleSection title="Enthält nicht">
-                <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
+            </FilterSection>
+
+            <FilterSection title="Enthält nicht">
+                <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
                     <div className={css({ display: 'flex', gap: '2' })}>
                         <input
                             type="text"
@@ -337,9 +349,11 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                                 flex: 1,
                                 borderRadius: 'lg',
                                 border: '1px solid',
-                                borderColor: 'rgba(0,0,0,0.1)',
+                                borderColor: 'light',
+                                background: 'surface',
                                 px: '3',
-                                py: '2',
+                                py: '2.5',
+                                fontSize: 'sm',
                             })}
                         />
                         <button
@@ -347,10 +361,10 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                             onClick={() => addIngredient(excludeQuery, 'excludeIngredients')}
                             className={css({
                                 borderRadius: 'lg',
-                                background: 'rgba(224,123,83,0.85)',
-                                color: 'white',
+                                background: 'primary-dark',
+                                color: 'light',
                                 px: '4',
-                                py: '2',
+                                py: '2.5',
                                 fontSize: 'sm',
                                 fontWeight: '600',
                             })}
@@ -359,20 +373,20 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         </button>
                     </div>
                     {excludeSuggestions.length > 0 && (
-                        <div className={css({ display: 'grid', gap: '1' })}>
+                        <div className={css({ display: 'grid', gap: '2' })}>
                             {excludeSuggestions.map((name) => (
                                 <button
                                     type="button"
-                                    key={`exclude${name}`}
+                                    key={`exclude-${name}`}
                                     onClick={() => addIngredient(name, 'excludeIngredients')}
                                     className={css({
                                         textAlign: 'left',
                                         fontSize: 'xs',
                                         color: 'text-muted',
-                                        padding: '1',
+                                        padding: '2',
                                         borderRadius: 'md',
                                         border: '1px solid',
-                                        borderColor: 'rgba(0,0,0,0.08)',
+                                        borderColor: 'light',
                                     })}
                                 >
                                     {name}
@@ -391,8 +405,9 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         ))}
                     </div>
                 </div>
-            </CollapsibleSection>
-            <CollapsibleSection title="Schwierigkeit">
+            </FilterSection>
+
+            <FilterSection title="Schwierigkeit">
                 <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
                     {DIFFICULTY_OPTIONS.map((option) => (
                         <Chip
@@ -404,19 +419,10 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         </Chip>
                     ))}
                 </div>
-            </CollapsibleSection>
-            <CollapsibleSection
-                title="Tageszeit & Dauer"
-                description="Zeitfenster schnell auswählen"
-            >
-                <div
-                    className={css({
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '2',
-                        marginBottom: '3',
-                    })}
-                >
+            </FilterSection>
+
+            <FilterSection title="Tageszeit & Dauer" description="Zeitfenster schnell auswählen">
+                <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
                     {TIME_OF_DAY_OPTIONS.map((option) => (
                         <Chip
                             key={option.value}
@@ -465,8 +471,9 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         />
                     </div>
                 </div>
-            </CollapsibleSection>
-            <CollapsibleSection title="Bewertung & Beliebt">
+            </FilterSection>
+
+            <FilterSection title="Bewertung & Beliebt">
                 <div className={css({ display: 'grid', gap: '3' })}>
                     <NumberInput
                         label="Min. Bewertung"
@@ -481,7 +488,7 @@ export function FilterSidebar({ filters, options, onFiltersChange }: FilterSideb
                         onChange={(value) => onFiltersChange({ minCookCount: value })}
                     />
                 </div>
-            </CollapsibleSection>
+            </FilterSection>
         </div>
     );
 }

@@ -1,13 +1,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useState, type FC } from 'react';
+import { type FC, useEffect, useMemo, useState } from 'react';
 
 import type { CategoryOption } from '@/app/actions/filters';
 import type { RecipeCardData } from '@/app/actions/recipes';
 import { Button } from '@/components/atoms/Button';
 import { RecipeCard } from '@/components/features/RecipeCard';
-import { buildRecipeFilterQuery } from '@/lib/recipeFilters';
+import { buildRecipeFilterQuery, MULTI_VALUE_KEYS, NUMBER_KEYS } from '@/lib/recipeFilters';
 import type { RecipeFilterSearchParams } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 
@@ -25,6 +25,9 @@ type RecipeSearchClientProps = {
     initialFilters: RecipeFilterSearchParams;
     filterOptions: FilterOptions;
 };
+
+const ARRAY_FILTER_KEYS = MULTI_VALUE_KEYS;
+const NUMERIC_FILTER_KEYS = NUMBER_KEYS;
 
 export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     initialFilters,
@@ -84,7 +87,33 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         };
     }, [showMobileFilters]);
 
+    const activeFilterCount = useMemo(() => {
+        const arrayCount = ARRAY_FILTER_KEYS.reduce((sum, key) => {
+            const value = filters[key];
+            if (Array.isArray(value)) {
+                return sum + value.length;
+            }
+            return sum;
+        }, 0);
+
+        const numericCount = NUMERIC_FILTER_KEYS.reduce((sum, key) => {
+            return typeof filters[key] === 'number' ? sum + 1 : sum;
+        }, 0);
+
+        const hasQuery = Boolean(filters.query?.trim());
+        return arrayCount + numericCount + (hasQuery ? 1 : 0);
+    }, [filters]);
+
     const totalResults = meta?.total ?? 0;
+    const filterSummaryText = activeFilterCount
+        ? `${activeFilterCount} aktive Filter`
+        : 'Alle Rezepte anzeigen';
+
+    const resultStatusText = loading
+        ? 'Rezepte laden…'
+        : totalResults > 0
+          ? `${totalResults} Rezepte gefunden`
+          : 'Keine Rezepte mit den aktuellen Einstellungen gefunden.';
 
     return (
         <div
@@ -93,14 +122,16 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                 gridTemplateColumns: { base: '1fr', lg: '320px 1fr' },
                 gap: '6',
                 paddingTop: '5',
-                paddingBottom: '10',
+                paddingBottom: '12',
+                position: 'relative',
             })}
         >
-            <div
+            <aside
                 className={css({
                     display: { base: 'none', lg: 'block' },
                     position: 'sticky',
-                    top: '96px',
+                    top: '100px',
+                    alignSelf: 'flex-start',
                 })}
             >
                 <FilterSidebar
@@ -108,7 +139,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                     options={filterOptions}
                     onFiltersChange={updateFilters}
                 />
-            </div>
+            </aside>
 
             <section className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
                 <header
@@ -124,11 +155,24 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                         <p className={css({ fontSize: 'lg', fontWeight: '600', color: 'text' })}>
                             Rezepte filtern
                         </p>
-                        <p className={css({ fontSize: 'sm', color: 'text-muted' })}>
-                            {totalResults} Ergebnisse gefunden
+                        <p className={css({ fontSize: 'sm', color: 'text-muted', marginTop: '1' })}>
+                            {filterSummaryText}
+                        </p>
+                        <p className={css({ fontSize: 'xs', color: 'text-muted', marginTop: '1' })}>
+                            {resultStatusText}
                         </p>
                     </div>
-                    <div className={css({ display: 'flex', gap: '2', alignItems: 'center' })}>
+                    <div
+                        className={css({
+                            display: 'flex',
+                            gap: '2',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                        })}
+                    >
+                        <Button variant="ghost" size="sm" onClick={resetFilters}>
+                            Filter zurücksetzen
+                        </Button>
                         <button
                             type="button"
                             onClick={() => setShowMobileFilters((prev) => !prev)}
@@ -136,110 +180,38 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                 display: { base: 'inline-flex', lg: 'none' },
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '2',
+                                gap: '1',
                                 px: '4',
                                 py: '2',
                                 borderRadius: 'full',
                                 border: '1px solid',
-                                borderColor: 'rgba(0,0,0,0.15)',
-                                background: 'white',
-                                fontFamily: 'body',
+                                borderColor: 'primary',
+                                background: 'surface',
+                                color: 'primary',
                                 fontSize: 'sm',
-                                fontWeight: '500',
+                                fontWeight: '600',
                                 cursor: 'pointer',
-                                transition: 'all 150ms ease',
-                                _hover: {
-                                    borderColor: 'rgba(224,123,83,0.6)',
-                                },
                             })}
                         >
-                            Filter {showMobileFilters ? 'verbergen' : 'anzeigen'}
+                            {showMobileFilters ? 'Filter schließen' : 'Filter öffnen'}
                         </button>
-                        <Button variant="ghost" size="sm" onClick={resetFilters}>
-                            Filter zurücksetzen
-                        </Button>
                     </div>
                 </header>
 
-                {showMobileFilters && (
-                    <div
-                        className={css({
-                            position: 'fixed',
-                            inset: 0,
-                            zIndex: 60,
-                            bg: 'rgba(0,0,0,0.35)',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'flex-start',
-                            padding: '4',
-                        })}
-                    >
-                        <div
-                            className={css({
-                                width: '100%',
-                                maxW: '480px',
-                                bg: 'white',
-                                borderRadius: '2xl',
-                                border: '1px solid',
-                                borderColor: 'rgba(0,0,0,0.08)',
-                                boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
-                                maxHeight: 'calc(100vh - 32px)',
-                                overflowY: 'auto',
-                            })}
-                        >
-                            <div
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    px: '4',
-                                    py: '3',
-                                    borderBottom: '1px solid',
-                                    borderColor: 'rgba(0,0,0,0.08)',
-                                })}
-                            >
-                                <span className={css({ fontWeight: '600' })}>Filter</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowMobileFilters(false)}
-                                    className={css({
-                                        border: 'none',
-                                        background: 'transparent',
-                                        fontSize: 'sm',
-                                        fontWeight: '600',
-                                        color: 'primary',
-                                        cursor: 'pointer',
-                                        padding: 0,
-                                    })}
-                                >
-                                    Schließen
-                                </button>
-                            </div>
-                            <div className={css({ padding: '4' })}>
-                                <FilterSidebar
-                                    filters={filters}
-                                    options={filterOptions}
-                                    onFiltersChange={updateFilters}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <div aria-live="polite">
+                    <ActiveFilters filters={filters} onRemove={updateFilters} />
+                </div>
 
-                <ActiveFilters filters={filters} onRemove={updateFilters} />
-
-                {error && (
-                    <div className={css({ color: 'text-muted', fontSize: 'sm' })}>{error}</div>
-                )}
-
-                {loading ? (
-                    <div className={css({ fontSize: 'sm', color: 'text-muted' })}>
-                        Lädt Rezepte…
-                    </div>
+                {error ? (
+                    <p className={css({ fontSize: 'sm', color: 'text-muted' })}>{error}</p>
+                ) : loading ? (
+                    <p className={css({ fontSize: 'sm', color: 'text-muted' })}>
+                        Rezepte werden geladen…
+                    </p>
                 ) : data.length === 0 ? (
-                    <div className={css({ fontSize: 'sm', color: 'text-muted' })}>
+                    <p className={css({ fontSize: 'sm', color: 'text-muted' })}>
                         Keine Rezepte mit den aktuellen Filtern gefunden.
-                    </div>
+                    </p>
                 ) : (
                     <div
                         className={css({
@@ -258,6 +230,106 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                     </div>
                 )}
             </section>
+
+            {showMobileFilters && (
+                <div
+                    className={css({
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 60,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        justifyContent: 'center',
+                        padding: '4',
+                    })}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Rezepte filtern"
+                    onClick={() => setShowMobileFilters(false)}
+                >
+                    <div
+                        className={css({
+                            width: '100%',
+                            maxWidth: '480px',
+                            borderRadius: '2xl',
+                            background: 'surface.elevated',
+                            border: '1px solid',
+                            borderColor: 'primary',
+                            boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
+                            maxHeight: '90vh',
+                            overflowY: 'auto',
+                        })}
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div
+                            className={css({
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '4',
+                                borderBottom: '1px solid',
+                                borderColor: 'light',
+                            })}
+                        >
+                            <p className={css({ fontWeight: '600', fontSize: 'sm' })}>Filter</p>
+                            <button
+                                type="button"
+                                onClick={() => setShowMobileFilters(false)}
+                                className={css({
+                                    border: 'none',
+                                    background: 'transparent',
+                                    fontWeight: '600',
+                                    color: 'primary',
+                                    cursor: 'pointer',
+                                })}
+                            >
+                                Schließen
+                            </button>
+                        </div>
+                        <div className={css({ padding: '4' })}>
+                            <FilterSidebar
+                                filters={filters}
+                                options={filterOptions}
+                                onFiltersChange={updateFilters}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div
+                className={css({
+                    display: { base: 'flex', lg: 'none' },
+                    position: 'sticky',
+                    bottom: 0,
+                    zIndex: 50,
+                    gap: '2',
+                    padding: '3',
+                    background: 'surface.elevated',
+                    borderTop: '1px solid',
+                    borderColor: 'light',
+                })}
+            >
+                <button
+                    type="button"
+                    onClick={() => setShowMobileFilters(true)}
+                    className={css({
+                        flex: 1,
+                        borderRadius: 'lg',
+                        background: 'primary',
+                        color: 'light',
+                        fontWeight: '600',
+                        padding: '3',
+                        fontSize: 'sm',
+                    })}
+                >
+                    Filter öffnen
+                </button>
+                <Button variant="ghost" size="sm" onClick={resetFilters}>
+                    Zurücksetzen
+                </Button>
+            </div>
         </div>
     );
 };

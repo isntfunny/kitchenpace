@@ -1,6 +1,6 @@
 type MaybeNumber = number | undefined;
 
-const MultiValueKeys = [
+export const MULTI_VALUE_KEYS = [
     'tags',
     'mealTypes',
     'ingredients',
@@ -9,7 +9,7 @@ const MultiValueKeys = [
     'timeOfDay',
 ] as const;
 
-const NumberKeys = [
+export const NUMBER_KEYS = [
     'minTotalTime',
     'maxTotalTime',
     'minPrepTime',
@@ -68,7 +68,7 @@ const clamp = (value: number | undefined, min: number, max: number) => {
 
 export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSearchParams {
     const multi: Record<string, string[]> = {};
-    MultiValueKeys.forEach((key) => {
+    MULTI_VALUE_KEYS.forEach((key) => {
         multi[key] = normalizeArray(
             params
                 .getAll(key)
@@ -78,7 +78,7 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
     });
 
     const numbers: Record<string, MaybeNumber> = {};
-    NumberKeys.forEach((key) => {
+    NUMBER_KEYS.forEach((key) => {
         numbers[key] = toNumber(params.get(key));
     });
 

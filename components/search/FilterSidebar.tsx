@@ -173,6 +173,20 @@ const chipBadgeClass = css({
     py: '0.5',
 });
 
+const chipZeroClass = css({
+    color: 'text-muted',
+    borderColor: 'light',
+    background: 'surface',
+    opacity: 0.75,
+});
+
+const chipBadgeMutedClass = css({
+    background: 'transparent',
+    border: '1px solid',
+    borderColor: 'light',
+    color: 'text-muted',
+});
+
 const chipRemoveIconClass = css({
     fontSize: 'sm',
     lineHeight: '1',
@@ -472,7 +486,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
             if (!a.selected && b.selected) return 1;
             return b.count - a.count;
         });
-    }, [tags, tagFacets, tagQuery, filters]);
+    }, [tags, tagFacets, tagQuery, filters.tags]);
 
     const ingredientSuggestions = useMemo(() => {
         const query = ingredientQuery.toLowerCase().trim();
@@ -554,16 +568,22 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                             }
                         >
                             {sortedTags.map((tag) => {
+                                const itemClass = cx(
+                                    chipItemClass,
+                                    tag.count === 0 && !tag.selected && chipZeroClass,
+                                );
+                                const badgeClass = cx(
+                                    chipBadgeClass,
+                                    tag.count === 0 && chipBadgeMutedClass,
+                                );
                                 return (
                                     <ToggleGroup.Item
                                         key={`tag-${tag.name}`}
                                         value={tag.name}
-                                        className={chipItemClass}
+                                        className={itemClass}
                                     >
                                         <span>{tag.name}</span>
-                                        {tag.count > 0 && (
-                                            <span className={chipBadgeClass}>{tag.count}</span>
-                                        )}
+                                        <span className={badgeClass}>{tag.count}</span>
                                     </ToggleGroup.Item>
                                 );
                             })}

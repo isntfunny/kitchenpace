@@ -38,6 +38,21 @@ const mapDocumentToRecipeCard = (document: Record<string, unknown>): RecipeCardD
 const buildTermsAggregation = (buckets?: Array<{ key: string; doc_count: number }>) =>
     buckets?.map((bucket) => ({ key: bucket.key, count: bucket.doc_count })) ?? [];
 
+type HistogramAggregation = { buckets?: Array<{ key: number | string; doc_count: number }> };
+
+const buildHistogramFacet = (agg: HistogramAggregation | undefined, interval: number) => {
+    const buckets = (agg?.buckets ?? [])
+        .map((bucket) => ({ key: Number(bucket.key), count: bucket.doc_count }))
+        .filter((bucket) => !Number.isNaN(bucket.key));
+
+    if (buckets.length === 0) return undefined;
+
+    const sorted = buckets.sort((a, b) => a.key - b.key);
+    const min = sorted[0].key;
+    const max = sorted[sorted.length - 1].key;
+    return { buckets: sorted, min, max, interval };
+};
+
 export async function GET(request: NextRequest) {
     log.debug('Filter request received', { url: request.url });
 
@@ -191,6 +206,11 @@ export async function GET(request: NextRequest) {
                         histogram: { field: 'totalTime', interval: 10, min_doc_count: 0 },
                     },
                     prepTime: { histogram: { field: 'prepTime', interval: 5, min_doc_count: 0 } },
+                    cookTime: { histogram: { field: 'cookTime', interval: 5, min_doc_count: 0 } },
+                    rating: { histogram: { field: 'rating', interval: 1, min_doc_count: 0 } },
+                    cookCount: {
+                        histogram: { field: 'cookCount', interval: 10, min_doc_count: 0 },
+                    },
                 },
             },
         });
@@ -223,6 +243,11 @@ export async function GET(request: NextRequest) {
                     categories: buildTermsAggregation(
                         response.body.aggregations?.categories?.buckets,
                     ),
+                    totalTime: buildHistogramFacet(response.body.aggregations?.totalTime, 10),
+                    prepTime: buildHistogramFacet(response.body.aggregations?.prepTime, 5),
+                    cookTime: buildHistogramFacet(response.body.aggregations?.cookTime, 5),
+                    rating: buildHistogramFacet(response.body.aggregations?.rating, 1),
+                    cookCount: buildHistogramFacet(response.body.aggregations?.cookCount, 10),
                 },
             },
         };

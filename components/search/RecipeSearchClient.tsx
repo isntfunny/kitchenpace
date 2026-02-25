@@ -36,6 +36,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     const [filters, setFilters] = useState(initialFilters);
     const [showMobileFilters, setShowMobileFilters] = useState(false);
     const { data, meta, loading, error } = useRecipeSearch(filters);
+    const facets = meta?.facets;
     const pathname = usePathname();
 
     useEffect(() => {
@@ -137,6 +138,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                 <FilterSidebar
                     filters={filters}
                     options={filterOptions}
+                    facets={facets}
                     onFiltersChange={updateFilters}
                 />
             </aside>

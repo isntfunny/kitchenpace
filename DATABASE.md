@@ -19,7 +19,7 @@ While PostgreSQL remains the source of truth, an OpenSearch cluster (available v
 | Database    | PostgreSQL                 |
 | ORM         | Prisma 7                   |
 | Flow Editor | React Flow (@xyflow/react) |
-| Auth        | NextAuth.js                |
+| Auth        | Logto                      |
 | Storage     | S3 (MinIO)                 |
 
 ### Core Features (from KUC-1 MVP)
@@ -45,6 +45,7 @@ While PostgreSQL remains the source of truth, an OpenSearch cluster (available v
 │                                    User                                     │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ id, name, email, image, hashedPassword                                     │
+│ isActive, activationToken, resetToken, resetTokenExpiry                    │
 │                                                                             │
 │ 1:1 Profile ─────────┐                                                    │
 │ 1:m Recipe ──────────┼────────────────────────────────────────────────────┤
@@ -52,23 +53,29 @@ While PostgreSQL remains the source of truth, an OpenSearch cluster (available v
 │ 1:m UserRating ──────┤    ┌──────────────┐    ┌─────────────────────┐   │
 │ 1:m Favorite ────────┤    │    Follow    │    │   Notification     │   │
 │ 1:m Follow ─────────┼───►│ followerId   │◄───│ userId             │   │
-│ 1:m Notification ───┤    │ followingId  │    │ type               │   │
+│                      │    │ followingId  │    │ type               │   │
 │ 1:m MealPlan ───────┤    └──────────────┘    │ title, message    │   │
 │ 1:m ShoppingList ───┤                          └─────────────────────┘   │
 │ 1:m ActivityLog ────┤                                                    │
-│ 1:m PinnedFavorite ┘                                                    │
+│ 1:m PinnedFavorite ┤    ┌──────────────┐    ┌─────────────────────┐   │
+│ 1:m CookHistory ────┤    │ CookImage   │    │  UserCookHistory   │   │
+│ 1:m CookImage ──────┘    │ recipeId    │    │ userId, recipeId   │   │
+│                          │ userId      │    │ imageUrl           │   │
+│                          └──────────────┘    └─────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                                 Recipe                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ id, title, description, imageUrl                                           │
-│ servings, totalTime, difficulty (EASY/MEDIUM/HARD)                         │
+│ id, title, slug, description, imageUrl, imageKey                          │
+│ blurhash, imageWidth, imageHeight                                          │
+│ servings, prepTime, cookTime, totalTime, difficulty                       │
 │ rating, ratingCount, viewCount, cookCount                                  │
+│ status, publishedAt                                                         │
 │ flowNodes (JSON), flowEdges (JSON)  ◄── Core feature                     │
 │                                                                             │
 │ m:1 Author (User) ─────────────────────────────────────────────────────┐   │
-│ m:1 Category                                                             │   │
+│ m:m Category (via RecipeCategory) ──────────────────────────────────────┤   │
 │ 1:m RecipeIngredient ───────────────────────────────────────────────────┤   │
 │   └── 1:1 Ingredient (master) ◄─── 1:m shoppingItems                  │   │
 │ 1:m Comment  ───────────────────────────────────────────────────────────┤   │
@@ -77,7 +84,8 @@ While PostgreSQL remains the source of truth, an OpenSearch cluster (available v
 │ 1:m RecipeTag ──────────────────────────────────────────────────────────┤   │
 │ 1:m MealPlanRecipe ────────────────────────────────────────────────────┤   │
 │ 1:m UserViewHistory ───────────────────────────────────────────────────┤   │
-│ 1:m PinnedFavorite ───────────────────────────────────────────────────┘   │
+│ 1:m PinnedFavorite ─────────────────────────────────────────────────────┤   │
+│ 1:m CookImage ─────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -97,6 +105,10 @@ model User {
   emailVerified   DateTime?
   image           String?
   hashedPassword  String?
+  isActive        Boolean   @default(false) // Must be activated via email
+  activationToken String?
+  resetToken      String?
+  resetTokenExpiry DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -107,14 +119,16 @@ model User {
   comments       Comment[]
   ratings        UserRating[]
   favorites      Favorite[]
-  followedBy     Follow[]   @relation("Followers")
-  following      Follow[]   @relation("Follows")
+  followedBy     Follow[]   @relation("FollowedBy")
+  following      Follow[]   @relation("Following")
   notifications  Notification[]
   mealPlans      MealPlan[]
   shoppingLists  ShoppingList[]
   activities     ActivityLog[]
   viewHistory    UserViewHistory[]
+  cookHistory    UserCookHistory[]
   pinnedFavorites PinnedFavorite[]
+  cookImages     CookImage[]
 }
 ```
 
@@ -142,6 +156,7 @@ model Profile {
   ratingsPublic   Boolean  @default(true)
   followsPublic   Boolean  @default(true)
   favoritesPublic Boolean  @default(true)
+  showInActivity  Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -170,26 +185,55 @@ Standard NextAuth models for OAuth providers.
 
 ```prisma
 model Recipe {
-  id           String     @id @default(cuid())
+  id           String      @id @default(cuid())
   title        String
+  slug         String      @unique
   description  String?
   imageUrl     String?
-  servings     Int        @default(4)
-  totalTime    Int        @default(0)
-  difficulty   Difficulty @default(MEDIUM)
-  rating       Float      @default(0)
-  ratingCount  Int        @default(0)
-  viewCount    Int        @default(0)
-  cookCount    Int        @default(0)
+  imageKey     String?
+  blurhash     String?
+  imageWidth   Int?
+  imageHeight  Int?
+  servings     Int         @default(4)
+  prepTime     Int         @default(0)
+  cookTime     Int         @default(0)
+  totalTime    Int         @default(0)
+  difficulty   Difficulty  @default(MEDIUM)
+  status       RecipeStatus @default(DRAFT)
+  publishedAt  DateTime?
+  rating       Float       @default(0)
+  ratingCount  Int         @default(0)
+  viewCount    Int         @default(0)
+  cookCount    Int         @default(0)
 
   // Flow data stored as JSON
   flowNodes    Json?
   flowEdges    Json?
 
   authorId     String
-  categoryId   String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Relations
+  author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  categories   RecipeCategory[]
+  recipeIngredients RecipeIngredient[]
+  comments     Comment[]
+  ratings      UserRating[]
+  favorites    Favorite[]
+  tags         RecipeTag[]
+  mealPlanRecipes MealPlanRecipe[]
+  shoppingItems ShoppingItem[]
+  userViewHistory UserViewHistory[]
+  cookHistory  UserCookHistory[]
+  pinnedFavorites PinnedFavorite[]
+  cookImages   CookImage[]
+
+  @@index([authorId])
+  @@index([difficulty])
+  @@index([createdAt])
+  @@index([rating])
+  @@index([status])
 }
 ```
 
@@ -287,7 +331,23 @@ model Category {
   slug        String   @unique
   description String?
   imageUrl    String?
-  color       String?
+  color       String?  // Hex color for UI theming
+  createdAt   DateTime @default(now())
+
+  recipes RecipeCategory[]
+}
+
+model RecipeCategory {
+  recipeId   String
+  categoryId String
+  position   Int      @default(0) // For ordering categories
+
+  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, categoryId])
+  @@index([recipeId])
+  @@index([categoryId])
 }
 ```
 
@@ -306,11 +366,17 @@ model Tag {
   name      String      @unique
   slug      String      @unique
   recipes   RecipeTag[]
+  createdAt DateTime    @default(now())
 }
 
 model RecipeTag {
   recipeId String
   tagId    String
+  createdAt DateTime @default(now())
+
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
   @@id([recipeId, tagId])
 }
 ```
@@ -319,6 +385,26 @@ model RecipeTag {
 
 - `/app/recipe/[id]/RecipeDetailClient.tsx` - Recipe tags
 - `/components/features/TrendingTags.tsx` - Trending tags sidebar
+
+#### Comment
+
+```prisma
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  imageUrl  String?
+  recipeId  String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+  @@index([authorId])
+}
+```
 
 ---
 
@@ -333,7 +419,14 @@ model UserRating {
   userId    String
   rating    Int      // 1-5
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([recipeId, userId])
+  @@index([recipeId])
+  @@index([userId])
 }
 ```
 
@@ -356,7 +449,12 @@ model Favorite {
   recipeId  String
   userId    String
   createdAt DateTime @default(now())
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([recipeId, userId])
+  @@index([userId])
 }
 ```
 
@@ -373,7 +471,13 @@ model Follow {
   followerId  String
   followingId String
   createdAt   DateTime @default(now())
+
+  follower    User     @relation("FollowedBy", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
   @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 ```
 
@@ -421,7 +525,14 @@ model MealPlan {
   startDate DateTime
   endDate   DateTime
   meals     MealPlanRecipe[]
+  shoppingLists ShoppingList[]
   createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, startDate])
 }
 
 model MealPlanRecipe {
@@ -433,20 +544,12 @@ model MealPlanRecipe {
   servings    Int         @default(4)
   status      MealStatus  @default(PLANNED)
   notes       String?
-}
 
-enum MealType {
-  BREAKFAST
-  LUNCH
-  DINNER
-  SNACK
-}
+  mealPlan    MealPlan    @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  recipe      Recipe      @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
-enum MealStatus {
-  PLANNED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
+  @@index([mealPlanId])
+  @@index([recipeId])
 }
 ```
 
@@ -468,30 +571,32 @@ model ShoppingList {
   name        String?
   mealPlanId  String?
   items       ShoppingItem[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealPlan    MealPlan?       @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
 }
 
 model ShoppingItem {
   id             String           @id @default(cuid())
   shoppingListId String
-  recipeId       String?          // Origin recipe
-  name           String
+  recipeId       String?          // Original recipe (optional)
+  ingredientId   String?          // Master ingredient (optional)
+  name           String           // Display name (fallback)
   amount         String?
   unit           String?
-  category       ShoppingCategory
+  category       ShoppingCategory @default(SONSTIGES)
   checked        Boolean           @default(false)
-  position       Int
-}
+  position       Int               @default(0)
 
-enum ShoppingCategory {
-  GEMUESE
-  OBST
-  FLEISCH
-  FISCH
-  MILCHPRODUKTE
-  GEWURZE
-  BACKEN
-  GETRAENKE
-  SONSTIGES
+  shoppingList   ShoppingList      @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  recipe         Recipe?          @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  ingredient     Ingredient?      @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+
+  @@index([shoppingListId])
 }
 ```
 
@@ -515,7 +620,13 @@ model ActivityLog {
   targetId   String?
   targetType String?
   metadata   Json?
-  createdAt  DateTime    @default(now())
+  createdAt  DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
 
 enum ActivityType {
@@ -546,6 +657,15 @@ model UserViewHistory {
   userId    String
   recipeId  String
   viewedAt  DateTime @default(now())
+  pinned    Boolean  @default(false)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId])
+  @@index([userId])
+  @@index([recipeId])
+  @@index([userId, viewedAt])
 }
 ```
 
@@ -561,6 +681,15 @@ model UserCookHistory {
   cookedAt  DateTime @default(now())
   servings  Int?
   notes     String?
+  imageUrl  String?  // User's photo of the cooked meal
+  imageKey  String?  // S3 key for the image
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([recipeId])
+  @@index([userId, cookedAt])
 }
 ```
 
@@ -568,7 +697,33 @@ model UserCookHistory {
 
 ---
 
-### 8. Pinned Favorites (KUC-5)
+### 8. Cook Images (User-submitted photos)
+
+#### CookImage
+
+```prisma
+model CookImage {
+  id          String   @id @default(cuid())
+  recipeId    String
+  userId      String
+  imageUrl    String
+  imageKey    String?  // S3 key for the image
+  blurhash    String?
+  caption     String?
+  createdAt   DateTime @default(now())
+
+  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+  @@index([userId])
+  @@index([createdAt])
+}
+```
+
+---
+
+### 9. Pinned Favorites (KUC-5)
 
 #### PinnedFavorite
 
@@ -578,8 +733,14 @@ model PinnedFavorite {
   userId    String
   recipeId  String
   position  Int      // 0, 1, or 2 (max 3)
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
   @@unique([userId, position])
   @@unique([userId, recipeId])
+  @@index([userId])
 }
 ```
 

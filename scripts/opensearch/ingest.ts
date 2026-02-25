@@ -202,7 +202,7 @@ const fetchNextBatch = async (cursor: {
     return prisma.recipe.findMany({
         where: { OR: conditions },
         include: {
-            category: true,
+            categories: { include: { category: true } },
             tags: { include: { tag: true } },
             recipeIngredients: { include: { ingredient: true } },
         },

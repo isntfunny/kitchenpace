@@ -168,7 +168,7 @@ export async function fetchRecipeBySlug(
             publishedAt: { not: null },
         },
         include: {
-            category: true,
+            categories: { include: { category: true }, orderBy: { position: 'asc' } },
             author: {
                 include: { profile: true },
             },
@@ -235,7 +235,7 @@ export async function fetchRecipeBySlug(
         title: recipe.title,
         description: recipe.description || '',
         image: recipe.imageUrl || DEFAULT_IMAGE,
-        category: recipe.category?.name || 'Hauptgericht',
+        category: recipe.categories[0]?.category?.name || 'Hauptgericht',
         rating: recipe.rating ?? 0,
         prepTime: recipe.prepTime ?? 0,
         cookTime: recipe.cookTime ?? 0,

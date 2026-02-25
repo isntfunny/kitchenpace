@@ -1,0 +1,6 @@
+[default]
+access_key = YONld8lwucriN8Qamnys
+secret_key = 9YWPgWOwMYiFVF33Bmn1xZynfg0NUVUjt3mDE51C
+host_base = cdn.isntfunny.de
+host_bucket = %(bucket).cdn.isntfunny.de
+use_https = False

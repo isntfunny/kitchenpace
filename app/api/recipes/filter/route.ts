@@ -1,16 +1,15 @@
-import { Prisma } from '@prisma/client';
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import type { RecipeCardData } from '@/app/actions/recipes';
 import { createLogger } from '@/lib/logger';
-import { prisma } from '@/lib/prisma';
+import { opensearchClient, OPENSEARCH_INDEX } from '@/lib/opensearch/client';
 import { parseRecipeFilterParams, RECIPE_FILTER_DEFAULT_LIMIT } from '@/lib/recipeFilters';
 
 const log = createLogger('filter');
 
 const TOTAL_TIME_MAX = 180;
 
-const TIME_OF_DAY_RANGES: Record<string, Partial<{ min: number; max: number }>> = {
+const TIME_OF_DAY_RANGES: Record<string, { min?: number; max?: number }> = {
     morgen: { min: 0, max: 25 },
     mittag: { min: 20, max: 45 },
     nachmittag: { min: 25, max: 60 },
@@ -18,35 +17,32 @@ const TIME_OF_DAY_RANGES: Record<string, Partial<{ min: number; max: number }>> 
     snack: { min: 0, max: 20 },
 };
 
-function mapRecipeToCard(
-    recipe: Prisma.RecipeGetPayload<{ include: { category: true } }>,
-): RecipeCardData {
-    const totalTime = recipe.totalTime ?? (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
+const mapDocumentToRecipeCard = (document: Record<string, unknown>): RecipeCardData => {
+    const totalTime = Number(document.totalTime ?? 0);
+    const rating = Number(document.rating ?? 0);
 
     return {
-        id: recipe.id,
-        slug: recipe.slug,
-        title: recipe.title,
-        category: recipe.category?.name ?? 'Hauptgericht',
-        rating: recipe.rating ?? 0,
-        time: `${totalTime ?? 0} Min.`,
+        id: document.id as string,
+        slug: document.slug as string,
+        title: (document.title as string) || 'Unbekanntes Rezept',
+        category: (document.category as string) || 'Hauptgericht',
+        rating,
+        time: `${totalTime} Min.`,
         image:
-            recipe.imageUrl ??
+            (document.imageUrl as string) ??
             'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&q=80',
-        description: recipe.description ?? '',
+        description: (document.description as string) || '',
     };
-}
+};
 
-function ensureValidDifficulty(value: string): value is 'EASY' | 'MEDIUM' | 'HARD' {
-    return ['EASY', 'MEDIUM', 'HARD'].includes(value);
-}
+const buildTermsAggregation = (buckets?: Array<{ key: string; doc_count: number }>) =>
+    buckets?.map((bucket) => ({ key: bucket.key, count: bucket.doc_count })) ?? [];
 
 export async function GET(request: NextRequest) {
     log.debug('Filter request received', { url: request.url });
 
     try {
         const filters = parseRecipeFilterParams(new URL(request.url).searchParams);
-
         const {
             query,
             tags = [],
@@ -68,151 +64,166 @@ export async function GET(request: NextRequest) {
             filterMode = 'and',
         } = filters;
 
-        const clauses: Prisma.RecipeWhereInput[] = [];
+        type BoolClause = Record<string, unknown>;
+        type BoolQuery = {
+            bool: {
+                must: BoolClause[];
+                filter: BoolClause[];
+                should: BoolClause[];
+                must_not: BoolClause[];
+                minimum_should_match?: number;
+            };
+        };
+
+        const boolQuery: BoolQuery = {
+            bool: {
+                must: [],
+                filter: [],
+                should: [],
+                must_not: [],
+            },
+        };
+
+        const clauses: Record<string, unknown>[] = [];
+
+        const pushClause = (clause: Record<string, unknown>) => clauses.push(clause);
 
         if (query) {
-            clauses.push({
-                OR: [
-                    { title: { contains: query, mode: 'insensitive' } },
-                    { description: { contains: query, mode: 'insensitive' } },
-                ],
+            boolQuery.bool.must.push({
+                multi_match: {
+                    query,
+                    fields: ['title^3', 'description', 'keywords'],
+                    fuzziness: 'AUTO',
+                },
             });
         }
 
+        pushClause({ term: { status: 'PUBLISHED' } });
+
         if (mealTypes.length > 0) {
-            const categoryConditions = mealTypes.map((mealType) => ({
-                category: {
-                    name: { equals: mealType },
-                },
-            }));
-            clauses.push({ OR: categoryConditions });
+            pushClause({ terms: { category: mealTypes } });
         }
 
         if (tags.length > 0) {
-            clauses.push({
-                AND: tags.map((tag) => ({
-                    tags: {
-                        some: {
-                            tag: {
-                                name: { equals: tag },
-                            },
-                        },
-                    },
-                })),
-            });
+            pushClause({ bool: { must: tags.map((tag) => ({ term: { tags: tag } })) } });
         }
 
         if (ingredients.length > 0) {
-            clauses.push({
-                AND: ingredients.map((ing) => ({
-                    recipeIngredients: {
-                        some: {
-                            ingredient: {
-                                name: { equals: ing },
-                            },
-                        },
-                    },
-                })),
-            });
-        }
-
-        if (excludeIngredients.length > 0) {
-            clauses.push({
-                recipeIngredients: {
-                    none: {
-                        ingredient: {
-                            name: { in: excludeIngredients, mode: 'insensitive' },
-                        },
-                    },
+            pushClause({
+                bool: {
+                    must: ingredients.map((ingredient) => ({ term: { ingredients: ingredient } })),
                 },
             });
         }
 
-        const validDifficulties = difficulty.filter(ensureValidDifficulty);
-        if (validDifficulties.length > 0) {
-            clauses.push({ difficulty: { in: validDifficulties } });
+        if (difficulty.length > 0) {
+            pushClause({ terms: { difficulty: difficulty.map((value) => value.toUpperCase()) } });
         }
 
-        if (typeof minTotalTime === 'number') {
-            clauses.push({ totalTime: { gte: minTotalTime } });
-        }
+        const addRange = (field: string, gte?: number, lte?: number) => {
+            const range: Record<string, number> = {};
+            if (typeof gte === 'number') range.gte = gte;
+            if (typeof lte === 'number') range.lte = lte;
+            if (Object.keys(range).length === 0) return;
+            pushClause({ range: { [field]: range } });
+        };
 
-        if (typeof maxTotalTime === 'number') {
-            clauses.push({ totalTime: { lte: maxTotalTime } });
-        }
+        addRange('totalTime', minTotalTime, maxTotalTime);
+        addRange('prepTime', minPrepTime, maxPrepTime);
+        addRange('cookTime', minCookTime, maxCookTime);
+        if (typeof minRating === 'number') addRange('rating', minRating, undefined);
+        if (typeof minCookCount === 'number') addRange('cookCount', minCookCount, undefined);
 
-        if (typeof minPrepTime === 'number') {
-            clauses.push({ prepTime: { gte: minPrepTime } });
-        }
-
-        if (typeof maxPrepTime === 'number') {
-            clauses.push({ prepTime: { lte: maxPrepTime } });
-        }
-
-        if (typeof minCookTime === 'number') {
-            clauses.push({ cookTime: { gte: minCookTime } });
-        }
-
-        if (typeof maxCookTime === 'number') {
-            clauses.push({ cookTime: { lte: maxCookTime } });
-        }
-
-        if (typeof minRating === 'number') {
-            clauses.push({ rating: { gte: minRating } });
-        }
-
-        if (typeof minCookCount === 'number') {
-            clauses.push({ cookCount: { gte: minCookCount } });
-        }
-
-        const ranges = timeOfDay
+        const timeRanges = timeOfDay
             .map((slot) => TIME_OF_DAY_RANGES[slot.toLowerCase()])
             .filter(Boolean)
             .map((range) => ({
-                totalTime: {
-                    gte: range.min ?? 0,
-                    lte: range.max ?? TOTAL_TIME_MAX,
+                range: {
+                    totalTime: {
+                        gte: range.min ?? 0,
+                        lte: range.max ?? TOTAL_TIME_MAX,
+                    },
                 },
             }));
 
-        if (ranges.length > 0) {
-            clauses.push({ OR: ranges });
+        if (timeRanges.length > 0) {
+            pushClause({ bool: { should: timeRanges, minimum_should_match: 1 } });
         }
 
-        const baseClause: Prisma.RecipeWhereInput = { publishedAt: { not: null } };
-        let where: Prisma.RecipeWhereInput = baseClause;
+        if (excludeIngredients.length > 0) {
+            boolQuery.bool.must_not.push({ terms: { ingredients: excludeIngredients } });
+        }
 
         if (clauses.length > 0) {
             if (filterMode === 'or') {
-                where = {
-                    AND: [baseClause, { OR: clauses }],
-                };
+                boolQuery.bool.should = clauses;
+                boolQuery.bool.minimum_should_match = 1;
             } else {
-                where = {
-                    AND: [baseClause, ...clauses],
-                };
+                boolQuery.bool.filter = clauses;
             }
         }
 
-        const skip = Math.max(0, page - 1) * limit;
+        const hasClauses =
+            boolQuery.bool.must.length > 0 ||
+            boolQuery.bool.filter.length > 0 ||
+            boolQuery.bool.should.length > 0 ||
+            boolQuery.bool.must_not.length > 0 ||
+            typeof boolQuery.bool.minimum_should_match === 'number';
 
-        const [recipes, total] = await Promise.all([
-            prisma.recipe.findMany({
-                where,
-                include: { category: true },
-                orderBy: [{ rating: 'desc' }, { createdAt: 'desc' }],
-                take: limit,
-                skip,
-            }),
-            prisma.recipe.count({ where }),
-        ]);
+        const sanitizedQuery = hasClauses ? boolQuery : { match_all: {} };
+
+        const openSearchPage = Math.max(0, page - 1);
+        const from = openSearchPage * limit;
+
+        const response = await opensearchClient.search({
+            index: OPENSEARCH_INDEX,
+            body: {
+                query: sanitizedQuery,
+                sort: [{ rating: 'desc' }, { publishedAt: 'desc' }],
+                from,
+                size: limit,
+                aggs: {
+                    tags: { terms: { field: 'tags', size: 30 } },
+                    ingredients: { terms: { field: 'ingredients', size: 30 } },
+                    difficulties: { terms: { field: 'difficulty', size: 5 } },
+                    categories: { terms: { field: 'category', size: 8 } },
+                    totalTime: {
+                        histogram: { field: 'totalTime', interval: 10, min_doc_count: 0 },
+                    },
+                    prepTime: { histogram: { field: 'prepTime', interval: 5, min_doc_count: 0 } },
+                },
+            },
+        });
+
+        const hits = (response.body.hits?.hits ?? []) as Array<{
+            _source?: Record<string, unknown>;
+        }>;
+        const total =
+            typeof response.body.hits?.total === 'number'
+                ? response.body.hits.total
+                : (response.body.hits?.total?.value ?? 0);
 
         const payload = {
-            data: recipes.map(mapRecipeToCard),
+            data: hits
+                .map((hit) => hit._source)
+                .filter(Boolean)
+                .map((source) => mapDocumentToRecipeCard(source ?? {})),
             meta: {
                 total,
                 page,
                 limit,
+                facets: {
+                    tags: buildTermsAggregation(response.body.aggregations?.tags?.buckets),
+                    ingredients: buildTermsAggregation(
+                        response.body.aggregations?.ingredients?.buckets,
+                    ),
+                    difficulties: buildTermsAggregation(
+                        response.body.aggregations?.difficulties?.buckets,
+                    ),
+                    categories: buildTermsAggregation(
+                        response.body.aggregations?.categories?.buckets,
+                    ),
+                },
             },
         };
 

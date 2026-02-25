@@ -1,10 +1,13 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
+import { Heading, Text } from '@/components/atoms/Typography';
 import { PageShell } from '@/components/layouts/PageShell';
 import { getAllCategories, getAllTags } from '@/components/recipe/actions';
 import { RecipeForm } from '@/components/recipe/RecipeForm';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
+import { css } from 'styled-system/css';
+import { stack } from 'styled-system/patterns';
 
 export const metadata: Metadata = {
     title: 'Rezept erstellen',
@@ -24,33 +27,38 @@ export default async function CreateRecipePage() {
 
     return (
         <PageShell>
-            <div
-                style={{
-                    maxWidth: '800px',
-                    margin: '0 auto',
-                    padding: '2rem 1rem',
-                }}
-            >
-                <h1
-                    style={{
-                        fontSize: '2rem',
-                        fontWeight: '800',
-                        marginBottom: '0.5rem',
-                    }}
-                >
-                    Neues Rezept erstellen
-                </h1>
-                <p
-                    style={{
-                        color: '#666',
-                        marginBottom: '2rem',
-                    }}
-                >
-                    Teile dein Rezept mit der KüchenTakt Community.
-                </p>
-
-                <RecipeForm categories={categories} tags={tags} authorId={session.user.id} />
+            <div className={pageLayoutClass}>
+                <div className={headerStackClass}>
+                    <Heading as="h1" size="xl">
+                        Neues Rezept erstellen
+                    </Heading>
+                    <Text size="md" color="muted">
+                        Teile dein Rezept mit der KüchenTakt Community.
+                    </Text>
+                </div>
+                <div className={formWrapperClass}>
+                    <RecipeForm categories={categories} tags={tags} authorId={session.user.id} />
+                </div>
             </div>
         </PageShell>
     );
 }
+
+const pageLayoutClass = css({
+    maxWidth: '960px',
+    marginX: 'auto',
+    px: { base: '4', md: '6' },
+    py: { base: '6', md: '8' },
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4',
+});
+
+const headerStackClass = stack({
+    gap: '1',
+    maxWidth: '640px',
+});
+
+const formWrapperClass = css({
+    width: 'full',
+});

@@ -24,7 +24,7 @@ export function PageShell({ children }: PageShellProps) {
                     maxWidth: '1400px',
                     marginX: 'auto',
                     paddingX: { base: '4', md: '6' },
-                    paddingY: { base: '6', md: '10' },
+                    paddingY: { base: '4', md: '5' },
                 })}
             >
                 {children}

@@ -19,7 +19,7 @@ export function Section({ title, description, children, action, titleColor }: Se
     return (
         <section
             className={css({
-                p: '5',
+                p: '4',
                 borderRadius: '2xl',
                 bg: '#fffcf9',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
@@ -31,7 +31,7 @@ export function Section({ title, description, children, action, titleColor }: Se
                     justify: 'space-between',
                     align: 'flex-start',
                     gap: '3',
-                    mb: '4',
+                    mb: '3',
                 })}
             >
                 <div>

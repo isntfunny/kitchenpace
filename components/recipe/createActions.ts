@@ -52,7 +52,7 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
                     position: index,
                 })),
             },
-        } as any,
+        },
     });
 
     // Add categories after recipe is created
@@ -91,7 +91,7 @@ export async function createIngredient(name: string, category?: string, units: s
         create: {
             name,
             slug,
-            category: (category as any) || null,
+            category: category || null,
             units: units.length > 0 ? units : [name.includes('g') ? 'g' : 'Stück'],
         },
     });

@@ -12,13 +12,13 @@ export function QuickTips({ tips }: QuickTipsProps) {
         return (
             <div
                 className={css({
-                    p: '5',
+                    p: '4',
                     borderRadius: '2xl',
                     bg: '#fffcf9',
                     boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                 })}
             >
-                <Heading as="h3" size="md" className={css({ color: '#00b894', mb: '3' })}>
+                <Heading as="h3" size="md" className={css({ color: '#00b894', mb: '2' })}>
                     Küchen-Hacks 💡
                 </Heading>
                 <Text size="sm" color="muted">
@@ -31,13 +31,13 @@ export function QuickTips({ tips }: QuickTipsProps) {
     return (
         <div
             className={css({
-                p: '5',
+                p: '4',
                 borderRadius: '2xl',
                 bg: '#fffcf9',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
             })}
         >
-            <div className={css({ mb: '3' })}>
+            <div className={css({ mb: '2' })}>
                 <Heading as="h3" size="md" className={css({ color: '#00b894' })}>
                     Küchen-Hacks 💡
                 </Heading>
@@ -49,8 +49,8 @@ export function QuickTips({ tips }: QuickTipsProps) {
                         key={tip.title}
                         className={css({
                             display: 'flex',
-                            gap: '3',
-                            p: '3',
+                            gap: '2',
+                            p: '2',
                             _hover: {
                                 bg: 'rgba(0,0,0,0.02)',
                             },

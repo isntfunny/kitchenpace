@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import * as ToggleGroup from '@radix-ui/react-toggle-group';
 
 import { FileUpload } from '@/components/features/FileUpload';
-import { css } from 'styled-system/css';
-import { grid } from 'styled-system/patterns';
+import { css, cx } from 'styled-system/css';
+import { grid, stack } from 'styled-system/patterns';
 
 import { searchIngredients } from '../recipe/actions';
 import { createIngredient, createRecipe } from '../recipe/createActions';
@@ -17,6 +18,7 @@ interface Category {
 interface Tag {
     id: string;
     name: string;
+    count: number;
 }
 
 interface IngredientSearchResult {
@@ -42,6 +44,82 @@ interface RecipeFormProps {
     authorId: string;
 }
 
+const formStackClass = stack({
+    gap: '6',
+});
+
+const sectionStackClass = stack({
+    gap: '3',
+});
+
+const tagSearchInputClass = css({
+    width: '100%',
+    borderRadius: 'xl',
+    border: '1px solid',
+    borderColor: 'light',
+    background: 'surface',
+    px: '3',
+    py: '2.5',
+    fontSize: 'sm',
+    outline: 'none',
+    _focus: {
+        borderColor: 'primary',
+    },
+});
+
+const tagChipsWrapperClass = css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '2',
+});
+
+const tagChipBaseClass = css({
+    borderRadius: 'full',
+    px: '3',
+    py: '2',
+    minHeight: '40px',
+    border: '1px solid',
+    borderColor: 'light',
+    background: 'surface',
+    color: 'text',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '2',
+    fontSize: 'sm',
+    cursor: 'pointer',
+    transition: 'border 150ms ease, background 150ms ease, color 150ms ease',
+});
+
+const tagChipSelectedClass = css({
+    borderColor: 'primary-dark',
+    background: 'primary',
+    color: 'light',
+    boxShadow: '0 10px 20px rgba(0, 0, 0, 0.12)',
+});
+
+const tagZeroClass = css({
+    opacity: 0.8,
+    color: 'text-muted',
+});
+
+const tagCountClass = css({
+    fontSize: 'xs',
+    borderRadius: 'full',
+    px: '2',
+    py: '0.5',
+    background: 'accent',
+    color: 'secondary',
+    fontWeight: '600',
+});
+
+const tagCountZeroClass = css({
+    background: 'surface',
+    border: '1px solid',
+    borderColor: 'light',
+    color: 'text-muted',
+    fontWeight: '500',
+});
+
 export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -52,6 +130,7 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
     const [difficulty, setDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>('MEDIUM');
     const [categoryIds, setCategoryIds] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [tagQuery, setTagQuery] = useState('');
     const [ingredients, setIngredients] = useState<AddedIngredient[]>([]);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -77,6 +156,24 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
 
         return () => clearTimeout(timer);
     }, [ingredientQuery]);
+
+    const sortedTags = useMemo(() => {
+        const normalizedQuery = tagQuery.toLowerCase().trim();
+        const tagPool = tags.map((tag) => ({
+            ...tag,
+            selected: selectedTags.includes(tag.id),
+        }));
+        const filtered = normalizedQuery
+            ? tagPool.filter((tag) => tag.name.toLowerCase().includes(normalizedQuery))
+            : tagPool;
+
+        return filtered.sort((a, b) => {
+            if (a.selected && !b.selected) return -1;
+            if (!a.selected && b.selected) return 1;
+            if (a.count !== b.count) return b.count - a.count;
+            return a.name.localeCompare(b.name);
+        });
+    }, [selectedTags, tagQuery, tags]);
 
     const handleAddIngredient = (ing: IngredientSearchResult) => {
         setIngredients([
@@ -175,15 +272,9 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
         }
     };
 
-    const toggleTag = (tagId: string) => {
-        setSelectedTags((prev) =>
-            prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId],
-        );
-    };
-
     return (
         <form onSubmit={handleSubmit}>
-            <div className={css({ display: 'flex', flexDir: 'column', gap: '8' })}>
+            <div className={formStackClass}>
                 {/* Image Upload */}
                 <div>
                     <label className={css({ fontWeight: '600', display: 'block', mb: '2' })}>
@@ -351,7 +442,9 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
                         </label>
                         <select
                             value={difficulty}
-                            onChange={(e) => setDifficulty(e.target.value as any)}
+                            onChange={(e) =>
+                                setDifficulty(e.target.value as 'EASY' | 'MEDIUM' | 'HARD')
+                            }
                             className={css({
                                 width: '100%',
                                 padding: '3',
@@ -423,37 +516,45 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
                 </div>
 
                 {/* Tags */}
-                <div>
-                    <label className={css({ fontWeight: '600', display: 'block', mb: '2' })}>
-                        Tags
-                    </label>
-                    <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
-                        {tags.map((tag) => (
-                            <button
-                                key={tag.id}
-                                type="button"
-                                onClick={() => toggleTag(tag.id)}
-                                className={css({
-                                    padding: '2 px-3',
-                                    borderRadius: 'full',
-                                    border: '1px solid',
-                                    borderColor: selectedTags.includes(tag.id)
-                                        ? '#e07b53'
-                                        : 'rgba(224,123,83,0.3)',
-                                    bg: selectedTags.includes(tag.id) ? '#e07b53' : 'transparent',
-                                    color: selectedTags.includes(tag.id) ? 'white' : 'text',
-                                    fontSize: 'sm',
-                                    cursor: 'pointer',
-                                    transition: 'all 150ms',
-                                    _hover: {
-                                        borderColor: '#e07b53',
-                                    },
-                                })}
-                            >
-                                {tag.name}
-                            </button>
-                        ))}
-                    </div>
+                <div className={sectionStackClass}>
+                    <label className={css({ fontWeight: '600', display: 'block' })}>Tags</label>
+                    <input
+                        type="search"
+                        value={tagQuery}
+                        onChange={(event) => setTagQuery(event.target.value)}
+                        placeholder="Tags durchsuchen"
+                        className={tagSearchInputClass}
+                    />
+                    <ToggleGroup.Root
+                        type="multiple"
+                        aria-label="Tags auswählen"
+                        className={tagChipsWrapperClass}
+                        value={selectedTags}
+                        onValueChange={(next) => setSelectedTags(next)}
+                    >
+                        {sortedTags.map((tag) => {
+                            const chipClass = cx(
+                                tagChipBaseClass,
+                                tag.selected && tagChipSelectedClass,
+                                !tag.selected && tag.count === 0 && tagZeroClass,
+                            );
+                            const badgeClass = cx(
+                                tagCountClass,
+                                tag.count === 0 && tagCountZeroClass,
+                            );
+                            return (
+                                <ToggleGroup.Item key={tag.id} value={tag.id} className={chipClass}>
+                                    <span>{tag.name}</span>
+                                    <span className={badgeClass}>{tag.count}</span>
+                                </ToggleGroup.Item>
+                            );
+                        })}
+                    </ToggleGroup.Root>
+                    {sortedTags.length === 0 && (
+                        <p className={css({ fontSize: 'xs', color: 'text-muted' })}>
+                            Keine Tags zum Anzeigen.
+                        </p>
+                    )}
                 </div>
 
                 {/* Ingredients */}

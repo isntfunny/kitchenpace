@@ -120,10 +120,10 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         <div
             className={css({
                 display: 'grid',
-                gridTemplateColumns: { base: '1fr', lg: '320px 1fr' },
-                gap: '6',
-                paddingTop: '5',
-                paddingBottom: '12',
+                gridTemplateColumns: { base: '1fr', lg: '280px 1fr' },
+                gap: '4',
+                paddingTop: '3',
+                paddingBottom: '8',
                 position: 'relative',
             })}
         >
@@ -223,7 +223,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                 sm: 'repeat(2, minmax(0, 1fr))',
                                 lg: 'repeat(3, minmax(0, 1fr))',
                             },
-                            gap: '5',
+                            gap: '4',
                         })}
                     >
                         {data.map((recipe: RecipeCardData) => (

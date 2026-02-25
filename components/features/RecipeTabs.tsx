@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import * as React from 'react';
 
@@ -106,9 +107,11 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                     })}
                 >
                     {recipe.imageUrl ? (
-                        <img
+                        <Image
                             src={recipe.imageUrl}
                             alt={recipe.title}
+                            width={400}
+                            height={120}
                             className={css({
                                 width: '100%',
                                 height: '120px',

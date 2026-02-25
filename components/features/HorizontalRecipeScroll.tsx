@@ -37,7 +37,7 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
     return (
         <div
             className={css({
-                p: '5',
+                p: '4',
                 borderRadius: '2xl',
                 bg: '#fffcf9',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
@@ -47,7 +47,7 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                 as="h2"
                 size="lg"
                 className={css({
-                    mb: '4',
+                    mb: '3',
                     color: 'text',
                 })}
             >
@@ -57,7 +57,7 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
             <div
                 className={css({
                     display: 'flex',
-                    gap: '4',
+                    gap: '3',
                     overflowX: 'auto',
                     pb: '2',
                     scrollbarWidth: 'thin',

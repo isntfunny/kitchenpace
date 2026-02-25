@@ -317,10 +317,10 @@ export function RecipeDetailClient({
                     maxW: '1400px',
                     mx: 'auto',
                     px: { base: '4', md: '6' },
-                    py: '8',
+                    py: '5',
                 })}
             >
-                <div className={css({ mb: '8' })}>
+                <div className={css({ mb: '5' })}>
                     <div className={css({ mb: '4' })}>
                         <h1
                             className={css({
@@ -333,7 +333,7 @@ export function RecipeDetailClient({
                             {recipe.title}
                         </h1>
                     </div>
-                    <div className={grid({ columns: { base: 1, lg: 2 }, gap: '8' })}>
+                    <div className={grid({ columns: { base: 1, lg: 2 }, gap: '5' })}>
                         <div
                             className={css({
                                 display: 'flex',
@@ -538,18 +538,18 @@ export function RecipeDetailClient({
                                 className={css({
                                     fontFamily: 'body',
                                     color: 'text-muted',
-                                    mb: '6',
+                                    mb: '4',
                                     lineHeight: 'relaxed',
                                 })}
                             >
                                 {recipe.description}
                             </p>
 
-                            <div className={grid({ columns: 3, gap: '4', mb: '6' })}>
+                            <div className={grid({ columns: 3, gap: '3', mb: '4' })}>
                                 <div
                                     className={css({
                                         textAlign: 'center',
-                                        p: '4',
+                                        p: '3',
                                         bg: 'light',
                                         borderRadius: 'xl',
                                     })}
@@ -576,12 +576,12 @@ export function RecipeDetailClient({
                                 <div
                                     className={css({
                                         textAlign: 'center',
-                                        p: '4',
+                                        p: '3',
                                         bg: 'light',
                                         borderRadius: 'xl',
                                     })}
                                 >
-                                    <div className={css({ fontSize: '2xl', mb: '1' })}>👨‍🍳</div>
+                                    <div className={css({ fontSize: 'xl', mb: '1' })}>👨‍🍳</div>
                                     <div
                                         className={css({
                                             fontSize: 'sm',
@@ -603,12 +603,12 @@ export function RecipeDetailClient({
                                 <div
                                     className={css({
                                         textAlign: 'center',
-                                        p: '4',
+                                        p: '3',
                                         bg: 'light',
                                         borderRadius: 'xl',
                                     })}
                                 >
-                                    <div className={css({ fontSize: '2xl', mb: '1' })}>🔥</div>
+                                    <div className={css({ fontSize: 'xl', mb: '1' })}>🔥</div>
                                     <div
                                         className={css({
                                             fontSize: 'sm',
@@ -631,9 +631,9 @@ export function RecipeDetailClient({
 
                             <div
                                 className={css({
-                                    mb: '6',
+                                    mb: '4',
                                     borderRadius: 'xl',
-                                    p: '5',
+                                    p: '4',
                                     bg: 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(255,246,236,0.9))',
                                     border: '1px solid',
                                     borderColor: 'rgba(224,123,83,0.2)',
@@ -643,9 +643,9 @@ export function RecipeDetailClient({
                                 <div
                                     className={flex({
                                         align: 'center',
-                                        gap: { base: '4', md: '6' },
+                                        gap: { base: '3', md: '4' },
                                         flexWrap: 'wrap',
-                                        mb: '4',
+                                        mb: '3',
                                     })}
                                 >
                                     <div
@@ -901,22 +901,22 @@ export function RecipeDetailClient({
                     </div>
                 </div>
 
-                <div className={grid({ columns: { base: 1, lg: 12 }, gap: '8' })}>
+                <div className={grid({ columns: { base: 1, lg: 12 }, gap: '5' })}>
                     <div className={css({ lg: { gridColumn: 'span 4' } })}>
                         <div
                             className={css({
                                 bg: 'white',
                                 borderRadius: '2xl',
-                                p: '6',
+                                p: '5',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                             })}
                         >
                             <h2
                                 className={css({
                                     fontFamily: 'heading',
-                                    fontSize: '2xl',
+                                    fontSize: 'xl',
                                     fontWeight: '600',
-                                    mb: '4',
+                                    mb: '3',
                                 })}
                             >
                                 Zutaten
@@ -924,8 +924,8 @@ export function RecipeDetailClient({
 
                             <div
                                 className={css({
-                                    mb: '6',
-                                    p: '4',
+                                    mb: '4',
+                                    p: '3',
                                     bg: 'light',
                                     borderRadius: 'xl',
                                 })}
@@ -988,14 +988,14 @@ export function RecipeDetailClient({
                                 </div>
                             </div>
 
-                            <ul className={css({ spaceY: '3' })}>
+                            <ul className={css({ spaceY: '2' })}>
                                 {recipe.ingredients.map((ingredient, index) => (
                                     <li
                                         key={index}
                                         className={flex({
                                             justify: 'space-between',
                                             align: 'center',
-                                            p: '3',
+                                            p: '2',
                                             bg: 'light',
                                             borderRadius: 'lg',
                                             fontFamily: 'body',
@@ -1018,16 +1018,16 @@ export function RecipeDetailClient({
                             className={css({
                                 bg: 'white',
                                 borderRadius: '2xl',
-                                p: '6',
+                                p: '5',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                             })}
                         >
                             <h2
                                 className={css({
                                     fontFamily: 'heading',
-                                    fontSize: '2xl',
+                                    fontSize: 'xl',
                                     fontWeight: '600',
-                                    mb: '4',
+                                    mb: '3',
                                 })}
                             >
                                 Zubereitung
@@ -1039,13 +1039,13 @@ export function RecipeDetailClient({
                 </div>
 
                 {author && (
-                    <div className={css({ mt: '12' })}>
+                    <div className={css({ mt: '8' })}>
                         <h2
                             className={css({
                                 fontFamily: 'heading',
-                                fontSize: '2xl',
+                                fontSize: 'xl',
                                 fontWeight: '600',
-                                mb: '6',
+                                mb: '4',
                             })}
                         >
                             Über den Autor
@@ -1054,7 +1054,7 @@ export function RecipeDetailClient({
                             className={css({
                                 bg: 'white',
                                 borderRadius: '2xl',
-                                p: '6',
+                                p: '5',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                             })}
                         >

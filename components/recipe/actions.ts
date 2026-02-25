@@ -39,7 +39,18 @@ export async function getAllCategories() {
 }
 
 export async function getAllTags() {
-    return prisma.tag.findMany({
+    const tags = await prisma.tag.findMany({
         orderBy: { name: 'asc' },
+        include: {
+            _count: {
+                select: { recipes: true },
+            },
+        },
     });
+
+    return tags.map((tag) => ({
+        id: tag.id,
+        name: tag.name,
+        count: tag._count.recipes,
+    }));
 }

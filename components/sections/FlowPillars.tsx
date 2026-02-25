@@ -35,7 +35,7 @@ export function FlowPillars() {
     return (
         <section
             className={css({
-                padding: { base: '6', md: '8' },
+                padding: { base: '4', md: '5' },
                 borderRadius: '2xl',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                 bg: '#fffcf9',
@@ -45,20 +45,20 @@ export function FlowPillars() {
                 className={grid({
                     columns: { base: 1, md: 3 },
                     gap: '4',
-                    mt: '6',
+                    mt: '4',
                 })}
             >
                 {pillars.map((pillar) => (
                     <div
                         key={pillar.title}
                         className={css({
-                            padding: '5',
-                            minHeight: '180px',
+                            padding: '4',
+                            minHeight: '160px',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '3',
+                            gap: '2',
                             _hover: {
-                                transform: 'translateY(-4px)',
+                                transform: 'translateY(-2px)',
                             },
                             transition: 'transform 250ms ease',
                         })}

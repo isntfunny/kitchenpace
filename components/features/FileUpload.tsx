@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useRef, useCallback } from 'react';
 
 import { css } from 'styled-system/css';
@@ -101,12 +102,11 @@ export function FileUpload({
                         overflow: 'hidden',
                     })}
                 >
-                    <img
+                    <Image
                         src={value}
                         alt="Uploaded preview"
+                        fill
                         className={css({
-                            width: 'full',
-                            height: 'full',
                             objectFit: 'cover',
                         })}
                     />

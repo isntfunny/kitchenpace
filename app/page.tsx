@@ -57,7 +57,7 @@ export default async function Home() {
                     maxW: '1400px',
                     mx: 'auto',
                     px: { base: '4', md: '6' },
-                    py: { base: '6', md: '8' },
+                    py: { base: '4', md: '5' },
                 })}
             >
                 <HeroSpotlight />
@@ -66,13 +66,13 @@ export default async function Home() {
 
                 <div
                     className={css({
-                        marginTop: '6',
+                        marginTop: '4',
                     })}
                 >
                     <div
                         className={grid({
                             columns: { base: 1, lg: 12 },
-                            gap: '6',
+                            gap: '4',
                         })}
                     >
                         <div className={css({ lg: { gridColumn: 'span 8' } })}>
@@ -80,7 +80,7 @@ export default async function Home() {
 
                             <div
                                 className={css({
-                                    marginTop: '6',
+                                    marginTop: '4',
                                 })}
                             >
                                 <RecipeScrollServer
@@ -91,7 +91,7 @@ export default async function Home() {
 
                             <div
                                 className={css({
-                                    marginTop: '6',
+                                    marginTop: '4',
                                 })}
                             >
                                 <FitsNow />
@@ -99,7 +99,7 @@ export default async function Home() {
 
                             <div
                                 className={css({
-                                    marginTop: '6',
+                                    marginTop: '4',
                                 })}
                             >
                                 <RecipeScrollServer title="Top Rated" recipes={topRatedRecipes} />
@@ -110,21 +110,21 @@ export default async function Home() {
                             <TrendingTags tags={trendingTags} />
                             <div
                                 className={css({
-                                    marginTop: '5',
+                                    marginTop: '4',
                                 })}
                             >
                                 <ChefSpotlight chef={chefSpotlight} />
                             </div>
                             <div
                                 className={css({
-                                    marginTop: '5',
+                                    marginTop: '4',
                                 })}
                             >
                                 <QuickTips tips={quickTips} />
                             </div>
                             <div
                                 className={css({
-                                    marginTop: '5',
+                                    marginTop: '4',
                                 })}
                             >
                                 <ActivitySidebar activities={recentActivities} />
@@ -136,8 +136,8 @@ export default async function Home() {
 
             <footer
                 className={css({
-                    py: '8',
-                    mt: '8',
+                    py: '5',
+                    mt: '5',
                     textAlign: 'center',
                     fontFamily: 'body',
                     fontSize: 'sm',

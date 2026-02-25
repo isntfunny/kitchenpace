@@ -15,13 +15,13 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
         return (
             <div
                 className={css({
-                    p: '5',
+                    p: '4',
                     borderRadius: '2xl',
                     bg: '#fffcf9',
                     boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                 })}
             >
-                <Heading as="h3" size="md" className={css({ color: 'primary', mb: '3' })}>
+                <Heading as="h3" size="md" className={css({ color: 'primary', mb: '2' })}>
                     Trending 🔥
                 </Heading>
                 <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
@@ -34,13 +34,13 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
     return (
         <div
             className={css({
-                p: '5',
+                p: '4',
                 borderRadius: '2xl',
                 bg: '#fffcf9',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
             })}
         >
-            <div className={css({ mb: '3' })}>
+            <div className={css({ mb: '2' })}>
                 <Heading as="h3" size="md" className={css({ color: 'primary' })}>
                     Trending 🔥
                 </Heading>

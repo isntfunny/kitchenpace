@@ -15,17 +15,17 @@ export function HeroSpotlight() {
                 position: 'relative',
                 overflow: 'hidden',
                 px: { base: '4', md: '6' },
-                py: { base: '8', md: '10' },
+                py: { base: '5', md: '6' },
                 bg: '#fffcf9',
                 borderRadius: '2xl',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-                mb: '6',
+                mb: '4',
             })}
         >
             <div
                 className={grid({
                     columns: { base: 1, lg: 2 },
-                    gap: '10',
+                    gap: { base: '5', md: '6' },
                     alignItems: 'center',
                 })}
             >

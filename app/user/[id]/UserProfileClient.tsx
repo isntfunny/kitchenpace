@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
@@ -178,12 +179,11 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 })}
                             >
                                 {user.avatar ? (
-                                    <img
+                                    <Image
                                         src={user.avatar}
                                         alt={user.name}
+                                        fill
                                         className={css({
-                                            width: '100%',
-                                            height: '100%',
                                             objectFit: 'cover',
                                             display: 'block',
                                         })}
@@ -617,14 +617,12 @@ function RecipeCard({ recipe }: { recipe: UserProfileRecipe }) {
                     overflow: 'hidden',
                 })}
             >
-                <img
+                <Image
                     src={recipe.image}
                     alt={recipe.title}
+                    fill
                     className={css({
-                        width: '100%',
-                        height: '100%',
                         objectFit: 'cover',
-                        transition: 'transform 0.3s',
                     })}
                 />
                 <div

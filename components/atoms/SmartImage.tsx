@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 
 import { getThumbnailUrl, extractKeyFromUrl, ThumbnailOptions } from '@/lib/thumbnail';
@@ -62,18 +63,14 @@ export function SmartImage({
 
     if (fill) {
         return (
-            <img
+            <Image
                 src={currentSrc}
-                alt={alt}
+                alt={alt || ''}
+                fill
                 onLoad={handleLoad}
                 onError={handleError}
                 className={cx(
                     css({
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
                         objectFit: 'cover',
                     }),
                     className,
@@ -83,9 +80,9 @@ export function SmartImage({
     }
 
     return (
-        <img
+        <Image
             src={currentSrc}
-            alt={alt}
+            alt={alt || ''}
             width={width}
             height={height}
             onLoad={handleLoad}

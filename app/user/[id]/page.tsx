@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 
+import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { css } from 'styled-system/css';
@@ -142,18 +143,22 @@ export default async function UserProfilePage({ params }: UserProfileProps) {
 
     if (!user) {
         return (
-            <div className={css({ minH: '100vh', color: 'text' })}>
-                <main className={container({ maxW: '1400px', mx: 'auto', px: '4', py: '8' })}>
-                    <div className={css({ textAlign: 'center', py: '20' })}>
-                        <h1 className={css({ fontFamily: 'heading', fontSize: '3xl', mb: '4' })}>
-                            Benutzer nicht gefunden
-                        </h1>
-                        <p className={css({ color: 'text-muted' })}>
-                            Der gesuchte Benutzer existiert leider nicht.
-                        </p>
-                    </div>
-                </main>
-            </div>
+            <PageShell>
+                <div className={css({ minH: '100vh', color: 'text' })}>
+                    <main className={container({ maxW: '1400px', mx: 'auto', px: '4', py: '8' })}>
+                        <div className={css({ textAlign: 'center', py: '20' })}>
+                            <h1
+                                className={css({ fontFamily: 'heading', fontSize: '3xl', mb: '4' })}
+                            >
+                                Benutzer nicht gefunden
+                            </h1>
+                            <p className={css({ color: 'text-muted' })}>
+                                Der gesuchte Benutzer existiert leider nicht.
+                            </p>
+                        </div>
+                    </main>
+                </div>
+            </PageShell>
         );
     }
 
@@ -176,5 +181,9 @@ export default async function UserProfilePage({ params }: UserProfileProps) {
         }
     }
 
-    return <UserProfileClient user={user} viewer={viewer} />;
+    return (
+        <PageShell>
+            <UserProfileClient user={user} viewer={viewer} />
+        </PageShell>
+    );
 }

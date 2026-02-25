@@ -9,45 +9,85 @@ import { css } from 'styled-system/css';
 
 interface HoverPreviewProps {
     recipe: RecipeTabItem;
-    position: 'left' | 'right';
+    children: React.ReactNode;
 }
 
-function HoverPreview({ recipe, position }: HoverPreviewProps) {
+function HoverPreview({ recipe, children }: HoverPreviewProps) {
     const [isVisible, setIsVisible] = React.useState(false);
-    const [isHovering, setIsHovering] = React.useState(false);
-    const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [previewSide, setPreviewSide] = React.useState<'left' | 'right'>('left');
+    const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const triggerRef = React.useRef<HTMLDivElement>(null);
 
-    const handleMouseEnter = () => {
-        timeoutRef.current = setTimeout(() => {
-            setIsVisible(true);
-        }, 300);
-        setIsHovering(true);
-    };
-
-    const handleMouseLeave = () => {
-        setIsHovering(false);
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
+    const clearHoverTimeout = () => {
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
         }
-        setTimeout(() => {
-            if (!isHovering) {
-                setIsVisible(false);
-            }
-        }, 150);
     };
+
+    const determineSide = () => {
+        const element = triggerRef.current;
+        if (!element) return;
+        const rect = element.getBoundingClientRect();
+        const midpoint = window.innerWidth / 2;
+        setPreviewSide(rect.left < midpoint ? 'left' : 'right');
+    };
+
+    const showPreview = (withDelay = true) => {
+        clearHoverTimeout();
+        hoverTimeoutRef.current = setTimeout(
+            () => {
+                setIsVisible(true);
+            },
+            withDelay ? 200 : 0,
+        );
+    };
+
+    const hidePreview = () => {
+        clearHoverTimeout();
+        hoverTimeoutRef.current = setTimeout(() => {
+            setIsVisible(false);
+        }, 100);
+    };
+
+    const handlePointerEnter = () => {
+        determineSide();
+        showPreview();
+    };
+
+    const handlePointerLeave = () => {
+        hidePreview();
+    };
+
+    const handleFocus = () => {
+        determineSide();
+        showPreview(false);
+    };
+
+    const handleBlur = () => {
+        hidePreview();
+    };
+
+    React.useEffect(() => {
+        return () => clearHoverTimeout();
+    }, []);
 
     const totalTime = (recipe.prepTime || 0) + (recipe.cookTime || 0);
-
-    const positionStyles = position === 'left' ? { left: '0' } : { right: '0' };
+    const positionStyles = previewSide === 'left' ? { left: 0 } : { right: 0 };
 
     return (
         <div
-            className={css({ position: 'relative' })}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            ref={triggerRef}
+            className={css({ position: 'relative', flexShrink: 0 })}
+            onMouseEnter={handlePointerEnter}
+            onMouseLeave={handlePointerLeave}
+            onFocusCapture={handleFocus}
+            onBlurCapture={handleBlur}
         >
+            {children}
             {isVisible && (
                 <div
+                    aria-hidden
                     className={css({
                         position: 'absolute',
                         top: '100%',
@@ -62,6 +102,7 @@ function HoverPreview({ recipe, position }: HoverPreviewProps) {
                         padding: '3',
                         zIndex: 50,
                         animation: 'fadeIn 150ms ease',
+                        display: { base: 'none', md: 'block' },
                     })}
                 >
                     {recipe.imageUrl ? (
@@ -172,7 +213,7 @@ function RecipeChip({
     const href = recipe.slug ? `/recipe/${recipe.slug}` : `/recipe/${recipe.id}`;
 
     return (
-        <div className={css({ position: 'relative', flexShrink: 0 })}>
+        <HoverPreview recipe={recipe}>
             <Link
                 href={href}
                 className={css({
@@ -198,7 +239,6 @@ function RecipeChip({
                     },
                 })}
             >
-                <span>{recipe.emoji || '🍽️'}</span>
                 <span className={css({ whiteSpace: 'nowrap' })}>{recipe.title}</span>
                 <span
                     onClick={handlePinClick}
@@ -219,8 +259,7 @@ function RecipeChip({
                     {isPinned ? '×' : '📌'}
                 </span>
             </Link>
-            <HoverPreview recipe={recipe} position="left" />
-        </div>
+        </HoverPreview>
     );
 }
 

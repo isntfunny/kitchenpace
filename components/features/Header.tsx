@@ -49,9 +49,10 @@ export function Header() {
                 <div
                     className={css({
                         display: 'flex',
+                        flexDir: { base: 'column', md: 'row' },
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        gap: '6',
+                        gap: { base: '3', md: '6' },
                     })}
                 >
                     <div
@@ -60,6 +61,7 @@ export function Header() {
                             alignItems: 'center',
                             gap: '4',
                             flex: '0 0 auto',
+                            order: { base: 1, md: 1 },
                         })}
                     >
                         <Link href="/">
@@ -87,7 +89,9 @@ export function Header() {
                         className={css({
                             flex: '1',
                             maxW: '400px',
-                            display: { base: 'none', md: 'block' },
+                            width: '100%',
+                            display: { base: 'block', md: 'block' },
+                            order: { base: 3, md: 2 },
                         })}
                     >
                         <HeaderSearch />
@@ -97,6 +101,10 @@ export function Header() {
                         className={flex({
                             gap: '1',
                             align: 'center',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            justifyContent: 'center',
+                            order: { base: 2, md: 3 },
                         })}
                     >
                         <DropdownMenu.Root>

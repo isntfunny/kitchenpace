@@ -200,13 +200,12 @@ model Recipe {
   flowEdges    Json?
   
   authorId     String
-  categoryId   String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
   // Relations
   author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  category     Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categories   RecipeCategory[]
   recipeIngredients RecipeIngredient[]
   comments     Comment[]
   ratings      UserRating[]
@@ -220,7 +219,6 @@ model Recipe {
   cookImages   CookImage[]
 
   @@index([authorId])
-  @@index([categoryId])
   @@index([difficulty])
   @@index([createdAt])
   @@index([rating])
@@ -275,7 +273,20 @@ model Category {
   color       String?  // Hex color for UI theming
   createdAt   DateTime @default(now())
 
-  recipes Recipe[]
+  recipes RecipeCategory[]
+}
+
+model RecipeCategory {
+  recipeId   String
+  categoryId String
+  position   Int      @default(0) // For ordering categories
+
+  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, categoryId])
+  @@index([recipeId])
+  @@index([categoryId])
 }
 
 model Tag {

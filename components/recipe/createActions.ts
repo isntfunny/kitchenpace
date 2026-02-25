@@ -18,7 +18,7 @@ export interface CreateRecipeInput {
     prepTime: number;
     cookTime: number;
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
-    categoryId?: string;
+    categoryIds: string[]; // Changed from categoryId to categoryIds array
     tagIds?: string[];
     ingredients: RecipeIngredientInput[];
 }
@@ -42,7 +42,6 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             difficulty: data.difficulty,
             status: 'DRAFT',
             authorId,
-            categoryId: data.categoryId,
             recipeIngredients: {
                 create: data.ingredients.map((ing, index) => ({
                     ingredientId: ing.ingredientId,
@@ -55,6 +54,17 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             },
         } as any,
     });
+
+    // Add categories after recipe is created
+    if (data.categoryIds && data.categoryIds.length > 0) {
+        await prisma.recipeCategory.createMany({
+            data: data.categoryIds.map((categoryId, index) => ({
+                recipeId: recipe.id,
+                categoryId,
+                position: index,
+            })),
+        });
+    }
 
     // Add tags after recipe is created
     if (data.tagIds && data.tagIds.length > 0) {

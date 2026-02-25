@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 
 import { fetchUserFavorites } from '@/app/actions/favorites';
+import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession } from '@/lib/auth';
 
 import { FavoritesClient, type FavoriteRecipeCard } from './FavoritesClient';
@@ -16,5 +17,9 @@ export default async function FavoritesPage() {
 
     const favorites = await fetchUserFavorites(session.user.id);
 
-    return <FavoritesClient initialFavorites={favorites as FavoriteRecipeCard[]} />;
+    return (
+        <PageShell>
+            <FavoritesClient initialFavorites={favorites as FavoriteRecipeCard[]} />
+        </PageShell>
+    );
 }

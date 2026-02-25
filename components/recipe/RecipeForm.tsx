@@ -50,7 +50,7 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
     const [prepTime, setPrepTime] = useState(0);
     const [cookTime, setCookTime] = useState(0);
     const [difficulty, setDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>('MEDIUM');
-    const [categoryId, setCategoryId] = useState('');
+    const [categoryIds, setCategoryIds] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [ingredients, setIngredients] = useState<AddedIngredient[]>([]);
     const [saving, setSaving] = useState(false);
@@ -135,6 +135,10 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
                 setError('Bitte gib einen Titel ein.');
                 return;
             }
+            if (categoryIds.length === 0) {
+                setError('Bitte wähle mindestens eine Kategorie aus.');
+                return;
+            }
             if (ingredients.length === 0) {
                 setError('Bitte füge mindestens eine Zutat hinzu.');
                 return;
@@ -149,7 +153,7 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
                     prepTime,
                     cookTime,
                     difficulty,
-                    categoryId: categoryId || undefined,
+                    categoryIds: categoryIds,
                     tagIds: selectedTags,
                     ingredients: ingredients.map((ing) => ({
                         ingredientId: ing.id,
@@ -368,34 +372,54 @@ export function RecipeForm({ categories, tags, authorId }: RecipeFormProps) {
                     </div>
                 </div>
 
-                {/* Category */}
+                {/* Categories */}
                 <div>
                     <label className={css({ fontWeight: '600', display: 'block', mb: '2' })}>
-                        Kategorie
+                        Kategorien (mindestens eine)
                     </label>
-                    <select
-                        value={categoryId}
-                        onChange={(e) => setCategoryId(e.target.value)}
+                    <div
                         className={css({
-                            width: '100%',
-                            padding: '3',
-                            borderRadius: 'xl',
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(2, 1fr)',
+                            gap: '2',
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            padding: '2',
                             border: '1px solid rgba(224,123,83,0.4)',
-                            fontSize: 'md',
-                            outline: 'none',
-                            bg: 'white',
-                            _focus: {
-                                borderColor: '#e07b53',
-                            },
+                            borderRadius: 'xl',
                         })}
                     >
-                        <option value="">Keine Kategorie</option>
                         {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                            </option>
+                            <label
+                                key={cat.id}
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                    cursor: 'pointer',
+                                    padding: '1',
+                                    borderRadius: 'md',
+                                    _hover: { bg: 'gray.50' },
+                                })}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={categoryIds.includes(cat.id)}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setCategoryIds([...categoryIds, cat.id]);
+                                        } else {
+                                            setCategoryIds(
+                                                categoryIds.filter((id) => id !== cat.id),
+                                            );
+                                        }
+                                    }}
+                                    className={css({ width: '4', height: '4' })}
+                                />
+                                <span>{cat.name}</span>
+                            </label>
                         ))}
-                    </select>
+                    </div>
                 </div>
 
                 {/* Tags */}

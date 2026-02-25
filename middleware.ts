@@ -2,42 +2,44 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const OPENPANEL_ID = process.env.OPENPANEL_ID;
 const OPENPANEL_TOKEN = process.env.OPENPANEL_TOKEN;
-const OPENPANEL_API_URL = process.env.OPENPANEL_API_URL || 'https://actions.isntfunny.de/';
+const OPENPANEL_API_URL = process.env.OPENPANEL_API_URL;
 
 export async function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
 
-    if (!OPENPANEL_ID || !OPENPANEL_TOKEN) {
+    if (!OPENPANEL_ID || !OPENPANEL_TOKEN || !OPENPANEL_API_URL) {
         return NextResponse.next();
     }
 
-    if (pathname === '/api/thumbnail' || pathname === '/api/filter') {
-        const startTime = Date.now();
+    const isThumbnailRoute = pathname === '/api/thumbnail';
+    const isFilterRoute = pathname.startsWith('/api/filter');
 
-        const response = NextResponse.next();
-
-        response.headers.set('x-openpanel-track', '1');
-
-        setTimeout(() => {
-            trackApiRequest(request, response, startTime, pathname, searchParams);
-        }, 0);
-
-        return response;
+    if (!isThumbnailRoute && !isFilterRoute) {
+        return NextResponse.next();
     }
 
-    return NextResponse.next();
+    const startTime = Date.now();
+    const response = NextResponse.next();
+
+    const track = () => {
+        const duration = Date.now() - startTime;
+        trackRequest(request, response, duration, pathname, searchParams);
+    };
+
+    setTimeout(track, 0);
+
+    return response;
 }
 
-async function trackApiRequest(
+function trackRequest(
     request: NextRequest,
     response: NextResponse,
-    startTime: number,
+    duration: number,
     pathname: string,
     searchParams: URLSearchParams,
 ) {
-    const duration = Date.now() - startTime;
     const isThumbnailRoute = pathname === '/api/thumbnail';
-    const isFilterRoute = pathname === '/api/filter';
+    const isFilterRoute = pathname.startsWith('/api/filter');
 
     const eventData = {
         url: pathname,
@@ -89,23 +91,19 @@ async function trackApiRequest(
         ],
     };
 
-    try {
-        await fetch(OPENPANEL_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${OPENPANEL_TOKEN}`,
-            },
-            body: JSON.stringify({
-                client_id: OPENPANEL_ID,
-                ...payload,
-            }),
-        });
-    } catch (error) {
-        console.error('OpenPanel tracking error:', error);
-    }
+    fetch(OPENPANEL_API_URL!, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${OPENPANEL_TOKEN}`,
+        },
+        body: JSON.stringify({
+            client_id: OPENPANEL_ID,
+            ...payload,
+        }),
+    }).catch(() => {});
 }
 
 export const config = {
-    matcher: ['/api/thumbnail', '/api/filter'],
+    matcher: ['/api/thumbnail', '/api/filter/:path*'],
 };

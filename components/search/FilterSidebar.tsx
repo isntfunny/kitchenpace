@@ -63,6 +63,8 @@ const FILTER_SECTION_IDS = {
     rating: 'rating',
 } as const;
 
+const normalizeTag = (value: string) => value.trim().toLowerCase();
+
 const accordionRootClass = css({
     display: 'flex',
     flexDirection: 'column',
@@ -173,18 +175,20 @@ const chipBadgeClass = css({
     py: '0.5',
 });
 
-const chipZeroClass = css({
-    color: 'text-muted',
-    borderColor: 'light',
-    background: 'surface',
-    opacity: 0.75,
-});
-
 const chipBadgeMutedClass = css({
+    fontSize: 'xs',
+    padding: '0.25 0.5',
+    borderRadius: 'full',
     background: 'transparent',
     border: '1px solid',
     borderColor: 'light',
     color: 'text-muted',
+});
+
+const chipZeroClass = css({
+    color: 'text-muted',
+    borderColor: 'light',
+    background: 'surface',
 });
 
 const chipRemoveIconClass = css({
@@ -465,13 +469,27 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
     // Sort and filter tags: selected first, then by count descending
     const tagFacets = facets?.tags;
 
+    const tagCountMap = useMemo(() => {
+        const map = new Map<string, number>();
+        tagFacets?.forEach((facet) => {
+            if (!facet.key) return;
+            map.set(facet.key, facet.count);
+            map.set(normalizeTag(facet.key), facet.count);
+        });
+        return map;
+    }, [tagFacets]);
+
     const sortedTags = useMemo(() => {
         const selectedTags = filters.tags ?? [];
-        const tagData = tags.map((tag) => ({
-            name: tag,
-            count: tagFacets?.find((f) => f.key === tag)?.count ?? 0,
-            selected: selectedTags.includes(tag),
-        }));
+        const tagData = tags.map((tag) => {
+            const normalized = normalizeTag(tag);
+            const count = tagCountMap.get(tag) ?? tagCountMap.get(normalized) ?? 0;
+            return {
+                name: tag,
+                count,
+                selected: selectedTags.includes(tag),
+            };
+        });
 
         // If there's a search query, filter first
         let filtered = tagData;
@@ -486,7 +504,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
             if (!a.selected && b.selected) return 1;
             return b.count - a.count;
         });
-    }, [tags, tagFacets, tagQuery, filters.tags]);
+    }, [tags, tagCountMap, tagQuery, filters.tags]);
 
     const ingredientSuggestions = useMemo(() => {
         const query = ingredientQuery.toLowerCase().trim();
@@ -526,7 +544,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
     return (
         <div
             className={css({
-                padding: '5',
+                padding: '4',
                 borderRadius: '2xl',
                 border: '1px solid',
                 borderColor: 'light',
@@ -572,10 +590,8 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                                     chipItemClass,
                                     tag.count === 0 && !tag.selected && chipZeroClass,
                                 );
-                                const badgeClass = cx(
-                                    chipBadgeClass,
-                                    tag.count === 0 && chipBadgeMutedClass,
-                                );
+                                const badgeClass =
+                                    tag.count === 0 ? chipBadgeMutedClass : chipBadgeClass;
                                 return (
                                     <ToggleGroup.Item
                                         key={`tag-${tag.name}`}

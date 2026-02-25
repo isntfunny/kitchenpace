@@ -4,62 +4,28 @@ const OPENPANEL_ID = process.env.OPENPANEL_ID;
 const OPENPANEL_TOKEN = process.env.OPENPANEL_TOKEN;
 const OPENPANEL_API_URL = process.env.OPENPANEL_API_URL || 'https://panel.tretz.dev/api/v1/ingest';
 
-const API_ROUTES = ['/api/thumbnail', '/api/filter'];
-
 export async function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
-    const isApiRoute = API_ROUTES.includes(pathname);
 
     if (!OPENPANEL_ID || !OPENPANEL_TOKEN) {
         return NextResponse.next();
     }
 
-    if (isApiRoute) {
+    if (pathname === '/api/thumbnail' || pathname === '/api/filter') {
         const startTime = Date.now();
-        const originalResponse = NextResponse.next();
+
+        const response = NextResponse.next();
+
+        response.headers.set('x-openpanel-track', '1');
 
         setTimeout(() => {
-            trackApiRequest(request, originalResponse, startTime, pathname, searchParams);
+            trackApiRequest(request, response, startTime, pathname, searchParams);
         }, 0);
 
-        return originalResponse;
+        return response;
     }
 
-    setTimeout(() => {
-        trackPageView(request, pathname);
-    }, 0);
-
     return NextResponse.next();
-}
-
-async function trackPageView(request: NextRequest, pathname: string) {
-    const payload = {
-        events: [
-            {
-                name: 'page_view',
-                timestamp: new Date().toISOString(),
-                properties: {
-                    url: pathname,
-                    referrer: request.headers.get('referer') || '',
-                    user_agent: request.headers.get('user-agent') || '',
-                },
-            },
-        ],
-    };
-
-    try {
-        await fetch(OPENPANEL_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${OPENPANEL_TOKEN}`,
-            },
-            body: JSON.stringify({
-                client_id: OPENPANEL_ID,
-                ...payload,
-            }),
-        });
-    } catch {}
 }
 
 async function trackApiRequest(
@@ -141,5 +107,5 @@ async function trackApiRequest(
 }
 
 export const config = {
-    matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*$).*)'],
+    matcher: ['/api/thumbnail', '/api/filter'],
 };

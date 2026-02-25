@@ -448,13 +448,15 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
     const ingredients = options.ingredients;
     const tags = options.tags;
 
-    // Sort and filter tags by count (descending), then searchable
+    // Sort and filter tags: selected first, then by count descending
     const tagFacets = facets?.tags;
+    const selectedTags = filters.tags ?? [];
     // eslint-disable-next-line react-hooks/preserve-manual-memoization
     const sortedTags = useMemo(() => {
         const tagData = tags.map((tag) => ({
             name: tag,
             count: findCount(tagFacets, tag),
+            selected: selectedTags.includes(tag),
         }));
 
         // If there's a search query, filter first
@@ -464,9 +466,13 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
             filtered = tagData.filter((t) => t.name.toLowerCase().includes(query));
         }
 
-        // Sort by count descending
-        return filtered.sort((a, b) => b.count - a.count);
-    }, [tags, tagFacets, tagQuery]);
+        // Sort: selected first, then by count descending
+        return filtered.sort((a, b) => {
+            if (a.selected && !b.selected) return -1;
+            if (!a.selected && b.selected) return 1;
+            return b.count - a.count;
+        });
+    }, [tags, tagFacets, tagQuery, selectedTags]);
 
     const ingredientSuggestions = useMemo(() => {
         const query = ingredientQuery.toLowerCase().trim();

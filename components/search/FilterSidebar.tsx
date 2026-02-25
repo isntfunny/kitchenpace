@@ -1,10 +1,14 @@
 'use client';
 
-import { useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
+import * as Accordion from '@radix-ui/react-accordion';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
+import * as Slider from '@radix-ui/react-slider';
+import * as ToggleGroup from '@radix-ui/react-toggle-group';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import type { CategoryOption } from '@/app/actions/filters';
 import type { RecipeFilterSearchParams } from '@/lib/recipeFilters';
-import { css } from 'styled-system/css';
+import { css, cx } from 'styled-system/css';
 
 import type { HistogramFacet, RecipeSearchFacets } from './useRecipeSearch';
 
@@ -49,87 +53,204 @@ const RANGE_FALLBACKS = {
     cookCount: { min: 0, max: 200, interval: 10 },
 };
 
+const FILTER_SECTION_IDS = {
+    tags: 'tags',
+    mealType: 'meal-type',
+    ingredients: 'ingredients',
+    exclude: 'exclude',
+    difficulty: 'difficulty',
+    timing: 'timing',
+    rating: 'rating',
+} as const;
+
+const ALL_FILTER_SECTION_IDS = Object.values(FILTER_SECTION_IDS);
+
+const accordionRootClass = css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '3',
+});
+
+const accordionItemClass = css({
+    borderRadius: '2xl',
+    border: '1px solid',
+    borderColor: 'light',
+    background: 'surface',
+    overflow: 'hidden',
+});
+
+const accordionHeaderClass = css({ width: '100%' });
+
+const accordionTriggerClass = css({
+    all: 'unset',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: '3',
+    px: '4',
+    py: '3',
+    cursor: 'pointer',
+    background: 'surface',
+    transition: 'background 150ms ease',
+    '&[data-state="open"]': {
+        background: 'surface.elevated',
+    },
+    '& svg': {
+        transition: 'transform 200ms ease',
+    },
+    '&[data-state="open"] svg': {
+        transform: 'rotate(180deg)',
+    },
+});
+
+const accordionContentClass = css({
+    borderTop: '1px solid',
+    borderColor: 'light',
+    px: '4',
+    py: '4',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4',
+    background: 'surface',
+    '&[data-state="closed"]': {
+        display: 'none',
+    },
+});
+
+const accordionTitleClass = css({
+    fontSize: 'xs',
+    textTransform: 'uppercase',
+    letterSpacing: 'widest',
+    color: 'text-muted',
+});
+
+const accordionDescriptionClass = css({
+    fontSize: 'xs',
+    color: 'text-muted',
+});
+
+const accordionChevronClass = css({
+    width: '16px',
+    height: '16px',
+    flexShrink: 0,
+    color: 'text-muted',
+});
+
+const chipGroupClass = css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '2',
+});
+
+const chipItemClass = css({
+    borderRadius: 'full',
+    px: '3',
+    py: '2',
+    minHeight: '44px',
+    fontSize: 'xs',
+    border: '1px solid',
+    borderColor: 'light',
+    background: 'surface',
+    color: 'text',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '1.5',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'border 150ms ease, box-shadow 150ms ease, background 150ms ease',
+    '&[data-state="on"]': {
+        borderColor: 'primary-dark',
+        background: 'primary',
+        color: 'light',
+        boxShadow: '0 8px 16px rgba(0,0,0,0.08)',
+    },
+});
+
+const chipBadgeClass = css({
+    fontSize: 'xs',
+    background: 'rgba(249,115,22,0.12)',
+    borderRadius: 'full',
+    px: '2',
+    py: '0.5',
+});
+
+const chipRemoveIconClass = css({
+    fontSize: 'sm',
+    lineHeight: '1',
+    opacity: 0.85,
+});
+
+const removableChipClass = cx(
+    chipItemClass,
+    css({
+        minHeight: '36px',
+        fontSize: 'sm',
+        px: '3',
+        py: '1.5',
+    }),
+);
+
+const sliderRootClass = css({
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    height: '10',
+});
+
+const sliderTrackClass = css({
+    position: 'relative',
+    flex: 1,
+    height: '3',
+    borderRadius: 'full',
+    border: '1px solid',
+    borderColor: 'light',
+    background: 'surface',
+    overflow: 'hidden',
+});
+
+const sliderRangeClass = css({
+    position: 'absolute',
+    height: '100%',
+    background: 'primary',
+    opacity: 0.3,
+    borderRadius: 'inherit',
+});
+
+const sliderThumbClass = css({
+    all: 'unset',
+    width: '18px',
+    height: '18px',
+    borderRadius: 'full',
+    background: 'primary',
+    border: '2px solid white',
+    boxShadow: '0 6px 12px rgba(0,0,0,0.18)',
+    cursor: 'grab',
+});
+
 const FilterSection = ({
+    value,
     title,
     description,
     children,
 }: {
+    value: string;
     title: string;
     description?: string;
     children: ReactNode;
 }) => (
-    <section className={css({ display: 'flex', flexDirection: 'column', gap: '2.5' })}>
-        <div className={css({ display: 'flex', flexDirection: 'column', gap: '0.5' })}>
-            <p
-                className={css({
-                    fontSize: 'xs',
-                    letterSpacing: 'widest',
-                    color: 'text-muted',
-                    textTransform: 'uppercase',
-                })}
-            >
-                {title}
-            </p>
-            {description && (
-                <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{description}</p>
-            )}
-        </div>
-        <div>{children}</div>
-    </section>
-);
-
-const Chip = ({
-    active,
-    children,
-    badge,
-    onClick,
-}: {
-    active?: boolean;
-    children: ReactNode;
-    badge?: ReactNode;
-    onClick: () => void;
-}) => (
-    <button
-        type="button"
-        onClick={onClick}
-        className={css({
-            borderRadius: '999px',
-            px: '3',
-            py: '2',
-            minHeight: '44px',
-            fontSize: 'xs',
-            border: '1px solid',
-            borderColor: active ? 'primary-dark' : 'light',
-            background: active ? 'primary' : 'surface',
-            color: active ? 'light' : 'text',
-            fontFamily: 'body',
-            cursor: 'pointer',
-            transition: 'border 150ms ease, box-shadow 150ms ease',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '1',
-            _hover: {
-                borderColor: 'primary-dark',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.08)',
-            },
-        })}
-        aria-pressed={active || undefined}
-    >
-        <span>{children}</span>
-        {badge && (
-            <span
-                className={css({
-                    fontSize: 'xs',
-                    background: 'rgba(249,115,22,0.12)',
-                    borderRadius: 'full',
-                    px: '2',
-                    py: '0.5',
-                })}
-            >
-                {badge}
-            </span>
-        )}
-    </button>
+    <Accordion.Item value={value} className={accordionItemClass}>
+        <Accordion.Header className={accordionHeaderClass}>
+            <Accordion.Trigger className={accordionTriggerClass}>
+                <div className={css({ display: 'flex', flexDirection: 'column', gap: '0.5' })}>
+                    <p className={accordionTitleClass}>{title}</p>
+                    {description && <p className={accordionDescriptionClass}>{description}</p>}
+                </div>
+                <ChevronDownIcon aria-hidden className={accordionChevronClass} />
+            </Accordion.Trigger>
+        </Accordion.Header>
+        <Accordion.Content className={accordionContentClass}>{children}</Accordion.Content>
+    </Accordion.Item>
 );
 
 const buildHistogramGradient = (
@@ -217,32 +338,27 @@ const RangeControl = ({
 
     const applyRange = (lower: number, upper: number) => {
         const update: Partial<RecipeFilterSearchParams> = {};
-        update[minField] = lower > sliderMin ? lower : undefined;
-        const maxKey = maxField;
-        if (maxKey) {
-            update[maxKey] = upper < sliderMax ? upper : undefined;
+        (update as Record<string, number | undefined>)[minField as string] =
+            lower > sliderMin ? lower : undefined;
+        if (maxField) {
+            (update as Record<string, number | undefined>)[maxField as string] =
+                upper < sliderMax ? upper : undefined;
         }
         onFiltersChange(update);
     };
 
-    const handleLowerChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const nextValue = Number(event.target.value);
-        if (Number.isNaN(nextValue)) return;
-        const clamped = Math.min(
-            Math.max(nextValue, sliderMin),
-            Math.max(upperValue - interval, sliderMin),
-        );
-        applyRange(clamped, upperValue);
-    };
+    const sliderValue = maxField ? [lowerValue, upperValue] : [lowerValue];
 
-    const handleUpperChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const nextValue = Number(event.target.value);
-        if (Number.isNaN(nextValue)) return;
-        const clamped = Math.max(
-            Math.min(nextValue, sliderMax),
-            Math.min(lowerValue + interval, sliderMax),
-        );
-        applyRange(lowerValue, clamped);
+    const handleSliderChange = (values: number[]) => {
+        if (values.length === 0) return;
+        if (maxField) {
+            const [first, second = first] = values;
+            const nextLower = Math.min(first, second);
+            const nextUpper = Math.max(first, second);
+            applyRange(nextLower, nextUpper);
+        } else {
+            applyRange(values[0], sliderMax);
+        }
     };
 
     return (
@@ -253,47 +369,29 @@ const RangeControl = ({
                     <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{description}</p>
                 )}
             </div>
-            <div
-                className={css({
-                    position: 'relative',
-                    height: '3',
-                    borderRadius: '2xl',
-                    border: '1px solid',
-                    borderColor: 'light',
-                    background: 'surface',
-                    overflow: 'hidden',
-                })}
+            <Slider.Root
+                className={sliderRootClass}
+                min={sliderMin}
+                max={sliderMax}
+                step={step ?? interval}
+                value={sliderValue}
+                onValueChange={handleSliderChange}
+                aria-label={label}
             >
-                {gradient && (
-                    <div
-                        aria-hidden
-                        className={css({ position: 'absolute', inset: 0 })}
-                        style={{ backgroundImage: gradient }}
+                <Slider.Track
+                    className={sliderTrackClass}
+                    style={gradient ? { backgroundImage: gradient } : undefined}
+                >
+                    <Slider.Range className={sliderRangeClass} />
+                </Slider.Track>
+                {sliderValue.map((_, index) => (
+                    <Slider.Thumb
+                        key={index === 0 ? 'min' : 'max'}
+                        aria-label={`${label} ${index === 0 ? 'Minimum' : 'Maximum'}`}
+                        className={sliderThumbClass}
                     />
-                )}
-                <div className={css({ position: 'relative', height: '100%' })}>
-                    <input
-                        type="range"
-                        min={sliderMin}
-                        max={sliderMax}
-                        step={step ?? interval}
-                        value={lowerValue}
-                        onChange={handleLowerChange}
-                        className="range-slider-input range-slider-input-lower"
-                        aria-label={`${label} Minimum`}
-                    />
-                    <input
-                        type="range"
-                        min={sliderMin}
-                        max={sliderMax}
-                        step={step ?? interval}
-                        value={upperValue}
-                        onChange={handleUpperChange}
-                        className="range-slider-input range-slider-input-upper"
-                        aria-label={`${label} Maximum`}
-                    />
-                </div>
-            </div>
+                ))}
+            </Slider.Root>
             <div
                 className={css({
                     display: 'flex',
@@ -337,17 +435,6 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
             .slice(0, 6);
     }, [excludeQuery, ingredients, filters.excludeIngredients]);
 
-    const getArrayValues = (field: keyof RecipeFilterSearchParams): string[] =>
-        (filters[field] as string[] | undefined) ?? [];
-
-    const toggleArray = (field: keyof RecipeFilterSearchParams, value: string) => {
-        const current = getArrayValues(field);
-        const next = current.includes(value)
-            ? current.filter((entry) => entry !== value)
-            : [...current, value];
-        onFiltersChange({ [field]: next } as Partial<RecipeFilterSearchParams>);
-    };
-
     const addIngredient = (value: string, field: 'ingredients' | 'excludeIngredients') => {
         const trimmed = value.trim();
         if (!trimmed) return;
@@ -359,13 +446,6 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
         } else {
             setExcludeQuery('');
         }
-    };
-
-    const removeFromArray = (field: keyof RecipeFilterSearchParams, value: string) => {
-        const current = getArrayValues(field);
-        onFiltersChange({
-            [field]: current.filter((entry) => entry !== value),
-        } as Partial<RecipeFilterSearchParams>);
     };
 
     const findCount = (collection?: Array<{ key: string; count: number }>, key?: string) =>
@@ -380,286 +460,371 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                 borderColor: 'light',
                 background: 'surface.elevated',
                 boxShadow: '0 24px 60px rgba(45,52,54,0.12)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4',
                 width: 'full',
             })}
         >
-            <FilterSection title="Tags" description="Beliebte Themen">
-                <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
-                    {tags.map((tag) => {
-                        const count = findCount(facets?.tags, tag);
-                        return (
-                            <Chip
-                                key={`tag-${tag}`}
-                                active={(filters.tags ?? []).includes(tag)}
-                                onClick={() => toggleArray('tags', tag)}
-                                badge={count > 0 ? count : undefined}
-                            >
-                                {tag}
-                            </Chip>
-                        );
-                    })}
-                </div>
-            </FilterSection>
-
-            <FilterSection title="Mahlzeit" description="Abgestimmt auf deinen Rhythmus">
-                <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
-                    {MEAL_TYPE_OPTIONS.map((option) => (
-                        <Chip
-                            key={option.value}
-                            active={(filters.mealTypes ?? []).includes(option.value)}
-                            onClick={() => toggleArray('mealTypes', option.value)}
-                        >
-                            {option.label}
-                        </Chip>
-                    ))}
-                </div>
-            </FilterSection>
-
-            <FilterSection title="Zutaten" description="Nur Gerichte mit den richtigen Zutaten">
-                <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
-                    <div className={css({ display: 'flex', gap: '2' })}>
-                        <input
-                            type="text"
-                            value={ingredientQuery}
-                            onChange={(event) => setIngredientQuery(event.target.value)}
-                            onKeyDown={(event) => {
-                                if (event.key === 'Enter' && ingredientQuery.trim()) {
-                                    event.preventDefault();
-                                    addIngredient(ingredientQuery, 'ingredients');
-                                }
-                            }}
-                            placeholder="Zutat eingeben"
-                            className={css({
-                                flex: 1,
-                                borderRadius: 'lg',
-                                border: '1px solid',
-                                borderColor: 'light',
-                                background: 'surface',
-                                px: '3',
-                                py: '2.5',
-                                fontSize: 'sm',
-                            })}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => addIngredient(ingredientQuery, 'ingredients')}
-                            className={css({
-                                borderRadius: 'lg',
-                                background: 'primary',
-                                color: 'light',
-                                px: '4',
-                                py: '2.5',
-                                fontSize: 'sm',
-                                fontWeight: '600',
-                            })}
-                        >
-                            Hinzufügen
-                        </button>
-                    </div>
-                    {ingredientSuggestions.length > 0 && (
-                        <div className={css({ display: 'grid', gap: '2' })}>
-                            {ingredientSuggestions.map((name) => (
-                                <button
-                                    type="button"
-                                    key={`suggestion-${name}`}
-                                    onClick={() => addIngredient(name, 'ingredients')}
-                                    className={css({
-                                        textAlign: 'left',
-                                        fontSize: 'xs',
-                                        color: 'text-muted',
-                                        padding: '2',
-                                        borderRadius: 'md',
-                                        border: '1px solid',
-                                        borderColor: 'light',
-                                    })}
+            <Accordion.Root
+                type="multiple"
+                defaultValue={ALL_FILTER_SECTION_IDS}
+                className={accordionRootClass}
+            >
+                <FilterSection
+                    value={FILTER_SECTION_IDS.tags}
+                    title="Tags"
+                    description="Beliebte Themen"
+                >
+                    <ToggleGroup.Root
+                        type="multiple"
+                        className={chipGroupClass}
+                        aria-label="Tags filtern"
+                        value={filters.tags ?? []}
+                        onValueChange={(next) =>
+                            onFiltersChange({ tags: next } as Partial<RecipeFilterSearchParams>)
+                        }
+                    >
+                        {tags.map((tag) => {
+                            const count = findCount(facets?.tags, tag);
+                            return (
+                                <ToggleGroup.Item
+                                    key={`tag-${tag}`}
+                                    value={tag}
+                                    className={chipItemClass}
                                 >
-                                    {name}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                    <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
-                        {(filters.ingredients ?? []).map((ingredient) => (
-                            <Chip
-                                key={`selected-${ingredient}`}
-                                onClick={() => removeFromArray('ingredients', ingredient)}
-                            >
-                                {ingredient}
-                            </Chip>
-                        ))}
-                    </div>
-                </div>
-            </FilterSection>
+                                    <span>{tag}</span>
+                                    {count > 0 && <span className={chipBadgeClass}>{count}</span>}
+                                </ToggleGroup.Item>
+                            );
+                        })}
+                    </ToggleGroup.Root>
+                </FilterSection>
 
-            <FilterSection title="Enthält nicht">
-                <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
-                    <div className={css({ display: 'flex', gap: '2' })}>
-                        <input
-                            type="text"
-                            value={excludeQuery}
-                            onChange={(event) => setExcludeQuery(event.target.value)}
-                            onKeyDown={(event) => {
-                                if (event.key === 'Enter' && excludeQuery.trim()) {
-                                    event.preventDefault();
-                                    addIngredient(excludeQuery, 'excludeIngredients');
-                                }
-                            }}
-                            placeholder="Allergene oder Zutaten"
-                            className={css({
-                                flex: 1,
-                                borderRadius: 'lg',
-                                border: '1px solid',
-                                borderColor: 'light',
-                                background: 'surface',
-                                px: '3',
-                                py: '2.5',
-                                fontSize: 'sm',
-                            })}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => addIngredient(excludeQuery, 'excludeIngredients')}
-                            className={css({
-                                borderRadius: 'lg',
-                                background: 'primary-dark',
-                                color: 'light',
-                                px: '4',
-                                py: '2.5',
-                                fontSize: 'sm',
-                                fontWeight: '600',
-                            })}
+                <FilterSection
+                    value={FILTER_SECTION_IDS.mealType}
+                    title="Mahlzeit"
+                    description="Abgestimmt auf deinen Rhythmus"
+                >
+                    <ToggleGroup.Root
+                        type="multiple"
+                        className={chipGroupClass}
+                        aria-label="Mahlzeiten filtern"
+                        value={filters.mealTypes ?? []}
+                        onValueChange={(next) =>
+                            onFiltersChange({
+                                mealTypes: next,
+                            } as Partial<RecipeFilterSearchParams>)
+                        }
+                    >
+                        {MEAL_TYPE_OPTIONS.map((option) => (
+                            <ToggleGroup.Item
+                                key={option.value}
+                                value={option.value}
+                                className={chipItemClass}
+                            >
+                                {option.label}
+                            </ToggleGroup.Item>
+                        ))}
+                    </ToggleGroup.Root>
+                </FilterSection>
+
+                <FilterSection
+                    value={FILTER_SECTION_IDS.ingredients}
+                    title="Zutaten"
+                    description="Nur Gerichte mit den richtigen Zutaten"
+                >
+                    <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
+                        <div className={css({ display: 'flex', gap: '2' })}>
+                            <input
+                                type="text"
+                                value={ingredientQuery}
+                                onChange={(event) => setIngredientQuery(event.target.value)}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' && ingredientQuery.trim()) {
+                                        event.preventDefault();
+                                        addIngredient(ingredientQuery, 'ingredients');
+                                    }
+                                }}
+                                placeholder="Zutat eingeben"
+                                className={css({
+                                    flex: 1,
+                                    borderRadius: 'lg',
+                                    border: '1px solid',
+                                    borderColor: 'light',
+                                    background: 'surface',
+                                    px: '3',
+                                    py: '2.5',
+                                    fontSize: 'sm',
+                                })}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => addIngredient(ingredientQuery, 'ingredients')}
+                                className={css({
+                                    borderRadius: 'lg',
+                                    background: 'primary',
+                                    color: 'light',
+                                    px: '4',
+                                    py: '2.5',
+                                    fontSize: 'sm',
+                                    fontWeight: '600',
+                                })}
+                            >
+                                Hinzufügen
+                            </button>
+                        </div>
+                        {ingredientSuggestions.length > 0 && (
+                            <div className={css({ display: 'grid', gap: '2' })}>
+                                {ingredientSuggestions.map((name) => (
+                                    <button
+                                        type="button"
+                                        key={`suggestion-${name}`}
+                                        onClick={() => addIngredient(name, 'ingredients')}
+                                        className={css({
+                                            textAlign: 'left',
+                                            fontSize: 'xs',
+                                            color: 'text-muted',
+                                            padding: '2',
+                                            borderRadius: 'md',
+                                            border: '1px solid',
+                                            borderColor: 'light',
+                                        })}
+                                    >
+                                        {name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <ToggleGroup.Root
+                            type="multiple"
+                            className={chipGroupClass}
+                            aria-label="Ausgewählte Zutaten"
+                            value={filters.ingredients ?? []}
+                            onValueChange={(next) =>
+                                onFiltersChange({
+                                    ingredients: next,
+                                } as Partial<RecipeFilterSearchParams>)
+                            }
                         >
-                            Hinzufügen
-                        </button>
-                    </div>
-                    {excludeSuggestions.length > 0 && (
-                        <div className={css({ display: 'grid', gap: '2' })}>
-                            {excludeSuggestions.map((name) => (
-                                <button
-                                    type="button"
-                                    key={`exclude-${name}`}
-                                    onClick={() => addIngredient(name, 'excludeIngredients')}
-                                    className={css({
-                                        textAlign: 'left',
-                                        fontSize: 'xs',
-                                        color: 'text-muted',
-                                        padding: '2',
-                                        borderRadius: 'md',
-                                        border: '1px solid',
-                                        borderColor: 'light',
-                                    })}
+                            {(filters.ingredients ?? []).map((ingredient) => (
+                                <ToggleGroup.Item
+                                    key={`selected-${ingredient}`}
+                                    value={ingredient}
+                                    className={removableChipClass}
                                 >
-                                    {name}
-                                </button>
+                                    <span>{ingredient}</span>
+                                    <span className={chipRemoveIconClass} aria-hidden>
+                                        ×
+                                    </span>
+                                </ToggleGroup.Item>
                             ))}
-                        </div>
-                    )}
-                    <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
-                        {(filters.excludeIngredients ?? []).map((ingredient) => (
-                            <Chip
-                                key={`exclude-selected-${ingredient}`}
-                                onClick={() => removeFromArray('excludeIngredients', ingredient)}
-                            >
-                                {ingredient}
-                            </Chip>
-                        ))}
+                        </ToggleGroup.Root>
                     </div>
-                </div>
-            </FilterSection>
+                </FilterSection>
 
-            <FilterSection title="Schwierigkeit">
-                <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
-                    {DIFFICULTY_OPTIONS.map((option) => (
-                        <Chip
-                            key={option.value}
-                            active={(filters.difficulty ?? []).includes(option.value)}
-                            onClick={() => toggleArray('difficulty', option.value)}
+                <FilterSection value={FILTER_SECTION_IDS.exclude} title="Enthält nicht">
+                    <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
+                        <div className={css({ display: 'flex', gap: '2' })}>
+                            <input
+                                type="text"
+                                value={excludeQuery}
+                                onChange={(event) => setExcludeQuery(event.target.value)}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' && excludeQuery.trim()) {
+                                        event.preventDefault();
+                                        addIngredient(excludeQuery, 'excludeIngredients');
+                                    }
+                                }}
+                                placeholder="Allergene oder Zutaten"
+                                className={css({
+                                    flex: 1,
+                                    borderRadius: 'lg',
+                                    border: '1px solid',
+                                    borderColor: 'light',
+                                    background: 'surface',
+                                    px: '3',
+                                    py: '2.5',
+                                    fontSize: 'sm',
+                                })}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => addIngredient(excludeQuery, 'excludeIngredients')}
+                                className={css({
+                                    borderRadius: 'lg',
+                                    background: 'primary-dark',
+                                    color: 'light',
+                                    px: '4',
+                                    py: '2.5',
+                                    fontSize: 'sm',
+                                    fontWeight: '600',
+                                })}
+                            >
+                                Hinzufügen
+                            </button>
+                        </div>
+                        {excludeSuggestions.length > 0 && (
+                            <div className={css({ display: 'grid', gap: '2' })}>
+                                {excludeSuggestions.map((name) => (
+                                    <button
+                                        type="button"
+                                        key={`exclude-${name}`}
+                                        onClick={() => addIngredient(name, 'excludeIngredients')}
+                                        className={css({
+                                            textAlign: 'left',
+                                            fontSize: 'xs',
+                                            color: 'text-muted',
+                                            padding: '2',
+                                            borderRadius: 'md',
+                                            border: '1px solid',
+                                            borderColor: 'light',
+                                        })}
+                                    >
+                                        {name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <ToggleGroup.Root
+                            type="multiple"
+                            className={chipGroupClass}
+                            aria-label="Ausgeschlossene Zutaten"
+                            value={filters.excludeIngredients ?? []}
+                            onValueChange={(next) =>
+                                onFiltersChange({
+                                    excludeIngredients: next,
+                                } as Partial<RecipeFilterSearchParams>)
+                            }
                         >
-                            {option.label}
-                        </Chip>
-                    ))}
-                </div>
-            </FilterSection>
+                            {(filters.excludeIngredients ?? []).map((ingredient) => (
+                                <ToggleGroup.Item
+                                    key={`exclude-selected-${ingredient}`}
+                                    value={ingredient}
+                                    className={removableChipClass}
+                                >
+                                    <span>{ingredient}</span>
+                                    <span className={chipRemoveIconClass} aria-hidden>
+                                        ×
+                                    </span>
+                                </ToggleGroup.Item>
+                            ))}
+                        </ToggleGroup.Root>
+                    </div>
+                </FilterSection>
 
-            <FilterSection title="Tageszeit & Dauer" description="Zeitfenster schnell auswählen">
-                <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
-                    {TIME_OF_DAY_OPTIONS.map((option) => (
-                        <Chip
-                            key={option.value}
-                            active={(filters.timeOfDay ?? []).includes(option.value)}
-                            onClick={() => toggleArray('timeOfDay', option.value)}
-                        >
-                            {option.label}
-                        </Chip>
-                    ))}
-                </div>
-                <div className={css({ display: 'grid', gap: '3' })}>
-                    <RangeControl
-                        filters={filters}
-                        onFiltersChange={onFiltersChange}
-                        label="Gesamtdauer"
-                        description="Verfügbar nach Anzahl Rezepte"
-                        minField="minTotalTime"
-                        maxField="maxTotalTime"
-                        fallback={RANGE_FALLBACKS.totalTime}
-                        facet={facets?.totalTime}
-                        unit="Min."
-                    />
-                    <RangeControl
-                        filters={filters}
-                        onFiltersChange={onFiltersChange}
-                        label="Vorbereitungszeit"
-                        description="Optimal planen"
-                        minField="minPrepTime"
-                        maxField="maxPrepTime"
-                        fallback={RANGE_FALLBACKS.prepTime}
-                        facet={facets?.prepTime}
-                        unit="Min."
-                    />
-                    <RangeControl
-                        filters={filters}
-                        onFiltersChange={onFiltersChange}
-                        label="Kochzeit"
-                        description="Verfügbarkeit prüfen"
-                        minField="minCookTime"
-                        maxField="maxCookTime"
-                        fallback={RANGE_FALLBACKS.cookTime}
-                        facet={facets?.cookTime}
-                        unit="Min."
-                    />
-                </div>
-            </FilterSection>
+                <FilterSection value={FILTER_SECTION_IDS.difficulty} title="Schwierigkeit">
+                    <ToggleGroup.Root
+                        type="multiple"
+                        className={chipGroupClass}
+                        aria-label="Schwierigkeitsgrad filtern"
+                        value={filters.difficulty ?? []}
+                        onValueChange={(next) =>
+                            onFiltersChange({
+                                difficulty: next,
+                            } as Partial<RecipeFilterSearchParams>)
+                        }
+                    >
+                        {DIFFICULTY_OPTIONS.map((option) => (
+                            <ToggleGroup.Item
+                                key={option.value}
+                                value={option.value}
+                                className={chipItemClass}
+                            >
+                                {option.label}
+                            </ToggleGroup.Item>
+                        ))}
+                    </ToggleGroup.Root>
+                </FilterSection>
 
-            <FilterSection title="Bewertung & Beliebt">
-                <div className={css({ display: 'grid', gap: '3' })}>
-                    <RangeControl
-                        filters={filters}
-                        onFiltersChange={onFiltersChange}
-                        label="Min. Bewertung"
-                        description="Mindestens so gut bewertet"
-                        minField="minRating"
-                        fallback={RANGE_FALLBACKS.rating}
-                        facet={facets?.rating}
-                        step={0.5}
-                        unit="★"
-                        formatValue={(value) => `${value.toFixed(1)} ★`}
-                    />
-                    <RangeControl
-                        filters={filters}
-                        onFiltersChange={onFiltersChange}
-                        label="Mind. gekocht"
-                        description="häufig ausprobiert"
-                        minField="minCookCount"
-                        fallback={RANGE_FALLBACKS.cookCount}
-                        facet={facets?.cookCount}
-                        unit="x"
-                        formatValue={(value) => `${Math.round(value)}x`}
-                    />
-                </div>
-            </FilterSection>
+                <FilterSection
+                    value={FILTER_SECTION_IDS.timing}
+                    title="Tageszeit & Dauer"
+                    description="Zeitfenster schnell auswählen"
+                >
+                    <ToggleGroup.Root
+                        type="multiple"
+                        className={chipGroupClass}
+                        aria-label="Tageszeit filtern"
+                        value={filters.timeOfDay ?? []}
+                        onValueChange={(next) =>
+                            onFiltersChange({
+                                timeOfDay: next,
+                            } as Partial<RecipeFilterSearchParams>)
+                        }
+                    >
+                        {TIME_OF_DAY_OPTIONS.map((option) => (
+                            <ToggleGroup.Item
+                                key={option.value}
+                                value={option.value}
+                                className={chipItemClass}
+                            >
+                                {option.label}
+                            </ToggleGroup.Item>
+                        ))}
+                    </ToggleGroup.Root>
+                    <div className={css({ display: 'grid', gap: '3' })}>
+                        <RangeControl
+                            filters={filters}
+                            onFiltersChange={onFiltersChange}
+                            label="Gesamtdauer"
+                            description="Verfügbar nach Anzahl Rezepte"
+                            minField="minTotalTime"
+                            maxField="maxTotalTime"
+                            fallback={RANGE_FALLBACKS.totalTime}
+                            facet={facets?.totalTime}
+                            unit="Min."
+                        />
+                        <RangeControl
+                            filters={filters}
+                            onFiltersChange={onFiltersChange}
+                            label="Vorbereitungszeit"
+                            description="Optimal planen"
+                            minField="minPrepTime"
+                            maxField="maxPrepTime"
+                            fallback={RANGE_FALLBACKS.prepTime}
+                            facet={facets?.prepTime}
+                            unit="Min."
+                        />
+                        <RangeControl
+                            filters={filters}
+                            onFiltersChange={onFiltersChange}
+                            label="Kochzeit"
+                            description="Verfügbarkeit prüfen"
+                            minField="minCookTime"
+                            maxField="maxCookTime"
+                            fallback={RANGE_FALLBACKS.cookTime}
+                            facet={facets?.cookTime}
+                            unit="Min."
+                        />
+                    </div>
+                </FilterSection>
+
+                <FilterSection value={FILTER_SECTION_IDS.rating} title="Bewertung & Beliebt">
+                    <div className={css({ display: 'grid', gap: '3' })}>
+                        <RangeControl
+                            filters={filters}
+                            onFiltersChange={onFiltersChange}
+                            label="Min. Bewertung"
+                            description="Mindestens so gut bewertet"
+                            minField="minRating"
+                            fallback={RANGE_FALLBACKS.rating}
+                            facet={facets?.rating}
+                            step={0.5}
+                            unit="★"
+                            formatValue={(value) => `${value.toFixed(1)} ★`}
+                        />
+                        <RangeControl
+                            filters={filters}
+                            onFiltersChange={onFiltersChange}
+                            label="Mind. gekocht"
+                            description="häufig ausprobiert"
+                            minField="minCookCount"
+                            fallback={RANGE_FALLBACKS.cookCount}
+                            facet={facets?.cookCount}
+                            unit="x"
+                            formatValue={(value) => `${Math.round(value)}x`}
+                        />
+                    </div>
+                </FilterSection>
+            </Accordion.Root>
         </div>
     );
 }

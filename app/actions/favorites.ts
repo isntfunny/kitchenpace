@@ -22,7 +22,7 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteRecipe
         orderBy: { createdAt: 'desc' },
         include: {
             recipe: {
-                include: { category: true },
+                include: { categories: { include: { category: true } } },
             },
         },
     });
@@ -35,7 +35,7 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteRecipe
             id: recipe.id,
             slug: recipe.slug,
             title: recipe.title,
-            category: recipe.category?.name || 'Hauptgericht',
+            category: recipe.categories[0]?.category?.name || 'Hauptgericht',
             rating: recipe.rating ?? 0,
             time: `${totalTime ?? 0} Min.`,
             image: recipe.imageUrl || DEFAULT_IMAGE,

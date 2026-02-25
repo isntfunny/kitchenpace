@@ -171,18 +171,35 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
         ? await prisma.tag.findUnique({ where: { id: topTagGroup.tagId } })
         : null;
 
-    const categoryGroups = await prisma.recipe.groupBy({
-        where: { publishedAt: { not: null }, categoryId: { not: null } },
-        by: ['categoryId'],
-        _count: { categoryId: true },
+    const recipesWithCategories = await prisma.recipe.findMany({
+        where: {
+            publishedAt: { not: null },
+            categories: { some: {} },
+        },
+        include: {
+            categories: { include: { category: true }, orderBy: { position: 'asc' } },
+        },
+        take: 100,
     });
-    const sortedCategoryGroups = [...categoryGroups].sort(
-        (a, b) => (b._count?.categoryId ?? 0) - (a._count?.categoryId ?? 0),
-    );
-    const topCategoryGroup = sortedCategoryGroups[0];
-    const topCategory = topCategoryGroup?.categoryId
-        ? await prisma.category.findUnique({ where: { id: topCategoryGroup.categoryId } })
-        : null;
+
+    const categoryCounts: Record<string, number> = {};
+    for (const recipe of recipesWithCategories) {
+        const cat = recipe.categories[0]?.category;
+        if (cat) {
+            categoryCounts[cat.id] = (categoryCounts[cat.id] || 0) + 1;
+        }
+    }
+
+    let topCategory: { name: string } | null = null;
+    let topCategoryCount = 0;
+
+    for (const [catId, count] of Object.entries(categoryCounts)) {
+        if (count > topCategoryCount) {
+            topCategoryCount = count;
+            const cat = await prisma.category.findUnique({ where: { id: catId } });
+            if (cat) topCategory = cat;
+        }
+    }
 
     const tips: QuickTipData[] = [];
 
@@ -190,7 +207,7 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
         tips.push({
             icon: '🏷️',
             title: 'Beliebteste Kategorie',
-            content: `${topCategory.name} · ${topCategoryGroup?._count?.categoryId ?? 0} Rezepte`,
+            content: `${topCategory.name} · ${topCategoryCount} Rezepte`,
             iconBg: TIP_ACCENTS[0],
         });
     }

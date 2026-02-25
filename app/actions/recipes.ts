@@ -20,7 +20,9 @@ export interface RecipeCardData {
     description?: string;
 }
 
-type RecipeWithCategory = Prisma.RecipeGetPayload<{ include: { category: true } }>;
+type RecipeWithCategory = Prisma.RecipeGetPayload<{
+    include: { categories: { include: { category: true } } };
+}>;
 
 function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
     const totalTime = recipe.totalTime ?? (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
@@ -29,7 +31,7 @@ function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
         id: recipe.id,
         slug: recipe.slug,
         title: recipe.title,
-        category: recipe.category?.name || 'Hauptgericht',
+        category: recipe.categories[0]?.category?.name || 'Hauptgericht',
         rating: recipe.rating ?? 0,
         time: `${totalTime ?? 0} Min.`,
         image: recipe.imageUrl || DEFAULT_IMAGE,
@@ -40,7 +42,7 @@ function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
 export async function fetchNewestRecipes(take = 8): Promise<RecipeCardData[]> {
     const recipes = await prisma.recipe.findMany({
         where: { publishedAt: { not: null } },
-        include: { category: true },
+        include: { categories: { include: { category: true } } },
         orderBy: { createdAt: 'desc' },
         take,
     });
@@ -51,7 +53,7 @@ export async function fetchNewestRecipes(take = 8): Promise<RecipeCardData[]> {
 export async function fetchTopRatedRecipes(take = 8): Promise<RecipeCardData[]> {
     const recipes = await prisma.recipe.findMany({
         where: { publishedAt: { not: null } },
-        include: { category: true },
+        include: { categories: { include: { category: true } } },
         orderBy: [{ rating: 'desc' }, { viewCount: 'desc' }],
         take,
     });
@@ -62,7 +64,7 @@ export async function fetchTopRatedRecipes(take = 8): Promise<RecipeCardData[]> 
 export async function fetchFeaturedRecipe(): Promise<RecipeCardData | null> {
     const recipe = await prisma.recipe.findFirst({
         where: { publishedAt: { not: null }, rating: { gte: 4 } },
-        include: { category: true },
+        include: { categories: { include: { category: true } } },
         orderBy: { viewCount: 'desc' },
     });
 
@@ -89,7 +91,7 @@ export async function fetchRecipesByTime(mealTime: string, take = 6): Promise<Re
             publishedAt: { not: null },
             totalTime: filter,
         },
-        include: { category: true },
+        include: { categories: { include: { category: true } } },
         orderBy: { rating: 'desc' },
         take,
     });

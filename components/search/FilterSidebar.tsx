@@ -441,9 +441,6 @@ const RangeControl = ({
     );
 };
 
-const findCount = (collection?: Array<{ key: string; count: number }>, key?: string) =>
-    collection?.find((entry) => entry.key === key)?.count ?? 0;
-
 export function FilterSidebar({ filters, options, facets, onFiltersChange }: FilterSidebarProps) {
     const [ingredientQuery, setIngredientQuery] = useState('');
     const [excludeQuery, setExcludeQuery] = useState('');
@@ -454,11 +451,18 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
     // Sort and filter tags: selected first, then by count descending
     const tagFacets = facets?.tags;
     const selectedTags = filters.tags ?? [];
-    // eslint-disable-next-line react-hooks/preserve-manual-memoization
+
+    // Create a Map for O(1) lookup of tag counts
+    const tagCountMap = useMemo(() => {
+        const map = new Map<string, number>();
+        tagFacets?.forEach((facet) => map.set(facet.key, facet.count));
+        return map;
+    }, [tagFacets]);
+
     const sortedTags = useMemo(() => {
         const tagData = tags.map((tag) => ({
             name: tag,
-            count: findCount(tagFacets, tag),
+            count: tagCountMap.get(tag) ?? 0,
             selected: selectedTags.includes(tag),
         }));
 
@@ -475,7 +479,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
             if (!a.selected && b.selected) return 1;
             return b.count - a.count;
         });
-    }, [tags, tagFacets, tagQuery, selectedTags]);
+    }, [tags, tagCountMap, tagQuery, selectedTags]);
 
     const ingredientSuggestions = useMemo(() => {
         const query = ingredientQuery.toLowerCase().trim();

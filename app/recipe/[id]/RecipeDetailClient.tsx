@@ -321,163 +321,184 @@ export function RecipeDetailClient({
                 })}
             >
                 <div className={css({ mb: '8' })}>
+                    <div className={css({ mb: '4' })}>
+                        <h1
+                            className={css({
+                                fontFamily: 'heading',
+                                fontSize: '4xl',
+                                fontWeight: '700',
+                                lineHeight: 'short',
+                            })}
+                        >
+                            {recipe.title}
+                        </h1>
+                    </div>
                     <div className={grid({ columns: { base: 1, lg: 2 }, gap: '8' })}>
                         <div
                             className={css({
-                                position: 'relative',
-                                borderRadius: '2xl',
-                                overflow: 'hidden',
-                                bg: 'black',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '3',
                             })}
-                            data-debug-image-container
                         >
                             <div
                                 className={css({
-                                    aspectRatio: '4/3',
                                     position: 'relative',
-                                    cursor: 'pointer',
+                                    borderRadius: '2xl',
+                                    overflow: 'hidden',
+                                    bg: 'black',
                                 })}
-                                onClick={() => {
-                                    setLightboxIndex(normalizedHeroIndex);
-                                    setLightboxOpen(true);
-                                }}
+                                data-debug-image-container
                             >
-                                <Image
-                                    src={heroMeta?.src || recipe.image}
-                                    alt={heroMeta?.title ?? recipe.title}
-                                    fill
-                                    sizes="(max-width: 1024px) 100vw, 50vw"
-                                    style={{ objectFit: 'cover' }}
-                                />
-                            </div>
-                            <button
-                                type="button"
-                                onClick={handleHeroPrev}
-                                aria-label="Vorheriges Bild"
-                                className={css({
-                                    position: 'absolute',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    left: '2',
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: 'full',
-                                    border: 'none',
-                                    bg: 'rgba(0,0,0,0.4)',
-                                    color: 'white',
-                                    cursor: 'pointer',
-                                })}
-                            >
-                                ‹
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleHeroNext}
-                                aria-label="Nächstes Bild"
-                                className={css({
-                                    position: 'absolute',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    right: '2',
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: 'full',
-                                    border: 'none',
-                                    bg: 'rgba(0,0,0,0.4)',
-                                    color: 'white',
-                                    cursor: 'pointer',
-                                })}
-                            >
-                                ›
-                            </button>
-                        </div>
-
-                        <div className={css({ mt: '3' })}>
-                            <div
-                                className={flex({
-                                    justify: 'space-between',
-                                    align: 'center',
-                                    mb: '2',
-                                })}
-                            >
-                                <span
+                                <div
                                     className={css({
-                                        fontSize: 'sm',
-                                        color: 'text-muted',
-                                        fontFamily: 'body',
+                                        aspectRatio: '4/3',
+                                        position: 'relative',
+                                        cursor: 'pointer',
+                                    })}
+                                    onClick={() => {
+                                        setLightboxIndex(normalizedHeroIndex);
+                                        setLightboxOpen(true);
+                                    }}
+                                >
+                                    <Image
+                                        src={heroMeta?.src || recipe.image}
+                                        alt={heroMeta?.title ?? recipe.title}
+                                        fill
+                                        sizes="(max-width: 1024px) 100vw, 50vw"
+                                        style={{ objectFit: 'cover' }}
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleHeroPrev}
+                                    aria-label="Vorheriges Bild"
+                                    className={css({
+                                        position: 'absolute',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        left: '2',
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: 'full',
+                                        border: 'none',
+                                        bg: 'rgba(0,0,0,0.4)',
+                                        color: 'white',
+                                        cursor: 'pointer',
                                     })}
                                 >
-                                    {heroMeta?.subtitle ?? 'Galerie'} ({normalizedHeroIndex + 1}/
-                                    {heroCount})
-                                </span>
-                                {heroCount > 1 && (
+                                    ‹
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleHeroNext}
+                                    aria-label="Nächstes Bild"
+                                    className={css({
+                                        position: 'absolute',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        right: '2',
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: 'full',
+                                        border: 'none',
+                                        bg: 'rgba(0,0,0,0.4)',
+                                        color: 'white',
+                                        cursor: 'pointer',
+                                    })}
+                                >
+                                    ›
+                                </button>
+                            </div>
+
+                            <div className={css({ mt: '1' })}>
+                                <div
+                                    className={flex({
+                                        justify: 'space-between',
+                                        align: 'center',
+                                        mb: '2',
+                                        gap: '2',
+                                    })}
+                                >
                                     <span
                                         className={css({
-                                            fontSize: 'xs',
+                                            fontSize: 'sm',
                                             color: 'text-muted',
+                                            fontFamily: 'body',
                                         })}
                                     >
-                                        Tippe oder swipere über das Bild
+                                        {heroMeta?.subtitle ?? 'Galerie'} ({normalizedHeroIndex + 1}
+                                        /{heroCount})
                                     </span>
-                                )}
-                            </div>
-                            <div
-                                className={css({
-                                    display: 'flex',
-                                    gap: '2',
-                                    overflowX: 'auto',
-                                    pb: '2',
-                                    maxW: '100%',
-                                    lg: {
-                                        display: 'grid',
-                                        gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                                        overflowX: 'visible',
-                                    },
-                                })}
-                            >
-                                {heroImages.map((img, idx) => {
-                                    const thumbUrl = img.thumbKey
-                                        ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=200&height=200&fit=cover&quality=75`
-                                        : img.src;
-                                    return (
-                                        <button
-                                            key={`${idx}-${img.src}`}
-                                            type="button"
-                                            onClick={() => setHeroIndex(idx)}
+                                    {heroCount > 1 && (
+                                        <span
                                             className={css({
-                                                borderRadius: 'lg',
-                                                border: '2px solid',
-                                                borderColor:
-                                                    idx === normalizedHeroIndex
-                                                        ? 'primary'
-                                                        : 'transparent',
-                                                padding: 0,
-                                                minWidth: { base: '72px', lg: 'auto' },
-                                                width: '72px',
-                                                height: '72px',
-                                                flex: { base: '0 0 auto', lg: 'initial' },
-                                                overflow: 'hidden',
-                                                cursor: 'pointer',
+                                                fontSize: 'xs',
+                                                color: 'text-muted',
                                             })}
                                         >
-                                            <div
+                                            Tippe oder swipere über das Bild
+                                        </span>
+                                    )}
+                                </div>
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        gap: '2',
+                                        overflowX: 'auto',
+                                        pb: '2',
+                                        maxW: '100%',
+                                        lg: {
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                                            overflowX: 'visible',
+                                        },
+                                    })}
+                                >
+                                    {heroImages.map((img, idx) => {
+                                        const thumbUrl = img.thumbKey
+                                            ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=200&height=200&fit=cover&quality=75`
+                                            : img.src;
+                                        return (
+                                            <button
+                                                key={`${idx}-${img.src}`}
+                                                type="button"
+                                                onClick={() => setHeroIndex(idx)}
                                                 className={css({
-                                                    position: 'relative',
-                                                    width: '100%',
-                                                    height: '100%',
+                                                    borderRadius: 'lg',
+                                                    border: '2px solid',
+                                                    borderColor:
+                                                        idx === normalizedHeroIndex
+                                                            ? 'primary'
+                                                            : 'transparent',
+                                                    padding: 0,
+                                                    minWidth: { base: '72px', lg: 'auto' },
+                                                    width: '72px',
+                                                    height: '72px',
+                                                    flex: { base: '0 0 auto', lg: 'initial' },
+                                                    overflow: 'hidden',
+                                                    cursor: 'pointer',
                                                 })}
                                             >
-                                                <Image
-                                                    src={thumbUrl}
-                                                    alt={img.title}
-                                                    fill
-                                                    sizes="72px"
-                                                    style={{ objectFit: 'cover' }}
-                                                />
-                                            </div>
-                                        </button>
-                                    );
-                                })}
+                                                <div
+                                                    className={css({
+                                                        position: 'relative',
+                                                        width: '100%',
+                                                        height: '100%',
+                                                    })}
+                                                >
+                                                    <Image
+                                                        src={thumbUrl}
+                                                        alt={img.title}
+                                                        fill
+                                                        sizes="72px"
+                                                        style={{ objectFit: 'cover' }}
+                                                    />
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
 
@@ -512,17 +533,6 @@ export function RecipeDetailClient({
                                     {recipe.difficulty}
                                 </button>
                             </div>
-
-                            <h1
-                                className={css({
-                                    fontFamily: 'heading',
-                                    fontSize: '4xl',
-                                    fontWeight: '700',
-                                    mb: '4',
-                                })}
-                            >
-                                {recipe.title}
-                            </h1>
 
                             <p
                                 className={css({

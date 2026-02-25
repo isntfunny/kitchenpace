@@ -100,7 +100,7 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                         borderColor: 'rgba(224,123,83,0.2)',
                         boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
                         padding: '3',
-                        zIndex: 50,
+                        zIndex: 110,
                         animation: 'fadeIn 150ms ease',
                         display: { base: 'none', md: 'block' },
                     })}
@@ -297,6 +297,7 @@ export function RecipeTabs() {
                 alignItems: 'center',
                 gap: '3',
                 overflowX: 'auto',
+                overflowY: 'visible',
                 scrollbarWidth: 'none',
                 '&::-webkitScrollbar': {
                     display: 'none',

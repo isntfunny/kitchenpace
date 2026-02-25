@@ -1756,7 +1756,7 @@ async function main() {
         {
             id: 'recipe-37',
             title: 'Kaiserschmarrn - Tiroler Landgasthofrezept',
-            slug: 'kaiserschmarrn',
+            slug: 'kaiserschmarrn-tiroler',
             description: 'Fluffiger Kaiserschmarrn mit Rosinen und Puderzucker',
             imageUrl: 'https://cdn.isntfunny.de/kitchenpace/mock/recipes/kaiserschmarrn.jpg',
             servings: 4,
@@ -2123,7 +2123,9 @@ async function main() {
     }
 
     const createdRecipes = [];
+    console.log('📝 Creating recipes...');
     for (const r of recipesData) {
+        console.log(`Processing recipe: ${r.id} - ${r.slug}`);
         const {
             tags: _tags,
             categories: _categories,

@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { fetchRecipeCookImages } from '@/app/actions/cooks';
 import { fetchRecipeBySlug } from '@/app/actions/recipes';
 import { getServerAuthSession } from '@/lib/auth';
+import { extractKeyFromUrl, getThumbnailUrl } from '@/lib/thumbnail';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
 
@@ -28,6 +29,11 @@ const buildRecipeMetadata = (recipe: Awaited<ReturnType<typeof fetchRecipeBySlug
         };
     }
 
+    const imageKey = extractKeyFromUrl(recipe.image);
+    const bannerUrl = imageKey
+        ? getThumbnailUrl(imageKey, { width: 1200, height: 600 })
+        : '/og-image.png';
+
     return {
         title: `${recipe.title} | KüchenTakt`,
         description: recipe.description,
@@ -39,7 +45,9 @@ const buildRecipeMetadata = (recipe: Awaited<ReturnType<typeof fetchRecipeBySlug
             type: 'article',
             images: [
                 {
-                    url: recipe.image,
+                    url: bannerUrl,
+                    width: 1200,
+                    height: 600,
                     alt: recipe.title,
                 },
             ],
@@ -48,7 +56,7 @@ const buildRecipeMetadata = (recipe: Awaited<ReturnType<typeof fetchRecipeBySlug
             card: 'summary_large_image',
             title: `${recipe.title} | KüchenTakt`,
             description: recipe.description,
-            images: [recipe.image],
+            images: [bannerUrl],
         },
     };
 };

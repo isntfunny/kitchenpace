@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { fetchUserStats } from '@/app/actions/user';
@@ -6,6 +7,16 @@ import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { logAuth } from '@/lib/auth-logger';
 import { getOrCreateProfile } from '@/lib/profile';
+
+export const metadata: Metadata = {
+    title: 'Dashboard',
+    description:
+        'Dein persönliches KüchenTakt Dashboard. Statistiken, Aktivitäten und Übersicht über deine Kochaktivitäten.',
+    robots: {
+        index: false,
+        follow: false,
+    },
+};
 
 export default async function DashboardPage() {
     const session = await getServerAuthSession('dashboard');

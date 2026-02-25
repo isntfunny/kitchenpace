@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { extractKeyFromUrl, getThumbnailUrl } from '@/lib/thumbnail';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
 
@@ -16,10 +17,45 @@ type UserProfileProps = {
     params: UserProfileParams | Promise<UserProfileParams>;
 };
 
-const buildUserMetadata = (name: string): Metadata => ({
-    title: `${name} | KüchenTakt`,
-    description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
-});
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
+
+const buildUserMetadata = (name: string, userId: string, photoUrl?: string | null): Metadata => {
+    const profileImageUrl = photoUrl
+        ? getThumbnailUrl(extractKeyFromUrl(photoUrl) ?? '', {
+              width: 400,
+              height: 400,
+              fit: 'cover',
+          })
+        : undefined;
+
+    return {
+        title: `${name} | KüchenTakt`,
+        description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+        openGraph: {
+            title: `${name} | KüchenTakt`,
+            description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+            url: `${SITE_URL}/user/${userId}`,
+            siteName: 'KüchenTakt',
+            type: 'profile',
+            ...(profileImageUrl && {
+                images: [
+                    {
+                        url: profileImageUrl,
+                        width: 400,
+                        height: 400,
+                        alt: `${name} Profilbild`,
+                    },
+                ],
+            }),
+        },
+        twitter: {
+            card: profileImageUrl ? 'summary' : 'summary',
+            title: `${name} | KüchenTakt`,
+            description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+            ...(profileImageUrl && { images: [profileImageUrl] }),
+        },
+    };
+};
 
 async function getUserProfile(userId: string): Promise<UserProfileData | null> {
     const user = await prisma.user.findUnique({
@@ -131,7 +167,7 @@ export async function generateMetadata({ params }: UserProfileProps): Promise<Me
             title: 'Benutzer nicht gefunden | KüchenTakt',
         };
     }
-    return buildUserMetadata(user.name);
+    return buildUserMetadata(user.name, user.id, user.profile?.photoUrl);
 }
 
 export default async function UserProfilePage({ params }: UserProfileProps) {

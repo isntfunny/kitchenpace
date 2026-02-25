@@ -1,6 +1,6 @@
+import { OpenPanelComponent } from '@openpanel/nextjs';
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
-import { OpenPanelComponent } from '@openpanel/nextjs';
 
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { RecipeTabsProvider } from '@/components/providers/RecipeTabsProvider';

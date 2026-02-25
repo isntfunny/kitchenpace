@@ -1,9 +1,16 @@
+import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { PageShell } from '@/components/layouts/PageShell';
 import { getAllCategories, getAllTags } from '@/components/recipe/actions';
 import { RecipeForm } from '@/components/recipe/RecipeForm';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
+
+export const metadata: Metadata = {
+    title: 'Rezept erstellen',
+    description:
+        'Erstelle ein neues Rezept bei KüchenTakt. Teile deine kulinarischen Kreationen mit unserer Community.',
+};
 
 export default async function CreateRecipePage() {
     const session = await getServerAuthSession('recipe/create');

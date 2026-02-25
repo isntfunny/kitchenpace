@@ -1,3 +1,5 @@
+import { Metadata } from 'next';
+
 import {
     fetchFilterTags,
     fetchFilterIngredients,
@@ -9,6 +11,12 @@ import { parseRecipeFilterParams } from '@/lib/recipeFilters';
 
 type RecipesPageProps = {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export const metadata: Metadata = {
+    title: 'Rezepte',
+    description:
+        'Durchsuche unsere Rezepte-Sammlung. Filtere nach Kategorien, Zutaten und Tags. Finde dein nächstes Lieblingsrezept.',
 };
 
 const toURLSearchParams = async (searchParams: RecipesPageProps['searchParams']) => {

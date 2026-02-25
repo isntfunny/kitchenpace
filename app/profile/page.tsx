@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
@@ -7,6 +8,12 @@ import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { getOrCreateProfile } from '@/lib/profile';
 import { css } from 'styled-system/css';
+
+export const metadata: Metadata = {
+    title: 'Mein Profil',
+    description:
+        'Dein persönliches KüchenTakt Profil. Verwalte deine Favoriten, erstellte Rezepte und Kontoeinstellungen.',
+};
 
 const ProfilePage = async () => {
     const session = await getServerAuthSession('profile/page');

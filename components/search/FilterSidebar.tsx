@@ -450,19 +450,12 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
 
     // Sort and filter tags: selected first, then by count descending
     const tagFacets = facets?.tags;
-    const selectedTags = filters.tags ?? [];
-
-    // Create a Map for O(1) lookup of tag counts
-    const tagCountMap = useMemo(() => {
-        const map = new Map<string, number>();
-        tagFacets?.forEach((facet) => map.set(facet.key, facet.count));
-        return map;
-    }, [tagFacets]);
 
     const sortedTags = useMemo(() => {
+        const selectedTags = filters.tags ?? [];
         const tagData = tags.map((tag) => ({
             name: tag,
-            count: tagCountMap.get(tag) ?? 0,
+            count: tagFacets?.find((f) => f.key === tag)?.count ?? 0,
             selected: selectedTags.includes(tag),
         }));
 
@@ -479,7 +472,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
             if (!a.selected && b.selected) return 1;
             return b.count - a.count;
         });
-    }, [tags, tagCountMap, tagQuery, selectedTags]);
+    }, [tags, tagFacets, tagQuery, filters]);
 
     const ingredientSuggestions = useMemo(() => {
         const query = ingredientQuery.toLowerCase().trim();

@@ -3,8 +3,10 @@ import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import { ProfileProvider } from '@/components/providers/ProfileProvider';
 import { RecipeTabsProvider } from '@/components/providers/RecipeTabsProvider';
 import { getServerAuthSession } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 import './globals.css';
 
@@ -76,6 +78,21 @@ export default async function RootLayout({
     children: React.ReactNode;
 }>) {
     const session = await getServerAuthSession('openpanel-root-layout');
+
+    let profile: { photoUrl: string | null; nickname: string | null } | null = null;
+
+    if (session?.user?.id) {
+        const userProfile = await prisma.profile.findUnique({
+            where: { userId: session.user.id },
+        });
+        if (userProfile) {
+            profile = {
+                photoUrl: userProfile.photoUrl,
+                nickname: userProfile.nickname,
+            };
+        }
+    }
+
     const openPanelClientId = process.env.OPENPANEL_ID ?? '';
     const hasOpenPanelId = Boolean(openPanelClientId);
     const userName = session?.user?.name?.trim() ?? '';
@@ -127,7 +144,9 @@ export default async function RootLayout({
                 />
                 {identifyProps && <IdentifyComponent {...identifyProps} />}
                 <AuthProvider session={session}>
-                    <RecipeTabsProvider>{children}</RecipeTabsProvider>
+                    <ProfileProvider profile={profile}>
+                        <RecipeTabsProvider>{children}</RecipeTabsProvider>
+                    </ProfileProvider>
                 </AuthProvider>
             </body>
         </html>

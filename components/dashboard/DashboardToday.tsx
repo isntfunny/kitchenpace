@@ -2,6 +2,7 @@
 
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
+import { CheckCircle, Clipboard, Flame, Hourglass, ChefHat } from 'lucide-react';
 
 interface TimelineItem {
     id: string;
@@ -22,19 +23,19 @@ const statusConfig = {
         bg: 'rgba(0,0,0,0.04)',
         border: 'rgba(0,0,0,0.1)',
         text: 'text-muted',
-        icon: '⏳',
+        icon: <Hourglass size={18} color="#636e72" />,
     },
     in_progress: {
         bg: 'rgba(224,123,83,0.1)',
         border: '#e07b53',
         text: 'primary',
-        icon: '🔥',
+        icon: <Flame size={18} color="#e07b53" />,
     },
     completed: {
         bg: 'rgba(0,184,148,0.1)',
         border: '#00b894',
         text: '#00b894',
-        icon: '✓',
+        icon: <CheckCircle size={18} color="#00b894" />,
     },
 };
 
@@ -197,9 +198,13 @@ export function DashboardToday({ items }: DashboardTodayProps) {
                             fontSize: 'xl',
                             fontWeight: '700',
                             color: 'text',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
                         })}
                     >
-                        Heute beim Kochen 🍳
+                        <ChefHat size={26} color="#e07b53" />
+                        Heute beim Kochen
                     </h3>
                     <p
                         className={css({
@@ -259,9 +264,10 @@ export function DashboardToday({ items }: DashboardTodayProps) {
                             fontSize: '3xl',
                             display: 'block',
                             mb: '2',
+                            color: '#636e72',
                         })}
                     >
-                        📋
+                        <Clipboard size={40} />
                     </span>
                     <p>Keine geplanten Gerichte heute</p>
                     <button

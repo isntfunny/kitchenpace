@@ -1,6 +1,8 @@
-import { css } from 'styled-system/css';
 import { Text } from '@/components/atoms/Typography';
+import { css } from 'styled-system/css';
+
 import { ActivityItem, ActivityRecipeLink, parseActivityDetail } from './ActivityItem';
+import { Camera, Calendar, ShoppingCart } from 'lucide-react';
 
 interface ActivityDetailProps {
     id: string;
@@ -60,8 +62,19 @@ export function CookedActivity(props: ActivityDetailProps) {
         <ActivityItem activity={props}>
             <ActivityRecipeLink recipeId={props.recipeId} recipeTitle={props.recipeTitle} />
             {hasImage && (
-                <Text size="sm" color="muted" className={css({ mt: '1', fontSize: '0.75rem' })}>
-                    📸 Mit Bild
+                <Text
+                    size="sm"
+                    color="muted"
+                    className={css({
+                        mt: '1',
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                    })}
+                >
+                    <Camera size={14} />
+                    <span>Mit Bild</span>
                 </Text>
             )}
         </ActivityItem>
@@ -111,13 +124,35 @@ export function CreatedActivity(props: ActivityDetailProps) {
                 </Text>
             )}
             {isShoppingList && (
-                <Text size="sm" color="muted" className={css({ mt: '1', fontSize: '0.75rem' })}>
-                    🛒 Einkaufsliste
+                <Text
+                    size="sm"
+                    color="muted"
+                    className={css({
+                        mt: '1',
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                    })}
+                >
+                    <ShoppingCart size={14} />
+                    <span>Einkaufsliste</span>
                 </Text>
             )}
             {isMealPlan && (
-                <Text size="sm" color="muted" className={css({ mt: '1', fontSize: '0.75rem' })}>
-                    📅 Meal Plan
+                <Text
+                    size="sm"
+                    color="muted"
+                    className={css({
+                        mt: '1',
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                    })}
+                >
+                    <Calendar size={14} />
+                    <span>Meal Plan</span>
                 </Text>
             )}
         </ActivityItem>

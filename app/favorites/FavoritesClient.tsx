@@ -9,6 +9,7 @@ import { toggleFavoriteAction } from '@/app/actions/social';
 import { Badge } from '@/components/atoms/Badge';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
+import { Heart } from 'lucide-react';
 
 export interface FavoriteRecipeCard {
     id: string;
@@ -131,7 +132,9 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                             boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                         })}
                     >
-                        <div className={css({ fontSize: '4xl', mb: '4' })}>💝</div>
+                        <div className={css({ fontSize: '4xl', mb: '4', color: '#fd4c6f' })}>
+                            <Heart size={48} />
+                        </div>
                         <h2
                             className={css({
                                 fontSize: 'xl',

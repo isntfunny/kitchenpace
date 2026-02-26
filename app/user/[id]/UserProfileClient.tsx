@@ -3,13 +3,26 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { ReactNode, useState, useTransition } from 'react';
 
 import { toggleFollowAction } from '@/app/actions/social';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
+import {
+    Bookmark,
+    Calendar,
+    ChefHat,
+    Clipboard,
+    Edit3,
+    Flame,
+    FileText,
+    Handshake,
+    MessageSquare,
+    ShoppingCart,
+    Star,
+} from 'lucide-react';
 
 export interface UserProfileRecipe {
     id: string;
@@ -57,44 +70,44 @@ interface UserProfileClientProps {
 const AVATAR_SIZE = 140;
 
 // Activity type configurations - supports {recipe} placeholder
-const ACTIVITY_CONFIG: Record<string, { icon: string; template: string[]; bgColor: string }> = {
+const ACTIVITY_CONFIG: Record<string, { icon: ReactNode; template: string[]; bgColor: string }> = {
     RECIPE_CREATED: {
-        icon: '✍️',
+        icon: <Edit3 size={16} />,
         template: ['hat das Rezept', 'erstellt'],
         bgColor: '#f3e8ff',
     },
     RECIPE_COOKED: {
-        icon: '🔥',
+        icon: <Flame size={16} />,
         template: ['hat', 'gekocht'],
         bgColor: '#fef3c7',
     },
     RECIPE_RATED: {
-        icon: '⭐',
+        icon: <Star size={16} />,
         template: ['hat', 'bewertet'],
         bgColor: '#fef9c3',
     },
     RECIPE_COMMENTED: {
-        icon: '💬',
+        icon: <MessageSquare size={16} />,
         template: ['hat', 'kommentiert'],
         bgColor: '#fce7f3',
     },
     RECIPE_FAVORITED: {
-        icon: '🔖',
+        icon: <Bookmark size={16} />,
         template: ['hat', 'gespeichert'],
         bgColor: '#dbeafe',
     },
     USER_FOLLOWED: {
-        icon: '🤝',
+        icon: <Handshake size={16} />,
         template: ['ist jetzt Follower'],
         bgColor: '#d1fae5',
     },
     SHOPPING_LIST_CREATED: {
-        icon: '🛒',
+        icon: <ShoppingCart size={16} />,
         template: ['hat eine Einkaufsliste erstellt'],
         bgColor: '#fef3c7',
     },
     MEAL_PLAN_CREATED: {
-        icon: '📅',
+        icon: <Calendar size={16} />,
         template: ['hat einen Essensplan erstellt'],
         bgColor: '#e0e7ff',
     },
@@ -389,7 +402,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         mb: '3',
                                     })}
                                 >
-                                    🍳
+                                    <ChefHat size={42} color="#e07b53" />
                                 </div>
                                 <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
                                     {user.name} hat noch keine Rezepte veröffentlicht.
@@ -425,7 +438,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 <div className={flex({ direction: 'column' })}>
                                     {activities.map((activity, index) => {
                                         const config = ACTIVITY_CONFIG[activity.type] ?? {
-                                            icon: '📋',
+                                            icon: <Clipboard size={16} />,
                                             template: ['war aktiv'],
                                             bgColor: '#f3f4f6',
                                         };
@@ -541,7 +554,11 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     borderColor: 'gray.200',
                                 })}
                             >
-                                <div className={css({ fontSize: '2xl', mb: '2' })}>📝</div>
+                                <div
+                                    className={css({ fontSize: '2xl', mb: '2', color: '#4a5568' })}
+                                >
+                                    <FileText size={36} />
+                                </div>
                                 <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
                                     Noch keine Aktivitäten.
                                 </p>

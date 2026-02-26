@@ -22,6 +22,7 @@ import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
 import { buildRecipeFilterHref } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
+import { Bookmark, Camera, CheckCircle, ChefHat, Clock, Flame, Heart, Printer } from 'lucide-react';
 
 import type { Recipe, User, Activity } from './data';
 
@@ -554,7 +555,15 @@ export function RecipeDetailClient({
                                         borderRadius: 'xl',
                                     })}
                                 >
-                                    <div className={css({ fontSize: '2xl', mb: '1' })}>⏱️</div>
+                                    <div
+                                        className={css({
+                                            fontSize: '2xl',
+                                            mb: '1',
+                                            color: '#e07b53',
+                                        })}
+                                    >
+                                        <Clock size={26} />
+                                    </div>
                                     <div
                                         className={css({
                                             fontSize: 'sm',
@@ -581,7 +590,15 @@ export function RecipeDetailClient({
                                         borderRadius: 'xl',
                                     })}
                                 >
-                                    <div className={css({ fontSize: 'xl', mb: '1' })}>👨‍🍳</div>
+                                    <div
+                                        className={css({
+                                            fontSize: 'xl',
+                                            mb: '1',
+                                            color: '#4caf50',
+                                        })}
+                                    >
+                                        <ChefHat size={24} />
+                                    </div>
                                     <div
                                         className={css({
                                             fontSize: 'sm',
@@ -608,7 +625,15 @@ export function RecipeDetailClient({
                                         borderRadius: 'xl',
                                     })}
                                 >
-                                    <div className={css({ fontSize: 'xl', mb: '1' })}>🔥</div>
+                                    <div
+                                        className={css({
+                                            fontSize: 'xl',
+                                            mb: '1',
+                                            color: '#ff5722',
+                                        })}
+                                    >
+                                        <Flame size={24} />
+                                    </div>
                                     <div
                                         className={css({
                                             fontSize: 'sm',
@@ -730,8 +755,30 @@ export function RecipeDetailClient({
                                     onClick={handleFavoriteToggle}
                                     disabled={isFavoritePending}
                                 >
-                                    {favoriteState.isFavorite ? '❤️ Favorit' : '♡ Speichern'} ·{' '}
-                                    {favoriteState.count}
+                                    {favoriteState.isFavorite ? (
+                                        <span
+                                            className={css({
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                            })}
+                                        >
+                                            <Heart size={16} />
+                                            Favorit
+                                        </span>
+                                    ) : (
+                                        <span
+                                            className={css({
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                            })}
+                                        >
+                                            <Bookmark size={16} />
+                                            Speichern
+                                        </span>
+                                    )}{' '}
+                                    · {favoriteState.count}
                                 </Button>
                                 <Button
                                     type="button"
@@ -739,10 +786,42 @@ export function RecipeDetailClient({
                                     onClick={handleMarkCooked}
                                     disabled={isCookPending}
                                 >
-                                    {hasCooked ? '✅ Gekocht' : '🍳 Gekocht'} · {cookCount}
+                                    {hasCooked ? (
+                                        <span
+                                            className={css({
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                            })}
+                                        >
+                                            <CheckCircle size={16} />
+                                            Gekocht
+                                        </span>
+                                    ) : (
+                                        <span
+                                            className={css({
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                            })}
+                                        >
+                                            <ChefHat size={16} />
+                                            Gekocht
+                                        </span>
+                                    )}{' '}
+                                    · {cookCount}
                                 </Button>
                                 <Button type="button" variant="ghost" onClick={handlePrint}>
-                                    🖨️ Drucken
+                                    <span
+                                        className={css({
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                        })}
+                                    >
+                                        <Printer size={16} />
+                                        Drucken
+                                    </span>
                                 </Button>
                             </div>
 
@@ -764,9 +843,13 @@ export function RecipeDetailClient({
                                             fontWeight: '700',
                                             fontFamily: 'heading',
                                             mb: '3',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
                                         })}
                                     >
-                                        🍳 Als gekocht markieren
+                                        <ChefHat size={20} />
+                                        <span>Als gekocht markieren</span>
                                     </h3>
 
                                     <div
@@ -803,9 +886,10 @@ export function RecipeDetailClient({
                                                     className={css({
                                                         fontSize: 'xl',
                                                         mb: '2',
+                                                        color: '#4caf50',
                                                     })}
                                                 >
-                                                    ✅
+                                                    <CheckCircle size={32} />
                                                 </div>
                                                 <p
                                                     className={css({
@@ -831,9 +915,10 @@ export function RecipeDetailClient({
                                                     className={css({
                                                         fontSize: '2xl',
                                                         mb: '2',
+                                                        color: '#4a5568',
                                                     })}
                                                 >
-                                                    📷
+                                                    <Camera size={40} />
                                                 </div>
                                                 <p
                                                     className={css({

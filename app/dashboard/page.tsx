@@ -7,6 +7,7 @@ import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { logAuth } from '@/lib/auth-logger';
 import { getOrCreateProfile } from '@/lib/profile';
+import { ChefHat, FileText, Heart, Star } from 'lucide-react';
 
 export const metadata: Metadata = {
     title: 'Dashboard',
@@ -50,28 +51,28 @@ export default async function DashboardPage() {
                         id: '1',
                         label: 'Rezepte erstellt',
                         value: stats.recipeCount,
-                        icon: '📝',
+                        icon: <FileText size={20} />,
                         color: '#e07b53',
                     },
                     {
                         id: '2',
                         label: 'Favoriten',
                         value: stats.favoriteCount,
-                        icon: '❤️',
+                        icon: <Heart size={20} />,
                         color: '#fd79a8',
                     },
                     {
                         id: '3',
                         label: 'Gekochte Gerichte',
                         value: stats.cookedCount,
-                        icon: '🍳',
+                        icon: <ChefHat size={20} />,
                         color: '#00b894',
                     },
                     {
                         id: '4',
                         label: 'Bewertungen',
                         value: stats.ratingCount,
-                        icon: '⭐',
+                        icon: <Star size={20} />,
                         color: '#f8b500',
                     },
                 ]}

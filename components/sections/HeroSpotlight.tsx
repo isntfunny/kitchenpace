@@ -7,6 +7,7 @@ import { grid } from 'styled-system/patterns';
 
 import { SmartImage } from '../atoms/SmartImage';
 import { Heading, Text } from '../atoms/Typography';
+import { Star } from 'lucide-react';
 
 export function HeroSpotlight() {
     return (
@@ -33,6 +34,8 @@ export function HeroSpotlight() {
                     <div
                         className={css({
                             display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
                             bg: '#e07b53',
                             borderRadius: 'full',
                             padding: '4px 14px',
@@ -41,7 +44,8 @@ export function HeroSpotlight() {
                             color: 'white',
                         })}
                     >
-                        🌟 Neu gedacht
+                        <Star size={16} />
+                        <span>Neu gedacht</span>
                     </div>
                     <Heading as="h1" size="xl" className={css({ mt: '4', maxW: '48ch' })}>
                         Kochen ist nicht immer Schritt für Schritt

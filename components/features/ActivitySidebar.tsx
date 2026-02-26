@@ -2,6 +2,8 @@ import type { ActivityFeedItem } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';
+import { Activity } from 'lucide-react';
+
 import {
     RatedActivity,
     CookedActivity,
@@ -61,8 +63,18 @@ export function ActivitySidebar({ activities }: ActivitySidebarProps) {
             })}
         >
             <div className={css({ mb: '4' })}>
-                <Heading as="h3" size="md" className={css({ color: 'primary' })}>
-                    Aktivität 🔥
+                <Heading
+                    as="h3"
+                    size="md"
+                    className={css({
+                        color: 'primary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                    })}
+                >
+                    <Activity size={18} />
+                    <span>Aktivität</span>
                 </Heading>
                 <Text size="sm" color="muted" className={css({ fontSize: '0.75rem' })}>
                     Was passiert gerade in der Community

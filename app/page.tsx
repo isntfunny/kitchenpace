@@ -21,6 +21,7 @@ import { FlowPillars } from '@/components/sections/FlowPillars';
 import { HeroSpotlight } from '@/components/sections/HeroSpotlight';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
+import { ChefHat } from 'lucide-react';
 
 export const revalidate = 60;
 
@@ -157,9 +158,10 @@ export default async function Home() {
                         className={css({
                             fontSize: '2xl',
                             marginBottom: '3',
+                            color: '#e07b53',
                         })}
                     >
-                        🍳
+                        <ChefHat size={48} />
                     </div>
                     <div
                         className={css({

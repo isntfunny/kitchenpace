@@ -1,5 +1,6 @@
 'use client';
 
+import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
@@ -85,11 +86,10 @@ export function HeaderSearch() {
                         right: '3',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        fontSize: 'lg',
                         pointerEvents: 'none',
                     })}
                 >
-                    🔍
+                    <Search size={18} color="#999" />
                 </span>
             </form>
 

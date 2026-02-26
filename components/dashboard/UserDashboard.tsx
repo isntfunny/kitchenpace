@@ -1,17 +1,19 @@
 'use client';
 
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
+import { ChefHat, FileText, Heart, Star } from 'lucide-react';
 import { SmartImage } from '../atoms/SmartImage';
 
 interface DashboardStatCard {
     id: string;
     label: string;
     value: string | number;
-    icon: string;
+    icon: ReactNode;
     color: string;
 }
 
@@ -23,10 +25,22 @@ interface UserDashboardProps {
 }
 
 const defaultStats: DashboardStatCard[] = [
-    { id: '1', label: 'Rezepte erstellt', value: 24, icon: '📝', color: '#e07b53' },
-    { id: '2', label: 'Favoriten', value: 156, icon: '❤️', color: '#fd79a8' },
-    { id: '3', label: 'Gekochte Gerichte', value: 89, icon: '🍳', color: '#00b894' },
-    { id: '4', label: 'Bewertungen', value: 34, icon: '⭐', color: '#f8b500' },
+    {
+        id: '1',
+        label: 'Rezepte erstellt',
+        value: 24,
+        icon: <FileText size={20} />,
+        color: '#e07b53',
+    },
+    { id: '2', label: 'Favoriten', value: 156, icon: <Heart size={20} />, color: '#fd79a8' },
+    {
+        id: '3',
+        label: 'Gekochte Gerichte',
+        value: 89,
+        icon: <ChefHat size={20} />,
+        color: '#00b894',
+    },
+    { id: '4', label: 'Bewertungen', value: 34, icon: <Star size={20} />, color: '#f8b500' },
 ];
 
 export function UserDashboard({

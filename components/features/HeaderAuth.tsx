@@ -1,6 +1,7 @@
 'use client';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Key, LogOut, Menu, Plus, Search, User, Heart } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
@@ -144,7 +145,7 @@ export function HeaderAuth() {
                                     },
                                 })}
                             >
-                                <span>👤</span>
+                                <User size={16} />
                                 <span>Mein Profil</span>
                             </Link>
                         </DropdownMenu.Item>
@@ -207,7 +208,7 @@ export function HeaderAuth() {
                                     },
                                 })}
                             >
-                                <span>🚪</span>
+                                <LogOut size={16} />
                                 <span>Abmelden</span>
                             </button>
                         </DropdownMenu.Item>
@@ -241,7 +242,7 @@ export function HeaderAuth() {
                 },
             })}
         >
-            <span>🔑</span>
+            <Key size={16} />
             <span className={css({ display: { base: 'none', md: 'inline' } })}>Anmelden</span>
         </button>
     );

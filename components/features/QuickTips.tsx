@@ -2,6 +2,7 @@ import type { QuickTipData } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';
+import { Lightbulb } from 'lucide-react';
 
 interface QuickTipsProps {
     tips: QuickTipData[];
@@ -18,8 +19,19 @@ export function QuickTips({ tips }: QuickTipsProps) {
                     boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                 })}
             >
-                <Heading as="h3" size="md" className={css({ color: '#00b894', mb: '2' })}>
-                    Küchen-Hacks 💡
+                <Heading
+                    as="h3"
+                    size="md"
+                    className={css({
+                        color: '#00b894',
+                        mb: '2',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                    })}
+                >
+                    <Lightbulb size={18} />
+                    <span>Küchen-Hacks</span>
                 </Heading>
                 <Text size="sm" color="muted">
                     Wir bereiten gerade neue Tipps für dich vor.
@@ -38,8 +50,18 @@ export function QuickTips({ tips }: QuickTipsProps) {
             })}
         >
             <div className={css({ mb: '2' })}>
-                <Heading as="h3" size="md" className={css({ color: '#00b894' })}>
-                    Küchen-Hacks 💡
+                <Heading
+                    as="h3"
+                    size="md"
+                    className={css({
+                        color: '#00b894',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                    })}
+                >
+                    <Lightbulb size={18} />
+                    <span>Küchen-Hacks</span>
                 </Heading>
             </div>
 

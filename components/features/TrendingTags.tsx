@@ -5,6 +5,7 @@ import { buildRecipeFilterHref } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 
 import { Heading } from '../atoms/Typography';
+import { Flame } from 'lucide-react';
 
 interface TrendingTagsProps {
     tags: TrendingTagData[];
@@ -21,8 +22,19 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                     boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                 })}
             >
-                <Heading as="h3" size="md" className={css({ color: 'primary', mb: '2' })}>
-                    Trending 🔥
+                <Heading
+                    as="h3"
+                    size="md"
+                    className={css({
+                        color: 'primary',
+                        mb: '2',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                    })}
+                >
+                    <Flame size={18} />
+                    <span>Trending</span>
                 </Heading>
                 <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
                     Aktuell keine Tags verfügbar.
@@ -41,8 +53,18 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
             })}
         >
             <div className={css({ mb: '2' })}>
-                <Heading as="h3" size="md" className={css({ color: 'primary' })}>
-                    Trending 🔥
+                <Heading
+                    as="h3"
+                    size="md"
+                    className={css({
+                        color: 'primary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                    })}
+                >
+                    <Flame size={18} />
+                    <span>Trending</span>
                 </Heading>
             </div>
             <div

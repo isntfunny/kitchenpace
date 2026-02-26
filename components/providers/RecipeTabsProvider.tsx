@@ -67,7 +67,7 @@ export const RecipeTabsContext = createContext<RecipeTabsContextValue | null>(nu
 function withDefaultEmoji(recipe: RecipeTabItem): RecipeTabItem {
     return {
         ...recipe,
-        emoji: recipe.emoji ?? '🍽️',
+        emoji: recipe.emoji ?? 'plating',
     };
 }
 

@@ -3,6 +3,7 @@ import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
 import { Heading, Text } from '../atoms/Typography';
+import { Flame } from 'lucide-react';
 
 interface DailyHighlightProps {
     recipe: RecipeCardData | null;
@@ -50,6 +51,8 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                                     bottom: '4',
                                     left: '4',
                                     display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
                                     bg: '#e07b53',
                                     borderRadius: 'full',
                                     padding: '4px 12px',
@@ -58,7 +61,8 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                                     color: 'white',
                                 })}
                             >
-                                🔥 Tageshighlight
+                                <Flame size={16} />
+                                <span>Tageshighlight</span>
                             </div>
                         </div>
                         <div className={css({ mt: '4' })}>

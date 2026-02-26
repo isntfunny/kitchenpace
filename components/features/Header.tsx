@@ -1,6 +1,17 @@
 'use client';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import {
+    ChefHat,
+    Coffee,
+    GlassWater,
+    Heart,
+    LayoutGrid,
+    Menu,
+    Moon,
+    Plus,
+    UtensilsCrossed,
+} from 'lucide-react';
 import Link from 'next/link';
 
 import { HeaderSearch } from '@/components/search/HeaderSearch';
@@ -13,14 +24,14 @@ import { HeaderAuth } from './HeaderAuth';
 import { RecipeTabs } from './RecipeTabs';
 
 const categories = [
-    { name: 'Frühstück', icon: '🍳' },
-    { name: 'Mittagessen', icon: '🥗' },
-    { name: 'Abendessen', icon: '🍽️' },
-    { name: 'Desserts', icon: '🍰' },
-    { name: 'Getränke', icon: '🥤' },
-    { name: 'Snacks', icon: '🥨' },
-    { name: 'Beilagen', icon: '🥬' },
-    { name: 'Backen', icon: '🥖' },
+    { name: 'Frühstück', icon: Coffee },
+    { name: 'Mittagessen', icon: UtensilsCrossed },
+    { name: 'Abendessen', icon: Moon },
+    { name: 'Desserts', icon: ChefHat },
+    { name: 'Getränke', icon: GlassWater },
+    { name: 'Snacks', icon: LayoutGrid },
+    { name: 'Beilagen', icon: LayoutGrid },
+    { name: 'Backen', icon: ChefHat },
 ];
 
 function CategoryGrid() {
@@ -57,7 +68,7 @@ function CategoryGrid() {
                             },
                         })}
                     >
-                        <span>{category.icon}</span>
+                        <category.icon size={18} color="#666" />
                         <span>{category.name}</span>
                     </Link>
                 </DropdownMenu.Item>
@@ -74,37 +85,45 @@ function MobileMenu() {
                     className={css({
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '1',
-                        borderRadius: 'full',
-                        padding: '2.5',
+                        justifyContent: 'center',
+                        width: '10',
+                        height: '10',
+                        borderRadius: 'lg',
                         border: '1px solid rgba(0,0,0,0.1)',
-                        background: 'rgba(255,255,255,0.9)',
-                        fontSize: 'sm',
-                        fontFamily: 'body',
-                        fontWeight: '600',
+                        background: 'white',
                         cursor: 'pointer',
-                        _hover: { boxShadow: '0 10px 20px rgba(0,0,0,0.12)' },
+                        transition: 'all 150ms ease',
+                        _hover: { background: 'rgba(224,123,83,0.08)' },
                     })}
+                    aria-label="Menü öffnen"
                 >
-                    <span aria-hidden>☰</span>
-                    <span>Menu</span>
+                    <Menu size={20} />
                 </button>
             </DropdownMenu.Trigger>
 
             <DropdownMenu.Portal>
+                {/* 
+                    position: fixed verhindert Seitenverschiebung 
+                    onInteractOutside stellt sicher, dass Klick außerhalb das Menü schließt
+                */}
                 <DropdownMenu.Content
                     className={css({
-                        minWidth: '240px',
+                        position: 'fixed',
+                        right: '16px',
+                        top: '70px',
+                        minWidth: '260px',
+                        maxWidth: '85vw',
                         background: 'white',
                         borderRadius: 'xl',
                         border: '1px solid',
                         borderColor: 'rgba(224,123,83,0.2)',
                         padding: '4',
                         boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
-                        animation: 'slideDown 200ms ease',
+                        animation: 'contentShow 200ms ease',
                         zIndex: 100,
                     })}
                     sideOffset={8}
+                    onCloseAutoFocus={(event) => event.preventDefault()}
                 >
                     <DropdownMenu.Label className={css({ fontSize: 'sm', fontWeight: '600' })}>
                         Aktionen
@@ -126,7 +145,7 @@ function MobileMenu() {
                                 _hover: { background: 'rgba(224,123,83,0.08)' },
                             })}
                         >
-                            <span>❤️</span>
+                            <Heart size={16} />
                             <span>Favoriten</span>
                         </Link>
                     </DropdownMenu.Item>
@@ -147,7 +166,7 @@ function MobileMenu() {
                                 _hover: { background: 'rgba(224,123,83,0.08)' },
                             })}
                         >
-                            <span>+</span>
+                            <Plus size={16} />
                             <span>Rezept</span>
                         </Link>
                     </DropdownMenu.Item>
@@ -201,9 +220,6 @@ export function Header() {
                             gap: '4',
                         })}
                     >
-                        <div className={css({ display: { base: 'flex', md: 'none' } })}>
-                            <MobileMenu />
-                        </div>
                         <Link href="/">
                             <SmartImage
                                 src="/kitchenpace.png"
@@ -247,7 +263,7 @@ export function Header() {
                                         },
                                     })}
                                 >
-                                    <span>📋</span>
+                                    <Menu size={16} />
                                     <span
                                         className={css({ display: { base: 'none', md: 'inline' } })}
                                     >
@@ -297,7 +313,7 @@ export function Header() {
                                 },
                             })}
                         >
-                            <span>❤️</span>
+                            <Heart size={16} />
                             <span className={css({ display: { base: 'none', md: 'inline' } })}>
                                 Favoriten
                             </span>
@@ -325,7 +341,7 @@ export function Header() {
                                 },
                             })}
                         >
-                            <span>+</span>
+                            <Plus size={16} color="white" />
                             <span className={css({ display: { base: 'none', md: 'inline' } })}>
                                 Rezept
                             </span>
@@ -343,8 +359,18 @@ export function Header() {
                         marginTop: '3',
                     })}
                 >
-                    <div className={css({ flex: 1, minWidth: 0 })}>
-                        <HeaderSearch />
+                    <div
+                        className={css({
+                            display: { base: 'flex', md: 'none' },
+                            alignItems: 'center',
+                            gap: '2',
+                            flex: 1,
+                        })}
+                    >
+                        <MobileMenu />
+                        <div className={css({ flex: 1, minWidth: 0 })}>
+                            <HeaderSearch />
+                        </div>
                     </div>
                     <div className={css({ flex: '0 0 auto' })}>
                         <HeaderAuth />

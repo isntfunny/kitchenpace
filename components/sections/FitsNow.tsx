@@ -8,6 +8,7 @@ import { css } from 'styled-system/css';
 import { RecipeCard } from '../features/RecipeCard';
 import { Section } from '../features/Section';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../features/Select';
+import { Target } from 'lucide-react';
 
 const timeOptions = [
     { value: 'frueh', label: 'Frühstück' },
@@ -47,7 +48,8 @@ export function FitsNow() {
 
     return (
         <Section
-            title="🎯 Passt zu jetzt"
+            title="Passt zu jetzt"
+            titleIcon={<Target size={20} color="#e07b53" />}
             description="Tagesgefühl trifft Rezept – sofort, schnell, perfekt abgestimmt."
             action={
                 <Select value={selectedTime} onValueChange={handleTimeChange}>

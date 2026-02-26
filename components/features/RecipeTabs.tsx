@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import * as React from 'react';
+import { ChefHat, Clock, Pin } from 'lucide-react';
 
 import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
 import type { RecipeTabItem } from '@/components/providers/RecipeTabsProvider';
@@ -131,10 +132,9 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '3xl',
                             })}
                         >
-                            {recipe.emoji || '🍽️'}
+                            <ChefHat size={42} color="white" />
                         </div>
                     )}
                     <h4
@@ -159,7 +159,7 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                     >
                         {totalTime > 0 && (
                             <>
-                                <span>⏱️</span>
+                                <Clock size={12} />
                                 <span>{totalTime} min</span>
                             </>
                         )}
@@ -259,7 +259,7 @@ function RecipeChip({
                         },
                     })}
                 >
-                    {isPinned ? '×' : '📌'}
+                    <Pin size={14} />
                 </span>
             </Link>
         </HoverPreview>

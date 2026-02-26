@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
+import { BookOpen, Calendar, CheckCircle, Heart, Sparkles } from 'lucide-react';
 
 import { SmartImage } from '../atoms/SmartImage';
 
@@ -40,11 +41,11 @@ const filters = [
 
 function RecipeCard({ recipe }: { recipe: Recipe }) {
     const color = categoryColors[recipe.category] || '#e07b53';
-    const statusIcons = {
-        cooked: '✓',
-        favorite: '❤️',
-        planned: '📅',
-        new: '🆕',
+    const statusIcons: Record<string, ReactNode> = {
+        cooked: <CheckCircle size={14} color="#00b894" />,
+        favorite: <Heart size={14} color="#fd79a8" />,
+        planned: <Calendar size={14} color="#6c5ce7" />,
+        new: <Sparkles size={14} color="#e07b53" />,
     };
 
     return (
@@ -195,7 +196,7 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
                             },
                         })}
                     >
-                        ♡
+                        <Heart size={20} />
                     </button>
                 </div>
             </div>
@@ -235,9 +236,13 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                             fontSize: 'xl',
                             fontWeight: '700',
                             color: 'text',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
                         })}
                     >
-                        Meine Rezepte 📖
+                        <BookOpen size={22} color="#e07b53" />
+                        <span>Meine Rezepte</span>
                     </h3>
                     <p
                         className={css({
@@ -334,9 +339,10 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                             fontSize: '3xl',
                             display: 'block',
                             mb: '2',
+                            color: '#636e72',
                         })}
                     >
-                        📖
+                        <BookOpen size={48} />
                     </span>
                     <p>Keine Rezepte in dieser Kategorie</p>
                 </div>

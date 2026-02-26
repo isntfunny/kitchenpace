@@ -4,6 +4,28 @@ import jsPDF from 'jspdf';
 import { useMemo, useRef, useState } from 'react';
 
 import { css } from 'styled-system/css';
+import {
+    ChefHat,
+    Clock,
+    Download,
+    Eye,
+    FileText,
+    Flame,
+    ForkKnife,
+    GlassWater,
+    LayoutGrid,
+    Leaf,
+    Map,
+    Menu,
+    Moon,
+    PocketKnife,
+    Plus,
+    RotateCcw,
+    Sparkles,
+    UtensilsCrossed,
+    X,
+    ZoomIn,
+} from 'lucide-react';
 
 interface FlowNode {
     id: string;
@@ -34,16 +56,23 @@ const LANES = [
     { id: 'servieren', label: 'Servieren', color: '#ffebee', y: 1000 },
 ];
 
-const getTypeEmoji = (type: string): string => {
-    const emojis: Record<string, string> = {
-        prep: '🔪',
-        cook: '🔥',
-        wait: '⏱️',
-        season: '🥘',
-        combine: '🍽️',
-        serve: '🎉',
-    };
-    return emojis[type] || '📝';
+const getTypeIcon = (type: string) => {
+    switch (type) {
+        case 'prep':
+            return <PocketKnife size={22} />;
+        case 'cook':
+            return <Flame size={22} />;
+        case 'wait':
+            return <Clock size={22} />;
+        case 'season':
+            return <Leaf size={22} />;
+        case 'combine':
+            return <ForkKnife size={22} />;
+        case 'serve':
+            return <Sparkles size={22} />;
+        default:
+            return <Sparkles size={22} />;
+    }
 };
 
 const getTypeColor = (type: string): string => {
@@ -124,7 +153,11 @@ function NodeCard({
                 })}
             >
                 <div className={css({ display: 'flex', alignItems: 'center', gap: '8px' })}>
-                    <span className={css({ fontSize: '20px' })}>{getTypeEmoji(node.type)}</span>
+                    <div
+                        className={css({ display: 'flex', alignItems: 'center', color: '#2196f3' })}
+                    >
+                        {getTypeIcon(node.type)}
+                    </div>
                     <span
                         className={css({
                             fontSize: '11px',
@@ -285,8 +318,15 @@ function NodeDetailModal({ node, isCompleted, onToggleComplete, onClose }: NodeD
                         marginBottom: '16px',
                     })}
                 >
-                    <div className={css({ display: 'flex', alignItems: 'center', gap: '12px' })}>
-                        <span className={css({ fontSize: '32px' })}>{getTypeEmoji(node.type)}</span>
+                    <div
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            color: '#2196f3',
+                        })}
+                    >
+                        {getTypeIcon(node.type)}
                         <div>
                             <div
                                 className={css({
@@ -321,7 +361,7 @@ function NodeDetailModal({ node, isCompleted, onToggleComplete, onClose }: NodeD
                             _hover: { color: '#333' },
                         })}
                     >
-                        ×
+                        <X size={24} />
                     </button>
                 </div>
 
@@ -350,7 +390,7 @@ function NodeDetailModal({ node, isCompleted, onToggleComplete, onClose }: NodeD
                             marginBottom: '16px',
                         })}
                     >
-                        ⏱️
+                        <Clock size={16} />
                         <span>ca. {node.duration} Minuten</span>
                     </div>
                 )}
@@ -599,8 +639,18 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
             {/* Mobile Controls */}
             <div className="mobile-controls">
                 <div>
-                    <div className={css({ fontSize: '14px', fontWeight: '600', color: '#333' })}>
-                        🗺️ Koch-Flow
+                    <div
+                        className={css({
+                            display: 'flex',
+                            gap: '6px',
+                            alignItems: 'center',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            color: '#333',
+                        })}
+                    >
+                        <Map size={16} />
+                        <span>Koch-Flow</span>
                     </div>
                     <div className={css({ fontSize: '11px', color: '#666' })}>
                         {completed.size} von {nodes.length} erledigt
@@ -610,6 +660,9 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                     <button
                         onClick={() => setIsCookingMode(!isCookingMode)}
                         className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
                             padding: '6px 10px',
                             borderRadius: '6px',
                             border: isCookingMode ? '2px solid #4caf50' : '1px solid #ddd',
@@ -621,11 +674,15 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                             transition: 'all 0.2s ease',
                         })}
                     >
-                        {isCookingMode ? '✕' : '👨‍🦰'} Kochmodus
+                        {isCookingMode ? <X size={14} /> : <ChefHat size={14} />}
+                        <span>Kochmodus</span>
                     </button>
                     <button
                         onClick={() => handleZoom(!isZoomed)}
                         className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
                             padding: '6px 10px',
                             borderRadius: '6px',
                             border: '1px solid #ddd',
@@ -637,7 +694,8 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                             transition: 'all 0.2s ease',
                         })}
                     >
-                        {isZoomed ? '🔄' : '👁️'}
+                        {isZoomed ? <RotateCcw size={14} /> : <Eye size={14} />}
+                        <span>{isZoomed ? 'Zoom aus' : 'Zoom'}</span>
                     </button>
                 </div>
             </div>
@@ -645,8 +703,18 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
             {/* Desktop Controls */}
             <div className="flow-controls">
                 <div>
-                    <div className={css({ fontSize: '16px', fontWeight: '700', color: '#333' })}>
-                        🗺️ Koch-Flow
+                    <div
+                        className={css({
+                            display: 'flex',
+                            gap: '6px',
+                            alignItems: 'center',
+                            fontSize: '16px',
+                            fontWeight: '700',
+                            color: '#333',
+                        })}
+                    >
+                        <Map size={18} />
+                        <span>Koch-Flow</span>
                     </div>
                     <div className={css({ fontSize: '12px', color: '#666' })}>
                         {completed.size} von {nodes.length} erledigt
@@ -704,7 +772,8 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                             },
                         })}
                     >
-                        {isCookingMode ? '✕' : '👨‍🦰'} Kochmodus
+                        {isCookingMode ? <X size={16} /> : <ChefHat size={16} />}
+                        <span>Kochmodus</span>
                     </button>
                     <button
                         onClick={() => handleZoom(!isZoomed)}
@@ -727,7 +796,8 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                             },
                         })}
                     >
-                        {isZoomed ? '🔄' : '👁️'} {isZoomed ? 'Zoom aus' : 'Zoom'}
+                        {isZoomed ? <RotateCcw size={16} /> : <ZoomIn size={16} />}
+                        <span>{isZoomed ? 'Zoom aus' : 'Zoom'}</span>
                     </button>
                     <button
                         onClick={() => handleExport('png')}
@@ -750,7 +820,8 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                             },
                         })}
                     >
-                        📥 PNG
+                        <Download size={16} />
+                        PNG
                     </button>
                     <button
                         onClick={() => handleExport('pdf')}
@@ -773,7 +844,8 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                             },
                         })}
                     >
-                        📄 PDF
+                        <FileText size={16} />
+                        PDF
                     </button>
                 </div>
             </div>
@@ -919,7 +991,11 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                         flexShrink: 0,
                     })}
                 >
-                    <div className={css({ fontSize: '24px', marginBottom: '4px' })}>🎉</div>
+                    <div
+                        className={css({ fontSize: '24px', marginBottom: '4px', color: '#4caf50' })}
+                    >
+                        <Sparkles size={32} />
+                    </div>
                     <div className={css({ fontSize: '16px', fontWeight: '700', color: '#2e7d32' })}>
                         Fertig! Guten Appetit!
                     </div>

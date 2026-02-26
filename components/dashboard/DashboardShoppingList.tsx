@@ -1,8 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { css } from 'styled-system/css';
+import {
+    Apple,
+    Box,
+    Croissant,
+    Drumstick,
+    Fish,
+    GlassWater,
+    Leaf,
+    Milk,
+    ShoppingCart,
+    Sparkles,
+} from 'lucide-react';
 
 interface ShoppingItem {
     id: string;
@@ -17,16 +29,16 @@ interface DashboardShoppingListProps {
     items: ShoppingItem[];
 }
 
-const categoryIcons: Record<string, string> = {
-    Gemüse: '🥬',
-    Obst: '🍎',
-    Fleisch: '🥩',
-    Fisch: '🐟',
-    Milchprodukte: '🧀',
-    Gewürze: '🧂',
-    Backen: '🥖',
-    Getränke: '🥤',
-    Sonstiges: '📦',
+const categoryIcons: Record<string, ReactNode> = {
+    Gemüse: <Leaf size={16} color="#00b894" />,
+    Obst: <Apple size={16} color="#fdcb6e" />,
+    Fleisch: <Drumstick size={16} color="#e07b53" />,
+    Fisch: <Fish size={16} color="#74b9ff" />,
+    Milchprodukte: <Milk size={16} color="#fd79a8" />,
+    Gewürze: <Sparkles size={16} color="#e07b53" />,
+    Backen: <Croissant size={16} color="#f8b500" />,
+    Getränke: <GlassWater size={16} color="#74b9ff" />,
+    Sonstiges: <Box size={16} color="#636e72" />,
 };
 
 function ShoppingItemRow({
@@ -162,9 +174,13 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
                             fontSize: 'xl',
                             fontWeight: '700',
                             color: 'text',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
                         })}
                     >
-                        Einkaufsliste 🛒
+                        <ShoppingCart size={24} color="#e07b53" />
+                        Einkaufsliste
                     </h3>
                     <p
                         className={css({
@@ -236,7 +252,9 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
                                 paddingLeft: '1',
                             })}
                         >
-                            <span>{categoryIcons[category] || '📦'}</span>
+                            <span>
+                                {categoryIcons[category] ?? <Box size={16} color="#636e72" />}
+                            </span>
                             <span
                                 className={css({
                                     fontSize: 'xs',
@@ -269,9 +287,10 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
                             fontSize: '2xl',
                             display: 'block',
                             mb: '2',
+                            color: '#e07b53',
                         })}
                     >
-                        🛒
+                        <ShoppingCart size={40} />
                     </span>
                     <p className={css({ fontSize: 'sm' })}>Keine Artikel in der Liste</p>
                 </div>

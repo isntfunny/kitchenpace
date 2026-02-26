@@ -1,6 +1,7 @@
 'use client';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { LogOut, Settings, User } from 'lucide-react';
 import Link from 'next/link';
 
 import { handleSignIn, handleSignOut } from '@/components/auth/actions';
@@ -73,7 +74,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                 <DropdownMenu.Portal>
                     <DropdownMenu.Content
                         className={css({
-                            minWidth: '200px',
+                            minWidth: '180px',
                             background: 'white',
                             borderRadius: 'xl',
                             border: '1px solid',
@@ -83,7 +84,6 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                             zIndex: 100,
                         })}
                         sideOffset={8}
-                        align="end"
                     >
                         <DropdownMenu.Item asChild>
                             <Link
@@ -106,7 +106,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                                     },
                                 })}
                             >
-                                <span>👤</span>
+                                <User size={16} />
                                 <span>Mein Profil</span>
                             </Link>
                         </DropdownMenu.Item>
@@ -132,7 +132,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                                     },
                                 })}
                             >
-                                <span>⚙️</span>
+                                <Settings size={16} />
                                 <span>Einstellungen</span>
                             </Link>
                         </DropdownMenu.Item>
@@ -169,7 +169,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                                     },
                                 })}
                             >
-                                <span>🚪</span>
+                                <LogOut size={16} />
                                 <span>Abmelden</span>
                             </button>
                         </DropdownMenu.Item>
@@ -203,7 +203,6 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                 },
             })}
         >
-            <span>🔑</span>
             <span>Anmelden</span>
         </button>
     );

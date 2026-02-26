@@ -1,6 +1,7 @@
 'use client';
 
 import { css } from 'styled-system/css';
+import { Hand } from 'lucide-react';
 
 import { SmartImage } from '../atoms/SmartImage';
 
@@ -106,9 +107,13 @@ export function DashboardWelcome({ userName = 'KüchenFan', userPhoto }: Dashboa
                             fontFamily: 'heading',
                             color: 'text',
                             lineHeight: 'tight',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
                         })}
                     >
-                        {greeting} 👋
+                        {greeting}
+                        <Hand size={28} color="#e07b53" />
                     </h1>
                     <p
                         className={css({

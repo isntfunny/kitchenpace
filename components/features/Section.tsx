@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import type { ReactNode } from 'react';
 
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
@@ -8,14 +9,22 @@ import { flex } from 'styled-system/patterns';
 import { Heading, Text } from '../atoms/Typography';
 
 interface SectionProps {
-    title: string;
-    description?: string;
+    title: ReactNode;
+    description?: ReactNode;
     children: React.ReactNode;
     action?: React.ReactNode;
     titleColor?: string;
+    titleIcon?: ReactNode;
 }
 
-export function Section({ title, description, children, action, titleColor }: SectionProps) {
+export function Section({
+    title,
+    description,
+    children,
+    action,
+    titleColor,
+    titleIcon,
+}: SectionProps) {
     return (
         <section
             className={css({
@@ -44,10 +53,18 @@ export function Section({ title, description, children, action, titleColor }: Se
                                       background: titleColor,
                                       backgroundClip: 'text',
                                       color: 'transparent',
+                                      display: 'inline-flex',
+                                      gap: '0.5rem',
+                                      alignItems: 'center',
                                   })
-                                : undefined
+                                : css({
+                                      display: 'inline-flex',
+                                      gap: '0.5rem',
+                                      alignItems: 'center',
+                                  })
                         }
                     >
+                        {titleIcon}
                         {title}
                     </Heading>
                     {description && (

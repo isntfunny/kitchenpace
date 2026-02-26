@@ -107,8 +107,9 @@ export async function GET(request: NextRequest) {
             boolQuery.bool.must.push({
                 multi_match: {
                     query,
-                    fields: ['title^3', 'description', 'keywords'],
+                    fields: ['title^3', 'description', 'keywords', 'ingredients^2'],
                     fuzziness: 'AUTO',
+                    prefix_length: 1,
                 },
             });
         }

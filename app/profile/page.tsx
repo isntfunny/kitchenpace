@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+import { Button } from '@/components/atoms/Button';
 import { SmartImage } from '@/components/atoms/SmartImage';
 import SignOutButton from '@/components/auth/SignOutButton';
 import { PageShell } from '@/components/layouts/PageShell';
@@ -124,6 +125,14 @@ const ProfilePage = async () => {
                         </div>
 
                         <SignOutButton label="Abmelden" />
+
+                        {profile.userId && (
+                            <Link href={`/user/${profile.userId}`}>
+                                <Button type="button" variant="ghost">
+                                    Öffentliches Profil ansehen →
+                                </Button>
+                            </Link>
+                        )}
                     </div>
 
                     <div

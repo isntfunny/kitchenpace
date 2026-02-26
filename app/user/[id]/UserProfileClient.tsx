@@ -284,6 +284,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     className={css({
                                         mt: '5',
                                         display: 'flex',
+                                        gap: '3',
                                         justifyContent: { base: 'center', md: 'flex-start' },
                                     })}
                                 >
@@ -295,6 +296,13 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     >
                                         {isFollowing ? '✓ Folgst du' : '+ Folgen'}
                                     </Button>
+                                    {viewerId && (
+                                        <Link href="/profile">
+                                            <Button type="button" variant="ghost">
+                                                Mein Profil
+                                            </Button>
+                                        </Link>
+                                    )}
                                 </div>
                             )}
                         </div>

@@ -67,13 +67,64 @@ const ensureIndex = async () => {
     await opensearchClient.indices.create({
         index: OPENSEARCH_INDEX,
         body: {
+            settings: {
+                analysis: {
+                    analyzer: {
+                        recipe_analyzer: {
+                            type: 'custom',
+                            tokenizer: 'standard',
+                            filter: [
+                                'lowercase',
+                                'german_stemmer',
+                                'recipe_synonyms',
+                                'edge_ngram_filter',
+                            ],
+                        },
+                        recipe_search: {
+                            type: 'custom',
+                            tokenizer: 'standard',
+                            filter: ['lowercase', 'german_stemmer'],
+                        },
+                    },
+                    filter: {
+                        german_stemmer: {
+                            type: 'stemmer',
+                            language: 'german',
+                        },
+                        edge_ngram_filter: {
+                            type: 'edge_ngram',
+                            min_gram: 2,
+                            max_gram: 20,
+                        },
+                        recipe_synonyms: {
+                            type: 'synonym',
+                            synonyms: [
+                                'spaghetto, spaghetti, spagetti, spageti',
+                                'nudeln, pasta, noodle',
+                                'tomatensoße, tomatensoße, tomato sauce',
+                                'käse, cheese, formaggio',
+                                'hackfleisch, faschiertes, minced meat',
+                                'zwiebel, onion, cipolla',
+                            ],
+                        },
+                    },
+                },
+            },
             mappings: {
                 dynamic: 'strict',
                 properties: {
                     id: { type: 'keyword' },
                     slug: { type: 'keyword' },
-                    title: { type: 'text', analyzer: 'standard' },
-                    description: { type: 'text', analyzer: 'standard' },
+                    title: {
+                        type: 'text',
+                        analyzer: 'recipe_analyzer',
+                        search_analyzer: 'recipe_search',
+                    },
+                    description: {
+                        type: 'text',
+                        analyzer: 'recipe_analyzer',
+                        search_analyzer: 'recipe_search',
+                    },
                     category: { type: 'keyword' },
                     categorySlug: { type: 'keyword' },
                     tags: { type: 'keyword' },
@@ -87,7 +138,11 @@ const ensureIndex = async () => {
                     cookCount: { type: 'integer' },
                     publishedAt: { type: 'date' },
                     imageUrl: { type: 'keyword' },
-                    keywords: { type: 'text', analyzer: 'standard' },
+                    keywords: {
+                        type: 'text',
+                        analyzer: 'recipe_analyzer',
+                        search_analyzer: 'recipe_search',
+                    },
                 },
             },
         },

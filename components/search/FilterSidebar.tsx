@@ -138,6 +138,14 @@ const accordionChevronClass = css({
     color: 'text-muted',
 });
 
+const accordionActiveBadgeClass = css({
+    width: '8px',
+    height: '8px',
+    borderRadius: 'full',
+    background: 'primary',
+    flexShrink: 0,
+});
+
 const chipGroupClass = css({
     display: 'flex',
     flexWrap: 'wrap',
@@ -213,17 +221,29 @@ const FilterSection = ({
     title,
     description,
     children,
+    activeCount = 0,
 }: {
     value: string;
     title: string;
     description?: string;
     children: ReactNode;
+    activeCount?: number;
 }) => (
     <Accordion.Item value={value} className={accordionItemClass}>
         <Accordion.Header className={accordionHeaderClass}>
             <Accordion.Trigger className={accordionTriggerClass}>
-                <div className={css({ display: 'flex', flexDirection: 'column', gap: '0.5' })}>
-                    <p className={accordionTitleClass}>{title}</p>
+                <div
+                    className={css({
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5',
+                        flex: 1,
+                    })}
+                >
+                    <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                        <p className={accordionTitleClass}>{title}</p>
+                        {activeCount > 0 && <span className={accordionActiveBadgeClass} />}
+                    </div>
                     {description && <p className={accordionDescriptionClass}>{description}</p>}
                 </div>
                 <ChevronDownIcon aria-hidden className={accordionChevronClass} />
@@ -464,6 +484,37 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
         });
     }, [ingredientOptionNames, ingredientCountMap, filters.excludeIngredients]);
 
+    const activeSectionCounts = useMemo(() => {
+        const hasActiveTags = (filters.tags?.length ?? 0) > 0;
+        const hasActiveMealType = (filters.mealTypes?.length ?? 0) > 0;
+        const hasActiveIngredients = (filters.ingredients?.length ?? 0) > 0;
+        const hasActiveExclude = (filters.excludeIngredients?.length ?? 0) > 0;
+        const hasActiveDifficulty = (filters.difficulty?.length ?? 0) > 0;
+        const hasActiveTimeOfDay = (filters.timeOfDay?.length ?? 0) > 0;
+        const hasActiveTotalTime =
+            typeof filters.minTotalTime === 'number' || typeof filters.maxTotalTime === 'number';
+        const hasActivePrepTime =
+            typeof filters.minPrepTime === 'number' || typeof filters.maxPrepTime === 'number';
+        const hasActiveCookTime =
+            typeof filters.minCookTime === 'number' || typeof filters.maxCookTime === 'number';
+        const hasActiveRating = typeof filters.minRating === 'number';
+        const hasActiveCookCount = typeof filters.minCookCount === 'number';
+
+        return {
+            tags: hasActiveTags ? 1 : 0,
+            mealType: hasActiveMealType ? (filters.mealTypes?.length ?? 0) : 0,
+            ingredients: hasActiveIngredients ? (filters.ingredients?.length ?? 0) : 0,
+            exclude: hasActiveExclude ? (filters.excludeIngredients?.length ?? 0) : 0,
+            difficulty: hasActiveDifficulty ? (filters.difficulty?.length ?? 0) : 0,
+            timing:
+                (hasActiveTimeOfDay ? (filters.timeOfDay?.length ?? 0) : 0) +
+                (hasActiveTotalTime ? 1 : 0) +
+                (hasActivePrepTime ? 1 : 0) +
+                (hasActiveCookTime ? 1 : 0),
+            rating: (hasActiveRating ? 1 : 0) + (hasActiveCookCount ? 1 : 0),
+        };
+    }, [filters]);
+
     return (
         <div
             className={css({
@@ -485,6 +536,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     value={FILTER_SECTION_IDS.tags}
                     title="Tags"
                     description="Beliebte Themen"
+                    activeCount={activeSectionCounts.tags}
                 >
                     <SearchableFilterChips
                         items={sortedTags}
@@ -502,6 +554,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     value={FILTER_SECTION_IDS.mealType}
                     title="Mahlzeit"
                     description="Abgestimmt auf deinen Rhythmus"
+                    activeCount={activeSectionCounts.mealType}
                 >
                     <ToggleGroup.Root
                         type="multiple"
@@ -530,6 +583,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     value={FILTER_SECTION_IDS.ingredients}
                     title="Zutaten"
                     description="Nur Gerichte mit den richtigen Zutaten"
+                    activeCount={activeSectionCounts.ingredients}
                 >
                     <SearchableFilterChips
                         items={sortedIngredients}
@@ -545,7 +599,11 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     />
                 </FilterSection>
 
-                <FilterSection value={FILTER_SECTION_IDS.exclude} title="Enthält nicht">
+                <FilterSection
+                    value={FILTER_SECTION_IDS.exclude}
+                    title="Enthält nicht"
+                    activeCount={activeSectionCounts.exclude}
+                >
                     <SearchableFilterChips
                         items={sortedExcludeIngredients}
                         selectedValues={filters.excludeIngredients ?? []}
@@ -561,7 +619,11 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     />
                 </FilterSection>
 
-                <FilterSection value={FILTER_SECTION_IDS.difficulty} title="Schwierigkeit">
+                <FilterSection
+                    value={FILTER_SECTION_IDS.difficulty}
+                    title="Schwierigkeit"
+                    activeCount={activeSectionCounts.difficulty}
+                >
                     <ToggleGroup.Root
                         type="multiple"
                         className={chipGroupClass}
@@ -589,6 +651,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     value={FILTER_SECTION_IDS.timing}
                     title="Tageszeit & Dauer"
                     description="Zeitfenster schnell auswählen"
+                    activeCount={activeSectionCounts.timing}
                 >
                     <ToggleGroup.Root
                         type="multiple"
@@ -648,7 +711,11 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     </div>
                 </FilterSection>
 
-                <FilterSection value={FILTER_SECTION_IDS.rating} title="Bewertung & Beliebt">
+                <FilterSection
+                    value={FILTER_SECTION_IDS.rating}
+                    title="Bewertung & Beliebt"
+                    activeCount={activeSectionCounts.rating}
+                >
                     <div className={css({ display: 'grid', gap: '3' })}>
                         <RangeControl
                             filters={filters}

@@ -5,6 +5,21 @@ import { useMemo, useRef, useState } from 'react';
 
 import { css } from 'styled-system/css';
 
+interface FlowNode {
+    id: string;
+    type: string;
+    label: string;
+    description: string;
+    duration?: number;
+    position: { x: number; y: number };
+}
+
+interface FlowEdge {
+    id: string;
+    source: string;
+    target: string;
+}
+
 const NODE_WIDTH = 200;
 const NODE_HEIGHT = 100;
 const NODE_GAP_X = 80;
@@ -431,24 +446,26 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
             context.scale(window.devicePixelRatio, window.devicePixelRatio);
 
             // Render the cloned content to canvas
-            html2canvas(clone, {
+            html2canvas(clone as HTMLElement, {
                 canvas: canvas,
                 scale: 2,
                 backgroundColor: 'white',
             }).then((canvas) => {
                 if (format === 'png') {
                     canvas.toBlob((blob) => {
-                        saveAs(blob, 'rezept-flow.png');
+                        if (blob) {
+                            saveAs(blob, 'rezept-flow.png');
+                        }
                     });
                 } else {
                     // Convert canvas to PDF
                     const imgData = canvas.toDataURL('image/png');
                     const pdf = new jsPDF({
-                        orientation: 'l',
+                        orientation: 'landscape',
                         unit: 'px',
                         format: [canvas.width, canvas.height],
                     });
-                    pdf.addImage(imgData, 'PNG', 0, 0);
+                    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
                     pdf.save('rezept-flow.pdf');
                 }
 

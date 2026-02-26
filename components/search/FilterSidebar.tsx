@@ -4,6 +4,7 @@ import * as Accordion from '@radix-ui/react-accordion';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import * as Slider from '@radix-ui/react-slider';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
+import * as Tooltip from '@radix-ui/react-tooltip';
 import { useMemo, type ReactNode } from 'react';
 
 import type { CategoryOption } from '@/app/actions/filters';
@@ -216,6 +217,16 @@ const sliderThumbClass = css({
     cursor: 'grab',
 });
 
+const tooltipContentClass = css({
+    backgroundColor: 'gray.900',
+    color: 'white',
+    padding: '8px 12px',
+    borderRadius: 'lg',
+    fontSize: 'xs',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    zIndex: 1000,
+});
+
 const FilterSection = ({
     value,
     title,
@@ -385,11 +396,22 @@ const RangeControl = ({
                     <Slider.Range className={sliderRangeClass} />
                 </Slider.Track>
                 {sliderValue.map((_, index) => (
-                    <Slider.Thumb
-                        key={index === 0 ? 'min' : 'max'}
-                        aria-label={`${label} ${index === 0 ? 'Minimum' : 'Maximum'}`}
-                        className={sliderThumbClass}
-                    />
+                    <Tooltip.Provider key={index === 0 ? 'min' : 'max'}>
+                        <Tooltip.Root>
+                            <Tooltip.Trigger asChild>
+                                <Slider.Thumb
+                                    aria-label={`${label} ${index === 0 ? 'Minimum' : 'Maximum'}`}
+                                    className={sliderThumbClass}
+                                />
+                            </Tooltip.Trigger>
+                            <Tooltip.Portal>
+                                <Tooltip.Content className={tooltipContentClass} sideOffset={5}>
+                                    {index === 0 ? format(lowerValue) : format(upperValue)}
+                                    <Tooltip.Arrow />
+                                </Tooltip.Content>
+                            </Tooltip.Portal>
+                        </Tooltip.Root>
+                    </Tooltip.Provider>
                 ))}
             </Slider.Root>
             <div
@@ -516,233 +538,235 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
     }, [filters]);
 
     return (
-        <div
-            className={css({
-                padding: '4',
-                borderRadius: '2xl',
-                border: '1px solid',
-                borderColor: 'light',
-                background: 'surface.elevated',
-                boxShadow: '0 24px 60px rgba(45,52,54,0.12)',
-                width: 'full',
-            })}
-        >
-            <Accordion.Root
-                type="multiple"
-                defaultValue={[FILTER_SECTION_IDS.tags]}
-                className={accordionRootClass}
+        <Tooltip.Provider delayDuration={300}>
+            <div
+                className={css({
+                    padding: '4',
+                    borderRadius: '2xl',
+                    border: '1px solid',
+                    borderColor: 'light',
+                    background: 'surface.elevated',
+                    boxShadow: '0 24px 60px rgba(45,52,54,0.12)',
+                    width: 'full',
+                })}
             >
-                <FilterSection
-                    value={FILTER_SECTION_IDS.tags}
-                    title="Tags"
-                    description="Beliebte Themen"
-                    activeCount={activeSectionCounts.tags}
+                <Accordion.Root
+                    type="multiple"
+                    defaultValue={[FILTER_SECTION_IDS.tags]}
+                    className={accordionRootClass}
                 >
-                    <SearchableFilterChips
-                        items={sortedTags}
-                        selectedValues={filters.tags ?? []}
-                        onSelectionChange={(next) =>
-                            onFiltersChange({ tags: next } as Partial<RecipeFilterSearchParams>)
-                        }
-                        placeholder="Tags suchen..."
-                        emptyMessage="Keine Tags gefunden."
-                        ariaLabel="Tags filtern"
-                    />
-                </FilterSection>
-
-                <FilterSection
-                    value={FILTER_SECTION_IDS.mealType}
-                    title="Mahlzeit"
-                    description="Abgestimmt auf deinen Rhythmus"
-                    activeCount={activeSectionCounts.mealType}
-                >
-                    <ToggleGroup.Root
-                        type="multiple"
-                        className={chipGroupClass}
-                        aria-label="Mahlzeiten filtern"
-                        value={filters.mealTypes ?? []}
-                        onValueChange={(next) =>
-                            onFiltersChange({
-                                mealTypes: next,
-                            } as Partial<RecipeFilterSearchParams>)
-                        }
+                    <FilterSection
+                        value={FILTER_SECTION_IDS.tags}
+                        title="Tags"
+                        description="Beliebte Themen"
+                        activeCount={activeSectionCounts.tags}
                     >
-                        {MEAL_TYPE_OPTIONS.map((option) => (
-                            <ToggleGroup.Item
-                                key={option.value}
-                                value={option.value}
-                                className={chipItemClass}
-                            >
-                                {option.label}
-                            </ToggleGroup.Item>
-                        ))}
-                    </ToggleGroup.Root>
-                </FilterSection>
+                        <SearchableFilterChips
+                            items={sortedTags}
+                            selectedValues={filters.tags ?? []}
+                            onSelectionChange={(next) =>
+                                onFiltersChange({ tags: next } as Partial<RecipeFilterSearchParams>)
+                            }
+                            placeholder="Tags suchen..."
+                            emptyMessage="Keine Tags gefunden."
+                            ariaLabel="Tags filtern"
+                        />
+                    </FilterSection>
 
-                <FilterSection
-                    value={FILTER_SECTION_IDS.ingredients}
-                    title="Zutaten"
-                    description="Nur Gerichte mit den richtigen Zutaten"
-                    activeCount={activeSectionCounts.ingredients}
-                >
-                    <SearchableFilterChips
-                        items={sortedIngredients}
-                        selectedValues={filters.ingredients ?? []}
-                        onSelectionChange={(next) =>
-                            onFiltersChange({
-                                ingredients: next,
-                            } as Partial<RecipeFilterSearchParams>)
-                        }
-                        placeholder="Zutaten durchsuchen..."
-                        emptyMessage="Keine Zutaten gefunden."
-                        ariaLabel="Zutaten filtern"
-                    />
-                </FilterSection>
-
-                <FilterSection
-                    value={FILTER_SECTION_IDS.exclude}
-                    title="Enthält nicht"
-                    activeCount={activeSectionCounts.exclude}
-                >
-                    <SearchableFilterChips
-                        items={sortedExcludeIngredients}
-                        selectedValues={filters.excludeIngredients ?? []}
-                        onSelectionChange={(next) =>
-                            onFiltersChange({
-                                excludeIngredients: next,
-                            } as Partial<RecipeFilterSearchParams>)
-                        }
-                        placeholder="Zutaten ausschließen..."
-                        emptyMessage="Keine Zutaten gefunden."
-                        ariaLabel="Zutaten ausschließen"
-                        variant="exclude"
-                    />
-                </FilterSection>
-
-                <FilterSection
-                    value={FILTER_SECTION_IDS.difficulty}
-                    title="Schwierigkeit"
-                    activeCount={activeSectionCounts.difficulty}
-                >
-                    <ToggleGroup.Root
-                        type="multiple"
-                        className={chipGroupClass}
-                        aria-label="Schwierigkeitsgrad filtern"
-                        value={filters.difficulty ?? []}
-                        onValueChange={(next) =>
-                            onFiltersChange({
-                                difficulty: next,
-                            } as Partial<RecipeFilterSearchParams>)
-                        }
+                    <FilterSection
+                        value={FILTER_SECTION_IDS.mealType}
+                        title="Mahlzeit"
+                        description="Abgestimmt auf deinen Rhythmus"
+                        activeCount={activeSectionCounts.mealType}
                     >
-                        {DIFFICULTY_OPTIONS.map((option) => (
-                            <ToggleGroup.Item
-                                key={option.value}
-                                value={option.value}
-                                className={chipItemClass}
-                            >
-                                {option.label}
-                            </ToggleGroup.Item>
-                        ))}
-                    </ToggleGroup.Root>
-                </FilterSection>
+                        <ToggleGroup.Root
+                            type="multiple"
+                            className={chipGroupClass}
+                            aria-label="Mahlzeiten filtern"
+                            value={filters.mealTypes ?? []}
+                            onValueChange={(next) =>
+                                onFiltersChange({
+                                    mealTypes: next,
+                                } as Partial<RecipeFilterSearchParams>)
+                            }
+                        >
+                            {MEAL_TYPE_OPTIONS.map((option) => (
+                                <ToggleGroup.Item
+                                    key={option.value}
+                                    value={option.value}
+                                    className={chipItemClass}
+                                >
+                                    {option.label}
+                                </ToggleGroup.Item>
+                            ))}
+                        </ToggleGroup.Root>
+                    </FilterSection>
 
-                <FilterSection
-                    value={FILTER_SECTION_IDS.timing}
-                    title="Tageszeit & Dauer"
-                    description="Zeitfenster schnell auswählen"
-                    activeCount={activeSectionCounts.timing}
-                >
-                    <ToggleGroup.Root
-                        type="multiple"
-                        className={chipGroupClass}
-                        aria-label="Tageszeit filtern"
-                        value={filters.timeOfDay ?? []}
-                        onValueChange={(next) =>
-                            onFiltersChange({
-                                timeOfDay: next,
-                            } as Partial<RecipeFilterSearchParams>)
-                        }
+                    <FilterSection
+                        value={FILTER_SECTION_IDS.ingredients}
+                        title="Zutaten"
+                        description="Nur Gerichte mit den richtigen Zutaten"
+                        activeCount={activeSectionCounts.ingredients}
                     >
-                        {TIME_OF_DAY_OPTIONS.map((option) => (
-                            <ToggleGroup.Item
-                                key={option.value}
-                                value={option.value}
-                                className={chipItemClass}
-                            >
-                                {option.label}
-                            </ToggleGroup.Item>
-                        ))}
-                    </ToggleGroup.Root>
-                    <div className={css({ display: 'grid', gap: '3' })}>
-                        <RangeControl
-                            filters={filters}
-                            onFiltersChange={onFiltersChange}
-                            label="Gesamtdauer"
-                            description="Verfügbar nach Anzahl Rezepte"
-                            minField="minTotalTime"
-                            maxField="maxTotalTime"
-                            fallback={RANGE_FALLBACKS.totalTime}
-                            facet={facets?.totalTime}
-                            unit="Min."
+                        <SearchableFilterChips
+                            items={sortedIngredients}
+                            selectedValues={filters.ingredients ?? []}
+                            onSelectionChange={(next) =>
+                                onFiltersChange({
+                                    ingredients: next,
+                                } as Partial<RecipeFilterSearchParams>)
+                            }
+                            placeholder="Zutaten durchsuchen..."
+                            emptyMessage="Keine Zutaten gefunden."
+                            ariaLabel="Zutaten filtern"
                         />
-                        <RangeControl
-                            filters={filters}
-                            onFiltersChange={onFiltersChange}
-                            label="Vorbereitungszeit"
-                            description="Optimal planen"
-                            minField="minPrepTime"
-                            maxField="maxPrepTime"
-                            fallback={RANGE_FALLBACKS.prepTime}
-                            facet={facets?.prepTime}
-                            unit="Min."
-                        />
-                        <RangeControl
-                            filters={filters}
-                            onFiltersChange={onFiltersChange}
-                            label="Kochzeit"
-                            description="Verfügbarkeit prüfen"
-                            minField="minCookTime"
-                            maxField="maxCookTime"
-                            fallback={RANGE_FALLBACKS.cookTime}
-                            facet={facets?.cookTime}
-                            unit="Min."
-                        />
-                    </div>
-                </FilterSection>
+                    </FilterSection>
 
-                <FilterSection
-                    value={FILTER_SECTION_IDS.rating}
-                    title="Bewertung & Beliebt"
-                    activeCount={activeSectionCounts.rating}
-                >
-                    <div className={css({ display: 'grid', gap: '3' })}>
-                        <RangeControl
-                            filters={filters}
-                            onFiltersChange={onFiltersChange}
-                            label="Min. Bewertung"
-                            description="Mindestens so gut bewertet"
-                            minField="minRating"
-                            fallback={RANGE_FALLBACKS.rating}
-                            facet={facets?.rating}
-                            step={0.5}
-                            unit="★"
-                            formatValue={(value) => `${value.toFixed(1)} ★`}
+                    <FilterSection
+                        value={FILTER_SECTION_IDS.exclude}
+                        title="Enthält nicht"
+                        activeCount={activeSectionCounts.exclude}
+                    >
+                        <SearchableFilterChips
+                            items={sortedExcludeIngredients}
+                            selectedValues={filters.excludeIngredients ?? []}
+                            onSelectionChange={(next) =>
+                                onFiltersChange({
+                                    excludeIngredients: next,
+                                } as Partial<RecipeFilterSearchParams>)
+                            }
+                            placeholder="Zutaten ausschließen..."
+                            emptyMessage="Keine Zutaten gefunden."
+                            ariaLabel="Zutaten ausschließen"
+                            variant="exclude"
                         />
-                        <RangeControl
-                            filters={filters}
-                            onFiltersChange={onFiltersChange}
-                            label="Mind. gekocht"
-                            description="häufig ausprobiert"
-                            minField="minCookCount"
-                            fallback={RANGE_FALLBACKS.cookCount}
-                            facet={facets?.cookCount}
-                            unit="x"
-                            formatValue={(value) => `${Math.round(value)}x`}
-                        />
-                    </div>
-                </FilterSection>
-            </Accordion.Root>
-        </div>
+                    </FilterSection>
+
+                    <FilterSection
+                        value={FILTER_SECTION_IDS.difficulty}
+                        title="Schwierigkeit"
+                        activeCount={activeSectionCounts.difficulty}
+                    >
+                        <ToggleGroup.Root
+                            type="multiple"
+                            className={chipGroupClass}
+                            aria-label="Schwierigkeitsgrad filtern"
+                            value={filters.difficulty ?? []}
+                            onValueChange={(next) =>
+                                onFiltersChange({
+                                    difficulty: next,
+                                } as Partial<RecipeFilterSearchParams>)
+                            }
+                        >
+                            {DIFFICULTY_OPTIONS.map((option) => (
+                                <ToggleGroup.Item
+                                    key={option.value}
+                                    value={option.value}
+                                    className={chipItemClass}
+                                >
+                                    {option.label}
+                                </ToggleGroup.Item>
+                            ))}
+                        </ToggleGroup.Root>
+                    </FilterSection>
+
+                    <FilterSection
+                        value={FILTER_SECTION_IDS.timing}
+                        title="Tageszeit & Dauer"
+                        description="Zeitfenster schnell auswählen"
+                        activeCount={activeSectionCounts.timing}
+                    >
+                        <ToggleGroup.Root
+                            type="multiple"
+                            className={chipGroupClass}
+                            aria-label="Tageszeit filtern"
+                            value={filters.timeOfDay ?? []}
+                            onValueChange={(next) =>
+                                onFiltersChange({
+                                    timeOfDay: next,
+                                } as Partial<RecipeFilterSearchParams>)
+                            }
+                        >
+                            {TIME_OF_DAY_OPTIONS.map((option) => (
+                                <ToggleGroup.Item
+                                    key={option.value}
+                                    value={option.value}
+                                    className={chipItemClass}
+                                >
+                                    {option.label}
+                                </ToggleGroup.Item>
+                            ))}
+                        </ToggleGroup.Root>
+                        <div className={css({ display: 'grid', gap: '3' })}>
+                            <RangeControl
+                                filters={filters}
+                                onFiltersChange={onFiltersChange}
+                                label="Gesamtdauer"
+                                description="Verfügbar nach Anzahl Rezepte"
+                                minField="minTotalTime"
+                                maxField="maxTotalTime"
+                                fallback={RANGE_FALLBACKS.totalTime}
+                                facet={facets?.totalTime}
+                                unit="Min."
+                            />
+                            <RangeControl
+                                filters={filters}
+                                onFiltersChange={onFiltersChange}
+                                label="Vorbereitungszeit"
+                                description="Optimal planen"
+                                minField="minPrepTime"
+                                maxField="maxPrepTime"
+                                fallback={RANGE_FALLBACKS.prepTime}
+                                facet={facets?.prepTime}
+                                unit="Min."
+                            />
+                            <RangeControl
+                                filters={filters}
+                                onFiltersChange={onFiltersChange}
+                                label="Kochzeit"
+                                description="Verfügbarkeit prüfen"
+                                minField="minCookTime"
+                                maxField="maxCookTime"
+                                fallback={RANGE_FALLBACKS.cookTime}
+                                facet={facets?.cookTime}
+                                unit="Min."
+                            />
+                        </div>
+                    </FilterSection>
+
+                    <FilterSection
+                        value={FILTER_SECTION_IDS.rating}
+                        title="Bewertung & Beliebt"
+                        activeCount={activeSectionCounts.rating}
+                    >
+                        <div className={css({ display: 'grid', gap: '3' })}>
+                            <RangeControl
+                                filters={filters}
+                                onFiltersChange={onFiltersChange}
+                                label="Min. Bewertung"
+                                description="Mindestens so gut bewertet"
+                                minField="minRating"
+                                fallback={RANGE_FALLBACKS.rating}
+                                facet={facets?.rating}
+                                step={0.5}
+                                unit="★"
+                                formatValue={(value) => `${value.toFixed(1)} ★`}
+                            />
+                            <RangeControl
+                                filters={filters}
+                                onFiltersChange={onFiltersChange}
+                                label="Mind. gekocht"
+                                description="häufig ausprobiert"
+                                minField="minCookCount"
+                                fallback={RANGE_FALLBACKS.cookCount}
+                                facet={facets?.cookCount}
+                                unit="x"
+                                formatValue={(value) => `${Math.round(value)}x`}
+                            />
+                        </div>
+                    </FilterSection>
+                </Accordion.Root>
+            </div>
+        </Tooltip.Provider>
     );
 }

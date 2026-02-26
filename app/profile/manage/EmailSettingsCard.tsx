@@ -1,6 +1,72 @@
 'use client';
 
+import * as Checkbox from '@radix-ui/react-checkbox';
+import { CheckIcon } from '@radix-ui/react-icons';
+
 import { css } from 'styled-system/css';
+
+interface CheckboxItemProps {
+    label: string;
+    defaultChecked?: boolean;
+}
+
+function CheckboxItem({ label, defaultChecked = false }: CheckboxItemProps) {
+    return (
+        <label
+            className={css({
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '4',
+                borderRadius: 'xl',
+                border: '1px solid',
+                borderColor: 'rgba(224,123,83,0.2)',
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+                _hover: {
+                    borderColor: '#e07b53',
+                    background: 'rgba(224,123,83,0.03)',
+                },
+            })}
+        >
+            <p
+                className={css({
+                    fontSize: 'sm',
+                    fontWeight: '600',
+                })}
+            >
+                {label}
+            </p>
+            <Checkbox.Root
+                defaultChecked={defaultChecked}
+                className={css({
+                    width: '20px',
+                    height: '20px',
+                    backgroundColor: 'white',
+                    borderRadius: '6px',
+                    border: '2px solid',
+                    borderColor: 'rgba(224,123,83,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 150ms ease',
+                    _hover: {
+                        borderColor: '#e07b53',
+                    },
+                    '&[data-state="checked"]': {
+                        backgroundColor: '#e07b53',
+                        borderColor: '#e07b53',
+                    },
+                })}
+            >
+                <Checkbox.Indicator>
+                    <CheckIcon color="white" width={14} height={14} />
+                </Checkbox.Indicator>
+            </Checkbox.Root>
+        </label>
+    );
+}
 
 export function EmailSettingsCard() {
     return (
@@ -29,118 +95,9 @@ export function EmailSettingsCard() {
                     gap: '3',
                 })}
             >
-                <label
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '4',
-                        borderRadius: 'xl',
-                        border: '1px solid',
-                        borderColor: 'rgba(224,123,83,0.2)',
-                        cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                        _hover: {
-                            borderColor: '#e07b53',
-                            background: 'rgba(224,123,83,0.03)',
-                        },
-                    })}
-                >
-                    <div>
-                        <p
-                            className={css({
-                                fontSize: 'sm',
-                                fontWeight: '600',
-                            })}
-                        >
-                            Neue Rezepte von anderen Kochbegeisterten
-                        </p>
-                    </div>
-                    <input
-                        type="checkbox"
-                        defaultChecked
-                        className={css({
-                            width: '20px',
-                            height: '20px',
-                            accentColor: '#e07b53',
-                        })}
-                    />
-                </label>
-
-                <label
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '4',
-                        borderRadius: 'xl',
-                        border: '1px solid',
-                        borderColor: 'rgba(224,123,83,0.2)',
-                        cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                        _hover: {
-                            borderColor: '#e07b53',
-                            background: 'rgba(224,123,83,0.03)',
-                        },
-                    })}
-                >
-                    <div>
-                        <p
-                            className={css({
-                                fontSize: 'sm',
-                                fontWeight: '600',
-                            })}
-                        >
-                            Wöchentlicher Koch-Newsletter
-                        </p>
-                    </div>
-                    <input
-                        type="checkbox"
-                        defaultChecked
-                        className={css({
-                            width: '20px',
-                            height: '20px',
-                            accentColor: '#e07b53',
-                        })}
-                    />
-                </label>
-
-                <label
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '4',
-                        borderRadius: 'xl',
-                        border: '1px solid',
-                        borderColor: 'rgba(224,123,83,0.2)',
-                        cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                        _hover: {
-                            borderColor: '#e07b53',
-                            background: 'rgba(224,123,83,0.03)',
-                        },
-                    })}
-                >
-                    <div>
-                        <p
-                            className={css({
-                                fontSize: 'sm',
-                                fontWeight: '600',
-                            })}
-                        >
-                            Erinnerungen an geplante Mahlzeiten
-                        </p>
-                    </div>
-                    <input
-                        type="checkbox"
-                        className={css({
-                            width: '20px',
-                            height: '20px',
-                            accentColor: '#e07b53',
-                        })}
-                    />
-                </label>
+                <CheckboxItem label="Neue Rezepte von anderen Kochbegeisterten" defaultChecked />
+                <CheckboxItem label="Wöchentlicher Koch-Newsletter" defaultChecked />
+                <CheckboxItem label="Erinnerungen an geplante Mahlzeiten" />
             </div>
         </div>
     );

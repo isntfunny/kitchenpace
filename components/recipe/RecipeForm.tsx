@@ -1,5 +1,7 @@
 'use client';
 
+import * as Checkbox from '@radix-ui/react-checkbox';
+import { CheckIcon } from '@radix-ui/react-icons';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -519,11 +521,10 @@ export function RecipeForm({ categories, tags, tagFacets, authorId }: RecipeForm
                                     _hover: { bg: 'gray.50' },
                                 })}
                             >
-                                <input
-                                    type="checkbox"
+                                <Checkbox.Root
                                     checked={categoryIds.includes(cat.id)}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
+                                    onCheckedChange={(checked) => {
+                                        if (checked) {
                                             setCategoryIds([...categoryIds, cat.id]);
                                         } else {
                                             setCategoryIds(
@@ -531,8 +532,28 @@ export function RecipeForm({ categories, tags, tagFacets, authorId }: RecipeForm
                                             );
                                         }
                                     }}
-                                    className={css({ width: '4', height: '4' })}
-                                />
+                                    className={css({
+                                        width: '4',
+                                        height: '4',
+                                        backgroundColor: 'white',
+                                        borderRadius: 'sm',
+                                        border: '2px solid',
+                                        borderColor: categoryIds.includes(cat.id)
+                                            ? 'brand.primary'
+                                            : 'gray.300',
+                                        cursor: 'pointer',
+                                        transition: 'all 150ms ease',
+                                        _hover: { borderColor: 'brand.primary' },
+                                        '&[data-state="checked"]': {
+                                            backgroundColor: 'brand.primary',
+                                            borderColor: 'brand.primary',
+                                        },
+                                    })}
+                                >
+                                    <Checkbox.Indicator>
+                                        <CheckIcon color="white" width={12} height={12} />
+                                    </Checkbox.Indicator>
+                                </Checkbox.Root>
                                 <span>{cat.name}</span>
                             </label>
                         ))}
@@ -825,15 +846,35 @@ export function RecipeForm({ categories, tags, tagFacets, authorId }: RecipeForm
                                             fontSize: 'sm',
                                         })}
                                     >
-                                        <input
-                                            type="checkbox"
+                                        <Checkbox.Root
                                             checked={ing.isOptional}
-                                            onChange={(e) => {
+                                            onCheckedChange={(checked) => {
                                                 const updated = [...ingredients];
-                                                updated[index].isOptional = e.target.checked;
+                                                updated[index].isOptional = checked === true;
                                                 setIngredients(updated);
                                             }}
-                                        />
+                                            className={css({
+                                                width: '4',
+                                                height: '4',
+                                                backgroundColor: 'white',
+                                                borderRadius: 'sm',
+                                                border: '2px solid',
+                                                borderColor: ing.isOptional
+                                                    ? 'brand.primary'
+                                                    : 'gray.300',
+                                                cursor: 'pointer',
+                                                transition: 'all 150ms ease',
+                                                _hover: { borderColor: 'brand.primary' },
+                                                '&[data-state="checked"]': {
+                                                    backgroundColor: 'brand.primary',
+                                                    borderColor: 'brand.primary',
+                                                },
+                                            })}
+                                        >
+                                            <Checkbox.Indicator>
+                                                <CheckIcon color="white" width={12} height={12} />
+                                            </Checkbox.Indicator>
+                                        </Checkbox.Root>
                                         Optional
                                     </label>
                                     <button

@@ -1,5 +1,6 @@
 'use client';
 
+import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTransition } from 'react';
@@ -281,24 +282,124 @@ function FavoriteCard({
                         <span className={css({ fontSize: 'xs', color: 'text-muted' })}>
                             Gespeichert {formatTimeAgo(recipe.savedAt)}
                         </span>
-                        <button
-                            onClick={(e) => {
-                                e.preventDefault();
-                                onRemove();
-                            }}
-                            disabled={isRemoving}
-                            className={css({
-                                fontSize: 'xs',
-                                color: 'text-muted',
-                                cursor: 'pointer',
-                                bg: 'transparent',
-                                border: 'none',
-                                p: '0',
-                                _hover: { color: 'red.500' },
-                            })}
-                        >
-                            Entfernen
-                        </button>
+                        <AlertDialog.Root>
+                            <AlertDialog.Trigger asChild>
+                                <button
+                                    className={css({
+                                        fontSize: 'xs',
+                                        color: 'text-muted',
+                                        cursor: 'pointer',
+                                        bg: 'transparent',
+                                        border: 'none',
+                                        p: '0',
+                                        _hover: { color: 'red.500' },
+                                    })}
+                                >
+                                    Entfernen
+                                </button>
+                            </AlertDialog.Trigger>
+                            <AlertDialog.Portal>
+                                <AlertDialog.Overlay
+                                    className={css({
+                                        position: 'fixed',
+                                        inset: 0,
+                                        backgroundColor: 'rgba(0,0,0,0.5)',
+                                        animation:
+                                            'overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1)',
+                                    })}
+                                />
+                                <AlertDialog.Content
+                                    className={css({
+                                        position: 'fixed',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        width: '90vw',
+                                        maxWidth: '450px',
+                                        backgroundColor: 'white',
+                                        borderRadius: 'xl',
+                                        padding: '6',
+                                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                                        animation:
+                                            'contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1)',
+                                    })}
+                                >
+                                    <AlertDialog.Title
+                                        className={css({
+                                            fontSize: 'lg',
+                                            fontWeight: '700',
+                                            color: 'text',
+                                            mb: '2',
+                                        })}
+                                    >
+                                        Rezept entfernen?
+                                    </AlertDialog.Title>
+                                    <AlertDialog.Description
+                                        className={css({
+                                            fontSize: 'sm',
+                                            color: 'text-muted',
+                                            mb: '5',
+                                            lineHeight: '1.5',
+                                        })}
+                                    >
+                                        Möchtest du "{recipe.title}" wirklich aus deinen Favoriten
+                                        entfernen? Du kannst es später jederzeit wieder hinzufügen.
+                                    </AlertDialog.Description>
+                                    <div
+                                        className={flex({
+                                            gap: '3',
+                                            justify: 'flex-end',
+                                        })}
+                                    >
+                                        <AlertDialog.Cancel asChild>
+                                            <button
+                                                className={css({
+                                                    px: '4',
+                                                    py: '2',
+                                                    fontSize: 'sm',
+                                                    fontWeight: '500',
+                                                    color: 'text',
+                                                    bg: 'gray.100',
+                                                    border: 'none',
+                                                    borderRadius: 'lg',
+                                                    cursor: 'pointer',
+                                                    _hover: { bg: 'gray.200' },
+                                                })}
+                                            >
+                                                Abbrechen
+                                            </button>
+                                        </AlertDialog.Cancel>
+                                        <AlertDialog.Action asChild>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    onRemove();
+                                                }}
+                                                disabled={isRemoving}
+                                                className={css({
+                                                    px: '4',
+                                                    py: '2',
+                                                    fontSize: 'sm',
+                                                    fontWeight: '500',
+                                                    color: 'white',
+                                                    bg: 'red.500',
+                                                    border: 'none',
+                                                    borderRadius: 'lg',
+                                                    cursor: 'pointer',
+                                                    _hover: { bg: 'red.600' },
+                                                    _disabled: {
+                                                        opacity: 0.5,
+                                                        cursor: 'not-allowed',
+                                                    },
+                                                })}
+                                            >
+                                                {isRemoving ? 'Entferne...' : 'Entfernen'}
+                                            </button>
+                                        </AlertDialog.Action>
+                                    </div>
+                                </AlertDialog.Content>
+                            </AlertDialog.Portal>
+                        </AlertDialog.Root>
                     </div>
                 </div>
             </div>

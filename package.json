@@ -46,6 +46,7 @@
         "@radix-ui/react-toggle-group": "^1.1.11",
         "@styled-system/css": "^5.1.5",
         "@xyflow/react": "^12.10.1",
+        "@openpanel/nextjs": "^1.1.4",
         "bcrypt": "^6.0.0",
         "dagre": "^0.8.5",
         "dotenv": "^17.3.1",
@@ -63,7 +64,6 @@
         "yet-another-react-lightbox": "^3.29.1"
     },
     "devDependencies": {
-        "@openpanel/nextjs": "^1.1.4",
         "@types/bcrypt": "^6.0.0",
         "@types/dagre": "^0.7.53",
         "@types/node": "^20.19.33",

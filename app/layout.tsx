@@ -1,9 +1,10 @@
-import { OpenPanelComponent } from '@openpanel/nextjs';
+import { IdentifyComponent, OpenPanelComponent } from '@openpanel/nextjs';
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { RecipeTabsProvider } from '@/components/providers/RecipeTabsProvider';
+import { getServerAuthSession } from '@/lib/auth';
 
 import './globals.css';
 
@@ -74,6 +75,30 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const session = await getServerAuthSession('openpanel-root-layout');
+    const openPanelClientId = process.env.OPENPANEL_ID ?? '';
+    const hasOpenPanelId = Boolean(openPanelClientId);
+    const userName = session?.user?.name?.trim() ?? '';
+    const nameParts = userName.split(/\s+/).filter(Boolean);
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || undefined;
+    const openPanelGlobalProperties = {
+        environment: process.env.NODE_ENV ?? 'development',
+        appVersion:
+            process.env.NEXT_PUBLIC_APP_VERSION ?? process.env.npm_package_version ?? '0.1.0',
+        appId: 'kitchenpace',
+    };
+    const identifyProps = session?.user?.id
+        ? {
+              profileId: session.user.id,
+              email: session.user.email ?? undefined,
+              firstName,
+              lastName,
+              properties: {
+                  name: userName || undefined,
+              },
+          }
+        : null;
     return (
         <html lang="de">
             <body
@@ -91,9 +116,16 @@ export default async function RootLayout({
                 }}
             >
                 <OpenPanelComponent
-                    clientId={process.env.OPENPANEL_ID || ''}
+                    clientId={openPanelClientId}
+                    apiUrl="/api/op"
+                    cdnUrl="/api/op/op1.js"
                     trackScreenViews={true}
+                    trackAttributes={true}
+                    waitForProfile={Boolean(identifyProps)}
+                    disabled={!hasOpenPanelId}
+                    globalProperties={openPanelGlobalProperties}
                 />
+                {identifyProps && <IdentifyComponent {...identifyProps} />}
                 <AuthProvider>
                     <RecipeTabsProvider>{children}</RecipeTabsProvider>
                 </AuthProvider>

@@ -1,5 +1,5 @@
-import { ImageResponse } from 'next/og';
 import { ChefHat } from 'lucide-react';
+import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 

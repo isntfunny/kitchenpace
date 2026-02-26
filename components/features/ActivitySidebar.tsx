@@ -1,8 +1,9 @@
+import { Activity } from 'lucide-react';
+
 import type { ActivityFeedItem } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';
-import { Activity } from 'lucide-react';
 
 import {
     RatedActivity,

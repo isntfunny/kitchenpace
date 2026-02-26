@@ -1,9 +1,6 @@
 import { saveAs } from 'file-saver';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { useMemo, useRef, useState } from 'react';
-
-import { css } from 'styled-system/css';
 import {
     ChefHat,
     Clock,
@@ -12,20 +9,17 @@ import {
     FileText,
     Flame,
     ForkKnife,
-    GlassWater,
-    LayoutGrid,
     Leaf,
     Map,
-    Menu,
-    Moon,
     PocketKnife,
-    Plus,
     RotateCcw,
     Sparkles,
-    UtensilsCrossed,
     X,
     ZoomIn,
 } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+
+import { css } from 'styled-system/css';
 
 interface FlowNode {
     id: string;

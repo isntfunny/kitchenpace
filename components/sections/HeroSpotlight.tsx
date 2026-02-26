@@ -1,5 +1,6 @@
 'use client';
 
+import { Star } from 'lucide-react';
 import * as React from 'react';
 
 import { css } from 'styled-system/css';
@@ -7,7 +8,6 @@ import { grid } from 'styled-system/patterns';
 
 import { SmartImage } from '../atoms/SmartImage';
 import { Heading, Text } from '../atoms/Typography';
-import { Star } from 'lucide-react';
 
 export function HeroSpotlight() {
     return (

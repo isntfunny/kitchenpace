@@ -1,8 +1,9 @@
 'use client';
 
+import { CheckCircle, Clipboard, Flame, Hourglass, ChefHat } from 'lucide-react';
+
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
-import { CheckCircle, Clipboard, Flame, Hourglass, ChefHat } from 'lucide-react';
 
 interface TimelineItem {
     id: string;

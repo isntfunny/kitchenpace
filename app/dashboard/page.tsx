@@ -1,3 +1,4 @@
+import { ChefHat, FileText, Heart, Star } from 'lucide-react';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
@@ -7,7 +8,6 @@ import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { logAuth } from '@/lib/auth-logger';
 import { getOrCreateProfile } from '@/lib/profile';
-import { ChefHat, FileText, Heart, Star } from 'lucide-react';
 
 export const metadata: Metadata = {
     title: 'Dashboard',

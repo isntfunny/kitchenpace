@@ -1,3 +1,5 @@
+import { ChefHat } from 'lucide-react';
+
 import {
     fetchChefSpotlight,
     fetchQuickTips,
@@ -21,7 +23,6 @@ import { FlowPillars } from '@/components/sections/FlowPillars';
 import { HeroSpotlight } from '@/components/sections/HeroSpotlight';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
-import { ChefHat } from 'lucide-react';
 
 export const revalidate = 60;
 

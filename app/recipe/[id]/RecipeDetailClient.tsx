@@ -1,5 +1,6 @@
 'use client';
 
+import { Bookmark, Camera, CheckCircle, ChefHat, Clock, Flame, Heart, Printer } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -22,7 +23,6 @@ import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
 import { buildRecipeFilterHref } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
-import { Bookmark, Camera, CheckCircle, ChefHat, Clock, Flame, Heart, Printer } from 'lucide-react';
 
 import type { Recipe, User, Activity } from './data';
 

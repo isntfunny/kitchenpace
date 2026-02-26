@@ -1,6 +1,7 @@
 'use client';
 
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
+import { Heart } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTransition } from 'react';
@@ -9,7 +10,6 @@ import { toggleFavoriteAction } from '@/app/actions/social';
 import { Badge } from '@/components/atoms/Badge';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
-import { Heart } from 'lucide-react';
 
 export interface FavoriteRecipeCard {
     id: string;

@@ -1,7 +1,8 @@
 'use client';
 
-import { css } from 'styled-system/css';
 import { Hand } from 'lucide-react';
+
+import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
 

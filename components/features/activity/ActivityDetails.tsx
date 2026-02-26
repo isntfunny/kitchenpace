@@ -1,8 +1,9 @@
+import { Camera, Calendar, ShoppingCart } from 'lucide-react';
+
 import { Text } from '@/components/atoms/Typography';
 import { css } from 'styled-system/css';
 
 import { ActivityItem, ActivityRecipeLink, parseActivityDetail } from './ActivityItem';
-import { Camera, Calendar, ShoppingCart } from 'lucide-react';
 
 interface ActivityDetailProps {
     id: string;

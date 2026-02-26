@@ -1,12 +1,12 @@
 'use client';
 
+import { ChefHat, FileText, Heart, Star } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
-import { ChefHat, FileText, Heart, Star } from 'lucide-react';
 import { SmartImage } from '../atoms/SmartImage';
 
 interface DashboardStatCard {

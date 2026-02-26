@@ -1,11 +1,11 @@
 'use client';
 
+import { Clock, Clipboard, Sparkles } from 'lucide-react';
 import * as React from 'react';
 import type { ReactNode } from 'react';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
-import { Clock, Clipboard, Sparkles } from 'lucide-react';
 
 import { Heading, Text } from '../atoms/Typography';
 

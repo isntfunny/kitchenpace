@@ -1,9 +1,9 @@
 'use client';
 
+import { ChefHat, Clock, Pin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import * as React from 'react';
-import { ChefHat, Clock, Pin } from 'lucide-react';
 
 import { useRecipeTabs } from '@/components/hooks/useRecipeTabs';
 import type { RecipeTabItem } from '@/components/providers/RecipeTabsProvider';

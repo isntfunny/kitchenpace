@@ -1,8 +1,9 @@
+import { Lightbulb } from 'lucide-react';
+
 import type { QuickTipData } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';
-import { Lightbulb } from 'lucide-react';
 
 interface QuickTipsProps {
     tips: QuickTipData[];

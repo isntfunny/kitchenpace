@@ -1,10 +1,10 @@
 'use client';
 
+import { BookOpen, Calendar, CheckCircle, Heart, Sparkles } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
-import { BookOpen, Calendar, CheckCircle, Heart, Sparkles } from 'lucide-react';
 
 import { SmartImage } from '../atoms/SmartImage';
 

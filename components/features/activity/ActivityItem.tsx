@@ -1,7 +1,9 @@
-import { css } from 'styled-system/css';
-import { Text } from '@/components/atoms/Typography';
-import type { ActivityFeedItem } from '@/app/actions/community';
 import Link from 'next/link';
+
+import type { ActivityFeedItem } from '@/app/actions/community';
+import { Text } from '@/components/atoms/Typography';
+import { css } from 'styled-system/css';
+
 
 interface ActivityItemProps {
     activity: ActivityFeedItem;

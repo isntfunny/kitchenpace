@@ -1,15 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ReactNode, useState, useTransition } from 'react';
-
-import { toggleFollowAction } from '@/app/actions/social';
-import { Badge } from '@/components/atoms/Badge';
-import { Button } from '@/components/atoms/Button';
-import { css } from 'styled-system/css';
-import { flex, grid } from 'styled-system/patterns';
 import {
     Bookmark,
     Calendar,
@@ -23,6 +13,16 @@ import {
     ShoppingCart,
     Star,
 } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ReactNode, useState, useTransition } from 'react';
+
+import { toggleFollowAction } from '@/app/actions/social';
+import { Badge } from '@/components/atoms/Badge';
+import { Button } from '@/components/atoms/Button';
+import { css } from 'styled-system/css';
+import { flex, grid } from 'styled-system/patterns';
 
 export interface UserProfileRecipe {
     id: string;

@@ -1,8 +1,5 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
-
-import { css } from 'styled-system/css';
 import {
     Apple,
     Box,
@@ -15,6 +12,9 @@ import {
     ShoppingCart,
     Sparkles,
 } from 'lucide-react';
+import { ReactNode, useState } from 'react';
+
+import { css } from 'styled-system/css';
 
 interface ShoppingItem {
     id: string;

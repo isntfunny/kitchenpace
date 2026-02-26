@@ -1,5 +1,6 @@
 'use client';
 
+import { Target } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 import { fetchRecipesByTime, type RecipeCardData } from '@/app/actions/recipes';
@@ -8,7 +9,6 @@ import { css } from 'styled-system/css';
 import { RecipeCard } from '../features/RecipeCard';
 import { Section } from '../features/Section';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../features/Select';
-import { Target } from 'lucide-react';
 
 const timeOptions = [
     { value: 'frueh', label: 'Frühstück' },

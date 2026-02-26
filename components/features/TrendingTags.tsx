@@ -1,3 +1,4 @@
+import { Flame } from 'lucide-react';
 import Link from 'next/link';
 
 import type { TrendingTagData } from '@/app/actions/community';
@@ -5,7 +6,6 @@ import { buildRecipeFilterHref } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 
 import { Heading } from '../atoms/Typography';
-import { Flame } from 'lucide-react';
 
 interface TrendingTagsProps {
     tags: TrendingTagData[];

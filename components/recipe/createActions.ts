@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { slugify, generateUniqueSlug } from '@/lib/slug';
 
 type ShoppingCategory =
     | 'GEMUESE'
@@ -54,15 +55,15 @@ export interface CreateRecipeInput {
 }
 
 export async function createRecipe(data: CreateRecipeInput, authorId: string) {
-    const slug = data.title
-        .toLowerCase()
-        .replace(/[^a-z0-9äöüß]+/g, '-')
-        .replace(/(^-|-$)/g, '');
+    const slug = await generateUniqueSlug(data.title, async (s) => {
+        const existing = await prisma.recipe.findUnique({ where: { slug: s } });
+        return !!existing;
+    });
 
     const recipe = await prisma.recipe.create({
         data: {
             title: data.title,
-            slug: `${slug}-${Date.now()}`,
+            slug: slug,
             description: data.description,
             imageUrl: data.imageUrl,
             servings: data.servings,
@@ -110,10 +111,7 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
 }
 
 export async function createIngredient(name: string, category?: string, units: string[] = []) {
-    const slug = name
-        .toLowerCase()
-        .replace(/[^a-z0-9äöüß]+/g, '-')
-        .replace(/(^-|-$)/g, '');
+    const slug = slugify(name);
 
     return prisma.ingredient.upsert({
         where: { slug },

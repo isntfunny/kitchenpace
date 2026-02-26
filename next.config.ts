@@ -30,6 +30,9 @@ const nextConfig: NextConfig = {
             {
                 pathname: '/kitchenpace.png',
             },
+            {
+                pathname: '/placeholder.jpg',
+            },
         ],
     },
     turbopack: {

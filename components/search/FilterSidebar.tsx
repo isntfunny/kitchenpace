@@ -4,12 +4,13 @@ import * as Accordion from '@radix-ui/react-accordion';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import * as Slider from '@radix-ui/react-slider';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
 import type { CategoryOption } from '@/app/actions/filters';
 import type { RecipeFilterSearchParams } from '@/lib/recipeFilters';
-import { css, cx } from 'styled-system/css';
+import { css } from 'styled-system/css';
 
+import { SearchableFilterChips, type FilterChipItem } from './SearchableFilterChips';
 import type { HistogramFacet, RecipeSearchFacets } from './useRecipeSearch';
 
 type FilterSidebarProps = {
@@ -166,79 +167,6 @@ const chipItemClass = css({
         boxShadow: '0 8px 16px rgba(0,0,0,0.08)',
     },
 });
-
-const chipBadgeClass = css({
-    fontSize: 'xs',
-    background: 'rgba(249,115,22,0.12)',
-    borderRadius: 'full',
-    px: '2',
-    py: '0.5',
-});
-
-const chipBadgeMutedClass = css({
-    fontSize: 'xs',
-    padding: '0.25 0.5',
-    borderRadius: 'full',
-    background: 'transparent',
-    border: '1px solid',
-    borderColor: 'light',
-    color: 'text-muted',
-});
-
-const chipZeroClass = css({
-    color: 'text-muted',
-    borderColor: 'light',
-    background: 'surface',
-});
-
-const chipRemoveIconClass = css({
-    fontSize: 'sm',
-    lineHeight: '1',
-    opacity: 0.85,
-});
-
-const tagSearchInputClass = css({
-    width: '100%',
-    borderRadius: 'lg',
-    border: '1px solid',
-    borderColor: 'light',
-    background: 'surface',
-    px: '3',
-    py: '2',
-    fontSize: 'sm',
-    marginBottom: '2',
-    '&::placeholder': {
-        color: 'text-muted',
-    },
-});
-
-const tagScrollContainerClass = css({
-    maxHeight: '200px',
-    overflowY: 'auto',
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '2',
-    '&::-webkit-scrollbar': {
-        width: '6px',
-    },
-    '&::-webkit-scrollbar-track': {
-        background: 'transparent',
-    },
-    '&::-webkit-scrollbar-thumb': {
-        background: 'light',
-        borderRadius: 'full',
-    },
-});
-
-const removableChipClass = cx(
-    chipItemClass,
-    css({
-        minHeight: '36px',
-        fontSize: 'sm',
-        px: '3',
-        py: '1.5',
-    }),
-);
 
 const sliderRootClass = css({
     position: 'relative',
@@ -460,9 +388,6 @@ const RangeControl = ({
 };
 
 export function FilterSidebar({ filters, options, facets, onFiltersChange }: FilterSidebarProps) {
-    const [ingredientQuery, setIngredientQuery] = useState('');
-    const [excludeQuery, setExcludeQuery] = useState('');
-    const [tagQuery, setTagQuery] = useState('');
     const ingredients = options.ingredients;
     const tags = options.tags;
 
@@ -490,7 +415,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
         return map;
     }, [ingredientFacets]);
 
-    const sortedTags = useMemo(() => {
+    const sortedTags = useMemo((): FilterChipItem[] => {
         const selectedTags = filters.tags ?? [];
         const tagData = tags.map((tag) => {
             const normalized = normalizeTag(tag);
@@ -501,21 +426,8 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                 selected: selectedTags.includes(tag),
             };
         });
-
-        // If there's a search query, filter first
-        let filtered = tagData;
-        if (tagQuery.trim()) {
-            const query = tagQuery.toLowerCase().trim();
-            filtered = tagData.filter((t) => t.name.toLowerCase().includes(query));
-        }
-
-        // Sort: selected first, then by count descending
-        return filtered.sort((a, b) => {
-            if (a.selected && !b.selected) return -1;
-            if (!a.selected && b.selected) return 1;
-            return b.count - a.count;
-        });
-    }, [tags, tagCountMap, tagQuery, filters.tags]);
+        return tagData;
+    }, [tags, tagCountMap, filters.tags]);
 
     const ingredientOptionNames = useMemo(() => {
         const selected = [...(filters.ingredients ?? []), ...(filters.excludeIngredients ?? [])];
@@ -526,17 +438,9 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
         return Array.from(new Set([...ingredients, ...selected, ...facetKeys]));
     }, [ingredients, ingredientFacets, filters.ingredients, filters.excludeIngredients]);
 
-    const resolveIngredientName = useCallback(
-        (value: string) => {
-            const normalized = normalizeTag(value);
-            return ingredientOptionNames.find((name) => normalizeTag(name) === normalized);
-        },
-        [ingredientOptionNames],
-    );
-
-    const sortedIngredients = useMemo(() => {
+    const sortedIngredients = useMemo((): FilterChipItem[] => {
         const selectedIngredients = filters.ingredients ?? [];
-        const data = ingredientOptionNames.map((name) => {
+        return ingredientOptionNames.map((name) => {
             const normalized = normalizeTag(name);
             const count = ingredientCountMap.get(name) ?? ingredientCountMap.get(normalized) ?? 0;
             return {
@@ -545,45 +449,20 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                 selected: selectedIngredients.includes(name),
             };
         });
+    }, [ingredientOptionNames, ingredientCountMap, filters.ingredients]);
 
-        let filtered = data;
-        if (ingredientQuery.trim()) {
-            const query = ingredientQuery.toLowerCase().trim();
-            filtered = data.filter((item) => item.name.toLowerCase().includes(query));
-        }
-
-        return filtered.sort((a, b) => {
-            if (a.selected && !b.selected) return -1;
-            if (!a.selected && b.selected) return 1;
-            return b.count - a.count;
+    const sortedExcludeIngredients = useMemo((): FilterChipItem[] => {
+        const selectedExclude = filters.excludeIngredients ?? [];
+        return ingredientOptionNames.map((name) => {
+            const normalized = normalizeTag(name);
+            const count = ingredientCountMap.get(name) ?? ingredientCountMap.get(normalized) ?? 0;
+            return {
+                name,
+                count,
+                selected: selectedExclude.includes(name),
+            };
         });
-    }, [ingredientOptionNames, ingredientCountMap, ingredientQuery, filters.ingredients]);
-
-    const excludeSuggestions = useMemo(() => {
-        const query = excludeQuery.toLowerCase().trim();
-        return ingredientOptionNames
-            .filter(
-                (name) =>
-                    name.toLowerCase().includes(query) &&
-                    !(filters.excludeIngredients ?? []).includes(name),
-            )
-            .slice(0, 6);
-    }, [excludeQuery, ingredientOptionNames, filters.excludeIngredients]);
-
-    const selectIngredient = (value: string, field: 'ingredients' | 'excludeIngredients') => {
-        const trimmed = value.trim();
-        if (!trimmed) return;
-        const resolved = resolveIngredientName(trimmed);
-        if (!resolved) return;
-        const existing = (filters[field] ?? []) as string[];
-        if (existing.includes(resolved)) return;
-        onFiltersChange({ [field]: [...existing, resolved] });
-        if (field === 'ingredients') {
-            setIngredientQuery('');
-        } else {
-            setExcludeQuery('');
-        }
-    };
+    }, [ingredientOptionNames, ingredientCountMap, filters.excludeIngredients]);
 
     return (
         <div
@@ -607,48 +486,16 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     title="Tags"
                     description="Beliebte Themen"
                 >
-                    <input
-                        type="text"
-                        value={tagQuery}
-                        onChange={(e) => setTagQuery(e.target.value)}
+                    <SearchableFilterChips
+                        items={sortedTags}
+                        selectedValues={filters.tags ?? []}
+                        onSelectionChange={(next) =>
+                            onFiltersChange({ tags: next } as Partial<RecipeFilterSearchParams>)
+                        }
                         placeholder="Tags suchen..."
-                        className={tagSearchInputClass}
+                        emptyMessage="Keine Tags gefunden."
+                        ariaLabel="Tags filtern"
                     />
-                    <div className={tagScrollContainerClass}>
-                        <ToggleGroup.Root
-                            type="multiple"
-                            className={css({
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                gap: '2',
-                                width: '100%',
-                            })}
-                            aria-label="Tags filtern"
-                            value={filters.tags ?? []}
-                            onValueChange={(next) =>
-                                onFiltersChange({ tags: next } as Partial<RecipeFilterSearchParams>)
-                            }
-                        >
-                            {sortedTags.map((tag) => {
-                                const itemClass = cx(
-                                    chipItemClass,
-                                    tag.count === 0 && !tag.selected && chipZeroClass,
-                                );
-                                const badgeClass =
-                                    tag.count === 0 ? chipBadgeMutedClass : chipBadgeClass;
-                                return (
-                                    <ToggleGroup.Item
-                                        key={`tag-${tag.name}`}
-                                        value={tag.name}
-                                        className={itemClass}
-                                    >
-                                        <span>{tag.name}</span>
-                                        <span className={badgeClass}>{tag.count}</span>
-                                    </ToggleGroup.Item>
-                                );
-                            })}
-                        </ToggleGroup.Root>
-                    </div>
                 </FilterSection>
 
                 <FilterSection
@@ -684,136 +531,34 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     title="Zutaten"
                     description="Nur Gerichte mit den richtigen Zutaten"
                 >
-                    <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
-                        <input
-                            type="text"
-                            value={ingredientQuery}
-                            onChange={(event) => setIngredientQuery(event.target.value)}
-                            placeholder="Zutaten durchsuchen"
-                            className={tagSearchInputClass}
-                        />
-                        {sortedIngredients.length === 0 ? (
-                            <p className={css({ fontSize: 'xs', color: 'text-muted' })}>
-                                Keine Zutaten gefunden.
-                            </p>
-                        ) : (
-                            <div className={tagScrollContainerClass}>
-                                <ToggleGroup.Root
-                                    type="multiple"
-                                    className={css({
-                                        display: 'flex',
-                                        flexWrap: 'wrap',
-                                        gap: '2',
-                                        width: '100%',
-                                    })}
-                                    aria-label="Zutaten filtern"
-                                    value={filters.ingredients ?? []}
-                                    onValueChange={(next) =>
-                                        onFiltersChange({
-                                            ingredients: next,
-                                        } as Partial<RecipeFilterSearchParams>)
-                                    }
-                                >
-                                    {sortedIngredients.map((ingredient) => {
-                                        const itemClass = cx(
-                                            chipItemClass,
-                                            ingredient.count === 0 &&
-                                                !ingredient.selected &&
-                                                chipZeroClass,
-                                        );
-                                        const badgeClass =
-                                            ingredient.count === 0
-                                                ? chipBadgeMutedClass
-                                                : chipBadgeClass;
-                                        return (
-                                            <ToggleGroup.Item
-                                                key={`ingredient-${ingredient.name}`}
-                                                value={ingredient.name}
-                                                className={itemClass}
-                                            >
-                                                <span>{ingredient.name}</span>
-                                                <span className={badgeClass}>
-                                                    {ingredient.count}
-                                                </span>
-                                            </ToggleGroup.Item>
-                                        );
-                                    })}
-                                </ToggleGroup.Root>
-                            </div>
-                        )}
-                    </div>
+                    <SearchableFilterChips
+                        items={sortedIngredients}
+                        selectedValues={filters.ingredients ?? []}
+                        onSelectionChange={(next) =>
+                            onFiltersChange({
+                                ingredients: next,
+                            } as Partial<RecipeFilterSearchParams>)
+                        }
+                        placeholder="Zutaten durchsuchen..."
+                        emptyMessage="Keine Zutaten gefunden."
+                        ariaLabel="Zutaten filtern"
+                    />
                 </FilterSection>
 
                 <FilterSection value={FILTER_SECTION_IDS.exclude} title="Enthält nicht">
-                    <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
-                        <input
-                            type="text"
-                            value={excludeQuery}
-                            onChange={(event) => setExcludeQuery(event.target.value)}
-                            onKeyDown={(event) => {
-                                if (event.key === 'Enter') {
-                                    event.preventDefault();
-                                    selectIngredient(excludeQuery, 'excludeIngredients');
-                                }
-                            }}
-                            placeholder="Allergene oder Zutaten"
-                            className={css({
-                                borderRadius: 'lg',
-                                border: '1px solid',
-                                borderColor: 'light',
-                                background: 'surface',
-                                px: '3',
-                                py: '2.5',
-                                fontSize: 'sm',
-                            })}
-                        />
-                        {excludeSuggestions.length > 0 && (
-                            <div className={css({ display: 'grid', gap: '2' })}>
-                                {excludeSuggestions.map((name) => (
-                                    <button
-                                        type="button"
-                                        key={`exclude-${name}`}
-                                        onClick={() => selectIngredient(name, 'excludeIngredients')}
-                                        className={css({
-                                            textAlign: 'left',
-                                            fontSize: 'xs',
-                                            color: 'text-muted',
-                                            padding: '2',
-                                            borderRadius: 'md',
-                                            border: '1px solid',
-                                            borderColor: 'light',
-                                        })}
-                                    >
-                                        {name}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                        <ToggleGroup.Root
-                            type="multiple"
-                            className={chipGroupClass}
-                            aria-label="Ausgeschlossene Zutaten"
-                            value={filters.excludeIngredients ?? []}
-                            onValueChange={(next) =>
-                                onFiltersChange({
-                                    excludeIngredients: next,
-                                } as Partial<RecipeFilterSearchParams>)
-                            }
-                        >
-                            {(filters.excludeIngredients ?? []).map((ingredient) => (
-                                <ToggleGroup.Item
-                                    key={`exclude-selected-${ingredient}`}
-                                    value={ingredient}
-                                    className={removableChipClass}
-                                >
-                                    <span>{ingredient}</span>
-                                    <span className={chipRemoveIconClass} aria-hidden>
-                                        ×
-                                    </span>
-                                </ToggleGroup.Item>
-                            ))}
-                        </ToggleGroup.Root>
-                    </div>
+                    <SearchableFilterChips
+                        items={sortedExcludeIngredients}
+                        selectedValues={filters.excludeIngredients ?? []}
+                        onSelectionChange={(next) =>
+                            onFiltersChange({
+                                excludeIngredients: next,
+                            } as Partial<RecipeFilterSearchParams>)
+                        }
+                        placeholder="Zutaten ausschließen..."
+                        emptyMessage="Keine Zutaten gefunden."
+                        ariaLabel="Zutaten ausschließen"
+                        variant="exclude"
+                    />
                 </FilterSection>
 
                 <FilterSection value={FILTER_SECTION_IDS.difficulty} title="Schwierigkeit">

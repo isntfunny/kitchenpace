@@ -4,7 +4,6 @@ import type { ActivityFeedItem } from '@/app/actions/community';
 import { Text } from '@/components/atoms/Typography';
 import { css } from 'styled-system/css';
 
-
 interface ActivityItemProps {
     activity: ActivityFeedItem;
     children: React.ReactNode;

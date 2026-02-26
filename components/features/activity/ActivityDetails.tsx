@@ -1,22 +1,10 @@
 import { Camera, Calendar, ShoppingCart } from 'lucide-react';
 
+import type { ActivityFeedItem } from '@/app/actions/community';
 import { Text } from '@/components/atoms/Typography';
 import { css } from 'styled-system/css';
 
 import { ActivityItem, ActivityRecipeLink, parseActivityDetail } from './ActivityItem';
-
-interface ActivityDetailProps {
-    id: string;
-    detail?: string;
-    recipeId?: string;
-    recipeTitle?: string;
-    userName: string;
-    actionLabel: string;
-    timeAgo: string;
-    icon: string;
-    iconBg: string;
-    targetUserName?: string;
-}
 
 function StarRating({ rating }: { rating: number }) {
     return (
@@ -36,7 +24,7 @@ function StarRating({ rating }: { rating: number }) {
     );
 }
 
-export function RatedActivity(props: ActivityDetailProps) {
+export function RatedActivity(props: ActivityFeedItem) {
     const metadata = parseActivityDetail(props.detail);
     const rating = metadata?.rating as number | undefined;
 
@@ -55,7 +43,7 @@ export function RatedActivity(props: ActivityDetailProps) {
     );
 }
 
-export function CookedActivity(props: ActivityDetailProps) {
+export function CookedActivity(props: ActivityFeedItem) {
     const metadata = parseActivityDetail(props.detail);
     const hasImage = metadata?.hasImage as boolean | undefined;
 
@@ -82,7 +70,7 @@ export function CookedActivity(props: ActivityDetailProps) {
     );
 }
 
-export function FavoritedActivity(props: ActivityDetailProps) {
+export function FavoritedActivity(props: ActivityFeedItem) {
     return (
         <ActivityItem activity={props}>
             <ActivityRecipeLink recipeId={props.recipeId} recipeTitle={props.recipeTitle} />
@@ -90,7 +78,7 @@ export function FavoritedActivity(props: ActivityDetailProps) {
     );
 }
 
-export function CommentedActivity(props: ActivityDetailProps) {
+export function CommentedActivity(props: ActivityFeedItem) {
     const comment = props.detail?.replace(/"/g, '') || '';
 
     return (
@@ -109,7 +97,7 @@ export function CommentedActivity(props: ActivityDetailProps) {
     );
 }
 
-export function CreatedActivity(props: ActivityDetailProps) {
+export function CreatedActivity(props: ActivityFeedItem) {
     const isRecipe = props.actionLabel.includes('Rezept');
     const isShoppingList = props.actionLabel.includes('Einkaufsliste');
     const isMealPlan = props.actionLabel.includes('Plan');
@@ -160,7 +148,7 @@ export function CreatedActivity(props: ActivityDetailProps) {
     );
 }
 
-export function FollowedActivity(props: ActivityDetailProps) {
+export function FollowedActivity(props: ActivityFeedItem) {
     return (
         <ActivityItem activity={props}>
             <Text size="sm" color="muted" className={css({ mt: '1', fontSize: '0.75rem' })}>

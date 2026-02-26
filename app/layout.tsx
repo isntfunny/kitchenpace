@@ -126,7 +126,7 @@ export default async function RootLayout({
                     globalProperties={openPanelGlobalProperties}
                 />
                 {identifyProps && <IdentifyComponent {...identifyProps} />}
-                <AuthProvider>
+                <AuthProvider session={session}>
                     <RecipeTabsProvider>{children}</RecipeTabsProvider>
                 </AuthProvider>
             </body>

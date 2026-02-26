@@ -2,8 +2,6 @@
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import Link from 'next/link';
-import { getServerAuthSession } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 
 import { HeaderSearch } from '@/components/search/HeaderSearch';
 import { buildRecipeFilterHref } from '@/lib/recipeFilters';
@@ -11,7 +9,7 @@ import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
 
-import { HeaderAuthClient } from './HeaderAuthClient';
+import { HeaderAuth } from './HeaderAuth';
 import { RecipeTabs } from './RecipeTabs';
 
 const categories = [
@@ -166,23 +164,7 @@ function MobileMenu() {
     );
 }
 
-export async function Header() {
-    const session = await getServerAuthSession('header');
-
-    let profile: { photoUrl: string | null; nickname: string | null } | null = null;
-
-    if (session?.user?.id) {
-        const userProfile = await prisma.profile.findUnique({
-            where: { userId: session.user.id },
-        });
-        if (userProfile) {
-            profile = {
-                photoUrl: userProfile.photoUrl,
-                nickname: userProfile.nickname,
-            };
-        }
-    }
-
+export function Header() {
     return (
         <header
             className={css({
@@ -365,10 +347,7 @@ export async function Header() {
                         <HeaderSearch />
                     </div>
                     <div className={css({ flex: '0 0 auto' })}>
-                        <HeaderAuthClient
-                            isAuthenticated={Boolean(session?.user?.id)}
-                            profile={profile}
-                        />
+                        <HeaderAuth />
                     </div>
                 </div>
             </div>

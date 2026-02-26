@@ -2,9 +2,49 @@ import type { ActivityFeedItem } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';
+import {
+    RatedActivity,
+    CookedActivity,
+    FavoritedActivity,
+    CommentedActivity,
+    CreatedActivity,
+    FollowedActivity,
+} from './activity';
 
 interface ActivitySidebarProps {
     activities: ActivityFeedItem[];
+}
+
+function getActivityComponent(activity: ActivityFeedItem) {
+    if (activity.targetUserName) {
+        return <FollowedActivity {...activity} />;
+    }
+
+    if (activity.actionLabel.includes('bewertet')) {
+        return <RatedActivity {...activity} />;
+    }
+
+    if (activity.actionLabel.includes('gekocht')) {
+        return <CookedActivity {...activity} />;
+    }
+
+    if (activity.actionLabel.includes('gespeichert')) {
+        return <FavoritedActivity {...activity} />;
+    }
+
+    if (activity.actionLabel.includes('kommentiert')) {
+        return <CommentedActivity {...activity} />;
+    }
+
+    if (
+        activity.actionLabel.includes('erstellt') ||
+        activity.actionLabel.includes('Einkaufsliste') ||
+        activity.actionLabel.includes('Plan')
+    ) {
+        return <CreatedActivity {...activity} />;
+    }
+
+    return <CreatedActivity {...activity} />;
 }
 
 export function ActivitySidebar({ activities }: ActivitySidebarProps) {
@@ -31,84 +71,7 @@ export function ActivitySidebar({ activities }: ActivitySidebarProps) {
 
             <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
                 {activities.map((activity) => (
-                    <div
-                        key={activity.id}
-                        className={css({
-                            display: 'flex',
-                            gap: '3',
-                            p: '3',
-                            borderRadius: 'xl',
-                            _hover: { bg: 'rgba(224,123,83,0.05)' },
-                            transition: 'background 150ms ease',
-                        })}
-                    >
-                        <span
-                            className={css({
-                                fontSize: 'md',
-                                display: 'grid',
-                                placeItems: 'center',
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: 'full',
-                                background: activity.iconBg,
-                                color: 'white',
-                                flexShrink: 0,
-                            })}
-                        >
-                            {activity.icon}
-                        </span>
-                        <div className={css({ flex: 1 })}>
-                            <Text size="sm" className={css({ fontWeight: '600', color: 'text' })}>
-                                {activity.userName}{' '}
-                                <span className={css({ fontWeight: '400', color: 'text-muted' })}>
-                                    {activity.actionLabel}
-                                </span>
-                                {activity.targetUserName && (
-                                    <>
-                                        {' '}
-                                        <span
-                                            className={css({ color: 'primary', fontWeight: '600' })}
-                                        >
-                                            {activity.targetUserName}
-                                        </span>
-                                        <span
-                                            className={css({
-                                                fontWeight: '400',
-                                                color: 'text-muted',
-                                            })}
-                                        >
-                                            {' '}
-                                            gefolgt
-                                        </span>
-                                    </>
-                                )}
-                            </Text>
-                            {activity.recipeTitle && (
-                                <Text
-                                    size="sm"
-                                    className={css({ color: 'primary', fontWeight: '600' })}
-                                >
-                                    {activity.recipeTitle}
-                                </Text>
-                            )}
-                            {activity.detail && (
-                                <Text
-                                    size="sm"
-                                    color="muted"
-                                    className={css({ mt: '1', fontSize: '0.75rem' })}
-                                >
-                                    {`“${activity.detail}”`}
-                                </Text>
-                            )}
-                            <Text
-                                size="sm"
-                                color="muted"
-                                className={css({ mt: '1', fontSize: '0.75rem' })}
-                            >
-                                {activity.timeAgo}
-                            </Text>
-                        </div>
-                    </div>
+                    <div key={activity.id}>{getActivityComponent(activity)}</div>
                 ))}
             </div>
 

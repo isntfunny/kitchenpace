@@ -58,6 +58,7 @@ export interface ActivityFeedItem {
     icon: string;
     iconBg: string;
     userName: string;
+    userId?: string;
     actionLabel: string;
     recipeTitle?: string;
     recipeId?: string;
@@ -65,6 +66,7 @@ export interface ActivityFeedItem {
     rating?: number;
     timeAgo: string;
     targetUserName?: string;
+    targetUserId?: string;
 }
 
 function formatTimeAgo(date: Date): string {
@@ -314,12 +316,14 @@ export async function fetchRecentActivities(limit = 6): Promise<ActivityFeedItem
             icon: base.icon,
             iconBg: base.bg,
             userName: user?.name || user?.profile?.nickname || 'Küchenfreund',
+            userId: user?.id,
             actionLabel,
             recipeTitle: recipe?.title,
             recipeId: recipe?.id,
             detail: log.metadata ? JSON.stringify(log.metadata) : undefined,
             timeAgo: formatTimeAgo(log.createdAt),
             targetUserName,
+            targetUserId: log.targetId || undefined,
         });
 
         // Stop when we have enough activities

@@ -19,6 +19,8 @@ export const metadata: Metadata = {
         'Durchsuche unsere Rezepte-Sammlung. Filtere nach Kategorien, Zutaten und Tags. Finde dein nächstes Lieblingsrezept.',
 };
 
+export const revalidate = 60;
+
 const toURLSearchParams = async (searchParams: RecipesPageProps['searchParams']) => {
     const params = await searchParams;
     const search = new URLSearchParams();

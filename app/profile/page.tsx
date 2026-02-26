@@ -15,6 +15,8 @@ export const metadata: Metadata = {
         'Dein persönliches KüchenTakt Profil. Verwalte deine Favoriten, erstellte Rezepte und Kontoeinstellungen.',
 };
 
+export const dynamic = 'force-dynamic';
+
 const ProfilePage = async () => {
     const session = await getServerAuthSession('profile/page');
 

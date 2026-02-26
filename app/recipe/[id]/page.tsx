@@ -10,6 +10,7 @@ import { container } from 'styled-system/patterns';
 import { RecipeDetailClient } from './RecipeDetailClient';
 
 export const revalidate = 60;
+export const dynamicParams = true;
 
 type RecipePageParams = {
     id: string;
@@ -65,17 +66,6 @@ export async function generateMetadata({ params }: RecipePageProps): Promise<Met
     const resolvedParams = await params;
     const recipe = await fetchRecipeBySlug(resolvedParams.id);
     return buildRecipeMetadata(recipe);
-}
-
-export async function generateStaticParams() {
-    const { prisma } = await import('@/lib/prisma');
-    const recipes = await prisma.recipe.findMany({
-        where: { publishedAt: { not: null } },
-        select: { slug: true },
-        take: 100,
-    });
-
-    return recipes.map((recipe) => ({ id: recipe.slug }));
 }
 
 export default async function RecipePage({ params }: RecipePageProps) {

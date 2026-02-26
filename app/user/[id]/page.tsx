@@ -9,6 +9,8 @@ import { container } from 'styled-system/patterns';
 
 import { UserProfileClient, type UserProfileData } from './UserProfileClient';
 
+export const revalidate = 60;
+
 type UserProfileParams = {
     id: string;
 };

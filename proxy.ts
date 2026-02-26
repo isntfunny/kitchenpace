@@ -4,7 +4,7 @@ const OPENPANEL_ID = process.env.OPENPANEL_ID;
 const OPENPANEL_TOKEN = process.env.OPENPANEL_TOKEN;
 const OPENPANEL_API_URL = process.env.OPENPANEL_API_URL;
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
 
     if (!OPENPANEL_ID || !OPENPANEL_TOKEN || !OPENPANEL_API_URL) {

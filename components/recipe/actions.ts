@@ -81,5 +81,3 @@ export async function getTagFacets(): Promise<TagFacet[]> {
         count: bucket.doc_count,
     }));
 }
-
-export type { TagFacet };

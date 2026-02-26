@@ -2,6 +2,36 @@
 
 import { prisma } from '@/lib/prisma';
 
+type ShoppingCategory =
+    | 'GEMUESE'
+    | 'OBST'
+    | 'FLEISCH'
+    | 'FISCH'
+    | 'MILCHPRODUKTE'
+    | 'GEWURZE'
+    | 'BACKEN'
+    | 'GETRAENKE'
+    | 'SONSTIGES';
+
+const SHOPPING_CATEGORIES: ShoppingCategory[] = [
+    'GEMUESE',
+    'OBST',
+    'FLEISCH',
+    'FISCH',
+    'MILCHPRODUKTE',
+    'GEWURZE',
+    'BACKEN',
+    'GETRAENKE',
+    'SONSTIGES',
+];
+
+function toShoppingCategory(category?: string): ShoppingCategory | null {
+    if (!category) return null;
+    const normalized = category.toUpperCase().replace(/[^A-Z]/g, '');
+    const match = SHOPPING_CATEGORIES.find((c) => c.includes(normalized) || normalized.includes(c));
+    return match ?? 'SONSTIGES';
+}
+
 export interface RecipeIngredientInput {
     ingredientId: string;
     amount: string;
@@ -91,7 +121,7 @@ export async function createIngredient(name: string, category?: string, units: s
         create: {
             name,
             slug,
-            category: category || null,
+            category: toShoppingCategory(category),
             units: units.length > 0 ? units : [name.includes('g') ? 'g' : 'Stück'],
         },
     });

@@ -74,8 +74,13 @@ async function getUserProfile(userId: string): Promise<UserProfileData | null> {
                     rating: true,
                     prepTime: true,
                     cookTime: true,
-                    category: {
-                        select: { name: true },
+                    categories: {
+                        select: {
+                            category: {
+                                select: { name: true },
+                            },
+                        },
+                        take: 1,
                     },
                 },
             },
@@ -138,7 +143,7 @@ async function getUserProfile(userId: string): Promise<UserProfileData | null> {
             image:
                 recipe.imageUrl ??
                 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80',
-            category: recipe.category?.name ?? 'Allgemein',
+            category: recipe.categories[0]?.category?.name ?? 'Allgemein',
             rating: recipe.rating ?? 0,
             prepTime: recipe.prepTime,
             cookTime: recipe.cookTime,
@@ -167,7 +172,7 @@ export async function generateMetadata({ params }: UserProfileProps): Promise<Me
             title: 'Benutzer nicht gefunden | KüchenTakt',
         };
     }
-    return buildUserMetadata(user.name, user.id, user.profile?.photoUrl);
+    return buildUserMetadata(user.name, user.id, user.avatar);
 }
 
 export default async function UserProfilePage({ params }: UserProfileProps) {

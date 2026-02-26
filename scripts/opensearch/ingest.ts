@@ -32,7 +32,7 @@ type RecipeWithRelations = {
     updatedAt: Date;
     tags: Array<{ tag: { name: string } | null }>;
     recipeIngredients: Array<{ ingredient: { name: string } | null }>;
-    category: { name: string; slug: string } | null;
+    categories: Array<{ category: { name: string; slug: string } | null }>;
 };
 
 type RecipeDocument = {
@@ -105,11 +105,13 @@ const toDocument = (recipe: RecipeWithRelations): RecipeDocument => {
         .map((entry) => entry.ingredient?.name)
         .filter((name): name is string => Boolean(name));
 
+    const category = recipe.categories[0]?.category;
+
     const keywords = [
         recipe.title,
         recipe.description,
-        recipe.category?.name,
-        recipe.category?.slug,
+        category?.name,
+        category?.slug,
         ...tags,
         ...ingredients,
     ]
@@ -121,8 +123,8 @@ const toDocument = (recipe: RecipeWithRelations): RecipeDocument => {
         slug: recipe.slug,
         title: recipe.title,
         description: recipe.description ?? '',
-        category: recipe.category?.name ?? undefined,
-        categorySlug: recipe.category?.slug ?? undefined,
+        category: category?.name ?? undefined,
+        categorySlug: category?.slug ?? undefined,
         tags,
         ingredients,
         difficulty: recipe.difficulty,

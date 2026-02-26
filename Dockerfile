@@ -28,13 +28,14 @@ RUN addgroup --system --gid 1001 nodejs \
 
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --chown=nextjs:nodejs . .
-RUN mkdir -p /app/.next && chown -R nextjs:nodejs /app/.next
-
-USER nextjs
 
 RUN npx prisma generate
 
+RUN chown -R nextjs:nodejs /app
+
 RUN chmod +x ./docker-entrypoint.sh || true
+
+USER nextjs
 
 EXPOSE 3000
 

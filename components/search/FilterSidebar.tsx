@@ -4,7 +4,7 @@ import * as Accordion from '@radix-ui/react-accordion';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import * as Slider from '@radix-ui/react-slider';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 
 import type { CategoryOption } from '@/app/actions/filters';
 import type { RecipeFilterSearchParams } from '@/lib/recipeFilters';
@@ -468,6 +468,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
 
     // Sort and filter tags: selected first, then by count descending
     const tagFacets = facets?.tags;
+    const ingredientFacets = facets?.ingredients;
 
     const tagCountMap = useMemo(() => {
         const map = new Map<string, number>();
@@ -478,6 +479,16 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
         });
         return map;
     }, [tagFacets]);
+
+    const ingredientCountMap = useMemo(() => {
+        const map = new Map<string, number>();
+        ingredientFacets?.forEach((facet) => {
+            if (!facet.key) return;
+            map.set(facet.key, facet.count);
+            map.set(normalizeTag(facet.key), facet.count);
+        });
+        return map;
+    }, [ingredientFacets]);
 
     const sortedTags = useMemo(() => {
         const selectedTags = filters.tags ?? [];
@@ -506,34 +517,67 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
         });
     }, [tags, tagCountMap, tagQuery, filters.tags]);
 
-    const ingredientSuggestions = useMemo(() => {
-        const query = ingredientQuery.toLowerCase().trim();
-        return ingredients
-            .filter(
-                (name) =>
-                    name.toLowerCase().includes(query) &&
-                    !(filters.ingredients ?? []).includes(name),
-            )
-            .slice(0, 6);
-    }, [ingredientQuery, ingredients, filters.ingredients]);
+    const ingredientOptionNames = useMemo(() => {
+        const selected = [...(filters.ingredients ?? []), ...(filters.excludeIngredients ?? [])];
+        const facetKeys =
+            ingredientFacets
+                ?.map((facet) => facet.key)
+                .filter((key): key is string => Boolean(key)) ?? [];
+        return Array.from(new Set([...ingredients, ...selected, ...facetKeys]));
+    }, [ingredients, ingredientFacets, filters.ingredients, filters.excludeIngredients]);
+
+    const resolveIngredientName = useCallback(
+        (value: string) => {
+            const normalized = normalizeTag(value);
+            return ingredientOptionNames.find((name) => normalizeTag(name) === normalized);
+        },
+        [ingredientOptionNames],
+    );
+
+    const sortedIngredients = useMemo(() => {
+        const selectedIngredients = filters.ingredients ?? [];
+        const data = ingredientOptionNames.map((name) => {
+            const normalized = normalizeTag(name);
+            const count = ingredientCountMap.get(name) ?? ingredientCountMap.get(normalized) ?? 0;
+            return {
+                name,
+                count,
+                selected: selectedIngredients.includes(name),
+            };
+        });
+
+        let filtered = data;
+        if (ingredientQuery.trim()) {
+            const query = ingredientQuery.toLowerCase().trim();
+            filtered = data.filter((item) => item.name.toLowerCase().includes(query));
+        }
+
+        return filtered.sort((a, b) => {
+            if (a.selected && !b.selected) return -1;
+            if (!a.selected && b.selected) return 1;
+            return b.count - a.count;
+        });
+    }, [ingredientOptionNames, ingredientCountMap, ingredientQuery, filters.ingredients]);
 
     const excludeSuggestions = useMemo(() => {
         const query = excludeQuery.toLowerCase().trim();
-        return ingredients
+        return ingredientOptionNames
             .filter(
                 (name) =>
                     name.toLowerCase().includes(query) &&
                     !(filters.excludeIngredients ?? []).includes(name),
             )
             .slice(0, 6);
-    }, [excludeQuery, ingredients, filters.excludeIngredients]);
+    }, [excludeQuery, ingredientOptionNames, filters.excludeIngredients]);
 
-    const addIngredient = (value: string, field: 'ingredients' | 'excludeIngredients') => {
+    const selectIngredient = (value: string, field: 'ingredients' | 'excludeIngredients') => {
         const trimmed = value.trim();
         if (!trimmed) return;
-        const existing = filters[field] ?? [];
-        if (existing.includes(trimmed)) return;
-        onFiltersChange({ [field]: [...existing, trimmed] });
+        const resolved = resolveIngredientName(trimmed);
+        if (!resolved) return;
+        const existing = (filters[field] ?? []) as string[];
+        if (existing.includes(resolved)) return;
+        onFiltersChange({ [field]: [...existing, resolved] });
         if (field === 'ingredients') {
             setIngredientQuery('');
         } else {
@@ -641,142 +685,95 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     description="Nur Gerichte mit den richtigen Zutaten"
                 >
                     <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
-                        <div className={css({ display: 'flex', gap: '2' })}>
-                            <input
-                                type="text"
-                                value={ingredientQuery}
-                                onChange={(event) => setIngredientQuery(event.target.value)}
-                                onKeyDown={(event) => {
-                                    if (event.key === 'Enter' && ingredientQuery.trim()) {
-                                        event.preventDefault();
-                                        addIngredient(ingredientQuery, 'ingredients');
+                        <input
+                            type="text"
+                            value={ingredientQuery}
+                            onChange={(event) => setIngredientQuery(event.target.value)}
+                            placeholder="Zutaten durchsuchen"
+                            className={tagSearchInputClass}
+                        />
+                        {sortedIngredients.length === 0 ? (
+                            <p className={css({ fontSize: 'xs', color: 'text-muted' })}>
+                                Keine Zutaten gefunden.
+                            </p>
+                        ) : (
+                            <div className={tagScrollContainerClass}>
+                                <ToggleGroup.Root
+                                    type="multiple"
+                                    className={css({
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '2',
+                                        width: '100%',
+                                    })}
+                                    aria-label="Zutaten filtern"
+                                    value={filters.ingredients ?? []}
+                                    onValueChange={(next) =>
+                                        onFiltersChange({
+                                            ingredients: next,
+                                        } as Partial<RecipeFilterSearchParams>)
                                     }
-                                }}
-                                placeholder="Zutat eingeben"
-                                className={css({
-                                    flex: 1,
-                                    borderRadius: 'lg',
-                                    border: '1px solid',
-                                    borderColor: 'light',
-                                    background: 'surface',
-                                    px: '3',
-                                    py: '2.5',
-                                    fontSize: 'sm',
-                                })}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => addIngredient(ingredientQuery, 'ingredients')}
-                                className={css({
-                                    borderRadius: 'lg',
-                                    background: 'primary',
-                                    color: 'light',
-                                    px: '4',
-                                    py: '2.5',
-                                    fontSize: 'sm',
-                                    fontWeight: '600',
-                                })}
-                            >
-                                Hinzufügen
-                            </button>
-                        </div>
-                        {ingredientSuggestions.length > 0 && (
-                            <div className={css({ display: 'grid', gap: '2' })}>
-                                {ingredientSuggestions.map((name) => (
-                                    <button
-                                        type="button"
-                                        key={`suggestion-${name}`}
-                                        onClick={() => addIngredient(name, 'ingredients')}
-                                        className={css({
-                                            textAlign: 'left',
-                                            fontSize: 'xs',
-                                            color: 'text-muted',
-                                            padding: '2',
-                                            borderRadius: 'md',
-                                            border: '1px solid',
-                                            borderColor: 'light',
-                                        })}
-                                    >
-                                        {name}
-                                    </button>
-                                ))}
+                                >
+                                    {sortedIngredients.map((ingredient) => {
+                                        const itemClass = cx(
+                                            chipItemClass,
+                                            ingredient.count === 0 &&
+                                                !ingredient.selected &&
+                                                chipZeroClass,
+                                        );
+                                        const badgeClass =
+                                            ingredient.count === 0
+                                                ? chipBadgeMutedClass
+                                                : chipBadgeClass;
+                                        return (
+                                            <ToggleGroup.Item
+                                                key={`ingredient-${ingredient.name}`}
+                                                value={ingredient.name}
+                                                className={itemClass}
+                                            >
+                                                <span>{ingredient.name}</span>
+                                                <span className={badgeClass}>
+                                                    {ingredient.count}
+                                                </span>
+                                            </ToggleGroup.Item>
+                                        );
+                                    })}
+                                </ToggleGroup.Root>
                             </div>
                         )}
-                        <ToggleGroup.Root
-                            type="multiple"
-                            className={chipGroupClass}
-                            aria-label="Ausgewählte Zutaten"
-                            value={filters.ingredients ?? []}
-                            onValueChange={(next) =>
-                                onFiltersChange({
-                                    ingredients: next,
-                                } as Partial<RecipeFilterSearchParams>)
-                            }
-                        >
-                            {(filters.ingredients ?? []).map((ingredient) => (
-                                <ToggleGroup.Item
-                                    key={`selected-${ingredient}`}
-                                    value={ingredient}
-                                    className={removableChipClass}
-                                >
-                                    <span>{ingredient}</span>
-                                    <span className={chipRemoveIconClass} aria-hidden>
-                                        ×
-                                    </span>
-                                </ToggleGroup.Item>
-                            ))}
-                        </ToggleGroup.Root>
                     </div>
                 </FilterSection>
 
                 <FilterSection value={FILTER_SECTION_IDS.exclude} title="Enthält nicht">
                     <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
-                        <div className={css({ display: 'flex', gap: '2' })}>
-                            <input
-                                type="text"
-                                value={excludeQuery}
-                                onChange={(event) => setExcludeQuery(event.target.value)}
-                                onKeyDown={(event) => {
-                                    if (event.key === 'Enter' && excludeQuery.trim()) {
-                                        event.preventDefault();
-                                        addIngredient(excludeQuery, 'excludeIngredients');
-                                    }
-                                }}
-                                placeholder="Allergene oder Zutaten"
-                                className={css({
-                                    flex: 1,
-                                    borderRadius: 'lg',
-                                    border: '1px solid',
-                                    borderColor: 'light',
-                                    background: 'surface',
-                                    px: '3',
-                                    py: '2.5',
-                                    fontSize: 'sm',
-                                })}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => addIngredient(excludeQuery, 'excludeIngredients')}
-                                className={css({
-                                    borderRadius: 'lg',
-                                    background: 'primary-dark',
-                                    color: 'light',
-                                    px: '4',
-                                    py: '2.5',
-                                    fontSize: 'sm',
-                                    fontWeight: '600',
-                                })}
-                            >
-                                Hinzufügen
-                            </button>
-                        </div>
+                        <input
+                            type="text"
+                            value={excludeQuery}
+                            onChange={(event) => setExcludeQuery(event.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                    event.preventDefault();
+                                    selectIngredient(excludeQuery, 'excludeIngredients');
+                                }
+                            }}
+                            placeholder="Allergene oder Zutaten"
+                            className={css({
+                                borderRadius: 'lg',
+                                border: '1px solid',
+                                borderColor: 'light',
+                                background: 'surface',
+                                px: '3',
+                                py: '2.5',
+                                fontSize: 'sm',
+                            })}
+                        />
                         {excludeSuggestions.length > 0 && (
                             <div className={css({ display: 'grid', gap: '2' })}>
                                 {excludeSuggestions.map((name) => (
                                     <button
                                         type="button"
                                         key={`exclude-${name}`}
-                                        onClick={() => addIngredient(name, 'excludeIngredients')}
+                                        onClick={() => selectIngredient(name, 'excludeIngredients')}
                                         className={css({
                                             textAlign: 'left',
                                             fontSize: 'xs',

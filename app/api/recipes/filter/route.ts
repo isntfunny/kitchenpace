@@ -198,8 +198,8 @@ export async function GET(request: NextRequest) {
                 from,
                 size: limit,
                 aggs: {
-                    tags: { terms: { field: 'tags', size: 30 } },
-                    ingredients: { terms: { field: 'ingredients', size: 30 } },
+                    tags: { terms: { field: 'tags', size: 60 } },
+                    ingredients: { terms: { field: 'ingredients', size: 60 } },
                     difficulties: { terms: { field: 'difficulty', size: 5 } },
                     categories: { terms: { field: 'category', size: 8 } },
                     totalTime: {

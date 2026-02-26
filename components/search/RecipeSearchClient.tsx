@@ -54,6 +54,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     const resetFilters = () => {
         setFilters((prev) => ({
             ...prev,
+            query: undefined,
             tags: [],
             mealTypes: [],
             ingredients: [],
@@ -163,6 +164,59 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                         <p className={css({ fontSize: 'xs', color: 'text-muted', marginTop: '1' })}>
                             {resultStatusText}
                         </p>
+                        <div
+                            className={css({
+                                marginTop: '3',
+                                display: 'flex',
+                                gap: '2',
+                                alignItems: 'center',
+                                width: '100%',
+                                maxWidth: '420px',
+                            })}
+                        >
+                            <input
+                                type="search"
+                                value={filters.query ?? ''}
+                                onChange={(event) => {
+                                    const nextValue = event.target.value;
+                                    const sanitized = nextValue.trim();
+                                    updateFilters({
+                                        query: sanitized.length > 0 ? nextValue : undefined,
+                                    });
+                                }}
+                                placeholder="Rezepte, Zutaten oder Techniken suchen"
+                                aria-label="Rezepte durchsuchen"
+                                className={css({
+                                    flex: 1,
+                                    borderRadius: 'lg',
+                                    border: '1px solid',
+                                    borderColor: 'light',
+                                    background: 'surface',
+                                    px: '3',
+                                    py: '2.5',
+                                    fontSize: 'sm',
+                                })}
+                            />
+                            {filters.query ? (
+                                <button
+                                    type="button"
+                                    onClick={() => updateFilters({ query: undefined })}
+                                    className={css({
+                                        borderRadius: 'lg',
+                                        background: 'surface',
+                                        border: '1px solid',
+                                        borderColor: 'light',
+                                        fontSize: 'xs',
+                                        fontWeight: '600',
+                                        px: '3',
+                                        py: '2',
+                                        color: 'text-muted',
+                                    })}
+                                >
+                                    Suche löschen
+                                </button>
+                            ) : null}
+                        </div>
                     </div>
                     <div
                         className={css({

@@ -27,7 +27,7 @@ services:
             plugins.security.disabled: 'true'
             OPENSEARCH_JAVA_OPTS: '-Xms512m -Xmx512m'
             bootstrap.memory_lock: 'true'
-            OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-admin}
+            OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-1snt-Funny1}
         ulimits:
             memlock:
                 soft: -1
@@ -51,6 +51,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
+            target: runner
             args:
                 DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
                 DEBUG: ${DEBUG:-0}
@@ -75,17 +76,17 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
+            target: worker
         container_name: kitchenpace-opensearch-sync
         depends_on:
             postgres:
                 condition: service_healthy
             opensearch:
                 condition: service_healthy
-        command: ['npm', 'run', 'opensearch:sync']
         restart: unless-stopped
         environment:
             DATABASE_URL: postgresql://kitchenpace:${POSTGRES_PASSWORD:-kitchenpace_secret}@postgres:5432/kitchenpace
-            NODE_ENV: development
+            NODE_ENV: production
             OPENSEARCH_URL: http://opensearch:9200
             OPENSEARCH_INDEX: recipes
             OPENSEARCH_BATCH_SIZE: 200

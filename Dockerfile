@@ -61,7 +61,6 @@ RUN addgroup --system --gid 1001 nodejs \
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
 RUN chown -R nextjs:nodejs /app
 
@@ -73,3 +72,17 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
+
+FROM node:20-alpine AS worker
+
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY prisma ./prisma
+COPY scripts ./scripts
+COPY lib ./lib
+COPY package.json ./
+COPY tsconfig.json ./
+COPY prisma.config.ts ./
+
+CMD ["npx", "tsx", "scripts/opensearch/ingest.ts"]

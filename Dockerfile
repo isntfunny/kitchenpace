@@ -79,7 +79,7 @@ WORKDIR /app
 
 ARG DATABASE_URL
 ARG TRIGGER_API_URL
-ARG TRIGGER_API_KEY
+ARG TRIGGER_ACCESS_TOKEN
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY prisma ./prisma
@@ -93,6 +93,6 @@ COPY trigger.config.ts ./
 
 ENV DATABASE_URL=${DATABASE_URL}
 ENV TRIGGER_API_URL=${TRIGGER_API_URL}
-ENV TRIGGER_API_KEY=${TRIGGER_API_KEY}
+ENV TRIGGER_ACCESS_TOKEN=${TRIGGER_ACCESS_TOKEN}
 
 CMD ["npx", "trigger.dev@latest", "deploy"]

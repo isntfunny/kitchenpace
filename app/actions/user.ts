@@ -5,14 +5,16 @@ import { prisma } from '@/lib/prisma';
 
 export interface UserStats {
     recipeCount: number;
+    draftCount: number;
     favoriteCount: number;
     cookedCount: number;
     ratingCount: number;
 }
 
 export async function fetchUserStats(userId: string): Promise<UserStats> {
-    const [recipeCount, favoriteCount, cookedCount, ratingCount] = await Promise.all([
+    const [recipeCount, draftCount, favoriteCount, cookedCount, ratingCount] = await Promise.all([
         prisma.recipe.count({ where: { authorId: userId, publishedAt: { not: null } } }),
+        prisma.recipe.count({ where: { authorId: userId, status: 'DRAFT' } }),
         prisma.favorite.count({ where: { userId } }),
         prisma.userCookHistory.count({ where: { userId } }),
         prisma.userRating.count({ where: { userId } }),
@@ -20,6 +22,7 @@ export async function fetchUserStats(userId: string): Promise<UserStats> {
 
     return {
         recipeCount,
+        draftCount,
         favoriteCount,
         cookedCount,
         ratingCount,

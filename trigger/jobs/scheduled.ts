@@ -4,7 +4,13 @@ import { task, schedules, logger } from '@trigger.dev/sdk';
 import { sendEmail } from '../lib/email';
 import { renderEmailTemplate } from '../lib/email-templates';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    datasources: {
+        db: {
+            url: process.env.DATABASE_URL,
+        },
+    },
+});
 
 export const dailyRecipeTask = task({
     id: 'daily-recipe',

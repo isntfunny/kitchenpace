@@ -261,20 +261,27 @@ const HistogramBar = ({ facet, min, max, interval, onClick }: HistogramBarProps)
 
     const domainMin = min;
     const domainMax = max;
+    const domainRange = domainMax - domainMin || interval;
 
     const maxCount = Math.max(...buckets.map((b) => b.count), 1);
 
     const sortedBuckets = [...buckets].sort((a, b) => a.key - b.key);
+
+    const bucketWidthPercent = (interval / domainRange) * 100;
 
     return (
         <div className={histogramContainerClass}>
             {sortedBuckets.map((bucket) => {
                 const bucketStart = bucket.key;
                 const bucketEnd = bucket.key + interval;
-                if (bucketEnd < domainMin || bucketStart > domainMax) return null;
+
+                const isOutsideRange = bucketEnd < domainMin || bucketStart > domainMax;
+                const isGrayed = isOutsideRange;
 
                 const heightPercent = (bucket.count / maxCount) * 100;
                 const intensity = Math.max(0.15, bucket.count / maxCount);
+
+                const leftPercent = ((bucketStart - domainMin) / domainRange) * 100;
 
                 return (
                     <Tooltip.Provider key={bucket.key} delayDuration={200}>
@@ -284,9 +291,16 @@ const HistogramBar = ({ facet, min, max, interval, onClick }: HistogramBarProps)
                                     className={histogramBarClass}
                                     style={{
                                         height: `${heightPercent}%`,
-                                        backgroundColor: `rgba(249, 115, 22, ${intensity})`,
+                                        width: `${bucketWidthPercent}%`,
+                                        marginLeft: `${leftPercent}%`,
+                                        backgroundColor: isGrayed
+                                            ? 'rgba(200, 200, 200, 0.3)'
+                                            : `rgba(249, 115, 22, ${intensity})`,
+                                        cursor: isGrayed ? 'not-allowed' : 'pointer',
+                                        opacity: isGrayed ? 0.4 : 1,
                                     }}
                                     onClick={(e) => {
+                                        if (isGrayed) return;
                                         e.stopPropagation();
                                         onClick?.(bucket.key);
                                     }}

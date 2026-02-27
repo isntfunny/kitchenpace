@@ -241,10 +241,19 @@ export function RecipeTabsProvider({
     const unpinRecipe = useCallback(
         async (recipeId: string) => {
             if (!isAuthenticated) {
-                updateTabs((prev) => ({
-                    pinned: prev.pinned.filter((item) => item.id !== recipeId),
-                    recent: prev.recent,
-                }));
+                updateTabs((prev) => {
+                    const wasPinned = prev.pinned.find((item) => item.id === recipeId);
+                    if (!wasPinned) return prev;
+
+                    const alreadyInRecent = prev.recent.some((item) => item.id === recipeId);
+
+                    return {
+                        pinned: prev.pinned.filter((item) => item.id !== recipeId),
+                        recent: alreadyInRecent
+                            ? prev.recent
+                            : [wasPinned, ...prev.recent].slice(0, MAX_RECENT),
+                    };
+                });
                 return;
             }
 

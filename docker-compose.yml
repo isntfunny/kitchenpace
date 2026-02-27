@@ -79,6 +79,8 @@ services:
             target: worker
             args:
                 DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
+                TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
+                TRIGGER_API_KEY: ${TRIGGER_API_KEY:-}
         container_name: kitchenpace-worker
         depends_on:
             postgres:

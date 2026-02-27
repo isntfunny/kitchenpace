@@ -78,6 +78,8 @@ FROM node:20-alpine AS worker
 WORKDIR /app
 
 ARG DATABASE_URL
+ARG TRIGGER_API_URL
+ARG TRIGGER_API_KEY
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY prisma ./prisma
@@ -90,5 +92,7 @@ COPY prisma.config.ts ./
 COPY trigger.config.ts ./
 
 ENV DATABASE_URL=${DATABASE_URL}
+ENV TRIGGER_API_URL=${TRIGGER_API_URL}
+ENV TRIGGER_API_KEY=${TRIGGER_API_KEY}
 
 CMD ["npx", "trigger.dev@latest", "deploy"]

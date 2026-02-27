@@ -191,38 +191,52 @@ export async function GET(request: NextRequest) {
         const openSearchPage = Math.max(0, page - 1);
         const from = openSearchPage * limit;
 
-        const response = await opensearchClient.search({
-            index: OPENSEARCH_INDEX,
-            body: {
-                query: sanitizedQuery,
-                sort: [{ rating: 'desc' }, { publishedAt: 'desc' }],
-                from,
-                size: limit,
-                aggs: {
-                    tags: { terms: { field: 'tags', size: 60 } },
-                    ingredients: { terms: { field: 'ingredients', size: 60 } },
-                    difficulties: { terms: { field: 'difficulty', size: 5 } },
-                    categories: { terms: { field: 'category', size: 8 } },
-                    totalTime: {
-                        histogram: { field: 'totalTime', interval: 5, min_doc_count: 0 },
-                    },
-                    prepTime: { histogram: { field: 'prepTime', interval: 5, min_doc_count: 0 } },
-                    cookTime: { histogram: { field: 'cookTime', interval: 5, min_doc_count: 0 } },
-                    rating: { histogram: { field: 'rating', interval: 1, min_doc_count: 0 } },
-                    cookCount: {
-                        histogram: { field: 'cookCount', interval: 10, min_doc_count: 0 },
+        const [dataResponse, facetsResponse] = await Promise.all([
+            opensearchClient.search({
+                index: OPENSEARCH_INDEX,
+                body: {
+                    query: sanitizedQuery,
+                    sort: [{ rating: 'desc' }, { publishedAt: 'desc' }],
+                    from,
+                    size: limit,
+                    track_total_hits: true,
+                },
+            }),
+            opensearchClient.search({
+                index: OPENSEARCH_INDEX,
+                body: {
+                    query: sanitizedQuery,
+                    size: 0,
+                    aggs: {
+                        tags: { terms: { field: 'tags', size: 60 } },
+                        ingredients: { terms: { field: 'ingredients', size: 60 } },
+                        difficulties: { terms: { field: 'difficulty', size: 5 } },
+                        categories: { terms: { field: 'category', size: 8 } },
+                        totalTime: {
+                            histogram: { field: 'totalTime', interval: 5, min_doc_count: 0 },
+                        },
+                        prepTime: {
+                            histogram: { field: 'prepTime', interval: 5, min_doc_count: 0 },
+                        },
+                        cookTime: {
+                            histogram: { field: 'cookTime', interval: 5, min_doc_count: 0 },
+                        },
+                        rating: { histogram: { field: 'rating', interval: 1, min_doc_count: 0 } },
+                        cookCount: {
+                            histogram: { field: 'cookCount', interval: 10, min_doc_count: 0 },
+                        },
                     },
                 },
-            },
-        });
+            }),
+        ]);
 
-        const hits = (response.body.hits?.hits ?? []) as Array<{
+        const hits = (dataResponse.body.hits?.hits ?? []) as Array<{
             _source?: Record<string, unknown>;
         }>;
         const total =
-            typeof response.body.hits?.total === 'number'
-                ? response.body.hits.total
-                : (response.body.hits?.total?.value ?? 0);
+            typeof dataResponse.body.hits?.total === 'number'
+                ? dataResponse.body.hits.total
+                : (dataResponse.body.hits?.total?.value ?? 0);
 
         const payload = {
             data: hits
@@ -234,21 +248,21 @@ export async function GET(request: NextRequest) {
                 page,
                 limit,
                 facets: {
-                    tags: buildTermsAggregation(response.body.aggregations?.tags?.buckets),
+                    tags: buildTermsAggregation(facetsResponse.body.aggregations?.tags?.buckets),
                     ingredients: buildTermsAggregation(
-                        response.body.aggregations?.ingredients?.buckets,
+                        facetsResponse.body.aggregations?.ingredients?.buckets,
                     ),
                     difficulties: buildTermsAggregation(
-                        response.body.aggregations?.difficulties?.buckets,
+                        facetsResponse.body.aggregations?.difficulties?.buckets,
                     ),
                     categories: buildTermsAggregation(
-                        response.body.aggregations?.categories?.buckets,
+                        facetsResponse.body.aggregations?.categories?.buckets,
                     ),
-                    totalTime: buildHistogramFacet(response.body.aggregations?.totalTime, 10),
-                    prepTime: buildHistogramFacet(response.body.aggregations?.prepTime, 5),
-                    cookTime: buildHistogramFacet(response.body.aggregations?.cookTime, 5),
-                    rating: buildHistogramFacet(response.body.aggregations?.rating, 1),
-                    cookCount: buildHistogramFacet(response.body.aggregations?.cookCount, 10),
+                    totalTime: buildHistogramFacet(facetsResponse.body.aggregations?.totalTime, 5),
+                    prepTime: buildHistogramFacet(facetsResponse.body.aggregations?.prepTime, 5),
+                    cookTime: buildHistogramFacet(facetsResponse.body.aggregations?.cookTime, 5),
+                    rating: buildHistogramFacet(facetsResponse.body.aggregations?.rating, 1),
+                    cookCount: buildHistogramFacet(facetsResponse.body.aggregations?.cookCount, 10),
                 },
             },
         };

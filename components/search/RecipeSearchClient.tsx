@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { type FC, useEffect, useMemo, useState } from 'react';
+import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { CategoryOption } from '@/app/actions/filters';
 import type { RecipeCardData } from '@/app/actions/recipes';
@@ -28,6 +28,29 @@ type RecipeSearchClientProps = {
 
 const ARRAY_FILTER_KEYS = MULTI_VALUE_KEYS;
 const NUMERIC_FILTER_KEYS = NUMBER_KEYS;
+const buildSliderSignature = (filters: RecipeFilterSearchParams) =>
+    JSON.stringify([
+        filters.minTotalTime ?? null,
+        filters.maxTotalTime ?? null,
+        filters.minPrepTime ?? null,
+        filters.maxPrepTime ?? null,
+        filters.minCookTime ?? null,
+        filters.maxCookTime ?? null,
+        filters.minRating ?? null,
+        filters.minCookCount ?? null,
+    ]);
+
+const buildNonSliderSignature = (filters: RecipeFilterSearchParams) =>
+    JSON.stringify({
+        query: filters.query ?? null,
+        tags: filters.tags ?? [],
+        mealTypes: filters.mealTypes ?? [],
+        ingredients: filters.ingredients ?? [],
+        excludeIngredients: filters.excludeIngredients ?? [],
+        difficulty: filters.difficulty ?? [],
+        timeOfDay: filters.timeOfDay ?? [],
+        filterMode: filters.filterMode ?? 'and',
+    });
 
 export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     initialFilters,
@@ -38,6 +61,38 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     const { data, meta, loading, error } = useRecipeSearch(filters);
     const facets = meta?.facets;
     const pathname = usePathname();
+    const sliderSignature = useMemo(
+        () => buildSliderSignature(filters),
+        [
+            filters.minTotalTime,
+            filters.maxTotalTime,
+            filters.minPrepTime,
+            filters.maxPrepTime,
+            filters.minCookTime,
+            filters.maxCookTime,
+            filters.minRating,
+            filters.minCookCount,
+        ],
+    );
+
+    const nonSliderSignature = useMemo(
+        () => buildNonSliderSignature(filters),
+        [
+            filters.query,
+            filters.tags,
+            filters.mealTypes,
+            filters.ingredients,
+            filters.excludeIngredients,
+            filters.difficulty,
+            filters.timeOfDay,
+            filters.filterMode,
+        ],
+    );
+
+    const prevSliderSignatureRef = useRef(sliderSignature);
+    const prevNonSliderSignatureRef = useRef(nonSliderSignature);
+    const prevFiltersRef = useRef(filters);
+    const [stableFacets, setStableFacets] = useState(facets);
     const currentPage = filters.page ?? 1;
     const pageSize = meta?.limit ?? filters.limit ?? 30;
     const totalResults = meta?.total ?? 0;
@@ -147,6 +202,61 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
           ? `${totalResults} Rezepte gefunden`
           : 'Keine Rezepte mit den aktuellen Einstellungen gefunden.';
 
+    const evaluateMinChange = (prevValue?: number, nextValue?: number) => {
+        if (prevValue === nextValue) return 'none';
+        if (nextValue === undefined) return 'relax';
+        if (prevValue === undefined) return 'restrict';
+        return nextValue < prevValue ? 'relax' : 'restrict';
+    };
+
+    const evaluateMaxChange = (prevValue?: number, nextValue?: number) => {
+        if (prevValue === nextValue) return 'none';
+        if (nextValue === undefined) return 'relax';
+        if (prevValue === undefined) return 'restrict';
+        return nextValue > prevValue ? 'relax' : 'restrict';
+    };
+
+    useEffect(() => {
+        if (!facets) return;
+
+        const prevSliderSignature = prevSliderSignatureRef.current;
+        const prevNonSliderSignature = prevNonSliderSignatureRef.current;
+        const sliderChanged = sliderSignature !== prevSliderSignature;
+        const nonSliderChanged = nonSliderSignature !== prevNonSliderSignature;
+
+        prevSliderSignatureRef.current = sliderSignature;
+        prevNonSliderSignatureRef.current = nonSliderSignature;
+
+        const prevFilters = prevFiltersRef.current;
+        prevFiltersRef.current = filters;
+
+        if (!sliderChanged && !nonSliderChanged) {
+            if (!stableFacets) {
+                setStableFacets(facets);
+            }
+            return;
+        }
+
+        const sliderRelaxed = sliderChanged
+            ? [
+                  evaluateMinChange(prevFilters.minTotalTime, filters.minTotalTime),
+                  evaluateMaxChange(prevFilters.maxTotalTime, filters.maxTotalTime),
+                  evaluateMinChange(prevFilters.minPrepTime, filters.minPrepTime),
+                  evaluateMaxChange(prevFilters.maxPrepTime, filters.maxPrepTime),
+                  evaluateMinChange(prevFilters.minCookTime, filters.minCookTime),
+                  evaluateMaxChange(prevFilters.maxCookTime, filters.maxCookTime),
+                  evaluateMinChange(prevFilters.minRating, filters.minRating),
+                  evaluateMinChange(prevFilters.minCookCount, filters.minCookCount),
+              ].some((result) => result === 'relax')
+            : false;
+
+        if (sliderChanged && !nonSliderChanged && !sliderRelaxed) {
+            return;
+        }
+
+        setStableFacets(facets);
+    }, [facets, filters, sliderSignature, nonSliderSignature, stableFacets]);
+
     return (
         <div
             className={css({
@@ -169,7 +279,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                 <FilterSidebar
                     filters={filters}
                     options={filterOptions}
-                    facets={facets}
+                    facets={stableFacets ?? facets}
                     onFiltersChange={updateFilters}
                 />
             </aside>
@@ -483,7 +593,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                             <FilterSidebar
                                 filters={filters}
                                 options={filterOptions}
-                                facets={facets}
+                                facets={stableFacets ?? facets}
                                 onFiltersChange={updateFilters}
                             />
                         </div>

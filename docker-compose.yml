@@ -70,6 +70,8 @@ services:
             NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
             OPENSEARCH_URL: http://opensearch:9200
             OPENSEARCH_INDEX: recipes
+            TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
+            TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN:-}
         restart: unless-stopped
 
     worker:

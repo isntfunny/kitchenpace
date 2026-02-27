@@ -241,18 +241,14 @@ const histogramContainerClass = css({
     height: '32px',
     display: 'flex',
     alignItems: 'flex-end',
-    gap: '1px',
-    cursor: 'pointer',
+    gap: '2px',
     userSelect: 'none',
 });
 
 const histogramBarClass = css({
     flex: 1,
     borderRadius: 'sm',
-    transition: 'opacity 150ms ease',
-    '&:hover': {
-        opacity: 0.7,
-    },
+    transition: 'opacity 150ms ease, transform 120ms ease',
 });
 
 const HistogramBar = ({ facet, min, max, interval, onClick }: HistogramBarProps) => {
@@ -261,13 +257,10 @@ const HistogramBar = ({ facet, min, max, interval, onClick }: HistogramBarProps)
 
     const domainMin = min;
     const domainMax = max;
-    const domainRange = domainMax - domainMin || interval;
 
     const maxCount = Math.max(...buckets.map((b) => b.count), 1);
 
     const sortedBuckets = [...buckets].sort((a, b) => a.key - b.key);
-
-    const bucketWidthPercent = (interval / domainRange) * 100;
 
     return (
         <div className={histogramContainerClass}>
@@ -275,13 +268,15 @@ const HistogramBar = ({ facet, min, max, interval, onClick }: HistogramBarProps)
                 const bucketStart = bucket.key;
                 const bucketEnd = bucket.key + interval;
 
-                const isOutsideRange = bucketEnd < domainMin || bucketStart > domainMax;
-                const isGrayed = isOutsideRange;
-
+                const overlapsRange = bucketEnd > domainMin && bucketStart < domainMax;
                 const heightPercent = (bucket.count / maxCount) * 100;
-                const intensity = Math.max(0.15, bucket.count / maxCount);
+                const intensity = Math.max(0.18, bucket.count / maxCount);
 
-                const leftPercent = ((bucketStart - domainMin) / domainRange) * 100;
+                const backgroundColor = overlapsRange
+                    ? `rgba(249, 115, 22, ${intensity})`
+                    : 'rgba(180, 190, 197, 0.35)';
+                const cursor = overlapsRange ? 'pointer' : 'not-allowed';
+                const opacity = overlapsRange ? 1 : 0.6;
 
                 return (
                     <Tooltip.Provider key={bucket.key} delayDuration={200}>
@@ -291,16 +286,12 @@ const HistogramBar = ({ facet, min, max, interval, onClick }: HistogramBarProps)
                                     className={histogramBarClass}
                                     style={{
                                         height: `${heightPercent}%`,
-                                        width: `${bucketWidthPercent}%`,
-                                        marginLeft: `${leftPercent}%`,
-                                        backgroundColor: isGrayed
-                                            ? 'rgba(200, 200, 200, 0.3)'
-                                            : `rgba(249, 115, 22, ${intensity})`,
-                                        cursor: isGrayed ? 'not-allowed' : 'pointer',
-                                        opacity: isGrayed ? 0.4 : 1,
+                                        backgroundColor,
+                                        cursor,
+                                        opacity,
                                     }}
                                     onClick={(e) => {
-                                        if (isGrayed) return;
+                                        if (!overlapsRange) return;
                                         e.stopPropagation();
                                         onClick?.(bucket.key);
                                     }}

@@ -38,6 +38,37 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     const { data, meta, loading, error } = useRecipeSearch(filters);
     const facets = meta?.facets;
     const pathname = usePathname();
+    const currentPage = filters.page ?? 1;
+    const pageSize = meta?.limit ?? filters.limit ?? 30;
+    const totalResults = meta?.total ?? 0;
+    const totalPages = Math.max(1, Math.ceil(totalResults / pageSize));
+    const startItem = totalResults === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    const endItem = totalResults === 0 ? 0 : Math.min(currentPage * pageSize, totalResults);
+    const canGoPrev = currentPage > 1;
+    const canGoNext = currentPage < totalPages;
+
+    const pageNumbers = useMemo(() => {
+        const windowSize = Math.min(5, totalPages);
+        const half = Math.floor(windowSize / 2);
+        let start = Math.max(1, currentPage - half);
+        let end = start + windowSize - 1;
+        if (end > totalPages) {
+            end = totalPages;
+            start = Math.max(1, end - windowSize + 1);
+        }
+        return Array.from({ length: windowSize }, (_, index) => start + index);
+    }, [currentPage, totalPages]);
+
+    const handlePageChange = (nextPage: number) => {
+        const bounded = Math.min(Math.max(1, nextPage), totalPages);
+        setFilters((prev) => ({
+            ...prev,
+            page: bounded,
+        }));
+        if (typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
 
     useEffect(() => {
         setFilters(initialFilters);
@@ -106,7 +137,6 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         return arrayCount + numericCount + (hasQuery ? 1 : 0);
     }, [filters]);
 
-    const totalResults = meta?.total ?? 0;
     const filterSummaryText = activeFilterCount
         ? `${activeFilterCount} aktive Filter`
         : 'Alle Rezepte anzeigen';
@@ -269,21 +299,127 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                         Keine Rezepte mit den aktuellen Filtern gefunden.
                     </p>
                 ) : (
-                    <div
-                        className={css({
-                            display: 'grid',
-                            gridTemplateColumns: {
-                                base: '1fr',
-                                sm: 'repeat(2, minmax(0, 1fr))',
-                                lg: 'repeat(3, minmax(0, 1fr))',
-                            },
-                            gap: '4',
-                        })}
-                    >
-                        {data.map((recipe: RecipeCardData) => (
-                            <RecipeCard key={recipe.id} recipe={recipe} />
-                        ))}
-                    </div>
+                    <>
+                        <div
+                            className={css({
+                                display: 'grid',
+                                gridTemplateColumns: {
+                                    base: '1fr',
+                                    sm: 'repeat(2, minmax(0, 1fr))',
+                                    lg: 'repeat(3, minmax(0, 1fr))',
+                                },
+                                gap: '4',
+                            })}
+                        >
+                            {data.map((recipe: RecipeCardData) => (
+                                <RecipeCard key={recipe.id} recipe={recipe} />
+                            ))}
+                        </div>
+
+                        {totalPages > 1 && (
+                            <div
+                                className={css({
+                                    marginTop: '5',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '3',
+                                    alignItems: 'center',
+                                })}
+                            >
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        gap: '2',
+                                        flexWrap: 'wrap',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                    })}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={!canGoPrev}
+                                        className={css({
+                                            px: '3',
+                                            py: '2',
+                                            borderRadius: 'lg',
+                                            border: '1px solid',
+                                            borderColor: canGoPrev ? 'primary' : 'light',
+                                            color: canGoPrev ? 'primary' : 'text-muted',
+                                            background: 'surface',
+                                            cursor: canGoPrev ? 'pointer' : 'not-allowed',
+                                            fontSize: 'sm',
+                                            fontWeight: '600',
+                                            minWidth: '80px',
+                                        })}
+                                    >
+                                        Zurück
+                                    </button>
+
+                                    <div
+                                        className={css({
+                                            display: 'flex',
+                                            gap: '1',
+                                            alignItems: 'center',
+                                        })}
+                                    >
+                                        {pageNumbers.map((pageNumber) => {
+                                            const isActive = pageNumber === currentPage;
+                                            return (
+                                                <button
+                                                    key={pageNumber}
+                                                    type="button"
+                                                    onClick={() => handlePageChange(pageNumber)}
+                                                    aria-current={isActive ? 'page' : undefined}
+                                                    className={css({
+                                                        width: '36px',
+                                                        height: '36px',
+                                                        borderRadius: 'md',
+                                                        border: '1px solid',
+                                                        borderColor: isActive ? 'primary' : 'light',
+                                                        background: isActive
+                                                            ? 'primary'
+                                                            : 'surface',
+                                                        color: isActive ? 'white' : 'text',
+                                                        fontWeight: '600',
+                                                        fontSize: 'sm',
+                                                        cursor: 'pointer',
+                                                    })}
+                                                >
+                                                    {pageNumber}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={!canGoNext}
+                                        className={css({
+                                            px: '3',
+                                            py: '2',
+                                            borderRadius: 'lg',
+                                            border: '1px solid',
+                                            borderColor: canGoNext ? 'primary' : 'light',
+                                            color: canGoNext ? 'primary' : 'text-muted',
+                                            background: 'surface',
+                                            cursor: canGoNext ? 'pointer' : 'not-allowed',
+                                            fontSize: 'sm',
+                                            fontWeight: '600',
+                                            minWidth: '80px',
+                                        })}
+                                    >
+                                        Weiter
+                                    </button>
+                                </div>
+
+                                <p className={css({ fontSize: 'xs', color: 'text-muted' })}>
+                                    Zeige {startItem}-{endItem} von {totalResults} Rezepten
+                                </p>
+                            </div>
+                        )}
+                    </>
                 )}
             </section>
 

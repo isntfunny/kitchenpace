@@ -20,7 +20,7 @@ export const NUMBER_KEYS = [
     'minCookCount',
 ] as const;
 
-const DEFAULT_LIMIT = 24;
+const DEFAULT_LIMIT = 30;
 const DEFAULT_PAGE = 1;
 const DEFAULT_FILTER_MODE: RecipeFilterSearchParams['filterMode'] = 'and';
 
@@ -106,7 +106,7 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
             ? Math.max(DEFAULT_PAGE, pageValue ?? DEFAULT_PAGE)
             : DEFAULT_PAGE,
         limit: Number.isFinite(limitValue ?? NaN)
-            ? Math.min(Math.max(1, limitValue ?? DEFAULT_LIMIT), 48)
+            ? Math.min(Math.max(1, limitValue ?? DEFAULT_LIMIT), DEFAULT_LIMIT)
             : DEFAULT_LIMIT,
         filterMode: modeParam === 'or' || modeParam === 'OR' ? 'or' : DEFAULT_FILTER_MODE,
     };

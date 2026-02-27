@@ -3,9 +3,9 @@ import { randomBytes } from 'crypto';
 import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
 
-import { sendActivationEmail } from '@/lib/email';
 import { createLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
+import { trigger } from '@/lib/trigger';
 
 const log = createLogger('auth-register');
 
@@ -54,7 +54,15 @@ export async function POST(request: Request) {
                 },
             });
 
-            await sendActivationEmail(normalizedEmail, activationToken);
+            await trigger.sendTemplatedEmail({
+                to: normalizedEmail,
+                templateType: 'welcome',
+                variables: {
+                    name: name || 'Kochenthusiast',
+                    link: `${process.env.NEXT_PUBLIC_APP_URL}/auth/activate?token=${activationToken}`,
+                    linkText: 'Konto aktivieren',
+                },
+            });
 
             log.info('Resent activation email', { email: normalizedEmail });
 
@@ -85,7 +93,15 @@ export async function POST(request: Request) {
             },
         });
 
-        await sendActivationEmail(normalizedEmail, activationToken);
+        await trigger.sendTemplatedEmail({
+            to: normalizedEmail,
+            templateType: 'welcome',
+            variables: {
+                name: name || 'Kochenthusiast',
+                activationLink: `${process.env.NEXT_PUBLIC_APP_URL}/auth/activate?token=${activationToken}`,
+                appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+            },
+        });
 
         log.info('New user registered', { userId: user.id, email: normalizedEmail });
 

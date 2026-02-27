@@ -2,9 +2,9 @@ import crypto from 'crypto';
 
 import { NextResponse } from 'next/server';
 
-import { sendPasswordResetEmail } from '@/lib/email';
 import { createLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
+import { trigger } from '@/lib/trigger';
 
 const log = createLogger('auth-forgot-password');
 
@@ -42,7 +42,18 @@ export async function POST(request: Request) {
             },
         });
 
-        await sendPasswordResetEmail(user.email!, resetToken);
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+        await trigger.sendTemplatedEmail({
+            to: user.email!,
+            templateType: 'passwordReset',
+            variables: {
+                name: user.name || 'Kochenthusiast',
+                resetLink: `${appUrl}/auth/new-password?token=${resetToken}`,
+                link: `${appUrl}/auth/new-password?token=${resetToken}`,
+                linkText: 'Passwort zurücksetzen',
+            },
+        });
 
         log.info('Password reset requested', { userId: user.id, email: user.email });
 

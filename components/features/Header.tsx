@@ -166,6 +166,27 @@ function MobileMenu() {
                     </DropdownMenu.Item>
                     <DropdownMenu.Item asChild>
                         <Link
+                            href="/dashboard"
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '2',
+                                padding: '3',
+                                borderRadius: 'lg',
+                                textDecoration: 'none',
+                                fontSize: 'sm',
+                                fontFamily: 'body',
+                                color: 'text',
+                                transition: 'all 150ms ease',
+                                _hover: { background: 'rgba(224,123,83,0.08)' },
+                            })}
+                        >
+                            <LayoutDashboard size={16} />
+                            <span>Dashboard</span>
+                        </Link>
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item asChild>
+                        <Link
                             href="/recipe/create"
                             className={css({
                                 display: 'flex',
@@ -182,7 +203,7 @@ function MobileMenu() {
                             })}
                         >
                             <Plus size={16} />
-                            <span>Rezept</span>
+                            <span>Rezept erstellen</span>
                         </Link>
                     </DropdownMenu.Item>
                     <DropdownMenu.Separator
@@ -345,62 +366,6 @@ export function Header() {
                             <Heart size={16} />
                             <span className={css({ display: { base: 'none', md: 'inline' } })}>
                                 Favoriten
-                            </span>
-                        </Link>
-
-                        <Link
-                            href="/dashboard"
-                            className={css({
-                                fontFamily: 'body',
-                                fontSize: 'sm',
-                                fontWeight: '600',
-                                color: 'white',
-                                px: '4',
-                                py: '2',
-                                borderRadius: 'lg',
-                                background: 'linear-gradient(135deg, #6c5ce7 0%, #a55eea 100%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '1.5',
-                                transition: 'all 150ms ease',
-                                textDecoration: 'none',
-                                _hover: {
-                                    transform: 'translateY(-1px)',
-                                    boxShadow: '0 4px 12px rgba(108,92,231,0.4)',
-                                },
-                            })}
-                        >
-                            <LayoutDashboard size={16} color="white" />
-                            <span className={css({ display: { base: 'none', md: 'inline' } })}>
-                                Dashboard
-                            </span>
-                        </Link>
-
-                        <Link
-                            href="/recipe/create"
-                            className={css({
-                                fontFamily: 'body',
-                                fontSize: 'sm',
-                                fontWeight: '600',
-                                color: 'white',
-                                px: '4',
-                                py: '2',
-                                borderRadius: 'lg',
-                                background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '1.5',
-                                transition: 'all 150ms ease',
-                                textDecoration: 'none',
-                                _hover: {
-                                    transform: 'translateY(-1px)',
-                                    boxShadow: '0 4px 12px rgba(224,123,83,0.3)',
-                                },
-                            })}
-                        >
-                            <Plus size={16} color="white" />
-                            <span className={css({ display: { base: 'none', md: 'inline' } })}>
-                                Rezept
                             </span>
                         </Link>
                     </div>

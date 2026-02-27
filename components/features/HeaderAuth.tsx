@@ -1,6 +1,6 @@
 'use client';
 
-import { Key, LogOut, Settings, User } from 'lucide-react';
+import { FileText, Key, LayoutDashboard, LogOut, Plus, Settings, User } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
@@ -124,6 +124,84 @@ export function HeaderAuth() {
                         sideOffset={8}
                         align="end"
                     >
+                        <DropdownMenu.Item asChild>
+                            <Link
+                                href="/dashboard"
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                    padding: '3',
+                                    borderRadius: 'lg',
+                                    fontSize: 'sm',
+                                    fontFamily: 'body',
+                                    color: 'text',
+                                    textDecoration: 'none',
+                                    outline: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'all 150ms ease',
+                                    _hover: {
+                                        background: 'rgba(108,92,231,0.08)',
+                                    },
+                                })}
+                            >
+                                <LayoutDashboard size={16} color="#6c5ce7" />
+                                <span>Dashboard</span>
+                            </Link>
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Item asChild>
+                            <Link
+                                href="/recipe/create"
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                    padding: '3',
+                                    borderRadius: 'lg',
+                                    fontSize: 'sm',
+                                    fontFamily: 'body',
+                                    color: 'text',
+                                    textDecoration: 'none',
+                                    outline: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'all 150ms ease',
+                                    _hover: {
+                                        background: 'rgba(224,123,83,0.08)',
+                                    },
+                                })}
+                            >
+                                <Plus size={16} color="#e07b53" />
+                                <span>Rezept erstellen</span>
+                            </Link>
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Item asChild>
+                            <Link
+                                href="/my-recipes"
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                    padding: '3',
+                                    borderRadius: 'lg',
+                                    fontSize: 'sm',
+                                    fontFamily: 'body',
+                                    color: 'text',
+                                    textDecoration: 'none',
+                                    outline: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'all 150ms ease',
+                                    _hover: {
+                                        background: 'rgba(224,123,83,0.08)',
+                                    },
+                                })}
+                            >
+                                <FileText size={16} color="#666" />
+                                <span>Meine Rezepte</span>
+                            </Link>
+                        </DropdownMenu.Item>
+
                         <DropdownMenu.Item asChild>
                             <Link
                                 href="/profile"

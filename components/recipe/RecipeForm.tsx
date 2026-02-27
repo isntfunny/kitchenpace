@@ -1,9 +1,8 @@
 'use client';
 
-import * as Checkbox from '@radix-ui/react-checkbox';
-import { CheckIcon } from '@radix-ui/react-icons';
-import * as ToggleGroup from '@radix-ui/react-toggle-group';
+import { Check } from 'lucide-react';
 import { X } from 'lucide-react';
+import { Checkbox, ToggleGroup } from 'radix-ui';
 import { useEffect, useMemo, useState } from 'react';
 
 import { FileUpload } from '@/components/features/FileUpload';
@@ -552,7 +551,7 @@ export function RecipeForm({ categories, tags, tagFacets, authorId }: RecipeForm
                                     })}
                                 >
                                     <Checkbox.Indicator>
-                                        <CheckIcon color="white" width={12} height={12} />
+                                        <Check color="white" size={12} />
                                     </Checkbox.Indicator>
                                 </Checkbox.Root>
                                 <span>{cat.name}</span>
@@ -873,7 +872,7 @@ export function RecipeForm({ categories, tags, tagFacets, authorId }: RecipeForm
                                             })}
                                         >
                                             <Checkbox.Indicator>
-                                                <CheckIcon color="white" width={12} height={12} />
+                                                <Check color="white" size={12} />
                                             </Checkbox.Indicator>
                                         </Checkbox.Root>
                                         Optional

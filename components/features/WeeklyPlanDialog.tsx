@@ -1,6 +1,6 @@
 'use client';
 
-import * as Dialog from '@radix-ui/react-dialog';
+import { Dialog } from 'radix-ui';
 import * as React from 'react';
 
 import { css } from 'styled-system/css';

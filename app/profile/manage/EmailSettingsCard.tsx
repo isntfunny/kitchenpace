@@ -1,7 +1,7 @@
 'use client';
 
-import * as Checkbox from '@radix-ui/react-checkbox';
-import { CheckIcon } from '@radix-ui/react-icons';
+import { Check } from 'lucide-react';
+import { Checkbox } from 'radix-ui';
 
 import { css } from 'styled-system/css';
 
@@ -61,7 +61,7 @@ function CheckboxItem({ label, defaultChecked = false }: CheckboxItemProps) {
                 })}
             >
                 <Checkbox.Indicator>
-                    <CheckIcon color="white" width={14} height={14} />
+                    <Check color="white" size={14} />
                 </Checkbox.Indicator>
             </Checkbox.Root>
         </label>

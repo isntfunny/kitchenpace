@@ -1,8 +1,8 @@
 'use client';
 
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { LogOut, Settings, User } from 'lucide-react';
 import Link from 'next/link';
+import { DropdownMenu } from 'radix-ui';
 
 import { handleSignIn, handleSignOut } from '@/components/auth/actions';
 import { css } from 'styled-system/css';

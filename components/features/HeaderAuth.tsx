@@ -1,9 +1,9 @@
 'use client';
 
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Key, LogOut, Settings, User } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { DropdownMenu } from 'radix-ui';
 import { useEffect } from 'react';
 
 import { handleSignIn, handleSignOut } from '@/components/auth/actions';

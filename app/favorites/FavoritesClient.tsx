@@ -1,9 +1,9 @@
 'use client';
 
-import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { Clock, Heart, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { AlertDialog } from 'radix-ui';
 import { useTransition } from 'react';
 
 import { toggleFavoriteAction } from '@/app/actions/social';

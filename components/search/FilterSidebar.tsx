@@ -1,11 +1,7 @@
 'use client';
 
-import * as Accordion from '@radix-ui/react-accordion';
-import { ChevronDownIcon } from '@radix-ui/react-icons';
-import * as Slider from '@radix-ui/react-slider';
-import * as ToggleGroup from '@radix-ui/react-toggle-group';
-import * as Tooltip from '@radix-ui/react-tooltip';
-import { Star } from 'lucide-react';
+import { Star, ChevronDown } from 'lucide-react';
+import { Accordion, Slider, ToggleGroup, Tooltip } from 'radix-ui';
 import { useMemo, type ReactNode } from 'react';
 
 import type { CategoryOption } from '@/app/actions/filters';
@@ -345,7 +341,7 @@ const FilterSection = ({
                     </div>
                     {description && <p className={accordionDescriptionClass}>{description}</p>}
                 </div>
-                <ChevronDownIcon aria-hidden className={accordionChevronClass} />
+                <ChevronDown aria-hidden className={accordionChevronClass} />
             </Accordion.Trigger>
         </Accordion.Header>
         <Accordion.Content className={accordionContentClass}>{children}</Accordion.Content>

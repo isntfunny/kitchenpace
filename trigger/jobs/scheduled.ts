@@ -1,10 +1,11 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
 import { task, schedules, logger } from '@trigger.dev/sdk';
+import { PrismaClient } from 'node_modules/.prisma/client';
 import { Pool } from 'pg';
 
 import { sendEmail } from '../lib/email';
 import { renderEmailTemplate } from '../lib/email-templates';
+
 
 const databaseUrl =
     process.env.DATABASE_URL ??

@@ -1,6 +1,5 @@
 'use client';
 
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
     ChefHat,
     Coffee,
@@ -13,6 +12,7 @@ import {
     UtensilsCrossed,
 } from 'lucide-react';
 import Link from 'next/link';
+import { DropdownMenu } from 'radix-ui';
 import { useState } from 'react';
 
 import { HeaderSearch } from '@/components/search/HeaderSearch';

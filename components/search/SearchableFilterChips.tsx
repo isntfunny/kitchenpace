@@ -1,6 +1,6 @@
 'use client';
 
-import * as ToggleGroup from '@radix-ui/react-toggle-group';
+import { ToggleGroup } from 'radix-ui';
 import { useMemo, useState } from 'react';
 
 import { css, cx } from 'styled-system/css';

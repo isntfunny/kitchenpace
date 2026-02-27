@@ -98,8 +98,8 @@ export async function POST(request: Request) {
             templateType: 'welcome',
             variables: {
                 name: name || 'Kochenthusiast',
-                activationLink: `${process.env.NEXT_PUBLIC_APP_URL}/auth/activate?token=${activationToken}`,
-                appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+                link: `${process.env.NEXT_PUBLIC_APP_URL}/auth/activate?token=${activationToken}`,
+                linkText: 'Konto aktivieren',
             },
         });
 

@@ -1,3 +1,5 @@
+import { logger } from '@trigger.dev/sdk';
+
 export interface SendEmailOptions {
     to: string;
     subject: string;
@@ -11,7 +13,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
     const emailPort = process.env.EMAIL_PORT || '587';
     const hasSmtpConfig = Boolean(emailHost && emailUser && process.env.EMAIL_PASS);
 
-    console.log('[EMAIL] Starting email send process', {
+    logger.info('Starting email send process', {
         to,
         subject,
         from: emailFrom,
@@ -22,7 +24,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
     });
 
     if (!hasSmtpConfig) {
-        console.log('[EMAIL] ⚠️ No SMTP configured - email logged only (simulated send)', {
+        logger.warn('No SMTP configured - email logged only (simulated send)', {
             to,
             bodyPreview: html.substring(0, 200),
             bodyLength: html.length,
@@ -30,25 +32,21 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
         return true;
     }
 
-    let nodemailerModule: typeof import('nodemailer') | null = null;
+    let nodemailerModule: ReturnType<typeof require> | null = null;
 
     try {
-        console.log('[EMAIL] Loading nodemailer module...');
-        nodemailerModule = await import('nodemailer');
+        logger.debug('Loading nodemailer module');
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        nodemailerModule = require('nodemailer');
 
-        console.log('[EMAIL] Creating SMTP transporter with config:', {
+        logger.debug('Creating SMTP transporter', {
             host: emailHost,
             port: emailPort,
             secure: emailPort === '465',
-            auth: {
-                user: emailUser,
-                pass: process.env.EMAIL_PASS ? '***REDACTED***' : undefined,
-            },
+            auth: { user: emailUser, pass: '***REDACTED***' },
         });
 
-        const createTransport =
-            nodemailerModule.default?.createTransport || nodemailerModule.createTransport;
-        const transporter = createTransport({
+        const transporter = nodemailerModule.createTransport({
             host: emailHost,
             port: parseInt(emailPort, 10),
             secure: emailPort === '465',
@@ -60,11 +58,11 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
             socketTimeout: 10000,
         });
 
-        console.log('[EMAIL] Verifying SMTP connection...');
+        logger.debug('Verifying SMTP connection');
         const verifyResult = await transporter.verify();
-        console.log('[EMAIL] SMTP connection verified:', verifyResult);
+        logger.debug('SMTP connection verified', { result: verifyResult });
 
-        console.log('[EMAIL] Sending email...', {
+        logger.info('Sending email via SMTP', {
             to,
             from: emailFrom,
             subject,
@@ -78,16 +76,23 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
             html,
         });
 
-        console.log('[EMAIL] ✅ Email sent successfully!', {
+        logger.info('Email sent successfully', {
             to,
             messageId: result.messageId,
             accepted: result.accepted,
             rejected: result.rejected,
         });
 
+        if (result.rejected && result.rejected.length > 0) {
+            logger.warn('Some recipients were rejected', {
+                rejected: result.rejected,
+                to,
+            });
+        }
+
         return true;
     } catch (error) {
-        console.error('[EMAIL] ❌ Failed to send email!', {
+        logger.error('Failed to send email', {
             to,
             subject,
             error: error instanceof Error ? error.message : String(error),
@@ -96,10 +101,6 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
             errorCommand:
                 error instanceof Error ? (error as { command?: string }).command : undefined,
         });
-
-        if (nodemailerModule) {
-            console.error('[EMAIL] Nodemailer module loaded successfully');
-        }
 
         return false;
     }

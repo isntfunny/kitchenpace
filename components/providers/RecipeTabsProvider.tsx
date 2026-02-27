@@ -73,10 +73,25 @@ function withDefaultEmoji(recipe: RecipeTabItem): RecipeTabItem {
 
 const emptyTabs: RecipeTabsState = { pinned: [], recent: [] };
 
-export function RecipeTabsProvider({ children }: { children: React.ReactNode }) {
+interface RecipeTabsProviderProps {
+    children: React.ReactNode;
+    initialPinned?: RecipeTabItem[];
+    initialRecent?: RecipeTabItem[];
+}
+
+export function RecipeTabsProvider({
+    children,
+    initialPinned,
+    initialRecent,
+}: RecipeTabsProviderProps) {
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated' && !!session?.user?.id;
-    const [tabs, setTabs] = useState<RecipeTabsState>(emptyTabs);
+    const hasInitialData =
+        (initialPinned && initialPinned.length > 0) || (initialRecent && initialRecent.length > 0);
+    const initialTabs = hasInitialData
+        ? { pinned: initialPinned || [], recent: initialRecent || [] }
+        : emptyTabs;
+    const [tabs, setTabs] = useState<RecipeTabsState>(initialTabs);
     const [isLoading, setIsLoading] = useState(false);
     const previousAuthRef = useRef(isAuthenticated);
 

@@ -13,6 +13,7 @@ import {
     UtensilsCrossed,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 import { HeaderSearch } from '@/components/search/HeaderSearch';
 import { buildRecipeFilterHref } from '@/lib/recipeFilters';
@@ -78,8 +79,10 @@ function CategoryGrid() {
 }
 
 function MobileMenu() {
+    const [isOpen, setIsOpen] = useState(false);
+
     return (
-        <DropdownMenu.Root>
+        <DropdownMenu.Root open={isOpen} onOpenChange={setIsOpen}>
             <DropdownMenu.Trigger asChild>
                 <button
                     className={css({
@@ -102,6 +105,17 @@ function MobileMenu() {
             </DropdownMenu.Trigger>
 
             <DropdownMenu.Portal>
+                {isOpen && (
+                    <div
+                        className={css({
+                            position: 'fixed',
+                            inset: 0,
+                            zIndex: 90,
+                            background: 'rgba(0,0,0,0.25)',
+                        })}
+                        onPointerDown={() => setIsOpen(false)}
+                    />
+                )}
                 {/* 
                     position: fixed verhindert Seitenverschiebung 
                     onInteractOutside stellt sicher, dass Klick außerhalb das Menü schließt
@@ -220,6 +234,9 @@ export function Header() {
                             gap: '4',
                         })}
                     >
+                        <div className={css({ display: { base: 'flex', md: 'none' } })}>
+                            <MobileMenu />
+                        </div>
                         <Link href="/">
                             <SmartImage
                                 src="/kitchenpace.png"
@@ -229,6 +246,17 @@ export function Header() {
                                 className={css({ objectFit: 'contain' })}
                             />
                         </Link>
+                    </div>
+
+                    <div
+                        className={css({
+                            flex: 1,
+                            minWidth: 0,
+                            marginLeft: '2',
+                            display: { base: 'none', md: 'block' },
+                        })}
+                    >
+                        <HeaderSearch />
                     </div>
 
                     <div
@@ -367,7 +395,6 @@ export function Header() {
                             flex: 1,
                         })}
                     >
-                        <MobileMenu />
                         <div className={css({ flex: 1, minWidth: 0 })}>
                             <HeaderSearch />
                         </div>

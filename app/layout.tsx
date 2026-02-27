@@ -2,6 +2,7 @@ import { IdentifyComponent, OpenPanelComponent } from '@openpanel/nextjs';
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 
+import { fetchPinnedEntries } from '@/app/api/recipe-tabs/helpers';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { ProfileProvider } from '@/components/providers/ProfileProvider';
 import { RecipeTabsProvider } from '@/components/providers/RecipeTabsProvider';
@@ -80,6 +81,27 @@ export default async function RootLayout({
     const session = await getServerAuthSession('openpanel-root-layout');
 
     let profile: { photoUrl: string | null; nickname: string | null } | null = null;
+    let pinnedRecipes: Array<{
+        id: string;
+        title: string;
+        slug?: string;
+        imageUrl?: string;
+        prepTime?: number;
+        cookTime?: number;
+        difficulty?: string;
+        position: number;
+    }> = [];
+    let recentRecipes: Array<{
+        id: string;
+        title: string;
+        slug?: string;
+        imageUrl?: string;
+        prepTime?: number;
+        cookTime?: number;
+        difficulty?: string;
+        viewedAt?: string;
+        pinned?: boolean;
+    }> = [];
 
     if (session?.user?.id) {
         const userProfile = await prisma.profile.findUnique({
@@ -91,6 +113,62 @@ export default async function RootLayout({
                 nickname: userProfile.nickname,
             };
         }
+
+        const { entries: pinned } = await fetchPinnedEntries(session.user.id);
+        pinnedRecipes = pinned.map((e) => ({
+            id: e.id,
+            title: e.title,
+            slug: e.slug,
+            imageUrl: e.imageUrl,
+            prepTime: e.prepTime,
+            cookTime: e.cookTime,
+            difficulty: e.difficulty,
+            position: e.position,
+        }));
+
+        const recentViews = await prisma.userViewHistory.findMany({
+            where: { userId: session.user.id },
+            include: {
+                recipe: {
+                    select: {
+                        id: true,
+                        title: true,
+                        slug: true,
+                        imageUrl: true,
+                        prepTime: true,
+                        cookTime: true,
+                        difficulty: true,
+                    },
+                },
+            },
+            orderBy: { viewedAt: 'desc' },
+            take: 5,
+        });
+        recentRecipes = recentViews.map(
+            (view: {
+                recipeId: string;
+                viewedAt: Date;
+                recipe: {
+                    id: string;
+                    title: string;
+                    slug: string | null;
+                    imageUrl: string | null;
+                    prepTime: number | null;
+                    cookTime: number | null;
+                    difficulty: string | null;
+                };
+            }) => ({
+                id: view.recipe.id,
+                title: view.recipe.title,
+                slug: view.recipe.slug ?? undefined,
+                imageUrl: view.recipe.imageUrl ?? undefined,
+                prepTime: view.recipe.prepTime ?? undefined,
+                cookTime: view.recipe.cookTime ?? undefined,
+                difficulty: view.recipe.difficulty ?? undefined,
+                viewedAt: view.viewedAt.toISOString(),
+                pinned: pinnedRecipes.some((p) => p.id === view.recipeId),
+            }),
+        );
     }
 
     const openPanelClientId = process.env.OPENPANEL_ID ?? '';
@@ -145,7 +223,12 @@ export default async function RootLayout({
                 {identifyProps && <IdentifyComponent {...identifyProps} />}
                 <AuthProvider session={session}>
                     <ProfileProvider profile={profile}>
-                        <RecipeTabsProvider>{children}</RecipeTabsProvider>
+                        <RecipeTabsProvider
+                            initialPinned={pinnedRecipes}
+                            initialRecent={recentRecipes}
+                        >
+                            {children}
+                        </RecipeTabsProvider>
                     </ProfileProvider>
                 </AuthProvider>
             </body>

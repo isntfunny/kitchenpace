@@ -1,6 +1,18 @@
+import {
+    Activity as ActivityIcon,
+    Bookmark,
+    Calendar,
+    Edit3,
+    Flame,
+    Handshake,
+    MessageSquare,
+    ShoppingCart,
+    Star,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 
-import type { ActivityFeedItem } from '@/app/actions/community';
+import type { ActivityFeedItem, ActivityIconName } from '@/app/actions/community';
 import { Text } from '@/components/atoms/Typography';
 import { css } from 'styled-system/css';
 
@@ -9,9 +21,21 @@ interface ActivityItemProps {
     children: React.ReactNode;
 }
 
+const ACTIVITY_ICON_MAP: Record<ActivityIconName, LucideIcon> = {
+    edit3: Edit3,
+    flame: Flame,
+    star: Star,
+    'message-square': MessageSquare,
+    bookmark: Bookmark,
+    handshake: Handshake,
+    'shopping-cart': ShoppingCart,
+    calendar: Calendar,
+};
+
 export function ActivityItem({ activity, children }: ActivityItemProps) {
     const userLink = activity.userId ? `/user/${activity.userId}` : null;
     const targetUserLink = activity.targetUserId ? `/user/${activity.targetUserId}` : null;
+    const IconComponent = ACTIVITY_ICON_MAP[activity.icon] ?? ActivityIcon;
 
     return (
         <div
@@ -37,7 +61,7 @@ export function ActivityItem({ activity, children }: ActivityItemProps) {
                     flexShrink: 0,
                 })}
             >
-                {activity.icon}
+                <IconComponent size={18} />
             </span>
             <div className={css({ flex: 1 })}>
                 <Text size="sm" className={css({ fontWeight: '600', color: 'text' })}>

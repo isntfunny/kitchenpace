@@ -1,4 +1,4 @@
-import { Camera, Calendar, ShoppingCart } from 'lucide-react';
+import { Camera, Calendar, ShoppingCart, Star } from 'lucide-react';
 
 import type { ActivityFeedItem } from '@/app/actions/community';
 import { Text } from '@/components/atoms/Typography';
@@ -10,15 +10,13 @@ function StarRating({ rating }: { rating: number }) {
     return (
         <span className={css({ display: 'inline-flex', gap: '0.5' })}>
             {[1, 2, 3, 4, 5].map((star) => (
-                <span
+                <Star
                     key={star}
+                    size={14}
                     className={css({
                         color: star <= rating ? '#f8b500' : '#e0e0e0',
-                        fontSize: '0.75rem',
                     })}
-                >
-                    ★
-                </span>
+                />
             ))}
         </span>
     );

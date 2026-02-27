@@ -1,9 +1,16 @@
-import { Lightbulb } from 'lucide-react';
+import { Clock, Flame, Lightbulb, Tag } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-import type { QuickTipData } from '@/app/actions/community';
+import type { QuickTipData, QuickTipIconName } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';
+
+const TIP_ICON_MAP: Record<QuickTipIconName, LucideIcon> = {
+    tag: Tag,
+    flame: Flame,
+    clock: Clock,
+};
 
 interface QuickTipsProps {
     tips: QuickTipData[];
@@ -93,7 +100,10 @@ export function QuickTips({ tips }: QuickTipsProps) {
                                 color: 'white',
                             })}
                         >
-                            {tip.icon}
+                            {(() => {
+                                const Icon = TIP_ICON_MAP[tip.icon];
+                                return Icon ? <Icon size={18} /> : null;
+                            })()}
                         </span>
                         <div>
                             <Text size="sm" className={css({ fontWeight: '600', color: 'text' })}>

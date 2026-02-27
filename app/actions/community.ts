@@ -2,6 +2,18 @@
 
 import { prisma } from '@/lib/prisma';
 
+export type ActivityIconName =
+    | 'edit3'
+    | 'flame'
+    | 'star'
+    | 'message-square'
+    | 'bookmark'
+    | 'handshake'
+    | 'shopping-cart'
+    | 'calendar';
+
+export type QuickTipIconName = 'tag' | 'flame' | 'clock';
+
 const TAG_COLORS = [
     '#e07b53',
     '#00b894',
@@ -17,15 +29,19 @@ const TAG_COLORS = [
 
 const TIP_ACCENTS = ['#e07b53', '#00b894', '#fdcb6e'];
 
-const ACTIVITY_DECOR = {
-    RECIPE_CREATED: { icon: '✍️', bg: '#6c5ce7', label: 'hat ein Rezept erstellt' },
-    RECIPE_COOKED: { icon: '🔥', bg: '#e17055', label: 'hat gekocht' },
-    RECIPE_RATED: { icon: '⭐', bg: '#f8b500', label: 'hat bewertet' },
-    RECIPE_COMMENTED: { icon: '💬', bg: '#fd79a8', label: 'hat kommentiert' },
-    RECIPE_FAVORITED: { icon: '🔖', bg: '#74b9ff', label: 'hat gespeichert' },
-    USER_FOLLOWED: { icon: '🤝', bg: '#00cec9', label: 'hat' }, // Will be combined with target name
-    SHOPPING_LIST_CREATED: { icon: '🛒', bg: '#fdcb6e', label: 'hat eine Einkaufsliste erstellt' },
-    MEAL_PLAN_CREATED: { icon: '📅', bg: '#a29bfe', label: 'hat einen Plan erstellt' },
+const ACTIVITY_DECOR: Record<string, { icon: ActivityIconName; bg: string; label: string }> = {
+    RECIPE_CREATED: { icon: 'edit3', bg: '#6c5ce7', label: 'hat ein Rezept erstellt' },
+    RECIPE_COOKED: { icon: 'flame', bg: '#e17055', label: 'hat gekocht' },
+    RECIPE_RATED: { icon: 'star', bg: '#f8b500', label: 'hat bewertet' },
+    RECIPE_COMMENTED: { icon: 'message-square', bg: '#fd79a8', label: 'hat kommentiert' },
+    RECIPE_FAVORITED: { icon: 'bookmark', bg: '#74b9ff', label: 'hat gespeichert' },
+    USER_FOLLOWED: { icon: 'handshake', bg: '#00cec9', label: 'hat' }, // Will be combined with target name
+    SHOPPING_LIST_CREATED: {
+        icon: 'shopping-cart',
+        bg: '#fdcb6e',
+        label: 'hat eine Einkaufsliste erstellt',
+    },
+    MEAL_PLAN_CREATED: { icon: 'calendar', bg: '#a29bfe', label: 'hat einen Plan erstellt' },
 };
 
 export interface TrendingTagData {
@@ -47,7 +63,7 @@ export interface ChefSpotlightData {
 }
 
 export interface QuickTipData {
-    icon: string;
+    icon: QuickTipIconName;
     title: string;
     content: string;
     iconBg: string;
@@ -55,7 +71,7 @@ export interface QuickTipData {
 
 export interface ActivityFeedItem {
     id: string;
-    icon: string;
+    icon: ActivityIconName;
     iconBg: string;
     userName: string;
     userId?: string;
@@ -207,7 +223,7 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
 
     if (topCategory) {
         tips.push({
-            icon: '🏷️',
+            icon: 'tag',
             title: 'Beliebteste Kategorie',
             content: `${topCategory.name} · ${topCategoryCount} Rezepte`,
             iconBg: TIP_ACCENTS[0],
@@ -216,7 +232,7 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
 
     if (topTag) {
         tips.push({
-            icon: '🔥',
+            icon: 'flame',
             title: 'Trend-Tag',
             content: `${topTag.name} · ${topTagGroup?._count?.tagId ?? 0} Erwähnungen`,
             iconBg: TIP_ACCENTS[1],
@@ -225,7 +241,7 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
 
     if (fastRecipe) {
         tips.push({
-            icon: '⏱️',
+            icon: 'clock',
             title: 'Schnellstes Rezept',
             content: `${fastRecipe.title} in ${fastRecipe.totalTime ?? 0} Min. (von ${totalRecipes} Rezepten)`,
             iconBg: TIP_ACCENTS[2],
@@ -288,7 +304,7 @@ export async function fetchRecentActivities(limit = 6): Promise<ActivityFeedItem
         if (!visibleUserIds.has(log.userId)) continue;
 
         const base = ACTIVITY_DECOR[log.type as keyof typeof ACTIVITY_DECOR] ?? {
-            icon: '⭐',
+            icon: 'star',
             bg: '#e07b53',
             label: 'hat etwas gemacht',
         };

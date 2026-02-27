@@ -1,6 +1,11 @@
+'use client';
+
+/* eslint-disable import/order */
+import { Star } from 'lucide-react';
 import type { ChefSpotlightData } from '@/app/actions/community';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
+/* eslint-enable import/order */
 
 import { SmartImage } from '../atoms/SmartImage';
 import { Heading, Text } from '../atoms/Typography';
@@ -54,8 +59,18 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                     py: '1',
                 })}
             >
-                <Text size="sm" className={css({ fontWeight: '600', color: 'white' })}>
-                    ⭐ Chef des Monats
+                <Text
+                    size="sm"
+                    className={css({
+                        fontWeight: '600',
+                        color: 'white',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '1',
+                    })}
+                >
+                    <Star size={16} />
+                    <span>Chef des Monats</span>
                 </Text>
             </div>
 

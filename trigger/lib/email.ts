@@ -1,7 +1,3 @@
-import { createLogger } from './logger';
-
-const log = createLogger('email');
-
 export interface SendEmailOptions {
     to: string;
     subject: string;
@@ -11,13 +7,10 @@ export interface SendEmailOptions {
 export async function sendEmail({ to, subject, html }: SendEmailOptions): Promise<boolean> {
     const emailHost = process.env.EMAIL_HOST;
     const emailUser = process.env.EMAIL_USER;
-    const emailFrom = process.env.EMAIL_FROM;
     const hasSmtpConfig = Boolean(emailHost && emailUser && process.env.EMAIL_PASS);
 
-    log.debug('Starting email send', { to, subject, hasSmtpConfig, emailHost, emailFrom });
-
     if (!hasSmtpConfig) {
-        log.warn('No SMTP configured - email logged only', {
+        console.log('[EMAIL] No SMTP configured - email logged only', {
             to,
             bodyPreview: html.substring(0, 200),
         });
@@ -46,11 +39,11 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
             html,
         });
 
-        log.info('Email sent successfully', { to, messageId: result.messageId });
+        console.log('[EMAIL] Sent successfully', { to, messageId: result.messageId });
 
         return true;
     } catch (error) {
-        log.error('Failed to send email', {
+        console.error('[EMAIL] Failed to send', {
             to,
             error: error instanceof Error ? error.message : String(error),
         });

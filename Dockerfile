@@ -95,4 +95,4 @@ ENV DATABASE_URL=${DATABASE_URL}
 ENV TRIGGER_API_URL=${TRIGGER_API_URL}
 ENV TRIGGER_ACCESS_TOKEN=${TRIGGER_ACCESS_TOKEN}
 
-CMD ["npx", "trigger.dev@latest", "deploy"]
+CMD ["npx", "trigger.dev@latest", "dev"]

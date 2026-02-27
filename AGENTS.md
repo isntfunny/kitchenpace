@@ -322,8 +322,8 @@ npx husky install
 
 Or simply ensure `npm install --include=dev` is used. The `prepare` script in package.json should handle this automatically.
 
-
 <!-- TRIGGER.DEV scheduled-tasks START -->
+
 # Scheduled tasks (cron)
 
 Recurring tasks using cron. For one-off future runs, use the **delay** option.
@@ -331,20 +331,20 @@ Recurring tasks using cron. For one-off future runs, use the **delay** option.
 ## Define a scheduled task
 
 ```ts
-import { schedules } from "@trigger.dev/sdk";
+import { schedules } from '@trigger.dev/sdk';
 
 export const task = schedules.task({
-  id: "first-scheduled-task",
-  run: async (payload) => {
-    payload.timestamp; // Date (scheduled time, UTC)
-    payload.lastTimestamp; // Date | undefined
-    payload.timezone; // IANA, e.g. "America/New_York" (default "UTC")
-    payload.scheduleId; // string
-    payload.externalId; // string | undefined
-    payload.upcoming; // Date[]
+    id: 'first-scheduled-task',
+    run: async (payload) => {
+        payload.timestamp; // Date (scheduled time, UTC)
+        payload.lastTimestamp; // Date | undefined
+        payload.timezone; // IANA, e.g. "America/New_York" (default "UTC")
+        payload.scheduleId; // string
+        payload.externalId; // string | undefined
+        payload.upcoming; // Date[]
 
-    payload.timestamp.toLocaleString("en-US", { timeZone: payload.timezone });
-  },
+        payload.timestamp.toLocaleString('en-US', { timeZone: payload.timezone });
+    },
 });
 ```
 
@@ -356,15 +356,15 @@ export const task = schedules.task({
 
 ```ts
 schedules.task({
-  id: "every-2h",
-  cron: "0 */2 * * *", // UTC
-  run: async () => {},
+    id: 'every-2h',
+    cron: '0 */2 * * *', // UTC
+    run: async () => {},
 });
 
 schedules.task({
-  id: "tokyo-5am",
-  cron: { pattern: "0 5 * * *", timezone: "Asia/Tokyo", environments: ["PRODUCTION", "STAGING"] },
-  run: async () => {},
+    id: 'tokyo-5am',
+    cron: { pattern: '0 5 * * *', timezone: 'Asia/Tokyo', environments: ['PRODUCTION', 'STAGING'] },
+    run: async () => {},
 });
 ```
 
@@ -372,11 +372,11 @@ schedules.task({
 
 ```ts
 await schedules.create({
-  task: task.id,
-  cron: "0 0 * * *",
-  timezone: "America/New_York", // DST-aware
-  externalId: "user_123",
-  deduplicationKey: "user_123-daily", // updates if reused
+    task: task.id,
+    cron: '0 0 * * *',
+    timezone: 'America/New_York', // DST-aware
+    externalId: 'user_123',
+    deduplicationKey: 'user_123-daily', // updates if reused
 });
 ```
 
@@ -385,28 +385,28 @@ await schedules.create({
 ```ts
 // /trigger/reminder.ts
 export const reminderTask = schedules.task({
-  id: "todo-reminder",
-  run: async (p) => {
-    if (!p.externalId) throw new Error("externalId is required");
-    const user = await db.getUser(p.externalId);
-    await sendReminderEmail(user);
-  },
+    id: 'todo-reminder',
+    run: async (p) => {
+        if (!p.externalId) throw new Error('externalId is required');
+        const user = await db.getUser(p.externalId);
+        await sendReminderEmail(user);
+    },
 });
 ```
 
 ```ts
 // app/reminders/route.ts
 export async function POST(req: Request) {
-  const data = await req.json();
-  return Response.json(
-    await schedules.create({
-      task: reminderTask.id,
-      cron: "0 8 * * *",
-      timezone: data.timezone,
-      externalId: data.userId,
-      deduplicationKey: `${data.userId}-reminder`,
-    })
-  );
+    const data = await req.json();
+    return Response.json(
+        await schedules.create({
+            task: reminderTask.id,
+            cron: '0 8 * * *',
+            timezone: data.timezone,
+            externalId: data.userId,
+            deduplicationKey: `${data.userId}-reminder`,
+        }),
+    );
 }
 ```
 
@@ -431,7 +431,7 @@ export async function POST(req: Request) {
 ```ts
 await schedules.retrieve(id);
 await schedules.list();
-await schedules.update(id, { cron: "0 0 1 * *", externalId: "ext", deduplicationKey: "key" });
+await schedules.update(id, { cron: '0 0 1 * *', externalId: 'ext', deduplicationKey: 'key' });
 await schedules.deactivate(id);
 await schedules.activate(id);
 await schedules.del(id);
@@ -445,6 +445,7 @@ Create/attach schedules visually (Task, Cron pattern, Timezone, Optional: Extern
 <!-- TRIGGER.DEV scheduled-tasks END -->
 
 <!-- TRIGGER.DEV basic START -->
+
 # Trigger.dev Basic Tasks (v4)
 
 **MUST use `@trigger.dev/sdk`, NEVER `client.defineJob`**
@@ -452,42 +453,42 @@ Create/attach schedules visually (Task, Cron pattern, Timezone, Optional: Extern
 ## Basic Task
 
 ```ts
-import { task } from "@trigger.dev/sdk";
+import { task } from '@trigger.dev/sdk';
 
 export const processData = task({
-  id: "process-data",
-  retry: {
-    maxAttempts: 10,
-    factor: 1.8,
-    minTimeoutInMs: 500,
-    maxTimeoutInMs: 30_000,
-    randomize: false,
-  },
-  run: async (payload: { userId: string; data: any[] }) => {
-    // Task logic - runs for long time, no timeouts
-    console.log(`Processing ${payload.data.length} items for user ${payload.userId}`);
-    return { processed: payload.data.length };
-  },
+    id: 'process-data',
+    retry: {
+        maxAttempts: 10,
+        factor: 1.8,
+        minTimeoutInMs: 500,
+        maxTimeoutInMs: 30_000,
+        randomize: false,
+    },
+    run: async (payload: { userId: string; data: any[] }) => {
+        // Task logic - runs for long time, no timeouts
+        console.log(`Processing ${payload.data.length} items for user ${payload.userId}`);
+        return { processed: payload.data.length };
+    },
 });
 ```
 
 ## Schema Task (with validation)
 
 ```ts
-import { schemaTask } from "@trigger.dev/sdk";
-import { z } from "zod";
+import { schemaTask } from '@trigger.dev/sdk';
+import { z } from 'zod';
 
 export const validatedTask = schemaTask({
-  id: "validated-task",
-  schema: z.object({
-    name: z.string(),
-    age: z.number(),
-    email: z.string().email(),
-  }),
-  run: async (payload) => {
-    // Payload is automatically validated and typed
-    return { message: `Hello ${payload.name}, age ${payload.age}` };
-  },
+    id: 'validated-task',
+    schema: z.object({
+        name: z.string(),
+        age: z.number(),
+        email: z.string().email(),
+    }),
+    run: async (payload) => {
+        // Payload is automatically validated and typed
+        return { message: `Hello ${payload.name}, age ${payload.age}` };
+    },
 });
 ```
 
@@ -496,19 +497,19 @@ export const validatedTask = schemaTask({
 ### From Backend Code
 
 ```ts
-import { tasks } from "@trigger.dev/sdk";
-import type { processData } from "./trigger/tasks";
+import { tasks } from '@trigger.dev/sdk';
+import type { processData } from './trigger/tasks';
 
 // Single trigger
-const handle = await tasks.trigger<typeof processData>("process-data", {
-  userId: "123",
-  data: [{ id: 1 }, { id: 2 }],
+const handle = await tasks.trigger<typeof processData>('process-data', {
+    userId: '123',
+    data: [{ id: 1 }, { id: 2 }],
 });
 
 // Batch trigger (up to 1,000 items, 3MB per payload)
-const batchHandle = await tasks.batchTrigger<typeof processData>("process-data", [
-  { payload: { userId: "123", data: [{ id: 1 }] } },
-  { payload: { userId: "456", data: [{ id: 2 }] } },
+const batchHandle = await tasks.batchTrigger<typeof processData>('process-data', [
+    { payload: { userId: '123', data: [{ id: 1 }] } },
+    { payload: { userId: '456', data: [{ id: 2 }] } },
 ]);
 ```
 
@@ -519,29 +520,30 @@ Consolidate multiple triggers into a single execution:
 ```ts
 // Multiple rapid triggers with same key = single execution
 await myTask.trigger(
-  { userId: "123" },
-  {
-    debounce: {
-      key: "user-123-update",  // Unique key for debounce group
-      delay: "5s",              // Wait before executing
+    { userId: '123' },
+    {
+        debounce: {
+            key: 'user-123-update', // Unique key for debounce group
+            delay: '5s', // Wait before executing
+        },
     },
-  }
 );
 
 // Trailing mode: use payload from LAST trigger
 await myTask.trigger(
-  { data: "latest-value" },
-  {
-    debounce: {
-      key: "trailing-example",
-      delay: "10s",
-      mode: "trailing",  // Default is "leading" (first payload)
+    { data: 'latest-value' },
+    {
+        debounce: {
+            key: 'trailing-example',
+            delay: '10s',
+            mode: 'trailing', // Default is "leading" (first payload)
+        },
     },
-  }
 );
 ```
 
 **Debounce modes:**
+
 - `leading` (default): Uses payload from first trigger, subsequent triggers only reschedule
 - `trailing`: Uses payload from most recent trigger
 
@@ -549,43 +551,43 @@ await myTask.trigger(
 
 ```ts
 export const parentTask = task({
-  id: "parent-task",
-  run: async (payload) => {
-    // Trigger and continue
-    const handle = await childTask.trigger({ data: "value" });
+    id: 'parent-task',
+    run: async (payload) => {
+        // Trigger and continue
+        const handle = await childTask.trigger({ data: 'value' });
 
-    // Trigger and wait - returns Result object, NOT task output
-    const result = await childTask.triggerAndWait({ data: "value" });
-    if (result.ok) {
-      console.log("Task output:", result.output); // Actual task return value
-    } else {
-      console.error("Task failed:", result.error);
-    }
+        // Trigger and wait - returns Result object, NOT task output
+        const result = await childTask.triggerAndWait({ data: 'value' });
+        if (result.ok) {
+            console.log('Task output:', result.output); // Actual task return value
+        } else {
+            console.error('Task failed:', result.error);
+        }
 
-    // Quick unwrap (throws on error)
-    const output = await childTask.triggerAndWait({ data: "value" }).unwrap();
+        // Quick unwrap (throws on error)
+        const output = await childTask.triggerAndWait({ data: 'value' }).unwrap();
 
-    // Batch trigger and wait
-    const results = await childTask.batchTriggerAndWait([
-      { payload: { data: "item1" } },
-      { payload: { data: "item2" } },
-    ]);
+        // Batch trigger and wait
+        const results = await childTask.batchTriggerAndWait([
+            { payload: { data: 'item1' } },
+            { payload: { data: 'item2' } },
+        ]);
 
-    for (const run of results) {
-      if (run.ok) {
-        console.log("Success:", run.output);
-      } else {
-        console.log("Failed:", run.error);
-      }
-    }
-  },
+        for (const run of results) {
+            if (run.ok) {
+                console.log('Success:', run.output);
+            } else {
+                console.log('Failed:', run.error);
+            }
+        }
+    },
 });
 
 export const childTask = task({
-  id: "child-task",
-  run: async (payload: { data: string }) => {
-    return { processed: payload.data };
-  },
+    id: 'child-task',
+    run: async (payload: { data: string }) => {
+        return { processed: payload.data };
+    },
 });
 ```
 
@@ -594,31 +596,31 @@ export const childTask = task({
 ## Waits
 
 ```ts
-import { task, wait } from "@trigger.dev/sdk";
+import { task, wait } from '@trigger.dev/sdk';
 
 export const taskWithWaits = task({
-  id: "task-with-waits",
-  run: async (payload) => {
-    console.log("Starting task");
+    id: 'task-with-waits',
+    run: async (payload) => {
+        console.log('Starting task');
 
-    // Wait for specific duration
-    await wait.for({ seconds: 30 });
-    await wait.for({ minutes: 5 });
-    await wait.for({ hours: 1 });
-    await wait.for({ days: 1 });
+        // Wait for specific duration
+        await wait.for({ seconds: 30 });
+        await wait.for({ minutes: 5 });
+        await wait.for({ hours: 1 });
+        await wait.for({ days: 1 });
 
-    // Wait until specific date
-    await wait.until({ date: new Date("2024-12-25") });
+        // Wait until specific date
+        await wait.until({ date: new Date('2024-12-25') });
 
-    // Wait for token (from external system)
-    await wait.forToken({
-      token: "user-approval-token",
-      timeoutInSeconds: 3600, // 1 hour timeout
-    });
+        // Wait for token (from external system)
+        await wait.forToken({
+            token: 'user-approval-token',
+            timeoutInSeconds: 3600, // 1 hour timeout
+        });
 
-    console.log("All waits completed");
-    return { status: "completed" };
-  },
+        console.log('All waits completed');
+        return { status: 'completed' };
+    },
 });
 ```
 
@@ -636,10 +638,10 @@ export const taskWithWaits = task({
 ```ts
 // BREAKS APPLICATION
 client.defineJob({
-  id: "job-id",
-  run: async (payload, io) => {
-    /* ... */
-  },
+    id: 'job-id',
+    run: async (payload, io) => {
+        /* ... */
+    },
 });
 ```
 
@@ -648,6 +650,7 @@ Use SDK (`@trigger.dev/sdk`), check `result.ok` before accessing `result.output`
 <!-- TRIGGER.DEV basic END -->
 
 <!-- TRIGGER.DEV advanced-tasks START -->
+
 # Trigger.dev Advanced Tasks (v4)
 
 **Advanced patterns and features for writing tasks**
@@ -655,28 +658,28 @@ Use SDK (`@trigger.dev/sdk`), check `result.ok` before accessing `result.output`
 ## Tags & Organization
 
 ```ts
-import { task, tags } from "@trigger.dev/sdk";
+import { task, tags } from '@trigger.dev/sdk';
 
 export const processUser = task({
-  id: "process-user",
-  run: async (payload: { userId: string; orgId: string }, { ctx }) => {
-    // Add tags during execution
-    await tags.add(`user_${payload.userId}`);
-    await tags.add(`org_${payload.orgId}`);
+    id: 'process-user',
+    run: async (payload: { userId: string; orgId: string }, { ctx }) => {
+        // Add tags during execution
+        await tags.add(`user_${payload.userId}`);
+        await tags.add(`org_${payload.orgId}`);
 
-    return { processed: true };
-  },
+        return { processed: true };
+    },
 });
 
 // Trigger with tags
 await processUser.trigger(
-  { userId: "123", orgId: "abc" },
-  { tags: ["priority", "user_123", "org_abc"] } // Max 10 tags per run
+    { userId: '123', orgId: 'abc' },
+    { tags: ['priority', 'user_123', 'org_abc'] }, // Max 10 tags per run
 );
 
 // Subscribe to tagged runs
-for await (const run of runs.subscribeToRunsWithTag("user_123")) {
-  console.log(`User task ${run.id}: ${run.status}`);
+for await (const run of runs.subscribeToRunsWithTag('user_123')) {
+    console.log(`User task ${run.id}: ${run.status}`);
 }
 ```
 
@@ -698,59 +701,59 @@ Enhanced batch triggering with larger payloads and streaming ingestion.
 
 ### Rate Limiting (per environment)
 
-| Tier | Bucket Size | Refill Rate |
-|------|-------------|-------------|
-| Free | 1,200 runs | 100 runs/10 sec |
-| Hobby | 5,000 runs | 500 runs/5 sec |
-| Pro | 5,000 runs | 500 runs/5 sec |
+| Tier  | Bucket Size | Refill Rate     |
+| ----- | ----------- | --------------- |
+| Free  | 1,200 runs  | 100 runs/10 sec |
+| Hobby | 5,000 runs  | 500 runs/5 sec  |
+| Pro   | 5,000 runs  | 500 runs/5 sec  |
 
 ### Concurrent Batch Processing
 
-| Tier | Concurrent Batches |
-|------|-------------------|
-| Free | 1 |
-| Hobby | 10 |
-| Pro | 10 |
+| Tier  | Concurrent Batches |
+| ----- | ------------------ |
+| Free  | 1                  |
+| Hobby | 10                 |
+| Pro   | 10                 |
 
 ### Usage
 
 ```ts
-import { myTask } from "./trigger/myTask";
+import { myTask } from './trigger/myTask';
 
 // Basic batch trigger (up to 1,000 items)
 const runs = await myTask.batchTrigger([
-  { payload: { userId: "user-1" } },
-  { payload: { userId: "user-2" } },
-  { payload: { userId: "user-3" } },
+    { payload: { userId: 'user-1' } },
+    { payload: { userId: 'user-2' } },
+    { payload: { userId: 'user-3' } },
 ]);
 
 // Batch trigger with wait
 const results = await myTask.batchTriggerAndWait([
-  { payload: { userId: "user-1" } },
-  { payload: { userId: "user-2" } },
+    { payload: { userId: 'user-1' } },
+    { payload: { userId: 'user-2' } },
 ]);
 
 for (const result of results) {
-  if (result.ok) {
-    console.log("Result:", result.output);
-  }
+    if (result.ok) {
+        console.log('Result:', result.output);
+    }
 }
 
 // With per-item options
 const batchHandle = await myTask.batchTrigger([
-  {
-    payload: { userId: "123" },
-    options: {
-      idempotencyKey: "user-123-batch",
-      tags: ["priority"],
+    {
+        payload: { userId: '123' },
+        options: {
+            idempotencyKey: 'user-123-batch',
+            tags: ['priority'],
+        },
     },
-  },
-  {
-    payload: { userId: "456" },
-    options: {
-      idempotencyKey: "user-456-batch",
+    {
+        payload: { userId: '456' },
+        options: {
+            idempotencyKey: 'user-456-batch',
+        },
     },
-  },
 ]);
 ```
 
@@ -769,13 +772,13 @@ Consolidate multiple triggers into a single execution by debouncing task runs wi
 
 ```ts
 await myTask.trigger(
-  { userId: "123" },
-  {
-    debounce: {
-      key: "user-123-update",  // Unique identifier for debounce group
-      delay: "5s",              // Wait duration ("5s", "1m", or milliseconds)
+    { userId: '123' },
+    {
+        debounce: {
+            key: 'user-123-update', // Unique identifier for debounce group
+            delay: '5s', // Wait duration ("5s", "1m", or milliseconds)
+        },
     },
-  }
 );
 ```
 
@@ -785,14 +788,20 @@ await myTask.trigger(
 
 ```ts
 // First trigger sets the payload
-await myTask.trigger({ action: "first" }, {
-  debounce: { key: "my-key", delay: "10s" }
-});
+await myTask.trigger(
+    { action: 'first' },
+    {
+        debounce: { key: 'my-key', delay: '10s' },
+    },
+);
 
 // Second trigger only reschedules - payload remains "first"
-await myTask.trigger({ action: "second" }, {
-  debounce: { key: "my-key", delay: "10s" }
-});
+await myTask.trigger(
+    { action: 'second' },
+    {
+        debounce: { key: 'my-key', delay: '10s' },
+    },
+);
 // Task executes with { action: "first" }
 ```
 
@@ -800,18 +809,19 @@ await myTask.trigger({ action: "second" }, {
 
 ```ts
 await myTask.trigger(
-  { data: "latest-value" },
-  {
-    debounce: {
-      key: "trailing-example",
-      delay: "10s",
-      mode: "trailing",
+    { data: 'latest-value' },
+    {
+        debounce: {
+            key: 'trailing-example',
+            delay: '10s',
+            mode: 'trailing',
+        },
     },
-  }
 );
 ```
 
 In trailing mode, these options update with each trigger:
+
 - `payload` — task input data
 - `metadata` — run metadata
 - `tags` — run tags (replaces existing)
@@ -828,93 +838,93 @@ In trailing mode, these options update with each trigger:
 ## Concurrency & Queues
 
 ```ts
-import { task, queue } from "@trigger.dev/sdk";
+import { task, queue } from '@trigger.dev/sdk';
 
 // Shared queue for related tasks
 const emailQueue = queue({
-  name: "email-processing",
-  concurrencyLimit: 5, // Max 5 emails processing simultaneously
+    name: 'email-processing',
+    concurrencyLimit: 5, // Max 5 emails processing simultaneously
 });
 
 // Task-level concurrency
 export const oneAtATime = task({
-  id: "sequential-task",
-  queue: { concurrencyLimit: 1 }, // Process one at a time
-  run: async (payload) => {
-    // Critical section - only one instance runs
-  },
+    id: 'sequential-task',
+    queue: { concurrencyLimit: 1 }, // Process one at a time
+    run: async (payload) => {
+        // Critical section - only one instance runs
+    },
 });
 
 // Per-user concurrency
 export const processUserData = task({
-  id: "process-user-data",
-  run: async (payload: { userId: string }) => {
-    // Override queue with user-specific concurrency
-    await childTask.trigger(payload, {
-      queue: {
-        name: `user-${payload.userId}`,
-        concurrencyLimit: 2,
-      },
-    });
-  },
+    id: 'process-user-data',
+    run: async (payload: { userId: string }) => {
+        // Override queue with user-specific concurrency
+        await childTask.trigger(payload, {
+            queue: {
+                name: `user-${payload.userId}`,
+                concurrencyLimit: 2,
+            },
+        });
+    },
 });
 
 export const emailTask = task({
-  id: "send-email",
-  queue: emailQueue, // Use shared queue
-  run: async (payload: { to: string }) => {
-    // Send email logic
-  },
+    id: 'send-email',
+    queue: emailQueue, // Use shared queue
+    run: async (payload: { to: string }) => {
+        // Send email logic
+    },
 });
 ```
 
 ## Error Handling & Retries
 
 ```ts
-import { task, retry, AbortTaskRunError } from "@trigger.dev/sdk";
+import { task, retry, AbortTaskRunError } from '@trigger.dev/sdk';
 
 export const resilientTask = task({
-  id: "resilient-task",
-  retry: {
-    maxAttempts: 10,
-    factor: 1.8, // Exponential backoff multiplier
-    minTimeoutInMs: 500,
-    maxTimeoutInMs: 30_000,
-    randomize: false,
-  },
-  catchError: async ({ error, ctx }) => {
-    // Custom error handling
-    if (error.code === "FATAL_ERROR") {
-      throw new AbortTaskRunError("Cannot retry this error");
-    }
+    id: 'resilient-task',
+    retry: {
+        maxAttempts: 10,
+        factor: 1.8, // Exponential backoff multiplier
+        minTimeoutInMs: 500,
+        maxTimeoutInMs: 30_000,
+        randomize: false,
+    },
+    catchError: async ({ error, ctx }) => {
+        // Custom error handling
+        if (error.code === 'FATAL_ERROR') {
+            throw new AbortTaskRunError('Cannot retry this error');
+        }
 
-    // Log error details
-    console.error(`Task ${ctx.task.id} failed:`, error);
+        // Log error details
+        console.error(`Task ${ctx.task.id} failed:`, error);
 
-    // Allow retry by returning nothing
-    return { retryAt: new Date(Date.now() + 60000) }; // Retry in 1 minute
-  },
-  run: async (payload) => {
-    // Retry specific operations
-    const result = await retry.onThrow(
-      async () => {
-        return await unstableApiCall(payload);
-      },
-      { maxAttempts: 3 }
-    );
+        // Allow retry by returning nothing
+        return { retryAt: new Date(Date.now() + 60000) }; // Retry in 1 minute
+    },
+    run: async (payload) => {
+        // Retry specific operations
+        const result = await retry.onThrow(
+            async () => {
+                return await unstableApiCall(payload);
+            },
+            { maxAttempts: 3 },
+        );
 
-    // Conditional HTTP retries
-    const response = await retry.fetch("https://api.example.com", {
-      retry: {
-        maxAttempts: 5,
-        condition: (response, error) => {
-          return response?.status === 429 || response?.status >= 500;
-        },
-      },
-    });
+        // Conditional HTTP retries
+        const response = await retry.fetch('https://api.example.com', {
+            retry: {
+                maxAttempts: 5,
+                condition: (response, error) => {
+                    return response?.status === 429 || response?.status >= 500;
+                },
+            },
+        });
 
-    return result;
-  },
+        return result;
+    },
 });
 ```
 
@@ -922,23 +932,23 @@ export const resilientTask = task({
 
 ```ts
 export const heavyTask = task({
-  id: "heavy-computation",
-  machine: { preset: "large-2x" }, // 8 vCPU, 16 GB RAM
-  maxDuration: 1800, // 30 minutes timeout
-  run: async (payload, { ctx }) => {
-    // Resource-intensive computation
-    if (ctx.machine.preset === "large-2x") {
-      // Use all available cores
-      return await parallelProcessing(payload);
-    }
+    id: 'heavy-computation',
+    machine: { preset: 'large-2x' }, // 8 vCPU, 16 GB RAM
+    maxDuration: 1800, // 30 minutes timeout
+    run: async (payload, { ctx }) => {
+        // Resource-intensive computation
+        if (ctx.machine.preset === 'large-2x') {
+            // Use all available cores
+            return await parallelProcessing(payload);
+        }
 
-    return await standardProcessing(payload);
-  },
+        return await standardProcessing(payload);
+    },
 });
 
 // Override machine when triggering
 await heavyTask.trigger(payload, {
-  machine: { preset: "medium-1x" }, // Override for this run
+    machine: { preset: 'medium-1x' }, // Override for this run
 });
 ```
 
@@ -955,139 +965,139 @@ await heavyTask.trigger(payload, {
 ## Idempotency
 
 ```ts
-import { task, idempotencyKeys } from "@trigger.dev/sdk";
+import { task, idempotencyKeys } from '@trigger.dev/sdk';
 
 export const paymentTask = task({
-  id: "process-payment",
-  retry: {
-    maxAttempts: 3,
-  },
-  run: async (payload: { orderId: string; amount: number }) => {
-    // Automatically scoped to this task run, so if the task is retried, the idempotency key will be the same
-    const idempotencyKey = await idempotencyKeys.create(`payment-${payload.orderId}`);
+    id: 'process-payment',
+    retry: {
+        maxAttempts: 3,
+    },
+    run: async (payload: { orderId: string; amount: number }) => {
+        // Automatically scoped to this task run, so if the task is retried, the idempotency key will be the same
+        const idempotencyKey = await idempotencyKeys.create(`payment-${payload.orderId}`);
 
-    // Ensure payment is processed only once
-    await chargeCustomer.trigger(payload, {
-      idempotencyKey,
-      idempotencyKeyTTL: "24h", // Key expires in 24 hours
-    });
-  },
+        // Ensure payment is processed only once
+        await chargeCustomer.trigger(payload, {
+            idempotencyKey,
+            idempotencyKeyTTL: '24h', // Key expires in 24 hours
+        });
+    },
 });
 
 // Payload-based idempotency
-import { createHash } from "node:crypto";
+import { createHash } from 'node:crypto';
 
 function createPayloadHash(payload: any): string {
-  const hash = createHash("sha256");
-  hash.update(JSON.stringify(payload));
-  return hash.digest("hex");
+    const hash = createHash('sha256');
+    hash.update(JSON.stringify(payload));
+    return hash.digest('hex');
 }
 
 export const deduplicatedTask = task({
-  id: "deduplicated-task",
-  run: async (payload) => {
-    const payloadHash = createPayloadHash(payload);
-    const idempotencyKey = await idempotencyKeys.create(payloadHash);
+    id: 'deduplicated-task',
+    run: async (payload) => {
+        const payloadHash = createPayloadHash(payload);
+        const idempotencyKey = await idempotencyKeys.create(payloadHash);
 
-    await processData.trigger(payload, { idempotencyKey });
-  },
+        await processData.trigger(payload, { idempotencyKey });
+    },
 });
 ```
 
 ## Metadata & Progress Tracking
 
 ```ts
-import { task, metadata } from "@trigger.dev/sdk";
+import { task, metadata } from '@trigger.dev/sdk';
 
 export const batchProcessor = task({
-  id: "batch-processor",
-  run: async (payload: { items: any[] }, { ctx }) => {
-    const totalItems = payload.items.length;
+    id: 'batch-processor',
+    run: async (payload: { items: any[] }, { ctx }) => {
+        const totalItems = payload.items.length;
 
-    // Initialize progress metadata
-    metadata
-      .set("progress", 0)
-      .set("totalItems", totalItems)
-      .set("processedItems", 0)
-      .set("status", "starting");
+        // Initialize progress metadata
+        metadata
+            .set('progress', 0)
+            .set('totalItems', totalItems)
+            .set('processedItems', 0)
+            .set('status', 'starting');
 
-    const results = [];
+        const results = [];
 
-    for (let i = 0; i < payload.items.length; i++) {
-      const item = payload.items[i];
+        for (let i = 0; i < payload.items.length; i++) {
+            const item = payload.items[i];
 
-      // Process item
-      const result = await processItem(item);
-      results.push(result);
+            // Process item
+            const result = await processItem(item);
+            results.push(result);
 
-      // Update progress
-      const progress = ((i + 1) / totalItems) * 100;
-      metadata
-        .set("progress", progress)
-        .increment("processedItems", 1)
-        .append("logs", `Processed item ${i + 1}/${totalItems}`)
-        .set("currentItem", item.id);
-    }
+            // Update progress
+            const progress = ((i + 1) / totalItems) * 100;
+            metadata
+                .set('progress', progress)
+                .increment('processedItems', 1)
+                .append('logs', `Processed item ${i + 1}/${totalItems}`)
+                .set('currentItem', item.id);
+        }
 
-    // Final status
-    metadata.set("status", "completed");
+        // Final status
+        metadata.set('status', 'completed');
 
-    return { results, totalProcessed: results.length };
-  },
+        return { results, totalProcessed: results.length };
+    },
 });
 
 // Update parent metadata from child task
 export const childTask = task({
-  id: "child-task",
-  run: async (payload, { ctx }) => {
-    // Update parent task metadata
-    metadata.parent.set("childStatus", "processing");
-    metadata.root.increment("childrenCompleted", 1);
+    id: 'child-task',
+    run: async (payload, { ctx }) => {
+        // Update parent task metadata
+        metadata.parent.set('childStatus', 'processing');
+        metadata.root.increment('childrenCompleted', 1);
 
-    return { processed: true };
-  },
+        return { processed: true };
+    },
 });
 ```
 
 ## Logging & Tracing
 
 ```ts
-import { task, logger } from "@trigger.dev/sdk";
+import { task, logger } from '@trigger.dev/sdk';
 
 export const tracedTask = task({
-  id: "traced-task",
-  run: async (payload, { ctx }) => {
-    logger.info("Task started", { userId: payload.userId });
+    id: 'traced-task',
+    run: async (payload, { ctx }) => {
+        logger.info('Task started', { userId: payload.userId });
 
-    // Custom trace with attributes
-    const user = await logger.trace(
-      "fetch-user",
-      async (span) => {
-        span.setAttribute("user.id", payload.userId);
-        span.setAttribute("operation", "database-fetch");
+        // Custom trace with attributes
+        const user = await logger.trace(
+            'fetch-user',
+            async (span) => {
+                span.setAttribute('user.id', payload.userId);
+                span.setAttribute('operation', 'database-fetch');
 
-        const userData = await database.findUser(payload.userId);
-        span.setAttribute("user.found", !!userData);
+                const userData = await database.findUser(payload.userId);
+                span.setAttribute('user.found', !!userData);
 
-        return userData;
-      },
-      { userId: payload.userId }
-    );
+                return userData;
+            },
+            { userId: payload.userId },
+        );
 
-    logger.debug("User fetched", { user: user.id });
+        logger.debug('User fetched', { user: user.id });
 
-    try {
-      const result = await processUser(user);
-      logger.info("Processing completed", { result });
-      return result;
-    } catch (error) {
-      logger.error("Processing failed", {
-        error: error.message,
-        userId: payload.userId,
-      });
-      throw error;
-    }
-  },
+        try {
+            const result = await processUser(user);
+            logger.info('Processing completed', { result });
+            return result;
+        } catch (error) {
+            logger.error('Processing failed', {
+                error: error.message,
+                userId: payload.userId,
+            });
+            throw error;
+        }
+    },
 });
 ```
 
@@ -1096,27 +1106,27 @@ export const tracedTask = task({
 ```ts
 // Hidden task - not exported, only used internally
 const internalProcessor = task({
-  id: "internal-processor",
-  run: async (payload: { data: string }) => {
-    return { processed: payload.data.toUpperCase() };
-  },
+    id: 'internal-processor',
+    run: async (payload: { data: string }) => {
+        return { processed: payload.data.toUpperCase() };
+    },
 });
 
 // Public task that uses hidden task
 export const publicWorkflow = task({
-  id: "public-workflow",
-  run: async (payload: { input: string }) => {
-    // Use hidden task internally
-    const result = await internalProcessor.triggerAndWait({
-      data: payload.input,
-    });
+    id: 'public-workflow',
+    run: async (payload: { input: string }) => {
+        // Use hidden task internally
+        const result = await internalProcessor.triggerAndWait({
+            data: payload.input,
+        });
 
-    if (result.ok) {
-      return { output: result.output.processed };
-    }
+        if (result.ok) {
+            return { output: result.output.processed };
+        }
 
-    throw new Error("Internal processing failed");
-  },
+        throw new Error('Internal processing failed');
+    },
 });
 ```
 
@@ -1137,6 +1147,7 @@ Design tasks to be stateless, idempotent, and resilient to failures. Use metadat
 <!-- TRIGGER.DEV advanced-tasks END -->
 
 <!-- TRIGGER.DEV realtime START -->
+
 # Trigger.dev Realtime (v4)
 
 **Real-time monitoring and updates for runs**
@@ -1154,17 +1165,17 @@ Realtime allows you to:
 ### Public Access Tokens
 
 ```ts
-import { auth } from "@trigger.dev/sdk";
+import { auth } from '@trigger.dev/sdk';
 
 // Read-only token for specific runs
 const publicToken = await auth.createPublicToken({
-  scopes: {
-    read: {
-      runs: ["run_123", "run_456"],
-      tasks: ["my-task-1", "my-task-2"],
+    scopes: {
+        read: {
+            runs: ['run_123', 'run_456'],
+            tasks: ['my-task-1', 'my-task-2'],
+        },
     },
-  },
-  expirationTime: "1h", // Default: 15 minutes
+    expirationTime: '1h', // Default: 15 minutes
 });
 ```
 
@@ -1172,8 +1183,8 @@ const publicToken = await auth.createPublicToken({
 
 ```ts
 // Single-use token for triggering tasks
-const triggerToken = await auth.createTriggerPublicToken("my-task", {
-  expirationTime: "30m",
+const triggerToken = await auth.createTriggerPublicToken('my-task', {
+    expirationTime: '30m',
 });
 ```
 
@@ -1182,63 +1193,63 @@ const triggerToken = await auth.createTriggerPublicToken("my-task", {
 ### Subscribe to Runs
 
 ```ts
-import { runs, tasks } from "@trigger.dev/sdk";
+import { runs, tasks } from '@trigger.dev/sdk';
 
 // Trigger and subscribe
-const handle = await tasks.trigger("my-task", { data: "value" });
+const handle = await tasks.trigger('my-task', { data: 'value' });
 
 // Subscribe to specific run
 for await (const run of runs.subscribeToRun<typeof myTask>(handle.id)) {
-  console.log(`Status: ${run.status}, Progress: ${run.metadata?.progress}`);
-  if (run.status === "COMPLETED") break;
+    console.log(`Status: ${run.status}, Progress: ${run.metadata?.progress}`);
+    if (run.status === 'COMPLETED') break;
 }
 
 // Subscribe to runs with tag
-for await (const run of runs.subscribeToRunsWithTag("user-123")) {
-  console.log(`Tagged run ${run.id}: ${run.status}`);
+for await (const run of runs.subscribeToRunsWithTag('user-123')) {
+    console.log(`Tagged run ${run.id}: ${run.status}`);
 }
 
 // Subscribe to batch
 for await (const run of runs.subscribeToBatch(batchId)) {
-  console.log(`Batch run ${run.id}: ${run.status}`);
+    console.log(`Batch run ${run.id}: ${run.status}`);
 }
 ```
 
 ### Realtime Streams v2 (Recommended)
 
 ```ts
-import { streams, InferStreamType } from "@trigger.dev/sdk";
+import { streams, InferStreamType } from '@trigger.dev/sdk';
 
 // 1. Define streams (shared location)
 export const aiStream = streams.define<string>({
-  id: "ai-output",
+    id: 'ai-output',
 });
 
 export type AIStreamPart = InferStreamType<typeof aiStream>;
 
 // 2. Pipe from task
 export const streamingTask = task({
-  id: "streaming-task",
-  run: async (payload) => {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [{ role: "user", content: payload.prompt }],
-      stream: true,
-    });
+    id: 'streaming-task',
+    run: async (payload) => {
+        const completion = await openai.chat.completions.create({
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: payload.prompt }],
+            stream: true,
+        });
 
-    const { waitUntilComplete } = aiStream.pipe(completion);
-    await waitUntilComplete();
-  },
+        const { waitUntilComplete } = aiStream.pipe(completion);
+        await waitUntilComplete();
+    },
 });
 
 // 3. Read from backend
 const stream = await aiStream.read(runId, {
-  timeoutInSeconds: 300,
-  startIndex: 0, // Resume from specific chunk
+    timeoutInSeconds: 300,
+    startIndex: 0, // Resume from specific chunk
 });
 
 for await (const chunk of stream) {
-  console.log("Chunk:", chunk); // Fully typed
+    console.log('Chunk:', chunk); // Fully typed
 }
 ```
 
@@ -1255,132 +1266,135 @@ npm add @trigger.dev/react-hooks
 ### Triggering Tasks
 
 ```tsx
-"use client";
-import { useTaskTrigger, useRealtimeTaskTrigger } from "@trigger.dev/react-hooks";
-import type { myTask } from "../trigger/tasks";
+'use client';
+import { useTaskTrigger, useRealtimeTaskTrigger } from '@trigger.dev/react-hooks';
+import type { myTask } from '../trigger/tasks';
 
 function TriggerComponent({ accessToken }: { accessToken: string }) {
-  // Basic trigger
-  const { submit, handle, isLoading } = useTaskTrigger<typeof myTask>("my-task", {
-    accessToken,
-  });
+    // Basic trigger
+    const { submit, handle, isLoading } = useTaskTrigger<typeof myTask>('my-task', {
+        accessToken,
+    });
 
-  // Trigger with realtime updates
-  const {
-    submit: realtimeSubmit,
-    run,
-    isLoading: isRealtimeLoading,
-  } = useRealtimeTaskTrigger<typeof myTask>("my-task", { accessToken });
+    // Trigger with realtime updates
+    const {
+        submit: realtimeSubmit,
+        run,
+        isLoading: isRealtimeLoading,
+    } = useRealtimeTaskTrigger<typeof myTask>('my-task', { accessToken });
 
-  return (
-    <div>
-      <button onClick={() => submit({ data: "value" })} disabled={isLoading}>
-        Trigger Task
-      </button>
+    return (
+        <div>
+            <button onClick={() => submit({ data: 'value' })} disabled={isLoading}>
+                Trigger Task
+            </button>
 
-      <button onClick={() => realtimeSubmit({ data: "realtime" })} disabled={isRealtimeLoading}>
-        Trigger with Realtime
-      </button>
+            <button
+                onClick={() => realtimeSubmit({ data: 'realtime' })}
+                disabled={isRealtimeLoading}
+            >
+                Trigger with Realtime
+            </button>
 
-      {run && <div>Status: {run.status}</div>}
-    </div>
-  );
+            {run && <div>Status: {run.status}</div>}
+        </div>
+    );
 }
 ```
 
 ### Subscribing to Runs
 
 ```tsx
-"use client";
-import { useRealtimeRun, useRealtimeRunsWithTag } from "@trigger.dev/react-hooks";
-import type { myTask } from "../trigger/tasks";
+'use client';
+import { useRealtimeRun, useRealtimeRunsWithTag } from '@trigger.dev/react-hooks';
+import type { myTask } from '../trigger/tasks';
 
 function SubscribeComponent({ runId, accessToken }: { runId: string; accessToken: string }) {
-  // Subscribe to specific run
-  const { run, error } = useRealtimeRun<typeof myTask>(runId, {
-    accessToken,
-    onComplete: (run) => {
-      console.log("Task completed:", run.output);
-    },
-  });
+    // Subscribe to specific run
+    const { run, error } = useRealtimeRun<typeof myTask>(runId, {
+        accessToken,
+        onComplete: (run) => {
+            console.log('Task completed:', run.output);
+        },
+    });
 
-  // Subscribe to tagged runs
-  const { runs } = useRealtimeRunsWithTag("user-123", { accessToken });
+    // Subscribe to tagged runs
+    const { runs } = useRealtimeRunsWithTag('user-123', { accessToken });
 
-  if (error) return <div>Error: {error.message}</div>;
-  if (!run) return <div>Loading...</div>;
+    if (error) return <div>Error: {error.message}</div>;
+    if (!run) return <div>Loading...</div>;
 
-  return (
-    <div>
-      <div>Status: {run.status}</div>
-      <div>Progress: {run.metadata?.progress || 0}%</div>
-      {run.output && <div>Result: {JSON.stringify(run.output)}</div>}
+    return (
+        <div>
+            <div>Status: {run.status}</div>
+            <div>Progress: {run.metadata?.progress || 0}%</div>
+            {run.output && <div>Result: {JSON.stringify(run.output)}</div>}
 
-      <h3>Tagged Runs:</h3>
-      {runs.map((r) => (
-        <div key={r.id}>
-          {r.id}: {r.status}
+            <h3>Tagged Runs:</h3>
+            {runs.map((r) => (
+                <div key={r.id}>
+                    {r.id}: {r.status}
+                </div>
+            ))}
         </div>
-      ))}
-    </div>
-  );
+    );
 }
 ```
 
 ### Realtime Streams with React
 
 ```tsx
-"use client";
-import { useRealtimeStream } from "@trigger.dev/react-hooks";
-import { aiStream } from "../trigger/streams";
+'use client';
+import { useRealtimeStream } from '@trigger.dev/react-hooks';
+import { aiStream } from '../trigger/streams';
 
 function StreamComponent({ runId, accessToken }: { runId: string; accessToken: string }) {
-  // Pass defined stream directly for type safety
-  const { parts, error } = useRealtimeStream(aiStream, runId, {
-    accessToken,
-    timeoutInSeconds: 300,
-    throttleInMs: 50, // Control re-render frequency
-  });
+    // Pass defined stream directly for type safety
+    const { parts, error } = useRealtimeStream(aiStream, runId, {
+        accessToken,
+        timeoutInSeconds: 300,
+        throttleInMs: 50, // Control re-render frequency
+    });
 
-  if (error) return <div>Error: {error.message}</div>;
-  if (!parts) return <div>Loading...</div>;
+    if (error) return <div>Error: {error.message}</div>;
+    if (!parts) return <div>Loading...</div>;
 
-  const text = parts.join(""); // parts is typed as AIStreamPart[]
+    const text = parts.join(''); // parts is typed as AIStreamPart[]
 
-  return <div>Streamed Text: {text}</div>;
+    return <div>Streamed Text: {text}</div>;
 }
 ```
 
 ### Wait Tokens
 
 ```tsx
-"use client";
-import { useWaitToken } from "@trigger.dev/react-hooks";
+'use client';
+import { useWaitToken } from '@trigger.dev/react-hooks';
 
 function WaitTokenComponent({ tokenId, accessToken }: { tokenId: string; accessToken: string }) {
-  const { complete } = useWaitToken(tokenId, { accessToken });
+    const { complete } = useWaitToken(tokenId, { accessToken });
 
-  return <button onClick={() => complete({ approved: true })}>Approve Task</button>;
+    return <button onClick={() => complete({ approved: true })}>Approve Task</button>;
 }
 ```
 
 ### SWR Hooks (Fetch Once)
 
 ```tsx
-"use client";
-import { useRun } from "@trigger.dev/react-hooks";
-import type { myTask } from "../trigger/tasks";
+'use client';
+import { useRun } from '@trigger.dev/react-hooks';
+import type { myTask } from '../trigger/tasks';
 
 function SWRComponent({ runId, accessToken }: { runId: string; accessToken: string }) {
-  const { run, error, isLoading } = useRun<typeof myTask>(runId, {
-    accessToken,
-    refreshInterval: 0, // Disable polling (recommended)
-  });
+    const { run, error, isLoading } = useRun<typeof myTask>(runId, {
+        accessToken,
+        refreshInterval: 0, // Disable polling (recommended)
+    });
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+    if (isLoading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error.message}</div>;
 
-  return <div>Run: {run?.status}</div>;
+    return <div>Run: {run?.status}</div>;
 }
 ```
 
@@ -1407,6 +1421,7 @@ Key properties available in run subscriptions:
 <!-- TRIGGER.DEV realtime END -->
 
 <!-- TRIGGER.DEV config START -->
+
 # Trigger.dev Configuration (v4)
 
 **Complete guide to configuring `trigger.config.ts` with build extensions**
@@ -1414,44 +1429,44 @@ Key properties available in run subscriptions:
 ## Basic Configuration
 
 ```ts
-import { defineConfig } from "@trigger.dev/sdk";
+import { defineConfig } from '@trigger.dev/sdk';
 
 export default defineConfig({
-  project: "<project-ref>", // Required: Your project reference
-  dirs: ["./trigger"], // Task directories
-  runtime: "node", // "node", "node-22", or "bun"
-  logLevel: "info", // "debug", "info", "warn", "error"
+    project: '<project-ref>', // Required: Your project reference
+    dirs: ['./trigger'], // Task directories
+    runtime: 'node', // "node", "node-22", or "bun"
+    logLevel: 'info', // "debug", "info", "warn", "error"
 
-  // Default retry settings
-  retries: {
-    enabledInDev: false,
-    default: {
-      maxAttempts: 3,
-      minTimeoutInMs: 1000,
-      maxTimeoutInMs: 10000,
-      factor: 2,
-      randomize: true,
+    // Default retry settings
+    retries: {
+        enabledInDev: false,
+        default: {
+            maxAttempts: 3,
+            minTimeoutInMs: 1000,
+            maxTimeoutInMs: 10000,
+            factor: 2,
+            randomize: true,
+        },
     },
-  },
 
-  // Build configuration
-  build: {
-    autoDetectExternal: true,
-    keepNames: true,
-    minify: false,
-    extensions: [], // Build extensions go here
-  },
+    // Build configuration
+    build: {
+        autoDetectExternal: true,
+        keepNames: true,
+        minify: false,
+        extensions: [], // Build extensions go here
+    },
 
-  // Global lifecycle hooks
-  onStartAttempt: async ({ payload, ctx }) => {
-    console.log("Global task start");
-  },
-  onSuccess: async ({ payload, output, ctx }) => {
-    console.log("Global task success");
-  },
-  onFailure: async ({ payload, error, ctx }) => {
-    console.log("Global task failure");
-  },
+    // Global lifecycle hooks
+    onStartAttempt: async ({ payload, ctx }) => {
+        console.log('Global task start');
+    },
+    onSuccess: async ({ payload, output, ctx }) => {
+        console.log('Global task success');
+    },
+    onFailure: async ({ payload, error, ctx }) => {
+        console.log('Global task failure');
+    },
 });
 ```
 
@@ -1462,26 +1477,26 @@ export default defineConfig({
 #### Prisma
 
 ```ts
-import { prismaExtension } from "@trigger.dev/build/extensions/prisma";
+import { prismaExtension } from '@trigger.dev/build/extensions/prisma';
 
 extensions: [
-  prismaExtension({
-    schema: "prisma/schema.prisma",
-    version: "5.19.0", // Optional: specify version
-    migrate: true, // Run migrations during build
-    directUrlEnvVarName: "DIRECT_DATABASE_URL",
-    typedSql: true, // Enable TypedSQL support
-  }),
+    prismaExtension({
+        schema: 'prisma/schema.prisma',
+        version: '5.19.0', // Optional: specify version
+        migrate: true, // Run migrations during build
+        directUrlEnvVarName: 'DIRECT_DATABASE_URL',
+        typedSql: true, // Enable TypedSQL support
+    }),
 ];
 ```
 
 #### TypeScript Decorators (for TypeORM)
 
 ```ts
-import { emitDecoratorMetadata } from "@trigger.dev/build/extensions/typescript";
+import { emitDecoratorMetadata } from '@trigger.dev/build/extensions/typescript';
 
 extensions: [
-  emitDecoratorMetadata(), // Enables decorator metadata
+    emitDecoratorMetadata(), // Enables decorator metadata
 ];
 ```
 
@@ -1490,19 +1505,19 @@ extensions: [
 #### Python
 
 ```ts
-import { pythonExtension } from "@trigger.dev/build/extensions/python";
+import { pythonExtension } from '@trigger.dev/build/extensions/python';
 
 extensions: [
-  pythonExtension({
-    scripts: ["./python/**/*.py"], // Copy Python files
-    requirementsFile: "./requirements.txt", // Install packages
-    devPythonBinaryPath: ".venv/bin/python", // Dev mode binary
-  }),
+    pythonExtension({
+        scripts: ['./python/**/*.py'], // Copy Python files
+        requirementsFile: './requirements.txt', // Install packages
+        devPythonBinaryPath: '.venv/bin/python', // Dev mode binary
+    }),
 ];
 
 // Usage in tasks
 const result = await python.runInline(`print("Hello, world!")`);
-const output = await python.runScript("./python/script.py", ["arg1"]);
+const output = await python.runScript('./python/script.py', ['arg1']);
 ```
 
 ### Browser Automation
@@ -1510,20 +1525,20 @@ const output = await python.runScript("./python/script.py", ["arg1"]);
 #### Playwright
 
 ```ts
-import { playwright } from "@trigger.dev/build/extensions/playwright";
+import { playwright } from '@trigger.dev/build/extensions/playwright';
 
 extensions: [
-  playwright({
-    browsers: ["chromium", "firefox", "webkit"], // Default: ["chromium"]
-    headless: true, // Default: true
-  }),
+    playwright({
+        browsers: ['chromium', 'firefox', 'webkit'], // Default: ["chromium"]
+        headless: true, // Default: true
+    }),
 ];
 ```
 
 #### Puppeteer
 
 ```ts
-import { puppeteer } from "@trigger.dev/build/extensions/puppeteer";
+import { puppeteer } from '@trigger.dev/build/extensions/puppeteer';
 
 extensions: [puppeteer()];
 
@@ -1534,13 +1549,13 @@ extensions: [puppeteer()];
 #### Lightpanda
 
 ```ts
-import { lightpanda } from "@trigger.dev/build/extensions/lightpanda";
+import { lightpanda } from '@trigger.dev/build/extensions/lightpanda';
 
 extensions: [
-  lightpanda({
-    version: "latest", // or "nightly"
-    disableTelemetry: false,
-  }),
+    lightpanda({
+        version: 'latest', // or "nightly"
+        disableTelemetry: false,
+    }),
 ];
 ```
 
@@ -1549,10 +1564,10 @@ extensions: [
 #### FFmpeg
 
 ```ts
-import { ffmpeg } from "@trigger.dev/build/extensions/core";
+import { ffmpeg } from '@trigger.dev/build/extensions/core';
 
 extensions: [
-  ffmpeg({ version: "7" }), // Static build, or omit for Debian version
+    ffmpeg({ version: '7' }), // Static build, or omit for Debian version
 ];
 
 // Automatically sets FFMPEG_PATH and FFPROBE_PATH
@@ -1562,10 +1577,10 @@ extensions: [
 #### Audio Waveform
 
 ```ts
-import { audioWaveform } from "@trigger.dev/build/extensions/audioWaveform";
+import { audioWaveform } from '@trigger.dev/build/extensions/audioWaveform';
 
 extensions: [
-  audioWaveform(), // Installs Audio Waveform 1.1.0
+    audioWaveform(), // Installs Audio Waveform 1.1.0
 ];
 ```
 
@@ -1574,12 +1589,12 @@ extensions: [
 #### System Packages (apt-get)
 
 ```ts
-import { aptGet } from "@trigger.dev/build/extensions/core";
+import { aptGet } from '@trigger.dev/build/extensions/core';
 
 extensions: [
-  aptGet({
-    packages: ["ffmpeg", "imagemagick", "curl=7.68.0-1"], // Can specify versions
-  }),
+    aptGet({
+        packages: ['ffmpeg', 'imagemagick', 'curl=7.68.0-1'], // Can specify versions
+    }),
 ];
 ```
 
@@ -1588,24 +1603,24 @@ extensions: [
 Only use this for installing CLI tools, NOT packages you import in your code.
 
 ```ts
-import { additionalPackages } from "@trigger.dev/build/extensions/core";
+import { additionalPackages } from '@trigger.dev/build/extensions/core';
 
 extensions: [
-  additionalPackages({
-    packages: ["wrangler"], // CLI tools and specific versions
-  }),
+    additionalPackages({
+        packages: ['wrangler'], // CLI tools and specific versions
+    }),
 ];
 ```
 
 #### Additional Files
 
 ```ts
-import { additionalFiles } from "@trigger.dev/build/extensions/core";
+import { additionalFiles } from '@trigger.dev/build/extensions/core';
 
 extensions: [
-  additionalFiles({
-    files: ["wrangler.toml", "./assets/**", "./fonts/**"], // Glob patterns supported
-  }),
+    additionalFiles({
+        files: ['wrangler.toml', './assets/**', './fonts/**'], // Glob patterns supported
+    }),
 ];
 ```
 
@@ -1614,70 +1629,70 @@ extensions: [
 #### Environment Variable Sync
 
 ```ts
-import { syncEnvVars } from "@trigger.dev/build/extensions/core";
+import { syncEnvVars } from '@trigger.dev/build/extensions/core';
 
 extensions: [
-  syncEnvVars(async (ctx) => {
-    // ctx contains: environment, projectRef, env
-    return [
-      { name: "SECRET_KEY", value: await getSecret(ctx.environment) },
-      { name: "API_URL", value: ctx.environment === "prod" ? "api.prod.com" : "api.dev.com" },
-    ];
-  }),
+    syncEnvVars(async (ctx) => {
+        // ctx contains: environment, projectRef, env
+        return [
+            { name: 'SECRET_KEY', value: await getSecret(ctx.environment) },
+            { name: 'API_URL', value: ctx.environment === 'prod' ? 'api.prod.com' : 'api.dev.com' },
+        ];
+    }),
 ];
 ```
 
 #### ESBuild Plugins
 
 ```ts
-import { esbuildPlugin } from "@trigger.dev/build/extensions";
-import { sentryEsbuildPlugin } from "@sentry/esbuild-plugin";
+import { esbuildPlugin } from '@trigger.dev/build/extensions';
+import { sentryEsbuildPlugin } from '@sentry/esbuild-plugin';
 
 extensions: [
-  esbuildPlugin(
-    sentryEsbuildPlugin({
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-    }),
-    { placement: "last", target: "deploy" } // Optional config
-  ),
+    esbuildPlugin(
+        sentryEsbuildPlugin({
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+        }),
+        { placement: 'last', target: 'deploy' }, // Optional config
+    ),
 ];
 ```
 
 ## Custom Build Extensions
 
 ```ts
-import { defineConfig } from "@trigger.dev/sdk";
+import { defineConfig } from '@trigger.dev/sdk';
 
 const customExtension = {
-  name: "my-custom-extension",
+    name: 'my-custom-extension',
 
-  externalsForTarget: (target) => {
-    return ["some-native-module"]; // Add external dependencies
-  },
+    externalsForTarget: (target) => {
+        return ['some-native-module']; // Add external dependencies
+    },
 
-  onBuildStart: async (context) => {
-    console.log(`Build starting for ${context.target}`);
-    // Register esbuild plugins, modify build context
-  },
+    onBuildStart: async (context) => {
+        console.log(`Build starting for ${context.target}`);
+        // Register esbuild plugins, modify build context
+    },
 
-  onBuildComplete: async (context, manifest) => {
-    console.log("Build complete, adding layers");
-    // Add build layers, modify deployment
-    context.addLayer({
-      id: "my-layer",
-      files: [{ source: "./custom-file", destination: "/app/custom" }],
-      commands: ["chmod +x /app/custom"],
-    });
-  },
+    onBuildComplete: async (context, manifest) => {
+        console.log('Build complete, adding layers');
+        // Add build layers, modify deployment
+        context.addLayer({
+            id: 'my-layer',
+            files: [{ source: './custom-file', destination: '/app/custom' }],
+            commands: ['chmod +x /app/custom'],
+        });
+    },
 };
 
 export default defineConfig({
-  project: "my-project",
-  build: {
-    extensions: [customExtension],
-  },
+    project: 'my-project',
+    build: {
+        extensions: [customExtension],
+    },
 });
 ```
 
@@ -1686,15 +1701,15 @@ export default defineConfig({
 ### Telemetry
 
 ```ts
-import { PrismaInstrumentation } from "@prisma/instrumentation";
-import { OpenAIInstrumentation } from "@langfuse/openai";
+import { PrismaInstrumentation } from '@prisma/instrumentation';
+import { OpenAIInstrumentation } from '@langfuse/openai';
 
 export default defineConfig({
-  // ... other config
-  telemetry: {
-    instrumentations: [new PrismaInstrumentation(), new OpenAIInstrumentation()],
-    exporters: [customExporter], // Optional custom exporters
-  },
+    // ... other config
+    telemetry: {
+        instrumentations: [new PrismaInstrumentation(), new OpenAIInstrumentation()],
+        exporters: [customExporter], // Optional custom exporters
+    },
 });
 ```
 
@@ -1702,10 +1717,10 @@ export default defineConfig({
 
 ```ts
 export default defineConfig({
-  // ... other config
-  defaultMachine: "large-1x", // Default machine for all tasks
-  maxDuration: 300, // Default max duration (seconds)
-  enableConsoleLogging: true, // Console logging in development
+    // ... other config
+    defaultMachine: 'large-1x', // Default machine for all tasks
+    maxDuration: 300, // Default max duration (seconds)
+    enableConsoleLogging: true, // Console logging in development
 });
 ```
 
@@ -1715,9 +1730,9 @@ export default defineConfig({
 
 ```ts
 extensions: [
-  prismaExtension({ schema: "prisma/schema.prisma", migrate: true }),
-  additionalFiles({ files: ["./public/**", "./assets/**"] }),
-  syncEnvVars(async (ctx) => [...envVars]),
+    prismaExtension({ schema: 'prisma/schema.prisma', migrate: true }),
+    additionalFiles({ files: ['./public/**', './assets/**'] }),
+    syncEnvVars(async (ctx) => [...envVars]),
 ];
 ```
 
@@ -1725,12 +1740,12 @@ extensions: [
 
 ```ts
 extensions: [
-  pythonExtension({
-    scripts: ["./ai/**/*.py"],
-    requirementsFile: "./requirements.txt",
-  }),
-  ffmpeg({ version: "7" }),
-  additionalPackages({ packages: ["wrangler"] }),
+    pythonExtension({
+        scripts: ['./ai/**/*.py'],
+        requirementsFile: './requirements.txt',
+    }),
+    ffmpeg({ version: '7' }),
+    additionalPackages({ packages: ['wrangler'] }),
 ];
 ```
 
@@ -1738,9 +1753,9 @@ extensions: [
 
 ```ts
 extensions: [
-  playwright({ browsers: ["chromium"] }),
-  puppeteer(),
-  additionalFiles({ files: ["./selectors.json", "./proxies.txt"] }),
+    playwright({ browsers: ['chromium'] }),
+    puppeteer(),
+    additionalFiles({ files: ['./selectors.json', './proxies.txt'] }),
 ];
 ```
 

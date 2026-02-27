@@ -82,11 +82,11 @@ ARG TRIGGER_API_URL
 ARG TRIGGER_ACCESS_TOKEN
 
 COPY --from=builder /app/node_modules ./node_modules
+COPY package.json package-lock.json* ./
 COPY prisma ./prisma
 COPY scripts ./scripts
 COPY lib ./lib
 COPY trigger ./trigger
-COPY package.json ./
 COPY tsconfig.json ./
 COPY prisma.config.ts ./
 COPY trigger.config.ts ./

@@ -77,12 +77,18 @@ FROM node:20-alpine AS worker
 
 WORKDIR /app
 
+ARG DATABASE_URL
+
 COPY --from=builder /app/node_modules ./node_modules
 COPY prisma ./prisma
 COPY scripts ./scripts
 COPY lib ./lib
+COPY trigger ./trigger
 COPY package.json ./
 COPY tsconfig.json ./
 COPY prisma.config.ts ./
+COPY trigger.config.ts ./
 
-CMD ["npx", "tsx", "scripts/opensearch/ingest.ts"]
+ENV DATABASE_URL=${DATABASE_URL}
+
+CMD ["npx", "trigger.dev@latest", "deploy"]

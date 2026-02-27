@@ -34,7 +34,8 @@
         ".next/dev/types/**/*.ts",
         "**/*.mts",
         "styled-system/**/*",
-        ".next/dev/dev/types/**/*.ts"
+        ".next/dev/dev/types/**/*.ts",
+        "trigger.config.ts"
     ],
     "exclude": ["node_modules"]
 }

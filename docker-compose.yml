@@ -72,12 +72,14 @@ services:
             OPENSEARCH_INDEX: recipes
         restart: unless-stopped
 
-    opensearch-sync:
+    worker:
         build:
             context: .
             dockerfile: Dockerfile
             target: worker
-        container_name: kitchenpace-opensearch-sync
+            args:
+                DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
+        container_name: kitchenpace-worker
         depends_on:
             postgres:
                 condition: service_healthy
@@ -89,8 +91,10 @@ services:
             NODE_ENV: production
             OPENSEARCH_URL: http://opensearch:9200
             OPENSEARCH_INDEX: recipes
-            OPENSEARCH_BATCH_SIZE: 200
-            OPENSEARCH_SYNC_INTERVAL: 15000
+            TRIGGER_API_KEY: ${TRIGGER_API_KEY:-}
+            TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
+        volumes:
+            - ./trigger:/app/trigger
 
 volumes:
     postgres_data:

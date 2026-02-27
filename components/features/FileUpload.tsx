@@ -1,5 +1,6 @@
 'use client';
 
+import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useRef, useCallback } from 'react';
 
@@ -132,7 +133,7 @@ export function FileUpload({
                             _hover: { background: 'rgba(0,0,0,0.8)' },
                         })}
                     >
-                        ×
+                        <X size={16} />
                     </button>
                 </div>
             ) : (

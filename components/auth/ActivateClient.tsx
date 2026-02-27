@@ -1,5 +1,6 @@
 'use client';
 
+import { CheckCircle, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -104,14 +105,11 @@ export default function ActivateClient({ token }: ActivateClientProps) {
 
                     {status === 'success' && (
                         <>
-                            <div
-                                className={css({
-                                    fontSize: '5xl',
-                                    marginBottom: '4',
-                                })}
-                            >
-                                ✓
-                            </div>
+                            <CheckCircle
+                                size={64}
+                                color="#22c55e"
+                                className={css({ marginBottom: '4' })}
+                            />
                             <h1
                                 className={css({
                                     fontSize: '2xl',
@@ -159,14 +157,11 @@ export default function ActivateClient({ token }: ActivateClientProps) {
 
                     {status === 'error' && (
                         <>
-                            <div
-                                className={css({
-                                    fontSize: '5xl',
-                                    marginBottom: '4',
-                                })}
-                            >
-                                ✕
-                            </div>
+                            <XCircle
+                                size={64}
+                                color="#ef4444"
+                                className={css({ marginBottom: '4' })}
+                            />
                             <h1
                                 className={css({
                                     fontSize: '2xl',

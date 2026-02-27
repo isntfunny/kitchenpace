@@ -1,6 +1,17 @@
 'use client';
 
-import { Bookmark, Camera, CheckCircle, ChefHat, Clock, Flame, Heart, Printer } from 'lucide-react';
+import {
+    Bookmark,
+    Camera,
+    Check,
+    CheckCircle,
+    ChefHat,
+    Clock,
+    Flame,
+    Heart,
+    Printer,
+    Star,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -675,13 +686,17 @@ export function RecipeDetailClient({
                                 >
                                     <div
                                         className={css({
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '2',
                                             fontSize: { base: '3xl', md: '4xl' },
                                             fontFamily: 'heading',
                                             fontWeight: '700',
                                             color: 'primary',
                                         })}
                                     >
-                                        {averageRating.toFixed(1)} ★
+                                        <span>{averageRating.toFixed(1)}</span>
+                                        <Star size={28} className={css({ color: '#f8b500' })} />
                                     </div>
                                     <div
                                         className={css({
@@ -728,9 +743,20 @@ export function RecipeDetailClient({
                                                 _hover: {
                                                     transform: 'translateY(-1px)',
                                                 },
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
                                             })}
                                         >
-                                            {value <= activeStarValue ? '★' : '☆'}
+                                            <Star
+                                                size={22}
+                                                className={css({
+                                                    color:
+                                                        value <= activeStarValue
+                                                            ? 'white'
+                                                            : 'rgba(224,123,83,0.9)',
+                                                })}
+                                            />
                                         </button>
                                     ))}
                                     <span
@@ -739,11 +765,22 @@ export function RecipeDetailClient({
                                             color: 'text-muted',
                                             fontFamily: 'body',
                                             ml: { base: 0, md: '3' },
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '1',
                                         })}
                                     >
-                                        {viewerRating
-                                            ? `Deine Bewertung: ${viewerRating}★`
-                                            : 'Jetzt bewerten und Feedback geben'}
+                                        {viewerRating ? (
+                                            <>
+                                                Deine Bewertung: {viewerRating.toFixed(1)}
+                                                <Star
+                                                    size={14}
+                                                    className={css({ color: '#f8b500' })}
+                                                />
+                                            </>
+                                        ) : (
+                                            'Jetzt bewerten und Feedback geben'
+                                        )}
                                     </span>
                                 </div>
                             </div>
@@ -1214,7 +1251,20 @@ export function RecipeDetailClient({
                                             onClick={handleFollowToggle}
                                             disabled={isFollowPending || author?.id === viewerId}
                                         >
-                                            {isFollowing ? '✓ Folgst du' : '+ Folgen'}
+                                            {isFollowing ? (
+                                                <span
+                                                    className={css({
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '1',
+                                                    })}
+                                                >
+                                                    <Check size={14} />
+                                                    Folgst du
+                                                </span>
+                                            ) : (
+                                                '+ Folgen'
+                                            )}
                                         </Button>
                                     </div>
 

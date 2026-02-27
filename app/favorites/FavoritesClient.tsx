@@ -1,7 +1,7 @@
 'use client';
 
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
-import { Heart } from 'lucide-react';
+import { Clock, Heart, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTransition } from 'react';
@@ -257,13 +257,13 @@ function FavoriteCard({
                     })}
                 >
                     <div className={flex({ align: 'center', gap: '1' })}>
-                        <span className={css({ color: '#f8b500' })}>★</span>
+                        <Star size={16} className={css({ color: '#f8b500' })} />
                         <span className={css({ fontWeight: '600' })}>
                             {recipe.rating.toFixed(1)}
                         </span>
                     </div>
                     <div className={flex({ align: 'center', gap: '1' })}>
-                        <span>⏱</span>
+                        <Clock size={16} className={css({ color: '#636e72' })} />
                         <span>{recipe.time}</span>
                     </div>
                 </div>

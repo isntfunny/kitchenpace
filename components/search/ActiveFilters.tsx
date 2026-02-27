@@ -1,5 +1,7 @@
 'use client';
 
+import { X } from 'lucide-react';
+
 import type { RecipeFilterSearchParams } from '@/lib/recipeFilters';
 import { css } from 'styled-system/css';
 
@@ -38,7 +40,9 @@ const Chip = ({ label, onRemove }: Omit<FilterChip, 'id'>) => (
         })}
     >
         <span>{label}</span>
-        <span aria-hidden>×</span>
+        <span aria-hidden>
+            <X size={12} />
+        </span>
     </button>
 );
 

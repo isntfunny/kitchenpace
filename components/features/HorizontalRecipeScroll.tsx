@@ -1,5 +1,6 @@
 'use client';
 
+import { Star } from 'lucide-react';
 import * as React from 'react';
 
 import { css } from 'styled-system/css';
@@ -129,12 +130,23 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                                         justifyContent: 'space-between',
                                         fontSize: '0.75rem',
                                         color: 'text-muted',
+                                        alignItems: 'center',
                                     })}
                                 >
-                                    <span className={css({ color: '#f8b500' })}>
-                                        {'★'.repeat(Math.floor(recipe.rating))}
-                                        {'☆'.repeat(5 - Math.floor(recipe.rating))}
-                                    </span>
+                                    <div className={css({ display: 'flex', gap: '2' })}>
+                                        {[1, 2, 3, 4, 5].map((value) => (
+                                            <Star
+                                                key={value}
+                                                size={14}
+                                                className={css({
+                                                    color:
+                                                        value <= Math.floor(recipe.rating)
+                                                            ? '#f8b500'
+                                                            : '#e0e0e0',
+                                                })}
+                                            />
+                                        ))}
+                                    </div>
                                     <span>{recipe.time}</span>
                                 </div>
                             </div>

@@ -3,6 +3,7 @@
 import {
     Apple,
     Box,
+    Check,
     Croissant,
     Drumstick,
     Fish,
@@ -81,7 +82,7 @@ function ShoppingItemRow({
                     transition: 'all 150ms ease',
                 })}
             >
-                {item.checked && '✓'}
+                {item.checked && <Check size={12} />}
             </button>
             <div
                 className={css({

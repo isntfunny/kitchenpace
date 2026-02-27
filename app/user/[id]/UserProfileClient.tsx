@@ -4,7 +4,9 @@ import {
     Bookmark,
     Calendar,
     ChefHat,
+    Check,
     Clipboard,
+    Clock,
     Edit3,
     Flame,
     FileText,
@@ -286,7 +288,21 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                             recipes.reduce((sum, r) => sum + r.rating, 0) /
                                             recipes.length
                                         }
-                                        label="⭐ Ø Rating"
+                                        label={
+                                            <span
+                                                className={css({
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '1',
+                                                })}
+                                            >
+                                                <Star
+                                                    size={12}
+                                                    className={css({ color: '#f8b500' })}
+                                                />
+                                                Ø Rating
+                                            </span>
+                                        }
                                         isDecimal
                                     />
                                 )}
@@ -307,7 +323,20 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         onClick={handleFollowToggle}
                                         disabled={isPending}
                                     >
-                                        {isFollowing ? '✓ Folgst du' : '+ Folgen'}
+                                        {isFollowing ? (
+                                            <span
+                                                className={css({
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '1',
+                                                })}
+                                            >
+                                                <Check size={14} />
+                                                Folgst du
+                                            </span>
+                                        ) : (
+                                            '+ Folgen'
+                                        )}
                                     </Button>
                                     {viewerId && (
                                         <Link href="/profile">
@@ -578,7 +607,7 @@ function StatItem({
     isDecimal = false,
 }: {
     value: number;
-    label: string;
+    label: ReactNode;
     isDecimal?: boolean;
 }) {
     return (
@@ -702,13 +731,13 @@ function RecipeCard({ recipe }: { recipe: UserProfileRecipe }) {
                             gap: '1',
                         })}
                     >
-                        <span className={css({ color: '#f8b500' })}>★</span>
+                        <Star size={16} className={css({ color: '#f8b500' })} />
                         <span className={css({ fontWeight: '600' })}>
                             {recipe.rating.toFixed(1)}
                         </span>
                     </div>
                     <div className={flex({ align: 'center', gap: '1' })}>
-                        <span>⏱</span>
+                        <Clock size={16} className={css({ color: '#636e72' })} />
                         <span>{totalTime} Min.</span>
                     </div>
                 </div>

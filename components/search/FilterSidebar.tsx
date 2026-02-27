@@ -5,6 +5,7 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import * as Slider from '@radix-ui/react-slider';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import * as Tooltip from '@radix-ui/react-tooltip';
+import { Star } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
 
 import type { CategoryOption } from '@/app/actions/filters';
@@ -48,7 +49,7 @@ const DIFFICULTY_OPTIONS = [
 ];
 
 const RANGE_FALLBACKS = {
-    totalTime: { min: 0, max: 180, interval: 10 },
+    totalTime: { min: 0, max: 180, interval: 5 },
     prepTime: { min: 0, max: 90, interval: 5 },
     cookTime: { min: 0, max: 120, interval: 5 },
     rating: { min: 0, max: 5, interval: 0.5 },
@@ -227,6 +228,88 @@ const tooltipContentClass = css({
     zIndex: 1000,
 });
 
+type HistogramBarProps = {
+    facet: HistogramFacet;
+    min: number;
+    max: number;
+    interval: number;
+    onClick?: (value: number) => void;
+};
+
+const histogramContainerClass = css({
+    position: 'relative',
+    height: '32px',
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: '1px',
+    cursor: 'pointer',
+    userSelect: 'none',
+});
+
+const histogramBarClass = css({
+    flex: 1,
+    borderRadius: 'sm',
+    transition: 'opacity 150ms ease',
+    '&:hover': {
+        opacity: 0.7,
+    },
+});
+
+const HistogramBar = ({ facet, min, max, interval, onClick }: HistogramBarProps) => {
+    const buckets = facet.buckets ?? [];
+    if (buckets.length === 0) return null;
+
+    const domainMin = min;
+    const domainMax = max;
+
+    const maxCount = Math.max(...buckets.map((b) => b.count), 1);
+
+    const sortedBuckets = [...buckets].sort((a, b) => a.key - b.key);
+
+    return (
+        <div className={histogramContainerClass}>
+            {sortedBuckets.map((bucket) => {
+                const bucketStart = bucket.key;
+                const bucketEnd = bucket.key + interval;
+                if (bucketEnd < domainMin || bucketStart > domainMax) return null;
+
+                const heightPercent = (bucket.count / maxCount) * 100;
+                const intensity = Math.max(0.15, bucket.count / maxCount);
+
+                return (
+                    <Tooltip.Provider key={bucket.key} delayDuration={200}>
+                        <Tooltip.Root>
+                            <Tooltip.Trigger asChild>
+                                <div
+                                    className={histogramBarClass}
+                                    style={{
+                                        height: `${heightPercent}%`,
+                                        backgroundColor: `rgba(249, 115, 22, ${intensity})`,
+                                    }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onClick?.(bucket.key);
+                                    }}
+                                />
+                            </Tooltip.Trigger>
+                            <Tooltip.Portal>
+                                <Tooltip.Content
+                                    className={tooltipContentClass}
+                                    sideOffset={5}
+                                    style={{ zIndex: 1001 }}
+                                >
+                                    {bucket.key}-{bucket.key + interval}: {bucket.count} Rezepte
+                                    <Tooltip.Arrow />
+                                </Tooltip.Content>
+                            </Tooltip.Portal>
+                        </Tooltip.Root>
+                    </Tooltip.Provider>
+                );
+            })}
+        </div>
+    );
+};
+
 const FilterSection = ({
     value,
     title,
@@ -303,7 +386,7 @@ type RangeControlProps = {
     facet?: HistogramFacet;
     step?: number;
     unit?: string;
-    formatValue?: (value: number) => string;
+    formatValue?: (value: number) => ReactNode;
 };
 
 const RangeControl = ({
@@ -319,10 +402,9 @@ const RangeControl = ({
     unit,
     formatValue,
 }: RangeControlProps) => {
-    const sliderMin = Math.min(fallback.min, facet?.min ?? fallback.min);
-    const sliderMax =
-        Math.max(fallback.max, facet?.max ?? fallback.max) + (facet?.interval ?? fallback.interval);
     const interval = facet?.interval ?? fallback.interval;
+    const sliderMin = facet?.min !== undefined ? facet.min : fallback.min;
+    const sliderMax = facet?.max !== undefined ? facet.max + interval : fallback.max + interval;
     const lowerFilterValue =
         typeof filters[minField] === 'number' ? (filters[minField] as number) : undefined;
     const upperFilterValue =
@@ -345,7 +427,8 @@ const RangeControl = ({
         [facet, sliderMin, sliderMax, interval],
     );
 
-    const format = formatValue ?? ((value: number) => `${value}${unit ? ` ${unit}` : ''}`);
+    const defaultFormat = (value: number) => `${value}${unit ? ` ${unit}` : ''}`;
+    const format = formatValue ?? defaultFormat;
 
     const applyRange = (lower: number, upper: number) => {
         const update: Partial<RecipeFilterSearchParams> = {};
@@ -372,6 +455,18 @@ const RangeControl = ({
         }
     };
 
+    const effectiveStep = step ?? interval;
+    const stepValue = effectiveStep >= 5 ? 5 : effectiveStep;
+
+    const handleHistogramClick = (value: number) => {
+        const snappedValue = Math.round(value / stepValue) * stepValue;
+        if (maxField) {
+            applyRange(snappedValue, snappedValue + stepValue * 2);
+        } else {
+            applyRange(snappedValue, sliderMax);
+        }
+    };
+
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
             <div className={css({ display: 'flex', justifyContent: 'space-between', gap: '4' })}>
@@ -380,11 +475,20 @@ const RangeControl = ({
                     <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{description}</p>
                 )}
             </div>
+            {facet && facet.buckets && facet.buckets.length > 0 && (
+                <HistogramBar
+                    facet={facet}
+                    min={sliderMin}
+                    max={sliderMax}
+                    interval={interval}
+                    onClick={handleHistogramClick}
+                />
+            )}
             <Slider.Root
                 className={sliderRootClass}
                 min={sliderMin}
                 max={sliderMax}
-                step={step ?? interval}
+                step={stepValue}
                 value={sliderValue}
                 onValueChange={handleSliderChange}
                 aria-label={label}
@@ -749,8 +853,18 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                                 fallback={RANGE_FALLBACKS.rating}
                                 facet={facets?.rating}
                                 step={0.5}
-                                unit="★"
-                                formatValue={(value) => `${value.toFixed(1)} ★`}
+                                formatValue={(value) => (
+                                    <span
+                                        className={css({
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '1',
+                                        })}
+                                    >
+                                        {value.toFixed(1)}
+                                        <Star size={12} className={css({ color: '#f8b500' })} />
+                                    </span>
+                                )}
                             />
                             <RangeControl
                                 filters={filters}

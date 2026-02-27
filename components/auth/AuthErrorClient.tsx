@@ -1,5 +1,6 @@
 'use client';
 
+import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 import { css } from 'styled-system/css';
@@ -28,14 +29,7 @@ export default function AuthErrorClient({ error }: AuthErrorClientProps) {
 
     return (
         <div>
-            <div
-                className={css({
-                    fontSize: '5xl',
-                    marginBottom: '4',
-                })}
-            >
-                ⚠️
-            </div>
+            <AlertTriangle size={64} color="#f97316" className={css({ marginBottom: '4' })} />
             <h1
                 className={css({
                     fontSize: '2xl',

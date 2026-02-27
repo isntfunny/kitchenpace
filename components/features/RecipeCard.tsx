@@ -1,5 +1,6 @@
 'use client';
 
+import { Star } from 'lucide-react';
 import Link from 'next/link';
 
 import { css } from 'styled-system/css';
@@ -46,7 +47,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
                     >
                         {recipe.rating && (
                             <span className={flex({ align: 'center', gap: '1' })}>
-                                <span>★</span>
+                                <Star size={14} className={css({ color: '#f8b500' })} />
                                 <span>{recipe.rating}</span>
                             </span>
                         )}

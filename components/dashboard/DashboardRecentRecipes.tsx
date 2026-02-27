@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Calendar, CheckCircle, Heart, Sparkles } from 'lucide-react';
+import { BookOpen, Calendar, CheckCircle, Heart, Sparkles, Star } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { css } from 'styled-system/css';
@@ -162,18 +162,23 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
                         className={css({
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '1',
+                            gap: '2',
                         })}
                     >
-                        <span
-                            className={css({
-                                color: '#f8b500',
-                                fontSize: 'sm',
-                            })}
-                        >
-                            {'★'.repeat(Math.floor(recipe.rating))}
-                            {'☆'.repeat(5 - Math.floor(recipe.rating))}
-                        </span>
+                        <div className={css({ display: 'flex', gap: '1' })}>
+                            {[1, 2, 3, 4, 5].map((value) => (
+                                <Star
+                                    key={value}
+                                    size={14}
+                                    className={css({
+                                        color:
+                                            value <= Math.floor(recipe.rating)
+                                                ? '#f8b500'
+                                                : '#e0e0e0',
+                                    })}
+                                />
+                            ))}
+                        </div>
                         <span
                             className={css({
                                 fontSize: 'xs',

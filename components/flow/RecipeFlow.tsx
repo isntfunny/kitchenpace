@@ -3,6 +3,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import {
     ChefHat,
+    Check,
     Clock,
     Download,
     Eye,
@@ -251,9 +252,12 @@ function NodeCard({
                         _hover: {
                             boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
                         },
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '1',
                     })}
                 >
-                    {isCompleted ? '✓' : 'Fertig'}
+                    {isCompleted ? <Check size={14} /> : 'Fertig'}
                 </button>
             </div>
 
@@ -406,9 +410,21 @@ function NodeDetailModal({ node, isCompleted, onToggleComplete, onClose }: NodeD
                             transform: 'translateY(-1px)',
                             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                         },
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '1',
                     })}
                 >
-                    {isCompleted ? '✓ Rückgängig machen' : '✓ Als erledigt markieren'}
+                    {isCompleted ? (
+                        <>
+                            <Check size={16} /> Rückgängig machen
+                        </>
+                    ) : (
+                        <>
+                            <Check size={16} /> Als erledigt markieren
+                        </>
+                    )}
                 </button>
             </div>
         </div>

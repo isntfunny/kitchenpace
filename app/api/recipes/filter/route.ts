@@ -204,7 +204,7 @@ export async function GET(request: NextRequest) {
                     difficulties: { terms: { field: 'difficulty', size: 5 } },
                     categories: { terms: { field: 'category', size: 8 } },
                     totalTime: {
-                        histogram: { field: 'totalTime', interval: 10, min_doc_count: 0 },
+                        histogram: { field: 'totalTime', interval: 5, min_doc_count: 0 },
                     },
                     prepTime: { histogram: { field: 'prepTime', interval: 5, min_doc_count: 0 } },
                     cookTime: { histogram: { field: 'cookTime', interval: 5, min_doc_count: 0 } },

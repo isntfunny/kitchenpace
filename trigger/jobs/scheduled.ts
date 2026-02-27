@@ -1,16 +1,21 @@
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import { task, schedules, logger } from '@trigger.dev/sdk';
+import { Pool } from 'pg';
 
 import { sendEmail } from '../lib/email';
 import { renderEmailTemplate } from '../lib/email-templates';
 
-const prisma = new PrismaClient({
-    datasources: {
-        db: {
-            url: process.env.DATABASE_URL,
-        },
-    },
+const databaseUrl =
+    process.env.DATABASE_URL ??
+    'postgresql://kitchenpace:kitchenpace_secret@localhost:64000/kitchenpace';
+
+const pool = new Pool({
+    connectionString: databaseUrl,
 });
+
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 export const dailyRecipeTask = task({
     id: 'daily-recipe',

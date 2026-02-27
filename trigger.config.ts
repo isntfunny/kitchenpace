@@ -1,4 +1,3 @@
-import { prismaExtension } from '@trigger.dev/build/extensions/prisma';
 import { defineConfig } from '@trigger.dev/sdk/v3';
 
 export default defineConfig({
@@ -7,15 +6,6 @@ export default defineConfig({
     logLevel: 'log',
     maxDuration: 3600,
     dirs: ['trigger'],
-    build: {
-        extensions: [
-            prismaExtension({
-                mode: 'legacy',
-                schema: 'prisma/schema.prisma',
-                migrate: true,
-            }),
-        ],
-    },
     retries: {
         enabledInDev: true,
         default: {

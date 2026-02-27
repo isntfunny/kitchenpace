@@ -8,9 +8,13 @@ export const syncOpenSearchScheduled = schedules.task({
     cron: '*/15 * * * *',
     maxDuration: 300,
     run: async (payload, { ctx }) => {
-        logger.log('Starting scheduled opensearch sync', { runId: ctx.run.id });
+        logger.info('🔄 Starting scheduled opensearch sync', {
+            runId: ctx.run.id,
+            cron: '*/15 * * * *',
+        });
 
         try {
+            logger.debug('Fetching published recipes from database');
             const recipes = await prisma.recipe.findMany({
                 where: { status: 'PUBLISHED' },
                 include: {
@@ -22,8 +26,13 @@ export const syncOpenSearchScheduled = schedules.task({
                 take: 150,
             });
 
+            logger.info('📊 Fetched recipes from database', {
+                count: recipes.length,
+                runId: ctx.run.id,
+            });
+
             if (recipes.length === 0) {
-                logger.log('No recipes to sync');
+                logger.warn('⚠️ No recipes to sync - empty result set');
                 return { synced: 0 };
             }
 
@@ -35,17 +44,28 @@ export const syncOpenSearchScheduled = schedules.task({
                 operations.push(doc);
             }
 
+            logger.debug('Sending bulk request to opensearch', {
+                operationsCount: operations.length,
+                index: OPENSEARCH_INDEX,
+            });
+
             await opensearchClient.bulk({
                 refresh: 'wait_for',
                 body: operations,
             });
 
-            logger.log('Synced recipes to opensearch', { count: recipes.length });
+            logger.info('✅ Synced recipes to opensearch', {
+                count: recipes.length,
+                index: OPENSEARCH_INDEX,
+                runId: ctx.run.id,
+            });
 
             return { synced: recipes.length };
         } catch (error) {
-            logger.error('Opensearch sync failed', {
-                error: error instanceof Error ? error.message : error,
+            logger.error('❌ Opensearch sync failed', {
+                error: error instanceof Error ? error.message : String(error),
+                errorStack: error instanceof Error ? error.stack : undefined,
+                runId: ctx.run.id,
             });
             throw error;
         }
@@ -58,9 +78,13 @@ export const syncOpenSearch = task({
     run: async (payload: { batchSize?: number }, { ctx }) => {
         const batchSize = payload.batchSize ?? 150;
 
-        logger.log('Starting opensearch sync', { batchSize, runId: ctx.run.id });
+        logger.info('🔄 Starting opensearch sync', {
+            batchSize,
+            runId: ctx.run.id,
+        });
 
         try {
+            logger.debug('Fetching published recipes from database', { batchSize });
             const recipes = await prisma.recipe.findMany({
                 where: { status: 'PUBLISHED' },
                 include: {
@@ -72,8 +96,13 @@ export const syncOpenSearch = task({
                 take: batchSize,
             });
 
+            logger.info('📊 Fetched recipes from database', {
+                count: recipes.length,
+                runId: ctx.run.id,
+            });
+
             if (recipes.length === 0) {
-                logger.log('No recipes to sync');
+                logger.warn('⚠️ No recipes to sync - empty result set');
                 return { synced: 0 };
             }
 
@@ -85,17 +114,28 @@ export const syncOpenSearch = task({
                 operations.push(doc);
             }
 
+            logger.debug('Sending bulk request to opensearch', {
+                operationsCount: operations.length,
+                index: OPENSEARCH_INDEX,
+            });
+
             await opensearchClient.bulk({
                 refresh: 'wait_for',
                 body: operations,
             });
 
-            logger.log('Synced recipes to opensearch', { count: recipes.length });
+            logger.info('✅ Synced recipes to opensearch', {
+                count: recipes.length,
+                index: OPENSEARCH_INDEX,
+                runId: ctx.run.id,
+            });
 
             return { synced: recipes.length };
         } catch (error) {
-            logger.error('Opensearch sync failed', {
-                error: error instanceof Error ? error.message : error,
+            logger.error('❌ Opensearch sync failed', {
+                error: error instanceof Error ? error.message : String(error),
+                errorStack: error instanceof Error ? error.stack : undefined,
+                runId: ctx.run.id,
             });
             throw error;
         }
@@ -107,11 +147,11 @@ export const syncRecipeToOpenSearch = task({
     maxDuration: 60,
     run: async (payload: { recipeId: string }, { ctx }) => {
         if (!payload.recipeId) {
-            logger.error('recipeId is required', { payload });
+            logger.error('❌ recipeId is required', { payload });
             return { success: false, reason: 'missing_recipeId' };
         }
 
-        logger.log('Syncing single recipe to opensearch', {
+        logger.info('🔄 Syncing single recipe to opensearch', {
             recipeId: payload.recipeId,
             runId: ctx.run.id,
         });
@@ -127,34 +167,59 @@ export const syncRecipeToOpenSearch = task({
             });
 
             if (!recipe) {
-                logger.warn('Recipe not found', { recipeId: payload.recipeId });
+                logger.warn('⚠️ Recipe not found', {
+                    recipeId: payload.recipeId,
+                    runId: ctx.run.id,
+                });
                 return { success: false, reason: 'not_found' };
             }
 
+            logger.debug('Recipe fetched', {
+                recipeId: payload.recipeId,
+                status: recipe.status,
+                publishedAt: recipe.publishedAt,
+            });
+
             if (recipe.status !== 'PUBLISHED' || !recipe.publishedAt) {
+                logger.info('🗑️ Removing unpublished recipe from opensearch', {
+                    recipeId: payload.recipeId,
+                    status: recipe.status,
+                    publishedAt: recipe.publishedAt,
+                });
                 await opensearchClient.delete({
                     index: OPENSEARCH_INDEX,
                     id: recipe.id,
                     refresh: 'wait_for',
                 });
-                logger.log('Removed recipe from opensearch', { recipeId: payload.recipeId });
                 return { success: true, action: 'deleted' };
             }
+
+            const doc = transformToDocument(recipe);
+            logger.debug('Indexing recipe to opensearch', {
+                recipeId: payload.recipeId,
+                index: OPENSEARCH_INDEX,
+            });
 
             await opensearchClient.index({
                 index: OPENSEARCH_INDEX,
                 id: recipe.id,
-                body: transformToDocument(recipe),
+                body: doc,
                 refresh: 'wait_for',
             });
 
-            logger.log('Synced recipe to opensearch', { recipeId: payload.recipeId });
+            logger.info('✅ Synced recipe to opensearch', {
+                recipeId: payload.recipeId,
+                title: recipe.title,
+                runId: ctx.run.id,
+            });
 
             return { success: true, action: 'indexed' };
         } catch (error) {
-            logger.error('Failed to sync recipe to opensearch', {
+            logger.error('❌ Failed to sync recipe to opensearch', {
                 recipeId: payload.recipeId,
-                error: error instanceof Error ? error.message : error,
+                error: error instanceof Error ? error.message : String(error),
+                errorStack: error instanceof Error ? error.stack : undefined,
+                runId: ctx.run.id,
             });
             throw error;
         }

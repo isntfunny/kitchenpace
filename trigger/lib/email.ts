@@ -7,46 +7,98 @@ export interface SendEmailOptions {
 export async function sendEmail({ to, subject, html }: SendEmailOptions): Promise<boolean> {
     const emailHost = process.env.EMAIL_HOST;
     const emailUser = process.env.EMAIL_USER;
+    const emailFrom = process.env.EMAIL_FROM;
+    const emailPort = process.env.EMAIL_PORT || '587';
     const hasSmtpConfig = Boolean(emailHost && emailUser && process.env.EMAIL_PASS);
 
+    console.log('[EMAIL] Starting email send process', {
+        to,
+        subject,
+        from: emailFrom,
+        host: emailHost,
+        port: emailPort,
+        secure: emailPort === '465',
+        hasCredentials: Boolean(emailUser && process.env.EMAIL_PASS),
+    });
+
     if (!hasSmtpConfig) {
-        console.log('[EMAIL] No SMTP configured - email logged only', {
+        console.log('[EMAIL] ⚠️ No SMTP configured - email logged only (simulated send)', {
             to,
             bodyPreview: html.substring(0, 200),
+            bodyLength: html.length,
         });
         return true;
     }
 
-    try {
-        const nodemailer = await import('nodemailer');
+    let nodemailerModule: typeof import('nodemailer') | null = null;
 
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: parseInt(process.env.EMAIL_PORT || '587', 10),
-            secure: process.env.EMAIL_PORT === '465',
+    try {
+        console.log('[EMAIL] Loading nodemailer module...');
+        nodemailerModule = await import('nodemailer');
+
+        console.log('[EMAIL] Creating SMTP transporter with config:', {
+            host: emailHost,
+            port: emailPort,
+            secure: emailPort === '465',
             auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
+                user: emailUser,
+                pass: process.env.EMAIL_PASS ? '***REDACTED***' : undefined,
             },
         });
 
-        await transporter.verify();
+        const transporter = nodemailerModule.createTransport({
+            host: emailHost,
+            port: parseInt(emailPort, 10),
+            secure: emailPort === '465',
+            auth: {
+                user: emailUser,
+                pass: process.env.EMAIL_PASS,
+            },
+            connectionTimeout: 10000,
+            socketTimeout: 10000,
+        });
+
+        console.log('[EMAIL] Verifying SMTP connection...');
+        const verifyResult = await transporter.verify();
+        console.log('[EMAIL] SMTP connection verified:', verifyResult);
+
+        console.log('[EMAIL] Sending email...', {
+            to,
+            from: emailFrom,
+            subject,
+            htmlLength: html.length,
+        });
 
         const result = await transporter.sendMail({
-            from: process.env.EMAIL_FROM,
+            from: emailFrom,
             to,
             subject,
             html,
         });
 
-        console.log('[EMAIL] Sent successfully', { to, messageId: result.messageId });
+        console.log('[EMAIL] ✅ Email sent successfully!', {
+            to,
+            messageId: result.messageId,
+            accepted: result.accepted,
+            rejected: result.rejected,
+        });
 
         return true;
     } catch (error) {
-        console.error('[EMAIL] Failed to send', {
+        console.error('[EMAIL] ❌ Failed to send email!', {
             to,
+            subject,
             error: error instanceof Error ? error.message : String(error),
+            errorStack: error instanceof Error ? error.stack : undefined,
+            errorCode: error instanceof Error ? (error as { code?: string }).code : undefined,
+            errorCommand:
+                error instanceof Error ? (error as { command?: string }).command : undefined,
         });
+
+        if (nodemailerModule) {
+            console.error('[EMAIL] Nodemailer module loaded successfully');
+        }
+
         return false;
     }
 }

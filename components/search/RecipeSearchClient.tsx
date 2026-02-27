@@ -61,33 +61,9 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     const { data, meta, loading, error } = useRecipeSearch(filters);
     const facets = meta?.facets;
     const pathname = usePathname();
-    const sliderSignature = useMemo(
-        () => buildSliderSignature(filters),
-        [
-            filters.minTotalTime,
-            filters.maxTotalTime,
-            filters.minPrepTime,
-            filters.maxPrepTime,
-            filters.minCookTime,
-            filters.maxCookTime,
-            filters.minRating,
-            filters.minCookCount,
-        ],
-    );
+    const sliderSignature = useMemo(() => buildSliderSignature(filters), [filters]);
 
-    const nonSliderSignature = useMemo(
-        () => buildNonSliderSignature(filters),
-        [
-            filters.query,
-            filters.tags,
-            filters.mealTypes,
-            filters.ingredients,
-            filters.excludeIngredients,
-            filters.difficulty,
-            filters.timeOfDay,
-            filters.filterMode,
-        ],
-    );
+    const nonSliderSignature = useMemo(() => buildNonSliderSignature(filters), [filters]);
 
     const prevSliderSignatureRef = useRef(sliderSignature);
     const prevNonSliderSignatureRef = useRef(nonSliderSignature);

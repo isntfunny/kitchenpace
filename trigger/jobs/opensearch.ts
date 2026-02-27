@@ -1,4 +1,4 @@
-import { logger, schedules, task } from '@trigger.dev/sdk/v3';
+import { logger, schedules, task } from '@trigger.dev/sdk';
 
 import { opensearchClient, OPENSEARCH_INDEX } from '@/lib/opensearch/client';
 import { prisma } from '@/lib/prisma';

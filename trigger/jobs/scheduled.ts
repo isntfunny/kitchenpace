@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { task, schedules } from '@trigger.dev/sdk';
+import { task, schedules, logger } from '@trigger.dev/sdk';
 
 import { sendEmail } from '../lib/email';
 import { renderEmailTemplate } from '../lib/email-templates';
@@ -9,6 +9,8 @@ const prisma = new PrismaClient();
 export const dailyRecipeTask = task({
     id: 'daily-recipe',
     run: async () => {
+        logger.info('Starting daily recipe task');
+
         const recipe = await prisma.recipe.findFirst({
             orderBy: { createdAt: 'desc' },
             include: {
@@ -17,6 +19,7 @@ export const dailyRecipeTask = task({
         });
 
         if (!recipe) {
+            logger.warn('No recipe found for daily recipe');
             return { success: false, reason: 'No recipe found' };
         }
 
@@ -28,6 +31,8 @@ export const dailyRecipeTask = task({
             html: `<h1>${recipe.title}</h1><p>${recipe.description}</p>`,
         });
 
+        logger.info('Daily recipe email sent', { recipeId: recipe.id });
+
         return { success: result, recipeId: recipe.id };
     },
 });
@@ -35,6 +40,8 @@ export const dailyRecipeTask = task({
 export const weeklyNewsletterTask = task({
     id: 'weekly-newsletter',
     run: async () => {
+        logger.info('Starting weekly newsletter task');
+
         const recentRecipes = await prisma.recipe.findMany({
             orderBy: { createdAt: 'desc' },
             take: 5,
@@ -87,6 +94,8 @@ export const weeklyNewsletterTask = task({
             results.push({ email: subscriber.email, success });
         }
 
+        logger.info('Weekly newsletter sent', { recipients: results.length });
+
         return {
             totalRecipients: subscribers.length,
             results,
@@ -98,6 +107,7 @@ export const dailyRecipeSchedule = schedules.task({
     id: 'daily-recipe-schedule',
     cron: '0 8 * * *',
     run: async () => {
+        logger.info('Daily recipe schedule triggered');
         await dailyRecipeTask.trigger();
     },
 });

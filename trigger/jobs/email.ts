@@ -1,4 +1,4 @@
-import { task } from '@trigger.dev/sdk';
+import { task, logger } from '@trigger.dev/sdk';
 
 import { sendEmail, type SendEmailOptions } from '../lib/email';
 import { emailTemplates } from '../lib/email-templates';
@@ -6,7 +6,9 @@ import { emailTemplates } from '../lib/email-templates';
 export const sendEmailTask = task({
     id: 'send-email',
     run: async (payload: SendEmailOptions) => {
+        logger.info('Sending email', { to: payload.to, subject: payload.subject });
         const result = await sendEmail(payload);
+        logger.info('Email sent', { to: payload.to, success: result });
         return { success: result };
     },
 });
@@ -20,6 +22,8 @@ export const sendTemplatedEmailTask = task({
         templateType: EmailTemplateType;
         variables: Record<string, string>;
     }) => {
+        logger.info('Sending templated email', { to: payload.to, template: payload.templateType });
+
         const template = emailTemplates[payload.templateType];
 
         if (!template) {
@@ -40,6 +44,7 @@ export const sendTemplatedEmailTask = task({
             html,
         });
 
+        logger.info('Templated email sent', { to: payload.to, template: payload.templateType });
         return { success: result, templateType: payload.templateType };
     },
 });
@@ -47,6 +52,8 @@ export const sendTemplatedEmailTask = task({
 export const sendBatchEmailsTask = task({
     id: 'send-batch-emails',
     run: async (payload: { emails: SendEmailOptions[]; concurrency?: number }) => {
+        logger.info('Starting batch email send', { total: payload.emails.length });
+
         const concurrency = payload.concurrency || 5;
         const results: { index: number; success: boolean; error?: string }[] = [];
 
@@ -71,6 +78,12 @@ export const sendBatchEmailsTask = task({
 
         const successful = results.filter((r) => r.success).length;
         const failed = results.filter((r) => !r.success).length;
+
+        logger.info('Batch email send complete', {
+            total: payload.emails.length,
+            successful,
+            failed,
+        });
 
         return {
             total: payload.emails.length,

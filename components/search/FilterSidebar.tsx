@@ -403,8 +403,21 @@ const RangeControl = ({
     formatValue,
 }: RangeControlProps) => {
     const interval = facet?.interval ?? fallback.interval;
-    const sliderMin = facet?.min !== undefined ? facet.min : fallback.min;
-    const sliderMax = facet?.max !== undefined ? facet.max + interval : fallback.max + interval;
+    const facetMin = facet?.min;
+    const facetMax = facet?.max;
+    const hasFacetData = facet && facet.buckets.length > 0;
+
+    const sliderMin = useMemo(() => {
+        if (!hasFacetData) return fallback.min;
+        const facetVal = facetMin ?? fallback.min;
+        return Math.min(facetVal, fallback.min);
+    }, [hasFacetData, facetMin, fallback.min]);
+
+    const sliderMax = useMemo(() => {
+        if (!hasFacetData) return fallback.max + interval;
+        const facetVal = facetMax ?? fallback.max;
+        return Math.max(facetVal + interval, fallback.max + interval);
+    }, [hasFacetData, facetMax, fallback.max, interval]);
     const lowerFilterValue =
         typeof filters[minField] === 'number' ? (filters[minField] as number) : undefined;
     const upperFilterValue =

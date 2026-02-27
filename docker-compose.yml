@@ -74,28 +74,97 @@ services:
             TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN:-}
         restart: unless-stopped
 
-    worker:
-        build:
-            context: .
-            dockerfile: Dockerfile
-            target: worker
-            args:
-                DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
-                TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
-                TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN:-}
-        container_name: kitchenpace-worker
-        depends_on:
-            postgres:
-                condition: service_healthy
-            opensearch:
-                condition: service_healthy
-        restart: unless-stopped
+    # worker:
+    #     build:
+    #         context: .
+    #         dockerfile: Dockerfile
+    #         target: worker
+    #         args:
+    #             DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
+    #             TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
+    #             TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN:-}
+    #     container_name: kitchenpace-worker
+    #     depends_on:
+    #         postgres:
+    #             condition: service_healthy
+    #         opensearch:
+    #             condition: service_healthy
+    #     restart: unless-stopped
+    #     environment:
+    #         OPENSEARCH_URL: http://opensearch:9200
+    #         OPENSEARCH_INDEX: recipes
+    #         TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
+    #         TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN:-}
+
+    docker-proxy:
+        image: tecnativa/docker-socket-proxy:${DOCKER_PROXY_IMAGE_TAG:-latest}
+        container_name: kitchenpace-docker-proxy
+        restart: ${RESTART_POLICY:-unless-stopped}
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+        networks:
+            - docker-proxy
         environment:
-            OPENSEARCH_URL: http://opensearch:9200
-            OPENSEARCH_INDEX: recipes
+            - LOG_LEVEL=info
+            - POST=1
+            - CONTAINERS=1
+            - IMAGES=1
+            - INFO=1
+            - NETWORKS=1
+        healthcheck:
+            test: ['CMD', 'nc', '-z', '127.0.0.1', '2375']
+            interval: 30s
+            timeout: 5s
+            retries: 5
+
+    trigger-supervisor:
+        image: ghcr.io/triggerdotdev/supervisor:${TRIGGER_IMAGE_TAG:-v4-beta}
+        container_name: kitchenpace-trigger-supervisor
+        restart: ${RESTART_POLICY:-unless-stopped}
+        depends_on:
+            docker-proxy:
+                condition: service_healthy
+        networks:
+            - default
+            - docker-proxy
+        volumes:
+            - trigger_shared:/home/node/shared
+        user: root
+        command: sh -c "chown -R node:node /home/node/shared && exec /usr/bin/dumb-init -- pnpm run --filter supervisor start"
+        environment:
+            TRIGGER_WORKER_TOKEN: ${TRIGGER_WORKER_TOKEN}
+            MANAGED_WORKER_SECRET: ${MANAGED_WORKER_SECRET}
             TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
-            TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN:-}
+            OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-https://task-trigger.isntfunny.de/otel}
+            TRIGGER_WORKLOAD_API_DOMAIN: supervisor
+            TRIGGER_WORKLOAD_API_PORT_EXTERNAL: 8020
+            DEBUG: ${DEBUG:-1}
+            ENFORCE_MACHINE_PRESETS: 1
+            TRIGGER_DEQUEUE_INTERVAL_MS: 1000
+            DOCKER_HOST: tcp://docker-proxy:2375
+            DOCKER_RUNNER_NETWORKS: default
+            DOCKER_REGISTRY_URL: ${DOCKER_REGISTRY_URL:-localhost:5000}
+            DOCKER_REGISTRY_USERNAME: ${DOCKER_REGISTRY_USERNAME:-}
+            DOCKER_REGISTRY_PASSWORD: ${DOCKER_REGISTRY_PASSWORD:-}
+            DOCKER_AUTOREMOVE_EXITED_CONTAINERS: 0
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'node',
+                    '-e',
+                    "http.get('http://localhost:8020/health', res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 10s
+
+networks:
+    docker-proxy:
+        name: docker-proxy
 
 volumes:
     postgres_data:
     opensearch_data:
+    trigger_shared:

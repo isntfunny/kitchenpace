@@ -52,6 +52,9 @@
         "@radix-ui/react-toggle-group": "^1.1.11",
         "@radix-ui/react-tooltip": "^1.2.8",
         "@styled-system/css": "^5.1.5",
+        "@trigger.dev/build": "^4.4.1",
+        "@trigger.dev/core": "^4.4.1",
+        "@trigger.dev/sdk": "^4.4.1",
         "@xyflow/react": "^12.10.1",
         "bcrypt": "^6.0.0",
         "dagre": "^0.8.5",
@@ -76,9 +79,6 @@
         "yet-another-react-lightbox": "^3.29.1"
     },
     "devDependencies": {
-        "@trigger.dev/build": "^4.4.1",
-        "@trigger.dev/core": "^4.4.1",
-        "@trigger.dev/sdk": "^4.4.1",
         "@types/bcrypt": "^6.0.0",
         "@types/dagre": "^0.7.53",
         "@types/file-saver": "^2.0.7",

@@ -46,7 +46,9 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
             },
         });
 
-        const transporter = nodemailerModule.createTransport({
+        const createTransport =
+            nodemailerModule.default?.createTransport || nodemailerModule.createTransport;
+        const transporter = createTransport({
             host: emailHost,
             port: parseInt(emailPort, 10),
             secure: emailPort === '465',

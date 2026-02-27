@@ -17,11 +17,21 @@ interface DashboardStatCard {
     color: string;
 }
 
+interface DraftRecipe {
+    id: string;
+    title: string;
+    slug: string;
+    imageUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 interface UserDashboardProps {
     userName?: string;
     userEmail?: string;
     userPhoto?: string;
     stats?: DashboardStatCard[];
+    draftRecipes?: DraftRecipe[];
 }
 
 const defaultStats: DashboardStatCard[] = [
@@ -48,6 +58,7 @@ export function UserDashboard({
     userEmail = 'user@example.com',
     userPhoto,
     stats = defaultStats,
+    draftRecipes = [],
 }: UserDashboardProps) {
     return (
         <section
@@ -317,6 +328,87 @@ export function UserDashboard({
                         </p>
                     </Link>
                 </div>
+
+                {draftRecipes.length > 0 && (
+                    <div
+                        className={css({
+                            mt: '8',
+                        })}
+                    >
+                        <h2
+                            className={css({
+                                fontSize: 'xl',
+                                fontWeight: '700',
+                                mb: '4',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '2',
+                            })}
+                        >
+                            <span
+                                className={css({
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: 'full',
+                                    background: '#6c5ce7',
+                                })}
+                            />
+                            Deine Entwürfe
+                        </h2>
+                        <div
+                            className={css({
+                                display: 'grid',
+                                gridTemplateColumns: {
+                                    base: '1fr',
+                                    sm: 'repeat(2, 1fr)',
+                                    md: 'repeat(3, 1fr)',
+                                },
+                                gap: '4',
+                            })}
+                        >
+                            {draftRecipes.map((draft) => (
+                                <Link
+                                    key={draft.id}
+                                    href={`/recipe/${draft.id}`}
+                                    className={css({
+                                        borderRadius: 'xl',
+                                        padding: '4',
+                                        border: '1px solid rgba(108,92,231,0.3)',
+                                        background: 'rgba(108,92,231,0.05)',
+                                        textDecoration: 'none',
+                                        color: 'inherit',
+                                        transition: 'all 150ms ease',
+                                        _hover: {
+                                            transform: 'translateY(-2px)',
+                                            borderColor: '#6c5ce7',
+                                            background: 'rgba(108,92,231,0.1)',
+                                        },
+                                    })}
+                                >
+                                    <p
+                                        className={css({
+                                            fontWeight: '600',
+                                            mb: '1',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        })}
+                                    >
+                                        {draft.title}
+                                    </p>
+                                    <p
+                                        className={css({
+                                            fontSize: 'sm',
+                                            color: 'text-muted',
+                                        })}
+                                    >
+                                        Entwurf
+                                    </p>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </section>
     );

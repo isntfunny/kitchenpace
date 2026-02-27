@@ -5,6 +5,7 @@ import {
     Coffee,
     GlassWater,
     Heart,
+    LayoutDashboard,
     LayoutGrid,
     Menu,
     Moon,
@@ -344,6 +345,34 @@ export function Header() {
                             <Heart size={16} />
                             <span className={css({ display: { base: 'none', md: 'inline' } })}>
                                 Favoriten
+                            </span>
+                        </Link>
+
+                        <Link
+                            href="/dashboard"
+                            className={css({
+                                fontFamily: 'body',
+                                fontSize: 'sm',
+                                fontWeight: '600',
+                                color: 'white',
+                                px: '4',
+                                py: '2',
+                                borderRadius: 'lg',
+                                background: 'linear-gradient(135deg, #6c5ce7 0%, #a55eea 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '1.5',
+                                transition: 'all 150ms ease',
+                                textDecoration: 'none',
+                                _hover: {
+                                    transform: 'translateY(-1px)',
+                                    boxShadow: '0 4px 12px rgba(108,92,231,0.4)',
+                                },
+                            })}
+                        >
+                            <LayoutDashboard size={16} color="white" />
+                            <span className={css({ display: { base: 'none', md: 'inline' } })}>
+                                Dashboard
                             </span>
                         </Link>
 

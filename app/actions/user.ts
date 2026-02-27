@@ -37,3 +37,64 @@ export async function getCurrentUserStats(): Promise<UserStats | null> {
 
     return fetchUserStats(session.user.id);
 }
+
+export interface DraftRecipe {
+    id: string;
+    title: string;
+    slug: string;
+    imageUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export async function fetchUserDraftRecipes(userId: string): Promise<DraftRecipe[]> {
+    const drafts = await prisma.recipe.findMany({
+        where: { authorId: userId, status: 'DRAFT' },
+        select: {
+            id: true,
+            title: true,
+            slug: true,
+            imageUrl: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: 10,
+    });
+
+    return drafts;
+}
+
+export interface UserRecipe {
+    id: string;
+    title: string;
+    slug: string;
+    imageUrl: string | null;
+    status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+    rating: number;
+    ratingCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+    publishedAt: Date | null;
+}
+
+export async function fetchUserRecipes(userId: string): Promise<UserRecipe[]> {
+    const recipes = await prisma.recipe.findMany({
+        where: { authorId: userId },
+        select: {
+            id: true,
+            title: true,
+            slug: true,
+            imageUrl: true,
+            status: true,
+            rating: true,
+            ratingCount: true,
+            createdAt: true,
+            updatedAt: true,
+            publishedAt: true,
+        },
+        orderBy: { updatedAt: 'desc' },
+    });
+
+    return recipes;
+}

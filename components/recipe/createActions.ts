@@ -1,5 +1,7 @@
 'use server';
 
+import { NotificationType } from '@prisma/client';
+
 import { prisma } from '@/lib/prisma';
 import { slugify, generateUniqueSlug } from '@/lib/slug';
 
@@ -91,6 +93,19 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         },
     });
 
+    if (isPublished) {
+        await prisma.activityLog.create({
+            data: {
+                userId: authorId,
+                type: 'RECIPE_CREATED',
+                targetId: recipe.id,
+                targetType: 'recipe',
+            },
+        });
+
+        await sendNotificationsToFollowers(authorId, recipe.id, data.title);
+    }
+
     // Add categories after recipe is created
     if (data.categoryIds && data.categoryIds.length > 0) {
         await prisma.recipeCategory.createMany({
@@ -128,4 +143,133 @@ export async function createIngredient(name: string, category?: string, units: s
             units: units.length > 0 ? units : [name.includes('g') ? 'g' : 'Stück'],
         },
     });
+}
+
+export type RecipeStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
+export async function updateRecipeStatus(
+    recipeId: string,
+    status: RecipeStatus,
+    authorId: string,
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const recipe = await prisma.recipe.findUnique({
+            where: { id: recipeId },
+            select: { authorId: true, title: true },
+        });
+
+        if (!recipe) {
+            return { success: false, error: 'Rezept nicht gefunden' };
+        }
+
+        if (recipe.authorId !== authorId) {
+            return { success: false, error: 'Nicht autorisiert' };
+        }
+
+        const isPublished = status === 'PUBLISHED';
+
+        await prisma.recipe.update({
+            where: { id: recipeId },
+            data: {
+                status,
+                publishedAt: isPublished ? new Date() : status === 'DRAFT' ? null : undefined,
+            },
+        });
+
+        if (isPublished) {
+            await prisma.activityLog.create({
+                data: {
+                    userId: authorId,
+                    type: 'RECIPE_CREATED',
+                    targetId: recipeId,
+                    targetType: 'recipe',
+                },
+            });
+
+            await sendNotificationsToFollowers(authorId, recipeId, recipe.title);
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating recipe status:', error);
+        return { success: false, error: 'Fehler beim Aktualisieren des Status' };
+    }
+}
+
+export async function bulkUpdateRecipeStatus(
+    recipeIds: string[],
+    status: RecipeStatus,
+    authorId: string,
+): Promise<{ success: boolean; updatedCount: number; error?: string }> {
+    try {
+        const isPublished = status === 'PUBLISHED';
+
+        const result = await prisma.recipe.updateMany({
+            where: {
+                id: { in: recipeIds },
+                authorId,
+            },
+            data: {
+                status,
+                publishedAt: isPublished ? new Date() : status === 'DRAFT' ? null : undefined,
+            },
+        });
+
+        if (isPublished) {
+            const publishedRecipes = await prisma.recipe.findMany({
+                where: { id: { in: recipeIds }, authorId },
+                select: { id: true, title: true },
+            });
+
+            await prisma.activityLog.createMany({
+                data: publishedRecipes.map((recipe) => ({
+                    userId: authorId,
+                    type: 'RECIPE_CREATED',
+                    targetId: recipe.id,
+                    targetType: 'recipe',
+                })),
+            });
+
+            for (const recipe of publishedRecipes) {
+                await sendNotificationsToFollowers(authorId, recipe.id, recipe.title);
+            }
+        }
+
+        return { success: true, updatedCount: result.count };
+    } catch (error) {
+        console.error('Error bulk updating recipe status:', error);
+        return { success: false, updatedCount: 0, error: 'Fehler beim Massen-Update' };
+    }
+}
+
+async function sendNotificationsToFollowers(
+    authorId: string,
+    recipeId: string,
+    recipeTitle: string,
+) {
+    const author = await prisma.user.findUnique({
+        where: { id: authorId },
+        include: { profile: true },
+    });
+
+    if (!author?.profile) return;
+
+    const authorName = author.name ?? author.profile.nickname ?? 'Ein Koch';
+
+    const followers = await prisma.follow.findMany({
+        where: { followingId: authorId },
+        select: { followerId: true },
+    });
+
+    if (followers.length === 0) return;
+
+    const notifications = followers.map((follow) => ({
+        userId: follow.followerId,
+        type: NotificationType.RECIPE_PUBLISHED,
+        title: 'Neues Rezept von gefolgtem Koch',
+        message: `${authorName} hat ein neues Rezept veröffentlicht: ${recipeTitle}`,
+        data: { recipeId, authorId },
+    }));
+
+    await prisma.notification.createMany({ data: notifications });
 }

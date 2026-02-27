@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+import { fetchUserDraftRecipes, fetchUserStats } from '@/app/actions/user';
 import { Button } from '@/components/atoms/Button';
 import { SmartImage } from '@/components/atoms/SmartImage';
 import SignOutButton from '@/components/auth/SignOutButton';
@@ -31,6 +32,9 @@ const ProfilePage = async () => {
     if (!profile) {
         redirect('/auth/signin');
     }
+
+    const stats = await fetchUserStats(session.user.id);
+    const draftRecipes = await fetchUserDraftRecipes(session.user.id);
 
     return (
         <PageShell>
@@ -183,6 +187,97 @@ const ProfilePage = async () => {
                             </p>
                         </Link>
                     </div>
+
+                    {draftRecipes.length > 0 && (
+                        <div
+                            className={css({
+                                marginTop: '10',
+                            })}
+                        >
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    mb: '4',
+                                })}
+                            >
+                                <h2
+                                    className={css({
+                                        fontSize: 'xl',
+                                        fontWeight: '700',
+                                    })}
+                                >
+                                    Meine Entwürfe
+                                </h2>
+                                <span
+                                    className={css({
+                                        background: '#6c5ce7',
+                                        color: 'white',
+                                        borderRadius: 'full',
+                                        px: '3',
+                                        py: '1',
+                                        fontSize: 'sm',
+                                        fontWeight: '600',
+                                    })}
+                                >
+                                    {stats.draftCount}
+                                </span>
+                            </div>
+                            <div
+                                className={css({
+                                    display: 'grid',
+                                    gridTemplateColumns: {
+                                        base: '1fr',
+                                        sm: 'repeat(2, 1fr)',
+                                        md: 'repeat(3, 1fr)',
+                                    },
+                                    gap: '4',
+                                })}
+                            >
+                                {draftRecipes.map((draft) => (
+                                    <Link
+                                        key={draft.id}
+                                        href={`/recipe/${draft.id}`}
+                                        className={css({
+                                            borderRadius: 'xl',
+                                            padding: '4',
+                                            border: '1px solid rgba(108,92,231,0.3)',
+                                            background: 'rgba(108,92,231,0.05)',
+                                            textDecoration: 'none',
+                                            color: 'inherit',
+                                            transition: 'all 150ms ease',
+                                            _hover: {
+                                                transform: 'translateY(-2px)',
+                                                borderColor: '#6c5ce7',
+                                                background: 'rgba(108,92,231,0.1)',
+                                            },
+                                        })}
+                                    >
+                                        <p
+                                            className={css({
+                                                fontWeight: '600',
+                                                mb: '1',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            })}
+                                        >
+                                            {draft.title}
+                                        </p>
+                                        <p
+                                            className={css({
+                                                fontSize: 'sm',
+                                                color: 'text-muted',
+                                            })}
+                                        >
+                                            Entwurf
+                                        </p>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </section>
         </PageShell>

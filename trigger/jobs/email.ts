@@ -96,14 +96,11 @@ export const sendTemplatedEmailTask = task({
         });
 
         try {
-            const result = await sendEmail(
-                {
-                    to: payload.to,
-                    subject,
-                    html,
-                },
-                logger,
-            );
+            const result = await sendEmail({
+                to: payload.to,
+                subject,
+                html,
+            });
 
             if (result) {
                 logger.info('✅ Templated email sent successfully', {
@@ -155,7 +152,7 @@ export const sendBatchEmailsTask = task({
             const batchResults = await Promise.all(
                 batch.map(async (email, batchIndex) => {
                     try {
-                        const success = await sendEmail(email, logger);
+                        const success = await sendEmail(email);
                         return { index: i + batchIndex, success, error: undefined };
                     } catch (error) {
                         logger.error('Batch email failed', {

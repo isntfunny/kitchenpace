@@ -52,6 +52,7 @@ export interface CreateRecipeInput {
     categoryIds: string[]; // Changed from categoryId to categoryIds array
     tagIds?: string[];
     ingredients: RecipeIngredientInput[];
+    status?: 'DRAFT' | 'PUBLISHED';
 }
 
 export async function createRecipe(data: CreateRecipeInput, authorId: string) {
@@ -59,6 +60,9 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         const existing = await prisma.recipe.findUnique({ where: { slug: s } });
         return !!existing;
     });
+
+    const recipeStatus = data.status ?? 'DRAFT';
+    const isPublished = recipeStatus === 'PUBLISHED';
 
     const recipe = await prisma.recipe.create({
         data: {
@@ -71,7 +75,8 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             cookTime: data.cookTime,
             totalTime: data.prepTime + data.cookTime,
             difficulty: data.difficulty,
-            status: 'DRAFT',
+            status: recipeStatus,
+            publishedAt: isPublished ? new Date() : null,
             authorId,
             recipeIngredients: {
                 create: data.ingredients.map((ing, index) => ({

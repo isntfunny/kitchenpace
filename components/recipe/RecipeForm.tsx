@@ -142,6 +142,7 @@ export function RecipeForm({ categories, tags, tagFacets, authorId }: RecipeForm
     const [tagQuery, setTagQuery] = useState('');
     const [ingredients, setIngredients] = useState<AddedIngredient[]>([]);
     const [saving, setSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<'DRAFT' | 'PUBLISHED'>('DRAFT');
     const [error, setError] = useState<string | null>(null);
 
     // Ingredient search state
@@ -285,6 +286,7 @@ export function RecipeForm({ categories, tags, tagFacets, authorId }: RecipeForm
                         notes: ing.notes || undefined,
                         isOptional: ing.isOptional,
                     })),
+                    status: saveStatus,
                 },
                 authorId,
             );
@@ -912,26 +914,62 @@ export function RecipeForm({ categories, tags, tagFacets, authorId }: RecipeForm
                 )}
 
                 {/* Submit */}
-                <button
-                    type="submit"
-                    disabled={saving}
+                <div
                     className={css({
-                        alignSelf: 'flex-start',
-                        borderRadius: 'full',
-                        px: '8',
-                        py: '3',
-                        background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
-                        color: 'white',
-                        fontWeight: '700',
-                        border: 'none',
-                        cursor: saving ? 'not-allowed' : 'pointer',
-                        opacity: saving ? 0.7 : 1,
-                        transition: 'transform 150ms ease',
-                        _hover: { transform: saving ? 'none' : 'translateY(-1px)' },
+                        display: 'flex',
+                        gap: '3',
+                        flexWrap: 'wrap',
                     })}
                 >
-                    {saving ? 'Wird gespeichert...' : 'Rezept erstellen'}
-                </button>
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        onClick={() => setSaveStatus('DRAFT')}
+                        className={css({
+                            alignSelf: 'flex-start',
+                            borderRadius: 'full',
+                            px: '6',
+                            py: '3',
+                            background:
+                                saveStatus === 'DRAFT'
+                                    ? 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)'
+                                    : 'white',
+                            color: saveStatus === 'DRAFT' ? 'white' : '#e07b53',
+                            fontWeight: '600',
+                            border: '2px solid #e07b53',
+                            cursor: saving ? 'not-allowed' : 'pointer',
+                            opacity: saving ? 0.7 : 1,
+                            transition: 'all 150ms ease',
+                            _hover: { transform: saving ? 'none' : 'translateY(-1px)' },
+                        })}
+                    >
+                        {saving ? 'Wird gespeichert...' : 'Als Entwurf speichern'}
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        onClick={() => setSaveStatus('PUBLISHED')}
+                        className={css({
+                            alignSelf: 'flex-start',
+                            borderRadius: 'full',
+                            px: '6',
+                            py: '3',
+                            background:
+                                saveStatus === 'PUBLISHED'
+                                    ? 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)'
+                                    : 'white',
+                            color: saveStatus === 'PUBLISHED' ? 'white' : '#00b894',
+                            fontWeight: '600',
+                            border: '2px solid #00b894',
+                            cursor: saving ? 'not-allowed' : 'pointer',
+                            opacity: saving ? 0.7 : 1,
+                            transition: 'all 150ms ease',
+                            _hover: { transform: saving ? 'none' : 'translateY(-1px)' },
+                        })}
+                    >
+                        {saving ? 'Wird gespeichert...' : 'Veröffentlichen'}
+                    </button>
+                </div>
             </div>
         </form>
     );

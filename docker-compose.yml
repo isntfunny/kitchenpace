@@ -89,14 +89,10 @@ services:
                 condition: service_healthy
         restart: unless-stopped
         environment:
-            DATABASE_URL: postgresql://kitchenpace:${POSTGRES_PASSWORD:-kitchenpace_secret}@postgres:5432/kitchenpace
-            NODE_ENV: production
             OPENSEARCH_URL: http://opensearch:9200
             OPENSEARCH_INDEX: recipes
             TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
             TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN:-}
-        volumes:
-            - ./trigger:/app/trigger
 
 volumes:
     postgres_data:

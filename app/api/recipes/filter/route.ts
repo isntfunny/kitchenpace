@@ -119,26 +119,30 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        pushClause({ term: { status: 'PUBLISHED' } });
+        pushClause({ term: { 'status.keyword': 'PUBLISHED' } });
 
         if (mealTypes.length > 0) {
-            pushClause({ terms: { category: mealTypes } });
+            pushClause({ terms: { 'category.keyword': mealTypes } });
         }
 
         if (tags.length > 0) {
-            pushClause({ bool: { must: tags.map((tag) => ({ term: { tags: tag } })) } });
+            pushClause({ bool: { must: tags.map((tag) => ({ term: { 'tags.keyword': tag } })) } });
         }
 
         if (ingredients.length > 0) {
             pushClause({
                 bool: {
-                    must: ingredients.map((ingredient) => ({ term: { ingredients: ingredient } })),
+                    must: ingredients.map((ingredient) => ({
+                        term: { 'ingredients.keyword': ingredient },
+                    })),
                 },
             });
         }
 
         if (difficulty.length > 0) {
-            pushClause({ terms: { difficulty: difficulty.map((value) => value.toUpperCase()) } });
+            pushClause({
+                terms: { 'difficulty.keyword': difficulty.map((value) => value.toUpperCase()) },
+            });
         }
 
         const addRange = (field: string, gte?: number, lte?: number) => {
@@ -172,7 +176,7 @@ export async function GET(request: NextRequest) {
         }
 
         if (excludeIngredients.length > 0) {
-            boolQuery.bool.must_not.push({ terms: { ingredients: excludeIngredients } });
+            boolQuery.bool.must_not.push({ terms: { 'ingredients.keyword': excludeIngredients } });
         }
 
         if (clauses.length > 0) {
@@ -213,10 +217,10 @@ export async function GET(request: NextRequest) {
                     query: sanitizedQuery,
                     size: 0,
                     aggs: {
-                        tags: { terms: { field: 'tags', size: 60 } },
-                        ingredients: { terms: { field: 'ingredients', size: 60 } },
-                        difficulties: { terms: { field: 'difficulty', size: 5 } },
-                        categories: { terms: { field: 'category', size: 8 } },
+                        tags: { terms: { field: 'tags.keyword', size: 60 } },
+                        ingredients: { terms: { field: 'ingredients.keyword', size: 60 } },
+                        difficulties: { terms: { field: 'difficulty.keyword', size: 5 } },
+                        categories: { terms: { field: 'category.keyword', size: 8 } },
                         totalTime: {
                             histogram: { field: 'totalTime', interval: 5, min_doc_count: 0 },
                         },

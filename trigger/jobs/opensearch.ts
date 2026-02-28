@@ -7,7 +7,7 @@ export const syncOpenSearchScheduled = schedules.task({
     id: 'opensearch-sync-scheduled',
     cron: '*/15 * * * *',
     maxDuration: 300,
-    run: async (payload, { ctx }) => {
+    run: async (_, { ctx }) => {
         logger.info('🔄 Starting scheduled opensearch sync', {
             runId: ctx.run.id,
             cron: '*/15 * * * *',
@@ -36,23 +36,8 @@ export const syncOpenSearchScheduled = schedules.task({
                 return { synced: 0 };
             }
 
-            const operations: Record<string, unknown>[] = [];
-
-            for (const recipe of recipes) {
-                const doc = transformToDocument(recipe);
-                operations.push({ index: { _index: OPENSEARCH_INDEX, _id: recipe.id } });
-                operations.push(doc);
-            }
-
-            logger.debug('Sending bulk request to opensearch', {
-                operationsCount: operations.length,
-                index: OPENSEARCH_INDEX,
-            });
-
-            await opensearchClient.bulk({
-                refresh: 'wait_for',
-                body: operations,
-            });
+            const operations = buildBulkOperations(recipes);
+            await runBulkOperations({ operations, runId: ctx.run.id });
 
             logger.info('✅ Synced recipes to opensearch', {
                 count: recipes.length,
@@ -106,23 +91,8 @@ export const syncOpenSearch = task({
                 return { synced: 0 };
             }
 
-            const operations: Record<string, unknown>[] = [];
-
-            for (const recipe of recipes) {
-                const doc = transformToDocument(recipe);
-                operations.push({ index: { _index: OPENSEARCH_INDEX, _id: recipe.id } });
-                operations.push(doc);
-            }
-
-            logger.debug('Sending bulk request to opensearch', {
-                operationsCount: operations.length,
-                index: OPENSEARCH_INDEX,
-            });
-
-            await opensearchClient.bulk({
-                refresh: 'wait_for',
-                body: operations,
-            });
+            const operations = buildBulkOperations(recipes);
+            await runBulkOperations({ operations, runId: ctx.run.id });
 
             logger.info('✅ Synced recipes to opensearch', {
                 count: recipes.length,
@@ -226,6 +196,10 @@ export const syncRecipeToOpenSearch = task({
     },
 });
 
+const BULK_CHUNK_SIZE = 2000;
+
+type BulkOperation = Record<string, unknown>;
+
 type RecipeWithRelations = {
     id: string;
     slug: string;
@@ -268,26 +242,27 @@ type RecipeDocument = {
 };
 
 function transformToDocument(recipe: RecipeWithRelations): RecipeDocument {
-    const tags = recipe.tags
-        .map((entry) => entry.tag?.name)
-        .filter((name): name is string => Boolean(name));
-
-    const ingredients = recipe.recipeIngredients
-        .map((entry) => entry.ingredient?.name)
-        .filter((name): name is string => Boolean(name));
+    const tags = normalizeStringArray(recipe.tags.map((entry) => entry.tag?.name));
+    const ingredients = normalizeStringArray(
+        recipe.recipeIngredients.map((entry) => entry.ingredient?.name),
+    );
 
     const category = recipe.categories[0]?.category;
 
-    const keywords = [
-        recipe.title,
-        recipe.description,
-        category?.name,
-        category?.slug,
-        ...tags,
-        ...ingredients,
-    ]
-        .filter((value): value is string => Boolean(value))
-        .map((value) => value.toLowerCase());
+    const keywords = Array.from(
+        new Set(
+            [
+                recipe.title,
+                recipe.description,
+                category?.name,
+                category?.slug,
+                ...tags,
+                ...ingredients,
+            ]
+                .filter((value): value is string => Boolean(value))
+                .map((value) => value.toLowerCase()),
+        ),
+    );
 
     return {
         id: recipe.id,
@@ -309,4 +284,56 @@ function transformToDocument(recipe: RecipeWithRelations): RecipeDocument {
         status: recipe.status,
         keywords,
     };
+}
+
+function normalizeStringArray(values: Array<string | undefined | null>) {
+    return Array.from(
+        new Set(
+            values.map((value) => value?.trim()).filter((value): value is string => Boolean(value)),
+        ),
+    );
+}
+
+function buildBulkOperations(recipes: RecipeWithRelations[]): BulkOperation[] {
+    const operations: BulkOperation[] = [];
+    for (const recipe of recipes) {
+        operations.push({ index: { _index: OPENSEARCH_INDEX, _id: recipe.id } });
+        operations.push(transformToDocument(recipe));
+    }
+    return operations;
+}
+
+async function runBulkOperations({
+    operations,
+    runId,
+}: {
+    operations: BulkOperation[];
+    runId: string;
+}) {
+    for (let i = 0; i < operations.length; i += BULK_CHUNK_SIZE) {
+        const chunk = operations.slice(i, i + BULK_CHUNK_SIZE);
+        logger.debug('Sending bulk chunk to opensearch', {
+            chunkSize: chunk.length,
+            chunkIndex: Math.floor(i / BULK_CHUNK_SIZE) + 1,
+            runId,
+        });
+
+        const response = await opensearchClient.bulk({
+            refresh: 'wait_for',
+            body: chunk,
+        });
+
+        const body = response.body as { errors?: boolean; items?: Array<Record<string, any>> };
+        if (body.errors) {
+            const errors = (body.items ?? [])
+                .map((item) => {
+                    const entry = item.index ?? item.update ?? item.delete;
+                    return entry?.error?.reason ?? entry?.error?.type;
+                })
+                .filter(Boolean);
+            if (errors.length > 0) {
+                throw new Error(`OpenSearch bulk chunk failed: ${errors.join('; ')}`);
+            }
+        }
+    }
 }

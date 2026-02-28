@@ -52,7 +52,7 @@ const darkThemeColors = {
 export default defineConfig({
     preflight: true,
     include: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
-    exclude: [],
+    exclude: ['./app/**/data.ts', './app/actions/**', './lib/**/*.ts', './trigger/**'],
     theme: {
         extend: {
             tokens: {

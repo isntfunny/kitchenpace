@@ -6,7 +6,6 @@ import { Moon, SunMedium } from 'lucide-react';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { css } from 'styled-system/css';
 
-
 const toggleStyles = css({
     display: 'inline-flex',
     alignItems: 'center',

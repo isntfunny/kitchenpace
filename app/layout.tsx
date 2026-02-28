@@ -2,7 +2,6 @@ import { IdentifyComponent, OpenPanelComponent } from '@openpanel/nextjs';
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 
-
 import { fetchPinnedEntries } from '@/app/api/recipe-tabs/helpers';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { ProfileProvider } from '@/components/providers/ProfileProvider';
@@ -189,7 +188,7 @@ export default async function RootLayout({
         );
     }
 
-    const openPanelClientId = process.env.OPENPANEL_ID ?? '';
+    const openPanelClientId = process.env.OPENPANEL_CLIENT_ID ?? process.env.OPENPANEL_ID ?? '';
     const hasOpenPanelId = Boolean(openPanelClientId);
     const userName = session?.user?.name?.trim() ?? '';
     const nameParts = userName.split(/\s+/).filter(Boolean);

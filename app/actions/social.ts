@@ -4,6 +4,7 @@ import { ActivityType, NotificationType } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 import { getServerAuthSession } from '@/lib/auth';
+import { trackServerEvent } from '@/lib/openpanel';
 import { prisma } from '@/lib/prisma';
 
 type AuthenticatedUser = {
@@ -101,6 +102,7 @@ export async function toggleFavoriteAction(recipeId: string) {
                 targetType: 'recipe',
             },
         });
+        trackServerEvent('favorite', { recipeId }, { profileId: viewer.id });
 
         if (recipe.authorId && recipe.authorId !== viewer.id) {
             await prisma.notification.create({
@@ -185,6 +187,8 @@ export async function rateRecipeAction(recipeId: string, rawRating: number) {
         },
     });
 
+    trackServerEvent('rate_recipe', { recipeId, rating }, { profileId: viewer.id });
+
     if (recipe.authorId && recipe.authorId !== viewer.id) {
         await prisma.notification.create({
             data: {
@@ -248,6 +252,7 @@ export async function toggleFollowAction(targetUserId: string, options?: { recip
                 targetType: 'user',
             },
         });
+        trackServerEvent('follow', { targetUserId }, { profileId: viewer.id });
 
         await prisma.notification.create({
             data: {
@@ -367,6 +372,12 @@ export async function markRecipeCookedAction(
             },
         },
     });
+
+    trackServerEvent(
+        'cook_recipe',
+        { recipeId, servings: options?.servings ?? 1, hasImage: Boolean(imageUrl) },
+        { profileId: viewer.id },
+    );
 
     if (recipe.authorId && recipe.authorId !== viewer.id) {
         await prisma.notification.create({

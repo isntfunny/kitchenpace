@@ -255,7 +255,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         <div
             className={css({
                 display: 'grid',
-                gridTemplateColumns: { base: '1fr', lg: '280px 1fr' },
+                gridTemplateColumns: { base: '1fr', lg: '380px 1fr' },
                 gap: '4',
                 paddingTop: '3',
                 paddingBottom: '8',

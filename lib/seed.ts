@@ -1065,7 +1065,7 @@ async function main() {
             cookCount: 234,
             categories: ['hauptgericht'],
             authorId: createdUsers[0].id,
-            tags: ['italienisch', 'pasta', 'schnell'],
+            tags: ['italienisch', 'pasta', 'schnell', 'klassisch', 'mittagessen', 'abendessen'],
         },
         {
             id: 'recipe-2',
@@ -1083,7 +1083,7 @@ async function main() {
             cookCount: 189,
             categories: ['hauptgericht'],
             authorId: createdUsers[0].id,
-            tags: ['italienisch', 'pizza', 'festlich'],
+            tags: ['italienisch', 'pizza', 'festlich', 'vegetarisch', 'einfach'],
         },
         {
             id: 'recipe-3',
@@ -1101,7 +1101,7 @@ async function main() {
             cookCount: 123,
             categories: ['hauptgericht'],
             authorId: createdUsers[1].id,
-            tags: ['asialtisch', 'schnell', 'modern'],
+            tags: ['asialtisch', 'schnell', 'modern', 'rindfleisch', 'gesund', 'scharf'],
         },
         {
             id: 'recipe-4',
@@ -1138,7 +1138,7 @@ async function main() {
             cookCount: 456,
             categories: ['hauptgericht'],
             authorId: createdUsers[1].id,
-            tags: ['asialtisch', 'schnell', 'einfach'],
+            tags: ['asialtisch', 'schnell', 'einfach', 'gefluegel', 'leicht'],
         },
         {
             id: 'recipe-6',
@@ -1156,7 +1156,7 @@ async function main() {
             cookCount: 567,
             categories: ['dessert'],
             authorId: createdUsers[3].id,
-            tags: ['einfach', 'festlich'],
+            tags: ['einfach', 'festlich', 'schokolade', 'dessert'],
         },
         {
             id: 'recipe-7',
@@ -1174,7 +1174,7 @@ async function main() {
             cookCount: 678,
             categories: ['fruehstueck'],
             authorId: createdUsers[3].id,
-            tags: ['einfach', 'schnell'],
+            tags: ['einfach', 'schnell', 'frühstück', 'vegan', 'leicht'],
         },
         {
             id: 'recipe-8',
@@ -1348,7 +1348,7 @@ async function main() {
             cookCount: 456,
             categories: ['hauptgericht'],
             authorId: createdUsers[1].id,
-            tags: ['asialtisch', 'schnell', 'scharf'],
+            tags: ['asialtisch', 'schnell', 'scharf', 'gesund', 'vegetarisch', 'proteinreich'],
         },
         // Recipe-10: Tiramisu - highly rated dessert
         {
@@ -1367,7 +1367,7 @@ async function main() {
             cookCount: 678,
             categories: ['dessert'],
             authorId: createdUsers[3].id,
-            tags: ['italienisch', 'dessert', 'festlich'],
+            tags: ['italienisch', 'dessert', 'festlich', 'schokolade', 'kaffee', 'klassisch'],
         },
         // Recipe-11: Avocado Toast - quick breakfast
         {
@@ -1386,7 +1386,7 @@ async function main() {
             cookCount: 789,
             categories: ['fruehstueck'],
             authorId: createdUsers[5].id,
-            tags: ['frühstück', 'schnell', 'gesund'],
+            tags: ['frühstück', 'schnell', 'gesund', 'vegan', 'vegetarisch', 'leicht'],
         },
         // Recipe-12: Greek Salad - light lunch
         {
@@ -1405,7 +1405,7 @@ async function main() {
             cookCount: 345,
             categories: ['hauptgericht'],
             authorId: createdUsers[6].id,
-            tags: ['gesund', 'vegetarisch', 'schnell'],
+            tags: ['gesund', 'vegetarisch', 'schnell', 'salat', 'leicht', 'sommer'],
         },
         // Recipe-13: Beef Bourguignon - complex French dish
         {
@@ -1424,7 +1424,14 @@ async function main() {
             cookCount: 234,
             categories: ['hauptgericht'],
             authorId: createdUsers[9].id,
-            tags: ['franzosisch', 'festlich', 'klassisch'],
+            tags: [
+                'franzosisch',
+                'festlich',
+                'klassisch',
+                'rindfleisch',
+                'winter',
+                'schmorgericht',
+            ],
         },
         // Recipe-14: NEW RECIPE - Brand new with NO interactions yet
         {
@@ -1433,7 +1440,7 @@ async function main() {
             slug: 'sommerliche-beeren-torte',
             description:
                 'Leichte Torte mit frischen Beeren und Vanillecreme - ganz frisch hochgeladen!',
-            imageUrl: 'https://cdn.isntfunny.de/kitchenpace/mock/recipes/beeren-torte.jpg',
+            imageUrl: 'https://cdn.isntfunny.de/kitchenpace/mock/recipes/beeren-torte-sommer.jpg',
             servings: 12,
             prepTime: 45,
             cookTime: 60,
@@ -1444,7 +1451,7 @@ async function main() {
             cookCount: 0,
             categories: ['dessert'],
             authorId: createdUsers[7].id,
-            tags: ['dessert', 'sommer', 'backen'],
+            tags: ['dessert', 'sommer', 'backen', 'leicht', 'fruchtig'],
         },
         // Recipe-15: EDGE CASE - Recipe with weird data
         {
@@ -1452,7 +1459,7 @@ async function main() {
             title: 'Test Rezept',
             slug: 'test-rezept',
             description: 'A', // Very short description
-            imageUrl: null, // No image!
+            imageUrl: 'https://cdn.isntfunny.de/kitchenpace/mock/recipes/beeren-torte.jpg', // No image!
             servings: 1,
             prepTime: 0, // No prep time
             cookTime: 0, // No cook time
@@ -1605,7 +1612,7 @@ async function main() {
             title: 'Flammkuchen mit Kartoffeln und Schwarzwälder Schinken',
             slug: 'flammkuchen-kartoffeln',
             description: 'Elsässischer Flammkuchen mit Kartoffeln und Schinken',
-            imageUrl: 'https://cdn.isntfunny.de/kitchenpace/mock/recipes/flammkuchen.jpg',
+            imageUrl: 'https://cdn.isntfunny.de/kitchenpace/mock/recipes/flammkuchen-potatoes.jpg',
             servings: 4,
             prepTime: 15,
             cookTime: 15,
@@ -1871,7 +1878,7 @@ async function main() {
             title: 'Kaiserschmarrn - Tiroler Landgasthofrezept',
             slug: 'kaiserschmarrn-tiroler',
             description: 'Fluffiger Kaiserschmarrn mit Rosinen und Puderzucker',
-            imageUrl: 'https://cdn.isntfunny.de/kitchenpace/mock/recipes/kaiserschmarrn.jpg',
+            imageUrl: 'https://cdn.isntfunny.de/kitchenpace/mock/recipes/kaiserschmarrn-alt.jpg',
             servings: 4,
             prepTime: 30,
             cookTime: 25,
@@ -2194,7 +2201,8 @@ async function main() {
             title: 'Elsässer Flammkuchen',
             slug: 'elsaasser-flammkuchen',
             description: 'Original elsässer Flammkuchen mit Crème fraîche, Zwiebeln und Speck',
-            imageUrl: 'https://cdn.isntfunny.de/kitchenpace/mock/recipes/flammkuchen.jpg',
+            imageUrl:
+                'https://cdn.isntfunny.de/kitchenpace/mock/recipes/flammkuchen-elsaessisch.jpg',
             servings: 4,
             prepTime: 25,
             cookTime: 15,

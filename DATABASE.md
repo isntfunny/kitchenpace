@@ -136,8 +136,7 @@ model User {
 
 - `/app/api/auth/[...nextauth]/route.ts` - NextAuth configuration
 - `/app/api/auth/register/route.ts` - User registration
-- `/app/dashboard/page.tsx` - Dashboard page (session check)
-- `/app/profile/page.tsx` - User profile display
+- `/app/profile/page.tsx` - User profile display with dashboard insights
 
 #### Profile
 

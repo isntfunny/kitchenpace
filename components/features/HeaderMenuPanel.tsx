@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Heart, LayoutDashboard, User, type LucideIcon } from 'lucide-react';
+import { FileText, Heart, Settings, User, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
 
@@ -15,10 +15,10 @@ export type NavLinkItem = {
 
 export const PERSONAL_LINKS: NavLinkItem[] = [
     {
-        label: 'Dashboard',
-        description: 'Planung & Insights',
-        href: '/dashboard',
-        icon: LayoutDashboard,
+        label: 'Profilübersicht',
+        description: 'Insights & Kochplan',
+        href: '/profile',
+        icon: User,
     },
     {
         label: 'Favoriten',
@@ -35,8 +35,8 @@ export const PERSONAL_LINKS: NavLinkItem[] = [
     {
         label: 'Profil & Einstellungen',
         description: 'Account verwalten',
-        href: '/profile',
-        icon: User,
+        href: '/profile/manage',
+        icon: Settings,
     },
 ];
 

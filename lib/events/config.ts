@@ -277,8 +277,8 @@ export const EVENT_DEFINITIONS: EventDefinitionsMap = {
                     'Dein Konto wurde erfolgreich erstellt. Entdecke jetzt dein Dashboard und starte deine kulinarische Reise.',
             }),
             getData: () => ({
-                link: '/dashboard',
-                linkText: 'Zum Dashboard',
+                link: '/profile',
+                linkText: 'Zum Profil',
             }),
         },
         tracking: {

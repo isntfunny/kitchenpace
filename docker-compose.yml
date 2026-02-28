@@ -5,14 +5,13 @@ services:
         environment:
             POSTGRES_USER: kitchenpace
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kitchenpace_secret}
-            POSTGRES_DB: kitchenpace
+            POSTGRES_DB: ${POSTGRES_DB:-kitchenpace}
         volumes:
             - postgres_data:/var/lib/postgresql/data
-
         ports:
             - '64000:5432'
         healthcheck:
-            test: ['CMD-SHELL', 'pg_isready -U kitchenpace -d kitchenpace']
+            test: ['CMD-SHELL', 'pg_isready -U kitchenpace -d ${POSTGRES_DB:-kitchenpace}']
             interval: 10s
             timeout: 5s
             retries: 5
@@ -54,22 +53,13 @@ services:
                 DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
                 DEBUG: ${DEBUG:-0}
         container_name: kitchenpace-app
+        env_file:
+            - .env
         depends_on:
             postgres:
                 condition: service_healthy
             opensearch:
                 condition: service_healthy
-        environment:
-            DATABASE_URL: postgresql://kitchenpace:${POSTGRES_PASSWORD:-kitchenpace_secret}@postgres:5432/kitchenpace
-            NODE_ENV: development
-            DEBUG: ${DEBUG:-0}
-            # NextAuth (set these in Coolify environment variables)
-            NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-in-production}
-            NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
-            OPENSEARCH_URL: http://opensearch:9200
-            OPENSEARCH_INDEX: recipes
-            TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
-            TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN:-}
         restart: unless-stopped
 
     worker:

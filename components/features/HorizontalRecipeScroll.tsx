@@ -7,6 +7,7 @@ import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
 import { Heading, Text } from '../atoms/Typography';
+
 import { CustomScrollbar } from './CustomScrollbar';
 
 interface Recipe {

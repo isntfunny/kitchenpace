@@ -69,6 +69,7 @@
         "yet-another-react-lightbox": "^3.29.1"
     },
     "devDependencies": {
+        "@playwright/test": "^1.52.0",
         "@types/bcrypt": "^6.0.0",
         "@types/dagre": "^0.7.54",
         "@types/file-saver": "^2.0.7",
@@ -84,7 +85,6 @@
         "eslint-plugin-import": "^2.32.0",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^7.0.1",
-        "@playwright/test": "^1.52.0",
         "eslint-plugin-unused-imports": "^4.4.1",
         "husky": "^9.1.7",
         "lodash": "^4.17.23",

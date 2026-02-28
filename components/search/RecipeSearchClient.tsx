@@ -275,6 +275,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                     options={filterOptions}
                     facets={stableFacets ?? facets}
                     onFiltersChange={updateFilters}
+                    loading={loading}
                 />
             </aside>
 
@@ -586,6 +587,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                 options={filterOptions}
                                 facets={stableFacets ?? facets}
                                 onFiltersChange={updateFilters}
+                                loading={loading}
                             />
                         </div>
                     </div>

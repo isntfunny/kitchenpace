@@ -170,6 +170,7 @@ export function SearchableFilterChips({
                     >
                         {filteredItems.map((item) => {
                             const isZeroCount = item.count === 0 && !item.selected;
+                            const isLoadingCount = item.count === -1;
                             const badgeClass = isZeroCount ? chipBadgeMutedClass : chipBadgeClass;
                             return (
                                 <ToggleGroup.Item
@@ -178,7 +179,9 @@ export function SearchableFilterChips({
                                     className={cx(itemClass, isZeroCount && chipZeroClass)}
                                 >
                                     <span>{item.name}</span>
-                                    <span className={badgeClass}>{item.count}</span>
+                                    <span className={badgeClass}>
+                                        {isLoadingCount ? '-' : item.count}
+                                    </span>
                                 </ToggleGroup.Item>
                             );
                         })}

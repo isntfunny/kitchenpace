@@ -21,6 +21,7 @@ type FilterSidebarProps = {
     };
     facets?: RecipeSearchFacets;
     onFiltersChange: (next: Partial<RecipeFilterSearchParams>) => void;
+    loading?: boolean;
 };
 
 const MEAL_TYPE_OPTIONS = [
@@ -214,7 +215,13 @@ const FilterSection = ({
     </Accordion.Item>
 );
 
-export function FilterSidebar({ filters, options, facets, onFiltersChange }: FilterSidebarProps) {
+export function FilterSidebar({
+    filters,
+    options,
+    facets,
+    onFiltersChange,
+    loading,
+}: FilterSidebarProps) {
     const ingredients = options.ingredients;
     const tags = options.tags;
 
@@ -222,6 +229,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
     const tagFacets = facets?.tags;
     const ingredientFacets = facets?.ingredients;
 
+    // Build count maps from current facets
     const tagCountMap = useMemo(() => {
         const map = new Map<string, number>();
         tagFacets?.forEach((facet) => {
@@ -242,19 +250,32 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
         return map;
     }, [ingredientFacets]);
 
+    // Build tag items - show '-' count when loading and count is unavailable
     const sortedTags = useMemo((): FilterChipItem[] => {
         const selectedTags = filters.tags ?? [];
-        const tagData = tags.map((tag) => {
+        return tags.map((tag) => {
             const normalized = normalizeTag(tag);
-            const count = tagCountMap.get(tag) ?? tagCountMap.get(normalized) ?? 0;
+            const isSelected = selectedTags.includes(tag);
+
+            // Get count from facets - use -1 to indicate "loading/unknown" when appropriate
+            const rawCount = tagCountMap.get(tag) ?? tagCountMap.get(normalized);
+            let count: number;
+            if (rawCount !== undefined) {
+                count = rawCount;
+            } else if (loading && isSelected) {
+                // While loading, show -1 to indicate "updating" for selected items
+                count = -1;
+            } else {
+                count = 0;
+            }
+
             return {
                 name: tag,
                 count,
-                selected: selectedTags.includes(tag),
+                selected: isSelected,
             };
         });
-        return tagData;
-    }, [tags, tagCountMap, filters.tags]);
+    }, [tags, tagCountMap, filters.tags, loading]);
 
     const ingredientOptionNames = useMemo(() => {
         const selected = [...(filters.ingredients ?? []), ...(filters.excludeIngredients ?? [])];
@@ -265,31 +286,58 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
         return Array.from(new Set([...ingredients, ...selected, ...facetKeys]));
     }, [ingredients, ingredientFacets, filters.ingredients, filters.excludeIngredients]);
 
+    // Build ingredient items - show '-' count when loading and count is unavailable
     const sortedIngredients = useMemo((): FilterChipItem[] => {
         const selectedIngredients = filters.ingredients ?? [];
-        return ingredientOptionNames.map((name) => {
+        return ingredientOptionNames.map((name: string) => {
             const normalized = normalizeTag(name);
-            const count = ingredientCountMap.get(name) ?? ingredientCountMap.get(normalized) ?? 0;
+            const isSelected = selectedIngredients.includes(name);
+
+            // Get count from facets - use -1 to indicate "loading/unknown" when appropriate
+            const rawCount = ingredientCountMap.get(name) ?? ingredientCountMap.get(normalized);
+            let count: number;
+            if (rawCount !== undefined) {
+                count = rawCount;
+            } else if (loading && isSelected) {
+                // While loading, show -1 to indicate "updating" for selected items
+                count = -1;
+            } else {
+                count = 0;
+            }
+
             return {
                 name,
                 count,
-                selected: selectedIngredients.includes(name),
+                selected: isSelected,
             };
         });
-    }, [ingredientOptionNames, ingredientCountMap, filters.ingredients]);
+    }, [ingredientOptionNames, ingredientCountMap, filters.ingredients, loading]);
 
     const sortedExcludeIngredients = useMemo((): FilterChipItem[] => {
         const selectedExclude = filters.excludeIngredients ?? [];
-        return ingredientOptionNames.map((name) => {
+        return ingredientOptionNames.map((name: string) => {
             const normalized = normalizeTag(name);
-            const count = ingredientCountMap.get(name) ?? ingredientCountMap.get(normalized) ?? 0;
+            const isSelected = selectedExclude.includes(name);
+
+            // Get count from facets - use -1 to indicate "loading/unknown" when appropriate
+            const rawCount = ingredientCountMap.get(name) ?? ingredientCountMap.get(normalized);
+            let count: number;
+            if (rawCount !== undefined) {
+                count = rawCount;
+            } else if (loading && isSelected) {
+                // While loading, show -1 to indicate "updating" for selected items
+                count = -1;
+            } else {
+                count = 0;
+            }
+
             return {
                 name,
                 count,
-                selected: selectedExclude.includes(name),
+                selected: isSelected,
             };
         });
-    }, [ingredientOptionNames, ingredientCountMap, filters.excludeIngredients]);
+    }, [ingredientOptionNames, ingredientCountMap, filters.excludeIngredients, loading]);
 
     const activeSectionCounts = useMemo(() => {
         const hasActiveTags = (filters.tags?.length ?? 0) > 0;
@@ -349,7 +397,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                         <SearchableFilterChips
                             items={sortedTags}
                             selectedValues={filters.tags ?? []}
-                            onSelectionChange={(next) =>
+                            onSelectionChange={(next: string[]) =>
                                 onFiltersChange({ tags: next } as Partial<RecipeFilterSearchParams>)
                             }
                             placeholder="Tags suchen..."
@@ -369,7 +417,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                             className={chipGroupClass}
                             aria-label="Mahlzeiten filtern"
                             value={filters.mealTypes ?? []}
-                            onValueChange={(next) =>
+                            onValueChange={(next: string[]) =>
                                 onFiltersChange({
                                     mealTypes: next,
                                 } as Partial<RecipeFilterSearchParams>)
@@ -396,7 +444,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                         <SearchableFilterChips
                             items={sortedIngredients}
                             selectedValues={filters.ingredients ?? []}
-                            onSelectionChange={(next) =>
+                            onSelectionChange={(next: string[]) =>
                                 onFiltersChange({
                                     ingredients: next,
                                 } as Partial<RecipeFilterSearchParams>)
@@ -415,7 +463,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                         <SearchableFilterChips
                             items={sortedExcludeIngredients}
                             selectedValues={filters.excludeIngredients ?? []}
-                            onSelectionChange={(next) =>
+                            onSelectionChange={(next: string[]) =>
                                 onFiltersChange({
                                     excludeIngredients: next,
                                 } as Partial<RecipeFilterSearchParams>)
@@ -437,7 +485,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                             className={chipGroupClass}
                             aria-label="Schwierigkeitsgrad filtern"
                             value={filters.difficulty ?? []}
-                            onValueChange={(next) =>
+                            onValueChange={(next: string[]) =>
                                 onFiltersChange({
                                     difficulty: next,
                                 } as Partial<RecipeFilterSearchParams>)
@@ -466,7 +514,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                             className={chipGroupClass}
                             aria-label="Tageszeit filtern"
                             value={filters.timeOfDay ?? []}
-                            onValueChange={(next) =>
+                            onValueChange={(next: string[]) =>
                                 onFiltersChange({
                                     timeOfDay: next,
                                 } as Partial<RecipeFilterSearchParams>)
@@ -534,7 +582,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                                 fallback={RANGE_FALLBACKS.rating}
                                 facet={facets?.rating}
                                 step={0.5}
-                                formatValue={(value) => (
+                                formatValue={(value: number) => (
                                     <span
                                         className={css({
                                             display: 'inline-flex',
@@ -556,7 +604,7 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                                 fallback={RANGE_FALLBACKS.cookCount}
                                 facet={facets?.cookCount}
                                 unit="x"
-                                formatValue={(value) => `${Math.round(value)}x`}
+                                formatValue={(value: number) => `${Math.round(value)}x`}
                             />
                         </div>
                     </FilterSection>

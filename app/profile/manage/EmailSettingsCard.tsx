@@ -1,8 +1,9 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { Check, Mail } from 'lucide-react';
 import { Checkbox } from 'radix-ui';
 
+import { Heading, Text } from '@/components/atoms/Typography';
 import { css } from 'styled-system/css';
 
 interface CheckboxItemProps {
@@ -17,46 +18,41 @@ function CheckboxItem({ label, defaultChecked = false }: CheckboxItemProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '4',
+                p: '3',
                 borderRadius: 'xl',
                 border: '1px solid',
-                borderColor: 'rgba(224,123,83,0.2)',
+                borderColor: 'border',
+                bg: 'background',
                 cursor: 'pointer',
                 transition: 'all 150ms ease',
                 _hover: {
-                    borderColor: '#e07b53',
-                    background: 'rgba(224,123,83,0.03)',
+                    borderColor: 'primary',
                 },
             })}
         >
-            <p
-                className={css({
-                    fontSize: 'sm',
-                    fontWeight: '600',
-                })}
-            >
+            <Text size="sm" className={css({ fontWeight: '500' })}>
                 {label}
-            </p>
+            </Text>
             <Checkbox.Root
                 defaultChecked={defaultChecked}
                 className={css({
                     width: '20px',
                     height: '20px',
-                    backgroundColor: 'white',
+                    bg: 'background',
                     borderRadius: '6px',
                     border: '2px solid',
-                    borderColor: 'rgba(224,123,83,0.5)',
+                    borderColor: 'border',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     transition: 'all 150ms ease',
                     _hover: {
-                        borderColor: '#e07b53',
+                        borderColor: 'primary',
                     },
                     '&[data-state="checked"]': {
-                        backgroundColor: '#e07b53',
-                        borderColor: '#e07b53',
+                        bg: 'primary',
+                        borderColor: 'primary',
                     },
                 })}
             >
@@ -72,27 +68,44 @@ export function EmailSettingsCard() {
     return (
         <div
             className={css({
-                background: 'surface.elevated',
+                p: { base: '4', md: '5' },
                 borderRadius: '2xl',
-                padding: '6',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+                bg: 'surface',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
             })}
         >
-            <h3
-                className={css({
-                    fontSize: 'lg',
-                    fontWeight: '700',
-                    color: 'text',
-                    mb: '4',
-                })}
-            >
-                E-Mail-Einstellungen
-            </h3>
             <div
                 className={css({
                     display: 'flex',
-                    flexDirection: 'column',
+                    alignItems: 'center',
                     gap: '3',
+                    mb: '4',
+                })}
+            >
+                <div
+                    className={css({
+                        w: '10',
+                        h: '10',
+                        borderRadius: 'lg',
+                        bg: 'secondary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                    })}
+                >
+                    <Mail size={20} />
+                </div>
+                <Heading as="h2" size="lg">
+                    E-Mail-Einstellungen
+                </Heading>
+            </div>
+
+            <div
+                className={css({
+                    display: 'flex',
+                    flexDir: 'column',
+                    gap: '2',
                 })}
             >
                 <CheckboxItem label="Neue Rezepte von anderen Kochbegeisterten" defaultChecked />

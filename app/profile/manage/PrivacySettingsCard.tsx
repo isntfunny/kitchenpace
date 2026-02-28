@@ -1,7 +1,10 @@
 'use client';
 
+import { Eye, Save } from 'lucide-react';
 import { useState } from 'react';
 
+import { Button } from '@/components/atoms/Button';
+import { Heading, Text } from '@/components/atoms/Typography';
 import { css } from 'styled-system/css';
 
 type SettingKey = 'ratingsPublic' | 'followsPublic' | 'favoritesPublic' | 'showInActivity';
@@ -83,36 +86,46 @@ export function PrivacySettingsCard({ profile }: PrivacySettingsCardProps) {
         <form
             onSubmit={handleSubmit}
             className={css({
-                borderRadius: '3xl',
-                padding: { base: '6', md: '8' },
-                background: 'white',
-                boxShadow: '0 30px 90px rgba(224,123,83,0.18)',
-                border: '1px solid rgba(224,123,83,0.2)',
-                fontFamily: 'body',
+                p: { base: '4', md: '5' },
+                borderRadius: '2xl',
+                bg: 'surface',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
             })}
         >
-            <div className={css({ mb: '6' })}>
-                <p
+            <div className={css({ mb: '5' })}>
+                <div
                     className={css({
-                        textTransform: 'uppercase',
-                        letterSpacing: 'widest',
-                        color: 'text-muted',
-                        fontSize: 'sm',
-                        mb: '2',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3',
+                        mb: '3',
                     })}
                 >
-                    Privatsphäre
-                </p>
-                <h2 className={css({ fontSize: '2xl', fontWeight: '800', mb: '2' })}>
-                    Sichtbarkeit deiner Aktivitäten
-                </h2>
-                <p className={css({ color: 'text-muted' })}>
+                    <div
+                        className={css({
+                            w: '10',
+                            h: '10',
+                            borderRadius: 'lg',
+                            bg: 'primary',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                        })}
+                    >
+                        <Eye size={20} />
+                    </div>
+                    <Heading as="h2" size="lg">
+                        Privatsphäre
+                    </Heading>
+                </div>
+                <Text color="muted" size="sm">
                     Entscheide, welche Aktivitäten für andere KüchenTakt-Mitglieder sichtbar sein
                     sollen.
-                </p>
+                </Text>
             </div>
 
-            <div className={css({ display: 'flex', flexDir: 'column', gap: '4' })}>
+            <div className={css({ display: 'flex', flexDir: 'column', gap: '3' })}>
                 {(Object.keys(SETTING_COPY) as SettingKey[]).map((key) => {
                     const copy = SETTING_COPY[key];
                     const isEnabled = settings[key];
@@ -121,71 +134,56 @@ export function PrivacySettingsCard({ profile }: PrivacySettingsCardProps) {
                         <div
                             key={key}
                             className={css({
-                                padding: '4',
-                                borderRadius: '2xl',
-                                border: '1px solid rgba(224,123,83,0.25)',
-                                background: 'surface.elevated',
+                                p: '4',
+                                borderRadius: 'xl',
+                                border: '1px solid',
+                                borderColor: 'border',
+                                bg: 'background',
                                 display: 'flex',
-                                flexDir: { base: 'column', md: 'row' },
+                                flexDir: { base: 'column', sm: 'row' },
                                 gap: '4',
-                                alignItems: 'stretch',
+                                alignItems: { base: 'flex-start', sm: 'center' },
+                                justifyContent: 'space-between',
                             })}
                         >
                             <div className={css({ flex: 1 })}>
-                                <p className={css({ fontWeight: '700', mb: '1' })}>{copy.title}</p>
-                                <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                                <Text className={css({ fontWeight: '600', mb: '1' })}>
+                                    {copy.title}
+                                </Text>
+                                <Text size="sm" color="muted">
                                     {copy.description}
-                                </p>
+                                </Text>
                             </div>
-                            <div
+                            <button
+                                type="button"
+                                onClick={() => toggleSetting(key)}
+                                aria-pressed={isEnabled}
                                 className={css({
-                                    display: 'flex',
-                                    flexDir: 'column',
-                                    gap: '2',
-                                    alignItems: { base: 'flex-start', md: 'flex-end' },
+                                    width: '56px',
+                                    height: '28px',
+                                    borderRadius: 'full',
+                                    border: 'none',
+                                    position: 'relative',
+                                    flexShrink: 0,
+                                    background: isEnabled ? 'primary' : 'border',
+                                    transition: 'background 150ms ease',
+                                    cursor: 'pointer',
                                 })}
                             >
-                                <button
-                                    type="button"
-                                    onClick={() => toggleSetting(key)}
-                                    aria-pressed={isEnabled}
-                                    className={css({
-                                        width: '64px',
-                                        height: '32px',
-                                        borderRadius: 'full',
-                                        border: 'none',
-                                        position: 'relative',
-                                        background: isEnabled
-                                            ? 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)'
-                                            : '#f3f4f6',
-                                        transition: 'background 150ms ease',
-                                        cursor: 'pointer',
-                                    })}
-                                >
-                                    <span
-                                        className={css({
-                                            position: 'absolute',
-                                            top: '4px',
-                                            left: isEnabled ? '34px' : '4px',
-                                            width: '24px',
-                                            height: '24px',
-                                            borderRadius: 'full',
-                                            background: 'white',
-                                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                                            transition: 'left 150ms ease',
-                                        })}
-                                    />
-                                </button>
                                 <span
                                     className={css({
-                                        fontSize: 'xs',
-                                        color: 'text-muted',
-                                        fontWeight: '600',
+                                        position: 'absolute',
+                                        top: '3px',
+                                        left: isEnabled ? '30px' : '3px',
+                                        width: '22px',
+                                        height: '22px',
+                                        borderRadius: 'full',
+                                        background: 'white',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                        transition: 'left 150ms ease',
                                     })}
-                                >
-                                    {isEnabled ? copy.labelOn : copy.labelOff}
-                                </span>
-                            </div>
+                                />
+                            </button>
                         </div>
                     );
                 })}
@@ -194,42 +192,27 @@ export function PrivacySettingsCard({ profile }: PrivacySettingsCardProps) {
             <div
                 className={css({
                     display: 'flex',
-                    flexDir: { base: 'column', md: 'row' },
-                    gap: '4',
-                    alignItems: { base: 'stretch', md: 'center' },
-                    mt: '6',
+                    flexDir: { base: 'column', sm: 'row' },
+                    gap: '3',
+                    alignItems: { base: 'stretch', sm: 'center' },
+                    mt: '5',
                 })}
             >
-                <button
-                    type="submit"
-                    disabled={saving}
-                    className={css({
-                        borderRadius: 'full',
-                        px: '6',
-                        py: '3',
-                        border: 'none',
-                        background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
-                        color: 'white',
-                        fontWeight: '700',
-                        cursor: saving ? 'not-allowed' : 'pointer',
-                        opacity: saving ? 0.75 : 1,
-                        transition: 'transform 150ms ease',
-                        _hover: { transform: saving ? 'none' : 'translateY(-1px)' },
-                    })}
-                >
-                    {saving ? 'Speichern…' : 'Einstellungen speichern'}
-                </button>
+                <Button type="submit" variant="primary" disabled={saving}>
+                    <Save size={18} />
+                    {saving ? 'Speichern...' : 'Einstellungen speichern'}
+                </Button>
 
                 {status === 'success' && (
-                    <span className={css({ color: '#15803d', fontWeight: '600' })}>
-                        Aktualisiert. Deine Privatsphäre ist up to date.
-                    </span>
+                    <Text size="sm" color="muted">
+                        Erfolgreich aktualisiert!
+                    </Text>
                 )}
 
                 {status === 'error' && (
-                    <span className={css({ color: '#dc2626', fontWeight: '600' })}>
-                        Speichern fehlgeschlagen. Bitte versuche es erneut.
-                    </span>
+                    <Text size="sm" className={css({ color: 'red.600' })}>
+                        Fehler beim Speichern. Bitte erneut versuchen.
+                    </Text>
                 )}
             </div>
         </form>

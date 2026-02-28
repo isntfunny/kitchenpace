@@ -1,12 +1,15 @@
 import type { Profile } from '@prisma/client';
+import { ArrowLeft, Bell, Lock, Mail, Shield, User } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+import { Heading, Text } from '@/components/atoms/Typography';
 import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { logAuth } from '@/lib/auth-logger';
 import { getOrCreateProfile } from '@/lib/profile';
 import { css } from 'styled-system/css';
+import { grid } from 'styled-system/patterns';
 
 import { EmailSettingsCard } from './EmailSettingsCard';
 import { NotificationSettingsCard } from './NotificationSettingsCard';
@@ -27,29 +30,6 @@ type PrivacyReadyProfile = Profile & {
     notifyOnWeeklyPlanReminder: boolean;
     notifyOnSystemMessages: boolean;
 };
-
-const actions = [
-    {
-        title: 'Profil bearbeiten',
-        description: 'Passe Foto, Nickname und Teaser jederzeit an.',
-        href: '/profile/edit',
-    },
-    {
-        title: 'Passwort ändern',
-        description: 'Ändere dein Passwort für KüchenTakt.',
-        href: '/auth/password/edit',
-    },
-    {
-        title: 'Passwort vergessen',
-        description: 'Starte eine sichere Wiederherstellung.',
-        href: '/auth/forgot-password',
-    },
-    {
-        title: 'Abmelden',
-        description: 'Melde dich auf allen Geräten ab.',
-        href: '/auth/signout',
-    },
-];
 
 const ManageProfilePage = async () => {
     const session = await getServerAuthSession('profile/manage');
@@ -73,30 +53,92 @@ const ManageProfilePage = async () => {
         <PageShell>
             <section
                 className={css({
-                    paddingY: { base: '8', md: '10' },
-                    fontFamily: 'body',
+                    py: { base: '4', md: '6' },
                 })}
             >
-                <div className={css({ maxW: '960px', marginX: 'auto' })}>
-                    <header className={css({ textAlign: 'center', mb: '10' })}>
-                        <p
+                {/* Back Link */}
+                <Link
+                    href="/profile"
+                    className={css({
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '2',
+                        color: 'text-muted',
+                        textDecoration: 'none',
+                        mb: '4',
+                        transition: 'color 150ms ease',
+                        _hover: { color: 'text' },
+                    })}
+                >
+                    <ArrowLeft size={18} />
+                    <Text size="sm">Zurück zum Profil</Text>
+                </Link>
+
+                {/* Header */}
+                <div
+                    className={css({
+                        mb: '6',
+                    })}
+                >
+                    <div
+                        className={css({
+                            p: { base: '4', md: '6' },
+                            borderRadius: '2xl',
+                            bg: 'surface',
+                            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                        })}
+                    >
+                        <div
                             className={css({
-                                textTransform: 'uppercase',
-                                color: 'text-muted',
-                                mb: '2',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4',
                             })}
                         >
-                            Verwaltung
-                        </p>
-                        <h1 className={css({ fontSize: '4xl', fontWeight: '800' })}>
-                            Dein KüchenTakt Konto
-                        </h1>
-                        <p className={css({ color: 'text-muted', mt: '3' })}>
-                            Alle Sicherheits- und Kontoaktionen an einem Ort.
-                        </p>
-                    </header>
+                            <div
+                                className={css({
+                                    w: '12',
+                                    h: '12',
+                                    borderRadius: 'xl',
+                                    bg: 'secondary',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                })}
+                            >
+                                <Shield size={24} />
+                            </div>
+                            <div>
+                                <Heading as="h1" size="xl">
+                                    Konto & Sicherheit
+                                </Heading>
+                                <Text color="muted">
+                                    Verwalte deine Privatsphäre, Benachrichtigungen und
+                                    Kontoeinstellungen.
+                                </Text>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                    <div className={css({ mb: '10' })}>
+                {/* Main Content Grid */}
+                <div
+                    className={grid({
+                        columns: { base: 1, lg: 12 },
+                        gap: '4',
+                    })}
+                >
+                    {/* Left Column - Settings */}
+                    <div
+                        className={css({
+                            lg: { gridColumn: 'span 8' },
+                            display: 'flex',
+                            flexDir: 'column',
+                            gap: '4',
+                        })}
+                    >
+                        {/* Privacy Settings */}
                         <PrivacySettingsCard
                             profile={{
                                 showInActivity: privacyReadyProfile.showInActivity,
@@ -105,9 +147,8 @@ const ManageProfilePage = async () => {
                                 favoritesPublic: privacyReadyProfile.favoritesPublic,
                             }}
                         />
-                    </div>
 
-                    <div className={css({ mb: '10' })}>
+                        {/* Notification Settings */}
                         <NotificationSettingsCard
                             profile={{
                                 notifyOnAnonymous: privacyReadyProfile.notifyOnAnonymous,
@@ -123,43 +164,117 @@ const ManageProfilePage = async () => {
                                 notifyOnSystemMessages: privacyReadyProfile.notifyOnSystemMessages,
                             }}
                         />
-                    </div>
 
-                    <div className={css({ mb: '10' })}>
+                        {/* Email Settings */}
                         <EmailSettingsCard />
                     </div>
 
-                    <div
-                        className={css({
-                            display: 'grid',
-                            gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' },
-                            gap: '6',
-                        })}
-                    >
-                        {actions.map((action) => (
-                            <Link
-                                key={action.title}
-                                href={action.href}
+                    {/* Right Column - Quick Actions */}
+                    <div className={css({ lg: { gridColumn: 'span 4' } })}>
+                        <div
+                            className={css({
+                                p: { base: '4', md: '5' },
+                                borderRadius: '2xl',
+                                bg: 'surface',
+                                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                            })}
+                        >
+                            <Heading as="h2" size="md" className={css({ mb: '4' })}>
+                                Schnellzugriff
+                            </Heading>
+                            <div
                                 className={css({
-                                    borderRadius: '2xl',
-                                    padding: '6',
-                                    border: '1px solid rgba(224,123,83,0.25)',
-                                    background: 'white',
-                                    textDecoration: 'none',
-                                    color: 'inherit',
-                                    transition: 'transform 150ms ease, box-shadow 150ms ease',
-                                    _hover: {
-                                        transform: 'translateY(-3px)',
-                                        boxShadow: '0 20px 50px rgba(224,123,83,0.15)',
-                                    },
+                                    display: 'flex',
+                                    flexDir: 'column',
+                                    gap: '2',
                                 })}
                             >
-                                <h2 className={css({ fontSize: 'xl', fontWeight: '700', mb: '2' })}>
-                                    {action.title}
-                                </h2>
-                                <p className={css({ color: 'text-muted' })}>{action.description}</p>
-                            </Link>
-                        ))}
+                                <Link
+                                    href="/profile/edit"
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '3',
+                                        p: '3',
+                                        borderRadius: 'xl',
+                                        bg: 'background',
+                                        textDecoration: 'none',
+                                        color: 'text',
+                                        transition: 'all 150ms ease',
+                                        _hover: {
+                                            bg: 'primary',
+                                            color: 'white',
+                                        },
+                                    })}
+                                >
+                                    <User size={20} />
+                                    <Text size="sm">Profil bearbeiten</Text>
+                                </Link>
+                                <Link
+                                    href="/auth/password/edit"
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '3',
+                                        p: '3',
+                                        borderRadius: 'xl',
+                                        bg: 'background',
+                                        textDecoration: 'none',
+                                        color: 'text',
+                                        transition: 'all 150ms ease',
+                                        _hover: {
+                                            bg: 'primary',
+                                            color: 'white',
+                                        },
+                                    })}
+                                >
+                                    <Lock size={20} />
+                                    <Text size="sm">Passwort ändern</Text>
+                                </Link>
+                                <Link
+                                    href="/auth/forgot-password"
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '3',
+                                        p: '3',
+                                        borderRadius: 'xl',
+                                        bg: 'background',
+                                        textDecoration: 'none',
+                                        color: 'text',
+                                        transition: 'all 150ms ease',
+                                        _hover: {
+                                            bg: 'primary',
+                                            color: 'white',
+                                        },
+                                    })}
+                                >
+                                    <Mail size={20} />
+                                    <Text size="sm">Passwort vergessen</Text>
+                                </Link>
+                                <Link
+                                    href="/auth/signout"
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '3',
+                                        p: '3',
+                                        borderRadius: 'xl',
+                                        bg: 'background',
+                                        textDecoration: 'none',
+                                        color: 'text',
+                                        transition: 'all 150ms ease',
+                                        _hover: {
+                                            bg: 'red.500',
+                                            color: 'white',
+                                        },
+                                    })}
+                                >
+                                    <Bell size={20} />
+                                    <Text size="sm">Abmelden</Text>
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

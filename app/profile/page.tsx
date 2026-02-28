@@ -1,3 +1,4 @@
+import { ChefHat, Edit3, Settings, User } from 'lucide-react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -5,11 +6,13 @@ import { redirect } from 'next/navigation';
 import { fetchUserDraftRecipes, fetchUserStats } from '@/app/actions/user';
 import { Button } from '@/components/atoms/Button';
 import { SmartImage } from '@/components/atoms/SmartImage';
+import { Heading, Text } from '@/components/atoms/Typography';
 import SignOutButton from '@/components/auth/SignOutButton';
 import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { getOrCreateProfile } from '@/lib/profile';
 import { css } from 'styled-system/css';
+import { grid } from 'styled-system/patterns';
 
 export const metadata: Metadata = {
     title: 'Mein Profil',
@@ -40,244 +43,399 @@ const ProfilePage = async () => {
         <PageShell>
             <section
                 className={css({
-                    paddingY: { base: '8', md: '10' },
-                    fontFamily: 'body',
-                    color: 'text',
+                    py: { base: '4', md: '6' },
                 })}
             >
+                {/* Header Section */}
                 <div
                     className={css({
-                        maxWidth: '5xl',
-                        margin: '0 auto',
-                        background: 'surface.elevated',
-                        borderRadius: '3xl',
-                        boxShadow: '0 40px 120px rgba(224,123,83,0.25)',
-                        padding: { base: '8', md: '14' },
+                        mb: '6',
                     })}
                 >
                     <div
                         className={css({
-                            display: 'flex',
-                            flexDir: { base: 'column', md: 'row' },
-                            gap: '8',
-                            alignItems: { base: 'flex-start', md: 'center' },
+                            p: { base: '4', md: '6' },
+                            borderRadius: '2xl',
+                            bg: 'surface',
+                            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                         })}
                     >
-                        <div>
-                            {profile.photoUrl ? (
-                                <SmartImage
-                                    src={profile.photoUrl}
-                                    alt={profile.nickname ?? 'Profilfoto'}
-                                    width={160}
-                                    height={160}
-                                    className={css({
-                                        borderRadius: '50%',
-                                        objectFit: 'cover',
-                                        border: '6px solid #fff7f1',
-                                        boxShadow: '0 15px 40px rgba(0,0,0,0.15)',
-                                    })}
-                                />
-                            ) : (
+                        <div
+                            className={css({
+                                display: 'flex',
+                                flexDir: { base: 'column', sm: 'row' },
+                                gap: '6',
+                                alignItems: { base: 'center', sm: 'flex-start' },
+                            })}
+                        >
+                            {/* Profile Image */}
+                            <div
+                                className={css({
+                                    flexShrink: 0,
+                                })}
+                            >
+                                {profile.photoUrl ? (
+                                    <SmartImage
+                                        src={profile.photoUrl}
+                                        alt={profile.nickname ?? 'Profilfoto'}
+                                        width={120}
+                                        height={120}
+                                        className={css({
+                                            borderRadius: 'full',
+                                            objectFit: 'cover',
+                                            border: '4px solid',
+                                            borderColor: 'surface.elevated',
+                                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                        })}
+                                    />
+                                ) : (
+                                    <div
+                                        className={css({
+                                            width: '120px',
+                                            height: '120px',
+                                            borderRadius: 'full',
+                                            background: 'primary',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '3xl',
+                                            fontWeight: '700',
+                                            color: 'white',
+                                            border: '4px solid',
+                                            borderColor: 'surface.elevated',
+                                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                        })}
+                                    >
+                                        <ChefHat size={48} />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Profile Info */}
+                            <div
+                                className={css({
+                                    flex: 1,
+                                    textAlign: { base: 'center', sm: 'left' },
+                                })}
+                            >
+                                <Text size="sm" color="muted" className={css({ mb: '1' })}>
+                                    KüchenTakt Profil
+                                </Text>
+                                <Heading as="h1" size="xl" className={css({ mb: '2' })}>
+                                    {profile.nickname ?? 'Neuer KüchenFan'}
+                                </Heading>
+                                <Text color="muted" className={css({ mb: '3', maxW: '50ch' })}>
+                                    {profile.teaser ??
+                                        'Lass andere wissen, was dich in der Küche begeistert.'}
+                                </Text>
                                 <div
                                     className={css({
-                                        width: '160px',
-                                        height: '160px',
-                                        borderRadius: '50%',
-                                        background: 'linear-gradient(135deg, #ffe5d1, #ffc89e)',
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '2',
+                                        justifyContent: { base: 'center', sm: 'flex-start' },
+                                        fontSize: 'sm',
+                                        color: 'text-muted',
+                                    })}
+                                >
+                                    <span>{session.user.email ?? '–'}</span>
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    flexDir: { base: 'row', sm: 'column' },
+                                    gap: '2',
+                                    alignItems: 'center',
+                                })}
+                            >
+                                <Link href="/profile/edit">
+                                    <Button variant="primary" size="sm">
+                                        <Edit3 size={16} />
+                                        Bearbeiten
+                                    </Button>
+                                </Link>
+                                <SignOutButton label="Abmelden" />
+                                {profile.userId && (
+                                    <Link href={`/user/${profile.userId}`}>
+                                        <Button type="button" variant="ghost" size="sm">
+                                            <User size={16} />
+                                            Öffentliches Profil
+                                        </Button>
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Content Grid */}
+                <div
+                    className={grid({
+                        columns: { base: 1, lg: 12 },
+                        gap: '4',
+                    })}
+                >
+                    {/* Left Column - Settings Cards */}
+                    <div className={css({ lg: { gridColumn: 'span 8' } })}>
+                        <div
+                            className={grid({
+                                columns: { base: 1, sm: 2 },
+                                gap: '4',
+                            })}
+                        >
+                            <Link
+                                href="/profile/edit"
+                                className={css({
+                                    p: '5',
+                                    borderRadius: '2xl',
+                                    bg: 'surface',
+                                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                    transition: 'transform 180ms ease',
+                                    display: 'flex',
+                                    flexDir: 'column',
+                                    gap: '3',
+                                    _hover: { transform: 'translateY(-4px)' },
+                                })}
+                            >
+                                <div
+                                    className={css({
+                                        w: '12',
+                                        h: '12',
+                                        borderRadius: 'xl',
+                                        bg: 'primary',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        fontSize: '4xl',
-                                        fontWeight: '700',
+                                        color: 'white',
                                     })}
                                 >
-                                    {(profile.nickname ?? 'KT').slice(0, 2).toUpperCase()}
+                                    <Edit3 size={24} />
                                 </div>
-                            )}
-                        </div>
+                                <div>
+                                    <Heading as="h2" size="md" className={css({ mb: '1' })}>
+                                        Profil bearbeiten
+                                    </Heading>
+                                    <Text size="sm" color="muted">
+                                        Foto, Teaser oder Nickname aktualisieren.
+                                    </Text>
+                                </div>
+                            </Link>
 
-                        <div className={css({ flex: 1 })}>
-                            <p
+                            <Link
+                                href="/profile/manage"
                                 className={css({
-                                    color: 'text-muted',
-                                    letterSpacing: 'widest',
-                                    mb: '1',
+                                    p: '5',
+                                    borderRadius: '2xl',
+                                    bg: 'surface',
+                                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                    transition: 'transform 180ms ease',
+                                    display: 'flex',
+                                    flexDir: 'column',
+                                    gap: '3',
+                                    _hover: { transform: 'translateY(-4px)' },
                                 })}
                             >
-                                KüchenTakt Profil
-                            </p>
-                            <h1 className={css({ fontSize: '4xl', fontWeight: '800', mb: '3' })}>
-                                {profile.nickname ?? 'Neuer KüchenFan'}
-                            </h1>
-                            <p className={css({ color: 'text-muted', mb: '4', lineHeight: '1.8' })}>
-                                {profile.teaser ??
-                                    'Lass andere wissen, was dich in der Küche begeistert.'}
-                            </p>
+                                <div
+                                    className={css({
+                                        w: '12',
+                                        h: '12',
+                                        borderRadius: 'xl',
+                                        bg: 'secondary',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                    })}
+                                >
+                                    <Settings size={24} />
+                                </div>
+                                <div>
+                                    <Heading as="h2" size="md" className={css({ mb: '1' })}>
+                                        Konto & Sicherheit
+                                    </Heading>
+                                    <Text size="sm" color="muted">
+                                        Passwort ändern, Recovery und Accountverwaltung.
+                                    </Text>
+                                </div>
+                            </Link>
+                        </div>
+
+                        {/* Draft Recipes */}
+                        {draftRecipes.length > 0 && (
                             <div
                                 className={css({
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                    gap: '3',
-                                    color: 'text-muted',
-                                    fontSize: 'sm',
+                                    mt: '4',
+                                    p: { base: '4', md: '5' },
+                                    borderRadius: '2xl',
+                                    bg: 'surface',
+                                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                                 })}
                             >
-                                <span>Nickname: {profile.nickname ?? '–'}</span>
-                                <span>•</span>
-                                <span>Email: {session.user.email ?? '–'}</span>
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        mb: '4',
+                                    })}
+                                >
+                                    <Heading as="h2" size="lg">
+                                        Meine Entwürfe
+                                    </Heading>
+                                    <span
+                                        className={css({
+                                            bg: 'primary',
+                                            color: 'white',
+                                            borderRadius: 'full',
+                                            px: '3',
+                                            py: '1',
+                                            fontSize: 'sm',
+                                            fontWeight: '600',
+                                        })}
+                                    >
+                                        {stats.draftCount}
+                                    </span>
+                                </div>
+                                <div
+                                    className={grid({
+                                        columns: { base: 1, sm: 2, md: 3 },
+                                        gap: '3',
+                                    })}
+                                >
+                                    {draftRecipes.map((draft) => (
+                                        <Link
+                                            key={draft.id}
+                                            href={`/recipe/${draft.id}`}
+                                            className={css({
+                                                p: '4',
+                                                borderRadius: 'xl',
+                                                border: '1px solid',
+                                                borderColor: 'border',
+                                                bg: 'background',
+                                                textDecoration: 'none',
+                                                color: 'inherit',
+                                                transition: 'all 150ms ease',
+                                                _hover: {
+                                                    transform: 'translateY(-2px)',
+                                                    borderColor: 'primary',
+                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                                                },
+                                            })}
+                                        >
+                                            <Text
+                                                className={css({
+                                                    mb: '1',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                    fontWeight: '600',
+                                                })}
+                                            >
+                                                {draft.title}
+                                            </Text>
+                                            <Text size="sm" color="muted">
+                                                Entwurf
+                                            </Text>
+                                        </Link>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-
-                        <SignOutButton label="Abmelden" />
-
-                        {profile.userId && (
-                            <Link href={`/user/${profile.userId}`}>
-                                <Button type="button" variant="ghost">
-                                    Öffentliches Profil ansehen →
-                                </Button>
-                            </Link>
                         )}
                     </div>
 
-                    <div
-                        className={css({
-                            marginTop: '10',
-                            display: 'grid',
-                            gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' },
-                            gap: '6',
-                        })}
-                    >
-                        <Link
-                            href="/profile/edit"
-                            className={css({
-                                borderRadius: '2xl',
-                                padding: '6',
-                                border: '1px solid rgba(224,123,83,0.3)',
-                                textDecoration: 'none',
-                                color: 'inherit',
-                                transition: 'transform 150ms ease',
-                                _hover: { transform: 'translateY(-2px)', borderColor: '#e07b53' },
-                            })}
-                        >
-                            <h2 className={css({ fontSize: 'xl', fontWeight: '700', mb: '2' })}>
-                                Profil bearbeiten
-                            </h2>
-                            <p className={css({ color: 'text-muted' })}>
-                                Foto, Teaser oder Nickname aktualisieren.
-                            </p>
-                        </Link>
-
-                        <Link
-                            href="/profile/manage"
-                            className={css({
-                                borderRadius: '2xl',
-                                padding: '6',
-                                border: '1px solid rgba(224,123,83,0.3)',
-                                textDecoration: 'none',
-                                color: 'inherit',
-                                transition: 'transform 150ms ease',
-                                _hover: { transform: 'translateY(-2px)', borderColor: '#e07b53' },
-                            })}
-                        >
-                            <h2 className={css({ fontSize: 'xl', fontWeight: '700', mb: '2' })}>
-                                Konto & Sicherheit
-                            </h2>
-                            <p className={css({ color: 'text-muted' })}>
-                                Passwort ändern, Recovery und Accountverwaltung.
-                            </p>
-                        </Link>
-                    </div>
-
-                    {draftRecipes.length > 0 && (
+                    {/* Right Column - Stats */}
+                    <div className={css({ lg: { gridColumn: 'span 4' } })}>
                         <div
                             className={css({
-                                marginTop: '10',
+                                p: { base: '4', md: '5' },
+                                borderRadius: '2xl',
+                                bg: 'surface',
+                                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                             })}
                         >
+                            <Heading as="h2" size="md" className={css({ mb: '4' })}>
+                                Statistiken
+                            </Heading>
                             <div
                                 className={css({
                                     display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    mb: '4',
+                                    flexDir: 'column',
+                                    gap: '3',
                                 })}
                             >
-                                <h2
+                                <div
                                     className={css({
-                                        fontSize: 'xl',
-                                        fontWeight: '700',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        p: '3',
+                                        borderRadius: 'xl',
+                                        bg: 'background',
                                     })}
                                 >
-                                    Meine Entwürfe
-                                </h2>
-                                <span
-                                    className={css({
-                                        background: '#6c5ce7',
-                                        color: 'white',
-                                        borderRadius: 'full',
-                                        px: '3',
-                                        py: '1',
-                                        fontSize: 'sm',
-                                        fontWeight: '600',
-                                    })}
-                                >
-                                    {stats.draftCount}
-                                </span>
-                            </div>
-                            <div
-                                className={css({
-                                    display: 'grid',
-                                    gridTemplateColumns: {
-                                        base: '1fr',
-                                        sm: 'repeat(2, 1fr)',
-                                        md: 'repeat(3, 1fr)',
-                                    },
-                                    gap: '4',
-                                })}
-                            >
-                                {draftRecipes.map((draft) => (
-                                    <Link
-                                        key={draft.id}
-                                        href={`/recipe/${draft.id}`}
+                                    <Text color="muted">Rezepte erstellt</Text>
+                                    <span
                                         className={css({
-                                            borderRadius: 'xl',
-                                            padding: '4',
-                                            border: '1px solid rgba(108,92,231,0.3)',
-                                            background: 'rgba(108,92,231,0.05)',
-                                            textDecoration: 'none',
-                                            color: 'inherit',
-                                            transition: 'all 150ms ease',
-                                            _hover: {
-                                                transform: 'translateY(-2px)',
-                                                borderColor: '#6c5ce7',
-                                                background: 'rgba(108,92,231,0.1)',
-                                            },
+                                            fontSize: 'lg',
+                                            fontWeight: '700',
+                                            color: 'text',
                                         })}
                                     >
-                                        <p
-                                            className={css({
-                                                fontWeight: '600',
-                                                mb: '1',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                            })}
-                                        >
-                                            {draft.title}
-                                        </p>
-                                        <p
-                                            className={css({
-                                                fontSize: 'sm',
-                                                color: 'text-muted',
-                                            })}
-                                        >
-                                            Entwurf
-                                        </p>
-                                    </Link>
-                                ))}
+                                        {stats.recipeCount}
+                                    </span>
+                                </div>
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        p: '3',
+                                        borderRadius: 'xl',
+                                        bg: 'background',
+                                    })}
+                                >
+                                    <Text color="muted">Entwürfe</Text>
+                                    <span
+                                        className={css({
+                                            fontSize: 'lg',
+                                            fontWeight: '700',
+                                            color: 'text',
+                                        })}
+                                    >
+                                        {stats.draftCount}
+                                    </span>
+                                </div>
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        p: '3',
+                                        borderRadius: 'xl',
+                                        bg: 'background',
+                                    })}
+                                >
+                                    <Text color="muted">Favoriten</Text>
+                                    <span
+                                        className={css({
+                                            fontSize: 'lg',
+                                            fontWeight: '700',
+                                            color: 'text',
+                                        })}
+                                    >
+                                        {stats.favoriteCount}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    )}
+                    </div>
                 </div>
             </section>
         </PageShell>

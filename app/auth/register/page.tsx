@@ -9,6 +9,7 @@ import {
     getAuthButtonClass,
 } from '@/components/forms/authStyles';
 import { AuthPageLayout } from '@/components/layouts/AuthPageLayout';
+import { useUtmParams } from '@/lib/hooks/useUtmParams';
 import { css } from 'styled-system/css';
 
 export default function RegisterPage() {
@@ -19,6 +20,7 @@ export default function RegisterPage() {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
+    const utmParams = useUtmParams();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,7 +42,7 @@ export default function RegisterPage() {
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, name, password }),
+                body: JSON.stringify({ email, name, password, ...utmParams }),
             });
 
             const data = await res.json();

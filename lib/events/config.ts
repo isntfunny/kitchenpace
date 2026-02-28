@@ -15,6 +15,23 @@ type RecipeCookedEvent = BaseRecipeEvent & {
 
 type UserFollowedEvent = Record<string, never>;
 
+type UserRegisteredEvent = {
+    email: string;
+    name?: string;
+    referrer?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+    utmTerm?: string;
+    utmContent?: string;
+    landingPage?: string;
+};
+
+type UserActivatedEvent = {
+    email: string;
+    name?: string;
+};
+
 export type EventDataMap = {
     recipeFavorited: BaseRecipeEvent;
     recipeUnfavorited: BaseRecipeEvent;
@@ -22,6 +39,8 @@ export type EventDataMap = {
     recipeCooked: RecipeCookedEvent;
     recipePublished: BaseRecipeEvent;
     userFollowed: UserFollowedEvent;
+    userRegistered: UserRegisteredEvent;
+    userActivated: UserActivatedEvent;
 };
 
 export type EventName = keyof EventDataMap;
@@ -32,14 +51,17 @@ type ActivityTypeValue =
     | 'RECIPE_RATED'
     | 'RECIPE_COOKED'
     | 'RECIPE_CREATED'
-    | 'USER_FOLLOWED';
+    | 'USER_FOLLOWED'
+    | 'USER_REGISTERED'
+    | 'USER_ACTIVATED';
 
 type NotificationTypeValue =
     | 'NEW_FOLLOWER'
     | 'RECIPE_LIKE'
     | 'RECIPE_RATING'
     | 'RECIPE_COOKED'
-    | 'RECIPE_PUBLISHED';
+    | 'RECIPE_PUBLISHED'
+    | 'SYSTEM';
 
 export type NotificationPreferenceKey =
     | 'notifyOnNewFollower'
@@ -237,6 +259,52 @@ export const EVENT_DEFINITIONS: EventDefinitionsMap = {
         tracking: {
             name: 'follow',
             getProperties: ({ recipientId }) => ({ targetUserId: recipientId ?? '' }),
+        },
+    },
+    userRegistered: {
+        activity: {
+            type: 'USER_REGISTERED',
+            targetType: 'user',
+            getTargetId: (context) => context.actorId,
+            getMetadata: (context) => ({ email: context.data.email }),
+        },
+        notification: {
+            type: 'SYSTEM',
+            preference: 'notifyOnSystemMessages',
+            template: () => ({
+                title: 'Willkommen bei KüchenTakt!',
+                message:
+                    'Dein Konto wurde erfolgreich erstellt. Entdecke jetzt dein Dashboard und starte deine kulinarische Reise.',
+            }),
+            getData: () => ({
+                link: '/dashboard',
+                linkText: 'Zum Dashboard',
+            }),
+        },
+        tracking: {
+            name: 'user_registered',
+            getProperties: ({ data }) => ({
+                email: data.email,
+                ...(data.referrer && { referrer: data.referrer }),
+                ...(data.utmSource && { utm_source: data.utmSource }),
+                ...(data.utmMedium && { utm_medium: data.utmMedium }),
+                ...(data.utmCampaign && { utm_campaign: data.utmCampaign }),
+                ...(data.utmTerm && { utm_term: data.utmTerm }),
+                ...(data.utmContent && { utm_content: data.utmContent }),
+                ...(data.landingPage && { landing_page: data.landingPage }),
+            }),
+        },
+    },
+    userActivated: {
+        activity: {
+            type: 'USER_ACTIVATED',
+            targetType: 'user',
+            getTargetId: (context) => context.actorId,
+            getMetadata: (context) => ({ email: context.data.email }),
+        },
+        tracking: {
+            name: 'user_activated',
+            getProperties: ({ data }) => ({ email: data.email }),
         },
     },
 };

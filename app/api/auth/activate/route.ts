@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { fireEvent } from '@/lib/events/fire';
 import { createLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 
@@ -33,6 +34,15 @@ export async function POST(request: Request) {
             data: {
                 isActive: true,
                 activationToken: null,
+            },
+        });
+
+        await fireEvent({
+            event: 'userActivated',
+            actorId: user.id,
+            data: {
+                email: user.email ?? '',
+                name: user.name || undefined,
             },
         });
 

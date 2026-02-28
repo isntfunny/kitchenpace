@@ -142,7 +142,8 @@ function shouldCreateNotification<T extends EventName>(
     context: NotificationContext<T>,
     recipient: NotificationTarget,
 ): boolean {
-    if (recipient.id === context.actorId) {
+    // Allow self-notifications for SYSTEM type (e.g., welcome messages)
+    if (recipient.id === context.actorId && definition.type !== 'SYSTEM') {
         return false;
     }
 

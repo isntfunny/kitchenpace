@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
 import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
 
+import { fireEvent } from '@/lib/events/fire';
 import { createLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 import { trigger } from '@/lib/trigger';
@@ -12,7 +13,18 @@ const log = createLogger('auth-register');
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { email, password, name } = body;
+        const {
+            email,
+            password,
+            name,
+            referrer,
+            utmSource,
+            utmMedium,
+            utmCampaign,
+            utmTerm,
+            utmContent,
+            landingPage,
+        } = body;
 
         if (!email || !password) {
             return NextResponse.json(
@@ -90,6 +102,23 @@ export async function POST(request: Request) {
                 userId: user.id,
                 email: normalizedEmail,
                 nickname: name || null,
+            },
+        });
+
+        await fireEvent({
+            event: 'userRegistered',
+            actorId: user.id,
+            recipientId: user.id, // Send welcome notification to the new user
+            data: {
+                email: normalizedEmail,
+                name: name || undefined,
+                referrer,
+                utmSource,
+                utmMedium,
+                utmCampaign,
+                utmTerm,
+                utmContent,
+                landingPage,
             },
         });
 

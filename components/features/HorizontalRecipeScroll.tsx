@@ -7,6 +7,7 @@ import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
 import { Heading, Text } from '../atoms/Typography';
+import { CustomScrollbar } from './CustomScrollbar';
 
 interface Recipe {
     id: string;
@@ -55,13 +56,11 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                 {title}
             </Heading>
 
-            <div
+            <CustomScrollbar
                 className={css({
                     display: 'flex',
                     gap: '3',
-                    overflowX: 'auto',
                     pb: '2',
-                    scrollbarWidth: 'thin',
                 })}
             >
                 {recipes.map((recipe) => {
@@ -153,7 +152,7 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                         </a>
                     );
                 })}
-            </div>
+            </CustomScrollbar>
         </div>
     );
 }

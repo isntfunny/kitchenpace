@@ -381,6 +381,8 @@ export function FilterSidebar({
                     background: 'surface',
                     boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
                     width: 'full',
+                    maxHeight: 'calc(100vh - 2rem)',
+                    overflowY: 'auto',
                 })}
             >
                 <Accordion.Root

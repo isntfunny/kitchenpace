@@ -115,6 +115,8 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '4',
+                        maxHeight: 'calc(100vh - 6rem)',
+                        overflowY: 'auto',
                     })}
                     sideOffset={8}
                 >

@@ -1,99 +1,102 @@
 import { defineConfig } from '@pandacss/dev';
 import { amber, amberDark, orange, orangeDark, slate, slateDark } from '@radix-ui/colors';
 
-const lightThemeColors = {
-    brand: {
-        primary: { value: orange.orange9 },
-        'primary-dark': { value: orange.orange11 },
-        secondary: { value: slate.slate12 },
-        accent: { value: amber.amber8 },
-        light: { value: slate.slate1 },
-        text: { value: slate.slate12 },
-        'text-muted': { value: slate.slate10 },
-    },
-    primary: { value: orange.orange9 },
-    'primary-dark': { value: orange.orange11 },
-    accent: { value: amber.amber8 },
-    accentHover: { value: amber.amber9 },
-    accentSoft: { value: amber.amber4 },
-    surface: { value: slate.slate1 },
-    surfaceElevated: { value: slate.slate2 },
-    background: { value: slate.slate2 },
-    text: { value: slate.slate12 },
-    'text-muted': { value: slate.slate10 },
-    border: { value: slate.slate6 },
-    'border-muted': { value: slate.slate4 },
-};
-
-const darkThemeColors = {
-    brand: {
-        primary: { value: orangeDark.orange8 },
-        'primary-dark': { value: orangeDark.orange10 },
-        secondary: { value: slateDark.slate12 },
-        accent: { value: amberDark.amber9 },
-        light: { value: slateDark.slate1 },
-        text: { value: slateDark.slate12 },
-        'text-muted': { value: slateDark.slate11 },
-    },
-    primary: { value: orangeDark.orange8 },
-    'primary-dark': { value: orangeDark.orange10 },
-    accent: { value: amberDark.amber9 },
-    accentHover: { value: amberDark.amber10 },
-    accentSoft: { value: amberDark.amber6 },
-    surface: { value: slateDark.slate1 },
-    surfaceElevated: { value: slateDark.slate2 },
-    background: { value: slateDark.slate1 },
-    text: { value: slateDark.slate12 },
-    'text-muted': { value: slateDark.slate11 },
-    border: { value: slateDark.slate7 },
-    'border-muted': { value: slateDark.slate9 },
-};
-
 export default defineConfig({
     preflight: true,
     include: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
     exclude: ['./app/**/data.ts', './app/actions/**', './lib/**/*.ts', './trigger/**'],
     theme: {
-        extend: {
-            tokens: {
-                colors: {
-                    ...lightThemeColors,
+        tokens: {
+            colors: {
+                brand: {
+                    primary: { value: 'var(--colors-brand-primary)' },
+                    'primary-dark': { value: 'var(--colors-brand-primary-dark)' },
+                    secondary: { value: 'var(--colors-brand-secondary)' },
+                    accent: { value: 'var(--colors-brand-accent)' },
+                    light: { value: 'var(--colors-brand-light)' },
+                    text: { value: 'var(--colors-brand-text)' },
+                    'text-muted': { value: 'var(--colors-brand-text-muted)' },
                 },
+                primary: { value: 'var(--colors-brand-primary)' },
+                'primary-dark': { value: 'var(--colors-brand-primary-dark)' },
+                accent: { value: 'var(--colors-brand-accent)' },
+                accentHover: { value: 'var(--colors-accent-hover)' },
+                accentSoft: { value: 'var(--colors-accent-soft)' },
+                surface: { value: 'var(--colors-surface)' },
+                surfaceElevated: { value: 'var(--colors-surface-elevated)' },
+                background: { value: 'var(--colors-background)' },
+                text: { value: 'var(--colors-text)' },
+                'text-muted': { value: 'var(--colors-text-muted)' },
+                border: { value: 'var(--colors-border)' },
+                'border-muted': { value: 'var(--colors-border-muted)' },
             },
-            semanticTokens: {
-                colors: {
-                    surface: {
-                        DEFAULT: { value: '{colors.surface}' },
-                        elevated: { value: '{colors.surfaceElevated}' },
-                    },
-                    background: { DEFAULT: { value: '{colors.background}' } },
-                    foreground: { DEFAULT: { value: '{colors.text}' } },
-                    'foreground-muted': { DEFAULT: { value: '{colors.text-muted}' } },
-                    border: { DEFAULT: { value: '{colors.border}' } },
-                    'border-muted': { DEFAULT: { value: '{colors.border-muted}' } },
-                    accent: { DEFAULT: { value: '{colors.accent}' } },
-                    'accent-hover': { DEFAULT: { value: '{colors.accentHover}' } },
-                    'accent-soft': { DEFAULT: { value: '{colors.accentSoft}' } },
-                },
-            },
-            breakpoints: {
-                sm: '640px',
-                md: '768px',
-                lg: '1024px',
-                xl: '1280px',
-                '2xl': '1536px',
+            fonts: {
+                heading: { value: 'var(--font-playfair), Georgia, serif' },
+                body: { value: 'var(--font-inter), system-ui, sans-serif' },
             },
         },
-    },
-    themes: {
-        dark: {
-            extend: {
-                tokens: {
-                    colors: {
-                        ...darkThemeColors,
-                    },
+        semanticTokens: {
+            colors: {
+                surface: {
+                    DEFAULT: { value: '{colors.surface}' },
+                    elevated: { value: '{colors.surfaceElevated}' },
                 },
+                background: { DEFAULT: { value: '{colors.background}' } },
+                foreground: { DEFAULT: { value: '{colors.text}' } },
+                'foreground-muted': { DEFAULT: { value: '{colors.text-muted}' } },
+                border: { DEFAULT: { value: '{colors.border}' } },
+                'border-muted': { DEFAULT: { value: '{colors.border-muted}' } },
+                accent: { DEFAULT: { value: '{colors.accent}' } },
+                'accent-hover': { DEFAULT: { value: '{colors.accentHover}' } },
+                'accent-soft': { DEFAULT: { value: '{colors.accentSoft}' } },
             },
+        },
+        breakpoints: {
+            sm: '640px',
+            md: '768px',
+            lg: '1024px',
+            xl: '1280px',
+            '2xl': '1536px',
+        },
+    },
+    globalCss: {
+        ':root, [data-theme="light"]': {
+            '--colors-brand-primary': orange.orange9,
+            '--colors-brand-primary-dark': orange.orange11,
+            '--colors-brand-secondary': slate.slate12,
+            '--colors-brand-accent': amber.amber8,
+            '--colors-brand-light': slate.slate1,
+            '--colors-brand-text': slate.slate12,
+            '--colors-brand-text-muted': slate.slate10,
+            '--colors-accent': amber.amber8,
+            '--colors-accent-hover': amber.amber9,
+            '--colors-accent-soft': amber.amber4,
+            '--colors-surface': slate.slate1,
+            '--colors-surface-elevated': slate.slate2,
+            '--colors-background': slate.slate2,
+            '--colors-text': slate.slate12,
+            '--colors-text-muted': slate.slate10,
+            '--colors-border': slate.slate6,
+            '--colors-border-muted': slate.slate4,
+        },
+        '[data-theme="dark"]': {
+            '--colors-brand-primary': orangeDark.orange8,
+            '--colors-brand-primary-dark': orangeDark.orange10,
+            '--colors-brand-secondary': slateDark.slate12,
+            '--colors-brand-accent': amberDark.amber9,
+            '--colors-brand-light': slateDark.slate1,
+            '--colors-brand-text': slateDark.slate12,
+            '--colors-brand-text-muted': slateDark.slate11,
+            '--colors-accent': amberDark.amber9,
+            '--colors-accent-hover': amberDark.amber10,
+            '--colors-accent-soft': amberDark.amber6,
+            '--colors-surface': slateDark.slate1,
+            '--colors-surface-elevated': slateDark.slate2,
+            '--colors-background': slateDark.slate1,
+            '--colors-text': slateDark.slate12,
+            '--colors-text-muted': slateDark.slate11,
+            '--colors-border': slateDark.slate7,
+            '--colors-border-muted': slateDark.slate9,
         },
     },
     jsxFramework: 'react',

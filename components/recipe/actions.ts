@@ -75,7 +75,9 @@ export async function getTagFacets(): Promise<TagFacet[]> {
     });
 
     type TagBucket = { key: string | number; doc_count: number };
-    const buckets = response.body.aggregations?.tags?.buckets ?? [];
+    type TermsAggregation = { buckets?: TagBucket[] };
+    const tagsAgg = response.body.aggregations?.tags as TermsAggregation | undefined;
+    const buckets = tagsAgg?.buckets ?? [];
     return buckets.map((bucket: TagBucket) => ({
         key: String(bucket.key),
         count: bucket.doc_count,

@@ -39,6 +39,11 @@ const buildTermsAggregation = (buckets?: Array<{ key: string; doc_count: number 
     buckets?.map((bucket) => ({ key: bucket.key, count: bucket.doc_count })) ?? [];
 
 type HistogramAggregation = { buckets?: Array<{ key: number | string; doc_count: number }> };
+type TermsAggregation = { buckets?: Array<{ key: string; doc_count: number }> };
+
+const getTermsBuckets = (
+    agg: TermsAggregation | undefined,
+): Array<{ key: string; doc_count: number }> | undefined => agg?.buckets;
 
 const buildHistogramFacet = (agg: HistogramAggregation | undefined, interval: number) => {
     const buckets = (agg?.buckets ?? [])
@@ -248,21 +253,62 @@ export async function GET(request: NextRequest) {
                 page,
                 limit,
                 facets: {
-                    tags: buildTermsAggregation(facetsResponse.body.aggregations?.tags?.buckets),
+                    tags: buildTermsAggregation(
+                        getTermsBuckets(
+                            facetsResponse.body.aggregations?.tags as TermsAggregation | undefined,
+                        ),
+                    ),
                     ingredients: buildTermsAggregation(
-                        facetsResponse.body.aggregations?.ingredients?.buckets,
+                        getTermsBuckets(
+                            facetsResponse.body.aggregations?.ingredients as
+                                | TermsAggregation
+                                | undefined,
+                        ),
                     ),
                     difficulties: buildTermsAggregation(
-                        facetsResponse.body.aggregations?.difficulties?.buckets,
+                        getTermsBuckets(
+                            facetsResponse.body.aggregations?.difficulties as
+                                | TermsAggregation
+                                | undefined,
+                        ),
                     ),
                     categories: buildTermsAggregation(
-                        facetsResponse.body.aggregations?.categories?.buckets,
+                        getTermsBuckets(
+                            facetsResponse.body.aggregations?.categories as
+                                | TermsAggregation
+                                | undefined,
+                        ),
                     ),
-                    totalTime: buildHistogramFacet(facetsResponse.body.aggregations?.totalTime, 5),
-                    prepTime: buildHistogramFacet(facetsResponse.body.aggregations?.prepTime, 5),
-                    cookTime: buildHistogramFacet(facetsResponse.body.aggregations?.cookTime, 5),
-                    rating: buildHistogramFacet(facetsResponse.body.aggregations?.rating, 1),
-                    cookCount: buildHistogramFacet(facetsResponse.body.aggregations?.cookCount, 10),
+                    totalTime: buildHistogramFacet(
+                        facetsResponse.body.aggregations?.totalTime as
+                            | HistogramAggregation
+                            | undefined,
+                        5,
+                    ),
+                    prepTime: buildHistogramFacet(
+                        facetsResponse.body.aggregations?.prepTime as
+                            | HistogramAggregation
+                            | undefined,
+                        5,
+                    ),
+                    cookTime: buildHistogramFacet(
+                        facetsResponse.body.aggregations?.cookTime as
+                            | HistogramAggregation
+                            | undefined,
+                        5,
+                    ),
+                    rating: buildHistogramFacet(
+                        facetsResponse.body.aggregations?.rating as
+                            | HistogramAggregation
+                            | undefined,
+                        1,
+                    ),
+                    cookCount: buildHistogramFacet(
+                        facetsResponse.body.aggregations?.cookCount as
+                            | HistogramAggregation
+                            | undefined,
+                        10,
+                    ),
                 },
             },
         };

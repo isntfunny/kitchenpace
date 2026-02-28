@@ -8,7 +8,11 @@ interface SubmissionControlsProps {
     onStatusChange: (status: 'DRAFT' | 'PUBLISHED') => void;
 }
 
-export function SubmissionControls({ saving, saveStatus, onStatusChange }: SubmissionControlsProps) {
+export function SubmissionControls({
+    saving,
+    saveStatus,
+    onStatusChange,
+}: SubmissionControlsProps) {
     const buttonClass = (status: 'DRAFT' | 'PUBLISHED') =>
         css({
             alignSelf: 'flex-start',
@@ -21,16 +25,9 @@ export function SubmissionControls({ saving, saveStatus, onStatusChange }: Submi
                         ? 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)'
                         : 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)'
                     : 'white',
-            color:
-                saveStatus === status
-                    ? 'white'
-                    : status === 'DRAFT'
-                        ? '#e07b53'
-                        : '#00b894',
+            color: saveStatus === status ? 'white' : status === 'DRAFT' ? '#e07b53' : '#00b894',
             fontWeight: '600',
-            border: `2px solid ${
-                status === 'DRAFT' ? '#e07b53' : '#00b894'
-            }`,
+            border: `2px solid ${status === 'DRAFT' ? '#e07b53' : '#00b894'}`,
             cursor: saving ? 'not-allowed' : 'pointer',
             opacity: saving ? 0.7 : 1,
             transition: 'all 150ms ease',

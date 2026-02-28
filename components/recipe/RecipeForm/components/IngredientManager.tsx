@@ -234,7 +234,9 @@ export function IngredientManager({
                                 borderRadius: 'xl',
                             })}
                         >
-                            <span className={css({ flex: '1', fontWeight: '500' })}>{ing.name}</span>
+                            <span className={css({ flex: '1', fontWeight: '500' })}>
+                                {ing.name}
+                            </span>
                             <input
                                 type="text"
                                 value={ing.amount}
@@ -254,7 +256,9 @@ export function IngredientManager({
                             <input
                                 type="text"
                                 value={ing.unit}
-                                onChange={(e) => onUpdateIngredient(index, { unit: e.target.value })}
+                                onChange={(e) =>
+                                    onUpdateIngredient(index, { unit: e.target.value })
+                                }
                                 placeholder="Einheit"
                                 className={css({
                                     width: '80px',

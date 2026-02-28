@@ -22,9 +22,7 @@ export function GeneralInformationSection({
 }: GeneralInformationSectionProps) {
     return (
         <div>
-            <div className={css({ fontWeight: '600', display: 'block', mb: '2' })}>
-                Rezeptbild
-            </div>
+            <div className={css({ fontWeight: '600', display: 'block', mb: '2' })}>Rezeptbild</div>
             <FileUpload type="recipe" value={imageUrl} onChange={onImageUrlChange} />
 
             <div className={css({ mt: '6' })}>

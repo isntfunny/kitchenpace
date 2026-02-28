@@ -84,7 +84,9 @@ export function TimeAndDifficultySection({
                 <label className={labelClass}>Schwierigkeit</label>
                 <select
                     value={difficulty}
-                    onChange={(e) => onDifficultyChange(e.target.value as 'EASY' | 'MEDIUM' | 'HARD')}
+                    onChange={(e) =>
+                        onDifficultyChange(e.target.value as 'EASY' | 'MEDIUM' | 'HARD')
+                    }
                     className={css({
                         width: '100%',
                         padding: '3',

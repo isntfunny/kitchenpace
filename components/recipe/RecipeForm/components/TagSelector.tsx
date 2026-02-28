@@ -117,10 +117,7 @@ export function TagSelector({
                         tag.selected && tagChipSelectedClass,
                         !tag.selected && tag.count === 0 && tagZeroClass,
                     );
-                    const badgeClass = cx(
-                        tagCountClass,
-                        tag.count === 0 && tagCountZeroClass,
-                    );
+                    const badgeClass = cx(tagCountClass, tag.count === 0 && tagCountZeroClass);
                     return (
                         <ToggleGroup.Item key={tag.id} value={tag.id} className={chipClass}>
                             <span>{tag.name}</span>

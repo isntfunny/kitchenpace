@@ -1,0 +1,62 @@
+services:
+    postgres:
+        image: postgres:16-alpine
+        container_name: kitchenpace-db
+        environment:
+            POSTGRES_USER: kitchenpace
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kitchenpace_secret}
+            POSTGRES_DB: ${POSTGRES_DB:-live_kitchenpace}
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U kitchenpace -d ${POSTGRES_DB:-live_kitchenpace}']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    opensearch:
+        image: opensearchproject/opensearch:3.0.0
+        container_name: kitchenpace-opensearch
+        environment:
+            discovery.type: single-node
+            plugins.security.disabled: 'true'
+            OPENSEARCH_JAVA_OPTS: '-Xms512m -Xmx512m'
+            bootstrap.memory_lock: 'true'
+            OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-1snt-Funny1}
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        volumes:
+            - opensearch_data:/usr/share/opensearch/data
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'curl -fsSL http://localhost:9200/_cluster/health | grep -q "\"status\""',
+                ]
+            interval: 15s
+            timeout: 5s
+            retries: 5
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: runner
+            args:
+                DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/live_kitchenpace}
+                DEBUG: 0
+        container_name: kitchenpace-app
+        env_file:
+            - .env
+        depends_on:
+            postgres:
+                condition: service_healthy
+            opensearch:
+                condition: service_healthy
+        restart: unless-stopped
+
+volumes:
+    postgres_data:
+    opensearch_data:

@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
     postgres:
         image: postgres:16-alpine
@@ -57,6 +59,22 @@ services:
                 condition: service_healthy
         restart: unless-stopped
 
+trigger-dev-worker:
+    image: triggerdotdev/trigger-dev:latest
+    container_name: kitchenpace-trigger-dev
+    environment:
+        DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/live_kitchenpace}
+        OPENSEARCH_URL: http://opensearch:9200
+        OPENSEARCH_INDEX: recipes
+        TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN}
+    depends_on:
+        postgres:
+            condition: service_healthy
+        opensearch:
+            condition: service_healthy
+    restart: unless-stopped
+
 volumes:
     postgres_data:
     opensearch_data:
+    trigger_dev_data:

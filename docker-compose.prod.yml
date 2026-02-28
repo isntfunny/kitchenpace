@@ -60,9 +60,10 @@ services:
         restart: unless-stopped
 
     trigger-dev-worker:
-        image: ghcr.io/triggerdotdev/supervisor:v4-beta
+        image: ghcr.io/triggerdotdev/supervisor:v4.3.0
         container_name: kitchenpace-trigger-dev
         environment:
+            DEBUG: true
             DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/live_kitchenpace}
             OPENSEARCH_URL: http://opensearch:9200
             OPENSEARCH_INDEX: recipes

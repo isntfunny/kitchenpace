@@ -26,8 +26,9 @@ const Chip = ({ label, onRemove }: Omit<FilterChip, 'id'>) => (
             py: '1.5',
             fontSize: 'xs',
             border: '1px solid',
-            borderColor: 'rgba(0,0,0,0.12)',
-            background: 'white',
+            borderColor: 'border',
+            background: 'surface',
+            color: 'foreground',
             fontFamily: 'body',
             cursor: 'pointer',
             display: 'inline-flex',
@@ -35,7 +36,7 @@ const Chip = ({ label, onRemove }: Omit<FilterChip, 'id'>) => (
             gap: '1',
             transition: 'all 150ms ease',
             _hover: {
-                borderColor: 'rgba(224,123,83,0.4)',
+                borderColor: 'accent',
             },
         })}
     >

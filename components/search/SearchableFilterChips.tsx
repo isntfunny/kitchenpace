@@ -28,9 +28,9 @@ const chipItemClass = css({
     minHeight: '44px',
     fontSize: 'xs',
     border: '1px solid',
-    borderColor: 'light',
+    borderColor: 'border.muted',
     background: 'surface',
-    color: 'text',
+    color: 'foreground',
     display: 'inline-flex',
     alignItems: 'center',
     gap: '1.5',
@@ -38,10 +38,10 @@ const chipItemClass = css({
     cursor: 'pointer',
     transition: 'border 150ms ease, box-shadow 150ms ease, background 150ms ease',
     '&[data-state="on"]': {
-        borderColor: 'primary-dark',
-        background: 'primary',
-        color: 'light',
-        boxShadow: '0 8px 16px rgba(0,0,0,0.08)',
+        borderColor: 'primary',
+        background: 'accent.soft',
+        color: 'primary',
+        boxShadow: '0 8px 16px rgba(224,123,83,0.15)',
     },
 });
 
@@ -58,7 +58,7 @@ const chipItemExcludeClass = cx(
 
 const chipBadgeClass = css({
     fontSize: 'xs',
-    background: 'rgba(249,115,22,0.12)',
+    background: 'accent.soft',
     borderRadius: 'full',
     px: '2',
     py: '0.5',
@@ -70,13 +70,13 @@ const chipBadgeMutedClass = css({
     borderRadius: 'full',
     background: 'transparent',
     border: '1px solid',
-    borderColor: 'light',
-    color: 'text-muted',
+    borderColor: 'border.muted',
+    color: 'foreground.muted',
 });
 
 const chipZeroClass = css({
-    color: 'text-muted',
-    borderColor: 'light',
+    color: 'foreground.muted',
+    borderColor: 'border.muted',
     background: 'surface',
 });
 
@@ -84,14 +84,14 @@ const searchInputClass = css({
     width: '100%',
     borderRadius: 'lg',
     border: '1px solid',
-    borderColor: 'light',
+    borderColor: 'border.muted',
     background: 'surface',
     px: '3',
     py: '2',
     fontSize: 'sm',
     marginBottom: '2',
     '&::placeholder': {
-        color: 'text-muted',
+        color: 'foreground.muted',
     },
 });
 

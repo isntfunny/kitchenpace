@@ -5,6 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import type { FormEvent } from 'react';
 
+import {
+    authFormStackClass,
+    authInputClass,
+    getAuthButtonClass,
+} from '@/components/forms/authStyles';
+import { AuthPageLayout } from '@/components/layouts/AuthPageLayout';
 import { PageShell } from '@/components/layouts/PageShell';
 import { css } from 'styled-system/css';
 
@@ -67,239 +73,154 @@ function NewPasswordForm() {
 
     if (!token) {
         return (
-            <PageShell>
-                <section
-                    className={css({
-                        paddingY: { base: '8', md: '12' },
-                        display: 'flex',
-                        justifyContent: 'center',
-                        fontFamily: 'body',
-                        color: 'text',
-                    })}
-                >
+            <AuthPageLayout
+                heroTitle="Sicherheitslink abgelaufen"
+                heroSubtitle="Fordere einfach einen neuen Link an, um das Passwort neu zu vergeben."
+            >
+                <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
                     <div
                         className={css({
-                            background: 'white',
-                            borderRadius: '2xl',
-                            padding: { base: '8', md: '10' },
-                            boxShadow: '0 22px 60px rgba(0,0,0,0.1)',
-                            width: '100%',
-                            maxWidth: '640px',
-                            textAlign: 'center',
+                            textAlign: 'left',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2',
                         })}
                     >
-                        <h1 className={css({ fontSize: '3xl', fontWeight: '700', mb: '4' })}>
+                        <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
                             Ungültiger Link
                         </h1>
-                        <p className={css({ color: 'text-muted', mb: '6' })}>
-                            Dieser Link ist ungültig oder abgelaufen.
+                        <p className={css({ color: 'foreground.muted', margin: 0 })}>
+                            Der Link wurde bereits benutzt oder ist abgelaufen. Fordere einen neuen
+                            Link an.
                         </p>
-                        <Link
-                            href="/auth/forgot-password"
-                            className={css({ color: 'primary', textDecoration: 'underline' })}
-                        >
-                            Neuen Link anfordern
-                        </Link>
                     </div>
-                </section>
-            </PageShell>
+                    <Link
+                        href="/auth/forgot-password"
+                        className={css({
+                            color: 'accent',
+                            fontWeight: '600',
+                            textDecoration: 'none',
+                        })}
+                    >
+                        Neuen Link anfordern
+                    </Link>
+                </div>
+            </AuthPageLayout>
         );
     }
 
     return (
-        <PageShell>
-            <section
-                className={css({
-                    paddingY: { base: '8', md: '12' },
-                    display: 'flex',
-                    justifyContent: 'center',
-                    fontFamily: 'body',
-                    color: 'text',
-                })}
-            >
-                <div
+        <AuthPageLayout
+            heroTitle="Neues Passwort festlegen"
+            heroSubtitle="Wähle ein sicheres Passwort und sichere deinen Flow. Wir leiten dich danach automatisch weiter."
+            formFooter={
+                <Link
+                    href="/auth/signin"
                     className={css({
-                        background: 'white',
-                        borderRadius: '2xl',
-                        padding: { base: '8', md: '10' },
-                        boxShadow: '0 22px 60px rgba(0,0,0,0.1)',
-                        width: '100%',
-                        maxWidth: '640px',
+                        color: 'text.muted',
+                        textDecoration: 'none',
+                        _hover: { color: 'accent' },
                     })}
                 >
-                    {success ? (
-                        <>
-                            <h1
-                                className={css({
-                                    fontSize: '3xl',
-                                    fontWeight: '700',
-                                    mb: '4',
-                                    color: 'green.600',
-                                })}
-                            >
-                                Passwort zurückgesetzt!
-                            </h1>
-                            <p className={css({ color: 'text-muted', mb: '6' })}>
-                                Dein Passwort wurde erfolgreich zurückgesetzt. Du wirst in Kürze zur
-                                Anmeldung weitergeleitet.
-                            </p>
-                            <Link
-                                href="/auth/signin"
-                                className={css({ color: 'primary', textDecoration: 'underline' })}
-                            >
-                                Jetzt anmelden
-                            </Link>
-                        </>
-                    ) : (
-                        <>
+                    Zurück zur Anmeldung
+                </Link>
+            }
+        >
+            <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
+                {success ? (
+                    <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
+                        <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                            Passwort zurückgesetzt!
+                        </h1>
+                        <p className={css({ color: 'foreground.muted', margin: 0 })}>
+                            Dein Passwort wurde gespeichert. Wir leiten dich gleich zur Anmeldung
+                            weiter.
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <div
+                            className={css({
+                                textAlign: 'left',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '2',
+                            })}
+                        >
                             <p
                                 className={css({
-                                    fontSize: 'sm',
                                     textTransform: 'uppercase',
-                                    color: 'text-muted',
-                                })}
-                            >
-                                Passwort zurücksetzen
-                            </p>
-                            <h1
-                                className={css({
-                                    fontSize: '3xl',
+                                    letterSpacing: 'wide',
+                                    fontSize: 'xs',
                                     fontWeight: '700',
-                                    mt: '2',
-                                    mb: '4',
+                                    color: 'foreground.muted',
                                 })}
                             >
-                                Neues Passwort festlegen
-                            </h1>
-                            <p className={css({ color: 'text-muted', mb: '6', lineHeight: '1.7' })}>
-                                Wähle ein neues, sicheres Passwort für dein Konto.
+                                Neu vergeben
                             </p>
+                            <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                                Neues Passwort anlegen
+                            </h1>
+                            <p className={css({ color: 'foreground.muted', margin: 0 })}>
+                                Wähle ein sicheres Passwort und bestätige es im zweiten Feld.
+                            </p>
+                        </div>
 
-                            <form
-                                onSubmit={handleSubmit}
-                                className={css({ display: 'flex', flexDir: 'column', gap: '4' })}
-                            >
-                                <label
-                                    className={css({
-                                        textAlign: 'left',
-                                        fontWeight: '600',
-                                        fontSize: 'sm',
-                                    })}
-                                >
-                                    Neues Passwort
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        required
-                                        minLength={6}
-                                        className={css({
-                                            display: 'block',
-                                            width: '100%',
-                                            marginTop: '1',
-                                            padding: '3',
-                                            borderRadius: 'xl',
-                                            border: '1px solid rgba(224,123,83,0.4)',
-                                            fontSize: 'md',
-                                            outline: 'none',
-                                            _focus: {
-                                                borderColor: '#e07b53',
-                                                boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
-                                            },
-                                        })}
-                                    />
-                                </label>
-
-                                <label
-                                    className={css({
-                                        textAlign: 'left',
-                                        fontWeight: '600',
-                                        fontSize: 'sm',
-                                    })}
-                                >
-                                    Passwort bestätigen
-                                    <input
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        required
-                                        minLength={6}
-                                        className={css({
-                                            display: 'block',
-                                            width: '100%',
-                                            marginTop: '1',
-                                            padding: '3',
-                                            borderRadius: 'xl',
-                                            border: '1px solid rgba(224,123,83,0.4)',
-                                            fontSize: 'md',
-                                            outline: 'none',
-                                            _focus: {
-                                                borderColor: '#e07b53',
-                                                boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
-                                            },
-                                        })}
-                                    />
-                                </label>
-
-                                {error && (
-                                    <p className={css({ color: 'red.500', fontSize: 'sm' })}>
-                                        {error}
-                                    </p>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className={css({
-                                        marginTop: '2',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '2',
-                                        px: '6',
-                                        py: '3',
-                                        borderRadius: 'full',
-                                        fontFamily: 'body',
-                                        fontWeight: '600',
-                                        fontSize: 'md',
-                                        color: 'white',
-                                        background:
-                                            'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
-                                        border: 'none',
-                                        cursor: loading ? 'not-allowed' : 'pointer',
-                                        opacity: loading ? 0.7 : 1,
-                                        transition: 'transform 150ms ease, box-shadow 150ms ease',
-                                        _hover: loading
-                                            ? {}
-                                            : {
-                                                  transform: 'translateY(-1px)',
-                                                  boxShadow: '0 10px 30px rgba(224,123,83,0.35)',
-                                              },
-                                    })}
-                                >
-                                    {loading ? 'Wird gespeichert...' : 'Passwort festlegen'}
-                                </button>
-                            </form>
-
-                            <Link
-                                href="/auth/signin"
+                        <form onSubmit={handleSubmit} className={authFormStackClass}>
+                            <label
                                 className={css({
-                                    display: 'inline-block',
-                                    marginTop: '4',
-                                    color: 'text-muted',
-                                    textDecoration: 'none',
-                                    _hover: { color: '#e07b53' },
+                                    textAlign: 'left',
+                                    fontWeight: '600',
+                                    fontSize: 'sm',
                                 })}
                             >
-                                ← Zurück zur Anmeldung
-                            </Link>
-                        </>
-                    )}
-                </div>
-            </section>
-        </PageShell>
+                                Neues Passwort
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    required
+                                    minLength={6}
+                                    className={authInputClass}
+                                />
+                            </label>
+
+                            <label
+                                className={css({
+                                    textAlign: 'left',
+                                    fontWeight: '600',
+                                    fontSize: 'sm',
+                                })}
+                            >
+                                Passwort bestätigen
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    required
+                                    minLength={6}
+                                    className={authInputClass}
+                                />
+                            </label>
+
+                            {error && (
+                                <p className={css({ color: 'red.500', fontSize: 'sm' })}>{error}</p>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={getAuthButtonClass(loading)}
+                            >
+                                {loading ? 'Speichert…' : 'Passwort festlegen'}
+                            </button>
+                        </form>
+                    </>
+                )}
+            </div>
+        </AuthPageLayout>
     );
 }
 

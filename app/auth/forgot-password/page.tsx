@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 
-import { PageShell } from '@/components/layouts/PageShell';
+import {
+    authFormStackClass,
+    authInputClass,
+    getAuthButtonClass,
+} from '@/components/forms/authStyles';
+import { AuthPageLayout } from '@/components/layouts/AuthPageLayout';
 import { css } from 'styled-system/css';
 
 export default function ForgotPasswordPage() {
@@ -41,171 +46,110 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <PageShell>
-            <section
-                className={css({
-                    paddingY: { base: '8', md: '12' },
-                    display: 'flex',
-                    justifyContent: 'center',
-                    fontFamily: 'body',
-                    color: 'text',
-                })}
-            >
-                <div
+        <AuthPageLayout
+            heroTitle="Passwort sichern"
+            heroSubtitle="Gib deine E-Mail ein und wir senden dir einen zeitlich begrenzten Link zum Zurücksetzen."
+            formFooter={
+                <Link
+                    href="/auth/signin"
                     className={css({
-                        background: 'white',
-                        borderRadius: '2xl',
-                        padding: { base: '8', md: '10' },
-                        boxShadow: '0 22px 60px rgba(0,0,0,0.1)',
-                        width: '100%',
-                        maxWidth: '640px',
+                        color: 'text.muted',
+                        textDecoration: 'none',
+                        _hover: { color: 'accent' },
                     })}
                 >
-                    {success ? (
-                        <>
-                            <h1
-                                className={css({
-                                    fontSize: '3xl',
-                                    fontWeight: '700',
-                                    mb: '4',
-                                    color: 'green.600',
-                                })}
-                            >
-                                E-Mail gesendet!
-                            </h1>
-                            <p className={css({ color: 'text-muted', mb: '6', lineHeight: '1.7' })}>
-                                Falls ein Konto mit dieser E-Mail-Adresse existiert, haben wir dir
-                                einen Link zum Zurücksetzen deines Passworts gesendet. Bitte
-                                überprüfe dein E-Mail-Postfach.
-                            </p>
-                            <Link
-                                href="/auth/signin"
-                                className={css({
-                                    color: 'primary',
-                                    textDecoration: 'none',
-                                    _hover: { textDecoration: 'underline' },
-                                })}
-                            >
-                                ← Zurück zur Anmeldung
-                            </Link>
-                        </>
-                    ) : (
-                        <>
+                    Zurück zur Anmeldung
+                </Link>
+            }
+        >
+            <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
+                {success ? (
+                    <div
+                        className={css({
+                            textAlign: 'left',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '3',
+                        })}
+                    >
+                        <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                            E-Mail gesendet!
+                        </h1>
+                        <p
+                            className={css({
+                                color: 'foreground.muted',
+                                margin: 0,
+                                lineHeight: '1.6',
+                            })}
+                        >
+                            Wenn es ein Konto mit dieser Adresse gibt, findest du gleich einen Link
+                            zum Zurücksetzen in deinem Postfach. Überprüfe auch den Spam-Ordner.
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <div
+                            className={css({
+                                textAlign: 'left',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '2',
+                            })}
+                        >
                             <p
                                 className={css({
-                                    fontSize: 'sm',
                                     textTransform: 'uppercase',
-                                    color: 'text-muted',
+                                    letterSpacing: 'wide',
+                                    fontSize: 'xs',
+                                    fontWeight: '700',
+                                    color: 'foreground.muted',
                                 })}
                             >
                                 Passwort vergessen
                             </p>
-                            <h1
-                                className={css({
-                                    fontSize: '3xl',
-                                    fontWeight: '700',
-                                    mt: '2',
-                                    mb: '4',
-                                })}
-                            >
+                            <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
                                 Passwort zurücksetzen
                             </h1>
-                            <p className={css({ color: 'text-muted', mb: '6', lineHeight: '1.7' })}>
-                                Gib deine E-Mail-Adresse ein, und wir senden dir einen Link zum
-                                Zurücksetzen deines Passworts.
+                            <p className={css({ color: 'foreground.muted', margin: 0 })}>
+                                Wir senden dir einen Link, mit dem du ein neues Passwort festlegen
+                                kannst.
                             </p>
+                        </div>
 
-                            <form
-                                onSubmit={handleSubmit}
-                                className={css({ display: 'flex', flexDir: 'column', gap: '4' })}
-                            >
-                                <label
-                                    className={css({
-                                        textAlign: 'left',
-                                        fontWeight: '600',
-                                        fontSize: 'sm',
-                                    })}
-                                >
-                                    E-Mail-Adresse
-                                    <input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="deine@email.de"
-                                        required
-                                        className={css({
-                                            display: 'block',
-                                            width: '100%',
-                                            marginTop: '1',
-                                            padding: '3',
-                                            borderRadius: 'xl',
-                                            border: '1px solid rgba(224,123,83,0.4)',
-                                            fontSize: 'md',
-                                            outline: 'none',
-                                            _focus: {
-                                                borderColor: '#e07b53',
-                                                boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
-                                            },
-                                        })}
-                                    />
-                                </label>
-
-                                {error && (
-                                    <p className={css({ color: 'red.500', fontSize: 'sm' })}>
-                                        {error}
-                                    </p>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className={css({
-                                        marginTop: '2',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '2',
-                                        px: '6',
-                                        py: '3',
-                                        borderRadius: 'full',
-                                        fontFamily: 'body',
-                                        fontWeight: '600',
-                                        fontSize: 'md',
-                                        color: 'white',
-                                        background:
-                                            'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
-                                        border: 'none',
-                                        cursor: loading ? 'not-allowed' : 'pointer',
-                                        opacity: loading ? 0.7 : 1,
-                                        transition: 'transform 150ms ease, box-shadow 150ms ease',
-                                        _hover: loading
-                                            ? {}
-                                            : {
-                                                  transform: 'translateY(-1px)',
-                                                  boxShadow: '0 10px 30px rgba(224,123,83,0.35)',
-                                              },
-                                    })}
-                                >
-                                    {loading ? 'Wird gesendet...' : 'Link anfordern'}
-                                </button>
-                            </form>
-
-                            <Link
-                                href="/auth/signin"
+                        <form onSubmit={handleSubmit} className={authFormStackClass}>
+                            <label
                                 className={css({
-                                    display: 'inline-block',
-                                    marginTop: '4',
-                                    color: 'text-muted',
-                                    textDecoration: 'none',
-                                    _hover: { color: '#e07b53' },
+                                    textAlign: 'left',
+                                    fontWeight: '600',
+                                    fontSize: 'sm',
                                 })}
                             >
-                                ← Zurück zur Anmeldung
-                            </Link>
-                        </>
-                    )}
-                </div>
-            </section>
-        </PageShell>
+                                E-Mail-Adresse
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="deine@email.de"
+                                    required
+                                    className={authInputClass}
+                                />
+                            </label>
+
+                            {error && (
+                                <p className={css({ color: 'red.500', fontSize: 'sm' })}>{error}</p>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={getAuthButtonClass(loading)}
+                            >
+                                {loading ? 'Link wird gesendet…' : 'Link anfordern'}
+                            </button>
+                        </form>
+                    </>
+                )}
+            </div>
+        </AuthPageLayout>
     );
 }

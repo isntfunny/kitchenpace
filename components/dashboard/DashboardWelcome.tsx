@@ -46,7 +46,7 @@ export function DashboardWelcome({ userName = 'KüchenFan', userPhoto }: Dashboa
     return (
         <div
             className={css({
-                background: 'linear-gradient(135deg, #fff7f1 0%, #fffcf9 50%, #fff5e6 100%)',
+                background: 'surface',
                 borderRadius: '2xl',
                 padding: { base: '6', md: '8' },
                 position: 'relative',

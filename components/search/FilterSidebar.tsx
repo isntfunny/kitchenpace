@@ -73,7 +73,7 @@ const accordionRootClass = css({
 const accordionItemClass = css({
     borderRadius: '2xl',
     border: '1px solid',
-    borderColor: 'light',
+    borderColor: 'border.muted',
     background: 'surface',
     overflow: 'hidden',
 });
@@ -93,7 +93,9 @@ const accordionTriggerClass = css({
     background: 'surface',
     transition: 'background 150ms ease',
     '&[data-state="open"]': {
-        background: 'surface.elevated',
+        background: 'surface',
+        borderBottom: '1px solid',
+        borderColor: 'border.muted',
     },
     '& svg': {
         transition: 'transform 200ms ease',
@@ -104,8 +106,7 @@ const accordionTriggerClass = css({
 });
 
 const accordionContentClass = css({
-    borderTop: '1px solid',
-    borderColor: 'light',
+    borderColor: 'border.muted',
     px: '4',
     py: '4',
     display: 'flex',
@@ -121,19 +122,20 @@ const accordionTitleClass = css({
     fontSize: 'xs',
     textTransform: 'uppercase',
     letterSpacing: 'widest',
-    color: 'text-muted',
+    color: 'primary',
+    fontWeight: '600',
 });
 
 const accordionDescriptionClass = css({
     fontSize: 'xs',
-    color: 'text-muted',
+    color: 'foreground.muted',
 });
 
 const accordionChevronClass = css({
     width: '16px',
     height: '16px',
     flexShrink: 0,
-    color: 'text-muted',
+    color: 'foreground.muted',
 });
 
 const accordionActiveBadgeClass = css({
@@ -157,9 +159,9 @@ const chipItemClass = css({
     minHeight: '44px',
     fontSize: 'xs',
     border: '1px solid',
-    borderColor: 'light',
+    borderColor: 'border.muted',
     background: 'surface',
-    color: 'text',
+    color: 'foreground',
     display: 'inline-flex',
     alignItems: 'center',
     gap: '1.5',
@@ -167,10 +169,10 @@ const chipItemClass = css({
     cursor: 'pointer',
     transition: 'border 150ms ease, box-shadow 150ms ease, background 150ms ease',
     '&[data-state="on"]': {
-        borderColor: 'primary-dark',
-        background: 'primary',
-        color: 'light',
-        boxShadow: '0 8px 16px rgba(0,0,0,0.08)',
+        borderColor: 'primary',
+        background: 'accent.soft',
+        color: 'primary',
+        boxShadow: '0 4px 12px rgba(224,123,83,0.15)',
     },
 });
 
@@ -190,7 +192,7 @@ const sliderTrackClass = css({
     height: '3',
     borderRadius: 'full',
     border: '1px solid',
-    borderColor: 'light',
+    borderColor: 'border.muted',
     background: 'surface',
     overflow: 'hidden',
 });
@@ -537,7 +539,7 @@ const RangeControl = ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     fontSize: 'xs',
-                    color: 'text-muted',
+                    color: 'foreground.muted',
                 })}
             >
                 <span>{format(lowerValue)}</span>
@@ -662,9 +664,9 @@ export function FilterSidebar({ filters, options, facets, onFiltersChange }: Fil
                     padding: '4',
                     borderRadius: '2xl',
                     border: '1px solid',
-                    borderColor: 'light',
-                    background: 'surface.elevated',
-                    boxShadow: '0 24px 60px rgba(45,52,54,0.12)',
+                    borderColor: 'border.muted',
+                    background: 'surface',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
                     width: 'full',
                 })}
             >

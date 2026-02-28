@@ -40,7 +40,7 @@ export function FlowPillars() {
                 padding: { base: '4', md: '5' },
                 borderRadius: '2xl',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-                bg: '#fffcf9',
+                bg: 'surface',
             })}
         >
             <div

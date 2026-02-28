@@ -1,10 +1,9 @@
 'use server';
 
-import { ActivityType, NotificationType } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 import { getServerAuthSession } from '@/lib/auth';
-import { trackServerEvent } from '@/lib/openpanel';
+import { fireEvent } from '@/lib/events/fire';
 import { prisma } from '@/lib/prisma';
 
 type AuthenticatedUser = {
@@ -79,42 +78,28 @@ export async function toggleFavoriteAction(recipeId: string) {
     } as const;
 
     const existing = await prisma.favorite.findUnique({ where: favoriteKey });
+    const revalidateTargets = [...buildRecipePaths(recipeId, recipe.slug), '/favorites'];
 
     if (existing) {
         await prisma.favorite.delete({ where: { id: existing.id } });
-        await prisma.activityLog.create({
-            data: {
-                userId: viewer.id,
-                type: ActivityType.RECIPE_UNFAVORITED,
-                targetId: recipeId,
-                targetType: 'recipe',
-            },
+        await fireEvent({
+            event: 'recipeUnfavorited',
+            actorId: viewer.id,
+            recipientId: recipe.authorId,
+            data: { recipeId, recipeTitle: recipe.title },
+            revalidatePaths: revalidateTargets,
         });
     } else {
         await prisma.favorite.create({
             data: { recipeId, userId: viewer.id },
         });
-        await prisma.activityLog.create({
-            data: {
-                userId: viewer.id,
-                type: ActivityType.RECIPE_FAVORITED,
-                targetId: recipeId,
-                targetType: 'recipe',
-            },
+        await fireEvent({
+            event: 'recipeFavorited',
+            actorId: viewer.id,
+            recipientId: recipe.authorId,
+            data: { recipeId, recipeTitle: recipe.title },
+            revalidatePaths: revalidateTargets,
         });
-        trackServerEvent('favorite', { recipeId }, { profileId: viewer.id });
-
-        if (recipe.authorId && recipe.authorId !== viewer.id) {
-            await prisma.notification.create({
-                data: {
-                    userId: recipe.authorId,
-                    type: NotificationType.RECIPE_LIKE,
-                    title: 'Neues Lieblingsrezept',
-                    message: `${viewer.name ?? 'Jemand'} hat ${recipe.title} gespeichert`,
-                    data: { recipeId, userId: viewer.id },
-                },
-            });
-        }
     }
 
     const favoriteCount = await prisma.favorite.count({ where: { recipeId } });
@@ -177,33 +162,13 @@ export async function rateRecipeAction(recipeId: string, rawRating: number) {
         },
     });
 
-    await prisma.activityLog.create({
-        data: {
-            userId: viewer.id,
-            type: ActivityType.RECIPE_RATED,
-            targetId: recipeId,
-            targetType: 'recipe',
-            metadata: { rating },
-        },
+    await fireEvent({
+        event: 'recipeRated',
+        actorId: viewer.id,
+        recipientId: recipe.authorId,
+        data: { recipeId, recipeTitle: recipe.title, rating },
+        revalidatePaths: buildRecipePaths(recipeId, recipe.slug),
     });
-
-    trackServerEvent('rate_recipe', { recipeId, rating }, { profileId: viewer.id });
-
-    if (recipe.authorId && recipe.authorId !== viewer.id) {
-        await prisma.notification.create({
-            data: {
-                userId: recipe.authorId,
-                type: NotificationType.RECIPE_RATING,
-                title: 'Neue Rezeptbewertung',
-                message: `${viewer.name ?? 'Ein Koch'} hat ${rating}★ für ${recipe.title} vergeben`,
-                data: { recipeId, rating },
-            },
-        });
-    }
-
-    for (const path of buildRecipePaths(recipeId, recipe.slug)) {
-        revalidatePath(path);
-    }
 
     return {
         rating,
@@ -244,24 +209,11 @@ export async function toggleFollowAction(targetUserId: string, options?: { recip
         await prisma.follow.delete({ where: { id: existing.id } });
     } else {
         await prisma.follow.create({ data: { followerId: viewer.id, followingId: targetUserId } });
-        await prisma.activityLog.create({
-            data: {
-                userId: viewer.id,
-                type: ActivityType.USER_FOLLOWED,
-                targetId: targetUserId,
-                targetType: 'user',
-            },
-        });
-        trackServerEvent('follow', { targetUserId }, { profileId: viewer.id });
-
-        await prisma.notification.create({
-            data: {
-                userId: targetUserId,
-                type: NotificationType.NEW_FOLLOWER,
-                title: 'Neuer Follower',
-                message: `${viewer.name ?? 'Ein Koch'} folgt dir jetzt`,
-                data: { followerId: viewer.id },
-            },
+        await fireEvent({
+            event: 'userFollowed',
+            actorId: viewer.id,
+            recipientId: targetUserId,
+            data: {},
         });
     }
 
@@ -359,43 +311,19 @@ export async function markRecipeCookedAction(
         },
     });
 
-    await prisma.activityLog.create({
+    await fireEvent({
+        event: 'recipeCooked',
+        actorId: viewer.id,
+        recipientId: recipe.authorId,
         data: {
-            userId: viewer.id,
-            type: ActivityType.RECIPE_COOKED,
-            targetId: recipeId,
-            targetType: 'recipe',
-            metadata: {
-                servings: options?.servings,
-                notes: options?.notes,
-                hasImage: Boolean(imageUrl),
-            },
+            recipeId,
+            recipeTitle: recipe.title,
+            hasImage,
+            servings: options?.servings,
+            notes: options?.notes,
         },
+        revalidatePaths: buildRecipePaths(recipeId, recipe.slug),
     });
-
-    trackServerEvent(
-        'cook_recipe',
-        { recipeId, servings: options?.servings ?? 1, hasImage: Boolean(imageUrl) },
-        { profileId: viewer.id },
-    );
-
-    if (recipe.authorId && recipe.authorId !== viewer.id) {
-        await prisma.notification.create({
-            data: {
-                userId: recipe.authorId,
-                type: NotificationType.RECIPE_LIKE,
-                title: 'Rezept gekocht',
-                message: `${viewer.name ?? 'Ein Koch'} hat ${recipe.title} gekocht${
-                    imageUrl ? ' und ein Foto geteilt' : ''
-                }`,
-                data: { recipeId, userId: viewer.id },
-            },
-        });
-    }
-
-    for (const path of buildRecipePaths(recipeId, recipe.slug)) {
-        revalidatePath(path);
-    }
 
     return {
         success: true,

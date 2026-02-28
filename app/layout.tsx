@@ -1,6 +1,7 @@
 import { IdentifyComponent, OpenPanelComponent } from '@openpanel/nextjs';
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
+import Script from 'next/script';
 
 import { fetchPinnedEntries } from '@/app/api/recipe-tabs/helpers';
 import { AuthProvider } from '@/components/providers/AuthProvider';
@@ -9,7 +10,6 @@ import { RecipeTabsProvider } from '@/components/providers/RecipeTabsProvider';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { getServerAuthSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { css } from 'styled-system/css';
 
 import './globals.css';
 
@@ -33,7 +33,6 @@ const themeInitScript = `
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const theme = stored || (prefersDark ? 'dark' : 'light');
         document.documentElement.setAttribute('data-theme', theme);
-        document.documentElement.dataset.theme = theme;
     } catch (error) {
         console.warn('Theme initialization failed', error);
     }
@@ -213,22 +212,13 @@ export default async function RootLayout({
         : null;
     return (
         <html lang="de">
-            <body
-                className={`${playfair.variable} ${inter.variable} ${css({ backgroundColor: 'background', color: 'text' })}`}
-                data-theme="light"
-                style={{
-                    backgroundImage: `
-          radial-gradient(ellipse 100% 80% at 0% 100%, rgba(224,123,83,0.2) 0%, transparent 50%),
-          radial-gradient(ellipse 80% 100% at 100% 0%, rgba(108,92,231,0.15) 0%, transparent 50%),
-          radial-gradient(ellipse 60% 40% at 50% 80%, rgba(248,181,0,0.12) 0%, transparent 50%),
-          linear-gradient(180deg, var(--colors-background) 0%, var(--colors-surface) 50%, var(--colors-background) 100%)
-        `,
-                    backgroundAttachment: 'fixed',
-                    margin: 0,
-                    minHeight: '100vh',
-                }}
-            >
-                <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+            <head></head>
+            <body className={`${playfair.variable} ${inter.variable}`}>
+                <Script
+                    id="theme-init"
+                    strategy="afterInteractive"
+                    dangerouslySetInnerHTML={{ __html: themeInitScript }}
+                />
                 <OpenPanelComponent
                     clientId={openPanelClientId}
                     apiUrl="/api/op"

@@ -153,7 +153,7 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
     return (
         <div
             className={css({
-                background: 'white',
+                background: 'surface.elevated',
                 borderRadius: '2xl',
                 padding: '6',
                 border: '1px solid',

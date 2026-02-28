@@ -9,6 +9,7 @@ import { getOrCreateProfile } from '@/lib/profile';
 import { css } from 'styled-system/css';
 
 import { EmailSettingsCard } from './EmailSettingsCard';
+import { NotificationSettingsCard } from './NotificationSettingsCard';
 import { PrivacySettingsCard } from './PrivacySettingsCard';
 
 type PrivacyReadyProfile = Profile & {
@@ -16,6 +17,15 @@ type PrivacyReadyProfile = Profile & {
     followsPublic: boolean;
     favoritesPublic: boolean;
     showInActivity: boolean;
+    notifyOnAnonymous: boolean;
+    notifyOnNewFollower: boolean;
+    notifyOnRecipeLike: boolean;
+    notifyOnRecipeComment: boolean;
+    notifyOnRecipeRating: boolean;
+    notifyOnRecipeCooked: boolean;
+    notifyOnRecipePublished: boolean;
+    notifyOnWeeklyPlanReminder: boolean;
+    notifyOnSystemMessages: boolean;
 };
 
 const actions = [
@@ -93,6 +103,24 @@ const ManageProfilePage = async () => {
                                 ratingsPublic: privacyReadyProfile.ratingsPublic,
                                 followsPublic: privacyReadyProfile.followsPublic,
                                 favoritesPublic: privacyReadyProfile.favoritesPublic,
+                            }}
+                        />
+                    </div>
+
+                    <div className={css({ mb: '10' })}>
+                        <NotificationSettingsCard
+                            profile={{
+                                notifyOnAnonymous: privacyReadyProfile.notifyOnAnonymous,
+                                notifyOnNewFollower: privacyReadyProfile.notifyOnNewFollower,
+                                notifyOnRecipeLike: privacyReadyProfile.notifyOnRecipeLike,
+                                notifyOnRecipeComment: privacyReadyProfile.notifyOnRecipeComment,
+                                notifyOnRecipeRating: privacyReadyProfile.notifyOnRecipeRating,
+                                notifyOnRecipeCooked: privacyReadyProfile.notifyOnRecipeCooked,
+                                notifyOnRecipePublished:
+                                    privacyReadyProfile.notifyOnRecipePublished,
+                                notifyOnWeeklyPlanReminder:
+                                    privacyReadyProfile.notifyOnWeeklyPlanReminder,
+                                notifyOnSystemMessages: privacyReadyProfile.notifyOnSystemMessages,
                             }}
                         />
                     </div>

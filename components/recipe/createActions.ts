@@ -1,7 +1,6 @@
 'use server';
 
-import { NotificationType } from '@prisma/client';
-
+import { fireEvent } from '@/lib/events/fire';
 import { prisma } from '@/lib/prisma';
 import { slugify, generateUniqueSlug } from '@/lib/slug';
 
@@ -221,14 +220,15 @@ export async function bulkUpdateRecipeStatus(
                 select: { id: true, title: true },
             });
 
-            await prisma.activityLog.createMany({
-                data: publishedRecipes.map((recipe) => ({
-                    userId: authorId,
-                    type: 'RECIPE_CREATED',
-                    targetId: recipe.id,
-                    targetType: 'recipe',
-                })),
-            });
+            await Promise.all(
+                publishedRecipes.map((recipe) =>
+                    fireEvent({
+                        event: 'recipePublished',
+                        actorId: authorId,
+                        data: { recipeId: recipe.id, recipeTitle: recipe.title },
+                    }),
+                ),
+            );
 
             for (const recipe of publishedRecipes) {
                 await sendNotificationsToFollowers(authorId, recipe.id, recipe.title);
@@ -247,15 +247,6 @@ async function sendNotificationsToFollowers(
     recipeId: string,
     recipeTitle: string,
 ) {
-    const author = await prisma.user.findUnique({
-        where: { id: authorId },
-        include: { profile: true },
-    });
-
-    if (!author?.profile) return;
-
-    const authorName = author.name ?? author.profile.nickname ?? 'Ein Koch';
-
     const followers = await prisma.follow.findMany({
         where: { followingId: authorId },
         select: { followerId: true },
@@ -263,13 +254,15 @@ async function sendNotificationsToFollowers(
 
     if (followers.length === 0) return;
 
-    const notifications = followers.map((follow) => ({
-        userId: follow.followerId,
-        type: NotificationType.RECIPE_PUBLISHED,
-        title: 'Neues Rezept von gefolgtem Koch',
-        message: `${authorName} hat ein neues Rezept veröffentlicht: ${recipeTitle}`,
-        data: { recipeId, authorId },
-    }));
-
-    await prisma.notification.createMany({ data: notifications });
+    await Promise.all(
+        followers.map((follow) =>
+            fireEvent({
+                event: 'recipePublished',
+                actorId: authorId,
+                recipientId: follow.followerId,
+                data: { recipeId, recipeTitle },
+                skipActivity: true,
+            }),
+        ),
+    );
 }

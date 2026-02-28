@@ -1,7 +1,6 @@
 'use client';
 
-import { FileText, Key, LayoutDashboard, LogOut, Plus, Settings, User } from 'lucide-react';
-import Link from 'next/link';
+import { Key, LogOut } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
 import { useEffect } from 'react';
@@ -11,6 +10,8 @@ import { useProfile } from '@/components/providers/ProfileProvider';
 import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
+
+import { MenuSection, PERSONAL_LINKS } from './HeaderMenuPanel';
 
 export function HeaderAuth() {
     const { data: session, status } = useSession();
@@ -112,182 +113,47 @@ export function HeaderAuth() {
                 <DropdownMenu.Portal>
                     <DropdownMenu.Content
                         className={css({
-                            minWidth: '200px',
-                            background: 'surfaceElevated',
-                            borderRadius: 'xl',
+                            minWidth: '240px',
+                            background: 'surface.elevated',
+                            borderRadius: '2xl',
                             border: '1px solid',
                             borderColor: 'border',
-                            padding: '2',
-                            boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
+                            padding: '3',
+                            boxShadow: '0 30px 80px rgba(0,0,0,0.14)',
                             zIndex: 100,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4',
                         })}
                         sideOffset={8}
                         align="end"
                     >
-                        <DropdownMenu.Item asChild>
-                            <Link
-                                href="/dashboard"
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '2',
-                                    padding: '3',
-                                    borderRadius: 'lg',
-                                    fontSize: 'sm',
-                                    fontFamily: 'body',
-                                    color: 'text',
-                                    textDecoration: 'none',
-                                    outline: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 150ms ease',
-                                    background: 'surfaceElevated',
-                                    _hover: {
-                                        background: 'accentSoft',
-                                    },
-                                })}
-                            >
-                                <LayoutDashboard size={16} color="#6c5ce7" />
-                                <span>Dashboard</span>
-                            </Link>
-                        </DropdownMenu.Item>
-
-                        <DropdownMenu.Item asChild>
-                            <Link
-                                href="/recipe/create"
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '2',
-                                    padding: '3',
-                                    borderRadius: 'lg',
-                                    fontSize: 'sm',
-                                    fontFamily: 'body',
-                                    color: 'text',
-                                    textDecoration: 'none',
-                                    outline: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 150ms ease',
-                                    background: 'surfaceElevated',
-                                    _hover: {
-                                        background: 'accentSoft',
-                                    },
-                                })}
-                            >
-                                <Plus size={16} color="#e07b53" />
-                                <span>Rezept erstellen</span>
-                            </Link>
-                        </DropdownMenu.Item>
-
-                        <DropdownMenu.Item asChild>
-                            <Link
-                                href="/my-recipes"
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '2',
-                                    padding: '3',
-                                    borderRadius: 'lg',
-                                    fontSize: 'sm',
-                                    fontFamily: 'body',
-                                    color: 'text',
-                                    textDecoration: 'none',
-                                    outline: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 150ms ease',
-                                    background: 'surfaceElevated',
-                                    _hover: {
-                                        background: 'accentSoft',
-                                    },
-                                })}
-                            >
-                                <FileText size={16} color="#666" />
-                                <span>Meine Rezepte</span>
-                            </Link>
-                        </DropdownMenu.Item>
-
-                        <DropdownMenu.Item asChild>
-                            <Link
-                                href="/profile"
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '2',
-                                    padding: '3',
-                                    borderRadius: 'lg',
-                                    fontSize: 'sm',
-                                    fontFamily: 'body',
-                                    color: 'text',
-                                    textDecoration: 'none',
-                                    outline: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 150ms ease',
-                                    background: 'surfaceElevated',
-                                    _hover: {
-                                        background: 'accentSoft',
-                                    },
-                                })}
-                            >
-                                <User size={16} />
-                                <span>Mein Profil</span>
-                            </Link>
-                        </DropdownMenu.Item>
-
-                        <DropdownMenu.Item asChild>
-                            <Link
-                                href="/profile/manage"
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '2',
-                                    padding: '3',
-                                    borderRadius: 'lg',
-                                    fontSize: 'sm',
-                                    fontFamily: 'body',
-                                    color: 'text',
-                                    textDecoration: 'none',
-                                    outline: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 150ms ease',
-                                    background: 'surfaceElevated',
-                                    _hover: {
-                                        background: 'accentSoft',
-                                    },
-                                })}
-                            >
-                                <Settings size={16} />
-                                <span>Einstellungen</span>
-                            </Link>
-                        </DropdownMenu.Item>
-
+                        <MenuSection title="Für dich" items={PERSONAL_LINKS} />
                         <DropdownMenu.Separator
-                            className={css({
-                                height: '1px',
-                                background: 'border',
-                                margin: '2',
-                            })}
+                            className={css({ height: '1px', background: 'border', marginY: '2' })}
                         />
-
                         <DropdownMenu.Item asChild>
                             <button
                                 onClick={() => handleSignOut()}
                                 className={css({
+                                    width: '100%',
                                     display: 'flex',
                                     alignItems: 'center',
+                                    justifyContent: 'center',
                                     gap: '2',
                                     padding: '3',
-                                    borderRadius: 'lg',
+                                    borderRadius: 'xl',
+                                    border: '1px solid',
+                                    borderColor: 'border.muted',
+                                    background: 'surface',
                                     fontSize: 'sm',
-                                    fontFamily: 'body',
-                                    color: 'accentHover',
-                                    textDecoration: 'none',
-                                    outline: 'none',
+                                    fontWeight: '600',
+                                    color: 'red.500',
                                     cursor: 'pointer',
                                     transition: 'all 150ms ease',
-                                    width: '100%',
-                                    border: 'none',
-                                    background: 'transparent',
                                     _hover: {
-                                        background: 'accentSoft',
+                                        borderColor: 'red.500',
+                                        boxShadow: '0 10px 30px rgba(224,123,83,0.25)',
                                     },
                                 })}
                             >
@@ -326,7 +192,7 @@ export function HeaderAuth() {
             })}
         >
             <Key size={16} />
-            <span className={css({ display: { base: 'none', md: 'inline' } })}>Anmelden</span>
+            <span className={css({ display: { base: 'none', md: 'inline-flex' } })}>Anmelden</span>
         </button>
     );
 }

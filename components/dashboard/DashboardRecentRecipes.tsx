@@ -51,7 +51,7 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
     return (
         <div
             className={css({
-                background: 'white',
+                background: 'surface.elevated',
                 borderRadius: 'xl',
                 overflow: 'hidden',
                 border: '1px solid',
@@ -103,7 +103,7 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
                     {recipe.status && (
                         <span
                             className={css({
-                                background: 'white',
+                                background: 'surface.elevated',
                                 color: 'text',
                                 width: '20px',
                                 height: '20px',
@@ -218,7 +218,7 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
     return (
         <div
             className={css({
-                background: 'white',
+                background: 'surface.elevated',
                 borderRadius: '2xl',
                 padding: '6',
                 border: '1px solid',

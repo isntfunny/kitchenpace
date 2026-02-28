@@ -18,7 +18,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                 className={css({
                     p: '4',
                     borderRadius: '2xl',
-                    bg: '#fffcf9',
+                    bg: 'surface',
                     boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                 })}
             >
@@ -36,7 +36,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                     <Flame size={18} />
                     <span>Trending</span>
                 </Heading>
-                <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                <p className={css({ color: 'foreground.muted', fontSize: 'sm' })}>
                     Aktuell keine Tags verfügbar.
                 </p>
             </div>
@@ -48,7 +48,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
             className={css({
                 p: '4',
                 borderRadius: '2xl',
-                bg: '#fffcf9',
+                bg: 'surface',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
             })}
         >
@@ -89,9 +89,9 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                             fontFamily: 'body',
                             fontWeight: '500',
                             bg: 'transparent',
-                            color: 'text',
+                            color: 'foreground',
                             border: '1px solid',
-                            borderColor: 'rgba(0,0,0,0.1)',
+                            borderColor: 'border',
                             cursor: 'pointer',
                             _hover: {
                                 bg: item.color,
@@ -106,7 +106,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                         <span
                             className={css({
                                 fontSize: '0.65rem',
-                                bg: 'rgba(0,0,0,0.1)',
+                                bg: 'border',
                                 px: '1.5',
                                 py: '0.5',
                                 borderRadius: 'full',

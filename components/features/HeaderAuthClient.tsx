@@ -75,7 +75,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                     <DropdownMenu.Content
                         className={css({
                             minWidth: '180px',
-                            background: 'white',
+                            background: 'surface.elevated',
                             borderRadius: 'xl',
                             border: '1px solid',
                             borderColor: 'rgba(224,123,83,0.2)',

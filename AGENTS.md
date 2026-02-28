@@ -268,6 +268,8 @@ Based on the recipe detail implementation, the recipe editor should:
 ```bash
 npm run dev    # Start development server
 # Opens at http://localhost:3000
+
+npm run lint:fix  # Auto-fix linting issues (imports, formatting, etc.)
 ```
 
 ## Acceptance Criteria
@@ -321,6 +323,67 @@ npx husky install
 ```
 
 Or simply ensure `npm install --include=dev` is used. The `prepare` script in package.json should handle this automatically.
+
+### Prisma 7 Configuration
+
+Prisma 7 introduced significant changes from earlier versions:
+
+**Installation:**
+
+```bash
+npm install @prisma/client@7
+npm install -D prisma@7
+npm install @prisma/adapter-pg pg
+```
+
+**Key Changes:**
+
+- Prisma 7 requires a **driver adapter** to connect to databases (no longer bundled with the client)
+- Uses `@prisma/adapter-pg` with the `pg` driver for PostgreSQL
+- Requires a `prisma.config.ts` file for configuration
+
+**Prisma Config (prisma.config.ts):**
+
+```typescript
+import path from 'node:path';
+import { defineConfig } from 'prisma/config';
+import 'dotenv/config';
+
+export default defineConfig({
+    schema: path.join('prisma', 'schema.prisma'),
+    datasource: {
+        url: process.env.DATABASE_URL,
+    },
+});
+```
+
+**Database Connection in Code:**
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
+
+const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+});
+
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+```
+
+**Environment Variables:**
+
+```bash
+# Format: postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public
+DATABASE_URL="postgresql://postgres:password@localhost:5432/kitchenpace?schema=public"
+```
+
+**Important Notes:**
+
+- The `datasource` block in schema.prisma should NOT include the `url` field anymore (it's in prisma.config.ts)
+- The generator client should use `provider = "prisma-client-js"` in schema.prisma
+- Connection pooling is handled by the `pg` driver pool
 
 <!-- TRIGGER.DEV scheduled-tasks START -->
 

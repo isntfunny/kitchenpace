@@ -17,7 +17,7 @@ export function HeroSpotlight() {
                 overflow: 'hidden',
                 px: { base: '4', md: '6' },
                 py: { base: '5', md: '6' },
-                bg: '#fffcf9',
+                bg: 'surface',
                 borderRadius: '2xl',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                 mb: '4',

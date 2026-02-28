@@ -68,7 +68,7 @@ export function HeaderSearch() {
                         borderRadius: 'full',
                         border: '1px solid',
                         borderColor: 'border',
-                        background: 'surfaceElevated',
+                        background: 'surface.elevated',
                         fontSize: 'sm',
                         fontFamily: 'body',
                         outline: 'none',
@@ -87,7 +87,7 @@ export function HeaderSearch() {
                         top: '50%',
                         transform: 'translateY(-50%)',
                         pointerEvents: 'none',
-                        color: 'text-muted',
+                        color: 'foreground.muted',
                     })}
                 >
                     <Search size={18} color="currentColor" />
@@ -114,7 +114,7 @@ export function HeaderSearch() {
                             <div
                                 className={css({
                                     fontSize: 'sm',
-                                    color: 'text-muted',
+                                    color: 'foreground.muted',
                                 })}
                             >
                                 Lädt…
@@ -124,7 +124,7 @@ export function HeaderSearch() {
                             <div
                                 className={css({
                                     fontSize: 'sm',
-                                    color: 'text-muted',
+                                    color: 'foreground.muted',
                                 })}
                             >
                                 Keine schnellen Treffer
@@ -151,7 +151,7 @@ export function HeaderSearch() {
                                             transition: 'border 150ms ease, background 150ms ease',
                                             _hover: {
                                                 borderColor: 'border',
-                                                background: 'surfaceElevated',
+                                                background: 'surface.elevated',
                                             },
                                         })}
                                     >

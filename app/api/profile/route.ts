@@ -88,6 +88,15 @@ export async function PUT(request: NextRequest) {
     const followsPublic = sanitizeBoolean(payload.followsPublic);
     const favoritesPublic = sanitizeBoolean(payload.favoritesPublic);
     const showInActivity = sanitizeBoolean(payload.showInActivity);
+    const notifyOnAnonymous = sanitizeBoolean(payload.notifyOnAnonymous);
+    const notifyOnNewFollower = sanitizeBoolean(payload.notifyOnNewFollower);
+    const notifyOnRecipeLike = sanitizeBoolean(payload.notifyOnRecipeLike);
+    const notifyOnRecipeComment = sanitizeBoolean(payload.notifyOnRecipeComment);
+    const notifyOnRecipeRating = sanitizeBoolean(payload.notifyOnRecipeRating);
+    const notifyOnRecipeCooked = sanitizeBoolean(payload.notifyOnRecipeCooked);
+    const notifyOnRecipePublished = sanitizeBoolean(payload.notifyOnRecipePublished);
+    const notifyOnWeeklyPlanReminder = sanitizeBoolean(payload.notifyOnWeeklyPlanReminder);
+    const notifyOnSystemMessages = sanitizeBoolean(payload.notifyOnSystemMessages);
 
     const profileUpdates: Parameters<typeof upsertProfile>[0]['data'] = {
         nickname,
@@ -109,6 +118,34 @@ export async function PUT(request: NextRequest) {
 
     if (showInActivity !== undefined) {
         profileUpdates.showInActivity = showInActivity;
+    }
+
+    if (notifyOnAnonymous !== undefined) {
+        profileUpdates.notifyOnAnonymous = notifyOnAnonymous;
+    }
+    if (notifyOnNewFollower !== undefined) {
+        profileUpdates.notifyOnNewFollower = notifyOnNewFollower;
+    }
+    if (notifyOnRecipeLike !== undefined) {
+        profileUpdates.notifyOnRecipeLike = notifyOnRecipeLike;
+    }
+    if (notifyOnRecipeComment !== undefined) {
+        profileUpdates.notifyOnRecipeComment = notifyOnRecipeComment;
+    }
+    if (notifyOnRecipeRating !== undefined) {
+        profileUpdates.notifyOnRecipeRating = notifyOnRecipeRating;
+    }
+    if (notifyOnRecipeCooked !== undefined) {
+        profileUpdates.notifyOnRecipeCooked = notifyOnRecipeCooked;
+    }
+    if (notifyOnRecipePublished !== undefined) {
+        profileUpdates.notifyOnRecipePublished = notifyOnRecipePublished;
+    }
+    if (notifyOnWeeklyPlanReminder !== undefined) {
+        profileUpdates.notifyOnWeeklyPlanReminder = notifyOnWeeklyPlanReminder;
+    }
+    if (notifyOnSystemMessages !== undefined) {
+        profileUpdates.notifyOnSystemMessages = notifyOnSystemMessages;
     }
 
     const profile = await upsertProfile({

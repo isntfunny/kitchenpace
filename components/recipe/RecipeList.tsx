@@ -218,10 +218,10 @@ export function RecipeList({ recipes }: RecipeListProps) {
                                 gap: '1rem',
                                 padding: '1rem',
                                 borderRadius: '0.75rem',
-                                background: 'white',
+                                background: 'var(--colors-surface-elevated)',
                                 border: selectedIds.has(recipe.id)
-                                    ? '2px solid #e07b53'
-                                    : '1px solid #e5e5e5',
+                                    ? '2px solid var(--colors-primary)'
+                                    : '1px solid var(--colors-border)',
                                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                             }}
                         >

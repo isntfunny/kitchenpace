@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { type FC, useEffect, useMemo, useRef, useState } from 'react';
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { CategoryOption } from '@/app/actions/filters';
 import type { RecipeCardData } from '@/app/actions/recipes';
@@ -57,6 +57,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     filterOptions,
 }) => {
     const [filters, setFilters] = useState(initialFilters);
+    const [queryInput, setQueryInput] = useState(initialFilters.query ?? '');
     const [showMobileFilters, setShowMobileFilters] = useState(false);
     const { data, meta, loading, error } = useRecipeSearch(filters);
     const facets = meta?.facets;
@@ -101,17 +102,13 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         }
     };
 
-    useEffect(() => {
-        setFilters(initialFilters);
-    }, [initialFilters]);
-
-    const updateFilters = (next: Partial<RecipeFilterSearchParams>) => {
+    const updateFilters = useCallback((next: Partial<RecipeFilterSearchParams>) => {
         setFilters((prev) => ({
             ...prev,
             ...next,
             page: 1,
         }));
-    };
+    }, []);
 
     const resetFilters = () => {
         setFilters((prev) => ({
@@ -134,6 +131,27 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
             page: 1,
         }));
     };
+
+    useEffect(() => {
+        setFilters(initialFilters);
+    }, [initialFilters]);
+
+    useEffect(() => {
+        setQueryInput(filters.query ?? '');
+    }, [filters.query]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const sanitized = queryInput.trim();
+            const nextQuery = sanitized.length > 0 ? queryInput : undefined;
+            if (nextQuery === filters.query) {
+                return;
+            }
+            updateFilters({ query: nextQuery });
+        }, 200);
+
+        return () => clearTimeout(timer);
+    }, [filters.query, queryInput, updateFilters]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -292,14 +310,8 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                         >
                             <input
                                 type="search"
-                                value={filters.query ?? ''}
-                                onChange={(event) => {
-                                    const nextValue = event.target.value;
-                                    const sanitized = nextValue.trim();
-                                    updateFilters({
-                                        query: sanitized.length > 0 ? nextValue : undefined,
-                                    });
-                                }}
+                                value={queryInput}
+                                onChange={(event) => setQueryInput(event.target.value)}
                                 placeholder="Rezepte, Zutaten oder Techniken suchen"
                                 aria-label="Rezepte durchsuchen"
                                 className={css({
@@ -313,10 +325,13 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                     fontSize: 'sm',
                                 })}
                             />
-                            {filters.query ? (
+                            {queryInput ? (
                                 <button
                                     type="button"
-                                    onClick={() => updateFilters({ query: undefined })}
+                                    onClick={() => {
+                                        setQueryInput('');
+                                        updateFilters({ query: undefined });
+                                    }}
                                     className={css({
                                         borderRadius: 'lg',
                                         background: 'surface',

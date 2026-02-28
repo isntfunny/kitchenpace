@@ -15,7 +15,7 @@ export function RecipeScrollServer({ title, recipes }: RecipeScrollProps) {
                 className={css({
                     p: '5',
                     borderRadius: '2xl',
-                    bg: '#fffcf9',
+                    bg: 'surface',
                     boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                     textAlign: 'center',
                 })}

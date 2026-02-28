@@ -1,104 +1,133 @@
 import { defineConfig } from '@pandacss/dev';
-import { amber, amberDark, orange, orangeDark, slate, slateDark } from '@radix-ui/colors';
 
 export default defineConfig({
     preflight: true,
     include: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
-    exclude: ['./app/**/data.ts', './app/actions/**', './lib/**/*.ts', './trigger/**'],
-    theme: {
-        tokens: {
-            colors: {
-                brand: {
-                    primary: { value: 'var(--colors-brand-primary)' },
-                    'primary-dark': { value: 'var(--colors-brand-primary-dark)' },
-                    secondary: { value: 'var(--colors-brand-secondary)' },
-                    accent: { value: 'var(--colors-brand-accent)' },
-                    light: { value: 'var(--colors-brand-light)' },
-                    text: { value: 'var(--colors-brand-text)' },
-                    'text-muted': { value: 'var(--colors-brand-text-muted)' },
-                },
-                primary: { value: 'var(--colors-brand-primary)' },
-                'primary-dark': { value: 'var(--colors-brand-primary-dark)' },
-                accent: { value: 'var(--colors-brand-accent)' },
-                accentHover: { value: 'var(--colors-accent-hover)' },
-                accentSoft: { value: 'var(--colors-accent-soft)' },
-                surface: { value: 'var(--colors-surface)' },
-                surfaceElevated: { value: 'var(--colors-surface-elevated)' },
-                background: { value: 'var(--colors-background)' },
-                text: { value: 'var(--colors-text)' },
-                'text-muted': { value: 'var(--colors-text-muted)' },
-                border: { value: 'var(--colors-border)' },
-                'border-muted': { value: 'var(--colors-border-muted)' },
-            },
-            fonts: {
-                heading: { value: 'var(--font-playfair), Georgia, serif' },
-                body: { value: 'var(--font-inter), system-ui, sans-serif' },
-            },
-        },
-        semanticTokens: {
-            colors: {
-                surface: {
-                    DEFAULT: { value: '{colors.surface}' },
-                    elevated: { value: '{colors.surfaceElevated}' },
-                },
-                background: { DEFAULT: { value: '{colors.background}' } },
-                foreground: { DEFAULT: { value: '{colors.text}' } },
-                'foreground-muted': { DEFAULT: { value: '{colors.text-muted}' } },
-                border: { DEFAULT: { value: '{colors.border}' } },
-                'border-muted': { DEFAULT: { value: '{colors.border-muted}' } },
-                accent: { DEFAULT: { value: '{colors.accent}' } },
-                'accent-hover': { DEFAULT: { value: '{colors.accentHover}' } },
-                'accent-soft': { DEFAULT: { value: '{colors.accentSoft}' } },
-            },
-        },
-        breakpoints: {
-            sm: '640px',
-            md: '768px',
-            lg: '1024px',
-            xl: '1280px',
-            '2xl': '1536px',
+    exclude: [],
+
+    conditions: {
+        extend: {
+            dark: '[data-theme="dark"] &',
         },
     },
+
     globalCss: {
-        ':root, [data-theme="light"]': {
-            '--colors-brand-primary': orange.orange9,
-            '--colors-brand-primary-dark': orange.orange11,
-            '--colors-brand-secondary': slate.slate12,
-            '--colors-brand-accent': amber.amber8,
-            '--colors-brand-light': slate.slate1,
-            '--colors-brand-text': slate.slate12,
-            '--colors-brand-text-muted': slate.slate10,
-            '--colors-accent': amber.amber8,
-            '--colors-accent-hover': amber.amber9,
-            '--colors-accent-soft': amber.amber4,
-            '--colors-surface': slate.slate1,
-            '--colors-surface-elevated': slate.slate2,
-            '--colors-background': slate.slate2,
-            '--colors-text': slate.slate12,
-            '--colors-text-muted': slate.slate10,
-            '--colors-border': slate.slate6,
-            '--colors-border-muted': slate.slate4,
+        'html, :host': {
+            backgroundColor: 'background',
+            color: 'foreground',
+            minHeight: '100vh',
         },
-        '[data-theme="dark"]': {
-            '--colors-brand-primary': orangeDark.orange8,
-            '--colors-brand-primary-dark': orangeDark.orange10,
-            '--colors-brand-secondary': slateDark.slate12,
-            '--colors-brand-accent': amberDark.amber9,
-            '--colors-brand-light': slateDark.slate1,
-            '--colors-brand-text': slateDark.slate12,
-            '--colors-brand-text-muted': slateDark.slate11,
-            '--colors-accent': amberDark.amber9,
-            '--colors-accent-hover': amberDark.amber10,
-            '--colors-accent-soft': amberDark.amber6,
-            '--colors-surface': slateDark.slate1,
-            '--colors-surface-elevated': slateDark.slate2,
-            '--colors-background': slateDark.slate1,
-            '--colors-text': slateDark.slate12,
-            '--colors-text-muted': slateDark.slate11,
-            '--colors-border': slateDark.slate7,
-            '--colors-border-muted': slateDark.slate9,
+        body: {
+            backgroundColor: 'background',
+            color: 'foreground',
+            minHeight: '100vh',
         },
     },
+
+    theme: {
+        extend: {
+            tokens: {
+                colors: {
+                    brand: {
+                        primary: { value: '#e07b53' },
+                        'primary-dark': { value: '#f76b15' },
+                        secondary: { value: '#2d3436' },
+                        accent: { value: '#f8b500' },
+                        light: { value: '#faf9f7' },
+                        dark: { value: '#0f1114' },
+                        text: { value: '#2d3436' },
+                        'text-muted': { value: '#636e72' },
+                        'text-dark': { value: '#f5f5f5' },
+                        'text-muted-dark': { value: '#a0a0a0' },
+                        'page-light': { value: '#fffcf9' },
+                        'page-dark': { value: '#121418' },
+                        'card-light': { value: '#ffffff' },
+                        'card-dark': { value: '#1a1d21' },
+                    },
+                },
+
+                fonts: {
+                    heading: { value: 'var(--font-playfair), Georgia, serif' },
+                    body: { value: 'var(--font-inter), system-ui, sans-serif' },
+                },
+            },
+
+            semanticTokens: {
+                colors: {
+                    background: {
+                        value: {
+                            base: '{colors.brand.light}',
+                            _dark: '{colors.brand.dark}',
+                        },
+                    },
+                    surface: {
+                        value: {
+                            base: '{colors.brand.card-light}',
+                            _dark: '{colors.brand.card-dark}',
+                        },
+                    },
+                    'surface.elevated': {
+                        value: {
+                            base: '{colors.brand.card-light}',
+                            _dark: '{colors.brand.card-dark}',
+                        },
+                    },
+                    foreground: {
+                        value: {
+                            base: '{colors.brand.text}',
+                            _dark: '{colors.brand.text-dark}',
+                        },
+                    },
+                    'foreground.muted': {
+                        value: {
+                            base: '{colors.brand.text-muted}',
+                            _dark: '{colors.brand.text-muted-dark}',
+                        },
+                    },
+                    border: {
+                        value: {
+                            base: 'rgba(0,0,0,0.08)',
+                            _dark: '#2d333b',
+                        },
+                    },
+                    'border.muted': {
+                        value: {
+                            base: 'rgba(0,0,0,0.04)',
+                            _dark: '#22262c',
+                        },
+                    },
+                    accent: {
+                        value: '{colors.brand.accent}',
+                    },
+                    'accent.hover': {
+                        value: '{colors.brand.primary}',
+                    },
+                    'accent.soft': {
+                        value: {
+                            base: 'rgba(224,123,83,0.08)',
+                            _dark: 'rgba(224,123,83,0.15)',
+                        },
+                    },
+                    primary: {
+                        value: {
+                            base: '{colors.brand.primary}',
+                            _dark: '{colors.brand.primary-dark}',
+                        },
+                    },
+                },
+            },
+
+            breakpoints: {
+                sm: '640px',
+                md: '768px',
+                lg: '1024px',
+                xl: '1280px',
+                '2xl': '1536px',
+            },
+        },
+    },
+
     jsxFramework: 'react',
+
     outdir: 'styled-system',
 });

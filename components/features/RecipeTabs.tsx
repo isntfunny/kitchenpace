@@ -96,7 +96,7 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                         ...positionStyles,
                         marginTop: '8px',
                         width: '240px',
-                        background: 'white',
+                        background: 'surface.elevated',
                         borderRadius: 'xl',
                         border: '1px solid',
                         borderColor: 'rgba(224,123,83,0.2)',
@@ -153,7 +153,7 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                             alignItems: 'center',
                             gap: '2',
                             fontSize: 'xs',
-                            color: 'text-muted',
+                            color: 'foreground.muted',
                             marginBottom: '2',
                         })}
                     >
@@ -247,7 +247,7 @@ function RecipeChip({
                     onClick={handlePinClick}
                     className={css({
                         fontSize: 'xs',
-                        color: 'text-muted',
+                        color: 'foreground.muted',
                         marginLeft: '1',
                         padding: '2px',
                         borderRadius: 'full',
@@ -305,9 +305,11 @@ export function RecipeTabs() {
                 '&::-webkitScrollbar': {
                     display: 'none',
                 },
-                background: '#fff',
-                borderTop: '1px solid rgba(0,0,0,0.08)',
-                borderBottom: '1px solid rgba(0,0,0,0.08)',
+                background: 'surface',
+                borderTop: '1px solid',
+                borderColor: 'border',
+                borderBottom: '1px solid',
+                borderBottomColor: 'border',
                 boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
             })}
         >
@@ -315,7 +317,7 @@ export function RecipeTabs() {
                 className={css({
                     fontSize: 'xs',
                     fontWeight: '600',
-                    color: 'text-muted',
+                    color: 'foreground.muted',
                     textTransform: 'uppercase',
                     letterSpacing: 'wide',
                     flexShrink: 0,
@@ -361,7 +363,7 @@ export function RecipeTabs() {
                 <span
                     className={css({
                         fontSize: 'sm',
-                        color: 'text-muted',
+                        color: 'foreground.muted',
                         opacity: 0.7,
                         whiteSpace: 'nowrap',
                     })}

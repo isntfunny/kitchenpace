@@ -28,14 +28,14 @@ export const revalidate = 60;
 
 export default async function Home() {
     const [
-        featuredRecipe,
-        newestRecipes,
-        topRatedRecipes,
-        trendingTags,
-        chefSpotlight,
-        quickTips,
-        recentActivities,
-    ] = await Promise.all([
+        featuredResult,
+        newestResult,
+        topRatedResult,
+        trendingTagsResult,
+        chefSpotlightResult,
+        quickTipsResult,
+        recentActivitiesResult,
+    ] = await Promise.allSettled([
         fetchFeaturedRecipe(),
         fetchNewestRecipes(),
         fetchTopRatedRecipes(),
@@ -44,6 +44,23 @@ export default async function Home() {
         fetchQuickTips(),
         fetchRecentActivities(),
     ]);
+
+    const handleSettled = <T,>(result: PromiseSettledResult<T>, fallback: T, label: string): T => {
+        if (result.status === 'fulfilled') {
+            return result.value;
+        }
+
+        console.error(`[Home] ${label} failed:`, result.reason);
+        return fallback;
+    };
+
+    const featuredRecipe = handleSettled(featuredResult, null, 'fetchFeaturedRecipe');
+    const newestRecipes = handleSettled(newestResult, [], 'fetchNewestRecipes');
+    const topRatedRecipes = handleSettled(topRatedResult, [], 'fetchTopRatedRecipes');
+    const trendingTags = handleSettled(trendingTagsResult, [], 'fetchTrendingTags');
+    const chefSpotlight = handleSettled(chefSpotlightResult, null, 'fetchChefSpotlight');
+    const quickTips = handleSettled(quickTipsResult, [], 'fetchQuickTips');
+    const recentActivities = handleSettled(recentActivitiesResult, [], 'fetchRecentActivities');
 
     return (
         <div

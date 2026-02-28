@@ -7,6 +7,15 @@ type ProfileFields = Partial<Pick<Profile, 'nickname' | 'teaser' | 'photoUrl'>> 
     followsPublic?: boolean;
     favoritesPublic?: boolean;
     showInActivity?: boolean;
+    notifyOnAnonymous?: boolean;
+    notifyOnNewFollower?: boolean;
+    notifyOnRecipeLike?: boolean;
+    notifyOnRecipeComment?: boolean;
+    notifyOnRecipeRating?: boolean;
+    notifyOnRecipeCooked?: boolean;
+    notifyOnRecipePublished?: boolean;
+    notifyOnWeeklyPlanReminder?: boolean;
+    notifyOnSystemMessages?: boolean;
 };
 
 export const getOrCreateProfile = async (userId: string, email: string) => {

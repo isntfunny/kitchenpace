@@ -30,7 +30,6 @@ const overlayClass = css({
     position: 'fixed',
     inset: 0,
     bg: 'rgba(15, 23, 42, 0.7)',
-    backdropFilter: 'blur(8px)',
 });
 
 const contentClass = css({
@@ -41,9 +40,9 @@ const contentClass = css({
     width: 'min(480px, 90vw)',
     borderRadius: '2xl',
     padding: '6',
-    bg: 'surface',
+    bg: 'surface.elevated',
     border: '1px solid',
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderColor: 'border.muted',
     boxShadow: '0 25px 55px rgba(0,0,0,0.12)',
 });
 

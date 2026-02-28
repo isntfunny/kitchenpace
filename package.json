@@ -88,6 +88,7 @@
         "lodash": "^4.17.23",
         "lucide-react": "^0.575.0",
         "prettier": "^3.8.1",
+        "swr": "^2.4.1",
         "tsx": "^4.21.0",
         "typescript": "^5"
     }

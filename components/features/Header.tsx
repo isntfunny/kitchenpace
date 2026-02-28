@@ -24,6 +24,7 @@ import { SmartImage } from '../atoms/SmartImage';
 
 import { HeaderAuth } from './HeaderAuth';
 import { RecipeTabs } from './RecipeTabs';
+import { ThemeToggle } from './ThemeToggle';
 
 const categories = [
     { name: 'Frühstück', icon: Coffee },
@@ -64,8 +65,9 @@ function CategoryGrid() {
                             transition: 'all 150ms ease',
                             textDecoration: 'none',
                             color: 'text',
+                            background: 'surfaceElevated',
                             _hover: {
-                                background: 'rgba(224,123,83,0.08)',
+                                background: 'accentSoft',
                                 transform: 'translateX(2px)',
                             },
                         })}
@@ -93,11 +95,14 @@ function MobileMenu() {
                         width: '10',
                         height: '10',
                         borderRadius: 'lg',
-                        border: '1px solid rgba(0,0,0,0.1)',
-                        background: 'white',
+                        border: '1px solid',
+                        borderColor: 'border',
+                        background: 'surfaceElevated',
                         cursor: 'pointer',
                         transition: 'all 150ms ease',
-                        _hover: { background: 'rgba(224,123,83,0.08)' },
+                        _hover: {
+                            background: 'accentSoft',
+                        },
                     })}
                     aria-label="Menü öffnen"
                 >
@@ -128,10 +133,10 @@ function MobileMenu() {
                         top: '70px',
                         minWidth: '260px',
                         maxWidth: '85vw',
-                        background: 'white',
+                        background: 'surfaceElevated',
                         borderRadius: 'xl',
                         border: '1px solid',
-                        borderColor: 'rgba(224,123,83,0.2)',
+                        borderColor: 'border',
                         padding: '4',
                         boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
                         animation: 'contentShow 200ms ease',
@@ -226,8 +231,8 @@ export function Header() {
                 position: 'sticky',
                 top: 0,
                 zIndex: 20,
-                bg: '#fffcf9',
-                boxShadow: '0 4px 20px rgba(224,123,83,0.15)',
+                bg: 'surface',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
             })}
         >
             <div
@@ -238,7 +243,7 @@ export function Header() {
                     px: { base: '4', md: '6' },
                     py: '3',
                     borderBottom: '1px solid',
-                    borderColor: 'rgba(0,0,0,0.05)',
+                    borderColor: 'border',
                 })}
             >
                 <div
@@ -326,10 +331,10 @@ export function Header() {
                                 <DropdownMenu.Content
                                     className={css({
                                         minWidth: '240px',
-                                        background: 'white',
+                                        background: 'surfaceElevated',
                                         borderRadius: 'xl',
                                         border: '1px solid',
-                                        borderColor: 'rgba(224,123,83,0.2)',
+                                        borderColor: 'border',
                                         padding: '2',
                                         boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
                                         animation: 'slideDown 200ms ease',
@@ -394,7 +399,10 @@ export function Header() {
                         </div>
                     </div>
                     <div className={css({ flex: '0 0 auto' })}>
-                        <HeaderAuth />
+                        <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                            <ThemeToggle />
+                            <HeaderAuth />
+                        </div>
                     </div>
                 </div>
             </div>

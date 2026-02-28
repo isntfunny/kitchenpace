@@ -2,12 +2,15 @@ import { IdentifyComponent, OpenPanelComponent } from '@openpanel/nextjs';
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 
+
 import { fetchPinnedEntries } from '@/app/api/recipe-tabs/helpers';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { ProfileProvider } from '@/components/providers/ProfileProvider';
 import { RecipeTabsProvider } from '@/components/providers/RecipeTabsProvider';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { getServerAuthSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { css } from 'styled-system/css';
 
 import './globals.css';
 
@@ -22,6 +25,21 @@ const inter = Inter({
     subsets: ['latin'],
     display: 'swap',
 });
+
+const themeInitScript = `
+(function () {
+    const storageKey = 'kitchenpace-theme';
+    try {
+        const stored = localStorage.getItem(storageKey);
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = stored || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.dataset.theme = theme;
+    } catch (error) {
+        console.warn('Theme initialization failed', error);
+    }
+})();
+`;
 
 export const metadata: Metadata = {
     title: {
@@ -197,19 +215,21 @@ export default async function RootLayout({
     return (
         <html lang="de">
             <body
-                className={`${playfair.variable} ${inter.variable}`}
+                className={`${playfair.variable} ${inter.variable} ${css({ backgroundColor: 'background', color: 'text' })}`}
+                data-theme="light"
                 style={{
-                    background: `
+                    backgroundImage: `
           radial-gradient(ellipse 100% 80% at 0% 100%, rgba(224,123,83,0.2) 0%, transparent 50%),
           radial-gradient(ellipse 80% 100% at 100% 0%, rgba(108,92,231,0.15) 0%, transparent 50%),
           radial-gradient(ellipse 60% 40% at 50% 80%, rgba(248,181,0,0.12) 0%, transparent 50%),
-          linear-gradient(180deg, #f8f5f0 0%, #f0ebe3 50%, #e8e2d9 100%)
+          linear-gradient(180deg, var(--colors-background) 0%, var(--colors-surface) 50%, var(--colors-background) 100%)
         `,
                     backgroundAttachment: 'fixed',
                     margin: 0,
                     minHeight: '100vh',
                 }}
             >
+                <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
                 <OpenPanelComponent
                     clientId={openPanelClientId}
                     apiUrl="/api/op"
@@ -221,16 +241,18 @@ export default async function RootLayout({
                     globalProperties={openPanelGlobalProperties}
                 />
                 {identifyProps && <IdentifyComponent {...identifyProps} />}
-                <AuthProvider session={session}>
-                    <ProfileProvider profile={profile}>
-                        <RecipeTabsProvider
-                            initialPinned={pinnedRecipes}
-                            initialRecent={recentRecipes}
-                        >
-                            {children}
-                        </RecipeTabsProvider>
-                    </ProfileProvider>
-                </AuthProvider>
+                <ThemeProvider>
+                    <AuthProvider session={session}>
+                        <ProfileProvider profile={profile}>
+                            <RecipeTabsProvider
+                                initialPinned={pinnedRecipes}
+                                initialRecent={recentRecipes}
+                            >
+                                {children}
+                            </RecipeTabsProvider>
+                        </ProfileProvider>
+                    </AuthProvider>
+                </ThemeProvider>
             </body>
         </html>
     );

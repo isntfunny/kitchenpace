@@ -113,10 +113,10 @@ export function HeaderAuth() {
                     <DropdownMenu.Content
                         className={css({
                             minWidth: '200px',
-                            background: 'white',
+                            background: 'surfaceElevated',
                             borderRadius: 'xl',
                             border: '1px solid',
-                            borderColor: 'rgba(224,123,83,0.2)',
+                            borderColor: 'border',
                             padding: '2',
                             boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
                             zIndex: 100,
@@ -140,8 +140,9 @@ export function HeaderAuth() {
                                     outline: 'none',
                                     cursor: 'pointer',
                                     transition: 'all 150ms ease',
+                                    background: 'surfaceElevated',
                                     _hover: {
-                                        background: 'rgba(108,92,231,0.08)',
+                                        background: 'accentSoft',
                                     },
                                 })}
                             >
@@ -166,8 +167,9 @@ export function HeaderAuth() {
                                     outline: 'none',
                                     cursor: 'pointer',
                                     transition: 'all 150ms ease',
+                                    background: 'surfaceElevated',
                                     _hover: {
-                                        background: 'rgba(224,123,83,0.08)',
+                                        background: 'accentSoft',
                                     },
                                 })}
                             >
@@ -192,8 +194,9 @@ export function HeaderAuth() {
                                     outline: 'none',
                                     cursor: 'pointer',
                                     transition: 'all 150ms ease',
+                                    background: 'surfaceElevated',
                                     _hover: {
-                                        background: 'rgba(224,123,83,0.08)',
+                                        background: 'accentSoft',
                                     },
                                 })}
                             >
@@ -218,8 +221,9 @@ export function HeaderAuth() {
                                     outline: 'none',
                                     cursor: 'pointer',
                                     transition: 'all 150ms ease',
+                                    background: 'surfaceElevated',
                                     _hover: {
-                                        background: 'rgba(224,123,83,0.08)',
+                                        background: 'accentSoft',
                                     },
                                 })}
                             >
@@ -244,8 +248,9 @@ export function HeaderAuth() {
                                     outline: 'none',
                                     cursor: 'pointer',
                                     transition: 'all 150ms ease',
+                                    background: 'surfaceElevated',
                                     _hover: {
-                                        background: 'rgba(224,123,83,0.08)',
+                                        background: 'accentSoft',
                                     },
                                 })}
                             >
@@ -257,7 +262,7 @@ export function HeaderAuth() {
                         <DropdownMenu.Separator
                             className={css({
                                 height: '1px',
-                                background: 'rgba(224,123,83,0.2)',
+                                background: 'border',
                                 margin: '2',
                             })}
                         />
@@ -273,7 +278,7 @@ export function HeaderAuth() {
                                     borderRadius: 'lg',
                                     fontSize: 'sm',
                                     fontFamily: 'body',
-                                    color: 'red.500',
+                                    color: 'accentHover',
                                     textDecoration: 'none',
                                     outline: 'none',
                                     cursor: 'pointer',
@@ -282,7 +287,7 @@ export function HeaderAuth() {
                                     border: 'none',
                                     background: 'transparent',
                                     _hover: {
-                                        background: 'rgba(224,123,83,0.08)',
+                                        background: 'accentSoft',
                                     },
                                 })}
                             >

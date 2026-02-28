@@ -67,16 +67,16 @@ export function HeaderSearch() {
                         paddingLeft: '10',
                         borderRadius: 'full',
                         border: '1px solid',
-                        borderColor: 'rgba(224,123,83,0.3)',
-                        background: 'white',
+                        borderColor: 'border',
+                        background: 'surfaceElevated',
                         fontSize: 'sm',
                         fontFamily: 'body',
                         outline: 'none',
                         transition: 'all 150ms ease',
                         _placeholder: { color: 'text-muted' },
                         _focus: {
-                            borderColor: '#e07b53',
-                            boxShadow: '0 0 0 3px rgba(224,123,83,0.1)',
+                            borderColor: 'accent',
+                            boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
                         },
                     })}
                 />
@@ -87,9 +87,10 @@ export function HeaderSearch() {
                         top: '50%',
                         transform: 'translateY(-50%)',
                         pointerEvents: 'none',
+                        color: 'text-muted',
                     })}
                 >
-                    <Search size={18} color="#999" />
+                    <Search size={18} color="currentColor" />
                 </span>
             </form>
 
@@ -100,10 +101,10 @@ export function HeaderSearch() {
                         top: 'calc(100% + 8px)',
                         left: 0,
                         right: 0,
-                        bg: 'white',
+                        bg: 'surfaceElevated',
                         borderRadius: 'xl',
                         border: '1px solid',
-                        borderColor: 'rgba(224,123,83,0.2)',
+                        borderColor: 'border',
                         boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
                         zIndex: 50,
                     })}
@@ -143,12 +144,14 @@ export function HeaderSearch() {
                                             padding: '2.5',
                                             fontFamily: 'body',
                                             fontSize: 'sm',
-                                            border: '1px solid transparent',
-                                            bg: 'rgba(224,123,83,0.05)',
+                                            border: '1px solid',
+                                            borderColor: 'transparent',
+                                            bg: 'surface',
                                             cursor: 'pointer',
-                                            transition: 'border 150ms ease',
+                                            transition: 'border 150ms ease, background 150ms ease',
                                             _hover: {
-                                                borderColor: 'rgba(224,123,83,0.3)',
+                                                borderColor: 'border',
+                                                background: 'surfaceElevated',
                                             },
                                         })}
                                     >
@@ -171,12 +174,13 @@ export function HeaderSearch() {
                             onMouseDown={() => navigateToSearch(trimmedQuery)}
                             className={css({
                                 width: '100%',
-                                borderTop: '1px solid rgba(0,0,0,0.05)',
+                                borderTop: '1px solid',
+                                borderColor: 'border',
                                 px: '3',
                                 py: '2',
                                 fontSize: 'xs',
                                 fontWeight: '600',
-                                color: 'primary',
+                                color: 'accent',
                                 textAlign: 'left',
                             })}
                         >

@@ -38,6 +38,7 @@
         "@pandacss/dev": "^1.8.2",
         "@prisma/adapter-pg": "^7.4.0",
         "@prisma/client": "^7.4.0",
+        "@radix-ui/colors": "^3.0.0",
         "@styled-system/css": "^5.1.5",
         "@trigger.dev/build": "^4.4.1",
         "@trigger.dev/core": "^4.4.1",

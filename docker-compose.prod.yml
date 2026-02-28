@@ -66,8 +66,7 @@ services:
             DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/live_kitchenpace}
             OPENSEARCH_URL: http://opensearch:9200
             OPENSEARCH_INDEX: recipes
-            TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN}
-            TRIGGER_API_URL: http://app:3000
+            TRIGGER_API_URL: ${TRIGGER_API_URL}
             TRIGGER_WORKER_TOKEN: ${TRIGGER_WORKER_TOKEN}
             MANAGED_WORKER_SECRET: ${MANAGED_WORKER_SECRET}
             DOCKER_HOST: unix:///var/run/docker.sock

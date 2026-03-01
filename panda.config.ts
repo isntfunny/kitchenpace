@@ -114,6 +114,99 @@ export default defineConfig({
                             _dark: '{colors.brand.primary-dark}',
                         },
                     },
+                    'surface.elevated': {
+                        value: {
+                            base: '{colors.brand.card-light}',
+                            _dark: '{colors.brand.card-dark}',
+                        },
+                    },
+                    'surface.card': {
+                        value: {
+                            base: '{colors.brand.card-light}',
+                            _dark: '{colors.brand.card-dark}',
+                        },
+                    },
+                    'border.primary': {
+                        value: {
+                            base: '{colors.brand.primary}',
+                            _dark: '{colors.brand.primary-dark}',
+                        },
+                    },
+                    'border.secondary': {
+                        value: {
+                            base: '{colors.brand.secondary}',
+                            _dark: '{colors.brand.secondary}',
+                        },
+                    },
+                    'border.muted': {
+                        value: {
+                            base: 'rgba(0,0,0,0.04)',
+                            _dark: '#22262c',
+                        },
+                    },
+                    'text.muted': {
+                        value: {
+                            base: '{colors.brand.text-muted}',
+                            _dark: '{colors.brand.text-muted-dark}',
+                        },
+                    },
+                    'text.primary': {
+                        value: {
+                            base: '{colors.brand.text}',
+                            _dark: '{colors.brand.text-dark}',
+                        },
+                    },
+                    'text.secondary': {
+                        value: {
+                            base: '{colors.brand.text-muted}',
+                            _dark: '{colors.brand.text-muted-dark}',
+                        },
+                    },
+                    'text.accent': {
+                        value: {
+                            base: '{colors.brand.accent}',
+                            _dark: '{colors.brand.accent}',
+                        },
+                    },
+                    'text.primary-hover': {
+                        value: {
+                            base: '{colors.brand.primary}',
+                            _dark: '{colors.brand.primary-dark}',
+                        },
+                    },
+                    'button.primary': {
+                        value: {
+                            base: '{colors.brand.primary}',
+                            _dark: '{colors.brand.primary-dark}',
+                        },
+                    },
+                    'button.primary-hover': {
+                        value: {
+                            base: '{colors.brand.primary-dark}',
+                            _dark: '{colors.brand.primary}',
+                        },
+                    },
+                    'button.secondary': {
+                        value: {
+                            base: '{colors.brand.secondary}',
+                            _dark: '{colors.brand.secondary}',
+                        },
+                    },
+                    'button.secondary-hover': {
+                        value: {
+                            base: 'rgba(0,0,0,0.08)',
+                            _dark: 'rgba(255,255,255,0.08)',
+                        },
+                    },
+                    'shadow.small': {
+                        value: '0 2px 8px rgba(0,0,0,0.06)',
+                    },
+                    'shadow.medium': {
+                        value: '0 4px 24px rgba(0,0,0,0.08)',
+                    },
+                    'shadow.large': {
+                        value: '0 40px 120px rgba(0,0,0,0.15)',
+                    },
                 },
             },
 
@@ -126,8 +219,4 @@ export default defineConfig({
             },
         },
     },
-
-    jsxFramework: 'react',
-
-    outdir: 'styled-system',
 });

@@ -160,9 +160,9 @@ export default async function Home() {
                     textAlign: 'center',
                     fontFamily: 'body',
                     fontSize: 'sm',
-                    color: 'text-muted',
-                    bg: '#fffcf9',
-                    boxShadow: '0 -4px 24px rgba(0,0,0,0.04)',
+                    color: 'muted',
+                    background: 'surface.card',
+                    boxShadow: 'shadow.medium',
                 })}
             >
                 <div

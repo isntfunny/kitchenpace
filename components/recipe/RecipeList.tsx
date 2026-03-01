@@ -1,9 +1,14 @@
 'use client';
 
+'use client';
+
 import Link from 'next/link';
 import { useState } from 'react';
 
 import type { UserRecipe } from '@/app/actions/user';
+import { Button } from '@/components/atoms/Button';
+import { css } from 'styled-system/css';
+
 
 interface RecipeListProps {
     recipes: UserRecipe[];
@@ -84,113 +89,77 @@ export function RecipeList({ recipes }: RecipeListProps) {
     return (
         <div>
             <div
-                style={{
+                className={css({
                     display: 'flex',
                     flexWrap: 'wrap',
                     gap: '1rem',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     marginBottom: '1.5rem',
-                }}
+                })}
             >
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className={css({ display: 'flex', gap: '0.5rem' })}>
                     {(['ALL', 'DRAFT', 'PUBLISHED'] as const).map((f) => (
-                        <button
+                        <Button
                             key={f}
+                            variant={filter === f ? 'primary' : 'secondary'}
+                            size="sm"
                             onClick={() => setFilter(f)}
-                            style={{
-                                padding: '0.5rem 1rem',
-                                borderRadius: '9999px',
-                                fontSize: '0.875rem',
-                                fontWeight: 500,
-                                transition: 'all 150ms ease',
-                                background:
-                                    filter === f
-                                        ? 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)'
-                                        : '#f5f5f5',
-                                color: filter === f ? 'white' : '#666',
-                                border: 'none',
-                                cursor: 'pointer',
-                            }}
                         >
                             {f === 'ALL' ? 'Alle' : f === 'DRAFT' ? 'Entwürfe' : 'Veröffentlicht'}
-                        </button>
+                        </Button>
                     ))}
                 </div>
 
                 {selectedIds.size > 0 && (
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                            onClick={handleBulkPublish}
-                            style={{
-                                padding: '0.5rem 1rem',
-                                borderRadius: '9999px',
-                                fontSize: '0.875rem',
-                                fontWeight: 600,
-                                background: '#00b894',
-                                color: 'white',
-                                border: 'none',
-                                cursor: 'pointer',
-                            }}
-                        >
+                    <div className={css({ display: 'flex', gap: '0.5rem' })}>
+                        <Button variant="primary" size="sm" onClick={handleBulkPublish}>
                             {selectedIds.size} veröffentlichen
-                        </button>
-                        <button
-                            onClick={handleBulkDraft}
-                            style={{
-                                padding: '0.5rem 1rem',
-                                borderRadius: '9999px',
-                                fontSize: '0.875rem',
-                                fontWeight: 600,
-                                background: '#6c5ce7',
-                                color: 'white',
-                                border: 'none',
-                                cursor: 'pointer',
-                            }}
-                        >
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={handleBulkDraft}>
                             {selectedIds.size} als Entwurf
-                        </button>
+                        </Button>
                     </div>
                 )}
             </div>
 
             {filteredRecipes.length === 0 ? (
                 <div
-                    style={{
+                    className={css({
                         textAlign: 'center',
                         padding: '3rem',
-                        color: '#666',
-                    }}
+                        color: 'muted',
+                    })}
                 >
-                    <p style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>
+                    <p className={css({ fontSize: '1.125rem', marginBottom: '0.5rem' })}>
                         Keine Rezepte gefunden
                     </p>
                     <Link
                         href="/recipe/create"
-                        style={{
-                            color: '#e07b53',
+                        className={css({
+                            color: 'accent',
                             textDecoration: 'underline',
-                        }}
+                        })}
                     >
                         Erstelle dein erstes Rezept
                     </Link>
                 </div>
             ) : (
                 <div
-                    style={{
+                    className={css({
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
                         gap: '1rem',
-                    }}
+                    })}
                 >
                     <div
-                        style={{
+                        className={css({
                             display: 'flex',
                             alignItems: 'center',
                             padding: '1rem',
-                            borderRadius: '0.75rem',
-                            background: '#f9f9f9',
-                        }}
+                            borderRadius: 'md',
+                            background: 'surface.card',
+                        })}
                     >
                         <input
                             type="checkbox"
@@ -199,84 +168,86 @@ export function RecipeList({ recipes }: RecipeListProps) {
                                 filteredRecipes.length > 0
                             }
                             onChange={handleSelectAll}
-                            style={{
+                            className={css({
                                 width: '1.25rem',
                                 height: '1.25rem',
                                 marginRight: '0.75rem',
                                 cursor: 'pointer',
-                            }}
+                            })}
                         />
-                        <span style={{ color: '#666', fontSize: '0.875rem' }}>Alle auswählen</span>
+                        <span className={css({ color: 'muted', fontSize: '0.875rem' })}>
+                            Alle auswählen
+                        </span>
                     </div>
 
                     {filteredRecipes.map((recipe) => (
                         <div
                             key={recipe.id}
-                            style={{
+                            className={css({
                                 display: 'flex',
                                 alignItems: 'flex-start',
                                 gap: '1rem',
                                 padding: '1rem',
-                                borderRadius: '0.75rem',
-                                background: 'var(--colors-surface-elevated)',
+                                borderRadius: 'md',
+                                background: 'surface.elevated',
                                 border: selectedIds.has(recipe.id)
-                                    ? '2px solid var(--colors-primary)'
-                                    : '1px solid var(--colors-border)',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                            }}
+                                    ? '2px solid primary'
+                                    : '1px solid border',
+                                boxShadow: 'shadow.small',
+                            })}
                         >
                             <input
                                 type="checkbox"
                                 checked={selectedIds.has(recipe.id)}
                                 onChange={() => handleSelect(recipe.id)}
-                                style={{
+                                className={css({
                                     width: '1.25rem',
                                     height: '1.25rem',
                                     marginTop: '0.25rem',
                                     cursor: 'pointer',
-                                }}
+                                })}
                             />
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <Link
                                     href={`/recipe/${recipe.id}`}
-                                    style={{
+                                    className={css({
                                         display: 'block',
                                         fontWeight: 600,
                                         fontSize: '1rem',
-                                        color: '#333',
+                                        color: 'text',
                                         textDecoration: 'none',
                                         marginBottom: '0.25rem',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
-                                    }}
+                                    })}
                                 >
                                     {recipe.title}
                                 </Link>
                                 <div
-                                    style={{
+                                    className={css({
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '0.5rem',
                                         fontSize: '0.75rem',
-                                        color: '#666',
-                                    }}
+                                        color: 'muted',
+                                    })}
                                 >
                                     <span
-                                        style={{
+                                        className={css({
                                             padding: '0.125rem 0.5rem',
-                                            borderRadius: '9999px',
+                                            borderRadius: 'md',
                                             fontSize: '0.7rem',
                                             fontWeight: 600,
                                             background:
                                                 recipe.status === 'PUBLISHED'
-                                                    ? 'rgba(0,184,148,0.15)'
-                                                    : 'rgba(108,92,231,0.15)',
+                                                    ? 'green-100'
+                                                    : 'purple-100',
                                             color:
                                                 recipe.status === 'PUBLISHED'
-                                                    ? '#00b894'
-                                                    : '#6c5ce7',
-                                        }}
+                                                    ? 'green-800'
+                                                    : 'purple-800',
+                                        })}
                                     >
                                         {recipe.status === 'PUBLISHED'
                                             ? 'Veröffentlicht'
@@ -293,15 +264,15 @@ export function RecipeList({ recipes }: RecipeListProps) {
                             </div>
                             <Link
                                 href={`/recipe/${recipe.id}`}
-                                style={{
+                                className={css({
                                     padding: '0.5rem',
-                                    borderRadius: '0.5rem',
-                                    background: '#f5f5f5',
-                                    color: '#666',
+                                    borderRadius: 'sm',
+                                    background: 'surface.card',
+                                    color: 'muted',
                                     textDecoration: 'none',
                                     fontSize: '0.75rem',
                                     fontWeight: 500,
-                                }}
+                                })}
                             >
                                 Bearbeiten
                             </Link>

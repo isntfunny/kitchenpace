@@ -166,7 +166,7 @@ export function PushSubscriptionToggle() {
                     border: '1px dashed',
                     borderColor: 'border',
                     padding: '4',
-                    background: 'surfaceElevated',
+                    background: 'surface.elevated',
                     color: 'text-muted',
                     fontSize: 'sm',
                 })}
@@ -182,7 +182,7 @@ export function PushSubscriptionToggle() {
                 borderRadius: '2xl',
                 border: '1px solid rgba(224,123,83,0.25)',
                 padding: '4',
-                background: 'surfaceElevated',
+                background: 'surface.elevated',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '3',

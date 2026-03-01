@@ -101,7 +101,7 @@ export function HeaderSearch() {
                         top: 'calc(100% + 8px)',
                         left: 0,
                         right: 0,
-                        bg: 'surfaceElevated',
+                        background: 'surface.elevated',
                         borderRadius: 'xl',
                         border: '1px solid',
                         borderColor: 'border',

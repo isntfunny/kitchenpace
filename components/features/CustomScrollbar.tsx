@@ -24,7 +24,7 @@ export function CustomScrollbar({
                     overflowX: isHorizontal ? 'auto' : 'hidden',
                     overflowY: isHorizontal ? 'hidden' : 'auto',
                     scrollbarWidth: 'thin',
-                    scrollbarColor: '{colors.primary} {colors.surface.elevated}',
+                    scrollbarColor: '{primary} {surface.elevated}',
 
                     '&::-webkit-scrollbar': {
                         height: isHorizontal ? '6px' : undefined,

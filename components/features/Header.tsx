@@ -66,38 +66,37 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
     return (
         <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-                <button
-                    aria-label="Weitere Navigation öffnen"
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '2',
-                        padding: '2',
-                        minWidth: '44px',
-                        minHeight: '44px',
-                        borderRadius: 'lg',
-                        border: '1px solid',
-                        borderColor: 'border',
-                        background: 'surface.elevated',
-                        color: 'foreground',
-                        cursor: 'pointer',
-                        fontSize: 'sm',
-                        fontWeight: '500',
-                        transition: 'all 150ms ease',
-                        _hover: {
-                            background: 'accent.soft',
-                            color: 'primary',
-                        },
-                        _focusVisible: {
-                            boxShadow: '0 0 0 3px rgba(224,123,83,0.35)',
-                        },
-                    })}
-                >
+<div
+                className={css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2',
+                    padding: '2',
+                    minWidth: '44px',
+                    minHeight: '44px',
+                    borderRadius: 'lg',
+                    border: '1px solid',
+                    borderColor: 'border',
+                    background: 'surface.elevated',
+                    color: 'text',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    transition: 'all 150ms ease',
+                    _hover: {
+                        background: 'accentSoft',
+                        color: 'primary',
+                    },
+                    _focusVisible: {
+                        boxShadow: '0 0 0 3px rgba(224,123,83,0.35)',
+                    },
+                })}
+            >
                     <Menu size={18} />
                     <span className={css({ display: { base: 'none', sm: 'inline-flex' } })}>
                         Entdecken
                     </span>
-                </button>
+                </div>
             </DropdownMenu.Trigger>
 
             <DropdownMenu.Portal>

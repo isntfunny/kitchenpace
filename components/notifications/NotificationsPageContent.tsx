@@ -57,7 +57,7 @@ export function NotificationsPageContent() {
                             paddingY: '2',
                             border: '1px solid',
                             borderColor: 'border',
-                            background: 'surfaceElevated',
+                            background: 'surface.elevated',
                             fontWeight: '600',
                             fontSize: 'sm',
                             cursor: 'pointer',

@@ -42,7 +42,7 @@ export function NotificationBell() {
                         borderRadius: 'lg',
                         border: '1px solid',
                         borderColor: 'border',
-                        background: 'surfaceElevated',
+                        background: 'surface.elevated',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

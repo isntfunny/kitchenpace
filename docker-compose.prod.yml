@@ -16,6 +16,17 @@ services:
             timeout: 5s
             retries: 5
 
+    redis:
+        image: redis:7-alpine
+        container_name: kitchenpace-redis
+        volumes:
+            - redis_data:/data
+        healthcheck:
+            test: ['CMD-SHELL', 'redis-cli ping | grep PONG']
+            interval: 10s
+            timeout: 3s
+            retries: 5
+
     opensearch:
         image: opensearchproject/opensearch:3.0.0
         container_name: kitchenpace-opensearch
@@ -55,10 +66,11 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
+            redis:
+                condition: service_healthy
             opensearch:
                 condition: service_healthy
         restart: unless-stopped
-
 
     worker:
         build:
@@ -67,21 +79,27 @@ services:
             target: worker
             args:
                 DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/live_kitchenpace}
-                TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
-                TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN:-}
+                REDIS_HOST: redis
+                REDIS_PORT: 6379
+                REDIS_PASSWORD: ${REDIS_PASSWORD:-}
         container_name: kitchenpace-worker
         depends_on:
             postgres:
+                condition: service_healthy
+            redis:
                 condition: service_healthy
             opensearch:
                 condition: service_healthy
         restart: unless-stopped
         environment:
+            DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/live_kitchenpace}
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+            REDIS_PASSWORD: ${REDIS_PASSWORD:-}
             OPENSEARCH_URL: http://opensearch:9200
             OPENSEARCH_INDEX: recipes
-            TRIGGER_API_URL: ${TRIGGER_API_URL:-https://task-trigger.isntfunny.de}
-            TRIGGER_ACCESS_TOKEN: ${TRIGGER_ACCESS_TOKEN:-}
 
 volumes:
     postgres_data:
+    redis_data:
     opensearch_data:

@@ -73,6 +73,24 @@ const workerRegistrations: WorkerRegistration[] = [
 
 const workers: Worker[] = [];
 
+export interface WorkerDefinitionSummary {
+    name: string;
+    queue: QueueName;
+    concurrency: number;
+    limiter?: WorkerOptions['limiter'];
+}
+
+export function getWorkerDefinitions(): WorkerDefinitionSummary[] {
+    const defaultConcurrency = DEFAULT_WORKER_OPTIONS.concurrency ?? 1;
+
+    return workerRegistrations.map((registration) => ({
+        name: registration.name,
+        queue: registration.queue,
+        concurrency: registration.options?.concurrency ?? defaultConcurrency,
+        limiter: registration.options?.limiter ?? DEFAULT_WORKER_OPTIONS.limiter,
+    }));
+}
+
 export function startWorkers(): void {
     console.log('[Worker] Starting BullMQ workers...');
 

@@ -60,173 +60,138 @@ export default async function AdminHomePage() {
 
     return (
         <PageShell>
-            <div
-                className={css({
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10',
-                    width: '100%',
-                })}
-            >
+            <div className={css({ display: 'flex', flexDirection: 'column', gap: '6' })}>
                 <section
                     className={css({
-                        borderRadius: '2.5rem',
+                        borderRadius: '2xl',
                         borderWidth: '1px',
-                        borderColor: 'rgba(255,255,255,0.1)',
-                        background:
-                            'linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(30,41,59,0.75) 50%, rgba(15,23,42,0.6) 100%)',
-                        padding: '8',
-                        boxShadow: '0 25px 80px rgba(15,23,42,0.55)',
+                        borderColor: 'border.muted',
+                        background: 'surface',
+                        padding: { base: '4', md: '6' },
+                        display: 'flex',
+                        flexDirection: { base: 'column', md: 'row' },
+                        gap: '4',
                     })}
                 >
-                    <div
-                        className={css({
-                            display: 'flex',
-                            flexDirection: { base: 'column', lg: 'row' },
-                            gap: '6',
-                            justifyContent: 'space-between',
-                            alignItems: { lg: 'center' },
-                        })}
-                    >
-                        <div>
-                            <p
-                                className={css({
-                                    fontSize: 'xs',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.6em',
-                                    color: '#94a3b8',
-                                })}
-                            >
-                                Admin Center
-                            </p>
-                            <h1
-                                className={css({
-                                    marginTop: '2',
-                                    fontSize: '4xl',
-                                    fontWeight: 'semibold',
-                                    color: 'white',
-                                })}
-                            >
-                                Willkommen zurück, {greetingName}
-                            </h1>
-                            <p
-                                className={css({
-                                    marginTop: '3',
-                                    maxWidth: '3xl',
-                                    fontSize: 'sm',
-                                    color: '#cbd5f5',
-                                })}
-                            >
-                                Überwache kritische Prozesse, schaue dir die letzten Fehler an und
-                                schalte zwischen Scheduler- und Systemansichten.
-                            </p>
-                            <div
-                                className={css({
-                                    marginTop: '5',
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                    gap: '3',
-                                })}
-                            >
-                                <Link
-                                    href="/admin/worker"
-                                    className={css({
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '2',
-                                        borderRadius: 'full',
-                                        borderWidth: '1px',
-                                        borderColor: 'rgba(255,255,255,0.2)',
-                                        background: 'rgba(255,255,255,0.1)',
-                                        px: '4',
-                                        py: '2',
-                                        fontSize: 'xs',
-                                        fontWeight: 'semibold',
-                                        letterSpacing: '0.3em',
-                                        textTransform: 'uppercase',
-                                        color: 'white',
-                                        textDecoration: 'none',
-                                        transition: 'border-color 200ms ease',
-                                        _hover: {
-                                            borderColor: 'rgba(255,255,255,0.4)',
-                                        },
-                                    })}
-                                >
-                                    <ShieldCheck size={14} />
-                                    <span>Worker Dashboard</span>
-                                </Link>
-                                <Link
-                                    href="/admin/worker?queue=scheduled"
-                                    className={css({
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '2',
-                                        borderRadius: 'full',
-                                        borderWidth: '1px',
-                                        borderColor: 'rgba(71,85,105,0.8)',
-                                        background: 'rgba(15,23,42,0.4)',
-                                        px: '4',
-                                        py: '2',
-                                        fontSize: 'xs',
-                                        fontWeight: 'semibold',
-                                        letterSpacing: '0.3em',
-                                        textTransform: 'uppercase',
-                                        color: '#cbd5f5',
-                                        textDecoration: 'none',
-                                        transition: 'border-color 200ms ease',
-                                        _hover: {
-                                            borderColor: 'rgba(148,163,184,0.7)',
-                                        },
-                                    })}
-                                >
-                                    <Clock3 size={14} />
-                                    <span>Geplante Jobs</span>
-                                </Link>
-                            </div>
-                        </div>
-                        <div
+                    <div>
+                        <p
                             className={css({
-                                borderRadius: '3xl',
-                                borderWidth: '1px',
-                                borderColor: 'rgba(255,255,255,0.1)',
-                                background: 'rgba(255,255,255,0.05)',
-                                padding: '6',
-                                textAlign: 'right',
+                                fontSize: 'xs',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5em',
+                                color: 'foreground.muted',
+                                marginBottom: '2',
                             })}
                         >
-                            <p
+                            Admin Center
+                        </p>
+                        <h1
+                            className={css({
+                                fontSize: { base: '3xl', md: '4xl' },
+                                fontWeight: 'semibold',
+                                color: 'foreground',
+                            })}
+                        >
+                            Willkommen zurück, {greetingName}
+                        </h1>
+                        <p
+                            className={css({
+                                maxWidth: '3xl',
+                                color: 'foreground.muted',
+                                marginTop: '2',
+                            })}
+                        >
+                            Überwache kritische Prozesse, schaue dir die letzten Fehler an und
+                            schalte zwischen Scheduler- und Systemansichten.
+                        </p>
+                        <div
+                            className={css({
+                                marginTop: '3',
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '3',
+                            })}
+                        >
+                            <Link
+                                href="/admin/worker"
                                 className={css({
-                                    fontSize: 'xs',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                    borderRadius: 'full',
+                                    borderWidth: '1px',
+                                    borderColor: 'border',
+                                    paddingX: '4',
+                                    paddingY: '2',
                                     textTransform: 'uppercase',
-                                    letterSpacing: '0.5em',
-                                    color: '#94a3b8',
-                                })}
-                            >
-                                Fehlerrate
-                            </p>
-                            <p
-                                className={css({
-                                    fontSize: '3xl',
+                                    letterSpacing: '0.3em',
+                                    fontSize: 'xs',
                                     fontWeight: 'semibold',
-                                    color: 'white',
+                                    color: 'foreground',
+                                    background: 'surface.elevated',
+                                    textDecoration: 'none',
                                 })}
                             >
-                                {statusCounts.FAILED ?? 0}
-                            </p>
-                            <p className={css({ fontSize: 'xs', color: '#94a3b8' })}>
-                                der letzten 12 Jobläufe
-                            </p>
+                                <ShieldCheck size={14} />
+                                <span>Worker Dashboard</span>
+                            </Link>
+                            <Link
+                                href="/admin/worker?queue=scheduled"
+                                className={css({
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                    borderRadius: 'full',
+                                    borderWidth: '1px',
+                                    borderColor: 'border.muted',
+                                    paddingX: '4',
+                                    paddingY: '2',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.3em',
+                                    fontSize: 'xs',
+                                    fontWeight: 'semibold',
+                                    color: 'foreground.muted',
+                                    textDecoration: 'none',
+                                })}
+                            >
+                                <Clock3 size={14} />
+                                <span>Geplante Jobs</span>
+                            </Link>
                         </div>
+                    </div>
+                    <div className={css({ marginLeft: { md: 'auto' } })}>
+                        <p
+                            className={css({
+                                fontSize: 'xs',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.4em',
+                                color: 'foreground.muted',
+                            })}
+                        >
+                            Fehlerrate
+                        </p>
+                        <p
+                            className={css({
+                                fontSize: '3xl',
+                                fontWeight: 'semibold',
+                                color: 'foreground',
+                            })}
+                        >
+                            {statusCounts.FAILED ?? 0}
+                        </p>
+                        <p className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
+                            der letzten 12 Jobläufe
+                        </p>
                     </div>
                 </section>
 
                 <section
                     className={css({
                         display: 'grid',
-                        gap: '4',
+                        gap: '3',
                         gridTemplateColumns: {
-                            base: '1fr',
-                            sm: 'repeat(2, minmax(0, 1fr))',
+                            base: 'repeat(2, minmax(0, 1fr))',
+                            sm: 'repeat(3, minmax(0, 1fr))',
                             lg: 'repeat(4, minmax(0, 1fr))',
                         },
                     })}
@@ -237,13 +202,14 @@ export default async function AdminHomePage() {
                             <div
                                 key={status}
                                 className={css({
-                                    borderRadius: '3xl',
+                                    borderRadius: '2xl',
                                     borderWidth: '1px',
-                                    borderColor: 'rgba(255,255,255,0.05)',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    padding: '5',
-                                    boxShadow: '0 25px 60px rgba(15,23,42,0.25)',
-                                    backdropFilter: 'blur(16px)',
+                                    borderColor: 'border.muted',
+                                    background: 'surface.elevated',
+                                    padding: '4',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '1',
                                 })}
                             >
                                 <p
@@ -251,27 +217,25 @@ export default async function AdminHomePage() {
                                         fontSize: 'xs',
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.4em',
-                                        color: '#94a3b8',
+                                        color: 'foreground.muted',
                                     })}
                                 >
                                     {details.label}
                                 </p>
                                 <p
                                     className={css({
-                                        marginTop: '3',
-                                        fontSize: '3xl',
+                                        fontSize: '2xl',
                                         fontWeight: 'semibold',
-                                        color: 'white',
+                                        color: 'foreground',
                                     })}
                                 >
                                     {statusCounts[status] ?? 0}
                                 </p>
                                 <div
                                     className={css({
-                                        marginTop: '3',
-                                        height: '1.5',
+                                        height: '1',
                                         borderRadius: 'full',
-                                        background: 'rgba(255,255,255,0.1)',
+                                        background: 'border.muted',
                                     })}
                                 >
                                     <div
@@ -286,12 +250,14 @@ export default async function AdminHomePage() {
 
                 <section
                     className={css({
-                        borderRadius: '3xl',
+                        borderRadius: '2xl',
                         borderWidth: '1px',
-                        borderColor: 'rgba(255,255,255,0.1)',
-                        background: 'rgba(255,255,255,0.05)',
-                        padding: '6',
-                        boxShadow: '0 30px 80px rgba(15,23,42,0.35)',
+                        borderColor: 'border.muted',
+                        background: 'surface.elevated',
+                        padding: '4',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '3',
                     })}
                 >
                     <div
@@ -307,34 +273,30 @@ export default async function AdminHomePage() {
                                     fontSize: 'xs',
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.4em',
-                                    color: '#94a3b8',
+                                    color: 'foreground.muted',
                                 })}
                             >
                                 Schnellzugriff
                             </p>
                             <h2
                                 className={css({
-                                    fontSize: '2xl',
+                                    fontSize: 'lg',
                                     fontWeight: 'semibold',
-                                    color: 'white',
+                                    color: 'foreground',
                                 })}
                             >
                                 Schnelle Aktionen
                             </h2>
                         </div>
-                        <span className={css({ fontSize: 'xs', color: '#94a3b8' })}>
+                        <span className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
                             Alle Links öffnen neue Steueransichten
                         </span>
                     </div>
                     <div
                         className={css({
-                            marginTop: '6',
                             display: 'grid',
-                            gap: '4',
-                            gridTemplateColumns: {
-                                base: '1fr',
-                                md: 'repeat(3, minmax(0, 1fr))',
-                            },
+                            gap: '3',
+                            gridTemplateColumns: { base: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
                         })}
                     >
                         {ADMIN_ACTIONS.map((action) => (
@@ -342,51 +304,49 @@ export default async function AdminHomePage() {
                                 key={action.label}
                                 href={action.href}
                                 className={css({
-                                    borderRadius: '3xl',
+                                    borderRadius: '2xl',
                                     borderWidth: '1px',
-                                    borderColor: 'rgba(255,255,255,0.1)',
-                                    background: 'rgba(15,23,42,0.5)',
+                                    borderColor: 'border.muted',
+                                    background: 'surface',
                                     padding: '4',
                                     textDecoration: 'none',
-                                    transition: 'border-color 200ms ease',
-                                    _hover: {
-                                        borderColor: 'rgba(255,255,255,0.3)',
-                                    },
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3',
                                 })}
                             >
                                 <div
                                     className={css({
+                                        borderRadius: 'lg',
+                                        borderWidth: '1px',
+                                        borderColor: 'border',
+                                        padding: '2',
+                                        background: 'surface.elevated',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '3',
+                                        justifyContent: 'center',
                                     })}
                                 >
-                                    <div
+                                    <action.icon size={18} />
+                                </div>
+                                <div>
+                                    <p
                                         className={css({
-                                            borderRadius: '2xl',
-                                            borderWidth: '1px',
-                                            borderColor: 'rgba(255,255,255,0.1)',
-                                            background: 'rgba(255,255,255,0.05)',
-                                            padding: '3',
-                                            color: '#e2e8f0',
+                                            fontSize: 'sm',
+                                            fontWeight: 'semibold',
+                                            color: 'foreground',
                                         })}
                                     >
-                                        <action.icon className={css({ fontSize: 'lg' })} />
-                                    </div>
-                                    <div>
-                                        <p
-                                            className={css({
-                                                fontSize: 'sm',
-                                                fontWeight: 'semibold',
-                                                color: 'white',
-                                            })}
-                                        >
-                                            {action.label}
-                                        </p>
-                                        <p className={css({ fontSize: 'xs', color: '#94a3b8' })}>
-                                            {action.description}
-                                        </p>
-                                    </div>
+                                        {action.label}
+                                    </p>
+                                    <p
+                                        className={css({
+                                            fontSize: 'xs',
+                                            color: 'foreground.muted',
+                                        })}
+                                    >
+                                        {action.description}
+                                    </p>
                                 </div>
                             </Link>
                         ))}
@@ -395,12 +355,14 @@ export default async function AdminHomePage() {
 
                 <section
                     className={css({
-                        borderRadius: '3xl',
+                        borderRadius: '2xl',
                         borderWidth: '1px',
-                        borderColor: 'rgba(255,255,255,0.1)',
-                        background: 'rgba(15,23,42,0.6)',
-                        padding: '6',
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+                        borderColor: 'border.muted',
+                        background: 'surface.elevated',
+                        padding: '4',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '3',
                     })}
                 >
                     <div
@@ -416,63 +378,60 @@ export default async function AdminHomePage() {
                                     fontSize: 'xs',
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.4em',
-                                    color: '#94a3b8',
+                                    color: 'foreground.muted',
                                 })}
                             >
                                 Letzte Fehler
                             </p>
                             <h2
                                 className={css({
-                                    fontSize: '2xl',
+                                    fontSize: 'lg',
                                     fontWeight: 'semibold',
-                                    color: 'white',
+                                    color: 'foreground',
                                 })}
                             >
                                 Problematische Jobs
                             </h2>
                         </div>
-                        <span className={css({ fontSize: 'xs', color: '#6b7280' })}>
+                        <span className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
                             {recentFailures.length} Einträge
                         </span>
                     </div>
                     {recentFailures.length === 0 ? (
-                        <p className={css({ marginTop: '4', fontSize: 'sm', color: '#94a3b8' })}>
+                        <p className={css({ color: 'foreground.muted' })}>
                             Keine Fehler in diesem Zeitraum.
                         </p>
                     ) : (
                         <div
-                            className={css({
-                                marginTop: '4',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '3',
-                            })}
+                            className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}
                         >
                             {recentFailures.map((run) => (
                                 <div
                                     key={run.id}
                                     className={css({
-                                        borderRadius: '2xl',
+                                        borderRadius: 'xl',
                                         borderWidth: '1px',
-                                        borderColor: 'rgba(255,255,255,0.05)',
-                                        background: 'rgba(255,255,255,0.05)',
-                                        padding: '4',
+                                        borderColor: 'border',
+                                        background: 'surface',
+                                        padding: '3',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '1',
                                     })}
                                 >
                                     <div
                                         className={css({
                                             display: 'flex',
-                                            flexDirection: { base: 'column', md: 'row' },
-                                            gap: '1',
-                                            alignItems: { md: 'center' },
-                                            justifyContent: { md: 'space-between' },
+                                            justifyContent: 'space-between',
+                                            gap: '2',
+                                            flexWrap: 'wrap',
                                         })}
                                     >
                                         <p
                                             className={css({
                                                 fontSize: 'sm',
                                                 fontWeight: 'semibold',
-                                                color: 'white',
+                                                color: 'foreground',
                                             })}
                                         >
                                             {run.jobName}
@@ -480,9 +439,7 @@ export default async function AdminHomePage() {
                                         <span
                                             className={css({
                                                 fontSize: 'xs',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.3em',
-                                                color: '#fca5a5',
+                                                color: 'foreground.muted',
                                             })}
                                         >
                                             {getQueueLabel(run.queueName)} ·{' '}
@@ -491,9 +448,8 @@ export default async function AdminHomePage() {
                                     </div>
                                     <p
                                         className={css({
-                                            marginTop: '2',
                                             fontSize: 'sm',
-                                            color: '#cbd5f5',
+                                            color: 'foreground.muted',
                                         })}
                                     >
                                         {run.errorMessage ?? 'Keine Fehlermeldung verfügbar.'}

@@ -1,7 +1,7 @@
 import { getEmailQueue, getOpenSearchQueue, getScheduledQueue } from './queue';
 import { QueueName } from './types';
 
-interface ScheduledJob {
+export interface ScheduledJobDefinition {
     name: string;
     queue: QueueName;
     data: Record<string, unknown>;
@@ -14,7 +14,7 @@ interface ScheduledJob {
     };
 }
 
-const scheduledJobs: ScheduledJob[] = [
+const scheduledJobs: ScheduledJobDefinition[] = [
     {
         name: 'opensearch-sync',
         queue: QueueName.OPENSEARCH,
@@ -40,7 +40,7 @@ const scheduledJobs: ScheduledJob[] = [
 
 let schedulerInterval: NodeJS.Timeout | null = null;
 
-async function addRepeatableJob(job: ScheduledJob): Promise<void> {
+async function addRepeatableJob(job: ScheduledJobDefinition): Promise<void> {
     const queue = getQueueForName(job.queue);
 
     const jobName = job.name;
@@ -106,4 +106,17 @@ export async function triggerJobNow(
     const queue = getQueueForName(name);
     await queue.add(jobName, data);
     console.log(`[Scheduler] Triggered job: ${jobName}`);
+}
+
+export function getScheduledJobDefinitions(): ScheduledJobDefinition[] {
+    return scheduledJobs.map((job) => ({
+        ...job,
+        data: { ...job.data },
+        options: job.options
+            ? {
+                  ...job.options,
+                  repeat: job.options.repeat ? { ...job.options.repeat } : undefined,
+              }
+            : undefined,
+    }));
 }

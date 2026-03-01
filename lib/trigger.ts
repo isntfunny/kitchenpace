@@ -1,12 +1,10 @@
 import {
-    addOpenSearchSyncJob,
-    addSyncRecipeJob,
-    addSendEmailJob,
-    addTemplatedEmailJob,
-    addBatchEmailsJob,
-    addDailyRecipeJob,
-    addWeeklyNewsletterJob,
-} from '@/lib/queues';
+    sendEmailTask,
+    sendTemplatedEmailTask,
+    sendBatchEmailsTask,
+    type EmailTemplateType,
+} from '@/trigger/jobs/email';
+import { syncOpenSearch, syncRecipeToOpenSearch } from '@/trigger/jobs/opensearch';
 
 interface SendEmailPayload {
     to: string;
@@ -16,7 +14,7 @@ interface SendEmailPayload {
 
 interface SendTemplatedEmailPayload {
     to: string;
-    templateType: string;
+    templateType: EmailTemplateType;
     variables: Record<string, string>;
 }
 
@@ -25,34 +23,26 @@ interface BatchEmailPayload {
     concurrency?: number;
 }
 
-export const queue = {
+export const trigger = {
     syncOpenSearch: async (payload: { batchSize?: number } = {}) => {
-        await addOpenSearchSyncJob(payload);
+        return syncOpenSearch.trigger(payload);
     },
 
     syncRecipeToOpenSearch: async (recipeId: string) => {
-        await addSyncRecipeJob(recipeId);
+        return syncRecipeToOpenSearch.trigger({ recipeId });
     },
 
     sendEmail: async (payload: SendEmailPayload) => {
-        await addSendEmailJob(payload);
+        return sendEmailTask.trigger(payload);
     },
 
     sendTemplatedEmail: async (payload: SendTemplatedEmailPayload) => {
-        await addTemplatedEmailJob(payload);
+        return sendTemplatedEmailTask.trigger(payload);
     },
 
     sendBatchEmails: async (payload: BatchEmailPayload) => {
-        await addBatchEmailsJob(payload);
-    },
-
-    sendDailyRecipe: async (recipientEmail?: string) => {
-        await addDailyRecipeJob(recipientEmail);
-    },
-
-    sendWeeklyNewsletter: async (dryRun?: boolean) => {
-        await addWeeklyNewsletterJob(dryRun);
+        return sendBatchEmailsTask.trigger(payload);
     },
 };
 
-export { QueueName } from '@/lib/queues';
+export type { EmailTemplateType } from '@/trigger/jobs/email';

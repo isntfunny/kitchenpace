@@ -1,4 +1,4 @@
-FROM node:24-alpine AS deps
+FROM node:20-alpine AS deps
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY tsconfig.json ./
 
 RUN npm ci --include=dev
 
-FROM node:24-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN npx prisma generate
 
 RUN npm run build
 
-FROM node:24-alpine AS runner
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
@@ -40,9 +40,6 @@ ARG S3_SECRET_ACCESS_KEY
 ARG OPENSEARCH_URL
 ARG OPENSEARCH_USERNAME
 ARG OPENSEARCH_PASSWORD
-ARG REDIS_HOST
-ARG REDIS_PORT
-ARG REDIS_PASSWORD
 
 ENV NODE_ENV=production
 ENV DATABASE_URL=${DATABASE_URL}
@@ -57,9 +54,6 @@ ENV S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
 ENV OPENSEARCH_URL=${OPENSEARCH_URL}
 ENV OPENSEARCH_USERNAME=${OPENSEARCH_USERNAME}
 ENV OPENSEARCH_PASSWORD=${OPENSEARCH_PASSWORD}
-ENV REDIS_HOST=${REDIS_HOST}
-ENV REDIS_PORT=${REDIS_PORT}
-ENV REDIS_PASSWORD=${REDIS_PASSWORD}
 
 RUN addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nextjs
@@ -79,32 +73,26 @@ ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
 
-FROM node:24-alpine AS worker
+FROM node:20-alpine AS worker
 
 WORKDIR /app
 
 ARG DATABASE_URL
-ARG REDIS_HOST
-ARG REDIS_PORT
-ARG REDIS_PASSWORD
-ARG OPENSEARCH_URL
-ARG OPENSEARCH_USERNAME
-ARG OPENSEARCH_PASSWORD
+ARG TRIGGER_API_URL
+ARG TRIGGER_ACCESS_TOKEN
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
 COPY scripts ./scripts
 COPY lib ./lib
+COPY trigger ./trigger
 COPY tsconfig.json ./
 COPY prisma.config.ts ./
+COPY trigger.config.ts ./
 
 ENV DATABASE_URL=${DATABASE_URL}
-ENV REDIS_HOST=${REDIS_HOST}
-ENV REDIS_PORT=${REDIS_PORT}
-ENV REDIS_PASSWORD=${REDIS_PASSWORD}
-ENV OPENSEARCH_URL=${OPENSEARCH_URL}
-ENV OPENSEARCH_USERNAME=${OPENSEARCH_USERNAME}
-ENV OPENSEARCH_PASSWORD=${OPENSEARCH_PASSWORD}
+ENV TRIGGER_API_URL=${TRIGGER_API_URL}
+ENV TRIGGER_ACCESS_TOKEN=${TRIGGER_ACCESS_TOKEN}
 
-CMD ["npm", "run", "worker"]
+CMD ["npx", "trigger.dev@latest", "dev"]

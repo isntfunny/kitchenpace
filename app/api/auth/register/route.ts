@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 import { fireEvent } from '@/lib/events/fire';
 import { createLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
-import { queue } from '@/lib/trigger';
+import { trigger } from '@/lib/trigger';
 
 const log = createLogger('auth-register');
 
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
                 },
             });
 
-            await queue.sendTemplatedEmail({
+            await trigger.sendTemplatedEmail({
                 to: normalizedEmail,
                 templateType: 'welcome',
                 variables: {
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
             },
         });
 
-        await queue.sendTemplatedEmail({
+        await trigger.sendTemplatedEmail({
             to: normalizedEmail,
             templateType: 'welcome',
             variables: {

@@ -35,9 +35,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - `DATABASE_URL` - PostgreSQL Verbindung
 - `OPENSEARCH_URL` - Opensearch Verbindung
 - `OPENSEARCH_INDEX` - Standard Index für Rezepte
-- `TRIGGER_ACCESS_TOKEN` - Sicherheitstoken für Trigger.dev API
-- `TRIGGER_WORKER_TOKEN` - Worker-Token vom Trigger.dev Webapp (Bootstrap oder manuell erstellt)
-- `MANAGED_WORKER_SECRET` - Secret shared zwischen Supervisor und Webapp
+- `TRIGGER_ACCESS_TOKEN` - Sicherheitstoken
 
 ### Docker Volumes
 

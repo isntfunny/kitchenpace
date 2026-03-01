@@ -1,27 +1,27 @@
 'use server';
 
-import { queue } from '@/lib/trigger';
+import { trigger } from '@/lib/trigger';
 
 /**
- * Example usage of email queue functions
+ * Example usage of email trigger functions
  *
- * These functions can be called from anywhere in your app to queue emails
- * for processing by the BullMQ worker.
+ * These functions can be called from anywhere in your app to send emails
+ * via the Trigger.dev background worker.
  */
 
 // Simple email send
 export async function sendTestEmail(to: string) {
-    await queue.sendEmail({
+    const handle = await trigger.sendEmail({
         to,
         subject: 'Test Email',
         html: '<h1>Hello World!</h1><p>This is a test email.</p>',
     });
-    return { success: true };
+    return handle.id;
 }
 
 // Templated email - uses predefined templates
 export async function sendWelcomeEmail(to: string, name: string) {
-    await queue.sendTemplatedEmail({
+    const handle = await trigger.sendTemplatedEmail({
         to,
         templateType: 'welcome',
         variables: {
@@ -29,12 +29,12 @@ export async function sendWelcomeEmail(to: string, name: string) {
             appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
         },
     });
-    return { success: true };
+    return handle.id;
 }
 
 // Password reset email
 export async function sendPasswordResetEmailAction(to: string, name: string, resetLink: string) {
-    await queue.sendTemplatedEmail({
+    const handle = await trigger.sendTemplatedEmail({
         to,
         templateType: 'passwordReset',
         variables: {
@@ -42,7 +42,7 @@ export async function sendPasswordResetEmailAction(to: string, name: string, res
             resetLink,
         },
     });
-    return { success: true };
+    return handle.id;
 }
 
 // Batch email - for newsletters, notifications, etc.
@@ -65,11 +65,11 @@ export async function sendBatchTest() {
         },
     ];
 
-    await queue.sendBatchEmails({
+    const handle = await trigger.sendBatchEmails({
         emails,
         concurrency: 5, // Send 5 emails at a time
     });
-    return { success: true };
+    return handle.id;
 }
 
 // Example: Send notification when someone comments on a recipe
@@ -81,7 +81,7 @@ export async function notifyNewComment(
     comment: string,
     recipeUrl: string,
 ) {
-    await queue.sendTemplatedEmail({
+    const handle = await trigger.sendTemplatedEmail({
         to: recipeAuthorEmail,
         templateType: 'newRecipeComment',
         variables: {
@@ -92,5 +92,5 @@ export async function notifyNewComment(
             recipeUrl,
         },
     });
-    return { success: true };
+    return handle.id;
 }

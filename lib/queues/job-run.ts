@@ -46,13 +46,18 @@ export async function createJobRun(params: CreateJobRunParams) {
 }
 
 export async function updateJobRun(id: string, params: UpdateJobRunParams) {
+    const data: Record<string, unknown> = {};
+
+    if (params.status !== undefined) data.status = params.status;
+    if (params.result !== undefined) data.result = params.result;
+    if (params.errorMessage !== undefined) data.errorMessage = params.errorMessage;
+    if (params.attempts !== undefined) data.attempts = params.attempts;
+    if (params.startedAt !== undefined) data.startedAt = params.startedAt;
+    if (params.completedAt !== undefined) data.completedAt = params.completedAt;
+
     return prisma.jobRun.update({
         where: { id },
-        data: {
-            ...params,
-            ...(params.startedAt && { startedAt: params.startedAt }),
-            ...(params.completedAt && { completedAt: params.completedAt }),
-        },
+        data,
     });
 }
 

@@ -11,7 +11,7 @@ import { processSyncOpenSearch, processSyncRecipeToOpenSearch } from './opensear
 import { processDailyRecipe, processWeeklyNewsletter } from './scheduled-processor';
 import { QueueName } from './types';
 
-const DEFAULT_WORKER_OPTIONS: WorkerOptions = {
+const DEFAULT_WORKER_OPTIONS: Omit<WorkerOptions, 'connection'> = {
     concurrency: 5,
     limiter: {
         max: 10,

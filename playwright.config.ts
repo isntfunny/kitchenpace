@@ -26,7 +26,7 @@ export default defineConfig({
     ],
     webServer: {
         env: {
-            NEXT_PUBLIC_APP_URL: 'http://localhost:3100'
+            NEXT_PUBLIC_APP_URL: 'http://localhost:3100',
         },
         command: 'npm run dev',
         port: 3100,

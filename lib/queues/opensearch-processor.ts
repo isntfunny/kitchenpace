@@ -121,7 +121,10 @@ async function runBulkOperations(operations: BulkOperation[]): Promise<void> {
             body: chunk,
         });
 
-        const body = response.body as { errors?: boolean; items?: Array<Record<string, unknown>> };
+        const body = response.body as {
+            errors?: boolean;
+            items?: Array<Record<string, { error?: { reason?: string; type?: string } }>>;
+        };
         if (body.errors) {
             const errors = (body.items ?? [])
                 .map((item) => {

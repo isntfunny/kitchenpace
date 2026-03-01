@@ -3,20 +3,18 @@ import { Queue, QueueOptions } from 'bullmq';
 import { getRedis } from './connection';
 import { QueueName } from './types';
 
-const DEFAULT_QUEUE_OPTIONS: QueueOptions = {
-    defaultJobOptions: {
-        removeOnComplete: {
-            count: 200,
-            age: 24 * 3600,
-        },
-        removeOnFail: {
-            count: 500,
-        },
-        attempts: 3,
-        backoff: {
-            type: 'exponential',
-            delay: 1000,
-        },
+const DEFAULT_JOB_OPTIONS: QueueOptions['defaultJobOptions'] = {
+    removeOnComplete: {
+        count: 200,
+        age: 24 * 3600,
+    },
+    removeOnFail: {
+        count: 500,
+    },
+    attempts: 3,
+    backoff: {
+        type: 'exponential',
+        delay: 1000,
     },
 };
 
@@ -27,8 +25,8 @@ let scheduledQueue: Queue | null = null;
 export function getEmailQueue(): Queue {
     if (!emailQueue) {
         emailQueue = new Queue(QueueName.EMAIL, {
-            ...DEFAULT_QUEUE_OPTIONS,
-            connection: getRedis() as any,
+            defaultJobOptions: DEFAULT_JOB_OPTIONS,
+            connection: getRedis() as unknown as import('bullmq').ConnectionOptions,
         });
     }
     return emailQueue;
@@ -37,8 +35,8 @@ export function getEmailQueue(): Queue {
 export function getOpenSearchQueue(): Queue {
     if (!opensearchQueue) {
         opensearchQueue = new Queue(QueueName.OPENSEARCH, {
-            ...DEFAULT_QUEUE_OPTIONS,
-            connection: getRedis() as any,
+            defaultJobOptions: DEFAULT_JOB_OPTIONS,
+            connection: getRedis() as unknown as import('bullmq').ConnectionOptions,
         });
     }
     return opensearchQueue;
@@ -47,8 +45,8 @@ export function getOpenSearchQueue(): Queue {
 export function getScheduledQueue(): Queue {
     if (!scheduledQueue) {
         scheduledQueue = new Queue(QueueName.SCHEDULED, {
-            ...DEFAULT_QUEUE_OPTIONS,
-            connection: getRedis() as any,
+            defaultJobOptions: DEFAULT_JOB_OPTIONS,
+            connection: getRedis() as unknown as import('bullmq').ConnectionOptions,
         });
     }
     return scheduledQueue;

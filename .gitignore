@@ -47,3 +47,5 @@ styled-system-studio
 ## Prisma
 prisma/generated
 .trigger
+
+test-results

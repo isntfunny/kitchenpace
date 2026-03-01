@@ -9,7 +9,6 @@ import type { UserRecipe } from '@/app/actions/user';
 import { Button } from '@/components/atoms/Button';
 import { css } from 'styled-system/css';
 
-
 interface RecipeListProps {
     recipes: UserRecipe[];
 }

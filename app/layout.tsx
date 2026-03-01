@@ -1,5 +1,5 @@
 import { IdentifyComponent, OpenPanelComponent } from '@openpanel/nextjs';
-import * as Sentry from "@sentry/browser";
+import * as Sentry from '@sentry/browser';
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 import Script from 'next/script';
@@ -15,12 +15,12 @@ import { prisma } from '@/lib/prisma';
 import './globals.css';
 
 Sentry.init({
-  dsn: "https://9e111c6e6e0b4a4596a495cb9edd4a3f@bugs.isntfunny.de/1",
+    dsn: 'https://9e111c6e6e0b4a4596a495cb9edd4a3f@bugs.isntfunny.de/1',
 
-  release: process.env.SOURCE_COMMIT,
+    release: process.env.SOURCE_COMMIT,
 
-  integrations: [],
-  tracesSampleRate: 0,
+    integrations: [],
+    tracesSampleRate: 0,
 });
 
 const playfair = Playfair_Display({

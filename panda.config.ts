@@ -66,12 +66,6 @@ export default defineConfig({
                             _dark: '{colors.brand.card-dark}',
                         },
                     },
-                    'surface.elevated': {
-                        value: {
-                            base: '{colors.brand.card-light}',
-                            _dark: '{colors.brand.card-dark}',
-                        },
-                    },
                     foreground: {
                         value: {
                             base: '{colors.brand.text}',
@@ -88,12 +82,6 @@ export default defineConfig({
                         value: {
                             base: 'rgba(0,0,0,0.08)',
                             _dark: '#2d333b',
-                        },
-                    },
-                    'border.muted': {
-                        value: {
-                            base: 'rgba(0,0,0,0.04)',
-                            _dark: '#22262c',
                         },
                     },
                     accent: {

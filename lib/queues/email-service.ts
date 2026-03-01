@@ -1,5 +1,3 @@
-import { logger } from '@trigger.dev/sdk';
-
 export interface SendEmailOptions {
     to: string;
     subject: string;
@@ -13,18 +11,17 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
     const emailPort = process.env.EMAIL_PORT || '587';
     const hasSmtpConfig = Boolean(emailHost && emailUser && process.env.EMAIL_PASS);
 
-    logger.info('Starting email send process', {
+    console.log('[Email] Starting email send process', {
         to,
         subject,
         from: emailFrom,
         host: emailHost,
         port: emailPort,
         secure: emailPort === '465',
-        hasCredentials: Boolean(emailUser && process.env.EMAIL_PASS),
     });
 
     if (!hasSmtpConfig) {
-        logger.warn('No SMTP configured - email logged only (simulated send)', {
+        console.warn('[Email] No SMTP configured - email logged only (simulated send)', {
             to,
             bodyPreview: html.substring(0, 200),
             bodyLength: html.length,
@@ -32,21 +29,10 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
         return true;
     }
 
-    let nodemailerModule: ReturnType<typeof require> | null = null;
-
     try {
-        logger.debug('Loading nodemailer module');
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        nodemailerModule = require('nodemailer');
+        const nodemailer = await import('nodemailer');
 
-        logger.debug('Creating SMTP transporter', {
-            host: emailHost,
-            port: emailPort,
-            secure: emailPort === '465',
-            auth: { user: emailUser, pass: '***REDACTED***' },
-        });
-
-        const transporter = nodemailerModule.createTransport({
+        const transporter = nodemailer.createTransport({
             host: emailHost,
             port: parseInt(emailPort, 10),
             secure: emailPort === '465',
@@ -58,16 +44,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
             socketTimeout: 10000,
         });
 
-        logger.debug('Verifying SMTP connection');
-        const verifyResult = await transporter.verify();
-        logger.debug('SMTP connection verified', { result: verifyResult });
-
-        logger.info('Sending email via SMTP', {
-            to,
-            from: emailFrom,
-            subject,
-            htmlLength: html.length,
-        });
+        await transporter.verify();
 
         const result = await transporter.sendMail({
             from: emailFrom,
@@ -76,7 +53,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
             html,
         });
 
-        logger.info('Email sent successfully', {
+        console.log('[Email] Email sent successfully', {
             to,
             messageId: result.messageId,
             accepted: result.accepted,
@@ -84,7 +61,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
         });
 
         if (result.rejected && result.rejected.length > 0) {
-            logger.warn('Some recipients were rejected', {
+            console.warn('[Email] Some recipients were rejected', {
                 rejected: result.rejected,
                 to,
             });
@@ -92,16 +69,11 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
 
         return true;
     } catch (error) {
-        logger.error('Failed to send email', {
+        console.error('[Email] Failed to send email', {
             to,
             subject,
             error: error instanceof Error ? error.message : String(error),
-            errorStack: error instanceof Error ? error.stack : undefined,
-            errorCode: error instanceof Error ? (error as { code?: string }).code : undefined,
-            errorCommand:
-                error instanceof Error ? (error as { command?: string }).command : undefined,
         });
-
         return false;
     }
 }

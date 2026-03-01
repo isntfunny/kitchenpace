@@ -1,5 +1,7 @@
+import type { Role } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import NextAuth, { type LoggerInstance, type NextAuthOptions } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 import { authDebugEnabled, logAuth } from '@/lib/auth-logger';
@@ -11,6 +13,11 @@ const safeUserMeta = (user?: { id?: string | null; email?: string | null }) => (
     userId: user?.id ?? null,
     email: user?.email ?? null,
 });
+
+type KitchenPaceToken = JWT & {
+    userId?: string;
+    role?: Role;
+};
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -59,6 +66,7 @@ export const authOptions: NextAuthOptions = {
                         email: user.email,
                         name: user.name,
                         image: user.image,
+                        role: user.role,
                     };
                 } catch (error) {
                     logAuth('error', 'authorize: unexpected error', {
@@ -86,30 +94,41 @@ export const authOptions: NextAuthOptions = {
     },
     callbacks: {
         jwt: async ({ token, user, trigger, session }) => {
+            const nextToken = token as KitchenPaceToken;
             if (user?.id) {
-                token.userId = user.id;
+                nextToken.userId = user.id;
+            }
+
+            if (user?.role) {
+                nextToken.role = user.role;
             }
 
             if (trigger === 'update' && session?.user?.name) {
-                token.name = session.user.name;
+                nextToken.name = session.user.name;
             }
 
             if (authDebugEnabled) {
                 logAuth('debug', 'callbacks.jwt', {
                     trigger,
-                    tokenUserId: (token as { userId?: string }).userId ?? token.sub ?? null,
+                    tokenUserId: nextToken.userId ?? nextToken.sub ?? null,
                 });
             }
 
-            return token;
+            return nextToken;
         },
         session: ({ session, token }) => {
-            if (session.user && token.sub) {
-                session.user.id = token.sub;
+            const nextToken = token as KitchenPaceToken;
+
+            if (session.user && nextToken.sub) {
+                session.user.id = nextToken.sub;
             }
 
-            if (session.user && (token as { userId?: string }).userId) {
-                session.user.id = (token as { userId?: string }).userId as string;
+            if (session.user && nextToken.userId) {
+                session.user.id = nextToken.userId;
+            }
+
+            if (session.user && nextToken.role) {
+                session.user.role = nextToken.role;
             }
 
             if (authDebugEnabled) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutGrid, Menu, Plus } from 'lucide-react';
+import { LayoutGrid, Menu, Plus, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
@@ -179,8 +179,9 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
 }
 
 export function Header() {
-    const { status } = useSession();
+    const { status, data: session } = useSession();
     const isAuthenticated = status === 'authenticated';
+    const isAdmin = Boolean(session?.user?.role === 'ADMIN');
 
     return (
         <header
@@ -247,6 +248,36 @@ export function Header() {
                     >
                         {isAuthenticated && <NotificationBell />}
                         <HeaderNavigationMenu isAuthenticated={isAuthenticated} />
+                        {isAdmin && (
+                            <Link
+                                href="/admin"
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1',
+                                    padding: '2',
+                                    borderRadius: 'lg',
+                                    border: '1px solid',
+                                    borderColor: 'border',
+                                    background: 'surface.elevated',
+                                    color: 'foreground',
+                                    fontSize: 'sm',
+                                    fontWeight: '500',
+                                    transition: 'all 150ms ease',
+                                    _hover: {
+                                        background: 'accent.soft',
+                                        color: 'primary',
+                                    },
+                                })}
+                            >
+                                <ShieldCheck size={18} />
+                                <span
+                                    className={css({ fontSize: 'xs', textTransform: 'uppercase' })}
+                                >
+                                    Admin
+                                </span>
+                            </Link>
+                        )}
                         <HeaderAuth />
                     </div>
                 </div>

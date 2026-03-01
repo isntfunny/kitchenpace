@@ -11,6 +11,11 @@ datasource db {
 // ENUMS
 // ============================================
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum Difficulty {
   EASY
   MEDIUM
@@ -35,6 +40,13 @@ enum MealStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 enum ShoppingCategory {
@@ -124,6 +136,7 @@ model User {
   emailVerified   DateTime?
   image           String?
   hashedPassword  String?
+  role            Role      @default(USER)
   isActive        Boolean   @default(false) // Must be activated via email
   activationToken String?
   resetToken      String?
@@ -591,4 +604,27 @@ model PinnedFavorite {
   @@unique([userId, position])
   @@unique([userId, recipeId])
   @@index([userId])
+}
+
+// ============================================
+// JOB RUNS (BullMQ History)
+// ============================================
+
+model JobRun {
+  id            String    @id @default(cuid())
+  queueName     String
+  jobName       String
+  jobId        String?   // BullMQ job ID
+  status       JobStatus @default(PENDING)
+  payload      Json?     // Job input data
+  result       Json?     // Job output/result
+  errorMessage String?   // Error message if failed
+  attempts     Int       @default(0)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([queueName, createdAt])
+  @@index([status, createdAt])
+  @@index([jobId])
 }

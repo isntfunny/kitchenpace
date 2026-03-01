@@ -124,21 +124,6 @@ export default async function WorkerDashboardPage() {
         })),
     ].sort((a, b) => a.jobName.localeCompare(b.jobName));
 
-    const bestPracticeLinks = [
-        {
-            label: 'Bull Board Monitoring Guide',
-            href: 'https://oneuptime.com/blog/post/2026-01-21-bullmq-bull-board/view',
-        },
-        {
-            label: 'Worker Health Checks Checklist',
-            href: 'https://oneuptime.com/blog/post/2026-01-21-bullmq-worker-health-checks/view',
-        },
-        {
-            label: 'bullmq-dash (Open Source Dashboard)',
-            href: 'https://github.com/quanghuynt14/bullmq-dash',
-        },
-    ];
-
     return (
         <PageShell>
             <div className={css({ display: 'flex', flexDirection: 'column', gap: '6' })}>
@@ -606,8 +591,8 @@ export default async function WorkerDashboardPage() {
                         className={css({
                             display: 'flex',
                             justifyContent: 'space-between',
-                            flexWrap: 'wrap',
                             gap: '2',
+                            flexWrap: 'wrap',
                         })}
                     >
                         <div>
@@ -628,196 +613,128 @@ export default async function WorkerDashboardPage() {
                                     color: 'foreground',
                                 })}
                             >
-                                Aktive BullMQ Jobs & Trigger
+                                Registrierte Jobs
                             </h2>
                         </div>
                         <span className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                            Payload bitte als gültiges JSON angeben
+                            Öffne Details, um Jobs zu triggern
                         </span>
                     </div>
-                    <div
+                    <ul
                         className={css({
-                            display: 'grid',
-                            gap: '3',
-                            gridTemplateColumns: { base: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+                            listStyle: 'none',
+                            margin: 0,
+                            padding: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2',
                         })}
                     >
                         {jobCatalog.map((item) => (
-                            <div
+                            <li
                                 key={item.id}
                                 className={css({
-                                    borderRadius: 'xl',
+                                    borderRadius: 'lg',
                                     borderWidth: '1px',
                                     borderColor: 'border.muted',
                                     background: 'surface',
-                                    padding: '4',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '3',
+                                    padding: '2.5',
                                 })}
                             >
-                                <div
-                                    className={css({
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        gap: '3',
-                                    })}
-                                >
-                                    <div>
-                                        <p
+                                <details className={css({ cursor: 'pointer' })}>
+                                    <summary
+                                        className={css({
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            gap: '2',
+                                            fontSize: 'sm',
+                                            fontWeight: 'semibold',
+                                            color: 'foreground',
+                                        })}
+                                    >
+                                        <div>
+                                            <p>{item.jobName}</p>
+                                            <p
+                                                className={css({
+                                                    fontSize: 'xs',
+                                                    color: 'foreground.muted',
+                                                })}
+                                            >
+                                                {getQueueLabel(item.queue)} ·{' '}
+                                                {item.type === 'worker'
+                                                    ? `${item.meta.concurrency ?? 1} parallel`
+                                                    : (item.meta.repeatPattern ?? 'ad hoc')}
+                                            </p>
+                                        </div>
+                                        <span
                                             className={css({
-                                                fontSize: 'sm',
+                                                borderRadius: 'full',
+                                                px: '3',
+                                                py: '0.5',
+                                                fontSize: 'xs',
                                                 fontWeight: 'semibold',
-                                                color: 'foreground',
+                                                background: 'border.muted',
                                             })}
                                         >
-                                            {item.jobName}
-                                        </p>
-                                        <p
+                                            {item.type === 'worker' ? 'Worker' : 'Scheduler'}
+                                        </span>
+                                    </summary>
+                                    <form
+                                        action={triggerJobAction}
+                                        className={css({
+                                            marginTop: '2',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '1',
+                                        })}
+                                    >
+                                        <input type="hidden" name="queue" value={item.queue} />
+                                        <input type="hidden" name="jobName" value={item.jobName} />
+                                        <label
                                             className={css({
                                                 fontSize: 'xs',
                                                 color: 'foreground.muted',
                                             })}
                                         >
-                                            {getQueueLabel(item.queue)} ·{' '}
-                                            {item.type === 'worker'
-                                                ? `${item.meta.concurrency ?? 1} parallel`
-                                                : (item.meta.repeatPattern ?? 'ad hoc')}
-                                        </p>
-                                    </div>
-                                    <span
-                                        className={css({
-                                            borderRadius: 'full',
-                                            px: '3',
-                                            py: '1',
-                                            fontSize: 'xs',
-                                            fontWeight: 'semibold',
-                                            background: 'border.muted',
-                                        })}
-                                    >
-                                        {item.type === 'worker' ? 'Worker' : 'Scheduler'}
-                                    </span>
-                                </div>
-                                <form
-                                    action={triggerJobAction}
-                                    className={css({
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '2',
-                                    })}
-                                >
-                                    <input type="hidden" name="queue" value={item.queue} />
-                                    <input type="hidden" name="jobName" value={item.jobName} />
-                                    <label
-                                        className={css({
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '1',
-                                            fontSize: 'xs',
-                                            color: 'foreground.muted',
-                                        })}
-                                    >
-                                        Payload
-                                        <textarea
-                                            name="payload"
-                                            defaultValue={stringifyPayload(item.defaultPayload)}
-                                            rows={4}
+                                            Payload
+                                            <textarea
+                                                name="payload"
+                                                defaultValue={stringifyPayload(item.defaultPayload)}
+                                                rows={2}
+                                                className={css({
+                                                    marginTop: '0.75',
+                                                    width: '100%',
+                                                    borderRadius: 'lg',
+                                                    borderWidth: '1px',
+                                                    borderColor: 'border',
+                                                    fontFamily: 'mono',
+                                                    fontSize: 'xs',
+                                                    padding: '1.5',
+                                                    color: 'foreground',
+                                                    background: 'surface.elevated',
+                                                })}
+                                            />
+                                        </label>
+                                        <button
+                                            type="submit"
                                             className={css({
-                                                borderRadius: 'lg',
-                                                borderWidth: '1px',
-                                                borderColor: 'border',
-                                                fontFamily: 'mono',
-                                                fontSize: 'sm',
-                                                padding: '2',
-                                                color: 'foreground',
-                                                background: 'surface.elevated',
+                                                alignSelf: 'flex-start',
+                                                borderRadius: 'full',
+                                                background: 'primary',
+                                                color: 'white',
+                                                fontSize: 'xs',
+                                                fontWeight: 'semibold',
+                                                px: '3',
+                                                py: '0.75',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.3em',
                                             })}
-                                        />
-                                    </label>
-                                    <button
-                                        type="submit"
-                                        className={css({
-                                            alignSelf: 'flex-start',
-                                            borderRadius: 'full',
-                                            background: 'primary',
-                                            color: 'white',
-                                            fontSize: 'xs',
-                                            fontWeight: 'semibold',
-                                            px: '4',
-                                            py: '1.5',
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.3em',
-                                        })}
-                                    >
-                                        Triggern
-                                    </button>
-                                </form>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                <section
-                    className={css({
-                        borderRadius: '2xl',
-                        borderWidth: '1px',
-                        borderColor: 'border.muted',
-                        background: 'surface.elevated',
-                        padding: '4',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '3',
-                    })}
-                >
-                    <div>
-                        <p
-                            className={css({
-                                fontSize: 'xs',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.4em',
-                                color: 'foreground.muted',
-                            })}
-                        >
-                            Best Practices
-                        </p>
-                        <h2
-                            className={css({
-                                fontSize: 'lg',
-                                fontWeight: 'semibold',
-                                color: 'foreground',
-                            })}
-                        >
-                            Monitoring & Tooling Inspiration
-                        </h2>
-                    </div>
-                    <p className={css({ fontSize: 'sm', color: 'foreground.muted' })}>
-                        Für tiefergehende Dashboards empfehlen sich etablierte Projekte wie Bull
-                        Board für Echtzeit-Kontrolle und bullmq-dash für TUI-Monitoring. Ergänzend
-                        sollten laut OneUptime regelmäßige Worker-Health-Checks (Liveness,
-                        Readiness, Startup) implementiert werden.
-                    </p>
-                    <ul
-                        className={css({
-                            listStyle: 'disc',
-                            pl: '5',
-                            fontSize: 'sm',
-                            color: 'foreground',
-                        })}
-                    >
-                        {bestPracticeLinks.map((link) => (
-                            <li key={link.href}>
-                                <a
-                                    href={link.href}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className={css({
-                                        color: 'primary',
-                                        textDecoration: 'underline',
-                                    })}
-                                >
-                                    {link.label}
-                                </a>
+                                        >
+                                            Triggern
+                                        </button>
+                                    </form>
+                                </details>
                             </li>
                         ))}
                     </ul>

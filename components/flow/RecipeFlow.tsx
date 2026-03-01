@@ -611,7 +611,7 @@ export function RecipeFlow({ nodes, edges }: RecipeFlowProps) {
                     gap: 8px;
                     padding: 12px;
                     background: white;
-                    border-bottom: 1px solid #eee;
+                    border: none;
                 }
                 .flow-controls button {
                     padding: 8px 12px;

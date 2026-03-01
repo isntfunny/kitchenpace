@@ -191,8 +191,6 @@ export function Header() {
                 zIndex: 20,
                 background: 'surface.elevated',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-                borderBottom: '1px solid',
-                borderColor: 'border.muted',
             })}
         >
             <div

@@ -239,6 +239,7 @@ function RecipeChip({
                         bg: isPinned ? 'rgba(248,181,0,0.25)' : 'rgba(0,0,0,0.03)',
                         borderColor: isPinned ? '#f8b500' : 'transparent',
                         color: 'text',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                     },
                 })}
             >
@@ -308,9 +309,6 @@ export function RecipeTabs() {
                 background: 'surface',
                 borderTop: '1px solid',
                 borderColor: 'border',
-                borderBottom: '1px solid',
-                borderBottomColor: 'border',
-                boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
             })}
         >
             <span

@@ -1,6 +1,7 @@
 import { Activity, Clock3, ShieldCheck, Users } from 'lucide-react';
 import Link from 'next/link';
 
+import { PageShell } from '@/components/layouts/PageShell';
 import { ensureAdminSession } from '@/lib/admin/ensure-admin';
 import { getJobRuns, type JobRun, type JobStatus } from '@/lib/queues/job-run';
 import { JOB_STATUS_DETAILS, STATUS_ORDER, getQueueLabel } from '@/lib/queues/job-run-ui';
@@ -57,8 +58,8 @@ export default async function AdminHomePage() {
     const greetingName = session.user.name ?? 'Admin';
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white">
-            <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 sm:px-6 lg:px-8">
+        <PageShell>
+            <div className="space-y-10">
                 <section className="rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-800 to-slate-900/60 p-8 shadow-[0_25px_80px_rgba(15,23,42,0.55)]">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                         <div>
@@ -204,6 +205,6 @@ export default async function AdminHomePage() {
                     )}
                 </section>
             </div>
-        </div>
+        </PageShell>
     );
 }

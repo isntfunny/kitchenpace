@@ -1,3 +1,4 @@
+import { PageShell } from '@/components/layouts/PageShell';
 import { ensureAdminSession } from '@/lib/admin/ensure-admin';
 import { getJobRuns, type JobRun, type JobStatus } from '@/lib/queues/job-run';
 import { getQueueLabel, JOB_STATUS_DETAILS, STATUS_ORDER } from '@/lib/queues/job-run-ui';
@@ -72,8 +73,8 @@ export default async function WorkerDashboardPage() {
         .slice(0, 4);
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white">
-            <div className="mx-auto max-w-6xl space-y-10 px-4 py-10 sm:px-6 lg:px-8">
+        <PageShell>
+            <div className="space-y-10">
                 <header className="rounded-3xl border border-white/10 bg-gradient-to-br from-orange-500/30 via-rose-500/10 to-blue-500/20 p-8 shadow-2xl backdrop-blur">
                     <p className="text-xs uppercase tracking-[0.5em] text-amber-200">
                         Admin · Worker
@@ -260,6 +261,6 @@ export default async function WorkerDashboardPage() {
                     )}
                 </section>
             </div>
-        </div>
+        </PageShell>
     );
 }

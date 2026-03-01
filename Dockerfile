@@ -1,4 +1,4 @@
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY tsconfig.json ./
 
 RUN npm ci --include=dev
 
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN npx prisma generate
 
 RUN npm run build
 
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
@@ -79,7 +79,7 @@ ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
 
-FROM node:22-alpine AS worker
+FROM node:24-alpine AS worker
 
 WORKDIR /app
 

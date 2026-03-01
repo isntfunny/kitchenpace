@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { createLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
-import { trigger } from '@/lib/trigger';
+import { queue } from '@/lib/trigger';
 
 const log = createLogger('auth-forgot-password');
 
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-        await trigger.sendTemplatedEmail({
+        await queue.sendTemplatedEmail({
             to: user.email!,
             templateType: 'passwordReset',
             variables: {

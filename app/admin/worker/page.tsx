@@ -2,6 +2,7 @@ import { PageShell } from '@/components/layouts/PageShell';
 import { ensureAdminSession } from '@/lib/admin/ensure-admin';
 import { getJobRuns, type JobRun, type JobStatus } from '@/lib/queues/job-run';
 import { getQueueLabel, JOB_STATUS_DETAILS, STATUS_ORDER } from '@/lib/queues/job-run-ui';
+import { css } from 'styled-system/css';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,28 +75,109 @@ export default async function WorkerDashboardPage() {
 
     return (
         <PageShell>
-            <div className="space-y-10">
-                <header className="rounded-3xl border border-white/10 bg-gradient-to-br from-orange-500/30 via-rose-500/10 to-blue-500/20 p-8 shadow-2xl backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.5em] text-amber-200">
+            <div className={css({ display: 'flex', flexDirection: 'column', gap: '10' })}>
+                <header
+                    className={css({
+                        borderRadius: '3xl',
+                        borderWidth: '1px',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        background:
+                            'linear-gradient(135deg, rgba(249,115,22,0.35), rgba(236,72,153,0.15) 50%, rgba(15,23,42,0.5))',
+                        padding: '8',
+                        boxShadow: '0 40px 120px rgba(0,0,0,0.35)',
+                        backdropFilter: 'blur(22px)',
+                    })}
+                >
+                    <p
+                        className={css({
+                            fontSize: 'xs',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5em',
+                            color: '#fcd34d',
+                        })}
+                    >
                         Admin · Worker
                     </p>
-                    <div className="mt-3 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div
+                        className={css({
+                            marginTop: '3',
+                            display: 'flex',
+                            flexDirection: { base: 'column', lg: 'row' },
+                            gap: '6',
+                            alignItems: { lg: 'center' },
+                            justifyContent: 'space-between',
+                        })}
+                    >
                         <div>
-                            <h1 className="text-4xl font-semibold text-white">Worker Dashboard</h1>
-                            <p className="mt-2 max-w-2xl text-sm text-slate-100">
+                            <h1
+                                className={css({
+                                    fontSize: '4xl',
+                                    fontWeight: 'semibold',
+                                    color: 'white',
+                                })}
+                            >
+                                Worker Dashboard
+                            </h1>
+                            <p
+                                className={css({
+                                    marginTop: '2',
+                                    maxWidth: '2xl',
+                                    fontSize: 'sm',
+                                    color: '#e5e7eb',
+                                })}
+                            >
                                 Aktuelle Jobläufe, Engpässe und Ausfälle auf einen Blick
                                 nachverfolgen.
                             </p>
                         </div>
-                        <div className="rounded-2xl border border-white/20 bg-white/10 px-6 py-4 text-right backdrop-blur">
-                            <p className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-200">
+                        <div
+                            className={css({
+                                borderRadius: '2xl',
+                                borderWidth: '1px',
+                                borderColor: 'rgba(255,255,255,0.2)',
+                                background: 'rgba(255,255,255,0.1)',
+                                paddingX: '6',
+                                paddingY: '4',
+                                textAlign: 'right',
+                                backdropFilter: 'blur(10px)',
+                            })}
+                        >
+                            <p
+                                className={css({
+                                    fontSize: '0.65rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.4em',
+                                    color: '#cbd5f5',
+                                })}
+                            >
                                 Erfolgsquote
                             </p>
-                            <p className="text-3xl font-semibold text-white">{completedRate}%</p>
-                            <p className="text-xs text-slate-300">von {totalJobs} letzten Jobs</p>
+                            <p
+                                className={css({
+                                    fontSize: '3xl',
+                                    fontWeight: 'semibold',
+                                    color: 'white',
+                                })}
+                            >
+                                {completedRate}%
+                            </p>
+                            <p className={css({ fontSize: 'xs', color: '#94a3b8' })}>
+                                von {totalJobs} letzten Jobs
+                            </p>
                         </div>
                     </div>
-                    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div
+                        className={css({
+                            marginTop: '6',
+                            display: 'grid',
+                            gap: '4',
+                            gridTemplateColumns: {
+                                base: '1fr',
+                                sm: 'repeat(2, minmax(0, 1fr))',
+                                lg: 'repeat(4, minmax(0, 1fr))',
+                            },
+                        })}
+                    >
                         {STATUS_ORDER.map((status) => {
                             const details = JOB_STATUS_DETAILS[status];
                             const percent =
@@ -106,24 +188,62 @@ export default async function WorkerDashboardPage() {
                             return (
                                 <div
                                     key={status}
-                                    className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg backdrop-blur"
+                                    className={css({
+                                        borderRadius: '2xl',
+                                        borderWidth: '1px',
+                                        borderColor: 'rgba(255,255,255,0.1)',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        padding: '4',
+                                        boxShadow: '0 20px 45px rgba(15,23,42,0.25)',
+                                        backdropFilter: 'blur(12px)',
+                                    })}
                                 >
-                                    <p className="text-xs uppercase tracking-[0.4em] text-slate-300">
+                                    <p
+                                        className={css({
+                                            fontSize: 'xs',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.4em',
+                                            color: '#94a3b8',
+                                        })}
+                                    >
                                         {details.label}
                                     </p>
-                                    <p className="mt-1 text-2xl font-semibold text-white">
+                                    <p
+                                        className={css({
+                                            marginTop: '1',
+                                            fontSize: '2xl',
+                                            fontWeight: 'semibold',
+                                            color: 'white',
+                                        })}
+                                    >
                                         {statusCounts[status]}
                                     </p>
-                                    <div className="mt-3 h-1.5 rounded-full bg-white/10">
+                                    <div
+                                        className={css({
+                                            marginTop: '3',
+                                            height: '1.5',
+                                            borderRadius: 'full',
+                                            background: 'rgba(255,255,255,0.1)',
+                                        })}
+                                    >
                                         <div
-                                            className="h-full rounded-full"
+                                            className={css({
+                                                height: '100%',
+                                                borderRadius: 'full',
+                                            })}
                                             style={{
                                                 width: `${percent}%`,
                                                 background: details.color,
                                             }}
                                         />
                                     </div>
-                                    <p className="mt-1 text-xs text-slate-400">
+                                    <p
+                                        className={css({
+                                            marginTop: '1',
+                                            fontSize: 'xs',
+                                            color: '#94a3b8',
+                                        })}
+                                    >
                                         {percent}% der Liste
                                     </p>
                                 </div>
@@ -132,75 +252,214 @@ export default async function WorkerDashboardPage() {
                     </div>
                 </header>
 
-                <section className="space-y-6 rounded-3xl border border-white/10 bg-slate-900/40 p-6 shadow-xl backdrop-blur">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-xs uppercase tracking-[0.4em] text-slate-400">
+                <section
+                    className={css({
+                        borderRadius: '3xl',
+                        borderWidth: '1px',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        background: 'rgba(15,23,42,0.4)',
+                        padding: '6',
+                        boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+                        backdropFilter: 'blur(12px)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6',
+                    })}
+                >
+                    <div
+                        className={css({
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            gap: '2',
+                        })}
+                    >
+                        <p
+                            className={css({
+                                fontSize: 'xs',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.4em',
+                                color: '#94a3b8',
+                            })}
+                        >
                             Warteschlangen
                         </p>
-                        <span className="text-xs text-slate-500">
+                        <span className={css({ fontSize: 'xs', color: '#94a3b8' })}>
                             {queueHighlights.length} aktive Queues
                         </span>
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+                    <div
+                        className={css({
+                            display: 'grid',
+                            gap: '4',
+                            gridTemplateColumns: {
+                                base: '1fr',
+                                sm: 'repeat(2, minmax(0, 1fr))',
+                                md: 'repeat(4, minmax(0, 1fr))',
+                            },
+                        })}
+                    >
                         {queueHighlights.map(([queue, count]) => (
                             <div
                                 key={queue}
-                                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                                className={css({
+                                    borderRadius: '2xl',
+                                    borderWidth: '1px',
+                                    borderColor: 'rgba(255,255,255,0.1)',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    paddingX: '4',
+                                    paddingY: '3',
+                                })}
                             >
-                                <p className="text-sm font-semibold text-white">
+                                <p
+                                    className={css({
+                                        fontSize: 'sm',
+                                        fontWeight: 'semibold',
+                                        color: 'white',
+                                    })}
+                                >
                                     {getQueueLabel(queue)}
                                 </p>
-                                <p className="text-2xl font-bold text-slate-100">{count}</p>
-                                <p className="text-xs text-slate-400">Letzte 50 Jobs</p>
+                                <p
+                                    className={css({
+                                        fontSize: '2xl',
+                                        fontWeight: 'bold',
+                                        color: '#e5e7eb',
+                                    })}
+                                >
+                                    {count}
+                                </p>
+                                <p className={css({ fontSize: 'xs', color: '#94a3b8' })}>
+                                    Letzte 50 Jobs
+                                </p>
                             </div>
                         ))}
                         {queueHighlights.length === 0 && (
-                            <p className="text-sm text-slate-400">Keine aktiven Queues sichtbar.</p>
+                            <p className={css({ fontSize: 'sm', color: '#94a3b8' })}>
+                                Keine aktiven Queues sichtbar.
+                            </p>
                         )}
                     </div>
-                    <div className="text-sm text-slate-400">
+                    <div className={css({ fontSize: 'sm', color: '#94a3b8' })}>
                         Durchschnittliche Laufzeit:{' '}
-                        <span className="text-white">{averageDuration}</span>
+                        <span className={css({ color: 'white' })}>{averageDuration}</span>
                     </div>
                 </section>
 
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between">
+                <section className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
+                    <div
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                        })}
+                    >
                         <div>
-                            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">
+                            <p
+                                className={css({
+                                    fontSize: 'xs',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.4em',
+                                    color: '#94a3b8',
+                                })}
+                            >
                                 Verlauf
                             </p>
-                            <h2 className="text-2xl font-semibold text-white">Neueste Jobläufe</h2>
+                            <h2
+                                className={css({
+                                    fontSize: '2xl',
+                                    fontWeight: 'semibold',
+                                    color: 'white',
+                                })}
+                            >
+                                Neueste Jobläufe
+                            </h2>
                         </div>
-                        <p className="text-xs text-slate-500">Zeige {jobRuns.length} Einträge</p>
+                        <p className={css({ fontSize: 'xs', color: '#94a3b8' })}>
+                            Zeige {jobRuns.length} Einträge
+                        </p>
                     </div>
 
                     {jobRuns.length === 0 ? (
-                        <div className="rounded-3xl border border-dashed border-white/20 bg-white/5 p-8 text-center text-slate-500">
+                        <div
+                            className={css({
+                                borderRadius: '3xl',
+                                borderWidth: '1px',
+                                borderStyle: 'dashed',
+                                borderColor: 'rgba(255,255,255,0.2)',
+                                background: 'rgba(255,255,255,0.05)',
+                                padding: '8',
+                                textAlign: 'center',
+                                color: '#94a3b8',
+                            })}
+                        >
                             Keine Jobläufe verfügbar.
                         </div>
                     ) : (
-                        <div className="space-y-4">
+                        <div
+                            className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}
+                        >
                             {jobRuns.map((run) => {
                                 const details = JOB_STATUS_DETAILS[run.status];
 
                                 return (
                                     <div
                                         key={run.id}
-                                        className="rounded-3xl border border-white/5 bg-white/5 p-5 shadow-lg backdrop-blur transition hover:-translate-y-0.5"
+                                        className={css({
+                                            borderRadius: '3xl',
+                                            borderWidth: '1px',
+                                            borderColor: 'rgba(255,255,255,0.05)',
+                                            background: 'rgba(255,255,255,0.05)',
+                                            padding: '5',
+                                            boxShadow: '0 20px 40px rgba(15,23,42,0.2)',
+                                            backdropFilter: 'blur(16px)',
+                                            transition: 'transform 200ms ease',
+                                            _hover: {
+                                                transform: 'translateY(-2px)',
+                                            },
+                                        })}
                                     >
-                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div
+                                            className={css({
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                alignItems: 'flex-start',
+                                                justifyContent: 'space-between',
+                                                gap: '3',
+                                            })}
+                                        >
                                             <div>
-                                                <p className="text-sm font-semibold text-white">
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'sm',
+                                                        fontWeight: 'semibold',
+                                                        color: 'white',
+                                                    })}
+                                                >
                                                     {run.jobName}
                                                 </p>
-                                                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'xs',
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.3em',
+                                                        color: '#94a3b8',
+                                                    })}
+                                                >
                                                     {run.id.slice(0, 8)} •{' '}
                                                     {getQueueLabel(run.queueName)}
                                                 </p>
                                             </div>
                                             <span
-                                                className="rounded-full px-3 py-1 text-xs font-semibold uppercase"
+                                                className={css({
+                                                    borderRadius: 'full',
+                                                    paddingX: '3',
+                                                    paddingY: '1',
+                                                    fontSize: 'xs',
+                                                    fontWeight: 'semibold',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.3em',
+                                                })}
                                                 style={{
                                                     backgroundColor: details.accent,
                                                     color: details.color,
@@ -210,26 +469,83 @@ export default async function WorkerDashboardPage() {
                                             </span>
                                         </div>
 
-                                        <div className="mt-4 grid gap-4 text-sm text-slate-300 md:grid-cols-2">
+                                        <div
+                                            className={css({
+                                                marginTop: '4',
+                                                display: 'grid',
+                                                gap: '4',
+                                                fontSize: 'sm',
+                                                color: '#94a3b8',
+                                                gridTemplateColumns: {
+                                                    md: 'repeat(2, minmax(0, 1fr))',
+                                                },
+                                            })}
+                                        >
                                             <div>
-                                                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'xs',
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.3em',
+                                                        color: '#94a3b8',
+                                                    })}
+                                                >
                                                     Dauer
                                                 </p>
-                                                <p className="text-lg text-white">
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'lg',
+                                                        fontWeight: 'semibold',
+                                                        color: 'white',
+                                                    })}
+                                                >
                                                     {formatDuration(run.startedAt, run.completedAt)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'xs',
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.3em',
+                                                        color: '#94a3b8',
+                                                    })}
+                                                >
                                                     Versuche
                                                 </p>
-                                                <p className="text-lg text-white">{run.attempts}</p>
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'lg',
+                                                        fontWeight: 'semibold',
+                                                        color: 'white',
+                                                    })}
+                                                >
+                                                    {run.attempts}
+                                                </p>
                                             </div>
                                         </div>
 
-                                        <div className="mt-4 grid gap-4 text-xs text-slate-400 sm:grid-cols-3">
+                                        <div
+                                            className={css({
+                                                marginTop: '4',
+                                                display: 'grid',
+                                                gap: '4',
+                                                fontSize: 'xs',
+                                                color: '#94a3b8',
+                                                gridTemplateColumns: {
+                                                    sm: 'repeat(3, minmax(0, 1fr))',
+                                                },
+                                            })}
+                                        >
                                             <div>
-                                                <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-500">
+                                                <p
+                                                    className={css({
+                                                        fontSize: '0.65rem',
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.3em',
+                                                        color: '#94a3b8',
+                                                    })}
+                                                >
                                                     Erstellt
                                                 </p>
                                                 <p>
@@ -242,13 +558,27 @@ export default async function WorkerDashboardPage() {
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-500">
+                                                <p
+                                                    className={css({
+                                                        fontSize: '0.65rem',
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.3em',
+                                                        color: '#94a3b8',
+                                                    })}
+                                                >
                                                     Gestartet
                                                 </p>
                                                 <p>{formatTime(run.startedAt)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-500">
+                                                <p
+                                                    className={css({
+                                                        fontSize: '0.65rem',
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.3em',
+                                                        color: '#94a3b8',
+                                                    })}
+                                                >
                                                     Beendet
                                                 </p>
                                                 <p>{formatTime(run.completedAt)}</p>

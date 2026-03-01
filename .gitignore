@@ -49,3 +49,5 @@ prisma/generated
 .trigger
 
 test-results
+# Sentry Config File
+.env.sentry-build-plugin

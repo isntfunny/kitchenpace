@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
-import { getThumbnailUrl, extractKeyFromUrl, ThumbnailOptions } from '@/lib/thumbnail';
+import { getThumbnailUrl, extractKeyFromUrl, ThumbnailOptions } from '@/lib/thumbnail-client';
 import { css, cx } from 'styled-system/css';
 
 interface SmartImageProps {

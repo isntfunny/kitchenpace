@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { getThumbnailUrl, extractKeyFromUrl } from './thumbnail-client';
+
+import { extractKeyFromUrl } from './thumbnail-client';
 
 export type ThumbnailSource =
     | { type: 'recipe'; id: string }

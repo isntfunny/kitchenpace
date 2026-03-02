@@ -206,7 +206,7 @@ export function RecipeList({ recipes }: RecipeListProps) {
                                     cursor: 'pointer',
                                 })}
                             />
-                            <div style={{ flex: 1, minWidth: 0 }}>
+                            <div className={css({ flex: 1, minWidth: 0 })}>
                                 <Link
                                     href={`/recipe/${recipe.id}`}
                                     className={css({

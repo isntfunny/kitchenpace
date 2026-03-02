@@ -6,6 +6,7 @@ import { PageShell } from '@/components/layouts/PageShell';
 import { RecipeList } from '@/components/recipe/RecipeList';
 import { getServerAuthSession, logMissingSession } from '@/lib/auth';
 import { getOrCreateProfile } from '@/lib/profile';
+import { css } from 'styled-system/css';
 
 export const metadata: Metadata = {
     title: 'Meine Rezepte',
@@ -33,7 +34,7 @@ export default async function MyRecipesPage() {
     return (
         <PageShell>
             <div
-                style={{
+                className={css({
                     maxWidth: '1200px',
                     marginLeft: 'auto',
                     marginRight: 'auto',
@@ -41,19 +42,19 @@ export default async function MyRecipesPage() {
                     paddingRight: '1rem',
                     paddingTop: '1.5rem',
                     paddingBottom: '1.5rem',
-                }}
+                })}
             >
-                <div style={{ marginBottom: '2rem' }}>
+                <div className={css({ marginBottom: '2rem' })}>
                     <h1
-                        style={{
+                        className={css({
                             fontSize: '2rem',
                             fontWeight: 800,
                             marginBottom: '0.5rem',
-                        }}
+                        })}
                     >
                         Meine Rezepte
                     </h1>
-                    <p style={{ color: '#666' }}>
+                    <p className={css({ color: 'text.muted' })}>
                         Verwalte deine Entwürfe und veröffentlichten Rezepte.
                     </p>
                 </div>

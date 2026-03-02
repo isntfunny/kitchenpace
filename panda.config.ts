@@ -96,6 +96,12 @@ export default defineConfig({
                             _dark: 'rgba(224,123,83,0.15)',
                         },
                     },
+                    accentSoft: {
+                        value: {
+                            base: 'rgba(224,123,83,0.08)',
+                            _dark: 'rgba(224,123,83,0.15)',
+                        },
+                    },
                     primary: {
                         value: {
                             base: '{colors.brand.primary}',
@@ -136,6 +142,12 @@ export default defineConfig({
                         value: {
                             base: '{colors.brand.text-muted}',
                             _dark: '{colors.brand.text-muted-dark}',
+                        },
+                    },
+                    text: {
+                        value: {
+                            base: '{colors.brand.text}',
+                            _dark: '{colors.brand.text-dark}',
                         },
                     },
                     'text.primary': {

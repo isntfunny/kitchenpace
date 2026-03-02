@@ -66,7 +66,8 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
     return (
         <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-                <div
+                <button
+                    type="button"
                     className={css({
                         display: 'flex',
                         alignItems: 'center',
@@ -96,7 +97,7 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
                     <span className={css({ display: { base: 'none', sm: 'inline-flex' } })}>
                         Entdecken
                     </span>
-                </div>
+                </button>
             </DropdownMenu.Trigger>
 
             <DropdownMenu.Portal>
@@ -142,7 +143,7 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
                                         fontWeight: '600',
                                         textTransform: 'uppercase',
                                         letterSpacing: 'wide',
-                                        color: 'foreground.muted',
+                                        color: 'text.muted',
                                         marginBottom: '3',
                                     })}
                                 >
@@ -160,7 +161,7 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
                                     <p
                                         className={css({
                                             fontSize: 'sm',
-                                            color: 'foreground.muted',
+                                            color: 'text.muted',
                                             margin: 0,
                                         })}
                                     >
@@ -257,7 +258,7 @@ export function Header() {
                                     border: '1px solid',
                                     borderColor: 'border',
                                     background: 'surface.elevated',
-                                    color: 'foreground',
+                                    color: 'text',
                                     fontSize: 'sm',
                                     fontWeight: '500',
                                     transition: 'all 150ms ease',

@@ -36,6 +36,17 @@ const scheduledJobs: ScheduledJobDefinition[] = [
             },
         },
     },
+    {
+        name: 'trending-recipes',
+        queue: QueueName.SCHEDULED,
+        data: {},
+        options: {
+            repeat: {
+                pattern: '0 6 * * *',
+                tz: 'Europe/Berlin',
+            },
+        },
+    },
 ];
 
 let schedulerInterval: NodeJS.Timeout | null = null;

@@ -8,7 +8,11 @@ import {
 } from './email-processor';
 import { createJobRun, updateJobRun } from './job-run';
 import { processSyncOpenSearch, processSyncRecipeToOpenSearch } from './opensearch-processor';
-import { processDailyRecipe, processWeeklyNewsletter } from './scheduled-processor';
+import {
+    processDailyRecipe,
+    processTrendingRecipes,
+    processWeeklyNewsletter,
+} from './scheduled-processor';
 import { QueueName } from './types';
 
 const DEFAULT_WORKER_OPTIONS: Omit<WorkerOptions, 'connection'> = {
@@ -58,6 +62,11 @@ const workerRegistrations: WorkerRegistration[] = [
         name: 'sync-recipe',
         queue: QueueName.OPENSEARCH,
         processor: processSyncRecipeToOpenSearch,
+    },
+    {
+        name: 'trending-recipes',
+        queue: QueueName.SCHEDULED,
+        processor: processTrendingRecipes,
     },
     {
         name: 'daily-recipe',

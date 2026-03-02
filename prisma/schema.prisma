@@ -220,6 +220,7 @@ model Recipe {
   ratingCount  Int         @default(0)
   viewCount    Int         @default(0)
   cookCount    Int         @default(0)
+  isTrending   Boolean     @default(false)
   
   // Flow data as JSON
   flowNodes    Json?
@@ -249,6 +250,7 @@ model Recipe {
   @@index([createdAt])
   @@index([rating])
   @@index([status])
+  @@index([isTrending])
 }
 
 // ============================================

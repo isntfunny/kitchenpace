@@ -18,7 +18,15 @@ COPY --from=deps /app/prisma ./prisma
 COPY --from=deps /app/panda.config.ts ./
 COPY --from=deps /app/tsconfig.json ./
 
-COPY . .
+COPY package.json package-lock.json* ./
+COPY next.config.* ./
+COPY tailwind.config.* ./
+COPY postcss.config.* ./
+COPY scripts ./scripts
+COPY lib ./lib
+COPY app ./app
+COPY components ./components
+COPY public ./public
 
 RUN npx prisma generate
 
@@ -83,28 +91,17 @@ FROM node:24-alpine AS worker
 
 WORKDIR /app
 
-ARG DATABASE_URL
-ARG REDIS_HOST
-ARG REDIS_PORT
-ARG REDIS_PASSWORD
-ARG OPENSEARCH_URL
-ARG OPENSEARCH_USERNAME
-ARG OPENSEARCH_PASSWORD
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
-COPY --from=builder /app/node_modules ./node_modules
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 COPY scripts ./scripts
 COPY lib ./lib
-COPY tsconfig.json ./
-COPY prisma.config.ts ./
+COPY triggers ./triggers
 
-ENV DATABASE_URL=${DATABASE_URL}
-ENV REDIS_HOST=${REDIS_HOST}
-ENV REDIS_PORT=${REDIS_PORT}
-ENV REDIS_PASSWORD=${REDIS_PASSWORD}
-ENV OPENSEARCH_URL=${OPENSEARCH_URL}
-ENV OPENSEARCH_USERNAME=${OPENSEARCH_USERNAME}
-ENV OPENSEARCH_PASSWORD=${OPENSEARCH_PASSWORD}
+ENV NODE_ENV=production
 
 CMD ["npm", "run", "worker"]

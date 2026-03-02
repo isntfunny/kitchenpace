@@ -65,6 +65,8 @@ services:
             args:
                 DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
                 DEBUG: ${DEBUG:-0}
+            cache_from:
+                - kitchenpace-app:latest
         container_name: kitchenpace-app
         env_file:
             - .env
@@ -85,6 +87,8 @@ services:
                 REDIS_HOST: redis
                 REDIS_PORT: 6379
                 REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+            cache_from:
+                - kitchenpace-worker:latest
         container_name: kitchenpace-worker
         depends_on:
             postgres:

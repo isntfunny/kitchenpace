@@ -12,6 +12,7 @@ import {
     processDailyRecipe,
     processTrendingRecipes,
     processWeeklyNewsletter,
+    processDailyDigest,
 } from './scheduled-processor';
 import { QueueName } from './types';
 
@@ -77,6 +78,11 @@ const workerRegistrations: WorkerRegistration[] = [
         name: 'weekly-newsletter',
         queue: QueueName.SCHEDULED,
         processor: processWeeklyNewsletter,
+    },
+    {
+        name: 'daily-digest',
+        queue: QueueName.SCHEDULED,
+        processor: processDailyDigest,
     },
 ];
 

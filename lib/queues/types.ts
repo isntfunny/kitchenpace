@@ -44,6 +44,10 @@ export interface WeeklyNewsletterJob {
     dryRun?: boolean;
 }
 
+export interface DailyDigestJob {
+    dryRun?: boolean;
+}
+
 export type EmailJob =
     | { name: 'send-email'; data: SendEmailJob }
     | { name: 'send-templated-email'; data: SendTemplatedEmailJob }
@@ -56,6 +60,7 @@ export type OpenSearchJob =
 export type ScheduledJob =
     | { name: 'daily-recipe'; data: DailyRecipeJob }
     | { name: 'weekly-newsletter'; data: WeeklyNewsletterJob }
+    | { name: 'daily-digest'; data: DailyDigestJob }
     | { name: 'opensearch-sync'; data: SyncOpenSearchJob };
 
 export type AllJob = EmailJob | OpenSearchJob | ScheduledJob;

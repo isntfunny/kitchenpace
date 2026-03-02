@@ -47,6 +47,17 @@ const scheduledJobs: ScheduledJobDefinition[] = [
             },
         },
     },
+    {
+        name: 'daily-digest',
+        queue: QueueName.SCHEDULED,
+        data: {},
+        options: {
+            repeat: {
+                pattern: '0 7 * * *',
+                tz: 'Europe/Berlin',
+            },
+        },
+    },
 ];
 
 let schedulerInterval: NodeJS.Timeout | null = null;

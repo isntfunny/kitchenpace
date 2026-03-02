@@ -70,6 +70,7 @@ export interface UserRecipe {
     title: string;
     slug: string;
     imageUrl: string | null;
+    imageKey: string | null;
     status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
     rating: number;
     ratingCount: number;
@@ -86,6 +87,7 @@ export async function fetchUserRecipes(userId: string): Promise<UserRecipe[]> {
             title: true,
             slug: true,
             imageUrl: true,
+            imageKey: true,
             status: true,
             rating: true,
             ratingCount: true,

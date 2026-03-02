@@ -15,6 +15,7 @@ interface Recipe {
     title: string;
     description?: string;
     image: string;
+    imageKey?: string | null;
     category: string;
     rating?: number;
     time?: string;
@@ -28,7 +29,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     return (
         <Link href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none' })}>
             <Card>
-                <CardImage src={recipe.image} alt={recipe.title} />
+                <CardImage src={recipe.image} alt={recipe.title} imageKey={recipe.imageKey} />
                 <CardContent>
                     <Badge>{recipe.category}</Badge>
                     <div className={css({ mt: '2' })}>

@@ -13,6 +13,7 @@ interface Recipe {
     slug: string;
     title: string;
     image: string;
+    imageKey?: string | null;
     rating: number;
     time: string;
     category: string;
@@ -75,6 +76,7 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
                     src={recipe.image}
                     alt={recipe.title}
                     fill
+                    imageKey={recipe.imageKey}
                     className={css({ objectFit: 'cover' })}
                 />
                 <div

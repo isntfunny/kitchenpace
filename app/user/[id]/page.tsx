@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { PageShell } from '@/components/layouts/PageShell';
 import { getServerAuthSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { extractKeyFromUrl, getThumbnailUrl } from '@/lib/thumbnail';
+import { getThumbnailUrlBySource } from '@/lib/thumbnail';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
 
@@ -21,14 +21,15 @@ type UserProfileProps = {
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
 
-const buildUserMetadata = (name: string, userId: string, photoUrl?: string | null): Metadata => {
-    const profileImageUrl = photoUrl
-        ? getThumbnailUrl(extractKeyFromUrl(photoUrl) ?? '', {
-              width: 400,
-              height: 400,
-              fit: 'cover',
-          })
-        : undefined;
+const buildUserMetadata = async (name: string, userId: string): Promise<Metadata> => {
+    const profileImageUrl = await getThumbnailUrlBySource(
+        { type: 'user', id: userId },
+        {
+            width: 400,
+            height: 400,
+            fit: 'cover',
+        },
+    );
 
     return {
         title: `${name} | KüchenTakt`,
@@ -73,6 +74,7 @@ async function getUserProfile(userId: string): Promise<UserProfileData | null> {
                     title: true,
                     description: true,
                     imageUrl: true,
+                    imageKey: true,
                     rating: true,
                     prepTime: true,
                     cookTime: true,
@@ -145,6 +147,7 @@ async function getUserProfile(userId: string): Promise<UserProfileData | null> {
             image:
                 recipe.imageUrl ??
                 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80',
+            imageKey: recipe.imageKey ?? null,
             category: recipe.categories[0]?.category?.name ?? 'Allgemein',
             rating: recipe.rating ?? 0,
             prepTime: recipe.prepTime,
@@ -174,7 +177,7 @@ export async function generateMetadata({ params }: UserProfileProps): Promise<Me
             title: 'Benutzer nicht gefunden | KüchenTakt',
         };
     }
-    return buildUserMetadata(user.name, user.id, user.avatar);
+    return buildUserMetadata(user.name, user.id);
 }
 
 export default async function UserProfilePage({ params }: UserProfileProps) {

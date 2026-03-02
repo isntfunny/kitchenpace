@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { fetchRecipeCookImages } from '@/app/actions/cooks';
 import { fetchRecipeBySlug } from '@/app/actions/recipes';
 import { getServerAuthSession } from '@/lib/auth';
-import { extractKeyFromUrl, getThumbnailUrl } from '@/lib/thumbnail';
+import { getThumbnailUrlBySource } from '@/lib/thumbnail';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
 
@@ -22,7 +22,9 @@ type RecipePageProps = {
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
 
-const buildRecipeMetadata = (recipe: Awaited<ReturnType<typeof fetchRecipeBySlug>>): Metadata => {
+const buildRecipeMetadata = async (
+    recipe: Awaited<ReturnType<typeof fetchRecipeBySlug>>,
+): Promise<Metadata> => {
     if (!recipe) {
         return {
             title: 'Rezept nicht gefunden | KüchenTakt',
@@ -30,10 +32,13 @@ const buildRecipeMetadata = (recipe: Awaited<ReturnType<typeof fetchRecipeBySlug
         };
     }
 
-    const imageKey = extractKeyFromUrl(recipe.image);
-    const bannerUrl = imageKey
-        ? getThumbnailUrl(imageKey, { width: 1200, height: 600 })
-        : '/og-image.png';
+    const bannerUrl =
+        recipe.imageKey && recipe.id
+            ? await getThumbnailUrlBySource(
+                  { type: 'recipe', id: recipe.id },
+                  { width: 1200, height: 600 },
+              )
+            : '/og-image.png';
 
     return {
         title: `${recipe.title} | KüchenTakt`,

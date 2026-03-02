@@ -130,6 +130,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                                 src={recipe.image}
                                 alt={recipe.title}
                                 fill
+                                imageKey={recipe.imageKey}
                                 className={css({ objectFit: 'cover' })}
                             />
                         </div>

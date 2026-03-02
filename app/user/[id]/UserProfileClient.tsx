@@ -23,6 +23,7 @@ import { ReactNode, useState, useTransition } from 'react';
 import { toggleFollowAction } from '@/app/actions/social';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
+import { SmartImage } from '@/components/atoms/SmartImage';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
@@ -31,6 +32,7 @@ export interface UserProfileRecipe {
     title: string;
     description: string;
     image: string;
+    imageKey?: string | null;
     category: string;
     rating: number;
     prepTime: number;
@@ -671,10 +673,11 @@ function RecipeCard({ recipe }: { recipe: UserProfileRecipe }) {
                     overflow: 'hidden',
                 })}
             >
-                <Image
+                <SmartImage
                     src={recipe.image}
                     alt={recipe.title}
                     fill
+                    imageKey={recipe.imageKey}
                     className={css({
                         objectFit: 'cover',
                     })}

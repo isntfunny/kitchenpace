@@ -18,6 +18,7 @@ interface Recipe {
     rating: number;
     time: string;
     image: string;
+    imageKey?: string | null;
 }
 
 interface HorizontalRecipeScrollProps {
@@ -99,6 +100,7 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                                     src={recipe.image}
                                     alt={recipe.title}
                                     fill
+                                    imageKey={recipe.imageKey}
                                     className={css({ objectFit: 'cover' })}
                                 />
                                 <div

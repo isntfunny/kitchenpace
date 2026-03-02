@@ -17,6 +17,7 @@ interface SmartImageProps {
     className?: string;
     onLoad?: () => void;
     onError?: () => void;
+    imageKey?: string | null;
     /** @deprecated Ignored - kept for backwards compatibility */
     sizes?: string;
     /** @deprecated Ignored - kept for backwards compatibility */
@@ -34,14 +35,13 @@ export function SmartImage({
     className,
     onLoad,
     onError,
-
+    imageKey,
     sizes: _sizes,
-
     priority: _priority,
 }: SmartImageProps) {
     const [error, setError] = useState(false);
 
-    const key = extractKeyFromUrl(src);
+    const key = imageKey || extractKeyFromUrl(src);
     const thumbnailSrc = key
         ? getThumbnailUrl(key, {
               width: fill ? undefined : width,

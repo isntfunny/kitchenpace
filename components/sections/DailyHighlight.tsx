@@ -43,6 +43,7 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                                 src={recipe.image}
                                 alt={recipe.title}
                                 fill
+                                imageKey={recipe.imageKey}
                                 sizes="(max-width: 768px) 100vw, 600px"
                                 className={css({ objectFit: 'cover' })}
                             />

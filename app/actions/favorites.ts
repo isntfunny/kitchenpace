@@ -12,6 +12,7 @@ export interface FavoriteRecipeCard {
     rating: number;
     time: string;
     image: string;
+    imageKey?: string | null;
     description?: string;
     savedAt: Date;
 }
@@ -39,6 +40,7 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteRecipe
             rating: recipe.rating ?? 0,
             time: `${totalTime ?? 0} Min.`,
             image: recipe.imageUrl || DEFAULT_IMAGE,
+            imageKey: recipe.imageKey ?? null,
             description: recipe.description ?? '',
             savedAt: fav.createdAt,
         };

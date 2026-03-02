@@ -59,7 +59,14 @@ export interface ChefSpotlightData {
     avatar?: string | null;
     followerCount: number;
     recipeCount: number;
-    topRecipes: Array<{ id: string; slug: string; title: string; rating: number; image: string }>;
+    topRecipes: Array<{
+        id: string;
+        slug: string;
+        title: string;
+        rating: number;
+        image: string;
+        imageKey?: string | null;
+    }>;
 }
 
 export interface QuickTipData {
@@ -164,6 +171,7 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
             image:
                 recipe.imageUrl ||
                 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80',
+            imageKey: recipe.imageKey ?? null,
             rating: recipe.rating ?? 0,
         })),
     };

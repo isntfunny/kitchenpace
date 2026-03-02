@@ -1,13 +1,13 @@
 'use client';
 
 import { Clock, Heart, Star } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { AlertDialog } from 'radix-ui';
 import { useTransition } from 'react';
 
 import { toggleFavoriteAction } from '@/app/actions/social';
 import { Badge } from '@/components/atoms/Badge';
+import { SmartImage } from '@/components/atoms/SmartImage';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
@@ -19,6 +19,7 @@ export interface FavoriteRecipeCard {
     rating: number;
     time: string;
     image: string;
+    imageKey?: string | null;
     description?: string;
     savedAt: Date | string;
 }
@@ -201,10 +202,11 @@ function FavoriteCard({
         >
             <Link href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none' })}>
                 <div className={css({ position: 'relative', aspectRatio: '16/10' })}>
-                    <Image
+                    <SmartImage
                         src={recipe.image}
                         alt={recipe.title}
                         fill
+                        imageKey={recipe.imageKey}
                         className={css({
                             objectFit: 'cover',
                         })}

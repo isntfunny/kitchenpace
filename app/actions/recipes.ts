@@ -35,6 +35,7 @@ function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
         rating: recipe.rating ?? 0,
         time: `${totalTime ?? 0} Min.`,
         image: recipe.imageUrl || DEFAULT_IMAGE,
+        imageKey: recipe.imageKey ?? null,
         description: recipe.description ?? '',
     };
 }

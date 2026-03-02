@@ -28,7 +28,15 @@ export function Card({ children, className }: CardProps) {
     return <div className={combineClasses(baseCardClass, className)}>{children}</div>;
 }
 
-export function CardImage({ src, alt }: { src: string; alt: string }) {
+export function CardImage({
+    src,
+    alt,
+    imageKey,
+}: {
+    src: string;
+    alt: string;
+    imageKey?: string | null;
+}) {
     return (
         <div
             className={css({
@@ -41,6 +49,7 @@ export function CardImage({ src, alt }: { src: string; alt: string }) {
                 src={src}
                 alt={alt}
                 fill
+                imageKey={imageKey}
                 sizes="(max-width: 768px) 100vw, 400px"
                 className={css({
                     objectFit: 'cover',

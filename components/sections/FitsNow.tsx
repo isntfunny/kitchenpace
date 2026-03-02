@@ -93,6 +93,7 @@ export function FitsNow() {
                                 title: recipe.title,
                                 description: recipe.description || '',
                                 image: recipe.image,
+                                imageKey: recipe.imageKey,
                                 category: recipe.category,
                                 rating: recipe.rating,
                                 time: recipe.time,

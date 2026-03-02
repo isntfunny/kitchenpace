@@ -27,6 +27,144 @@ import { SmartImage } from '@/components/atoms/SmartImage';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
+// Pagination Component
+function Pagination({
+    currentPage,
+    totalPages,
+    baseUrl,
+}: {
+    currentPage: number;
+    totalPages: number;
+    baseUrl: string;
+}) {
+    const getPageNumbers = () => {
+        const pages: (number | '...')[] = [];
+        const maxVisible = 5;
+
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            if (currentPage <= 3) {
+                for (let i = 1; i <= 4; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1);
+                pages.push('...');
+                for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                pages.push('...');
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            }
+        }
+
+        return pages;
+    };
+
+    return (
+        <div
+            className={flex({
+                justify: 'center',
+                align: 'center',
+                gap: '2',
+                mt: '8',
+            })}
+        >
+            {currentPage > 1 && (
+                <Link
+                    href={`${baseUrl}?page=${currentPage - 1}`}
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: 'lg',
+                        bg: 'surface.card',
+                        border: '1px solid',
+                        borderColor: 'border',
+                        color: 'text',
+                        fontWeight: '500',
+                        transition: 'all 150ms',
+                        _hover: {
+                            bg: 'accent.soft',
+                            borderColor: 'primary',
+                            color: 'primary',
+                        },
+                    })}
+                >
+                    ‹
+                </Link>
+            )}
+
+            {getPageNumbers().map((page, idx) =>
+                page === '...' ? (
+                    <span key={`ellipsis-${idx}`} className={css({ color: 'text.muted', px: '2' })}>
+                        …
+                    </span>
+                ) : (
+                    <Link
+                        key={page}
+                        href={`${baseUrl}?page=${page}`}
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: '40px',
+                            height: '40px',
+                            px: '3',
+                            borderRadius: 'lg',
+                            bg: page === currentPage ? 'primary' : 'surface.card',
+                            border: '1px solid',
+                            borderColor: page === currentPage ? 'primary' : 'border',
+                            color: page === currentPage ? 'white' : 'text',
+                            fontWeight: page === currentPage ? '600' : '500',
+                            transition: 'all 150ms',
+                            _hover: {
+                                bg: page === currentPage ? 'primary' : 'accent.soft',
+                                borderColor: page === currentPage ? 'primary' : 'primary',
+                                color: page === currentPage ? 'white' : 'primary',
+                            },
+                        })}
+                    >
+                        {page}
+                    </Link>
+                ),
+            )}
+
+            {currentPage < totalPages && (
+                <Link
+                    href={`${baseUrl}?page=${currentPage + 1}`}
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: 'lg',
+                        bg: 'surface.card',
+                        border: '1px solid',
+                        borderColor: 'border',
+                        color: 'text',
+                        fontWeight: '500',
+                        transition: 'all 150ms',
+                        _hover: {
+                            bg: 'accent.soft',
+                            borderColor: 'primary',
+                            color: 'primary',
+                        },
+                    })}
+                >
+                    ›
+                </Link>
+            )}
+        </div>
+    );
+}
+
 export interface UserProfileRecipe {
     id: string;
     title: string;
@@ -59,6 +197,8 @@ export interface UserProfileData {
     followerCount: number;
     recipes: UserProfileRecipe[];
     activities: UserProfileActivity[];
+    currentPage?: number;
+    totalPages?: number;
 }
 
 interface UserProfileClientProps {
@@ -151,15 +291,22 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
     };
 
     return (
-        <div className={css({ minH: '100vh', bg: 'background' })}>
+        <div
+            className={css({
+                minH: '100vh',
+                background: 'linear-gradient(135deg, #fff7f0 0%, #ffede0 50%, #fff7f0 100%)',
+                _dark: {
+                    background: 'linear-gradient(135deg, #1a1512 0%, #2d2520 50%, #1a1512 100%)',
+                },
+            })}
+        >
             {/* Profile Header */}
             <div
                 className={css({
-                    bg: 'linear-gradient(135deg, #fff7f0 0%, #ffede0 50%, #fff7f0 100%)',
                     pt: { base: '6', md: '10' },
                     pb: { base: '8', md: '12' },
                     borderBottom: '1px solid',
-                    borderColor: 'gray.100',
+                    borderColor: 'border',
                 })}
             >
                 <div
@@ -274,36 +421,34 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 </p>
                             )}
 
-                            {/* Stats Row */}
+                            {/* Stats Row - Small Cards */}
                             <div
                                 className={flex({
-                                    gap: { base: '6', md: '8' },
+                                    gap: '3',
                                     justify: { base: 'center', md: 'flex-start' },
                                     flexWrap: 'wrap',
+                                    mt: '4',
                                 })}
                             >
-                                <StatItem value={user.recipeCount} label="Rezepte" />
-                                <StatItem value={followerTotal} label="Follower" />
+                                <StatCard
+                                    value={user.recipeCount}
+                                    label="Rezepte"
+                                    icon={<ChefHat size={16} />}
+                                />
+                                <StatCard
+                                    value={followerTotal}
+                                    label="Follower"
+                                    icon={<Handshake size={16} />}
+                                />
                                 {recipes.length > 0 && (
-                                    <StatItem
+                                    <StatCard
                                         value={
                                             recipes.reduce((sum, r) => sum + r.rating, 0) /
                                             recipes.length
                                         }
-                                        label={
-                                            <span
-                                                className={css({
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '1',
-                                                })}
-                                            >
-                                                <Star
-                                                    size={12}
-                                                    className={css({ color: '#f8b500' })}
-                                                />
-                                                Ø Rating
-                                            </span>
+                                        label="Ø Rating"
+                                        icon={
+                                            <Star size={16} className={css({ color: '#f8b500' })} />
                                         }
                                         isDecimal
                                     />
@@ -313,9 +458,8 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                             {showFollowButton && (
                                 <div
                                     className={css({
-                                        mt: '5',
+                                        mt: '4',
                                         display: 'flex',
-                                        gap: '3',
                                         justifyContent: { base: 'center', md: 'flex-start' },
                                     })}
                                 >
@@ -324,29 +468,34 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         variant={isFollowing ? 'secondary' : 'primary'}
                                         onClick={handleFollowToggle}
                                         disabled={isPending}
+                                        className={css({
+                                            bg: isFollowing ? 'secondary' : 'primary',
+                                            color: 'white',
+                                            borderRadius: 'lg',
+                                            px: '5',
+                                            py: '2.5',
+                                            fontWeight: '600',
+                                            _hover: {
+                                                opacity: 0.9,
+                                                transform: 'translateY(-1px)',
+                                            },
+                                        })}
                                     >
                                         {isFollowing ? (
                                             <span
                                                 className={css({
                                                     display: 'inline-flex',
                                                     alignItems: 'center',
-                                                    gap: '1',
+                                                    gap: '2',
                                                 })}
                                             >
-                                                <Check size={14} />
+                                                <Check size={16} />
                                                 Folgst du
                                             </span>
                                         ) : (
                                             '+ Folgen'
                                         )}
                                     </Button>
-                                    {viewerId && (
-                                        <Link href="/profile">
-                                            <Button type="button" variant="ghost">
-                                                Mein Profil
-                                            </Button>
-                                        </Link>
-                                    )}
                                 </div>
                             )}
                         </div>
@@ -357,8 +506,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
             {/* Main Content */}
             <main
                 className={css({
-                    maxW: '1000px',
-                    mx: 'auto',
+                    width: '100%',
                     px: { base: '4', md: '6' },
                     py: { base: '6', md: '8' },
                 })}
@@ -368,6 +516,8 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                         display: 'grid',
                         gridTemplateColumns: { base: '1fr', lg: '1fr 320px' },
                         gap: { base: '8', lg: '10' },
+                        maxW: '1600px',
+                        mx: 'auto',
                     })}
                 >
                     {/* Recipes Section */}
@@ -393,7 +543,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 <span
                                     className={css({
                                         fontSize: 'sm',
-                                        color: 'text-muted',
+                                        color: 'text.muted',
                                         bg: 'gray.100',
                                         px: '3',
                                         py: '1',
@@ -406,16 +556,27 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                         </div>
 
                         {recipes.length > 0 ? (
-                            <div
-                                className={grid({
-                                    columns: { base: 1, sm: 2 },
-                                    gap: '4',
-                                })}
-                            >
-                                {recipes.map((recipe) => (
-                                    <RecipeCard key={recipe.id} recipe={recipe} />
-                                ))}
-                            </div>
+                            <>
+                                <div
+                                    className={grid({
+                                        columns: { base: 1, sm: 2, md: 3, xl: 4 },
+                                        gap: '4',
+                                    })}
+                                >
+                                    {recipes.map((recipe) => (
+                                        <RecipeCard key={recipe.id} recipe={recipe} />
+                                    ))}
+                                </div>
+
+                                {/* Pagination */}
+                                {user.totalPages && user.totalPages > 1 && (
+                                    <Pagination
+                                        currentPage={user.currentPage ?? 1}
+                                        totalPages={user.totalPages}
+                                        baseUrl={`/user/${user.id}`}
+                                    />
+                                )}
+                            </>
                         ) : (
                             <div
                                 className={css({
@@ -435,7 +596,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 >
                                     <ChefHat size={42} color="#e07b53" />
                                 </div>
-                                <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                                <p className={css({ color: 'text.muted', fontSize: 'sm' })}>
                                     {user.name} hat noch keine Rezepte veröffentlicht.
                                 </p>
                             </div>
@@ -602,36 +763,64 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
     );
 }
 
-// Stat Item Component
-function StatItem({
+// Stat Card Component - Small cards with backgrounds
+function StatCard({
     value,
     label,
+    icon,
     isDecimal = false,
 }: {
     value: number;
     label: ReactNode;
+    icon?: ReactNode;
     isDecimal?: boolean;
 }) {
     return (
         <div
             className={css({
+                bg: 'surface.card',
+                borderRadius: 'lg',
+                px: '4',
+                py: '3',
+                boxShadow: 'shadow.small',
+                border: '1px solid',
+                borderColor: 'border',
                 textAlign: 'center',
+                minW: '80px',
             })}
         >
             <div
-                className={css({
-                    fontSize: { base: 'xl', md: '2xl' },
-                    fontWeight: '800',
-                    color: 'text',
-                    fontFamily: 'heading',
+                className={flex({
+                    align: 'center',
+                    justify: 'center',
+                    gap: '2',
+                    mb: '1',
                 })}
             >
-                {isDecimal ? value.toFixed(1) : value}
+                {icon && (
+                    <span
+                        className={css({
+                            color: 'primary',
+                        })}
+                    >
+                        {icon}
+                    </span>
+                )}
+                <div
+                    className={css({
+                        fontSize: 'lg',
+                        fontWeight: '700',
+                        color: 'text',
+                        fontFamily: 'heading',
+                    })}
+                >
+                    {isDecimal ? value.toFixed(1) : value}
+                </div>
             </div>
             <div
                 className={css({
                     fontSize: 'xs',
-                    color: 'text-muted',
+                    color: 'text.muted',
                     fontWeight: '500',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',

@@ -17,7 +17,10 @@ type UserProfileParams = {
 
 type UserProfileProps = {
     params: UserProfileParams | Promise<UserProfileParams>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+const PAGE_SIZE = 12;
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
 
@@ -60,15 +63,25 @@ const buildUserMetadata = async (name: string, userId: string): Promise<Metadata
     };
 };
 
-async function getUserProfile(userId: string): Promise<UserProfileData | null> {
+async function getUserProfile(userId: string, page: number = 1): Promise<UserProfileData | null> {
+    const skip = (page - 1) * PAGE_SIZE;
+
     const user = await prisma.user.findUnique({
         where: { id: userId },
         include: {
             profile: true,
+            _count: {
+                select: {
+                    recipes: {
+                        where: { publishedAt: { not: null } },
+                    },
+                },
+            },
             recipes: {
                 where: { publishedAt: { not: null } },
                 orderBy: { createdAt: 'desc' },
-                take: 12,
+                skip: skip,
+                take: PAGE_SIZE,
                 select: {
                     id: true,
                     title: true,
@@ -138,8 +151,10 @@ async function getUserProfile(userId: string): Promise<UserProfileData | null> {
         name: user.name ?? user.profile?.nickname ?? 'Unbekannt',
         avatar: user.profile?.photoUrl ?? user.image ?? null,
         bio: user.profile?.bio ?? null,
-        recipeCount: user.profile?.recipeCount ?? user.recipes.length,
+        recipeCount: user.profile?.recipeCount ?? user._count.recipes,
         followerCount: user.profile?.followerCount ?? 0,
+        currentPage: page,
+        totalPages: Math.ceil(user._count.recipes / PAGE_SIZE),
         recipes: user.recipes.map((recipe) => ({
             id: recipe.id,
             title: recipe.title,
@@ -180,11 +195,17 @@ export async function generateMetadata({ params }: UserProfileProps): Promise<Me
     return buildUserMetadata(user.name, user.id);
 }
 
-export default async function UserProfilePage({ params }: UserProfileProps) {
+export default async function UserProfilePage({ params, searchParams }: UserProfileProps) {
     const resolvedParams = await params;
+    const resolvedSearchParams = await searchParams;
+    const page =
+        typeof resolvedSearchParams?.page === 'string'
+            ? parseInt(resolvedSearchParams.page, 10)
+            : 1;
+
     const [session, user] = await Promise.all([
         getServerAuthSession('user-profile-page'),
-        getUserProfile(resolvedParams.id),
+        getUserProfile(resolvedParams.id, page),
     ]);
 
     if (!user) {

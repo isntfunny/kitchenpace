@@ -20,6 +20,7 @@ const DEFAULT_JOB_OPTIONS: QueueOptions['defaultJobOptions'] = {
 
 let opensearchQueue: Queue | null = null;
 let scheduledQueue: Queue | null = null;
+let backupQueue: Queue | null = null;
 
 export function getOpenSearchQueue(): Queue {
     if (!opensearchQueue) {
@@ -41,6 +42,22 @@ export function getScheduledQueue(): Queue {
     return scheduledQueue;
 }
 
+export function getBackupQueue(): Queue {
+    if (!backupQueue) {
+        backupQueue = new Queue(QueueName.BACKUP, {
+            defaultJobOptions: {
+                ...DEFAULT_JOB_OPTIONS,
+                removeOnComplete: {
+                    count: 50,
+                    age: 7 * 24 * 3600,
+                },
+            },
+            connection: getRedis() as unknown as import('bullmq').ConnectionOptions,
+        });
+    }
+    return backupQueue;
+}
+
 export async function closeAllQueues(): Promise<void> {
     if (opensearchQueue) {
         await opensearchQueue.close();
@@ -49,5 +66,9 @@ export async function closeAllQueues(): Promise<void> {
     if (scheduledQueue) {
         await scheduledQueue.close();
         scheduledQueue = null;
+    }
+    if (backupQueue) {
+        await backupQueue.close();
+        backupQueue = null;
     }
 }

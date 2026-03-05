@@ -106,8 +106,12 @@ services:
             OPENSEARCH_URL: http://opensearch:9200
             OPENSEARCH_INDEX: recipes
             OPENSEARCH_INGREDIENTS_INDEX: ingredients
+            BACKUP_DIR: /app/backups
+        volumes:
+            - worker_backups:/app/backups
 
 volumes:
     postgres_data:
     redis_data:
     opensearch_data:
+    worker_backups:

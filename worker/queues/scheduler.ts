@@ -1,4 +1,4 @@
-import { getOpenSearchQueue, getScheduledQueue } from './queue';
+import { getOpenSearchQueue, getScheduledQueue, getBackupQueue } from './queue';
 import { QueueName } from './types';
 
 export interface ScheduledJobDefinition {
@@ -58,6 +58,28 @@ const scheduledJobs: ScheduledJobDefinition[] = [
             },
         },
     },
+    {
+        name: 'backup-database-hourly',
+        queue: QueueName.SCHEDULED,
+        data: {},
+        options: {
+            repeat: {
+                pattern: '0 * * * *',
+                tz: 'Europe/Berlin',
+            },
+        },
+    },
+    {
+        name: 'backup-database-daily',
+        queue: QueueName.SCHEDULED,
+        data: {},
+        options: {
+            repeat: {
+                pattern: '0 2 * * *',
+                tz: 'Europe/Berlin',
+            },
+        },
+    },
 ];
 
 let schedulerInterval: NodeJS.Timeout | null = null;
@@ -91,6 +113,8 @@ function getQueueForName(queueName: QueueName) {
             return getOpenSearchQueue();
         case QueueName.SCHEDULED:
             return getScheduledQueue();
+        case QueueName.BACKUP:
+            return getBackupQueue();
         default:
             throw new Error(`Unknown queue: ${queueName}`);
     }

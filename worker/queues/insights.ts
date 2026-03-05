@@ -1,6 +1,6 @@
 import { Queue } from 'bullmq';
 
-import { getOpenSearchQueue, getScheduledQueue } from './queue';
+import { getOpenSearchQueue, getScheduledQueue, getBackupQueue } from './queue';
 import { QueueName } from './types';
 
 export interface QueueSnapshot {
@@ -22,6 +22,7 @@ function getQueues(): Array<[QueueName, Queue]> {
     return [
         [QueueName.OPENSEARCH, getOpenSearchQueue()],
         [QueueName.SCHEDULED, getScheduledQueue()],
+        [QueueName.BACKUP, getBackupQueue()],
     ];
 }
 

@@ -103,6 +103,12 @@ docker compose up --build
 
 OpenSearch will be reachable at `http://localhost:9200`.
 
+## Git & Release Discipline
+
+- The `live` branch receives only **squash merges** so its history stays linear and clean.
+- Every merge commit targeting `live` must include a matching changelog entry describing the user-visible impact.
+- The **first line** of the commit message must be a compact summary of the biggest change, prefixed with the predominant type (`feat`/`fix`/`chore`), e.g. `feat: Autosave cooking progress in background`.
+
 ## Email Templates (MJML)
 
 Email templates are located in `lib/email-templates/mjml/` and use **MJML** format with **Liquid templating** for Notifuse integration.

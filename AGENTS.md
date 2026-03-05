@@ -272,6 +272,13 @@ npm run dev    # Start development server
 npm run lint:fix  # Auto-fix linting issues (imports, formatting, etc.)
 ```
 
+## Git & Branch Rules
+
+- **live** accepts only squash merges. Keep history linear and avoid merge commits.
+- Every commit merged into **live** must contain the project changelog entry. The first line must be a compact summary of the biggest changes and state whether the branch is predominately a `feat` or `fix` (e.g., `feat: Big-picture automation for scheduled backups`).
+- Ensure changelog entries describe the user-visible impact, not implementation minutiae.
+- These rules should also guide `main` when preparing a release into `live`.
+
 ## Acceptance Criteria
 
 From KUC-10:

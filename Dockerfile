@@ -1,98 +1,110 @@
-FROM node:20-alpine AS deps
+# ── Stage 1: Install dependencies ─────────────────────────────────────
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
-COPY panda.config.ts ./
-COPY tsconfig.json ./
+COPY panda.config.ts tsconfig.json postcss.config.cjs ./
 
 RUN npm ci --include=dev
 
-FROM node:20-alpine AS builder
+# ── Stage 2: Build Next.js app ────────────────────────────────────────
+FROM node:24-alpine AS builder
+
+ARG DEBUG=0
 
 WORKDIR /app
 
+# Make DEBUG available as env var for Next.js build
+ENV NEXT_PUBLIC_DEBUG=${DEBUG}
+
+# Copy dependency artifacts (changes least often → best cache layer)
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/prisma ./prisma
-COPY --from=deps /app/panda.config.ts ./
-COPY --from=deps /app/tsconfig.json ./
+COPY --from=deps /app/styled-system ./styled-system
 
-COPY . .
+# Config files (change occasionally)
+COPY package.json package-lock.json* ./
+COPY panda.config.ts tsconfig.json postcss.config.cjs ./
+COPY prisma.config.ts ./
+COPY next.config.ts ./
+COPY instrumentation.ts instrumentation-client.ts ./
+COPY sentry.server.config.ts sentry.edge.config.ts ./
 
-RUN npx prisma generate
+# Prisma schema (generate at runtime after migrations)
+COPY prisma ./prisma
+
+# Source code (changes most often → last for cache)
+COPY src ./src
+COPY shared ./shared
+COPY worker ./worker
+COPY public ./public
+COPY email-templates ./email-templates
+COPY cli ./cli
 
 RUN npm run build
 
-FROM node:20-alpine AS runner
+# ── Stage 3: Production runner (Next.js) ──────────────────────────────
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
-ARG DATABASE_URL
-ARG NEXTAUTH_SECRET
-ARG NEXTAUTH_URL
-ARG LOGTO_CLIENT_ID
-ARG LOGTO_CLIENT_SECRET
-ARG S3_ENDPOINT
-ARG S3_BUCKET
-ARG S3_ACCESS_KEY_ID
-ARG S3_SECRET_ACCESS_KEY
-ARG OPENSEARCH_URL
-ARG OPENSEARCH_USERNAME
-ARG OPENSEARCH_PASSWORD
-
 ENV NODE_ENV=production
-ENV DATABASE_URL=${DATABASE_URL}
-ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-ENV NEXTAUTH_URL=${NEXTAUTH_URL}
-ENV LOGTO_CLIENT_ID=${LOGTO_CLIENT_ID}
-ENV LOGTO_CLIENT_SECRET=${LOGTO_CLIENT_SECRET}
-ENV S3_ENDPOINT=${S3_ENDPOINT}
-ENV S3_BUCKET=${S3_BUCKET}
-ENV S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
-ENV S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
-ENV OPENSEARCH_URL=${OPENSEARCH_URL}
-ENV OPENSEARCH_USERNAME=${OPENSEARCH_USERNAME}
-ENV OPENSEARCH_PASSWORD=${OPENSEARCH_PASSWORD}
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nextjs
 
+# Copy node_modules + prisma (needed for db setup)
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
+
+# Copy app files
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
-RUN chown -R nextjs:nodejs /app
+# Copy CLI
+COPY --from=builder --chown=nextjs:nodejs /app/cli ./cli
+
+# Copy and setup entrypoint script
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
+RUN chmod +x ./docker-entrypoint.sh
+
+# CLI symlink (must be done as root)
+RUN ln -s /app/node_modules/.bin/tsx /usr/local/bin/kitchen
 
 USER nextjs
 
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server.js"]
 
-FROM node:20-alpine AS worker
+# ── Stage 4: Worker ───────────────────────────────────────────────────
+FROM node:24-alpine AS worker
 
 WORKDIR /app
 
-ARG DATABASE_URL
-ARG TRIGGER_API_URL
-ARG TRIGGER_ACCESS_TOKEN
+COPY --from=deps /app/node_modules ./node_modules
 
-COPY --from=builder /app/node_modules ./node_modules
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
-COPY scripts ./scripts
-COPY lib ./lib
-COPY trigger ./trigger
-COPY tsconfig.json ./
-COPY prisma.config.ts ./
-COPY trigger.config.ts ./
+COPY prisma.config.ts tsconfig.json ./
+COPY worker ./worker
+COPY src ./src
+COPY shared ./shared
+COPY email-templates ./email-templates
 
-ENV DATABASE_URL=${DATABASE_URL}
-ENV TRIGGER_API_URL=${TRIGGER_API_URL}
-ENV TRIGGER_ACCESS_TOKEN=${TRIGGER_ACCESS_TOKEN}
+# Set dummy DB URL for prisma generate (client will be generated but not validated)
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 
-CMD ["npx", "trigger.dev@latest", "dev"]
+# Generate Prisma client for worker
+RUN npx prisma generate || true
+
+ENV NODE_ENV=production
+
+CMD ["npm", "run", "worker"]

@@ -1,0 +1,947 @@
+'use client';
+
+import {
+    Bookmark,
+    Calendar,
+    ChefHat,
+    Check,
+    Clipboard,
+    Clock,
+    Edit3,
+    FileText,
+    Flame,
+    Handshake,
+    MessageSquare,
+    ShoppingCart,
+    Star,
+    UserPlus,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ReactNode, useState, useTransition } from 'react';
+
+import { toggleFollowAction } from '@app/app/actions/social';
+import { Badge } from '@app/components/atoms/Badge';
+import { SmartImage } from '@app/components/atoms/SmartImage';
+import { css } from 'styled-system/css';
+import { flex, grid } from 'styled-system/patterns';
+
+// Pagination Component
+function Pagination({
+    currentPage,
+    totalPages,
+    baseUrl,
+}: {
+    currentPage: number;
+    totalPages: number;
+    baseUrl: string;
+}) {
+    const getPageNumbers = () => {
+        const pages: (number | '...')[] = [];
+        const maxVisible = 5;
+
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            if (currentPage <= 3) {
+                for (let i = 1; i <= 4; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1);
+                pages.push('...');
+                for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                pages.push('...');
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            }
+        }
+
+        return pages;
+    };
+
+    return (
+        <div
+            className={flex({
+                justify: 'center',
+                align: 'center',
+                gap: '2',
+                mt: '8',
+            })}
+        >
+            {currentPage > 1 && (
+                <Link
+                    href={`${baseUrl}?page=${currentPage - 1}`}
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: 'lg',
+                        bg: 'surface.card',
+                        border: '1px solid',
+                        borderColor: 'border',
+                        color: 'text',
+                        fontWeight: '500',
+                        transition: 'all 150ms',
+                        _hover: {
+                            bg: 'accent.soft',
+                            borderColor: 'primary',
+                            color: 'primary',
+                        },
+                    })}
+                >
+                    ‹
+                </Link>
+            )}
+
+            {getPageNumbers().map((page, idx) =>
+                page === '...' ? (
+                    <span key={`ellipsis-${idx}`} className={css({ color: 'text.muted', px: '2' })}>
+                        …
+                    </span>
+                ) : (
+                    <Link
+                        key={page}
+                        href={`${baseUrl}?page=${page}`}
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: '40px',
+                            height: '40px',
+                            px: '3',
+                            borderRadius: 'lg',
+                            bg: page === currentPage ? 'primary' : 'surface.card',
+                            border: '1px solid',
+                            borderColor: page === currentPage ? 'primary' : 'border',
+                            color: page === currentPage ? 'white' : 'text',
+                            fontWeight: page === currentPage ? '600' : '500',
+                            transition: 'all 150ms',
+                            _hover: {
+                                bg: page === currentPage ? 'primary' : 'accent.soft',
+                                borderColor: page === currentPage ? 'primary' : 'primary',
+                                color: page === currentPage ? 'white' : 'primary',
+                            },
+                        })}
+                    >
+                        {page}
+                    </Link>
+                ),
+            )}
+
+            {currentPage < totalPages && (
+                <Link
+                    href={`${baseUrl}?page=${currentPage + 1}`}
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: 'lg',
+                        bg: 'surface.card',
+                        border: '1px solid',
+                        borderColor: 'border',
+                        color: 'text',
+                        fontWeight: '500',
+                        transition: 'all 150ms',
+                        _hover: {
+                            bg: 'accent.soft',
+                            borderColor: 'primary',
+                            color: 'primary',
+                        },
+                    })}
+                >
+                    ›
+                </Link>
+            )}
+        </div>
+    );
+}
+
+export interface UserProfileRecipe {
+    id: string;
+    title: string;
+    description: string;
+    image: string | null;
+    category: string;
+    rating: number;
+    prepTime: number;
+    cookTime: number;
+}
+
+export interface UserProfileActivity {
+    id: string;
+    type: string;
+    timeAgo: string;
+    targetId: string | null;
+    targetType: string | null;
+    recipeTitle: string | null;
+    recipeSlug: string | null;
+    metadata: Record<string, unknown> | null;
+}
+
+export interface UserProfileData {
+    id: string;
+    name: string;
+    avatar: string | null;
+    bio: string | null;
+    recipeCount: number;
+    followerCount: number;
+    recipes: UserProfileRecipe[];
+    activities: UserProfileActivity[];
+    currentPage?: number;
+    totalPages?: number;
+}
+
+interface UserProfileClientProps {
+    user: UserProfileData;
+    viewer?: {
+        id: string;
+        isSelf: boolean;
+        isFollowing: boolean;
+    };
+}
+
+// Avatar size constant for consistent sizing
+const AVATAR_SIZE = 180;
+
+// Activity type configurations - supports {recipe} placeholder
+const ACTIVITY_CONFIG: Record<string, { icon: ReactNode; template: string[]; bgColor: string }> = {
+    RECIPE_CREATED: {
+        icon: <Edit3 size={16} />,
+        template: ['hat das Rezept', 'erstellt'],
+        bgColor: '#f3e8ff',
+    },
+    RECIPE_COOKED: {
+        icon: <Flame size={16} />,
+        template: ['hat', 'gekocht'],
+        bgColor: '#fef3c7',
+    },
+    RECIPE_RATED: {
+        icon: <Star size={16} />,
+        template: ['hat', 'bewertet'],
+        bgColor: '#fef9c3',
+    },
+    RECIPE_COMMENTED: {
+        icon: <MessageSquare size={16} />,
+        template: ['hat', 'kommentiert'],
+        bgColor: '#fce7f3',
+    },
+    RECIPE_FAVORITED: {
+        icon: <Bookmark size={16} />,
+        template: ['hat', 'gespeichert'],
+        bgColor: '#dbeafe',
+    },
+    USER_FOLLOWED: {
+        icon: <Handshake size={16} />,
+        template: ['ist jetzt Follower'],
+        bgColor: '#d1fae5',
+    },
+    SHOPPING_LIST_CREATED: {
+        icon: <ShoppingCart size={16} />,
+        template: ['hat eine Einkaufsliste erstellt'],
+        bgColor: '#fef3c7',
+    },
+    MEAL_PLAN_CREATED: {
+        icon: <Calendar size={16} />,
+        template: ['hat einen Essensplan erstellt'],
+        bgColor: '#e0e7ff',
+    },
+};
+
+export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
+    const router = useRouter();
+    const { recipes, activities } = user;
+    const [followerTotal, setFollowerTotal] = useState(user.followerCount);
+    const [isFollowing, setIsFollowing] = useState(viewer?.isFollowing ?? false);
+    const [isPending, startTransition] = useTransition();
+    const viewerId = viewer?.id ?? null;
+    const showFollowButton = !viewer?.isSelf;
+
+    const requireAuth = () => {
+        if (viewerId) {
+            return true;
+        }
+        const callback = typeof window !== 'undefined' ? window.location.pathname : '/profile';
+        router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callback)}`);
+        return false;
+    };
+
+    const handleFollowToggle = () => {
+        if (!showFollowButton) return;
+        if (!requireAuth()) return;
+
+        startTransition(async () => {
+            try {
+                const result = await toggleFollowAction(user.id);
+                setIsFollowing(result.isFollowing);
+                setFollowerTotal(result.followerCount);
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    };
+
+    return (
+        <div
+            id="user-profile-page"
+            className={css({
+                minH: '100vh',
+            })}
+        >
+            {/* Profile Header */}
+            <div
+                className={css({
+                    pt: { base: '4', md: '6' },
+                    pb: { base: '4', md: '5' },
+                })}
+            >
+                <div
+                    className={css({
+                        maxW: '1000px',
+                        mx: 'auto',
+                        px: { base: '4', md: '6' },
+                    })}
+                >
+                    <div
+                        className={flex({
+                            direction: { base: 'column', md: 'row' },
+                            align: { base: 'center', md: 'flex-start' },
+                            gap: { base: '5', md: '8' },
+                        })}
+                    >
+                        {/* Avatar - Direct on Image */}
+                        <div
+                            className={css({
+                                position: 'relative',
+                                flexShrink: 0,
+                                width: `${AVATAR_SIZE}px`,
+                                height: `${AVATAR_SIZE}px`,
+                                borderRadius: '3xl',
+                                overflow: 'hidden',
+                                boxShadow:
+                                    '0 0 0 3px white, 0 0 0 6px #e07b53, 0 8px 32px rgba(224, 123, 83, 0.3)',
+                            })}
+                        >
+                            {user.avatar ? (
+                                <SmartImage
+                                    src={user.avatar}
+                                    alt={user.name}
+                                    fill
+                                    userId={user.id}
+                                    className={css({
+                                        objectFit: 'cover',
+                                        display: 'block',
+                                    })}
+                                />
+                            ) : (
+                                <div
+                                    className={css({
+                                        width: '100%',
+                                        height: '100%',
+                                        background:
+                                            'linear-gradient(135deg, #e07b53 0%, #c4623d 100%)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '4xl',
+                                        fontWeight: '700',
+                                        color: 'white',
+                                        fontFamily: 'heading',
+                                    })}
+                                >
+                                    {user.name.slice(0, 2).toUpperCase()}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Profile Info */}
+                        <div
+                            className={css({
+                                flex: 1,
+                                textAlign: { base: 'center', md: 'left' },
+                            })}
+                        >
+                            <p
+                                className={css({
+                                    color: 'primary',
+                                    fontSize: 'xs',
+                                    fontWeight: '600',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.1em',
+                                    mb: '2',
+                                })}
+                            >
+                                Koch-Profil
+                            </p>
+                            <h1
+                                className={css({
+                                    fontSize: { base: '2xl', md: '3xl', lg: '4xl' },
+                                    fontWeight: '800',
+                                    fontFamily: 'heading',
+                                    color: 'text',
+                                    mb: '3',
+                                    lineHeight: '1.2',
+                                })}
+                            >
+                                {user.name}
+                            </h1>
+                            {user.bio && (
+                                <p
+                                    className={css({
+                                        color: 'text.muted',
+                                        fontSize: { base: 'sm', md: 'base' },
+                                        lineHeight: '1.6',
+                                        mb: '4',
+                                        maxW: { base: 'full', md: '500px' },
+                                        mx: { base: 'auto', md: '0' },
+                                    })}
+                                >
+                                    {user.bio}
+                                </p>
+                            )}
+
+                            {/* Stats Row + Follow Button */}
+                            <div
+                                className={flex({
+                                    direction: { base: 'column', md: 'row' },
+                                    align: { base: 'stretch', md: 'center' },
+                                    justify: { base: 'center', md: 'flex-start' },
+                                    gap: '4',
+                                    mt: '4',
+                                })}
+                            >
+                                <div
+                                    className={flex({
+                                        gap: '3',
+                                        align: 'center',
+                                        justify: { base: 'center', md: 'flex-start' },
+                                        flexWrap: 'wrap',
+                                    })}
+                                >
+                                    <StatCard
+                                        value={user.recipeCount}
+                                        label="Rezepte"
+                                        icon={<ChefHat size={16} />}
+                                    />
+                                    <StatCard
+                                        value={followerTotal}
+                                        label="Follower"
+                                        icon={<Handshake size={16} />}
+                                    />
+                                    {recipes.length > 0 && (
+                                        <StatCard
+                                            value={
+                                                recipes.reduce((sum, r) => sum + r.rating, 0) /
+                                                recipes.length
+                                            }
+                                            label="Ø Rating"
+                                            icon={
+                                                <Star
+                                                    size={16}
+                                                    className={css({ color: '#f8b500' })}
+                                                />
+                                            }
+                                            isDecimal
+                                        />
+                                    )}
+                                </div>
+
+                                {showFollowButton && (
+                                    <div
+                                        className={css({
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        })}
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={handleFollowToggle}
+                                            disabled={isPending}
+                                            className={css({
+                                                bg: isFollowing ? 'transparent' : 'primary',
+                                                color: isFollowing ? 'text' : 'white',
+                                                border: isFollowing ? '1px solid' : 'none',
+                                                borderColor: isFollowing ? 'border' : 'transparent',
+                                                borderRadius: 'lg',
+                                                px: '4',
+                                                py: '3',
+                                                fontWeight: '600',
+                                                fontSize: 'sm',
+                                                cursor: isPending ? 'not-allowed' : 'pointer',
+                                                opacity: isPending ? 0.7 : 1,
+                                                transition: 'all 150ms',
+                                                whiteSpace: 'nowrap',
+                                                minW: '80px',
+                                                height: '100%',
+                                                _hover: {
+                                                    bg: isFollowing ? 'gray.50' : 'primary-hover',
+                                                    borderColor: isFollowing
+                                                        ? 'border'
+                                                        : 'transparent',
+                                                },
+                                            })}
+                                        >
+                                            <span
+                                                className={css({
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '2',
+                                                })}
+                                            >
+                                                {isFollowing ? (
+                                                    <Check size={14} />
+                                                ) : (
+                                                    <UserPlus size={14} />
+                                                )}
+                                                {isFollowing ? 'Folgst du' : 'Folgen'}
+                                            </span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <main
+                className={css({
+                    width: '100%',
+                    px: { base: '4', md: '6' },
+                    py: { base: '6', md: '8' },
+                })}
+            >
+                <div
+                    className={css({
+                        display: 'grid',
+                        gridTemplateColumns: { base: '1fr', lg: '1fr 320px' },
+                        gap: { base: '8', lg: '10' },
+                        maxW: '1600px',
+                        mx: 'auto',
+                    })}
+                >
+                    {/* Recipes Section */}
+                    <div id="recipes-section">
+                        <div
+                            className={flex({
+                                justify: 'space-between',
+                                align: 'center',
+                                mb: '5',
+                            })}
+                        >
+                            <h2
+                                className={css({
+                                    fontSize: 'lg',
+                                    fontWeight: '700',
+                                    color: 'text',
+                                    fontFamily: 'heading',
+                                })}
+                            >
+                                Rezepte
+                            </h2>
+                            {recipes.length > 0 && (
+                                <span
+                                    className={css({
+                                        fontSize: 'sm',
+                                        color: 'text.muted',
+                                        bg: 'gray.100',
+                                        px: '3',
+                                        py: '1',
+                                        borderRadius: 'full',
+                                    })}
+                                >
+                                    {user.recipeCount} insgesamt
+                                </span>
+                            )}
+                        </div>
+
+                        {recipes.length > 0 ? (
+                            <>
+                                <div
+                                    className={grid({
+                                        columns: { base: 1, sm: 2, md: 3, xl: 4 },
+                                        gap: '4',
+                                    })}
+                                >
+                                    {recipes.map((recipe) => (
+                                        <RecipeCard key={recipe.id} recipe={recipe} />
+                                    ))}
+                                </div>
+
+                                {/* Pagination */}
+                                {user.totalPages && user.totalPages > 1 && (
+                                    <Pagination
+                                        currentPage={user.currentPage ?? 1}
+                                        totalPages={user.totalPages}
+                                        baseUrl={`/user/${user.id}`}
+                                    />
+                                )}
+                            </>
+                        ) : (
+                            <div
+                                className={css({
+                                    bg: 'surface.elevated',
+                                    borderRadius: 'xl',
+                                    p: '8',
+                                    textAlign: 'center',
+                                    border: '1px dashed',
+                                    borderColor: 'gray.200',
+                                })}
+                            >
+                                <div
+                                    className={css({
+                                        fontSize: '3xl',
+                                        mb: '3',
+                                    })}
+                                >
+                                    <ChefHat size={42} color="#e07b53" />
+                                </div>
+                                <p className={css({ color: 'text.muted', fontSize: 'sm' })}>
+                                    {user.name} hat noch keine Rezepte veröffentlicht.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Activity Sidebar */}
+                    <div>
+                        <h2
+                            className={css({
+                                fontSize: 'lg',
+                                fontWeight: '700',
+                                color: 'text',
+                                fontFamily: 'heading',
+                                mb: '5',
+                            })}
+                        >
+                            Aktivitäten
+                        </h2>
+
+                        {activities.length > 0 ? (
+                            <div
+                                className={css({
+                                    bg: 'surface.elevated',
+                                    borderRadius: 'xl',
+                                    boxShadow:
+                                        '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
+                                    overflow: 'hidden',
+                                })}
+                            >
+                                <div className={flex({ direction: 'column' })}>
+                                    {activities.map((activity, index) => {
+                                        const config = ACTIVITY_CONFIG[activity.type] ?? {
+                                            icon: <Clipboard size={16} />,
+                                            template: ['war aktiv'],
+                                            bgColor: '#f3f4f6',
+                                        };
+
+                                        // Build the activity text
+                                        // If template has 2 parts, recipe goes between them
+                                        // If template has 1 part, it's a standalone action (no recipe)
+                                        const hasRecipe =
+                                            activity.recipeTitle && config.template.length === 2;
+
+                                        return (
+                                            <div
+                                                key={activity.id}
+                                                className={css({
+                                                    p: '4',
+                                                    borderBottom:
+                                                        index < activities.length - 1
+                                                            ? '1px solid'
+                                                            : 'none',
+                                                    borderColor: 'gray.100',
+                                                    _hover: { bg: 'gray.50' },
+                                                    transition: 'background 0.15s',
+                                                })}
+                                            >
+                                                <div
+                                                    className={flex({
+                                                        align: 'flex-start',
+                                                        gap: '3',
+                                                    })}
+                                                >
+                                                    <div
+                                                        className={css({
+                                                            width: '36px',
+                                                            height: '36px',
+                                                            borderRadius: 'lg',
+                                                            bg: config.bgColor,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: 'lg',
+                                                            flexShrink: 0,
+                                                        })}
+                                                    >
+                                                        {config.icon}
+                                                    </div>
+                                                    <div className={css({ flex: 1, minW: 0 })}>
+                                                        <p
+                                                            className={css({
+                                                                fontSize: 'sm',
+                                                                color: 'text',
+                                                                lineHeight: '1.5',
+                                                            })}
+                                                        >
+                                                            <span
+                                                                className={css({
+                                                                    fontWeight: '600',
+                                                                })}
+                                                            >
+                                                                {user.name}
+                                                            </span>{' '}
+                                                            {hasRecipe ? (
+                                                                <>
+                                                                    {config.template[0]}{' '}
+                                                                    <Link
+                                                                        href={`/recipe/${activity.recipeSlug ?? activity.targetId}`}
+                                                                        className={css({
+                                                                            color: 'primary',
+                                                                            fontWeight: '500',
+                                                                            _hover: {
+                                                                                textDecoration:
+                                                                                    'underline',
+                                                                            },
+                                                                        })}
+                                                                    >
+                                                                        {activity.recipeTitle}
+                                                                    </Link>{' '}
+                                                                    {config.template[1]}
+                                                                </>
+                                                            ) : (
+                                                                <span
+                                                                    className={css({
+                                                                        color: 'text-muted',
+                                                                    })}
+                                                                >
+                                                                    {config.template[0]}
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                        <p
+                                                            className={css({
+                                                                fontSize: 'xs',
+                                                                color: 'text-muted',
+                                                                mt: '1',
+                                                            })}
+                                                        >
+                                                            {activity.timeAgo}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ) : (
+                            <div
+                                className={css({
+                                    bg: 'surface.elevated',
+                                    borderRadius: 'xl',
+                                    p: '6',
+                                    textAlign: 'center',
+                                    border: '1px dashed',
+                                    borderColor: 'gray.200',
+                                })}
+                            >
+                                <div
+                                    className={css({ fontSize: '2xl', mb: '2', color: '#4a5568' })}
+                                >
+                                    <FileText size={36} />
+                                </div>
+                                <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                                    Noch keine Aktivitäten.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+}
+
+// Stat Card Component - Small cards with backgrounds
+function StatCard({
+    value,
+    label,
+    icon,
+    isDecimal = false,
+}: {
+    value: number;
+    label: ReactNode;
+    icon?: ReactNode;
+    isDecimal?: boolean;
+}) {
+    return (
+        <div
+            className={css({
+                bg: 'surface.card',
+                borderRadius: 'lg',
+                px: '4',
+                py: '3',
+                boxShadow: 'shadow.small',
+                border: '1px solid',
+                borderColor: 'border',
+                textAlign: 'center',
+                minW: '80px',
+            })}
+        >
+            <div
+                className={flex({
+                    align: 'center',
+                    justify: 'center',
+                    gap: '2',
+                    mb: '1',
+                })}
+            >
+                {icon && (
+                    <span
+                        className={css({
+                            color: 'primary',
+                        })}
+                    >
+                        {icon}
+                    </span>
+                )}
+                <div
+                    className={css({
+                        fontSize: 'lg',
+                        fontWeight: '700',
+                        color: 'text',
+                        fontFamily: 'heading',
+                    })}
+                >
+                    {isDecimal ? value.toFixed(1) : value}
+                </div>
+            </div>
+            <div
+                className={css({
+                    fontSize: 'xs',
+                    color: 'text.muted',
+                    fontWeight: '500',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                })}
+            >
+                {label}
+            </div>
+        </div>
+    );
+}
+
+// Recipe Card Component
+function RecipeCard({ recipe }: { recipe: UserProfileRecipe }) {
+    const totalTime = recipe.prepTime + recipe.cookTime;
+
+    return (
+        <Link
+            href={`/recipe/${recipe.id}`}
+            className={css({
+                display: 'block',
+                textDecoration: 'none',
+                color: 'inherit',
+                bg: 'surface.elevated',
+                borderRadius: 'xl',
+                overflow: 'hidden',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                _hover: {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.04)',
+                },
+            })}
+        >
+            {/* Recipe Image */}
+            <div
+                className={css({
+                    position: 'relative',
+                    aspectRatio: '16/10',
+                    overflow: 'hidden',
+                })}
+            >
+                <SmartImage
+                    src={recipe.image ?? undefined}
+                    alt={recipe.title}
+                    fill
+                    recipeId={recipe.id}
+                    className={css({
+                        objectFit: 'cover',
+                    })}
+                />
+                <div
+                    className={css({
+                        position: 'absolute',
+                        top: '3',
+                        left: '3',
+                    })}
+                >
+                    <Badge>{recipe.category}</Badge>
+                </div>
+            </div>
+
+            {/* Recipe Content */}
+            <div className={css({ p: '4' })}>
+                <h3
+                    className={css({
+                        fontSize: 'base',
+                        fontWeight: '700',
+                        fontFamily: 'heading',
+                        color: 'text',
+                        mb: '1',
+                        lineClamp: 1,
+                    })}
+                >
+                    {recipe.title}
+                </h3>
+                <p
+                    className={css({
+                        fontSize: 'sm',
+                        color: 'text-muted',
+                        lineClamp: 2,
+                        mb: '3',
+                        lineHeight: '1.5',
+                    })}
+                >
+                    {recipe.description}
+                </p>
+
+                {/* Recipe Meta */}
+                <div
+                    className={flex({
+                        justify: 'space-between',
+                        align: 'center',
+                        fontSize: 'xs',
+                        color: 'text-muted',
+                    })}
+                >
+                    <div
+                        className={flex({
+                            align: 'center',
+                            gap: '1',
+                        })}
+                    >
+                        <Star size={16} className={css({ color: '#f8b500' })} />
+                        <span className={css({ fontWeight: '600' })}>
+                            {recipe.rating.toFixed(1)}
+                        </span>
+                    </div>
+                    <div className={flex({ align: 'center', gap: '1' })}>
+                        <Clock size={16} className={css({ color: '#636e72' })} />
+                        <span>{totalTime} Min.</span>
+                    </div>
+                </div>
+            </div>
+        </Link>
+    );
+}

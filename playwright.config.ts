@@ -26,9 +26,11 @@ export default defineConfig({
     ],
     webServer: {
         env: {
-            NEXT_PUBLIC_APP_URL: 'http://localhost:3100'
+            NEXT_PUBLIC_APP_URL: 'http://localhost:3100',
+            DATABASE_URL: 'postgresql://kitchenpace:kitchenpace_secret@127.0.0.1:64000/kitchenpace',
+            OPENPANEL_MOCK: '1',
         },
-        command: 'npm run dev',
+        command: 'PORT=3100 npm run dev',
         port: 3100,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

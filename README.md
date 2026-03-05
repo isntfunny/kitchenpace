@@ -93,11 +93,7 @@ This sets `DEBUG=1`, performs a production build, then reruns Prisma code genera
 
 ## OpenSearch index & ingestion
 
-The repository now includes an embedded OpenSearch cluster alongside PostgreSQL in `docker-compose.yml`. An additional `opensearch-sync` worker keeps the `recipes` index up to date:
-
-- **Typed mappings** for keywords, categories, numeric fields, and timestamps so aggregations and histograms work out of the box
-- **Batch ingestion** that upserts published recipes and deletes archived ones in chunks via `scripts/opensearch/ingest.ts`
-- **Watch mode** with a ~15s poll that can also be run once for ad-hoc reindexing (`npm run opensearch:sync -- --once`)
+The repository includes an embedded OpenSearch cluster alongside PostgreSQL in `docker-compose.yml`. The `opensearch-sync` worker (in `worker/`) keeps the `recipes` index up to date with typed mappings for keywords, categories, numeric fields, and timestamps.
 
 Start everything during development with:
 
@@ -105,4 +101,44 @@ Start everything during development with:
 docker compose up --build
 ```
 
-OpenSearch will be reachable at `http://localhost:9200` and the background worker automatically refreshes filters, tag counts, and duration distributions so the UI can show accurate counts. When you reset your database or import new recipes, rerun `npm run opensearch:sync` to rebuild the index.
+OpenSearch will be reachable at `http://localhost:9200`.
+
+## Email Templates (MJML)
+
+Email templates are located in `lib/email-templates/mjml/` and use **MJML** format with **Liquid templating** for Notifuse integration.
+
+### Liquid Variable Reference
+
+#### Contact Variables
+
+| Variable                   | Description          |
+| -------------------------- | -------------------- |
+| `{{ contact.first_name }}` | User's first name    |
+| `{{ contact.last_name }}`  | User's last name     |
+| `{{ contact.email }}`      | User's email address |
+
+#### System URLs
+
+| Variable                         | Description                         |
+| -------------------------------- | ----------------------------------- |
+| `{{ unsubscribe_url }}`          | Link to unsubscribe from newsletter |
+| `{{ confirm_subscription_url }}` | Link to confirm subscription        |
+| `{{ notification_center_url }}`  | Link to notification preferences    |
+
+#### Template Variables
+
+**generic.mjml** (main template)
+
+| Variable           | Description                            |
+| ------------------ | -------------------------------------- |
+| `{{{ subject }}}`  | Email subject (triple braces for HTML) |
+| `{{{ message }}}`  | Main content (triple braces for HTML)  |
+| `{{ buttonText }}` | Button text (optional)                 |
+| `{{ buttonLink }}` | Button URL (optional)                  |
+
+### Import to Notifuse
+
+1. Open Notifuse dashboard → Templates
+2. Create New Template
+3. Copy MJML content from `lib/email-templates/mjml/`
+4. Notifuse compiles MJML to responsive HTML automatically

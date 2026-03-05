@@ -1,0 +1,555 @@
+'use client';
+
+import { Sparkles, ChefHat, CheckCircle2, X, Wand2 } from 'lucide-react';
+import { Dialog } from 'radix-ui';
+import { useState, useRef, useEffect } from 'react';
+
+interface AiConversionDialogProps {
+    open: boolean;
+    onClose: () => void;
+    /** Called with the text when the user submits (for future DB save) */
+    onSubmit?: (text: string) => void;
+}
+
+type Phase = 'input' | 'processing' | 'done';
+
+const MOCK_STEPS = [
+    'Rezepttext wird analysiert...',
+    'Zutaten werden erkannt...',
+    'Zubereitungsschritte werden identifiziert...',
+    'Flow-Struktur wird generiert...',
+    'Verbindungen werden optimiert...',
+];
+
+export function AiConversionDialog({ open, onClose, onSubmit }: AiConversionDialogProps) {
+    const [text, setText] = useState('');
+    const [phase, setPhase] = useState<Phase>('input');
+    const [stepIndex, setStepIndex] = useState(0);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Cleanup timers on unmount
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
+
+    function startConversion() {
+        if (!text.trim()) return;
+        onSubmit?.(text.trim());
+        setPhase('processing');
+        setStepIndex(0);
+        runSteps(0);
+    }
+
+    function runSteps(idx: number) {
+        if (idx >= MOCK_STEPS.length) {
+            timerRef.current = setTimeout(() => setPhase('done'), 400);
+            return;
+        }
+        setStepIndex(idx);
+        timerRef.current = setTimeout(() => runSteps(idx + 1), 620);
+    }
+
+    function handleClose() {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        setPhase('input');
+        setStepIndex(0);
+        setText('');
+        onClose();
+    }
+
+    return (
+        <Dialog.Root open={open} onOpenChange={(v) => !v && handleClose()}>
+            <Dialog.Portal>
+                <Dialog.Overlay
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        backgroundColor: 'rgba(0,0,0,0.45)',
+                        backdropFilter: 'blur(4px)',
+                        zIndex: 9000,
+                        animation: 'fadeIn 0.2s ease',
+                    }}
+                />
+                <Dialog.Content
+                    style={{
+                        position: 'fixed',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 9001,
+                        backgroundColor: 'white',
+                        borderRadius: '20px',
+                        boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
+                        width: 'min(580px, 95vw)',
+                        maxHeight: '90vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                    }}
+                    onPointerDownOutside={(e) => phase === 'processing' && e.preventDefault()}
+                >
+                    {/* Header */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '20px 24px 16px',
+                            borderBottom: '1px solid rgba(224,123,83,0.15)',
+                            background:
+                                'linear-gradient(135deg, rgba(224,123,83,0.06) 0%, rgba(248,181,0,0.06) 100%)',
+                        }}
+                    >
+                        <div
+                            style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '10px',
+                                background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                            }}
+                        >
+                            <Sparkles style={{ width: '18px', height: '18px', color: 'white' }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <Dialog.Title
+                                style={{
+                                    margin: 0,
+                                    fontSize: '16px',
+                                    fontWeight: 700,
+                                    color: '#2d3436',
+                                    lineHeight: 1.2,
+                                }}
+                            >
+                                Lass KI die Arbeit übernehmen
+                            </Dialog.Title>
+                            <p
+                                style={{
+                                    margin: 0,
+                                    fontSize: '12px',
+                                    color: '#636e72',
+                                    marginTop: '2px',
+                                }}
+                            >
+                                Füge ein klassisches Rezept ein — KI wandelt es in einen Flow um
+                            </p>
+                        </div>
+                        {phase !== 'processing' && (
+                            <Dialog.Close asChild>
+                                <button
+                                    type="button"
+                                    onClick={handleClose}
+                                    style={{
+                                        width: '30px',
+                                        height: '30px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        backgroundColor: 'rgba(0,0,0,0.06)',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    <X
+                                        style={{ width: '14px', height: '14px', color: '#636e72' }}
+                                    />
+                                </button>
+                            </Dialog.Close>
+                        )}
+                    </div>
+
+                    {/* Body */}
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+                        {phase === 'input' && <InputPhase text={text} onChange={setText} />}
+                        {phase === 'processing' && <ProcessingPhase stepIndex={stepIndex} />}
+                        {phase === 'done' && <DonePhase />}
+                    </div>
+
+                    {/* Footer */}
+                    {phase === 'input' && (
+                        <div
+                            style={{
+                                padding: '16px 24px',
+                                borderTop: '1px solid rgba(224,123,83,0.12)',
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                gap: '10px',
+                            }}
+                        >
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                style={{
+                                    padding: '8px 18px',
+                                    borderRadius: '999px',
+                                    border: '1.5px solid rgba(224,123,83,0.3)',
+                                    backgroundColor: 'transparent',
+                                    color: '#e07b53',
+                                    fontWeight: 600,
+                                    fontSize: '13px',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                Abbrechen
+                            </button>
+                            <button
+                                type="button"
+                                disabled={!text.trim()}
+                                onClick={startConversion}
+                                style={{
+                                    padding: '8px 20px',
+                                    borderRadius: '999px',
+                                    border: 'none',
+                                    background: text.trim()
+                                        ? 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)'
+                                        : 'rgba(0,0,0,0.1)',
+                                    color: text.trim() ? 'white' : '#b2bec3',
+                                    fontWeight: 600,
+                                    fontSize: '13px',
+                                    cursor: text.trim() ? 'pointer' : 'not-allowed',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.15s ease',
+                                }}
+                            >
+                                <Wand2 style={{ width: '14px', height: '14px' }} />
+                                Jetzt konvertieren
+                            </button>
+                        </div>
+                    )}
+                    {phase === 'done' && (
+                        <div
+                            style={{
+                                padding: '16px 24px',
+                                borderTop: '1px solid rgba(224,123,83,0.12)',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                gap: '10px',
+                            }}
+                        >
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                style={{
+                                    padding: '9px 28px',
+                                    borderRadius: '999px',
+                                    border: 'none',
+                                    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                    color: 'white',
+                                    fontWeight: 700,
+                                    fontSize: '14px',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 16px rgba(224,123,83,0.35)',
+                                }}
+                            >
+                                Flow ansehen ✨
+                            </button>
+                        </div>
+                    )}
+                </Dialog.Content>
+            </Dialog.Portal>
+        </Dialog.Root>
+    );
+}
+
+/* ── Sub-phases ────────────────────────────────────────────── */
+
+function InputPhase({ text, onChange }: { text: string; onChange: (v: string) => void }) {
+    return (
+        <div>
+            <p
+                style={{
+                    margin: '0 0 12px',
+                    fontSize: '13px',
+                    color: '#636e72',
+                    lineHeight: 1.6,
+                }}
+            >
+                Füge dein Rezept in Textform ein. Die KI erkennt automatisch Zutaten, Schritte und
+                deren Reihenfolge und erstellt daraus einen visuellen Flow.
+            </p>
+            <textarea
+                value={text}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={PLACEHOLDER_TEXT}
+                style={{
+                    width: '100%',
+                    minHeight: '240px',
+                    border: '1.5px solid rgba(224,123,83,0.35)',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
+                    fontSize: '13px',
+                    fontFamily: 'inherit',
+                    lineHeight: 1.65,
+                    resize: 'vertical',
+                    outline: 'none',
+                    color: '#2d3436',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.15s ease',
+                }}
+                onFocus={(e) => (e.target.style.borderColor = '#e07b53')}
+                onBlur={(e) => (e.target.style.borderColor = 'rgba(224,123,83,0.35)')}
+                autoFocus
+            />
+            <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#b2bec3' }}>
+                Tipp: Kopiere einfach ein Rezept aus dem Internet oder tippe es ab.
+            </p>
+        </div>
+    );
+}
+
+function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
+    return (
+        <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            {/* Animated orb */}
+            <div style={{ position: 'relative', display: 'inline-block', marginBottom: '28px' }}>
+                <div
+                    style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        animation: 'aiPulse 1.4s ease-in-out infinite',
+                        boxShadow: '0 0 0 0 rgba(224,123,83,0.4)',
+                    }}
+                >
+                    <ChefHat style={{ width: '36px', height: '36px', color: 'white' }} />
+                </div>
+                {/* Orbiting sparkle dots */}
+                <div style={orbitDot(0)} />
+                <div style={orbitDot(1)} />
+                <div style={orbitDot(2)} />
+            </div>
+
+            <h3 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 700, color: '#2d3436' }}>
+                KI analysiert dein Rezept…
+            </h3>
+            <p style={{ margin: '0 0 28px', fontSize: '13px', color: '#636e72' }}>
+                Das dauert nur einen Moment
+            </p>
+
+            {/* Step log */}
+            <div
+                style={{
+                    textAlign: 'left',
+                    maxWidth: '340px',
+                    margin: '0 auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                }}
+            >
+                {MOCK_STEPS.map((step, i) => {
+                    const done = i < stepIndex;
+                    const active = i === stepIndex;
+                    return (
+                        <div
+                            key={step}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                opacity: i > stepIndex ? 0.3 : 1,
+                                transition: 'opacity 0.3s ease',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: '18px',
+                                    height: '18px',
+                                    borderRadius: '50%',
+                                    flexShrink: 0,
+                                    backgroundColor: done
+                                        ? '#e07b53'
+                                        : active
+                                          ? 'rgba(224,123,83,0.2)'
+                                          : 'rgba(0,0,0,0.08)',
+                                    border: active ? '2px solid #e07b53' : '2px solid transparent',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.3s ease',
+                                }}
+                            >
+                                {done && (
+                                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                        <path
+                                            d="M2 5l2.5 2.5L8 3"
+                                            stroke="white"
+                                            strokeWidth="1.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                )}
+                                {active && (
+                                    <div
+                                        style={{
+                                            width: '6px',
+                                            height: '6px',
+                                            borderRadius: '50%',
+                                            backgroundColor: '#e07b53',
+                                            animation: 'aiDotPulse 0.8s ease-in-out infinite',
+                                        }}
+                                    />
+                                )}
+                            </div>
+                            <span
+                                style={{
+                                    fontSize: '13px',
+                                    color: done ? '#2d3436' : active ? '#e07b53' : '#b2bec3',
+                                    fontWeight: active || done ? 500 : 400,
+                                    transition: 'color 0.3s ease',
+                                }}
+                            >
+                                {step}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <style>{`
+                @keyframes aiPulse {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(224,123,83,0.4); transform: scale(1); }
+                    50% { box-shadow: 0 0 0 16px rgba(224,123,83,0); transform: scale(1.04); }
+                }
+                @keyframes aiDotPulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.3; }
+                }
+                @keyframes aiOrbit {
+                    from { transform: rotate(var(--start)) translateX(52px) rotate(calc(-1 * var(--start))); }
+                    to { transform: rotate(calc(var(--start) + 360deg)) translateX(52px) rotate(calc(-1 * (var(--start) + 360deg))); }
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+            `}</style>
+        </div>
+    );
+}
+
+function DonePhase() {
+    return (
+        <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <div
+                style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(34,197,94,0.1)',
+                    border: '2px solid rgba(34,197,94,0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 24px',
+                }}
+            >
+                <CheckCircle2 style={{ width: '40px', height: '40px', color: '#22c55e' }} />
+            </div>
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: '#2d3436' }}>
+                Flow wurde erstellt! 🎉
+            </h3>
+            <p
+                style={{
+                    margin: '0 0 24px',
+                    fontSize: '13px',
+                    color: '#636e72',
+                    maxWidth: '360px',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    lineHeight: 1.6,
+                }}
+            >
+                Dein Rezept wurde erfolgreich in einen visuellen Flow umgewandelt. Du kannst ihn
+                jetzt bearbeiten und verfeinern.
+            </p>
+            {/* Mock stats */}
+            <div
+                style={{
+                    display: 'flex',
+                    gap: '12px',
+                    justifyContent: 'center',
+                    flexWrap: 'wrap',
+                }}
+            >
+                {[
+                    { label: 'Schritte erkannt', value: '7' },
+                    { label: 'Zutaten verknüpft', value: '12' },
+                    { label: 'Verbindungen', value: '8' },
+                ].map((stat) => (
+                    <div
+                        key={stat.label}
+                        style={{
+                            backgroundColor: 'rgba(224,123,83,0.07)',
+                            borderRadius: '10px',
+                            padding: '10px 16px',
+                            minWidth: '100px',
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: '22px',
+                                fontWeight: 800,
+                                color: '#e07b53',
+                                lineHeight: 1,
+                            }}
+                        >
+                            {stat.value}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#636e72', marginTop: '4px' }}>
+                            {stat.label}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/* ── helpers ────────────────────────────────────────────────── */
+
+function orbitDot(index: number): React.CSSProperties {
+    const startDeg = index * 120;
+    return {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: '8px',
+        height: '8px',
+        borderRadius: '50%',
+        backgroundColor: index === 0 ? '#e07b53' : index === 1 ? '#f8b500' : '#ff8c69',
+        marginTop: '-4px',
+        marginLeft: '-4px',
+        animation: `aiOrbit ${1.8 + index * 0.3}s linear infinite`,
+        // @ts-expect-error CSS custom property
+        '--start': `${startDeg}deg`,
+    };
+}
+
+const PLACEHOLDER_TEXT = `Beispiel:
+
+Für den Teig:
+- 200g Mehl
+- 100g Butter
+- 2 Eier
+- 1 Prise Salz
+
+1. Mehl, Butter und Salz vermischen bis eine krümelige Masse entsteht.
+2. Eier hinzufügen und zu einem glatten Teig kneten.
+3. Teig 30 Minuten kalt stellen.
+4. Teig ausrollen und in die Form legen.
+5. Bei 180°C für 25 Minuten backen.`;

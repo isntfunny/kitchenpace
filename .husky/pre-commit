@@ -1,2 +1,29 @@
 npm run lint:fix
-npm run format
+
+# Only reformat if MJML files are staged
+if git diff --cached --name-only | grep -q '\.mjml$'; then
+  npm run format
+fi
+
+# Check if Prisma schema changed without a migration
+if git diff --cached --name-only | grep -q "prisma/schema.prisma"; then
+  if ! git diff --cached --name-only | grep -q "prisma/migrations/"; then
+    echo ""
+    echo "❌ ERROR: Prisma schema changed but no migration added!"
+    echo ""
+    echo "   Run: npx prisma migrate dev"
+    echo "   Then commit both the schema and the new migration."
+    echo ""
+    exit 1
+  fi
+fi
+
+# Validate MJML email templates only if MJML files staged
+if git diff --cached --name-only | grep -q '\.mjml$'; then
+  echo "📧 Validating MJML templates..."
+  node email-templates/validate.mjs
+fi
+
+# Re-stage only files that were already staged (not untracked/intentionally unstaged files)
+# Exclude deleted files (D) to avoid git add failing on removed paths
+git diff --cached --name-only --diff-filter=d | xargs -r git add

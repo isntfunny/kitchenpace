@@ -257,10 +257,10 @@ Based on the recipe detail implementation, the recipe editor should:
 
 ## Implementation Notes
 
-- The recipe detail page is at `/root/projects/kitchenpace/app/recipe/[id]/page.tsx`
+- The recipe detail page is at `/root/projects/kitchenpace/src/app/recipe/[id]/page.tsx`
 - The client component `RecipeDetailClient` handles the rendering
-- Current recipe data is in `/root/projects/kitchenpace/app/recipe/[id]/data.ts`
-- Components are in `/root/projects/kitchenpace/components/`
+- Current recipe data is in `/root/projects/kitchenpace/src/app/recipe/[id]/data.ts`
+- Components are in `/root/projects/kitchenpace/src/components/`
 - React Flow components are in `components/flow/`
 
 ## Development Commands
@@ -1745,8 +1745,8 @@ const customExtension = {
         // Add build layers, modify deployment
         context.addLayer({
             id: 'my-layer',
-            files: [{ source: './custom-file', destination: '/app/custom' }],
-            commands: ['chmod +x /app/custom'],
+            files: [{ source: './custom-file', destination: '/src/app/custom' }],
+            commands: ['chmod +x /src/app/custom'],
         });
     },
 };

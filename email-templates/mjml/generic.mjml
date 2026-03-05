@@ -1,0 +1,82 @@
+<mjml>
+    <mj-head>
+        <mj-font
+            name="Poppins"
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        />
+        <mj-font
+            name="Playfair Display"
+            href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap"
+        />
+        <mj-attributes>
+            <mj-text
+                padding="0 25px"
+                color="#333"
+                font-family="Poppins, Arial, sans-serif"
+                font-size="16px"
+                line-height="1.6"
+            />
+            <mj-button
+                font-family="Poppins, Arial, sans-serif"
+                background-color="#e07b53"
+                color="#ffffff"
+                font-size="16px"
+                font-weight="bold"
+                border-radius="999px"
+                padding="15px 25px"
+            />
+            <mj-image
+                font-family="Poppins, Arial, sans-serif"
+                padding="0 25px"
+                src="https://via.placeholder.com/1x1"
+            />
+            <mj-section padding="20px 0" />
+            <mj-column width="100%" />
+        </mj-attributes>
+        <mj-preview>{{{ subject }}}</mj-preview>
+        <mj-style>
+            body {
+                background: linear-gradient(
+                    180deg,
+                    #fff8f4 0%,
+                    #fef0e8 40%,
+                    #fceadd 100%
+                ) !important;
+            }
+        </mj-style>
+    </mj-head>
+    <mj-body background-color="#fff8f4">
+        <!-- Header with gradient -->
+        <mj-section background-color="#e07b53" padding="40px 0">
+            <mj-column>
+                <mj-image
+                    src="https://cdn.isntfunny.de/mailer/kitchenpace.png"
+                    width="120px"
+                    align="center"
+                />
+            </mj-column>
+        </mj-section>
+
+        <!-- Content -->
+        <mj-section background-color="#ffffff">
+            <mj-column>
+                <mj-text>Hallo {{ contact.first_name }},</mj-text>
+                <mj-text>{{{ message }}}</mj-text>
+                {% if buttonText and buttonLink %}
+                <mj-button href="{{ buttonLink }}">{{ buttonText }}</mj-button>
+                {% endif %}
+                <mj-text>Viele Grüße,</mj-text>
+                <mj-text>Team KüchenTakt</mj-text>
+            </mj-column>
+        </mj-section>
+
+        <!-- Footer -->
+        <mj-section>
+            <mj-column>
+                <mj-text align="center" font-size="14px" color="#666"
+                    >KüchenTakt · Deine Küche, dein Tempo</mj-text
+                >
+            </mj-column>
+        </mj-section>
+    </mj-body>
+</mjml>

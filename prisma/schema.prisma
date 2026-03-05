@@ -11,6 +11,11 @@ datasource db {
 // ENUMS
 // ============================================
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum Difficulty {
   EASY
   MEDIUM
@@ -35,6 +40,13 @@ enum MealStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 enum ShoppingCategory {
@@ -124,6 +136,7 @@ model User {
   emailVerified   DateTime?
   image           String?
   hashedPassword  String?
+  role            Role      @default(USER)
   isActive        Boolean   @default(false) // Must be activated via email
   activationToken String?
   resetToken      String?
@@ -156,7 +169,7 @@ model Profile {
   id             String   @id @default(cuid())
   userId         String   @unique
   email          String
-  nickname       String?
+  nickname       String   @db.VarChar(40)
   teaser         String?
   photoUrl       String?
   bio            String?
@@ -176,10 +189,13 @@ model Profile {
   notifyOnRecipePublished Boolean  @default(true)
   notifyOnWeeklyPlanReminder Boolean  @default(true)
   notifyOnSystemMessages Boolean  @default(true)
+  notifyOnNewsletter      Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([nickname])
 }
 
 // ============================================
@@ -191,7 +207,6 @@ model Recipe {
   title        String
   slug         String      @unique
   description  String?
-  imageUrl     String?
   imageKey     String?
   blurhash     String?
   imageWidth   Int?
@@ -207,10 +222,14 @@ model Recipe {
   ratingCount  Int         @default(0)
   viewCount    Int         @default(0)
   cookCount    Int         @default(0)
+  isTrending   Boolean     @default(false)
   
   // Flow data as JSON
   flowNodes    Json?
   flowEdges    Json?
+
+  // AI-assisted flow generation (prepared for future use)
+  rawRecipeText String?  // Classic text recipe, sent to AI to generate flow
   
   authorId     String
   createdAt    DateTime    @default(now())
@@ -236,6 +255,7 @@ model Recipe {
   @@index([createdAt])
   @@index([rating])
   @@index([status])
+  @@index([isTrending])
 }
 
 // ============================================
@@ -591,4 +611,39 @@ model PinnedFavorite {
   @@unique([userId, position])
   @@unique([userId, recipeId])
   @@index([userId])
+}
+
+// ============================================
+// SITE SETTINGS (Content Moderation)
+// ============================================
+
+model SiteSettings {
+  id        String    @id @default(cuid())
+  key       String    @unique
+  value     Json?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+}
+
+// ============================================
+// JOB RUNS (BullMQ History)
+// ============================================
+
+model JobRun {
+  id            String    @id @default(cuid())
+  queueName     String
+  jobName       String
+  jobId        String?   // BullMQ job ID
+  status       JobStatus @default(PENDING)
+  payload      Json?     // Job input data
+  result       Json?     // Job output/result
+  errorMessage String?   // Error message if failed
+  attempts     Int       @default(0)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([queueName, createdAt])
+  @@index([status, createdAt])
+  @@index([jobId])
 }

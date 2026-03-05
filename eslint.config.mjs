@@ -49,6 +49,7 @@ const eslintConfig = defineConfig([
                 },
             ],
             '@typescript-eslint/no-explicit-any': 'off',
+            '@next/next/no-img-element': 'off',
 
             // Unused imports
             'unused-imports/no-unused-imports': 'error',
@@ -64,7 +65,7 @@ const eslintConfig = defineConfig([
             ],
         },
     },
-    globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'styled-system/**']),
+    globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'styled-system/**', 'k6/**']),
 ]);
 
 export default eslintConfig;

@@ -1,0 +1,265 @@
+import type { ActivityType } from '@prisma/client';
+import { Metadata } from 'next';
+
+import { PageShell } from '@app/components/layouts/PageShell';
+import { getServerAuthSession } from '@app/lib/auth';
+import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
+import { prisma } from '@shared/prisma';
+import { css } from 'styled-system/css';
+import { container } from 'styled-system/patterns';
+
+import { UserProfileClient, type UserProfileData } from './UserProfileClient';
+
+export const revalidate = 60;
+
+type UserProfileParams = {
+    id: string;
+};
+
+type UserProfileProps = {
+    params: UserProfileParams | Promise<UserProfileParams>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+const PAGE_SIZE = 12;
+
+const KNOWN_ACTIVITY_TYPES: ActivityType[] = [
+    'RECIPE_CREATED',
+    'RECIPE_COOKED',
+    'RECIPE_RATED',
+    'RECIPE_COMMENTED',
+    'RECIPE_FAVORITED',
+    'USER_FOLLOWED',
+    'MEAL_PLAN_CREATED',
+];
+
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
+
+const buildUserMetadata = async (name: string, userId: string): Promise<Metadata> => {
+    const profileImageUrl = await getThumbnailUrlBySource(
+        { type: 'user', id: userId },
+        {
+            width: 400,
+            height: 400,
+            fit: 'cover',
+        },
+    );
+
+    return {
+        title: `${name} | KüchenTakt`,
+        description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+        openGraph: {
+            title: `${name} | KüchenTakt`,
+            description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+            url: `${SITE_URL}/user/${userId}`,
+            siteName: 'KüchenTakt',
+            type: 'profile',
+            ...(profileImageUrl && {
+                images: [
+                    {
+                        url: profileImageUrl,
+                        width: 400,
+                        height: 400,
+                        alt: `${name} Profilbild`,
+                    },
+                ],
+            }),
+        },
+        twitter: {
+            card: profileImageUrl ? 'summary' : 'summary',
+            title: `${name} | KüchenTakt`,
+            description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+            ...(profileImageUrl && { images: [profileImageUrl] }),
+        },
+    };
+};
+
+async function getUserProfile(userId: string, page: number = 1): Promise<UserProfileData | null> {
+    const skip = (page - 1) * PAGE_SIZE;
+
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+            profile: true,
+            _count: {
+                select: {
+                    recipes: {
+                        where: { publishedAt: { not: null } },
+                    },
+                },
+            },
+            recipes: {
+                where: { publishedAt: { not: null } },
+                orderBy: { createdAt: 'desc' },
+                skip: skip,
+                take: PAGE_SIZE,
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    imageKey: true,
+                    rating: true,
+                    prepTime: true,
+                    cookTime: true,
+                    categories: {
+                        select: {
+                            category: {
+                                select: { name: true },
+                            },
+                        },
+                        take: 1,
+                    },
+                },
+            },
+            activities: {
+                where: { type: { in: KNOWN_ACTIVITY_TYPES } },
+                orderBy: { createdAt: 'desc' },
+                take: 10,
+                select: {
+                    id: true,
+                    type: true,
+                    createdAt: true,
+                    targetId: true,
+                    targetType: true,
+                    metadata: true,
+                },
+            },
+        },
+    });
+
+    if (!user) return null;
+
+    // Fetch recipe details for recipe-related activities
+    const recipeIds = user.activities
+        .filter((a) => a.targetType === 'recipe' && a.targetId)
+        .map((a) => a.targetId as string);
+
+    const recipes =
+        recipeIds.length > 0
+            ? await prisma.recipe.findMany({
+                  where: { id: { in: recipeIds } },
+                  select: { id: true, title: true, slug: true },
+              })
+            : [];
+
+    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
+
+    // Format time ago on server side
+    const formatTimeAgo = (date: Date): string => {
+        const diff = Date.now() - new Date(date).getTime();
+        const minutes = Math.floor(diff / 60000);
+
+        if (minutes < 1) return 'Jetzt';
+        if (minutes < 60) return `${minutes} Min.`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} Std.`;
+        const days = Math.floor(hours / 24);
+        return `${days} Tg.`;
+    };
+
+    return {
+        id: user.id,
+        name: user.name ?? user.profile?.nickname ?? 'Unbekannt',
+        avatar: user.profile?.photoUrl ?? user.image ?? null,
+        bio: user.profile?.bio ?? null,
+        recipeCount: user.profile?.recipeCount ?? user._count.recipes,
+        followerCount: user.profile?.followerCount ?? 0,
+        currentPage: page,
+        totalPages: Math.ceil(user._count.recipes / PAGE_SIZE),
+        recipes: user.recipes.map((recipe) => ({
+            id: recipe.id,
+            title: recipe.title,
+            description: recipe.description ?? '',
+            image: recipe.imageKey ?? null,
+            imageKey: recipe.imageKey ?? null,
+            category: recipe.categories[0]?.category?.name ?? 'Allgemein',
+            rating: recipe.rating ?? 0,
+            prepTime: recipe.prepTime,
+            cookTime: recipe.cookTime,
+        })),
+        activities: user.activities.map((activity) => {
+            const recipe = activity.targetId ? recipeMap.get(activity.targetId) : null;
+            return {
+                id: activity.id,
+                type: activity.type,
+                timeAgo: formatTimeAgo(activity.createdAt),
+                targetId: activity.targetId,
+                targetType: activity.targetType,
+                recipeTitle: recipe?.title ?? null,
+                recipeSlug: recipe?.slug ?? null,
+                metadata: activity.metadata as Record<string, unknown> | null,
+            };
+        }),
+    };
+}
+
+export async function generateMetadata({ params }: UserProfileProps): Promise<Metadata> {
+    const resolvedParams = await params;
+    const user = await getUserProfile(resolvedParams.id);
+    if (!user) {
+        return {
+            title: 'Benutzer nicht gefunden | KüchenTakt',
+        };
+    }
+    return buildUserMetadata(user.name, user.id);
+}
+
+export default async function UserProfilePage({ params, searchParams }: UserProfileProps) {
+    const resolvedParams = await params;
+    const resolvedSearchParams = await searchParams;
+    const page =
+        typeof resolvedSearchParams?.page === 'string'
+            ? parseInt(resolvedSearchParams.page, 10)
+            : 1;
+
+    const [session, user] = await Promise.all([
+        getServerAuthSession('user-profile-page'),
+        getUserProfile(resolvedParams.id, page),
+    ]);
+
+    if (!user) {
+        return (
+            <PageShell>
+                <div className={css({ minH: '100vh', color: 'text' })}>
+                    <main className={container({ maxW: '1400px', mx: 'auto', px: '4', py: '8' })}>
+                        <div className={css({ textAlign: 'center', py: '20' })}>
+                            <h1
+                                className={css({ fontFamily: 'heading', fontSize: '3xl', mb: '4' })}
+                            >
+                                Benutzer nicht gefunden
+                            </h1>
+                            <p className={css({ color: 'text-muted' })}>
+                                Der gesuchte Benutzer existiert leider nicht.
+                            </p>
+                        </div>
+                    </main>
+                </div>
+            </PageShell>
+        );
+    }
+
+    let viewer: { id: string; isSelf: boolean; isFollowing: boolean } | undefined;
+
+    if (session?.user?.id) {
+        const viewerId = session.user.id;
+        if (viewerId === user.id) {
+            viewer = { id: viewerId, isSelf: true, isFollowing: false };
+        } else {
+            const follow = await prisma.follow.findUnique({
+                where: {
+                    followerId_followingId: {
+                        followerId: viewerId,
+                        followingId: user.id,
+                    },
+                },
+            });
+            viewer = { id: viewerId, isSelf: false, isFollowing: Boolean(follow) };
+        }
+    }
+
+    return (
+        <PageShell>
+            <UserProfileClient user={user} viewer={viewer} />
+        </PageShell>
+    );
+}

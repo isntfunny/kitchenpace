@@ -14,14 +14,16 @@
         "isolatedModules": true,
         "jsx": "react-jsx",
         "incremental": true,
-        "types": ["react", "react-dom"],
+        "types": ["react", "react-dom", "node"],
         "plugins": [
             {
                 "name": "next"
             }
         ],
         "paths": {
-            "@/*": ["./*"],
+            "@app/*": ["./src/*"],
+            "@shared/*": ["./shared/*"],
+            "@worker/*": ["./worker/*"],
             "styled-system": ["./styled-system"],
             "styled-system/*": ["./styled-system/*"]
         }

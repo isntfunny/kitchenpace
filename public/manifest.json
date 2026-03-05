@@ -1,0 +1,17 @@
+{
+    "name": "KüchenTakt - Rezepte im Takt",
+    "short_name": "KüchenTakt",
+    "description": "Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#f97316",
+    "icons": [
+        {
+            "src": "/kitchenpace_icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+# k6 Load Test Results
+/results/
+*.html
+*.json
+!grafana-dashboards/*.json
+
+# Environment files
+.env
+.env.local
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db

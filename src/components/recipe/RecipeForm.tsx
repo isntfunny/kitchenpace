@@ -1,0 +1,906 @@
+'use client';
+
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
+
+import type { EditRecipeData } from '@app/app/actions/recipes';
+import type {
+    FlowEdgeSerialized,
+    FlowNodeSerialized,
+} from '@app/components/flow/editor/editorTypes';
+import { FlowEditor } from '@app/components/flow/FlowEditor';
+import { css } from 'styled-system/css';
+import { stack } from 'styled-system/patterns';
+
+import { searchIngredients, searchTags } from '../recipe/actions';
+import {
+    createIngredient,
+    createRecipe,
+    updateRecipe,
+    type FlowNodeInput,
+    type FlowEdgeInput,
+} from '../recipe/createActions';
+
+import {
+    GeneralInformationSection,
+    TimeAndDifficultySection,
+    CategorySelector,
+    TagSelector,
+    IngredientManager,
+    SubmissionControls,
+    ErrorBanner,
+} from './RecipeForm/components';
+import { AddedIngredient, Category, IngredientSearchResult, Tag } from './RecipeForm/data';
+import type { TagFacet } from './types';
+
+const formStackClass = stack({ gap: '6' });
+const normalizeTag = (value: string) => value.trim().toLowerCase();
+type TagOption = Tag & { count: number };
+type TagWithCount = TagOption & { selected: boolean };
+
+type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+interface RecipeFormProps {
+    categories: Category[];
+    tags: Tag[];
+    tagFacets?: TagFacet[];
+    authorId: string;
+    initialData?: EditRecipeData;
+    layout?: 'stack' | 'sidebar';
+}
+
+export function RecipeForm({
+    categories,
+    tags,
+    tagFacets,
+    authorId,
+    initialData,
+    layout = 'stack',
+}: RecipeFormProps) {
+    const isEditMode = Boolean(initialData);
+
+    // ── form state ──────────────────────────────────────────
+    const [title, setTitle] = useState(initialData?.title ?? '');
+    const [description, setDescription] = useState(initialData?.description ?? '');
+    const [imageUrl, setImageUrl] = useState(initialData?.imageUrl ?? '');
+    const [servings, setServings] = useState(initialData?.servings ?? 4);
+    const [prepTime, setPrepTime] = useState(initialData?.prepTime ?? 0);
+    const [cookTime, setCookTime] = useState(initialData?.cookTime ?? 0);
+    const [difficulty, setDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>(
+        initialData?.difficulty ?? 'MEDIUM',
+    );
+    const [categoryIds, setCategoryIds] = useState<string[]>(initialData?.categoryIds ?? []);
+    const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tagIds ?? []);
+    const [tagQuery, setTagQuery] = useState('');
+    const [ingredients, setIngredients] = useState<AddedIngredient[]>(
+        (initialData?.ingredients ?? []).map((ing) => ({
+            id: ing.id,
+            name: ing.name,
+            amount: ing.amount,
+            unit: ing.unit,
+            notes: ing.notes,
+            isOptional: ing.isOptional,
+            isNew: false,
+        })),
+    );
+
+    // ── manual save state ───────────────────────────────────
+    const [saving, setSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<'DRAFT' | 'PUBLISHED'>(
+        initialData?.status ?? 'DRAFT',
+    );
+    const [error, setError] = useState<string | null>(null);
+
+    // ── ingredient search state ─────────────────────────────
+    const [ingredientQuery, setIngredientQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<IngredientSearchResult[]>([]);
+    const [showNewIngredient, setShowNewIngredient] = useState(false);
+    const [newIngredientName, setNewIngredientName] = useState('');
+    const [newIngredientUnit, setNewIngredientUnit] = useState('');
+
+    // ── flow state (stored in refs — changes don't re-render form) ──
+    const flowNodesRef = useRef<FlowNodeInput[]>(initialData?.flowNodes ?? []);
+    const flowEdgesRef = useRef<FlowEdgeInput[]>(initialData?.flowEdges ?? []);
+
+    // ── auto-save ────────────────────────────────────────────
+    const autoSavedIdRef = useRef<string | null>(initialData?.id ?? null);
+    const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle');
+    const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
+    const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+    // Progress bar: mandatory fields → 60%, optional → +40%
+    const titleDone = title.trim().length > 0;
+    const kategorieDone = categoryIds.length > 0;
+    const ingredientsDone = ingredients.length > 0;
+    const mandatoryPct = [titleDone, kategorieDone, ingredientsDone].filter(Boolean).length * 20;
+    const mandatoryMet = mandatoryPct === 60;
+    const optionalPct =
+        (description.trim().length > 0 ? 10 : 0) +
+        (prepTime > 0 || cookTime > 0 ? 10 : 0) +
+        (selectedTags.length > 0 ? 10 : 0) +
+        (servings !== 4 ? 10 : 0);
+    const progressPct = Math.min(100, mandatoryPct + optionalPct);
+
+    // Build the payload for save/update — reads current state at call time
+    const buildPayload = useCallback(
+        (status: 'DRAFT' | 'PUBLISHED') => ({
+            title: title.trim(),
+            description: description.trim(),
+            imageUrl: imageUrl || undefined,
+            servings,
+            prepTime,
+            cookTime,
+            difficulty,
+            categoryIds,
+            tagIds: selectedTags,
+            ingredients: ingredients.map((ing) => ({
+                ingredientId: ing.id,
+                ingredientName: ing.name,
+                amount: ing.amount,
+                unit: ing.unit,
+                notes: ing.notes || undefined,
+                isOptional: ing.isOptional,
+            })),
+            flowNodes: flowNodesRef.current,
+            flowEdges: flowEdgesRef.current,
+            status,
+        }),
+        [
+            title,
+            description,
+            imageUrl,
+            servings,
+            prepTime,
+            cookTime,
+            difficulty,
+            categoryIds,
+            selectedTags,
+            ingredients,
+        ],
+    );
+
+    const buildPayloadRef = useRef(buildPayload);
+    buildPayloadRef.current = buildPayload;
+
+    const performAutoSave = useCallback(async () => {
+        const trimmedTitle = title.trim();
+        if (!trimmedTitle) return;
+
+        setAutoSaveStatus('saving');
+        try {
+            const payload = buildPayloadRef.current('DRAFT');
+
+            if (autoSavedIdRef.current) {
+                await updateRecipe(autoSavedIdRef.current, payload, authorId);
+            } else {
+                const recipe = await createRecipe(payload, authorId);
+                autoSavedIdRef.current = recipe.id;
+                window.history.replaceState({}, '', `/recipe/${recipe.id}/edit`);
+            }
+
+            setAutoSaveStatus('saved');
+            setAutoSavedAt(new Date());
+        } catch {
+            setAutoSaveStatus('error');
+        }
+    }, [title, authorId]);
+
+    const performAutoSaveRef = useRef(performAutoSave);
+    performAutoSaveRef.current = performAutoSave;
+
+    useEffect(() => {
+        if (!title.trim()) {
+            setAutoSaveStatus('idle');
+            if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+            return;
+        }
+
+        setAutoSaveStatus('idle');
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = setTimeout(() => performAutoSaveRef.current(), 2500);
+
+        return () => {
+            if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        };
+    }, [
+        title,
+        description,
+        imageUrl,
+        servings,
+        prepTime,
+        cookTime,
+        difficulty,
+        categoryIds,
+        selectedTags,
+        ingredients,
+    ]);
+
+    // ── ingredient search ────────────────────────────────────
+    useEffect(() => {
+        if (ingredientQuery.length < 2) {
+            setSearchResults([]);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            const results = await searchIngredients(ingredientQuery);
+            setSearchResults(results);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [ingredientQuery]);
+
+    // ── tag sorting ──────────────────────────────────────────
+    const tagFacetCountMap = useMemo(() => {
+        const map = new Map<string, number>();
+        tagFacets?.forEach((facet) => {
+            map.set(facet.key, facet.count);
+            map.set(normalizeTag(facet.key), facet.count);
+        });
+        return map;
+    }, [tagFacets]);
+
+    const initialTagCandidates = useMemo<TagOption[]>(() => {
+        const candidates = tags.map((tag) => {
+            const normalizedName = normalizeTag(tag.name);
+            const count =
+                tagFacetCountMap.get(tag.name) ??
+                tagFacetCountMap.get(normalizedName) ??
+                tag.count ??
+                0;
+            return { ...tag, count };
+        });
+        return candidates
+            .sort((a, b) => {
+                if (a.count !== b.count) return b.count - a.count;
+                return a.name.localeCompare(b.name);
+            })
+            .slice(0, 50);
+    }, [tags, tagFacetCountMap]);
+
+    const [tagCandidates, setTagCandidates] = useState<TagOption[]>(initialTagCandidates);
+
+    useEffect(() => {
+        setTagCandidates(initialTagCandidates);
+    }, [initialTagCandidates]);
+
+    useEffect(() => {
+        const trimmedQuery = tagQuery.trim();
+        if (trimmedQuery.length < 2) {
+            setTagCandidates(initialTagCandidates);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                const searchResults = await searchTags(trimmedQuery);
+                setTagCandidates(searchResults);
+            } catch (error) {
+                console.error('Tag search failed', error);
+                setTagCandidates(initialTagCandidates);
+            }
+        }, 300);
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [tagQuery, initialTagCandidates]);
+
+    const sortedTags = useMemo(() => {
+        const normalizedQuery = tagQuery.toLowerCase().trim();
+        const tagPool: TagWithCount[] = tagCandidates.map((tag) => ({
+            ...tag,
+            selected: selectedTags.includes(tag.id),
+        }));
+        const filtered = normalizedQuery
+            ? tagPool.filter((tag) => tag.name.toLowerCase().includes(normalizedQuery))
+            : tagPool;
+        return filtered.sort((a, b) => {
+            if (a.selected && !b.selected) return -1;
+            if (!a.selected && b.selected) return 1;
+            if (a.count !== b.count) return b.count - a.count;
+            return a.name.localeCompare(b.name);
+        });
+    }, [selectedTags, tagQuery, tagCandidates]);
+
+    // ── handlers ─────────────────────────────────────────────
+    const handleCategoryToggle = (id: string, selected: boolean) => {
+        setCategoryIds((prev) =>
+            selected ? [...prev, id] : prev.filter((categoryId) => categoryId !== id),
+        );
+    };
+
+    const handleAddIngredient = (ing: IngredientSearchResult) => {
+        if (ingredients.some((i) => i.id === ing.id)) return; // already added
+        setIngredients((prev) => [
+            ...prev,
+            {
+                id: ing.id,
+                name: ing.name,
+                amount: '',
+                unit: ing.units[0] || '',
+                notes: '',
+                isOptional: false,
+                isNew: false,
+            },
+        ]);
+        setIngredientQuery('');
+        setSearchResults([]);
+    };
+
+    const handleCreateNewIngredient = async () => {
+        if (!newIngredientName.trim()) return;
+        const unit = newIngredientUnit.trim() || 'Stück';
+        const created = await createIngredient(newIngredientName.trim(), undefined, [unit]);
+        setIngredients((prev) => [
+            ...prev,
+            {
+                id: created.id,
+                name: created.name,
+                amount: '',
+                unit,
+                notes: '',
+                isOptional: false,
+                isNew: true,
+            },
+        ]);
+        setNewIngredientName('');
+        setNewIngredientUnit('');
+        setShowNewIngredient(false);
+        setIngredientQuery('');
+    };
+
+    const handleRemoveIngredient = (index: number) => {
+        setIngredients((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const updateIngredient = (index: number, changes: Partial<AddedIngredient>) => {
+        setIngredients((prev) => {
+            const next = [...prev];
+            next[index] = { ...next[index], ...changes };
+            return next;
+        });
+    };
+
+    const handleFlowChange = useCallback((nodes: FlowNodeInput[], edges: FlowEdgeInput[]) => {
+        flowNodesRef.current = nodes;
+        flowEdgesRef.current = edges;
+    }, []);
+
+    // ── submit ────────────────────────────────────────────────
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        setError(null);
+
+        try {
+            if (!title.trim()) {
+                setError('Bitte gib einen Titel ein.');
+                return;
+            }
+            if (categoryIds.length === 0) {
+                setError('Bitte wähle mindestens eine Kategorie aus.');
+                return;
+            }
+            if (ingredients.length === 0) {
+                setError('Bitte füge mindestens eine Zutat hinzu.');
+                return;
+            }
+
+            const payload = buildPayload(saveStatus);
+
+            if (isEditMode || autoSavedIdRef.current) {
+                const recipeId = (isEditMode ? initialData!.id : autoSavedIdRef.current)!;
+                await updateRecipe(recipeId, payload, authorId);
+                window.location.href = `/recipe/${recipeId}`;
+            } else {
+                const recipe = await createRecipe(payload, authorId);
+                window.location.href = `/recipe/${recipe.id}`;
+            }
+        } catch (err) {
+            console.error('Error saving recipe:', err);
+            setError(err instanceof Error ? err.message : 'Fehler beim Speichern des Rezepts.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // ── auto-save status label ────────────────────────────────
+    const autoSaveLabel = (() => {
+        if (!title.trim()) return null;
+        if (autoSaveStatus === 'saving') return 'Wird gespeichert…';
+        if (autoSaveStatus === 'error') return 'Fehler beim Speichern';
+        if (autoSaveStatus === 'saved' && autoSavedAt) {
+            return `Entwurf gespeichert ${autoSavedAt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;
+        }
+        return null;
+    })();
+
+    /* ── shared components ── */
+
+    const flowEditor = (
+        <FlowEditor
+            availableIngredients={ingredients}
+            initialNodes={(initialData?.flowNodes ?? []) as unknown as FlowNodeSerialized[]}
+            initialEdges={initialData?.flowEdges as unknown as FlowEdgeSerialized[]}
+            onChange={handleFlowChange}
+            onAddIngredientToRecipe={handleAddIngredient}
+        />
+    );
+
+    /* ── sidebar / accordion layout ── */
+
+    if (layout === 'sidebar') {
+        return (
+            <form onSubmit={handleSubmit} className={sidebarFormClass}>
+                {/* Left: accordion sidebar */}
+                <div className={sidebarCollapsed ? sidebarCollapsedClass : sidebarClass}>
+                    {!sidebarCollapsed && (
+                        <button
+                            type="button"
+                            className={sidebarToggleClass}
+                            onClick={() => setSidebarCollapsed(true)}
+                            title="Sidebar einklappen"
+                        >
+                            <PanelLeftClose className={css({ width: '16px', height: '16px' })} />
+                        </button>
+                    )}
+                    {/* Autosave bar */}
+                    {autoSaveLabel && (
+                        <div className={autoSaveBarClass(autoSaveStatus)}>
+                            {autoSaveStatus === 'saving' && <span className={spinnerClass} />}
+                            {autoSaveLabel}
+                        </div>
+                    )}
+
+                    {/* Progress bar */}
+                    <div className={progressBarWrapperClass}>
+                        <div
+                            className={css({
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                mb: '1',
+                            })}
+                        >
+                            <span
+                                className={css({
+                                    fontSize: '8px',
+                                    fontWeight: '700',
+                                    color: 'rgba(0,0,0,0.5)',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                })}
+                            >
+                                {progressPct}%
+                            </span>
+                            {progressPct >= 100 && (
+                                <span
+                                    className={css({
+                                        fontSize: '8px',
+                                        color: '#00b894',
+                                        fontWeight: '700',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.05em',
+                                    })}
+                                >
+                                    Vollständig
+                                </span>
+                            )}
+                            {mandatoryMet && progressPct < 100 && (
+                                <span
+                                    className={css({
+                                        fontSize: '8px',
+                                        color: '#00b894',
+                                        fontWeight: '700',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.05em',
+                                    })}
+                                >
+                                    Bereit
+                                </span>
+                            )}
+                        </div>
+                        {/* Track with 60% milestone marker */}
+                        <div className={progressTrackClass} style={{ position: 'relative' }}>
+                            <div
+                                className={progressFillClass}
+                                style={{
+                                    width: `${progressPct}%`,
+                                    backgroundColor: mandatoryMet ? '#00b894' : '#e07b53',
+                                }}
+                            />
+                            {/* 60% milestone marker */}
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: '60%',
+                                    top: '-2px',
+                                    bottom: '-2px',
+                                    width: '1.5px',
+                                    backgroundColor: 'rgba(0,0,0,0.15)',
+                                    borderRadius: '1px',
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Flat scrollable sections */}
+                    <div className={sidebarSectionsClass}>
+                        {/* Title */}
+                        <div className={sidebarSectionClass}>
+                            <GeneralInformationSection
+                                title={title}
+                                onTitleChange={setTitle}
+                                description={description}
+                                onDescriptionChange={setDescription}
+                                imageUrl={imageUrl}
+                                onImageUrlChange={setImageUrl}
+                                showAutoSaveHint={false}
+                            />
+                        </div>
+
+                        <div className={sidebarDividerClass} />
+
+                        {/* Time, Difficulty */}
+                        <div className={sidebarSectionClass}>
+                            <div className={sectionHeadingClass}>Details</div>
+                            <TimeAndDifficultySection
+                                prepTime={prepTime}
+                                onPrepTimeChange={setPrepTime}
+                                cookTime={cookTime}
+                                onCookTimeChange={setCookTime}
+                                difficulty={difficulty}
+                                onDifficultyChange={setDifficulty}
+                            />
+                        </div>
+
+                        <div className={sidebarDividerClass} />
+
+                        {/* Categories */}
+                        <div className={sidebarSectionClass}>
+                            <CategorySelector
+                                categories={categories}
+                                selectedIds={categoryIds}
+                                onToggle={handleCategoryToggle}
+                            />
+                        </div>
+
+                        <div className={sidebarDividerClass} />
+
+                        {/* Tags */}
+                        <div className={sidebarSectionClass}>
+                            <TagSelector
+                                sortedTags={sortedTags}
+                                selectedTags={selectedTags}
+                                tagQuery={tagQuery}
+                                onTagQueryChange={setTagQuery}
+                                onSelectionChange={setSelectedTags}
+                            />
+                        </div>
+
+                        <div className={sidebarDividerClass} />
+
+                        {/* Ingredients */}
+                        <div className={sidebarSectionClass}>
+                            <IngredientManager
+                                servings={servings}
+                                onServingsChange={setServings}
+                                ingredientQuery={ingredientQuery}
+                                onIngredientQueryChange={setIngredientQuery}
+                                searchResults={searchResults}
+                                showNewIngredient={showNewIngredient}
+                                onShowNewIngredient={setShowNewIngredient}
+                                newIngredientName={newIngredientName}
+                                onNewIngredientNameChange={setNewIngredientName}
+                                newIngredientUnit={newIngredientUnit}
+                                onNewIngredientUnitChange={setNewIngredientUnit}
+                                onCreateNewIngredient={handleCreateNewIngredient}
+                                ingredients={ingredients}
+                                onAddIngredient={handleAddIngredient}
+                                onUpdateIngredient={updateIngredient}
+                                onRemoveIngredient={handleRemoveIngredient}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Sticky footer */}
+                    <div className={sidebarFooterClass}>
+                        {error && <ErrorBanner message={error} />}
+                        <SubmissionControls
+                            saving={saving}
+                            saveStatus={saveStatus}
+                            onStatusChange={(next) => setSaveStatus(next)}
+                        />
+                    </div>
+                </div>
+
+                {/* Right: flow editor canvas */}
+                <div className={canvasAreaClass}>
+                    {sidebarCollapsed && (
+                        <button
+                            type="button"
+                            className={sidebarReopenClass}
+                            onClick={() => setSidebarCollapsed(false)}
+                            title="Sidebar öffnen"
+                        >
+                            <PanelLeftOpen className={css({ width: '16px', height: '16px' })} />
+                        </button>
+                    )}
+                    {flowEditor}
+                </div>
+            </form>
+        );
+    }
+
+    /* ── stack layout (default) ── */
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <div className={formStackClass}>
+                <GeneralInformationSection
+                    title={title}
+                    onTitleChange={setTitle}
+                    description={description}
+                    onDescriptionChange={setDescription}
+                    imageUrl={imageUrl}
+                    onImageUrlChange={setImageUrl}
+                    showAutoSaveHint={true}
+                />
+
+                <TimeAndDifficultySection
+                    prepTime={prepTime}
+                    onPrepTimeChange={setPrepTime}
+                    cookTime={cookTime}
+                    onCookTimeChange={setCookTime}
+                    difficulty={difficulty}
+                    onDifficultyChange={setDifficulty}
+                />
+
+                <CategorySelector
+                    categories={categories}
+                    selectedIds={categoryIds}
+                    onToggle={handleCategoryToggle}
+                />
+
+                <TagSelector
+                    sortedTags={sortedTags}
+                    selectedTags={selectedTags}
+                    tagQuery={tagQuery}
+                    onTagQueryChange={setTagQuery}
+                    onSelectionChange={setSelectedTags}
+                />
+
+                <IngredientManager
+                    servings={servings}
+                    onServingsChange={setServings}
+                    ingredientQuery={ingredientQuery}
+                    onIngredientQueryChange={setIngredientQuery}
+                    searchResults={searchResults}
+                    showNewIngredient={showNewIngredient}
+                    onShowNewIngredient={setShowNewIngredient}
+                    newIngredientName={newIngredientName}
+                    onNewIngredientNameChange={setNewIngredientName}
+                    newIngredientUnit={newIngredientUnit}
+                    onNewIngredientUnitChange={setNewIngredientUnit}
+                    onCreateNewIngredient={handleCreateNewIngredient}
+                    ingredients={ingredients}
+                    onAddIngredient={handleAddIngredient}
+                    onUpdateIngredient={updateIngredient}
+                    onRemoveIngredient={handleRemoveIngredient}
+                />
+
+                <div>
+                    <h2
+                        className={css({
+                            fontSize: 'lg',
+                            fontWeight: '600',
+                            mb: '1',
+                            color: 'text',
+                        })}
+                    >
+                        Zubereitungsschritte
+                    </h2>
+                    <p className={css({ fontSize: 'sm', color: 'text.muted', mb: '4' })}>
+                        Baue deinen Kochablauf Schritt für Schritt auf.
+                    </p>
+                    {flowEditor}
+                </div>
+
+                {error && <ErrorBanner message={error} />}
+
+                <SubmissionControls
+                    saving={saving}
+                    saveStatus={saveStatus}
+                    onStatusChange={(next) => setSaveStatus(next)}
+                />
+            </div>
+        </form>
+    );
+}
+
+/* ── styles ───────────────────────────────────────────────── */
+
+const autoSaveBarClass = (status: AutoSaveStatus) =>
+    css({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1.5',
+        px: '3.5',
+        py: '2',
+        fontSize: '8px',
+        fontWeight: '600',
+        backgroundColor: status === 'error' ? 'rgba(239,68,68,0.08)' : 'rgba(224,123,83,0.06)',
+        color: status === 'error' ? 'red.500' : 'text.muted',
+        borderBottom: '1px solid',
+        borderBottomColor: status === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(224,123,83,0.12)',
+        flexShrink: '0',
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+    });
+
+const spinnerClass = css({
+    width: '10px',
+    height: '10px',
+    borderRadius: 'full',
+    border: '2px solid',
+    borderColor: 'brand.primary',
+    borderTopColor: 'transparent',
+    animation: 'spin 0.7s linear infinite',
+    display: 'inline-block',
+    flexShrink: '0',
+});
+
+// Sidebar layout
+const sidebarFormClass = css({
+    display: 'flex',
+    height: '100%',
+    overflow: 'hidden',
+    flex: '1',
+});
+
+const sidebarClass = css({
+    width: '320px',
+    minWidth: '320px',
+    flexShrink: '0',
+    borderRight: '1px solid rgba(224,123,83,0.15)',
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: 'white',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    transition: 'width 200ms ease, min-width 200ms ease',
+    // Scrollable sidebar
+    '&::-webkit-scrollbar': { width: '4px' },
+    '&::-webkit-scrollbar-track': { background: 'transparent' },
+    '&::-webkit-scrollbar-thumb': {
+        background: 'rgba(224,123,83,0.2)',
+        borderRadius: '2px',
+    },
+});
+
+const sidebarCollapsedClass = css({
+    width: '0px',
+    minWidth: '0px',
+    flexShrink: '0',
+    overflow: 'hidden',
+    transition: 'width 200ms ease, min-width 200ms ease',
+});
+
+const sidebarToggleClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    p: '1.5',
+    mx: '2.5',
+    mt: '1.5',
+    mb: '0.5',
+    borderRadius: 'md',
+    border: 'none',
+    backgroundColor: 'transparent',
+    color: 'text.muted',
+    cursor: 'pointer',
+    alignSelf: 'flex-end',
+    transition: 'all 0.15s ease',
+    _hover: {
+        backgroundColor: 'rgba(224,123,83,0.08)',
+        color: 'text',
+    },
+});
+
+const sidebarReopenClass = css({
+    position: 'absolute',
+    top: '8px',
+    left: '8px',
+    zIndex: '20',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '32px',
+    height: '32px',
+    borderRadius: 'md',
+    border: '1px solid rgba(224,123,83,0.3)',
+    backgroundColor: 'white',
+    color: 'text.muted',
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    transition: 'all 0.15s ease',
+    _hover: {
+        backgroundColor: 'rgba(224,123,83,0.08)',
+        color: 'text',
+    },
+});
+
+const sidebarFooterClass = css({
+    p: '3.5',
+    borderTop: '1px solid rgba(224,123,83,0.1)',
+    position: 'sticky',
+    bottom: '0',
+    backgroundColor: 'white',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2.5',
+    flexShrink: '0',
+    zIndex: '10',
+});
+
+// Progress bar
+const progressBarWrapperClass = css({
+    px: '3.5',
+    py: '2.5',
+    flexShrink: '0',
+});
+
+const progressTrackClass = css({
+    width: '100%',
+    height: '3px',
+    borderRadius: 'full',
+    backgroundColor: 'rgba(224,123,83,0.1)',
+    overflow: 'visible',
+    position: 'relative',
+});
+
+const progressFillClass = css({
+    height: '100%',
+    borderRadius: 'full',
+    backgroundColor: 'brand.primary',
+    transition: 'width 0.3s ease',
+});
+
+// Flat sidebar sections
+const sidebarSectionsClass = css({
+    flex: '1',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+});
+
+const sidebarSectionClass = css({
+    px: '3.5',
+    py: '2.5',
+});
+
+const sidebarDividerClass = css({
+    height: '1px',
+    mx: '3.5',
+    backgroundColor: 'rgba(224,123,83,0.08)',
+});
+
+const sectionHeadingClass = css({
+    fontSize: '9px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    color: 'rgba(0,0,0,0.55)',
+    mb: '2',
+});
+
+// Canvas area
+const canvasAreaClass = css({
+    flex: '1',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: '0',
+    position: 'relative',
+});

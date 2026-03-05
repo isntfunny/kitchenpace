@@ -1,7 +1,3 @@
-
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN');
 
@@ -141,6 +137,7 @@ CREATE TABLE "Recipe" (
     "isTrending" BOOLEAN NOT NULL DEFAULT false,
     "flowNodes" JSONB,
     "flowEdges" JSONB,
+    "rawRecipeText" TEXT,
     "authorId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -406,6 +403,17 @@ CREATE TABLE "PinnedFavorite" (
 );
 
 -- CreateTable
+CREATE TABLE "SiteSettings" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "value" JSONB,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "updatedBy" TEXT,
+
+    CONSTRAINT "SiteSettings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "JobRun" (
     "id" TEXT NOT NULL,
     "queueName" TEXT NOT NULL,
@@ -607,6 +615,9 @@ CREATE UNIQUE INDEX "PinnedFavorite_userId_position_key" ON "PinnedFavorite"("us
 CREATE UNIQUE INDEX "PinnedFavorite_userId_recipeId_key" ON "PinnedFavorite"("userId", "recipeId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "SiteSettings_key_key" ON "SiteSettings"("key");
+
+-- CreateIndex
 CREATE INDEX "JobRun_queueName_createdAt_idx" ON "JobRun"("queueName", "createdAt");
 
 -- CreateIndex
@@ -725,4 +736,3 @@ ALTER TABLE "PinnedFavorite" ADD CONSTRAINT "PinnedFavorite_userId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "PinnedFavorite" ADD CONSTRAINT "PinnedFavorite_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-

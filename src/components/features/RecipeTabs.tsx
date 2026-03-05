@@ -386,8 +386,6 @@ export function RecipeTabs() {
                 '&::-webkitScrollbar': {
                     display: 'none',
                 },
-                borderTop: '1px solid',
-                borderColor: 'border',
             })}
         >
             <span

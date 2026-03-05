@@ -200,6 +200,8 @@ export function Header() {
                     width: '100%',
                     px: { base: '4', md: '6' },
                     py: '3',
+                    borderBottom: '1px solid',
+                    borderColor: 'border',
                 })}
             >
                 <div

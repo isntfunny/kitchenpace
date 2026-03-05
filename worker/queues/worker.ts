@@ -1,5 +1,6 @@
 import { Worker, WorkerOptions } from 'bullmq';
 
+import { processDatabaseBackup } from './backup-processor';
 import { getRedis } from './connection';
 import { createJobRun, updateJobRun } from './job-run';
 import {
@@ -7,7 +8,12 @@ import {
     processSyncOpenSearch,
     processSyncRecipeToOpenSearch,
 } from './opensearch-processor';
-import { processTrendingRecipes, processSyncContactsNotifuse } from './scheduled-processor';
+import {
+    processTrendingRecipes,
+    processSyncContactsNotifuse,
+    processBackupDatabaseDaily,
+    processBackupDatabaseHourly,
+} from './scheduled-processor';
 import { QueueName } from './types';
 
 const DEFAULT_WORKER_OPTIONS: Omit<WorkerOptions, 'connection'> = {
@@ -57,6 +63,42 @@ const workerRegistrations: WorkerRegistration[] = [
         name: 'sync-contacts-notifuse',
         queue: QueueName.SCHEDULED,
         processor: processSyncContactsNotifuse,
+    },
+    {
+        name: 'backup-database-hourly',
+        queue: QueueName.SCHEDULED,
+        processor: processBackupDatabaseHourly,
+        options: {
+            concurrency: 1,
+            limiter: {
+                max: 1,
+                duration: 1000,
+            },
+        } as WorkerOptions,
+    },
+    {
+        name: 'backup-database-daily',
+        queue: QueueName.SCHEDULED,
+        processor: processBackupDatabaseDaily,
+        options: {
+            concurrency: 1,
+            limiter: {
+                max: 1,
+                duration: 1000,
+            },
+        } as WorkerOptions,
+    },
+    {
+        name: 'database-backup',
+        queue: QueueName.BACKUP,
+        processor: processDatabaseBackup,
+        options: {
+            concurrency: 1,
+            limiter: {
+                max: 1,
+                duration: 60000,
+            },
+        } as WorkerOptions,
     },
 ];
 

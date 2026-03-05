@@ -304,6 +304,28 @@ program
     });
 
 program
+    .command('backup')
+    .description('Trigger database backup manually')
+    .option('-t, --type <type>', 'Backup type: hourly or daily', 'daily')
+    .action(async (options) => {
+        const { getBackupQueue } = await import('../worker/queues/queue.js');
+        const queue = getBackupQueue();
+
+        const type = options.type;
+
+        if (!['hourly', 'daily'].includes(type)) {
+            console.error('Error: Type must be "hourly" or "daily"');
+            process.exit(1);
+        }
+
+        const job = await queue.add('database-backup', { type });
+        console.log(`✓ Backup job triggered: ${job.id}`);
+        console.log(`  Type: ${type}`);
+
+        await queue.close();
+    });
+
+program
     .command('completion')
     .description('Generate shell completion script')
     .argument('<shell>', 'Shell type: bash, zsh, fish')

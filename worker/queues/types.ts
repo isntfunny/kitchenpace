@@ -1,6 +1,7 @@
 export enum QueueName {
     OPENSEARCH = 'opensearch',
     SCHEDULED = 'scheduled',
+    BACKUP = 'backup',
 }
 
 export enum JobPriority {
@@ -27,9 +28,15 @@ export type OpenSearchJob =
     | { name: 'sync-recipe'; data: SyncRecipeToOpenSearchJob }
     | { name: 'sync-ingredients'; data: SyncIngredientsJob };
 
+export interface BackupJob {
+    type: 'hourly' | 'daily';
+}
+
 export type ScheduledJob =
     | { name: 'opensearch-sync'; data: SyncOpenSearchJob }
     | { name: 'sync-ingredients'; data: SyncIngredientsJob }
-    | { name: 'trending-recipes'; data: Record<string, unknown> };
+    | { name: 'trending-recipes'; data: Record<string, unknown> }
+    | { name: 'backup-database-hourly'; data: Record<string, unknown> }
+    | { name: 'backup-database-daily'; data: Record<string, unknown> };
 
 export type AllJob = OpenSearchJob | ScheduledJob;

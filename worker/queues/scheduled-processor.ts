@@ -3,6 +3,8 @@ import { Job } from 'bullmq';
 import { syncContactToNotifuse } from '@app/lib/notifuse/email';
 
 import { prisma } from './prisma';
+import { getBackupQueue } from './queue';
+import { BackupJob } from './types';
 
 console.log('[DEBUG] scheduled-processor.ts module loaded');
 
@@ -195,6 +197,56 @@ export async function processSyncContactsNotifuse(
         console.error(`[SyncContactsWorker] sync-contacts-notifuse job ${job.id} failed`, {
             error: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined,
+        });
+        throw error;
+    }
+}
+
+export async function processBackupDatabaseHourly(
+    job: Job<Record<string, unknown>>,
+): Promise<{ success: boolean; jobId?: string }> {
+    console.log(`[BackupScheduler] Starting hourly backup job ${job.id}`);
+
+    try {
+        const backupQueue = getBackupQueue();
+        const backupJob: BackupJob = {
+            type: 'hourly',
+        };
+
+        const addedJob = await backupQueue.add('database-backup', backupJob, {
+            priority: 1,
+        });
+
+        console.log(`[BackupScheduler] Hourly backup queued: ${addedJob.id}`);
+        return { success: true, jobId: addedJob.id };
+    } catch (error) {
+        console.error(`[BackupScheduler] Hourly backup job ${job.id} failed`, {
+            error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+    }
+}
+
+export async function processBackupDatabaseDaily(
+    job: Job<Record<string, unknown>>,
+): Promise<{ success: boolean; jobId?: string }> {
+    console.log(`[BackupScheduler] Starting daily backup job ${job.id}`);
+
+    try {
+        const backupQueue = getBackupQueue();
+        const backupJob: BackupJob = {
+            type: 'daily',
+        };
+
+        const addedJob = await backupQueue.add('database-backup', backupJob, {
+            priority: 2,
+        });
+
+        console.log(`[BackupScheduler] Daily backup queued: ${addedJob.id}`);
+        return { success: true, jobId: addedJob.id };
+    } catch (error) {
+        console.error(`[BackupScheduler] Daily backup job ${job.id} failed`, {
+            error: error instanceof Error ? error.message : String(error),
         });
         throw error;
     }

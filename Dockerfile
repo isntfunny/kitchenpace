@@ -74,8 +74,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/cli ./cli
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
 RUN chmod +x ./docker-entrypoint.sh
 
-# CLI symlink (must be done as root)
-RUN ln -s /app/node_modules/.bin/tsx /usr/local/bin/kitchen
+# CLI launcher script (wraps tsx with entry file)
+RUN printf '#!/bin/sh\nexec /app/node_modules/.bin/tsx /app/cli/index.ts "$@"\n' > /usr/local/bin/kitchen \
+    && chmod +x /usr/local/bin/kitchen
 
 USER nextjs
 

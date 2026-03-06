@@ -202,50 +202,20 @@ export async function processSyncContactsNotifuse(
     }
 }
 
-export async function processBackupDatabaseHourly(
+export async function processBackupDatabase(
     job: Job<Record<string, unknown>>,
+    type: BackupJob['type'],
 ): Promise<{ success: boolean; jobId?: string }> {
-    console.log(`[BackupScheduler] Starting hourly backup job ${job.id}`);
+    console.log(`[BackupScheduler] Starting ${type} backup job ${job.id}`);
 
     try {
-        const backupQueue = getBackupQueue();
-        const backupJob: BackupJob = {
-            type: 'hourly',
-        };
+        const priority = type === 'hourly' ? 1 : 2;
+        const addedJob = await getBackupQueue().add('database-backup', { type }, { priority });
 
-        const addedJob = await backupQueue.add('database-backup', backupJob, {
-            priority: 1,
-        });
-
-        console.log(`[BackupScheduler] Hourly backup queued: ${addedJob.id}`);
+        console.log(`[BackupScheduler] ${type} backup queued: ${addedJob.id}`);
         return { success: true, jobId: addedJob.id };
     } catch (error) {
-        console.error(`[BackupScheduler] Hourly backup job ${job.id} failed`, {
-            error: error instanceof Error ? error.message : String(error),
-        });
-        throw error;
-    }
-}
-
-export async function processBackupDatabaseDaily(
-    job: Job<Record<string, unknown>>,
-): Promise<{ success: boolean; jobId?: string }> {
-    console.log(`[BackupScheduler] Starting daily backup job ${job.id}`);
-
-    try {
-        const backupQueue = getBackupQueue();
-        const backupJob: BackupJob = {
-            type: 'daily',
-        };
-
-        const addedJob = await backupQueue.add('database-backup', backupJob, {
-            priority: 2,
-        });
-
-        console.log(`[BackupScheduler] Daily backup queued: ${addedJob.id}`);
-        return { success: true, jobId: addedJob.id };
-    } catch (error) {
-        console.error(`[BackupScheduler] Daily backup job ${job.id} failed`, {
+        console.error(`[BackupScheduler] ${type} backup job ${job.id} failed`, {
             error: error instanceof Error ? error.message : String(error),
         });
         throw error;

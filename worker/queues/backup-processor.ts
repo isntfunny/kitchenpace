@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { createReadStream, promises as fs } from 'fs';
 import path from 'path';
 import { promisify } from 'util';
@@ -9,7 +9,7 @@ import { Job } from 'bullmq';
 
 import { BackupJob } from './types';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 interface BackupResult {
     filename: string;
@@ -106,9 +106,7 @@ async function createDatabaseDump(outputPath: string): Promise<void> {
     }
 
     // pg_dump mit custom format (komprimiert, schneller)
-    const command = `pg_dump -Fc "${dbUrl}" > "${outputPath}"`;
-
-    const { stderr } = await execAsync(command);
+    const { stderr } = await execFileAsync('pg_dump', ['-Fc', '--file', outputPath, dbUrl]);
     if (stderr && !stderr.includes('NOTICE')) {
         console.warn(`[BackupWorker] pg_dump stderr: ${stderr}`);
     }

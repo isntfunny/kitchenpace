@@ -90,6 +90,8 @@ FROM node:24-alpine AS worker
 
 WORKDIR /app
 
+RUN apk add --no-cache postgresql16-client
+
 COPY --from=deps /app/node_modules ./node_modules
 
 COPY package.json package-lock.json* ./

@@ -13,7 +13,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
     console.log(`[Main] Received ${signal}, starting graceful shutdown...`);
 
     try {
-        await stopScheduler();
+        stopScheduler();
         console.log('[Main] Scheduler stopped');
     } catch (error) {
         console.error('[Main] Error stopping scheduler:', error);

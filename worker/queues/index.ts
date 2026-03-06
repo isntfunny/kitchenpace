@@ -20,12 +20,12 @@ import { getOpenSearchQueue } from './queue';
 
 export async function addOpenSearchSyncJob(data?: { batchSize?: number }): Promise<void> {
     const queue = getOpenSearchQueue();
-    await queue.add('sync-opensearch', data || {});
+    await queue.add('sync-opensearch', data ?? {});
 }
 
 export async function addSyncIngredientsJob(data?: { batchSize?: number }): Promise<void> {
     const queue = getOpenSearchQueue();
-    await queue.add('sync-ingredients', data || {});
+    await queue.add('sync-ingredients', data ?? {});
 }
 
 export async function addSyncRecipeJob(recipeId: string): Promise<void> {

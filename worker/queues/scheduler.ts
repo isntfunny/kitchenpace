@@ -82,8 +82,6 @@ const scheduledJobs: ScheduledJobDefinition[] = [
     },
 ];
 
-let schedulerInterval: NodeJS.Timeout | null = null;
-
 async function addRepeatableJob(job: ScheduledJobDefinition): Promise<void> {
     const queue = getQueueForName(job.queue);
 
@@ -128,17 +126,9 @@ export async function startScheduler(): Promise<void> {
     }
 
     console.log(`[Scheduler] Scheduler started with ${scheduledJobs.length} jobs`);
-
-    schedulerInterval = setInterval(async () => {
-        console.log('[Scheduler] Checking scheduled jobs...');
-    }, 60000);
 }
 
-export async function stopScheduler(): Promise<void> {
-    if (schedulerInterval) {
-        clearInterval(schedulerInterval);
-        schedulerInterval = null;
-    }
+export function stopScheduler(): void {
     console.log('[Scheduler] Scheduler stopped');
 }
 
@@ -153,14 +143,5 @@ export async function triggerJobNow(
 }
 
 export function getScheduledJobDefinitions(): ScheduledJobDefinition[] {
-    return scheduledJobs.map((job) => ({
-        ...job,
-        data: { ...job.data },
-        options: job.options
-            ? {
-                  ...job.options,
-                  repeat: job.options.repeat ? { ...job.options.repeat } : undefined,
-              }
-            : undefined,
-    }));
+    return scheduledJobs;
 }

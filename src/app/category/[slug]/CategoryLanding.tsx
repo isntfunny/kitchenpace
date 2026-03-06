@@ -113,25 +113,36 @@ function RecipeSection({
             <div
                 className={flex({
                     align: 'center',
-                    gap: '2',
-                    mb: '3',
+                    gap: '3',
+                    mb: '4',
                 })}
             >
                 <div
                     className={css({
-                        width: '28px',
-                        height: '28px',
+                        width: '36px',
+                        height: '36px',
                         borderRadius: 'lg',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        flexShrink: 0,
                     })}
                     style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
                 >
-                    <Icon size={14} />
+                    <Icon size={20} />
                 </div>
+                <h2
+                    className={css({
+                        fontFamily: 'heading',
+                        fontSize: 'xl',
+                        fontWeight: '600',
+                        color: 'text',
+                    })}
+                >
+                    {title}
+                </h2>
             </div>
-            <HorizontalRecipeScroll title={title} recipes={recipes} />
+            <HorizontalRecipeScroll recipes={recipes} hideCategory={true} />
         </div>
     );
 }

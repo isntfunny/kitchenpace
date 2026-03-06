@@ -8,7 +8,7 @@ on:
     workflow_dispatch:
 
 env:
-    REGISTRY: registry.isntfnny.de
+    REGISTRY: registry.isntfunny.de
     IMAGE_NAME: kitchenpace/scraper
 
 jobs:

@@ -7,7 +7,7 @@ The KitchenPace Scraper Service provides recipe content extraction from any URL 
 ## Base URL
 
 ```
-http://localhost:64001
+http://scraper:8000
 ```
 
 ## Endpoints

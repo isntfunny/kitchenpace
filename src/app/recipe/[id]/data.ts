@@ -69,6 +69,8 @@ export interface Recipe {
     favoriteCount?: number;
     ratingCount?: number;
     cookCount?: number;
+    moderationStatus?: string;
+    moderationNote?: string | null;
     viewer?: {
         id: string;
         isFavorite: boolean;

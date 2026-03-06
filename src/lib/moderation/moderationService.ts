@@ -3,6 +3,7 @@
  * Uses OpenAI Moderation API (omni-moderation-latest) — free, multi-modal
  */
 
+import { getOpenAIClient } from '@app/lib/importer/openai-client';
 import { prisma } from '@shared/prisma';
 
 import { getThreshold } from './thresholds';
@@ -12,7 +13,6 @@ import {
   ContentModerationSnapshot,
 } from './types';
 
-import { getOpenAIClient } from '@/lib/importer/openai-client';
 
 /**
  * Moderate content using OpenAI Moderation API (free)
@@ -54,7 +54,7 @@ export async function moderateContent(
     const result = response.results[0];
 
     // Calculate the highest category score
-    const scores = Object.values(result.category_scores as Record<string, number>);
+    const scores = Object.values(result.category_scores as unknown as Record<string, number>);
     const maxScore = scores.length > 0 ? Math.max(...scores) : 0;
 
     // Determine decision based on score thresholds
@@ -73,7 +73,7 @@ export async function moderateContent(
     return {
       decision,
       score: maxScore,
-      flags: result.category_scores as Record<string, number>,
+      flags: result.category_scores as unknown as Record<string, number>,
       flagged: result.flagged,
       raw: response,
     };
@@ -117,8 +117,8 @@ export async function persistModerationResult(
         data: {
           aiScore: result.score,
           aiFlags: result.flags,
-          aiRawResponse: result.raw,
-          contentSnapshot: snapshot,
+          aiRawResponse: result.raw as any,
+          contentSnapshot: snapshot as any,
           updatedAt: new Date(),
         },
       });
@@ -131,8 +131,8 @@ export async function persistModerationResult(
           authorId,
           aiScore: result.score,
           aiFlags: result.flags,
-          aiRawResponse: result.raw,
-          contentSnapshot: snapshot,
+          aiRawResponse: result.raw as any,
+          contentSnapshot: snapshot as any,
           status: 'PENDING',
         },
       });

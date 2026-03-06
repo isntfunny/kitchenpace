@@ -23,6 +23,7 @@ import { ReactNode, useState, useTransition } from 'react';
 import { toggleFollowAction } from '@app/app/actions/social';
 import { Badge } from '@app/components/atoms/Badge';
 import { SmartImage } from '@app/components/atoms/SmartImage';
+import { ReportButton } from '@app/components/features/ReportButton';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
@@ -506,6 +507,13 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                             </span>
                                         </button>
                                     </div>
+                                )}
+                                {!viewer?.isSelf && (
+                                    <ReportButton
+                                        contentType="user"
+                                        contentId={user.id}
+                                        variant="icon"
+                                    />
                                 )}
                             </div>
                         </div>

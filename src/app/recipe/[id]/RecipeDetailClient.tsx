@@ -28,6 +28,7 @@ import { Badge } from '@app/components/atoms/Badge';
 import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { Header } from '@app/components/features/Header';
+import { ReportButton } from '@app/components/features/ReportButton';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
@@ -375,6 +376,89 @@ export function RecipeDetailClient({
                         })}
                     >
                         Bearbeiten
+                    </a>
+                </div>
+            )}
+            {recipe.viewer?.isAuthor && recipe.moderationStatus === 'PENDING' && (
+                <div
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '3',
+                        px: '4',
+                        py: '2.5',
+                        backgroundColor: 'rgba(217,173,54,0.1)',
+                        borderBottom: '1px solid rgba(217,173,54,0.25)',
+                        fontSize: 'sm',
+                        color: '#b8860b',
+                        fontWeight: '500',
+                    })}
+                >
+                    <span
+                        className={css({
+                            display: 'inline-block',
+                            px: '2',
+                            py: '0.5',
+                            borderRadius: 'full',
+                            fontSize: 'xs',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            backgroundColor: '#b8860b',
+                            color: 'white',
+                        })}
+                    >
+                        Wird überprüft
+                    </span>
+                    Dein Rezept wird gerade überprüft und ist noch nicht öffentlich sichtbar. Das dauert in der Regel weniger als 24 Stunden.
+                </div>
+            )}
+            {recipe.viewer?.isAuthor && recipe.moderationStatus === 'REJECTED' && (
+                <div
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '3',
+                        px: '4',
+                        py: '2.5',
+                        backgroundColor: 'rgba(220,38,38,0.08)',
+                        borderBottom: '1px solid rgba(220,38,38,0.2)',
+                        fontSize: 'sm',
+                        color: '#dc2626',
+                        fontWeight: '500',
+                    })}
+                >
+                    <span
+                        className={css({
+                            display: 'inline-block',
+                            px: '2',
+                            py: '0.5',
+                            borderRadius: 'full',
+                            fontSize: 'xs',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            backgroundColor: '#dc2626',
+                            color: 'white',
+                        })}
+                    >
+                        Abgelehnt
+                    </span>
+                    {recipe.moderationNote
+                        ? `Dein Rezept wurde abgelehnt: ${recipe.moderationNote}. Du kannst es überarbeiten und erneut einreichen.`
+                        : 'Dein Rezept wurde abgelehnt. Du kannst es überarbeiten und erneut einreichen.'}
+                    <a
+                        href={`/recipe/${recipe.id}/edit`}
+                        className={css({
+                            fontWeight: '600',
+                            textDecoration: 'underline',
+                            textUnderlineOffset: '2px',
+                            _hover: { opacity: '0.75' },
+                        })}
+                    >
+                        Überarbeiten
                     </a>
                 </div>
             )}
@@ -912,6 +996,13 @@ export function RecipeDetailClient({
                                         Drucken
                                     </span>
                                 </Button>
+                                {!recipe.viewer?.isAuthor && (
+                                    <ReportButton
+                                        contentType="recipe"
+                                        contentId={recipe.id}
+                                        variant="text"
+                                    />
+                                )}
                             </div>
 
                             {showCookDialog && (

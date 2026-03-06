@@ -1,0 +1,129 @@
+'use client';
+
+import type { LucideIcon } from 'lucide-react';
+import * as icons from 'lucide-react';
+import { Utensils } from 'lucide-react';
+import Link from 'next/link';
+import { createElement } from 'react';
+
+import { css } from 'styled-system/css';
+
+import { CustomScrollbar } from './CustomScrollbar';
+
+function resolveIcon(iconName: string | null): LucideIcon {
+    if (!iconName) return Utensils;
+    const pascal = iconName
+        .split('-')
+        .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+        .join('');
+    const icon = (icons as Record<string, unknown>)[pascal];
+    return (icon as LucideIcon) ?? Utensils;
+}
+
+function DynamicIcon({ name, size }: { name: string | null; size: number }) {
+    return createElement(resolveIcon(name), { size });
+}
+
+export interface CategoryBarItem {
+    slug: string;
+    name: string;
+    icon: string | null;
+    color: string | null;
+    recipeCount: number;
+}
+
+interface CategoryBarProps {
+    categories: CategoryBarItem[];
+}
+
+export function CategoryBar({ categories }: CategoryBarProps) {
+    if (categories.length === 0) return null;
+
+    return (
+        <div
+            className={css({
+                p: '4',
+                borderRadius: '2xl',
+                bg: 'surface',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+            })}
+        >
+            <CustomScrollbar
+                className={css({
+                    display: 'flex',
+                    gap: '3',
+                    pb: '1',
+                })}
+            >
+                {categories.map((cat) => {
+                    const color = cat.color ?? '#e07b53';
+
+                    return (
+                        <Link
+                            key={cat.slug}
+                            href={`/category/${cat.slug}`}
+                            className={css({
+                                flex: '0 0 auto',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '2',
+                                px: '4',
+                                py: '3',
+                                borderRadius: 'xl',
+                                border: '2px solid',
+                                borderColor: 'transparent',
+                                textDecoration: 'none',
+                                transition: 'all 200ms ease',
+                                cursor: 'pointer',
+                                minWidth: '100px',
+                                _hover: {
+                                    borderColor: color,
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: `0 8px 24px ${color}25`,
+                                },
+                            })}
+                        >
+                            <div
+                                className={css({
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: 'xl',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 200ms ease',
+                                })}
+                                style={{
+                                    backgroundColor: `${color}18`,
+                                    color,
+                                }}
+                            >
+                                <DynamicIcon name={cat.icon} size={22} />
+                            </div>
+                            <span
+                                className={css({
+                                    fontSize: '0.8rem',
+                                    fontWeight: '600',
+                                    color: 'text',
+                                    whiteSpace: 'nowrap',
+                                })}
+                            >
+                                {cat.name}
+                            </span>
+                            <span
+                                className={css({
+                                    fontSize: '0.65rem',
+                                    color: 'text-muted',
+                                    whiteSpace: 'nowrap',
+                                })}
+                            >
+                                {cat.recipeCount} Rezepte
+                            </span>
+                        </Link>
+                    );
+                })}
+            </CustomScrollbar>
+        </div>
+    );
+}

@@ -1,5 +1,6 @@
 import { ChefHat } from 'lucide-react';
 
+import { fetchCategoriesForBar } from '@app/app/actions/category';
 import {
     fetchChefSpotlight,
     fetchQuickTips,
@@ -12,6 +13,7 @@ import {
     fetchTopRatedRecipes,
 } from '@app/app/actions/recipes';
 import { ActivitySidebar } from '@app/components/features/ActivitySidebar';
+import { CategoryBar } from '@app/components/features/CategoryBar';
 import { ChefSpotlight } from '@app/components/features/ChefSpotlight';
 import { Header } from '@app/components/features/Header';
 import { QuickTips } from '@app/components/features/QuickTips';
@@ -35,6 +37,7 @@ export default async function Home() {
         chefSpotlightResult,
         quickTipsResult,
         recentActivitiesResult,
+        categoriesResult,
     ] = await Promise.allSettled([
         fetchFeaturedRecipe(),
         fetchNewestRecipes(),
@@ -43,6 +46,7 @@ export default async function Home() {
         fetchChefSpotlight(),
         fetchQuickTips(),
         fetchRecentActivities(),
+        fetchCategoriesForBar(),
     ]);
 
     const handleSettled = <T,>(result: PromiseSettledResult<T>, fallback: T, label: string): T => {
@@ -61,6 +65,7 @@ export default async function Home() {
     const chefSpotlight = handleSettled(chefSpotlightResult, null, 'fetchChefSpotlight');
     const quickTips = handleSettled(quickTipsResult, [], 'fetchQuickTips');
     const recentActivities = handleSettled(recentActivitiesResult, [], 'fetchRecentActivities');
+    const categories = handleSettled(categoriesResult, [], 'fetchCategoriesForBar');
 
     return (
         <div
@@ -82,6 +87,10 @@ export default async function Home() {
                 <HeroSpotlight />
 
                 <FlowPillars />
+
+                <div className={css({ mt: '4' })}>
+                    <CategoryBar categories={categories} />
+                </div>
 
                 <div
                     className={css({

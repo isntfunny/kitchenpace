@@ -13,6 +13,7 @@ export interface RecipeCardData {
     slug: string;
     title: string;
     category: string;
+    categorySlug?: string;
     rating: number;
     time: string;
     image: string | null;
@@ -32,6 +33,7 @@ function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
         slug: recipe.slug,
         title: recipe.title,
         category: recipe.categories[0]?.category?.name || 'Hauptgericht',
+        categorySlug: recipe.categories[0]?.category?.slug ?? undefined,
         rating: recipe.rating ?? 0,
         time: `${totalTime ?? 0} Min.`,
         image: recipe.imageKey
@@ -126,6 +128,7 @@ export interface RecipeDetailData {
     image: string | null;
     imageKey?: string | null;
     category: string;
+    categorySlug?: string;
     rating: number;
     prepTime: number;
     cookTime: number;
@@ -158,6 +161,7 @@ export interface RecipeDetailData {
     authorId: string;
     author: {
         id: string;
+        slug: string;
         name: string;
         avatar: string;
         bio: string | null;
@@ -257,6 +261,7 @@ export async function fetchRecipeBySlug(
         description: recipe.description || '',
         image: `/api/thumbnail?type=recipe&id=${encodeURIComponent(recipe.id)}`,
         category: recipe.categories[0]?.category?.name || 'Hauptgericht',
+        categorySlug: recipe.categories[0]?.category?.slug ?? undefined,
         rating: recipe.rating ?? 0,
         prepTime: recipe.prepTime ?? 0,
         cookTime: recipe.cookTime ?? 0,
@@ -279,6 +284,7 @@ export async function fetchRecipeBySlug(
         author: recipe.author
             ? {
                   id: recipe.author.id,
+                  slug: recipe.author.profile?.slug ?? recipe.author.id,
                   name: recipe.author.name || 'Unbekannt',
                   avatar: recipe.author.profile?.photoUrl || DEFAULT_AUTHOR_AVATAR,
                   bio: recipe.author.profile?.bio || null,

@@ -1042,6 +1042,7 @@ async function main() {
                     create: {
                         email: u.email,
                         nickname: u.nickname,
+                        slug: u.nickname.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
                         bio: u.bio,
                         photoUrl: u.photoUrl,
                         followerCount: u.followerCount,

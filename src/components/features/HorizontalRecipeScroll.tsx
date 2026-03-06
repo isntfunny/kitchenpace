@@ -1,6 +1,7 @@
 'use client';
 
 import { Star } from 'lucide-react';
+import Link from 'next/link';
 import * as React from 'react';
 
 import { css } from 'styled-system/css';
@@ -15,6 +16,7 @@ interface Recipe {
     slug: string;
     title: string;
     category: string;
+    categorySlug?: string;
     rating: number;
     time: string;
     image: string | null;
@@ -102,7 +104,9 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                                     recipeId={recipe.id}
                                     className={css({ objectFit: 'cover' })}
                                 />
-                                <div
+                                <Link
+                                    href={recipe.categorySlug ? `/category/${recipe.categorySlug}` : '#'}
+                                    onClick={(e) => e.stopPropagation()}
                                     className={css({
                                         position: 'absolute',
                                         top: '2',
@@ -116,10 +120,13 @@ export function HorizontalRecipeScroll({ recipes, title }: HorizontalRecipeScrol
                                         textTransform: 'uppercase',
                                         letterSpacing: 'wide',
                                         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                        textDecoration: 'none',
+                                        transition: 'all 150ms ease',
+                                        _hover: { opacity: 0.85, transform: 'scale(1.05)' },
                                     })}
                                 >
                                     {recipe.category}
-                                </div>
+                                </Link>
                             </div>
                             <div className={css({ p: '3' })}>
                                 <Text size="sm" className={css({ fontWeight: '600', mb: '1' })}>

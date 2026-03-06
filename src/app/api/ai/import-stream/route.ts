@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { getServerAuthSession } from '@app/lib/auth';
 import { streamRecipeFromMarkdown } from '@app/lib/importer/openai-client';
 import type { ImportedRecipe } from '@app/lib/importer/openai-recipe-schema';
+import { resolveIngredientMentions } from '@app/lib/importer/resolve-mentions';
 import { prisma } from '@shared/prisma';
 
 // Allow streaming responses up to 5 minutes
@@ -27,6 +28,24 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 function transformRecipe(data: ImportedRecipe) {
+    // Build ingredient refs for mention resolution:
+    // AI uses "ingredient-0" etc., we map to "imported_0" which is the client-side ID
+    const ingredientRefs = data.ingredients.map((ing, idx) => ({
+        id: `imported_${idx}`,
+        name: ing.name,
+    }));
+
+    const rawNodes = data.flowNodes.map((node) => ({
+        id: node.id,
+        type: node.type,
+        label: node.label,
+        description: node.description,
+        duration: node.duration ?? undefined,
+        ingredientIds: node.ingredientIds,
+    }));
+
+    const resolvedNodes = resolveIngredientMentions(rawNodes, ingredientRefs);
+
     return {
         title: data.title,
         description: data.description,
@@ -43,14 +62,7 @@ function transformRecipe(data: ImportedRecipe) {
             notes: ing.notes ?? '',
             isOptional: false,
         })),
-        flowNodes: data.flowNodes.map((node) => ({
-            id: node.id,
-            type: node.type,
-            label: node.label,
-            description: node.description,
-            duration: node.duration ?? undefined,
-            ingredientIds: node.ingredientIds,
-        })),
+        flowNodes: resolvedNodes,
         flowEdges: data.flowEdges.map((edge) => ({
             id: edge.id,
             source: edge.source,

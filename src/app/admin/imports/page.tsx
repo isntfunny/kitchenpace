@@ -23,6 +23,7 @@ async function getImportRuns(): Promise<ImportRunRow[]> {
         status: run.status as ImportRunRow['status'],
         sourceType: run.sourceType,
         sourceUrl: run.sourceUrl,
+        markdownLength: run.markdownLength,
         model: run.model,
         inputTokens: run.inputTokens,
         cachedInputTokens: run.cachedInputTokens,
@@ -30,6 +31,7 @@ async function getImportRuns(): Promise<ImportRunRow[]> {
         estimatedCostUsd: run.estimatedCostUsd,
         errorType: run.errorType,
         errorMessage: run.errorMessage,
+        rawApiResponse: run.rawApiResponse ?? null,
         userName: run.user.name ?? '—',
         userId: run.user.id,
         recipeId: run.recipe?.id ?? null,
@@ -39,18 +41,9 @@ async function getImportRuns(): Promise<ImportRunRow[]> {
     }));
 }
 
-async function getUsers() {
-    const users = await prisma.user.findMany({
-        where: { isActive: true },
-        select: { id: true, name: true },
-        orderBy: { name: 'asc' },
-    });
-    return users.map((u) => ({ id: u.id, name: u.name ?? u.id }));
-}
-
 export default async function ImportsPage() {
     await ensureAdminSession('admin-imports');
-    const [runs, users] = await Promise.all([getImportRuns(), getUsers()]);
+    const runs = await getImportRuns();
 
     const totalCost = runs.reduce((sum, r) => sum + (r.estimatedCostUsd ?? 0), 0);
     const successCount = runs.filter((r) => r.status === 'SUCCESS').length;
@@ -153,7 +146,7 @@ export default async function ImportsPage() {
                     ))}
                 </div>
 
-                <ImportsTable runs={runs} users={users} />
+                <ImportsTable runs={runs} />
             </div>
         </PageShell>
     );

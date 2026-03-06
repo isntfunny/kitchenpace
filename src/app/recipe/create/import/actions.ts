@@ -11,6 +11,7 @@
 
 import { importRecipeFromMarkdown } from '@app/lib/importer/openai-client';
 import type { ImportedRecipe } from '@app/lib/importer/openai-recipe-schema';
+import { resolveIngredientMentions } from '@app/lib/importer/resolve-mentions';
 import { generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
@@ -287,6 +288,23 @@ function transformImportedRecipe(data: ImportedRecipe): AnalyzedRecipe {
         Schwer: 'HARD',
     };
 
+    // Build ingredient refs for mention resolution
+    const ingredientRefs = data.ingredients.map((ing, idx) => ({
+        id: `imported_${idx}`,
+        name: ing.name,
+    }));
+
+    const rawNodes = data.flowNodes.map((node) => ({
+        id: node.id,
+        type: node.type,
+        label: node.label,
+        description: node.description,
+        duration: node.duration ?? undefined,
+        ingredientIds: node.ingredientIds,
+    }));
+
+    const resolvedNodes = resolveIngredientMentions(rawNodes, ingredientRefs);
+
     return {
         title: data.title,
         description: data.description,
@@ -300,16 +318,10 @@ function transformImportedRecipe(data: ImportedRecipe): AnalyzedRecipe {
             name: ing.name,
             amount: ing.amount != null ? String(ing.amount) : '',
             unit: ing.unit ?? 'Stück',
+            notes: ing.notes ?? undefined,
             isOptional: false,
         })),
-        flowNodes: data.flowNodes.map((node) => ({
-            id: node.id,
-            type: node.type,
-            label: node.label,
-            description: node.description,
-            duration: node.duration ?? undefined,
-            ingredientIds: node.ingredientIds,
-        })),
+        flowNodes: resolvedNodes,
         flowEdges: data.flowEdges.map((edge) => ({
             id: edge.id,
             source: edge.source,
@@ -421,32 +433,29 @@ export async function saveImportedRecipe(
         throw new Error('Das Rezept muss mindestens eine Zutat haben.');
     }
 
-    // Find or create ingredients in parallel
-    const syncedIngredients = await Promise.all(
-        data.ingredients.map(async (ing) => {
-            const normalizedName = ing.name.toLowerCase().trim();
-            const existing = await prisma.ingredient.findFirst({
-                where: {
-                    OR: [
-                        { name: { equals: normalizedName, mode: 'insensitive' } },
-                        { slug: { equals: normalizedName.replace(/\s+/g, '-'), mode: 'insensitive' } },
-                    ],
-                },
-            });
+    // Find or create ingredients — sequential to avoid race conditions on slug unique constraint
+    const syncedIngredients: typeof data.ingredients[number][] = [];
+    for (const ing of data.ingredients) {
+        const slug = ing.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        const result = await prisma.ingredient.upsert({
+            where: { slug },
+            update: {},
+            create: {
+                name: ing.name,
+                slug,
+                units: ing.unit ? [ing.unit] : [],
+            },
+        });
+        syncedIngredients.push({ ...ing, ingredientId: result.id });
+    }
 
-            if (existing) return { ...ing, ingredientId: existing.id };
-
-            const created = await prisma.ingredient.create({
-                data: {
-                    name: ing.name,
-                    slug: ing.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-                    units: ing.unit ? [ing.unit] : [],
-                },
-            });
-
-            return { ...ing, ingredientId: created.id };
-        }),
-    );
+    // Deduplicate by ingredientId — AI can generate the same ingredient multiple times
+    const seenIngredientIds = new Set<string>();
+    const uniqueIngredients = syncedIngredients.filter((ing) => {
+        if (!ing.ingredientId || seenIngredientIds.has(ing.ingredientId)) return false;
+        seenIngredientIds.add(ing.ingredientId);
+        return true;
+    });
 
     const slug = await generateUniqueSlug(data.title, async (s) => {
         const existing = await prisma.recipe.findUnique({ where: { slug: s } });
@@ -458,7 +467,8 @@ export async function saveImportedRecipe(
             title: data.title,
             slug,
             description: data.description || '',
-            imageKey: data.imageUrl,
+            // imageUrl is only for preview — don't store external URLs as imageKey
+            // The user can upload the image in the recipe editor
             servings: data.servings ?? 4,
             prepTime: data.prepTime ?? 0,
             cookTime: data.cookTime ?? 0,
@@ -469,7 +479,7 @@ export async function saveImportedRecipe(
             flowNodes: data.flowNodes as unknown as object,
             flowEdges: data.flowEdges as unknown as object,
             recipeIngredients: {
-                create: syncedIngredients.map((ing, index) => ({
+                create: uniqueIngredients.map((ing, index) => ({
                     ingredientId: ing.ingredientId,
                     amount: ing.amount,
                     unit: ing.unit,
@@ -491,20 +501,18 @@ export async function saveImportedRecipe(
         });
     }
 
-    // Upsert tags (create if new, reuse if existing) then link to recipe
+    // Find or create tags — upsert by slug fails when the name already exists with a different slug
     if (data.tags?.length) {
-        const tags = await Promise.all(
-            data.tags.map((name) =>
-                prisma.tag.upsert({
-                    where: { slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-') },
-                    create: {
-                        name,
-                        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-                    },
-                    update: {},
-                }),
-            ),
-        );
+        const uniqueTagNames = [...new Set(data.tags)];
+        const tags: { id: string }[] = [];
+        for (const name of uniqueTagNames) {
+            const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            const existing = await prisma.tag.findFirst({
+                where: { OR: [{ slug }, { name: { equals: name, mode: 'insensitive' } }] },
+            });
+            const tag = existing ?? (await prisma.tag.create({ data: { name, slug } }));
+            tags.push(tag);
+        }
 
         await prisma.recipeTag.createMany({
             data: tags.map((tag) => ({ recipeId: recipe.id, tagId: tag.id })),

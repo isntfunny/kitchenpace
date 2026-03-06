@@ -6,6 +6,7 @@ import {
     ChefHat,
     Download,
     Edit3,
+    ImageOff,
     Loader2,
     Wand2,
     X,
@@ -282,6 +283,11 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
 
             if (!analyzed) {
                 throw new Error('Keine Daten vom KI-Stream erhalten');
+            }
+
+            // Merge scraped image URL into analyzed recipe (AI doesn't extract images)
+            if (scraped.imageUrl && !analyzed.imageUrl) {
+                analyzed = { ...analyzed, imageUrl: scraped.imageUrl };
             }
 
             setAnalyzedRecipe(analyzed);
@@ -761,6 +767,34 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                         </motion.div>
                     ))}
                 </motion.div>
+
+                {/* Image Preview with opt-out */}
+                {imageUrl && (
+                    <motion.div
+                        className={imagePreviewClass}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.75 }}
+                    >
+                        <div className={imagePreviewHeaderClass}>
+                            <h3 className={ingredientsPreviewTitleClass}>Rezeptbild</h3>
+                            <button
+                                type="button"
+                                onClick={() => setImageUrl('')}
+                                className={imageRemoveButtonClass}
+                                title="Bild entfernen"
+                            >
+                                <ImageOff size={14} />
+                                Entfernen
+                            </button>
+                        </div>
+                        <img
+                            src={imageUrl}
+                            alt={analyzedRecipe.title}
+                            className={imagePreviewImgClass}
+                        />
+                    </motion.div>
+                )}
 
                 {/* Ingredients Preview with staggered animation */}
                 <motion.div
@@ -1484,6 +1518,51 @@ const previewCardValueClass = css({
 
 const cardIconClass = css({
     color: '#e07b53',
+});
+
+const imagePreviewClass = css({
+    mb: '6',
+    p: '4',
+    backgroundColor: 'rgba(224,123,83,0.05)',
+    borderRadius: 'lg',
+});
+
+const imagePreviewHeaderClass = css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    mb: '3',
+});
+
+const imageRemoveButtonClass = css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '1',
+    px: '2',
+    py: '1',
+    fontSize: 'xs',
+    fontWeight: '500',
+    color: 'text.dimmed',
+    backgroundColor: 'transparent',
+    border: '1px solid',
+    borderColor: 'border',
+    borderRadius: 'md',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+    _hover: {
+        color: 'red.600',
+        borderColor: 'red.300',
+        backgroundColor: 'red.50',
+    },
+});
+
+const imagePreviewImgClass = css({
+    width: '100%',
+    maxHeight: '240px',
+    objectFit: 'cover',
+    borderRadius: 'md',
+    border: '1px solid',
+    borderColor: 'border',
 });
 
 const ingredientsPreviewClass = css({

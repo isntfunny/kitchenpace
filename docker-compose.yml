@@ -116,6 +116,8 @@ services:
             context: ./services/scraper
             dockerfile: Dockerfile
         container_name: kitchenpace-scraper
+        ports:
+            - '34215:8000'
         healthcheck:
             test: ['CMD', 'curl', '-f', 'http://127.0.0.1:8000/health']
             interval: 30s

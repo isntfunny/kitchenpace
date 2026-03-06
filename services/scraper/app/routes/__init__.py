@@ -1,3 +1,3 @@
-from app.routes.scrape import router
+from app.routes import scrape
 
-__all__ = ["router"]
+__all__ = ["scrape"]

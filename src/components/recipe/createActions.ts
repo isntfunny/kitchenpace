@@ -3,6 +3,7 @@
 import { fireEvent } from '@app/lib/events/fire';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
+import { addSyncRecipeJob } from '@worker/queues';
 
 type ShoppingCategory =
     | 'GEMUESE'
@@ -186,6 +187,12 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
         await sendNotificationsToFollowers(authorId, recipeId, data.title);
     }
 
+    if (recipeStatus === 'PUBLISHED' || existing.status === 'PUBLISHED') {
+        await addSyncRecipeJob(recipeId).catch((err) =>
+            console.error('[OpenSearch] Failed to queue sync for recipe update:', err),
+        );
+    }
+
     return recipe;
 }
 
@@ -296,6 +303,12 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         });
     }
 
+    if (isPublished) {
+        await addSyncRecipeJob(recipe.id).catch((err) =>
+            console.error('[OpenSearch] Failed to queue sync for new recipe:', err),
+        );
+    }
+
     return recipe;
 }
 
@@ -358,6 +371,10 @@ export async function updateRecipeStatus(
             await sendNotificationsToFollowers(authorId, recipeId, recipe.title);
         }
 
+        await addSyncRecipeJob(recipeId).catch((err) =>
+            console.error('[OpenSearch] Failed to queue sync for status change:', err),
+        );
+
         return { success: true };
     } catch (error) {
         console.error('Error updating recipe status:', error);
@@ -404,6 +421,14 @@ export async function bulkUpdateRecipeStatus(
                 await sendNotificationsToFollowers(authorId, recipe.id, recipe.title);
             }
         }
+
+        await Promise.all(
+            recipeIds.map((id) =>
+                addSyncRecipeJob(id).catch((err) =>
+                    console.error('[OpenSearch] Failed to queue sync for bulk update:', err),
+                ),
+            ),
+        );
 
         return { success: true, updatedCount: result.count };
     } catch (error) {
@@ -470,6 +495,14 @@ export async function bulkDeleteRecipes(
                 authorId,
             },
         });
+
+        await Promise.all(
+            recipeIds.map((id) =>
+                addSyncRecipeJob(id).catch((err) =>
+                    console.error('[OpenSearch] Failed to queue sync for bulk delete:', err),
+                ),
+            ),
+        );
 
         return { success: true, deletedCount: result.count };
     } catch (error) {

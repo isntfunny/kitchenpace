@@ -87,7 +87,7 @@ export async function searchTags(
             aggs: {
                 tags: {
                     terms: {
-                        field: 'tags.keyword',
+                        field: 'tags',
                         size: limit,
                         ...(includePattern ? { include: includePattern } : {}),
                     },
@@ -137,7 +137,7 @@ export async function getTagFacets(): Promise<TagFacet[]> {
             aggs: {
                 tags: {
                     terms: {
-                        field: 'tags.keyword',
+                        field: 'tags',
                         size: 120,
                     },
                 },

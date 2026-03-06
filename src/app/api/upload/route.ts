@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
-import { uploadFile, UploadType } from '@app/lib/s3';
+import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
+import { deleteFile, uploadFile, UploadType } from '@app/lib/s3';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -45,9 +46,54 @@ export async function POST(request: NextRequest) {
             type,
         });
 
+        // Run AI image moderation
+        const modResult = await moderateContent({ imageUrl: result.url });
+
+        if (modResult.decision === 'REJECTED') {
+            // Delete the uploaded file from S3
+            await deleteFile(result.key);
+
+            logAuth('warn', 'POST /api/upload: image rejected by moderation', {
+                userId: session.user.id,
+                type,
+                score: modResult.score,
+            });
+
+            return NextResponse.json(
+                {
+                    error: 'Bild wurde abgelehnt',
+                    reason: 'Inhalt verstößt gegen unsere Richtlinien',
+                },
+                { status: 400 },
+            );
+        }
+
+        if (modResult.decision === 'PENDING') {
+            // Queue for human review but let the upload succeed
+            await persistModerationResult(
+                type === 'recipe' ? 'recipe' : type === 'profile' ? 'profile' : 'comment',
+                result.key, // use S3 key as contentId for image uploads
+                session.user.id,
+                modResult,
+                {
+                    contentType: type,
+                    contentId: result.key,
+                    authorId: session.user.id,
+                    imageUrl: result.url,
+                },
+            );
+
+            logAuth('info', 'POST /api/upload: image queued for moderation', {
+                userId: session.user.id,
+                type,
+                score: modResult.score,
+            });
+        }
+
         return NextResponse.json({
             url: result.url,
             key: result.key,
+            moderationStatus: modResult.decision,
         });
     } catch (error) {
         logAuth('error', 'POST /api/upload failed', {

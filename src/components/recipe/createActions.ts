@@ -1,6 +1,7 @@
 'use server';
 
 import { fireEvent } from '@app/lib/events/fire';
+import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 import { addSyncRecipeJob } from '@worker/queues';
@@ -33,6 +34,19 @@ function toShoppingCategory(category?: string): ShoppingCategory | null {
     const normalized = category.toUpperCase().replace(/[^A-Z]/g, '');
     const match = SHOPPING_CATEGORIES.find((c) => c.includes(normalized) || normalized.includes(c));
     return match ?? 'SONSTIGES';
+}
+
+/**
+ * Extract all user-generated text from a recipe for content moderation
+ */
+function extractRecipeText(data: { title: string; description?: string; flowNodes?: FlowNodeInput[] }): string {
+    const parts = [data.title, data.description || ''];
+    if (data.flowNodes) {
+        for (const node of data.flowNodes) {
+            parts.push(node.label, node.description);
+        }
+    }
+    return parts.filter(Boolean).join('\n');
 }
 
 export interface RecipeIngredientInput {
@@ -88,7 +102,17 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
         throw new Error('Rezept nicht gefunden oder keine Berechtigung');
     }
 
-    const recipeStatus = data.status ?? existing.status;
+    // Content moderation — check text before saving
+    const recipeText = extractRecipeText(data);
+    const modResult = await moderateContent({ text: recipeText });
+
+    if (modResult.decision === 'REJECTED') {
+        throw new Error('CONTENT_REJECTED:Dein Inhalt wurde abgelehnt — bitte überprüfe den Text deines Rezepts.');
+    }
+
+    // If moderation flags content for review, force draft status
+    const intendedStatus = data.status ?? existing.status;
+    const recipeStatus = modResult.decision === 'PENDING' ? 'DRAFT' : intendedStatus;
     const isPublishing = recipeStatus === 'PUBLISHED' && existing.status !== 'PUBLISHED';
 
     let slug = existing.slug;
@@ -115,10 +139,25 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
             difficulty: data.difficulty,
             status: recipeStatus as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED',
             publishedAt: isPublishing ? new Date() : undefined,
+            moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
+            aiModerationScore: modResult.score,
+            moderationNote: modResult.decision === 'PENDING' ? null : undefined, // clear old note on re-check
             flowNodes: data.flowNodes ? (data.flowNodes as unknown as object) : undefined,
             flowEdges: data.flowEdges ? (data.flowEdges as unknown as object) : undefined,
         },
     });
+
+    // Queue for moderation review if needed
+    if (modResult.decision === 'PENDING') {
+        await persistModerationResult('recipe', recipe.id, authorId, modResult, {
+            contentType: 'recipe',
+            contentId: recipe.id,
+            authorId,
+            title: data.title,
+            description: data.description,
+            text: recipeText,
+        });
+    }
 
     // Replace categories
     await prisma.recipeCategory.deleteMany({ where: { recipeId } });
@@ -218,7 +257,17 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         return !!existing;
     });
 
-    const recipeStatus = data.status ?? 'DRAFT';
+    // Content moderation — check text before saving
+    const recipeText = extractRecipeText(data);
+    const modResult = await moderateContent({ text: recipeText });
+
+    if (modResult.decision === 'REJECTED') {
+        throw new Error('CONTENT_REJECTED:Dein Inhalt wurde abgelehnt — bitte überprüfe den Text deines Rezepts.');
+    }
+
+    // If moderation flags content for review, force draft status
+    const intendedStatus = data.status ?? 'DRAFT';
+    const recipeStatus = modResult.decision === 'PENDING' ? 'DRAFT' : intendedStatus;
     const isPublished = recipeStatus === 'PUBLISHED';
 
     // Verify and sync ingredients — ensure all referenced ingredient IDs exist
@@ -253,6 +302,8 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             difficulty: data.difficulty,
             status: recipeStatus,
             publishedAt: isPublished ? new Date() : null,
+            moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
+            aiModerationScore: modResult.score,
             authorId,
             flowNodes: (data.flowNodes as unknown as object) ?? undefined,
             flowEdges: (data.flowEdges as unknown as object) ?? undefined,
@@ -268,6 +319,18 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             },
         },
     });
+
+    // Queue for moderation review if needed
+    if (modResult.decision === 'PENDING') {
+        await persistModerationResult('recipe', recipe.id, authorId, modResult, {
+            contentType: 'recipe',
+            contentId: recipe.id,
+            authorId,
+            title: data.title,
+            description: data.description,
+            text: recipeText,
+        });
+    }
 
     if (isPublished) {
         await prisma.activityLog.create({

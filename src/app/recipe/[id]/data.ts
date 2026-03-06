@@ -2,6 +2,7 @@ export interface Ingredient {
     name: string;
     amount: number;
     unit: string;
+    notes?: string | null;
 }
 
 export type NodeType = 'prep' | 'cook' | 'wait' | 'season' | 'combine' | 'serve';

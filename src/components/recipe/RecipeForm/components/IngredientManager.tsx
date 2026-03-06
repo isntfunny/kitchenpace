@@ -250,13 +250,20 @@ export function IngredientManager({
                             key={`${ing.id}-${index}`}
                             className={css({
                                 display: 'flex',
-                                alignItems: 'center',
-                                gap: '2',
+                                flexDir: 'column',
+                                gap: '1',
                                 padding: '3',
                                 bg: 'rgba(224,123,83,0.05)',
                                 borderRadius: 'xl',
                             })}
                         >
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                })}
+                            >
                             <span className={css({ flex: '1', fontWeight: '500' })}>
                                 {ing.name}
                             </span>
@@ -341,6 +348,28 @@ export function IngredientManager({
                             >
                                 <X size={16} />
                             </button>
+                            </div>
+                            <input
+                                type="text"
+                                value={ing.notes}
+                                onChange={(e) =>
+                                    onUpdateIngredient(index, { notes: e.target.value })
+                                }
+                                placeholder="Hinweis (z.B. frisch gehackt, fein gewürfelt)"
+                                className={css({
+                                    width: '100%',
+                                    padding: '1',
+                                    paddingX: '2',
+                                    borderRadius: 'md',
+                                    border: '1px solid rgba(224,123,83,0.2)',
+                                    fontSize: 'xs',
+                                    color: 'text-muted',
+                                    bg: 'transparent',
+                                    outline: 'none',
+                                    _focus: { borderColor: 'rgba(224,123,83,0.5)' },
+                                    _placeholder: { color: 'rgba(0,0,0,0.3)' },
+                                })}
+                            />
                         </div>
                     ))}
                 </div>

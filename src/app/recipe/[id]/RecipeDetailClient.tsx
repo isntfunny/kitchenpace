@@ -1166,9 +1166,23 @@ export function RecipeDetailClient({
                                             fontFamily: 'body',
                                         })}
                                     >
-                                        <span className={css({ fontWeight: '500' })}>
-                                            {ingredient.name}
-                                        </span>
+                                        <div>
+                                            <span className={css({ fontWeight: '500' })}>
+                                                {ingredient.name}
+                                            </span>
+                                            {ingredient.notes && (
+                                                <span
+                                                    className={css({
+                                                        display: 'block',
+                                                        fontSize: 'xs',
+                                                        color: 'text-muted',
+                                                        fontStyle: 'italic',
+                                                    })}
+                                                >
+                                                    {ingredient.notes}
+                                                </span>
+                                            )}
+                                        </div>
                                         <span className={css({ color: 'text-muted' })}>
                                             {formatAmount(ingredient.amount)} {ingredient.unit}
                                         </span>

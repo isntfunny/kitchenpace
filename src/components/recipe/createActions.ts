@@ -52,7 +52,7 @@ export interface FlowNodeInput {
     ingredientIds?: string[];
     photoKey?: string;
     photoUrl?: string;
-    position: { x: number; y: number };
+    position?: { x: number; y: number };
 }
 
 export interface FlowEdgeInput {

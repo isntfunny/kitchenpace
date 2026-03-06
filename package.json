@@ -33,7 +33,7 @@
         "db:migrate": "prisma migrate dev",
         "db:seed": "tsx src/lib/seed.ts",
         "db:seed-basics": "tsx src/lib/seed-basics.ts",
-        "db:reset": "prisma migrate reset --force && npx prisma db push --accept-data-loss && npm run db:seed",
+        "db:reset": "prisma migrate reset --force && npx prisma db push --accept-data-loss && npm run db:seed-basics",
         "db:fresh": "npm run db:generate && prisma migrate reset --force && npx prisma db push --accept-data-loss && npm run db:seed",
         "build:dev-seed": "DEBUG=1 npm run build && npm run db:fresh",
         "worker": "tsx worker/entrypoint.ts",

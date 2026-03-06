@@ -73,8 +73,8 @@ services:
                 DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
                 DEBUG: ${DEBUG:-0}
         container_name: kitchenpace-app
-        env_file:
-            - .env
+        environment:
+            - SCRAPLER_URL=http://kitchenpace-scraper:8000
         depends_on:
             postgres:
                 condition: service_healthy
@@ -116,10 +116,8 @@ services:
             context: ./services/scraper
             dockerfile: Dockerfile
         container_name: kitchenpace-scraper
-        ports:
-            - '34215:8000'
         healthcheck:
-            test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
+            test: ['CMD', 'curl', '-f', 'http://127.0.0.1:8000/health']
             interval: 30s
             timeout: 10s
             retries: 3

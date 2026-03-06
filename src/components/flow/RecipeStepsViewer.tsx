@@ -1,6 +1,17 @@
 'use client';
 
 import {
+    applyNodeChanges,
+    Background,
+    Handle,
+    MarkerType,
+    Position,
+    ReactFlow,
+    type Node as RFNode,
+    type NodeChange,
+    type NodeProps,
+} from '@xyflow/react';
+import {
     Check,
     CheckCircle2,
     ChevronDown,
@@ -16,7 +27,8 @@ import {
     Sparkles,
     X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import '@xyflow/react/dist/style.css';
+import { type ComponentType, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
 import { css } from 'styled-system/css';
 
@@ -939,7 +951,7 @@ function StepCard({
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        timerRunning ? onTimerPause() : onTimerStart();
+                                        if (timerRunning) { onTimerPause(); } else { onTimerStart(); }
                                     }}
                                     title={timerRunning ? 'Pause' : 'Timer starten'}
                                     style={{
@@ -1137,14 +1149,71 @@ function MiniMap({
 
 /* ── desktop: horizontal column view ─────────────────────── */
 
-interface EdgePath {
-    edge: FlowEdgeSerialized;
-    d: string;
-    sourceType?: string;
+/* ── viewer node for read-only xyflow desktop view ──────── */
+
+interface ViewerNodeData extends Record<string, unknown> {
+    sNode: FlowNodeSerialized;
+    completed: boolean;
+    active: boolean;
+    timerState: TimerState | undefined;
+    onToggle: () => void;
+    onTimerStart: () => void;
+    onTimerPause: () => void;
+    onTimerReset: () => void;
+    onOpenDetail: () => void;
+    ingredients: RecipeStepsViewerProps['ingredients'] | undefined;
 }
 
+const INVIS_HANDLE: React.CSSProperties = { opacity: 0, pointerEvents: 'none' };
+
+function ViewerNodeRenderer({ data }: NodeProps) {
+    const d = data as ViewerNodeData;
+    return (
+        <>
+            <Handle type="target" position={Position.Left} style={INVIS_HANDLE} />
+            <Handle id="top-in" type="target" position={Position.Top} style={INVIS_HANDLE} />
+            <Handle id="bottom-in" type="target" position={Position.Bottom} style={INVIS_HANDLE} />
+            <StepCard
+                node={d.sNode}
+                completed={d.completed}
+                active={d.active}
+                timerState={d.timerState}
+                onToggle={d.onToggle}
+                onTimerStart={d.onTimerStart}
+                onTimerPause={d.onTimerPause}
+                onTimerReset={d.onTimerReset}
+                onOpenDetail={d.onOpenDetail}
+                ingredients={d.ingredients}
+            />
+            <Handle type="source" position={Position.Right} style={INVIS_HANDLE} />
+            <Handle id="top-out" type="source" position={Position.Top} style={INVIS_HANDLE} />
+            <Handle id="bottom-out" type="source" position={Position.Bottom} style={INVIS_HANDLE} />
+        </>
+    );
+}
+
+// Module-level constant — must never be recreated inside a render
+const VIEWER_NODE_TYPES: Record<string, ComponentType<NodeProps>> = Object.fromEntries(
+    (
+        [
+            'start',
+            'kochen',
+            'schneiden',
+            'braten',
+            'backen',
+            'mixen',
+            'warten',
+            'wuerzen',
+            'anrichten',
+            'servieren',
+        ] as const
+    ).map((t) => [t, ViewerNodeRenderer as ComponentType<NodeProps>]),
+);
+
+/* ── desktop: read-only xyflow view ─────────────────────── */
+
 function DesktopView({
-    columnGroups,
+    nodes,
     outgoing,
     edges,
     completed,
@@ -1153,7 +1222,7 @@ function DesktopView({
     onOpenDetail,
     ingredients,
 }: {
-    columnGroups: FlowNodeSerialized[][];
+    nodes: FlowNodeSerialized[];
     outgoing: Map<string, string[]>;
     edges: FlowEdgeSerialized[];
     completed: Set<string>;
@@ -1162,189 +1231,111 @@ function DesktopView({
     onOpenDetail: (nodeId: string) => void;
     ingredients?: RecipeStepsViewerProps['ingredients'];
 }) {
-    const innerRef = useRef<HTMLDivElement>(null);
-    const [edgePaths, setEdgePaths] = useState<EdgePath[]>([]);
-    const allNodes = useMemo(() => columnGroups.flat(), [columnGroups]);
-    const maxRows = useMemo(
-        () => Math.max(1, ...columnGroups.map((g) => g.length)),
-        [columnGroups],
+    const makeNodeData = useCallback(
+        (node: FlowNodeSerialized): ViewerNodeData => ({
+            sNode: node,
+            completed: completed.has(node.id),
+            active:
+                !completed.has(node.id) &&
+                (outgoing.get(node.id)?.every((c) => completed.has(c)) === false ||
+                    node.type === 'start'),
+            timerState: timers.get(node.id),
+            onToggle: () => dispatch({ type: 'toggle', nodeId: node.id }),
+            onTimerStart: () => dispatch({ type: 'timerStart', nodeId: node.id }),
+            onTimerPause: () => dispatch({ type: 'timerPause', nodeId: node.id }),
+            onTimerReset: () => dispatch({ type: 'timerReset', nodeId: node.id }),
+            onOpenDetail: () => onOpenDetail(node.id),
+            ingredients,
+        }),
+        [completed, timers, outgoing, dispatch, onOpenDetail, ingredients],
     );
 
-    const measure = useCallback(() => {
-        const container = innerRef.current;
-        if (!container) return;
-        const cRect = container.getBoundingClientRect();
+    const buildRfEdges = useCallback(
+        () =>
+            edges.map((edge) => {
+                const sourceNode = nodes.find((n) => n.id === edge.source);
+                const sourceDone = completed.has(edge.source) || sourceNode?.type === 'start';
+                const t = timers.get(edge.source);
+                const timerPct =
+                    t && t.total > 0 ? ((t.total - t.remaining) / t.total) * 100 : 0;
+                const stroke = sourceDone
+                    ? '#00b894'
+                    : timerPct > 0
+                      ? timerColor(timerPct)
+                      : 'rgba(0,0,0,0.18)';
+                return {
+                    id: edge.id,
+                    source: edge.source,
+                    target: edge.target,
+                    type: 'smoothstep',
+                    style: { stroke, strokeWidth: sourceDone ? 2.5 : 2 },
+                    animated: !sourceDone && (t?.running ?? false),
+                    markerEnd: {
+                        type: MarkerType.ArrowClosed,
+                        color: stroke,
+                        width: 14,
+                        height: 14,
+                    },
+                };
+            }),
+        [edges, nodes, completed, timers],
+    );
 
-        const paths = edges.flatMap((edge): EdgePath[] => {
-            const srcEl = container.querySelector<HTMLElement>(`[data-node-id="${edge.source}"]`);
-            const tgtEl = container.querySelector<HTMLElement>(`[data-node-id="${edge.target}"]`);
-            if (!srcEl || !tgtEl) return [];
+    const [rfNodes, setRfNodes] = useState<RFNode[]>(() =>
+        nodes.map((n) => ({ id: n.id, type: n.type, position: n.position ?? { x: 0, y: 0 }, data: makeNodeData(n) })),
+    );
+    const [rfEdges, setRfEdges] = useState(() => buildRfEdges());
 
-            const sR = srcEl.getBoundingClientRect();
-            const tR = tgtEl.getBoundingClientRect();
+    // Allow xyflow to apply dimension measurements (needed for fitView)
+    const onNodesChange = useCallback(
+        (changes: NodeChange[]) => setRfNodes((nds) => applyNodeChanges(changes, nds)),
+        [],
+    );
 
-            const x0 = sR.right - cRect.left;
-            const y0 = sR.top + sR.height / 2 - cRect.top;
-            const x1 = tR.left - cRect.left;
-            const y1 = tR.top + tR.height / 2 - cRect.top;
-            const cx = (x0 + x1) / 2;
-
-            const sourceNode = allNodes.find((n) => n.id === edge.source);
-            return [
-                {
-                    edge,
-                    d: `M ${x0} ${y0} C ${cx} ${y0}, ${cx} ${y1}, ${x1} ${y1}`,
-                    sourceType: sourceNode?.type,
-                },
-            ];
-        });
-
-        setEdgePaths(paths);
-    }, [edges, allNodes]);
-
+    // Sync node data when completion/timer state changes (preserve xyflow's measured sizes)
     useEffect(() => {
-        // Measure after paint so images are loaded into layout
-        const raf = requestAnimationFrame(() => {
-            measure();
-            // Second pass after images may have loaded
-            const t = setTimeout(measure, 300);
-            return () => clearTimeout(t);
-        });
-        const ro = new ResizeObserver(measure);
-        if (innerRef.current) {
-            innerRef.current.querySelectorAll('[data-node-id]').forEach((el) => ro.observe(el));
-        }
-        return () => {
-            cancelAnimationFrame(raf);
-            ro.disconnect();
-        };
-    }, [measure]);
+        setRfNodes((nds) =>
+            nds.map((n) => {
+                const orig = nodes.find((o) => o.id === n.id);
+                return orig ? { ...n, data: makeNodeData(orig) } : n;
+            }),
+        );
+    }, [completed, timers, makeNodeData, nodes]);
+
+    // Sync edge styles when state changes
+    useEffect(() => {
+        setRfEdges(buildRfEdges());
+    }, [buildRfEdges]);
+
+    // Container height based on node bounding box
+    const containerHeight = useMemo(() => {
+        if (nodes.length === 0) return 400;
+        const ys = nodes.map((n) => n.position?.y ?? 0);
+        return Math.max(420, Math.min(740, Math.max(...ys) - Math.min(...ys) + 380));
+    }, [nodes]);
 
     return (
-        <div
-            style={{
-                overflowX: 'auto',
-                overflowY: 'visible',
-                padding: '32px 40px 36px',
-                scrollbarWidth: 'thin' as React.CSSProperties['scrollbarWidth'],
-                scrollbarColor: 'rgba(224,123,83,0.2) transparent',
-            }}
-        >
-            <div
-                ref={innerRef}
-                style={{
-                    position: 'relative',
-                    display: 'inline-grid',
-                    gridTemplateColumns: `repeat(${columnGroups.length}, auto)`,
-                    gridTemplateRows: `repeat(${maxRows}, auto)`,
-                    columnGap: 80,
-                    rowGap: 20,
-                }}
+        <div style={{ height: containerHeight, position: 'relative' }}>
+            <ReactFlow
+                nodes={rfNodes}
+                edges={rfEdges}
+                nodeTypes={VIEWER_NODE_TYPES}
+                onNodesChange={onNodesChange}
+                nodesDraggable={false}
+                nodesConnectable={false}
+                elementsSelectable={false}
+                panOnDrag
+                zoomOnScroll
+                fitView
+                fitViewOptions={{ padding: 0.18 }}
+                proOptions={{ hideAttribution: true }}
             >
-                {columnGroups.flatMap((group, colIdx) => {
-                    const N = group.length;
-                    const M = maxRows;
-                    return group.map((node, rowIdx) => {
-                        // Distribute N nodes evenly across M rows so they center proportionally
-                        const rowStart = Math.round((rowIdx * M) / N) + 1;
-                        const rowEnd = Math.round(((rowIdx + 1) * M) / N) + 1;
-                        return (
-                            <div
-                                key={node.id}
-                                style={{
-                                    gridColumn: colIdx + 1,
-                                    gridRow: `${rowStart} / ${rowEnd}`,
-                                    alignSelf: 'center',
-                                    justifySelf: 'center',
-                                }}
-                            >
-                                <StepCard
-                                    node={node}
-                                    completed={completed.has(node.id)}
-                                    active={
-                                        !completed.has(node.id) &&
-                                        (outgoing.get(node.id)?.every((c) => completed.has(c)) ===
-                                            false ||
-                                            node.type === 'start')
-                                    }
-                                    timerState={timers.get(node.id)}
-                                    onToggle={() => dispatch({ type: 'toggle', nodeId: node.id })}
-                                    onTimerStart={() =>
-                                        dispatch({ type: 'timerStart', nodeId: node.id })
-                                    }
-                                    onTimerPause={() =>
-                                        dispatch({ type: 'timerPause', nodeId: node.id })
-                                    }
-                                    onTimerReset={() =>
-                                        dispatch({ type: 'timerReset', nodeId: node.id })
-                                    }
-                                    onOpenDetail={() => onOpenDetail(node.id)}
-                                    ingredients={ingredients}
-                                />
-                            </div>
-                        );
-                    });
-                })}
-
-                {/* SVG overlay — paths measured from actual DOM positions */}
-                <svg
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        pointerEvents: 'none',
-                        overflow: 'visible',
-                    }}
-                >
-                    {edgePaths.map(({ edge, d, sourceType }) => {
-                        const sourceDone = completed.has(edge.source) || sourceType === 'start';
-                        const t = timers.get(edge.source);
-                        const timerPct =
-                            t && t.total > 0 ? ((t.total - t.remaining) / t.total) * 100 : 0;
-                        const fillPct = sourceDone ? 100 : timerPct;
-                        const fillColor = sourceDone ? '#00b894' : timerColor(timerPct);
-                        const arrowD = (() => {
-                            // extract endpoint from path "M x0 y0 C ... x1 y1"
-                            const parts = d.split(' ');
-                            const x1 = parseFloat(parts[parts.length - 2]);
-                            const y1 = parseFloat(parts[parts.length - 1]);
-                            return `M ${x1 - 7} ${y1 - 4} L ${x1} ${y1} L ${x1 - 7} ${y1 + 4}`;
-                        })();
-                        return (
-                            <g key={`${edge.source}-${edge.target}`}>
-                                <path d={d} stroke="rgba(0,0,0,0.1)" strokeWidth={2} fill="none" />
-                                <path
-                                    d={d}
-                                    pathLength="1"
-                                    stroke={fillPct > 0 ? fillColor : 'transparent'}
-                                    strokeWidth={sourceDone ? 2.5 : 2}
-                                    fill="none"
-                                    strokeDasharray="1"
-                                    strokeDashoffset={1 - fillPct / 100}
-                                    style={{
-                                        transition: sourceDone
-                                            ? 'stroke-dashoffset 0.4s ease'
-                                            : 'stroke-dashoffset 1s linear',
-                                    }}
-                                />
-                                <path
-                                    d={arrowD}
-                                    stroke={fillPct >= 99 ? fillColor : 'rgba(0,0,0,0.15)'}
-                                    strokeWidth={1.5}
-                                    fill="none"
-                                    strokeLinecap="round"
-                                    style={{ transition: 'stroke 0.4s ease' }}
-                                />
-                            </g>
-                        );
-                    })}
-                </svg>
-            </div>
+                <Background gap={24} color="rgba(0,0,0,0.035)" size={1} />
+            </ReactFlow>
         </div>
     );
 }
+
 
 /* ── mobile: swipeable single-step view ──────────────────── */
 
@@ -1357,7 +1348,6 @@ function MobileView({
     ingredients,
 }: {
     columnGroups: FlowNodeSerialized[][];
-    outgoing: Map<string, string[]>;
     completed: Set<string>;
     timers: Map<string, TimerState>;
     dispatch: React.Dispatch<ViewerAction>;
@@ -1696,15 +1686,15 @@ export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsView
         );
     }
 
-    const sharedProps = {
-        columnGroups,
-        outgoing,
+    const sharedState = {
         completed: state.completed,
         timers: state.timers,
         dispatch,
         onOpenDetail: setSelectedNodeId,
         ingredients,
     };
+
+    const mobileProps = { ...sharedState, columnGroups, outgoing };
 
     const selectedNode = selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) : null;
 
@@ -1746,7 +1736,7 @@ export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsView
                     <Smartphone style={{ width: 13, height: 13 }} /> Mobil
                 </button>
 
-                <DesktopView {...sharedProps} edges={edges} />
+                <DesktopView {...sharedState} nodes={nodes} edges={edges} outgoing={outgoing} />
 
                 {allStepsDone && <CompletionBanner />}
             </div>
@@ -1819,7 +1809,7 @@ export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsView
                                 overflow: 'hidden',
                             }}
                         >
-                            <MobileView {...sharedProps} />
+                            <MobileView {...mobileProps} />
                         </div>
                     </div>
                 </div>

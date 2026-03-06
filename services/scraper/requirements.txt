@@ -1,9 +1,30 @@
+# Core scraping framework
 scrapling>=0.3.0
+
+# BrowserForge - Required for stealth mode and fingerprint generation
 browserforge>=1.0.0
+
+# Browser automation
 playwright>=1.40.0
 patchright>=0.8.0
+
+# Camoufox - Required for stealthy-fetch anti-bot mode
+camoufox>=0.3.0
+
+# HTTP client with TLS/JA3 fingerprint spoofing
 curl_cffi>=0.6.0
+
+# HTML parsing and markdown conversion
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+markdownify>=0.11.0
+
+# Web framework
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 pydantic>=2.5.0
 python-multipart>=0.0.0
+
+# Additional utilities
+httpx>=0.25.0
+aiohttp>=3.9.0

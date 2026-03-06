@@ -126,7 +126,12 @@ export function NodeEditPanel({
                 {/* ── Photo banner ── */}
                 {photoUrl && (
                     <div className={photoBannerClass}>
-                        <img src={photoUrl} alt="Schrittfoto" className={photoBannerImgClass} />
+                        <img
+                            src={photoUrl}
+                            alt="Schrittfoto"
+                            className={photoBannerImgClass}
+                            onError={() => setPhotoUrl(undefined)}
+                        />
                         <button
                             type="button"
                             className={photoReplaceClass}

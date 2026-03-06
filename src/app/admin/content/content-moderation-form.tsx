@@ -109,6 +109,9 @@ export function ContentModerationForm({
                                         height: 'full',
                                         objectFit: 'cover',
                                     })}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
                                 />
                             )}
                         </div>
@@ -211,6 +214,9 @@ export function ContentModerationForm({
                                         height: 'full',
                                         objectFit: 'cover',
                                     })}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
                                 />
                             ) : (
                                 <div

@@ -10,6 +10,7 @@ import { flex } from 'styled-system/patterns';
 
 interface Author {
     id: string;
+    slug: string;
     name: string | null;
     bio: string | null;
     avatar: string | null;
@@ -60,7 +61,7 @@ export function AuthorCard({
                         direction: { base: 'column', sm: 'row' },
                     })}
                 >
-                    <Link href={`/user/${author.id}`}>
+                    <Link href={`/user/${author.slug}`}>
                         <div
                             className={css({
                                 position: 'relative',
@@ -92,7 +93,7 @@ export function AuthorCard({
                             })}
                         >
                             <div>
-                                <Link href={`/user/${author.id}`}>
+                                <Link href={`/user/${author.slug}`}>
                                     <h3
                                         className={css({
                                             fontFamily: 'heading',

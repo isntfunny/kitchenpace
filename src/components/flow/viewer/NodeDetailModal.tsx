@@ -114,6 +114,9 @@ export function NodeDetailModal({
                             borderRadius: '20px 20px 0 0',
                             display: 'block',
                         }}
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                        }}
                     />
                 )}
 

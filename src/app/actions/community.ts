@@ -90,14 +90,17 @@ export interface ActivityFeedItem {
     iconBg: string;
     userName: string;
     userId?: string;
+    userSlug?: string;
     actionLabel: string;
     recipeTitle?: string;
     recipeId?: string;
+    recipeSlug?: string;
     detail?: string;
     rating?: number;
     timeAgo: string;
     targetUserName?: string;
     targetUserId?: string;
+    targetUserSlug?: string;
 }
 
 function formatTimeAgo(date: Date): string {
@@ -458,7 +461,7 @@ export async function fetchUserActivityFeedItems(
         recipeIds.length > 0
             ? await prisma.recipe.findMany({
                   where: { id: { in: recipeIds } },
-                  select: { id: true, title: true },
+                  select: { id: true, title: true, slug: true },
               })
             : [];
     const recipeMap = new Map(recipes.map((r) => [r.id, r]));
@@ -495,19 +498,24 @@ export async function fetchUserActivityFeedItems(
             targetUserId = targetUser?.id;
         }
 
+        const followTarget = log.targetId ? targetUserMap.get(log.targetId) : null;
+
         return {
             id: log.id,
             icon: base.icon,
             iconBg: base.bg,
             userName: user?.name || user?.profile?.nickname || 'Küchenfreund',
             userId: user?.id,
+            userSlug: user?.profile?.slug ?? user?.id,
             actionLabel,
             recipeTitle: recipe?.title,
             recipeId: recipe?.id,
+            recipeSlug: recipe?.slug,
             detail: log.metadata ? JSON.stringify(log.metadata) : undefined,
             timeAgo: formatTimeAgo(log.createdAt),
             targetUserName,
             targetUserId,
+            targetUserSlug: followTarget?.profile?.slug ?? targetUserId,
         };
     });
 }
@@ -537,7 +545,7 @@ export async function fetchRecentActivities(limit = 6): Promise<ActivityFeedItem
     );
     const recipes = await prisma.recipe.findMany({
         where: { id: { in: recipeIds } },
-        select: { id: true, title: true },
+        select: { id: true, title: true, slug: true },
     });
 
     const followTargetIds = Array.from(
@@ -583,19 +591,24 @@ export async function fetchRecentActivities(limit = 6): Promise<ActivityFeedItem
             }
         }
 
+        const followTarget = log.targetId ? targetUserMap.get(log.targetId) : null;
+
         activities.push({
             id: log.id,
             icon: base.icon,
             iconBg: base.bg,
             userName: user?.name || user?.profile?.nickname || 'Küchenfreund',
             userId: user?.id,
+            userSlug: user?.profile?.slug ?? user?.id,
             actionLabel,
             recipeTitle: recipe?.title,
             recipeId: recipe?.id,
+            recipeSlug: recipe?.slug,
             detail: log.metadata ? JSON.stringify(log.metadata) : undefined,
             timeAgo: formatTimeAgo(log.createdAt),
             targetUserName,
             targetUserId: log.targetId || undefined,
+            targetUserSlug: followTarget?.profile?.slug ?? log.targetId ?? undefined,
         });
 
         // Stop when we have enough activities

@@ -201,6 +201,10 @@ export function StepCard({
                                 objectFit: 'cover',
                                 display: 'block',
                             }}
+                            onError={(e) => {
+                                const wrapper = (e.target as HTMLImageElement).parentElement;
+                                if (wrapper) wrapper.style.display = 'none';
+                            }}
                         />
                     </div>
                 )}

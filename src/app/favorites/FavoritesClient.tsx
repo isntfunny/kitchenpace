@@ -83,7 +83,7 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                     >
                         <Heart size={20} />
                     </div>
-                    <Heading as="h1" size="2xl">
+                    <Heading as="h1" size="xl">
                         Meine Favoriten
                     </Heading>
                 </div>
@@ -126,7 +126,7 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                                     px: '1',
                                 })}
                             >
-                                <Text size="xs" color="muted">
+                                <Text size="sm" color="muted">
                                     Gespeichert {formatTimeAgo(recipe.savedAt)}
                                 </Text>
                                 <RemoveButton

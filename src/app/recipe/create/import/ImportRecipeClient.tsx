@@ -792,6 +792,7 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                             src={imageUrl}
                             alt={analyzedRecipe.title}
                             className={imagePreviewImgClass}
+                            onError={() => setImageUrl('')}
                         />
                     </motion.div>
                 )}

@@ -395,11 +395,11 @@ export function RecipeForm({
 
             if (isEditMode || autoSavedIdRef.current) {
                 const recipeId = (isEditMode ? initialData!.id : autoSavedIdRef.current)!;
-                await updateRecipe(recipeId, payload, authorId);
-                window.location.href = `/recipe/${recipeId}`;
+                const recipe = await updateRecipe(recipeId, payload, authorId);
+                window.location.href = `/recipe/${recipe.slug}`;
             } else {
                 const recipe = await createRecipe(payload, authorId);
-                window.location.href = `/recipe/${recipe.id}`;
+                window.location.href = `/recipe/${recipe.slug}`;
             }
         } catch (err) {
             console.error('Error saving recipe:', err);

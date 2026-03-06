@@ -33,8 +33,8 @@ const ACTIVITY_ICON_MAP: Record<ActivityIconName, LucideIcon> = {
 };
 
 export function ActivityItem({ activity, children }: ActivityItemProps) {
-    const userLink = activity.userId ? `/user/${activity.userId}` : null;
-    const targetUserLink = activity.targetUserId ? `/user/${activity.targetUserId}` : null;
+    const userLink = activity.userSlug ? `/user/${activity.userSlug}` : null;
+    const targetUserLink = activity.targetUserSlug ? `/user/${activity.targetUserSlug}` : null;
     const IconComponent = ACTIVITY_ICON_MAP[activity.icon] ?? ActivityIcon;
 
     return (
@@ -120,9 +120,11 @@ export function ActivityItem({ activity, children }: ActivityItemProps) {
 
 export function ActivityRecipeLink({
     recipeId,
+    recipeSlug,
     recipeTitle,
 }: {
     recipeId?: string;
+    recipeSlug?: string;
     recipeTitle?: string;
 }) {
     if (!recipeTitle) return null;
@@ -133,9 +135,9 @@ export function ActivityRecipeLink({
         </Text>
     );
 
-    if (recipeId) {
+    if (recipeSlug || recipeId) {
         return (
-            <Link href={`/recipe/${recipeId}`} className={css({ textDecoration: 'none' })}>
+            <Link href={`/recipe/${recipeSlug ?? recipeId}`} className={css({ textDecoration: 'none' })}>
                 {linkContent}
             </Link>
         );

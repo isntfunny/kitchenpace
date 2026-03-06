@@ -434,7 +434,7 @@ export async function saveImportedRecipe(
     }
 
     // Find or create ingredients — sequential to avoid race conditions on slug unique constraint
-    const syncedIngredients: typeof data.ingredients[number][] = [];
+    const syncedIngredients: (typeof data.ingredients[number] & { ingredientId: string })[] = [];
     for (const ing of data.ingredients) {
         const slug = ing.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
         const result = await prisma.ingredient.upsert({

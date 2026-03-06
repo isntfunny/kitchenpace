@@ -46,7 +46,7 @@ const buildRecipeMetadata = async (
         openGraph: {
             title: `${recipe.title} | KüchenTakt`,
             description: recipe.description,
-            url: `${SITE_URL}/recipe/${recipe.id}`,
+            url: `${SITE_URL}/recipe/${recipe.slug}`,
             siteName: 'KüchenTakt',
             type: 'article',
             images: [

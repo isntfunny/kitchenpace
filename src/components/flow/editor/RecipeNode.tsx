@@ -187,6 +187,10 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                         <img
                             src={data.photoUrl}
                             alt=""
+                            onError={(e) => {
+                                const wrapper = (e.target as HTMLImageElement).parentElement;
+                                if (wrapper) wrapper.style.display = 'none';
+                            }}
                             className={css({
                                 width: '100%',
                                 height: '72px',

@@ -171,9 +171,12 @@ export function RecipeDetailClient({
         return [primary, ...extras];
     }, [cookImages, recipe.image, recipe.imageKey, recipe.title]);
 
-    const heroCount = Math.max(1, heroImages.length);
-    const normalizedHeroIndex = heroCount ? heroIndex % heroCount : 0;
-    const heroMeta = heroImages[normalizedHeroIndex];
+    // Only show carousel if there are actual images with src
+    const hasImages = heroImages.some((img) => img.src);
+    const visibleImages = hasImages ? heroImages : [];
+    const heroCount = Math.max(1, visibleImages.length);
+    const normalizedHeroIndex = heroCount && hasImages ? heroIndex % heroCount : 0;
+    const heroMeta = visibleImages[normalizedHeroIndex];
 
     const handleHeroNext = () => setHeroIndex((prev) => (prev + 1) % heroCount);
     const handleHeroPrev = () => setHeroIndex((prev) => (prev - 1 + heroCount) % heroCount);
@@ -220,8 +223,12 @@ export function RecipeDetailClient({
         router.push(buildRecipeFilterHref({ tags: [tag] }));
     };
 
-    const handleCategoryClick = (category: string) => {
-        router.push(buildRecipeFilterHref({ mealTypes: [category] }));
+    const handleCategoryClick = () => {
+        if (recipe.categorySlug) {
+            router.push(`/category/${recipe.categorySlug}`);
+        } else {
+            router.push(buildRecipeFilterHref({ mealTypes: [recipe.category] }));
+        }
     };
 
     const handleDifficultyClick = (difficulty: string) => {
@@ -400,6 +407,7 @@ export function RecipeDetailClient({
                                 gap: '3',
                             })}
                         >
+                            {hasImages && (<>
                             <div
                                 className={css({
                                     position: 'relative',
@@ -512,7 +520,7 @@ export function RecipeDetailClient({
                                         },
                                     })}
                                 >
-                                    {heroImages.map((img, idx) => {
+                                    {visibleImages.map((img, idx) => {
                                         const thumbUrl = img.thumbKey
                                             ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=200&height=200&fit=cover&quality=75`
                                             : img.src;
@@ -555,6 +563,7 @@ export function RecipeDetailClient({
                                     })}
                                 </div>
                             </div>
+                            </>)}
                         </div>
 
                         <div
@@ -566,7 +575,7 @@ export function RecipeDetailClient({
                         >
                             <div className={flex({ gap: '2', mb: '4', flexWrap: 'wrap' })}>
                                 <button
-                                    onClick={() => handleCategoryClick(recipe.category)}
+                                    onClick={() => handleCategoryClick()}
                                     className={css({ cursor: 'pointer', _hover: { opacity: 0.8 } })}
                                 >
                                     <Badge>{recipe.category}</Badge>
@@ -1253,7 +1262,7 @@ export function RecipeDetailClient({
                                     direction: { base: 'column', sm: 'row' },
                                 })}
                             >
-                                <Link href={`/user/${author.id}`}>
+                                <Link href={`/user/${author.slug}`}>
                                     <div
                                         className={css({
                                             position: 'relative',
@@ -1285,7 +1294,7 @@ export function RecipeDetailClient({
                                         })}
                                     >
                                         <div>
-                                            <Link href={`/user/${author.id}`}>
+                                            <Link href={`/user/${author.slug}`}>
                                                 <h3
                                                     className={css({
                                                         fontFamily: 'heading',

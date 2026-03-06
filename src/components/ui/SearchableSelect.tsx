@@ -203,6 +203,9 @@ export function SearchableSelect({
                                                 objectFit: 'cover',
                                                 flexShrink: '0',
                                             })}
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
                                         />
                                     )}
                                     <div className={css({ minWidth: '0' })}>

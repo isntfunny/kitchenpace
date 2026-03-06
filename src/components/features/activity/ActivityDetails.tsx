@@ -28,7 +28,7 @@ export function RatedActivity(props: ActivityFeedItem) {
 
     return (
         <ActivityItem activity={props}>
-            <ActivityRecipeLink recipeId={props.recipeId} recipeTitle={props.recipeTitle} />
+            <ActivityRecipeLink recipeId={props.recipeId} recipeSlug={props.recipeSlug} recipeTitle={props.recipeTitle} />
             {rating && (
                 <div className={css({ mt: '1', display: 'flex', alignItems: 'center', gap: '2' })}>
                     <StarRating rating={rating} />
@@ -47,7 +47,7 @@ export function CookedActivity(props: ActivityFeedItem) {
 
     return (
         <ActivityItem activity={props}>
-            <ActivityRecipeLink recipeId={props.recipeId} recipeTitle={props.recipeTitle} />
+            <ActivityRecipeLink recipeId={props.recipeId} recipeSlug={props.recipeSlug} recipeTitle={props.recipeTitle} />
             {hasImage && (
                 <Text
                     size="sm"
@@ -71,7 +71,7 @@ export function CookedActivity(props: ActivityFeedItem) {
 export function FavoritedActivity(props: ActivityFeedItem) {
     return (
         <ActivityItem activity={props}>
-            <ActivityRecipeLink recipeId={props.recipeId} recipeTitle={props.recipeTitle} />
+            <ActivityRecipeLink recipeId={props.recipeId} recipeSlug={props.recipeSlug} recipeTitle={props.recipeTitle} />
         </ActivityItem>
     );
 }
@@ -81,7 +81,7 @@ export function CommentedActivity(props: ActivityFeedItem) {
 
     return (
         <ActivityItem activity={props}>
-            <ActivityRecipeLink recipeId={props.recipeId} recipeTitle={props.recipeTitle} />
+            <ActivityRecipeLink recipeId={props.recipeId} recipeSlug={props.recipeSlug} recipeTitle={props.recipeTitle} />
             {comment && (
                 <Text
                     size="sm"
@@ -103,7 +103,7 @@ export function CreatedActivity(props: ActivityFeedItem) {
     return (
         <ActivityItem activity={props}>
             {isRecipe && (
-                <ActivityRecipeLink recipeId={props.recipeId} recipeTitle={props.recipeTitle} />
+                <ActivityRecipeLink recipeId={props.recipeId} recipeSlug={props.recipeSlug} recipeTitle={props.recipeTitle} />
             )}
             {!isRecipe && !isShoppingList && !isMealPlan && (
                 <Text size="sm" color="muted" className={css({ mt: '1', fontSize: '0.75rem' })}>

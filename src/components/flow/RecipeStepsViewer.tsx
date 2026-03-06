@@ -284,6 +284,7 @@ export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsView
                         flexDirection: 'column',
                         background: 'linear-gradient(180deg, rgba(26,23,21,0.92) 0%, rgba(35,30,26,0.95) 40%, rgba(28,24,21,0.92) 100%)',
                         backdropFilter: 'blur(24px)',
+                        // @ts-expect-error vendor prefix not in csstype
                         WebkitBackdropFilter: 'blur(24px)',
                     })}
                 >

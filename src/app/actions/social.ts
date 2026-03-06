@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { getServerAuthSession } from '@app/lib/auth';
 import { fireEvent } from '@app/lib/events/fire';
+import { generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
 type AuthenticatedUser = {
@@ -47,12 +48,18 @@ async function ensureProfileCounts(
     const email = user?.email ?? emailFallback;
     const nickname = user?.name ?? `user_${userId.slice(0, 8)}`;
 
+    const slug = await generateUniqueSlug(
+        nickname,
+        async (s) => !!(await prisma.profile.findUnique({ where: { slug: s } })),
+    );
+
     await prisma.profile.upsert({
         where: { userId },
         create: {
             userId,
             email,
             nickname,
+            slug,
             followerCount: data.followerCount ?? 0,
             followingCount: data.followingCount ?? 0,
         },
@@ -232,8 +239,12 @@ export async function toggleFollowAction(targetUserId: string, options?: { recip
         ensureProfileCounts(viewer.id, `${viewer.id}@kitchenpace.local`, { followingCount }),
     ]);
 
-    revalidatePath(`/user/${targetUserId}`);
-    revalidatePath(`/user/${viewer.id}`);
+    const [targetProfile, viewerProfile] = await Promise.all([
+        prisma.profile.findUnique({ where: { userId: targetUserId }, select: { slug: true } }),
+        prisma.profile.findUnique({ where: { userId: viewer.id }, select: { slug: true } }),
+    ]);
+    if (targetProfile?.slug) revalidatePath(`/user/${targetProfile.slug}`);
+    if (viewerProfile?.slug) revalidatePath(`/user/${viewerProfile.slug}`);
 
     if (options?.recipeId) {
         const recipe = await prisma.recipe.findUnique({

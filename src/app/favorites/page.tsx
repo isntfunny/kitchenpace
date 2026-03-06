@@ -5,7 +5,7 @@ import { fetchUserFavorites } from '@app/app/actions/favorites';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
 
-import { FavoritesClient, type FavoriteRecipeCard } from './FavoritesClient';
+import { FavoritesClient } from './FavoritesClient';
 
 export const revalidate = 0;
 
@@ -26,7 +26,7 @@ export default async function FavoritesPage() {
 
     return (
         <PageShell>
-            <FavoritesClient initialFavorites={favorites as FavoriteRecipeCard[]} />
+            <FavoritesClient initialFavorites={favorites} />
         </PageShell>
     );
 }

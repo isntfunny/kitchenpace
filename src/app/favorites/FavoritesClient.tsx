@@ -1,13 +1,14 @@
 'use client';
 
-import { Clock, Heart, Star } from 'lucide-react';
+import { Heart, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { AlertDialog } from 'radix-ui';
 import { useTransition } from 'react';
 
 import { toggleFavoriteAction } from '@app/app/actions/social';
-import { Badge } from '@app/components/atoms/Badge';
-import { SmartImage } from '@app/components/atoms/SmartImage';
+import { Button } from '@app/components/atoms/Button';
+import { Heading, Text } from '@app/components/atoms/Typography';
+import { RecipeCard } from '@app/components/features/RecipeCard';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
@@ -18,7 +19,7 @@ export interface FavoriteRecipeCard {
     category: string;
     rating: number;
     time: string;
-    image: string;
+    image: string | null;
     description?: string;
     savedAt: Date | string;
 }
@@ -44,7 +45,6 @@ function formatTimeAgo(date: Date | string): string {
 
 export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
     const [isPending, startTransition] = useTransition();
-    const favorites = initialFavorites;
 
     const handleRemove = (recipeId: string) => {
         startTransition(async () => {
@@ -57,356 +57,219 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
     };
 
     return (
-        <div className={css({ minH: '100vh', bg: 'background' })}>
-            <div
-                className={css({
-                    bg: 'linear-gradient(135deg, #fff7f0 0%, #ffede0 50%, #fff7f0 100%)',
-                    pt: { base: '8', md: '12' },
-                    pb: { base: '10', md: '14' },
-                    borderBottom: '1px solid',
-                    borderColor: 'gray.100',
-                })}
-            >
+        <section className={css({ py: { base: '6', md: '8' } })}>
+            {/* Page header */}
+            <div className={css({ mb: '8' })}>
                 <div
                     className={css({
-                        maxW: '5xl',
-                        mx: 'auto',
-                        px: { base: '4', md: '6' },
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3',
+                        mb: '1',
                     })}
                 >
-                    <h1
+                    <div
                         className={css({
-                            fontSize: { base: '2xl', md: '3xl' },
-                            fontWeight: '800',
-                            fontFamily: 'heading',
-                            color: 'text',
-                            mb: '2',
+                            w: '10',
+                            h: '10',
+                            borderRadius: 'xl',
+                            bg: 'primary',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            flexShrink: '0',
                         })}
                     >
+                        <Heart size={20} />
+                    </div>
+                    <Heading as="h1" size="2xl">
                         Meine Favoriten
-                    </h1>
-                    <p
-                        className={css({
-                            color: 'text-muted',
-                            fontSize: { base: 'sm', md: 'base' },
-                        })}
-                    >
-                        {favorites.length}{' '}
-                        {favorites.length === 1 ? 'gespeichertes Rezept' : 'gespeicherte Rezepte'}
-                    </p>
+                    </Heading>
                 </div>
+                <Text color="muted" className={css({ pl: '13' })}>
+                    {initialFavorites.length === 0
+                        ? 'Noch keine gespeicherten Rezepte'
+                        : initialFavorites.length === 1
+                          ? '1 gespeichertes Rezept'
+                          : `${initialFavorites.length} gespeicherte Rezepte`}
+                </Text>
             </div>
 
-            <main
-                className={css({
-                    maxW: '5xl',
-                    mx: 'auto',
-                    px: { base: '4', md: '6' },
-                    py: { base: '6', md: '8' },
-                })}
-            >
-                {favorites.length > 0 ? (
-                    <div
-                        className={grid({
-                            columns: { base: 1, sm: 2, lg: 3 },
-                            gap: '6',
-                        })}
-                    >
-                        {favorites.map((recipe) => (
-                            <FavoriteCard
-                                key={recipe.id}
-                                recipe={recipe}
-                                onRemove={() => handleRemove(recipe.id)}
-                                isRemoving={isPending}
-                            />
-                        ))}
-                    </div>
-                ) : (
+            {initialFavorites.length > 0 ? (
+                <div
+                    className={grid({
+                        columns: { base: 1, sm: 2, lg: 3 },
+                        gap: '6',
+                    })}
+                >
+                    {initialFavorites.map((recipe) => (
+                        <div key={recipe.id} className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
+                            <div className={css({ position: 'relative' })}>
+                                <RecipeCard
+                                    recipe={{
+                                        id: recipe.id,
+                                        slug: recipe.slug,
+                                        title: recipe.title,
+                                        description: recipe.description,
+                                        image: recipe.image,
+                                        category: recipe.category,
+                                        rating: recipe.rating,
+                                        time: recipe.time,
+                                    }}
+                                />
+                            </div>
+                            <div
+                                className={flex({
+                                    justify: 'space-between',
+                                    align: 'center',
+                                    px: '1',
+                                })}
+                            >
+                                <Text size="xs" color="muted">
+                                    Gespeichert {formatTimeAgo(recipe.savedAt)}
+                                </Text>
+                                <RemoveButton
+                                    title={recipe.title}
+                                    onRemove={() => handleRemove(recipe.id)}
+                                    isRemoving={isPending}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div
+                    className={css({
+                        textAlign: 'center',
+                        py: '16',
+                        px: '4',
+                        bg: 'surface',
+                        borderRadius: '2xl',
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                    })}
+                >
                     <div
                         className={css({
-                            textAlign: 'center',
-                            py: '16',
-                            px: '4',
-                            bg: 'surface.elevated',
-                            borderRadius: '2xl',
-                            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                            w: '16',
+                            h: '16',
+                            borderRadius: 'full',
+                            bg: 'red.50',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'red.400',
+                            mx: 'auto',
+                            mb: '4',
                         })}
                     >
-                        <div className={css({ fontSize: '4xl', mb: '4', color: '#fd4c6f' })}>
-                            <Heart size={48} />
-                        </div>
-                        <h2
-                            className={css({
-                                fontSize: 'xl',
-                                fontWeight: '700',
-                                fontFamily: 'heading',
-                                color: 'text',
-                                mb: '2',
-                            })}
-                        >
-                            Noch keine Favoriten
-                        </h2>
-                        <p className={css({ color: 'text-muted', mb: '6' })}>
-                            Speichere Rezepte, die du später kochen möchtest.
-                        </p>
-                        <Link
-                            href="/"
-                            className={css({
-                                display: 'inline-block',
-                                px: '6',
-                                py: '3',
-                                bg: 'primary',
-                                color: 'white',
-                                borderRadius: 'lg',
-                                fontWeight: '600',
-                                textDecoration: 'none',
-                                transition: 'all 150ms ease',
-                                _hover: {
-                                    bg: 'primary-dark',
-                                },
-                            })}
-                        >
-                            Rezepte entdecken
-                        </Link>
+                        <Heart size={32} />
                     </div>
-                )}
-            </main>
-        </div>
+                    <Heading as="h2" size="lg" className={css({ mb: '2' })}>
+                        Noch keine Favoriten
+                    </Heading>
+                    <Text color="muted" className={css({ mb: '6' })}>
+                        Speichere Rezepte, die du später kochen möchtest.
+                    </Text>
+                    <Link href="/">
+                        <Button variant="primary">Rezepte entdecken</Button>
+                    </Link>
+                </div>
+            )}
+        </section>
     );
 }
 
-function FavoriteCard({
-    recipe,
+function RemoveButton({
+    title,
     onRemove,
     isRemoving,
 }: {
-    recipe: FavoriteRecipeCard;
+    title: string;
     onRemove: () => void;
     isRemoving: boolean;
 }) {
     return (
-        <div
-            className={css({
-                position: 'relative',
-                bg: 'surface.elevated',
-                borderRadius: 'xl',
-                overflow: 'hidden',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                transition: 'all 200ms ease',
-                _hover: {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-                },
-            })}
-        >
-            <Link href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none' })}>
-                <div className={css({ position: 'relative', aspectRatio: '16/10' })}>
-                    <SmartImage
-                        src={recipe.image}
-                        alt={recipe.title}
-                        fill
-                        recipeId={recipe.id}
-                        className={css({
-                            objectFit: 'cover',
-                        })}
-                    />
-                    <div
-                        className={css({
-                            position: 'absolute',
-                            top: '3',
-                            left: '3',
-                        })}
-                    >
-                        <Badge>{recipe.category}</Badge>
-                    </div>
-                </div>
-            </Link>
-
-            <div className={css({ p: '4' })}>
-                <Link href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none' })}>
-                    <h3
-                        className={css({
-                            fontSize: 'base',
-                            fontWeight: '700',
-                            fontFamily: 'heading',
-                            color: 'text',
-                            mb: '1',
-                            lineClamp: 1,
-                        })}
-                    >
-                        {recipe.title}
-                    </h3>
-                </Link>
-                <p
+        <AlertDialog.Root>
+            <AlertDialog.Trigger asChild>
+                <button
                     className={css({
-                        fontSize: 'sm',
-                        color: 'text-muted',
-                        lineClamp: 2,
-                        mb: '3',
-                        lineHeight: '1.5',
-                    })}
-                >
-                    {recipe.description}
-                </p>
-
-                <div
-                    className={flex({
-                        justify: 'space-between',
-                        align: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1',
                         fontSize: 'xs',
                         color: 'text-muted',
+                        cursor: 'pointer',
+                        bg: 'transparent',
+                        border: 'none',
+                        p: '0',
+                        transition: 'color 150ms ease',
+                        _hover: { color: 'red.500' },
                     })}
                 >
-                    <div className={flex({ align: 'center', gap: '1' })}>
-                        <Star size={16} className={css({ color: '#f8b500' })} />
-                        <span className={css({ fontWeight: '600' })}>
-                            {recipe.rating.toFixed(1)}
-                        </span>
-                    </div>
-                    <div className={flex({ align: 'center', gap: '1' })}>
-                        <Clock size={16} className={css({ color: '#636e72' })} />
-                        <span>{recipe.time}</span>
-                    </div>
-                </div>
-
-                <div
+                    <Trash2 size={12} />
+                    Entfernen
+                </button>
+            </AlertDialog.Trigger>
+            <AlertDialog.Portal>
+                <AlertDialog.Overlay
                     className={css({
-                        mt: '3',
-                        pt: '3',
-                        borderTop: '1px solid',
-                        borderColor: 'gray.100',
+                        position: 'fixed',
+                        inset: 0,
+                        backgroundColor: 'rgba(0,0,0,0.4)',
+                        zIndex: '40',
+                    })}
+                />
+                <AlertDialog.Content
+                    className={css({
+                        position: 'fixed',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '90vw',
+                        maxWidth: '420px',
+                        bg: 'surface',
+                        borderRadius: '2xl',
+                        p: '6',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                        zIndex: '50',
                     })}
                 >
-                    <div
-                        className={flex({
-                            justify: 'space-between',
-                            align: 'center',
-                        })}
-                    >
-                        <span className={css({ fontSize: 'xs', color: 'text-muted' })}>
-                            Gespeichert {formatTimeAgo(recipe.savedAt)}
-                        </span>
-                        <AlertDialog.Root>
-                            <AlertDialog.Trigger asChild>
-                                <button
-                                    className={css({
-                                        fontSize: 'xs',
-                                        color: 'text-muted',
-                                        cursor: 'pointer',
-                                        bg: 'transparent',
-                                        border: 'none',
-                                        p: '0',
-                                        _hover: { color: 'red.500' },
-                                    })}
-                                >
-                                    Entfernen
-                                </button>
-                            </AlertDialog.Trigger>
-                            <AlertDialog.Portal>
-                                <AlertDialog.Overlay
-                                    className={css({
-                                        position: 'fixed',
-                                        inset: 0,
-                                        backgroundColor: 'rgba(0,0,0,0.5)',
-                                        animation:
-                                            'overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1)',
-                                    })}
-                                />
-                                <AlertDialog.Content
-                                    className={css({
-                                        position: 'fixed',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        width: '90vw',
-                                        maxWidth: '450px',
-                                        backgroundColor: 'white',
-                                        borderRadius: 'xl',
-                                        padding: '6',
-                                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-                                        animation:
-                                            'contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1)',
-                                    })}
-                                >
-                                    <AlertDialog.Title
-                                        className={css({
-                                            fontSize: 'lg',
-                                            fontWeight: '700',
-                                            color: 'text',
-                                            mb: '2',
-                                        })}
-                                    >
-                                        Rezept entfernen?
-                                    </AlertDialog.Title>
-                                    <AlertDialog.Description
-                                        className={css({
-                                            fontSize: 'sm',
-                                            color: 'text-muted',
-                                            mb: '5',
-                                            lineHeight: '1.5',
-                                        })}
-                                    >
-                                        Möchtest du "{recipe.title}" wirklich aus deinen Favoriten
-                                        entfernen? Du kannst es später jederzeit wieder hinzufügen.
-                                    </AlertDialog.Description>
-                                    <div
-                                        className={flex({
-                                            gap: '3',
-                                            justify: 'flex-end',
-                                        })}
-                                    >
-                                        <AlertDialog.Cancel asChild>
-                                            <button
-                                                className={css({
-                                                    px: '4',
-                                                    py: '2',
-                                                    fontSize: 'sm',
-                                                    fontWeight: '500',
-                                                    color: 'text',
-                                                    bg: 'gray.100',
-                                                    border: 'none',
-                                                    borderRadius: 'lg',
-                                                    cursor: 'pointer',
-                                                    _hover: { bg: 'gray.200' },
-                                                })}
-                                            >
-                                                Abbrechen
-                                            </button>
-                                        </AlertDialog.Cancel>
-                                        <AlertDialog.Action asChild>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    onRemove();
-                                                }}
-                                                disabled={isRemoving}
-                                                className={css({
-                                                    px: '4',
-                                                    py: '2',
-                                                    fontSize: 'sm',
-                                                    fontWeight: '500',
-                                                    color: 'white',
-                                                    bg: 'red.500',
-                                                    border: 'none',
-                                                    borderRadius: 'lg',
-                                                    cursor: 'pointer',
-                                                    _hover: { bg: 'red.600' },
-                                                    _disabled: {
-                                                        opacity: 0.5,
-                                                        cursor: 'not-allowed',
-                                                    },
-                                                })}
-                                            >
-                                                {isRemoving ? 'Entferne...' : 'Entfernen'}
-                                            </button>
-                                        </AlertDialog.Action>
-                                    </div>
-                                </AlertDialog.Content>
-                            </AlertDialog.Portal>
-                        </AlertDialog.Root>
+                    <AlertDialog.Title asChild>
+                        <Heading as="h3" size="lg" className={css({ mb: '2' })}>
+                            Rezept entfernen?
+                        </Heading>
+                    </AlertDialog.Title>
+                    <AlertDialog.Description asChild>
+                        <Text color="muted" className={css({ mb: '6', lineHeight: '1.6' })}>
+                            Möchtest du „{title}" wirklich aus deinen Favoriten entfernen? Du kannst
+                            es später jederzeit wieder hinzufügen.
+                        </Text>
+                    </AlertDialog.Description>
+                    <div className={flex({ gap: '3', justify: 'flex-end' })}>
+                        <AlertDialog.Cancel asChild>
+                            <Button variant="ghost">Abbrechen</Button>
+                        </AlertDialog.Cancel>
+                        <AlertDialog.Action asChild>
+                            <Button
+                                variant="primary"
+                                disabled={isRemoving}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    onRemove();
+                                }}
+                                className={css({
+                                    bg: 'red.500',
+                                    _hover: { bg: 'red.600' },
+                                })}
+                            >
+                                <Trash2 size={16} />
+                                {isRemoving ? 'Entferne...' : 'Entfernen'}
+                            </Button>
+                        </AlertDialog.Action>
                     </div>
-                </div>
-            </div>
-        </div>
+                </AlertDialog.Content>
+            </AlertDialog.Portal>
+        </AlertDialog.Root>
     );
 }

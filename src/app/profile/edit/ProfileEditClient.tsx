@@ -1,8 +1,8 @@
 'use client';
 
-import { ArrowLeft, Camera, Save, User } from 'lucide-react';
+import { ArrowLeft, Camera, Check, Loader2, Mail, Save, User, X } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
@@ -19,6 +19,8 @@ const clamp = (value: string | null, maxLength: number) => {
     }
     return value.slice(0, maxLength);
 };
+
+type NicknameStatus = 'idle' | 'checking' | 'available' | 'taken';
 
 interface ProfileData {
     id: string;
@@ -39,9 +41,54 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
     const [teaser, setTeaser] = useState(profile.teaser || '');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [nicknameStatus, setNicknameStatus] = useState<NicknameStatus>('idle');
+
+    const [newEmail, setNewEmail] = useState('');
+    const [emailSaving, setEmailSaving] = useState(false);
+    const [emailError, setEmailError] = useState<string | null>(null);
+    const [emailSuccess, setEmailSuccess] = useState(false);
+
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const originalNickname = profile.nickname || '';
+
+    useEffect(() => {
+        const trimmed = nickname.trim();
+
+        if (!trimmed || trimmed === originalNickname) {
+            setNicknameStatus('idle');
+            return;
+        }
+
+        if (trimmed.length < 2) {
+            setNicknameStatus('idle');
+            return;
+        }
+
+        setNicknameStatus('checking');
+
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+
+        debounceRef.current = setTimeout(async () => {
+            try {
+                const res = await fetch(
+                    `/api/profile/check-nickname?nickname=${encodeURIComponent(trimmed)}`,
+                );
+                const data = await res.json();
+                setNicknameStatus(data.available ? 'available' : 'taken');
+            } catch {
+                setNicknameStatus('idle');
+            }
+        }, 500);
+
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, [nickname, originalNickname]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (nicknameStatus === 'taken') return;
+
         setSaving(true);
         setError(null);
 
@@ -59,13 +106,41 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
             if (response.ok) {
                 window.location.href = '/profile';
             } else {
-                setError('Fehler beim Speichern. Bitte versuche es erneut.');
+                const data = await response.json().catch(() => ({}));
+                setError(data.message ?? 'Fehler beim Speichern. Bitte versuche es erneut.');
             }
         } catch (err) {
             console.error('Error saving profile:', err);
             setError('Fehler beim Speichern. Bitte versuche es erneut.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleEmailSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setEmailSaving(true);
+        setEmailError(null);
+        setEmailSuccess(false);
+
+        try {
+            const response = await fetch('/api/profile', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: newEmail }),
+            });
+
+            if (response.ok) {
+                setEmailSuccess(true);
+                setNewEmail('');
+            } else {
+                const data = await response.json().catch(() => ({}));
+                setEmailError(data.message ?? 'Fehler beim Speichern der E-Mail.');
+            }
+        } catch {
+            setEmailError('Fehler beim Speichern der E-Mail.');
+        } finally {
+            setEmailSaving(false);
         }
     };
 
@@ -174,37 +249,98 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                             </div>
 
                             {/* Nickname */}
-                            <label
-                                className={css({ display: 'flex', flexDir: 'column', gap: '2' })}
-                            >
+                            <div className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
                                 <span className={css({ fontWeight: '600' })}>Nickname</span>
-                                <input
-                                    type="text"
-                                    name="nickname"
-                                    maxLength={32}
-                                    value={nickname}
-                                    onChange={(e) => setNickname(e.target.value)}
-                                    placeholder="Dein öffentlicher Name"
-                                    className={css({
-                                        borderRadius: 'xl',
-                                        border: '1px solid',
-                                        borderColor: 'border',
-                                        p: '3',
-                                        fontSize: 'md',
-                                        outline: 'none',
-                                        bg: 'background',
-                                        transition: 'all 150ms ease',
-                                        _focus: {
-                                            borderColor: 'primary',
-                                            boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
-                                        },
-                                    })}
-                                    required
-                                />
-                                <Text size="sm" color="muted">
-                                    Maximal {MAX_NICKNAME_LENGTH} Zeichen
-                                </Text>
-                            </label>
+                                <div className={css({ position: 'relative' })}>
+                                    <input
+                                        type="text"
+                                        name="nickname"
+                                        maxLength={32}
+                                        value={nickname}
+                                        onChange={(e) => setNickname(e.target.value)}
+                                        placeholder="Dein öffentlicher Name"
+                                        className={css({
+                                            w: '100%',
+                                            borderRadius: 'xl',
+                                            border: '1px solid',
+                                            borderColor:
+                                                nicknameStatus === 'taken'
+                                                    ? 'red.400'
+                                                    : nicknameStatus === 'available'
+                                                      ? 'green.400'
+                                                      : 'border',
+                                            p: '3',
+                                            pr: '10',
+                                            fontSize: 'md',
+                                            outline: 'none',
+                                            bg: 'background',
+                                            transition: 'all 150ms ease',
+                                            _focus: {
+                                                borderColor:
+                                                    nicknameStatus === 'taken'
+                                                        ? 'red.400'
+                                                        : nicknameStatus === 'available'
+                                                          ? 'green.400'
+                                                          : 'primary',
+                                                boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
+                                            },
+                                        })}
+                                        required
+                                    />
+                                    {nicknameStatus === 'checking' && (
+                                        <Loader2
+                                            size={16}
+                                            className={css({
+                                                position: 'absolute',
+                                                right: '12px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                color: 'text-muted',
+                                                animation: 'spin 1s linear infinite',
+                                            })}
+                                        />
+                                    )}
+                                    {nicknameStatus === 'available' && (
+                                        <Check
+                                            size={16}
+                                            className={css({
+                                                position: 'absolute',
+                                                right: '12px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                color: 'green.500',
+                                            })}
+                                        />
+                                    )}
+                                    {nicknameStatus === 'taken' && (
+                                        <X
+                                            size={16}
+                                            className={css({
+                                                position: 'absolute',
+                                                right: '12px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                color: 'red.500',
+                                            })}
+                                        />
+                                    )}
+                                </div>
+                                {nicknameStatus === 'taken' && (
+                                    <Text size="sm" className={css({ color: 'red.500' })}>
+                                        Dieser Nickname ist bereits vergeben.
+                                    </Text>
+                                )}
+                                {nicknameStatus === 'available' && (
+                                    <Text size="sm" className={css({ color: 'green.600' })}>
+                                        Nickname ist verfügbar.
+                                    </Text>
+                                )}
+                                {nicknameStatus !== 'taken' && nicknameStatus !== 'available' && (
+                                    <Text size="sm" color="muted">
+                                        Maximal {MAX_NICKNAME_LENGTH} Zeichen
+                                    </Text>
+                                )}
+                            </div>
 
                             {/* Teaser */}
                             <label
@@ -240,7 +376,11 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                             </label>
 
                             <div className={css({ display: 'flex', gap: '3', mt: '2' })}>
-                                <Button type="submit" variant="primary" disabled={saving}>
+                                <Button
+                                    type="submit"
+                                    variant="primary"
+                                    disabled={saving || nicknameStatus === 'taken'}
+                                >
                                     <Save size={18} />
                                     {saving ? 'Speichern...' : 'Änderungen speichern'}
                                 </Button>
@@ -249,6 +389,109 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                                         Abbrechen
                                     </Button>
                                 </Link>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {/* Email Change Card */}
+                <div className={css({ lg: { gridColumn: 'span 8' } })}>
+                    <div
+                        className={css({
+                            p: { base: '4', md: '6' },
+                            borderRadius: '2xl',
+                            bg: 'surface',
+                            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                        })}
+                    >
+                        <div className={css({ mb: '5' })}>
+                            <div
+                                className={css({
+                                    w: '12',
+                                    h: '12',
+                                    borderRadius: 'xl',
+                                    bg: 'primary',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    mb: '4',
+                                })}
+                            >
+                                <Mail size={24} />
+                            </div>
+                            <Heading as="h2" size="lg" className={css({ mb: '1' })}>
+                                E-Mail-Adresse ändern
+                            </Heading>
+                            <Text color="muted" size="sm">
+                                Aktuelle Adresse:{' '}
+                                <strong>{profile.email || '–'}</strong>
+                            </Text>
+                        </div>
+
+                        <form
+                            onSubmit={handleEmailSave}
+                            className={css({ display: 'flex', flexDir: 'column', gap: '4' })}
+                        >
+                            {emailError && (
+                                <div
+                                    className={css({
+                                        p: '3',
+                                        bg: 'red.50',
+                                        color: 'red.600',
+                                        borderRadius: 'lg',
+                                        border: '1px solid',
+                                        borderColor: 'red.200',
+                                    })}
+                                >
+                                    <Text size="sm">{emailError}</Text>
+                                </div>
+                            )}
+                            {emailSuccess && (
+                                <div
+                                    className={css({
+                                        p: '3',
+                                        bg: 'green.50',
+                                        color: 'green.700',
+                                        borderRadius: 'lg',
+                                        border: '1px solid',
+                                        borderColor: 'green.200',
+                                    })}
+                                >
+                                    <Text size="sm">E-Mail-Adresse erfolgreich geändert.</Text>
+                                </div>
+                            )}
+                            <label
+                                className={css({ display: 'flex', flexDir: 'column', gap: '2' })}
+                            >
+                                <span className={css({ fontWeight: '600' })}>Neue E-Mail-Adresse</span>
+                                <input
+                                    type="email"
+                                    value={newEmail}
+                                    onChange={(e) => setNewEmail(e.target.value)}
+                                    placeholder="neue@adresse.de"
+                                    required
+                                    className={css({
+                                        borderRadius: 'xl',
+                                        border: '1px solid',
+                                        borderColor: 'border',
+                                        p: '3',
+                                        fontSize: 'md',
+                                        outline: 'none',
+                                        bg: 'background',
+                                        transition: 'all 150ms ease',
+                                        _focus: {
+                                            borderColor: 'primary',
+                                            boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
+                                        },
+                                    })}
+                                />
+                            </label>
+                            <div>
+                                <Button type="submit" variant="primary" disabled={emailSaving}>
+                                    <Mail size={18} />
+                                    {emailSaving ? 'Speichern...' : 'E-Mail ändern'}
+                                </Button>
                             </div>
                         </form>
                     </div>

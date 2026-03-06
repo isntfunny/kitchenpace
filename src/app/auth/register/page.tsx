@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { TurnstileWidget } from '@app/components/features/TurnstileWidget';
 import {
     authFormStackClass,
     authInputClass,
@@ -98,10 +99,17 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
+            // Get Turnstile token
+            const turnstileToken = (document.getElementById('cf-turnstile-response') as HTMLInputElement)?.value;
+            if (!turnstileToken) {
+                setError('Bitte vervollständige die Sicherheitsüberprüfung');
+                return;
+            }
+
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, nickname, password, ...utmParams }),
+                body: JSON.stringify({ email, nickname, password, turnstileToken, ...utmParams }),
             });
 
             const data = await res.json();
@@ -260,6 +268,8 @@ export default function RegisterPage() {
                     </label>
 
                     {error && <p className={css({ color: 'red.500', fontSize: 'sm' })}>{error}</p>}
+
+                    <TurnstileWidget />
 
                     <button
                         type="submit"

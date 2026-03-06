@@ -18,6 +18,7 @@ export async function POST(request: Request) {
             email,
             password,
             nickname,
+            turnstileToken,
             referrer,
             utmSource,
             utmMedium,
@@ -26,6 +27,52 @@ export async function POST(request: Request) {
             utmContent,
             landingPage,
         } = body;
+
+        // Validate Turnstile token
+        if (!turnstileToken) {
+            return NextResponse.json(
+                { message: 'Sicherheitsüberprüfung erforderlich' },
+                { status: 400 },
+            );
+        }
+
+        const turnstileSecretKey = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
+        if (!turnstileSecretKey) {
+            log.error('CLOUDFLARE_TURNSTILE_SECRET_KEY not configured');
+            return NextResponse.json(
+                { message: 'Ein Fehler ist aufgetreten' },
+                { status: 500 },
+            );
+        }
+
+        try {
+            const turnstileResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    secret: turnstileSecretKey,
+                    response: turnstileToken,
+                }),
+            });
+
+            const turnstileData = await turnstileResponse.json() as { success: boolean; error_codes?: string[] };
+
+            if (!turnstileData.success) {
+                log.warn('Turnstile verification failed', { errors: turnstileData.error_codes });
+                return NextResponse.json(
+                    { message: 'Sicherheitsüberprüfung fehlgeschlagen — bitte versuche es erneut' },
+                    { status: 400 },
+                );
+            }
+        } catch (error) {
+            log.error('Turnstile verification error', {
+                error: error instanceof Error ? error.message : String(error),
+            });
+            return NextResponse.json(
+                { message: 'Sicherheitsüberprüfung fehlgeschlagen' },
+                { status: 400 },
+            );
+        }
 
         if (!email || !password) {
             return NextResponse.json(

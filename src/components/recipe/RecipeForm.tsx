@@ -191,8 +191,10 @@ export function RecipeForm({
     const performAutoSaveRef = useRef(performAutoSave);
     performAutoSaveRef.current = performAutoSave;
 
+    const isPublished = saveStatus === 'PUBLISHED';
+
     useEffect(() => {
-        if (!title.trim()) {
+        if (isPublished || !title.trim()) {
             setAutoSaveStatus('idle');
             if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
             return;
@@ -206,6 +208,7 @@ export function RecipeForm({
             if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
         };
     }, [
+        isPublished,
         title,
         description,
         imageUrl,
@@ -408,6 +411,7 @@ export function RecipeForm({
 
     // ── auto-save status label ────────────────────────────────
     const autoSaveLabel = (() => {
+        if (isPublished) return 'Automatisches Speichern ist nur für Entwürfe verfügbar';
         if (!title.trim()) return null;
         if (autoSaveStatus === 'saving') return 'Wird gespeichert…';
         if (autoSaveStatus === 'error') return 'Fehler beim Speichern';

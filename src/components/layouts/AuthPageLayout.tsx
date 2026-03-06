@@ -1,6 +1,6 @@
 'use client';
 
-import { ChefHat, Clock, Sparkles } from 'lucide-react';
+import { BookmarkPlus, Camera, ChefHat, Pin, Star } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { PageShell } from '@app/components/layouts/PageShell';
@@ -8,19 +8,34 @@ import { css } from 'styled-system/css';
 
 const HERO_POINTS = [
     {
-        label: 'Flow-Diagramme',
-        description: 'Parallele Schritte und Timing im Blick',
+        label: 'Eigene Rezepte erstellen',
+        description:
+            'Erstelle Rezepte als visuelle Flow-Diagramme — mit parallelen Schritten, Timings und eigenen Fotos.',
         icon: ChefHat,
     },
     {
-        label: 'Filterschnellzugriff',
-        description: 'Saisonale, vegetarische oder schnelle Rezepte mit einem Klick',
-        icon: Sparkles,
+        label: 'Rezepte anpinnen & organisieren',
+        description:
+            'Pinne deine Lieblingsrezepte an und hab sie immer griffbereit — dein persönliches Kochbuch.',
+        icon: Pin,
     },
     {
-        label: 'Gemeinschaft & Tipps',
-        description: 'Trending Tags und Quick Tips direkt aus der Community',
-        icon: Clock,
+        label: 'Favoriten & Sammlungen',
+        description:
+            'Speichere Rezepte anderer Köche als Favoriten und finde sie jederzeit wieder.',
+        icon: Star,
+    },
+    {
+        label: 'Fotos hochladen',
+        description:
+            'Zeig deine Kreationen! Lade eigene Fotos zu jedem Rezeptschritt hoch.',
+        icon: Camera,
+    },
+    {
+        label: 'Rezepte importieren',
+        description:
+            'Importiere Rezepte von jeder Website — unsere KI wandelt sie automatisch in Flow-Diagramme um.',
+        icon: BookmarkPlus,
     },
 ];
 

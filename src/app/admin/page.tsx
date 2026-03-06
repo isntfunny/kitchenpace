@@ -1,4 +1,4 @@
-import { Activity, ShieldCheck, Users, BookOpen, Tag, Settings } from 'lucide-react';
+import { Activity, ShieldCheck, Users, BookOpen, Tag, Settings, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 import { PageShell } from '@app/components/layouts/PageShell';
@@ -44,6 +44,12 @@ const ADMIN_ACTIONS = [
         description: 'Jobläufe, Zustände und Timeouts im Blick behalten.',
         href: '/admin/worker',
         icon: Activity,
+    },
+    {
+        label: 'KI-Imports',
+        description: 'Import-Verlauf, Kosten und Rezept-Zuweisung.',
+        href: '/admin/imports',
+        icon: Sparkles,
     },
 ];
 

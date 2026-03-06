@@ -128,8 +128,8 @@ export default function RegisterPage() {
 
     return (
         <AuthPageLayout
-            heroTitle="Werde Teil der Community"
-            heroSubtitle="Erstelle dein Profil, um Workflows, Einkaufslisten und Tipps genau auf dich zuzuschneiden."
+            heroTitle="Dein persönliches Kochbuch — kostenlos"
+            heroSubtitle="Erstelle Rezepte, importiere sie von jeder Website, lade eigene Fotos hoch und pinne deine Favoriten an."
             formFooter={
                 <Link
                     href="/auth/signin"
@@ -165,11 +165,11 @@ export default function RegisterPage() {
                         Neues Konto
                     </p>
                     <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
-                        Erstelle dein Küchenprofil
+                        Starte in unter 30 Sekunden
                     </h1>
                     <p className={css({ color: 'foreground.muted', margin: 0 })}>
-                        Registriere dich und nutze persönliche Empfehlungen, Filter und
-                        Einkaufslisten.
+                        Kostenlos registrieren — Rezepte erstellen, Fotos hochladen und
+                        Lieblingsrezepte anpinnen.
                     </p>
                 </div>
 

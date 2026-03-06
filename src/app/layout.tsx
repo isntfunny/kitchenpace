@@ -249,6 +249,7 @@ export default async function RootLayout({
                             <RecipeTabsProvider
                                 initialPinned={pinnedRecipes}
                                 initialRecent={recentRecipes}
+                                serverDataFetched={!!session?.user?.id}
                             >
                                 {children}
                             </RecipeTabsProvider>

@@ -74,7 +74,7 @@ services:
                 DEBUG: ${DEBUG:-0}
         container_name: kitchenpace-app
         environment:
-            - SCRAPLER_URL=http://kitchenpace-scraper:8000
+            - SCRAPLER_URL=http://scraper:8000
         depends_on:
             postgres:
                 condition: service_healthy

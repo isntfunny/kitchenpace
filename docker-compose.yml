@@ -112,9 +112,7 @@ services:
             BACKUP_DIR: /tmp/backups
 
     scraper:
-        build:
-            context: ./services/scraper
-            dockerfile: Dockerfile
+        image: registry.isntfnny.de/kitchenpace/scraper:latest
         container_name: kitchenpace-scraper
         ports:
             - '34215:8000'

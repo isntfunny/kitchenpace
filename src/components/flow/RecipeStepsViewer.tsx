@@ -2,14 +2,22 @@
 
 import {
     applyNodeChanges,
+    BaseEdge,
     Background,
+    getBezierPath,
+    getNodesBounds,
+    getViewportForBounds,
     Handle,
     MarkerType,
+    PanOnScrollMode,
     Position,
     ReactFlow,
+    ReactFlowProvider,
+    type EdgeProps,
     type Node as RFNode,
     type NodeChange,
     type NodeProps,
+    useReactFlow,
 } from '@xyflow/react';
 import {
     Check,
@@ -19,7 +27,8 @@ import {
     ChevronRight,
     ChevronUp,
     Clock,
-    Monitor,
+    Download,
+    List,
     Pause,
     Play,
     RotateCcw,
@@ -34,6 +43,76 @@ import { css } from 'styled-system/css';
 
 import type { FlowEdgeSerialized, FlowNodeSerialized, StepType } from './editor/editorTypes';
 import { getStepConfig } from './editor/stepConfig';
+
+/* ── custom curved edge (higher curvature than default bezier) ── */
+
+function CurvedEdge(props: EdgeProps) {
+    const { sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, markerEnd, style } = props;
+    const [path] = getBezierPath({
+        sourceX,
+        sourceY,
+        sourcePosition,
+        targetX,
+        targetY,
+        targetPosition,
+        curvature: 0.4,
+    });
+    return <BaseEdge path={path} markerEnd={markerEnd} style={style} />;
+}
+
+const VIEWER_EDGE_TYPES = { curved: CurvedEdge } as const;
+
+/* ── PDF export ─────────────────────────────────────────── */
+
+async function exportFlowToPdf(flowElement: HTMLElement, rfInstance: { getNodes: () => RFNode[] }) {
+    const { toPng } = await import('html-to-image');
+    const { default: jsPDF } = await import('jspdf');
+
+    const allNodes = rfInstance.getNodes();
+    if (allNodes.length === 0) return;
+
+    // Compute bounds and a viewport that fits all nodes
+    const bounds = getNodesBounds(allNodes);
+    const padding = 40;
+    const width = Math.ceil(bounds.width + padding * 2);
+    const height = Math.ceil(bounds.height + padding * 2);
+    const viewport = getViewportForBounds(bounds, width, height, 0.5, 2, padding);
+
+    // Target the xyflow viewport element directly (official approach)
+    const viewportEl = flowElement.querySelector('.react-flow__viewport') as HTMLElement | null;
+    if (!viewportEl) return;
+
+    const dataUrl = await toPng(viewportEl, {
+        backgroundColor: '#ffffff',
+        width,
+        height,
+        style: {
+            width: String(width),
+            height: String(height),
+            transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
+        filter: (node: HTMLElement) => {
+            // Exclude background pattern, panels, and minimap from export
+            const cls = node?.classList;
+            if (!cls) return true;
+            return (
+                !cls.contains('react-flow__background') &&
+                !cls.contains('react-flow__panel') &&
+                !cls.contains('react-flow__minimap') &&
+                !cls.contains('react-flow__controls')
+            );
+        },
+    });
+
+    const isLandscape = width > height;
+    const pdf = new jsPDF({
+        orientation: isLandscape ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [width, height],
+    });
+    pdf.addImage(dataUrl, 'PNG', 0, 0, width, height);
+    pdf.save('rezept-flow.pdf');
+}
 
 /* ── types ───────────────────────────────────────────────── */
 
@@ -133,10 +212,33 @@ function viewerReducer(state: ViewerState, action: ViewerAction): ViewerState {
     }
 }
 
-/* ── topology builder ────────────────────────────────────── */
+/* ── dagre setup (same instance used by FlowEditor) ──────── */
+
+interface DagreGraph {
+    setDefaultEdgeLabel(fn: () => Record<string, unknown>): void;
+    setGraph(opts: {
+        rankdir?: string;
+        nodesep?: number;
+        ranksep?: number;
+        marginx?: number;
+        marginy?: number;
+    }): void;
+    setNode(id: string, opts: { width: number; height: number }): void;
+    setEdge(source: string, target: string): void;
+    node(id: string): { x: number; y: number };
+}
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const dagre = require('dagre') as {
+    graphlib: { Graph: new () => DagreGraph };
+    layout: (g: DagreGraph) => void;
+};
+
+/* ── topology builder (dagre-powered) ───────────────────── */
 
 interface Topology {
     columnGroups: FlowNodeSerialized[][];
+    /** dagre Y position per node — used by minimap for stable lane positioning */
+    dagreY: Map<string, number>;
     outgoing: Map<string, string[]>;
     incoming: Map<string, string[]>;
     nodeById: Map<string, FlowNodeSerialized>;
@@ -156,41 +258,48 @@ function buildTopology(nodes: FlowNodeSerialized[], edges: FlowEdgeSerialized[])
         incoming.get(e.target)?.push(e.source);
     }
 
-    // BFS column assignment: column = max(parent column + 1)
-    const columns = new Map<string, number>();
-    const startId = nodes.find((n) => n.type === 'start')?.id ?? nodes[0]?.id;
-    if (!startId) return { columnGroups: [], outgoing, incoming, nodeById };
-
-    columns.set(startId, 0);
-    const queue = [startId];
-    const enqueued = new Set([startId]);
-
-    while (queue.length > 0) {
-        const id = queue.shift()!;
-        const col = columns.get(id) ?? 0;
-        for (const child of outgoing.get(id) ?? []) {
-            const existing = columns.get(child) ?? -1;
-            columns.set(child, Math.max(existing, col + 1));
-            if (!enqueued.has(child)) {
-                enqueued.add(child);
-                queue.push(child);
-            }
-        }
+    if (nodes.length === 0) {
+        return { columnGroups: [], dagreY: new Map(), outgoing, incoming, nodeById };
     }
 
-    // Nodes not reachable from start: place at column 0
+    // Use dagre for layered layout — it handles topological ordering, column
+    // assignment (ranks), and Y-lane positioning (Brandes-Köpf) in one call.
+    const g = new dagre.graphlib.Graph();
+    g.setDefaultEdgeLabel(() => ({}));
+    g.setGraph({ rankdir: 'LR', nodesep: 30, ranksep: 40 });
+
+    for (const n of nodes) g.setNode(n.id, { width: 24, height: 24 });
+    for (const e of edges) g.setEdge(e.source, e.target);
+
+    dagre.layout(g);
+
+    // Extract positions — dagre X = rank/column, Y = lane
+    const positions = new Map<string, { x: number; y: number }>();
+    const dagreY = new Map<string, number>();
     for (const n of nodes) {
-        if (!columns.has(n.id)) columns.set(n.id, 0);
+        const pos = g.node(n.id);
+        positions.set(n.id, pos);
+        dagreY.set(n.id, pos.y);
     }
 
-    const maxCol = Math.max(0, ...columns.values());
-    const groups: FlowNodeSerialized[][] = Array.from({ length: maxCol + 1 }, () => []);
-    for (const [nodeId, col] of columns) {
-        const node = nodeById.get(nodeId);
-        if (node) groups[col].push(node);
+    // Derive column groups from dagre X positions (same X = same column).
+    // Dagre uses exact X values per rank, so we can group by X.
+    const xToNodes = new Map<number, FlowNodeSerialized[]>();
+    for (const n of nodes) {
+        const x = positions.get(n.id)!.x;
+        if (!xToNodes.has(x)) xToNodes.set(x, []);
+        xToNodes.get(x)!.push(n);
     }
 
-    return { columnGroups: groups, outgoing, incoming, nodeById };
+    // Sort columns by X value, sort nodes within each column by Y
+    const sortedXValues = [...xToNodes.keys()].sort((a, b) => a - b);
+    const groups: FlowNodeSerialized[][] = sortedXValues.map((x) => {
+        const col = xToNodes.get(x)!;
+        col.sort((a, b) => (dagreY.get(a.id) ?? 0) - (dagreY.get(b.id) ?? 0));
+        return col;
+    });
+
+    return { columnGroups: groups, dagreY, outgoing, incoming, nodeById };
 }
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -240,115 +349,6 @@ function renderDescription(
     }
     if (lastIndex < text.length) parts.push(text.slice(lastIndex));
     return parts;
-}
-
-/* ── animated connector ──────────────────────────────────── */
-
-function Connector({
-    sourceDone,
-    timerPct,
-    vertical = false,
-}: {
-    sourceDone: boolean;
-    timerPct: number; // 0-100
-    vertical?: boolean;
-}) {
-    const fillPct = sourceDone ? 100 : timerPct;
-    const fillColor = sourceDone ? '#00b894' : '#e07b53';
-    const glowColor = sourceDone ? 'rgba(0,184,148,0.5)' : 'rgba(224,123,83,0.45)';
-
-    if (vertical) {
-        return (
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: 36,
-                    flexShrink: 0,
-                }}
-            >
-                <div style={{ position: 'relative', width: 2, height: 32 }}>
-                    <div
-                        style={{
-                            position: 'absolute',
-                            inset: 0,
-                            backgroundColor: 'rgba(0,0,0,0.08)',
-                            borderRadius: 1,
-                        }}
-                    />
-                    {fillPct > 0 && (
-                        <div
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: `${fillPct}%`,
-                                backgroundColor: fillColor,
-                                borderRadius: 1,
-                                boxShadow: fillPct > 5 ? `0 0 6px ${glowColor}` : 'none',
-                                transition: sourceDone ? 'height 0.4s ease' : 'height 1s linear',
-                            }}
-                        />
-                    )}
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                width: 44,
-                position: 'relative',
-            }}
-        >
-            {/* Track */}
-            <div
-                style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    height: 2,
-                    backgroundColor: 'rgba(0,0,0,0.08)',
-                    borderRadius: 1,
-                }}
-            />
-            {/* Fill */}
-            {fillPct > 0 && (
-                <div
-                    style={{
-                        position: 'absolute',
-                        left: 0,
-                        height: 2,
-                        width: `${fillPct}%`,
-                        backgroundColor: fillColor,
-                        borderRadius: 1,
-                        boxShadow: fillPct > 5 ? `0 0 6px ${glowColor}` : 'none',
-                        transition: sourceDone ? 'width 0.4s ease' : 'width 1s linear',
-                    }}
-                />
-            )}
-            {/* Arrowhead */}
-            <div
-                style={{
-                    position: 'absolute',
-                    right: 2,
-                    width: 0,
-                    height: 0,
-                    borderTop: '4px solid transparent',
-                    borderBottom: '4px solid transparent',
-                    borderLeft: `5px solid ${fillPct >= 99 ? fillColor : 'rgba(0,0,0,0.15)'}`,
-                    transition: 'border-left-color 0.4s ease',
-                }}
-            />
-        </div>
-    );
 }
 
 /* ── color helpers ───────────────────────────────────────── */
@@ -1084,69 +1084,6 @@ function StepCard({
     );
 }
 
-/* ── mini-map ────────────────────────────────────────────── */
-
-function MiniMap({
-    columnGroups,
-    completed,
-    currentCol,
-    currentRow,
-}: {
-    columnGroups: FlowNodeSerialized[][];
-    completed: Set<string>;
-    currentCol: number;
-    currentRow: number;
-}) {
-    return (
-        <div
-            style={{
-                position: 'absolute',
-                top: 10,
-                right: 10,
-                backgroundColor: 'rgba(255,255,255,0.92)',
-                border: '1px solid rgba(0,0,0,0.08)',
-                borderRadius: 10,
-                padding: '6px 8px',
-                display: 'flex',
-                gap: 4,
-                alignItems: 'flex-start',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                zIndex: 20,
-                backdropFilter: 'blur(4px)',
-            }}
-        >
-            {columnGroups.map((group, colIdx) => (
-                <div key={colIdx} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    {group.map((node, rowIdx) => {
-                        const isCurrent = colIdx === currentCol && rowIdx === currentRow;
-                        const isDone = completed.has(node.id);
-                        return (
-                            <div
-                                key={node.id}
-                                style={{
-                                    width: 8,
-                                    height: 8,
-                                    borderRadius: '50%',
-                                    backgroundColor: isDone
-                                        ? '#00b894'
-                                        : isCurrent
-                                          ? '#e07b53'
-                                          : 'rgba(0,0,0,0.15)',
-                                    border: isCurrent ? '1.5px solid #e07b53' : 'none',
-                                    boxShadow: isCurrent
-                                        ? '0 0 0 2px rgba(224,123,83,0.25)'
-                                        : 'none',
-                                    transition: 'all 0.2s ease',
-                                }}
-                            />
-                        );
-                    })}
-                </div>
-            ))}
-        </div>
-    );
-}
-
 /* ── desktop: horizontal column view ─────────────────────── */
 
 /* ── viewer node for read-only xyflow desktop view ──────── */
@@ -1169,7 +1106,7 @@ const INVIS_HANDLE: React.CSSProperties = { opacity: 0, pointerEvents: 'none' };
 function ViewerNodeRenderer({ data }: NodeProps) {
     const d = data as ViewerNodeData;
     return (
-        <>
+        <div style={{ pointerEvents: 'all' }}>
             <Handle type="target" position={Position.Left} style={INVIS_HANDLE} />
             <Handle id="top-in" type="target" position={Position.Top} style={INVIS_HANDLE} />
             <Handle id="bottom-in" type="target" position={Position.Bottom} style={INVIS_HANDLE} />
@@ -1188,7 +1125,7 @@ function ViewerNodeRenderer({ data }: NodeProps) {
             <Handle type="source" position={Position.Right} style={INVIS_HANDLE} />
             <Handle id="top-out" type="source" position={Position.Top} style={INVIS_HANDLE} />
             <Handle id="bottom-out" type="source" position={Position.Bottom} style={INVIS_HANDLE} />
-        </>
+        </div>
     );
 }
 
@@ -1220,6 +1157,7 @@ function DesktopView({
     timers,
     dispatch,
     onOpenDetail,
+    onExportPdf,
     ingredients,
 }: {
     nodes: FlowNodeSerialized[];
@@ -1229,6 +1167,7 @@ function DesktopView({
     timers: Map<string, TimerState>;
     dispatch: React.Dispatch<ViewerAction>;
     onOpenDetail: (nodeId: string) => void;
+    onExportPdf: (el: HTMLElement, rf: { getNodes: () => RFNode[] }) => void;
     ingredients?: RecipeStepsViewerProps['ingredients'];
 }) {
     const makeNodeData = useCallback(
@@ -1267,7 +1206,7 @@ function DesktopView({
                     id: edge.id,
                     source: edge.source,
                     target: edge.target,
-                    type: 'smoothstep',
+                    type: 'curved',
                     style: { stroke, strokeWidth: sourceDone ? 2.5 : 2 },
                     animated: !sourceDone && (t?.running ?? false),
                     markerEnd: {
@@ -1285,11 +1224,49 @@ function DesktopView({
         nodes.map((n) => ({ id: n.id, type: n.type, position: n.position ?? { x: 0, y: 0 }, data: makeNodeData(n) })),
     );
     const [rfEdges, setRfEdges] = useState(() => buildRfEdges());
+    const containerRef = useRef<HTMLDivElement>(null);
+    const { getNodes, setViewport } = useReactFlow();
+    const hasFitRef = useRef(false);
 
     // Allow xyflow to apply dimension measurements (needed for fitView)
     const onNodesChange = useCallback(
-        (changes: NodeChange[]) => setRfNodes((nds) => applyNodeChanges(changes, nds)),
-        [],
+        (changes: NodeChange[]) => {
+            setRfNodes((nds) => applyNodeChanges(changes, nds));
+
+            // After xyflow measures node dimensions, fit zoom to match container height
+            if (!hasFitRef.current) {
+                const measured = getNodes();
+                if (measured.length > 0 && measured[0].measured?.width) {
+                    hasFitRef.current = true;
+                    requestAnimationFrame(() => {
+                        const allNodes = getNodes();
+                        if (allNodes.length === 0 || !containerRef.current) return;
+
+                        let minY = Infinity, maxY = -Infinity;
+                        for (const n of allNodes) {
+                            const h = n.measured?.height ?? 200;
+                            minY = Math.min(minY, n.position.y);
+                            maxY = Math.max(maxY, n.position.y + h);
+                        }
+
+                        const contentHeight = maxY - minY;
+                        const containerHeight = containerRef.current.clientHeight;
+                        const paddingPx = 20; // small margin top+bottom in screen pixels
+                        const zoom = Math.min(
+                            (containerHeight - paddingPx * 2) / contentHeight,
+                            3.0,
+                        );
+
+                        // Center vertically, start near left edge
+                        const centerY = (minY + maxY) / 2;
+                        const viewportY = containerHeight / 2 - centerY * zoom;
+
+                        setViewport({ x: 20, y: viewportY, zoom }, { duration: 300 });
+                    });
+                }
+            }
+        },
+        [getNodes, setViewport],
     );
 
     // Sync node data when completion/timer state changes (preserve xyflow's measured sizes)
@@ -1307,47 +1284,317 @@ function DesktopView({
         setRfEdges(buildRfEdges());
     }, [buildRfEdges]);
 
-    // Container height based on node bounding box
-    const containerHeight = useMemo(() => {
-        if (nodes.length === 0) return 400;
-        const ys = nodes.map((n) => n.position?.y ?? 0);
-        return Math.max(420, Math.min(740, Math.max(...ys) - Math.min(...ys) + 380));
-    }, [nodes]);
+    const handleExportPdf = useCallback(() => {
+        if (containerRef.current) {
+            onExportPdf(containerRef.current, { getNodes });
+        }
+    }, [onExportPdf, getNodes]);
 
     return (
-        <div style={{ height: containerHeight, position: 'relative' }}>
+        <div ref={containerRef} style={{ height: 'calc(100vh - 200px)', minHeight: 400, position: 'relative' }}>
             <ReactFlow
                 nodes={rfNodes}
                 edges={rfEdges}
                 nodeTypes={VIEWER_NODE_TYPES}
+                edgeTypes={VIEWER_EDGE_TYPES}
                 onNodesChange={onNodesChange}
                 nodesDraggable={false}
                 nodesConnectable={false}
                 elementsSelectable={false}
-                panOnDrag
-                zoomOnScroll
-                fitView
-                fitViewOptions={{ padding: 0.18 }}
+                panOnDrag={[1, 2]}
+                panOnScroll
+                panOnScrollMode={PanOnScrollMode.Horizontal}
+                zoomOnScroll={false}
+                zoomOnPinch
                 proOptions={{ hideAttribution: true }}
             >
                 <Background gap={24} color="rgba(0,0,0,0.035)" size={1} />
             </ReactFlow>
+
+            {/* PDF export button — bottom right */}
+            <button
+                type="button"
+                onClick={handleExportPdf}
+                title="Als PDF exportieren"
+                className={css({
+                    position: 'absolute',
+                    bottom: '3',
+                    right: '3',
+                    zIndex: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.5',
+                    py: '1.5',
+                    px: '3',
+                    borderRadius: 'lg',
+                    border: '1px solid rgba(224,123,83,0.2)',
+                    bg: 'rgba(255,255,255,0.9)',
+                    color: '#c45e30',
+                    fontSize: 'xs',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    backdropFilter: 'blur(4px)',
+                    _hover: { bg: 'rgba(255,255,255,1)' },
+                })}
+            >
+                <Download style={{ width: 13, height: 13 }} /> PDF
+            </button>
         </div>
     );
 }
 
 
-/* ── mobile: swipeable single-step view ──────────────────── */
+/* ── mobile minimap with timer circles ────────────────────── */
+
+
+function MobileMiniMap({
+    columnGroups,
+    edges,
+    dagreY,
+    completed,
+    currentCol,
+    currentRow,
+    onNavigate,
+}: {
+    columnGroups: FlowNodeSerialized[][];
+    edges: FlowEdgeSerialized[];
+    dagreY: Map<string, number>;
+    completed: Set<string>;
+    currentCol: number;
+    currentRow: number;
+    onNavigate: (col: number, row: number) => void;
+}) {
+    const dotSize = 24;
+    const connLen = 16;
+    const padding = 4;
+
+    // Derive Y bounds from dagre positions
+    const allY = Array.from(dagreY.values());
+    const minY = Math.min(...allY);
+    const maxY = Math.max(...allY);
+    const yRange = maxY - minY;
+
+    // SVG dimensions
+    const colWidth = dotSize + connLen;
+    const totalWidth = columnGroups.length * colWidth - connLen;
+    const maxLanes = Math.max(1, ...columnGroups.map((g) => g.length));
+    const totalHeight = maxLanes > 1
+        ? maxLanes * (dotSize + padding) - padding + dotSize / 2
+        : dotSize + 12;
+
+    // Map dagre Y to pixel Y, preserving dagre's relative spacing
+    const getNodeX = (colIdx: number): number => colIdx * colWidth + dotSize / 2;
+    const getNodeY = (nodeId: string): number => {
+        if (yRange === 0) return totalHeight / 2;
+        const y = dagreY.get(nodeId) ?? 0;
+        return ((y - minY) / yRange) * (totalHeight - dotSize) + dotSize / 2;
+    };
+
+    // Build a nodeId → (colIdx, rowIdx) lookup for onNavigate
+    const nodePosition = new Map<string, { col: number; row: number }>();
+    for (let c = 0; c < columnGroups.length; c++) {
+        for (let r = 0; r < columnGroups[c].length; r++) {
+            nodePosition.set(columnGroups[c][r].id, { col: c, row: r });
+        }
+    }
+
+    // Build connectors from actual edges
+    const connectors: { x1: number; y1: number; x2: number; y2: number; done: boolean }[] = [];
+    for (const edge of edges) {
+        const src = nodePosition.get(edge.source);
+        const tgt = nodePosition.get(edge.target);
+        if (!src || !tgt) continue;
+        connectors.push({
+            x1: getNodeX(src.col) + dotSize / 2,
+            y1: getNodeY(edge.source),
+            x2: getNodeX(tgt.col) - dotSize / 2,
+            y2: getNodeY(edge.target),
+            done: completed.has(edge.source),
+        });
+    }
+
+    return (
+        <div
+            className={css({
+                display: 'flex',
+                justifyContent: 'center',
+                py: '3',
+                px: '4',
+                flexShrink: 0,
+                overflowX: 'auto',
+                backdropFilter: 'blur(12px)',
+                bg: 'rgba(26, 23, 21, 0.6)',
+                borderBottom: '1px solid rgba(224,123,83,0.1)',
+            })}
+        >
+            <svg
+                width={totalWidth}
+                height={totalHeight}
+                viewBox={`0 0 ${totalWidth} ${totalHeight}`}
+                style={{ flexShrink: 0 }}
+            >
+                {/* Connector lines from actual edges */}
+                {connectors.map((c, i) => (
+                    <line
+                        key={`conn-${i}`}
+                        x1={c.x1}
+                        y1={c.y1}
+                        x2={c.x2}
+                        y2={c.y2}
+                        stroke={c.done ? 'rgba(0,184,148,0.5)' : 'rgba(224,123,83,0.15)'}
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        style={{ transition: 'stroke 0.3s ease' }}
+                    />
+                ))}
+
+                {/* Node dots */}
+                {columnGroups.map((group, colIdx) =>
+                    group.map((node, rowIdx) => {
+                        const cx = getNodeX(colIdx);
+                        const cy = getNodeY(node.id);
+                        const isCurrent = colIdx === currentCol && rowIdx === currentRow;
+                        const isDone = completed.has(node.id);
+                        const config = getStepConfig(node.type as StepType);
+                        const NodeIcon = config.icon;
+
+                        return (
+                            <g
+                                key={node.id}
+                                onClick={() => onNavigate(colIdx, rowIdx)}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                {/* Glow ring for current */}
+                                {isCurrent && (
+                                    <circle
+                                        cx={cx}
+                                        cy={cy}
+                                        r={dotSize / 2 + 3}
+                                        fill="none"
+                                        stroke="rgba(224,123,83,0.4)"
+                                        strokeWidth={2}
+                                    />
+                                )}
+                                {/* Background circle */}
+                                <circle
+                                    cx={cx}
+                                    cy={cy}
+                                    r={dotSize / 2}
+                                    fill={
+                                        isDone
+                                            ? 'rgba(0,184,148,0.25)'
+                                            : isCurrent
+                                              ? 'rgba(224,123,83,0.3)'
+                                              : 'rgba(255,255,255,0.08)'
+                                    }
+                                />
+                                {/* Icon */}
+                                <foreignObject
+                                    x={cx - dotSize / 2}
+                                    y={cy - dotSize / 2}
+                                    width={dotSize}
+                                    height={dotSize}
+                                >
+                                    <div
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                        {isDone ? (
+                                            <Check style={{ width: 11, height: 11, color: '#00b894' }} />
+                                        ) : (
+                                            <NodeIcon
+                                                style={{
+                                                    width: 11,
+                                                    height: 11,
+                                                    color: isCurrent ? '#e07b53' : 'rgba(255,255,255,0.4)',
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                </foreignObject>
+                            </g>
+                        );
+                    }),
+                )}
+            </svg>
+        </div>
+    );
+}
+
+/* ── mobile: fullscreen immersive single-card view ───────── */
+
+function BranchHint({
+    direction,
+    node,
+    onClick,
+}: {
+    direction: 'up' | 'down';
+    node: FlowNodeSerialized;
+    onClick: () => void;
+}) {
+    const config = getStepConfig(node.type as StepType);
+    const Icon = config.icon;
+    const isUp = direction === 'up';
+
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            style={{
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                ...(isUp ? { top: 0 } : { bottom: 0 }),
+                zIndex: 5,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                padding: isUp ? '6px 16px 10px' : '10px 16px 6px',
+                border: 'none',
+                background: isUp
+                    ? 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%)'
+                    : 'linear-gradient(0deg, rgba(255,255,255,0.12) 0%, transparent 100%)',
+                borderRadius: isUp ? '0 0 16px 16px' : '16px 16px 0 0',
+                cursor: 'pointer',
+                color: 'rgba(255,255,255,0.7)',
+                animation: 'branchPulse 2s ease-in-out infinite',
+            }}
+        >
+            {isUp && <ChevronUp style={{ width: 16, height: 16, opacity: 0.6 }} />}
+            <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: 11,
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+            }}>
+                <Icon style={{ width: 12, height: 12 }} />
+                {node.label.length > 20 ? node.label.slice(0, 20) + '\u2026' : node.label}
+            </span>
+            {!isUp && <ChevronDown style={{ width: 16, height: 16, opacity: 0.6 }} />}
+        </button>
+    );
+}
 
 function MobileView({
     columnGroups,
+    edges,
+    dagreY,
     completed,
     timers,
     dispatch,
-    onOpenDetail,
     ingredients,
 }: {
     columnGroups: FlowNodeSerialized[][];
+    edges: FlowEdgeSerialized[];
+    dagreY: Map<string, number>;
     completed: Set<string>;
     timers: Map<string, TimerState>;
     dispatch: React.Dispatch<ViewerAction>;
@@ -1361,40 +1608,195 @@ function MobileView({
     const currentGroup = columnGroups[col] ?? [];
     const currentNode = currentGroup[row];
 
-    const canGoLeft = col > 0;
-    const canGoRight = col < columnGroups.length - 1;
-    const canGoUp = row > 0;
-    const canGoDown = row < currentGroup.length - 1;
+    // Build edge-based navigation lookups: nodeId → outgoing/incoming target nodeIds
+    const { outgoingMap, incomingMap, nodePos } = useMemo(() => {
+        const out = new Map<string, string[]>();
+        const inc = new Map<string, string[]>();
+        const pos = new Map<string, { col: number; row: number }>();
+        for (let c = 0; c < columnGroups.length; c++) {
+            for (let r = 0; r < columnGroups[c].length; r++) {
+                const id = columnGroups[c][r].id;
+                pos.set(id, { col: c, row: r });
+                if (!out.has(id)) out.set(id, []);
+                if (!inc.has(id)) inc.set(id, []);
+            }
+        }
+        for (const e of edges) {
+            out.get(e.source)?.push(e.target);
+            inc.get(e.target)?.push(e.source);
+        }
+        return { outgoingMap: out, incomingMap: inc, nodePos: pos };
+    }, [columnGroups, edges]);
 
-    const prevNode = canGoLeft
-        ? columnGroups[col - 1]?.[Math.min(row, (columnGroups[col - 1]?.length ?? 1) - 1)]
-        : null;
-    const nextNode = canGoRight ? columnGroups[col + 1]?.[0] : null;
-    const upNode = canGoUp ? currentGroup[row - 1] : null;
-    const downNode = canGoDown ? currentGroup[row + 1] : null;
+    // Edge-aware navigation
+    const targets = currentNode ? (outgoingMap.get(currentNode.id) ?? []) : [];
+    const sources = currentNode ? (incomingMap.get(currentNode.id) ?? []) : [];
 
-    const goLeft = useCallback(() => {
-        if (!canGoLeft) return;
-        setPosition((p) => ({
-            col: p.col - 1,
-            row: Math.min(p.row, (columnGroups[p.col - 1]?.length ?? 1) - 1),
-        }));
-    }, [canGoLeft, columnGroups]);
+    const canGoRight = targets.length > 0;
+    const canGoLeft = sources.length > 0;
+
+    // Cross-column branch detection: find parallel branches that span the current column.
+    // A node on another branch is "parallel" if it sits in a column range that overlaps
+    // the current column. We find all nodes whose column range (their col .. their
+    // furthest-downstream col before a shared merge) overlaps with `col`.
+    // Simplified approach: collect all nodes from other branches that are reachable
+    // from a common ancestor and haven't merged yet at the current column.
+    const parallelBranches = useMemo(() => {
+        if (!currentNode) return [];
+        // Walk backward from currentNode to find the nearest fork ancestor
+        const findForkAncestor = (nodeId: string): string | null => {
+            let cur = nodeId;
+            const visited = new Set<string>();
+            while (cur) {
+                if (visited.has(cur)) break;
+                visited.add(cur);
+                // Check if this node has multiple outgoing edges (it's a fork)
+                if ((outgoingMap.get(cur) ?? []).length > 1) return cur;
+                // Go to parent
+                const parents = incomingMap.get(cur) ?? [];
+                if (parents.length !== 1) break;
+                cur = parents[0];
+            }
+            return null;
+        };
+
+        const forkId = findForkAncestor(currentNode.id);
+        if (!forkId) return [];
+
+        // Get all branches from this fork
+        const forkChildren = outgoingMap.get(forkId) ?? [];
+        if (forkChildren.length < 2) return [];
+
+        // Find which branch the current node is on
+        const isOnBranch = (branchStartId: string, targetId: string): boolean => {
+            const visited = new Set<string>();
+            const q = [branchStartId];
+            while (q.length > 0) {
+                const id = q.shift()!;
+                if (id === targetId) return true;
+                if (visited.has(id)) continue;
+                visited.add(id);
+                for (const child of outgoingMap.get(id) ?? []) q.push(child);
+            }
+            return false;
+        };
+
+        // Collect first node of each other branch
+        const result: { node: FlowNodeSerialized; col: number; row: number }[] = [];
+        for (const branchStart of forkChildren) {
+            if (branchStart === currentNode.id) continue;
+            if (isOnBranch(branchStart, currentNode.id)) continue;
+
+            // Find the node on this branch closest to the current column
+            // Walk the branch and collect all nodes
+            const branchNodes: string[] = [];
+            const visited = new Set<string>();
+            const q = [branchStart];
+            while (q.length > 0) {
+                const id = q.shift()!;
+                if (visited.has(id)) continue;
+                visited.add(id);
+                branchNodes.push(id);
+                // Stop at merge points (nodes with >1 incoming edge)
+                const inc = incomingMap.get(id) ?? [];
+                if (inc.length > 1 && id !== branchStart) continue;
+                for (const child of outgoingMap.get(id) ?? []) q.push(child);
+            }
+
+            // Find the branch node closest to current column
+            let bestNode: string | null = null;
+            let bestDist = Infinity;
+            for (const bid of branchNodes) {
+                const pos = nodePos.get(bid);
+                if (!pos) continue;
+                const dist = Math.abs(pos.col - col);
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    bestNode = bid;
+                }
+            }
+
+            if (bestNode) {
+                const pos = nodePos.get(bestNode)!;
+                const node = columnGroups[pos.col]?.[pos.row];
+                if (node) result.push({ node, ...pos });
+            }
+        }
+
+        return result;
+    }, [currentNode, col, outgoingMap, incomingMap, nodePos, columnGroups]);
+
+    // Same-column lanes (existing)
+    const hasLaneAbove = row > 0;
+    const hasLaneBelow = row < currentGroup.length - 1;
+    const hasMultipleLanes = currentGroup.length > 1;
+
+    // Combined: can branch-switch if same-column lanes OR parallel branches exist
+    const canBranchUp = hasLaneAbove || parallelBranches.length > 0;
+    const canBranchDown = hasLaneBelow || parallelBranches.length > 0;
+    const hasBranching = hasMultipleLanes || parallelBranches.length > 0;
 
     const goRight = useCallback(() => {
-        if (!canGoRight) return;
-        setPosition((p) => ({ col: p.col + 1, row: 0 }));
-    }, [canGoRight]);
+        if (!currentNode) return;
+        const tgts = outgoingMap.get(currentNode.id) ?? [];
+        if (tgts.length === 0) return;
+        const targetPos = nodePos.get(tgts[0]);
+        if (targetPos) setPosition(targetPos);
+    }, [currentNode, outgoingMap, nodePos]);
 
-    const goUp = useCallback(() => {
-        if (!canGoUp) return;
-        setPosition((p) => ({ ...p, row: p.row - 1 }));
-    }, [canGoUp]);
+    const goLeft = useCallback(() => {
+        if (!currentNode) return;
+        const srcs = incomingMap.get(currentNode.id) ?? [];
+        if (srcs.length === 0) return;
+        const sourcePos = nodePos.get(srcs[0]);
+        if (sourcePos) setPosition(sourcePos);
+    }, [currentNode, incomingMap, nodePos]);
 
-    const goDown = useCallback(() => {
-        if (!canGoDown) return;
-        setPosition((p) => ({ ...p, row: p.row + 1 }));
-    }, [canGoDown]);
+    const goLaneUp = useCallback(() => {
+        if (hasLaneAbove) {
+            setPosition((p) => ({ ...p, row: p.row - 1 }));
+        } else if (parallelBranches.length > 0) {
+            // Jump to the first parallel branch node
+            const target = parallelBranches[0];
+            setPosition({ col: target.col, row: target.row });
+        }
+    }, [hasLaneAbove, parallelBranches]);
+
+    const goLaneDown = useCallback(() => {
+        if (hasLaneBelow) {
+            setPosition((p) => ({ ...p, row: p.row + 1 }));
+        } else if (parallelBranches.length > 0) {
+            // Jump to the last parallel branch node
+            const target = parallelBranches[parallelBranches.length - 1];
+            setPosition({ col: target.col, row: target.row });
+        }
+    }, [hasLaneBelow, parallelBranches]);
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            switch (e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    goLeft();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    goRight();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    goLaneUp();
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    goLaneDown();
+                    break;
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [goLeft, goRight, goLaneUp, goLaneDown]);
 
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -1406,201 +1808,394 @@ function MobileView({
         const dy = e.changedTouches[0].clientY - touchStart.current.y;
         const threshold = 50;
         touchStart.current = null;
-        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+
+        if (absDx > absDy && absDx > threshold) {
+            // Horizontal swipe = navigate columns (steps)
             if (dx < 0) goRight();
             else goLeft();
-        } else if (Math.abs(dy) > threshold) {
-            if (dy < 0) goDown();
-            else goUp();
+        } else if (absDy > threshold && hasBranching) {
+            // Vertical swipe = switch lanes/branches
+            if (dy < 0) goLaneDown();
+            else goLaneUp();
         }
     };
 
     if (!currentNode) return null;
 
-    const navLabelStyle: React.CSSProperties = {
-        fontSize: 10,
-        fontWeight: 600,
-        color: 'rgba(0,0,0,0.45)',
-        maxWidth: 64,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        textAlign: 'center',
-        lineHeight: 1.2,
-    };
-
-    const navBtnStyle = (enabled: boolean): React.CSSProperties => ({
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 3,
-        padding: '8px 12px',
-        borderRadius: 12,
-        border: 'none',
-        backgroundColor: enabled ? 'rgba(224,123,83,0.08)' : 'transparent',
-        cursor: enabled ? 'pointer' : 'default',
-        opacity: enabled ? 1 : 0.2,
-        transition: 'all 0.15s ease',
-        minWidth: 56,
-    });
+    const config = getStepConfig(currentNode.type as StepType);
+    const Icon = config.icon;
+    const isSpecial = currentNode.type === 'start' || currentNode.type === 'servieren';
+    const isDone = completed.has(currentNode.id);
+    const timerState = timers.get(currentNode.id);
+    const hasTimer = !!timerState;
+    const timerRunning = hasTimer && timerState!.running;
+    const timerDone = hasTimer && timerState!.remaining === 0;
+    const pct = hasTimer
+        ? ((timerState!.total - timerState!.remaining) / timerState!.total) * 100
+        : 0;
 
     return (
         <div
-            style={{ position: 'relative', userSelect: 'none' }}
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                userSelect: 'none',
+                overflow: 'hidden',
+            }}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
         >
-            <MiniMap
+            {/* Minimap */}
+            <MobileMiniMap
                 columnGroups={columnGroups}
+                edges={edges}
+                dagreY={dagreY}
                 completed={completed}
                 currentCol={col}
                 currentRow={row}
+                onNavigate={(c, r) => setPosition({ col: c, row: r })}
             />
 
-            {/* Up navigation */}
-            {(canGoUp || canGoDown) && (
+            {/* Main card area — fills remaining space */}
+            <div
+                style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: '0 24px',
+                    minHeight: 0,
+                    position: 'relative',
+                }}
+            >
+                {/* Branch hint: lane above (same column or parallel branch) */}
+                {canBranchUp && (
+                    <BranchHint
+                        direction="up"
+                        node={hasLaneAbove ? currentGroup[row - 1] : parallelBranches[0]?.node}
+                        onClick={goLaneUp}
+                    />
+                )}
+
+                {/* Branch hint: lane below (same column or parallel branch) */}
+                {canBranchDown && (
+                    <BranchHint
+                        direction="down"
+                        node={hasLaneBelow ? currentGroup[row + 1] : parallelBranches[parallelBranches.length - 1]?.node}
+                        onClick={goLaneDown}
+                    />
+                )}
+
+                {/* Lane indicator when branches are available */}
+                {hasBranching && (() => {
+                    const totalBranches = hasMultipleLanes
+                        ? currentGroup.length
+                        : 1 + parallelBranches.length;
+                    const currentBranch = hasMultipleLanes ? row + 1 : 1;
+                    return (
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                marginBottom: 12,
+                            }}
+                        >
+                            <span style={{
+                                fontSize: 10,
+                                fontWeight: 700,
+                                textTransform: 'uppercase' as const,
+                                letterSpacing: '0.08em',
+                                color: 'rgba(255,255,255,0.4)',
+                            }}>
+                                Branch {currentBranch}/{totalBranches}
+                            </span>
+                            <div style={{ display: 'flex', gap: 4 }}>
+                                {Array.from({ length: totalBranches }, (_, idx) => (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            width: idx === currentBranch - 1 ? 16 : 6,
+                                            height: 6,
+                                            borderRadius: 3,
+                                            backgroundColor: idx === currentBranch - 1
+                                                ? '#e07b53'
+                                                : 'rgba(255,255,255,0.2)',
+                                            transition: 'all 0.2s ease',
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* Step type badge */}
                 <div
                     style={{
                         display: 'flex',
-                        justifyContent: 'center',
-                        gap: 12,
-                        paddingTop: 8,
-                        paddingBottom: 4,
+                        alignItems: 'center',
+                        gap: 6,
+                        marginBottom: 16,
                     }}
                 >
+                    <span
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            backgroundColor: 'rgba(255,255,255,0.15)',
+                            borderRadius: 999,
+                            padding: '5px 14px',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: 'rgba(255,255,255,0.8)',
+                        }}
+                    >
+                        <Icon style={{ width: 14, height: 14 }} />
+                        {config.label}
+                    </span>
+                    {isDone && (
+                        <span
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 24,
+                                height: 24,
+                                borderRadius: '50%',
+                                backgroundColor: '#00b894',
+                            }}
+                        >
+                            <Check style={{ width: 14, height: 14, color: 'white' }} />
+                        </span>
+                    )}
+                </div>
+
+                {/* Title — large, centered */}
+                <h2
+                    style={{
+                        fontSize: 'clamp(28px, 7vw, 44px)',
+                        fontWeight: 800,
+                        color: 'white',
+                        textAlign: 'center',
+                        lineHeight: 1.15,
+                        marginBottom: 16,
+                        maxWidth: '100%',
+                        wordBreak: 'break-word',
+                    }}
+                >
+                    {currentNode.label}
+                </h2>
+
+                {/* Description — medium, centered */}
+                {currentNode.description && (
+                    <p
+                        style={{
+                            fontSize: 'clamp(15px, 3.5vw, 20px)',
+                            color: 'rgba(255,255,255,0.75)',
+                            textAlign: 'center',
+                            lineHeight: 1.6,
+                            maxWidth: 460,
+                            marginBottom: 20,
+                        }}
+                    >
+                        {renderDescription(currentNode.description, ingredients)}
+                    </p>
+                )}
+
+                {/* Timer display */}
+                {hasTimer && (
+                    <div style={{ marginBottom: 20, textAlign: 'center' }}>
+                        <div
+                            style={{
+                                fontSize: 'clamp(36px, 10vw, 56px)',
+                                fontWeight: 800,
+                                fontVariantNumeric: 'tabular-nums',
+                                color: timerDone ? '#00b894' : timerRunning ? '#f39c12' : 'rgba(255,255,255,0.6)',
+                                letterSpacing: '0.02em',
+                                lineHeight: 1,
+                                marginBottom: 12,
+                            }}
+                        >
+                            {formatTime(timerState!.remaining)}
+                        </div>
+                        {/* Timer progress bar */}
+                        <div
+                            style={{
+                                width: 200,
+                                height: 4,
+                                borderRadius: 2,
+                                backgroundColor: 'rgba(255,255,255,0.15)',
+                                margin: '0 auto 12px',
+                                overflow: 'hidden',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    height: '100%',
+                                    width: `${pct}%`,
+                                    backgroundColor: timerDone ? '#00b894' : '#e07b53',
+                                    borderRadius: 2,
+                                    transition: 'width 1s linear',
+                                }}
+                            />
+                        </div>
+                        {/* Timer buttons */}
+                        {!isDone && !isSpecial && (
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (timerRunning) {
+                                            dispatch({ type: 'timerPause', nodeId: currentNode.id });
+                                        } else {
+                                            dispatch({ type: 'timerStart', nodeId: currentNode.id });
+                                        }
+                                    }}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 6,
+                                        padding: '10px 20px',
+                                        borderRadius: 999,
+                                        border: '1.5px solid rgba(255,255,255,0.25)',
+                                        backgroundColor: timerRunning ? 'rgba(231,76,60,0.2)' : 'rgba(255,255,255,0.12)',
+                                        color: 'white',
+                                        fontSize: 14,
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    {timerRunning ? (
+                                        <><Pause style={{ width: 14, height: 14 }} /> Pause</>
+                                    ) : (
+                                        <><Play style={{ width: 14, height: 14 }} /> Start</>
+                                    )}
+                                </button>
+                                {pct > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => dispatch({ type: 'timerReset', nodeId: currentNode.id })}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: 42,
+                                            height: 42,
+                                            borderRadius: '50%',
+                                            border: '1.5px solid rgba(255,255,255,0.2)',
+                                            backgroundColor: 'rgba(255,255,255,0.08)',
+                                            color: 'rgba(255,255,255,0.7)',
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        <RotateCcw style={{ width: 14, height: 14 }} />
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Done button */}
+                {!isSpecial && (
                     <button
                         type="button"
-                        style={navBtnStyle(canGoUp)}
-                        onClick={goUp}
-                        disabled={!canGoUp}
+                        onClick={() => dispatch({ type: 'toggle', nodeId: currentNode.id })}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            padding: '14px 32px',
+                            borderRadius: 999,
+                            border: isDone ? '2px solid rgba(0,184,148,0.5)' : 'none',
+                            backgroundColor: isDone ? 'rgba(0,184,148,0.15)' : '#e07b53',
+                            color: isDone ? '#00b894' : 'white',
+                            fontSize: 16,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            minWidth: 180,
+                        }}
                     >
-                        <ChevronUp style={{ width: 16, height: 16, color: '#e07b53' }} />
-                        {upNode && <span style={navLabelStyle}>{upNode.label}</span>}
+                        {isDone ? (
+                            <><CheckCircle2 style={{ width: 18, height: 18 }} /> Erledigt</>
+                        ) : timerDone ? (
+                            <><Check style={{ width: 18, height: 18 }} /> Timer fertig — Erledigt?</>
+                        ) : (
+                            'Erledigt'
+                        )}
                     </button>
-                </div>
-            )}
+                )}
+            </div>
 
-            {/* Main row: left nav, card, right nav */}
+            {/* Bottom navigation — horizontal steps only */}
             <div
                 style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    padding: '8px 12px',
+                    justifyContent: 'space-between',
+                    padding: '16px 24px 20px',
+                    flexShrink: 0,
                 }}
             >
-                {/* Left nav */}
                 <button
                     type="button"
-                    style={{ ...navBtnStyle(canGoLeft), minWidth: 48, flexShrink: 0 }}
                     onClick={goLeft}
                     disabled={!canGoLeft}
-                >
-                    <ChevronLeft style={{ width: 16, height: 16, color: '#e07b53' }} />
-                    {prevNode && <span style={navLabelStyle}>{prevNode.label}</span>}
-                </button>
-
-                {/* Current step - centered, full width up to 400px */}
-                <div
                     style={{
-                        flex: 1,
-                        minWidth: 0,
-                        maxWidth: 400,
                         display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'stretch',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '10px 16px',
+                        borderRadius: 12,
+                        border: 'none',
+                        backgroundColor: canGoLeft ? 'rgba(255,255,255,0.12)' : 'transparent',
+                        color: canGoLeft ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: canGoLeft ? 'pointer' : 'default',
                     }}
                 >
-                    {/* Connector above (from prev column) */}
-                    {canGoLeft && (
-                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
-                            <Connector
-                                vertical
-                                sourceDone={completed.has(columnGroups[col - 1]?.[0]?.id ?? '')}
-                                timerPct={0}
-                            />
-                        </div>
-                    )}
+                    <ChevronLeft style={{ width: 16, height: 16 }} />
+                    Zurück
+                </button>
 
-                    <StepCard
-                        node={currentNode}
-                        completed={completed.has(currentNode.id)}
-                        active={!completed.has(currentNode.id)}
-                        timerState={timers.get(currentNode.id)}
-                        onToggle={() => dispatch({ type: 'toggle', nodeId: currentNode.id })}
-                        onTimerStart={() =>
-                            dispatch({ type: 'timerStart', nodeId: currentNode.id })
-                        }
-                        onTimerPause={() =>
-                            dispatch({ type: 'timerPause', nodeId: currentNode.id })
-                        }
-                        onTimerReset={() =>
-                            dispatch({ type: 'timerReset', nodeId: currentNode.id })
-                        }
-                        onOpenDetail={() => onOpenDetail(currentNode.id)}
-                        ingredients={ingredients}
-                        fullWidth
-                    />
-
-                    {/* Connector below (to next column) */}
-                    {canGoRight && (
-                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
-                            <Connector
-                                vertical
-                                sourceDone={completed.has(currentNode.id)}
-                                timerPct={0}
-                            />
-                        </div>
-                    )}
+                {/* Step counter */}
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>
+                        Schritt {col + 1} / {columnGroups.length}
+                    </div>
                 </div>
 
-                {/* Right nav */}
                 <button
                     type="button"
-                    style={{ ...navBtnStyle(canGoRight), minWidth: 48, flexShrink: 0 }}
                     onClick={goRight}
                     disabled={!canGoRight}
-                >
-                    <ChevronRight style={{ width: 16, height: 16, color: '#e07b53' }} />
-                    {nextNode && <span style={navLabelStyle}>{nextNode.label}</span>}
-                </button>
-            </div>
-
-            {/* Down navigation */}
-            {(canGoUp || canGoDown) && (
-                <div
                     style={{
                         display: 'flex',
-                        justifyContent: 'center',
-                        paddingTop: 4,
-                        paddingBottom: 8,
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '10px 16px',
+                        borderRadius: 12,
+                        border: 'none',
+                        backgroundColor: canGoRight ? 'rgba(255,255,255,0.12)' : 'transparent',
+                        color: canGoRight ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: canGoRight ? 'pointer' : 'default',
                     }}
                 >
-                    <button
-                        type="button"
-                        style={navBtnStyle(canGoDown)}
-                        onClick={goDown}
-                        disabled={!canGoDown}
-                    >
-                        <ChevronDown style={{ width: 16, height: 16, color: '#e07b53' }} />
-                        {downNode && <span style={navLabelStyle}>{downNode.label}</span>}
-                    </button>
-                </div>
-            )}
-
-            {/* Step indicator */}
-            <div
-                style={{
-                    textAlign: 'center',
-                    fontSize: 11,
-                    color: 'rgba(0,0,0,0.4)',
-                    paddingBottom: 12,
-                    fontWeight: 600,
-                }}
-            >
-                {col + 1} / {columnGroups.length}
-                {currentGroup.length > 1 && ` · Zweig ${row + 1}/${currentGroup.length}`}
+                    Weiter
+                    <ChevronRight style={{ width: 16, height: 16 }} />
+                </button>
             </div>
         </div>
     );
@@ -1631,10 +2226,251 @@ function CompletionBanner() {
     );
 }
 
+/* ── simple text recipe view ─────────────────────────────── */
+
+function SimpleTextView({
+    columnGroups,
+    completed,
+    timers,
+    dispatch,
+    ingredients,
+}: {
+    columnGroups: FlowNodeSerialized[][];
+    completed: Set<string>;
+    timers: Map<string, TimerState>;
+    dispatch: React.Dispatch<ViewerAction>;
+    ingredients?: RecipeStepsViewerProps['ingredients'];
+}) {
+    const steps = columnGroups.flat().filter((n) => n.type !== 'start');
+
+    return (
+        <div
+            className={css({
+                py: '6',
+                px: '5',
+                maxWidth: '640px',
+                mx: 'auto',
+            })}
+        >
+            <ol
+                className={css({
+                    listStyle: 'none',
+                    p: 0,
+                    m: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4',
+                })}
+            >
+                {steps.map((node, idx) => {
+                    const config = getStepConfig(node.type as StepType);
+                    const Icon = config.icon;
+                    const isLast = node.type === 'servieren';
+                    const isDone = completed.has(node.id);
+                    const timer = timers.get(node.id);
+                    const hasTimer = !!timer;
+                    const timerRunning = hasTimer && timer!.running;
+                    const timerDone = hasTimer && timer!.remaining === 0;
+
+                    return (
+                        <li key={node.id}>
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    gap: '3',
+                                    alignItems: 'flex-start',
+                                    p: '3',
+                                    borderRadius: 'lg',
+                                    transition: 'all 0.2s ease',
+                                })}
+                                style={{
+                                    backgroundColor: isDone
+                                        ? 'rgba(0,184,148,0.06)'
+                                        : 'transparent',
+                                    opacity: isDone ? 0.7 : 1,
+                                }}
+                            >
+                                {/* Clickable step icon — toggles done */}
+                                <button
+                                    type="button"
+                                    onClick={() => dispatch({ type: 'toggle', nodeId: node.id })}
+                                    className={css({
+                                        flexShrink: 0,
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: 'full',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        mt: '0.5',
+                                        transition: 'all 0.2s ease',
+                                    })}
+                                    style={{
+                                        backgroundColor: isDone
+                                            ? 'rgba(0,184,148,0.2)'
+                                            : isLast
+                                              ? 'rgba(0,184,148,0.12)'
+                                              : 'rgba(224,123,83,0.1)',
+                                        color: isDone
+                                            ? '#00b894'
+                                            : isLast
+                                              ? '#00b894'
+                                              : '#e07b53',
+                                    }}
+                                >
+                                    {isDone ? (
+                                        <Check style={{ width: 16, height: 16 }} />
+                                    ) : (
+                                        <Icon style={{ width: 16, height: 16 }} />
+                                    )}
+                                </button>
+
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    {/* Title + duration */}
+                                    <div
+                                        className={css({
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '2',
+                                            mb: '1',
+                                            flexWrap: 'wrap',
+                                        })}
+                                    >
+                                        <span
+                                            className={css({
+                                                fontWeight: 'bold',
+                                                fontSize: 'md',
+                                                color: 'text',
+                                            })}
+                                            style={{
+                                                textDecoration: isDone ? 'line-through' : 'none',
+                                                textDecorationColor: 'rgba(0,184,148,0.4)',
+                                            }}
+                                        >
+                                            {idx + 1}. {node.label}
+                                        </span>
+                                        {node.duration && node.duration > 0 && !hasTimer && (
+                                            <span
+                                                className={css({
+                                                    fontSize: 'xs',
+                                                    color: 'text.muted',
+                                                    flexShrink: 0,
+                                                })}
+                                            >
+                                                ~{node.duration} Min.
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Description */}
+                                    {node.description && (
+                                        <p
+                                            className={css({
+                                                fontSize: 'sm',
+                                                color: 'text.secondary',
+                                                lineHeight: '1.6',
+                                                m: 0,
+                                            })}
+                                        >
+                                            {renderDescription(node.description, ingredients)}
+                                        </p>
+                                    )}
+
+                                    {/* Timer controls */}
+                                    {hasTimer && !isDone && (
+                                        <div
+                                            className={css({
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '2',
+                                                mt: '2',
+                                            })}
+                                        >
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    dispatch({
+                                                        type: timerRunning ? 'timerPause' : 'timerStart',
+                                                        nodeId: node.id,
+                                                    })
+                                                }
+                                                className={css({
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '1.5',
+                                                    py: '1',
+                                                    px: '2.5',
+                                                    borderRadius: 'full',
+                                                    border: '1px solid',
+                                                    fontSize: 'xs',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer',
+                                                })}
+                                                style={{
+                                                    borderColor: timerRunning
+                                                        ? 'rgba(243,156,18,0.3)'
+                                                        : timerDone
+                                                          ? 'rgba(0,184,148,0.3)'
+                                                          : 'rgba(224,123,83,0.25)',
+                                                    backgroundColor: timerRunning
+                                                        ? 'rgba(243,156,18,0.08)'
+                                                        : timerDone
+                                                          ? 'rgba(0,184,148,0.08)'
+                                                          : 'rgba(224,123,83,0.06)',
+                                                    color: timerRunning
+                                                        ? '#f39c12'
+                                                        : timerDone
+                                                          ? '#00b894'
+                                                          : '#e07b53',
+                                                }}
+                                            >
+                                                {timerRunning ? (
+                                                    <Pause style={{ width: 12, height: 12 }} />
+                                                ) : timerDone ? (
+                                                    <Check style={{ width: 12, height: 12 }} />
+                                                ) : (
+                                                    <Play style={{ width: 12, height: 12 }} />
+                                                )}
+                                                <Clock style={{ width: 11, height: 11, opacity: 0.7 }} />
+                                                {formatTime(timer!.remaining)}
+                                            </button>
+                                            {(timerRunning || timer!.remaining < timer!.total) && !timerDone && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => dispatch({ type: 'timerReset', nodeId: node.id })}
+                                                    className={css({
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        p: '1',
+                                                        borderRadius: 'full',
+                                                        border: 'none',
+                                                        bg: 'transparent',
+                                                        color: 'text.muted',
+                                                        cursor: 'pointer',
+                                                    })}
+                                                    title="Zurücksetzen"
+                                                >
+                                                    <RotateCcw style={{ width: 12, height: 12 }} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </li>
+                    );
+                })}
+            </ol>
+        </div>
+    );
+}
+
 /* ── main component ──────────────────────────────────────── */
 
 export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsViewerProps) {
-    const { columnGroups, outgoing } = useMemo(() => buildTopology(nodes, edges), [nodes, edges]);
+    const { columnGroups, dagreY, outgoing } = useMemo(() => buildTopology(nodes, edges), [nodes, edges]);
 
     const [state, dispatch] = useReducer(viewerReducer, {
         completed: new Set<string>(),
@@ -1642,7 +2478,17 @@ export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsView
     });
 
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+    const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'text'>('desktop');
+
+    // Detect mobile devices
+    const [isMobileDevice, setIsMobileDevice] = useState(false);
+    useEffect(() => {
+        const mq = window.matchMedia('(max-width: 768px)');
+        const handler = (e: MediaQueryListEvent) => setIsMobileDevice(e.matches);
+        handler({ matches: mq.matches } as MediaQueryListEvent);
+        mq.addEventListener('change', handler);
+        return () => mq.removeEventListener('change', handler);
+    }, []);
 
     // Initialize timer state from nodes
     useEffect(() => {
@@ -1694,124 +2540,241 @@ export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsView
         ingredients,
     };
 
-    const mobileProps = { ...sharedState, columnGroups, outgoing };
+    const mobileProps = { ...sharedState, columnGroups, edges, dagreY };
 
     const selectedNode = selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) : null;
 
     return (
         <>
-            <div
-                style={{
-                    backgroundColor: '#fdfcfb',
-                    borderRadius: 16,
-                    border: '1px solid rgba(224,123,83,0.12)',
-                    overflow: 'hidden',
-                    position: 'relative',
-                }}
-            >
-                {/* Mobile view toggle button */}
-                <button
-                    type="button"
-                    onClick={() => setViewMode('mobile')}
-                    title="Mobile-Ansicht öffnen"
-                    style={{
-                        position: 'absolute',
-                        top: 12,
-                        right: 12,
-                        zIndex: 10,
+            {/* On mobile: show action buttons instead of desktop flow */}
+            {isMobileDevice ? (
+                <div
+                    className={css({
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        padding: '4px 10px',
-                        borderRadius: 20,
-                        border: '1px solid rgba(224,123,83,0.25)',
-                        backgroundColor: 'rgba(255,255,255,0.9)',
-                        color: '#c45e30',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        backdropFilter: 'blur(4px)',
-                    }}
+                        flexDirection: 'column',
+                        gap: '3',
+                        py: '4',
+                        px: '4',
+                    })}
                 >
-                    <Smartphone style={{ width: 13, height: 13 }} /> Mobil
-                </button>
+                    <button
+                        type="button"
+                        onClick={() => setViewMode('mobile')}
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2',
+                            py: '3.5',
+                            px: '6',
+                            borderRadius: 'xl',
+                            border: 'none',
+                            bg: 'primary',
+                            color: 'white',
+                            fontSize: 'md',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            _hover: { opacity: 0.9 },
+                        })}
+                    >
+                        <Smartphone style={{ width: 18, height: 18 }} />
+                        Rezept starten
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setViewMode('text')}
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2',
+                            py: '3',
+                            px: '6',
+                            borderRadius: 'xl',
+                            border: '1px solid',
+                            borderColor: 'border.primary',
+                            bg: 'transparent',
+                            color: 'primary',
+                            fontSize: 'sm',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                        })}
+                    >
+                        <List style={{ width: 16, height: 16 }} />
+                        Als Text anzeigen
+                    </button>
+                </div>
+            ) : (
+                <div
+                    className={css({
+                        bg: 'surface',
+                        borderRadius: 'xl',
+                        border: '1px solid',
+                        borderColor: 'rgba(224,123,83,0.12)',
+                        overflow: 'hidden',
+                        position: 'relative',
+                    })}
+                >
+                    {/* View mode toggle buttons — top right */}
+                    <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', gap: 6 }}>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('text')}
+                            title="Textansicht"
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '1',
+                                py: '1',
+                                px: '2.5',
+                                borderRadius: 'full',
+                                border: '1px solid rgba(224,123,83,0.25)',
+                                bg: 'rgba(255,255,255,0.9)',
+                                color: '#c45e30',
+                                fontSize: 'xs',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                backdropFilter: 'blur(4px)',
+                            })}
+                        >
+                            <List style={{ width: 13, height: 13 }} /> Text
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('mobile')}
+                            title="Mobile-Ansicht öffnen"
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '1',
+                                py: '1',
+                                px: '2.5',
+                                borderRadius: 'full',
+                                border: '1px solid rgba(224,123,83,0.25)',
+                                bg: 'rgba(255,255,255,0.9)',
+                                color: '#c45e30',
+                                fontSize: 'xs',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                backdropFilter: 'blur(4px)',
+                            })}
+                        >
+                            <Smartphone style={{ width: 13, height: 13 }} /> Mobil
+                        </button>
+                    </div>
 
-                <DesktopView {...sharedState} nodes={nodes} edges={edges} outgoing={outgoing} />
+                    <ReactFlowProvider>
+                        <DesktopView {...sharedState} nodes={nodes} edges={edges} outgoing={outgoing} onExportPdf={exportFlowToPdf} />
+                    </ReactFlowProvider>
 
-                {allStepsDone && <CompletionBanner />}
-            </div>
+                    {allStepsDone && <CompletionBanner />}
+                </div>
+            )}
+
+            {/* Text view overlay */}
+            {viewMode === 'text' && (
+                <div
+                    className={css({
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 300,
+                        bg: 'background',
+                        overflowY: 'auto',
+                    })}
+                >
+                    <div
+                        style={{
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 10,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '12px 16px',
+                        }}
+                        className={css({
+                            bg: 'background',
+                            borderBottom: '1px solid',
+                            borderColor: 'rgba(224,123,83,0.1)',
+                        })}
+                    >
+                        <span className={css({ fontWeight: 'bold', fontSize: 'md', color: 'text' })}>
+                            Zubereitungsschritte
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode(isMobileDevice ? 'desktop' : 'desktop')}
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: 'full',
+                                border: '1px solid',
+                                borderColor: 'rgba(224,123,83,0.2)',
+                                bg: 'surface',
+                                color: 'text.muted',
+                                cursor: 'pointer',
+                            })}
+                        >
+                            <X style={{ width: 16, height: 16 }} />
+                        </button>
+                    </div>
+                    <SimpleTextView
+                        columnGroups={columnGroups}
+                        completed={state.completed}
+                        timers={state.timers}
+                        dispatch={dispatch}
+                        ingredients={ingredients}
+                    />
+                </div>
+            )}
 
             {/* Mobile fullscreen overlay */}
             {viewMode === 'mobile' && (
                 <div
-                    style={{
+                    className={css({
                         position: 'fixed',
                         inset: 0,
                         zIndex: 300,
-                        backgroundColor: 'rgba(15,10,5,0.65)',
-                        backdropFilter: 'blur(12px)',
-                        WebkitBackdropFilter: 'blur(12px)',
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center',
-                    }}
+                        background: 'linear-gradient(180deg, rgba(26,23,21,0.92) 0%, rgba(35,30,26,0.95) 40%, rgba(28,24,21,0.92) 100%)',
+                        backdropFilter: 'blur(24px)',
+                        WebkitBackdropFilter: 'blur(24px)',
+                    })}
                 >
-                    {/* Toolbar */}
-                    <div
-                        style={{
-                            width: '100%',
-                            maxWidth: 520,
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            padding: '12px 16px 0',
-                            flexShrink: 0,
-                        }}
-                    >
+                    <style>{`
+                        @keyframes branchPulse {
+                            0%, 100% { opacity: 0.7; }
+                            50% { opacity: 1; }
+                        }
+                    `}</style>
+
+                    {/* Close button — top right */}
+                    <div style={{ position: 'absolute', top: 12, right: 16, zIndex: 10 }}>
                         <button
                             type="button"
-                            onClick={() => setViewMode('desktop')}
+                            onClick={() => setViewMode(isMobileDevice ? 'desktop' : 'desktop')}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: 5,
-                                padding: '6px 14px',
-                                borderRadius: 20,
-                                border: '1px solid rgba(255,255,255,0.2)',
-                                backgroundColor: 'rgba(255,255,255,0.12)',
-                                color: 'rgba(255,255,255,0.85)',
-                                fontSize: 12,
-                                fontWeight: 600,
+                                justifyContent: 'center',
+                                width: 36,
+                                height: 36,
+                                borderRadius: '50%',
+                                border: '1px solid rgba(255,255,255,0.15)',
+                                backgroundColor: 'rgba(255,255,255,0.08)',
+                                color: 'rgba(255,255,255,0.7)',
                                 cursor: 'pointer',
-                                backdropFilter: 'blur(4px)',
                             }}
                         >
-                            <Monitor style={{ width: 13, height: 13 }} /> Desktop
+                            <X style={{ width: 16, height: 16 }} />
                         </button>
                     </div>
 
-                    {/* Mobile content */}
-                    <div
-                        style={{
-                            flex: 1,
-                            width: '100%',
-                            maxWidth: 520,
-                            overflowY: 'auto',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        <div
-                            style={{
-                                backgroundColor: 'rgba(255,252,250,0.97)',
-                                borderRadius: 20,
-                                margin: '12px 16px 16px',
-                                overflow: 'hidden',
-                            }}
-                        >
-                            <MobileView {...mobileProps} />
-                        </div>
-                    </div>
+                    <MobileView {...mobileProps} />
                 </div>
             )}
 

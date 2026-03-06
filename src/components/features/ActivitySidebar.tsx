@@ -18,7 +18,7 @@ interface ActivitySidebarProps {
     activities: ActivityFeedItem[];
 }
 
-function getActivityComponent(activity: ActivityFeedItem) {
+export function getActivityComponent(activity: ActivityFeedItem) {
     if (activity.targetUserName) {
         return <FollowedActivity {...activity} />;
     }
@@ -48,6 +48,17 @@ function getActivityComponent(activity: ActivityFeedItem) {
     }
 
     return <CreatedActivity {...activity} />;
+}
+
+/** Reusable list of activity items — no wrapper card or heading. */
+export function ActivityList({ activities }: { activities: ActivityFeedItem[] }) {
+    return (
+        <div className={css({ display: 'flex', flexDirection: 'column', gap: '1' })}>
+            {activities.map((activity) => (
+                <div key={activity.id}>{getActivityComponent(activity)}</div>
+            ))}
+        </div>
+    );
 }
 
 export function ActivitySidebar({ activities }: ActivitySidebarProps) {
@@ -82,11 +93,7 @@ export function ActivitySidebar({ activities }: ActivitySidebarProps) {
                 </Text>
             </div>
 
-            <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
-                {activities.map((activity) => (
-                    <div key={activity.id}>{getActivityComponent(activity)}</div>
-                ))}
-            </div>
+            <ActivityList activities={activities} />
 
             <button
                 className={css({

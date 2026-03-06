@@ -425,6 +425,93 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     return shuffled.slice(0, 3);
 }
 
+export async function fetchUserActivityFeedItems(
+    userId: string,
+    take = 20,
+): Promise<ActivityFeedItem[]> {
+    const knownTypes = new Set(Object.keys(ACTIVITY_DECOR));
+
+    // Fetch more than needed to account for unknown types being filtered out
+    const allLogs = await prisma.activityLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: take * 2,
+    });
+
+    const logs = allLogs.filter((l) => knownTypes.has(l.type)).slice(0, take);
+
+    if (logs.length === 0) return [];
+
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { profile: true },
+    });
+
+    const recipeIds = Array.from(
+        new Set(
+            logs
+                .filter((l) => l.targetType === 'recipe' && l.targetId)
+                .map((l) => l.targetId as string),
+        ),
+    );
+    const recipes =
+        recipeIds.length > 0
+            ? await prisma.recipe.findMany({
+                  where: { id: { in: recipeIds } },
+                  select: { id: true, title: true },
+              })
+            : [];
+    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
+
+    const followTargetIds = Array.from(
+        new Set(
+            logs
+                .filter((l) => l.type === 'USER_FOLLOWED' && l.targetId)
+                .map((l) => l.targetId as string),
+        ),
+    );
+    const targetUsers =
+        followTargetIds.length > 0
+            ? await prisma.user.findMany({
+                  where: { id: { in: followTargetIds } },
+                  include: { profile: true },
+              })
+            : [];
+    const targetUserMap = new Map(targetUsers.map((u) => [u.id, u]));
+
+    return logs.map((log) => {
+        const base = ACTIVITY_DECOR[log.type];
+        const recipeId = log.targetType === 'recipe' ? log.targetId : null;
+        const recipe = recipeId ? recipeMap.get(recipeId) : null;
+
+        let actionLabel = base.label;
+        let targetUserName: string | undefined;
+        let targetUserId: string | undefined;
+
+        if (log.type === 'USER_FOLLOWED' && log.targetId) {
+            const targetUser = targetUserMap.get(log.targetId);
+            targetUserName = targetUser?.name || targetUser?.profile?.nickname || undefined;
+            actionLabel = targetUserName ? 'hat' : 'hat jemandem gefolgt';
+            targetUserId = targetUser?.id;
+        }
+
+        return {
+            id: log.id,
+            icon: base.icon,
+            iconBg: base.bg,
+            userName: user?.name || user?.profile?.nickname || 'Küchenfreund',
+            userId: user?.id,
+            actionLabel,
+            recipeTitle: recipe?.title,
+            recipeId: recipe?.id,
+            detail: log.metadata ? JSON.stringify(log.metadata) : undefined,
+            timeAgo: formatTimeAgo(log.createdAt),
+            targetUserName,
+            targetUserId,
+        };
+    });
+}
+
 export async function fetchRecentActivities(limit = 6): Promise<ActivityFeedItem[]> {
     const logs = await prisma.activityLog.findMany({
         orderBy: { createdAt: 'desc' },

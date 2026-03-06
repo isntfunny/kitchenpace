@@ -281,10 +281,12 @@ function RecipeChip({
     recipe,
     isPinned,
     onPinToggle,
+    showPin,
 }: {
     recipe: RecipeTabItem;
     isPinned: boolean;
     onPinToggle: () => void;
+    showPin: boolean;
 }) {
     const handlePinClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -323,24 +325,26 @@ function RecipeChip({
                 })}
             >
                 <span className={css({ whiteSpace: 'nowrap' })}>{recipe.title}</span>
-                <span
-                    onClick={handlePinClick}
-                    className={css({
-                        fontSize: 'xs',
-                        color: 'foreground.muted',
-                        marginLeft: '1',
-                        padding: '2px',
-                        borderRadius: 'full',
-                        cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                        _hover: {
-                            bg: 'rgba(224,123,83,0.2)',
-                            color: 'primary',
-                        },
-                    })}
-                >
-                    <Pin size={14} />
-                </span>
+                {showPin && (
+                    <span
+                        onClick={handlePinClick}
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                            marginLeft: '1',
+                            padding: '2px',
+                            borderRadius: 'full',
+                            cursor: 'pointer',
+                            transition: 'all 150ms ease',
+                            _hover: {
+                                bg: 'rgba(224,123,83,0.2)',
+                                color: 'primary',
+                            },
+                        })}
+                    >
+                        <Pin size={14} />
+                    </span>
+                )}
             </Link>
         </HoverPreview>
     );
@@ -349,7 +353,7 @@ function RecipeChip({
 const RECENT_DISPLAY_LIMIT = 5;
 
 export function RecipeTabs() {
-    const { pinned, recent, pinRecipe, unpinRecipe, isLoading } = useRecipeTabs();
+    const { pinned, recent, pinRecipe, unpinRecipe, isLoading, isAuthenticated } = useRecipeTabs();
 
     const handlePinToggle = (recipe: RecipeTabItem, currentlyPinned: boolean) => {
         if (isLoading) return;
@@ -409,6 +413,7 @@ export function RecipeTabs() {
                             recipe={recipe}
                             isPinned={true}
                             onPinToggle={() => handlePinToggle(recipe, true)}
+                            showPin={isAuthenticated}
                         />
                     ))}
 
@@ -432,6 +437,7 @@ export function RecipeTabs() {
                         recipe={recipe}
                         isPinned={false}
                         onPinToggle={() => handlePinToggle(recipe, false)}
+                        showPin={isAuthenticated}
                     />
                 ))
             ) : (

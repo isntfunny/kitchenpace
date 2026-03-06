@@ -30,11 +30,13 @@ interface RecipeTabsContextValue {
 }
 
 const STORAGE_KEY = 'kitchenpace_recipe_tabs';
-const MAX_PINNED = 3;
+const _MAX_PINNED = 3;
 const MAX_RECENT = 5;
 const API_BASE = '/api/recipe-tabs';
 const PINNED_API = `${API_BASE}/pinned`;
 const RECENT_API = `${API_BASE}/recent`;
+
+type TabsApiResponse = { pinned: RecipeTabItem[]; recent: RecipeTabItem[] };
 
 type RecipeTabsState = {
     pinned: RecipeTabItem[];
@@ -46,7 +48,9 @@ function loadFromStorage(): RecipeTabsState {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
-            return JSON.parse(stored);
+            const parsed = JSON.parse(stored);
+            // Only keep recent for unauthenticated users — pinned requires an account
+            return { pinned: [], recent: parsed.recent ?? [] };
         }
     } catch (error) {
         console.error('Failed to read recipe tabs from storage', error);
@@ -54,10 +58,10 @@ function loadFromStorage(): RecipeTabsState {
     return { pinned: [], recent: [] };
 }
 
-function saveToStorage(data: RecipeTabsState) {
+function saveToStorage(recent: RecipeTabItem[]) {
     if (typeof window === 'undefined') return;
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ recent }));
     } catch (error) {
         console.error('Failed to write recipe tabs to storage', error);
     }
@@ -78,30 +82,34 @@ interface RecipeTabsProviderProps {
     children: React.ReactNode;
     initialPinned?: RecipeTabItem[];
     initialRecent?: RecipeTabItem[];
+    /** True when the layout has already fetched fresh data server-side */
+    serverDataFetched?: boolean;
 }
 
 export function RecipeTabsProvider({
     children,
     initialPinned,
     initialRecent,
+    serverDataFetched = false,
 }: RecipeTabsProviderProps) {
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated' && !!session?.user?.id;
-    const hasInitialData =
-        (initialPinned && initialPinned.length > 0) || (initialRecent && initialRecent.length > 0);
-    const initialTabs = hasInitialData
-        ? { pinned: initialPinned || [], recent: initialRecent || [] }
-        : emptyTabs;
+    const initialTabs =
+        initialPinned || initialRecent
+            ? { pinned: initialPinned ?? [], recent: initialRecent ?? [] }
+            : emptyTabs;
     const [tabs, setTabs] = useState<RecipeTabsState>(initialTabs);
     const [isLoading, setIsLoading] = useState(false);
     const previousAuthRef = useRef(isAuthenticated);
+    // Skip the first client-side refresh when the layout already provided fresh SSR data
+    const skipInitialRefreshRef = useRef(serverDataFetched);
 
     const updateTabs = useCallback(
         (updater: (prev: RecipeTabsState) => RecipeTabsState) => {
             setTabs((prev) => {
                 const next = updater(prev);
                 if (!isAuthenticated) {
-                    saveToStorage(next);
+                    saveToStorage(next.recent);
                 }
                 return next;
             });
@@ -113,36 +121,20 @@ export function RecipeTabsProvider({
         if (!isAuthenticated) return;
         setIsLoading(true);
         try {
-            const [pinnedResponse, recentResponse] = await Promise.all([
-                fetch(PINNED_API),
-                fetch(RECENT_API),
-            ]);
+            const response = await fetch(API_BASE);
 
-            if (!pinnedResponse.ok) {
-                throw new Error(`Failed to load pinned recipes (${pinnedResponse.status})`);
+            if (!response.ok) {
+                throw new Error(`Failed to load recipe tabs (${response.status})`);
             }
 
-            if (!recentResponse.ok) {
-                throw new Error(`Failed to load recent recipes (${recentResponse.status})`);
-            }
-
-            const pinnedEntries: RecipeTabItem[] = await pinnedResponse.json();
-            const recentEntries: RecipeTabItem[] = await recentResponse.json();
-
-            const normalizedPinned = pinnedEntries
-                .map(withDefaultEmoji)
-                .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
-
-            const pinnedIds = new Set(normalizedPinned.map((entry) => entry.id));
-
-            const normalizedRecent = recentEntries
-                .filter((entry) => !pinnedIds.has(entry.id))
-                .map(withDefaultEmoji)
-                .slice(0, MAX_RECENT);
+            const { pinned: pinnedEntries, recent: recentEntries }: TabsApiResponse =
+                await response.json();
 
             updateTabs(() => ({
-                pinned: normalizedPinned,
-                recent: normalizedRecent,
+                pinned: pinnedEntries
+                    .map(withDefaultEmoji)
+                    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
+                recent: recentEntries.map(withDefaultEmoji),
             }));
         } catch (error) {
             console.error('Failed to refresh recipe tabs', error);
@@ -153,18 +145,8 @@ export function RecipeTabsProvider({
 
     const migrateLocalData = useCallback(async () => {
         const stored = loadFromStorage();
+        if (stored.recent.length === 0) return;
         try {
-            for (const recipe of stored.pinned.slice(0, MAX_PINNED)) {
-                try {
-                    await fetch(PINNED_API, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ recipeId: recipe.id }),
-                    });
-                } catch (error) {
-                    console.error('Failed to migrate pinned recipe', error);
-                }
-            }
             for (const recipe of stored.recent.slice(0, MAX_RECENT)) {
                 try {
                     await fetch(RECENT_API, {
@@ -177,7 +159,7 @@ export function RecipeTabsProvider({
                 }
             }
         } finally {
-            saveToStorage(emptyTabs);
+            saveToStorage([]);
         }
     }, []);
 
@@ -187,12 +169,20 @@ export function RecipeTabsProvider({
 
         const initialize = async () => {
             if (isAuthenticated) {
-                setIsLoading(true);
                 if (!prevAuth) {
+                    // First time becoming authenticated — migrate any local data
+                    setIsLoading(true);
                     await migrateLocalData();
+                    if (skipInitialRefreshRef.current) {
+                        // SSR already provided fresh data; no need to re-fetch
+                        skipInitialRefreshRef.current = false;
+                    } else {
+                        await refreshData();
+                    }
+                    setIsLoading(false);
+                } else {
+                    await refreshData();
                 }
-                await refreshData();
-                setIsLoading(false);
             } else {
                 setTabs(loadFromStorage());
             }
@@ -203,23 +193,7 @@ export function RecipeTabsProvider({
 
     const pinRecipe = useCallback(
         async (recipe: RecipeTabItem) => {
-            const normalized = withDefaultEmoji(recipe);
-
-            if (!isAuthenticated) {
-                updateTabs((prev) => {
-                    if (
-                        prev.pinned.length >= MAX_PINNED ||
-                        prev.pinned.some((item) => item.id === recipe.id)
-                    ) {
-                        return prev;
-                    }
-                    return {
-                        pinned: [...prev.pinned, normalized],
-                        recent: prev.recent.filter((item) => item.id !== recipe.id),
-                    };
-                });
-                return;
-            }
+            if (!isAuthenticated) return;
 
             try {
                 const response = await fetch(PINNED_API, {
@@ -236,27 +210,12 @@ export function RecipeTabsProvider({
                 await refreshData();
             }
         },
-        [isAuthenticated, refreshData, updateTabs],
+        [isAuthenticated, refreshData],
     );
 
     const unpinRecipe = useCallback(
         async (recipeId: string) => {
-            if (!isAuthenticated) {
-                updateTabs((prev) => {
-                    const wasPinned = prev.pinned.find((item) => item.id === recipeId);
-                    if (!wasPinned) return prev;
-
-                    const alreadyInRecent = prev.recent.some((item) => item.id === recipeId);
-
-                    return {
-                        pinned: prev.pinned.filter((item) => item.id !== recipeId),
-                        recent: alreadyInRecent
-                            ? prev.recent
-                            : [wasPinned, ...prev.recent].slice(0, MAX_RECENT),
-                    };
-                });
-                return;
-            }
+            if (!isAuthenticated) return;
 
             try {
                 const response = await fetch(`${PINNED_API}/${recipeId}`, { method: 'DELETE' });
@@ -269,12 +228,13 @@ export function RecipeTabsProvider({
                 await refreshData();
             }
         },
-        [isAuthenticated, refreshData, updateTabs],
+        [isAuthenticated, refreshData],
     );
 
     const addToRecent = useCallback(
         async (recipe: RecipeTabItem) => {
             const normalized = withDefaultEmoji(recipe);
+            // Optimistic update — move recipe to front, deduplicate, cap length
             updateTabs((prev) => ({
                 ...prev,
                 recent: [normalized, ...prev.recent.filter((item) => item.id !== recipe.id)].slice(
@@ -283,9 +243,7 @@ export function RecipeTabsProvider({
                 ),
             }));
 
-            if (!isAuthenticated) {
-                return;
-            }
+            if (!isAuthenticated) return;
 
             try {
                 const response = await fetch(RECENT_API, {
@@ -297,12 +255,12 @@ export function RecipeTabsProvider({
                 if (!response.ok) {
                     throw new Error(`Failed to log recipe view (${response.status})`);
                 }
-                await refreshData();
+                // No refreshData() here — the optimistic update is sufficient for UI
             } catch (error) {
                 console.error('Failed to track recipe view', error);
             }
         },
-        [isAuthenticated, refreshData, updateTabs],
+        [isAuthenticated, updateTabs],
     );
 
     const contextValue = useMemo(

@@ -180,8 +180,8 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
 
 export function Header() {
     const { status, data: session } = useSession();
-    const isAuthenticated = status === 'authenticated';
-    const isAdmin = Boolean(session?.user?.role === 'ADMIN');
+    const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
+    const isAdmin = isAuthenticated && session?.user?.role === 'ADMIN';
 
     return (
         <header

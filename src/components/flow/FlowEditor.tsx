@@ -15,7 +15,7 @@ import {
     Panel,
 } from '@xyflow/react';
 import { Sparkles } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '@xyflow/react/dist/style.css';
 
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
@@ -111,7 +111,7 @@ function deserializeNodes(nodes: FlowNodeSerialized[]): RecipeFlowNode[] {
     return nodes.map((n) => ({
         id: n.id,
         type: 'recipeStep' as const,
-        position: n.position,
+        position: n.position ?? { x: 0, y: 0 },
         data: {
             stepType: n.type,
             label: n.label,
@@ -227,6 +227,28 @@ function FlowEditorInner({
         },
         [applyLayout, setNodes, setEdges, notifyChange, fitView],
     );
+
+    /* ── auto-layout on first mount when nodes have no position (e.g. imported recipes) ── */
+
+    const didAutoLayout = useRef(false);
+
+    useEffect(() => {
+        if (didAutoLayout.current) return;
+        if (!initialNodes || initialNodes.length === 0) return;
+
+        // Detect nodes that were saved without position (imported from AI)
+        const needsLayout = initialNodes.some((n) => !n.position);
+        if (!needsLayout) return;
+
+        didAutoLayout.current = true;
+
+        // Small delay to allow ReactFlow to finish its initial render before fitView
+        const timer = setTimeout(() => {
+            autoLayoutAndFit(getNodes() as RecipeFlowNode[], getEdges());
+        }, 50);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     /* ── xyflow callbacks ── */
 
@@ -717,9 +739,31 @@ function FlowEditorInner({
             <AiConversionDialog
                 open={aiDialogOpen}
                 onClose={() => setAiDialogOpen(false)}
-                onSubmit={(text) => {
-                    // TODO: save rawRecipeText to DB and trigger AI conversion
-                    console.log('[AI] raw recipe text submitted, length:', text.length);
+                onResult={(result) => {
+                    const newNodes: RecipeFlowNode[] = result.flowNodes.map((node) => ({
+                        id: node.id,
+                        type: 'recipeStep' as const,
+                        position: { x: 0, y: 0 },
+                        data: {
+                            stepType: node.type as StepType,
+                            label: node.label,
+                            description: node.description,
+                            duration: node.duration,
+                            ingredientIds: node.ingredientIds,
+                        },
+                    }));
+
+                    const newEdges: Edge[] = result.flowEdges.map((edge) => ({
+                        id: edge.id,
+                        source: edge.source,
+                        target: edge.target,
+                        type: 'insertable',
+                        style: DEFAULT_EDGE_STYLE,
+                    }));
+
+                    // autoLayoutAndFit computes dagre positions, sets state, notifies parent, and fits view
+                    autoLayoutAndFit(newNodes, newEdges);
+                    setAiDialogOpen(false);
                 }}
             />
         </FlowEditorContext.Provider>

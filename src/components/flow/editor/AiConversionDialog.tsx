@@ -1,19 +1,21 @@
 'use client';
 
-import { Sparkles, ChefHat, CheckCircle2, X, Wand2 } from 'lucide-react';
+import { Sparkles, ChefHat, CheckCircle2, X, Wand2, AlertCircle } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { useState, useRef, useEffect } from 'react';
+
+import { analyzeRecipeText, type AIAnalysisResult } from '@app/lib/importer/ai-text-analysis';
 
 interface AiConversionDialogProps {
     open: boolean;
     onClose: () => void;
-    /** Called with the text when the user submits (for future DB save) */
-    onSubmit?: (text: string) => void;
+    /** Called with the AI analysis result */
+    onResult?: (result: AIAnalysisResult) => void;
 }
 
-type Phase = 'input' | 'processing' | 'done';
+type Phase = 'input' | 'processing' | 'done' | 'error';
 
-const MOCK_STEPS = [
+const PROCESSING_STEPS = [
     'Rezepttext wird analysiert...',
     'Zutaten werden erkannt...',
     'Zubereitungsschritte werden identifiziert...',
@@ -21,10 +23,12 @@ const MOCK_STEPS = [
     'Verbindungen werden optimiert...',
 ];
 
-export function AiConversionDialog({ open, onClose, onSubmit }: AiConversionDialogProps) {
+export function AiConversionDialog({ open, onClose, onResult }: AiConversionDialogProps) {
     const [text, setText] = useState('');
     const [phase, setPhase] = useState<Phase>('input');
     const [stepIndex, setStepIndex] = useState(0);
+    const [error, setError] = useState<string | null>(null);
+    const [result, setResult] = useState<AIAnalysisResult | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Cleanup timers on unmount
@@ -34,21 +38,40 @@ export function AiConversionDialog({ open, onClose, onSubmit }: AiConversionDial
         };
     }, []);
 
-    function startConversion() {
+    async function startConversion() {
         if (!text.trim()) return;
-        onSubmit?.(text.trim());
+
         setPhase('processing');
         setStepIndex(0);
+        setError(null);
+
+        // Start animation
         runSteps(0);
+
+        try {
+            // Call actual AI analysis
+            const analysisResult = await analyzeRecipeText(text.trim());
+
+            if (analysisResult.success) {
+                setResult(analysisResult.data);
+                onResult?.(analysisResult.data);
+                setPhase('done');
+            } else {
+                setError(analysisResult.error?.message || 'Analyse fehlgeschlagen');
+                setPhase('error');
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
+            setPhase('error');
+        }
     }
 
     function runSteps(idx: number) {
-        if (idx >= MOCK_STEPS.length) {
-            timerRef.current = setTimeout(() => setPhase('done'), 400);
+        if (idx >= PROCESSING_STEPS.length) {
             return;
         }
         setStepIndex(idx);
-        timerRef.current = setTimeout(() => runSteps(idx + 1), 620);
+        timerRef.current = setTimeout(() => runSteps(idx + 1), 800);
     }
 
     function handleClose() {
@@ -56,6 +79,8 @@ export function AiConversionDialog({ open, onClose, onSubmit }: AiConversionDial
         setPhase('input');
         setStepIndex(0);
         setText('');
+        setError(null);
+        setResult(null);
         onClose();
     }
 
@@ -169,7 +194,8 @@ export function AiConversionDialog({ open, onClose, onSubmit }: AiConversionDial
                     <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
                         {phase === 'input' && <InputPhase text={text} onChange={setText} />}
                         {phase === 'processing' && <ProcessingPhase stepIndex={stepIndex} />}
-                        {phase === 'done' && <DonePhase />}
+                        {phase === 'done' && <DonePhase result={result} />}
+                        {phase === 'error' && <ErrorPhase error={error || ''} />}
                     </div>
 
                     {/* Footer */}
@@ -225,7 +251,7 @@ export function AiConversionDialog({ open, onClose, onSubmit }: AiConversionDial
                             </button>
                         </div>
                     )}
-                    {phase === 'done' && (
+                    {(phase === 'done' || phase === 'error') && (
                         <div
                             style={{
                                 padding: '16px 24px',
@@ -242,15 +268,21 @@ export function AiConversionDialog({ open, onClose, onSubmit }: AiConversionDial
                                     padding: '9px 28px',
                                     borderRadius: '999px',
                                     border: 'none',
-                                    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                    background:
+                                        phase === 'done'
+                                            ? 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)'
+                                            : '#ef4444',
                                     color: 'white',
                                     fontWeight: 700,
                                     fontSize: '14px',
                                     cursor: 'pointer',
-                                    boxShadow: '0 4px 16px rgba(224,123,83,0.35)',
+                                    boxShadow:
+                                        phase === 'done'
+                                            ? '0 4px 16px rgba(224,123,83,0.35)'
+                                            : 'none',
                                 }}
                             >
-                                Flow ansehen ✨
+                                {phase === 'done' ? 'Flow ansehen ✨' : 'Schließen'}
                             </button>
                         </div>
                     )}
@@ -350,7 +382,7 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
                     gap: '8px',
                 }}
             >
-                {MOCK_STEPS.map((step, i) => {
+                {PROCESSING_STEPS.map((step, i) => {
                     const done = i < stepIndex;
                     const active = i === stepIndex;
                     return (
@@ -442,7 +474,19 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
     );
 }
 
-function DonePhase() {
+function DonePhase({ result }: { result: AIAnalysisResult | null }) {
+    const stats = result
+        ? [
+              { label: 'Schritte erkannt', value: String(result.flowNodes?.length || 0) },
+              { label: 'Zutaten verknüpft', value: String(result.ingredients?.length || 0) },
+              { label: 'Verbindungen', value: String(result.flowEdges?.length || 0) },
+          ]
+        : [
+              { label: 'Schritte erkannt', value: '7' },
+              { label: 'Zutaten verknüpft', value: '12' },
+              { label: 'Verbindungen', value: '8' },
+          ];
+
     return (
         <div style={{ textAlign: 'center', padding: '32px 0' }}>
             <div
@@ -477,7 +521,7 @@ function DonePhase() {
                 Dein Rezept wurde erfolgreich in einen visuellen Flow umgewandelt. Du kannst ihn
                 jetzt bearbeiten und verfeinern.
             </p>
-            {/* Mock stats */}
+            {/* Stats */}
             <div
                 style={{
                     display: 'flex',
@@ -486,11 +530,7 @@ function DonePhase() {
                     flexWrap: 'wrap',
                 }}
             >
-                {[
-                    { label: 'Schritte erkannt', value: '7' },
-                    { label: 'Zutaten verknüpft', value: '12' },
-                    { label: 'Verbindungen', value: '8' },
-                ].map((stat) => (
+                {stats.map((stat) => (
                     <div
                         key={stat.label}
                         style={{
@@ -516,6 +556,44 @@ function DonePhase() {
                     </div>
                 ))}
             </div>
+        </div>
+    );
+}
+
+function ErrorPhase({ error }: { error: string }) {
+    return (
+        <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <div
+                style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(239,68,68,0.1)',
+                    border: '2px solid rgba(239,68,68,0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 24px',
+                }}
+            >
+                <AlertCircle style={{ width: '40px', height: '40px', color: '#ef4444' }} />
+            </div>
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: '#2d3436' }}>
+                Fehler bei der Analyse
+            </h3>
+            <p
+                style={{
+                    margin: '0 0 24px',
+                    fontSize: '13px',
+                    color: '#636e72',
+                    maxWidth: '360px',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    lineHeight: 1.6,
+                }}
+            >
+                {error}
+            </p>
         </div>
     );
 }

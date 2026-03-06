@@ -1,6 +1,6 @@
 import { prisma } from '@shared/prisma';
 
-import { extractKeyFromUrl } from './thumbnail-client';
+import { extractKeyFromUrl, getThumbnailUrl, ThumbnailOptions } from './thumbnail-client';
 
 export type ThumbnailSource =
     | { type: 'recipe'; id: string }
@@ -9,30 +9,30 @@ export type ThumbnailSource =
 
 export async function getThumbnailUrlBySource(
     source: ThumbnailSource,
-    options: {
-        width?: number;
-        height?: number;
-        quality?: number;
-        fit?: 'cover' | 'contain' | 'fill';
-    } = {},
+    options: ThumbnailOptions = {},
 ): Promise<string> {
-    const { getThumbnailUrl } = await import('@app/lib/thumbnail-client');
     let key: string | null | undefined;
 
-    if (source.type === 'key') {
-        key = source.key;
-    } else if (source.type === 'recipe') {
-        const recipe = await prisma.recipe.findUnique({
-            where: { id: source.id },
-            select: { imageKey: true },
-        });
-        key = recipe?.imageKey;
-    } else if (source.type === 'user') {
-        const profile = await prisma.profile.findUnique({
-            where: { userId: source.id },
-            select: { photoUrl: true },
-        });
-        key = profile?.photoUrl ? extractKeyFromUrl(profile.photoUrl) : null;
+    switch (source.type) {
+        case 'key':
+            key = source.key;
+            break;
+        case 'recipe': {
+            const recipe = await prisma.recipe.findUnique({
+                where: { id: source.id },
+                select: { imageKey: true },
+            });
+            key = recipe?.imageKey;
+            break;
+        }
+        case 'user': {
+            const profile = await prisma.profile.findUnique({
+                where: { userId: source.id },
+                select: { photoUrl: true },
+            });
+            key = profile?.photoUrl ? extractKeyFromUrl(profile.photoUrl) : null;
+            break;
+        }
     }
 
     return getThumbnailUrl(key, options);

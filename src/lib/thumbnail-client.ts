@@ -12,24 +12,24 @@ const DEFAULT_OPTIONS: ThumbnailOptions = {
     fit: 'cover',
 };
 
-export function getThumbnailUrl(
-    key: string | null | undefined,
-    options: ThumbnailOptions = {},
-): string {
-    if (!key) return '/placeholder.jpg';
-
+function buildUrl(baseParams: Record<string, string>, options: ThumbnailOptions): string {
     const opts = { ...DEFAULT_OPTIONS, ...options };
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(baseParams);
 
     if (opts.width) params.set('width', opts.width.toString());
     if (opts.height) params.set('height', opts.height.toString());
     if (opts.quality && opts.quality !== 80) params.set('quality', opts.quality.toString());
     if (opts.fit && opts.fit !== 'cover') params.set('fit', opts.fit);
 
-    const queryString = params.toString();
-    const baseUrl = `/api/thumbnail?key=${encodeURIComponent(key)}`;
+    return `/api/thumbnail?${params.toString()}`;
+}
 
-    return queryString ? `${baseUrl}&${queryString}` : baseUrl;
+export function getThumbnailUrl(
+    key: string | null | undefined,
+    options: ThumbnailOptions = {},
+): string {
+    if (!key) return '/placeholder.jpg';
+    return buildUrl({ key }, options);
 }
 
 export function getThumbnailUrlById(
@@ -37,18 +37,7 @@ export function getThumbnailUrlById(
     type: 'recipe' | 'user',
     options: ThumbnailOptions = {},
 ): string {
-    const opts = { ...DEFAULT_OPTIONS, ...options };
-    const params = new URLSearchParams();
-
-    if (opts.width) params.set('width', opts.width.toString());
-    if (opts.height) params.set('height', opts.height.toString());
-    if (opts.quality && opts.quality !== 80) params.set('quality', opts.quality.toString());
-    if (opts.fit && opts.fit !== 'cover') params.set('fit', opts.fit);
-
-    const queryString = params.toString();
-    const baseUrl = `/api/thumbnail?type=${type}&id=${encodeURIComponent(id)}`;
-
-    return queryString ? `${baseUrl}&${queryString}` : baseUrl;
+    return buildUrl({ type, id }, options);
 }
 
 export function extractKeyFromUrl(url: string): string | null {

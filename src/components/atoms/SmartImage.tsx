@@ -1,6 +1,8 @@
 'use client';
 
+import { ChefHat } from 'lucide-react';
 import { useState } from 'react';
+
 
 import {
     getThumbnailUrl,
@@ -85,6 +87,29 @@ export function SmartImage({
     };
 
     const currentSrc = !thumbnailSrc || error ? fallback : thumbnailSrc;
+
+    if (error && userId) {
+        const iconSize = fill ? '40%' : Math.round(Math.min(width, height) * 0.4);
+        return (
+            <div
+                className={cx(
+                    css({
+                        background: 'linear-gradient(135deg, #e07b53 0%, #c4623d 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                    }),
+                    fill
+                        ? css({ width: '100%', height: '100%' })
+                        : css({ width: `${width}px`, height: `${height}px` }),
+                    className,
+                )}
+            >
+                <ChefHat size={iconSize} />
+            </div>
+        );
+    }
 
     return (
         <img

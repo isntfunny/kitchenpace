@@ -163,6 +163,7 @@ model User {
   cookHistory    UserCookHistory[]
   pinnedFavorites PinnedFavorite[]
   cookImages     CookImage[]
+  importRuns     ImportRun[]
 }
 
 model Profile {
@@ -249,6 +250,7 @@ model Recipe {
   cookHistory  UserCookHistory[]
   pinnedFavorites PinnedFavorite[]
   cookImages   CookImage[]
+  importRuns   ImportRun[]
 
   @@index([authorId])
   @@index([difficulty])
@@ -256,6 +258,53 @@ model Recipe {
   @@index([rating])
   @@index([status])
   @@index([isTrending])
+}
+
+// ============================================
+// RECIPE IMPORTER RUNS (audit + cost tracking)
+// ============================================
+
+enum ImportRunStatus {
+  SUCCESS  // AI analyzed + recipe saved
+  FALLBACK // AI failed/unavailable, used regex fallback parser
+  FAILED   // Hard failure (scraping error, unrecoverable)
+}
+
+model ImportRun {
+  id               String          @id @default(cuid())
+  userId           String
+
+  // Source
+  sourceUrl        String?         // null = pasted text (AI dialog in editor)
+  sourceType       String          @default("url") // "url" | "text"
+  markdownLength   Int?            // scraped content size in chars
+
+  // Result
+  status           ImportRunStatus
+  errorType        String?         // maps to ErrorType enum from importer
+  errorMessage     String?
+  recipeId         String?         // linked recipe if successfully saved
+
+  // AI usage (matches OpenAI usage object fields)
+  model             String?         // e.g. "gpt-4o-mini"
+  inputTokens       Int?            // prompt_tokens
+  cachedInputTokens Int?            // prompt_tokens_details.cached_tokens
+  outputTokens      Int?            // completion_tokens
+  // Cost: input $2.50/1M, cached $0.25/1M, output $15.00/1M
+  estimatedCostUsd  Float?
+
+  // Raw OpenAI completion object for debugging & auditing
+  rawApiResponse    Json?
+
+  createdAt        DateTime        @default(now())
+
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe           Recipe?         @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ============================================

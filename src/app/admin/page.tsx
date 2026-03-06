@@ -1,4 +1,4 @@
-import { Activity, ShieldCheck, Users, BookOpen, Tag, Settings, Sparkles } from 'lucide-react';
+import { Activity, ShieldCheck, ShieldAlert, Users, BookOpen, Tag, Settings, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 import { PageShell } from '@app/components/layouts/PageShell';
@@ -9,6 +9,12 @@ import { STATUS_ORDER, getQueueLabel } from '@worker/queues/job-run-ui';
 import { css } from 'styled-system/css';
 
 const ADMIN_ACTIONS = [
+    {
+        label: 'Moderations-Queue',
+        description: 'Gemeldete Inhalte prüfen, freigeben oder ablehnen.',
+        href: '/moderation',
+        icon: ShieldAlert,
+    },
     {
         label: 'Content Moderation',
         description: 'Startseite: Highlight-Rezept & Top-User auswählen.',

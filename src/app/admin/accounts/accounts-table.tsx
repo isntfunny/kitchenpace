@@ -11,12 +11,12 @@ import {
     useReactTable,
     flexRender,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Search, Shield, Key } from 'lucide-react';
+import { ArrowUpDown, Search, Shield, ShieldCheck, Key, Ban, Unlock } from 'lucide-react';
 import { useState } from 'react';
 
 import { css } from 'styled-system/css';
 
-import { updateUserRole, toggleUserActive, sendPasswordReset } from './actions';
+import { updateUserRole, toggleUserActive, sendPasswordReset, banUser, unbanUser } from './actions';
 
 type User = {
     id: string;
@@ -88,13 +88,45 @@ const columns: ColumnDef<User>[] = [
         },
         cell: ({ row }) => {
             const user = row.original;
-            const isAdmin = user.role === 'ADMIN';
+            const role = user.role;
+            const isBanned = role === 'BANNED';
+
+            // Cycle: USER → MODERATOR → ADMIN → USER
+            const nextRole = role === 'USER' ? Role.MODERATOR : role === 'MODERATOR' ? Role.ADMIN : Role.USER;
+
+            const roleConfig = {
+                ADMIN: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', icon: <Shield size={12} />, label: 'Admin' },
+                MODERATOR: { bg: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', icon: <ShieldCheck size={12} />, label: 'Moderator' },
+                USER: { bg: 'rgba(107, 114, 128, 0.15)', color: '#6b7280', icon: null, label: 'Benutzer' },
+                BANNED: { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', icon: <Ban size={12} />, label: 'Gesperrt' },
+            };
+            const cfg = roleConfig[role] ?? roleConfig.USER;
+
+            if (isBanned) {
+                return (
+                    <span
+                        className={css({
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '1',
+                            paddingX: '2',
+                            paddingY: '1',
+                            borderRadius: 'full',
+                            fontSize: 'xs',
+                            fontWeight: 'medium',
+                        })}
+                        style={{ backgroundColor: cfg.bg, color: cfg.color }}
+                    >
+                        {cfg.icon}
+                        {cfg.label}
+                    </span>
+                );
+            }
 
             return (
                 <form
                     action={async () => {
-                        const newRole = isAdmin ? Role.USER : Role.ADMIN;
-                        await updateUserRole(user.id, newRole);
+                        await updateUserRole(user.id, nextRole);
                     }}
                 >
                     <button
@@ -111,15 +143,10 @@ const columns: ColumnDef<User>[] = [
                             border: 'none',
                             transition: 'all 0.2s',
                         })}
-                        style={{
-                            backgroundColor: isAdmin
-                                ? 'rgba(59, 130, 246, 0.15)'
-                                : 'rgba(107, 114, 128, 0.15)',
-                            color: isAdmin ? '#3b82f6' : '#6b7280',
-                        }}
+                        style={{ backgroundColor: cfg.bg, color: cfg.color }}
                     >
-                        {isAdmin ? <Shield size={12} /> : null}
-                        {isAdmin ? 'Admin' : 'Benutzer'}
+                        {cfg.icon}
+                        {cfg.label}
                     </button>
                 </form>
             );
@@ -287,6 +314,68 @@ const columns: ColumnDef<User>[] = [
                             <Key size={14} />
                         </button>
                     </form>
+                    {user.role === 'BANNED' ? (
+                        <form
+                            action={async () => {
+                                await unbanUser(user.id);
+                            }}
+                        >
+                            <button
+                                title="Entsperren"
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '8',
+                                    height: '8',
+                                    borderRadius: 'lg',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(34,197,94,0.3)',
+                                    background: 'surface',
+                                    cursor: 'pointer',
+                                    color: '#22c55e',
+                                    transition: 'all 0.2s',
+                                    _hover: {
+                                        background: 'rgba(34,197,94,0.1)',
+                                    },
+                                })}
+                            >
+                                <Unlock size={14} />
+                            </button>
+                        </form>
+                    ) : (
+                        <form
+                            action={async () => {
+                                const reason = prompt('Sperrgrund:');
+                                if (reason) {
+                                    await banUser(user.id, reason);
+                                }
+                            }}
+                        >
+                            <button
+                                title="Sperren"
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '8',
+                                    height: '8',
+                                    borderRadius: 'lg',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(239,68,68,0.3)',
+                                    background: 'surface',
+                                    cursor: 'pointer',
+                                    color: '#ef4444',
+                                    transition: 'all 0.2s',
+                                    _hover: {
+                                        background: 'rgba(239,68,68,0.1)',
+                                    },
+                                })}
+                            >
+                                <Ban size={14} />
+                            </button>
+                        </form>
+                    )}
                 </div>
             );
         },

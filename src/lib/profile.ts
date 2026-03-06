@@ -1,5 +1,6 @@
 import type { Profile } from '@prisma/client';
 
+import { generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
 type ProfileFields = Partial<Pick<Profile, 'nickname' | 'teaser' | 'photoUrl'>> & {
@@ -26,6 +27,10 @@ export const getOrCreateProfile = async (userId: string, email: string) => {
     }
 
     const nickname = user.name ?? `user_${userId.slice(0, 8)}`;
+    const slug = await generateUniqueSlug(
+        nickname,
+        async (s) => !!(await prisma.profile.findUnique({ where: { slug: s } })),
+    );
 
     return prisma.profile.upsert({
         where: { userId },
@@ -33,6 +38,7 @@ export const getOrCreateProfile = async (userId: string, email: string) => {
             userId,
             email,
             nickname,
+            slug,
         },
         update: {},
     });
@@ -53,12 +59,18 @@ export const upsertProfile = async (params: {
         nickname = user?.name ?? `user_${params.userId.slice(0, 8)}`;
     }
 
+    const slug = await generateUniqueSlug(
+        nickname,
+        async (s) => !!(await prisma.profile.findUnique({ where: { slug: s } })),
+    );
+
     return prisma.profile.upsert({
         where: { userId: params.userId },
         create: {
             userId: params.userId,
             email: params.email,
             nickname,
+            slug,
             teaser: definedData.teaser,
             photoUrl: definedData.photoUrl,
             ratingsPublic: definedData.ratingsPublic,
@@ -78,6 +90,7 @@ export const upsertProfile = async (params: {
         update: {
             email: params.email,
             nickname,
+            ...(definedData.nickname ? { slug } : {}),
             teaser: definedData.teaser,
             photoUrl: definedData.photoUrl,
             ratingsPublic: definedData.ratingsPublic,

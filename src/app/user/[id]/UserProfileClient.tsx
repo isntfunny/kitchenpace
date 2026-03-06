@@ -166,6 +166,7 @@ function Pagination({
 
 export interface UserProfileRecipe {
     id: string;
+    slug: string;
     title: string;
     description: string;
     image: string | null;
@@ -188,6 +189,7 @@ export interface UserProfileActivity {
 
 export interface UserProfileData {
     id: string;
+    slug: string;
     name: string;
     avatar: string | null;
     bio: string | null;
@@ -581,7 +583,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     <Pagination
                                         currentPage={user.currentPage ?? 1}
                                         totalPages={user.totalPages}
-                                        baseUrl={`/user/${user.id}`}
+                                        baseUrl={`/user/${user.slug}`}
                                     />
                                 )}
                             </>
@@ -846,7 +848,7 @@ function RecipeCard({ recipe }: { recipe: UserProfileRecipe }) {
 
     return (
         <Link
-            href={`/recipe/${recipe.id}`}
+            href={`/recipe/${recipe.slug}`}
             className={css({
                 display: 'block',
                 textDecoration: 'none',

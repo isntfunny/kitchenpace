@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 
 import { fireEvent } from '@app/lib/events/fire';
 import { sendNotifuseActivationEmail, syncContactToNotifuse } from '@app/lib/notifuse/email';
+import { generateUniqueSlug } from '@app/lib/slug';
 import { createLogger } from '@shared/logger';
 import { prisma } from '@shared/prisma';
 
@@ -117,11 +118,17 @@ export async function POST(request: Request) {
             },
         });
 
+        const profileSlug = await generateUniqueSlug(
+            nickname.trim(),
+            async (slug) => !!(await prisma.profile.findUnique({ where: { slug } })),
+        );
+
         await prisma.profile.create({
             data: {
                 userId: user.id,
                 email: normalizedEmail,
                 nickname: nickname.trim(),
+                slug: profileSlug,
             },
         });
 

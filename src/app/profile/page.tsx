@@ -341,11 +341,11 @@ function HistorySection({
 }
 
 // ---- Quick links sidebar card ----
-function QuickLinksCard({ userId }: { userId: string }) {
+function QuickLinksCard({ userSlug }: { userSlug: string }) {
     const links = [
         { href: '/profile/edit', label: 'Profil bearbeiten', IconEl: Edit3 },
         { href: '/profile/manage', label: 'Einstellungen', IconEl: Settings },
-        { href: `/user/${userId}`, label: 'Öffentliches Profil', IconEl: User },
+        { href: `/user/${userSlug}`, label: 'Öffentliches Profil', IconEl: User },
         { href: '/auth/password/edit', label: 'Passwort ändern', IconEl: Lock },
     ];
 
@@ -610,7 +610,7 @@ export default async function ProfilePage() {
                                 </Button>
                             </Link>
                             {profile.userId && (
-                                <Link href={`/user/${profile.userId}`}>
+                                <Link href={`/user/${profile.slug}`}>
                                     <Button variant="ghost" size="sm">
                                         <User size={15} />
                                         Öffentlich
@@ -660,7 +660,7 @@ export default async function ProfilePage() {
                             top: { lg: '6' },
                         })}
                     >
-                        <QuickLinksCard userId={profile.userId} />
+                        <QuickLinksCard userSlug={profile.slug} />
 
                         <div className={cardCss}>
                             <Heading as="h2" size="md" className={css({ mb: '3' })}>

@@ -3,6 +3,8 @@ import 'dotenv/config';
 import { hash } from 'bcrypt';
 import { Command } from 'commander';
 
+import { generateUniqueSlug } from '@app/lib/slug';
+
 import { generateCompletions } from './lib/complete.js';
 import { db, Role, RecipeStatus } from './lib/db.js';
 import { triggerJobNow, getJobDefinitions } from './lib/jobs.js';
@@ -77,11 +79,16 @@ program
                         },
                     });
 
+                    const slug = await generateUniqueSlug(
+                        nickname,
+                        async (s) => !!(await tx.profile.findUnique({ where: { slug: s } })),
+                    );
                     await tx.profile.create({
                         data: {
                             userId: created.id,
                             email,
                             nickname,
+                            slug,
                         },
                     });
 

@@ -35,7 +35,7 @@ const KNOWN_ACTIVITY_TYPES: ActivityType[] = [
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
 
-const buildUserMetadata = async (name: string, userId: string): Promise<Metadata> => {
+const buildUserMetadata = async (name: string, userId: string, userSlug: string): Promise<Metadata> => {
     const profileImageUrl = await getThumbnailUrlBySource(
         { type: 'user', id: userId },
         {
@@ -51,7 +51,7 @@ const buildUserMetadata = async (name: string, userId: string): Promise<Metadata
         openGraph: {
             title: `${name} | KüchenTakt`,
             description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
-            url: `${SITE_URL}/user/${userId}`,
+            url: `${SITE_URL}/user/${userSlug}`,
             siteName: 'KüchenTakt',
             type: 'profile',
             ...(profileImageUrl && {
@@ -74,11 +74,11 @@ const buildUserMetadata = async (name: string, userId: string): Promise<Metadata
     };
 };
 
-async function getUserProfile(userId: string, page: number = 1): Promise<UserProfileData | null> {
+async function getUserProfile(slug: string, page: number = 1): Promise<UserProfileData | null> {
     const skip = (page - 1) * PAGE_SIZE;
 
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
+    const user = await prisma.user.findFirst({
+        where: { profile: { slug } },
         include: {
             profile: true,
             _count: {
@@ -95,6 +95,7 @@ async function getUserProfile(userId: string, page: number = 1): Promise<UserPro
                 take: PAGE_SIZE,
                 select: {
                     id: true,
+                    slug: true,
                     title: true,
                     description: true,
                     imageKey: true,
@@ -159,6 +160,7 @@ async function getUserProfile(userId: string, page: number = 1): Promise<UserPro
 
     return {
         id: user.id,
+        slug: user.profile?.slug ?? user.id,
         name: user.name ?? user.profile?.nickname ?? 'Unbekannt',
         avatar: user.profile?.photoUrl ?? user.image ?? null,
         bio: user.profile?.bio ?? null,
@@ -168,6 +170,7 @@ async function getUserProfile(userId: string, page: number = 1): Promise<UserPro
         totalPages: Math.ceil(user._count.recipes / PAGE_SIZE),
         recipes: user.recipes.map((recipe) => ({
             id: recipe.id,
+            slug: recipe.slug,
             title: recipe.title,
             description: recipe.description ?? '',
             image: recipe.imageKey ?? null,
@@ -201,7 +204,7 @@ export async function generateMetadata({ params }: UserProfileProps): Promise<Me
             title: 'Benutzer nicht gefunden | KüchenTakt',
         };
     }
-    return buildUserMetadata(user.name, user.id);
+    return buildUserMetadata(user.name, user.id, user.slug);
 }
 
 export default async function UserProfilePage({ params, searchParams }: UserProfileProps) {

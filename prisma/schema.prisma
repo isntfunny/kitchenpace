@@ -171,6 +171,7 @@ model Profile {
   userId         String   @unique
   email          String
   nickname       String   @db.VarChar(40)
+  slug           String   @unique @db.VarChar(60)
   teaser         String?
   photoUrl       String?
   bio            String?
@@ -347,13 +348,16 @@ model RecipeIngredient {
 // ============================================
 
 model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  imageUrl    String?
-  color       String?  // Hex color for UI theming
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  name          String   @unique
+  slug          String   @unique
+  description   String?
+  imageUrl      String?
+  color         String?  // Hex accent color for UI theming
+  icon          String?  // Lucide icon name (e.g. "utensils", "cake", "salad")
+  coverImageKey String?  // S3 key for hero/cover image
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
 
   recipes RecipeCategory[]
 }

@@ -280,9 +280,9 @@ function generateFallbackOg(categoryName: string, recipeCount: number, color: st
     const iconElements = getLucideIconSvgElements(iconName);
     const iconPaths = buildLucideSvgPaths(iconElements);
 
-    // Large background icon (very subtle)
+    // Large background icon (subtle but visible)
     const bgIconSize = 800;
-    const bgIconSvg = iconPaths ? `<g opacity="0.06" transform="translate(${WIDTH / 2 - bgIconSize / 2}, ${HEIGHT / 2 - bgIconSize / 2})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${bgIconSize}" height="${bgIconSize}">${iconPaths.replace(/currentColor/g, color)}</svg></g>` : '';
+    const bgIconSvg = iconPaths ? `<g opacity="0.12" transform="translate(${WIDTH / 2 - bgIconSize / 2}, ${HEIGHT / 2 - bgIconSize / 2})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${bgIconSize}" height="${bgIconSize}">${iconPaths.replace(/currentColor/g, color)}</svg></g>` : '';
 
     // Foreground icon
     const iconSvg = iconPaths ? `<g transform="translate(${WIDTH / 2 - 60}, ${HEIGHT / 2 - 140})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="120" height="120">${iconPaths.replace(/currentColor/g, color)}</svg></g>` : '';

@@ -1,4 +1,4 @@
-import { Activity, ShieldCheck, ShieldAlert, Users, BookOpen, Tag, Settings, Sparkles } from 'lucide-react';
+import { Activity, ShieldCheck, ShieldAlert, Users, BookOpen, Tag, Settings, Sparkles, LayoutList } from 'lucide-react';
 import Link from 'next/link';
 
 import { PageShell } from '@app/components/layouts/PageShell';
@@ -44,6 +44,12 @@ const ADMIN_ACTIONS = [
         description: 'Schlagwörter verwalten.',
         href: '/admin/tags',
         icon: Tag,
+    },
+    {
+        label: 'Kategorien',
+        description: 'Rezept-Kategorien verwalten und sortieren.',
+        href: '/admin/categories',
+        icon: LayoutList,
     },
     {
         label: 'Worker Dashboard',

@@ -267,34 +267,34 @@ export default defineConfig({
                         },
                     },
                     'palette.orange': {
-                        value: { base: '{colors.palette.orange}', _dark: '{colors.palette.orange-dark}' },
+                        value: { base: '#e07b53', _dark: '#f09070' },
                     },
                     'palette.gold': {
-                        value: { base: '{colors.palette.gold}', _dark: '{colors.palette.gold-dark}' },
+                        value: { base: '#f8b500', _dark: '#ffc94d' },
                     },
                     'palette.emerald': {
-                        value: { base: '{colors.palette.emerald}', _dark: '{colors.palette.emerald-dark}' },
+                        value: { base: '#00b894', _dark: '#2ed8a3' },
                     },
                     'palette.purple': {
-                        value: { base: '{colors.palette.purple}', _dark: '{colors.palette.purple-dark}' },
+                        value: { base: '#6c5ce7', _dark: '#9b8ff5' },
                     },
                     'palette.blue': {
-                        value: { base: '{colors.palette.blue}', _dark: '{colors.palette.blue-dark}' },
+                        value: { base: '#0984e3', _dark: '#4ea8f0' },
                     },
                     'palette.pink': {
-                        value: { base: '{colors.palette.pink}', _dark: '{colors.palette.pink-dark}' },
+                        value: { base: '#fd79a8', _dark: '#ff9ec0' },
                     },
                     'status.success': {
-                        value: { base: '{colors.status.success}', _dark: '#4ade80' },
+                        value: { base: '#22c55e', _dark: '#4ade80' },
                     },
                     'status.error': {
-                        value: { base: '{colors.status.error}', _dark: '#f87171' },
+                        value: { base: '#ef4444', _dark: '#f87171' },
                     },
                     'status.danger': {
-                        value: { base: '{colors.status.danger}', _dark: '#f87171' },
+                        value: { base: '#dc2626', _dark: '#f87171' },
                     },
                     'status.warning': {
-                        value: { base: '{colors.status.warning}', _dark: '#fbbf24' },
+                        value: { base: '#f59e0b', _dark: '#fbbf24' },
                     },
                     'shadow.small': {
                         value: '0 2px 8px rgba(0,0,0,0.06)',

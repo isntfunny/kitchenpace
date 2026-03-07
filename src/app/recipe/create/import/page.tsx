@@ -7,9 +7,10 @@ import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 
 import { ImportRecipeClient } from './ImportRecipeClient';
 
+// NEVER index this page — it is a private AI tool for authenticated users only
 export const metadata: Metadata = {
     title: 'Rezept importieren',
-    description: 'Importiere ein Rezept von einer externen URL bei KüchenTakt.',
+    robots: { index: false, follow: false },
 };
 
 export default async function ImportRecipePage() {

@@ -171,6 +171,8 @@ export interface RecipeDetailData {
     favoriteCount: number;
     ratingCount: number;
     cookCount: number;
+    publishedAt?: string | null;
+    updatedAt?: string;
     moderationStatus?: string;
     moderationNote?: string | null;
     viewer?: {
@@ -298,6 +300,8 @@ export async function fetchRecipeBySlug(
         ratingCount: recipe.ratingCount ?? 0,
         cookCount: recipe.cookCount ?? 0,
         imageKey: recipe.imageKey ?? null,
+        publishedAt: recipe.publishedAt?.toISOString() ?? null,
+        updatedAt: recipe.updatedAt.toISOString(),
         moderationStatus: recipe.moderationStatus ?? undefined,
         moderationNote: recipe.moderationNote ?? undefined,
         viewer: viewerId

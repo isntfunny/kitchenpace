@@ -1,5 +1,6 @@
 'use client';
 
+import { useOpenPanel } from '@openpanel/nextjs';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -59,6 +60,7 @@ export function RecipeForm({
     initialData,
     layout = 'stack',
 }: RecipeFormProps) {
+    const op = useOpenPanel();
     const isEditMode = Boolean(initialData);
 
     // ── form state ──────────────────────────────────────────
@@ -452,6 +454,16 @@ export function RecipeForm({
             }
 
             const payload = buildPayload(saveStatus);
+
+            if (saveStatus === 'PUBLISHED') {
+                op.track('recipe_published', {
+                    is_edit: isEditMode,
+                    has_image: Boolean(imageUrl),
+                    has_flow: flowNodesRef.current.length > 0,
+                    step_count: flowNodesRef.current.length,
+                    ingredient_count: ingredients.length,
+                });
+            }
 
             if (isEditMode || autoSavedIdRef.current) {
                 const recipeId = (isEditMode ? initialData!.id : autoSavedIdRef.current)!;

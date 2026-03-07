@@ -13,6 +13,39 @@ import { getServerAuthSession } from '@app/lib/auth';
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 
+const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+        {
+            '@type': 'WebSite',
+            '@id': `${APP_URL}/#website`,
+            url: APP_URL,
+            name: 'KüchenTakt',
+            description:
+                'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen.',
+            inLanguage: 'de-DE',
+            potentialAction: {
+                '@type': 'SearchAction',
+                target: {
+                    '@type': 'EntryPoint',
+                    urlTemplate: `${APP_URL}/recipes?q={search_term_string}`,
+                },
+                'query-input': 'required name=search_term_string',
+            },
+        },
+        {
+            '@type': 'Organization',
+            '@id': `${APP_URL}/#organization`,
+            name: 'KüchenTakt',
+            url: APP_URL,
+            logo: {
+                '@type': 'ImageObject',
+                url: `${APP_URL}/kitchenpace_icon.png`,
+            },
+        },
+    ],
+};
+
 import './globals.css';
 
 const playfair = Playfair_Display({
@@ -228,6 +261,11 @@ export default async function RootLayout({
                 />
             </head>
             <body className={`${playfair.variable} ${inter.variable}`}>
+                <script
+                    type="application/ld+json"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+                />
                 <ChatwootWidgetComponent />
                 <OpenPanelComponent
                     clientId={openPanelClientId}

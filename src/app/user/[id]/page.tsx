@@ -48,12 +48,13 @@ const buildUserMetadata = async (name: string, userId: string, userSlug: string)
     return {
         title: `${name} | KüchenTakt`,
         description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+        alternates: { canonical: `${APP_URL}/user/${userSlug}` },
         openGraph: {
             title: `${name} | KüchenTakt`,
             description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
             url: `${APP_URL}/user/${userSlug}`,
             siteName: 'KüchenTakt',
-            type: 'profile',
+            type: 'website',
             ...(profileImageUrl && {
                 images: [
                     {
@@ -66,7 +67,7 @@ const buildUserMetadata = async (name: string, userId: string, userSlug: string)
             }),
         },
         twitter: {
-            card: profileImageUrl ? 'summary' : 'summary',
+            card: profileImageUrl ? 'summary_large_image' : 'summary',
             title: `${name} | KüchenTakt`,
             description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
             ...(profileImageUrl && { images: [profileImageUrl] }),

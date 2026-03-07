@@ -73,8 +73,27 @@ export default async function CategoryPage({ params }: Props) {
     const safe = <T,>(r: PromiseSettledResult<T>, fallback: T): T =>
         r.status === 'fulfilled' ? r.value : fallback;
 
+    const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'KüchenTakt', item: APP_URL },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: category.name,
+                item: `${APP_URL}/category/${category.slug}`,
+            },
+        ],
+    };
+
     return (
         <PageShell>
+            <script
+                type="application/ld+json"
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+            />
             <CategoryLanding
                 category={category}
                 newest={safe(newest, [])}

@@ -9,6 +9,7 @@ import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
 import { APP_URL } from '@app/lib/url';
 
 import { RecipeDetailClient } from './RecipeDetailClient';
+import { RecipeJsonLd } from './RecipeJsonLd';
 
 export const revalidate = 60;
 export const dynamicParams = true;
@@ -23,6 +24,7 @@ type RecipePageProps = {
 
 const buildRecipeMetadata = async (
     recipe: Awaited<ReturnType<typeof fetchRecipeBySlug>>,
+    isDraft = false,
 ): Promise<Metadata> => {
     if (!recipe) {
         return {
@@ -31,28 +33,37 @@ const buildRecipeMetadata = async (
         };
     }
 
+    const fallbackDescription = `Rezept von ${recipe.author?.name ?? 'KüchenTakt'} – Zutaten, Schritte und Zeiten auf einen Blick.`;
+    const description = recipe.description || fallbackDescription;
+
     const bannerUrl =
         recipe.imageKey && recipe.id
             ? await getThumbnailUrlBySource(
                   { type: 'recipe', id: recipe.id },
-                  { width: 1200, height: 600 },
+                  { width: 1200, height: 630 },
               )
             : '/og-image.png';
 
+    const recipeUrl = `${APP_URL}/recipe/${recipe.slug}`;
+
     return {
         title: `${recipe.title} | KüchenTakt`,
-        description: recipe.description,
+        description,
+        alternates: { canonical: recipeUrl },
+        ...(isDraft && { robots: { index: false, follow: false } }),
         openGraph: {
             title: `${recipe.title} | KüchenTakt`,
-            description: recipe.description,
-            url: `${APP_URL}/recipe/${recipe.slug}`,
+            description,
+            url: recipeUrl,
             siteName: 'KüchenTakt',
             type: 'article',
+            publishedTime: recipe.publishedAt ?? undefined,
+            modifiedTime: recipe.updatedAt,
             images: [
                 {
                     url: bannerUrl,
                     width: 1200,
-                    height: 600,
+                    height: 630,
                     alt: recipe.title,
                 },
             ],
@@ -60,7 +71,7 @@ const buildRecipeMetadata = async (
         twitter: {
             card: 'summary_large_image',
             title: `${recipe.title} | KüchenTakt`,
-            description: recipe.description,
+            description,
             images: [bannerUrl],
         },
     };
@@ -68,8 +79,11 @@ const buildRecipeMetadata = async (
 
 export async function generateMetadata({ params }: RecipePageProps): Promise<Metadata> {
     const resolvedParams = await params;
-    const recipe = await fetchRecipeBySlug(resolvedParams.id);
-    return buildRecipeMetadata(recipe);
+    // For generateMetadata we fetch with unpublished to detect draft status
+    const published = await fetchRecipeBySlug(resolvedParams.id);
+    if (published) return buildRecipeMetadata(published, false);
+    const draft = await fetchRecipeBySlug(resolvedParams.id, undefined, true);
+    return buildRecipeMetadata(draft, true);
 }
 
 export default async function RecipePage({ params }: RecipePageProps) {
@@ -99,13 +113,24 @@ export default async function RecipePage({ params }: RecipePageProps) {
     const cookImages = await fetchRecipeCookImages(resolvedParams.id);
     const isDraft = recipe.status !== 'PUBLISHED';
 
+    const ogImageUrl =
+        recipe.imageKey && recipe.id
+            ? await getThumbnailUrlBySource(
+                  { type: 'recipe', id: recipe.id },
+                  { width: 1200, height: 630 },
+              )
+            : '/og-image.png';
+
     return (
-        <RecipeDetailClient
-            recipe={recipe as any}
-            author={recipe.author as any}
-            recipeActivities={[]}
-            cookImages={cookImages}
-            isDraft={isDraft}
-        />
+        <>
+            <RecipeJsonLd recipe={recipe} ogImageUrl={ogImageUrl} />
+            <RecipeDetailClient
+                recipe={recipe as any}
+                author={recipe.author as any}
+                recipeActivities={[]}
+                cookImages={cookImages}
+                isDraft={isDraft}
+            />
+        </>
     );
 }

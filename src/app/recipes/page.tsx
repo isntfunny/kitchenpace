@@ -8,6 +8,7 @@ import {
 import { PageShell } from '@app/components/layouts/PageShell';
 import { RecipeSearchClient } from '@app/components/search/RecipeSearchClient';
 import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
+import { APP_URL } from '@app/lib/url';
 
 type RecipesPageProps = {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
     title: 'Rezepte',
     description:
         'Durchsuche unsere Rezepte-Sammlung. Filtere nach Kategorien, Zutaten und Tags. Finde dein nächstes Lieblingsrezept.',
+    alternates: { canonical: `${APP_URL}/recipes` },
 };
 
 export const revalidate = 60;

@@ -1,5 +1,6 @@
 'use client';
 
+import { useOpenPanel } from '@openpanel/nextjs';
 import {
     ArrowRight,
     Check,
@@ -86,6 +87,7 @@ interface ImportRecipeClientProps {
 
 export function ImportRecipeClient({ categories, tags: _tags, authorId }: ImportRecipeClientProps) {
     const router = useRouter();
+    const op = useOpenPanel();
 
     // ── State ────────────────────────────────────────────────────────────────
     const [currentStep, setCurrentStep] = useState<ImportStep>('url');
@@ -172,6 +174,7 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
         });
 
         addStreamEvent({ type: 'progress', message: 'Import gestartet', detail: url.trim() });
+        op.track('recipe_import_started', { url: url.trim() });
 
         try {
             // ── PHASE 1: SCRAPING ──
@@ -314,6 +317,10 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                 addStreamEvent({ type: 'data', message: 'tags', detail: analyzed.tags.join(', ') });
             }
             addStreamEvent({ type: 'complete', message: 'Analyse erfolgreich abgeschlossen' });
+            op.track('recipe_import_completed', {
+                node_count: analyzed.flowNodes.length,
+                ingredient_count: analyzed.ingredients.length,
+            });
 
             // Set form state from analyzed recipe
             setTitle(analyzed.title);

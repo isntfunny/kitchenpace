@@ -242,8 +242,8 @@ export function Header() {
 
                     <div
                         className={css({
-                            flex: '1 1 320px',
-                            minWidth: '220px',
+                            flex: { base: '1 1 180px', sm: '1 1 240px', md: '1 1 320px' },
+                            minWidth: { base: '160px', sm: '180px', md: '220px' },
                         })}
                     >
                         <HeaderSearch />

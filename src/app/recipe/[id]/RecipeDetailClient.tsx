@@ -553,13 +553,20 @@ export function RecipeDetailClient({
                                         top: '50%',
                                         transform: 'translateY(-50%)',
                                         left: '2',
-                                        width: '40px',
-                                        height: '40px',
+                                        width: '48px',
+                                        height: '48px',
                                         borderRadius: 'full',
                                         border: 'none',
-                                        bg: 'rgba(0,0,0,0.4)',
+                                        bg: 'rgba(0,0,0,0.5)',
                                         color: 'white',
                                         cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '24px',
+                                        transition: 'all 200ms ease',
+                                        _hover: { bg: 'rgba(0,0,0,0.7)' },
+                                        _active: { transform: 'translateY(-50%) scale(0.95)' },
                                     })}
                                 >
                                     ‹
@@ -573,13 +580,20 @@ export function RecipeDetailClient({
                                         top: '50%',
                                         transform: 'translateY(-50%)',
                                         right: '2',
-                                        width: '40px',
-                                        height: '40px',
+                                        width: '48px',
+                                        height: '48px',
                                         borderRadius: 'full',
                                         border: 'none',
-                                        bg: 'rgba(0,0,0,0.4)',
+                                        bg: 'rgba(0,0,0,0.5)',
                                         color: 'white',
                                         cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '24px',
+                                        transition: 'all 200ms ease',
+                                        _hover: { bg: 'rgba(0,0,0,0.7)' },
+                                        _active: { transform: 'translateY(-50%) scale(0.95)' },
                                     })}
                                 >
                                     ›
@@ -658,9 +672,9 @@ export function RecipeDetailClient({
                                                             ? 'primary'
                                                             : 'transparent',
                                                     padding: 0,
-                                                    minWidth: { base: '72px', lg: 'auto' },
-                                                    width: '72px',
-                                                    height: '72px',
+                                                    minWidth: { base: '64px', md: '72px', lg: 'auto' },
+                                                    width: { base: '64px', md: '72px' },
+                                                    height: { base: '64px', md: '72px' },
                                                     flex: { base: '0 0 auto', lg: 'initial' },
                                                     overflow: 'hidden',
                                                     cursor: 'pointer',
@@ -730,7 +744,7 @@ export function RecipeDetailClient({
                                 {recipe.description}
                             </p>
 
-                            <div className={grid({ columns: 3, gap: '3', mb: '4' })}>
+                            <div className={grid({ columns: { base: 1, sm: 2, lg: 3 }, gap: '3', mb: '4' })}>
                                 <div
                                     className={css({
                                         textAlign: 'center',
@@ -882,9 +896,10 @@ export function RecipeDetailClient({
                                 </div>
                                 <div
                                     className={flex({
-                                        gap: '2',
+                                        gap: { base: '1.5', md: '2' },
                                         align: 'center',
                                         flexWrap: 'wrap',
+                                        justify: { base: 'flex-start', md: 'center' },
                                     })}
                                 >
                                     {starValues.map((value) => (

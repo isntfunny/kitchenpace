@@ -61,12 +61,12 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                             key={cat.slug}
                             href={`/category/${cat.slug}`}
                             className={css({
-                                flex: '1 1 0',
+                                flex: { base: '1 1 80px', md: '1 1 0' },
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
                                 gap: '2',
-                                px: '2',
+                                px: { base: '1.5', md: '2' },
                                 py: '3',
                                 borderRadius: 'xl',
                                 border: '2px solid',
@@ -101,22 +101,24 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                             </div>
                             <span
                                 className={css({
-                                    fontSize: '0.8rem',
+                                    fontSize: { base: '0.75rem', md: '0.8rem' },
                                     fontWeight: '600',
                                     color: 'text',
                                     whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                    lineClamp: '1',
                                 })}
                             >
                                 {cat.name}
                             </span>
                             <span
                                 className={css({
-                                    fontSize: '0.65rem',
+                                    fontSize: { base: '0.6rem', md: '0.65rem' },
                                     color: 'text-muted',
                                     whiteSpace: 'nowrap',
                                 })}
                             >
-                                {cat.recipeCount} Rezepte
+                                {cat.recipeCount}
                             </span>
                         </Link>
                     );

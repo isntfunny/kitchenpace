@@ -2,6 +2,7 @@
 
 import { Clock, Star } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { css, cx } from 'styled-system/css';
@@ -107,6 +108,7 @@ function CategoryOverlay({
     recipe: RecipeCardRecipe;
     link?: boolean;
 }) {
+    const router = useRouter();
     const color = categoryColors[recipe.category] || '#e07b53';
 
     const badgeStyle = css({
@@ -122,20 +124,25 @@ function CategoryOverlay({
         textTransform: 'uppercase',
         letterSpacing: 'wide',
         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-        textDecoration: 'none',
+        border: 'none',
+        cursor: link ? 'pointer' : 'default',
         transition: 'all 150ms ease',
         _hover: link ? { opacity: 0.85, transform: 'scale(1.05)' } : {},
     });
 
     if (link && recipe.categorySlug) {
         return (
-            <a
-                href={`/category/${recipe.categorySlug}`}
-                onClick={(e) => e.stopPropagation()}
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    router.push(`/category/${recipe.categorySlug}`);
+                }}
                 className={badgeStyle}
             >
                 {recipe.category}
-            </a>
+            </button>
         );
     }
 

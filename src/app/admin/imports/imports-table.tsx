@@ -11,12 +11,11 @@ import {
     getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
+import JsonView from '@uiw/react-json-view';
 import { ArrowUpDown, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { Dialog } from 'radix-ui';
 import { useState } from 'react';
-import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
-import 'react-json-view-lite/dist/index.css';
 
 import { css } from 'styled-system/css';
 
@@ -244,9 +243,11 @@ function ImportDetailDialog({ run, open, onClose }: { run: ImportRunRow; open: b
                             })}>
                                 {run.rawApiResponse != null ? (
                                     <JsonView
-                                        data={run.rawApiResponse as object}
-                                        shouldExpandNode={allExpanded}
-                                        style={defaultStyles}
+                                        value={run.rawApiResponse as object}
+                                        collapsed={2}
+                                        enableClipboard
+                                        displayDataTypes={false}
+                                        shortenTextAfterLength={80}
                                     />
                                 ) : (
                                     <div className={css({ padding: '1rem', color: 'muted', fontSize: 'sm' })}>Keine Daten vorhanden</div>

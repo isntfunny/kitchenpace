@@ -287,54 +287,113 @@ function RecipeChip({
 
     return (
         <HoverPreview recipe={recipe}>
-            <Link
-                href={href}
-                className={css({
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '2',
-                    px: '3',
-                    py: '1.5',
-                    borderRadius: 'full',
-                    bg: isPinned ? 'rgba(248,181,0,0.15)' : 'transparent',
-                    border: '1px solid',
-                    borderColor: isPinned ? 'rgba(248,181,0,0.3)' : 'transparent',
-                    fontSize: 'sm',
-                    fontWeight: isPinned ? '500' : '400',
-                    color: isPinned ? 'text' : 'text-muted',
-                    cursor: 'pointer',
-                    transition: 'all 150ms ease',
-                    textDecoration: 'none',
-                    _hover: {
-                        bg: isPinned ? 'rgba(248,181,0,0.25)' : 'rgba(0,0,0,0.03)',
-                        borderColor: isPinned ? '#f8b500' : 'transparent',
-                        color: 'text',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    },
-                })}
-            >
-                <span className={css({ whiteSpace: 'nowrap' })}>{recipe.title}</span>
-                {showPin && (
-                    <span
-                        onClick={handlePinClick}
+            <motion.div whileHover="hover" initial="rest" animate="rest">
+                <Link
+                    href={href}
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2',
+                        px: '3',
+                        py: '1.5',
+                        borderRadius: 'full',
+                        bg: isPinned ? 'rgba(248,181,0,0.15)' : 'rgba(0,0,0,0.02)',
+                        border: '1px solid',
+                        borderColor: isPinned ? 'rgba(248,181,0,0.3)' : 'transparent',
+                        fontSize: 'sm',
+                        fontWeight: isPinned ? '500' : '400',
+                        color: isPinned ? 'text' : 'text-muted',
+                        cursor: 'pointer',
+                        textDecoration: 'none',
+                        position: 'relative',
+                        overflow: 'hidden',
+                    })}
+                >
+                    {/* Animated background glow on hover */}
+                    <motion.span
                         className={css({
-                            fontSize: 'xs',
-                            color: 'foreground.muted',
-                            marginLeft: '1',
-                            padding: '2px',
+                            position: 'absolute',
+                            inset: 0,
                             borderRadius: 'full',
-                            cursor: 'pointer',
-                            transition: 'all 150ms ease',
-                            _hover: {
-                                bg: 'rgba(224,123,83,0.2)',
-                                color: 'primary',
-                            },
+                            pointerEvents: 'none',
                         })}
+                        variants={{
+                            rest: {
+                                background: 'transparent',
+                                boxShadow: '0 0 0 rgba(224,123,83,0)',
+                            },
+                            hover: {
+                                background: isPinned
+                                    ? 'rgba(248,181,0,0.2)'
+                                    : 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(248,181,0,0.08))',
+                                boxShadow: '0 2px 12px rgba(224,123,83,0.15)',
+                            },
+                        }}
+                        transition={{ duration: 0.25 }}
+                    />
+                    {/* Small recipe thumbnail that peeks in on hover */}
+                    <motion.span
+                        className={css({
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: 'full',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            position: 'relative',
+                        })}
+                        variants={{
+                            rest: { width: 0, opacity: 0, marginRight: '-8px' },
+                            hover: { width: 20, opacity: 1, marginRight: 0 },
+                        }}
+                        transition={{ duration: 0.2 }}
                     >
-                        <Pin size={14} />
-                    </span>
-                )}
-            </Link>
+                        <SmartImage
+                            src={recipe.imageUrl ?? undefined}
+                            alt=""
+                            recipeId={recipe.id}
+                            width={20}
+                            height={20}
+                            className={css({
+                                width: '20px',
+                                height: '20px',
+                                objectFit: 'cover',
+                                borderRadius: 'full',
+                            })}
+                        />
+                    </motion.span>
+                    <motion.span
+                        className={css({ whiteSpace: 'nowrap', position: 'relative' })}
+                        variants={{
+                            rest: { color: isPinned ? 'var(--colors-text)' : 'var(--colors-text-muted)' },
+                            hover: { color: 'var(--colors-text)' },
+                        }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {recipe.title}
+                    </motion.span>
+                    {showPin && (
+                        <span
+                            onClick={handlePinClick}
+                            className={css({
+                                fontSize: 'xs',
+                                color: 'foreground.muted',
+                                marginLeft: '1',
+                                padding: '2px',
+                                borderRadius: 'full',
+                                cursor: 'pointer',
+                                transition: 'all 150ms ease',
+                                position: 'relative',
+                                _hover: {
+                                    bg: 'rgba(224,123,83,0.2)',
+                                    color: 'primary',
+                                },
+                            })}
+                        >
+                            <Pin size={14} />
+                        </span>
+                    )}
+                </Link>
+            </motion.div>
         </HoverPreview>
     );
 }

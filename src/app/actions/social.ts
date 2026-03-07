@@ -90,7 +90,7 @@ export async function toggleFavoriteAction(recipeId: string) {
     } as const;
 
     const existing = await prisma.favorite.findUnique({ where: favoriteKey });
-    const revalidateTargets = [...buildRecipePaths(recipeId, recipe.slug), '/favorites'];
+    const revalidateTargets = [...buildRecipePaths(recipeId, recipe.slug), '/profile/favorites'];
 
     if (existing) {
         await prisma.favorite.delete({ where: { id: existing.id } });
@@ -119,7 +119,7 @@ export async function toggleFavoriteAction(recipeId: string) {
     for (const path of buildRecipePaths(recipeId, recipe.slug)) {
         revalidatePath(path);
     }
-    revalidatePath('/favorites');
+    revalidatePath('/profile/favorites');
 
     return {
         isFavorite: !existing,

@@ -16,9 +16,9 @@ const PUBLIC_PAGES = [
 const AUTH_PAGES = [
     '/profile',
     '/profile/edit',
-    '/profile/manage',
-    '/my-recipes',
-    '/favorites',
+    '/profile/settings',
+    '/profile/recipes',
+    '/profile/favorites',
     '/notifications',
     '/recipe/create',
 ];

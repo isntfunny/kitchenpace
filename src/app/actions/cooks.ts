@@ -120,7 +120,7 @@ export async function deleteUserCookImage(imageId: string): Promise<void> {
     }
 
     await prisma.cookImage.delete({ where: { id: imageId } });
-    revalidatePath('/profile/my-images');
+    revalidatePath('/profile/images');
 }
 
 export async function fetchUserCookHistory(userId: string, take = 10) {

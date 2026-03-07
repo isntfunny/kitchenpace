@@ -120,7 +120,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
 
                         <DropdownMenu.Item asChild>
                             <Link
-                                href="/profile/manage"
+                                href="/profile/settings"
                                 className={css({
                                     display: 'flex',
                                     alignItems: 'center',

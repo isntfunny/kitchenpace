@@ -1,4 +1,4 @@
-import { Camera, ChefHat, Edit3, FileText, Lock, Settings, User } from 'lucide-react';
+import { ChefHat, Edit3, FileText, Settings, User } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -20,8 +20,8 @@ import {
 import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { Heading, Text } from '@app/components/atoms/Typography';
-import SignOutButton from '@app/components/auth/SignOutButton';
 import { ActivityList } from '@app/components/features/ActivitySidebar';
+import { QuickLinksCard } from '@app/components/features/QuickLinksCard';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { FadeInSection } from '@app/components/motion/FadeInSection';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
@@ -178,7 +178,7 @@ function DraftSection({ drafts }: { drafts: DraftRecipe[] }) {
     if (drafts.length === 0) return null;
     return (
         <section>
-            <SectionHeader title="Aktuelle Entwürfe" count={drafts.length} href="/my-recipes" />
+            <SectionHeader title="Aktuelle Entwürfe" count={drafts.length} href="/profile/recipes" />
             <div
                 className={grid({
                     columns: { base: 2, sm: 3, md: 4 },
@@ -248,7 +248,7 @@ function DraftSection({ drafts }: { drafts: DraftRecipe[] }) {
 function TopRecipesSection({ recipes }: { recipes: TopRecipeEntry[] }) {
     return (
         <section>
-            <SectionHeader title="Meine besten Rezepte" href="/my-recipes" />
+            <SectionHeader title="Meine besten Rezepte" href="/profile/recipes" />
             {recipes.length === 0 ? (
                 <div
                     className={css({
@@ -338,53 +338,6 @@ function HistorySection({
                 ))}
             </div>
         </section>
-    );
-}
-
-// ---- Quick links sidebar card ----
-function QuickLinksCard({ userSlug }: { userSlug: string }) {
-    const links = [
-        { href: '/profile/edit', label: 'Profil bearbeiten', IconEl: Edit3 },
-        { href: '/profile/manage', label: 'Einstellungen', IconEl: Settings },
-        { href: '/profile/my-images', label: 'Meine Zubereitet-Bilder', IconEl: Camera },
-        { href: `/user/${userSlug}`, label: 'Öffentliches Profil', IconEl: User },
-        { href: '/auth/password/edit', label: 'Passwort ändern', IconEl: Lock },
-    ];
-
-    return (
-        <div className={cardCss}>
-            <Heading as="h2" size="md" className={css({ mb: '3' })}>
-                Schnellzugriff
-            </Heading>
-            <div className={css({ display: 'flex', flexDir: 'column', gap: '1' })}>
-                {links.map(({ href, label, IconEl }) => (
-                    <Link
-                        key={href}
-                        href={href}
-                        className={css({
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '3',
-                            px: '3',
-                            py: '2',
-                            borderRadius: 'lg',
-                            textDecoration: 'none',
-                            color: 'text',
-                            fontSize: 'sm',
-                            fontWeight: '500',
-                            transition: 'all 150ms ease',
-                            _hover: { bg: 'primary', color: 'white' },
-                        })}
-                    >
-                        <IconEl size={16} />
-                        {label}
-                    </Link>
-                ))}
-                <div className={css({ pt: '1', mt: '1', borderTop: '1px solid', borderColor: 'border' })}>
-                    <SignOutButton label="Abmelden" />
-                </div>
-            </div>
-        </div>
     );
 }
 
@@ -606,7 +559,7 @@ export default async function ProfilePage() {
                                     Profil bearbeiten
                                 </Button>
                             </Link>
-                            <Link href="/profile/manage">
+                            <Link href="/profile/settings">
                                 <Button variant="secondary" size="sm">
                                     <Settings size={15} />
                                     Einstellungen
@@ -641,12 +594,12 @@ export default async function ProfilePage() {
                         <HistorySection
                             title="Zuletzt zubereitet"
                             items={cookItems}
-                            href="/my-recipes"
+                            href="/profile/recipes"
                         />
                         <HistorySection
                             title="Zuletzt geliked"
                             items={favoriteItems}
-                            href="/favorites"
+                            href="/profile/favorites"
                         />
                         <HistorySection
                             title="Zuletzt angesehen"

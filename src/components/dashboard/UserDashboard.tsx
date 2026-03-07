@@ -251,7 +251,7 @@ export function UserDashboard({
                     </Link>
 
                     <Link
-                        href="/profile/manage"
+                        href="/profile/settings"
                         className={css({
                             borderRadius: '2xl',
                             padding: '6',
@@ -277,7 +277,7 @@ export function UserDashboard({
                     </Link>
 
                     <Link
-                        href="/favorites"
+                        href="/profile/favorites"
                         className={css({
                             borderRadius: '2xl',
                             padding: '6',
@@ -303,7 +303,7 @@ export function UserDashboard({
                     </Link>
 
                     <Link
-                        href="/my-recipes"
+                        href="/profile/recipes"
                         className={css({
                             borderRadius: '2xl',
                             padding: '6',

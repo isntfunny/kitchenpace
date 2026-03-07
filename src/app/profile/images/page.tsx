@@ -17,10 +17,10 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function MyImagesPage() {
-    const session = await getServerAuthSession('profile/my-images');
+    const session = await getServerAuthSession('profile/images');
 
     if (!session?.user?.id) {
-        logMissingSession(session, 'profile/my-images');
+        logMissingSession(session, 'profile/images');
         redirect('/auth/signin');
     }
 

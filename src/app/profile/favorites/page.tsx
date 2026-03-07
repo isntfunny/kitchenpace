@@ -19,7 +19,7 @@ export default async function FavoritesPage() {
     const session = await getServerAuthSession('favorites-page');
 
     if (!session?.user?.id) {
-        redirect('/auth/signin?callbackUrl=/favorites');
+        redirect('/auth/signin?callbackUrl=/profile/favorites');
     }
 
     const favorites = await fetchUserFavorites(session.user.id);

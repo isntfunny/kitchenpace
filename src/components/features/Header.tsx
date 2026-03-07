@@ -1,9 +1,10 @@
 'use client';
 
-import { LayoutGrid, Menu, Plus, ShieldCheck } from 'lucide-react';
+import { LayoutGrid, Menu, Plus, Shield, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
+import { useCallback, useEffect, useState } from 'react';
 
 import { NotificationBell } from '@app/components/notifications/NotificationBell';
 import { HeaderSearch } from '@app/components/search/HeaderSearch';
@@ -187,7 +188,10 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
 export function Header() {
     const { status, data: session } = useSession();
     const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
-    const isAdmin = isAuthenticated && session?.user?.role === 'ADMIN';
+    const userRole = session?.user?.role;
+    const isAdmin = isAuthenticated && userRole === 'ADMIN';
+    const isModerator = isAuthenticated && userRole === 'MODERATOR';
+    const isAdminOrMod = isAdmin || isModerator;
 
     return (
         <header
@@ -254,41 +258,8 @@ export function Header() {
                     >
                         {isAuthenticated && <NotificationBell />}
                         <HeaderNavigationMenu isAuthenticated={isAuthenticated} />
-                        {isAdmin && (
-                            <Link
-                                href="/admin"
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '2',
-                                    padding: '2',
-                                    minWidth: '44px',
-                                    minHeight: '44px',
-                                    borderRadius: 'lg',
-                                    border: '1px solid',
-                                    borderColor: 'border',
-                                    background: 'surface.elevated',
-                                    color: 'text',
-                                    fontSize: '0.875rem',
-                                    fontWeight: '500',
-                                    transition: 'all 150ms ease',
-                                    _hover: {
-                                        background: 'transparent',
-                                        color: 'primary',
-                                    },
-                                })}
-                            >
-                                <ShieldCheck size={18} />
-                                <span
-                                    className={css({
-                                        display: { base: 'none', sm: 'inline-flex' },
-                                        fontSize: '0.875rem',
-                                        fontWeight: '500',
-                                    })}
-                                >
-                                    Admin
-                                </span>
-                            </Link>
+                        {isAdminOrMod && (
+                            <ModerationHeaderLink isAdmin={isAdmin} />
                         )}
                         <HeaderAuth />
                     </div>
@@ -297,5 +268,87 @@ export function Header() {
 
             <RecipeTabs />
         </header>
+    );
+}
+
+function ModerationHeaderLink({ isAdmin }: { isAdmin: boolean }) {
+    const [count, setCount] = useState(0);
+
+    const fetchCount = useCallback(() => {
+        fetch('/api/moderation/stats')
+            .then((r) => r.json())
+            .then((d: { total?: number }) => setCount(d.total ?? 0))
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        fetchCount();
+        const interval = setInterval(fetchCount, 60_000);
+        return () => clearInterval(interval);
+    }, [fetchCount]);
+
+    const Icon = isAdmin ? ShieldCheck : Shield;
+    const href = isAdmin ? '/admin' : '/moderation';
+    const label = isAdmin ? 'Admin' : 'Mod';
+
+    return (
+        <Link
+            href={href}
+            className={css({
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2',
+                padding: '2',
+                minWidth: '44px',
+                minHeight: '44px',
+                borderRadius: 'lg',
+                border: '1px solid',
+                borderColor: 'border',
+                background: 'surface.elevated',
+                color: 'text',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                transition: 'all 150ms ease',
+                _hover: {
+                    background: 'transparent',
+                    color: 'primary',
+                },
+            })}
+        >
+            <Icon size={18} />
+            <span
+                className={css({
+                    display: { base: 'none', sm: 'inline-flex' },
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                })}
+            >
+                {label}
+            </span>
+            {count > 0 && (
+                <span
+                    className={css({
+                        position: 'absolute',
+                        top: '-4px',
+                        right: '-4px',
+                        minWidth: '18px',
+                        height: '18px',
+                        borderRadius: 'full',
+                        background: '#dc2626',
+                        color: 'white',
+                        fontSize: '0.65rem',
+                        fontWeight: '700',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        px: '1',
+                        lineHeight: '1',
+                    })}
+                >
+                    {count > 99 ? '99+' : count}
+                </span>
+            )}
+        </Link>
     );
 }

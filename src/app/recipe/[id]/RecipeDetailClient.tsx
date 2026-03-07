@@ -1378,6 +1378,8 @@ export function RecipeDetailClient({
                                     amount: ing.amount != null ? String(ing.amount) : undefined,
                                     unit: ing.unit,
                                 }))}
+                                recipeTitle={recipe.title}
+                                recipeImage={recipe.image}
                             />
                         </div>
                     </div>

@@ -1,0 +1,169 @@
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import type { FlowEdgeSerialized, FlowNodeSerialized } from '@app/components/flow/editor/editorTypes';
+
+/**
+ * Google Cast Application ID.
+ * Register your receiver at https://cast.google.com/publish and set
+ * NEXT_PUBLIC_CAST_APP_ID in your environment. Falls back to the default
+ * media receiver for development (cast sessions work but custom messages
+ * are not supported without a registered custom receiver).
+ */
+const CAST_APP_ID = process.env.NEXT_PUBLIC_CAST_APP_ID ?? 'CC1AD845';
+
+/** Namespace for custom messages between sender and receiver. */
+export const CAST_NAMESPACE = 'urn:x-cast:de.kuechentakt.recipe';
+
+export type CastMessage =
+    | {
+          type: 'LOAD_RECIPE';
+          title: string;
+          recipeImage?: string;
+          nodes: FlowNodeSerialized[];
+          edges: FlowEdgeSerialized[];
+          /** Index into the flattened step list (start+servieren excluded). */
+          stepIndex: number;
+      }
+    | { type: 'STEP_CHANGE'; stepIndex: number }
+    | { type: 'TIMER_ACTION'; nodeId: string; action: 'start' | 'pause' | 'reset' }
+    | { type: 'STEP_COMPLETE'; nodeId: string; completed: boolean };
+
+export type CastState = 'unavailable' | 'available' | 'connecting' | 'connected';
+
+export interface UseCastReturn {
+    castState: CastState;
+    startCast: () => void;
+    stopCast: () => void;
+    sendMessage: (msg: CastMessage) => void;
+}
+
+// Augment window for the Cast SDK globals.
+declare global {
+    interface Window {
+        __onGCastApiAvailable?: (isAvailable: boolean) => void;
+        cast?: {
+            framework: {
+                CastContext: {
+                    getInstance: () => CastContextInstance;
+                };
+                CastContextEventType: { SESSION_STATE_CHANGED: string };
+                SessionState: {
+                    SESSION_STARTED: string;
+                    SESSION_RESUMED: string;
+                    SESSION_ENDED: string;
+                    NO_SESSION: string;
+                };
+                RemotePlayer: new () => RemotePlayer;
+                RemotePlayerController: new (player: RemotePlayer) => unknown;
+            };
+        };
+        chrome?: {
+            cast: {
+                AutoJoinPolicy: { ORIGIN_SCOPED: string };
+            };
+        };
+    }
+}
+
+interface CastContextInstance {
+    setOptions: (opts: {
+        receiverApplicationId: string;
+        autoJoinPolicy: string;
+        language?: string;
+    }) => void;
+    requestSession: () => Promise<void>;
+    endCurrentSession: (stopCasting: boolean) => void;
+    getCurrentSession: () => CastSession | null;
+    addEventListener: (event: string, handler: (e: unknown) => void) => void;
+    removeEventListener: (event: string, handler: (e: unknown) => void) => void;
+}
+
+interface CastSession {
+    sendMessage: (
+        namespace: string,
+        message: string,
+        successCallback?: () => void,
+        errorCallback?: (e: unknown) => void,
+    ) => void;
+}
+
+interface RemotePlayer {
+    isConnected: boolean;
+}
+
+export function useCast(): UseCastReturn {
+    const [castState, setCastState] = useState<CastState>('unavailable');
+    const sessionRef = useRef<CastSession | null>(null);
+
+    useEffect(() => {
+        // Load the Cast sender SDK once (idempotent).
+        if (typeof window === 'undefined') return;
+        if (document.getElementById('google-cast-sdk')) return;
+
+        // Register callback before the script loads.
+        window.__onGCastApiAvailable = (isAvailable: boolean) => {
+            if (!isAvailable || !window.cast) return;
+
+            const ctx = window.cast.framework.CastContext.getInstance();
+            ctx.setOptions({
+                receiverApplicationId: CAST_APP_ID,
+                autoJoinPolicy: window.chrome?.cast.AutoJoinPolicy.ORIGIN_SCOPED ?? 'origin_scoped',
+            });
+
+            const handleSessionChange = () => {
+                if (!window.cast) return;
+                const sf = window.cast.framework;
+                const state = ctx.getCurrentSession();
+                const session = state;
+                if (session) {
+                    sessionRef.current = session;
+                    setCastState('connected');
+                } else {
+                    sessionRef.current = null;
+                    setCastState('available');
+                }
+            };
+
+            ctx.addEventListener(
+                window.cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+                handleSessionChange,
+            );
+
+            setCastState('available');
+        };
+
+        const script = document.createElement('script');
+        script.id = 'google-cast-sdk';
+        script.src = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1';
+        script.async = true;
+        document.head.appendChild(script);
+    }, []);
+
+    const startCast = useCallback(async () => {
+        if (!window.cast) return;
+        setCastState('connecting');
+        try {
+            await window.cast.framework.CastContext.getInstance().requestSession();
+        } catch {
+            // User dismissed the dialog — fall back.
+            setCastState('available');
+        }
+    }, []);
+
+    const stopCast = useCallback(() => {
+        if (!window.cast) return;
+        window.cast.framework.CastContext.getInstance().endCurrentSession(true);
+        sessionRef.current = null;
+        setCastState('available');
+    }, []);
+
+    const sendMessage = useCallback((msg: CastMessage) => {
+        const session = sessionRef.current;
+        if (!session) return;
+        session.sendMessage(CAST_NAMESPACE, JSON.stringify(msg));
+    }, []);
+
+    return { castState, startCast, stopCast, sendMessage };
+}

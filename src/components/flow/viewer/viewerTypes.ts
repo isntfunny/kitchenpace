@@ -4,6 +4,10 @@ export interface RecipeStepsViewerProps {
     nodes: FlowNodeSerialized[];
     edges: FlowEdgeSerialized[];
     ingredients?: { id: string; name: string; amount?: string; unit?: string }[];
+    /** Recipe title — shown on the cast receiver. */
+    recipeTitle?: string;
+    /** Recipe hero image URL — shown on the cast receiver beside the current step. */
+    recipeImage?: string;
 }
 
 export interface TimerState {

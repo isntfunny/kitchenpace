@@ -574,6 +574,7 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
     return (
         <>
             <CategoryDialog
+                key={editingCategory?.id ?? 'new'}
                 category={editingCategory}
                 open={dialogOpen}
                 onClose={handleCloseDialog}

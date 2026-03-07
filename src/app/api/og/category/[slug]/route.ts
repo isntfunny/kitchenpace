@@ -17,28 +17,34 @@ const PANEL_H = 470; // image area height
 const FOOTER_H = HEIGHT - PANEL_H; // 160px bottom bar
 const SKEW_PX = 60; // how far the diagonal cut shifts
 
-// Get SVG path from lucide icon by name
-function getLucideIconPath(iconName: string | null | undefined): string {
-    if (!iconName) return '';
+// Get SVG elements from lucide icon by name
+// lucide icons are exported as arrays of [element, attributes] tuples
+function getLucideIconSvgElements(iconName: string | null | undefined): Array<[string, Record<string, string>]> {
+    if (!iconName) return [];
 
     // Convert kebab-case to camelCase for lucide exports
     const camelName = iconName.replace(/-./g, (x) => x[1].toUpperCase());
 
     // Get the icon from lucide, fallback to utensils
-    const IconComponent = (lucideIcons as Record<string, any>)[camelName] || lucideIcons.Utensils;
+    const icon = (lucideIcons as Record<string, any>)[camelName] || lucideIcons.Utensils;
 
-    // lucide icons have a 'toSvg()' method that returns { svg: string }
     try {
-        const svg = IconComponent.toSvg ? IconComponent.toSvg() : IconComponent();
-        // Extract the path data from the SVG
-        if (typeof svg === 'string') {
-            const match = svg.match(/d="([^"]+)"/);
-            return match ? match[1] : '';
+        // Lucide icons are arrays of [element, attributes] tuples
+        if (Array.isArray(icon)) {
+            return icon;
         }
-        return '';
+        return [];
     } catch {
-        return '';
+        return [];
     }
+}
+
+// Build SVG path elements string from lucide icon elements
+function buildLucideSvgPaths(elements: Array<[string, Record<string, string>]>): string {
+    return elements
+        .filter(([element]) => element === 'path')
+        .map(([, attrs]) => `<path d="${attrs.d}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`)
+        .join('');
 }
 
 // ─── S3 cache helpers ─────────────────────────────────────────────────────────
@@ -271,8 +277,15 @@ function generateFallbackOg(categoryName: string, recipeCount: number, color: st
             ? `<text x="${WIDTH / 2}" y="${HEIGHT / 2 + (iconName ? 90 : 50)}" fill="#636e72" font-family="system-ui, -apple-system, sans-serif" font-size="28" text-anchor="middle">${recipeCount} Rezept${recipeCount !== 1 ? 'e' : ''}</text>`
             : '';
 
-    const iconPath = getLucideIconPath(iconName);
-    const iconSvg = iconPath ? `<g transform="translate(${WIDTH / 2 - 60}, ${HEIGHT / 2 - 140})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="120" height="120"><path d="${iconPath}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></g>` : '';
+    const iconElements = getLucideIconSvgElements(iconName);
+    const iconPaths = buildLucideSvgPaths(iconElements);
+
+    // Large background icon (very subtle)
+    const bgIconSize = 800;
+    const bgIconSvg = iconPaths ? `<g opacity="0.06" transform="translate(${WIDTH / 2 - bgIconSize / 2}, ${HEIGHT / 2 - bgIconSize / 2})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${bgIconSize}" height="${bgIconSize}">${iconPaths.replace(/currentColor/g, color)}</svg></g>` : '';
+
+    // Foreground icon
+    const iconSvg = iconPaths ? `<g transform="translate(${WIDTH / 2 - 60}, ${HEIGHT / 2 - 140})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="120" height="120">${iconPaths.replace(/currentColor/g, color)}</svg></g>` : '';
 
     // Generate decorative circles that fade out (only if no icon)
     const circles = !iconName ? Array.from({ length: 5 }, (_, i) => {
@@ -293,6 +306,9 @@ function generateFallbackOg(categoryName: string, recipeCount: number, color: st
     </linearGradient>
   </defs>
   <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#bg)" />
+
+  <!-- Large subtle background icon -->
+  ${bgIconSvg}
 
   <!-- Decorative background circles -->
   ${circles}

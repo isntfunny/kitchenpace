@@ -10,128 +10,149 @@ import { BackupJob } from './types';
 
 console.log('[DEBUG] scheduled-processor.ts module loaded');
 
+// Trending calculation weights
+const TRENDING_WEIGHTS = {
+    cook: { withImage: 8, withoutImage: 6 },
+    rating: 6,
+    favorite: 4,
+    view: 2,
+    window: { publish: 30, activity: 7 },
+    limit: 5,
+} as const;
+
 export async function processTrendingRecipes(
     job: Job<Record<string, unknown>>,
-): Promise<{ success: boolean; updatedCount?: number }> {
+): Promise<{ success: boolean; trendingCount?: number }> {
     console.log(`[TrendingWorker] Starting trending-recipes job ${job.id}`);
 
     try {
         console.log(`[TrendingWorker] Calculating trending scores...`);
-        const sql = `
-            BEGIN;
 
-            -- Reset all trending status
-            UPDATE "Recipe" SET "isTrending" = FALSE;
+        // Step 1: Calculate trending IDs within a transaction
+        const trendingIds = await prisma.$transaction(async (tx) => {
+            // Calculate trending scores for recipes published in last 30 days
+            const scored = await tx.$queryRaw<
+                Array<{ id: string; score: number }>
+            >`
+                WITH recent_recipes AS (
+                    SELECT r.id, r."imageKey" IS NOT NULL as has_image
+                    FROM "Recipe" r
+                    WHERE r."publishedAt" >= NOW() - INTERVAL '30 days'
+                    AND r."status" = 'PUBLISHED'
+                ),
+                -- Cook counts in last 7 days
+                cook_counts AS (
+                    SELECT h."recipeId" as id, COUNT(*) as cook_count
+                    FROM "UserCookHistory" h
+                    WHERE h."cookedAt" >= NOW() - INTERVAL '7 days'
+                    GROUP BY h."recipeId"
+                ),
+                -- View counts in last 7 days
+                view_counts AS (
+                    SELECT v."recipeId" as id, COUNT(*) as view_count
+                    FROM "UserViewHistory" v
+                    WHERE v."viewedAt" >= NOW() - INTERVAL '7 days'
+                    GROUP BY v."recipeId"
+                ),
+                -- Favorite counts in last 7 days
+                favorite_counts AS (
+                    SELECT f."recipeId" as id, COUNT(*) as favorite_count
+                    FROM "Favorite" f
+                    WHERE f."createdAt" >= NOW() - INTERVAL '7 days'
+                    GROUP BY f."recipeId"
+                ),
+                -- Scored recipes using denormalized rating field
+                scored_recipes AS (
+                    SELECT
+                        r.id,
+                        r.has_image,
+                        COALESCE(cook_counts.cook_count, 0)::int as cook_count,
+                        COALESCE(view_counts.view_count, 0)::int as view_count,
+                        COALESCE(favorite_counts.favorite_count, 0)::int as favorite_count,
+                        COALESCE(r."rating", 0)::float as rating,
+                        -- Weighted scoring formula
+                        (CASE
+                            WHEN r.has_image THEN COALESCE(cook_counts.cook_count, 0) * ${TRENDING_WEIGHTS.cook.withImage}
+                            ELSE COALESCE(cook_counts.cook_count, 0) * ${TRENDING_WEIGHTS.cook.withoutImage}
+                         END) +
+                        (COALESCE(r."rating", 0)::float * ${TRENDING_WEIGHTS.rating}) +
+                        (COALESCE(favorite_counts.favorite_count, 0) * ${TRENDING_WEIGHTS.favorite}) +
+                        (COALESCE(view_counts.view_count, 0) * ${TRENDING_WEIGHTS.view}) as score
+                    FROM recent_recipes r
+                    LEFT JOIN cook_counts ON r.id = cook_counts.id
+                    LEFT JOIN view_counts ON r.id = view_counts.id
+                    LEFT JOIN favorite_counts ON r.id = favorite_counts.id
+                ),
+                -- Get trending by score
+                trending_by_score AS (
+                    SELECT id, score
+                    FROM scored_recipes
+                    WHERE score > 0
+                    ORDER BY score DESC
+                    LIMIT ${TRENDING_WEIGHTS.limit}
+                ),
+                -- Get top rated as fallback (not already in trending)
+                top_rated_fallback AS (
+                    SELECT r.id, r."rating" as score
+                    FROM "Recipe" r
+                    WHERE r."publishedAt" >= NOW() - INTERVAL '30 days'
+                    AND r."status" = 'PUBLISHED'
+                    AND r."ratingCount" > 0
+                    AND NOT EXISTS (SELECT 1 FROM trending_by_score WHERE id = r.id)
+                    ORDER BY r."rating" DESC
+                    LIMIT ${TRENDING_WEIGHTS.limit}
+                ),
+                -- Combine: trending first (priority), then fallback
+                final_trending AS (
+                    SELECT id, score, 1::int as priority FROM trending_by_score
+                    UNION ALL
+                    SELECT id, score, 2::int as priority FROM top_rated_fallback
+                )
+                SELECT id, score FROM final_trending ORDER BY priority ASC, score DESC LIMIT ${TRENDING_WEIGHTS.limit}
+            `;
 
-            -- Calculate trending scores for recipes published in last 30 days
-            WITH recent_recipes AS (
-                SELECT r.id, r."imageKey" IS NOT NULL as has_image
-                FROM "Recipe" r
-                WHERE r."publishedAt" >= NOW() - INTERVAL '30 days'
-                AND r."status" = 'PUBLISHED'
-            ),
-            -- Cook counts in last 7 days
-            cook_counts AS (
-                SELECT r.id, COUNT(*) as cook_count
-                FROM "UserCookHistory" h
-                JOIN recent_recipes r ON h."recipeId" = r.id
-                WHERE h."cookedAt" >= NOW() - INTERVAL '7 days'
-                GROUP BY r.id
-            ),
-            -- View counts in last 7 days
-            view_counts AS (
-                SELECT r.id, COUNT(*) as view_count
-                FROM "UserViewHistory" v
-                JOIN recent_recipes r ON v."recipeId" = r.id
-                WHERE v."viewedAt" >= NOW() - INTERVAL '7 days'
-                GROUP BY r.id
-            ),
-            -- Favorite counts in last 7 days
-            favorite_counts AS (
-                SELECT r.id, COUNT(*) as favorite_count
-                FROM "Favorite" f
-                JOIN recent_recipes r ON f."recipeId" = r.id
-                WHERE f."createdAt" >= NOW() - INTERVAL '7 days'
-                GROUP BY r.id
-            ),
-            -- Average ratings for recipes
-            rating_averages AS (
-                SELECT r.id, AVG(ur."rating") as avg_rating
-                FROM "UserRating" ur
-                JOIN recent_recipes r ON ur."recipeId" = r.id
-                GROUP BY r.id
-            ),
-            -- Combined scores with filtering
-            scored_recipes AS (
-                SELECT 
-                    r.id,
-                    r.has_image,
-                    COALESCE(cook_counts.cook_count, 0) as cook_count,
-                    COALESCE(view_counts.view_count, 0) as view_count,
-                    COALESCE(favorite_counts.favorite_count, 0) as favorite_count,
-                    COALESCE(rating_averages.avg_rating, 0) as avg_rating,
-                    -- Weighted scoring formula (no minimum cook threshold)
-                    (CASE 
-                        WHEN r.has_image THEN COALESCE(cook_counts.cook_count, 0) * 8
-                        ELSE COALESCE(cook_counts.cook_count, 0) * 6
-                     END) +
-                    (COALESCE(rating_averages.avg_rating, 0) * 6) +
-                    (COALESCE(favorite_counts.favorite_count, 0) * 4) +
-                    (COALESCE(view_counts.view_count, 0) * 2) as score
-                FROM recent_recipes r
-                LEFT JOIN cook_counts ON r.id = cook_counts.id
-                LEFT JOIN view_counts ON r.id = view_counts.id
-                LEFT JOIN favorite_counts ON r.id = favorite_counts.id
-                LEFT JOIN rating_averages ON r.id = rating_averages.id
-            ),
-            -- Get trending by score
-            trending_by_score AS (
-                SELECT id, score, 1 as priority
-                FROM scored_recipes
-                ORDER BY score DESC
-                LIMIT 5
-            ),
-            -- Get top rated as fallback
-            top_rated_fallback AS (
-                SELECT r.id, 0 as score, 2 as priority
-                FROM "Recipe" r
-                WHERE r."publishedAt" >= NOW() - INTERVAL '30 days'
-                AND r."status" = 'PUBLISHED'
-                AND r."ratingCount" > 0
-                AND NOT EXISTS (SELECT 1 FROM trending_by_score WHERE id = r.id)
-                ORDER BY r."rating" DESC
-                LIMIT 5
-            ),
-            -- Combine trending and fallback
-            final_trending AS (
-                SELECT id, priority FROM trending_by_score
-                UNION ALL
-                SELECT id, priority FROM top_rated_fallback
-            )
-            -- Update top 5 trending recipes
-            UPDATE "Recipe" r
-            SET "isTrending" = TRUE
-            FROM (
-                SELECT id FROM final_trending ORDER BY priority ASC, score DESC LIMIT 5
-            ) final
-            WHERE r.id = final.id;
+            return scored.map((r) => r.id);
+        });
 
-            COMMIT;
-        `;
+        console.log(`[TrendingWorker] Calculated trending recipes:`, {
+            count: trendingIds.length,
+            ids: trendingIds,
+        });
 
-        await prisma.$executeRawUnsafe(sql);
+        // Step 2: Apply changes in a transaction (no visibility gap)
+        // First mark new trending, then clear old ones in a single transaction
+        const result = await prisma.$transaction(async (tx) => {
+            // Mark new trending recipes
+            if (trendingIds.length > 0) {
+                await tx.$executeRaw`
+                    UPDATE "Recipe"
+                    SET "isTrending" = TRUE, "updatedAt" = NOW()
+                    WHERE id = ANY(${trendingIds}::text[])
+                `;
+            }
 
-        const result = await prisma.$queryRaw<[{ count: bigint }]>`
-            SELECT COUNT(*) as count FROM "Recipe" WHERE "isTrending" = true
-        `;
-        const updatedCount = Number(result[0]?.count ?? 0);
+            // Clear recipes that are no longer trending (avoid full table scan)
+            await tx.$executeRaw`
+                UPDATE "Recipe"
+                SET "isTrending" = FALSE, "updatedAt" = NOW()
+                WHERE "isTrending" = TRUE
+                  AND id != ALL(COALESCE(${trendingIds.length > 0 ? trendingIds : null}::text[], '{}'::text[]))
+            `;
+
+            // Get current trending count
+            const count = await tx.$queryRaw<[{ count: bigint }]>`
+                SELECT COUNT(*) as count FROM "Recipe" WHERE "isTrending" = true
+            `;
+
+            return Number(count[0]?.count ?? 0);
+        });
 
         console.log(`[TrendingWorker] Trending recipes calculation completed`, {
-            updatedCount,
+            trendingCount: result,
             timestamp: new Date().toISOString(),
         });
 
-        return { success: true, updatedCount };
+        return { success: true, trendingCount: result };
     } catch (error) {
         console.error(`[TrendingWorker] trending-recipes job ${job.id} failed`, {
             error: error instanceof Error ? error.message : String(error),

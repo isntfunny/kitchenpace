@@ -467,6 +467,7 @@ model Favorite {
 
   @@unique([recipeId, userId])
   @@index([userId])
+  @@index([recipeId, createdAt])
 }
 
 // ============================================
@@ -631,6 +632,7 @@ model UserViewHistory {
   @@index([userId])
   @@index([recipeId])
   @@index([userId, viewedAt])
+  @@index([recipeId, viewedAt])
 }
 
 model UserCookHistory {
@@ -649,6 +651,7 @@ model UserCookHistory {
   @@index([userId])
   @@index([recipeId])
   @@index([userId, cookedAt])
+  @@index([recipeId, cookedAt])
 }
 
 // ============================================

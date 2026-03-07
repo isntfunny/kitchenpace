@@ -3,6 +3,11 @@
  * Uses OpenAI Moderation API (omni-moderation-latest) — free, multi-modal
  */
 
+import {
+  publishAdminInboxCreated,
+  publishAdminInboxRemoved,
+  serializeModerationQueueItem,
+} from '@app/lib/admin-inbox';
 import { getOpenAIClient } from '@app/lib/importer/openai-client';
 import { prisma } from '@shared/prisma';
 
@@ -111,6 +116,7 @@ export async function persistModerationResult(
     });
 
     if (existing) {
+      const previousStatus = existing.status;
       await prisma.moderationQueue.update({
         where: { id: existing.id },
         data: {
@@ -122,8 +128,30 @@ export async function persistModerationResult(
           updatedAt: new Date(),
         },
       });
+
+      if (previousStatus !== 'PENDING' && result.decision === 'PENDING') {
+        const refreshed = await prisma.moderationQueue.findUnique({
+          where: { id: existing.id },
+          select: {
+            id: true,
+            contentType: true,
+            contentId: true,
+            authorId: true,
+            aiScore: true,
+            createdAt: true,
+          },
+        });
+
+        if (refreshed) {
+          await publishAdminInboxCreated(await serializeModerationQueueItem(refreshed));
+        }
+      }
+
+      if (previousStatus === 'PENDING' && result.decision !== 'PENDING') {
+        await publishAdminInboxRemoved(`moderation_queue:${existing.id}`);
+      }
     } else {
-      await prisma.moderationQueue.create({
+      const createdQueueItem = await prisma.moderationQueue.create({
         data: {
           contentType,
           contentId,
@@ -135,6 +163,10 @@ export async function persistModerationResult(
           status: result.decision,
         },
       });
+
+      if (result.decision === 'PENDING') {
+        await publishAdminInboxCreated(await serializeModerationQueueItem(createdQueueItem));
+      }
     }
   }
 }
@@ -180,10 +212,16 @@ export async function checkReportEscalation(
           select: { authorId: true },
         });
         authorId = comment?.authorId || '';
+      } else if (contentType === 'cook_image') {
+        const cookImage = await prisma.cookImage.findUnique({
+          where: { id: contentId },
+          select: { userId: true },
+        });
+        authorId = cookImage?.userId || '';
       }
 
       if (authorId) {
-        await prisma.moderationQueue.create({
+        const queueItem = await prisma.moderationQueue.create({
           data: {
             contentType,
             contentId,
@@ -195,6 +233,8 @@ export async function checkReportEscalation(
             contentSnapshot: { contentType, contentId, authorId },
           },
         });
+
+        await publishAdminInboxCreated(await serializeModerationQueueItem(queueItem));
       }
     }
 

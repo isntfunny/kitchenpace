@@ -4,6 +4,7 @@ import { Role } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
+import { createUserNotification } from '@app/lib/events/persist';
 import { prisma } from '@shared/prisma';
 
 export async function updateUserRole(userId: string, role: Role) {
@@ -57,13 +58,11 @@ export async function banUser(userId: string, reason: string, expiresAt?: Date) 
     await prisma.session.deleteMany({ where: { userId } });
 
     // Send notification before session kill (best effort)
-    await prisma.notification.create({
-        data: {
-            userId,
-            type: 'SYSTEM',
-            title: 'Konto gesperrt',
-            message: `Dein Konto wurde gesperrt: ${reason}`,
-        },
+    await createUserNotification({
+        userId,
+        type: 'SYSTEM',
+        title: 'Konto gesperrt',
+        message: `Dein Konto wurde gesperrt: ${reason}`,
     });
 
     revalidatePath('/admin/accounts');
@@ -108,13 +107,11 @@ export async function unbanUser(userId: string) {
         },
     });
 
-    await prisma.notification.create({
-        data: {
-            userId,
-            type: 'SYSTEM',
-            title: 'Konto entsperrt',
-            message: 'Dein Konto wurde entsperrt. Du kannst die Plattform wieder nutzen.',
-        },
+    await createUserNotification({
+        userId,
+        type: 'SYSTEM',
+        title: 'Konto entsperrt',
+        message: 'Dein Konto wurde entsperrt. Du kannst die Plattform wieder nutzen.',
     });
 
     revalidatePath('/admin/accounts');

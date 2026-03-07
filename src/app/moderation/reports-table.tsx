@@ -2,6 +2,7 @@
 
 import type { Report, User } from '@prisma/client';
 import { CheckCircle, Flag } from 'lucide-react';
+import Link from 'next/link';
 import { useTransition } from 'react';
 
 import { css } from 'styled-system/css';
@@ -19,6 +20,25 @@ const REASON_LABELS: Record<string, string> = {
     misinformation: 'Fehlinformation',
     other: 'Sonstiges',
 };
+
+const CONTENT_LABELS: Record<string, string> = {
+    recipe: 'Rezept',
+    comment: 'Kommentar',
+    user: 'Profil',
+    cook_image: 'Foto',
+};
+
+function getContentHref(report: Pick<Report, 'contentType' | 'contentId'>) {
+    if (report.contentType === 'recipe') {
+        return `/recipe/${report.contentId}`;
+    }
+
+    if (report.contentType === 'user') {
+        return `/user/${report.contentId}`;
+    }
+
+    return null;
+}
 
 export function ReportsTable({ reports }: { reports: ReportItem[] }) {
     const [pending, startTransition] = useTransition();
@@ -51,7 +71,8 @@ export function ReportsTable({ reports }: { reports: ReportItem[] }) {
                     key={report.id}
                     className={css({
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: { base: 'flex-start', md: 'center' },
+                        flexDirection: { base: 'column', md: 'row' },
                         gap: '4',
                         px: '4',
                         py: '3',
@@ -80,37 +101,77 @@ export function ReportsTable({ reports }: { reports: ReportItem[] }) {
                         {REASON_LABELS[report.reason] ?? report.reason}
                     </span>
 
-                    <span
+                    <div
                         className={css({
-                            fontSize: 'xs',
-                            color: 'text.muted',
-                            flexShrink: '0',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.5',
+                            minW: { md: '120px' },
                         })}
                     >
-                        {report.contentType}
-                    </span>
+                        <span
+                            className={css({
+                                fontSize: 'xs',
+                                color: 'text.muted',
+                                flexShrink: '0',
+                            })}
+                        >
+                            {CONTENT_LABELS[report.contentType] ?? report.contentType}
+                        </span>
+                        <span className={css({ fontSize: 'xs', color: 'text.muted' })}>
+                            {new Date(report.createdAt).toLocaleString('de-DE', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                            })}
+                        </span>
+                    </div>
 
-                    <span
+                    <div
                         className={css({
                             fontSize: 'sm',
                             flex: '1',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1',
                         })}
                     >
-                        {report.description || 'Keine Beschreibung'}
-                    </span>
+                        <span
+                            className={css({
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: { base: 'normal', md: 'nowrap' },
+                            })}
+                        >
+                            {report.description || 'Keine Beschreibung'}
+                        </span>
+                        {getContentHref(report) && (
+                            <Link
+                                href={getContentHref(report)!}
+                                className={css({
+                                    width: 'fit-content',
+                                    fontSize: 'xs',
+                                    fontWeight: '600',
+                                    color: 'accent',
+                                    textDecoration: 'none',
+                                    _hover: { textDecoration: 'underline' },
+                                })}
+                            >
+                                Inhalt ansehen
+                            </Link>
+                        )}
+                    </div>
 
-                    <span
-                        className={css({
-                            fontSize: 'xs',
-                            color: 'text.muted',
-                            flexShrink: '0',
-                        })}
-                    >
-                        {report.reporter.name ?? report.reporter.email}
-                    </span>
+                    <div className={css({ minW: { md: '160px' } })}>
+                        <span
+                            className={css({
+                                fontSize: 'xs',
+                                color: 'text.muted',
+                                flexShrink: '0',
+                            })}
+                        >
+                            {report.reporter.name ?? report.reporter.email}
+                        </span>
+                    </div>
 
                     <button
                         onClick={() => handleResolve(report.id)}

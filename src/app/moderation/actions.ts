@@ -3,7 +3,9 @@
 import { ModerationStatus, Role } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
+import { publishAdminInboxRemoved } from '@app/lib/admin-inbox';
 import { getServerAuthSession } from '@app/lib/auth';
+import { createUserNotification } from '@app/lib/events/persist';
 import { prisma } from '@shared/prisma';
 
 async function requireModerator() {
@@ -114,14 +116,14 @@ export async function approveContent(queueId: string, reviewNote?: string) {
     });
 
     // Send notification to author
-    await prisma.notification.create({
-        data: {
-            userId: queueItem.authorId,
-            type: 'SYSTEM',
-            title: 'Inhalt freigegeben',
-            message: 'Dein Inhalt wurde überprüft und freigegeben.',
-        },
+    await createUserNotification({
+        userId: queueItem.authorId,
+        type: 'SYSTEM',
+        title: 'Inhalt freigegeben',
+        message: 'Dein Inhalt wurde überprüft und freigegeben.',
     });
+
+    await publishAdminInboxRemoved(`moderation_queue:${queueItem.id}`);
 
     revalidatePath('/moderation');
 }
@@ -188,14 +190,14 @@ export async function rejectContent(queueId: string, reviewNote: string) {
     });
 
     // Send notification to author
-    await prisma.notification.create({
-        data: {
-            userId: queueItem.authorId,
-            type: 'SYSTEM',
-            title: 'Inhalt abgelehnt',
-            message: `Dein Inhalt wurde abgelehnt: ${reviewNote}`,
-        },
+    await createUserNotification({
+        userId: queueItem.authorId,
+        type: 'SYSTEM',
+        title: 'Inhalt abgelehnt',
+        message: `Dein Inhalt wurde abgelehnt: ${reviewNote}`,
     });
+
+    await publishAdminInboxRemoved(`moderation_queue:${queueItem.id}`);
 
     revalidatePath('/moderation');
 }
@@ -210,6 +212,8 @@ export async function resolveReport(reportId: string) {
             resolvedBy: actorId,
         },
     });
+
+    await publishAdminInboxRemoved(`report:${reportId}`);
 
     await prisma.moderationLog.create({
         data: {

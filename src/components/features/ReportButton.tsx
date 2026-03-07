@@ -7,7 +7,7 @@ import { css } from 'styled-system/css';
 import { ReportModal } from './ReportModal';
 
 interface ReportButtonProps {
-    contentType: string; // "recipe" | "comment" | "user"
+    contentType: 'recipe' | 'comment' | 'user' | 'cook_image';
     contentId: string;
     variant?: 'icon' | 'text';
 }
@@ -20,6 +20,7 @@ export function ReportButton({ contentType, contentId, variant = 'text' }: Repor
             trigger={
                 variant === 'icon' ? (
                     <button
+                        type="button"
                         className={css({
                             p: '1.5',
                             borderRadius: 'lg',
@@ -35,6 +36,7 @@ export function ReportButton({ contentType, contentId, variant = 'text' }: Repor
                     </button>
                 ) : (
                     <button
+                        type="button"
                         className={css({
                             display: 'flex',
                             alignItems: 'center',

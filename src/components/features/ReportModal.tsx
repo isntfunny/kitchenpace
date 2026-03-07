@@ -1,6 +1,7 @@
 'use client';
 
 import { Flag, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Dialog } from 'radix-ui';
 import { useState, useTransition } from 'react';
 
@@ -17,29 +18,68 @@ const REASONS = [
 ] as const;
 
 interface ReportModalProps {
-    contentType: string; // "recipe" | "comment" | "user"
+    contentType: 'recipe' | 'comment' | 'user' | 'cook_image';
     contentId: string;
     trigger: React.ReactNode;
 }
 
+const CONTENT_LABELS: Record<ReportModalProps['contentType'], string> = {
+    recipe: 'dieses Rezept',
+    comment: 'diesen Kommentar',
+    user: 'dieses Profil',
+    cook_image: 'dieses Foto',
+};
+
 export function ReportModal({ contentType, contentId, trigger }: ReportModalProps) {
+    const router = useRouter();
     const [open, setOpen] = useState(false);
     const [reason, setReason] = useState('');
     const [description, setDescription] = useState('');
     const [result, setResult] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
+
+    const handleOpenChange = (nextOpen: boolean) => {
+        setOpen(nextOpen);
+
+        if (nextOpen) {
+            setResult(null);
+            setError(null);
+        } else {
+            setReason('');
+            setDescription('');
+            setResult(null);
+            setError(null);
+        }
+    };
 
     const handleSubmit = () => {
         if (!reason) return;
+
         startTransition(async () => {
-            const res = await submitReport(contentType, contentId, reason, description);
-            setResult(res.message);
-            setTimeout(() => setOpen(false), 2000);
+            setError(null);
+
+            try {
+                const res = await submitReport(contentType, contentId, reason, description);
+                setResult(res.message);
+                window.setTimeout(() => handleOpenChange(false), 1800);
+            } catch (submitError) {
+                if (
+                    submitError instanceof Error &&
+                    submitError.message.toLowerCase().includes('nicht angemeldet')
+                ) {
+                    const callbackUrl = window.location.pathname + window.location.search;
+                    router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+                    return;
+                }
+
+                setError('Die Meldung konnte gerade nicht gesendet werden.');
+            }
         });
     };
 
     return (
-        <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Root open={open} onOpenChange={handleOpenChange}>
             <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
             <Dialog.Portal>
                 <Dialog.Overlay
@@ -100,8 +140,21 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                     ) : (
                         <>
                             <p className={css({ fontSize: 'sm', color: 'text.muted', mb: '3' })}>
-                                Warum möchtest du diesen Inhalt melden?
+                                Warum möchtest du {CONTENT_LABELS[contentType]} melden?
                             </p>
+
+                            {error && (
+                                <p
+                                    className={css({
+                                        mb: '3',
+                                        fontSize: 'sm',
+                                        color: '#dc2626',
+                                        fontWeight: '600',
+                                    })}
+                                >
+                                    {error}
+                                </p>
+                            )}
 
                             <div className={css({ display: 'flex', flexDirection: 'column', gap: '2', mb: '4' })}>
                                 {REASONS.map((r) => (
@@ -174,6 +227,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                     Abbrechen
                                 </Dialog.Close>
                                 <button
+                                    type="button"
                                     onClick={handleSubmit}
                                     disabled={!reason || pending}
                                     className={css({

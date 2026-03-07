@@ -16,8 +16,14 @@
  *  Phone → [TIMER_ACTION] → TV starts / pauses / resets that step's timer
  *  Phone → [STEP_COMPLETE]→ TV marks step done
  *
- * Navigation on TV is READ-ONLY — the phone / tablet is the sole controller.
- * The existing mobile cooking view (MobileView) on the phone is the touch remote.
+ * Navigation on TV is READ-ONLY on standard Chromecasts — the phone / tablet is
+ * the primary controller via the MobileView touch remote.
+ *
+ * Touch-capable Cast devices (Google Nest Hub etc.):
+ *  The Cast framework injects a <touch-controls> overlay that blocks all touch
+ *  events.  We apply the Home Assistant hack: remove the overlay after ctx.start()
+ *  and restore overflow-y.  The receiver then renders prev/next nav zones, a
+ *  timer start/pause button, and a "Erledigt" (done) button directly on-screen.
  */
 
 import { useEffect, useReducer, useState } from 'react';
@@ -30,18 +36,30 @@ import { CAST_NAMESPACE } from '@app/hooks/useCast';
 import { PALETTE } from '@app/lib/palette';
 
 // ── Cast Receiver SDK types ─────────────────────────────────────────────
+interface CastReceiverOptions {
+    /** Official option — marks the app as touch-optimised.
+     *  As of 2019 this option does NOT actually remove the touch-controls overlay
+     *  injected by the framework; we still need the HA hack below. */
+    touchScreenOptimizedApp?: boolean;
+    maxInactivity?: number;
+}
+
+interface CastReceiverContext {
+    start: (options?: CastReceiverOptions) => void;
+    addCustomMessageListener: (
+        ns: string,
+        handler: (ev: { data: string }) => void,
+    ) => void;
+    /** Returns device capabilities. Availability depends on firmware version. */
+    getDeviceCapabilities: () => { touch_input_supported?: boolean } | null;
+}
+
 declare global {
     interface Window {
         cast?: {
             framework: {
                 CastReceiverContext: {
-                    getInstance: () => {
-                        start: () => void;
-                        addCustomMessageListener: (
-                            ns: string,
-                            handler: (ev: { data: string }) => void,
-                        ) => void;
-                    };
+                    getInstance: () => CastReceiverContext;
                 };
             };
         };
@@ -60,6 +78,7 @@ export default function CastReceiverPage() {
     const [, setEdges] = useState<FlowEdgeSerialized[]>([]);
     const [stepIndex, setStepIndex] = useState(0);
     const [ready, setReady] = useState(false);
+    const [isTouchDevice, setIsTouchDevice] = useState(false);
 
     const [state, dispatch] = useReducer(viewerReducer, {
         completed: new Set<string>(),
@@ -129,7 +148,35 @@ export default function CastReceiverPage() {
                 }
             });
 
-            ctx.start();
+            // Official option (has not worked since ≥2019, but harmless to set).
+            const options: CastReceiverOptions = { touchScreenOptimizedApp: true };
+            ctx.start(options);
+
+            // ── Home Assistant touch hack ─────────────────────────────
+            // The Cast framework injects a <touch-controls> element after
+            // start() that intercepts *all* pointer / touch events, making
+            // the receiver completely non-interactive on touch-screen Cast
+            // devices (Nest Hub etc.).  The official flag above doesn't fix
+            // this.  We remove the overlay and restore scrolling — same
+            // approach used by Home Assistant since 2019.
+            // Reference:
+            //   https://github.com/home-assistant/home-assistant-polymer/blob/
+            //   98b882d5/cast/src/receiver/layout/hc-main.ts#L200-L206
+            const caps = ctx.getDeviceCapabilities?.();
+            const touchSupported = !!caps?.touch_input_supported;
+            if (touchSupported) {
+                setIsTouchDevice(true);
+                const breakFree = () => {
+                    const overlay = document.body.querySelector('touch-controls');
+                    if (overlay) overlay.remove();
+                    document.body.setAttribute('style', 'overflow-y: auto !important');
+                };
+                // Run immediately and again after delays — the framework may
+                // inject the element asynchronously after start().
+                breakFree();
+                setTimeout(breakFree, 500);
+                setTimeout(breakFree, 1500);
+            }
         };
         document.head.appendChild(script);
     }, []);
@@ -188,6 +235,8 @@ export default function CastReceiverPage() {
                     @keyframes w{0%,80%,100%{transform:scale(.65);opacity:.35}40%{transform:scale(1.1);opacity:1}}
                     *{box-sizing:border-box;margin:0;padding:0}
                     body{background:#111;overflow:hidden}
+                    .touch-zone{position:absolute;top:0;bottom:0;width:22%;z-index:10;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+                    .touch-zone:active{opacity:1}
                 `}</style>
             </div>
         );
@@ -212,17 +261,21 @@ export default function CastReceiverPage() {
                 height: '100vh',
                 display: 'flex',
                 background: '#111',
-                overflow: 'hidden',
+                overflow: isTouchDevice ? 'auto' : 'hidden',
                 fontFamily: '-apple-system, Inter, sans-serif',
                 position: 'relative',
+                touchAction: 'manipulation',
             }}
         >
             <style>{`
                 @keyframes timerPulse{0%,100%{box-shadow:0 0 0 0 rgba(224,123,83,.4)}50%{box-shadow:0 0 0 14px rgba(224,123,83,0)}}
                 @keyframes donePulse{0%,100%{box-shadow:0 0 0 0 rgba(0,184,148,.4)}50%{box-shadow:0 0 0 16px rgba(0,184,148,0)}}
                 @keyframes stepIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+                @keyframes tapFeedback{0%{opacity:.55;transform:scale(.92)}100%{opacity:0;transform:scale(1.25)}}
                 *{box-sizing:border-box;margin:0;padding:0}
-                body{background:#111;overflow:hidden}
+                body{background:#111;${isTouchDevice ? 'overflow-y:auto' : 'overflow:hidden'}}
+                .touch-zone{position:absolute;top:0;bottom:0;width:22%;z-index:10;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+                .touch-zone:active{opacity:1}
             `}</style>
 
             {/* Recipe hero image — right panel */}
@@ -402,11 +455,128 @@ export default function CastReceiverPage() {
                 )}
             </div>
 
+            {/* ── Touch controls (Nest Hub / touch-capable Cast devices) ── */}
+            {isTouchDevice && (
+                <>
+                    {/* Previous step zone — left edge */}
+                    <button
+                        className="touch-zone"
+                        style={{ left: 0, cursor: 'pointer', background: 'none', border: 'none' }}
+                        onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
+                        aria-label="Vorheriger Schritt"
+                    >
+                        <div
+                            style={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: '50%',
+                                backgroundColor: 'rgba(255,255,255,0.15)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 28,
+                                color: '#fff',
+                            }}
+                        >
+                            ‹
+                        </div>
+                    </button>
+
+                    {/* Next step zone — right edge */}
+                    <button
+                        className="touch-zone"
+                        style={{ right: 0, cursor: 'pointer', background: 'none', border: 'none' }}
+                        onClick={() => setStepIndex((i) => Math.min(nodes.length - 1, i + 1))}
+                        aria-label="Nächster Schritt"
+                    >
+                        <div
+                            style={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: '50%',
+                                backgroundColor: 'rgba(255,255,255,0.15)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 28,
+                                color: '#fff',
+                            }}
+                        >
+                            ›
+                        </div>
+                    </button>
+
+                    {/* Bottom action bar */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            bottom: 56,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            display: 'flex',
+                            gap: 16,
+                            zIndex: 10,
+                        }}
+                    >
+                        {/* Timer tap target */}
+                        {hasTimer && !timerDone && (
+                            <button
+                                onClick={() =>
+                                    node &&
+                                    dispatch({
+                                        type: timerRunning ? 'timerPause' : 'timerStart',
+                                        nodeId: node.id,
+                                    })
+                                }
+                                style={{
+                                    padding: '14px 28px',
+                                    borderRadius: 999,
+                                    border: `2px solid ${PALETTE.orange}`,
+                                    background: timerRunning ? PALETTE.orange : 'rgba(0,0,0,0.6)',
+                                    color: timerRunning ? '#333' : PALETTE.orange,
+                                    fontSize: 18,
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    touchAction: 'manipulation',
+                                    WebkitTapHighlightColor: 'transparent',
+                                    minWidth: 130,
+                                    minHeight: 52,
+                                }}
+                            >
+                                {timerRunning ? '⏸ Pause' : '▶ Start'}
+                            </button>
+                        )}
+
+                        {/* Mark done button */}
+                        {node && (
+                            <button
+                                onClick={() => dispatch({ type: 'toggle', nodeId: node.id })}
+                                style={{
+                                    padding: '14px 28px',
+                                    borderRadius: 999,
+                                    border: `2px solid ${isCompleted ? PALETTE.emerald : 'rgba(255,255,255,0.3)'}`,
+                                    background: isCompleted ? PALETTE.emerald : 'rgba(0,0,0,0.6)',
+                                    color: isCompleted ? '#1a1a1a' : 'rgba(255,255,255,0.7)',
+                                    fontSize: 18,
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    touchAction: 'manipulation',
+                                    WebkitTapHighlightColor: 'transparent',
+                                    minHeight: 52,
+                                }}
+                            >
+                                {isCompleted ? '✓ Erledigt' : 'Erledigt'}
+                            </button>
+                        )}
+                    </div>
+                </>
+            )}
+
             {/* Step progress dots — bottom centre */}
             <div
                 style={{
                     position: 'absolute',
-                    bottom: 28,
+                    bottom: isTouchDevice ? 14 : 28,
                     left: '50%',
                     transform: 'translateX(-50%)',
                     display: 'flex',

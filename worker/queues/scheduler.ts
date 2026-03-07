@@ -17,7 +17,7 @@ export interface ScheduledJobDefinition {
 
 const scheduledJobs: ScheduledJobDefinition[] = [
     {
-        name: 'opensearch-sync',
+        name: 'sync-opensearch',
         queue: QueueName.OPENSEARCH,
         data: { batchSize: 150 },
         schema: {

@@ -10,6 +10,7 @@ import type {
     FlowNodeSerialized,
 } from '@app/components/flow/editor/editorTypes';
 import { FlowEditor } from '@app/components/flow/FlowEditor';
+import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
 import { css } from 'styled-system/css';
 import { stack } from 'styled-system/patterns';
 
@@ -371,6 +372,65 @@ export function RecipeForm({
         flowEdgesRef.current = edges;
     }, []);
 
+    const handleAiApply = useCallback(
+        async (result: AIAnalysisResult, apply: ApplySelection) => {
+            if (apply.title && result.title) setTitle(result.title);
+            if (apply.description && result.description) setDescription(result.description);
+            if (apply.prepTime) setPrepTime(result.prepTime);
+            if (apply.cookTime) setCookTime(result.cookTime);
+            if (apply.servings) setServings(result.servings);
+            if (apply.difficulty) setDifficulty(result.difficulty);
+
+            if (apply.category && result.categorySlug) {
+                const matched = categories.find((c) => c.slug === result.categorySlug);
+                if (matched) setCategoryIds([matched.id]);
+            }
+
+            if (apply.tags && result.tags && result.tags.length > 0) {
+                const matchedIds = result.tags
+                    .map((tagName) =>
+                        initialTagCandidates.find(
+                            (t) => t.name.toLowerCase() === tagName.toLowerCase(),
+                        ),
+                    )
+                    .filter((t): t is NonNullable<typeof t> => Boolean(t))
+                    .map((t) => t.id);
+                if (matchedIds.length > 0) setSelectedTags(matchedIds);
+            }
+
+            if (apply.ingredients && result.ingredients && result.ingredients.length > 0) {
+                const newIngredients: AddedIngredient[] = [];
+                for (const ing of result.ingredients) {
+                    try {
+                        const created = await createIngredient(
+                            ing.name,
+                            undefined,
+                            ing.unit ? [ing.unit] : [],
+                        );
+                        newIngredients.push({
+                            id: created.id,
+                            name: created.name,
+                            amount: ing.amount ?? '',
+                            unit: ing.unit || 'Stück',
+                            notes: ing.notes ?? '',
+                            isOptional: false,
+                            isNew: false,
+                        });
+                    } catch (e) {
+                        console.error('Failed to add ingredient:', ing.name, e);
+                    }
+                }
+                if (newIngredients.length > 0) {
+                    setIngredients((prev) => {
+                        const existingIds = new Set(prev.map((i) => i.id));
+                        return [...prev, ...newIngredients.filter((i) => !existingIds.has(i.id))];
+                    });
+                }
+            }
+        },
+        [categories, initialTagCandidates],
+    );
+
     // ── submit ────────────────────────────────────────────────
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -430,6 +490,7 @@ export function RecipeForm({
             initialEdges={initialData?.flowEdges as unknown as FlowEdgeSerialized[]}
             onChange={handleFlowChange}
             onAddIngredientToRecipe={handleAddIngredient}
+            onAiApply={handleAiApply}
         />
     );
 

@@ -56,6 +56,11 @@ type HeroImage = {
     thumbKey?: string | null;
     title: string;
     subtitle?: string;
+    reportable?: {
+        contentType: 'cook_image';
+        contentId: string;
+        ownerId: string;
+    };
 };
 
 type RecipeDetailClientProps = {
@@ -168,6 +173,11 @@ export function RecipeDetailClient({
             thumbKey: img.imageKey ?? null,
             title: img.user.name || img.user.nickname || 'Küchenfreund',
             subtitle: img.caption || 'Foto',
+            reportable: {
+                contentType: 'cook_image' as const,
+                contentId: img.id,
+                ownerId: img.user.id,
+            },
         }));
         return [primary, ...extras];
     }, [cookImages, recipe.image, recipe.imageKey, recipe.title]);
@@ -589,10 +599,21 @@ export function RecipeDetailClient({
                                             fontSize: 'sm',
                                             color: 'text-muted',
                                             fontFamily: 'body',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '2',
                                         })}
                                     >
                                         {heroMeta?.subtitle ?? 'Galerie'} ({normalizedHeroIndex + 1}
                                         /{heroCount})
+                                        {heroMeta?.reportable &&
+                                            heroMeta.reportable.ownerId !== viewerId && (
+                                                <ReportButton
+                                                    contentType={heroMeta.reportable.contentType}
+                                                    contentId={heroMeta.reportable.contentId}
+                                                    variant="icon"
+                                                />
+                                            )}
                                     </span>
                                     {heroCount > 1 && (
                                         <span

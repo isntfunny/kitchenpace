@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '@xyflow/react/dist/style.css';
 
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
+import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
 import { css } from 'styled-system/css';
 
 import { AiConversionDialog } from './editor/AiConversionDialog';
@@ -144,6 +145,7 @@ export interface FlowEditorProps {
     onAddIngredientToRecipe?: (
         ing: import('@app/components/recipe/RecipeForm/data').IngredientSearchResult,
     ) => void;
+    onAiApply?: (result: AIAnalysisResult, apply: ApplySelection) => void;
 }
 
 /* ── inner component (needs ReactFlowProvider above it) ── */
@@ -154,6 +156,7 @@ function FlowEditorInner({
     initialEdges,
     onChange,
     onAddIngredientToRecipe,
+    onAiApply,
 }: FlowEditorProps) {
     const { screenToFlowPosition, getNodes, getEdges, fitView } = useReactFlow();
     const onChangeRef = useRef(onChange);
@@ -739,7 +742,7 @@ function FlowEditorInner({
             <AiConversionDialog
                 open={aiDialogOpen}
                 onClose={() => setAiDialogOpen(false)}
-                onResult={(result) => {
+                onResult={(result, apply) => {
                     const newNodes: RecipeFlowNode[] = result.flowNodes.map((node) => ({
                         id: node.id,
                         type: 'recipeStep' as const,
@@ -763,6 +766,8 @@ function FlowEditorInner({
 
                     // autoLayoutAndFit computes dagre positions, sets state, notifies parent, and fits view
                     autoLayoutAndFit(newNodes, newEdges);
+                    // Notify parent about metadata to apply (title, description, tags, etc.)
+                    onAiApply?.(result, apply);
                     setAiDialogOpen(false);
                 }}
             />

@@ -1,6 +1,7 @@
 'use server';
 
 import { fireEvent } from '@app/lib/events/fire';
+import { createActivityLog } from '@app/lib/events/persist';
 import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
@@ -213,13 +214,11 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
     }
 
     if (isPublishing) {
-        await prisma.activityLog.create({
-            data: {
-                userId: authorId,
-                type: 'RECIPE_CREATED',
-                targetId: recipe.id,
-                targetType: 'recipe',
-            },
+        await createActivityLog({
+            userId: authorId,
+            type: 'RECIPE_CREATED',
+            targetId: recipe.id,
+            targetType: 'recipe',
         });
         await sendNotificationsToFollowers(authorId, recipeId, data.title);
     }
@@ -329,13 +328,11 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
     });
 
     if (isPublished) {
-        await prisma.activityLog.create({
-            data: {
-                userId: authorId,
-                type: 'RECIPE_CREATED',
-                targetId: recipe.id,
-                targetType: 'recipe',
-            },
+        await createActivityLog({
+            userId: authorId,
+            type: 'RECIPE_CREATED',
+            targetId: recipe.id,
+            targetType: 'recipe',
         });
 
         await sendNotificationsToFollowers(authorId, recipe.id, data.title);
@@ -418,13 +415,11 @@ export async function updateRecipeStatus(
         });
 
         if (isPublished) {
-            await prisma.activityLog.create({
-                data: {
-                    userId: authorId,
-                    type: 'RECIPE_CREATED',
-                    targetId: recipeId,
-                    targetType: 'recipe',
-                },
+            await createActivityLog({
+                userId: authorId,
+                type: 'RECIPE_CREATED',
+                targetId: recipeId,
+                targetType: 'recipe',
             });
 
             await sendNotificationsToFollowers(authorId, recipeId, recipe.title);

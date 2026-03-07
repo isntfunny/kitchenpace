@@ -10,6 +10,9 @@ import type { FlowNodeInput, FlowEdgeInput } from '@app/app/recipe/create/import
 export interface AIAnalysisResult {
     title: string;
     description: string;
+    /** Category slug matching Category.slug in DB (e.g. 'hauptgericht', 'dessert') */
+    categorySlug: string;
+    tags: string[];
     servings: number;
     prepTime: number;
     cookTime: number;
@@ -23,6 +26,19 @@ export interface AIAnalysisResult {
     }>;
     flowNodes: FlowNodeInput[];
     flowEdges: FlowEdgeInput[];
+}
+
+/** Which metadata fields the user wants to apply from the AI result */
+export interface ApplySelection {
+    title: boolean;
+    description: boolean;
+    category: boolean;
+    tags: boolean;
+    prepTime: boolean;
+    cookTime: boolean;
+    servings: boolean;
+    difficulty: boolean;
+    ingredients: boolean;
 }
 
 export interface AIAnalysisSuccess {

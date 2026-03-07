@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { analyzeWithAI } from '@app/app/recipe/create/import/actions';
 import { getServerAuthSession } from '@app/lib/auth';
-import { importRecipeFromMarkdown } from '@app/lib/importer/openai-client';
-import { prisma } from '@shared/prisma';
 
 /**
  * POST /api/ai/analyze-recipe
@@ -10,11 +9,12 @@ import { prisma } from '@shared/prisma';
  * Analyzes recipe text using OpenAI and returns structured data
  * for the Flow Editor AI conversion dialog.
  *
- * Response shape matches AIAnalysisResult in ai-text-analysis.ts.
+ * Delegates to analyzeWithAI (same code path as the full importer)
+ * so resolveIngredientMentions and ImportRun logging are included.
  */
 export async function POST(request: NextRequest) {
     const session = await getServerAuthSession('api/ai/analyze-recipe');
-    const userId = session?.user?.id ?? null;
+    const userId = session?.user?.id ?? undefined;
 
     try {
         const body = await request.json();
@@ -31,97 +31,20 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Fetch context data in parallel — gives the AI existing tags & ingredient names
-        const [allTags, topIngredients] = await Promise.all([
-            prisma.tag.findMany({ select: { name: true }, orderBy: { name: 'asc' } }),
-            prisma.ingredient.findMany({
-                select: { name: true },
-                orderBy: { recipes: { _count: 'desc' } },
-                take: 100,
-            }),
-        ]);
-
-        const result = await importRecipeFromMarkdown(text, 'text-input', {
-            model: 'gpt-5.4',
-            temperature: 0.1,
-            context: {
-                availableTags: allTags.map((t) => t.name),
-                topIngredients: topIngredients.map((i) => i.name),
-            },
-        });
-
-        if (!result.success) {
-            if (userId) {
-                prisma.importRun.create({
-                    data: {
-                        userId,
-                        sourceType: 'text',
-                        markdownLength: text.length,
-                        status: 'FAILED',
-                        errorType: result.error.type,
-                        errorMessage: result.error.message,
-                    },
-                }).catch((err: unknown) => console.error('ImportRun log failed:', err));
-            }
-            return NextResponse.json(
-                { error: result.error.message, errorType: result.error.type },
-                { status: 422 },
-            );
-        }
-
-        // Log successful AI run (fire-and-forget)
-        if (userId) {
-            const { metadata } = result;
-            prisma.importRun.create({
-                data: {
-                    userId,
-                    sourceType: 'text',
-                    markdownLength: text.length,
-                    status: 'SUCCESS',
-                    model: metadata.model,
-                    inputTokens: metadata.inputTokens,
-                    cachedInputTokens: metadata.cachedInputTokens,
-                    outputTokens: metadata.outputTokens,
-                    estimatedCostUsd: metadata.estimatedCostUsd,
-                    rawApiResponse: metadata.rawApiResponse as object,
-                },
-            }).catch((err: unknown) => console.error('ImportRun log failed:', err));
-        }
-
-        const difficultyMap: Record<string, 'EASY' | 'MEDIUM' | 'HARD'> = {
-            Einfach: 'EASY',
-            Mittel: 'MEDIUM',
-            Schwer: 'HARD',
-        };
+        const result = await analyzeWithAI(text, '', userId);
 
         const data = {
-            title: result.data.title,
-            description: result.data.description,
-            servings: result.data.servings,
-            prepTime: result.data.prepTime,
-            cookTime: result.data.cookTime,
-            difficulty: difficultyMap[result.data.difficulty] ?? 'MEDIUM',
-            tags: result.data.tags,
-            ingredients: result.data.ingredients.map((ing) => ({
-                name: ing.name,
-                amount: ing.amount != null ? String(ing.amount) : '',
-                unit: ing.unit ?? 'Stück',
-                isOptional: false,
-            })),
-            // No position set — Dagre handles layout in FlowEditor
-            flowNodes: result.data.flowNodes.map((node) => ({
-                id: node.id,
-                type: node.type,
-                label: node.label,
-                description: node.description,
-                duration: node.duration ?? undefined,
-                ingredientIds: node.ingredientIds,
-            })),
-            flowEdges: result.data.flowEdges.map((edge) => ({
-                id: edge.id,
-                source: edge.source,
-                target: edge.target,
-            })),
+            title: result.title,
+            description: result.description,
+            categorySlug: result.categoryIds[0] ?? 'hauptgericht',
+            tags: result.tags,
+            servings: result.servings,
+            prepTime: result.prepTime,
+            cookTime: result.cookTime,
+            difficulty: result.difficulty,
+            ingredients: result.ingredients,
+            flowNodes: result.flowNodes,
+            flowEdges: result.flowEdges,
         };
 
         return NextResponse.json({ data });

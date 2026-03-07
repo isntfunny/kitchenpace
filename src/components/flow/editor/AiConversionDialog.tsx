@@ -1,19 +1,19 @@
 'use client';
 
-import { Sparkles, ChefHat, CheckCircle2, X, Wand2, AlertCircle } from 'lucide-react';
+import { Sparkles, ChefHat, CheckCircle2, X, Wand2, AlertCircle, Check } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { useState, useRef, useEffect } from 'react';
 
-import { analyzeRecipeText, type AIAnalysisResult } from '@app/lib/importer/ai-text-analysis';
+import { analyzeRecipeText, type AIAnalysisResult, type ApplySelection } from '@app/lib/importer/ai-text-analysis';
 
 interface AiConversionDialogProps {
     open: boolean;
     onClose: () => void;
-    /** Called with the AI analysis result */
-    onResult?: (result: AIAnalysisResult) => void;
+    /** Called when the user confirms applying the AI result */
+    onResult?: (result: AIAnalysisResult, apply: ApplySelection) => void;
 }
 
-type Phase = 'input' | 'processing' | 'done' | 'error';
+type Phase = 'input' | 'processing' | 'review' | 'done' | 'error';
 
 const PROCESSING_STEPS = [
     'Rezepttext wird analysiert...',
@@ -23,12 +23,25 @@ const PROCESSING_STEPS = [
     'Verbindungen werden optimiert...',
 ];
 
+const DEFAULT_APPLY: ApplySelection = {
+    title: true,
+    description: true,
+    category: true,
+    tags: true,
+    prepTime: true,
+    cookTime: true,
+    servings: true,
+    difficulty: true,
+    ingredients: true,
+};
+
 export function AiConversionDialog({ open, onClose, onResult }: AiConversionDialogProps) {
     const [text, setText] = useState('');
     const [phase, setPhase] = useState<Phase>('input');
     const [stepIndex, setStepIndex] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<AIAnalysisResult | null>(null);
+    const [apply, setApply] = useState<ApplySelection>(DEFAULT_APPLY);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Cleanup timers on unmount
@@ -49,13 +62,12 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
         runSteps(0);
 
         try {
-            // Call actual AI analysis
             const analysisResult = await analyzeRecipeText(text.trim());
 
             if (analysisResult.success) {
                 setResult(analysisResult.data);
-                onResult?.(analysisResult.data);
-                setPhase('done');
+                setApply(DEFAULT_APPLY);
+                setPhase('review');
             } else {
                 setError(analysisResult.error?.message || 'Analyse fehlgeschlagen');
                 setPhase('error');
@@ -74,6 +86,12 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
         timerRef.current = setTimeout(() => runSteps(idx + 1), 800);
     }
 
+    function handleConfirmReview() {
+        if (!result) return;
+        onResult?.(result, apply);
+        setPhase('done');
+    }
+
     function handleClose() {
         if (timerRef.current) clearTimeout(timerRef.current);
         setPhase('input');
@@ -81,7 +99,12 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
         setText('');
         setError(null);
         setResult(null);
+        setApply(DEFAULT_APPLY);
         onClose();
+    }
+
+    function toggleApply(field: keyof ApplySelection) {
+        setApply((prev) => ({ ...prev, [field]: !prev[field] }));
     }
 
     return (
@@ -107,11 +130,12 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                         backgroundColor: 'white',
                         borderRadius: '20px',
                         boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
-                        width: 'min(580px, 95vw)',
+                        width: phase === 'review' ? 'min(640px, 95vw)' : 'min(580px, 95vw)',
                         maxHeight: '90vh',
                         display: 'flex',
                         flexDirection: 'column',
                         overflow: 'hidden',
+                        transition: 'width 0.2s ease',
                     }}
                     onPointerDownOutside={(e) => phase === 'processing' && e.preventDefault()}
                 >
@@ -151,7 +175,9 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     lineHeight: 1.2,
                                 }}
                             >
-                                Lass KI die Arbeit übernehmen
+                                {phase === 'review'
+                                    ? 'Erkannte Daten übernehmen'
+                                    : 'Lass KI die Arbeit übernehmen'}
                             </Dialog.Title>
                             <p
                                 style={{
@@ -161,7 +187,9 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     marginTop: '2px',
                                 }}
                             >
-                                Füge ein klassisches Rezept ein — KI wandelt es in einen Flow um
+                                {phase === 'review'
+                                    ? 'Wähle aus, welche Felder du übernehmen möchtest'
+                                    : 'Füge ein klassisches Rezept ein — KI wandelt es in einen Flow um'}
                             </p>
                         </div>
                         {phase !== 'processing' && (
@@ -194,6 +222,9 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                     <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
                         {phase === 'input' && <InputPhase text={text} onChange={setText} />}
                         {phase === 'processing' && <ProcessingPhase stepIndex={stepIndex} />}
+                        {phase === 'review' && result && (
+                            <ReviewPhase result={result} apply={apply} onToggle={toggleApply} />
+                        )}
                         {phase === 'done' && <DonePhase result={result} />}
                         {phase === 'error' && <ErrorPhase error={error || ''} />}
                     </div>
@@ -249,6 +280,89 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                 <Wand2 style={{ width: '14px', height: '14px' }} />
                                 Jetzt konvertieren
                             </button>
+                        </div>
+                    )}
+                    {phase === 'review' && (
+                        <div
+                            style={{
+                                padding: '16px 24px',
+                                borderTop: '1px solid rgba(224,123,83,0.12)',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: '10px',
+                            }}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => setPhase('input')}
+                                style={{
+                                    padding: '8px 18px',
+                                    borderRadius: '999px',
+                                    border: '1.5px solid rgba(224,123,83,0.3)',
+                                    backgroundColor: 'transparent',
+                                    color: '#e07b53',
+                                    fontWeight: 600,
+                                    fontSize: '13px',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                Zurück
+                            </button>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!result) return;
+                                        onResult?.(result, {
+                                            title: false,
+                                            description: false,
+                                            category: false,
+                                            tags: false,
+                                            prepTime: false,
+                                            cookTime: false,
+                                            servings: false,
+                                            difficulty: false,
+                                            ingredients: false,
+                                        });
+                                        setPhase('done');
+                                    }}
+                                    style={{
+                                        padding: '8px 18px',
+                                        borderRadius: '999px',
+                                        border: '1.5px solid rgba(0,0,0,0.12)',
+                                        backgroundColor: 'transparent',
+                                        color: '#636e72',
+                                        fontWeight: 600,
+                                        fontSize: '13px',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    Nur Flow
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmReview}
+                                    style={{
+                                        padding: '8px 20px',
+                                        borderRadius: '999px',
+                                        border: 'none',
+                                        background:
+                                            'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                        color: 'white',
+                                        fontWeight: 700,
+                                        fontSize: '13px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        boxShadow: '0 4px 12px rgba(224,123,83,0.3)',
+                                    }}
+                                >
+                                    <Check style={{ width: '14px', height: '14px' }} />
+                                    Auswahl übernehmen
+                                </button>
+                            </div>
                         </div>
                     )}
                     {(phase === 'done' || phase === 'error') && (
@@ -473,6 +587,228 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
         </div>
     );
 }
+
+/* ── Review Phase ──────────────────────────────────────────── */
+
+const DIFFICULTY_LABEL: Record<string, string> = {
+    EASY: 'Einfach',
+    MEDIUM: 'Mittel',
+    HARD: 'Schwer',
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+    hauptgericht: 'Hauptgericht',
+    beilage: 'Beilage',
+    backen: 'Backen',
+    dessert: 'Dessert',
+    fruehstueck: 'Frühstück',
+    getraenk: 'Getränk',
+    vorspeise: 'Vorspeise',
+    salat: 'Salat',
+};
+
+interface ReviewPhaseProps {
+    result: AIAnalysisResult;
+    apply: ApplySelection;
+    onToggle: (field: keyof ApplySelection) => void;
+}
+
+function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
+    const rows: Array<{
+        field: keyof ApplySelection;
+        label: string;
+        value: string;
+        subtle?: boolean;
+    }> = [
+        {
+            field: 'title',
+            label: 'Titel',
+            value: result.title || '—',
+        },
+        {
+            field: 'description',
+            label: 'Beschreibung',
+            value: result.description
+                ? result.description.length > 120
+                    ? result.description.slice(0, 120) + '…'
+                    : result.description
+                : '—',
+            subtle: true,
+        },
+        {
+            field: 'category',
+            label: 'Kategorie',
+            value: CATEGORY_LABEL[result.categorySlug] ?? result.categorySlug ?? '—',
+        },
+        {
+            field: 'tags',
+            label: 'Tags',
+            value:
+                result.tags && result.tags.length > 0
+                    ? result.tags.join(', ')
+                    : 'Keine erkannt',
+        },
+        {
+            field: 'prepTime',
+            label: 'Vorbereitungszeit',
+            value: result.prepTime > 0 ? `${result.prepTime} Min` : '—',
+        },
+        {
+            field: 'cookTime',
+            label: 'Kochzeit',
+            value: result.cookTime > 0 ? `${result.cookTime} Min` : '—',
+        },
+        {
+            field: 'servings',
+            label: 'Portionen',
+            value: String(result.servings),
+        },
+        {
+            field: 'difficulty',
+            label: 'Schwierigkeitsgrad',
+            value: DIFFICULTY_LABEL[result.difficulty] ?? result.difficulty,
+        },
+        {
+            field: 'ingredients',
+            label: 'Zutaten',
+            value:
+                result.ingredients && result.ingredients.length > 0
+                    ? `${result.ingredients.length} Zutaten erkannt`
+                    : 'Keine erkannt',
+        },
+    ];
+
+    return (
+        <div>
+            <p
+                style={{
+                    margin: '0 0 16px',
+                    fontSize: '13px',
+                    color: '#636e72',
+                    lineHeight: 1.6,
+                }}
+            >
+                Die KI hat folgende Daten erkannt. Der Flow-Diagram wird immer übernommen.
+                Wähle aus, welche weiteren Felder du in das Formular übernehmen möchtest.
+            </p>
+
+            {/* Always-applied note */}
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(34,197,94,0.07)',
+                    border: '1px solid rgba(34,197,94,0.2)',
+                    marginBottom: '16px',
+                }}
+            >
+                <CheckCircle2
+                    style={{ width: '15px', height: '15px', color: '#22c55e', flexShrink: 0 }}
+                />
+                <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 500 }}>
+                    Flow-Diagramm ({result.flowNodes?.length ?? 0} Schritte,{' '}
+                    {result.flowEdges?.length ?? 0} Verbindungen) wird immer übernommen
+                </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {rows.map(({ field, label, value, subtle }) => {
+                    const checked = apply[field];
+                    return (
+                        <button
+                            key={field}
+                            type="button"
+                            onClick={() => onToggle(field)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '12px',
+                                padding: '10px 12px',
+                                borderRadius: '10px',
+                                border: checked
+                                    ? '1.5px solid rgba(224,123,83,0.4)'
+                                    : '1.5px solid rgba(0,0,0,0.07)',
+                                backgroundColor: checked
+                                    ? 'rgba(224,123,83,0.05)'
+                                    : 'rgba(0,0,0,0.02)',
+                                cursor: 'pointer',
+                                textAlign: 'left',
+                                width: '100%',
+                                transition: 'all 0.15s ease',
+                            }}
+                        >
+                            {/* Checkbox */}
+                            <div
+                                style={{
+                                    width: '18px',
+                                    height: '18px',
+                                    borderRadius: '5px',
+                                    flexShrink: 0,
+                                    marginTop: '1px',
+                                    backgroundColor: checked ? '#e07b53' : 'white',
+                                    border: checked
+                                        ? '1.5px solid #e07b53'
+                                        : '1.5px solid rgba(0,0,0,0.2)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.15s ease',
+                                }}
+                            >
+                                {checked && (
+                                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                        <path
+                                            d="M2 5l2.5 2.5L8 3"
+                                            stroke="white"
+                                            strokeWidth="1.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                )}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div
+                                    style={{
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        color: checked ? '#e07b53' : '#b2bec3',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.05em',
+                                        marginBottom: '2px',
+                                        transition: 'color 0.15s ease',
+                                    }}
+                                >
+                                    {label}
+                                </div>
+                                <div
+                                    style={{
+                                        fontSize: '13px',
+                                        color: checked
+                                            ? subtle
+                                                ? '#636e72'
+                                                : '#2d3436'
+                                            : '#b2bec3',
+                                        lineHeight: 1.4,
+                                        wordBreak: 'break-word',
+                                        transition: 'color 0.15s ease',
+                                    }}
+                                >
+                                    {value}
+                                </div>
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+/* ── Done / Error phases ───────────────────────────────────── */
 
 function DonePhase({ result }: { result: AIAnalysisResult | null }) {
     const stats = result

@@ -32,6 +32,7 @@ import { ReportButton } from '@app/components/features/ReportButton';
 import { ShareButton } from '@app/components/features/ShareButton';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
+import { useIsDark } from '@app/lib/darkMode';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
@@ -222,6 +223,7 @@ export function RecipeDetailClient({
     ]);
 
     const totalTime = recipe.prepTime + recipe.cookTime;
+    const dark = useIsDark();
     const starValues = [1, 2, 3, 4, 5] as const;
     const activeStarValue = viewerRating ?? Math.round(averageRating || 0);
     const ratingLabel = ratingCount === 1 ? 'Bewertung' : 'Bewertungen';
@@ -857,7 +859,9 @@ export function RecipeDetailClient({
                                     mb: '4',
                                     borderRadius: 'xl',
                                     p: '4',
-                                    bg: 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(255,246,236,0.9))',
+                                    bg: dark
+                                        ? 'linear-gradient(135deg, rgba(224,123,83,0.12), rgba(224,123,83,0.04))'
+                                        : 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(255,246,236,0.9))',
                                     border: '1px solid',
                                     borderColor: 'rgba(224,123,83,0.2)',
                                     boxShadow: '0 8px 30px rgba(224,123,83,0.12)',
@@ -916,7 +920,7 @@ export function RecipeDetailClient({
                                                 background:
                                                     value <= activeStarValue
                                                         ? 'rgba(224,123,83,0.9)'
-                                                        : 'rgba(255,255,255,0.6)',
+                                                        : dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.6)',
                                                 color:
                                                     value <= activeStarValue
                                                         ? 'white'
@@ -1227,7 +1231,7 @@ export function RecipeDetailClient({
                     <div className={css({ lg: { gridColumn: 'span 4' } })}>
                         <div
                             className={css({
-                                bg: 'white',
+                                bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '5',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
@@ -1270,7 +1274,7 @@ export function RecipeDetailClient({
                                             w: '10',
                                             h: '10',
                                             borderRadius: 'full',
-                                            bg: 'white',
+                                            bg: 'surface',
                                             border: '1px solid',
                                             borderColor: 'border',
                                             cursor: 'pointer',
@@ -1297,7 +1301,7 @@ export function RecipeDetailClient({
                                             w: '10',
                                             h: '10',
                                             borderRadius: 'full',
-                                            bg: 'white',
+                                            bg: 'surface',
                                             border: '1px solid',
                                             borderColor: 'border',
                                             cursor: 'pointer',
@@ -1352,7 +1356,7 @@ export function RecipeDetailClient({
                     <div className={css({ lg: { gridColumn: 'span 8' } })}>
                         <div
                             className={css({
-                                bg: 'white',
+                                bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '5',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
@@ -1397,7 +1401,7 @@ export function RecipeDetailClient({
                         </h2>
                         <div
                             className={css({
-                                bg: 'white',
+                                bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '5',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
@@ -1553,7 +1557,7 @@ export function RecipeDetailClient({
                         </h2>
                         <div
                             className={css({
-                                bg: 'white',
+                                bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '6',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',

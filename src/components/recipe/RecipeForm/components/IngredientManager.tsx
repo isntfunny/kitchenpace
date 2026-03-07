@@ -367,7 +367,7 @@ export function IngredientManager({
                                     bg: 'transparent',
                                     outline: 'none',
                                     _focus: { borderColor: 'rgba(224,123,83,0.5)' },
-                                    _placeholder: { color: 'rgba(0,0,0,0.3)' },
+                                    _placeholder: { color: 'foreground.muted' },
                                 })}
                             />
                         </div>

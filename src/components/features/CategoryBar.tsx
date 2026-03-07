@@ -40,7 +40,7 @@ export function CategoryBar({ categories }: CategoryBarProps) {
     return (
         <div
             className={css({
-                p: '4',
+                p: { base: '3', md: '4' },
                 borderRadius: '2xl',
                 bg: 'surface',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
@@ -49,6 +49,7 @@ export function CategoryBar({ categories }: CategoryBarProps) {
             <div
                 className={css({
                     display: 'flex',
+                    flexWrap: 'wrap',
                     gap: '3',
                     pt: '1',
                 })}
@@ -61,13 +62,18 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                             key={cat.slug}
                             href={`/category/${cat.slug}`}
                             className={css({
-                                flex: '1 1 0',
+                                flex: {
+                                    base: '1 1 calc(33.333% - 12px)',
+                                    sm: '1 1 calc(25% - 12px)',
+                                    md: '1 1 0',
+                                },
+                                minW: '0',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
-                                gap: '2',
+                                gap: { base: '1.5', md: '2' },
                                 px: '2',
-                                py: '3',
+                                py: { base: '2', md: '3' },
                                 borderRadius: 'xl',
                                 border: '2px solid',
                                 borderColor: 'transparent',
@@ -84,8 +90,8 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                         >
                             <div
                                 className={css({
-                                    width: '48px',
-                                    height: '48px',
+                                    width: { base: '40px', md: '48px' },
+                                    height: { base: '40px', md: '48px' },
                                     borderRadius: 'xl',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -97,14 +103,16 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                     color,
                                 }}
                             >
-                                <DynamicIcon name={cat.icon} size={22} />
+                                <DynamicIcon name={cat.icon} size={20} />
                             </div>
                             <span
                                 className={css({
-                                    fontSize: '0.8rem',
+                                    fontSize: { base: '0.7rem', md: '0.8rem' },
                                     fontWeight: '600',
                                     color: 'text',
-                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                    lineHeight: '1.2',
+                                    wordBreak: 'break-word',
                                 })}
                             >
                                 {cat.name}

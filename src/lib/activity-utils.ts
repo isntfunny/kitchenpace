@@ -25,6 +25,7 @@ export interface ActivityFeedItem {
     recipeSlug?: string;
     detail?: string;
     timeAgo: string;
+    createdAt: string;
     targetUserName?: string;
     targetUserId?: string;
     targetUserSlug?: string;
@@ -109,6 +110,7 @@ export function mapLogToFeedItem(
         recipeSlug: recipe?.slug,
         detail: log.metadata ? JSON.stringify(log.metadata) : undefined,
         timeAgo: formatTimeAgo(log.createdAt),
+        createdAt: log.createdAt.toISOString(),
         targetUserName,
         targetUserId,
         targetUserSlug,

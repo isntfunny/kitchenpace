@@ -1,6 +1,7 @@
 'use server';
 
-import { ACTIVITY_DECOR, mapLogToFeedItem, type ActivityFeedItem } from '@app/lib/activity-utils';
+import { fetchActivityFeed } from '@app/lib/activity-feed';
+import { type ActivityFeedItem } from '@app/lib/activity-utils';
 import { prisma } from '@shared/prisma';
 
 
@@ -381,121 +382,9 @@ export async function fetchUserActivityFeedItems(
     userId: string,
     take = 20,
 ): Promise<ActivityFeedItem[]> {
-    const knownTypes = new Set(Object.keys(ACTIVITY_DECOR));
-
-    // Fetch more than needed to account for unknown types being filtered out
-    const allLogs = await prisma.activityLog.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        take: take * 2,
-    });
-
-    const logs = allLogs.filter((l) => knownTypes.has(l.type)).slice(0, take);
-
-    if (logs.length === 0) return [];
-
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { profile: true },
-    });
-
-    const recipeIds = Array.from(
-        new Set(
-            logs
-                .filter((l) => l.targetType === 'recipe' && l.targetId)
-                .map((l) => l.targetId as string),
-        ),
-    );
-    const recipes =
-        recipeIds.length > 0
-            ? await prisma.recipe.findMany({
-                  where: { id: { in: recipeIds } },
-                  select: { id: true, title: true, slug: true },
-              })
-            : [];
-    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
-
-    const followTargetIds = Array.from(
-        new Set(
-            logs
-                .filter((l) => l.type === 'USER_FOLLOWED' && l.targetId)
-                .map((l) => l.targetId as string),
-        ),
-    );
-    const targetUsers =
-        followTargetIds.length > 0
-            ? await prisma.user.findMany({
-                  where: { id: { in: followTargetIds } },
-                  include: { profile: true },
-              })
-            : [];
-    const targetUserMap = new Map(targetUsers.map((u) => [u.id, u]));
-
-    // Single-user map for the mapper
-    const userMap = new Map(user ? [[user.id, user]] : []);
-
-    return logs
-        .map((log) => mapLogToFeedItem(log, userMap, recipeMap, targetUserMap))
-        .filter((item): item is ActivityFeedItem => item !== null);
+    return fetchActivityFeed({ type: 'user', userId }, take);
 }
 
 export async function fetchRecentActivities(limit = 6): Promise<ActivityFeedItem[]> {
-    const logs = await prisma.activityLog.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: limit * 2,
-    });
-
-    const userIds = [...new Set(logs.map((log) => log.userId))];
-    const users = await prisma.user.findMany({
-        where: { id: { in: userIds } },
-        include: { profile: true },
-    });
-
-    const visibleUserIds = new Set(
-        users.filter((user) => user.profile?.showInActivity !== false).map((user) => user.id),
-    );
-
-    const recipeIds = Array.from(
-        new Set(
-            logs
-                .filter((log) => log.targetType === 'recipe' && log.targetId)
-                .map((log) => log.targetId as string),
-        ),
-    );
-    const recipes = await prisma.recipe.findMany({
-        where: { id: { in: recipeIds } },
-        select: { id: true, title: true, slug: true },
-    });
-
-    const followTargetIds = Array.from(
-        new Set(
-            logs
-                .filter((log) => log.type === 'USER_FOLLOWED' && log.targetId)
-                .map((log) => log.targetId as string),
-        ),
-    );
-    const targetUsers = await prisma.user.findMany({
-        where: { id: { in: followTargetIds } },
-        include: { profile: true },
-    });
-
-    const userMap = new Map(users.map((user) => [user.id, user]));
-    const recipeMap = new Map(recipes.map((recipe) => [recipe.id, recipe]));
-    const targetUserMap = new Map(targetUsers.map((user) => [user.id, user]));
-
-    const activities: ActivityFeedItem[] = [];
-
-    for (const log of logs) {
-        if (!visibleUserIds.has(log.userId)) continue;
-
-        const item = mapLogToFeedItem(log, userMap, recipeMap, targetUserMap, {
-            respectShowInActivity: true,
-        });
-        if (!item) continue;
-
-        activities.push(item);
-        if (activities.length >= limit) break;
-    }
-
-    return activities;
+    return fetchActivityFeed('global', limit);
 }

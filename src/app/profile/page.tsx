@@ -1,4 +1,4 @@
-import { ChefHat, Edit3, FileText, Settings, User } from 'lucide-react';
+import { ChefHat, Edit3, Settings, User } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -20,7 +20,7 @@ import {
 import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { Heading, Text } from '@app/components/atoms/Typography';
-import { ActivityList } from '@app/components/features/ActivitySidebar';
+import { LiveUserActivityList } from '@app/components/features/LiveActivityFeed';
 import { QuickLinksCard } from '@app/components/features/QuickLinksCard';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { FadeInSection } from '@app/components/motion/FadeInSection';
@@ -623,27 +623,7 @@ export default async function ProfilePage() {
                             <Heading as="h2" size="md" className={css({ mb: '3' })}>
                                 Meine Aktivitäten
                             </Heading>
-                            {activityFeed.length === 0 ? (
-                                <div
-                                    className={css({
-                                        p: '5',
-                                        textAlign: 'center',
-                                        border: '1px dashed',
-                                        borderColor: 'border',
-                                        borderRadius: 'xl',
-                                    })}
-                                >
-                                    <FileText
-                                        size={28}
-                                        className={css({ color: 'text-muted', mx: 'auto', mb: '2' })}
-                                    />
-                                    <Text size="sm" color="muted">
-                                        Noch keine Aktivitäten.
-                                    </Text>
-                                </div>
-                            ) : (
-                                <ActivityList activities={activityFeed} />
-                            )}
+                            <LiveUserActivityList initialActivities={activityFeed} />
                         </div>
                     </div>
                 </div>

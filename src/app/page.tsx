@@ -10,10 +10,10 @@ import {
     fetchNewestRecipes,
     fetchTopRatedRecipes,
 } from '@app/app/actions/recipes';
-import { ActivitySidebar } from '@app/components/features/ActivitySidebar';
 import { CategoryBar } from '@app/components/features/CategoryBar';
 import { ChefSpotlight } from '@app/components/features/ChefSpotlight';
 import { Header } from '@app/components/features/Header';
+import { LiveActivitySidebar } from '@app/components/features/LiveActivityFeed';
 import { QuickTips } from '@app/components/features/QuickTips';
 import { RecipeScrollServer } from '@app/components/features/RecipeScrollServer';
 import { TrendingTags } from '@app/components/features/TrendingTags';
@@ -157,7 +157,7 @@ export default async function Home() {
                                     marginTop: '4',
                                 })}
                             >
-                                <ActivitySidebar activities={recentActivities} />
+                                <LiveActivitySidebar initialActivities={recentActivities} />
                             </div>
                         </FadeInSection>
                     </div>

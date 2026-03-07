@@ -2,6 +2,7 @@
 
 /* eslint-disable import/order */
 import { Star } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { ChefSpotlightData } from '@app/app/actions/community';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
@@ -69,7 +70,13 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                         gap: '1',
                     })}
                 >
-                    <Star size={16} />
+                    <motion.span
+                        style={{ display: 'inline-flex' }}
+                        animate={{ scale: [1, 1.15, 1] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                        <Star size={16} />
+                    </motion.span>
                     <span>Chef des Monats</span>
                 </Text>
             </div>

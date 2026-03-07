@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock, Pin } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -160,30 +161,33 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
             onBlurCapture={handleBlur}
         >
             {children}
-            {isVisible &&
-                popupPosition &&
-                portalElement &&
+            {portalElement &&
                 createPortal(
-                    <div
-                        aria-hidden
-                        className={css({
-                            position: 'fixed',
-                            marginTop: '0',
-                            width: '240px',
-                            background: 'surface.elevated',
-                            borderRadius: 'xl',
-                            border: '1px solid',
-                            borderColor: 'rgba(224,123,83,0.2)',
-                            boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
-                            padding: '3',
-                            zIndex: 110,
-                            animation: 'fadeIn 150ms ease',
-                            display: { base: 'none', md: 'block' },
-                        })}
-                        style={dropdownStyle}
-                        onMouseEnter={handlePreviewPointerEnter}
-                        onMouseLeave={handlePreviewPointerLeave}
-                    >
+                    <AnimatePresence>
+                        {isVisible && popupPosition && (
+                            <motion.div
+                                aria-hidden
+                                className={css({
+                                    position: 'fixed',
+                                    marginTop: '0',
+                                    width: '240px',
+                                    background: 'surface.elevated',
+                                    borderRadius: 'xl',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(224,123,83,0.2)',
+                                    boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
+                                    padding: '3',
+                                    zIndex: 110,
+                                    display: { base: 'none', md: 'block' },
+                                })}
+                                style={dropdownStyle}
+                                onMouseEnter={handlePreviewPointerEnter}
+                                onMouseLeave={handlePreviewPointerLeave}
+                                initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                                transition={{ duration: 0.15 }}
+                            >
                         <SmartImage
                             src={recipe.imageUrl ?? undefined}
                             alt={recipe.title}
@@ -253,7 +257,9 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                         >
                             Öffnen
                         </Link>
-                    </div>,
+                            </motion.div>
+                        )}
+                    </AnimatePresence>,
                     portalElement,
                 )}
         </div>

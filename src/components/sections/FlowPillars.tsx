@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock, Clipboard, Sparkles } from 'lucide-react';
+import { motion } from 'motion/react';
 import * as React from 'react';
 import type { ReactNode } from 'react';
 
@@ -50,8 +51,8 @@ export function FlowPillars() {
                     mt: '4',
                 })}
             >
-                {pillars.map((pillar) => (
-                    <div
+                {pillars.map((pillar, index) => (
+                    <motion.div
                         key={pillar.title}
                         className={css({
                             padding: '4',
@@ -59,13 +60,13 @@ export function FlowPillars() {
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '2',
-                            _hover: {
-                                transform: 'translateY(-2px)',
-                            },
-                            transition: 'transform 250ms ease',
                         })}
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-40px' }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
                     >
-                        <span
+                        <motion.span
                             className={css({
                                 width: '52px',
                                 height: '52px',
@@ -76,16 +77,18 @@ export function FlowPillars() {
                                 background: pillar.color,
                                 color: 'white',
                             })}
+                            whileHover={{ scale: 1.1, rotate: 8 }}
+                            transition={{ type: 'spring', stiffness: 300 }}
                         >
                             {pillar.icon}
-                        </span>
+                        </motion.span>
                         <Heading as="h3" size="md" className={css({ color: pillar.color })}>
                             {pillar.title}
                         </Heading>
                         <Text size="sm" color="muted">
                             {pillar.description}
                         </Text>
-                    </div>
+                    </motion.div>
                 ))}
             </div>
         </section>

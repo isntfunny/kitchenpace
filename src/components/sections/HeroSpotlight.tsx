@@ -1,6 +1,7 @@
 'use client';
 
 import { Star } from 'lucide-react';
+import { motion } from 'motion/react';
 import * as React from 'react';
 
 import { css } from 'styled-system/css';
@@ -30,7 +31,11 @@ export function HeroSpotlight() {
                     alignItems: 'center',
                 })}
             >
-                <div>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45 }}
+                >
                     <div
                         className={css({
                             display: 'inline-flex',
@@ -44,7 +49,13 @@ export function HeroSpotlight() {
                             color: 'white',
                         })}
                     >
-                        <Star size={16} />
+                        <motion.span
+                            style={{ display: 'inline-flex' }}
+                            animate={{ rotate: [0, 15, -10, 0] }}
+                            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                        >
+                            <Star size={16} />
+                        </motion.span>
                         <span>Neu gedacht</span>
                     </div>
                     <Heading as="h1" size="xl" className={css({ mt: '4', maxW: '48ch' })}>
@@ -54,8 +65,8 @@ export function HeroSpotlight() {
                         Manchmal kocht die Soße, während du das Gemüse schneidest. Hier siehst du
                         auf einen Blick, was gleichzeitig läuft – ohne lange Listen durchzulesen.
                     </Text>
-                </div>
-                <div
+                </motion.div>
+                <motion.div
                     className={css({
                         position: 'relative',
                         borderRadius: '2xl',
@@ -63,6 +74,9 @@ export function HeroSpotlight() {
                         minHeight: '320px',
                         boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                     })}
+                    initial={{ opacity: 0, scale: 0.97 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.15 }}
                 >
                     <SmartImage
                         src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1000&q=80"
@@ -78,7 +92,7 @@ export function HeroSpotlight() {
                             bg: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)',
                         })}
                     />
-                </div>
+                </motion.div>
             </div>
         </section>
     );

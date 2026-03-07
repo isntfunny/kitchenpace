@@ -1,5 +1,3 @@
-import { ChefHat } from 'lucide-react';
-
 import { fetchCategoriesForBar } from '@app/app/actions/category';
 import {
     fetchChefSpotlight,
@@ -19,6 +17,8 @@ import { Header } from '@app/components/features/Header';
 import { QuickTips } from '@app/components/features/QuickTips';
 import { RecipeScrollServer } from '@app/components/features/RecipeScrollServer';
 import { TrendingTags } from '@app/components/features/TrendingTags';
+import { AnimatedChefHat } from '@app/components/motion/AnimatedChefHat';
+import { FadeInSection } from '@app/components/motion/FadeInSection';
 import { DailyHighlight } from '@app/components/sections/DailyHighlight';
 import { FitsNow } from '@app/components/sections/FitsNow';
 import { FlowPillars } from '@app/components/sections/FlowPillars';
@@ -104,7 +104,9 @@ export default async function Home() {
                         })}
                     >
                         <div className={css({ lg: { gridColumn: 'span 8' } })}>
-                            <DailyHighlight recipe={featuredRecipe} />
+                            <FadeInSection>
+                                <DailyHighlight recipe={featuredRecipe} />
+                            </FadeInSection>
 
                             <div
                                 className={css({
@@ -134,7 +136,7 @@ export default async function Home() {
                             </div>
                         </div>
 
-                        <div className={css({ lg: { gridColumn: 'span 4' } })}>
+                        <FadeInSection delay={0.1} className={css({ lg: { gridColumn: 'span 4' } })}>
                             <TrendingTags tags={trendingTags} />
                             <div
                                 className={css({
@@ -157,7 +159,7 @@ export default async function Home() {
                             >
                                 <ActivitySidebar activities={recentActivities} />
                             </div>
-                        </div>
+                        </FadeInSection>
                     </div>
                 </div>
             </main>
@@ -188,7 +190,7 @@ export default async function Home() {
                             color: '#e07b53',
                         })}
                     >
-                        <ChefHat size={48} />
+                        <AnimatedChefHat />
                     </div>
                     <div
                         className={css({

@@ -1,4 +1,5 @@
 import winston from 'winston';
+import { SeqTransport } from 'winston-seq';
 
 const { NODE_ENV } = process.env;
 
@@ -17,15 +18,13 @@ const transports: winston.transport[] = [
 ];
 
 if (process.env.SEQ_URL && process.env.SEQ_API_KEY) {
-    const seqUrl = new URL(process.env.SEQ_URL);
     transports.push(
-        new winston.transports.Http({
-            host: seqUrl.hostname,
-            port: parseInt(seqUrl.port) || 443,
-            path: '/api/events/raw',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sequence-ApiKey': process.env.SEQ_API_KEY,
+        new SeqTransport({
+            serverUrl: process.env.SEQ_URL,
+            apiKey: process.env.SEQ_API_KEY,
+            onError: (e) => console.error('[seq]', e),
+            defaultProperties: {
+                Environment: NODE_ENV || 'development',
             },
         }),
     );

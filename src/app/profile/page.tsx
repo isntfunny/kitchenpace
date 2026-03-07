@@ -23,6 +23,7 @@ import { Heading, Text } from '@app/components/atoms/Typography';
 import SignOutButton from '@app/components/auth/SignOutButton';
 import { ActivityList } from '@app/components/features/ActivitySidebar';
 import { PageShell } from '@app/components/layouts/PageShell';
+import { FadeInSection } from '@app/components/motion/FadeInSection';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { getOrCreateProfile } from '@app/lib/profile';
 import { css } from 'styled-system/css';
@@ -455,6 +456,7 @@ export default async function ProfilePage() {
                 })}
             >
                 {/* ── Profile Hero ─────────────────────────────── */}
+                <FadeInSection y={16} duration={0.4}>
                 <div className={cardCss}>
                     <div
                         className={css({
@@ -620,6 +622,7 @@ export default async function ProfilePage() {
                         </div>
                     </div>
                 </div>
+                </FadeInSection>
 
                 {/* ── 2-col layout ─────────────────────────────── */}
                 <div

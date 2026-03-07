@@ -1,6 +1,7 @@
 'use client';
 
 import { Heart, Trash2 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { AlertDialog } from 'radix-ui';
 import { useTransition } from 'react';
@@ -103,9 +104,15 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                         gap: '6',
                     })}
                 >
-                    {initialFavorites.map((recipe) => (
-                        <RecipeCard
+                    {initialFavorites.map((recipe, index) => (
+                        <motion.div
                             key={recipe.id}
+                            initial={{ opacity: 0, y: 14 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: '-30px' }}
+                            transition={{ duration: 0.35, delay: Math.min(index, 5) * 0.06 }}
+                        >
+                        <RecipeCard
                             recipe={recipe}
                             footer={
                                 <div
@@ -126,6 +133,7 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                                 </div>
                             }
                         />
+                        </motion.div>
                     ))}
                 </div>
             ) : (

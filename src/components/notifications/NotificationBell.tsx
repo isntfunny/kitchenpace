@@ -1,6 +1,7 @@
 'use client';
 
 import { Bell } from 'lucide-react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
@@ -51,9 +52,15 @@ export function NotificationBell() {
                         _hover: { background: 'accentSoft' },
                     })}
                 >
-                    <Bell size={20} />
+                    <motion.span
+                        style={{ display: 'inline-flex' }}
+                        whileHover={{ rotate: [0, 12, -8, 5, 0] }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <Bell size={20} />
+                    </motion.span>
                     {unreadCount > 0 && (
-                        <span
+                        <motion.span
                             className={css({
                                 position: 'absolute',
                                 top: '1',
@@ -68,9 +75,11 @@ export function NotificationBell() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                             })}
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                         >
                             {badgeContent}
-                        </span>
+                        </motion.span>
                     )}
                 </button>
             </DropdownMenu.Trigger>

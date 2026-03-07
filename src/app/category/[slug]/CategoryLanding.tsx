@@ -12,6 +12,7 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import * as icons from 'lucide-react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { createElement } from 'react';
 
@@ -109,7 +110,13 @@ function RecipeSection({
     if (recipes.length === 0) return null;
 
     return (
-        <div className={css({ mt: '5' })}>
+        <motion.div
+            className={css({ mt: '5' })}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.45 }}
+        >
             <div
                 className={flex({
                     align: 'center',
@@ -143,7 +150,7 @@ function RecipeSection({
                 </h2>
             </div>
             <HorizontalRecipeScroll recipes={recipes} hideCategory={true} />
-        </div>
+        </motion.div>
     );
 }
 
@@ -185,33 +192,35 @@ export function CategoryLanding({
                     background: `linear-gradient(135deg, ${color}, ${color}dd, ${color}aa)`,
                 }}
             >
-                {/* Decorative circles */}
-                <div
+                {/* Decorative category icons */}
+                <motion.div
                     className={css({
                         position: 'absolute',
                         top: '-40px',
                         right: '-40px',
-                        width: '200px',
-                        height: '200px',
-                        borderRadius: 'full',
                         opacity: 0.15,
+                        pointerEvents: 'none',
                     })}
-                    style={{ backgroundColor: 'white' }}
-                />
-                <div
+                    animate={{ y: [0, -12, 0], rotate: [0, 4, 0] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                    <CategoryIcon name={category.icon} size={200} color="white" />
+                </motion.div>
+                <motion.div
                     className={css({
                         position: 'absolute',
                         bottom: '-60px',
                         left: '20%',
-                        width: '300px',
-                        height: '300px',
-                        borderRadius: 'full',
                         opacity: 0.08,
+                        pointerEvents: 'none',
                     })}
-                    style={{ backgroundColor: 'white' }}
-                />
+                    animate={{ y: [0, 10, 0], rotate: [0, -3, 0] }}
+                    transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                    <CategoryIcon name={category.icon} size={300} color="white" />
+                </motion.div>
 
-                <div
+                <motion.div
                     className={css({
                         position: 'relative',
                         zIndex: 1,
@@ -220,6 +229,9 @@ export function CategoryLanding({
                         maxW: '1400px',
                         mx: 'auto',
                     })}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
                 >
                     <div className={flex({ align: 'center', gap: '3', mb: '3' })}>
                         <div
@@ -252,7 +264,7 @@ export function CategoryLanding({
                     </div>
 
                     {category.description && (
-                        <p
+                        <motion.p
                             className={css({
                                 color: 'rgba(255,255,255,0.9)',
                                 fontSize: { base: 'sm', md: 'md' },
@@ -260,9 +272,12 @@ export function CategoryLanding({
                                 lineHeight: '1.6',
                                 mb: '5',
                             })}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2, duration: 0.4 }}
                         >
                             {category.description}
-                        </p>
+                        </motion.p>
                     )}
 
                     {/* Stats row */}
@@ -272,38 +287,30 @@ export function CategoryLanding({
                             flexWrap: 'wrap',
                         })}
                     >
-                        <StatPill
-                            icon={ChefHat}
-                            label="Rezepte"
-                            value={category.recipeCount}
-                            color={color}
-                        />
-                        {category.stats.totalCooks > 0 && (
-                            <StatPill
-                                icon={Flame}
-                                label="Mal gekocht"
-                                value={category.stats.totalCooks}
-                                color={color}
-                            />
-                        )}
-                        {category.stats.avgRating > 0 && (
-                            <StatPill
-                                icon={Star}
-                                label="Bewertung"
-                                value={`${category.stats.avgRating} ★`}
-                                color={color}
-                            />
-                        )}
-                        {category.stats.totalRatings > 0 && (
-                            <StatPill
-                                icon={Bookmark}
-                                label="Bewertungen"
-                                value={category.stats.totalRatings}
-                                color={color}
-                            />
-                        )}
+                        {[
+                            { show: true, icon: ChefHat, label: 'Rezepte', value: category.recipeCount },
+                            { show: category.stats.totalCooks > 0, icon: Flame, label: 'Mal gekocht', value: category.stats.totalCooks },
+                            { show: category.stats.avgRating > 0, icon: Star, label: 'Bewertung', value: `${category.stats.avgRating} ★` },
+                            { show: category.stats.totalRatings > 0, icon: Bookmark, label: 'Bewertungen', value: category.stats.totalRatings },
+                        ]
+                            .filter((s) => s.show)
+                            .map((stat, i) => (
+                                <motion.div
+                                    key={stat.label}
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 + i * 0.1, duration: 0.4 }}
+                                >
+                                    <StatPill
+                                        icon={stat.icon}
+                                        label={stat.label}
+                                        value={stat.value}
+                                        color={color}
+                                    />
+                                </motion.div>
+                            ))}
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* ── Content ── */}
@@ -362,7 +369,10 @@ export function CategoryLanding({
                     {/* Right column — activity sidebar */}
                     <div className={css({ lg: { gridColumn: 'span 4' } })}>
                         {activity.length > 0 && (
-                            <aside
+                            <motion.aside
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.4, duration: 0.5 }}
                                 className={css({
                                     p: '5',
                                     borderRadius: '2xl',
@@ -399,7 +409,7 @@ export function CategoryLanding({
                                 </div>
 
                                 <ActivityList activities={activity} />
-                            </aside>
+                            </motion.aside>
                         )}
 
                         {/* Browse all link */}

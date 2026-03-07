@@ -4,11 +4,9 @@ import type { LucideIcon } from 'lucide-react';
 import * as icons from 'lucide-react';
 import { Utensils } from 'lucide-react';
 import Link from 'next/link';
-import { createElement } from 'react';
+import React, { createElement } from 'react';
 
 import { css } from 'styled-system/css';
-
-import { CustomScrollbar } from './CustomScrollbar';
 
 function resolveIcon(iconName: string | null): LucideIcon {
     if (!iconName) return Utensils;
@@ -48,11 +46,11 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
             })}
         >
-            <CustomScrollbar
+            <div
                 className={css({
                     display: 'flex',
                     gap: '3',
-                    pb: '1',
+                    pt: '1',
                 })}
             >
                 {categories.map((cat) => {
@@ -63,12 +61,12 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                             key={cat.slug}
                             href={`/category/${cat.slug}`}
                             className={css({
-                                flex: '0 0 auto',
+                                flex: '1 1 0',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
                                 gap: '2',
-                                px: '4',
+                                px: '2',
                                 py: '3',
                                 borderRadius: 'xl',
                                 border: '2px solid',
@@ -76,13 +74,13 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                 textDecoration: 'none',
                                 transition: 'all 200ms ease',
                                 cursor: 'pointer',
-                                minWidth: '100px',
                                 _hover: {
-                                    borderColor: color,
+                                    borderColor: 'var(--cat-color)',
                                     transform: 'translateY(-2px)',
-                                    boxShadow: `0 8px 24px ${color}25`,
+                                    boxShadow: '0 8px 24px color-mix(in srgb, var(--cat-color) 15%, transparent)',
                                 },
                             })}
+                            style={{ '--cat-color': color } as React.CSSProperties}
                         >
                             <div
                                 className={css({
@@ -123,7 +121,7 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                         </Link>
                     );
                 })}
-            </CustomScrollbar>
+            </div>
         </div>
     );
 }

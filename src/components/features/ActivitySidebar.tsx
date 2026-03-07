@@ -1,41 +1,28 @@
-import { Activity } from 'lucide-react';
-
 import type { ActivityFeedItem } from '@app/app/actions/community';
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';
 
-import { ActivityItem, RatedActivity, CookedActivity, CommentedActivity } from './activity';
-
-interface ActivitySidebarProps {
-    activities: ActivityFeedItem[];
-}
-
-/** Only activity types with extra detail content need a specialized component */
-const DETAIL_COMPONENTS: Record<string, React.ComponentType<ActivityFeedItem>> = {
-    RECIPE_RATED: RatedActivity,
-    RECIPE_COOKED: CookedActivity,
-    RECIPE_COMMENTED: CommentedActivity,
-};
-
-export function getActivityComponent(activity: ActivityFeedItem) {
-    const DetailComponent = DETAIL_COMPONENTS[activity.type];
-    if (DetailComponent) return <DetailComponent {...activity} />;
-    return <ActivityItem activity={activity} />;
-}
+import { ActivityItem } from './activity';
 
 /** Reusable list of activity items — no wrapper card or heading. */
 export function ActivityList({ activities }: { activities: ActivityFeedItem[] }) {
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '1' })}>
             {activities.map((activity) => (
-                <div key={activity.id}>{getActivityComponent(activity)}</div>
+                <ActivityItem key={activity.id} activity={activity} />
             ))}
         </div>
     );
 }
 
-export function ActivitySidebar({ activities }: ActivitySidebarProps) {
+export function ActivitySidebar({
+    activities,
+    showMore = false,
+}: {
+    activities: ActivityFeedItem[];
+    showMore?: boolean;
+}) {
     return (
         <aside
             className={css({
@@ -52,15 +39,9 @@ export function ActivitySidebar({ activities }: ActivitySidebarProps) {
                 <Heading
                     as="h3"
                     size="md"
-                    className={css({
-                        color: 'primary',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                    })}
+                    className={css({ color: 'primary' })}
                 >
-                    <Activity size={18} />
-                    <span>Aktivität</span>
+                    Aktivität
                 </Heading>
                 <Text size="sm" color="muted" className={css({ fontSize: '0.75rem' })}>
                     Was passiert gerade in der Community
@@ -69,28 +50,30 @@ export function ActivitySidebar({ activities }: ActivitySidebarProps) {
 
             <ActivityList activities={activities} />
 
-            <button
-                className={css({
-                    width: '100%',
-                    mt: '4',
-                    py: '2.5',
-                    textAlign: 'center',
-                    fontSize: 'sm',
-                    fontWeight: '600',
-                    color: 'white',
-                    background: '#e07b53',
-                    border: 'none',
-                    cursor: 'pointer',
-                    borderRadius: 'xl',
-                    _hover: {
-                        background: '#c4623d',
-                        transform: 'translateY(-2px)',
-                    },
-                    transition: 'all 200ms ease',
-                })}
-            >
-                Mehr Aktivitäten →
-            </button>
+            {showMore && (
+                <button
+                    className={css({
+                        width: '100%',
+                        mt: '4',
+                        py: '2.5',
+                        textAlign: 'center',
+                        fontSize: 'sm',
+                        fontWeight: '600',
+                        color: 'white',
+                        background: '#e07b53',
+                        border: 'none',
+                        cursor: 'pointer',
+                        borderRadius: 'xl',
+                        _hover: {
+                            background: '#c4623d',
+                            transform: 'translateY(-2px)',
+                        },
+                        transition: 'all 200ms ease',
+                    })}
+                >
+                    Mehr Aktivitäten →
+                </button>
+            )}
         </aside>
     );
 }

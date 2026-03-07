@@ -38,6 +38,7 @@ export interface RecipeCardRecipe {
     image: string | null;
     category: string;
     categorySlug?: string;
+    categoryColor?: string;
     rating?: number;
     time?: string;
     description?: string;
@@ -110,7 +111,7 @@ function CategoryOverlay({
     link?: boolean;
 }) {
     const router = useRouter();
-    const color = categoryColors[recipe.category] || PALETTE.orange;
+    const color = recipe.categoryColor || categoryColors[recipe.category] || PALETTE.orange;
 
     const badgeStyle = css({
         position: 'absolute',
@@ -166,7 +167,7 @@ export function RecipeCard({
     className,
 }: RecipeCardProps) {
     const isCompact = variant === 'compact';
-    const color = categoryColors[recipe.category] || PALETTE.orange;
+    const color = recipe.categoryColor || categoryColors[recipe.category] || PALETTE.orange;
 
     const card = (
         <div

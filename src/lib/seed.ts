@@ -5,7 +5,6 @@ import 'dotenv/config';
 
 import bcrypt from 'bcrypt';
 
-import { PALETTE } from '@app/lib/palette';
 import { prisma } from '@shared/prisma';
 
 const E2E_TEST_PASSWORD = 'TestPassword123!';
@@ -55,44 +54,14 @@ async function main() {
     // CATEGORIES
     // ============================================
     const categoriesData = [
-        {
-            name: 'Hauptgericht',
-            slug: 'hauptgericht',
-            description: 'Hauptgerichte für Mittag- und Abendessen',
-            color: PALETTE.orange,
-        },
-        {
-            name: 'Beilage',
-            slug: 'beilage',
-            description: 'Beilagen und Ergänzungen zu Hauptgerichten',
-            color: PALETTE.emerald,
-        },
-        {
-            name: 'Backen',
-            slug: 'backen',
-            description: 'Backrezepte für Kuchen, Brot und mehr',
-            color: PALETTE.pink,
-        },
-        { name: 'Dessert', slug: 'dessert', description: 'Süße Nachspeisen', color: PALETTE.gold },
-        {
-            name: 'Frühstück',
-            slug: 'fruehstueck',
-            description: 'Frühstücksrezepte',
-            color: PALETTE.purple,
-        },
-        {
-            name: 'Getränk',
-            slug: 'getraenk',
-            description: 'Heiße und kalte Getränke',
-            color: PALETTE.blue,
-        },
-        {
-            name: 'Vorspeise',
-            slug: 'vorspeise',
-            description: 'Vorspeisen und Fingerfood',
-            color: '#fab1a0',
-        },
-        { name: 'Salat', slug: 'salat', description: 'Frische Salate', color: PALETTE.emerald },
+        { name: 'Hauptgericht', slug: 'hauptgericht', description: 'Hauptgerichte für Mittag- und Abendessen', color: 'orange' as const },
+        { name: 'Beilage', slug: 'beilage', description: 'Beilagen und Ergänzungen zu Hauptgerichten', color: 'emerald' as const },
+        { name: 'Backen', slug: 'backen', description: 'Backrezepte für Kuchen, Brot und mehr', color: 'gold' as const },
+        { name: 'Dessert', slug: 'dessert', description: 'Süße Nachspeisen', color: 'pink' as const },
+        { name: 'Frühstück', slug: 'fruehstueck', description: 'Frühstücksrezepte', color: 'gold' as const },
+        { name: 'Getränk', slug: 'getraenk', description: 'Heiße und kalte Getränke', color: 'blue' as const },
+        { name: 'Vorspeise', slug: 'vorspeise', description: 'Vorspeisen und Fingerfood', color: 'purple' as const },
+        { name: 'Salat', slug: 'salat', description: 'Frische Salate', color: 'emerald' as const },
     ];
 
     for (const cat of categoriesData) {

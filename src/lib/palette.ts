@@ -16,3 +16,13 @@ export const PALETTE = {
 } as const;
 
 export type PaletteColor = keyof typeof PALETTE;
+
+/** German labels for admin UI dropdown */
+export const PALETTE_LABELS: Record<PaletteColor, string> = {
+    orange: 'Orange',
+    gold: 'Gold',
+    emerald: 'Grün',
+    purple: 'Lila',
+    blue: 'Blau',
+    pink: 'Pink',
+} as const;

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
+import type { PaletteColor } from '@app/lib/palette';
 import { prisma } from '@shared/prisma';
 
 function generateSlug(name: string): string {
@@ -21,7 +22,7 @@ function generateSlug(name: string): string {
 export interface CategoryFormData {
     name: string;
     description?: string;
-    color?: string;
+    color?: PaletteColor;
     icon?: string;
     sortOrder?: number;
 }
@@ -36,7 +37,7 @@ export async function createCategory(data: CategoryFormData) {
                 name: data.name.trim(),
                 slug,
                 description: data.description?.trim() || null,
-                color: data.color?.trim() || null,
+                color: data.color ?? 'orange',
                 icon: data.icon?.trim() || null,
                 sortOrder: data.sortOrder ?? 0,
             },
@@ -62,7 +63,7 @@ export async function updateCategory(id: string, data: CategoryFormData) {
                 name: data.name.trim(),
                 slug,
                 description: data.description?.trim() || null,
-                color: data.color?.trim() || null,
+                color: data.color ?? 'orange',
                 icon: data.icon?.trim() || null,
                 sortOrder: data.sortOrder ?? 0,
             },

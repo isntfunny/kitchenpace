@@ -16,8 +16,6 @@
 import 'dotenv/config';
 import bcrypt from 'bcrypt';
 
-import { PALETTE } from '@app/lib/palette';
-
 import { prisma } from '../../shared/prisma';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -25,14 +23,14 @@ import { prisma } from '../../shared/prisma';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-    { name: 'Hauptgericht', slug: 'hauptgericht', color: PALETTE.orange, icon: 'utensils', sortOrder: 0, description: 'Herzhafte Hauptgerichte für jeden Tag — von schnellen Pfannengerichten bis hin zu aufwendigen Sonntagsbraten.' },
-    { name: 'Vorspeise', slug: 'vorspeise', color: '#9b7ec8', icon: 'soup', sortOrder: 1, description: 'Leichte Vorspeisen und Suppen, die Appetit auf mehr machen.' },
-    { name: 'Beilage', slug: 'beilage', color: '#8fb87a', icon: 'carrot', sortOrder: 2, description: 'Die perfekte Ergänzung zu jedem Hauptgericht — Kartoffeln, Gemüse, Reis und mehr.' },
-    { name: 'Salat', slug: 'salat', color: '#5faa6b', icon: 'leaf', sortOrder: 3, description: 'Frische Salate für jede Jahreszeit — knackig, bunt und voller Geschmack.' },
-    { name: 'Backen', slug: 'backen', color: '#c9a85c', icon: 'cake-slice', sortOrder: 4, description: 'Kuchen, Brot, Gebäck und Torten — alles rund ums Backen.' },
-    { name: 'Dessert', slug: 'dessert', color: '#d47fa6', icon: 'ice-cream-cone', sortOrder: 5, description: 'Süße Versuchungen zum krönenden Abschluss jeder Mahlzeit.' },
-    { name: 'Frühstück', slug: 'fruehstueck', color: '#f0c040', icon: 'egg-fried', sortOrder: 6, description: 'Energiegeladene Frühstücksideen für einen guten Start in den Tag.' },
-    { name: 'Getränk', slug: 'getraenk', color: '#5ba8d4', icon: 'glass-water', sortOrder: 7, description: 'Smoothies, Cocktails, Limonaden und heiße Getränke für jeden Anlass.' },
+    { name: 'Hauptgericht', slug: 'hauptgericht', color: 'orange' as const, icon: 'utensils', sortOrder: 0, description: 'Herzhafte Hauptgerichte für jeden Tag — von schnellen Pfannengerichten bis hin zu aufwendigen Sonntagsbraten.' },
+    { name: 'Vorspeise', slug: 'vorspeise', color: 'purple' as const, icon: 'soup', sortOrder: 1, description: 'Leichte Vorspeisen und Suppen, die Appetit auf mehr machen.' },
+    { name: 'Beilage', slug: 'beilage', color: 'emerald' as const, icon: 'carrot', sortOrder: 2, description: 'Die perfekte Ergänzung zu jedem Hauptgericht — Kartoffeln, Gemüse, Reis und mehr.' },
+    { name: 'Salat', slug: 'salat', color: 'emerald' as const, icon: 'leaf', sortOrder: 3, description: 'Frische Salate für jede Jahreszeit — knackig, bunt und voller Geschmack.' },
+    { name: 'Backen', slug: 'backen', color: 'gold' as const, icon: 'cake-slice', sortOrder: 4, description: 'Kuchen, Brot, Gebäck und Torten — alles rund ums Backen.' },
+    { name: 'Dessert', slug: 'dessert', color: 'pink' as const, icon: 'ice-cream-cone', sortOrder: 5, description: 'Süße Versuchungen zum krönenden Abschluss jeder Mahlzeit.' },
+    { name: 'Frühstück', slug: 'fruehstueck', color: 'gold' as const, icon: 'egg-fried', sortOrder: 6, description: 'Energiegeladene Frühstücksideen für einen guten Start in den Tag.' },
+    { name: 'Getränk', slug: 'getraenk', color: 'blue' as const, icon: 'glass-water', sortOrder: 7, description: 'Smoothies, Cocktails, Limonaden und heiße Getränke für jeden Anlass.' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

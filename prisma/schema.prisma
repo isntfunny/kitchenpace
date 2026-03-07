@@ -88,6 +88,15 @@ enum ActivityType {
   SHOPPING_LIST_CREATED
 }
 
+enum PaletteColor {
+  orange
+  gold
+  emerald
+  purple
+  blue
+  pink
+}
+
 enum ModerationStatus {
   APPROVED
   PENDING
@@ -375,7 +384,7 @@ model Category {
   slug          String   @unique
   description   String?
   imageUrl      String?
-  color         String?  // Hex accent color for UI theming
+  color         PaletteColor @default(orange)
   icon          String?  // Lucide icon name (e.g. "utensils", "cake", "salad")
   coverImageKey String?  // S3 key for hero/cover image
   sortOrder     Int      @default(0)

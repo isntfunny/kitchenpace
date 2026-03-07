@@ -14,7 +14,7 @@ import { ArrowUpDown, Search, Plus, Trash2, Pencil, X, ExternalLink } from 'luci
 import { Dialog } from 'radix-ui';
 import { useState } from 'react';
 
-import { PALETTE } from '@app/lib/palette';
+import { PALETTE, PALETTE_LABELS, type PaletteColor } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { createCategory, updateCategory, deleteCategory, type CategoryFormData } from './actions';
@@ -24,7 +24,7 @@ export type Category = {
     name: string;
     slug: string;
     description: string | null;
-    color: string | null;
+    color: PaletteColor;
     icon: string | null;
     sortOrder: number;
     recipeCount: number;
@@ -64,7 +64,7 @@ function CategoryDialog({
     const isEdit = category !== null;
     const [name, setName] = useState(category?.name ?? '');
     const [description, setDescription] = useState(category?.description ?? '');
-    const [color, setColor] = useState(category?.color ?? '');
+    const [color, setColor] = useState<PaletteColor>(category?.color ?? 'orange');
     const [icon, setIcon] = useState(category?.icon ?? '');
     const [sortOrder, setSortOrder] = useState(String(category?.sortOrder ?? 0));
     const [saving, setSaving] = useState(false);
@@ -208,7 +208,7 @@ function CategoryDialog({
                             })}
                         >
                             <div>
-                                <label className={LABEL_CLASS}>Farbe (Hex)</label>
+                                <label className={LABEL_CLASS}>Farbe</label>
                                 <div
                                     className={css({
                                         display: 'flex',
@@ -216,28 +216,28 @@ function CategoryDialog({
                                         alignItems: 'center',
                                     })}
                                 >
-                                    <input
-                                        type="color"
-                                        value={color || PALETTE.orange}
-                                        onChange={(e) => setColor(e.target.value)}
+                                    <span
                                         className={css({
                                             width: '9',
                                             height: '9',
                                             borderRadius: 'md',
                                             border: '1px solid',
                                             borderColor: 'border.muted',
-                                            cursor: 'pointer',
-                                            padding: '0.5',
-                                            background: 'surface.elevated',
+                                            flexShrink: 0,
                                         })}
+                                        style={{ background: PALETTE[color] }}
                                     />
-                                    <input
-                                        type="text"
+                                    <select
                                         value={color}
-                                        onChange={(e) => setColor(e.target.value)}
-                                        placeholder={PALETTE.orange}
+                                        onChange={(e) => setColor(e.target.value as PaletteColor)}
                                         className={INPUT_CLASS}
-                                    />
+                                    >
+                                        {(Object.keys(PALETTE) as PaletteColor[]).map((key) => (
+                                            <option key={key} value={key}>
+                                                {PALETTE_LABELS[key]}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                             <div>
@@ -358,7 +358,7 @@ const getColumns = (onEdit: (cat: Category) => void): ColumnDef<Category>[] => [
                 <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
                     {cat.color && (
                         <span
-                            style={{ background: cat.color }}
+                            style={{ background: PALETTE[cat.color] }}
                             className={css({
                                 width: '3',
                                 height: '3',

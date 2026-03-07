@@ -43,13 +43,15 @@ type RecipeWithCategory = Prisma.RecipeGetPayload<{
 
 function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
     const totalTime = recipe.totalTime ?? (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
+    const cat = recipe.categories[0]?.category;
 
     return {
         id: recipe.id,
         slug: recipe.slug,
         title: recipe.title,
-        category: recipe.categories[0]?.category?.name || 'Hauptgericht',
-        categorySlug: recipe.categories[0]?.category?.slug ?? undefined,
+        category: cat?.name || 'Hauptgericht',
+        categorySlug: cat?.slug ?? undefined,
+        categoryColor: PALETTE[cat?.color as keyof typeof PALETTE] ?? PALETTE.orange,
         rating: recipe.rating ?? 0,
         time: `${totalTime ?? 0} Min.`,
         image: recipe.imageKey
@@ -112,7 +114,7 @@ export async function fetchCategoryBySlug(slug: string): Promise<CategoryPageDat
         name: category.name,
         slug: category.slug,
         description: category.description,
-        color: category.color ?? DEFAULT_COLOR,
+        color: PALETTE[category.color] ?? DEFAULT_COLOR,
         icon: category.icon,
         coverImageKey: category.coverImageKey,
         recipeCount: category._count.recipes,
@@ -257,7 +259,7 @@ export interface CategoryBarData {
     slug: string;
     name: string;
     icon: string | null;
-    color: string | null;
+    color: string;
     recipeCount: number;
 }
 
@@ -279,7 +281,7 @@ export async function fetchCategoriesForBar(): Promise<CategoryBarData[]> {
         slug: c.slug,
         name: c.name,
         icon: c.icon,
-        color: c.color,
+        color: PALETTE[c.color] ?? PALETTE.orange,
         recipeCount: c._count.recipes,
     }));
 }

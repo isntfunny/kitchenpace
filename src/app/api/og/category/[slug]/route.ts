@@ -394,7 +394,7 @@ export async function GET(
             },
         });
 
-        const color = category.color ?? PALETTE.orange;
+        const color = PALETTE[category.color as keyof typeof PALETTE] ?? PALETTE.orange;
 
         // Generate
         const buffer =

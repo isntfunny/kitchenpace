@@ -63,7 +63,8 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-RUN addgroup --system --gid 1001 nodejs \
+RUN apk add --no-cache fontconfig \
+    && addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nextjs
 
 # Copy node_modules + prisma (needed for db setup)

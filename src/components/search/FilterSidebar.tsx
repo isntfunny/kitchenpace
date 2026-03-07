@@ -593,7 +593,7 @@ export function FilterSidebar({
                                         })}
                                     >
                                         {value.toFixed(1)}
-                                        <Star size={12} className={css({ color: '#f8b500' })} />
+                                        <Star size={12} className={css({ color: 'palette.gold' })} />
                                     </span>
                                 )}
                             />

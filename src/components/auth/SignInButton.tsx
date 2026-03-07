@@ -1,5 +1,6 @@
 'use client';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 type Props = {
@@ -23,7 +24,7 @@ const SignInButton = ({ onSignIn, label = 'Sign In' }: Props) => {
                 fontWeight: '600',
                 fontSize: 'md',
                 color: 'white',
-                background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'transform 150ms ease, box-shadow 150ms ease',

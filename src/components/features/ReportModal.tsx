@@ -116,7 +116,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                 gap: '2',
                             })}
                         >
-                            <Flag size={18} className={css({ color: '#dc2626' })} />
+                            <Flag size={18} className={css({ color: 'status.danger' })} />
                             Inhalt melden
                         </Dialog.Title>
                         <Dialog.Close
@@ -134,7 +134,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                     </div>
 
                     {result ? (
-                        <p className={css({ color: '#16a34a', fontSize: 'sm', fontWeight: '600' })}>
+                        <p className={css({ color: 'status.success', fontSize: 'sm', fontWeight: '600' })}>
                             {result}
                         </p>
                     ) : (
@@ -148,7 +148,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                     className={css({
                                         mb: '3',
                                         fontSize: 'sm',
-                                        color: '#dc2626',
+                                        color: 'status.danger',
                                         fontWeight: '600',
                                     })}
                                 >
@@ -169,7 +169,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                             borderRadius: 'lg',
                                             cursor: 'pointer',
                                             border: '1px solid',
-                                            borderColor: reason === r.value ? '#e07b53' : 'rgba(0,0,0,0.08)',
+                                            borderColor: reason === r.value ? 'palette.orange' : 'rgba(0,0,0,0.08)',
                                             bg: reason === r.value ? 'rgba(224,123,83,0.05)' : 'transparent',
                                             fontSize: 'sm',
                                             transition: 'all 0.15s',
@@ -181,7 +181,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                             value={r.value}
                                             checked={reason === r.value}
                                             onChange={(e) => setReason(e.target.value)}
-                                            className={css({ accentColor: '#e07b53' })}
+                                            className={css({ accentColor: 'palette.orange' })}
                                         />
                                         {r.label}
                                     </label>
@@ -203,7 +203,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                     minHeight: '60px',
                                     mb: '4',
                                     _focus: {
-                                        borderColor: '#e07b53',
+                                        borderColor: 'palette.orange',
                                         outline: 'none',
                                         boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
                                     },
@@ -236,7 +236,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                         borderRadius: 'xl',
                                         fontSize: 'sm',
                                         fontWeight: '600',
-                                        bg: '#dc2626',
+                                        bg: 'status.danger',
                                         color: 'white',
                                         border: 'none',
                                         cursor: 'pointer',

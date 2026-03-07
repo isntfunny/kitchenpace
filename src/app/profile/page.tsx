@@ -25,6 +25,7 @@ import { QuickLinksCard } from '@app/components/features/QuickLinksCard';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { FadeInSection } from '@app/components/motion/FadeInSection';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
+import { PALETTE } from '@app/lib/palette';
 import { getOrCreateProfile } from '@app/lib/profile';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
@@ -443,7 +444,7 @@ export default async function ProfilePage() {
                                         h: '24',
                                         borderRadius: 'full',
                                         background:
-                                            'linear-gradient(135deg, #e07b53 0%, #c4623d 100%)',
+                                            `linear-gradient(135deg, ${PALETTE.orange} 0%, #c4623d 100%)`,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',

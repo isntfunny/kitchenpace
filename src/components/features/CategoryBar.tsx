@@ -6,6 +6,7 @@ import { Utensils } from 'lucide-react';
 import Link from 'next/link';
 import React, { createElement } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 function resolveIcon(iconName: string | null): LucideIcon {
@@ -54,7 +55,7 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                 })}
             >
                 {categories.map((cat) => {
-                    const color = cat.color ?? '#e07b53';
+                    const color = cat.color ?? PALETTE.orange;
 
                     return (
                         <Link

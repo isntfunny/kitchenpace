@@ -4,6 +4,7 @@ import { ChefHat, FileText, Heart, Star } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
@@ -40,17 +41,17 @@ const defaultStats: DashboardStatCard[] = [
         label: 'Rezepte erstellt',
         value: 24,
         icon: <FileText size={20} />,
-        color: '#e07b53',
+        color: PALETTE.orange,
     },
-    { id: '2', label: 'Favoriten', value: 156, icon: <Heart size={20} />, color: '#fd79a8' },
+    { id: '2', label: 'Favoriten', value: 156, icon: <Heart size={20} />, color: PALETTE.pink },
     {
         id: '3',
         label: 'Zubereitete Gerichte',
         value: 89,
         icon: <ChefHat size={20} />,
-        color: '#00b894',
+        color: PALETTE.emerald,
     },
-    { id: '4', label: 'Bewertungen', value: 34, icon: <Star size={20} />, color: '#f8b500' },
+    { id: '4', label: 'Bewertungen', value: 34, icon: <Star size={20} />, color: PALETTE.gold },
 ];
 
 export function UserDashboard({
@@ -237,7 +238,7 @@ export function UserDashboard({
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
-                                borderColor: '#e07b53',
+                                borderColor: 'palette.orange',
                                 boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
                             },
                         })}
@@ -263,7 +264,7 @@ export function UserDashboard({
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
-                                borderColor: '#e07b53',
+                                borderColor: 'palette.orange',
                                 boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
                             },
                         })}
@@ -289,7 +290,7 @@ export function UserDashboard({
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
-                                borderColor: '#e07b53',
+                                borderColor: 'palette.orange',
                                 boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
                             },
                         })}
@@ -315,7 +316,7 @@ export function UserDashboard({
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
-                                borderColor: '#e07b53',
+                                borderColor: 'palette.orange',
                                 boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
                             },
                         })}
@@ -350,7 +351,7 @@ export function UserDashboard({
                                     width: '8px',
                                     height: '8px',
                                     borderRadius: 'full',
-                                    background: '#6c5ce7',
+                                    background: 'palette.purple',
                                 })}
                             />
                             Deine Entwürfe
@@ -380,7 +381,7 @@ export function UserDashboard({
                                         transition: 'all 150ms ease',
                                         _hover: {
                                             transform: 'translateY(-2px)',
-                                            borderColor: '#6c5ce7',
+                                            borderColor: 'palette.purple',
                                             background: 'rgba(108,92,231,0.1)',
                                         },
                                     })}

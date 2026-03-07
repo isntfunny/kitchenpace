@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { Header } from '@app/components/features/Header';
+import { PALETTE } from '@app/lib/palette';
 
 export default function ErrorPage({
     error,
@@ -106,7 +107,7 @@ export default function ErrorPage({
                         style={{
                             padding: '0.65rem 1.4rem',
                             borderRadius: '999px',
-                            backgroundColor: '#e07b53',
+                            backgroundColor: PALETTE.orange,
                             color: 'white',
                             fontWeight: 600,
                             fontSize: '0.9rem',
@@ -127,7 +128,7 @@ export default function ErrorPage({
                             borderRadius: '999px',
                             backgroundColor: 'transparent',
                             border: '1.5px solid rgba(224,123,83,0.4)',
-                            color: '#e07b53',
+                            color: PALETTE.orange,
                             fontWeight: 600,
                             fontSize: '0.9rem',
                             textDecoration: 'none',

@@ -13,8 +13,11 @@ import {
 } from 'lucide-react';
 import { type Dispatch } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
+
 import type { FlowEdgeSerialized, FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
+
 
 import { MobileMiniMap } from './MobileMiniMap';
 import { useMobileNavigation } from './useMobileNavigation';
@@ -218,7 +221,7 @@ export function MobileView({
                                             height: 6,
                                             borderRadius: 3,
                                             backgroundColor: idx === currentBranch - 1
-                                                ? '#e07b53'
+                                                ? PALETTE.orange
                                                 : 'rgba(255,255,255,0.2)',
                                             transition: 'all 0.2s ease',
                                         }}
@@ -263,7 +266,7 @@ export function MobileView({
                                 width: 24,
                                 height: 24,
                                 borderRadius: '50%',
-                                backgroundColor: '#00b894',
+                                backgroundColor: PALETTE.emerald,
                             }}
                         >
                             <Check style={{ width: 14, height: 14, color: 'white' }} />
@@ -311,7 +314,7 @@ export function MobileView({
                                 fontSize: 'clamp(36px, 10vw, 56px)',
                                 fontWeight: 800,
                                 fontVariantNumeric: 'tabular-nums',
-                                color: timerDone ? '#00b894' : timerRunning ? '#f39c12' : 'rgba(255,255,255,0.6)',
+                                color: timerDone ? PALETTE.emerald : timerRunning ? '#f39c12' : 'rgba(255,255,255,0.6)',
                                 letterSpacing: '0.02em',
                                 lineHeight: 1,
                                 marginBottom: 12,
@@ -334,7 +337,7 @@ export function MobileView({
                                 style={{
                                     height: '100%',
                                     width: `${pct}%`,
-                                    backgroundColor: timerDone ? '#00b894' : '#e07b53',
+                                    backgroundColor: timerDone ? PALETTE.emerald : PALETTE.orange,
                                     borderRadius: 2,
                                     transition: 'width 1s linear',
                                 }}
@@ -410,8 +413,8 @@ export function MobileView({
                             padding: '14px 32px',
                             borderRadius: 999,
                             border: isDone ? '2px solid rgba(0,184,148,0.5)' : 'none',
-                            backgroundColor: isDone ? 'rgba(0,184,148,0.15)' : '#e07b53',
-                            color: isDone ? '#00b894' : 'white',
+                            backgroundColor: isDone ? 'rgba(0,184,148,0.15)' : PALETTE.orange,
+                            color: isDone ? PALETTE.emerald : 'white',
                             fontSize: 16,
                             fontWeight: 700,
                             cursor: 'pointer',

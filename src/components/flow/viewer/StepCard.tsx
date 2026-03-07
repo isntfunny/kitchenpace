@@ -1,6 +1,8 @@
 import { Check, CheckCircle2, Clock, Pause, Play, RotateCcw } from 'lucide-react';
 import type { CSSProperties } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
+
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
 
@@ -74,8 +76,8 @@ export function StepCard({
                             height: '100%',
                             width: `${pct}%`,
                             background: timerDone
-                                ? '#00b894'
-                                : 'linear-gradient(90deg, #e07b53, #f39c12)',
+                                ? PALETTE.emerald
+                                : `linear-gradient(90deg, ${PALETTE.orange}, #f39c12)`,
                             transition: 'width 1s linear',
                             borderRadius: '0 2px 2px 0',
                             boxShadow:
@@ -118,7 +120,7 @@ export function StepCard({
                                 alignItems: 'center',
                                 gap: 3,
                                 fontSize: 10,
-                                color: timerRunning ? '#e07b53' : '#888',
+                                color: timerRunning ? PALETTE.orange : '#888',
                                 marginLeft: 'auto',
                                 fontWeight: timerRunning ? 700 : 400,
                                 transition: 'color 0.2s ease',
@@ -139,7 +141,7 @@ export function StepCard({
                                 width: 18,
                                 height: 18,
                                 borderRadius: '50%',
-                                backgroundColor: '#00b894',
+                                backgroundColor: PALETTE.emerald,
                                 marginLeft: hasTimer ? 0 : 'auto',
                                 flexShrink: 0,
                             }}
@@ -244,7 +246,7 @@ export function StepCard({
                                             : 'rgba(224,123,83,0.1)',
                                         border: `1.5px solid ${timerRunning ? 'rgba(231,76,60,0.3)' : 'rgba(224,123,83,0.3)'}`,
                                         cursor: 'pointer',
-                                        color: timerRunning ? '#e74c3c' : '#e07b53',
+                                        color: timerRunning ? '#e74c3c' : PALETTE.orange,
                                     }}
                                 >
                                     {timerRunning ? (
@@ -300,14 +302,14 @@ export function StepCard({
                                 border: completed
                                     ? '1.5px solid rgba(0,184,148,0.3)'
                                     : timerDone
-                                      ? '1.5px solid #00b894'
+                                      ? `1.5px solid ${PALETTE.emerald}`
                                       : '1.5px solid rgba(0,0,0,0.12)',
                                 backgroundColor: completed
                                     ? 'rgba(0,184,148,0.1)'
                                     : timerDone
-                                      ? '#00b894'
+                                      ? PALETTE.emerald
                                       : 'rgba(255,255,255,0.7)',
-                                color: completed ? '#00b894' : timerDone ? 'white' : '#888',
+                                color: completed ? PALETTE.emerald : timerDone ? 'white' : '#888',
                                 transition: 'all 0.2s ease',
                             }}
                         >
@@ -340,8 +342,8 @@ export function StepCard({
                             fontSize: 12,
                             fontWeight: 700,
                             cursor: 'pointer',
-                            backgroundColor: completed ? 'rgba(0,184,148,0.12)' : '#e07b53',
-                            color: completed ? '#00b894' : 'white',
+                            backgroundColor: completed ? 'rgba(0,184,148,0.12)' : PALETTE.orange,
+                            color: completed ? PALETTE.emerald : 'white',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',

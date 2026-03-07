@@ -1,3 +1,5 @@
+import { Clock, Star } from 'lucide-react';
+
 import { fetchCategoriesForBar } from '@app/app/actions/category';
 import {
     fetchChefSpotlight,
@@ -23,6 +25,7 @@ import { DailyHighlight } from '@app/components/sections/DailyHighlight';
 import { FitsNow } from '@app/components/sections/FitsNow';
 import { FlowPillars } from '@app/components/sections/FlowPillars';
 import { HeroSpotlight } from '@app/components/sections/HeroSpotlight';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
@@ -86,8 +89,6 @@ export default async function Home() {
             >
                 <HeroSpotlight />
 
-                <FlowPillars />
-
                 <div className={css({ mt: '4' })}>
                     <CategoryBar categories={categories} />
                 </div>
@@ -116,6 +117,8 @@ export default async function Home() {
                                 <RecipeScrollServer
                                     title="Neuste Rezepte"
                                     recipes={newestRecipes}
+                                    icon={Clock}
+                                    accentColor={PALETTE.orange}
                                 />
                             </div>
 
@@ -132,7 +135,12 @@ export default async function Home() {
                                     marginTop: '4',
                                 })}
                             >
-                                <RecipeScrollServer title="Top Rated" recipes={topRatedRecipes} />
+                                <RecipeScrollServer
+                                    title="Top Rated"
+                                    recipes={topRatedRecipes}
+                                    icon={Star}
+                                    accentColor={PALETTE.gold}
+                                />
                             </div>
                         </div>
 
@@ -162,6 +170,10 @@ export default async function Home() {
                         </FadeInSection>
                     </div>
                 </div>
+
+                <div className={css({ mt: '4' })}>
+                    <FlowPillars />
+                </div>
             </main>
 
             <footer
@@ -187,7 +199,7 @@ export default async function Home() {
                         className={css({
                             fontSize: '2xl',
                             marginBottom: '3',
-                            color: '#e07b53',
+                            color: 'palette.orange',
                         })}
                     >
                         <AnimatedChefHat />

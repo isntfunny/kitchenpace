@@ -1,5 +1,6 @@
 'use client';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
@@ -19,7 +20,7 @@ interface DashboardStatsProps {
 
 function StatCard({ stat }: { stat: StatCard }) {
     const changeColors = {
-        positive: '#00b894',
+        positive: PALETTE.emerald,
         negative: '#ff7675',
         neutral: 'text-muted',
     };

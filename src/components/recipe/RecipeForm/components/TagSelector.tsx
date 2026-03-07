@@ -30,7 +30,7 @@ const tagSearchInputClass = css({
     fontSize: 'sm',
     outline: 'none',
     _focus: {
-        borderColor: '#e07b53',
+        borderColor: 'palette.orange',
         boxShadow: '0 0 0 2px rgba(224,123,83,0.2)',
     },
 });
@@ -63,7 +63,7 @@ const tagChipBaseClass = css({
 });
 
 const tagChipSelectedClass = css({
-    borderColor: '#e07b53',
+    borderColor: 'palette.orange',
     background: 'rgba(224,123,83,0.12)',
     color: '#c0622e',
 });

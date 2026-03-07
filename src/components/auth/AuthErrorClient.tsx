@@ -3,6 +3,7 @@
 import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 type AuthErrorClientProps = {
@@ -67,7 +68,7 @@ export default function AuthErrorClient({ error }: AuthErrorClientProps) {
                         fontWeight: '600',
                         fontSize: 'md',
                         color: 'white',
-                        background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                        background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                         textDecoration: 'none',
                         transition: 'all 150ms ease',
                         _hover: {
@@ -84,11 +85,11 @@ export default function AuthErrorClient({ error }: AuthErrorClientProps) {
                         color: 'text-muted',
                         fontSize: 'sm',
                         textDecoration: 'none',
-                        _hover: { color: '#e07b53' },
+                        _hover: { color: 'palette.orange' },
                     })}
                 >
                     Noch kein Konto?{' '}
-                    <span className={css({ color: '#e07b53', fontWeight: '600' })}>
+                    <span className={css({ color: 'palette.orange', fontWeight: '600' })}>
                         Registrieren
                     </span>
                 </Link>

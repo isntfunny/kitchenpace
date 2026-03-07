@@ -1,3 +1,4 @@
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 export const authFormStackClass = css({
@@ -38,7 +39,7 @@ export function getAuthButtonClass(disabled?: boolean) {
         fontWeight: '600',
         fontSize: 'md',
         color: 'white',
-        background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+        background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
         border: 'none',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.7 : 1,

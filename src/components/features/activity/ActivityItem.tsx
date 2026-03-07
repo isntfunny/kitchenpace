@@ -1,7 +1,6 @@
 import {
     Activity as ActivityIcon,
     Bookmark,
-    BookmarkX,
     Calendar,
     Camera,
     Edit3,
@@ -26,7 +25,6 @@ const ACTIVITY_ICON_MAP: Record<ActivityIconName, LucideIcon> = {
     star: Star,
     'message-square': MessageSquare,
     bookmark: Bookmark,
-    'bookmark-x': BookmarkX,
     handshake: Handshake,
     'shopping-cart': ShoppingCart,
     calendar: Calendar,

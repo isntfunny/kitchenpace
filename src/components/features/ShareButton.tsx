@@ -3,6 +3,7 @@
 import { Check, Copy, Facebook, Share2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 interface ShareButtonProps {
@@ -159,7 +160,7 @@ export function ShareButton({ title, slug, imageUrl }: ShareButtonProps) {
                         })}
                     >
                         {copied ? (
-                            <Check size={16} color="#00b894" />
+                            <Check size={16} color={PALETTE.emerald} />
                         ) : (
                             <Copy size={16} />
                         )}

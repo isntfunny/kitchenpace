@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { ReactNode } from 'react';
 
 import { PageShell } from '@app/components/layouts/PageShell';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 const HERO_POINTS = [
@@ -180,7 +181,7 @@ export function AuthPageLayout({
                                                     justifyContent: 'center',
                                                 })}
                                             >
-                                                <point.icon size={20} color="#e07b53" />
+                                                <point.icon size={20} color={PALETTE.orange} />
                                             </div>
                                             <div>
                                                 <p

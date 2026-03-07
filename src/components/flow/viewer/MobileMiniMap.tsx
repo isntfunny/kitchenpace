@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import type { FlowEdgeSerialized, FlowNodeSerialized, StepType } from '../editor/editorTypes';
@@ -163,13 +164,13 @@ export function MobileMiniMap({
                                         }}
                                     >
                                         {isDone ? (
-                                            <Check style={{ width: 11, height: 11, color: '#00b894' }} />
+                                            <Check style={{ width: 11, height: 11, color: PALETTE.emerald }} />
                                         ) : (
                                             <NodeIcon
                                                 style={{
                                                     width: 11,
                                                     height: 11,
-                                                    color: isCurrent ? '#e07b53' : 'rgba(255,255,255,0.4)',
+                                                    color: isCurrent ? PALETTE.orange : 'rgba(255,255,255,0.4)',
                                                 }}
                                             />
                                         )}

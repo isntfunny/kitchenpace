@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css, cx } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -16,13 +17,13 @@ import { SmartImage } from '../atoms/SmartImage';
 // ---------------------------------------------------------------------------
 
 export const categoryColors: Record<string, string> = {
-    Hauptgericht: '#e07b53',
-    Beilage: '#00b894',
-    Dessert: '#fd79a8',
-    Frühstück: '#fdcb6e',
-    Getränk: '#74b9ff',
-    Vorspeise: '#a29bfe',
-    Fingerfood: '#e17055',
+    Hauptgericht: PALETTE.orange,
+    Beilage: PALETTE.emerald,
+    Dessert: PALETTE.pink,
+    Frühstück: PALETTE.gold,
+    Getränk: PALETTE.blue,
+    Vorspeise: PALETTE.purple,
+    Fingerfood: PALETTE.orange,
     Brunch: '#fab1a0',
 };
 
@@ -78,7 +79,7 @@ function StarRating({ rating }: { rating: number }) {
                         key={v}
                         size={14}
                         className={css({
-                            color: v <= Math.floor(rating) ? '#f8b500' : '#e0e0e0',
+                            color: v <= Math.floor(rating) ? 'palette.gold' : '#e0e0e0',
                         })}
                     />
                 ))}
@@ -91,7 +92,7 @@ function StarRating({ rating }: { rating: number }) {
 function SingleStar({ rating }: { rating: number }) {
     return (
         <span className={flex({ align: 'center', gap: '1' })}>
-            <Star size={14} className={css({ color: '#f8b500' })} />
+            <Star size={14} className={css({ color: 'palette.gold' })} />
             <span>{rating}</span>
         </span>
     );
@@ -109,7 +110,7 @@ function CategoryOverlay({
     link?: boolean;
 }) {
     const router = useRouter();
-    const color = categoryColors[recipe.category] || '#e07b53';
+    const color = categoryColors[recipe.category] || PALETTE.orange;
 
     const badgeStyle = css({
         position: 'absolute',
@@ -165,7 +166,7 @@ export function RecipeCard({
     className,
 }: RecipeCardProps) {
     const isCompact = variant === 'compact';
-    const color = categoryColors[recipe.category] || '#e07b53';
+    const color = categoryColors[recipe.category] || PALETTE.orange;
 
     const card = (
         <div
@@ -266,7 +267,7 @@ export function RecipeCard({
                     )}
                     {recipe.time && (
                         <span className={flex({ align: 'center', gap: '1' })}>
-                            {isCompact ? null : <Clock size={14} className={css({ color: '#636e72' })} />}
+                            {isCompact ? null : <Clock size={14} className={css({ color: 'foreground.muted' })} />}
                             {recipe.time}
                         </span>
                     )}

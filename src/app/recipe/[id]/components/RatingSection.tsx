@@ -56,7 +56,7 @@ export function RatingSection({
                     })}
                 >
                     <span>{averageRating.toFixed(1)}</span>
-                    <Star size={28} className={css({ color: '#f8b500' })} />
+                    <Star size={28} className={css({ color: 'palette.gold' })} />
                 </div>
                 <div
                     className={css({
@@ -127,7 +127,7 @@ export function RatingSection({
                     {viewerRating ? (
                         <>
                             Deine Bewertung: {viewerRating.toFixed(1)}
-                            <Star size={14} className={css({ color: '#f8b500' })} />
+                            <Star size={14} className={css({ color: 'palette.gold' })} />
                         </>
                     ) : (
                         'Jetzt bewerten und Feedback geben'

@@ -1,14 +1,11 @@
 'use client';
 
-import { Star } from 'lucide-react';
+import { ChefHat, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
-import * as React from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
-import { grid } from 'styled-system/patterns';
-
-import { SmartImage } from '../atoms/SmartImage';
-import { Heading, Text } from '../atoms/Typography';
+import { flex } from 'styled-system/patterns';
 
 export function HeroSpotlight() {
     return (
@@ -16,84 +13,98 @@ export function HeroSpotlight() {
             className={css({
                 position: 'relative',
                 overflow: 'hidden',
-                px: { base: '4', md: '6' },
-                py: { base: '5', md: '6' },
-                bg: 'surface',
                 borderRadius: '2xl',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
                 mb: '4',
             })}
+            style={{
+                background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.orange}dd, #d4694a)`,
+            }}
         >
-            <div
-                className={grid({
-                    columns: { base: 1, lg: 2 },
-                    gap: { base: '5', md: '6' },
-                    alignItems: 'center',
+            {/* Decorative floating icons */}
+            <motion.div
+                className={css({
+                    position: 'absolute',
+                    top: '-30px',
+                    right: '-30px',
+                    opacity: 0.12,
+                    pointerEvents: 'none',
                 })}
+                animate={{ y: [0, -10, 0], rotate: [0, 4, 0] }}
+                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
             >
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45 }}
-                >
+                <ChefHat size={180} color="white" />
+            </motion.div>
+            <motion.div
+                className={css({
+                    position: 'absolute',
+                    bottom: '-40px',
+                    left: '15%',
+                    opacity: 0.06,
+                    pointerEvents: 'none',
+                })}
+                animate={{ y: [0, 8, 0], rotate: [0, -3, 0] }}
+                transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+            >
+                <Sparkles size={220} color="white" />
+            </motion.div>
+
+            <motion.div
+                className={css({
+                    position: 'relative',
+                    zIndex: 1,
+                    px: { base: '5', md: '8' },
+                    py: { base: '6', md: '8' },
+                })}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                <div className={flex({ align: 'center', gap: '3', mb: '2' })}>
                     <div
                         className={css({
-                            display: 'inline-flex',
+                            width: '44px',
+                            height: '44px',
+                            borderRadius: 'xl',
+                            bg: 'rgba(255,255,255,0.2)',
+                            display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
-                            bg: '#e07b53',
-                            borderRadius: 'full',
-                            padding: '4px 14px',
-                            fontSize: 'xs',
-                            fontWeight: '600',
-                            color: 'white',
+                            justifyContent: 'center',
+                            backdropFilter: 'blur(8px)',
                         })}
                     >
-                        <motion.span
-                            style={{ display: 'inline-flex' }}
-                            animate={{ rotate: [0, 15, -10, 0] }}
-                            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                        >
-                            <Star size={16} />
-                        </motion.span>
-                        <span>Neu gedacht</span>
+                        <ChefHat size={22} color="white" />
                     </div>
-                    <Heading as="h1" size="xl" className={css({ mt: '4', maxW: '48ch' })}>
-                        Kochen ist nicht immer Schritt für Schritt
-                    </Heading>
-                    <Text size="lg" color="muted" className={css({ mt: '4', maxW: '46ch' })}>
-                        Manchmal kocht die Soße, während du das Gemüse schneidest. Hier siehst du
-                        auf einen Blick, was gleichzeitig läuft – ohne lange Listen durchzulesen.
-                    </Text>
-                </motion.div>
-                <motion.div
+                    <div>
+                        <h1
+                            className={css({
+                                fontFamily: 'heading',
+                                fontSize: { base: 'xl', md: '3xl' },
+                                fontWeight: '700',
+                                color: 'white',
+                                lineHeight: '1.15',
+                            })}
+                        >
+                            Kochen neu gedacht
+                        </h1>
+                    </div>
+                </div>
+
+                <motion.p
                     className={css({
-                        position: 'relative',
-                        borderRadius: '2xl',
-                        overflow: 'hidden',
-                        minHeight: '320px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                        color: 'rgba(255,255,255,0.9)',
+                        fontSize: { base: 'sm', md: 'md' },
+                        maxW: '520px',
+                        lineHeight: '1.6',
+                        mt: '1',
                     })}
-                    initial={{ opacity: 0, scale: 0.97 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, delay: 0.15 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.4 }}
                 >
-                    <SmartImage
-                        src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1000&q=80"
-                        alt="Rezeptübersicht"
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 480px"
-                        className={css({ objectFit: 'cover' })}
-                    />
-                    <div
-                        className={css({
-                            position: 'absolute',
-                            inset: 0,
-                            bg: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)',
-                        })}
-                    />
-                </motion.div>
-            </div>
+                    Sieh auf einen Blick, was gleichzeitig laeuft &ndash; ohne lange Listen.
+                    Parallele Schritte, klar visualisiert.
+                </motion.p>
+            </motion.div>
         </section>
     );
 }

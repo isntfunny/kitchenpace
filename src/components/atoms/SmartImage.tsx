@@ -4,6 +4,7 @@ import { ChefHat } from 'lucide-react';
 import { useState } from 'react';
 
 
+import { PALETTE } from '@app/lib/palette';
 import {
     getThumbnailUrl,
     getThumbnailUrlById,
@@ -101,7 +102,7 @@ export function SmartImage({
             <div
                 className={cx(
                     css({
-                        background: 'linear-gradient(135deg, #e07b53 0%, #c4623d 100%)',
+                        background: `linear-gradient(135deg, ${PALETTE.orange} 0%, #c4623d 100%)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

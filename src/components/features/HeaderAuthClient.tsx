@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
 
 import { handleSignIn, handleSignOut } from '@app/components/auth/actions';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
@@ -56,7 +57,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                                     width: '32px',
                                     height: '32px',
                                     borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                    background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -197,7 +198,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                 px: '4',
                 py: '2',
                 borderRadius: 'lg',
-                background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '1.5',

@@ -12,6 +12,7 @@ import type {
 } from '@app/components/flow/editor/editorTypes';
 import { FlowEditor } from '@app/components/flow/FlowEditor';
 import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { stack } from 'styled-system/patterns';
 
@@ -556,7 +557,7 @@ export function RecipeForm({
                                 <span
                                     className={css({
                                         fontSize: '8px',
-                                        color: '#00b894',
+                                        color: 'palette.emerald',
                                         fontWeight: '700',
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.05em',
@@ -569,7 +570,7 @@ export function RecipeForm({
                                 <span
                                     className={css({
                                         fontSize: '8px',
-                                        color: '#00b894',
+                                        color: 'palette.emerald',
                                         fontWeight: '700',
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.05em',
@@ -585,7 +586,7 @@ export function RecipeForm({
                                 className={progressFillClass}
                                 style={{
                                     width: `${progressPct}%`,
-                                    backgroundColor: mandatoryMet ? '#00b894' : '#e07b53',
+                                    backgroundColor: mandatoryMet ? PALETTE.emerald : PALETTE.orange,
                                 }}
                             />
                             {/* 60% milestone marker */}

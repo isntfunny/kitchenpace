@@ -23,6 +23,7 @@ import { toggleFollowAction } from '@app/app/actions/social';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { RecipeCard as SharedRecipeCard } from '@app/components/features/RecipeCard';
 import { ReportButton } from '@app/components/features/ReportButton';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
@@ -331,7 +332,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 borderRadius: '3xl',
                                 overflow: 'hidden',
                                 boxShadow:
-                                    '0 0 0 3px white, 0 0 0 6px #e07b53, 0 8px 32px rgba(224, 123, 83, 0.3)',
+                                    `0 0 0 3px white, 0 0 0 6px ${PALETTE.orange}, 0 8px 32px rgba(224, 123, 83, 0.3)`,
                             })}
                         >
                             {user.avatar ? (
@@ -351,7 +352,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         width: '100%',
                                         height: '100%',
                                         background:
-                                            'linear-gradient(135deg, #e07b53 0%, #c4623d 100%)',
+                                            `linear-gradient(135deg, ${PALETTE.orange} 0%, #c4623d 100%)`,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -452,7 +453,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                             icon={
                                                 <Star
                                                     size={16}
-                                                    className={css({ color: '#f8b500' })}
+                                                    className={css({ color: 'palette.gold' })}
                                                 />
                                             }
                                             isDecimal
@@ -623,7 +624,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         mb: '3',
                                     })}
                                 >
-                                    <ChefHat size={42} color="#e07b53" />
+                                    <ChefHat size={42} color={PALETTE.orange} />
                                 </div>
                                 <p className={css({ color: 'text.muted', fontSize: 'sm' })}>
                                     {user.name} hat noch keine Rezepte veröffentlicht.
@@ -831,7 +832,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 })}
                             >
                                 <div
-                                    className={css({ fontSize: '2xl', mb: '2', color: '#4a5568' })}
+                                    className={css({ fontSize: '2xl', mb: '2', color: 'foreground.muted' })}
                                 >
                                     <FileText size={36} />
                                 </div>

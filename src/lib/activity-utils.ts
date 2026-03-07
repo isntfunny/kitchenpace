@@ -4,7 +4,6 @@ export type ActivityIconName =
     | 'star'
     | 'message-square'
     | 'bookmark'
-    | 'bookmark-x'
     | 'handshake'
     | 'shopping-cart'
     | 'calendar'
@@ -31,19 +30,20 @@ export interface ActivityFeedItem {
     targetUserSlug?: string;
 }
 
+import { PALETTE } from './palette';
+
 /** Template placeholders: {recipe} = linked recipe title, {target} = linked target user */
 export const ACTIVITY_DECOR: Record<string, { icon: ActivityIconName; bg: string; template: string }> = {
-    RECIPE_CREATED: { icon: 'edit3', bg: '#6c5ce7', template: 'hat {recipe} erstellt' },
-    RECIPE_COOKED: { icon: 'flame', bg: '#e17055', template: 'hat {recipe} zubereitet' },
-    RECIPE_RATED: { icon: 'star', bg: '#f8b500', template: 'hat {recipe} bewertet' },
-    RECIPE_COMMENTED: { icon: 'message-square', bg: '#fd79a8', template: 'hat {recipe} kommentiert' },
-    RECIPE_FAVORITED: { icon: 'bookmark', bg: '#74b9ff', template: 'hat {recipe} gespeichert' },
-    RECIPE_UNFAVORITED: { icon: 'bookmark-x', bg: '#636e72', template: 'hat {recipe} aus Favoriten entfernt' },
-    USER_FOLLOWED: { icon: 'handshake', bg: '#00cec9', template: 'hat {target} gefolgt' },
-    USER_REGISTERED: { icon: 'user-plus', bg: '#00b894', template: 'hat sich registriert' },
-    USER_ACTIVATED: { icon: 'user-check', bg: '#0984e3', template: 'ist jetzt aktiv' },
-    SHOPPING_LIST_CREATED: { icon: 'shopping-cart', bg: '#fdcb6e', template: 'hat eine Einkaufsliste erstellt' },
-    MEAL_PLAN_CREATED: { icon: 'calendar', bg: '#a29bfe', template: 'hat einen Essensplan erstellt' },
+    RECIPE_CREATED: { icon: 'edit3', bg: PALETTE.purple, template: 'hat {recipe} erstellt' },
+    RECIPE_COOKED: { icon: 'flame', bg: PALETTE.orange, template: 'hat {recipe} zubereitet' },
+    RECIPE_RATED: { icon: 'star', bg: PALETTE.gold, template: 'hat {recipe} bewertet' },
+    RECIPE_COMMENTED: { icon: 'message-square', bg: PALETTE.pink, template: 'hat {recipe} kommentiert' },
+    RECIPE_FAVORITED: { icon: 'bookmark', bg: PALETTE.blue, template: 'hat {recipe} gespeichert' },
+    USER_FOLLOWED: { icon: 'handshake', bg: PALETTE.emerald, template: 'hat {target} gefolgt' },
+    USER_REGISTERED: { icon: 'user-plus', bg: PALETTE.emerald, template: 'hat sich registriert' },
+    USER_ACTIVATED: { icon: 'user-check', bg: PALETTE.blue, template: 'ist jetzt aktiv' },
+    SHOPPING_LIST_CREATED: { icon: 'shopping-cart', bg: PALETTE.gold, template: 'hat eine Einkaufsliste erstellt' },
+    MEAL_PLAN_CREATED: { icon: 'calendar', bg: PALETTE.purple, template: 'hat einen Essensplan erstellt' },
 };
 
 export function formatTimeAgo(date: Date): string {

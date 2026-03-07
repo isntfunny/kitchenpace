@@ -23,6 +23,7 @@ import '@xyflow/react/dist/style.css';
 import { Download } from 'lucide-react';
 import { type ComponentType, type Dispatch, useCallback, useEffect, useRef, useState } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import type { FlowEdgeSerialized, FlowNodeSerialized } from '../editor/editorTypes';
@@ -213,7 +214,7 @@ function DesktopViewInner({
                 const timerPct =
                     t && t.total > 0 ? ((t.total - t.remaining) / t.total) * 100 : 0;
                 const stroke = sourceDone
-                    ? '#00b894'
+                    ? PALETTE.emerald
                     : timerPct > 0
                       ? timerColor(timerPct)
                       : 'rgba(0,0,0,0.18)';
@@ -344,7 +345,7 @@ function DesktopViewInner({
                     borderRadius: 'lg',
                     border: '1px solid rgba(224,123,83,0.2)',
                     bg: 'rgba(255,255,255,0.9)',
-                    color: '#c45e30',
+                    color: 'palette.orange',
                     fontSize: 'xs',
                     fontWeight: '600',
                     cursor: 'pointer',

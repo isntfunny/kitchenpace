@@ -79,6 +79,27 @@ export default defineConfig({
                         'admin-header': { value: '#ffe8d6' },
                         'header-bg': { value: '#fceadd' },
                     },
+                    palette: {
+                        orange: { value: '#e07b53' },
+                        gold: { value: '#f8b500' },
+                        emerald: { value: '#00b894' },
+                        purple: { value: '#6c5ce7' },
+                        blue: { value: '#0984e3' },
+                        pink: { value: '#fd79a8' },
+                        // Dark-mode-friendly variants
+                        'orange-dark': { value: '#f09070' },
+                        'gold-dark': { value: '#ffc94d' },
+                        'emerald-dark': { value: '#2ed8a3' },
+                        'purple-dark': { value: '#9b8ff5' },
+                        'blue-dark': { value: '#4ea8f0' },
+                        'pink-dark': { value: '#ff9ec0' },
+                    },
+                    status: {
+                        success: { value: '#22c55e' },
+                        error: { value: '#ef4444' },
+                        danger: { value: '#dc2626' },
+                        warning: { value: '#f59e0b' },
+                    },
                 },
 
                 fonts: {
@@ -244,6 +265,36 @@ export default defineConfig({
                             base: 'rgba(0,0,0,0.08)',
                             _dark: 'rgba(255,255,255,0.08)',
                         },
+                    },
+                    'palette.orange': {
+                        value: { base: '{colors.palette.orange}', _dark: '{colors.palette.orange-dark}' },
+                    },
+                    'palette.gold': {
+                        value: { base: '{colors.palette.gold}', _dark: '{colors.palette.gold-dark}' },
+                    },
+                    'palette.emerald': {
+                        value: { base: '{colors.palette.emerald}', _dark: '{colors.palette.emerald-dark}' },
+                    },
+                    'palette.purple': {
+                        value: { base: '{colors.palette.purple}', _dark: '{colors.palette.purple-dark}' },
+                    },
+                    'palette.blue': {
+                        value: { base: '{colors.palette.blue}', _dark: '{colors.palette.blue-dark}' },
+                    },
+                    'palette.pink': {
+                        value: { base: '{colors.palette.pink}', _dark: '{colors.palette.pink-dark}' },
+                    },
+                    'status.success': {
+                        value: { base: '{colors.status.success}', _dark: '#4ade80' },
+                    },
+                    'status.error': {
+                        value: { base: '{colors.status.error}', _dark: '#f87171' },
+                    },
+                    'status.danger': {
+                        value: { base: '{colors.status.danger}', _dark: '#f87171' },
+                    },
+                    'status.warning': {
+                        value: { base: '{colors.status.warning}', _dark: '#fbbf24' },
                     },
                     'shadow.small': {
                         value: '0 2px 8px rgba(0,0,0,0.06)',

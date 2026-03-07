@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -204,7 +205,7 @@ export function PushSubscriptionToggle() {
                     paddingY: '2.5',
                     background: endpoint
                         ? 'rgba(220,38,38,0.15)'
-                        : 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                        : `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                     color: endpoint ? 'red' : 'white',
                     fontWeight: '700',
                     cursor: status === 'loading' ? 'not-allowed' : 'pointer',
@@ -216,7 +217,7 @@ export function PushSubscriptionToggle() {
                     ? 'Push-Benachrichtigungen deaktivieren'
                     : 'Push-Benachrichtigungen aktivieren'}
             </button>
-            {error && <p className={css({ color: '#dc2626', fontSize: 'xs' })}>{error}</p>}
+            {error && <p className={css({ color: 'status.danger', fontSize: 'xs' })}>{error}</p>}
         </div>
     );
 }

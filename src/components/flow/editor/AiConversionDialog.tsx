@@ -5,6 +5,7 @@ import { Dialog } from 'radix-ui';
 import { useState, useRef, useEffect } from 'react';
 
 import { analyzeRecipeText, type AIAnalysisResult, type ApplySelection } from '@app/lib/importer/ai-text-analysis';
+import { PALETTE } from '@app/lib/palette';
 
 interface AiConversionDialogProps {
     open: boolean;
@@ -156,7 +157,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                 width: '36px',
                                 height: '36px',
                                 borderRadius: '10px',
-                                background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -248,7 +249,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     borderRadius: '999px',
                                     border: '1.5px solid rgba(224,123,83,0.3)',
                                     backgroundColor: 'transparent',
-                                    color: '#e07b53',
+                                    color: PALETTE.orange,
                                     fontWeight: 600,
                                     fontSize: '13px',
                                     cursor: 'pointer',
@@ -265,7 +266,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     borderRadius: '999px',
                                     border: 'none',
                                     background: text.trim()
-                                        ? 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)'
+                                        ? `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`
                                         : 'rgba(0,0,0,0.1)',
                                     color: text.trim() ? 'white' : '#b2bec3',
                                     fontWeight: 600,
@@ -301,7 +302,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     borderRadius: '999px',
                                     border: '1.5px solid rgba(224,123,83,0.3)',
                                     backgroundColor: 'transparent',
-                                    color: '#e07b53',
+                                    color: PALETTE.orange,
                                     fontWeight: 600,
                                     fontSize: '13px',
                                     cursor: 'pointer',
@@ -348,7 +349,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                         borderRadius: '999px',
                                         border: 'none',
                                         background:
-                                            'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                            `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                                         color: 'white',
                                         fontWeight: 700,
                                         fontSize: '13px',
@@ -384,7 +385,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     border: 'none',
                                     background:
                                         phase === 'done'
-                                            ? 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)'
+                                            ? `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`
                                             : '#ef4444',
                                     color: 'white',
                                     fontWeight: 700,
@@ -441,7 +442,7 @@ function InputPhase({ text, onChange }: { text: string; onChange: (v: string) =>
                     boxSizing: 'border-box',
                     transition: 'border-color 0.15s ease',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#e07b53')}
+                onFocus={(e) => (e.target.style.borderColor = PALETTE.orange)}
                 onBlur={(e) => (e.target.style.borderColor = 'rgba(224,123,83,0.35)')}
                 autoFocus
             />
@@ -462,7 +463,7 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
                         width: '80px',
                         height: '80px',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                        background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -517,11 +518,11 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
                                     borderRadius: '50%',
                                     flexShrink: 0,
                                     backgroundColor: done
-                                        ? '#e07b53'
+                                        ? PALETTE.orange
                                         : active
                                           ? 'rgba(224,123,83,0.2)'
                                           : 'rgba(0,0,0,0.08)',
-                                    border: active ? '2px solid #e07b53' : '2px solid transparent',
+                                    border: active ? `2px solid ${PALETTE.orange}` : '2px solid transparent',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -545,7 +546,7 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
                                             width: '6px',
                                             height: '6px',
                                             borderRadius: '50%',
-                                            backgroundColor: '#e07b53',
+                                            backgroundColor: PALETTE.orange,
                                             animation: 'aiDotPulse 0.8s ease-in-out infinite',
                                         }}
                                     />
@@ -554,7 +555,7 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
                             <span
                                 style={{
                                     fontSize: '13px',
-                                    color: done ? '#2d3436' : active ? '#e07b53' : '#b2bec3',
+                                    color: done ? '#2d3436' : active ? PALETTE.orange : '#b2bec3',
                                     fontWeight: active || done ? 500 : 400,
                                     transition: 'color 0.3s ease',
                                 }}
@@ -748,9 +749,9 @@ function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
                                     borderRadius: '5px',
                                     flexShrink: 0,
                                     marginTop: '1px',
-                                    backgroundColor: checked ? '#e07b53' : 'white',
+                                    backgroundColor: checked ? PALETTE.orange : 'white',
                                     border: checked
-                                        ? '1.5px solid #e07b53'
+                                        ? `1.5px solid ${PALETTE.orange}`
                                         : '1.5px solid rgba(0,0,0,0.2)',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -775,7 +776,7 @@ function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
                                     style={{
                                         fontSize: '11px',
                                         fontWeight: 600,
-                                        color: checked ? '#e07b53' : '#b2bec3',
+                                        color: checked ? PALETTE.orange : '#b2bec3',
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.05em',
                                         marginBottom: '2px',
@@ -880,7 +881,7 @@ function DonePhase({ result }: { result: AIAnalysisResult | null }) {
                             style={{
                                 fontSize: '22px',
                                 fontWeight: 800,
-                                color: '#e07b53',
+                                color: PALETTE.orange,
                                 lineHeight: 1,
                             }}
                         >
@@ -945,7 +946,7 @@ function orbitDot(index: number): React.CSSProperties {
         width: '8px',
         height: '8px',
         borderRadius: '50%',
-        backgroundColor: index === 0 ? '#e07b53' : index === 1 ? '#f8b500' : '#ff8c69',
+        backgroundColor: index === 0 ? PALETTE.orange : index === 1 ? PALETTE.gold : '#ff8c69',
         marginTop: '-4px',
         marginLeft: '-4px',
         animation: `aiOrbit ${1.8 + index * 0.3}s linear infinite`,

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 interface ShoppingItem {
@@ -31,14 +32,14 @@ interface DashboardShoppingListProps {
 }
 
 const categoryIcons: Record<string, ReactNode> = {
-    Gemüse: <Leaf size={16} color="#00b894" />,
-    Obst: <Apple size={16} color="#fdcb6e" />,
-    Fleisch: <Drumstick size={16} color="#e07b53" />,
-    Fisch: <Fish size={16} color="#74b9ff" />,
-    Milchprodukte: <Milk size={16} color="#fd79a8" />,
-    Gewürze: <Sparkles size={16} color="#e07b53" />,
-    Backen: <Croissant size={16} color="#f8b500" />,
-    Getränke: <GlassWater size={16} color="#74b9ff" />,
+    Gemüse: <Leaf size={16} color={PALETTE.emerald} />,
+    Obst: <Apple size={16} color={PALETTE.gold} />,
+    Fleisch: <Drumstick size={16} color={PALETTE.orange} />,
+    Fisch: <Fish size={16} color={PALETTE.blue} />,
+    Milchprodukte: <Milk size={16} color={PALETTE.pink} />,
+    Gewürze: <Sparkles size={16} color={PALETTE.orange} />,
+    Backen: <Croissant size={16} color={PALETTE.gold} />,
+    Getränke: <GlassWater size={16} color={PALETTE.blue} />,
     Sonstiges: <Box size={16} color="#636e72" />,
 };
 
@@ -70,8 +71,8 @@ function ShoppingItemRow({
                     height: '24px',
                     borderRadius: 'full',
                     border: item.checked ? 'none' : '2px solid',
-                    borderColor: item.checked ? '#00b894' : 'rgba(0,0,0,0.2)',
-                    background: item.checked ? '#00b894' : 'transparent',
+                    borderColor: item.checked ? PALETTE.emerald : 'rgba(0,0,0,0.2)',
+                    background: item.checked ? PALETTE.emerald : 'transparent',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -180,7 +181,7 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
                             gap: '8px',
                         })}
                     >
-                        <ShoppingCart size={24} color="#e07b53" />
+                        <ShoppingCart size={24} color={PALETTE.orange} />
                         Einkaufsliste
                     </h3>
                     <p
@@ -198,7 +199,7 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
                         fontSize: 'xs',
                         fontWeight: '600',
                         color: 'white',
-                        background: '#e07b53',
+                        background: 'palette.orange',
                         border: 'none',
                         px: '3',
                         py: '1.5',
@@ -226,7 +227,7 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
                     className={css({
                         height: '100%',
                         width: `${progress}%`,
-                        background: 'linear-gradient(90deg, #e07b53, #f8b500)',
+                        background: `linear-gradient(90deg, ${PALETTE.orange}, ${PALETTE.gold})`,
                         borderRadius: 'full',
                         transition: 'width 300ms ease',
                     })}
@@ -288,7 +289,7 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
                             fontSize: '2xl',
                             display: 'block',
                             mb: '2',
-                            color: '#e07b53',
+                            color: 'palette.orange',
                         })}
                     >
                         <ShoppingCart size={40} />

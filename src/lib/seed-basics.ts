@@ -16,6 +16,8 @@
 import 'dotenv/config';
 import bcrypt from 'bcrypt';
 
+import { PALETTE } from '@app/lib/palette';
+
 import { prisma } from '../../shared/prisma';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -23,7 +25,7 @@ import { prisma } from '../../shared/prisma';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-    { name: 'Hauptgericht', slug: 'hauptgericht', color: '#e07b53', icon: 'utensils', sortOrder: 0, description: 'Herzhafte Hauptgerichte für jeden Tag — von schnellen Pfannengerichten bis hin zu aufwendigen Sonntagsbraten.' },
+    { name: 'Hauptgericht', slug: 'hauptgericht', color: PALETTE.orange, icon: 'utensils', sortOrder: 0, description: 'Herzhafte Hauptgerichte für jeden Tag — von schnellen Pfannengerichten bis hin zu aufwendigen Sonntagsbraten.' },
     { name: 'Vorspeise', slug: 'vorspeise', color: '#9b7ec8', icon: 'soup', sortOrder: 1, description: 'Leichte Vorspeisen und Suppen, die Appetit auf mehr machen.' },
     { name: 'Beilage', slug: 'beilage', color: '#8fb87a', icon: 'carrot', sortOrder: 2, description: 'Die perfekte Ergänzung zu jedem Hauptgericht — Kartoffeln, Gemüse, Reis und mehr.' },
     { name: 'Salat', slug: 'salat', color: '#5faa6b', icon: 'leaf', sortOrder: 3, description: 'Frische Salate für jede Jahreszeit — knackig, bunt und voller Geschmack.' },

@@ -1,5 +1,7 @@
 import { Sparkles } from 'lucide-react';
 
+import { PALETTE } from '@app/lib/palette';
+
 export function CompletionBanner() {
     return (
         <div
@@ -13,9 +15,9 @@ export function CompletionBanner() {
             }}
         >
             <div style={{ fontSize: 32, marginBottom: 6 }}>
-                <Sparkles style={{ width: 32, height: 32, color: '#00b894', display: 'inline' }} />
+                <Sparkles style={{ width: 32, height: 32, color: PALETTE.emerald, display: 'inline' }} />
             </div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#00b894', marginBottom: 4 }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: PALETTE.emerald, marginBottom: 4 }}>
                 Fertig zubereitet!
             </div>
             <div style={{ fontSize: 14, color: '#55b89a' }}>Guten Appetit!</div>

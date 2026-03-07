@@ -5,6 +5,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 
 import { searchIngredients } from '@app/components/recipe/actions';
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { DescriptionEditor } from './DescriptionEditor';
@@ -111,7 +112,7 @@ export function NodeEditPanel({
                 >
                     <div className={headerIconWrapClass}>
                         <Icon
-                            className={css({ width: '24px', height: '24px', color: '#2d3436' })}
+                            className={css({ width: '24px', height: '24px', color: 'text' })}
                         />
                     </div>
                     <div className={css({ flex: '1' })}>
@@ -162,7 +163,7 @@ export function NodeEditPanel({
                                                 backgroundImage: isSelected
                                                     ? config.gradient
                                                     : undefined,
-                                                borderColor: isSelected ? '#e07b53' : undefined,
+                                                borderColor: isSelected ? PALETTE.orange : undefined,
                                             }}
                                             onClick={() => setStepType(type)}
                                         >

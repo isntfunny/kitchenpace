@@ -71,23 +71,25 @@ export async function fireEvent<T extends EventName>(
         recipientProfile: (recipient?.profile ?? null) as NotificationProfile | null,
     };
 
-    const metadataFromDefinition = definition.activity.getMetadata?.(context);
-    const metadataPayload =
-        metadataFromDefinition || payload.metadata
-            ? { ...(metadataFromDefinition ?? {}), ...(payload.metadata ?? {}) }
-            : undefined;
+    let activity = null;
 
-    const activity = payload.skipActivity
-        ? null
-        : await createActivityLog({
-              userId: actor.id,
-              type: definition.activity.type,
-              targetId: definition.activity.getTargetId(context) ?? null,
-              targetType: definition.activity.targetType,
-              ...(metadataPayload
-                  ? { metadata: metadataPayload as Prisma.InputJsonValue }
-                  : {}),
-          });
+    if (definition.activity && !payload.skipActivity) {
+        const metadataFromDefinition = definition.activity.getMetadata?.(context);
+        const metadataPayload =
+            metadataFromDefinition || payload.metadata
+                ? { ...(metadataFromDefinition ?? {}), ...(payload.metadata ?? {}) }
+                : undefined;
+
+        activity = await createActivityLog({
+            userId: actor.id,
+            type: definition.activity.type,
+            targetId: definition.activity.getTargetId(context) ?? null,
+            targetType: definition.activity.targetType,
+            ...(metadataPayload
+                ? { metadata: metadataPayload as Prisma.InputJsonValue }
+                : {}),
+        });
+    }
 
     let notification = null;
 

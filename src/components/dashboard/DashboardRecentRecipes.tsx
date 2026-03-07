@@ -3,6 +3,7 @@
 import { BookOpen, Calendar, CheckCircle, Heart, Sparkles } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
@@ -24,10 +25,10 @@ const filters = [
 ];
 
 const statusIcons: Record<string, ReactNode> = {
-    cooked: <CheckCircle size={14} color="#00b894" />,
-    favorite: <Heart size={14} color="#fd79a8" />,
-    planned: <Calendar size={14} color="#6c5ce7" />,
-    new: <Sparkles size={14} color="#e07b53" />,
+    cooked: <CheckCircle size={14} color={PALETTE.emerald} />,
+    favorite: <Heart size={14} color={PALETTE.pink} />,
+    planned: <Calendar size={14} color={PALETTE.purple} />,
+    new: <Sparkles size={14} color={PALETTE.orange} />,
 };
 
 function StatusIcon({ status }: { status?: string }) {
@@ -111,7 +112,7 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                             gap: '8px',
                         })}
                     >
-                        <BookOpen size={22} color="#e07b53" />
+                        <BookOpen size={22} color={PALETTE.orange} />
                         <span>Meine Rezepte</span>
                     </h3>
                     <p
@@ -169,13 +170,13 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                             transition: 'all 150ms ease',
                             background:
                                 activeFilter === filter.id
-                                    ? 'linear-gradient(135deg, #e07b53, #f8b500)'
+                                    ? `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`
                                     : 'rgba(0,0,0,0.04)',
                             color: activeFilter === filter.id ? 'white' : 'text-muted',
                             _hover: {
                                 background:
                                     activeFilter === filter.id
-                                        ? 'linear-gradient(135deg, #e07b53, #f8b500)'
+                                        ? `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`
                                         : 'rgba(0,0,0,0.08)',
                             },
                         })}
@@ -220,7 +221,7 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                             fontSize: '3xl',
                             display: 'block',
                             mb: '2',
-                            color: '#636e72',
+                            color: 'foreground.muted',
                         })}
                     >
                         <BookOpen size={48} />

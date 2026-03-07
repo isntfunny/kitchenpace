@@ -1,3 +1,5 @@
+import type { Prisma } from '@prisma/client';
+
 type BaseRecipeEvent = {
     recipeId: string;
     recipeTitle: string;
@@ -62,18 +64,7 @@ export type EventDataMap = {
 
 export type EventName = keyof EventDataMap;
 
-type ActivityTypeValue =
-    | 'RECIPE_FAVORITED'
-    | 'RECIPE_UNFAVORITED'
-    | 'RECIPE_RATED'
-    | 'RECIPE_COOKED'
-    | 'RECIPE_CREATED'
-    | 'RECIPE_COMMENTED'
-    | 'USER_FOLLOWED'
-    | 'USER_REGISTERED'
-    | 'USER_ACTIVATED'
-    | 'MEAL_PLAN_CREATED'
-    | 'SHOPPING_LIST_CREATED';
+type ActivityTypeValue = Prisma.ActivityLogCreateInput['type'];
 
 type NotificationTypeValue =
     | 'NEW_FOLLOWER'
@@ -140,7 +131,7 @@ type TrackingDefinition<T extends EventName> = {
 };
 
 type EventDefinition<T extends EventName> = {
-    activity: ActivityDefinition<T>;
+    activity?: ActivityDefinition<T>;
     notification?: NotificationDefinition<T>;
     tracking?: TrackingDefinition<T>;
 };
@@ -170,13 +161,7 @@ export const EVENT_DEFINITIONS: EventDefinitionsMap = {
             getProperties: ({ data }) => ({ recipeId: data.recipeId }),
         },
     },
-    recipeUnfavorited: {
-        activity: {
-            type: 'RECIPE_UNFAVORITED',
-            targetType: 'recipe',
-            getTargetId: (context) => context.data.recipeId,
-        },
-    },
+    recipeUnfavorited: {},
     recipeRated: {
         activity: {
             type: 'RECIPE_RATED',

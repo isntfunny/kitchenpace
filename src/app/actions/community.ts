@@ -2,6 +2,7 @@
 
 import { fetchActivityFeed } from '@app/lib/activity-feed';
 import { type ActivityFeedItem } from '@app/lib/activity-utils';
+import { PALETTE } from '@app/lib/palette';
 import { prisma } from '@shared/prisma';
 
 
@@ -19,19 +20,15 @@ export type QuickTipIconName =
     | 'chart';
 
 const TAG_COLORS = [
-    '#e07b53',
-    '#00b894',
-    '#0984e3',
-    '#6c5ce7',
-    '#fdcb6e',
-    '#00cec9',
-    '#e17055',
-    '#fd79a8',
-    '#a29bfe',
-    '#fab1a0',
+    PALETTE.orange,
+    PALETTE.emerald,
+    PALETTE.blue,
+    PALETTE.purple,
+    PALETTE.gold,
+    PALETTE.pink,
 ];
 
-const TIP_ACCENTS = ['#e07b53', '#00b894', '#fdcb6e', '#0984e3', '#6c5ce7', '#fd79a8'];
+const TIP_ACCENTS = [PALETTE.orange, PALETTE.emerald, PALETTE.gold, PALETTE.blue, PALETTE.purple, PALETTE.pink];
 
 export interface TrendingTagData {
     tag: string;

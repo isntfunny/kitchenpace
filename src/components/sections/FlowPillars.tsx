@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import * as React from 'react';
 import type { ReactNode } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
@@ -16,21 +17,21 @@ const pillars: { title: string; description: string; icon: ReactNode; color: str
         description:
             'Sieh sofort, welche Schritte gleichzeitig laufen. Keine Panik mehr – die Synchronisation ist bereits durchdacht.',
         icon: <Clock size={24} color="white" />,
-        color: '#e07b53',
+        color: PALETTE.orange,
     },
     {
         title: 'Klar strukturiert',
         description:
             'Jeder Schritt hat seinen Platz. Du siehst den kritischen Pfad und behältst immer den Überblick.',
         icon: <Clipboard size={24} color="white" />,
-        color: '#6c5ce7',
+        color: PALETTE.purple,
     },
     {
         title: 'Einfach verständlich',
         description:
             'Die Visualisierung zeigt dir die gesamte Landkarte – entspannt, kontrolliert, im Flow.',
         icon: <Sparkles size={24} color="white" />,
-        color: '#00b894',
+        color: PALETTE.emerald,
     },
 ];
 

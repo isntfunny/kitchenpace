@@ -316,7 +316,7 @@ function ModerationDetailDialog({
                                             py: '2.5',
                                             borderRadius: 'xl',
                                             bg: 'rgba(239,68,68,0.1)',
-                                            color: '#dc2626',
+                                            color: 'status.danger',
                                             fontWeight: '700',
                                             fontSize: 'sm',
                                             cursor: 'pointer',
@@ -342,7 +342,7 @@ function ModerationDetailDialog({
                                             fontSize: 'sm',
                                             resize: 'vertical',
                                             minHeight: '80px',
-                                            _focus: { borderColor: '#e07b53', outline: 'none', boxShadow: '0 0 0 3px rgba(224,123,83,0.15)' },
+                                            _focus: { borderColor: 'palette.orange', outline: 'none', boxShadow: '0 0 0 3px rgba(224,123,83,0.15)' },
                                         })}
                                     />
                                     <div className={css({ display: 'flex', gap: '2' })}>
@@ -371,7 +371,7 @@ function ModerationDetailDialog({
                                                 px: '4',
                                                 py: '2',
                                                 borderRadius: 'xl',
-                                                bg: '#dc2626',
+                                                bg: 'status.danger',
                                                 color: 'white',
                                                 fontWeight: '700',
                                                 fontSize: 'sm',
@@ -525,7 +525,7 @@ export function ModerationQueueTable({ items }: { items: QueueItem[] }) {
                                         p: '1.5',
                                         borderRadius: 'lg',
                                         bg: 'rgba(239,68,68,0.1)',
-                                        color: '#dc2626',
+                                        color: 'status.danger',
                                         cursor: 'pointer',
                                         border: 'none',
                                         _hover: { bg: 'rgba(239,68,68,0.2)' },

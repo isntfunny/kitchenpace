@@ -74,7 +74,6 @@ export async function hydrateActivityFeedItems(
                       if (user.profile?.ratingsPublic === false) hidden.add('RECIPE_RATED');
                       if (user.profile?.favoritesPublic === false) {
                           hidden.add('RECIPE_FAVORITED');
-                          hidden.add('RECIPE_UNFAVORITED');
                       }
                       if (user.profile?.followsPublic === false) hidden.add('USER_FOLLOWED');
                       return [user.id, hidden] as const;

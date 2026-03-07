@@ -5,6 +5,7 @@ import 'dotenv/config';
 
 import bcrypt from 'bcrypt';
 
+import { PALETTE } from '@app/lib/palette';
 import { prisma } from '@shared/prisma';
 
 const E2E_TEST_PASSWORD = 'TestPassword123!';
@@ -58,32 +59,32 @@ async function main() {
             name: 'Hauptgericht',
             slug: 'hauptgericht',
             description: 'Hauptgerichte für Mittag- und Abendessen',
-            color: '#e07b53',
+            color: PALETTE.orange,
         },
         {
             name: 'Beilage',
             slug: 'beilage',
             description: 'Beilagen und Ergänzungen zu Hauptgerichten',
-            color: '#00b894',
+            color: PALETTE.emerald,
         },
         {
             name: 'Backen',
             slug: 'backen',
             description: 'Backrezepte für Kuchen, Brot und mehr',
-            color: '#fd79a8',
+            color: PALETTE.pink,
         },
-        { name: 'Dessert', slug: 'dessert', description: 'Süße Nachspeisen', color: '#fdcb6e' },
+        { name: 'Dessert', slug: 'dessert', description: 'Süße Nachspeisen', color: PALETTE.gold },
         {
             name: 'Frühstück',
             slug: 'fruehstueck',
             description: 'Frühstücksrezepte',
-            color: '#a29bfe',
+            color: PALETTE.purple,
         },
         {
             name: 'Getränk',
             slug: 'getraenk',
             description: 'Heiße und kalte Getränke',
-            color: '#74b9ff',
+            color: PALETTE.blue,
         },
         {
             name: 'Vorspeise',
@@ -91,7 +92,7 @@ async function main() {
             description: 'Vorspeisen und Fingerfood',
             color: '#fab1a0',
         },
-        { name: 'Salat', slug: 'salat', description: 'Frische Salate', color: '#00b894' },
+        { name: 'Salat', slug: 'salat', description: 'Frische Salate', color: PALETTE.emerald },
     ];
 
     for (const cat of categoriesData) {

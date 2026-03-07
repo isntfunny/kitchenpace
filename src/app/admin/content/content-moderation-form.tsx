@@ -73,7 +73,7 @@ export function ContentModerationForm({
                 })}
             >
                 <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '4' })}>
-                    <Star className={css({ color: '#e07b53' })} size={20} />
+                    <Star className={css({ color: 'palette.orange' })} size={20} />
                     <h2 className={css({ fontSize: 'lg', fontWeight: 'semibold' })}>
                         Highlight-Rezept
                     </h2>
@@ -158,7 +158,7 @@ export function ContentModerationForm({
                         marginTop: '3',
                         paddingY: '2',
                         borderRadius: 'lg',
-                        background: isPending || !selectedRecipeId ? 'gray.400' : '#e07b53',
+                        background: isPending || !selectedRecipeId ? 'gray.400' : 'palette.orange',
                         color: 'white',
                         fontWeight: '600',
                         fontSize: 'sm',
@@ -180,7 +180,7 @@ export function ContentModerationForm({
                 })}
             >
                 <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '4' })}>
-                    <User className={css({ color: '#00b894' })} size={20} />
+                    <User className={css({ color: 'palette.emerald' })} size={20} />
                     <h2 className={css({ fontSize: 'lg', fontWeight: 'semibold' })}>Top User</h2>
                 </div>
 
@@ -226,7 +226,7 @@ export function ContentModerationForm({
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        background: '#00b894',
+                                        background: 'palette.emerald',
                                         color: 'white',
                                     })}
                                 >
@@ -285,7 +285,7 @@ export function ContentModerationForm({
                         marginTop: '3',
                         paddingY: '2',
                         borderRadius: 'lg',
-                        background: isPending || !selectedUserId ? 'gray.400' : '#00b894',
+                        background: isPending || !selectedUserId ? 'gray.400' : 'palette.emerald',
                         color: 'white',
                         fontWeight: '600',
                         fontSize: 'sm',

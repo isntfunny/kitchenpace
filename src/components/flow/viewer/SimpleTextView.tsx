@@ -1,6 +1,7 @@
 import { Check, Clock, Pause, Play, RotateCcw } from 'lucide-react';
 import type { Dispatch } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
@@ -95,10 +96,10 @@ export function SimpleTextView({
                                               ? 'rgba(0,184,148,0.12)'
                                               : 'rgba(224,123,83,0.1)',
                                         color: isDone
-                                            ? '#00b894'
+                                            ? PALETTE.emerald
                                             : isLast
-                                              ? '#00b894'
-                                              : '#e07b53',
+                                              ? PALETTE.emerald
+                                              : PALETTE.orange,
                                     }}
                                 >
                                     {isDone ? (
@@ -203,8 +204,8 @@ export function SimpleTextView({
                                                     color: timerRunning
                                                         ? '#f39c12'
                                                         : timerDone
-                                                          ? '#00b894'
-                                                          : '#e07b53',
+                                                          ? PALETTE.emerald
+                                                          : PALETTE.orange,
                                                 }}
                                             >
                                                 {timerRunning ? (

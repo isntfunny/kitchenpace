@@ -3,6 +3,7 @@ import * as lucideIcons from 'lucide';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 
+import { PALETTE } from '@app/lib/palette';
 import { getFileBuffer, BUCKET, s3Client } from '@app/lib/s3';
 import { createLogger } from '@shared/logger';
 import { prisma } from '@shared/prisma';
@@ -108,7 +109,7 @@ function buildPanels(count: number): PanelDef[] {
     }
 
     if (count === 2) {
-        const mid = Math.round(WIDTH * 0.55);
+        const mid = Math.round(WIDTH * 0.48);
         // All cuts lean the same way: wider at top, narrower at bottom (\)
         return [
             {
@@ -124,9 +125,9 @@ function buildPanels(count: number): PanelDef[] {
         ];
     }
 
-    // 3 panels: ~40% / ~35% / ~25% with diagonal cuts (all lean same direction \)
-    const cut1 = Math.round(WIDTH * 0.40);
-    const cut2 = Math.round(WIDTH * 0.73);
+    // 3 panels: ~33% each with diagonal cuts (all lean same direction \)
+    const cut1 = Math.round(WIDTH * 0.31);
+    const cut2 = Math.round(WIDTH * 0.62);
     return [
         {
             x: 0,
@@ -162,8 +163,8 @@ function buildSvgOverlay(
     if (panels.length >= 2) {
         // Parse the cut points from panel clip paths to draw borders
         const cuts = panels.length === 3
-            ? [Math.round(WIDTH * 0.40), Math.round(WIDTH * 0.73)]
-            : [Math.round(WIDTH * 0.55)];
+            ? [Math.round(WIDTH * 0.31), Math.round(WIDTH * 0.62)]
+            : [Math.round(WIDTH * 0.48)];
 
         for (const cut of cuts) {
             borderLines.push(
@@ -188,7 +189,7 @@ function buildSvgOverlay(
   <rect x="0" y="${PANEL_H}" width="${WIDTH}" height="${FOOTER_H}" fill="#fceadd" />
 
   <!-- Category color accent bar -->
-  <rect x="0" y="${PANEL_H}" width="${WIDTH}" height="8" fill="#e07b53" />
+  <rect x="0" y="${PANEL_H}" width="${WIDTH}" height="8" fill="${color}" />
 
   <!-- Category name -->
   <text x="60" y="${PANEL_H + 70}" fill="#2d3436" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="800" letter-spacing="-0.5">
@@ -201,7 +202,7 @@ function buildSvgOverlay(
   </text>
 
   <!-- KüchenTakt branding -->
-  <text x="${WIDTH - 60}" y="${PANEL_H + 90}" fill="#e07b53" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" text-anchor="end">
+  <text x="${WIDTH - 60}" y="${PANEL_H + 90}" fill="${color}" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" text-anchor="end">
     KüchenTakt
   </text>
 </svg>`;
@@ -351,7 +352,7 @@ export async function GET(
         if (!IS_DEV) {
             const cached = await getFromS3Cache(cacheKey(slug));
             if (cached) {
-                return new NextResponse(new Uint8Array(cached), {
+                return new Response(Uint8Array.from(cached), {
                     headers: {
                         'Content-Type': 'image/png',
                         'Cache-Control': 'public, max-age=86400',
@@ -393,7 +394,7 @@ export async function GET(
             },
         });
 
-        const color = category.color ?? '#e07b53';
+        const color = category.color ?? PALETTE.orange;
 
         // Generate
         const buffer =
@@ -406,7 +407,7 @@ export async function GET(
             saveToS3Cache(cacheKey(slug), buffer);
         }
 
-        return new NextResponse(new Uint8Array(buffer), {
+        return new Response(Uint8Array.from(buffer), {
             headers: {
                 'Content-Type': 'image/png',
                 'Cache-Control': IS_DEV ? 'no-store' : 'public, max-age=86400',

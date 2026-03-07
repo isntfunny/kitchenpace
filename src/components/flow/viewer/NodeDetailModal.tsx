@@ -3,6 +3,8 @@
 import { CheckCircle2, Clock, Pause, Play, RotateCcw, X } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
+
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
 
@@ -128,8 +130,8 @@ export function NodeDetailModal({
                                 height: '100%',
                                 width: `${pct}%`,
                                 background: timerDone
-                                    ? '#00b894'
-                                    : 'linear-gradient(90deg, #e07b53, #f39c12)',
+                                    ? PALETTE.emerald
+                                    : `linear-gradient(90deg, ${PALETTE.orange}, #f39c12)`,
                                 transition: 'width 1s linear',
                                 boxShadow:
                                     timerRunning && pct > 0
@@ -174,7 +176,7 @@ export function NodeDetailModal({
                                     alignItems: 'center',
                                     gap: 4,
                                     fontSize: 12,
-                                    color: timerRunning ? '#e07b53' : '#888',
+                                    color: timerRunning ? PALETTE.orange : '#888',
                                     fontWeight: timerRunning ? 700 : 400,
                                     marginLeft: 'auto',
                                 }}
@@ -260,7 +262,7 @@ export function NodeDetailModal({
                                                 width: 6,
                                                 height: 6,
                                                 borderRadius: '50%',
-                                                backgroundColor: '#e07b53',
+                                                backgroundColor: PALETTE.orange,
                                                 flexShrink: 0,
                                             }}
                                         />
@@ -301,7 +303,7 @@ export function NodeDetailModal({
                                     backgroundColor: timerRunning
                                         ? 'rgba(231,76,60,0.08)'
                                         : 'rgba(224,123,83,0.08)',
-                                    color: timerRunning ? '#e74c3c' : '#e07b53',
+                                    color: timerRunning ? '#e74c3c' : PALETTE.orange,
                                     fontSize: 13,
                                     fontWeight: 700,
                                     cursor: 'pointer',
@@ -352,8 +354,8 @@ export function NodeDetailModal({
                                 padding: '12px 16px',
                                 borderRadius: 12,
                                 border: completed ? '1.5px solid rgba(0,184,148,0.3)' : 'none',
-                                backgroundColor: completed ? 'rgba(0,184,148,0.1)' : '#e07b53',
-                                color: completed ? '#00b894' : 'white',
+                                backgroundColor: completed ? 'rgba(0,184,148,0.1)' : PALETTE.orange,
+                                color: completed ? PALETTE.emerald : 'white',
                                 fontSize: 14,
                                 fontWeight: 700,
                                 cursor: 'pointer',

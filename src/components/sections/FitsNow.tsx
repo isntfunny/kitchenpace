@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 
 import { fetchRecipesByTime, type RecipeCardData } from '@app/app/actions/recipes';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { RecipeCard } from '../features/RecipeCard';
@@ -50,7 +51,7 @@ export function FitsNow() {
     return (
         <Section
             title="Passt zu jetzt"
-            titleIcon={<Target size={20} color="#e07b53" />}
+            titleIcon={<Target size={20} color={PALETTE.orange} />}
             description="Tagesgefühl trifft Rezept – sofort, schnell, perfekt abgestimmt."
             action={
                 <Select value={selectedTime} onValueChange={handleTimeChange}>

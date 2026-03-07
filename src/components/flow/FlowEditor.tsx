@@ -20,6 +20,7 @@ import '@xyflow/react/dist/style.css';
 
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { AiConversionDialog } from './editor/AiConversionDialog';
@@ -43,7 +44,7 @@ import { useFlowAutoLayout } from './editor/useFlowAutoLayout';
 const NODE_WIDTH = 220;
 const HORIZONTAL_GAP = 80;
 
-const DEFAULT_EDGE_STYLE: React.CSSProperties = { stroke: '#e07b53', strokeWidth: 2 };
+const DEFAULT_EDGE_STYLE: React.CSSProperties = { stroke: PALETTE.orange, strokeWidth: 2 };
 
 /** Stable nodeTypes / edgeTypes — defined once at module level, never recreated. */
 const NODE_TYPES = { recipeStep: RecipeNode };
@@ -684,7 +685,7 @@ function FlowEditorInner({
                             style: DEFAULT_EDGE_STYLE,
                         }}
                     >
-                        <Background color="#e07b53" gap={20} size={1} />
+                        <Background color={PALETTE.orange} gap={20} size={1} />
                         <Controls
                             className={controlsClass}
                             showZoom={true}

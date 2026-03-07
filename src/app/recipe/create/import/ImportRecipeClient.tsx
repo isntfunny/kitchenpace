@@ -1100,7 +1100,7 @@ const inputClass = css({
     outline: 'none',
     transition: 'all 0.15s ease',
     _focus: {
-        borderColor: '#e07b53',
+        borderColor: 'palette.orange',
         boxShadow: '0 0 0 3px rgba(224,123,83,0.1)',
     },
     _placeholder: {
@@ -1281,7 +1281,7 @@ const pipelineStepIndicatorClass = (done: boolean, active: boolean) =>
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        color: done ? '#22c55e' : active ? '#e07b53' : 'rgba(0,0,0,0.25)',
+        color: done ? 'status.success' : active ? 'palette.orange' : 'rgba(0,0,0,0.25)',
         backgroundColor: done ? 'rgba(34,197,94,0.08)' : active ? 'rgba(224,123,83,0.1)' : 'transparent',
         zIndex: 1,
     });
@@ -1290,7 +1290,7 @@ const pipelineStepLabelClass = (done: boolean, active: boolean) =>
     css({
         fontSize: 'sm',
         fontWeight: active ? '700' : '500',
-        color: done ? '#22c55e' : active ? 'text' : 'text.muted',
+        color: done ? 'status.success' : active ? 'text' : 'text.muted',
         pt: '3px',
         pb: '5',
     });
@@ -1431,7 +1431,7 @@ const terminalDetailClass = (type: string) =>
         color:
             type === 'complete' ? 'rgba(40,200,64,0.6)' :
             type === 'error'    ? 'rgba(255,95,87,0.7)' :
-            type === 'data'     ? '#f8b500' :
+            type === 'data'     ? 'palette.gold' :
                                   'rgba(255,255,255,0.4)',
         fontFamily: 'inherit',
         wordBreak: 'break-all',
@@ -1445,7 +1445,7 @@ const terminalCursorLineClass = css({
 });
 
 const terminalCursorClass = css({
-    color: '#e07b53',
+    color: 'palette.orange',
     fontSize: 'xs',
     fontFamily: 'inherit',
 });
@@ -1477,7 +1477,7 @@ const previewIconClass = css({
 const checkIconClass = css({
     width: '28px',
     height: '28px',
-    color: '#00b894',
+    color: 'palette.emerald',
 });
 
 const previewTitleClass = css({
@@ -1525,7 +1525,7 @@ const previewCardValueClass = css({
 });
 
 const cardIconClass = css({
-    color: '#e07b53',
+    color: 'palette.orange',
 });
 
 const imagePreviewClass = css({
@@ -1614,7 +1614,7 @@ const moreTagClass = css({
     borderRadius: 'md',
     fontSize: 'xs',
     fontWeight: '500',
-    color: '#e07b53',
+    color: 'palette.orange',
 });
 
 const previewActionsClass = css({
@@ -1706,7 +1706,7 @@ const flowNoteClass = css({
 const flowNoteIconClass = css({
     width: '20px',
     height: '20px',
-    color: '#e07b53',
+    color: 'palette.orange',
     flexShrink: 0,
     mt: '0.5',
 });

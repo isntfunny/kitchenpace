@@ -54,7 +54,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                 className={css({
                     mb: '3',
                     display: 'inline-flex',
-                    bg: '#f8b500',
+                    bg: 'palette.gold',
                     borderRadius: 'full',
                     px: '3',
                     py: '1',
@@ -90,7 +90,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                         borderRadius: 'full',
                         overflow: 'hidden',
                         border: '2px solid',
-                        borderColor: '#f8b500',
+                        borderColor: 'palette.gold',
                     })}
                 >
                     <SmartImage

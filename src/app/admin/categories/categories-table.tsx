@@ -14,6 +14,7 @@ import { ArrowUpDown, Search, Plus, Trash2, Pencil, X, ExternalLink } from 'luci
 import { Dialog } from 'radix-ui';
 import { useState } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { createCategory, updateCategory, deleteCategory, type CategoryFormData } from './actions';
@@ -217,7 +218,7 @@ function CategoryDialog({
                                 >
                                     <input
                                         type="color"
-                                        value={color || '#e07b53'}
+                                        value={color || PALETTE.orange}
                                         onChange={(e) => setColor(e.target.value)}
                                         className={css({
                                             width: '9',
@@ -234,7 +235,7 @@ function CategoryDialog({
                                         type="text"
                                         value={color}
                                         onChange={(e) => setColor(e.target.value)}
-                                        placeholder="#e07b53"
+                                        placeholder={PALETTE.orange}
                                         className={INPUT_CLASS}
                                     />
                                 </div>

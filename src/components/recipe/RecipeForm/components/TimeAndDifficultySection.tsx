@@ -28,7 +28,7 @@ export function TimeAndDifficultySection({
         fontSize: 'md',
         outline: 'none',
         _focus: {
-            borderColor: '#e07b53',
+            borderColor: 'palette.orange',
         },
     });
 
@@ -82,7 +82,7 @@ export function TimeAndDifficultySection({
                         outline: 'none',
                         bg: 'white',
                         _focus: {
-                            borderColor: '#e07b53',
+                            borderColor: 'palette.orange',
                         },
                     })}
                 >

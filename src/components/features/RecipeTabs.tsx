@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
 import type { RecipeTabItem } from '@app/components/providers/RecipeTabsProvider';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 const DROPDOWN_WIDTH = 240;
@@ -242,7 +243,7 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                                 width: '100%',
                                 textAlign: 'center',
                                 padding: '2',
-                                background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                                 color: 'white',
                                 borderRadius: 'lg',
                                 fontSize: 'xs',

@@ -5,6 +5,7 @@ import type { Prisma } from '@prisma/client';
 
 import type { ActivityFeedItem } from '@app/lib/activity-utils';
 import { mapLogToFeedItem } from '@app/lib/activity-utils';
+import { PALETTE } from '@app/lib/palette';
 import { prisma } from '@shared/prisma';
 
 import type { RecipeCardData } from './recipes';
@@ -34,7 +35,7 @@ export interface CategoryRecipeSection {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const DEFAULT_COLOR = '#e07b53';
+const DEFAULT_COLOR = PALETTE.orange;
 
 type RecipeWithCategory = Prisma.RecipeGetPayload<{
     include: { categories: { include: { category: true } } };

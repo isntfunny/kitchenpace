@@ -2,6 +2,7 @@ import { ChefHat } from 'lucide-react';
 import Link from 'next/link';
 
 import { Header } from '@app/components/features/Header';
+import { PALETTE } from '@app/lib/palette';
 
 export default function NotFound() {
     return (
@@ -50,7 +51,7 @@ export default function NotFound() {
                             style={{
                                 width: '52px',
                                 height: '52px',
-                                color: '#e07b53',
+                                color: PALETTE.orange,
                             }}
                         />
                     </div>
@@ -60,7 +61,7 @@ export default function NotFound() {
                             position: 'absolute',
                             top: '-8px',
                             right: '-12px',
-                            backgroundColor: '#e07b53',
+                            backgroundColor: PALETTE.orange,
                             color: 'white',
                             borderRadius: '999px',
                             padding: '4px 10px',
@@ -116,7 +117,7 @@ export default function NotFound() {
                             gap: '0.4rem',
                             padding: '0.65rem 1.4rem',
                             borderRadius: '999px',
-                            backgroundColor: '#e07b53',
+                            backgroundColor: PALETTE.orange,
                             color: 'white',
                             fontWeight: 600,
                             fontSize: '0.9rem',
@@ -136,7 +137,7 @@ export default function NotFound() {
                             borderRadius: '999px',
                             backgroundColor: 'transparent',
                             border: '1.5px solid rgba(224,123,83,0.4)',
-                            color: '#e07b53',
+                            color: PALETTE.orange,
                             fontWeight: 600,
                             fontSize: '0.9rem',
                             textDecoration: 'none',

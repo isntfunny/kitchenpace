@@ -151,7 +151,7 @@ export function FileUpload({
                         cursor: 'pointer',
                         transition: 'all 150ms',
                         _hover: {
-                            borderColor: '#e07b53',
+                            borderColor: 'palette.orange',
                             background: 'rgba(224,123,83,0.05)',
                         },
                     })}

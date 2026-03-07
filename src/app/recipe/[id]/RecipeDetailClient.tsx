@@ -437,7 +437,7 @@ export function RecipeDetailClient({
                         backgroundColor: 'rgba(220,38,38,0.08)',
                         borderBottom: '1px solid rgba(220,38,38,0.2)',
                         fontSize: 'sm',
-                        color: '#dc2626',
+                        color: 'status.danger',
                         fontWeight: '500',
                     })}
                 >
@@ -451,7 +451,7 @@ export function RecipeDetailClient({
                             fontWeight: '700',
                             textTransform: 'uppercase',
                             letterSpacing: '0.06em',
-                            backgroundColor: '#dc2626',
+                            backgroundColor: 'status.danger',
                             color: 'white',
                         })}
                     >
@@ -757,7 +757,7 @@ export function RecipeDetailClient({
                                         className={css({
                                             fontSize: '2xl',
                                             mb: '1',
-                                            color: '#e07b53',
+                                            color: 'palette.orange',
                                         })}
                                     >
                                         <Clock size={26} />
@@ -883,7 +883,7 @@ export function RecipeDetailClient({
                                         })}
                                     >
                                         <span>{averageRating.toFixed(1)}</span>
-                                        <Star size={28} className={css({ color: '#f8b500' })} />
+                                        <Star size={28} className={css({ color: 'palette.gold' })} />
                                     </div>
                                     <div
                                         className={css({
@@ -963,7 +963,7 @@ export function RecipeDetailClient({
                                                 Deine Bewertung: {viewerRating.toFixed(1)}
                                                 <Star
                                                     size={14}
-                                                    className={css({ color: '#f8b500' })}
+                                                    className={css({ color: 'palette.gold' })}
                                                 />
                                             </>
                                         ) : (

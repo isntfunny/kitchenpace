@@ -52,7 +52,7 @@ export function IngredientManager({
         fontSize: 'md',
         outline: 'none',
         _focus: {
-            borderColor: '#e07b53',
+            borderColor: 'palette.orange',
             boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
         },
     });
@@ -162,7 +162,7 @@ export function IngredientManager({
                             right: '2',
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            bg: '#e07b53',
+                            bg: 'palette.orange',
                             color: 'white',
                             border: 'none',
                             borderRadius: 'lg',
@@ -213,7 +213,7 @@ export function IngredientManager({
                                 onClick={onCreateNewIngredient}
                                 className={css({
                                     flex: '1',
-                                    bg: '#e07b53',
+                                    bg: 'palette.orange',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: 'lg',
@@ -340,7 +340,7 @@ export function IngredientManager({
                                 className={css({
                                     bg: 'transparent',
                                     border: 'none',
-                                    color: '#e07b53',
+                                    color: 'palette.orange',
                                     fontSize: 'lg',
                                     cursor: 'pointer',
                                     padding: '1',

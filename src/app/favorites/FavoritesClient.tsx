@@ -104,38 +104,28 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                     })}
                 >
                     {initialFavorites.map((recipe) => (
-                        <div key={recipe.id} className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
-                            <div className={css({ position: 'relative' })}>
-                                <RecipeCard
-                                    recipe={{
-                                        id: recipe.id,
-                                        slug: recipe.slug,
-                                        title: recipe.title,
-                                        description: recipe.description,
-                                        image: recipe.image,
-                                        category: recipe.category,
-                                        rating: recipe.rating,
-                                        time: recipe.time,
-                                    }}
-                                />
-                            </div>
-                            <div
-                                className={flex({
-                                    justify: 'space-between',
-                                    align: 'center',
-                                    px: '1',
-                                })}
-                            >
-                                <Text size="sm" color="muted">
-                                    Gespeichert {formatTimeAgo(recipe.savedAt)}
-                                </Text>
-                                <RemoveButton
-                                    title={recipe.title}
-                                    onRemove={() => handleRemove(recipe.id)}
-                                    isRemoving={isPending}
-                                />
-                            </div>
-                        </div>
+                        <RecipeCard
+                            key={recipe.id}
+                            recipe={recipe}
+                            footer={
+                                <div
+                                    className={flex({
+                                        justify: 'space-between',
+                                        align: 'center',
+                                        px: '1',
+                                    })}
+                                >
+                                    <Text size="sm" color="muted">
+                                        Gespeichert {formatTimeAgo(recipe.savedAt)}
+                                    </Text>
+                                    <RemoveButton
+                                        title={recipe.title}
+                                        onRemove={() => handleRemove(recipe.id)}
+                                        isRemoving={isPending}
+                                    />
+                                </div>
+                            }
+                        />
                     ))}
                 </div>
             ) : (

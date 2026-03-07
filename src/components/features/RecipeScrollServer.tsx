@@ -25,5 +25,25 @@ export function RecipeScrollServer({ title, recipes }: RecipeScrollProps) {
         );
     }
 
-    return <HorizontalRecipeScroll title={title} recipes={recipes} />;
+    return (
+        <section
+            className={css({
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '3',
+            })}
+        >
+            <h2
+                className={css({
+                    fontFamily: 'heading',
+                    fontSize: { base: 'xl', md: '2xl' },
+                    color: 'foreground',
+                    lineHeight: '1.2',
+                })}
+            >
+                {title}
+            </h2>
+            <HorizontalRecipeScroll recipes={recipes} />
+        </section>
+    );
 }

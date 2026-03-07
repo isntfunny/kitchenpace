@@ -1,36 +1,20 @@
 'use client';
 
-import { BookOpen, Calendar, CheckCircle, Heart, Sparkles, Star } from 'lucide-react';
+import { BookOpen, Calendar, CheckCircle, Heart, Sparkles } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
-import { SmartImage } from '../atoms/SmartImage';
+import { RecipeCard, type RecipeCardRecipe } from '../features/RecipeCard';
 
-interface Recipe {
-    id: string;
-    slug: string;
-    title: string;
-    image: string | null;
-    rating: number;
-    time: string;
-    category: string;
+interface DashboardRecipe extends RecipeCardRecipe {
     status?: 'cooked' | 'favorite' | 'planned' | 'new';
 }
 
 interface DashboardRecentRecipesProps {
-    recipes: Recipe[];
+    recipes: DashboardRecipe[];
 }
-
-const categoryColors: Record<string, string> = {
-    Hauptgericht: '#e07b53',
-    Beilage: '#00b894',
-    Dessert: '#fd79a8',
-    Frühstück: '#fdcb6e',
-    Getränk: '#74b9ff',
-    Vorspeise: '#a29bfe',
-};
 
 const filters = [
     { id: 'all', label: 'Alle' },
@@ -39,173 +23,53 @@ const filters = [
     { id: 'planned', label: 'Geplant' },
 ];
 
-function RecipeCard({ recipe }: { recipe: Recipe }) {
-    const color = categoryColors[recipe.category] || '#e07b53';
-    const statusIcons: Record<string, ReactNode> = {
-        cooked: <CheckCircle size={14} color="#00b894" />,
-        favorite: <Heart size={14} color="#fd79a8" />,
-        planned: <Calendar size={14} color="#6c5ce7" />,
-        new: <Sparkles size={14} color="#e07b53" />,
-    };
+const statusIcons: Record<string, ReactNode> = {
+    cooked: <CheckCircle size={14} color="#00b894" />,
+    favorite: <Heart size={14} color="#fd79a8" />,
+    planned: <Calendar size={14} color="#6c5ce7" />,
+    new: <Sparkles size={14} color="#e07b53" />,
+};
 
+function StatusIcon({ status }: { status?: string }) {
+    if (!status || !statusIcons[status]) return null;
+    return (
+        <span
+            className={css({
+                position: 'absolute',
+                top: '3',
+                right: '3',
+                background: 'surface.elevated',
+                width: '20px',
+                height: '20px',
+                borderRadius: 'full',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            })}
+        >
+            {statusIcons[status]}
+        </span>
+    );
+}
+
+function TimeBadge({ time }: { time?: string }) {
+    if (!time) return null;
     return (
         <div
             className={css({
-                background: 'surface.elevated',
-                borderRadius: 'xl',
-                overflow: 'hidden',
-                border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.06)',
-                transition: 'all 200ms ease',
-                cursor: 'pointer',
-                _hover: {
-                    transform: 'translateY(-4px)',
-                    boxShadow: `0 12px 28px ${color}20`,
-                    borderColor: color,
-                },
+                position: 'absolute',
+                bottom: '3',
+                right: '3',
+                background: 'rgba(0,0,0,0.7)',
+                color: 'white',
+                padding: '2px 8px',
+                borderRadius: 'full',
+                fontSize: '0.7rem',
+                fontWeight: '500',
             })}
         >
-            <div
-                className={css({
-                    position: 'relative',
-                    aspectRatio: '4/3',
-                })}
-            >
-                <SmartImage
-                    src={recipe.image ?? undefined}
-                    alt={recipe.title}
-                    fill
-                    recipeId={recipe.id}
-                    className={css({ objectFit: 'cover' })}
-                />
-                <div
-                    className={css({
-                        position: 'absolute',
-                        top: '3',
-                        left: '3',
-                        display: 'flex',
-                        gap: '2',
-                    })}
-                >
-                    <span
-                        className={css({
-                            background: color,
-                            color: 'white',
-                            padding: '1px 8px',
-                            borderRadius: 'full',
-                            fontSize: '0.65rem',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: 'wide',
-                        })}
-                    >
-                        {recipe.category}
-                    </span>
-                    {recipe.status && (
-                        <span
-                            className={css({
-                                background: 'surface.elevated',
-                                color: 'text',
-                                width: '20px',
-                                height: '20px',
-                                borderRadius: 'full',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '0.65rem',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                            })}
-                        >
-                            {statusIcons[recipe.status]}
-                        </span>
-                    )}
-                </div>
-                <div
-                    className={css({
-                        position: 'absolute',
-                        bottom: '3',
-                        right: '3',
-                        background: 'rgba(0,0,0,0.7)',
-                        color: 'white',
-                        padding: '2px 8px',
-                        borderRadius: 'full',
-                        fontSize: '0.7rem',
-                        fontWeight: '500',
-                    })}
-                >
-                    {recipe.time}
-                </div>
-            </div>
-            <div
-                className={css({
-                    padding: '4',
-                })}
-            >
-                <h4
-                    className={css({
-                        fontWeight: '600',
-                        color: 'text',
-                        fontSize: 'md',
-                        mb: '2',
-                        lineHeight: 'tight',
-                    })}
-                >
-                    {recipe.title}
-                </h4>
-                <div
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                    })}
-                >
-                    <div
-                        className={css({
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '2',
-                        })}
-                    >
-                        <div className={css({ display: 'flex', gap: '1' })}>
-                            {[1, 2, 3, 4, 5].map((value) => (
-                                <Star
-                                    key={value}
-                                    size={14}
-                                    className={css({
-                                        color:
-                                            value <= Math.floor(recipe.rating)
-                                                ? '#f8b500'
-                                                : '#e0e0e0',
-                                    })}
-                                />
-                            ))}
-                        </div>
-                        <span
-                            className={css({
-                                fontSize: 'xs',
-                                color: 'text-muted',
-                            })}
-                        >
-                            {recipe.rating}
-                        </span>
-                    </div>
-                    <button
-                        className={css({
-                            fontSize: 'lg',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            opacity: 0.5,
-                            transition: 'opacity 150ms ease',
-                            _hover: {
-                                opacity: 1,
-                            },
-                        })}
-                    >
-                        <Heart size={20} />
-                    </button>
-                </div>
-            </div>
+            {time}
         </div>
     );
 }
@@ -328,7 +192,18 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                 })}
             >
                 {filteredRecipes.slice(0, 6).map((recipe) => (
-                    <RecipeCard key={recipe.id} recipe={recipe} />
+                    <RecipeCard
+                        key={recipe.id}
+                        recipe={recipe}
+                        categoryOnImage
+                        starRating
+                        imageOverlay={
+                            <>
+                                <StatusIcon status={recipe.status} />
+                                <TimeBadge time={recipe.time} />
+                            </>
+                        }
+                    />
                 ))}
             </div>
 

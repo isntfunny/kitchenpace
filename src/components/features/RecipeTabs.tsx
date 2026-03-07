@@ -1,6 +1,6 @@
 'use client';
 
-import { ChefHat, Clock, Pin } from 'lucide-react';
+import { Clock, Pin } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -184,37 +184,20 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                         onMouseEnter={handlePreviewPointerEnter}
                         onMouseLeave={handlePreviewPointerLeave}
                     >
-                        {recipe.imageUrl ? (
-                            <SmartImage
-                                src={recipe.imageUrl}
-                                alt={recipe.title}
-                                recipeId={recipe.id}
-                                width={400}
-                                height={120}
-                                className={css({
-                                    width: '100%',
-                                    height: '120px',
-                                    objectFit: 'cover',
-                                    borderRadius: 'lg',
-                                    marginBottom: '2',
-                                })}
-                            />
-                        ) : (
-                            <div
-                                className={css({
-                                    width: '100%',
-                                    height: '120px',
-                                    borderRadius: 'lg',
-                                    marginBottom: '2',
-                                    background: 'linear-gradient(135deg, #f8b500 0%, #e07b53 100%)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                })}
-                            >
-                                <ChefHat size={42} color="white" />
-                            </div>
-                        )}
+                        <SmartImage
+                            src={recipe.imageUrl ?? undefined}
+                            alt={recipe.title}
+                            recipeId={recipe.id}
+                            width={400}
+                            height={120}
+                            className={css({
+                                width: '100%',
+                                height: '120px',
+                                objectFit: 'cover',
+                                borderRadius: 'lg',
+                                marginBottom: '2',
+                            })}
+                        />
                         <h4
                             className={css({
                                 fontSize: 'sm',

@@ -296,14 +296,47 @@ export default defineConfig({
                     'status.warning': {
                         value: { base: '#f59e0b', _dark: '#fbbf24' },
                     },
+                    'surface.muted': {
+                        value: {
+                            base: 'rgba(0,0,0,0.04)',
+                            _dark: 'rgba(255,255,255,0.06)',
+                        },
+                    },
+                    'surface.overlay': {
+                        value: {
+                            base: 'rgba(0,0,0,0.45)',
+                            _dark: 'rgba(0,0,0,0.65)',
+                        },
+                    },
+                    'error.bg': {
+                        value: {
+                            base: '#fee2e2',
+                            _dark: 'rgba(239,68,68,0.15)',
+                        },
+                    },
+                    'error.text': {
+                        value: {
+                            base: '#dc2626',
+                            _dark: '#f87171',
+                        },
+                    },
                     'shadow.small': {
-                        value: '0 2px 8px rgba(0,0,0,0.06)',
+                        value: {
+                            base: '0 2px 8px rgba(0,0,0,0.06)',
+                            _dark: '0 2px 8px rgba(0,0,0,0.3)',
+                        },
                     },
                     'shadow.medium': {
-                        value: '0 4px 24px rgba(0,0,0,0.08)',
+                        value: {
+                            base: '0 4px 24px rgba(0,0,0,0.08)',
+                            _dark: '0 4px 24px rgba(0,0,0,0.3)',
+                        },
                     },
                     'shadow.large': {
-                        value: '0 40px 120px rgba(0,0,0,0.15)',
+                        value: {
+                            base: '0 40px 120px rgba(0,0,0,0.15)',
+                            _dark: '0 40px 120px rgba(0,0,0,0.4)',
+                        },
                     },
                 },
             },

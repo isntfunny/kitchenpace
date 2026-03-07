@@ -54,3 +54,51 @@
  * in components/search/FilterSidebar.tsx, so no additional global styles
  * are required here at the moment.
  */
+
+/* ── Global scrollbar styling ─────────────────────────────────────────── */
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(224, 123, 83, 0.35) transparent;
+}
+
+[data-theme="dark"] * {
+    scrollbar-color: rgba(224, 123, 83, 0.5) transparent;
+}
+
+/* WebKit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 3px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(224, 123, 83, 0.35);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(224, 123, 83, 0.55);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: rgba(224, 123, 83, 0.5);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(224, 123, 83, 0.75);
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}

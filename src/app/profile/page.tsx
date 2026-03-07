@@ -1,4 +1,4 @@
-import { ChefHat, Edit3, FileText, Lock, Settings, User } from 'lucide-react';
+import { Camera, ChefHat, Edit3, FileText, Lock, Settings, User } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -346,6 +346,7 @@ function QuickLinksCard({ userSlug }: { userSlug: string }) {
     const links = [
         { href: '/profile/edit', label: 'Profil bearbeiten', IconEl: Edit3 },
         { href: '/profile/manage', label: 'Einstellungen', IconEl: Settings },
+        { href: '/profile/my-images', label: 'Meine Zubereitet-Bilder', IconEl: Camera },
         { href: `/user/${userSlug}`, label: 'Öffentliches Profil', IconEl: User },
         { href: '/auth/password/edit', label: 'Passwort ändern', IconEl: Lock },
     ];

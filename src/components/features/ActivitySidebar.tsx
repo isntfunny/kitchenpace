@@ -5,49 +5,23 @@ import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';
 
-import {
-    RatedActivity,
-    CookedActivity,
-    FavoritedActivity,
-    CommentedActivity,
-    CreatedActivity,
-    FollowedActivity,
-} from './activity';
+import { ActivityItem, RatedActivity, CookedActivity, CommentedActivity } from './activity';
 
 interface ActivitySidebarProps {
     activities: ActivityFeedItem[];
 }
 
+/** Only activity types with extra detail content need a specialized component */
+const DETAIL_COMPONENTS: Record<string, React.ComponentType<ActivityFeedItem>> = {
+    RECIPE_RATED: RatedActivity,
+    RECIPE_COOKED: CookedActivity,
+    RECIPE_COMMENTED: CommentedActivity,
+};
+
 export function getActivityComponent(activity: ActivityFeedItem) {
-    if (activity.targetUserName) {
-        return <FollowedActivity {...activity} />;
-    }
-
-    if (activity.actionLabel.includes('bewertet')) {
-        return <RatedActivity {...activity} />;
-    }
-
-    if (activity.actionLabel.includes('gekocht')) {
-        return <CookedActivity {...activity} />;
-    }
-
-    if (activity.actionLabel.includes('gespeichert')) {
-        return <FavoritedActivity {...activity} />;
-    }
-
-    if (activity.actionLabel.includes('kommentiert')) {
-        return <CommentedActivity {...activity} />;
-    }
-
-    if (
-        activity.actionLabel.includes('erstellt') ||
-        activity.actionLabel.includes('Einkaufsliste') ||
-        activity.actionLabel.includes('Plan')
-    ) {
-        return <CreatedActivity {...activity} />;
-    }
-
-    return <CreatedActivity {...activity} />;
+    const DetailComponent = DETAIL_COMPONENTS[activity.type];
+    if (DetailComponent) return <DetailComponent {...activity} />;
+    return <ActivityItem activity={activity} />;
 }
 
 /** Reusable list of activity items — no wrapper card or heading. */

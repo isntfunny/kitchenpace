@@ -2,9 +2,11 @@
 
 import type { Prisma } from '@prisma/client';
 
+
+import type { ActivityFeedItem } from '@app/lib/activity-utils';
+import { mapLogToFeedItem } from '@app/lib/activity-utils';
 import { prisma } from '@shared/prisma';
 
-import type { ActivityFeedItem, ActivityIconName } from './community';
 import type { RecipeCardData } from './recipes';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -238,59 +240,16 @@ export async function fetchCategoryActivity(
     });
     const recipeMap = new Map(recipes.map((r) => [r.id, r]));
 
-    const DECOR: Record<string, { icon: ActivityIconName; bg: string; label: string }> = {
-        RECIPE_CREATED: { icon: 'edit3', bg: '#6c5ce7', label: 'hat ein Rezept erstellt' },
-        RECIPE_COOKED: { icon: 'flame', bg: '#e17055', label: 'hat gekocht' },
-        RECIPE_RATED: { icon: 'star', bg: '#f8b500', label: 'hat bewertet' },
-        RECIPE_COMMENTED: { icon: 'message-square', bg: '#fd79a8', label: 'hat kommentiert' },
-        RECIPE_FAVORITED: { icon: 'bookmark', bg: '#74b9ff', label: 'hat gespeichert' },
-    };
-
-    const formatTimeAgo = (date: Date): string => {
-        const diff = Date.now() - date.getTime();
-        const minutes = Math.floor(diff / 60000);
-        if (minutes < 1) return 'Jetzt';
-        if (minutes < 60) return `${minutes} Min.`;
-        const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `${hours} Std.`;
-        const days = Math.floor(hours / 24);
-        return `${days} Tg.`;
-    };
-
     const visibleUserIds = new Set(
         users.filter((u) => u.profile?.showInActivity !== false).map((u) => u.id),
     );
+    const emptyTargetMap = new Map<string, never>();
 
     return logs
         .filter((l) => visibleUserIds.has(l.userId))
         .slice(0, limit)
-        .map((log) => {
-            const base = DECOR[log.type] ?? DECOR.RECIPE_CREATED;
-            const user = userMap.get(log.userId);
-            const recipe = log.targetId ? recipeMap.get(log.targetId) : null;
-
-            return {
-                id: log.id,
-                icon: base.icon,
-                iconBg: base.bg,
-                userName: user?.name || user?.profile?.nickname || 'Küchenfreund',
-                userId: user?.id,
-                userSlug: user?.profile?.slug ?? user?.id,
-                actionLabel: base.label,
-                recipeTitle: recipe?.title,
-                recipeId: recipe?.id,
-                recipeSlug: recipe?.slug,
-                detail: log.metadata ? JSON.stringify(log.metadata) : undefined,
-                rating:
-                    log.type === 'RECIPE_RATED' && log.metadata
-                        ? (log.metadata as any).rating
-                        : undefined,
-                timeAgo: formatTimeAgo(log.createdAt),
-                targetUserName: undefined,
-                targetUserId: undefined,
-                targetUserSlug: undefined,
-            };
-        });
+        .map((log) => mapLogToFeedItem(log, userMap, recipeMap, emptyTargetMap, { respectShowInActivity: true }))
+        .filter((item): item is ActivityFeedItem => item !== null);
 }
 
 export interface CategoryBarData {

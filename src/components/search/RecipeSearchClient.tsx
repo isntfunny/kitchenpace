@@ -149,7 +149,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                 return;
             }
             updateFilters({ query: nextQuery });
-        }, 200);
+        }, 400);
 
         return () => clearTimeout(timer);
     }, [filters.query, queryInput, updateFilters]);

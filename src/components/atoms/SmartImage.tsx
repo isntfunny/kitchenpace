@@ -12,6 +12,8 @@ import {
 } from '@app/lib/thumbnail-client';
 import { css, cx } from 'styled-system/css';
 
+export const RECIPE_PLACEHOLDER = '/recipe_placeholder.jpg';
+
 interface SmartImageProps {
     src?: string;
     alt?: string;
@@ -52,9 +54,15 @@ export function SmartImage({
 }: SmartImageProps) {
     const [error, setError] = useState(false);
 
+    // If recipeId is provided but there's no src, skip the network round-trip
+    // and render the placeholder immediately
+    const noImage = recipeId && !src;
+
     let thumbnailSrc: string;
 
-    if (recipeId) {
+    if (noImage) {
+        thumbnailSrc = RECIPE_PLACEHOLDER;
+    } else if (recipeId) {
         thumbnailSrc = getThumbnailUrlById(recipeId, 'recipe', {
             width: fill ? undefined : width,
             height: fill ? undefined : height,
@@ -86,8 +94,7 @@ export function SmartImage({
         onLoad?.();
     };
 
-    const currentSrc = !thumbnailSrc || error ? fallback : thumbnailSrc;
-
+    // User fallback: gradient with ChefHat icon
     if (error && userId) {
         const iconSize = fill ? '40%' : Math.round(Math.min(width, height) * 0.4);
         return (
@@ -111,14 +118,19 @@ export function SmartImage({
         );
     }
 
+    // Recipe fallback on error: swap to placeholder
+    const resolvedSrc = error && recipeId ? RECIPE_PLACEHOLDER : (!thumbnailSrc || error ? fallback : thumbnailSrc);
+    // Don't attach error handler if we're already showing a fallback
+    const isShowingFallback = noImage || error;
+
     return (
         <img
-            src={currentSrc}
+            src={resolvedSrc}
             alt={alt || ''}
             width={fill ? undefined : width}
             height={fill ? undefined : height}
-            onLoad={handleLoad}
-            onError={handleError}
+            onLoad={isShowingFallback ? undefined : handleLoad}
+            onError={isShowingFallback ? undefined : handleError}
             className={cx(
                 fill
                     ? css({
@@ -129,6 +141,7 @@ export function SmartImage({
                     : css({
                           width: `${width}px`,
                           height: `${height}px`,
+                          objectFit: 'cover',
                       }),
                 className,
             )}

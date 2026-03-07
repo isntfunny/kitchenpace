@@ -1,3 +1,6 @@
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -227,6 +230,21 @@ function errorResponse(message: string, status: number) {
     return NextResponse.json({ error: message }, { status });
 }
 
+let placeholderCache: Buffer | null = null;
+
+async function placeholderResponse(): Promise<NextResponse> {
+    if (!placeholderCache) {
+        placeholderCache = await readFile(join(process.cwd(), 'public', 'recipe_placeholder.jpg'));
+    }
+    return new NextResponse(new Uint8Array(placeholderCache), {
+        headers: {
+            'Content-Type': 'image/jpeg',
+            'Cache-Control': 'public, max-age=86400',
+            'X-Cache': 'PLACEHOLDER',
+        },
+    });
+}
+
 // ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
@@ -252,6 +270,10 @@ export async function GET(request: NextRequest) {
         (await resolveImageKey(searchParams.get('type'), searchParams.get('id')));
 
     if (!resolvedKey) {
+        // For recipe/user lookups that found no image, serve the placeholder
+        if (searchParams.get('type')) {
+            return placeholderResponse();
+        }
         return errorResponse('Missing key or invalid type/id', 400);
     }
 
@@ -306,6 +328,6 @@ export async function GET(request: NextRequest) {
             key: resolvedKey,
             error: error instanceof Error ? error.message : String(error),
         });
-        return errorResponse('Failed to process image', 500);
+        return placeholderResponse();
     }
 }

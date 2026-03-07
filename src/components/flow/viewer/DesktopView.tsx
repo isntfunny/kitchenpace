@@ -23,6 +23,7 @@ import '@xyflow/react/dist/style.css';
 import { Download } from 'lucide-react';
 import { type ComponentType, type Dispatch, useCallback, useEffect, useRef, useState } from 'react';
 
+import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
@@ -186,6 +187,8 @@ function DesktopViewInner({
     onOpenDetail,
     ingredients,
 }: DesktopViewProps) {
+    const dark = useIsDark();
+
     const makeNodeData = useCallback(
         (node: FlowNodeSerialized): ViewerNodeData => ({
             sNode: node,
@@ -217,7 +220,7 @@ function DesktopViewInner({
                     ? PALETTE.emerald
                     : timerPct > 0
                       ? timerColor(timerPct)
-                      : 'rgba(0,0,0,0.18)';
+                      : dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)';
                 return {
                     id: edge.id,
                     source: edge.source,
@@ -233,7 +236,7 @@ function DesktopViewInner({
                     },
                 };
             }),
-        [edges, nodes, completed, timers],
+        [edges, nodes, completed, timers, dark],
     );
 
     const [rfNodes, setRfNodes] = useState<RFNode[]>(() =>
@@ -324,7 +327,7 @@ function DesktopViewInner({
                 zoomOnPinch
                 proOptions={{ hideAttribution: true }}
             >
-                <Background gap={24} color="rgba(0,0,0,0.035)" size={1} />
+                <Background gap={24} color={dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.035)'} size={1} />
             </ReactFlow>
 
             {/* PDF export button — bottom right */}
@@ -344,13 +347,13 @@ function DesktopViewInner({
                     px: '3',
                     borderRadius: 'lg',
                     border: '1px solid rgba(224,123,83,0.2)',
-                    bg: 'rgba(255,255,255,0.9)',
+                    bg: 'surface',
                     color: 'palette.orange',
                     fontSize: 'xs',
                     fontWeight: '600',
                     cursor: 'pointer',
                     backdropFilter: 'blur(4px)',
-                    _hover: { bg: 'rgba(255,255,255,1)' },
+                    _hover: { bg: 'surface.elevated' },
                 })}
             >
                 <Download style={{ width: 13, height: 13 }} /> PDF

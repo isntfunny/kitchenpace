@@ -105,6 +105,7 @@ const MENTION_REGEX = /@\[(.*?)(?:\|(.*?))?\]\((.*?)\)/g;
 export function renderDescription(
     text: string,
     ingredients: { id: string; name: string; amount?: string; unit?: string }[] | undefined,
+    dark?: boolean,
 ): ReactNode[] {
     const parts: ReactNode[] = [];
     let lastIndex = 0;
@@ -124,8 +125,8 @@ export function renderDescription(
             <span
                 key={match.index}
                 style={{
-                    backgroundColor: 'rgba(224,123,83,0.15)',
-                    color: '#c45e30',
+                    backgroundColor: dark ? 'rgba(224,123,83,0.2)' : 'rgba(224,123,83,0.15)',
+                    color: dark ? '#f09070' : '#c45e30',
                     borderRadius: 4,
                     padding: '0 3px',
                     fontWeight: 600,

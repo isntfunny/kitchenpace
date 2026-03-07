@@ -794,13 +794,13 @@ const canvasContainerClass = css({
     flex: '1',
     border: '1px solid rgba(224,123,83,0.4)',
     borderRadius: 'xl',
-    backgroundColor: '#fdfcfb',
+    backgroundColor: 'surface',
     overflow: 'hidden',
 });
 
 const controlsClass = css({
     '& button': {
-        backgroundColor: 'white',
+        backgroundColor: 'surface',
         border: '1px solid rgba(224,123,83,0.4)',
         borderRadius: 'md',
         color: 'text',
@@ -811,7 +811,7 @@ const controlsClass = css({
 const layoutButtonClass = css({
     py: '2',
     px: '3',
-    backgroundColor: 'white',
+    backgroundColor: 'surface',
     border: '1px solid rgba(224,123,83,0.4)',
     borderRadius: 'md',
     fontSize: 'sm',

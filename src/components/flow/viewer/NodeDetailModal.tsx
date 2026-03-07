@@ -3,6 +3,7 @@
 import { CheckCircle2, Clock, Pause, Play, RotateCcw, X } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
@@ -34,6 +35,7 @@ export function NodeDetailModal({
     onTimerPause: () => void;
     onTimerReset: () => void;
 }) {
+    const c = useDarkColors();
     const config = getStepConfig(node.type as StepType);
     const Icon = config.icon;
     const isSpecial = node.type === 'start' || node.type === 'servieren';
@@ -57,7 +59,7 @@ export function NodeDetailModal({
             style={{
                 position: 'fixed',
                 inset: 0,
-                backgroundColor: 'rgba(0,0,0,0.45)',
+                backgroundColor: c.overlay,
                 zIndex: 1000,
                 display: 'flex',
                 alignItems: 'center',
@@ -69,13 +71,13 @@ export function NodeDetailModal({
         >
             <div
                 style={{
-                    backgroundColor: 'white',
+                    backgroundColor: c.surface,
                     borderRadius: 20,
                     maxWidth: 480,
                     width: '100%',
                     maxHeight: '88vh',
                     overflowY: 'auto',
-                    boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+                    boxShadow: c.shadow,
                     position: 'relative',
                 }}
                 onClick={(e) => e.stopPropagation()}
@@ -93,12 +95,12 @@ export function NodeDetailModal({
                         height: 32,
                         borderRadius: '50%',
                         border: 'none',
-                        backgroundColor: node.photoUrl ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.1)',
+                        backgroundColor: node.photoUrl ? c.closeBgPhoto : c.closeBg,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        color: node.photoUrl ? 'white' : '#555',
+                        color: node.photoUrl ? 'white' : c.textMid,
                     }}
                 >
                     <X style={{ width: 16, height: 16 }} />
@@ -124,7 +126,7 @@ export function NodeDetailModal({
 
                 {/* Timer progress bar */}
                 {hasTimer && (
-                    <div style={{ height: 4, backgroundColor: 'rgba(0,0,0,0.06)' }}>
+                    <div style={{ height: 4, backgroundColor: c.progressTrack }}>
                         <div
                             style={{
                                 height: '100%',
@@ -163,7 +165,7 @@ export function NodeDetailModal({
                                 padding: '4px 10px',
                                 fontSize: 11,
                                 fontWeight: 700,
-                                color: '#555',
+                                color: c.badgeText,
                             }}
                         >
                             <Icon style={{ width: 12, height: 12 }} />
@@ -176,7 +178,7 @@ export function NodeDetailModal({
                                     alignItems: 'center',
                                     gap: 4,
                                     fontSize: 12,
-                                    color: timerRunning ? PALETTE.orange : '#888',
+                                    color: timerRunning ? PALETTE.orange : c.textSubtle,
                                     fontWeight: timerRunning ? 700 : 400,
                                     marginLeft: 'auto',
                                 }}
@@ -194,7 +196,7 @@ export function NodeDetailModal({
                         style={{
                             fontSize: 22,
                             fontWeight: 800,
-                            color: '#1a1a1a',
+                            color: c.textDark,
                             marginBottom: 12,
                             lineHeight: 1.2,
                         }}
@@ -207,12 +209,12 @@ export function NodeDetailModal({
                         <p
                             style={{
                                 fontSize: 14,
-                                color: '#555',
+                                color: c.textMid,
                                 lineHeight: 1.65,
                                 marginBottom: 16,
                             }}
                         >
-                            {renderDescription(node.description, ingredients)}
+                            {renderDescription(node.description, ingredients, c.dark)}
                         </p>
                     )}
 
@@ -233,7 +235,7 @@ export function NodeDetailModal({
                                     fontWeight: 700,
                                     textTransform: 'uppercase' as const,
                                     letterSpacing: '0.06em',
-                                    color: '#c0623e',
+                                    color: c.textLabel,
                                     marginBottom: 8,
                                 }}
                             >
@@ -254,7 +256,7 @@ export function NodeDetailModal({
                                             alignItems: 'center',
                                             gap: 8,
                                             fontSize: 13,
-                                            color: '#333',
+                                            color: c.textIngredient,
                                         }}
                                     >
                                         <span
@@ -268,7 +270,7 @@ export function NodeDetailModal({
                                         />
                                         <span style={{ fontWeight: 600 }}>{ing.name}</span>
                                         {(ing.amount || ing.unit) && (
-                                            <span style={{ color: '#888', marginLeft: 'auto' }}>
+                                            <span style={{ color: c.textSubtle, marginLeft: 'auto' }}>
                                                 {[ing.amount, ing.unit].filter(Boolean).join(' ')}
                                             </span>
                                         )}
@@ -326,9 +328,9 @@ export function NodeDetailModal({
                                     style={{
                                         padding: '10px',
                                         borderRadius: 12,
-                                        border: '1.5px solid rgba(0,0,0,0.1)',
-                                        backgroundColor: 'rgba(0,0,0,0.04)',
-                                        color: '#999',
+                                        border: `1.5px solid ${c.borderInput}`,
+                                        backgroundColor: c.mutedBgLight,
+                                        color: c.textSubtle,
                                         cursor: 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',

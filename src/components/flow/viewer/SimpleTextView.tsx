@@ -1,6 +1,7 @@
 import { Check, Clock, Pause, Play, RotateCcw } from 'lucide-react';
 import type { Dispatch } from 'react';
 
+import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
@@ -23,6 +24,7 @@ export function SimpleTextView({
     dispatch: Dispatch<ViewerAction>;
     ingredients?: RecipeStepsViewerProps['ingredients'];
 }) {
+    const c = useDarkColors();
     const steps = columnGroups.flat().filter((n) => n.type !== 'start');
 
     return (
@@ -67,7 +69,7 @@ export function SimpleTextView({
                                 })}
                                 style={{
                                     backgroundColor: isDone
-                                        ? 'rgba(0,184,148,0.06)'
+                                        ? c.successBgLight
                                         : 'transparent',
                                     opacity: isDone ? 0.7 : 1,
                                 }}
@@ -156,7 +158,7 @@ export function SimpleTextView({
                                                 m: 0,
                                             })}
                                         >
-                                            {renderDescription(node.description, ingredients)}
+                                            {renderDescription(node.description, ingredients, c.dark)}
                                         </p>
                                     )}
 

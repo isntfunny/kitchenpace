@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { Seq as SeqTransport } from 'winston-seq';
+import SeqTransport from 'winston-seq-updated';
 
 const { NODE_ENV } = process.env;
 

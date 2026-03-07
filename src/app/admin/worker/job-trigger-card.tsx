@@ -121,7 +121,7 @@ export function JobTriggerCard({ item }: { item: JobCatalogItem }) {
                             borderColor: 'border.muted',
                         })}
                     >
-                        {Object.entries(item.schema).map(([key, field]) => (
+                        {Object.entries(item.schema!).map(([key, field]) => (
                             <div key={key}>
                                 <label
                                     className={css({
@@ -140,7 +140,7 @@ export function JobTriggerCard({ item }: { item: JobCatalogItem }) {
                                         type="number"
                                         min={field.min}
                                         max={field.max}
-                                        value={fieldValues[key] ?? field.default ?? 0}
+                                        value={(fieldValues[key] as number) ?? field.default ?? 0}
                                         onChange={(e) => handleFieldChange(key, Number(e.target.value))}
                                         className={css({
                                             width: '100%',
@@ -163,7 +163,7 @@ export function JobTriggerCard({ item }: { item: JobCatalogItem }) {
                                     <input
                                         type="text"
                                         placeholder={field.placeholder}
-                                        value={fieldValues[key] ?? field.default ?? ''}
+                                        value={(fieldValues[key] as string) ?? field.default ?? ''}
                                         onChange={(e) => handleFieldChange(key, e.target.value)}
                                         className={css({
                                             width: '100%',

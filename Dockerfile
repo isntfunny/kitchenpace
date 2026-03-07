@@ -17,7 +17,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 # ── Stage 2: Build Next.js app ────────────────────────────────────────
 FROM node:24-alpine AS builder

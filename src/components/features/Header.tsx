@@ -1,13 +1,16 @@
 'use client';
 
-import { LayoutGrid, Menu, Plus, Shield, ShieldCheck } from 'lucide-react';
+import { Apple, ChefHat, Droplet, Egg, Flame, Leaf, LayoutGrid, Menu, Plus, Shield, ShieldCheck, Zap } from 'lucide-react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
+import { useMemo } from 'react';
 
 import { NotificationBell } from '@app/components/notifications/NotificationBell';
 import { useAdminInboxCount } from '@app/components/notifications/useAdminInboxCount';
 import { HeaderSearch } from '@app/components/search/HeaderSearch';
+import { PALETTE } from '@app/lib/palette';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
 
@@ -19,6 +22,13 @@ import { RecipeTabs } from './RecipeTabs';
 import { ThemeToggle } from './ThemeToggle';
 
 type GeneralNavLinkItem = MenuNavLinkItem & { authOnly?: boolean };
+
+const ICON_POOL = [Apple, Egg, Flame, ChefHat, Leaf, Zap, Droplet];
+
+function getRandomIcons() {
+    const shuffled = [...ICON_POOL].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+}
 
 const GENERAL_NAV_LINKS: GeneralNavLinkItem[] = [
     {
@@ -193,25 +203,75 @@ export function Header() {
     const isModerator = isAuthenticated && userRole === 'MODERATOR';
     const isAdminOrMod = isAdmin || isModerator;
 
+    const [Icon1, Icon2, Icon3] = useMemo(() => getRandomIcons(), []);
+
     return (
         <header
             className={css({
                 position: 'sticky',
                 top: 0,
                 zIndex: 20,
-                background: 'header.background',
+                overflow: 'hidden',
                 boxShadow: '0 4px 30px rgba(0,0,0,0.15)',
             })}
+            style={{
+                background: `linear-gradient(135deg, rgba(224,123,83,0.05), rgba(248,181,0,0.02))`,
+                backdropFilter: 'blur(8px)',
+            }}
         >
+            {/* Animated floating background elements */}
+            <motion.div
+                className={css({
+                    position: 'absolute',
+                    top: '-20px',
+                    right: '10%',
+                    opacity: 0.08,
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                })}
+                animate={{ y: [0, -20, 0], rotate: [0, 3, 0] }}
+                transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+            >
+                <Icon1 size={140} color={PALETTE.orange} />
+            </motion.div>
+            <motion.div
+                className={css({
+                    position: 'absolute',
+                    top: '50%',
+                    left: '-30px',
+                    opacity: 0.07,
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                })}
+                animate={{ y: [0, 18, 0], rotate: [0, -4, 0] }}
+                transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+            >
+                <Icon2 size={120} color={PALETTE.orange} />
+            </motion.div>
+            <motion.div
+                className={css({
+                    position: 'absolute',
+                    bottom: '-25px',
+                    right: '20%',
+                    opacity: 0.05,
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                })}
+                animate={{ y: [0, 20, 0], rotate: [0, 2, 0] }}
+                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            >
+                <Icon3 size={160} color={PALETTE.gold} />
+            </motion.div>
             <div
                 className={css({
+                    position: 'relative',
+                    zIndex: 1,
                     maxWidth: '1400px',
                     marginX: 'auto',
                     width: '100%',
                     px: { base: '4', md: '6' },
-                    py: '3',
-                    borderBottom: '1px solid',
-                    borderColor: 'border',
+                    pt: '3',
+                    pb: '0',
                 })}
             >
                 <div
@@ -266,7 +326,9 @@ export function Header() {
                 </div>
             </div>
 
-            <RecipeTabs />
+            <div className={css({ position: 'relative', zIndex: 1 })}>
+                <RecipeTabs />
+            </div>
         </header>
     );
 }

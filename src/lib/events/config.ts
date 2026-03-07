@@ -32,15 +32,32 @@ type UserActivatedEvent = {
     name?: string;
 };
 
+type RecipeCommentedEvent = BaseRecipeEvent & {
+    commentId: string;
+};
+
+type MealPlanCreatedEvent = {
+    mealPlanId: string;
+    mealPlanName?: string;
+};
+
+type ShoppingListCreatedEvent = {
+    listId: string;
+    listName?: string;
+};
+
 export type EventDataMap = {
     recipeFavorited: BaseRecipeEvent;
     recipeUnfavorited: BaseRecipeEvent;
     recipeRated: RecipeRatedEvent;
     recipeCooked: RecipeCookedEvent;
     recipePublished: BaseRecipeEvent;
+    recipeCommented: RecipeCommentedEvent;
     userFollowed: UserFollowedEvent;
     userRegistered: UserRegisteredEvent;
     userActivated: UserActivatedEvent;
+    mealPlanCreated: MealPlanCreatedEvent;
+    shoppingListCreated: ShoppingListCreatedEvent;
 };
 
 export type EventName = keyof EventDataMap;
@@ -51,9 +68,12 @@ type ActivityTypeValue =
     | 'RECIPE_RATED'
     | 'RECIPE_COOKED'
     | 'RECIPE_CREATED'
+    | 'RECIPE_COMMENTED'
     | 'USER_FOLLOWED'
     | 'USER_REGISTERED'
-    | 'USER_ACTIVATED';
+    | 'USER_ACTIVATED'
+    | 'MEAL_PLAN_CREATED'
+    | 'SHOPPING_LIST_CREATED';
 
 type NotificationTypeValue =
     | 'NEW_FOLLOWER'
@@ -305,6 +325,61 @@ export const EVENT_DEFINITIONS: EventDefinitionsMap = {
         tracking: {
             name: 'user_activated',
             getProperties: ({ data }) => ({ email: data.email }),
+        },
+    },
+    recipeCommented: {
+        activity: {
+            type: 'RECIPE_COMMENTED',
+            targetType: 'recipe',
+            getTargetId: (context) => context.data.recipeId,
+            getMetadata: (context) => ({ commentId: context.data.commentId }),
+        },
+        notification: {
+            type: 'RECIPE_RATING',
+            preference: 'notifyOnRecipeComment',
+            template: ({ actorLabel, data }) => ({
+                title: 'Neuer Kommentar',
+                message: `${actorLabel} hat ${data.recipeTitle} kommentiert`,
+            }),
+            getData: ({ actorId, data }) => ({
+                recipeId: data.recipeId,
+                actorId,
+                commentId: data.commentId,
+            }),
+        },
+        tracking: {
+            name: 'comment_recipe',
+            getProperties: ({ data }) => ({ recipeId: data.recipeId }),
+        },
+    },
+    mealPlanCreated: {
+        activity: {
+            type: 'MEAL_PLAN_CREATED',
+            targetType: 'user',
+            getTargetId: (context) => context.actorId,
+            getMetadata: (context) => ({
+                mealPlanId: context.data.mealPlanId,
+                mealPlanName: context.data.mealPlanName,
+            }),
+        },
+        tracking: {
+            name: 'create_meal_plan',
+            getProperties: ({ data }) => ({ mealPlanId: data.mealPlanId }),
+        },
+    },
+    shoppingListCreated: {
+        activity: {
+            type: 'SHOPPING_LIST_CREATED',
+            targetType: 'user',
+            getTargetId: (context) => context.actorId,
+            getMetadata: (context) => ({
+                listId: context.data.listId,
+                listName: context.data.listName,
+            }),
+        },
+        tracking: {
+            name: 'create_shopping_list',
+            getProperties: ({ data }) => ({ listId: data.listId }),
         },
     },
 };

@@ -12,6 +12,13 @@ type QueueItem = ModerationQueue & {
     author: Pick<User, 'id' | 'name' | 'email'>;
 };
 
+type ModerationContentSnapshot = {
+    title?: string;
+    description?: string;
+    text?: string;
+    imageUrl?: string;
+};
+
 const TYPE_LABELS: Record<string, { label: string; icon: typeof BookOpen }> = {
     recipe: { label: 'Rezept', icon: BookOpen },
     comment: { label: 'Kommentar', icon: MessageSquare },
@@ -115,8 +122,9 @@ export function ModerationQueueTable({ items }: { items: QueueItem[] }) {
                     icon: Eye,
                 };
                 const TypeIcon = typeConfig.icon;
-                const snapshot = item.contentSnapshot as Record<string, unknown> | null;
+                const snapshot = item.contentSnapshot as ModerationContentSnapshot | null;
                 const isExpanded = expandedId === item.id;
+                const description = snapshot?.description;
 
                 return (
                     <div
@@ -251,7 +259,7 @@ export function ModerationQueueTable({ items }: { items: QueueItem[] }) {
                                 })}
                             >
                                 {/* Content preview */}
-                                {(snapshot?.description as string) && (
+                                {description ? (
                                     <p
                                         className={css({
                                             fontSize: 'sm',
@@ -260,9 +268,9 @@ export function ModerationQueueTable({ items }: { items: QueueItem[] }) {
                                             whiteSpace: 'pre-wrap',
                                         })}
                                     >
-                                        {String(snapshot!.description).slice(0, 500)}
+                                        {description.slice(0, 500)}
                                     </p>
-                                )}
+                                ) : null}
 
                                 {snapshot?.imageUrl && (
                                     <img

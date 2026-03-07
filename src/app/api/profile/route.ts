@@ -172,17 +172,29 @@ export async function PUT(request: NextRequest) {
         profileUpdates.notifyOnNewsletter = notifyOnNewsletter;
     }
 
-    const profile = await upsertProfile({
-        userId: session.userId,
-        email: session.email,
-        data: profileUpdates,
-    });
+    // Text moderation happens inside upsertProfile() — throws on REJECTED
+    try {
+        const profile = await upsertProfile({
+            userId: session.userId,
+            email: session.email,
+            data: profileUpdates,
+        });
 
-    logAuth('info', 'PUT /api/profile: profile updated', {
-        userId: session.userId,
-    });
+        logAuth('info', 'PUT /api/profile: profile updated', {
+            userId: session.userId,
+        });
 
-    return NextResponse.json({ profile });
+        return NextResponse.json({ profile });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message.startsWith('CONTENT_REJECTED:')) {
+            return NextResponse.json(
+                { error: message.replace('CONTENT_REJECTED:', '') },
+                { status: 400 },
+            );
+        }
+        throw error;
+    }
 }
 
 export async function PATCH(request: NextRequest) {

@@ -101,7 +101,7 @@ export async function persistModerationResult(
   result: ModerationResult,
   snapshot: ContentModerationSnapshot
 ): Promise<void> {
-  if (result.decision === 'PENDING') {
+  if (result.decision === 'PENDING' || result.decision === 'AUTO_APPROVED' || result.decision === 'REJECTED') {
     // Check if already queued
     const existing = await prisma.moderationQueue.findFirst({
       where: {
@@ -111,7 +111,6 @@ export async function persistModerationResult(
     });
 
     if (existing) {
-      // Update existing entry
       await prisma.moderationQueue.update({
         where: { id: existing.id },
         data: {
@@ -119,11 +118,11 @@ export async function persistModerationResult(
           aiFlags: result.flags,
           aiRawResponse: result.raw as any,
           contentSnapshot: snapshot as any,
+          status: result.decision,
           updatedAt: new Date(),
         },
       });
     } else {
-      // Create new queue entry
       await prisma.moderationQueue.create({
         data: {
           contentType,
@@ -133,7 +132,7 @@ export async function persistModerationResult(
           aiFlags: result.flags,
           aiRawResponse: result.raw as any,
           contentSnapshot: snapshot as any,
-          status: 'PENDING',
+          status: result.decision,
         },
       });
     }

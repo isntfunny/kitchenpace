@@ -287,13 +287,34 @@ export async function markRecipeCookedAction(
     let imageKey: string | undefined;
 
     if (options?.image) {
-        const { uploadFile } = await import('@app/lib/s3');
+        const { uploadFile, deleteFile } = await import('@app/lib/s3');
+        const { moderateContent, persistModerationResult } = await import(
+            '@app/lib/moderation/moderationService'
+        );
         const arrayBuffer = await options.image.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const file = options.image as File;
         const result = await uploadFile(buffer, file.name, file.type, 'cook');
-        imageUrl = result.url;
-        imageKey = result.key;
+
+        // Run AI image moderation
+        const modResult = await moderateContent({ imageUrl: result.url });
+
+        if (modResult.decision === 'REJECTED') {
+            await deleteFile(result.key);
+            await persistModerationResult('cook_image', result.key, viewer.id, modResult, {
+                imageUrl: result.url,
+                recipeId,
+            });
+            // Don't block the cook action, just skip the image
+        } else {
+            imageUrl = result.url;
+            imageKey = result.key;
+
+            await persistModerationResult('cook_image', result.key, viewer.id, modResult, {
+                imageUrl: result.url,
+                recipeId,
+            });
+        }
     }
 
     const hasImage = Boolean(imageUrl);

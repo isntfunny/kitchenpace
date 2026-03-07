@@ -16,12 +16,13 @@ export interface ModerationResult {
 }
 
 export interface ContentModerationSnapshot {
-  contentType: string;              // "recipe" | "comment" | "profile" | "cook_image"
-  contentId: string;
-  authorId: string;
+  contentType?: string;
+  contentId?: string;
+  authorId?: string;
   title?: string;
   description?: string;
   text?: string;
   imageUrl?: string;
   label?: string;
+  [key: string]: unknown;           // allow extra fields (recipeId, nickname, etc.)
 }

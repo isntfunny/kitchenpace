@@ -491,6 +491,21 @@ export function RecipeDetailClient({
                                 gap: '3',
                             })}
                         >
+                            {!hasImages && (
+                                <div
+                                    className={css({
+                                        aspectRatio: '4/3',
+                                        borderRadius: '2xl',
+                                        overflow: 'hidden',
+                                    })}
+                                >
+                                    <SmartImage
+                                        recipeId={recipe.id}
+                                        alt={recipe.title}
+                                        fill
+                                    />
+                                </div>
+                            )}
                             {hasImages && (<>
                             <div
                                 className={css({

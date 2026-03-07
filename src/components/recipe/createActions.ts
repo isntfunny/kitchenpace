@@ -147,17 +147,15 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
         },
     });
 
-    // Queue for moderation review if needed
-    if (modResult.decision === 'PENDING') {
-        await persistModerationResult('recipe', recipe.id, authorId, modResult, {
-            contentType: 'recipe',
-            contentId: recipe.id,
-            authorId,
-            title: data.title,
-            description: data.description,
-            text: recipeText,
-        });
-    }
+    // Persist moderation result for audit trail
+    await persistModerationResult('recipe', recipe.id, authorId, modResult, {
+        contentType: 'recipe',
+        contentId: recipe.id,
+        authorId,
+        title: data.title,
+        description: data.description,
+        text: recipeText,
+    });
 
     // Replace categories
     await prisma.recipeCategory.deleteMany({ where: { recipeId } });
@@ -320,17 +318,15 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         },
     });
 
-    // Queue for moderation review if needed
-    if (modResult.decision === 'PENDING') {
-        await persistModerationResult('recipe', recipe.id, authorId, modResult, {
-            contentType: 'recipe',
-            contentId: recipe.id,
-            authorId,
-            title: data.title,
-            description: data.description,
-            text: recipeText,
-        });
-    }
+    // Persist moderation result for audit trail
+    await persistModerationResult('recipe', recipe.id, authorId, modResult, {
+        contentType: 'recipe',
+        contentId: recipe.id,
+        authorId,
+        title: data.title,
+        description: data.description,
+        text: recipeText,
+    });
 
     if (isPublished) {
         await prisma.activityLog.create({

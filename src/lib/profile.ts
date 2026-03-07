@@ -1,6 +1,6 @@
 import type { Profile } from '@prisma/client';
 
-import { moderateContent } from '@app/lib/moderation/moderationService';
+import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
 import { generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
@@ -58,6 +58,12 @@ export const upsertProfile = async (params: {
     const textParts = [definedData.nickname, definedData.teaser].filter(Boolean);
     if (textParts.length > 0) {
         const modResult = await moderateContent({ text: textParts.join('\n') });
+
+        await persistModerationResult('profile', params.userId, params.userId, modResult, {
+            nickname: definedData.nickname,
+            teaser: definedData.teaser,
+        });
+
         if (modResult.decision === 'REJECTED') {
             throw new Error('CONTENT_REJECTED:Dein Profil enthält unzulässige Inhalte — bitte überprüfe deinen Text.');
         }

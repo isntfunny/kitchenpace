@@ -6,7 +6,6 @@ import {
     ChefHat,
     Check,
     Clipboard,
-    Clock,
     Edit3,
     FileText,
     Flame,
@@ -21,8 +20,8 @@ import { useRouter } from 'next/navigation';
 import { ReactNode, useState, useTransition } from 'react';
 
 import { toggleFollowAction } from '@app/app/actions/social';
-import { Badge } from '@app/components/atoms/Badge';
 import { SmartImage } from '@app/components/atoms/SmartImage';
+import { RecipeCard as SharedRecipeCard } from '@app/components/features/RecipeCard';
 import { ReportButton } from '@app/components/features/ReportButton';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
@@ -582,7 +581,14 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     })}
                                 >
                                     {recipes.map((recipe) => (
-                                        <RecipeCard key={recipe.id} recipe={recipe} />
+                                        <SharedRecipeCard
+                                            key={recipe.id}
+                                            recipe={{
+                                                ...recipe,
+                                                time: `${recipe.prepTime + recipe.cookTime} Min.`,
+                                            }}
+                                            categoryOnImage
+                                        />
                                     ))}
                                 </div>
 
@@ -850,108 +856,3 @@ function StatCard({
     );
 }
 
-// Recipe Card Component
-function RecipeCard({ recipe }: { recipe: UserProfileRecipe }) {
-    const totalTime = recipe.prepTime + recipe.cookTime;
-
-    return (
-        <Link
-            href={`/recipe/${recipe.slug}`}
-            className={css({
-                display: 'block',
-                textDecoration: 'none',
-                color: 'inherit',
-                bg: 'surface.elevated',
-                borderRadius: 'xl',
-                overflow: 'hidden',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                _hover: {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.04)',
-                },
-            })}
-        >
-            {/* Recipe Image */}
-            <div
-                className={css({
-                    position: 'relative',
-                    aspectRatio: '16/10',
-                    overflow: 'hidden',
-                })}
-            >
-                <SmartImage
-                    src={recipe.image ?? undefined}
-                    alt={recipe.title}
-                    fill
-                    recipeId={recipe.id}
-                    className={css({
-                        objectFit: 'cover',
-                    })}
-                />
-                <div
-                    className={css({
-                        position: 'absolute',
-                        top: '3',
-                        left: '3',
-                    })}
-                >
-                    <Badge>{recipe.category}</Badge>
-                </div>
-            </div>
-
-            {/* Recipe Content */}
-            <div className={css({ p: '4' })}>
-                <h3
-                    className={css({
-                        fontSize: 'base',
-                        fontWeight: '700',
-                        fontFamily: 'heading',
-                        color: 'text',
-                        mb: '1',
-                        lineClamp: 1,
-                    })}
-                >
-                    {recipe.title}
-                </h3>
-                <p
-                    className={css({
-                        fontSize: 'sm',
-                        color: 'text-muted',
-                        lineClamp: 2,
-                        mb: '3',
-                        lineHeight: '1.5',
-                    })}
-                >
-                    {recipe.description}
-                </p>
-
-                {/* Recipe Meta */}
-                <div
-                    className={flex({
-                        justify: 'space-between',
-                        align: 'center',
-                        fontSize: 'xs',
-                        color: 'text-muted',
-                    })}
-                >
-                    <div
-                        className={flex({
-                            align: 'center',
-                            gap: '1',
-                        })}
-                    >
-                        <Star size={16} className={css({ color: '#f8b500' })} />
-                        <span className={css({ fontWeight: '600' })}>
-                            {recipe.rating.toFixed(1)}
-                        </span>
-                    </div>
-                    <div className={flex({ align: 'center', gap: '1' })}>
-                        <Clock size={16} className={css({ color: '#636e72' })} />
-                        <span>{totalTime} Min.</span>
-                    </div>
-                </div>
-            </div>
-        </Link>
-    );
-}

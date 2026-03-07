@@ -1,13 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextFetchEvent, NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+import { isTrackingEnabled, trackApiRequest } from './src/lib/tracking';
+
 /**
- * Middleware: redirect banned users to /banned
- * Reads the JWT token directly (no DB hit) — ban takes effect after session is invalidated
+ * Proxy: ban enforcement + API request tracking.
+ * Runs on Node.js runtime (Next.js 16 default for proxy).
  */
-export async function middleware(request: NextRequest) {
-    // Skip static files, API routes, and the banned page itself
+export async function proxy(request: NextRequest, event: NextFetchEvent) {
     const { pathname } = request.nextUrl;
+
+    // Skip static files, auth API, and the banned page itself
     if (
         pathname.startsWith('/banned') ||
         pathname.startsWith('/api/auth') ||
@@ -17,10 +20,15 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
+    // Ban check — reads JWT directly, no DB hit
     const token = await getToken({ req: request });
-
     if (token?.role === 'BANNED') {
         return NextResponse.redirect(new URL('/banned', request.url));
+    }
+
+    // Fire-and-forget API tracking
+    if (isTrackingEnabled()) {
+        event.waitUntil(trackApiRequest(request));
     }
 
     return NextResponse.next();

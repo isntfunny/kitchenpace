@@ -1,7 +1,6 @@
 import { IdentifyComponent, OpenPanelComponent } from '@openpanel/nextjs';
 import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
-import Script from 'next/script';
 
 import { fetchPinnedEntries } from '@app/app/api/recipe-tabs/helpers';
 import { ChatwootWidgetComponent } from '@app/components/ChatwootWidget';
@@ -29,15 +28,13 @@ const inter = Inter({
 
 const themeInitScript = `
 (function () {
-    const storageKey = 'kitchenpace-theme';
+    var storageKey = 'kitchenpace-theme';
     try {
-        const stored = localStorage.getItem(storageKey);
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const theme = stored || (prefersDark ? 'dark' : 'light');
+        var stored = localStorage.getItem(storageKey);
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = stored || (prefersDark ? 'dark' : 'light');
         document.documentElement.setAttribute('data-theme', theme);
-    } catch (error) {
-        console.warn('Theme initialization failed', error);
-    }
+    } catch (e) {}
 })();
 `;
 
@@ -222,14 +219,14 @@ export default async function RootLayout({
           }
         : null;
     return (
-        <html lang="de">
-            <head></head>
-            <body className={`${playfair.variable} ${inter.variable}`}>
-                <Script
-                    id="theme-init"
-                    strategy="afterInteractive"
+        <html lang="de" suppressHydrationWarning>
+            <head>
+                <script
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Required to prevent theme flash
                     dangerouslySetInnerHTML={{ __html: themeInitScript }}
                 />
+            </head>
+            <body className={`${playfair.variable} ${inter.variable}`}>
                 <ChatwootWidgetComponent />
                 <OpenPanelComponent
                     clientId={openPanelClientId}

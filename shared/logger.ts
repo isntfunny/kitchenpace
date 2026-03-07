@@ -1,9 +1,4 @@
-import { createRequire } from 'module';
-
 import winston from 'winston';
-
-const require = createRequire(import.meta.url);
-const SeqTransport = require('winston-seq-updated');
 
 const { NODE_ENV } = process.env;
 
@@ -21,14 +16,8 @@ const transports: winston.transport[] = [
     }),
 ];
 
-if (process.env.SEQ_URL && process.env.SEQ_API_KEY) {
-    transports.push(
-        new SeqTransport({
-            serverUrl: process.env.SEQ_URL,
-            apiKey: process.env.SEQ_API_KEY,
-        }) as unknown as winston.transport,
-    );
-}
+// TODO: SeqTransport loading disabled to avoid Turbopack build issues
+// This should be re-enabled with a proper ESM-compatible approach
 
 export const logger = winston.createLogger({
     level: 'debug',

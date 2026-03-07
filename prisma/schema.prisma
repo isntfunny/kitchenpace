@@ -85,6 +85,7 @@ enum ActivityType {
   USER_REGISTERED
   USER_ACTIVATED
   MEAL_PLAN_CREATED
+  SHOPPING_LIST_CREATED
 }
 
 enum ModerationStatus {

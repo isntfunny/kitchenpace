@@ -65,6 +65,23 @@ export async function hydrateActivityFeedItems(
             ? new Set(users.filter((user) => user.profile?.showInActivity !== false).map((user) => user.id))
             : null;
 
+    // Build per-user privacy maps for granular activity type filtering (global scope only)
+    const privacyHiddenTypes =
+        scope === 'global'
+            ? new Map(
+                  users.map((user) => {
+                      const hidden = new Set<string>();
+                      if (user.profile?.ratingsPublic === false) hidden.add('RECIPE_RATED');
+                      if (user.profile?.favoritesPublic === false) {
+                          hidden.add('RECIPE_FAVORITED');
+                          hidden.add('RECIPE_UNFAVORITED');
+                      }
+                      if (user.profile?.followsPublic === false) hidden.add('USER_FOLLOWED');
+                      return [user.id, hidden] as const;
+                  }),
+              )
+            : null;
+
     const baseItems = logs
         .filter((log) => {
             if (!ACTIVITY_DECOR[log.type]) {
@@ -72,6 +89,10 @@ export async function hydrateActivityFeedItems(
             }
 
             if (scope === 'global' && visibleUserIds && !visibleUserIds.has(log.userId)) {
+                return false;
+            }
+
+            if (privacyHiddenTypes?.get(log.userId)?.has(log.type)) {
                 return false;
             }
 

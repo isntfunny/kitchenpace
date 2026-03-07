@@ -1,8 +1,9 @@
 import type { Notification, Prisma } from '@prisma/client';
 
+import { resolveNotificationHref } from '@app/components/notifications/utils';
+import { sendPushToUser } from '@app/lib/push/send';
 import { publishRealtimeEvent } from '@app/lib/realtime/broker';
 import { prisma } from '@shared/prisma';
-
 
 import { serializeActivityLog, serializeNotification } from './views';
 
@@ -43,6 +44,16 @@ export async function createUserNotification(
         type: 'notification.created',
         payload: view,
     }).catch((err) => console.error('[Realtime] Failed to publish notification event', err));
+
+    const pushUrl = resolveNotificationHref({
+        data: (notification.data as Record<string, unknown> | null) ?? {},
+        type: notification.type,
+    });
+    sendPushToUser(input.userId, {
+        title: input.title,
+        body: input.message,
+        url: pushUrl,
+    }).catch((err) => console.error('[Push] Failed to send push notification', err));
 
     return notification;
 }

@@ -195,7 +195,10 @@ export interface UserProfileData {
     bio: string | null;
     recipeCount: number;
     followerCount: number;
+    showFollowerCount?: boolean;
+    showFavorites?: boolean;
     recipes: UserProfileRecipe[];
+    favorites?: UserProfileRecipe[];
     activities: UserProfileActivity[];
     currentPage?: number;
     totalPages?: number;
@@ -432,11 +435,13 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         label="Rezepte"
                                         icon={<ChefHat size={16} />}
                                     />
-                                    <StatCard
-                                        value={followerTotal}
-                                        label="Follower"
-                                        icon={<Handshake size={16} />}
-                                    />
+                                    {user.showFollowerCount !== false && (
+                                        <StatCard
+                                            value={followerTotal}
+                                            label="Follower"
+                                            icon={<Handshake size={16} />}
+                                        />
+                                    )}
                                     {recipes.length > 0 && (
                                         <StatCard
                                             value={
@@ -625,6 +630,61 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 </p>
                             </div>
                         )}
+
+                        {/* Favorites Section */}
+                        {user.showFavorites !== false &&
+                            user.favorites &&
+                            user.favorites.length > 0 && (
+                                <div className={css({ mt: '10' })}>
+                                    <div
+                                        className={flex({
+                                            justify: 'space-between',
+                                            align: 'center',
+                                            mb: '5',
+                                        })}
+                                    >
+                                        <h2
+                                            className={css({
+                                                fontSize: 'lg',
+                                                fontWeight: '700',
+                                                color: 'text',
+                                                fontFamily: 'heading',
+                                            })}
+                                        >
+                                            Favoriten
+                                        </h2>
+                                        <span
+                                            className={css({
+                                                fontSize: 'sm',
+                                                color: 'text.muted',
+                                                bg: 'gray.100',
+                                                px: '3',
+                                                py: '1',
+                                                borderRadius: 'full',
+                                            })}
+                                        >
+                                            {user.favorites.length} gespeichert
+                                        </span>
+                                    </div>
+                                    <div
+                                        className={grid({
+                                            columns: { base: 1, sm: 2, md: 3, xl: 4 },
+                                            gap: '4',
+                                        })}
+                                    >
+                                        {user.favorites.map((recipe) => (
+                                            <SharedRecipeCard
+                                                key={`fav-${recipe.id}`}
+                                                recipe={{
+                                                    ...recipe,
+                                                    time: `${recipe.prepTime + recipe.cookTime} Min.`,
+                                                }}
+                                                categoryOnImage
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                     </div>
 
                     {/* Activity Sidebar */}

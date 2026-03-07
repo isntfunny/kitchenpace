@@ -130,8 +130,23 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
 
     if (!user) return null;
 
+    const profile = user.profile;
+    const showFollowerCount = profile?.followsPublic !== false;
+    const showFavorites = profile?.favoritesPublic !== false;
+
+    // Build set of activity types to hide based on privacy settings
+    const hiddenActivityTypes = new Set<string>();
+    if (profile?.ratingsPublic === false) hiddenActivityTypes.add('RECIPE_RATED');
+    if (profile?.favoritesPublic === false) hiddenActivityTypes.add('RECIPE_FAVORITED');
+    if (profile?.followsPublic === false) hiddenActivityTypes.add('USER_FOLLOWED');
+
+    // Filter activities by privacy
+    const visibleActivities = hiddenActivityTypes.size > 0
+        ? user.activities.filter((a) => !hiddenActivityTypes.has(a.type))
+        : user.activities;
+
     // Fetch recipe details for recipe-related activities
-    const recipeIds = user.activities
+    const recipeIds = visibleActivities
         .filter((a) => a.targetType === 'recipe' && a.targetId)
         .map((a) => a.targetId as string);
 
@@ -144,6 +159,33 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
             : [];
 
     const recipeMap = new Map(recipes.map((r) => [r.id, r]));
+
+    // Fetch public favorites if enabled
+    const favoriteRecipes = showFavorites
+        ? await prisma.favorite.findMany({
+              where: { userId: user.id, recipe: { publishedAt: { not: null } } },
+              orderBy: { createdAt: 'desc' },
+              take: 12,
+              select: {
+                  recipe: {
+                      select: {
+                          id: true,
+                          slug: true,
+                          title: true,
+                          description: true,
+                          imageKey: true,
+                          rating: true,
+                          prepTime: true,
+                          cookTime: true,
+                          categories: {
+                              select: { category: { select: { name: true } } },
+                              take: 1,
+                          },
+                      },
+                  },
+              },
+          })
+        : [];
 
     // Format time ago on server side
     const formatTimeAgo = (date: Date): string => {
@@ -166,6 +208,8 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
         bio: user.profile?.bio ?? null,
         recipeCount: user.profile?.recipeCount ?? user._count.recipes,
         followerCount: user.profile?.followerCount ?? 0,
+        showFollowerCount,
+        showFavorites,
         currentPage: page,
         totalPages: Math.ceil(user._count.recipes / PAGE_SIZE),
         recipes: user.recipes.map((recipe) => ({
@@ -180,7 +224,19 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
             prepTime: recipe.prepTime,
             cookTime: recipe.cookTime,
         })),
-        activities: user.activities.map((activity) => {
+        favorites: favoriteRecipes.map((fav) => ({
+            id: fav.recipe.id,
+            slug: fav.recipe.slug,
+            title: fav.recipe.title,
+            description: fav.recipe.description ?? '',
+            image: fav.recipe.imageKey ?? null,
+            imageKey: fav.recipe.imageKey ?? null,
+            category: fav.recipe.categories[0]?.category?.name ?? 'Allgemein',
+            rating: fav.recipe.rating ?? 0,
+            prepTime: fav.recipe.prepTime,
+            cookTime: fav.recipe.cookTime,
+        })),
+        activities: visibleActivities.map((activity) => {
             const recipe = activity.targetId ? recipeMap.get(activity.targetId) : null;
             return {
                 id: activity.id,

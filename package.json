@@ -111,6 +111,7 @@
         "node-html-parser": "^7.1.0",
         "prettier": "^3.8.1",
         "tsx": "^4.21.0",
-        "typescript": "^5"
+        "typescript": "^5",
+        "web-push": "^3.6.7"
     }
 }

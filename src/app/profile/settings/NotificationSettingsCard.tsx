@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
+import { PushSubscriptionToggle } from '@app/components/notifications/PushSubscriptionToggle';
 import { css } from 'styled-system/css';
 
 type NotificationSettingKey =
@@ -166,6 +167,10 @@ export function NotificationSettingsCard({ profile }: NotificationSettingsCardPr
                     Wähle, welche Benachrichtigungen dir als Push, Browser oder in der App angezeigt
                     werden sollen.
                 </Text>
+            </div>
+
+            <div className={css({ mb: '4' })}>
+                <PushSubscriptionToggle />
             </div>
 
             <div className={css({ display: 'flex', flexDir: 'column', gap: '3' })}>

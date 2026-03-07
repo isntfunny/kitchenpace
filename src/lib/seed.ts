@@ -127,10 +127,8 @@ async function main() {
         { name: 'Halloween', slug: 'halloween' },
         { name: 'Weihnachten', slug: 'weihnachten' },
         { name: 'Ostern', slug: 'ostern' },
-        { name: 'Festlich', slug: 'festlich' },
         { name: 'Low Carb', slug: 'low-carb' },
         { name: 'Proteinreich', slug: 'proteinreich' },
-        { name: 'Klassisch', slug: 'klassisch' },
         { name: 'Süß', slug: 'suess' },
         { name: 'Herzhaft', slug: 'herzhaft' },
         { name: 'Eis', slug: 'eis' },
@@ -139,7 +137,7 @@ async function main() {
     ];
 
     for (const tag of tagsData) {
-        await prisma.tag.upsert({ where: { slug: tag.slug }, update: {}, create: tag });
+        await prisma.tag.upsert({ where: { name: tag.name }, update: {}, create: tag });
     }
     console.log('✅ Created tags');
 
@@ -4958,7 +4956,11 @@ async function main() {
     ];
 
     for (const vh of viewHistoryData) {
-        await prisma.userViewHistory.create({ data: vh }).catch(() => {});
+        await prisma.userViewHistory.upsert({
+            where: { userId_recipeId: { userId: vh.userId, recipeId: vh.recipeId } },
+            update: {},
+            create: vh,
+        });
     }
     console.log('✅ Created view history');
 

@@ -29,6 +29,7 @@ import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { Header } from '@app/components/features/Header';
 import { ReportButton } from '@app/components/features/ReportButton';
+import { ShareButton } from '@app/components/features/ShareButton';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
@@ -1032,6 +1033,11 @@ export function RecipeDetailClient({
                                         Drucken
                                     </span>
                                 </Button>
+                                <ShareButton
+                                    title={recipe.title}
+                                    slug={recipe.slug}
+                                    imageUrl={recipe.image ?? undefined}
+                                />
                                 {!recipe.viewer?.isAuthor && (
                                     <ReportButton
                                         contentType="recipe"

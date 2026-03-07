@@ -1,10 +1,11 @@
 import { getOpenSearchQueue, getScheduledQueue, getBackupQueue } from './queue';
-import { QueueName } from './types';
+import { QueueName, type JobPayloadSchema } from './types';
 
 export interface ScheduledJobDefinition {
     name: string;
     queue: QueueName;
     data: Record<string, unknown>;
+    schema?: JobPayloadSchema;
     options?: {
         repeat?: {
             pattern: string;
@@ -19,6 +20,9 @@ const scheduledJobs: ScheduledJobDefinition[] = [
         name: 'opensearch-sync',
         queue: QueueName.OPENSEARCH,
         data: { batchSize: 150 },
+        schema: {
+            batchSize: { type: 'number', label: 'Batch Size', default: 150, min: 1, max: 1000 },
+        },
         options: {
             repeat: {
                 pattern: '*/15 * * * *',
@@ -29,6 +33,9 @@ const scheduledJobs: ScheduledJobDefinition[] = [
         name: 'sync-ingredients',
         queue: QueueName.OPENSEARCH,
         data: { batchSize: 500 },
+        schema: {
+            batchSize: { type: 'number', label: 'Batch Size', default: 500, min: 1, max: 2000 },
+        },
         options: {
             repeat: {
                 pattern: '0 */1 * * *',
@@ -51,6 +58,9 @@ const scheduledJobs: ScheduledJobDefinition[] = [
         name: 'sync-contacts-notifuse',
         queue: QueueName.SCHEDULED,
         data: { batchSize: 100 },
+        schema: {
+            batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 1, max: 500 },
+        },
         options: {
             repeat: {
                 pattern: '0 */6 * * *',
@@ -76,6 +86,20 @@ const scheduledJobs: ScheduledJobDefinition[] = [
         options: {
             repeat: {
                 pattern: '0 2 * * *',
+                tz: 'Europe/Berlin',
+            },
+        },
+    },
+    {
+        name: 'purge-thumbnail-cache',
+        queue: QueueName.SCHEDULED,
+        data: { maxAgeDays: 3 },
+        schema: {
+            maxAgeDays: { type: 'number', label: 'Max Age (days)', default: 3, min: 1, max: 30 },
+        },
+        options: {
+            repeat: {
+                pattern: '0 * * * *',
                 tz: 'Europe/Berlin',
             },
         },

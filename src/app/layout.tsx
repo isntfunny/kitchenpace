@@ -10,6 +10,7 @@ import { ProfileProvider } from '@app/components/providers/ProfileProvider';
 import { RecipeTabsProvider } from '@app/components/providers/RecipeTabsProvider';
 import { ThemeProvider } from '@app/components/providers/ThemeProvider';
 import { getServerAuthSession } from '@app/lib/auth';
+import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 
 import './globals.css';
@@ -49,11 +50,11 @@ export const metadata: Metadata = {
     authors: [{ name: 'KüchenTakt' }],
     creator: 'KüchenTakt',
     publisher: 'KüchenTakt',
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app'),
+    metadataBase: new URL(APP_URL),
     openGraph: {
         type: 'website',
         locale: 'de_DE',
-        url: 'https://kitchenpace.app',
+        url: APP_URL,
         siteName: 'KüchenTakt',
         title: 'KüchenTakt - Deine Rezepte im Takt',
         description:

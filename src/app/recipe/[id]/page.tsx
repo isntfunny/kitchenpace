@@ -6,6 +6,7 @@ import { fetchRecipeBySlug } from '@app/app/actions/recipes';
 import { isAdmin } from '@app/lib/admin/check-admin';
 import { getServerAuthSession } from '@app/lib/auth';
 import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
+import { APP_URL } from '@app/lib/url';
 
 import { RecipeDetailClient } from './RecipeDetailClient';
 
@@ -19,8 +20,6 @@ type RecipePageParams = {
 type RecipePageProps = {
     params: RecipePageParams | Promise<RecipePageParams>;
 };
-
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
 
 const buildRecipeMetadata = async (
     recipe: Awaited<ReturnType<typeof fetchRecipeBySlug>>,
@@ -46,7 +45,7 @@ const buildRecipeMetadata = async (
         openGraph: {
             title: `${recipe.title} | KüchenTakt`,
             description: recipe.description,
-            url: `${SITE_URL}/recipe/${recipe.slug}`,
+            url: `${APP_URL}/recipe/${recipe.slug}`,
             siteName: 'KüchenTakt',
             type: 'article',
             images: [

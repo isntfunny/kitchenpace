@@ -11,7 +11,7 @@ interface ShareButtonProps {
     imageUrl?: string;
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://kitchenpace.de';
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://kitchenpace.app';
 
 function buildShareUrl(slug: string) {
     return `${SITE_URL}/recipe/${slug}`;

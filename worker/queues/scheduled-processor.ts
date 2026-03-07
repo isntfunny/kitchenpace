@@ -1,6 +1,8 @@
+import { ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { Job } from 'bullmq';
 
 import { syncContactToNotifuse } from '@app/lib/notifuse/email';
+import { s3Client, BUCKET } from '@app/lib/s3';
 
 import { prisma } from './prisma';
 import { getBackupQueue } from './queue';
@@ -217,6 +219,73 @@ export async function processBackupDatabase(
     } catch (error) {
         console.error(`[BackupScheduler] ${type} backup job ${job.id} failed`, {
             error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+    }
+}
+
+export async function processCachePurge(
+    job: Job<{ maxAgeDays?: number }>,
+): Promise<{ success: boolean; scannedCount: number; deletedCount: number }> {
+    console.log(`[CachePurge] Starting purge-thumbnail-cache job ${job.id}`);
+
+    const maxAgeDays = job.data.maxAgeDays ?? 3;
+    const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
+
+    try {
+        const staleKeys: { Key: string }[] = [];
+        let continuationToken: string | undefined;
+        let scannedCount = 0;
+
+        // Paginate through all cache/ objects
+        do {
+            const response = await s3Client.send(
+                new ListObjectsV2Command({
+                    Bucket: BUCKET,
+                    Prefix: 'cache/',
+                    ContinuationToken: continuationToken,
+                }),
+            );
+
+            for (const obj of response.Contents ?? []) {
+                scannedCount++;
+                if (obj.Key && obj.LastModified && obj.LastModified < cutoff) {
+                    staleKeys.push({ Key: obj.Key });
+                }
+            }
+
+            continuationToken = response.NextContinuationToken;
+        } while (continuationToken);
+
+        console.log(
+            `[CachePurge] Found ${staleKeys.length} files older than ${maxAgeDays} days out of ${scannedCount} scanned`,
+        );
+
+        // Batch delete (max 1000 per request)
+        let deletedCount = 0;
+        for (let i = 0; i < staleKeys.length; i += 1000) {
+            const batch = staleKeys.slice(i, i + 1000);
+            await s3Client.send(
+                new DeleteObjectsCommand({
+                    Bucket: BUCKET,
+                    Delete: { Objects: batch, Quiet: true },
+                }),
+            );
+            deletedCount += batch.length;
+        }
+
+        console.log(`[CachePurge] Deleted ${deletedCount} cache files`, {
+            scannedCount,
+            deletedCount,
+            maxAgeDays,
+            jobId: job.id,
+        });
+
+        return { success: true, scannedCount, deletedCount };
+    } catch (error) {
+        console.error(`[CachePurge] purge-thumbnail-cache job ${job.id} failed`, {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
         });
         throw error;
     }

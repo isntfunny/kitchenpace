@@ -11,6 +11,7 @@ import {
     fetchCategoryTopRated,
 } from '@app/app/actions/category';
 import { PageShell } from '@app/components/layouts/PageShell';
+import { APP_URL } from '@app/lib/url';
 
 import { CategoryLanding } from './CategoryLanding';
 
@@ -20,26 +21,36 @@ type Props = {
     params: Promise<{ slug: string }>;
 };
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
     const category = await fetchCategoryBySlug(slug);
     if (!category) return { title: 'Kategorie nicht gefunden | KüchenTakt' };
 
+    const title = `${category.name} Rezepte | KüchenTakt`;
+    const description =
+        category.description ??
+        `Entdecke ${category.recipeCount} ${category.name}-Rezepte auf KüchenTakt.`;
+    const url = `${APP_URL}/category/${category.slug}`;
+    const ogImageUrl = `${APP_URL}/api/og/category/${category.slug}`;
+
     return {
-        title: `${category.name} Rezepte | KüchenTakt`,
-        description:
-            category.description ??
-            `Entdecke ${category.recipeCount} ${category.name}-Rezepte auf KüchenTakt.`,
+        title,
+        description,
+        alternates: { canonical: url },
         openGraph: {
-            title: `${category.name} Rezepte | KüchenTakt`,
-            description:
-                category.description ??
-                `Entdecke ${category.recipeCount} ${category.name}-Rezepte auf KüchenTakt.`,
-            url: `${SITE_URL}/category/${category.slug}`,
+            title,
+            description,
+            url,
             siteName: 'KüchenTakt',
             type: 'website',
+            locale: 'de_DE',
+            images: [{ url: ogImageUrl, width: 1200, height: 630, alt: `${category.name} Rezepte` }],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [ogImageUrl],
         },
     };
 }

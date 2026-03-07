@@ -4,6 +4,7 @@ import { Metadata } from 'next';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
 import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
+import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
@@ -33,7 +34,6 @@ const KNOWN_ACTIVITY_TYPES: ActivityType[] = [
     'MEAL_PLAN_CREATED',
 ];
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
 
 const buildUserMetadata = async (name: string, userId: string, userSlug: string): Promise<Metadata> => {
     const profileImageUrl = await getThumbnailUrlBySource(
@@ -51,7 +51,7 @@ const buildUserMetadata = async (name: string, userId: string, userSlug: string)
         openGraph: {
             title: `${name} | KüchenTakt`,
             description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
-            url: `${SITE_URL}/user/${userSlug}`,
+            url: `${APP_URL}/user/${userSlug}`,
             siteName: 'KüchenTakt',
             type: 'profile',
             ...(profileImageUrl && {

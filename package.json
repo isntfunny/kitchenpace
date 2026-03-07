@@ -83,6 +83,7 @@
         "sharp": "^0.34.5",
         "styled-system": "^5.1.5",
         "swr": "^2.4.1",
+        "tsx": "^4.21.0",
         "winston": "^3.19.0",
         "winston-seq": "^0.1.0",
         "yet-another-react-lightbox": "^3.29.1",
@@ -108,9 +109,9 @@
         "eslint-plugin-unused-imports": "^4.4.1",
         "html-to-image": "^1.11.13",
         "husky": "^9.1.7",
+        "lucide": "^0.577.0",
         "node-html-parser": "^7.1.0",
         "prettier": "^3.8.1",
-        "tsx": "^4.21.0",
         "typescript": "^5",
         "web-push": "^3.6.7"
     }

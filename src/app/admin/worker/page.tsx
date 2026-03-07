@@ -4,11 +4,11 @@ import { getQueueSnapshots } from '@worker/queues/insights';
 import { getJobRuns, type JobRun, type JobStatus } from '@worker/queues/job-run';
 import { getQueueLabel, JOB_STATUS_DETAILS, STATUS_ORDER } from '@worker/queues/job-run-ui';
 import { getScheduledJobDefinitions } from '@worker/queues/scheduler';
-import { QueueName } from '@worker/queues/types';
+import { QueueName, type JobPayloadSchema } from '@worker/queues/types';
 import { getWorkerDefinitions } from '@worker/queues/worker';
 import { css } from 'styled-system/css';
 
-import { triggerJobAction } from './actions';
+import { JobTriggerCard } from './job-trigger-card';
 import { PastRuns } from './past-runs';
 
 export const dynamic = 'force-dynamic';
@@ -39,96 +39,13 @@ type JobCatalogItem = {
     queue: QueueName;
     type: 'worker' | 'scheduled';
     defaultPayload: Record<string, unknown>;
+    schema?: JobPayloadSchema;
     meta: {
         concurrency?: number;
         repeatPattern?: string;
     };
 };
 
-function JobItem({ item }: { item: JobCatalogItem }) {
-    return (
-        <li
-            className={css({
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2',
-                padding: '3',
-                borderRadius: 'lg',
-                borderWidth: '1px',
-                borderColor: 'border.muted',
-                background: 'surface',
-            })}
-        >
-            <div
-                className={css({
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '2',
-                })}
-            >
-                <div>
-                    <p
-                        className={css({
-                            fontSize: 'sm',
-                            fontWeight: 'semibold',
-                            color: 'foreground',
-                        })}
-                    >
-                        {item.jobName}
-                    </p>
-                    <p
-                        className={css({
-                            fontSize: 'xs',
-                            color: 'foreground.muted',
-                        })}
-                    >
-                        {getQueueLabel(item.queue)}
-                    </p>
-                </div>
-                <span
-                    className={css({
-                        borderRadius: 'full',
-                        px: '2',
-                        py: '0.5',
-                        fontSize: 'xs',
-                        fontWeight: 'medium',
-                        background: 'border.muted',
-                        color: 'foreground.muted',
-                    })}
-                >
-                    {item.type === 'worker'
-                        ? `${item.meta.concurrency ?? 1}⚡`
-                        : (item.meta.repeatPattern ?? 'adhoc')}
-                </span>
-            </div>
-            <form action={triggerJobAction}>
-                <input type="hidden" name="queue" value={item.queue} />
-                <input type="hidden" name="jobName" value={item.jobName} />
-                <input type="hidden" name="payload" value={JSON.stringify(item.defaultPayload)} />
-                <button
-                    type="submit"
-                    className={css({
-                        width: '100%',
-                        borderRadius: 'lg',
-                        background: 'primary',
-                        color: 'white',
-                        fontSize: 'xs',
-                        fontWeight: 'semibold',
-                        padding: '2',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                            opacity: 0.9,
-                        },
-                    })}
-                >
-                    ▶ Ausführen
-                </button>
-            </form>
-        </li>
-    );
-}
 
 function JobAccordionSection({ title, jobs }: { title: string; jobs: JobCatalogItem[] }) {
     return (
@@ -189,7 +106,7 @@ function JobAccordionSection({ title, jobs }: { title: string; jobs: JobCatalogI
                         })}
                     >
                         {jobs.map((job) => (
-                            <JobItem key={job.id} item={job} />
+                            <JobTriggerCard key={job.id} item={job} />
                         ))}
                     </ul>
                 </div>
@@ -243,6 +160,7 @@ export default async function WorkerDashboardPage() {
         queue: job.queue,
         type: 'scheduled' as const,
         defaultPayload: job.data,
+        schema: job.schema,
         meta: {
             repeatPattern: job.options?.repeat?.pattern,
         },

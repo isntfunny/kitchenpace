@@ -12,6 +12,7 @@ import {
     processTrendingRecipes,
     processSyncContactsNotifuse,
     processBackupDatabase,
+    processCachePurge,
 } from './scheduled-processor';
 import { QueueName } from './types';
 
@@ -33,6 +34,7 @@ const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
             case 'sync-contacts-notifuse': return processSyncContactsNotifuse(job);
             case 'backup-database-hourly': return processBackupDatabase(job, 'hourly');
             case 'backup-database-daily': return processBackupDatabase(job, 'daily');
+            case 'purge-thumbnail-cache': return processCachePurge(job);
             default: throw new Error(`Unknown scheduled job: ${job.name}`);
         }
     },

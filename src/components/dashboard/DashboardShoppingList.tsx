@@ -60,7 +60,7 @@ function ShoppingItemRow({
                 borderRadius: 'lg',
                 transition: 'all 150ms ease',
                 _hover: {
-                    background: 'rgba(0,0,0,0.02)',
+                    background: 'surface.muted',
                 },
             })}
         >
@@ -71,7 +71,7 @@ function ShoppingItemRow({
                     height: '24px',
                     borderRadius: 'full',
                     border: item.checked ? 'none' : '2px solid',
-                    borderColor: item.checked ? PALETTE.emerald : 'rgba(0,0,0,0.2)',
+                    borderColor: item.checked ? PALETTE.emerald : 'border',
                     background: item.checked ? PALETTE.emerald : 'transparent',
                     cursor: 'pointer',
                     display: 'flex',
@@ -115,7 +115,7 @@ function ShoppingItemRow({
                 className={css({
                     fontSize: 'xs',
                     color: 'text-muted',
-                    background: 'rgba(0,0,0,0.04)',
+                    background: 'surface.muted',
                     px: '2',
                     py: '1',
                     borderRadius: 'full',
@@ -158,7 +158,7 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
                 borderRadius: '2xl',
                 padding: '6',
                 border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.06)',
+                borderColor: 'border',
                 height: 'fit-content',
             })}
         >
@@ -206,7 +206,7 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
                         borderRadius: 'lg',
                         cursor: 'pointer',
                         _hover: {
-                            background: '#c4623d',
+                            background: 'button.primary-hover',
                         },
                     })}
                 >
@@ -217,7 +217,7 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
             <div
                 className={css({
                     height: '6px',
-                    background: 'rgba(0,0,0,0.06)',
+                    background: 'border',
                     borderRadius: 'full',
                     overflow: 'hidden',
                     mb: '4',

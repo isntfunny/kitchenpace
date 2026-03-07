@@ -46,7 +46,7 @@ function StatusIcon({ status }: { status?: string }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                boxShadow: 'shadow.small',
             })}
         >
             {statusIcons[status]}
@@ -88,7 +88,7 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                 borderRadius: '2xl',
                 padding: '6',
                 border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.06)',
+                borderColor: 'border',
             })}
         >
             <div
@@ -130,14 +130,14 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                         fontSize: 'sm',
                         fontWeight: '600',
                         color: 'primary',
-                        background: 'rgba(224,123,83,0.1)',
+                        background: 'accentSoft',
                         border: 'none',
                         px: '4',
                         py: '2',
                         borderRadius: 'lg',
                         cursor: 'pointer',
                         _hover: {
-                            background: 'rgba(224,123,83,0.2)',
+                            background: 'accent.soft',
                         },
                     })}
                 >
@@ -171,13 +171,13 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                             background:
                                 activeFilter === filter.id
                                     ? `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`
-                                    : 'rgba(0,0,0,0.04)',
+                                    : 'surface.muted',
                             color: activeFilter === filter.id ? 'white' : 'text-muted',
                             _hover: {
                                 background:
                                     activeFilter === filter.id
                                         ? `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`
-                                        : 'rgba(0,0,0,0.08)',
+                                        : 'button.secondary-hover',
                             },
                         })}
                     >

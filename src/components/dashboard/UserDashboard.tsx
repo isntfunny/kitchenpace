@@ -73,7 +73,7 @@ export function UserDashboard({
                     className={css({
                         background: 'surface.elevated',
                         borderRadius: '3xl',
-                        boxShadow: '0 40px 120px rgba(224,123,83,0.25)',
+                        boxShadow: 'shadow.large',
                         padding: { base: '8', md: '14' },
                         mb: '8',
                     })}
@@ -96,8 +96,8 @@ export function UserDashboard({
                                     className={css({
                                         borderRadius: 'full',
                                         objectFit: 'cover',
-                                        border: '4px solid #fff7f1',
-                                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                        border: { base: '4px solid #fff7f1', _dark: '4px solid #2d333b' },
+                                        boxShadow: 'shadow.medium',
                                     })}
                                 />
                             ) : (
@@ -106,14 +106,14 @@ export function UserDashboard({
                                         width: '120px',
                                         height: '120px',
                                         borderRadius: 'full',
-                                        background: 'linear-gradient(135deg, #ffe5d1, #ffc89e)',
+                                        background: { base: 'linear-gradient(135deg, #ffe5d1, #ffc89e)', _dark: 'linear-gradient(135deg, #5a3d2d, #7a5038)' },
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         fontSize: '3xl',
                                         fontWeight: '700',
-                                        border: '4px solid #fff7f1',
-                                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                        border: { base: '4px solid #fff7f1', _dark: '4px solid #2d333b' },
+                                        boxShadow: 'shadow.medium',
                                     })}
                                 >
                                     {userName.slice(0, 2).toUpperCase()}
@@ -142,13 +142,13 @@ export function UserDashboard({
                             className={css({
                                 padding: '3',
                                 borderRadius: 'xl',
-                                background: 'rgba(224,123,83,0.1)',
+                                background: 'accentSoft',
                                 color: 'primary',
                                 fontWeight: '600',
                                 textDecoration: 'none',
                                 transition: 'all 150ms ease',
                                 _hover: {
-                                    background: 'rgba(224,123,83,0.2)',
+                                    background: 'accent.soft',
                                 },
                             })}
                         >
@@ -171,7 +171,7 @@ export function UserDashboard({
                                 bg: 'surface.elevated',
                                 borderRadius: '2xl',
                                 p: '5',
-                                boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+                                boxShadow: 'shadow.medium',
                             })}
                         >
                             <div
@@ -234,7 +234,7 @@ export function UserDashboard({
                             background: 'surface.elevated',
                             textDecoration: 'none',
                             color: 'inherit',
-                            boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.small',
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
@@ -260,7 +260,7 @@ export function UserDashboard({
                             background: 'surface.elevated',
                             textDecoration: 'none',
                             color: 'inherit',
-                            boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.small',
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
@@ -286,7 +286,7 @@ export function UserDashboard({
                             background: 'surface.elevated',
                             textDecoration: 'none',
                             color: 'inherit',
-                            boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.small',
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
@@ -312,7 +312,7 @@ export function UserDashboard({
                             background: 'surface.elevated',
                             textDecoration: 'none',
                             color: 'inherit',
-                            boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.small',
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',

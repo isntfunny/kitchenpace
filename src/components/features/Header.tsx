@@ -10,6 +10,7 @@ import { useMemo } from 'react';
 import { NotificationBell } from '@app/components/notifications/NotificationBell';
 import { useAdminInboxCount } from '@app/components/notifications/useAdminInboxCount';
 import { HeaderSearch } from '@app/components/search/HeaderSearch';
+import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
@@ -202,6 +203,7 @@ export function Header() {
     const isAdmin = isAuthenticated && userRole === 'ADMIN';
     const isModerator = isAuthenticated && userRole === 'MODERATOR';
     const isAdminOrMod = isAdmin || isModerator;
+    const dark = useIsDark();
 
     const [Icon1, Icon2, Icon3] = useMemo(() => getRandomIcons(), []);
 
@@ -215,7 +217,9 @@ export function Header() {
                 boxShadow: '0 4px 30px rgba(0,0,0,0.15)',
             })}
             style={{
-                background: `linear-gradient(135deg, rgba(224,123,83,0.05), rgba(248,181,0,0.02))`,
+                background: dark
+                    ? 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(248,181,0,0.04))'
+                    : 'linear-gradient(135deg, rgba(224,123,83,0.05), rgba(248,181,0,0.02))',
                 backdropFilter: 'blur(8px)',
             }}
         >
@@ -384,7 +388,7 @@ function ModerationHeaderLink({ isAdmin }: { isAdmin: boolean }) {
                         minWidth: '18px',
                         height: '18px',
                         borderRadius: 'full',
-                        background: '#dc2626',
+                        background: 'status.danger',
                         color: 'white',
                         fontSize: '0.65rem',
                         fontWeight: '700',

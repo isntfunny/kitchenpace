@@ -225,7 +225,7 @@ export function NotificationSettingsCard({ profile }: NotificationSettingsCardPr
                                         width: '22px',
                                         height: '22px',
                                         borderRadius: 'full',
-                                        background: 'white',
+                                        background: 'surface',
                                         boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                                         transition: 'left 150ms ease',
                                     })}

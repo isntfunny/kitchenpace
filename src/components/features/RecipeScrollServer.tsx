@@ -31,6 +31,10 @@ export function RecipeScrollServer({ title, recipes }: RecipeScrollProps) {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '3',
+                p: '4',
+                borderRadius: '2xl',
+                bg: 'surface',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
             })}
         >
             <h2

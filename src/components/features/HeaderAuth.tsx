@@ -124,6 +124,13 @@ export function HeaderAuth() {
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '4',
+                            transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
+                            '&[data-state="open"]': {
+                                animation: 'scaleUp 200ms ease',
+                            },
+                            '&[data-state="closed"]': {
+                                animation: 'scaleDown 150ms ease',
+                            },
                         })}
                         sideOffset={8}
                         align="end"

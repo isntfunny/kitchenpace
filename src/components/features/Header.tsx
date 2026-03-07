@@ -110,8 +110,14 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
                         borderColor: 'border',
                         padding: '4',
                         boxShadow: '0 40px 120px rgba(0,0,0,0.15)',
-                        animation: 'scaleUp 180ms ease',
                         zIndex: 100,
+                        transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
+                        '&[data-state="open"]': {
+                            animation: 'scaleUp 200ms ease',
+                        },
+                        '&[data-state="closed"]': {
+                            animation: 'scaleDown 150ms ease',
+                        },
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '4',

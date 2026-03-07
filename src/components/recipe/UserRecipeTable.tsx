@@ -162,7 +162,7 @@ const columns: ColumnDef<RecipeWithActions>[] = [
                     })}
                     onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 >
-                    Gekocht
+                    Zubereitet
                     <ArrowUpDown size={14} />
                 </button>
             );

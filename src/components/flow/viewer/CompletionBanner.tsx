@@ -16,7 +16,7 @@ export function CompletionBanner() {
                 <Sparkles style={{ width: 32, height: 32, color: '#00b894', display: 'inline' }} />
             </div>
             <div style={{ fontSize: 20, fontWeight: 800, color: '#00b894', marginBottom: 4 }}>
-                Fertig gekocht!
+                Fertig zubereitet!
             </div>
             <div style={{ fontSize: 14, color: '#55b89a' }}>Guten Appetit!</div>
         </div>

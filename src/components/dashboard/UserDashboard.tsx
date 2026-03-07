@@ -45,7 +45,7 @@ const defaultStats: DashboardStatCard[] = [
     { id: '2', label: 'Favoriten', value: 156, icon: <Heart size={20} />, color: '#fd79a8' },
     {
         id: '3',
-        label: 'Gekochte Gerichte',
+        label: 'Zubereitete Gerichte',
         value: 89,
         icon: <ChefHat size={20} />,
         color: '#00b894',

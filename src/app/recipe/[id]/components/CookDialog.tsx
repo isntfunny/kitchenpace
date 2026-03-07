@@ -56,7 +56,7 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
                 })}
             >
                 <ChefHat size={20} />
-                <span>Als gekocht markieren</span>
+                <span>Als zubereitet markieren</span>
             </h3>
 
             <div

@@ -55,7 +55,7 @@ const SETTING_COPY: Record<
         labelOff: 'Nur Durchschnittswerte',
     },
     notifyOnRecipeCooked: {
-        title: 'Rezept gekocht',
+        title: 'Rezept zubereitet',
         description: 'Wenn jemand dein Rezept ausprobiert und teilt, bekommst du Bescheid.',
         labelOn: 'Kochgeschichten empfangen',
         labelOff: 'Nur kritische Meldungen',

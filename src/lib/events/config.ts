@@ -197,8 +197,8 @@ export const EVENT_DEFINITIONS: EventDefinitionsMap = {
             type: 'RECIPE_COOKED',
             preference: 'notifyOnRecipeCooked',
             template: ({ actorLabel, data }) => ({
-                title: 'Rezept gekocht',
-                message: `${actorLabel} hat ${data.recipeTitle} gekocht${
+                title: 'Rezept zubereitet',
+                message: `${actorLabel} hat ${data.recipeTitle} zubereitet${
                     data.hasImage ? ' und ein Foto geteilt' : ''
                 }`,
             }),

@@ -33,7 +33,7 @@ export interface ActivityFeedItem {
 /** Template placeholders: {recipe} = linked recipe title, {target} = linked target user */
 export const ACTIVITY_DECOR: Record<string, { icon: ActivityIconName; bg: string; template: string }> = {
     RECIPE_CREATED: { icon: 'edit3', bg: '#6c5ce7', template: 'hat {recipe} erstellt' },
-    RECIPE_COOKED: { icon: 'flame', bg: '#e17055', template: 'hat {recipe} gekocht' },
+    RECIPE_COOKED: { icon: 'flame', bg: '#e17055', template: 'hat {recipe} zubereitet' },
     RECIPE_RATED: { icon: 'star', bg: '#f8b500', template: 'hat {recipe} bewertet' },
     RECIPE_COMMENTED: { icon: 'message-square', bg: '#fd79a8', template: 'hat {recipe} kommentiert' },
     RECIPE_FAVORITED: { icon: 'bookmark', bg: '#74b9ff', template: 'hat {recipe} gespeichert' },

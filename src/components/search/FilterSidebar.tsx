@@ -600,7 +600,7 @@ export function FilterSidebar({
                             <RangeControl
                                 filters={filters}
                                 onFiltersChange={onFiltersChange}
-                                label="Mind. gekocht"
+                                label="Mind. zubereitet"
                                 description="häufig ausprobiert"
                                 minField="minCookCount"
                                 fallback={RANGE_FALLBACKS.cookCount}

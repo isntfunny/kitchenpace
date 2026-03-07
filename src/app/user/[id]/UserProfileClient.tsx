@@ -222,7 +222,7 @@ const ACTIVITY_CONFIG: Record<string, { icon: ReactNode; template: string[]; bgC
     },
     RECIPE_COOKED: {
         icon: <Flame size={16} />,
-        template: ['hat', 'gekocht'],
+        template: ['hat', 'zubereitet'],
         bgColor: '#fef3c7',
     },
     RECIPE_RATED: {

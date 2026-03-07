@@ -16,7 +16,7 @@ const SETTING_COPY: Record<
     showInActivity: {
         title: 'In Aktivitäts-Feed anzeigen',
         description:
-            'Bestimme, ob deine Aktivitäten (z.B. Rezepte erstellt, gekocht, bewertet) im Community-Feed sichtbar sind.',
+            'Bestimme, ob deine Aktivitäten (z.B. Rezepte erstellt, zubereitet, bewertet) im Community-Feed sichtbar sind.',
         labelOn: 'Aktivitäten sichtbar',
         labelOff: 'Aktivitäten verborgen',
     },

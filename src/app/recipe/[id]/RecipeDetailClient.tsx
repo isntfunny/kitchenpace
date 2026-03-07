@@ -167,7 +167,7 @@ export function RecipeDetailClient({
             src: img.imageUrl,
             thumbKey: img.imageKey ?? null,
             title: img.user.name || img.user.nickname || 'Küchenfreund',
-            subtitle: img.caption || 'Gekochtes Foto',
+            subtitle: img.caption || 'Foto',
         }));
         return [primary, ...extras];
     }, [cookImages, recipe.image, recipe.imageKey, recipe.title]);
@@ -983,7 +983,7 @@ export function RecipeDetailClient({
                                             })}
                                         >
                                             <CheckCircle size={16} />
-                                            Gekocht
+                                            Zubereitet
                                         </span>
                                     ) : (
                                         <span
@@ -994,7 +994,7 @@ export function RecipeDetailClient({
                                             })}
                                         >
                                             <ChefHat size={16} />
-                                            Gekocht
+                                            Zubereitet
                                         </span>
                                     )}{' '}
                                     · {cookCount}
@@ -1044,7 +1044,7 @@ export function RecipeDetailClient({
                                         })}
                                     >
                                         <ChefHat size={20} />
-                                        <span>Als gekocht markieren</span>
+                                        <span>Als zubereitet markieren</span>
                                     </h3>
 
                                     <div

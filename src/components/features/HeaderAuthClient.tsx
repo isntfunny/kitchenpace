@@ -82,6 +82,13 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                             padding: '2',
                             boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
                             zIndex: 100,
+                            transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
+                            '&[data-state="open"]': {
+                                animation: 'scaleUp 200ms ease',
+                            },
+                            '&[data-state="closed"]': {
+                                animation: 'scaleDown 150ms ease',
+                            },
                         })}
                         sideOffset={8}
                     >

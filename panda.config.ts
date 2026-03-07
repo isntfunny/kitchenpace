@@ -49,6 +49,14 @@ export default defineConfig({
                     from: { height: 'var(--radix-accordion-content-height)' },
                     to: { height: '0' },
                 },
+                scaleUp: {
+                    from: { opacity: '0', transform: 'scale(0.96) translateY(-4px)' },
+                    to: { opacity: '1', transform: 'scale(1) translateY(0)' },
+                },
+                scaleDown: {
+                    from: { opacity: '1', transform: 'scale(1) translateY(0)' },
+                    to: { opacity: '0', transform: 'scale(0.96) translateY(-4px)' },
+                },
             },
 
             tokens: {

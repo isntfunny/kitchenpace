@@ -96,8 +96,14 @@ export function NotificationBell() {
                         background: 'surface',
                         boxShadow: '0 40px 120px rgba(0,0,0,0.15)',
                         padding: '4',
-                        animation: 'scaleUp 200ms ease',
                         display: 'flex',
+                        transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
+                        '&[data-state="open"]': {
+                            animation: 'scaleUp 200ms ease',
+                        },
+                        '&[data-state="closed"]': {
+                            animation: 'scaleDown 150ms ease',
+                        },
                         flexDirection: 'column',
                         gap: '3',
                         zIndex: 9999,

@@ -289,7 +289,7 @@ export function CategoryLanding({
                     >
                         {[
                             { show: true, icon: ChefHat, label: 'Rezepte', value: category.recipeCount },
-                            { show: category.stats.totalCooks > 0, icon: Flame, label: 'Mal gekocht', value: category.stats.totalCooks },
+                            { show: category.stats.totalCooks > 0, icon: Flame, label: 'Mal zubereitet', value: category.stats.totalCooks },
                             { show: category.stats.avgRating > 0, icon: Star, label: 'Bewertung', value: `${category.stats.avgRating} ★` },
                             { show: category.stats.totalRatings > 0, icon: Bookmark, label: 'Bewertungen', value: category.stats.totalRatings },
                         ]
@@ -352,7 +352,7 @@ export function CategoryLanding({
                         />
 
                         <RecipeSection
-                            title="Am meisten gekocht"
+                            title="Am meisten zubereitet"
                             icon={Flame}
                             recipes={mostCooked}
                             accentColor={color}

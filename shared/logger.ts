@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { SeqTransport } from 'winston-seq';
+import { Seq as SeqTransport } from 'winston-seq';
 
 const { NODE_ENV } = process.env;
 
@@ -22,11 +22,7 @@ if (process.env.SEQ_URL && process.env.SEQ_API_KEY) {
         new SeqTransport({
             serverUrl: process.env.SEQ_URL,
             apiKey: process.env.SEQ_API_KEY,
-            onError: (e) => console.error('[seq]', e),
-            defaultProperties: {
-                Environment: NODE_ENV || 'development',
-            },
-        }),
+        }) as unknown as winston.transport,
     );
 }
 

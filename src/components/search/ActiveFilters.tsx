@@ -187,7 +187,7 @@ export function ActiveFilters({ filters, onRemove }: ActiveFiltersProps) {
     if (typeof filters.minCookCount === 'number') {
         push({
             id: 'minCookCount',
-            label: `Gekocht ≥ ${filters.minCookCount}x`,
+            label: `Zubereitet ≥ ${filters.minCookCount}x`,
             onRemove: () => onRemove({ minCookCount: undefined }),
         });
     }

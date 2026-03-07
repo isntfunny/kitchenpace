@@ -553,7 +553,7 @@ export default async function ProfilePage() {
                                 {[
                                     { label: 'Rezepte', value: stats.recipeCount },
                                     { label: 'Favoriten', value: stats.favoriteCount },
-                                    { label: 'Mal gekocht', value: stats.cookedCount },
+                                    { label: 'Mal zubereitet', value: stats.cookedCount },
                                     { label: 'Bewertungen', value: stats.ratingCount },
                                     { label: 'Entwürfe', value: stats.draftCount },
                                 ].map(({ label, value }) => (
@@ -638,7 +638,7 @@ export default async function ProfilePage() {
                         <DraftSection drafts={draftRecipes} />
                         <TopRecipesSection recipes={topRecipes} />
                         <HistorySection
-                            title="Zuletzt gekocht"
+                            title="Zuletzt zubereitet"
                             items={cookItems}
                             href="/my-recipes"
                         />

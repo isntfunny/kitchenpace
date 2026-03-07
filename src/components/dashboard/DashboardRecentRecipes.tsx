@@ -18,7 +18,7 @@ interface DashboardRecentRecipesProps {
 
 const filters = [
     { id: 'all', label: 'Alle' },
-    { id: 'cooked', label: 'Gekocht' },
+    { id: 'cooked', label: 'Zubereitet' },
     { id: 'favorite', label: 'Favoriten' },
     { id: 'planned', label: 'Geplant' },
 ];

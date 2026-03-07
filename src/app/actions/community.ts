@@ -1,6 +1,6 @@
 'use server';
 
-import { ACTIVITY_DECOR, mapLogToFeedItem } from '@app/lib/activity-utils';
+import { ACTIVITY_DECOR, mapLogToFeedItem, type ActivityFeedItem } from '@app/lib/activity-utils';
 import { prisma } from '@shared/prisma';
 
 
@@ -367,8 +367,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (totalCooks > 0) {
         tips.push({
             icon: 'flame',
-            title: 'Gekocht wurde',
-            content: `${totalCooks} Mal wurden Rezepte nachgekocht`,
+            title: 'Zubereitet wurde',
+            content: `${totalCooks} Mal wurden Rezepte nachgemacht`,
             iconBg: TIP_ACCENTS[5],
         });
     }

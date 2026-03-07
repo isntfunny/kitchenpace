@@ -76,7 +76,7 @@ export function RecipeActionButtons({
                         })}
                     >
                         <CheckCircle size={16} />
-                        Gekocht
+                        Zubereitet
                     </span>
                 ) : (
                     <span
@@ -87,7 +87,7 @@ export function RecipeActionButtons({
                         })}
                     >
                         <ChefHat size={16} />
-                        Gekocht
+                        Zubereitet
                     </span>
                 )}{' '}
                 · {cookCount}

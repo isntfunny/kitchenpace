@@ -1,5 +1,9 @@
+import { createRequire } from 'module';
+
 import winston from 'winston';
-import SeqTransport from 'winston-seq-updated';
+
+const require = createRequire(import.meta.url);
+const SeqTransport = require('winston-seq-updated');
 
 const { NODE_ENV } = process.env;
 

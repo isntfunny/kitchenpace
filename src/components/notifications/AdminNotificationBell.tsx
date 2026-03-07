@@ -1,41 +1,39 @@
 'use client';
 
-import { Bell } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useSession } from 'next-auth/react';
 
+import type { AdminInboxItem } from '@app/lib/admin-inbox';
 import { css } from 'styled-system/css';
 
 import { InboxDropdown } from './InboxDropdown';
-import { NotificationItem } from './NotificationItem';
-import { useNotifications } from './useNotifications';
-import { resolveNotificationHref } from './utils';
+import { InboxItemCard } from './InboxItemCard';
+import { useAdminNotifications } from './useAdminNotifications';
 
-export function NotificationBell() {
-    const { data: session, status } = useSession();
-    const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications();
-    const visibleNotifications = notifications.slice(0, 19);
-    const badgeContent = unreadCount > 9 ? '9+' : unreadCount;
+function resolveAdminNotificationHref(notification: Pick<AdminInboxItem, 'href'>) {
+    return notification.href;
+}
 
-    const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
-
-    if (!isAuthenticated) {
-        return null;
-    }
-
-    const handleMarkHovered = (id: string) => {
-        const notification = notifications.find((item) => item.id === id);
-        if (notification && !notification.read) {
-            markAsRead([id]);
-        }
+function extractMedia(notification: Pick<AdminInboxItem, 'data'>) {
+    return {
+        actor: notification.data.actor ?? null,
+        recipe: notification.data.recipe ?? null,
+        cookImage: notification.data.cookImage ?? null,
+        score: notification.data.score ?? null,
+        topRatedCategory: notification.data.recipe?.topRatedCategory ?? null,
     };
+}
+
+export function AdminNotificationBell() {
+    const { notifications, count, isLoading } = useAdminNotifications();
+    const badgeContent = count > 9 ? '9+' : count;
 
     return (
         <InboxDropdown
             trigger={
                 <button
                     type="button"
-                    aria-label="Benachrichtigungen öffnen"
+                    aria-label="Admin-Postfach öffnen"
                     className={css({
                         position: 'relative',
                         width: '10',
@@ -54,12 +52,12 @@ export function NotificationBell() {
                 >
                     <motion.span
                         style={{ display: 'inline-flex' }}
-                        whileHover={{ rotate: [0, 12, -8, 5, 0] }}
-                        transition={{ duration: 0.5 }}
+                        whileHover={{ rotate: [0, 8, -5, 0] }}
+                        transition={{ duration: 0.4 }}
                     >
-                        <Bell size={20} />
+                        <ShieldAlert size={18} />
                     </motion.span>
-                    {unreadCount > 0 && (
+                    {count > 0 && (
                         <motion.span
                             className={css({
                                 position: 'absolute',
@@ -75,7 +73,7 @@ export function NotificationBell() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                             })}
-                            animate={{ scale: [1, 1.2, 1] }}
+                            animate={{ scale: [1, 1.15, 1] }}
                             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                         >
                             {badgeContent}
@@ -83,22 +81,21 @@ export function NotificationBell() {
                     )}
                 </button>
             }
-            title="Benachrichtigungen"
-            subtitle="Die neuesten 19 Einträge"
-            actionLabel={notifications.length > 0 ? 'Alle lesen' : undefined}
-            onAction={notifications.length > 0 ? () => markAllAsRead() : undefined}
+            title="Admin-Postfach"
+            subtitle="Moderation und Meldungen mit offenem Handlungsbedarf"
             isLoading={isLoading}
-            isEmpty={visibleNotifications.length === 0}
-            emptyLabel="Noch keine Benachrichtigungen"
-            footerHref="/notifications"
-            footerLabel="Alle anzeigen"
+            isEmpty={notifications.length === 0}
+            emptyLabel="Keine offenen Admin-Hinweise"
         >
-            {visibleNotifications.map((notification) => (
-                <NotificationItem
+            {notifications.map((notification) => (
+                <InboxItemCard
                     key={notification.id}
-                    notification={notification}
-                    onHover={() => handleMarkHovered(notification.id)}
-                    href={resolveNotificationHref(notification)}
+                    href={resolveAdminNotificationHref(notification)}
+                    title={notification.title}
+                    message={notification.message}
+                    createdAt={notification.createdAt}
+                    emphasized
+                    media={extractMedia(notification)}
                 />
             ))}
         </InboxDropdown>

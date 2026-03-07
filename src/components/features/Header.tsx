@@ -4,9 +4,9 @@ import { LayoutGrid, Menu, Plus, Shield, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
-import { useCallback, useEffect, useState } from 'react';
 
 import { NotificationBell } from '@app/components/notifications/NotificationBell';
+import { useAdminInboxCount } from '@app/components/notifications/useAdminInboxCount';
 import { HeaderSearch } from '@app/components/search/HeaderSearch';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
@@ -272,20 +272,7 @@ export function Header() {
 }
 
 function ModerationHeaderLink({ isAdmin }: { isAdmin: boolean }) {
-    const [count, setCount] = useState(0);
-
-    const fetchCount = useCallback(() => {
-        fetch('/api/moderation/stats')
-            .then((r) => r.json())
-            .then((d: { total?: number }) => setCount(d.total ?? 0))
-            .catch(() => {});
-    }, []);
-
-    useEffect(() => {
-        fetchCount();
-        const interval = setInterval(fetchCount, 60_000);
-        return () => clearInterval(interval);
-    }, [fetchCount]);
+    const { count } = useAdminInboxCount();
 
     const Icon = isAdmin ? ShieldCheck : Shield;
     const href = isAdmin ? '/admin' : '/moderation';

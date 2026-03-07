@@ -1,8 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
 import useSWR from 'swr';
 
+import type { NotificationView } from '@app/lib/events/views';
+import { connectStream, disconnectStream, onStreamEvent } from '@app/lib/realtime/clientStream';
+
 const API_PATH = '/api/notifications';
+const STREAM_URL = '/api/notifications/stream';
 
 const fetcher = (url: string) =>
     fetch(url, { cache: 'no-store' }).then((response) => {
@@ -13,22 +18,39 @@ const fetcher = (url: string) =>
     });
 
 type NotificationsResponse = {
-    notifications: Array<{
-        id: string;
-        title: string;
-        message: string;
-        type: string;
-        data: Record<string, unknown> | null;
-        read: boolean;
-        createdAt: string;
-    }>;
+    notifications: NotificationView[];
     unreadCount: number;
 };
 
 export function useNotifications(options?: { refreshInterval?: number }) {
     const { data, error, mutate, isLoading } = useSWR<NotificationsResponse>(API_PATH, fetcher, {
-        refreshInterval: options?.refreshInterval ?? 12_000,
+        refreshInterval: options?.refreshInterval ?? 60_000,
     });
+
+    useEffect(() => {
+        connectStream(STREAM_URL);
+
+        const off = onStreamEvent('notification.created', (event: MessageEvent<string>) => {
+            const payload = JSON.parse(event.data) as NotificationView;
+            mutate((current) => {
+                const existing = current?.notifications ?? [];
+                if (existing.some((notification) => notification.id === payload.id)) {
+                    return current;
+                }
+
+                const notifications = [payload, ...existing].slice(0, 50);
+                return {
+                    notifications,
+                    unreadCount: notifications.filter((notification) => !notification.read).length,
+                };
+            }, false);
+        });
+
+        return () => {
+            off();
+            disconnectStream();
+        };
+    }, [mutate]);
 
     const markAsRead = async (ids: string[], markRead = true) => {
         if (ids.length === 0) {
@@ -41,7 +63,20 @@ export function useNotifications(options?: { refreshInterval?: number }) {
             body: JSON.stringify({ ids, markRead }),
         });
 
-        mutate();
+        mutate((current) => {
+            if (!current) {
+                return current;
+            }
+
+            const notifications = current.notifications.map((notification) =>
+                ids.includes(notification.id) ? { ...notification, read: markRead } : notification,
+            );
+
+            return {
+                notifications,
+                unreadCount: notifications.filter((notification) => !notification.read).length,
+            };
+        }, false);
     };
 
     const markAllAsRead = async () => {

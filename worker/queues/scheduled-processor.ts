@@ -35,7 +35,7 @@ export async function processTrendingRecipes(
                 Array<{ id: string; score: number }>
             >`
                 WITH recent_recipes AS (
-                    SELECT r.id, r."imageKey" IS NOT NULL as has_image
+                    SELECT r.id, r."imageKey" IS NOT NULL as has_image, r."rating", r."ratingCount"
                     FROM "Recipe" r
                     WHERE r."publishedAt" >= NOW() - INTERVAL '30 days'
                     AND r."status" = 'PUBLISHED'

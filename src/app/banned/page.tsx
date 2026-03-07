@@ -41,7 +41,7 @@ export default async function BannedPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'linear-gradient(180deg, #fff8f4 0%, #fef0e8 40%, #fceadd 100%)',
+                background: { base: 'linear-gradient(180deg, #fff8f4 0%, #fef0e8 40%, #fceadd 100%)', _dark: 'linear-gradient(180deg, #1a1715 0%, #231e1a 40%, #1c1815 100%)' },
                 px: '4',
             })}
         >
@@ -53,7 +53,7 @@ export default async function BannedPage() {
             >
                 <ShieldAlert
                     size={64}
-                    className={css({ color: '#dc2626', mx: 'auto', mb: '4' })}
+                    className={css({ color: 'status.danger', mx: 'auto', mb: '4' })}
                 />
                 <h1
                     className={css({
@@ -113,9 +113,9 @@ export default async function BannedPage() {
                         fontWeight: '600',
                         fontSize: 'sm',
                         color: 'white',
-                        bg: '#dc2626',
+                        bg: 'status.danger',
                         textDecoration: 'none',
-                        _hover: { bg: '#b91c1c' },
+                        _hover: { bg: { base: '#b91c1c', _dark: '#dc2626' } },
                     })}
                 >
                     Support kontaktieren

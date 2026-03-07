@@ -3,17 +3,12 @@ import Link from 'next/link';
 
 import { Header } from '@app/components/features/Header';
 import { PALETTE } from '@app/lib/palette';
+import { css } from 'styled-system/css';
 
 export default function NotFound() {
     return (
         <div
-            style={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                backgroundColor: '#fffcf9',
-                color: '#2d3436',
-            }}
+            className={css({ minHeight: '100vh', display: 'flex', flexDirection: 'column', bg: 'background', color: 'foreground' })}
         >
             <Header />
             <main
@@ -76,22 +71,22 @@ export default function NotFound() {
                 </div>
 
                 <h1
+                    className={css({ color: 'text' })}
                     style={{
                         fontSize: 'clamp(2rem, 5vw, 3rem)',
                         fontWeight: 800,
                         fontFamily: 'Georgia, serif',
                         marginBottom: '0.75rem',
                         lineHeight: 1.15,
-                        color: '#2d3436',
                     }}
                 >
                     Gericht nicht gefunden
                 </h1>
 
                 <p
+                    className={css({ color: 'foreground.muted' })}
                     style={{
                         fontSize: '1.05rem',
-                        color: '#636e72',
                         maxWidth: '420px',
                         lineHeight: 1.65,
                         marginBottom: '2.5rem',

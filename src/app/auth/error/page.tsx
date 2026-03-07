@@ -22,10 +22,10 @@ export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps
             >
                 <div
                     className={css({
-                        background: 'white',
+                        background: 'surface',
                         borderRadius: '2xl',
                         padding: { base: '8', md: '10' },
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
+                        boxShadow: 'shadow.large',
                         maxWidth: '520px',
                         width: '100%',
                         textAlign: 'center',

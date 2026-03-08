@@ -45,7 +45,14 @@ services:
             retries: 5
 
     app:
-        image: registry.isntfunny.de/kitchenpace/app:live
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: runner
+            extra_hosts:
+                - 'host.docker.internal:host-gateway'
+            args:
+                - DATABASE_URL=${DATABASE_URL}
         container_name: kitchenpace-app
         env_file:
             - .env
@@ -59,7 +66,10 @@ services:
         restart: unless-stopped
 
     worker:
-        image: registry.isntfunny.de/kitchenpace/worker:live
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: worker
         container_name: kitchenpace-worker
         extra_hosts:
             - 'host.docker.internal:host-gateway'

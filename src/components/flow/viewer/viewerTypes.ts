@@ -4,10 +4,8 @@ export interface RecipeStepsViewerProps {
     nodes: FlowNodeSerialized[];
     edges: FlowEdgeSerialized[];
     ingredients?: { id: string; name: string; amount?: string; unit?: string }[];
-    /** Recipe title — shown on the cast receiver. */
-    recipeTitle?: string;
-    /** Recipe hero image URL — shown on the cast receiver beside the current step. */
-    recipeImage?: string;
+    /** Recipe slug — used to send the recipe to a Cast device. */
+    recipeSlug?: string;
 }
 
 export interface TimerState {

@@ -1,7 +1,7 @@
 'use client';
 
-import { List, Smartphone, Tv2, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { List, Smartphone, X } from 'lucide-react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 
 import { CastButton } from '@app/components/cast/CastButton';
 import { useCast } from '@app/hooks/useCast';
@@ -13,10 +13,10 @@ import { MobileView } from './viewer/MobileView';
 import { NodeDetailModal } from './viewer/NodeDetailModal';
 import { SimpleTextView } from './viewer/SimpleTextView';
 import { viewerReducer } from './viewer/viewerTypes';
-import type { RecipeStepsViewerProps, TimerState, ViewerAction } from './viewer/viewerTypes';
+import type { RecipeStepsViewerProps, TimerState } from './viewer/viewerTypes';
 import { buildTopology } from './viewer/viewerUtils';
 
-export function RecipeStepsViewer({ nodes, edges, ingredients, recipeTitle, recipeImage }: RecipeStepsViewerProps) {
+export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: RecipeStepsViewerProps) {
     const { columnGroups, dagreY, outgoing } = useMemo(() => buildTopology(nodes, edges), [nodes, edges]);
 
     const [state, dispatch] = useReducer(viewerReducer, {
@@ -27,58 +27,14 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeTitle, reci
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'text'>('desktop');
 
-    // ── Google Cast ─────────────────────────────────────────────────────────
+    // ── Google Cast — send recipe slug to TV ─────────────────────────────
     const { castState, startCast, stopCast, sendMessage } = useCast();
-    const isCasting = castState === 'connected';
 
-    // Send LOAD_RECIPE when cast session is established.
     useEffect(() => {
-        if (!isCasting) return;
-        sendMessage({
-            type: 'LOAD_RECIPE',
-            title: recipeTitle ?? 'KüchenTakt',
-            recipeImage,
-            nodes,
-            edges,
-            stepIndex: 0,
-        });
-    // We only want to re-send on cast connect, not on every nodes change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isCasting]);
-
-    // Intercept dispatcher: forward timer and step-completion actions to the receiver.
-    const castDispatch = useCallback(
-        (action: ViewerAction) => {
-            dispatch(action);
-            if (!isCasting) return;
-            if (action.type === 'timerStart')
-                sendMessage({ type: 'TIMER_ACTION', nodeId: action.nodeId, action: 'start' });
-            else if (action.type === 'timerPause')
-                sendMessage({ type: 'TIMER_ACTION', nodeId: action.nodeId, action: 'pause' });
-            else if (action.type === 'timerReset')
-                sendMessage({ type: 'TIMER_ACTION', nodeId: action.nodeId, action: 'reset' });
-            else if (action.type === 'toggle') {
-                // Determine the NEW completed state (toggle means flip).
-                sendMessage({
-                    type: 'STEP_COMPLETE',
-                    nodeId: action.nodeId,
-                    completed: !state.completed.has(action.nodeId),
-                });
-            }
-        },
-        [dispatch, isCasting, sendMessage, state.completed],
-    );
-
-    // Called by MobileView when the active step changes — sync to receiver.
-    const handleMobileNavigate = useCallback(
-        (nodeId: string) => {
-            if (!isCasting) return;
-            const idx = nodes.findIndex((n) => n.id === nodeId);
-            if (idx >= 0) sendMessage({ type: 'STEP_CHANGE', stepIndex: idx });
-        },
-        [isCasting, nodes, sendMessage],
-    );
-    // ────────────────────────────────────────────────────────────────────────
+        if (castState !== 'connected' || !recipeSlug) return;
+        sendMessage({ type: 'LOAD_RECIPE', slug: recipeSlug });
+    }, [castState, recipeSlug, sendMessage]);
+    // ─────────────────────────────────────────────────────────────────────
 
     // Detect mobile devices
     const [isMobileDevice, setIsMobileDevice] = useState(false);
@@ -135,12 +91,12 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeTitle, reci
     const sharedState = {
         completed: state.completed,
         timers: state.timers,
-        dispatch: castDispatch,
+        dispatch,
         onOpenDetail: setSelectedNodeId,
         ingredients,
     };
 
-    const mobileProps = { ...sharedState, columnGroups, edges, dagreY, onNavigate: handleMobileNavigate };
+    const mobileProps = { ...sharedState, columnGroups, edges, dagreY };
     const selectedNode = selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) : null;
 
     return (
@@ -158,21 +114,7 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeTitle, reci
                 >
                     <button
                         type="button"
-                        onClick={() => {
-                            setViewMode('mobile');
-                            // When cast is active and user starts mobile cooking mode,
-                            // ensure the receiver is loaded with the latest recipe data.
-                            if (isCasting) {
-                                sendMessage({
-                                    type: 'LOAD_RECIPE',
-                                    title: recipeTitle ?? 'KüchenTakt',
-                                    recipeImage,
-                                    nodes,
-                                    edges,
-                                    stepIndex: 0,
-                                });
-                            }
-                        }}
+                        onClick={() => setViewMode('mobile')}
                         className={css({
                             display: 'flex',
                             alignItems: 'center',
@@ -193,25 +135,12 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeTitle, reci
                         <Smartphone style={{ width: 18, height: 18 }} />
                         Rezept starten
                     </button>
-                    {/* Cast button — visible when Cast SDK is available */}
                     {castState !== 'unavailable' && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <CastButton
-                                castState={castState}
-                                onStart={() => {
-                                    startCast();
-                                    // Pre-open mobile cooking mode when casting starts on mobile.
-                                    if (viewMode !== 'mobile') setViewMode('mobile');
-                                }}
-                                onStop={stopCast}
-                            />
-                            {isCasting && (
-                                <span style={{ fontSize: 12, color: '#e07b53', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <Tv2 style={{ width: 13, height: 13 }} />
-                                    Auf TV aktiv
-                                </span>
-                            )}
-                        </div>
+                        <CastButton
+                            castState={castState}
+                            onStart={startCast}
+                            onStop={stopCast}
+                        />
                     )}
                     <button
                         type="button"
@@ -294,7 +223,6 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeTitle, reci
                         >
                             <Smartphone style={{ width: 13, height: 13 }} /> Mobil
                         </button>
-                        {/* Google Cast button */}
                         <CastButton
                             castState={castState}
                             onStart={startCast}
@@ -423,10 +351,10 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeTitle, reci
                     timerState={state.timers.get(selectedNodeId!)}
                     completed={state.completed.has(selectedNodeId!)}
                     onClose={() => setSelectedNodeId(null)}
-                    onToggle={() => castDispatch({ type: 'toggle', nodeId: selectedNodeId! })}
-                    onTimerStart={() => castDispatch({ type: 'timerStart', nodeId: selectedNodeId! })}
-                    onTimerPause={() => castDispatch({ type: 'timerPause', nodeId: selectedNodeId! })}
-                    onTimerReset={() => castDispatch({ type: 'timerReset', nodeId: selectedNodeId! })}
+                    onToggle={() => dispatch({ type: 'toggle', nodeId: selectedNodeId! })}
+                    onTimerStart={() => dispatch({ type: 'timerStart', nodeId: selectedNodeId! })}
+                    onTimerPause={() => dispatch({ type: 'timerPause', nodeId: selectedNodeId! })}
+                    onTimerReset={() => dispatch({ type: 'timerReset', nodeId: selectedNodeId! })}
                 />
             )}
         </>

@@ -2,33 +2,23 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { FlowEdgeSerialized, FlowNodeSerialized } from '@app/components/flow/editor/editorTypes';
-
 /**
- * Google Cast Application ID.
+ * Google Cast — simplified sender hook.
+ *
+ * The phone starts a cast session and sends only the recipe slug.
+ * The receiver page (`/cast/receiver`) loads `/recipe/[slug]/mobile`
+ * in a fullscreen iframe. All interaction happens via touch on the
+ * Cast device itself — no phone-as-remote.
+ *
  * Register your receiver at https://cast.google.com/publish and set
- * NEXT_PUBLIC_CAST_APP_ID in your environment. Falls back to the default
- * media receiver for development (cast sessions work but custom messages
- * are not supported without a registered custom receiver).
+ * NEXT_PUBLIC_CAST_APP_ID in your environment.
  */
 const CAST_APP_ID = process.env.NEXT_PUBLIC_CAST_APP_ID ?? 'CC1AD845';
 
 /** Namespace for custom messages between sender and receiver. */
 export const CAST_NAMESPACE = 'urn:x-cast:de.kuechentakt.recipe';
 
-export type CastMessage =
-    | {
-          type: 'LOAD_RECIPE';
-          title: string;
-          recipeImage?: string;
-          nodes: FlowNodeSerialized[];
-          edges: FlowEdgeSerialized[];
-          /** Index into the flattened step list (start+servieren excluded). */
-          stepIndex: number;
-      }
-    | { type: 'STEP_CHANGE'; stepIndex: number }
-    | { type: 'TIMER_ACTION'; nodeId: string; action: 'start' | 'pause' | 'reset' }
-    | { type: 'STEP_COMPLETE'; nodeId: string; completed: boolean };
+export type CastMessage = { type: 'LOAD_RECIPE'; slug: string };
 
 export type CastState = 'unavailable' | 'available' | 'connecting' | 'connected';
 
@@ -55,8 +45,6 @@ declare global {
                     SESSION_ENDED: string;
                     NO_SESSION: string;
                 };
-                RemotePlayer: new () => RemotePlayer;
-                RemotePlayerController: new (player: RemotePlayer) => unknown;
             };
         };
         chrome?: {
@@ -71,7 +59,6 @@ interface CastContextInstance {
     setOptions: (opts: {
         receiverApplicationId: string;
         autoJoinPolicy: string;
-        language?: string;
     }) => void;
     requestSession: () => Promise<void>;
     endCurrentSession: (stopCasting: boolean) => void;
@@ -89,20 +76,14 @@ interface CastSession {
     ) => void;
 }
 
-interface RemotePlayer {
-    isConnected: boolean;
-}
-
 export function useCast(): UseCastReturn {
     const [castState, setCastState] = useState<CastState>('unavailable');
     const sessionRef = useRef<CastSession | null>(null);
 
     useEffect(() => {
-        // Load the Cast sender SDK once (idempotent).
         if (typeof window === 'undefined') return;
         if (document.getElementById('google-cast-sdk')) return;
 
-        // Register callback before the script loads.
         window.__onGCastApiAvailable = (isAvailable: boolean) => {
             if (!isAvailable || !window.cast) return;
 
@@ -112,23 +93,19 @@ export function useCast(): UseCastReturn {
                 autoJoinPolicy: window.chrome?.cast.AutoJoinPolicy.ORIGIN_SCOPED ?? 'origin_scoped',
             });
 
-            const handleSessionChange = () => {
-                if (!window.cast) return;
-                const sf = window.cast.framework;
-                const state = ctx.getCurrentSession();
-                const session = state;
-                if (session) {
-                    sessionRef.current = session;
-                    setCastState('connected');
-                } else {
-                    sessionRef.current = null;
-                    setCastState('available');
-                }
-            };
-
             ctx.addEventListener(
                 window.cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-                handleSessionChange,
+                () => {
+                    if (!window.cast) return;
+                    const session = ctx.getCurrentSession();
+                    if (session) {
+                        sessionRef.current = session;
+                        setCastState('connected');
+                    } else {
+                        sessionRef.current = null;
+                        setCastState('available');
+                    }
+                },
             );
 
             setCastState('available');
@@ -147,7 +124,6 @@ export function useCast(): UseCastReturn {
         try {
             await window.cast.framework.CastContext.getInstance().requestSession();
         } catch {
-            // User dismissed the dialog — fall back.
             setCastState('available');
         }
     }, []);

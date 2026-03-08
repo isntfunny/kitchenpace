@@ -7,8 +7,6 @@ import type { FlowEdgeSerialized, FlowNodeSerialized } from '../editor/editorTyp
 export function useMobileNavigation(
     columnGroups: FlowNodeSerialized[][],
     edges: FlowEdgeSerialized[],
-    onNavigate?: (nodeId: string) => void,
-    externalNodeId?: string,
 ) {
     const [position, setPosition] = useState({ col: 0, row: 0 });
     const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -36,22 +34,6 @@ export function useMobileNavigation(
         }
         return { outgoingMap: out, incomingMap: inc, nodePos: pos };
     }, [columnGroups, edges]);
-
-    // Sync to an externally-controlled node (e.g. cast receiver following the phone).
-    useEffect(() => {
-        if (!externalNodeId) return;
-        const pos = nodePos.get(externalNodeId);
-        if (pos) setPosition(pos);
-    // nodePos identity is stable between renders unless columnGroups/edges change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [externalNodeId]);
-
-    // Notify parent when the active node changes (used for cast sync).
-    useEffect(() => {
-        if (currentNode && onNavigate) onNavigate(currentNode.id);
-        // onNavigate is intentionally excluded from deps — we only care about nodeId changes.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentNode?.id]);
 
     // Edge-aware navigation
     const targets = currentNode ? (outgoingMap.get(currentNode.id) ?? []) : [];

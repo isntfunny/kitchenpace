@@ -1,37 +1,23 @@
 'use client';
 
 /**
- * Google Cast Web Receiver page — loaded by Chromecast devices on the TV.
+ * Google Cast Web Receiver — loaded on Chromecast / Nest Hub.
  *
- * The TV displays the same MobileView used on the phone — no duplicate UI code.
- *
- * Setup:
- *  1. Host this app and note the URL, e.g. https://kuechentakt.de/cast/receiver
- *  2. Register a Receiver App at https://cast.google.com/publish with that URL.
- *  3. Set NEXT_PUBLIC_CAST_APP_ID in your .env with the resulting App ID.
- *  4. During development, enrol your Chromecast in the Cast SDK developer console.
- *
- * Message flow:
- *  Phone → [LOAD_RECIPE]  → TV initialises MobileView with nodes/edges
- *  Phone → [STEP_CHANGE]  → TV seeks MobileView to the matching node
- *  Phone → [TIMER_ACTION] → TV starts / pauses / resets that step's timer
- *  Phone → [STEP_COMPLETE]→ TV marks step done
+ * Receives only the recipe slug from the phone, then loads
+ * `/recipe/[slug]/mobile` in a fullscreen iframe. All interaction
+ * (swipe, tap, timers) is handled by the mobile page itself.
  *
  * Touch-capable Cast devices (Google Nest Hub etc.):
- *  The Cast framework injects a <touch-controls> overlay that blocks all touch
- *  events.  We apply the Home Assistant hack: remove the overlay after ctx.start()
- *  and restore overflow-y.  MobileView's own swipe/tap handlers then work natively.
+ *  The Cast framework injects a <touch-controls> overlay that blocks
+ *  all pointer/touch events. We apply the Home Assistant hack: remove
+ *  the overlay after ctx.start() and restore overflow-y so the iframe
+ *  can receive touch events natively.
  */
 
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { MobileView } from '@app/components/flow/viewer/MobileView';
-import { viewerReducer } from '@app/components/flow/viewer/viewerTypes';
-import type { TimerState } from '@app/components/flow/viewer/viewerTypes';
-import { buildTopology } from '@app/components/flow/viewer/viewerUtils';
-import type { FlowEdgeSerialized, FlowNodeSerialized } from '@app/components/flow/editor/editorTypes';
-import type { CastMessage } from '@app/hooks/useCast';
 import { CAST_NAMESPACE } from '@app/hooks/useCast';
+import type { CastMessage } from '@app/hooks/useCast';
 import { PALETTE } from '@app/lib/palette';
 
 // ── Cast Receiver SDK types ─────────────────────────────────────────────
@@ -46,97 +32,44 @@ interface CastReceiverContext {
     getDeviceCapabilities: () => { touch_input_supported?: boolean } | null;
 }
 
-declare global {
-    interface Window {
-        cast?: {
-            framework: {
-                CastReceiverContext: { getInstance: () => CastReceiverContext };
-            };
-        };
-    }
+interface CastReceiverFramework {
+    CastReceiverContext: { getInstance: () => CastReceiverContext };
 }
 // ───────────────────────────────────────────────────────────────────────
 
 export default function CastReceiverPage() {
-    const [nodes, setNodes] = useState<FlowNodeSerialized[]>([]);
-    const [edges, setEdges] = useState<FlowEdgeSerialized[]>([]);
-    const [externalNodeId, setExternalNodeId] = useState<string | undefined>();
-    const [ready, setReady] = useState(false);
-    const [isTouchDevice, setIsTouchDevice] = useState(false);
+    const [recipeUrl, setRecipeUrl] = useState<string | null>(null);
 
-    const [state, dispatch] = useReducer(viewerReducer, {
-        completed: new Set<string>(),
-        timers: new Map<string, TimerState>(),
-    });
-
-    // Global timer tick.
-    useEffect(() => {
-        const id = setInterval(() => dispatch({ type: 'timerTick' }), 1000);
-        return () => clearInterval(id);
-    }, []);
-
-    // Boot the Cast Receiver SDK and listen for messages.
     useEffect(() => {
         if (typeof window === 'undefined') return;
         const script = document.createElement('script');
         script.src = '//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js';
         script.onload = () => {
-            const ctx = window.cast?.framework.CastReceiverContext.getInstance();
+            // The receiver SDK exposes CastReceiverContext on window.cast.framework.
+            // We access it via an untyped cast to avoid conflicting with the sender SDK's
+            // global Window augmentation (which declares a different shape for window.cast).
+             
+            const framework = (window as any).cast?.framework as CastReceiverFramework | undefined;
+            const ctx = framework?.CastReceiverContext.getInstance();
             if (!ctx) return;
 
-            ctx.addCustomMessageListener(CAST_NAMESPACE, ({ data }) => {
+            ctx.addCustomMessageListener(CAST_NAMESPACE, ({ data }: { data: string }) => {
                 let msg: CastMessage;
                 try { msg = JSON.parse(data) as CastMessage; } catch { return; }
 
-                switch (msg.type) {
-                    case 'LOAD_RECIPE': {
-                        setNodes(msg.nodes);
-                        setEdges(msg.edges);
-                        setExternalNodeId(msg.nodes[msg.stepIndex]?.id);
-                        const timers = new Map(
-                            msg.nodes
-                                .filter((n) => n.duration && n.duration > 0)
-                                .map((n) => [n.id, {
-                                    remaining: n.duration! * 60,
-                                    running: false,
-                                    total: n.duration! * 60,
-                                }]),
-                        );
-                        dispatch({ type: 'init', timers });
-                        setReady(true);
-                        break;
-                    }
-                    case 'STEP_CHANGE':
-                        // Use functional setNodes to read current nodes without a stale closure.
-                        setNodes((currentNodes) => {
-                            const nodeId = currentNodes[msg.stepIndex]?.id;
-                            if (nodeId) setExternalNodeId(nodeId);
-                            return currentNodes;
-                        });
-                        break;
-                    case 'TIMER_ACTION': {
-                        const { nodeId, action } = msg;
-                        if (action === 'start') dispatch({ type: 'timerStart', nodeId });
-                        else if (action === 'pause') dispatch({ type: 'timerPause', nodeId });
-                        else if (action === 'reset') dispatch({ type: 'timerReset', nodeId });
-                        break;
-                    }
-                    case 'STEP_COMPLETE':
-                        dispatch({ type: 'toggle', nodeId: msg.nodeId });
-                        break;
+                if (msg.type === 'LOAD_RECIPE') {
+                    setRecipeUrl(`/recipe/${msg.slug}/mobile`);
                 }
             });
 
-            ctx.start({ touchScreenOptimizedApp: true });
+            ctx.start({ touchScreenOptimizedApp: true, maxInactivity: 3600 });
 
-            // ── Home Assistant touch hack ─────────────────────────────────────
-            // The Cast framework injects a <touch-controls> element after start()
-            // that intercepts all pointer/touch events on touch-screen Cast devices
-            // (Nest Hub etc.). Remove it and restore scrolling — same approach used
-            // by Home Assistant since 2019.
+            // ── Home Assistant touch hack ─────────────────────────────
+            // The Cast framework injects a <touch-controls> element that
+            // intercepts all pointer/touch events on Nest Hub etc.
+            // Remove it and restore scrolling so the iframe works.
             const caps = ctx.getDeviceCapabilities?.();
             if (caps?.touch_input_supported) {
-                setIsTouchDevice(true);
                 const breakFree = () => {
                     document.body.querySelector('touch-controls')?.remove();
                     document.body.setAttribute('style', 'overflow-y: auto !important');
@@ -149,13 +82,8 @@ export default function CastReceiverPage() {
         document.head.appendChild(script);
     }, []);
 
-    const { columnGroups, dagreY } = useMemo(
-        () => buildTopology(nodes, edges),
-        [nodes, edges],
-    );
-
     // ── Waiting screen ──────────────────────────────────────────────────
-    if (!ready) {
+    if (!recipeUrl) {
         return (
             <div style={{
                 minHeight: '100vh',
@@ -199,29 +127,20 @@ export default function CastReceiverPage() {
         );
     }
 
-    // ── Active recipe — rendered as MobileView ──────────────────────────
+    // ── Recipe loaded — fullscreen iframe to /recipe/[slug]/mobile ────
     return (
-        <div style={{
-            height: '100vh',
-            background: 'linear-gradient(180deg, rgba(26,23,21,0.98) 0%, rgba(35,30,26,1) 100%)',
-            overflow: isTouchDevice ? 'auto' : 'hidden',
-            fontFamily: '-apple-system, Inter, sans-serif',
-        }}>
-            <style>{`
-                @keyframes branchPulse{0%,100%{opacity:.7}50%{opacity:1}}
-                *{box-sizing:border-box;margin:0;padding:0}
-                body{background:#1a1714;${isTouchDevice ? 'overflow-y:auto' : 'overflow:hidden'}}
-            `}</style>
-            <MobileView
-                columnGroups={columnGroups}
-                edges={edges}
-                dagreY={dagreY}
-                completed={state.completed}
-                timers={state.timers}
-                dispatch={dispatch}
-                onOpenDetail={() => {/* read-only on TV */}}
-                externalNodeId={externalNodeId}
+        <>
+            <style>{`*{margin:0;padding:0}body{overflow:hidden}`}</style>
+            <iframe
+                src={recipeUrl}
+                title="Rezept"
+                style={{
+                    width: '100vw',
+                    height: '100vh',
+                    border: 'none',
+                }}
+                allow="autoplay"
             />
-        </div>
+        </>
     );
 }

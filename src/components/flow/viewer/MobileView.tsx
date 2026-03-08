@@ -87,8 +87,6 @@ export function MobileView({
     timers,
     dispatch,
     ingredients,
-    onNavigate,
-    externalNodeId,
 }: {
     columnGroups: FlowNodeSerialized[][];
     edges: FlowEdgeSerialized[];
@@ -98,10 +96,6 @@ export function MobileView({
     dispatch: Dispatch<ViewerAction>;
     onOpenDetail: (nodeId: string) => void;
     ingredients?: RecipeStepsViewerProps['ingredients'];
-    /** Called whenever the active step changes — used for cast sync. */
-    onNavigate?: (nodeId: string) => void;
-    /** Externally-controlled node id — drives position when set (cast receiver). */
-    externalNodeId?: string;
 }) {
     const {
         col,
@@ -124,7 +118,7 @@ export function MobileView({
         handleTouchStart,
         handleTouchEnd,
         setPosition,
-    } = useMobileNavigation(columnGroups, edges, onNavigate, externalNodeId);
+    } = useMobileNavigation(columnGroups, edges);
 
     if (!currentNode) return null;
 

@@ -32,3 +32,9 @@ async def root():
         "version": "2.0.0",
         "docs": "/docs",
     }
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint."""
+    return {"status": "ok"}

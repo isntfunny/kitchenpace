@@ -110,8 +110,8 @@ RUN apk add --no-cache postgresql16-client
 # Production node_modules (tsx moved to prod deps)
 COPY --from=prod-deps /app/node_modules ./node_modules
 
-# Prisma client already generated in builder stage — no need to re-run generate
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Prisma client generated in deps stage (via @prisma/client postinstall)
+COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma

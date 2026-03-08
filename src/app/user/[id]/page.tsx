@@ -4,6 +4,7 @@ import { Metadata } from 'next';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
 import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
+import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 import { css } from 'styled-system/css';
 import { container } from 'styled-system/patterns';
@@ -33,9 +34,8 @@ const KNOWN_ACTIVITY_TYPES: ActivityType[] = [
     'MEAL_PLAN_CREATED',
 ];
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app').replace(/\/$/, '');
 
-const buildUserMetadata = async (name: string, userId: string): Promise<Metadata> => {
+const buildUserMetadata = async (name: string, userId: string, userSlug: string): Promise<Metadata> => {
     const profileImageUrl = await getThumbnailUrlBySource(
         { type: 'user', id: userId },
         {
@@ -48,12 +48,13 @@ const buildUserMetadata = async (name: string, userId: string): Promise<Metadata
     return {
         title: `${name} | KüchenTakt`,
         description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+        alternates: { canonical: `${APP_URL}/user/${userSlug}` },
         openGraph: {
             title: `${name} | KüchenTakt`,
             description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
-            url: `${SITE_URL}/user/${userId}`,
+            url: `${APP_URL}/user/${userSlug}`,
             siteName: 'KüchenTakt',
-            type: 'profile',
+            type: 'website',
             ...(profileImageUrl && {
                 images: [
                     {
@@ -66,7 +67,7 @@ const buildUserMetadata = async (name: string, userId: string): Promise<Metadata
             }),
         },
         twitter: {
-            card: profileImageUrl ? 'summary' : 'summary',
+            card: profileImageUrl ? 'summary_large_image' : 'summary',
             title: `${name} | KüchenTakt`,
             description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
             ...(profileImageUrl && { images: [profileImageUrl] }),
@@ -74,11 +75,11 @@ const buildUserMetadata = async (name: string, userId: string): Promise<Metadata
     };
 };
 
-async function getUserProfile(userId: string, page: number = 1): Promise<UserProfileData | null> {
+async function getUserProfile(slug: string, page: number = 1): Promise<UserProfileData | null> {
     const skip = (page - 1) * PAGE_SIZE;
 
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
+    const user = await prisma.user.findFirst({
+        where: { profile: { slug } },
         include: {
             profile: true,
             _count: {
@@ -95,6 +96,7 @@ async function getUserProfile(userId: string, page: number = 1): Promise<UserPro
                 take: PAGE_SIZE,
                 select: {
                     id: true,
+                    slug: true,
                     title: true,
                     description: true,
                     imageKey: true,
@@ -129,8 +131,23 @@ async function getUserProfile(userId: string, page: number = 1): Promise<UserPro
 
     if (!user) return null;
 
+    const profile = user.profile;
+    const showFollowerCount = profile?.followsPublic !== false;
+    const showFavorites = profile?.favoritesPublic !== false;
+
+    // Build set of activity types to hide based on privacy settings
+    const hiddenActivityTypes = new Set<string>();
+    if (profile?.ratingsPublic === false) hiddenActivityTypes.add('RECIPE_RATED');
+    if (profile?.favoritesPublic === false) hiddenActivityTypes.add('RECIPE_FAVORITED');
+    if (profile?.followsPublic === false) hiddenActivityTypes.add('USER_FOLLOWED');
+
+    // Filter activities by privacy
+    const visibleActivities = hiddenActivityTypes.size > 0
+        ? user.activities.filter((a) => !hiddenActivityTypes.has(a.type))
+        : user.activities;
+
     // Fetch recipe details for recipe-related activities
-    const recipeIds = user.activities
+    const recipeIds = visibleActivities
         .filter((a) => a.targetType === 'recipe' && a.targetId)
         .map((a) => a.targetId as string);
 
@@ -143,6 +160,33 @@ async function getUserProfile(userId: string, page: number = 1): Promise<UserPro
             : [];
 
     const recipeMap = new Map(recipes.map((r) => [r.id, r]));
+
+    // Fetch public favorites if enabled
+    const favoriteRecipes = showFavorites
+        ? await prisma.favorite.findMany({
+              where: { userId: user.id, recipe: { publishedAt: { not: null } } },
+              orderBy: { createdAt: 'desc' },
+              take: 12,
+              select: {
+                  recipe: {
+                      select: {
+                          id: true,
+                          slug: true,
+                          title: true,
+                          description: true,
+                          imageKey: true,
+                          rating: true,
+                          prepTime: true,
+                          cookTime: true,
+                          categories: {
+                              select: { category: { select: { name: true } } },
+                              take: 1,
+                          },
+                      },
+                  },
+              },
+          })
+        : [];
 
     // Format time ago on server side
     const formatTimeAgo = (date: Date): string => {
@@ -159,15 +203,19 @@ async function getUserProfile(userId: string, page: number = 1): Promise<UserPro
 
     return {
         id: user.id,
+        slug: user.profile?.slug ?? user.id,
         name: user.name ?? user.profile?.nickname ?? 'Unbekannt',
         avatar: user.profile?.photoUrl ?? user.image ?? null,
         bio: user.profile?.bio ?? null,
         recipeCount: user.profile?.recipeCount ?? user._count.recipes,
         followerCount: user.profile?.followerCount ?? 0,
+        showFollowerCount,
+        showFavorites,
         currentPage: page,
         totalPages: Math.ceil(user._count.recipes / PAGE_SIZE),
         recipes: user.recipes.map((recipe) => ({
             id: recipe.id,
+            slug: recipe.slug,
             title: recipe.title,
             description: recipe.description ?? '',
             image: recipe.imageKey ?? null,
@@ -177,7 +225,19 @@ async function getUserProfile(userId: string, page: number = 1): Promise<UserPro
             prepTime: recipe.prepTime,
             cookTime: recipe.cookTime,
         })),
-        activities: user.activities.map((activity) => {
+        favorites: favoriteRecipes.map((fav) => ({
+            id: fav.recipe.id,
+            slug: fav.recipe.slug,
+            title: fav.recipe.title,
+            description: fav.recipe.description ?? '',
+            image: fav.recipe.imageKey ?? null,
+            imageKey: fav.recipe.imageKey ?? null,
+            category: fav.recipe.categories[0]?.category?.name ?? 'Allgemein',
+            rating: fav.recipe.rating ?? 0,
+            prepTime: fav.recipe.prepTime,
+            cookTime: fav.recipe.cookTime,
+        })),
+        activities: visibleActivities.map((activity) => {
             const recipe = activity.targetId ? recipeMap.get(activity.targetId) : null;
             return {
                 id: activity.id,
@@ -201,7 +261,7 @@ export async function generateMetadata({ params }: UserProfileProps): Promise<Me
             title: 'Benutzer nicht gefunden | KüchenTakt',
         };
     }
-    return buildUserMetadata(user.name, user.id);
+    return buildUserMetadata(user.name, user.id, user.slug);
 }
 
 export default async function UserProfilePage({ params, searchParams }: UserProfileProps) {

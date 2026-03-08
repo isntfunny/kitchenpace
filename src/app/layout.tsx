@@ -1,7 +1,6 @@
 import { IdentifyComponent, OpenPanelComponent } from '@openpanel/nextjs';
 import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
-import Script from 'next/script';
 
 import { fetchPinnedEntries } from '@app/app/api/recipe-tabs/helpers';
 import { ChatwootWidgetComponent } from '@app/components/ChatwootWidget';
@@ -11,7 +10,41 @@ import { ProfileProvider } from '@app/components/providers/ProfileProvider';
 import { RecipeTabsProvider } from '@app/components/providers/RecipeTabsProvider';
 import { ThemeProvider } from '@app/components/providers/ThemeProvider';
 import { getServerAuthSession } from '@app/lib/auth';
+import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
+
+const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+        {
+            '@type': 'WebSite',
+            '@id': `${APP_URL}/#website`,
+            url: APP_URL,
+            name: 'KüchenTakt',
+            description:
+                'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen.',
+            inLanguage: 'de-DE',
+            potentialAction: {
+                '@type': 'SearchAction',
+                target: {
+                    '@type': 'EntryPoint',
+                    urlTemplate: `${APP_URL}/recipes?q={search_term_string}`,
+                },
+                'query-input': 'required name=search_term_string',
+            },
+        },
+        {
+            '@type': 'Organization',
+            '@id': `${APP_URL}/#organization`,
+            name: 'KüchenTakt',
+            url: APP_URL,
+            logo: {
+                '@type': 'ImageObject',
+                url: `${APP_URL}/kitchenpace_icon.png`,
+            },
+        },
+    ],
+};
 
 import './globals.css';
 
@@ -29,15 +62,13 @@ const inter = Inter({
 
 const themeInitScript = `
 (function () {
-    const storageKey = 'kitchenpace-theme';
+    var storageKey = 'kitchenpace-theme';
     try {
-        const stored = localStorage.getItem(storageKey);
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const theme = stored || (prefersDark ? 'dark' : 'light');
+        var stored = localStorage.getItem(storageKey);
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = stored || (prefersDark ? 'dark' : 'light');
         document.documentElement.setAttribute('data-theme', theme);
-    } catch (error) {
-        console.warn('Theme initialization failed', error);
-    }
+    } catch (e) {}
 })();
 `;
 
@@ -52,11 +83,11 @@ export const metadata: Metadata = {
     authors: [{ name: 'KüchenTakt' }],
     creator: 'KüchenTakt',
     publisher: 'KüchenTakt',
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kitchenpace.app'),
+    metadataBase: new URL(APP_URL),
     openGraph: {
         type: 'website',
         locale: 'de_DE',
-        url: 'https://kitchenpace.app',
+        url: APP_URL,
         siteName: 'KüchenTakt',
         title: 'KüchenTakt - Deine Rezepte im Takt',
         description:
@@ -222,13 +253,18 @@ export default async function RootLayout({
           }
         : null;
     return (
-        <html lang="de">
-            <head></head>
-            <body className={`${playfair.variable} ${inter.variable}`}>
-                <Script
-                    id="theme-init"
-                    strategy="afterInteractive"
+        <html lang="de" suppressHydrationWarning>
+            <head>
+                <script
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Required to prevent theme flash
                     dangerouslySetInnerHTML={{ __html: themeInitScript }}
+                />
+            </head>
+            <body className={`${playfair.variable} ${inter.variable}`}>
+                <script
+                    type="application/ld+json"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
                 />
                 <ChatwootWidgetComponent />
                 <OpenPanelComponent
@@ -249,6 +285,7 @@ export default async function RootLayout({
                             <RecipeTabsProvider
                                 initialPinned={pinnedRecipes}
                                 initialRecent={recentRecipes}
+                                serverDataFetched={!!session?.user?.id}
                             >
                                 {children}
                             </RecipeTabsProvider>

@@ -49,6 +49,14 @@ export default defineConfig({
                     from: { height: 'var(--radix-accordion-content-height)' },
                     to: { height: '0' },
                 },
+                scaleUp: {
+                    from: { opacity: '0', transform: 'scale(0.96) translateY(-4px)' },
+                    to: { opacity: '1', transform: 'scale(1) translateY(0)' },
+                },
+                scaleDown: {
+                    from: { opacity: '1', transform: 'scale(1) translateY(0)' },
+                    to: { opacity: '0', transform: 'scale(0.96) translateY(-4px)' },
+                },
             },
 
             tokens: {
@@ -70,6 +78,27 @@ export default defineConfig({
                         'card-dark': { value: '#1a1d21' },
                         'admin-header': { value: '#ffe8d6' },
                         'header-bg': { value: '#fceadd' },
+                    },
+                    palette: {
+                        orange: { value: '#e07b53' },
+                        gold: { value: '#f8b500' },
+                        emerald: { value: '#00b894' },
+                        purple: { value: '#6c5ce7' },
+                        blue: { value: '#0984e3' },
+                        pink: { value: '#fd79a8' },
+                        // Dark-mode-friendly variants
+                        'orange-dark': { value: '#f09070' },
+                        'gold-dark': { value: '#ffc94d' },
+                        'emerald-dark': { value: '#2ed8a3' },
+                        'purple-dark': { value: '#9b8ff5' },
+                        'blue-dark': { value: '#4ea8f0' },
+                        'pink-dark': { value: '#ff9ec0' },
+                    },
+                    status: {
+                        success: { value: '#22c55e' },
+                        error: { value: '#ef4444' },
+                        danger: { value: '#dc2626' },
+                        warning: { value: '#f59e0b' },
                     },
                 },
 
@@ -237,14 +266,77 @@ export default defineConfig({
                             _dark: 'rgba(255,255,255,0.08)',
                         },
                     },
+                    'palette.orange': {
+                        value: { base: '#e07b53', _dark: '#f09070' },
+                    },
+                    'palette.gold': {
+                        value: { base: '#f8b500', _dark: '#ffc94d' },
+                    },
+                    'palette.emerald': {
+                        value: { base: '#00b894', _dark: '#2ed8a3' },
+                    },
+                    'palette.purple': {
+                        value: { base: '#6c5ce7', _dark: '#9b8ff5' },
+                    },
+                    'palette.blue': {
+                        value: { base: '#0984e3', _dark: '#4ea8f0' },
+                    },
+                    'palette.pink': {
+                        value: { base: '#fd79a8', _dark: '#ff9ec0' },
+                    },
+                    'status.success': {
+                        value: { base: '#22c55e', _dark: '#4ade80' },
+                    },
+                    'status.error': {
+                        value: { base: '#ef4444', _dark: '#f87171' },
+                    },
+                    'status.danger': {
+                        value: { base: '#dc2626', _dark: '#f87171' },
+                    },
+                    'status.warning': {
+                        value: { base: '#f59e0b', _dark: '#fbbf24' },
+                    },
+                    'surface.muted': {
+                        value: {
+                            base: 'rgba(0,0,0,0.04)',
+                            _dark: 'rgba(255,255,255,0.06)',
+                        },
+                    },
+                    'surface.overlay': {
+                        value: {
+                            base: 'rgba(0,0,0,0.45)',
+                            _dark: 'rgba(0,0,0,0.65)',
+                        },
+                    },
+                    'error.bg': {
+                        value: {
+                            base: '#fee2e2',
+                            _dark: 'rgba(239,68,68,0.15)',
+                        },
+                    },
+                    'error.text': {
+                        value: {
+                            base: '#dc2626',
+                            _dark: '#f87171',
+                        },
+                    },
                     'shadow.small': {
-                        value: '0 2px 8px rgba(0,0,0,0.06)',
+                        value: {
+                            base: '0 2px 8px rgba(0,0,0,0.06)',
+                            _dark: '0 2px 8px rgba(0,0,0,0.3)',
+                        },
                     },
                     'shadow.medium': {
-                        value: '0 4px 24px rgba(0,0,0,0.08)',
+                        value: {
+                            base: '0 4px 24px rgba(0,0,0,0.08)',
+                            _dark: '0 4px 24px rgba(0,0,0,0.3)',
+                        },
                     },
                     'shadow.large': {
-                        value: '0 40px 120px rgba(0,0,0,0.15)',
+                        value: {
+                            base: '0 40px 120px rgba(0,0,0,0.15)',
+                            _dark: '0 40px 120px rgba(0,0,0,0.4)',
+                        },
                     },
                 },
             },

@@ -10,6 +10,8 @@ import {
 import { Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
+
 import type { StepType } from './editorTypes';
 import { useFlowEditor } from './FlowEditorContext';
 import { ADDABLE_STEP_TYPES, STEP_CONFIGS } from './stepConfig';
@@ -126,7 +128,7 @@ function InsertEdgeComponent({
                                     width: '26px',
                                     height: '26px',
                                     borderRadius: '50%',
-                                    border: '2px solid #e07b53',
+                                    border: `2px solid ${PALETTE.orange}`,
                                     backgroundColor: 'white',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -137,7 +139,7 @@ function InsertEdgeComponent({
                                     padding: 0,
                                 }}
                             >
-                                <Plus style={{ width: '13px', height: '13px', color: '#e07b53' }} />
+                                <Plus style={{ width: '13px', height: '13px', color: PALETTE.orange }} />
                             </button>
 
                             {/* Delete button — visible when edge is selected */}

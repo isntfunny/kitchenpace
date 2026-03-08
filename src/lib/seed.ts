@@ -54,44 +54,14 @@ async function main() {
     // CATEGORIES
     // ============================================
     const categoriesData = [
-        {
-            name: 'Hauptgericht',
-            slug: 'hauptgericht',
-            description: 'Hauptgerichte für Mittag- und Abendessen',
-            color: '#e07b53',
-        },
-        {
-            name: 'Beilage',
-            slug: 'beilage',
-            description: 'Beilagen und Ergänzungen zu Hauptgerichten',
-            color: '#00b894',
-        },
-        {
-            name: 'Backen',
-            slug: 'backen',
-            description: 'Backrezepte für Kuchen, Brot und mehr',
-            color: '#fd79a8',
-        },
-        { name: 'Dessert', slug: 'dessert', description: 'Süße Nachspeisen', color: '#fdcb6e' },
-        {
-            name: 'Frühstück',
-            slug: 'fruehstueck',
-            description: 'Frühstücksrezepte',
-            color: '#a29bfe',
-        },
-        {
-            name: 'Getränk',
-            slug: 'getraenk',
-            description: 'Heiße und kalte Getränke',
-            color: '#74b9ff',
-        },
-        {
-            name: 'Vorspeise',
-            slug: 'vorspeise',
-            description: 'Vorspeisen und Fingerfood',
-            color: '#fab1a0',
-        },
-        { name: 'Salat', slug: 'salat', description: 'Frische Salate', color: '#00b894' },
+        { name: 'Hauptgericht', slug: 'hauptgericht', description: 'Hauptgerichte für Mittag- und Abendessen', color: 'orange' as const },
+        { name: 'Beilage', slug: 'beilage', description: 'Beilagen und Ergänzungen zu Hauptgerichten', color: 'emerald' as const },
+        { name: 'Backen', slug: 'backen', description: 'Backrezepte für Kuchen, Brot und mehr', color: 'gold' as const },
+        { name: 'Dessert', slug: 'dessert', description: 'Süße Nachspeisen', color: 'pink' as const },
+        { name: 'Frühstück', slug: 'fruehstueck', description: 'Frühstücksrezepte', color: 'gold' as const },
+        { name: 'Getränk', slug: 'getraenk', description: 'Heiße und kalte Getränke', color: 'blue' as const },
+        { name: 'Vorspeise', slug: 'vorspeise', description: 'Vorspeisen und Fingerfood', color: 'purple' as const },
+        { name: 'Salat', slug: 'salat', description: 'Frische Salate', color: 'emerald' as const },
     ];
 
     for (const cat of categoriesData) {
@@ -127,10 +97,8 @@ async function main() {
         { name: 'Halloween', slug: 'halloween' },
         { name: 'Weihnachten', slug: 'weihnachten' },
         { name: 'Ostern', slug: 'ostern' },
-        { name: 'Festlich', slug: 'festlich' },
         { name: 'Low Carb', slug: 'low-carb' },
         { name: 'Proteinreich', slug: 'proteinreich' },
-        { name: 'Klassisch', slug: 'klassisch' },
         { name: 'Süß', slug: 'suess' },
         { name: 'Herzhaft', slug: 'herzhaft' },
         { name: 'Eis', slug: 'eis' },
@@ -139,7 +107,7 @@ async function main() {
     ];
 
     for (const tag of tagsData) {
-        await prisma.tag.upsert({ where: { slug: tag.slug }, update: {}, create: tag });
+        await prisma.tag.upsert({ where: { name: tag.name }, update: {}, create: tag });
     }
     console.log('✅ Created tags');
 
@@ -1042,6 +1010,7 @@ async function main() {
                     create: {
                         email: u.email,
                         nickname: u.nickname,
+                        slug: u.nickname.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
                         bio: u.bio,
                         photoUrl: u.photoUrl,
                         followerCount: u.followerCount,
@@ -4957,7 +4926,11 @@ async function main() {
     ];
 
     for (const vh of viewHistoryData) {
-        await prisma.userViewHistory.create({ data: vh }).catch(() => {});
+        await prisma.userViewHistory.upsert({
+            where: { userId_recipeId: { userId: vh.userId, recipeId: vh.recipeId } },
+            update: {},
+            create: vh,
+        });
     }
     console.log('✅ Created view history');
 

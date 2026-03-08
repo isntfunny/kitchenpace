@@ -1,9 +1,11 @@
 'use client';
 
 import { Target } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 
 import { fetchRecipesByTime, type RecipeCardData } from '@app/app/actions/recipes';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { RecipeCard } from '../features/RecipeCard';
@@ -49,7 +51,7 @@ export function FitsNow() {
     return (
         <Section
             title="Passt zu jetzt"
-            titleIcon={<Target size={20} color="#e07b53" />}
+            titleIcon={<Target size={20} color={PALETTE.orange} />}
             description="Tagesgefühl trifft Rezept – sofort, schnell, perfekt abgestimmt."
             action={
                 <Select value={selectedTime} onValueChange={handleTimeChange}>
@@ -84,20 +86,26 @@ export function FitsNow() {
                         gap: '6',
                     })}
                 >
-                    {recipes.map((recipe) => (
-                        <RecipeCard
+                    {recipes.map((recipe, index) => (
+                        <motion.div
                             key={recipe.id}
-                            recipe={{
-                                id: recipe.id,
-                                slug: recipe.slug,
-                                title: recipe.title,
-                                description: recipe.description || '',
-                                image: recipe.image,
-                                category: recipe.category,
-                                rating: recipe.rating,
-                                time: recipe.time,
-                            }}
-                        />
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.08 }}
+                        >
+                            <RecipeCard
+                                recipe={{
+                                    id: recipe.id,
+                                    slug: recipe.slug,
+                                    title: recipe.title,
+                                    description: recipe.description || '',
+                                    image: recipe.image,
+                                    category: recipe.category,
+                                    rating: recipe.rating,
+                                    time: recipe.time,
+                                }}
+                            />
+                        </motion.div>
                     ))}
                 </div>
             )}

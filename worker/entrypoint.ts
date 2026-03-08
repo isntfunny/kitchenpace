@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import { ensureIndices } from '@shared/opensearch/client';
+
 import { getRedis, disconnectRedis } from './queues/connection';
 import { closeAllQueues } from './queues/queue';
 import { startScheduler, stopScheduler } from './queues/scheduler';
@@ -13,7 +15,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
     console.log(`[Main] Received ${signal}, starting graceful shutdown...`);
 
     try {
-        await stopScheduler();
+        stopScheduler();
         console.log('[Main] Scheduler stopped');
     } catch (error) {
         console.error('[Main] Error stopping scheduler:', error);
@@ -50,6 +52,9 @@ async function main(): Promise<void> {
     const redis = getRedis();
     await redis.connect();
     console.log('[Main] Redis connected');
+
+    await ensureIndices();
+    console.log('[Main] OpenSearch indices ensured');
 
     await startScheduler();
     console.log('[Main] Scheduler started');

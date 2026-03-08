@@ -1,26 +1,43 @@
 'use client';
 
-import { ChefHat, Clock, Sparkles } from 'lucide-react';
+import { BookmarkPlus, Camera, ChefHat, Pin, Star } from 'lucide-react';
+import { motion } from 'motion/react';
 import { ReactNode } from 'react';
 
 import { PageShell } from '@app/components/layouts/PageShell';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 const HERO_POINTS = [
     {
-        label: 'Flow-Diagramme',
-        description: 'Parallele Schritte und Timing im Blick',
+        label: 'Eigene Rezepte erstellen',
+        description:
+            'Erstelle Rezepte als visuelle Flow-Diagramme — mit parallelen Schritten, Timings und eigenen Fotos.',
         icon: ChefHat,
     },
     {
-        label: 'Filterschnellzugriff',
-        description: 'Saisonale, vegetarische oder schnelle Rezepte mit einem Klick',
-        icon: Sparkles,
+        label: 'Rezepte anpinnen & organisieren',
+        description:
+            'Pinne deine Lieblingsrezepte an und hab sie immer griffbereit — dein persönliches Kochbuch.',
+        icon: Pin,
     },
     {
-        label: 'Gemeinschaft & Tipps',
-        description: 'Trending Tags und Quick Tips direkt aus der Community',
-        icon: Clock,
+        label: 'Favoriten & Sammlungen',
+        description:
+            'Speichere Rezepte anderer Köche als Favoriten und finde sie jederzeit wieder.',
+        icon: Star,
+    },
+    {
+        label: 'Fotos hochladen',
+        description:
+            'Zeig deine Kreationen! Lade eigene Fotos zu jedem Rezeptschritt hoch.',
+        icon: Camera,
+    },
+    {
+        label: 'Rezepte importieren',
+        description:
+            'Importiere Rezepte von jeder Website — unsere KI wandelt sie automatisch in Flow-Diagramme um.',
+        icon: BookmarkPlus,
     },
 ];
 
@@ -63,7 +80,7 @@ export function AuthPageLayout({
                             gap: { base: '6', lg: '10' },
                         })}
                     >
-                        <div
+                        <motion.div
                             className={css({
                                 position: 'relative',
                                 borderRadius: '3xl',
@@ -74,6 +91,9 @@ export function AuthPageLayout({
                                 overflow: 'hidden',
                                 minHeight: '100%',
                             })}
+                            initial={{ opacity: 0, x: -16 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.45 }}
                         >
                             <div
                                 aria-hidden
@@ -133,8 +153,8 @@ export function AuthPageLayout({
                                         marginTop: 'auto',
                                     })}
                                 >
-                                    {HERO_POINTS.map((point) => (
-                                        <div
+                                    {HERO_POINTS.map((point, index) => (
+                                        <motion.div
                                             key={point.label}
                                             className={css({
                                                 display: 'flex',
@@ -146,6 +166,9 @@ export function AuthPageLayout({
                                                 background: 'surface.elevated',
                                                 alignItems: 'flex-start',
                                             })}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3, delay: 0.2 + index * 0.06 }}
                                         >
                                             <div
                                                 className={css({
@@ -158,7 +181,7 @@ export function AuthPageLayout({
                                                     justifyContent: 'center',
                                                 })}
                                             >
-                                                <point.icon size={20} color="#e07b53" />
+                                                <point.icon size={20} color={PALETTE.orange} />
                                             </div>
                                             <div>
                                                 <p
@@ -181,17 +204,20 @@ export function AuthPageLayout({
                                                     {point.description}
                                                 </p>
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     ))}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        <div
+                        <motion.div
                             className={css({
                                 display: 'flex',
                                 justifyContent: 'center',
                             })}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.15 }}
                         >
                             <div
                                 className={css({
@@ -232,7 +258,7 @@ export function AuthPageLayout({
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
             </section>

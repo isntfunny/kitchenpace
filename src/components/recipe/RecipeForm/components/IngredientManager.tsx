@@ -52,7 +52,7 @@ export function IngredientManager({
         fontSize: 'md',
         outline: 'none',
         _focus: {
-            borderColor: '#e07b53',
+            borderColor: 'palette.orange',
             boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
         },
     });
@@ -162,7 +162,7 @@ export function IngredientManager({
                             right: '2',
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            bg: '#e07b53',
+                            bg: 'palette.orange',
                             color: 'white',
                             border: 'none',
                             borderRadius: 'lg',
@@ -213,7 +213,7 @@ export function IngredientManager({
                                 onClick={onCreateNewIngredient}
                                 className={css({
                                     flex: '1',
-                                    bg: '#e07b53',
+                                    bg: 'palette.orange',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: 'lg',
@@ -250,13 +250,20 @@ export function IngredientManager({
                             key={`${ing.id}-${index}`}
                             className={css({
                                 display: 'flex',
-                                alignItems: 'center',
-                                gap: '2',
+                                flexDir: 'column',
+                                gap: '1',
                                 padding: '3',
                                 bg: 'rgba(224,123,83,0.05)',
                                 borderRadius: 'xl',
                             })}
                         >
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                })}
+                            >
                             <span className={css({ flex: '1', fontWeight: '500' })}>
                                 {ing.name}
                             </span>
@@ -333,7 +340,7 @@ export function IngredientManager({
                                 className={css({
                                     bg: 'transparent',
                                     border: 'none',
-                                    color: '#e07b53',
+                                    color: 'palette.orange',
                                     fontSize: 'lg',
                                     cursor: 'pointer',
                                     padding: '1',
@@ -341,6 +348,28 @@ export function IngredientManager({
                             >
                                 <X size={16} />
                             </button>
+                            </div>
+                            <input
+                                type="text"
+                                value={ing.notes}
+                                onChange={(e) =>
+                                    onUpdateIngredient(index, { notes: e.target.value })
+                                }
+                                placeholder="Hinweis (z.B. frisch gehackt, fein gewürfelt)"
+                                className={css({
+                                    width: '100%',
+                                    padding: '1',
+                                    paddingX: '2',
+                                    borderRadius: 'md',
+                                    border: '1px solid rgba(224,123,83,0.2)',
+                                    fontSize: 'xs',
+                                    color: 'text-muted',
+                                    bg: 'transparent',
+                                    outline: 'none',
+                                    _focus: { borderColor: 'rgba(224,123,83,0.5)' },
+                                    _placeholder: { color: 'foreground.muted' },
+                                })}
+                            />
                         </div>
                     ))}
                 </div>

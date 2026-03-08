@@ -1,5 +1,8 @@
+'use client';
+
 import { Check, Clock, Flame, ForkKnife, Leaf, PocketKnife, Sparkles } from 'lucide-react';
 
+import { useIsDark } from '@app/lib/darkMode';
 import { css } from 'styled-system/css';
 
 interface FlowNode {
@@ -41,8 +44,8 @@ const getTypeIcon = (type: string) => {
     }
 };
 
-const getTypeColor = (type: string): string => {
-    const colors: Record<string, string> = {
+const getTypeColor = (type: string, dark: boolean): string => {
+    const lightColors: Record<string, string> = {
         prep: '#e3f2fd',
         cook: '#fff3e0',
         wait: '#f3e5f5',
@@ -50,7 +53,16 @@ const getTypeColor = (type: string): string => {
         combine: '#fce4ec',
         serve: '#ffebee',
     };
-    return colors[type] || '#f5f5f5';
+    const darkColors: Record<string, string> = {
+        prep: '#1a2a3d',
+        cook: '#3d2a1a',
+        wait: '#2d1a3d',
+        season: '#1a3d1e',
+        combine: '#3d1a2a',
+        serve: '#3d1a1a',
+    };
+    const colors = dark ? darkColors : lightColors;
+    return colors[type] || (dark ? '#2a2a2a' : '#f5f5f5');
 };
 
 const getTypeLabel = (type: string): string => {
@@ -73,6 +85,8 @@ export function NodeCard({
     onToggleComplete,
     onClick,
 }: NodeCardProps) {
+    const dark = useIsDark();
+
     return (
         <div
             onClick={onClick}
@@ -80,15 +94,6 @@ export function NodeCard({
                 width: `${NODE_WIDTH}px`,
                 padding: '16px',
                 borderRadius: '16px',
-                backgroundColor: isCompleted ? '#f0f9f0' : getTypeColor(node.type),
-                border: isActive
-                    ? '2px solid #2196f3'
-                    : isCompleted
-                      ? '2px solid #4caf50'
-                      : '2px solid transparent',
-                boxShadow: isActive
-                    ? '0 4px 20px rgba(33, 150, 243, 0.25)'
-                    : '0 2px 8px rgba(0,0,0,0.08)',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 _hover: {
@@ -97,9 +102,24 @@ export function NodeCard({
                 },
                 position: 'relative',
                 overflow: 'hidden',
-                animation: isJustCompleted ? 'cardComplete 600ms ease-out' : 'none',
                 zIndex: 2,
             })}
+            style={{
+                backgroundColor: isCompleted
+                    ? (dark ? '#1a3d1a' : '#f0f9f0')
+                    : getTypeColor(node.type, dark),
+                border: isActive
+                    ? '2px solid #2196f3'
+                    : isCompleted
+                      ? '2px solid #4caf50'
+                      : '2px solid transparent',
+                boxShadow: isActive
+                    ? '0 4px 20px rgba(33, 150, 243, 0.25)'
+                    : dark
+                      ? '0 2px 8px rgba(0,0,0,0.3)'
+                      : '0 2px 8px rgba(0,0,0,0.08)',
+                animation: isJustCompleted ? 'cardComplete 600ms ease-out' : 'none',
+            }}
         >
             <div
                 className={css({
@@ -119,10 +139,10 @@ export function NodeCard({
                         className={css({
                             fontSize: '11px',
                             fontWeight: '600',
-                            color: '#666',
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px',
                         })}
+                        style={{ color: dark ? '#a0a0a0' : '#666' }}
                     >
                         {getTypeLabel(node.type)}
                     </span>
@@ -131,11 +151,13 @@ export function NodeCard({
                     <div
                         className={css({
                             fontSize: '11px',
-                            color: '#888',
-                            backgroundColor: 'rgba(255,255,255,0.7)',
                             padding: '3px 8px',
                             borderRadius: '12px',
                         })}
+                        style={{
+                            color: dark ? '#808080' : '#888',
+                            backgroundColor: dark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.7)',
+                        }}
                     >
                         {node.duration} Min.
                     </div>
@@ -146,9 +168,13 @@ export function NodeCard({
                 className={css({
                     fontSize: '14px',
                     fontWeight: '600',
-                    color: isCompleted ? '#666' : '#333',
                     marginBottom: '4px',
                 })}
+                style={{
+                    color: isCompleted
+                        ? (dark ? '#808080' : '#666')
+                        : (dark ? '#e0e0e0' : '#333'),
+                }}
             >
                 {node.label}
             </div>
@@ -156,10 +182,14 @@ export function NodeCard({
             <div
                 className={css({
                     fontSize: '12px',
-                    color: isCompleted ? '#888' : '#666',
                     lineHeight: '1.4',
                     textDecoration: isCompleted ? 'line-through' : 'none',
                 })}
+                style={{
+                    color: isCompleted
+                        ? (dark ? '#606060' : '#888')
+                        : (dark ? '#a0a0a0' : '#666'),
+                }}
             >
                 {node.description}
             </div>
@@ -204,9 +234,6 @@ export function NodeCard({
                     className={css({
                         padding: '5px 10px',
                         borderRadius: '999px',
-                        border: isCompleted ? 'none' : '1px solid #ddd',
-                        backgroundColor: isCompleted ? '#4caf50' : 'white',
-                        color: isCompleted ? 'white' : '#666',
                         fontSize: '11px',
                         fontWeight: '600',
                         cursor: 'pointer',
@@ -218,6 +245,11 @@ export function NodeCard({
                         alignItems: 'center',
                         gap: '1',
                     })}
+                    style={{
+                        border: isCompleted ? 'none' : (dark ? '1px solid #444' : '1px solid #ddd'),
+                        backgroundColor: isCompleted ? '#4caf50' : (dark ? '#2a2a2a' : 'white'),
+                        color: isCompleted ? 'white' : (dark ? '#a0a0a0' : '#666'),
+                    }}
                 >
                     {isCompleted ? <Check size={14} /> : 'Fertig'}
                 </button>

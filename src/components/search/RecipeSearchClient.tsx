@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'motion/react';
 import { usePathname } from 'next/navigation';
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -148,7 +149,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                 return;
             }
             updateFilters({ query: nextQuery });
-        }, 200);
+        }, 400);
 
         return () => clearTimeout(timer);
     }, [filters.query, queryInput, updateFilters]);
@@ -413,8 +414,15 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                 gap: '4',
                             })}
                         >
-                            {data.map((recipe: RecipeCardData) => (
-                                <RecipeCard key={recipe.id} recipe={recipe} />
+                            {data.map((recipe: RecipeCardData, index: number) => (
+                                <motion.div
+                                    key={recipe.id}
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3, delay: Math.min(index, 5) * 0.05 }}
+                                >
+                                    <RecipeCard recipe={recipe} />
+                                </motion.div>
                             ))}
                         </div>
 

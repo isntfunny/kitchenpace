@@ -1,6 +1,57 @@
 import winston from 'winston';
+import TransportStream from 'winston-transport';
 
 const { NODE_ENV } = process.env;
+
+// ── Minimal Seq transport (CLEF over fetch) ──────────────────────────────────
+// Replaces winston-seq-updated which had ESM/Turbopack interop issues.
+// Seq's CLEF endpoint: POST /api/events/raw, Content-Type: application/vnd.serilog.clef
+const SEQ_LEVELS: Record<string, string> = {
+    error: 'Error',
+    warn: 'Warning',
+    info: 'Information',
+    http: 'Debug',
+    verbose: 'Verbose',
+    debug: 'Debug',
+    silly: 'Verbose',
+};
+
+class SeqFetchTransport extends TransportStream {
+    private endpoint: string;
+    private apiKey: string;
+
+    constructor(opts: { serverUrl: string; apiKey: string } & TransportStream.TransportStreamOptions) {
+        const { serverUrl, apiKey, ...rest } = opts;
+        super(rest);
+        this.endpoint = `${serverUrl.replace(/\/$/, '')}/api/events/raw`;
+        this.apiKey = apiKey;
+    }
+
+    log(info: Record<string, unknown>, callback: () => void) {
+        setImmediate(() => this.emit('logged', info));
+
+        const { level, message, timestamp, ...meta } = info;
+        const event = {
+            '@t': timestamp ?? new Date().toISOString(),
+            '@l': SEQ_LEVELS[level as string] ?? 'Information',
+            '@m': message,
+            ...meta,
+        };
+
+        // fire-and-forget — never blocks the caller
+        fetch(this.endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/vnd.serilog.clef',
+                ...(this.apiKey ? { 'X-Seq-ApiKey': this.apiKey } : {}),
+            },
+            body: JSON.stringify(event),
+        }).catch((e) => console.error('[seq]', e));
+
+        callback();
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const transports: winston.transport[] = [
     new winston.transports.Console({
@@ -17,16 +68,11 @@ const transports: winston.transport[] = [
 ];
 
 if (process.env.SEQ_URL && process.env.SEQ_API_KEY) {
-    const seqUrl = new URL(process.env.SEQ_URL);
     transports.push(
-        new winston.transports.Http({
-            host: seqUrl.hostname,
-            port: parseInt(seqUrl.port) || 443,
-            path: '/api/events/raw',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sequence-ApiKey': process.env.SEQ_API_KEY,
-            },
+        new SeqFetchTransport({
+            serverUrl: process.env.SEQ_URL,
+            apiKey: process.env.SEQ_API_KEY,
+            level: 'debug',
         }),
     );
 }

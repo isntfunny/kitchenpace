@@ -15,7 +15,6 @@ export function PageShell({ children }: PageShellProps) {
             className={css({
                 minH: '100vh',
                 color: 'text',
-                bg: 'background',
             })}
         >
             <Header />

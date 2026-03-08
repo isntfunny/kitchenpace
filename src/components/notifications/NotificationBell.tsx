@@ -1,12 +1,12 @@
 'use client';
 
 import { Bell } from 'lucide-react';
-import Link from 'next/link';
+import { motion } from 'motion/react';
 import { useSession } from 'next-auth/react';
-import { DropdownMenu } from 'radix-ui';
 
 import { css } from 'styled-system/css';
 
+import { InboxDropdown } from './InboxDropdown';
 import { NotificationItem } from './NotificationItem';
 import { useNotifications } from './useNotifications';
 import { resolveNotificationHref } from './utils';
@@ -31,9 +31,10 @@ export function NotificationBell() {
     };
 
     return (
-        <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
+        <InboxDropdown
+            trigger={
                 <button
+                    type="button"
                     aria-label="Benachrichtigungen öffnen"
                     className={css({
                         position: 'relative',
@@ -51,9 +52,15 @@ export function NotificationBell() {
                         _hover: { background: 'accentSoft' },
                     })}
                 >
-                    <Bell size={20} />
+                    <motion.span
+                        style={{ display: 'inline-flex' }}
+                        whileHover={{ rotate: [0, 12, -8, 5, 0] }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <Bell size={20} />
+                    </motion.span>
                     {unreadCount > 0 && (
-                        <span
+                        <motion.span
                             className={css({
                                 position: 'absolute',
                                 top: '1',
@@ -68,109 +75,32 @@ export function NotificationBell() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                             })}
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                         >
                             {badgeContent}
-                        </span>
+                        </motion.span>
                     )}
                 </button>
-            </DropdownMenu.Trigger>
-
-            <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                    className={css({
-                        minWidth: '320px',
-                        maxWidth: '90vw',
-                        maxHeight: '70vh',
-                        borderRadius: 'xl',
-                        border: '1px solid',
-                        borderColor: 'border',
-                        background: 'surface',
-                        boxShadow: '0 40px 120px rgba(0,0,0,0.15)',
-                        padding: '4',
-                        animation: 'scaleUp 200ms ease',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '3',
-                        zIndex: 9999,
-                    })}
-                    sideOffset={8}
-                >
-                    <div
-                        className={css({
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                        })}
-                    >
-                        <div>
-                            <p className={css({ fontWeight: '800', fontSize: 'md' })}>
-                                Benachrichtigungen
-                            </p>
-                            <p className={css({ fontSize: 'xs', color: 'text-muted' })}>
-                                Die neuesten 19 Einträge
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => markAllAsRead()}
-                            className={css({
-                                border: 'none',
-                                background: 'transparent',
-                                color: 'primary',
-                                fontSize: 'xs',
-                                cursor: 'pointer',
-                                textTransform: 'uppercase',
-                            })}
-                        >
-                            Alle lesen
-                        </button>
-                    </div>
-
-                    <div
-                        className={css({
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '2',
-                            overflowY: 'auto',
-                            maxHeight: '360px',
-                        })}
-                    >
-                        {isLoading && (
-                            <p className={css({ color: 'text-muted', fontSize: 'sm' })}>Lädt…</p>
-                        )}
-                        {!isLoading && visibleNotifications.length === 0 && (
-                            <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
-                                Noch keine Benachrichtigungen
-                            </p>
-                        )}
-                        {!isLoading &&
-                            visibleNotifications.map((notification) => (
-                                <NotificationItem
-                                    key={notification.id}
-                                    notification={notification}
-                                    onHover={() => handleMarkHovered(notification.id)}
-                                    href={resolveNotificationHref(notification)}
-                                />
-                            ))}
-                    </div>
-
-                    <Link
-                        href="/notifications"
-                        className={css({
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '3',
-                            borderRadius: '2xl',
-                            background: 'accentSoft',
-                            color: 'primary',
-                            fontWeight: '700',
-                            textDecoration: 'none',
-                        })}
-                    >
-                        Alle anzeigen
-                    </Link>
-                </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-        </DropdownMenu.Root>
+            }
+            title="Benachrichtigungen"
+            subtitle="Die neuesten 19 Einträge"
+            actionLabel={notifications.length > 0 ? 'Alle lesen' : undefined}
+            onAction={notifications.length > 0 ? () => markAllAsRead() : undefined}
+            isLoading={isLoading}
+            isEmpty={visibleNotifications.length === 0}
+            emptyLabel="Noch keine Benachrichtigungen"
+            footerHref="/notifications"
+            footerLabel="Alle anzeigen"
+        >
+            {visibleNotifications.map((notification) => (
+                <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onHover={() => handleMarkHovered(notification.id)}
+                    href={resolveNotificationHref(notification)}
+                />
+            ))}
+        </InboxDropdown>
     );
 }

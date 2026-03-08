@@ -1,3 +1,5 @@
+import type { Prisma } from '@prisma/client';
+
 type BaseRecipeEvent = {
     recipeId: string;
     recipeTitle: string;
@@ -32,28 +34,37 @@ type UserActivatedEvent = {
     name?: string;
 };
 
+type RecipeCommentedEvent = BaseRecipeEvent & {
+    commentId: string;
+};
+
+type MealPlanCreatedEvent = {
+    mealPlanId: string;
+    mealPlanName?: string;
+};
+
+type ShoppingListCreatedEvent = {
+    listId: string;
+    listName?: string;
+};
+
 export type EventDataMap = {
     recipeFavorited: BaseRecipeEvent;
     recipeUnfavorited: BaseRecipeEvent;
     recipeRated: RecipeRatedEvent;
     recipeCooked: RecipeCookedEvent;
     recipePublished: BaseRecipeEvent;
+    recipeCommented: RecipeCommentedEvent;
     userFollowed: UserFollowedEvent;
     userRegistered: UserRegisteredEvent;
     userActivated: UserActivatedEvent;
+    mealPlanCreated: MealPlanCreatedEvent;
+    shoppingListCreated: ShoppingListCreatedEvent;
 };
 
 export type EventName = keyof EventDataMap;
 
-type ActivityTypeValue =
-    | 'RECIPE_FAVORITED'
-    | 'RECIPE_UNFAVORITED'
-    | 'RECIPE_RATED'
-    | 'RECIPE_COOKED'
-    | 'RECIPE_CREATED'
-    | 'USER_FOLLOWED'
-    | 'USER_REGISTERED'
-    | 'USER_ACTIVATED';
+type ActivityTypeValue = Prisma.ActivityLogCreateInput['type'];
 
 type NotificationTypeValue =
     | 'NEW_FOLLOWER'
@@ -120,7 +131,7 @@ type TrackingDefinition<T extends EventName> = {
 };
 
 type EventDefinition<T extends EventName> = {
-    activity: ActivityDefinition<T>;
+    activity?: ActivityDefinition<T>;
     notification?: NotificationDefinition<T>;
     tracking?: TrackingDefinition<T>;
 };
@@ -150,13 +161,7 @@ export const EVENT_DEFINITIONS: EventDefinitionsMap = {
             getProperties: ({ data }) => ({ recipeId: data.recipeId }),
         },
     },
-    recipeUnfavorited: {
-        activity: {
-            type: 'RECIPE_UNFAVORITED',
-            targetType: 'recipe',
-            getTargetId: (context) => context.data.recipeId,
-        },
-    },
+    recipeUnfavorited: {},
     recipeRated: {
         activity: {
             type: 'RECIPE_RATED',
@@ -197,8 +202,8 @@ export const EVENT_DEFINITIONS: EventDefinitionsMap = {
             type: 'RECIPE_COOKED',
             preference: 'notifyOnRecipeCooked',
             template: ({ actorLabel, data }) => ({
-                title: 'Rezept gekocht',
-                message: `${actorLabel} hat ${data.recipeTitle} gekocht${
+                title: 'Rezept zubereitet',
+                message: `${actorLabel} hat ${data.recipeTitle} zubereitet${
                     data.hasImage ? ' und ein Foto geteilt' : ''
                 }`,
             }),
@@ -305,6 +310,61 @@ export const EVENT_DEFINITIONS: EventDefinitionsMap = {
         tracking: {
             name: 'user_activated',
             getProperties: ({ data }) => ({ email: data.email }),
+        },
+    },
+    recipeCommented: {
+        activity: {
+            type: 'RECIPE_COMMENTED',
+            targetType: 'recipe',
+            getTargetId: (context) => context.data.recipeId,
+            getMetadata: (context) => ({ commentId: context.data.commentId }),
+        },
+        notification: {
+            type: 'RECIPE_RATING',
+            preference: 'notifyOnRecipeComment',
+            template: ({ actorLabel, data }) => ({
+                title: 'Neuer Kommentar',
+                message: `${actorLabel} hat ${data.recipeTitle} kommentiert`,
+            }),
+            getData: ({ actorId, data }) => ({
+                recipeId: data.recipeId,
+                actorId,
+                commentId: data.commentId,
+            }),
+        },
+        tracking: {
+            name: 'comment_recipe',
+            getProperties: ({ data }) => ({ recipeId: data.recipeId }),
+        },
+    },
+    mealPlanCreated: {
+        activity: {
+            type: 'MEAL_PLAN_CREATED',
+            targetType: 'user',
+            getTargetId: (context) => context.actorId,
+            getMetadata: (context) => ({
+                mealPlanId: context.data.mealPlanId,
+                mealPlanName: context.data.mealPlanName,
+            }),
+        },
+        tracking: {
+            name: 'create_meal_plan',
+            getProperties: ({ data }) => ({ mealPlanId: data.mealPlanId }),
+        },
+    },
+    shoppingListCreated: {
+        activity: {
+            type: 'SHOPPING_LIST_CREATED',
+            targetType: 'user',
+            getTargetId: (context) => context.actorId,
+            getMetadata: (context) => ({
+                listId: context.data.listId,
+                listName: context.data.listName,
+            }),
+        },
+        tracking: {
+            name: 'create_shopping_list',
+            getProperties: ({ data }) => ({ listId: data.listId }),
         },
     },
 };

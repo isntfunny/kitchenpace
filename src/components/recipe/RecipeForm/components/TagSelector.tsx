@@ -24,13 +24,13 @@ const tagSearchInputClass = css({
     mt: '2',
     borderRadius: 'xl',
     border: '1px solid rgba(224,123,83,0.4)',
-    background: 'white',
+    background: 'surface',
     px: '3',
     py: '2.5',
     fontSize: 'sm',
     outline: 'none',
     _focus: {
-        borderColor: '#e07b53',
+        borderColor: 'palette.orange',
         boxShadow: '0 0 0 2px rgba(224,123,83,0.2)',
     },
 });
@@ -47,7 +47,7 @@ const tagChipBaseClass = css({
     px: '2.5',
     py: '1',
     border: '1.5px solid rgba(0,0,0,0.1)',
-    background: 'white',
+    background: 'surface',
     color: 'text.primary',
     display: 'inline-flex',
     alignItems: 'center',
@@ -63,9 +63,9 @@ const tagChipBaseClass = css({
 });
 
 const tagChipSelectedClass = css({
-    borderColor: '#e07b53',
+    borderColor: 'palette.orange',
     background: 'rgba(224,123,83,0.12)',
-    color: '#c0622e',
+    color: 'primary',
 });
 
 const tagCountClass = css({
@@ -80,7 +80,7 @@ const tagCountClass = css({
 
 const tagCountSelectedClass = css({
     background: 'rgba(192,98,46,0.15)',
-    color: '#c0622e',
+    color: 'primary',
 });
 
 export function TagSelector({

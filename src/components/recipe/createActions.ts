@@ -1,8 +1,11 @@
 'use server';
 
 import { fireEvent } from '@app/lib/events/fire';
+import { createActivityLog } from '@app/lib/events/persist';
+import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
+import { addSyncRecipeJob } from '@worker/queues';
 
 type ShoppingCategory =
     | 'GEMUESE'
@@ -34,6 +37,19 @@ function toShoppingCategory(category?: string): ShoppingCategory | null {
     return match ?? 'SONSTIGES';
 }
 
+/**
+ * Extract all user-generated text from a recipe for content moderation
+ */
+function extractRecipeText(data: { title: string; description?: string; flowNodes?: FlowNodeInput[] }): string {
+    const parts = [data.title, data.description || ''];
+    if (data.flowNodes) {
+        for (const node of data.flowNodes) {
+            parts.push(node.label, node.description);
+        }
+    }
+    return parts.filter(Boolean).join('\n');
+}
+
 export interface RecipeIngredientInput {
     ingredientId: string;
     ingredientName?: string; // For syncing missing ingredients
@@ -52,7 +68,7 @@ export interface FlowNodeInput {
     ingredientIds?: string[];
     photoKey?: string;
     photoUrl?: string;
-    position: { x: number; y: number };
+    position?: { x: number; y: number };
 }
 
 export interface FlowEdgeInput {
@@ -87,7 +103,17 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
         throw new Error('Rezept nicht gefunden oder keine Berechtigung');
     }
 
-    const recipeStatus = data.status ?? existing.status;
+    // Content moderation — check text before saving
+    const recipeText = extractRecipeText(data);
+    const modResult = await moderateContent({ text: recipeText });
+
+    if (modResult.decision === 'REJECTED') {
+        throw new Error('CONTENT_REJECTED:Dein Inhalt wurde abgelehnt — bitte überprüfe den Text deines Rezepts.');
+    }
+
+    // If moderation flags content for review, force draft status
+    const intendedStatus = data.status ?? existing.status;
+    const recipeStatus = modResult.decision === 'PENDING' ? 'DRAFT' : intendedStatus;
     const isPublishing = recipeStatus === 'PUBLISHED' && existing.status !== 'PUBLISHED';
 
     let slug = existing.slug;
@@ -114,9 +140,22 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
             difficulty: data.difficulty,
             status: recipeStatus as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED',
             publishedAt: isPublishing ? new Date() : undefined,
+            moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
+            aiModerationScore: modResult.score,
+            moderationNote: modResult.decision === 'PENDING' ? null : undefined, // clear old note on re-check
             flowNodes: data.flowNodes ? (data.flowNodes as unknown as object) : undefined,
             flowEdges: data.flowEdges ? (data.flowEdges as unknown as object) : undefined,
         },
+    });
+
+    // Persist moderation result for audit trail
+    await persistModerationResult('recipe', recipe.id, authorId, modResult, {
+        contentType: 'recipe',
+        contentId: recipe.id,
+        authorId,
+        title: data.title,
+        description: data.description,
+        text: recipeText,
     });
 
     // Replace categories
@@ -175,15 +214,19 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
     }
 
     if (isPublishing) {
-        await prisma.activityLog.create({
-            data: {
-                userId: authorId,
-                type: 'RECIPE_CREATED',
-                targetId: recipe.id,
-                targetType: 'recipe',
-            },
+        await createActivityLog({
+            userId: authorId,
+            type: 'RECIPE_CREATED',
+            targetId: recipe.id,
+            targetType: 'recipe',
         });
         await sendNotificationsToFollowers(authorId, recipeId, data.title);
+    }
+
+    if (recipeStatus === 'PUBLISHED' || existing.status === 'PUBLISHED') {
+        await addSyncRecipeJob(recipeId).catch((err) =>
+            console.error('[OpenSearch] Failed to queue sync for recipe update:', err),
+        );
     }
 
     return recipe;
@@ -211,7 +254,17 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         return !!existing;
     });
 
-    const recipeStatus = data.status ?? 'DRAFT';
+    // Content moderation — check text before saving
+    const recipeText = extractRecipeText(data);
+    const modResult = await moderateContent({ text: recipeText });
+
+    if (modResult.decision === 'REJECTED') {
+        throw new Error('CONTENT_REJECTED:Dein Inhalt wurde abgelehnt — bitte überprüfe den Text deines Rezepts.');
+    }
+
+    // If moderation flags content for review, force draft status
+    const intendedStatus = data.status ?? 'DRAFT';
+    const recipeStatus = modResult.decision === 'PENDING' ? 'DRAFT' : intendedStatus;
     const isPublished = recipeStatus === 'PUBLISHED';
 
     // Verify and sync ingredients — ensure all referenced ingredient IDs exist
@@ -246,6 +299,8 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             difficulty: data.difficulty,
             status: recipeStatus,
             publishedAt: isPublished ? new Date() : null,
+            moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
+            aiModerationScore: modResult.score,
             authorId,
             flowNodes: (data.flowNodes as unknown as object) ?? undefined,
             flowEdges: (data.flowEdges as unknown as object) ?? undefined,
@@ -262,14 +317,22 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         },
     });
 
+    // Persist moderation result for audit trail
+    await persistModerationResult('recipe', recipe.id, authorId, modResult, {
+        contentType: 'recipe',
+        contentId: recipe.id,
+        authorId,
+        title: data.title,
+        description: data.description,
+        text: recipeText,
+    });
+
     if (isPublished) {
-        await prisma.activityLog.create({
-            data: {
-                userId: authorId,
-                type: 'RECIPE_CREATED',
-                targetId: recipe.id,
-                targetType: 'recipe',
-            },
+        await createActivityLog({
+            userId: authorId,
+            type: 'RECIPE_CREATED',
+            targetId: recipe.id,
+            targetType: 'recipe',
         });
 
         await sendNotificationsToFollowers(authorId, recipe.id, data.title);
@@ -294,6 +357,12 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
                 tagId,
             })),
         });
+    }
+
+    if (isPublished) {
+        await addSyncRecipeJob(recipe.id).catch((err) =>
+            console.error('[OpenSearch] Failed to queue sync for new recipe:', err),
+        );
     }
 
     return recipe;
@@ -346,17 +415,19 @@ export async function updateRecipeStatus(
         });
 
         if (isPublished) {
-            await prisma.activityLog.create({
-                data: {
-                    userId: authorId,
-                    type: 'RECIPE_CREATED',
-                    targetId: recipeId,
-                    targetType: 'recipe',
-                },
+            await createActivityLog({
+                userId: authorId,
+                type: 'RECIPE_CREATED',
+                targetId: recipeId,
+                targetType: 'recipe',
             });
 
             await sendNotificationsToFollowers(authorId, recipeId, recipe.title);
         }
+
+        await addSyncRecipeJob(recipeId).catch((err) =>
+            console.error('[OpenSearch] Failed to queue sync for status change:', err),
+        );
 
         return { success: true };
     } catch (error) {
@@ -404,6 +475,14 @@ export async function bulkUpdateRecipeStatus(
                 await sendNotificationsToFollowers(authorId, recipe.id, recipe.title);
             }
         }
+
+        await Promise.all(
+            recipeIds.map((id) =>
+                addSyncRecipeJob(id).catch((err) =>
+                    console.error('[OpenSearch] Failed to queue sync for bulk update:', err),
+                ),
+            ),
+        );
 
         return { success: true, updatedCount: result.count };
     } catch (error) {
@@ -470,6 +549,14 @@ export async function bulkDeleteRecipes(
                 authorId,
             },
         });
+
+        await Promise.all(
+            recipeIds.map((id) =>
+                addSyncRecipeJob(id).catch((err) =>
+                    console.error('[OpenSearch] Failed to queue sync for bulk delete:', err),
+                ),
+            ),
+        );
 
         return { success: true, deletedCount: result.count };
     } catch (error) {

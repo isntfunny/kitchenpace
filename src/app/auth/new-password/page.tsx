@@ -245,7 +245,7 @@ export default function NewPasswordPage() {
                                 borderRadius: '50%',
                                 border: '3px solid',
                                 borderColor: 'rgba(224,123,83,0.3)',
-                                borderTopColor: '#e07b53',
+                                borderTopColor: 'palette.orange',
                                 animation: 'spin 1s linear infinite',
                             })}
                         />

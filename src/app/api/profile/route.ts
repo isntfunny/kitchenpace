@@ -172,15 +172,67 @@ export async function PUT(request: NextRequest) {
         profileUpdates.notifyOnNewsletter = notifyOnNewsletter;
     }
 
-    const profile = await upsertProfile({
-        userId: session.userId,
-        email: session.email,
-        data: profileUpdates,
+    // Text moderation happens inside upsertProfile() — throws on REJECTED
+    try {
+        const profile = await upsertProfile({
+            userId: session.userId,
+            email: session.email,
+            data: profileUpdates,
+        });
+
+        logAuth('info', 'PUT /api/profile: profile updated', {
+            userId: session.userId,
+        });
+
+        return NextResponse.json({ profile });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message.startsWith('CONTENT_REJECTED:')) {
+            return NextResponse.json(
+                { error: message.replace('CONTENT_REJECTED:', '') },
+                { status: 400 },
+            );
+        }
+        throw error;
+    }
+}
+
+export async function PATCH(request: NextRequest) {
+    const session = await requireSession();
+    if (!session) {
+        logAuth('warn', 'PATCH /api/profile: unauthorized');
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const payload = await request.json();
+    const newEmail =
+        typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : null;
+
+    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+        return NextResponse.json({ message: 'Ungültige E-Mail-Adresse' }, { status: 400 });
+    }
+
+    const existing = await prisma.user.findFirst({
+        where: { email: newEmail, id: { not: session.userId } },
+        select: { id: true },
     });
 
-    logAuth('info', 'PUT /api/profile: profile updated', {
-        userId: session.userId,
-    });
+    if (existing) {
+        return NextResponse.json(
+            { message: 'Diese E-Mail-Adresse ist bereits vergeben' },
+            { status: 400 },
+        );
+    }
 
-    return NextResponse.json({ profile });
+    await prisma.$transaction([
+        prisma.user.update({ where: { id: session.userId }, data: { email: newEmail } }),
+        prisma.profile.update({
+            where: { userId: session.userId },
+            data: { email: newEmail },
+        }),
+    ]);
+
+    logAuth('info', 'PATCH /api/profile: email updated', { userId: session.userId });
+
+    return NextResponse.json({ success: true });
 }

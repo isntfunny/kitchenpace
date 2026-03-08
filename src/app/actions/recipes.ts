@@ -3,6 +3,7 @@
 import type { Prisma } from '@prisma/client';
 
 import type { FlowEdgeInput, FlowNodeInput } from '@app/components/recipe/createActions';
+import { PALETTE } from '@app/lib/palette';
 import { prisma } from '@shared/prisma';
 
 const DEFAULT_AUTHOR_AVATAR =
@@ -13,6 +14,8 @@ export interface RecipeCardData {
     slug: string;
     title: string;
     category: string;
+    categorySlug?: string;
+    categoryColor?: string;
     rating: number;
     time: string;
     image: string | null;
@@ -26,12 +29,15 @@ type RecipeWithCategory = Prisma.RecipeGetPayload<{
 
 function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
     const totalTime = recipe.totalTime ?? (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
+    const cat = recipe.categories[0]?.category;
 
     return {
         id: recipe.id,
         slug: recipe.slug,
         title: recipe.title,
-        category: recipe.categories[0]?.category?.name || 'Hauptgericht',
+        category: cat?.name || 'Hauptgericht',
+        categorySlug: cat?.slug ?? undefined,
+        categoryColor: PALETTE[cat?.color as keyof typeof PALETTE] ?? PALETTE.orange,
         rating: recipe.rating ?? 0,
         time: `${totalTime ?? 0} Min.`,
         image: recipe.imageKey
@@ -126,6 +132,7 @@ export interface RecipeDetailData {
     image: string | null;
     imageKey?: string | null;
     category: string;
+    categorySlug?: string;
     rating: number;
     prepTime: number;
     cookTime: number;
@@ -158,6 +165,7 @@ export interface RecipeDetailData {
     authorId: string;
     author: {
         id: string;
+        slug: string;
         name: string;
         avatar: string;
         bio: string | null;
@@ -167,6 +175,10 @@ export interface RecipeDetailData {
     favoriteCount: number;
     ratingCount: number;
     cookCount: number;
+    publishedAt?: string | null;
+    updatedAt?: string;
+    moderationStatus?: string;
+    moderationNote?: string | null;
     viewer?: {
         id: string;
         isFavorite: boolean;
@@ -257,6 +269,7 @@ export async function fetchRecipeBySlug(
         description: recipe.description || '',
         image: `/api/thumbnail?type=recipe&id=${encodeURIComponent(recipe.id)}`,
         category: recipe.categories[0]?.category?.name || 'Hauptgericht',
+        categorySlug: recipe.categories[0]?.category?.slug ?? undefined,
         rating: recipe.rating ?? 0,
         prepTime: recipe.prepTime ?? 0,
         cookTime: recipe.cookTime ?? 0,
@@ -279,6 +292,7 @@ export async function fetchRecipeBySlug(
         author: recipe.author
             ? {
                   id: recipe.author.id,
+                  slug: recipe.author.profile?.slug ?? recipe.author.id,
                   name: recipe.author.name || 'Unbekannt',
                   avatar: recipe.author.profile?.photoUrl || DEFAULT_AUTHOR_AVATAR,
                   bio: recipe.author.profile?.bio || null,
@@ -290,6 +304,10 @@ export async function fetchRecipeBySlug(
         ratingCount: recipe.ratingCount ?? 0,
         cookCount: recipe.cookCount ?? 0,
         imageKey: recipe.imageKey ?? null,
+        publishedAt: recipe.publishedAt?.toISOString() ?? null,
+        updatedAt: recipe.updatedAt.toISOString(),
+        moderationStatus: recipe.moderationStatus ?? undefined,
+        moderationNote: recipe.moderationNote ?? undefined,
         viewer: viewerId
             ? {
                   id: viewerId,

@@ -1,5 +1,6 @@
 'use client';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 interface SubmissionControlsProps {
@@ -22,12 +23,12 @@ export function SubmissionControls({
             background:
                 saveStatus === status
                     ? status === 'DRAFT'
-                        ? 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)'
-                        : 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)'
+                        ? `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`
+                        : `linear-gradient(135deg, ${PALETTE.emerald} 0%, ${PALETTE.blue} 100%)`
                     : 'white',
-            color: saveStatus === status ? 'white' : status === 'DRAFT' ? '#e07b53' : '#00b894',
+            color: saveStatus === status ? 'white' : status === 'DRAFT' ? PALETTE.orange : PALETTE.emerald,
             fontWeight: '600',
-            border: `2px solid ${status === 'DRAFT' ? '#e07b53' : '#00b894'}`,
+            border: `2px solid ${status === 'DRAFT' ? PALETTE.orange : PALETTE.emerald}`,
             cursor: saving ? 'not-allowed' : 'pointer',
             opacity: saving ? 0.7 : 1,
             transition: 'all 150ms ease',

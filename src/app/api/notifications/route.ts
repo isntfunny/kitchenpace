@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
+import { serializeNotification } from '@app/lib/events/views';
 import { prisma } from '@shared/prisma';
 
 const requireSession = async (context: string) => {
@@ -31,7 +32,10 @@ export async function GET() {
         prisma.notification.count({ where: { userId: user.id, read: false } }),
     ]);
 
-    return NextResponse.json({ notifications, unreadCount });
+    return NextResponse.json({
+        notifications: notifications.map(serializeNotification),
+        unreadCount,
+    });
 }
 
 export async function PATCH(request: NextRequest) {

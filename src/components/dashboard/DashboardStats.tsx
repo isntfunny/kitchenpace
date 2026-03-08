@@ -1,5 +1,6 @@
 'use client';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
@@ -19,7 +20,7 @@ interface DashboardStatsProps {
 
 function StatCard({ stat }: { stat: StatCard }) {
     const changeColors = {
-        positive: '#00b894',
+        positive: PALETTE.emerald,
         negative: '#ff7675',
         neutral: 'text-muted',
     };
@@ -27,15 +28,15 @@ function StatCard({ stat }: { stat: StatCard }) {
     return (
         <div
             className={css({
-                background: 'white',
+                background: 'surface',
                 borderRadius: 'xl',
                 padding: '5',
                 border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.06)',
+                borderColor: 'border',
                 transition: 'all 200ms ease',
                 _hover: {
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                    boxShadow: 'shadow.medium',
                     borderColor: stat.color,
                 },
             })}

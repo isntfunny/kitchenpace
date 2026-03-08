@@ -55,7 +55,7 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '6px',
-                                    bg: '#e07b53',
+                                    bg: 'palette.orange',
                                     borderRadius: 'full',
                                     padding: '4px 12px',
                                     fontSize: 'xs',

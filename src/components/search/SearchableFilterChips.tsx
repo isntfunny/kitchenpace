@@ -1,7 +1,7 @@
 'use client';
 
 import { ToggleGroup } from 'radix-ui';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { css, cx } from 'styled-system/css';
 
@@ -19,6 +19,8 @@ export type SearchableFilterChipsProps = {
     emptyMessage?: string;
     ariaLabel: string;
     variant?: 'default' | 'exclude';
+    /** OpenSearch suggest field: 'tags' | 'ingredients'. Enables server-side typeahead. */
+    suggestField?: 'tags' | 'ingredients';
 };
 
 const chipItemClass = css({
@@ -113,6 +115,8 @@ const scrollContainerClass = css({
     },
 });
 
+type SuggestResult = { name: string; count: number };
+
 export function SearchableFilterChips({
     items,
     selectedValues,
@@ -121,21 +125,80 @@ export function SearchableFilterChips({
     emptyMessage = 'Keine Ergebnisse gefunden.',
     ariaLabel,
     variant = 'default',
+    suggestField,
 }: SearchableFilterChipsProps) {
     const [query, setQuery] = useState('');
+    const [suggestions, setSuggestions] = useState<SuggestResult[]>([]);
+    const [suggestLoading, setSuggestLoading] = useState(false);
+    const abortRef = useRef<AbortController | null>(null);
+
+    // Debounced OpenSearch typeahead
+    useEffect(() => {
+        if (!suggestField) return;
+        const trimmed = query.trim();
+        if (trimmed.length < 2) {
+            setSuggestions([]);
+            return;
+        }
+
+        setSuggestLoading(true);
+        const controller = new AbortController();
+        abortRef.current?.abort();
+        abortRef.current = controller;
+
+        const timer = setTimeout(async () => {
+            try {
+                const params = new URLSearchParams({ q: trimmed, field: suggestField });
+                const res = await fetch(`/api/recipes/suggest?${params}`, {
+                    signal: controller.signal,
+                });
+                if (!res.ok) throw new Error();
+                const json = await res.json();
+                setSuggestions(json.results ?? []);
+            } catch (err) {
+                if ((err as Error).name !== 'AbortError') {
+                    setSuggestions([]);
+                }
+            } finally {
+                setSuggestLoading(false);
+            }
+        }, 300);
+
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [query, suggestField]);
 
     const filteredItems = useMemo(() => {
+        const trimmed = query.trim();
         let filtered = items;
-        if (query.trim()) {
-            const normalizedQuery = query.toLowerCase().trim();
+
+        if (trimmed) {
+            const normalizedQuery = trimmed.toLowerCase();
+            // Client-side filter existing items
             filtered = items.filter((item) => item.name.toLowerCase().includes(normalizedQuery));
+
+            // Merge in server suggestions that aren't already in filtered items
+            if (suggestField && suggestions.length > 0) {
+                const existingNames = new Set(filtered.map((item) => item.name.toLowerCase()));
+                const newSuggestions = suggestions
+                    .filter((s) => !existingNames.has(s.name.toLowerCase()))
+                    .map((s) => ({
+                        name: s.name,
+                        count: s.count,
+                        selected: selectedValues.includes(s.name),
+                    }));
+                filtered = [...filtered, ...newSuggestions];
+            }
         }
+
         return filtered.sort((a, b) => {
             if (a.selected && !b.selected) return -1;
             if (!a.selected && b.selected) return 1;
             return b.count - a.count;
         });
-    }, [items, query]);
+    }, [items, query, suggestions, suggestField, selectedValues]);
 
     const handleToggle = (value: string[]) => {
         onSelectionChange(value);
@@ -152,7 +215,10 @@ export function SearchableFilterChips({
                 placeholder={placeholder}
                 className={searchInputClass}
             />
-            {filteredItems.length === 0 ? (
+            {suggestLoading && query.trim().length >= 2 && (
+                <p className={css({ fontSize: 'xs', color: 'foreground.muted' })}>Suche...</p>
+            )}
+            {filteredItems.length === 0 && !suggestLoading ? (
                 <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{emptyMessage}</p>
             ) : (
                 <div className={scrollContainerClass}>

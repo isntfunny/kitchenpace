@@ -40,3 +40,11 @@ export type ScheduledJob =
     | { name: 'backup-database-daily'; data: Record<string, unknown> };
 
 export type AllJob = OpenSearchJob | ScheduledJob;
+
+// Job payload schema for admin form generation
+export type JobPayloadField =
+    | { type: 'number'; label: string; default?: number; min?: number; max?: number }
+    | { type: 'string'; label: string; default?: string; placeholder?: string }
+    | { type: 'boolean'; label: string; default?: boolean };
+
+export type JobPayloadSchema = Record<string, JobPayloadField>;

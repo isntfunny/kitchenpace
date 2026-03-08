@@ -4,13 +4,17 @@ import {
     opensearchClient,
     OPENSEARCH_INDEX,
     OPENSEARCH_INGREDIENTS_INDEX,
-    ensureIndices,
 } from '@shared/opensearch/client';
 
+import { getRedis } from './connection';
 import { prisma } from './prisma';
 import { SyncIngredientsJob, SyncOpenSearchJob, SyncRecipeToOpenSearchJob } from './types';
 
-const BULK_CHUNK_SIZE = 2000;
+const WATERMARK_KEY_RECIPES = 'opensearch:watermark:recipes';
+const WATERMARK_KEY_INGREDIENTS = 'opensearch:watermark:ingredients';
+
+/** Max documents per bulk request (each document = 2 bulk entries: action + body) */
+const BULK_DOCS_PER_CHUNK = 1000;
 
 type BulkOperation = Record<string, unknown>;
 
@@ -61,6 +65,7 @@ type IngredientWithDetails = {
     slug: string;
     category: string | null;
     units: string[];
+    createdAt?: Date;
 };
 
 type IngredientDocument = {
@@ -163,11 +168,11 @@ function buildBulkOperations(recipes: RecipeWithRelations[]): BulkOperation[] {
 }
 
 async function runBulkOperations(operations: BulkOperation[]): Promise<void> {
-    for (let i = 0; i < operations.length; i += BULK_CHUNK_SIZE) {
-        const chunk = operations.slice(i, i + BULK_CHUNK_SIZE);
+    const chunkSize = BULK_DOCS_PER_CHUNK * 2;
+    for (let i = 0; i < operations.length; i += chunkSize) {
+        const chunk = operations.slice(i, i + chunkSize);
 
         const response = await opensearchClient.bulk({
-            refresh: 'wait_for',
             body: chunk,
         });
 
@@ -192,50 +197,84 @@ async function runBulkOperations(operations: BulkOperation[]): Promise<void> {
 export async function processSyncOpenSearch(
     job: Job<SyncOpenSearchJob>,
 ): Promise<{ synced: number }> {
-    const batchSize = job.data.batchSize ?? 150;
+    const pageSize = job.data.batchSize ?? 150;
 
-    console.log(`[OpenSearch] Processing sync-opensearch job ${job.id}`, { batchSize });
+    console.log(`[OpenSearch] Processing sync-opensearch job ${job.id}`, { pageSize });
 
     try {
-        await ensureIndices();
-        const recipes = await prisma.recipe.findMany({
-            where: { status: 'PUBLISHED' },
-            select: {
-                id: true,
-                slug: true,
-                title: true,
-                description: true,
-                difficulty: true,
-                status: true,
-                totalTime: true,
-                prepTime: true,
-                cookTime: true,
-                rating: true,
-                cookCount: true,
-                imageKey: true,
-                publishedAt: true,
-                updatedAt: true,
-                categories: { include: { category: true } },
-                tags: { include: { tag: true } },
-                recipeIngredients: { include: { ingredient: true } },
-            },
-            orderBy: { updatedAt: 'desc' },
-            take: batchSize,
-        });
+        const redis = getRedis();
+        const watermarkRaw = await redis.get(WATERMARK_KEY_RECIPES);
+        const watermark = watermarkRaw ? new Date(watermarkRaw) : undefined;
 
-        console.log(`[OpenSearch] Fetched ${recipes.length} recipes from database`);
-
-        if (recipes.length === 0) {
-            console.warn('[OpenSearch] No recipes to sync');
-            return { synced: 0 };
+        if (watermark) {
+            console.log(`[OpenSearch] Incremental sync from watermark: ${watermark.toISOString()}`);
+        } else {
+            console.log('[OpenSearch] Full sync (no watermark found)');
         }
 
-        const operations = buildBulkOperations(recipes);
-        await runBulkOperations(operations);
+        let totalSynced = 0;
+        let cursor: string | undefined;
+        let latestUpdatedAt: Date | undefined;
 
-        console.log(`[OpenSearch] Synced ${recipes.length} recipes to index ${OPENSEARCH_INDEX}`);
+        // Page through all recipes updated since the watermark
+        while (true) {
+            const recipes = await prisma.recipe.findMany({
+                where: {
+                    status: 'PUBLISHED',
+                    ...(watermark ? { updatedAt: { gt: watermark } } : {}),
+                    ...(cursor ? { id: { gt: cursor } } : {}),
+                },
+                select: {
+                    id: true,
+                    slug: true,
+                    title: true,
+                    description: true,
+                    difficulty: true,
+                    status: true,
+                    totalTime: true,
+                    prepTime: true,
+                    cookTime: true,
+                    rating: true,
+                    cookCount: true,
+                    imageKey: true,
+                    publishedAt: true,
+                    updatedAt: true,
+                    categories: { include: { category: true } },
+                    tags: { include: { tag: true } },
+                    recipeIngredients: { include: { ingredient: true } },
+                },
+                orderBy: { id: 'asc' },
+                take: pageSize,
+            });
 
-        return { synced: recipes.length };
+            if (recipes.length === 0) break;
+
+            const operations = buildBulkOperations(recipes);
+            await runBulkOperations(operations);
+
+            totalSynced += recipes.length;
+            cursor = recipes[recipes.length - 1].id;
+
+            for (const recipe of recipes) {
+                if (!latestUpdatedAt || recipe.updatedAt > latestUpdatedAt) {
+                    latestUpdatedAt = recipe.updatedAt;
+                }
+            }
+
+            console.log(`[OpenSearch] Synced batch of ${recipes.length} recipes (total: ${totalSynced})`);
+
+            if (recipes.length < pageSize) break;
+        }
+
+        // Advance the watermark
+        if (latestUpdatedAt) {
+            await redis.set(WATERMARK_KEY_RECIPES, latestUpdatedAt.toISOString());
+            console.log(`[OpenSearch] Updated watermark to ${latestUpdatedAt.toISOString()}`);
+        }
+
+        console.log(`[OpenSearch] Synced ${totalSynced} recipes to index ${OPENSEARCH_INDEX}`);
+
+        return { synced: totalSynced };
     } catch (error) {
         console.error(`[OpenSearch] sync-opensearch job ${job.id} failed`, {
             error: error instanceof Error ? error.message : String(error),
@@ -247,39 +286,72 @@ export async function processSyncOpenSearch(
 export async function processSyncIngredients(
     job: Job<SyncIngredientsJob>,
 ): Promise<{ synced: number }> {
-    const batchSize = job.data.batchSize ?? 500;
+    const pageSize = job.data.batchSize ?? 500;
 
-    console.log(`[OpenSearch] Processing sync-ingredients job ${job.id}`, { batchSize });
+    console.log(`[OpenSearch] Processing sync-ingredients job ${job.id}`, { pageSize });
 
     try {
-        await ensureIndices();
-        const ingredients = await prisma.ingredient.findMany({
-            select: {
-                id: true,
-                name: true,
-                slug: true,
-                category: true,
-                units: true,
-            },
-            orderBy: { createdAt: 'desc' },
-            take: batchSize,
-        });
+        const redis = getRedis();
+        const watermarkRaw = await redis.get(WATERMARK_KEY_INGREDIENTS);
+        const watermark = watermarkRaw ? new Date(watermarkRaw) : undefined;
 
-        console.log(`[OpenSearch] Fetched ${ingredients.length} ingredients from database`);
-
-        if (ingredients.length === 0) {
-            console.warn('[OpenSearch] No ingredients to sync');
-            return { synced: 0 };
+        if (watermark) {
+            console.log(`[OpenSearch] Incremental ingredients sync from: ${watermark.toISOString()}`);
+        } else {
+            console.log('[OpenSearch] Full ingredients sync (no watermark found)');
         }
 
-        const operations = buildIngredientBulkOperations(ingredients);
-        await runBulkOperations(operations);
+        let totalSynced = 0;
+        let cursor: string | undefined;
+        let latestCreatedAt: Date | undefined;
+
+        while (true) {
+            const ingredients = await prisma.ingredient.findMany({
+                where: {
+                    ...(watermark ? { createdAt: { gt: watermark } } : {}),
+                    ...(cursor ? { id: { gt: cursor } } : {}),
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    category: true,
+                    units: true,
+                    createdAt: true,
+                },
+                orderBy: { id: 'asc' },
+                take: pageSize,
+            });
+
+            if (ingredients.length === 0) break;
+
+            const operations = buildIngredientBulkOperations(ingredients);
+            await runBulkOperations(operations);
+
+            totalSynced += ingredients.length;
+            cursor = ingredients[ingredients.length - 1].id;
+
+            for (const ingredient of ingredients) {
+                if (!latestCreatedAt || ingredient.createdAt > latestCreatedAt) {
+                    latestCreatedAt = ingredient.createdAt;
+                }
+            }
+
+            console.log(`[OpenSearch] Synced batch of ${ingredients.length} ingredients (total: ${totalSynced})`);
+
+            if (ingredients.length < pageSize) break;
+        }
+
+        if (latestCreatedAt) {
+            await redis.set(WATERMARK_KEY_INGREDIENTS, latestCreatedAt.toISOString());
+            console.log(`[OpenSearch] Updated ingredients watermark to ${latestCreatedAt.toISOString()}`);
+        }
 
         console.log(
-            `[OpenSearch] Synced ${ingredients.length} ingredients to index ${OPENSEARCH_INGREDIENTS_INDEX}`,
+            `[OpenSearch] Synced ${totalSynced} ingredients to index ${OPENSEARCH_INGREDIENTS_INDEX}`,
         );
 
-        return { synced: ingredients.length };
+        return { synced: totalSynced };
     } catch (error) {
         console.error(`[OpenSearch] sync-ingredients job ${job.id} failed`, {
             error: error instanceof Error ? error.message : String(error),
@@ -324,17 +396,40 @@ export async function processSyncRecipeToOpenSearch(
         });
 
         if (!recipe) {
-            console.warn(`[OpenSearch] Recipe not found: ${recipeId}`);
-            return { success: false, reason: 'not_found' };
+            console.log(`[OpenSearch] Recipe not found in DB, removing from index: ${recipeId}`);
+            try {
+                await opensearchClient.delete({
+                    index: OPENSEARCH_INDEX,
+                    id: recipeId,
+                    refresh: 'wait_for',
+                });
+            } catch (deleteError: unknown) {
+                const statusCode = (deleteError as { meta?: { statusCode?: number } })?.meta
+                    ?.statusCode;
+                if (statusCode !== 404) throw deleteError;
+            }
+            return { success: true, action: 'deleted' };
         }
 
         if (recipe.status !== 'PUBLISHED' || !recipe.publishedAt) {
             console.log(`[OpenSearch] Removing unpublished recipe from index: ${recipeId}`);
-            await opensearchClient.delete({
-                index: OPENSEARCH_INDEX,
-                id: recipe.id,
-                refresh: 'wait_for',
-            });
+            try {
+                await opensearchClient.delete({
+                    index: OPENSEARCH_INDEX,
+                    id: recipe.id,
+                    refresh: 'wait_for',
+                });
+            } catch (deleteError: unknown) {
+                const statusCode = (deleteError as { meta?: { statusCode?: number } })?.meta
+                    ?.statusCode;
+                if (statusCode === 404) {
+                    console.log(
+                        `[OpenSearch] Recipe not in index (already absent): ${recipeId}`,
+                    );
+                } else {
+                    throw deleteError;
+                }
+            }
             return { success: true, action: 'deleted' };
         }
 

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { getServerAuthSession } from '@app/lib/auth';
 import { fireEvent } from '@app/lib/events/fire';
+import { generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
 type AuthenticatedUser = {
@@ -47,12 +48,18 @@ async function ensureProfileCounts(
     const email = user?.email ?? emailFallback;
     const nickname = user?.name ?? `user_${userId.slice(0, 8)}`;
 
+    const slug = await generateUniqueSlug(
+        nickname,
+        async (s) => !!(await prisma.profile.findUnique({ where: { slug: s } })),
+    );
+
     await prisma.profile.upsert({
         where: { userId },
         create: {
             userId,
             email,
             nickname,
+            slug,
             followerCount: data.followerCount ?? 0,
             followingCount: data.followingCount ?? 0,
         },
@@ -83,7 +90,7 @@ export async function toggleFavoriteAction(recipeId: string) {
     } as const;
 
     const existing = await prisma.favorite.findUnique({ where: favoriteKey });
-    const revalidateTargets = [...buildRecipePaths(recipeId, recipe.slug), '/favorites'];
+    const revalidateTargets = [...buildRecipePaths(recipeId, recipe.slug), '/profile/favorites'];
 
     if (existing) {
         await prisma.favorite.delete({ where: { id: existing.id } });
@@ -112,7 +119,7 @@ export async function toggleFavoriteAction(recipeId: string) {
     for (const path of buildRecipePaths(recipeId, recipe.slug)) {
         revalidatePath(path);
     }
-    revalidatePath('/favorites');
+    revalidatePath('/profile/favorites');
 
     return {
         isFavorite: !existing,
@@ -232,8 +239,12 @@ export async function toggleFollowAction(targetUserId: string, options?: { recip
         ensureProfileCounts(viewer.id, `${viewer.id}@kitchenpace.local`, { followingCount }),
     ]);
 
-    revalidatePath(`/user/${targetUserId}`);
-    revalidatePath(`/user/${viewer.id}`);
+    const [targetProfile, viewerProfile] = await Promise.all([
+        prisma.profile.findUnique({ where: { userId: targetUserId }, select: { slug: true } }),
+        prisma.profile.findUnique({ where: { userId: viewer.id }, select: { slug: true } }),
+    ]);
+    if (targetProfile?.slug) revalidatePath(`/user/${targetProfile.slug}`);
+    if (viewerProfile?.slug) revalidatePath(`/user/${viewerProfile.slug}`);
 
     if (options?.recipeId) {
         const recipe = await prisma.recipe.findUnique({
@@ -276,13 +287,34 @@ export async function markRecipeCookedAction(
     let imageKey: string | undefined;
 
     if (options?.image) {
-        const { uploadFile } = await import('@app/lib/s3');
+        const { uploadFile, deleteFile } = await import('@app/lib/s3');
+        const { moderateContent, persistModerationResult } = await import(
+            '@app/lib/moderation/moderationService'
+        );
         const arrayBuffer = await options.image.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const file = options.image as File;
         const result = await uploadFile(buffer, file.name, file.type, 'cook');
-        imageUrl = result.url;
-        imageKey = result.key;
+
+        // Run AI image moderation
+        const modResult = await moderateContent({ imageUrl: result.url });
+
+        if (modResult.decision === 'REJECTED') {
+            await deleteFile(result.key);
+            await persistModerationResult('cook_image', result.key, viewer.id, modResult, {
+                imageUrl: result.url,
+                recipeId,
+            });
+            // Don't block the cook action, just skip the image
+        } else {
+            imageUrl = result.url;
+            imageKey = result.key;
+
+            await persistModerationResult('cook_image', result.key, viewer.id, modResult, {
+                imageUrl: result.url,
+                recipeId,
+            });
+        }
     }
 
     const hasImage = Boolean(imageUrl);

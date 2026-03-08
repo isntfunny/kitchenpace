@@ -1,7 +1,10 @@
 'use client';
 
+import { ChefHat } from 'lucide-react';
 import { useState } from 'react';
 
+
+import { PALETTE } from '@app/lib/palette';
 import {
     getThumbnailUrl,
     getThumbnailUrlById,
@@ -9,6 +12,8 @@ import {
     ThumbnailOptions,
 } from '@app/lib/thumbnail-client';
 import { css, cx } from 'styled-system/css';
+
+export const RECIPE_PLACEHOLDER = '/recipe_placeholder.jpg';
 
 interface SmartImageProps {
     src?: string;
@@ -50,9 +55,15 @@ export function SmartImage({
 }: SmartImageProps) {
     const [error, setError] = useState(false);
 
+    // If recipeId is provided but there's no src, skip the network round-trip
+    // and render the placeholder immediately
+    const noImage = recipeId && !src;
+
     let thumbnailSrc: string;
 
-    if (recipeId) {
+    if (noImage) {
+        thumbnailSrc = RECIPE_PLACEHOLDER;
+    } else if (recipeId) {
         thumbnailSrc = getThumbnailUrlById(recipeId, 'recipe', {
             width: fill ? undefined : width,
             height: fill ? undefined : height,
@@ -84,16 +95,43 @@ export function SmartImage({
         onLoad?.();
     };
 
-    const currentSrc = !thumbnailSrc || error ? fallback : thumbnailSrc;
+    // User fallback: gradient with ChefHat icon
+    if (error && userId) {
+        const iconSize = fill ? '40%' : Math.round(Math.min(width, height) * 0.4);
+        return (
+            <div
+                className={cx(
+                    css({
+                        background: `linear-gradient(135deg, ${PALETTE.orange} 0%, #c4623d 100%)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                    }),
+                    fill
+                        ? css({ width: '100%', height: '100%' })
+                        : css({ width: `${width}px`, height: `${height}px` }),
+                    className,
+                )}
+            >
+                <ChefHat size={iconSize} />
+            </div>
+        );
+    }
+
+    // Recipe fallback on error: swap to placeholder
+    const resolvedSrc = error && recipeId ? RECIPE_PLACEHOLDER : (!thumbnailSrc || error ? fallback : thumbnailSrc);
+    // Don't attach error handler if we're already showing a fallback
+    const isShowingFallback = noImage || error;
 
     return (
         <img
-            src={currentSrc}
+            src={resolvedSrc}
             alt={alt || ''}
             width={fill ? undefined : width}
             height={fill ? undefined : height}
-            onLoad={handleLoad}
-            onError={handleError}
+            onLoad={isShowingFallback ? undefined : handleLoad}
+            onError={isShowingFallback ? undefined : handleError}
             className={cx(
                 fill
                     ? css({
@@ -104,6 +142,7 @@ export function SmartImage({
                     : css({
                           width: `${width}px`,
                           height: `${height}px`,
+                          objectFit: 'cover',
                       }),
                 className,
             )}

@@ -1,6 +1,7 @@
 'use client';
 
-import { ChefHat, Clock, Pin } from 'lucide-react';
+import { Clock, Pin } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -8,6 +9,7 @@ import { createPortal } from 'react-dom';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
 import type { RecipeTabItem } from '@app/components/providers/RecipeTabsProvider';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 const DROPDOWN_WIDTH = 240;
@@ -160,61 +162,47 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
             onBlurCapture={handleBlur}
         >
             {children}
-            {isVisible &&
-                popupPosition &&
-                portalElement &&
+            {portalElement &&
                 createPortal(
-                    <div
-                        aria-hidden
-                        className={css({
-                            position: 'fixed',
-                            marginTop: '0',
-                            width: '240px',
-                            background: 'surface.elevated',
-                            borderRadius: 'xl',
-                            border: '1px solid',
-                            borderColor: 'rgba(224,123,83,0.2)',
-                            boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
-                            padding: '3',
-                            zIndex: 110,
-                            animation: 'fadeIn 150ms ease',
-                            display: { base: 'none', md: 'block' },
-                        })}
-                        style={dropdownStyle}
-                        onMouseEnter={handlePreviewPointerEnter}
-                        onMouseLeave={handlePreviewPointerLeave}
-                    >
-                        {recipe.imageUrl ? (
-                            <SmartImage
-                                src={recipe.imageUrl}
-                                alt={recipe.title}
-                                recipeId={recipe.id}
-                                width={400}
-                                height={120}
+                    <AnimatePresence>
+                        {isVisible && popupPosition && (
+                            <motion.div
+                                aria-hidden
                                 className={css({
-                                    width: '100%',
-                                    height: '120px',
-                                    objectFit: 'cover',
-                                    borderRadius: 'lg',
-                                    marginBottom: '2',
+                                    position: 'fixed',
+                                    marginTop: '0',
+                                    width: '240px',
+                                    background: 'surface.elevated',
+                                    borderRadius: 'xl',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(224,123,83,0.2)',
+                                    boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
+                                    padding: '3',
+                                    zIndex: 110,
+                                    display: { base: 'none', md: 'block' },
                                 })}
-                            />
-                        ) : (
-                            <div
-                                className={css({
-                                    width: '100%',
-                                    height: '120px',
-                                    borderRadius: 'lg',
-                                    marginBottom: '2',
-                                    background: 'linear-gradient(135deg, #f8b500 0%, #e07b53 100%)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                })}
+                                style={dropdownStyle}
+                                onMouseEnter={handlePreviewPointerEnter}
+                                onMouseLeave={handlePreviewPointerLeave}
+                                initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                                transition={{ duration: 0.15 }}
                             >
-                                <ChefHat size={42} color="white" />
-                            </div>
-                        )}
+                        <SmartImage
+                            src={recipe.imageUrl ?? undefined}
+                            alt={recipe.title}
+                            recipeId={recipe.id}
+                            width={400}
+                            height={120}
+                            className={css({
+                                width: '100%',
+                                height: '120px',
+                                objectFit: 'cover',
+                                borderRadius: 'lg',
+                                marginBottom: '2',
+                            })}
+                        />
                         <h4
                             className={css({
                                 fontSize: 'sm',
@@ -255,7 +243,7 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                                 width: '100%',
                                 textAlign: 'center',
                                 padding: '2',
-                                background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                                 color: 'white',
                                 borderRadius: 'lg',
                                 fontSize: 'xs',
@@ -270,7 +258,9 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                         >
                             Öffnen
                         </Link>
-                    </div>,
+                            </motion.div>
+                        )}
+                    </AnimatePresence>,
                     portalElement,
                 )}
         </div>
@@ -281,10 +271,12 @@ function RecipeChip({
     recipe,
     isPinned,
     onPinToggle,
+    showPin,
 }: {
     recipe: RecipeTabItem;
     isPinned: boolean;
     onPinToggle: () => void;
+    showPin: boolean;
 }) {
     const handlePinClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -296,52 +288,113 @@ function RecipeChip({
 
     return (
         <HoverPreview recipe={recipe}>
-            <Link
-                href={href}
-                className={css({
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '2',
-                    px: '3',
-                    py: '1.5',
-                    borderRadius: 'full',
-                    bg: isPinned ? 'rgba(248,181,0,0.15)' : 'transparent',
-                    border: '1px solid',
-                    borderColor: isPinned ? 'rgba(248,181,0,0.3)' : 'transparent',
-                    fontSize: 'sm',
-                    fontWeight: isPinned ? '500' : '400',
-                    color: isPinned ? 'text' : 'text-muted',
-                    cursor: 'pointer',
-                    transition: 'all 150ms ease',
-                    textDecoration: 'none',
-                    _hover: {
-                        bg: isPinned ? 'rgba(248,181,0,0.25)' : 'rgba(0,0,0,0.03)',
-                        borderColor: isPinned ? '#f8b500' : 'transparent',
-                        color: 'text',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    },
-                })}
-            >
-                <span className={css({ whiteSpace: 'nowrap' })}>{recipe.title}</span>
-                <span
-                    onClick={handlePinClick}
+            <motion.div whileHover="hover" initial="rest" animate="rest">
+                <Link
+                    href={href}
                     className={css({
-                        fontSize: 'xs',
-                        color: 'foreground.muted',
-                        marginLeft: '1',
-                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2',
+                        px: '3',
+                        py: '1.5',
                         borderRadius: 'full',
+                        bg: isPinned ? 'rgba(248,181,0,0.15)' : 'rgba(0,0,0,0.02)',
+                        border: '1px solid',
+                        borderColor: isPinned ? 'rgba(248,181,0,0.3)' : 'transparent',
+                        fontSize: 'sm',
+                        fontWeight: isPinned ? '500' : '400',
+                        color: isPinned ? 'text' : 'text-muted',
                         cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                        _hover: {
-                            bg: 'rgba(224,123,83,0.2)',
-                            color: 'primary',
-                        },
+                        textDecoration: 'none',
+                        position: 'relative',
+                        overflow: 'hidden',
                     })}
                 >
-                    <Pin size={14} />
-                </span>
-            </Link>
+                    {/* Animated background glow on hover */}
+                    <motion.span
+                        className={css({
+                            position: 'absolute',
+                            inset: 0,
+                            borderRadius: 'full',
+                            pointerEvents: 'none',
+                        })}
+                        variants={{
+                            rest: {
+                                background: 'transparent',
+                                boxShadow: '0 0 0 rgba(224,123,83,0)',
+                            },
+                            hover: {
+                                background: isPinned
+                                    ? 'rgba(248,181,0,0.2)'
+                                    : 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(248,181,0,0.08))',
+                                boxShadow: '0 2px 12px rgba(224,123,83,0.15)',
+                            },
+                        }}
+                        transition={{ duration: 0.25 }}
+                    />
+                    {/* Small recipe thumbnail that peeks in on hover */}
+                    <motion.span
+                        className={css({
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: 'full',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            position: 'relative',
+                        })}
+                        variants={{
+                            rest: { width: 0, opacity: 0, marginRight: '-8px' },
+                            hover: { width: 20, opacity: 1, marginRight: 0 },
+                        }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <SmartImage
+                            src={recipe.imageUrl ?? undefined}
+                            alt=""
+                            recipeId={recipe.id}
+                            width={20}
+                            height={20}
+                            className={css({
+                                width: '20px',
+                                height: '20px',
+                                objectFit: 'cover',
+                                borderRadius: 'full',
+                            })}
+                        />
+                    </motion.span>
+                    <motion.span
+                        className={css({ whiteSpace: 'nowrap', position: 'relative' })}
+                        variants={{
+                            rest: { color: isPinned ? 'var(--colors-text)' : 'var(--colors-text-muted)' },
+                            hover: { color: 'var(--colors-text)' },
+                        }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {recipe.title}
+                    </motion.span>
+                    {showPin && (
+                        <span
+                            onClick={handlePinClick}
+                            className={css({
+                                fontSize: 'xs',
+                                color: 'foreground.muted',
+                                marginLeft: '1',
+                                padding: '2px',
+                                borderRadius: 'full',
+                                cursor: 'pointer',
+                                transition: 'all 150ms ease',
+                                position: 'relative',
+                                _hover: {
+                                    bg: 'rgba(224,123,83,0.2)',
+                                    color: 'primary',
+                                },
+                            })}
+                        >
+                            <Pin size={14} />
+                        </span>
+                    )}
+                </Link>
+            </motion.div>
         </HoverPreview>
     );
 }
@@ -349,7 +402,7 @@ function RecipeChip({
 const RECENT_DISPLAY_LIMIT = 5;
 
 export function RecipeTabs() {
-    const { pinned, recent, pinRecipe, unpinRecipe, isLoading } = useRecipeTabs();
+    const { pinned, recent, pinRecipe, unpinRecipe, isLoading, isAuthenticated } = useRecipeTabs();
 
     const handlePinToggle = (recipe: RecipeTabItem, currentlyPinned: boolean) => {
         if (isLoading) return;
@@ -409,6 +462,7 @@ export function RecipeTabs() {
                             recipe={recipe}
                             isPinned={true}
                             onPinToggle={() => handlePinToggle(recipe, true)}
+                            showPin={isAuthenticated}
                         />
                     ))}
 
@@ -432,6 +486,7 @@ export function RecipeTabs() {
                         recipe={recipe}
                         isPinned={false}
                         onPinToggle={() => handlePinToggle(recipe, false)}
+                        showPin={isAuthenticated}
                     />
                 ))
             ) : (

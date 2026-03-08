@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
 
 import { handleSignIn, handleSignOut } from '@app/components/auth/actions';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
@@ -56,7 +57,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                                     width: '32px',
                                     height: '32px',
                                     borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                    background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -82,6 +83,13 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                             padding: '2',
                             boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
                             zIndex: 100,
+                            transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
+                            '&[data-state="open"]': {
+                                animation: 'scaleUp 200ms ease',
+                            },
+                            '&[data-state="closed"]': {
+                                animation: 'scaleDown 150ms ease',
+                            },
                         })}
                         sideOffset={8}
                     >
@@ -113,7 +121,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
 
                         <DropdownMenu.Item asChild>
                             <Link
-                                href="/profile/manage"
+                                href="/profile/settings"
                                 className={css({
                                     display: 'flex',
                                     alignItems: 'center',
@@ -190,7 +198,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                 px: '4',
                 py: '2',
                 borderRadius: 'lg',
-                background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '1.5',

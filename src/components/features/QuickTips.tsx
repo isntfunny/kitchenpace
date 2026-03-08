@@ -94,20 +94,18 @@ export function QuickTips({ tips }: QuickTipsProps) {
                     >
                         <span
                             className={css({
-                                fontSize: 'xl',
                                 flexShrink: 0,
                                 width: '36px',
                                 height: '36px',
                                 display: 'grid',
                                 placeItems: 'center',
                                 borderRadius: 'full',
-                                background: tip.iconBg,
-                                color: 'white',
                             })}
+                            style={{ background: tip.iconBg }}
                         >
                             {(() => {
                                 const Icon = TIP_ICON_MAP[tip.icon];
-                                return Icon ? <Icon size={18} /> : null;
+                                return Icon ? <Icon size={18} color="white" /> : null;
                             })()}
                         </span>
                         <div>

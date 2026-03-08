@@ -13,6 +13,7 @@ import {
     type NotificationDefinition,
     type NotificationProfile,
 } from './config';
+import { createActivityLog, createUserNotification } from './persist';
 
 type NotificationTarget = {
     id: string;
@@ -70,25 +71,25 @@ export async function fireEvent<T extends EventName>(
         recipientProfile: (recipient?.profile ?? null) as NotificationProfile | null,
     };
 
-    const metadataFromDefinition = definition.activity.getMetadata?.(context);
-    const metadataPayload =
-        metadataFromDefinition || payload.metadata
-            ? { ...(metadataFromDefinition ?? {}), ...(payload.metadata ?? {}) }
-            : undefined;
+    let activity = null;
 
-    const activity = payload.skipActivity
-        ? null
-        : await prisma.activityLog.create({
-              data: {
-                  userId: actor.id,
-                  type: definition.activity.type,
-                  targetId: definition.activity.getTargetId(context) ?? null,
-                  targetType: definition.activity.targetType,
-                  ...(metadataPayload
-                      ? { metadata: metadataPayload as Prisma.InputJsonValue }
-                      : {}),
-              },
-          });
+    if (definition.activity && !payload.skipActivity) {
+        const metadataFromDefinition = definition.activity.getMetadata?.(context);
+        const metadataPayload =
+            metadataFromDefinition || payload.metadata
+                ? { ...(metadataFromDefinition ?? {}), ...(payload.metadata ?? {}) }
+                : undefined;
+
+        activity = await createActivityLog({
+            userId: actor.id,
+            type: definition.activity.type,
+            targetId: definition.activity.getTargetId(context) ?? null,
+            targetType: definition.activity.targetType,
+            ...(metadataPayload
+                ? { metadata: metadataPayload as Prisma.InputJsonValue }
+                : {}),
+        });
+    }
 
     let notification = null;
 
@@ -109,14 +110,12 @@ export async function fireEvent<T extends EventName>(
                 ...context.data,
             };
             const template = definition.notification.template(context);
-            notification = await prisma.notification.create({
-                data: {
-                    userId: recipient.id,
-                    type: definition.notification.type,
-                    title: template.title,
-                    message: template.message,
-                    data: notificationPayload as Prisma.InputJsonValue,
-                },
+            notification = await createUserNotification({
+                userId: recipient.id,
+                type: definition.notification.type,
+                title: template.title,
+                message: template.message,
+                data: notificationPayload as Prisma.InputJsonValue,
             });
         }
     }

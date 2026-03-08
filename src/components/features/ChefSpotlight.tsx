@@ -2,6 +2,7 @@
 
 /* eslint-disable import/order */
 import { Star } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { ChefSpotlightData } from '@app/app/actions/community';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
@@ -53,7 +54,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                 className={css({
                     mb: '3',
                     display: 'inline-flex',
-                    bg: '#f8b500',
+                    bg: 'palette.gold',
                     borderRadius: 'full',
                     px: '3',
                     py: '1',
@@ -69,7 +70,13 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                         gap: '1',
                     })}
                 >
-                    <Star size={16} />
+                    <motion.span
+                        style={{ display: 'inline-flex' }}
+                        animate={{ scale: [1, 1.15, 1] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                        <Star size={16} />
+                    </motion.span>
                     <span>Chef des Monats</span>
                 </Text>
             </div>
@@ -83,7 +90,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                         borderRadius: 'full',
                         overflow: 'hidden',
                         border: '2px solid',
-                        borderColor: '#f8b500',
+                        borderColor: 'palette.gold',
                     })}
                 >
                     <SmartImage
@@ -112,7 +119,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
             <div
                 className={css({
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gridTemplateColumns: { base: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
                     gap: '2',
                 })}
             >

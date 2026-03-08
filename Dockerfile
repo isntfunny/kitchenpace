@@ -9,6 +9,16 @@ COPY panda.config.ts tsconfig.json postcss.config.cjs ./
 
 RUN npm ci --include=dev
 
+# ── Stage 1b: Production-only dependencies ────────────────────────────
+FROM node:24-alpine AS prod-deps
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+COPY prisma ./prisma/
+
+RUN npm ci --omit=dev --ignore-scripts
+
 # ── Stage 2: Build Next.js app ────────────────────────────────────────
 FROM node:24-alpine AS builder
 
@@ -53,7 +63,8 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-RUN addgroup --system --gid 1001 nodejs \
+RUN apk add --no-cache fontconfig \
+    && addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nextjs
 
 # Copy node_modules + prisma (needed for db setup)
@@ -90,7 +101,13 @@ FROM node:24-alpine AS worker
 
 WORKDIR /app
 
-COPY --from=deps /app/node_modules ./node_modules
+RUN apk add --no-cache postgresql16-client
+
+# Production node_modules (tsx moved to prod deps)
+COPY --from=prod-deps /app/node_modules ./node_modules
+
+# Prisma client already generated in builder stage — no need to re-run generate
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
@@ -99,12 +116,6 @@ COPY worker ./worker
 COPY src ./src
 COPY shared ./shared
 COPY email-templates ./email-templates
-
-# Set dummy DB URL for prisma generate (client will be generated but not validated)
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-
-# Generate Prisma client for worker
-RUN npx prisma generate || true
 
 ENV NODE_ENV=production
 

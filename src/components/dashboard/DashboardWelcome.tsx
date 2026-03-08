@@ -2,6 +2,7 @@
 
 import { Hand } from 'lucide-react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
@@ -114,7 +115,7 @@ export function DashboardWelcome({ userName = 'KüchenFan', userPhoto }: Dashboa
                         })}
                     >
                         {greeting}
-                        <Hand size={28} color="#e07b53" />
+                        <Hand size={28} color={PALETTE.orange} />
                     </h1>
                     <p
                         className={css({
@@ -179,7 +180,7 @@ export function DashboardWelcome({ userName = 'KüchenFan', userPhoto }: Dashboa
                                 width: '64px',
                                 height: '64px',
                                 borderRadius: 'full',
-                                background: 'linear-gradient(135deg, #e07b53, #f8b500)',
+                                background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',

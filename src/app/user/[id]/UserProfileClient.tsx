@@ -6,7 +6,6 @@ import {
     ChefHat,
     Check,
     Clipboard,
-    Clock,
     Edit3,
     FileText,
     Flame,
@@ -21,8 +20,10 @@ import { useRouter } from 'next/navigation';
 import { ReactNode, useState, useTransition } from 'react';
 
 import { toggleFollowAction } from '@app/app/actions/social';
-import { Badge } from '@app/components/atoms/Badge';
 import { SmartImage } from '@app/components/atoms/SmartImage';
+import { RecipeCard as SharedRecipeCard } from '@app/components/features/RecipeCard';
+import { ReportButton } from '@app/components/features/ReportButton';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
@@ -166,6 +167,7 @@ function Pagination({
 
 export interface UserProfileRecipe {
     id: string;
+    slug: string;
     title: string;
     description: string;
     image: string | null;
@@ -188,12 +190,16 @@ export interface UserProfileActivity {
 
 export interface UserProfileData {
     id: string;
+    slug: string;
     name: string;
     avatar: string | null;
     bio: string | null;
     recipeCount: number;
     followerCount: number;
+    showFollowerCount?: boolean;
+    showFavorites?: boolean;
     recipes: UserProfileRecipe[];
+    favorites?: UserProfileRecipe[];
     activities: UserProfileActivity[];
     currentPage?: number;
     totalPages?: number;
@@ -220,7 +226,7 @@ const ACTIVITY_CONFIG: Record<string, { icon: ReactNode; template: string[]; bgC
     },
     RECIPE_COOKED: {
         icon: <Flame size={16} />,
-        template: ['hat', 'gekocht'],
+        template: ['hat', 'zubereitet'],
         bgColor: '#fef3c7',
     },
     RECIPE_RATED: {
@@ -326,7 +332,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 borderRadius: '3xl',
                                 overflow: 'hidden',
                                 boxShadow:
-                                    '0 0 0 3px white, 0 0 0 6px #e07b53, 0 8px 32px rgba(224, 123, 83, 0.3)',
+                                    `0 0 0 3px white, 0 0 0 6px ${PALETTE.orange}, 0 8px 32px rgba(224, 123, 83, 0.3)`,
                             })}
                         >
                             {user.avatar ? (
@@ -346,7 +352,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         width: '100%',
                                         height: '100%',
                                         background:
-                                            'linear-gradient(135deg, #e07b53 0%, #c4623d 100%)',
+                                            `linear-gradient(135deg, ${PALETTE.orange} 0%, #c4623d 100%)`,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -430,11 +436,13 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         label="Rezepte"
                                         icon={<ChefHat size={16} />}
                                     />
-                                    <StatCard
-                                        value={followerTotal}
-                                        label="Follower"
-                                        icon={<Handshake size={16} />}
-                                    />
+                                    {user.showFollowerCount !== false && (
+                                        <StatCard
+                                            value={followerTotal}
+                                            label="Follower"
+                                            icon={<Handshake size={16} />}
+                                        />
+                                    )}
                                     {recipes.length > 0 && (
                                         <StatCard
                                             value={
@@ -445,7 +453,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                             icon={
                                                 <Star
                                                     size={16}
-                                                    className={css({ color: '#f8b500' })}
+                                                    className={css({ color: 'palette.gold' })}
                                                 />
                                             }
                                             isDecimal
@@ -504,6 +512,13 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                             </span>
                                         </button>
                                     </div>
+                                )}
+                                {!viewer?.isSelf && (
+                                    <ReportButton
+                                        contentType="user"
+                                        contentId={user.id}
+                                        variant="icon"
+                                    />
                                 )}
                             </div>
                         </div>
@@ -572,7 +587,14 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     })}
                                 >
                                     {recipes.map((recipe) => (
-                                        <RecipeCard key={recipe.id} recipe={recipe} />
+                                        <SharedRecipeCard
+                                            key={recipe.id}
+                                            recipe={{
+                                                ...recipe,
+                                                time: `${recipe.prepTime + recipe.cookTime} Min.`,
+                                            }}
+                                            categoryOnImage
+                                        />
                                     ))}
                                 </div>
 
@@ -581,7 +603,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     <Pagination
                                         currentPage={user.currentPage ?? 1}
                                         totalPages={user.totalPages}
-                                        baseUrl={`/user/${user.id}`}
+                                        baseUrl={`/user/${user.slug}`}
                                     />
                                 )}
                             </>
@@ -602,13 +624,68 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         mb: '3',
                                     })}
                                 >
-                                    <ChefHat size={42} color="#e07b53" />
+                                    <ChefHat size={42} color={PALETTE.orange} />
                                 </div>
                                 <p className={css({ color: 'text.muted', fontSize: 'sm' })}>
                                     {user.name} hat noch keine Rezepte veröffentlicht.
                                 </p>
                             </div>
                         )}
+
+                        {/* Favorites Section */}
+                        {user.showFavorites !== false &&
+                            user.favorites &&
+                            user.favorites.length > 0 && (
+                                <div className={css({ mt: '10' })}>
+                                    <div
+                                        className={flex({
+                                            justify: 'space-between',
+                                            align: 'center',
+                                            mb: '5',
+                                        })}
+                                    >
+                                        <h2
+                                            className={css({
+                                                fontSize: 'lg',
+                                                fontWeight: '700',
+                                                color: 'text',
+                                                fontFamily: 'heading',
+                                            })}
+                                        >
+                                            Favoriten
+                                        </h2>
+                                        <span
+                                            className={css({
+                                                fontSize: 'sm',
+                                                color: 'text.muted',
+                                                bg: 'gray.100',
+                                                px: '3',
+                                                py: '1',
+                                                borderRadius: 'full',
+                                            })}
+                                        >
+                                            {user.favorites.length} gespeichert
+                                        </span>
+                                    </div>
+                                    <div
+                                        className={grid({
+                                            columns: { base: 1, sm: 2, md: 3, xl: 4 },
+                                            gap: '4',
+                                        })}
+                                    >
+                                        {user.favorites.map((recipe) => (
+                                            <SharedRecipeCard
+                                                key={`fav-${recipe.id}`}
+                                                recipe={{
+                                                    ...recipe,
+                                                    time: `${recipe.prepTime + recipe.cookTime} Min.`,
+                                                }}
+                                                categoryOnImage
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                     </div>
 
                     {/* Activity Sidebar */}
@@ -755,7 +832,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 })}
                             >
                                 <div
-                                    className={css({ fontSize: '2xl', mb: '2', color: '#4a5568' })}
+                                    className={css({ fontSize: '2xl', mb: '2', color: 'foreground.muted' })}
                                 >
                                     <FileText size={36} />
                                 </div>
@@ -840,108 +917,3 @@ function StatCard({
     );
 }
 
-// Recipe Card Component
-function RecipeCard({ recipe }: { recipe: UserProfileRecipe }) {
-    const totalTime = recipe.prepTime + recipe.cookTime;
-
-    return (
-        <Link
-            href={`/recipe/${recipe.id}`}
-            className={css({
-                display: 'block',
-                textDecoration: 'none',
-                color: 'inherit',
-                bg: 'surface.elevated',
-                borderRadius: 'xl',
-                overflow: 'hidden',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                _hover: {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.04)',
-                },
-            })}
-        >
-            {/* Recipe Image */}
-            <div
-                className={css({
-                    position: 'relative',
-                    aspectRatio: '16/10',
-                    overflow: 'hidden',
-                })}
-            >
-                <SmartImage
-                    src={recipe.image ?? undefined}
-                    alt={recipe.title}
-                    fill
-                    recipeId={recipe.id}
-                    className={css({
-                        objectFit: 'cover',
-                    })}
-                />
-                <div
-                    className={css({
-                        position: 'absolute',
-                        top: '3',
-                        left: '3',
-                    })}
-                >
-                    <Badge>{recipe.category}</Badge>
-                </div>
-            </div>
-
-            {/* Recipe Content */}
-            <div className={css({ p: '4' })}>
-                <h3
-                    className={css({
-                        fontSize: 'base',
-                        fontWeight: '700',
-                        fontFamily: 'heading',
-                        color: 'text',
-                        mb: '1',
-                        lineClamp: 1,
-                    })}
-                >
-                    {recipe.title}
-                </h3>
-                <p
-                    className={css({
-                        fontSize: 'sm',
-                        color: 'text-muted',
-                        lineClamp: 2,
-                        mb: '3',
-                        lineHeight: '1.5',
-                    })}
-                >
-                    {recipe.description}
-                </p>
-
-                {/* Recipe Meta */}
-                <div
-                    className={flex({
-                        justify: 'space-between',
-                        align: 'center',
-                        fontSize: 'xs',
-                        color: 'text-muted',
-                    })}
-                >
-                    <div
-                        className={flex({
-                            align: 'center',
-                            gap: '1',
-                        })}
-                    >
-                        <Star size={16} className={css({ color: '#f8b500' })} />
-                        <span className={css({ fontWeight: '600' })}>
-                            {recipe.rating.toFixed(1)}
-                        </span>
-                    </div>
-                    <div className={flex({ align: 'center', gap: '1' })}>
-                        <Clock size={16} className={css({ color: '#636e72' })} />
-                        <span>{totalTime} Min.</span>
-                    </div>
-                </div>
-            </div>
-        </Link>
-    );
-}

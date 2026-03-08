@@ -4,6 +4,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Clock, X } from 'lucide-react';
 import { memo, useMemo, useCallback } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css, cx } from 'styled-system/css';
 
 import { AddNodeButton } from './AddNodeButton';
@@ -187,6 +188,10 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                         <img
                             src={data.photoUrl}
                             alt=""
+                            onError={(e) => {
+                                const wrapper = (e.target as HTMLImageElement).parentElement;
+                                if (wrapper) wrapper.style.display = 'none';
+                            }}
                             className={css({
                                 width: '100%',
                                 height: '72px',
@@ -350,11 +355,11 @@ const ingredientChipClass = css({
     borderRadius: 'full',
     fontSize: '9px',
     fontWeight: '600',
-    color: '#c0623e',
+    color: 'palette.orange',
 });
 
 const handleStyle: React.CSSProperties = {
-    background: '#e07b53',
+    background: PALETTE.orange,
     width: 8,
     height: 8,
     border: '2px solid white',

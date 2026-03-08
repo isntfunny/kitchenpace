@@ -27,7 +27,7 @@ export function RecipeMetaStats({ prepTime, cookTime }: RecipeMetaStatsProps) {
                     className={css({
                         fontSize: '2xl',
                         mb: '1',
-                        color: '#e07b53',
+                        color: 'palette.orange',
                     })}
                 >
                     <Clock size={26} />

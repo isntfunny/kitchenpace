@@ -1,5 +1,7 @@
 import type { Profile } from '@prisma/client';
 
+import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
+import { generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
 type ProfileFields = Partial<Pick<Profile, 'nickname' | 'teaser' | 'photoUrl'>> & {
@@ -26,6 +28,10 @@ export const getOrCreateProfile = async (userId: string, email: string) => {
     }
 
     const nickname = user.name ?? `user_${userId.slice(0, 8)}`;
+    const slug = await generateUniqueSlug(
+        nickname,
+        async (s) => !!(await prisma.profile.findUnique({ where: { slug: s } })),
+    );
 
     return prisma.profile.upsert({
         where: { userId },
@@ -33,6 +39,7 @@ export const getOrCreateProfile = async (userId: string, email: string) => {
             userId,
             email,
             nickname,
+            slug,
         },
         update: {},
     });
@@ -47,11 +54,31 @@ export const upsertProfile = async (params: {
         Object.entries(params.data).filter(([, value]) => value !== undefined),
     ) as ProfileFields;
 
+    // Content moderation on text fields
+    const textParts = [definedData.nickname, definedData.teaser].filter(Boolean);
+    if (textParts.length > 0) {
+        const modResult = await moderateContent({ text: textParts.join('\n') });
+
+        await persistModerationResult('profile', params.userId, params.userId, modResult, {
+            nickname: definedData.nickname,
+            teaser: definedData.teaser,
+        });
+
+        if (modResult.decision === 'REJECTED') {
+            throw new Error('CONTENT_REJECTED:Dein Profil enthält unzulässige Inhalte — bitte überprüfe deinen Text.');
+        }
+    }
+
     let nickname = definedData.nickname;
     if (!nickname) {
         const user = await prisma.user.findUnique({ where: { id: params.userId } });
         nickname = user?.name ?? `user_${params.userId.slice(0, 8)}`;
     }
+
+    const slug = await generateUniqueSlug(
+        nickname,
+        async (s) => !!(await prisma.profile.findUnique({ where: { slug: s } })),
+    );
 
     return prisma.profile.upsert({
         where: { userId: params.userId },
@@ -59,6 +86,7 @@ export const upsertProfile = async (params: {
             userId: params.userId,
             email: params.email,
             nickname,
+            slug,
             teaser: definedData.teaser,
             photoUrl: definedData.photoUrl,
             ratingsPublic: definedData.ratingsPublic,
@@ -78,6 +106,7 @@ export const upsertProfile = async (params: {
         update: {
             email: params.email,
             nickname,
+            ...(definedData.nickname ? { slug } : {}),
             teaser: definedData.teaser,
             photoUrl: definedData.photoUrl,
             ratingsPublic: definedData.ratingsPublic,

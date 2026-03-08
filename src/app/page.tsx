@@ -1,5 +1,6 @@
-import { ChefHat } from 'lucide-react';
+import { Clock, Star } from 'lucide-react';
 
+import { fetchCategoriesForBar } from '@app/app/actions/category';
 import {
     fetchChefSpotlight,
     fetchQuickTips,
@@ -11,16 +12,20 @@ import {
     fetchNewestRecipes,
     fetchTopRatedRecipes,
 } from '@app/app/actions/recipes';
-import { ActivitySidebar } from '@app/components/features/ActivitySidebar';
+import { CategoryBar } from '@app/components/features/CategoryBar';
 import { ChefSpotlight } from '@app/components/features/ChefSpotlight';
 import { Header } from '@app/components/features/Header';
+import { LiveActivitySidebar } from '@app/components/features/LiveActivityFeed';
 import { QuickTips } from '@app/components/features/QuickTips';
 import { RecipeScrollServer } from '@app/components/features/RecipeScrollServer';
 import { TrendingTags } from '@app/components/features/TrendingTags';
+import { AnimatedChefHat } from '@app/components/motion/AnimatedChefHat';
+import { FadeInSection } from '@app/components/motion/FadeInSection';
 import { DailyHighlight } from '@app/components/sections/DailyHighlight';
 import { FitsNow } from '@app/components/sections/FitsNow';
 import { FlowPillars } from '@app/components/sections/FlowPillars';
 import { HeroSpotlight } from '@app/components/sections/HeroSpotlight';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
@@ -35,6 +40,7 @@ export default async function Home() {
         chefSpotlightResult,
         quickTipsResult,
         recentActivitiesResult,
+        categoriesResult,
     ] = await Promise.allSettled([
         fetchFeaturedRecipe(),
         fetchNewestRecipes(),
@@ -43,6 +49,7 @@ export default async function Home() {
         fetchChefSpotlight(),
         fetchQuickTips(),
         fetchRecentActivities(),
+        fetchCategoriesForBar(),
     ]);
 
     const handleSettled = <T,>(result: PromiseSettledResult<T>, fallback: T, label: string): T => {
@@ -61,6 +68,7 @@ export default async function Home() {
     const chefSpotlight = handleSettled(chefSpotlightResult, null, 'fetchChefSpotlight');
     const quickTips = handleSettled(quickTipsResult, [], 'fetchQuickTips');
     const recentActivities = handleSettled(recentActivitiesResult, [], 'fetchRecentActivities');
+    const categories = handleSettled(categoriesResult, [], 'fetchCategoriesForBar');
 
     return (
         <div
@@ -81,7 +89,9 @@ export default async function Home() {
             >
                 <HeroSpotlight />
 
-                <FlowPillars />
+                <div className={css({ mt: '4' })}>
+                    <CategoryBar categories={categories} />
+                </div>
 
                 <div
                     className={css({
@@ -95,7 +105,9 @@ export default async function Home() {
                         })}
                     >
                         <div className={css({ lg: { gridColumn: 'span 8' } })}>
-                            <DailyHighlight recipe={featuredRecipe} />
+                            <FadeInSection>
+                                <DailyHighlight recipe={featuredRecipe} />
+                            </FadeInSection>
 
                             <div
                                 className={css({
@@ -105,6 +117,8 @@ export default async function Home() {
                                 <RecipeScrollServer
                                     title="Neuste Rezepte"
                                     recipes={newestRecipes}
+                                    icon={Clock}
+                                    accentColor={PALETTE.orange}
                                 />
                             </div>
 
@@ -121,11 +135,16 @@ export default async function Home() {
                                     marginTop: '4',
                                 })}
                             >
-                                <RecipeScrollServer title="Top Rated" recipes={topRatedRecipes} />
+                                <RecipeScrollServer
+                                    title="Top Rated"
+                                    recipes={topRatedRecipes}
+                                    icon={Star}
+                                    accentColor={PALETTE.gold}
+                                />
                             </div>
                         </div>
 
-                        <div className={css({ lg: { gridColumn: 'span 4' } })}>
+                        <FadeInSection delay={0.1} className={css({ lg: { gridColumn: 'span 4' } })}>
                             <TrendingTags tags={trendingTags} />
                             <div
                                 className={css({
@@ -146,10 +165,14 @@ export default async function Home() {
                                     marginTop: '4',
                                 })}
                             >
-                                <ActivitySidebar activities={recentActivities} />
+                                <LiveActivitySidebar initialActivities={recentActivities} />
                             </div>
-                        </div>
+                        </FadeInSection>
                     </div>
+                </div>
+
+                <div className={css({ mt: '4' })}>
+                    <FlowPillars />
                 </div>
             </main>
 
@@ -176,10 +199,10 @@ export default async function Home() {
                         className={css({
                             fontSize: '2xl',
                             marginBottom: '3',
-                            color: '#e07b53',
+                            color: 'palette.orange',
                         })}
                     >
-                        <ChefHat size={48} />
+                        <AnimatedChefHat />
                     </div>
                     <div
                         className={css({

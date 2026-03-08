@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { PageShell } from '@app/components/layouts/PageShell';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 type ActivateClientProps = {
@@ -87,7 +88,7 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                                     borderRadius: '50%',
                                     border: '3px solid',
                                     borderColor: 'rgba(224,123,83,0.3)',
-                                    borderTopColor: '#e07b53',
+                                    borderTopColor: 'palette.orange',
                                     animation: 'spin 1s linear infinite',
                                 })}
                             />
@@ -140,7 +141,7 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                                     fontWeight: '600',
                                     fontSize: 'md',
                                     color: 'white',
-                                    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                    background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                                     border: 'none',
                                     cursor: 'pointer',
                                     transition: 'all 150ms ease',
@@ -192,7 +193,7 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                                     fontWeight: '600',
                                     fontSize: 'md',
                                     color: 'white',
-                                    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                    background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                                     border: 'none',
                                     cursor: 'pointer',
                                     transition: 'all 150ms ease',

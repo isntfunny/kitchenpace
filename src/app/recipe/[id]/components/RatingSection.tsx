@@ -2,6 +2,7 @@
 
 import { Star } from 'lucide-react';
 
+import { useIsDark } from '@app/lib/darkMode';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -20,6 +21,7 @@ export function RatingSection({
     onRatingSelect,
     isPending,
 }: RatingSectionProps) {
+    const dark = useIsDark();
     const starValues = [1, 2, 3, 4, 5] as const;
     const activeStarValue = viewerRating ?? Math.round(averageRating || 0);
     const ratingLabel = ratingCount === 1 ? 'Bewertung' : 'Bewertungen';
@@ -30,7 +32,9 @@ export function RatingSection({
                 mb: '4',
                 borderRadius: 'xl',
                 p: '4',
-                bg: 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(255,246,236,0.9))',
+                bg: dark
+                    ? 'linear-gradient(135deg, rgba(224,123,83,0.12), rgba(224,123,83,0.04))'
+                    : 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(255,246,236,0.9))',
                 border: '1px solid',
                 borderColor: 'rgba(224,123,83,0.2)',
                 boxShadow: '0 8px 30px rgba(224,123,83,0.12)',
@@ -56,7 +60,7 @@ export function RatingSection({
                     })}
                 >
                     <span>{averageRating.toFixed(1)}</span>
-                    <Star size={28} className={css({ color: '#f8b500' })} />
+                    <Star size={28} className={css({ color: 'palette.gold' })} />
                 </div>
                 <div
                     className={css({
@@ -88,7 +92,7 @@ export function RatingSection({
                             background:
                                 value <= activeStarValue
                                     ? 'rgba(224,123,83,0.9)'
-                                    : 'rgba(255,255,255,0.6)',
+                                    : dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.6)',
                             color: value <= activeStarValue ? 'white' : 'rgba(224,123,83,0.7)',
                             fontSize: 'lg',
                             cursor: 'pointer',
@@ -127,7 +131,7 @@ export function RatingSection({
                     {viewerRating ? (
                         <>
                             Deine Bewertung: {viewerRating.toFixed(1)}
-                            <Star size={14} className={css({ color: '#f8b500' })} />
+                            <Star size={14} className={css({ color: 'palette.gold' })} />
                         </>
                     ) : (
                         'Jetzt bewerten und Feedback geben'

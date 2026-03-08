@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 
 import { handleSignIn, handleSignOut } from '@app/components/auth/actions';
 import { useProfile } from '@app/components/providers/ProfileProvider';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
@@ -49,7 +50,7 @@ export function HeaderAuth() {
                         borderRadius: '50%',
                         border: '2px solid',
                         borderColor: 'rgba(224,123,83,0.3)',
-                        borderTopColor: '#e07b53',
+                        borderTopColor: 'palette.orange',
                         animation: 'spin 1s linear infinite',
                     })}
                 />
@@ -95,7 +96,7 @@ export function HeaderAuth() {
                                     width: '32px',
                                     height: '32px',
                                     borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                                    background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -124,6 +125,13 @@ export function HeaderAuth() {
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '4',
+                            transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
+                            '&[data-state="open"]': {
+                                animation: 'scaleUp 200ms ease',
+                            },
+                            '&[data-state="closed"]': {
+                                animation: 'scaleDown 150ms ease',
+                            },
                         })}
                         sideOffset={8}
                         align="end"
@@ -178,7 +186,7 @@ export function HeaderAuth() {
                 px: '4',
                 py: '2',
                 borderRadius: 'lg',
-                background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
+                background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '1.5',

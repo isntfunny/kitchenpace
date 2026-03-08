@@ -11,8 +11,8 @@ export function ErrorBanner({ message }: ErrorBannerProps) {
         <div
             className={css({
                 padding: '4',
-                bg: '#fee2e2',
-                color: '#dc2626',
+                bg: 'error.bg',
+                color: 'error.text',
                 borderRadius: 'xl',
             })}
         >

@@ -48,7 +48,7 @@ const columns: ColumnDef<RecipeWithActions>[] = [
         cell: ({ row }) => (
             <div className={css({ display: 'flex', flexDirection: 'column', gap: '0.375rem' })}>
                 <Link
-                    href={`/recipe/${row.original.id}`}
+                    href={`/recipe/${row.original.slug}`}
                     className={css({
                         fontWeight: 600,
                         fontSize: 'base',
@@ -162,7 +162,7 @@ const columns: ColumnDef<RecipeWithActions>[] = [
                     })}
                     onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 >
-                    Gekocht
+                    Zubereitet
                     <ArrowUpDown size={14} />
                 </button>
             );

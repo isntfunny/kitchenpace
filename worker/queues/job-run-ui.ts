@@ -33,9 +33,9 @@ export function getStatusColor(status: JobStatus) {
 }
 
 const QUEUE_LABELS: Record<string, string> = {
-    email: 'E-Mail',
     opensearch: 'OpenSearch',
     scheduled: 'Geplant',
+    backup: 'Backup',
 };
 
 export function getQueueLabel(queue: string) {

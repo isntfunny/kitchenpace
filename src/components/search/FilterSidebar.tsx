@@ -405,6 +405,7 @@ export function FilterSidebar({
                             placeholder="Tags suchen..."
                             emptyMessage="Keine Tags gefunden."
                             ariaLabel="Tags filtern"
+                            suggestField="tags"
                         />
                     </FilterSection>
 
@@ -454,6 +455,7 @@ export function FilterSidebar({
                             placeholder="Zutaten durchsuchen..."
                             emptyMessage="Keine Zutaten gefunden."
                             ariaLabel="Zutaten filtern"
+                            suggestField="ingredients"
                         />
                     </FilterSection>
 
@@ -474,6 +476,7 @@ export function FilterSidebar({
                             emptyMessage="Keine Zutaten gefunden."
                             ariaLabel="Zutaten ausschließen"
                             variant="exclude"
+                            suggestField="ingredients"
                         />
                     </FilterSection>
 
@@ -593,14 +596,14 @@ export function FilterSidebar({
                                         })}
                                     >
                                         {value.toFixed(1)}
-                                        <Star size={12} className={css({ color: '#f8b500' })} />
+                                        <Star size={12} className={css({ color: 'palette.gold' })} />
                                     </span>
                                 )}
                             />
                             <RangeControl
                                 filters={filters}
                                 onFiltersChange={onFiltersChange}
-                                label="Mind. gekocht"
+                                label="Mind. zubereitet"
                                 description="häufig ausprobiert"
                                 minField="minCookCount"
                                 fallback={RANGE_FALLBACKS.cookCount}

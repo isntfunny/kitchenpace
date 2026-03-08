@@ -4,6 +4,8 @@ import * as Sentry from '@sentry/nextjs';
 import { AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
+
 export default function GlobalError({
     error,
     reset,
@@ -107,7 +109,7 @@ export default function GlobalError({
                         style={{
                             padding: '0.65rem 1.4rem',
                             borderRadius: '999px',
-                            backgroundColor: '#e07b53',
+                            backgroundColor: PALETTE.orange,
                             color: 'white',
                             fontWeight: 600,
                             fontSize: '0.9rem',
@@ -126,7 +128,7 @@ export default function GlobalError({
                             padding: '0.65rem 1.4rem',
                             borderRadius: '999px',
                             border: '1.5px solid rgba(224,123,83,0.4)',
-                            color: '#e07b53',
+                            color: PALETTE.orange,
                             fontWeight: 600,
                             fontSize: '0.9rem',
                             textDecoration: 'none',

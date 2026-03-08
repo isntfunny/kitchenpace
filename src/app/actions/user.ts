@@ -116,3 +116,126 @@ export async function fetchUserRecipes(userId: string): Promise<UserRecipe[]> {
         publishedAt: recipe.publishedAt,
     }));
 }
+
+// ============================================================
+// Profile page: enriched data fetches
+// ============================================================
+
+export interface TopRecipeEntry {
+    id: string;
+    title: string;
+    slug: string;
+    imageKey: string | null;
+    rating: number;
+    ratingCount: number;
+    cookCount: number;
+}
+
+export async function fetchUserTopRecipes(userId: string, take = 6): Promise<TopRecipeEntry[]> {
+    const recipes = await prisma.recipe.findMany({
+        where: { authorId: userId, status: 'PUBLISHED' },
+        select: {
+            id: true,
+            title: true,
+            slug: true,
+            imageKey: true,
+            rating: true,
+            ratingCount: true,
+            _count: { select: { cookHistory: true } },
+        },
+        orderBy: { rating: 'desc' },
+        take,
+    });
+    return recipes.map((r) => ({ ...r, cookCount: r._count.cookHistory }));
+}
+
+export interface CookHistoryEntry {
+    id: string;
+    cookedAt: Date;
+    recipeId: string;
+    recipeTitle: string;
+    recipeSlug: string;
+    recipeImageKey: string | null;
+}
+
+export async function fetchUserCookHistory(userId: string, take = 6): Promise<CookHistoryEntry[]> {
+    const entries = await prisma.userCookHistory.findMany({
+        where: { userId },
+        select: {
+            id: true,
+            cookedAt: true,
+            recipe: { select: { id: true, title: true, slug: true, imageKey: true } },
+        },
+        orderBy: { cookedAt: 'desc' },
+        take,
+    });
+    return entries.map((e) => ({
+        id: e.id,
+        cookedAt: e.cookedAt,
+        recipeId: e.recipe.id,
+        recipeTitle: e.recipe.title,
+        recipeSlug: e.recipe.slug,
+        recipeImageKey: e.recipe.imageKey,
+    }));
+}
+
+export interface FavoriteEntry {
+    id: string;
+    createdAt: Date;
+    recipeId: string;
+    recipeTitle: string;
+    recipeSlug: string;
+    recipeImageKey: string | null;
+}
+
+export async function fetchUserLastFavorites(userId: string, take = 6): Promise<FavoriteEntry[]> {
+    const entries = await prisma.favorite.findMany({
+        where: { userId },
+        select: {
+            id: true,
+            createdAt: true,
+            recipe: { select: { id: true, title: true, slug: true, imageKey: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take,
+    });
+    return entries.map((e) => ({
+        id: e.id,
+        createdAt: e.createdAt,
+        recipeId: e.recipe.id,
+        recipeTitle: e.recipe.title,
+        recipeSlug: e.recipe.slug,
+        recipeImageKey: e.recipe.imageKey,
+    }));
+}
+
+export interface ViewHistoryEntry {
+    id: string;
+    viewedAt: Date;
+    recipeId: string;
+    recipeTitle: string;
+    recipeSlug: string;
+    recipeImageKey: string | null;
+}
+
+export async function fetchUserViewHistory(userId: string, take = 8): Promise<ViewHistoryEntry[]> {
+    const entries = await prisma.userViewHistory.findMany({
+        where: { userId },
+        select: {
+            id: true,
+            viewedAt: true,
+            recipe: { select: { id: true, title: true, slug: true, imageKey: true } },
+        },
+        orderBy: { viewedAt: 'desc' },
+        take,
+    });
+    return entries.map((e) => ({
+        id: e.id,
+        viewedAt: e.viewedAt,
+        recipeId: e.recipe.id,
+        recipeTitle: e.recipe.title,
+        recipeSlug: e.recipe.slug,
+        recipeImageKey: e.recipe.imageKey,
+    }));
+}
+

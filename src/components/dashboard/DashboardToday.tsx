@@ -2,6 +2,7 @@
 
 import { CheckCircle, Clipboard, Flame, Hourglass, ChefHat } from 'lucide-react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -21,37 +22,37 @@ interface DashboardTodayProps {
 
 const statusConfig = {
     pending: {
-        bg: 'rgba(0,0,0,0.04)',
-        border: 'rgba(0,0,0,0.1)',
+        bg: 'surface.muted',
+        border: 'border',
         text: 'text-muted',
         icon: <Hourglass size={18} color="#636e72" />,
     },
     in_progress: {
         bg: 'rgba(224,123,83,0.1)',
-        border: '#e07b53',
+        border: PALETTE.orange,
         text: 'primary',
-        icon: <Flame size={18} color="#e07b53" />,
+        icon: <Flame size={18} color={PALETTE.orange} />,
     },
     completed: {
         bg: 'rgba(0,184,148,0.1)',
-        border: '#00b894',
-        text: '#00b894',
-        icon: <CheckCircle size={18} color="#00b894" />,
+        border: PALETTE.emerald,
+        text: PALETTE.emerald,
+        icon: <CheckCircle size={18} color={PALETTE.emerald} />,
     },
 };
 
 const laneColors: Record<string, string> = {
-    vorbereitung: '#74b9ff',
-    kochen: '#e07b53',
-    backen: '#fd79a8',
-    warten: '#a29bfe',
-    wuerzen: '#00b894',
-    servieren: '#f8b500',
+    vorbereitung: PALETTE.blue,
+    kochen: PALETTE.orange,
+    backen: PALETTE.pink,
+    warten: PALETTE.purple,
+    wuerzen: PALETTE.emerald,
+    servieren: PALETTE.gold,
 };
 
 function TimelineItemComponent({ item, isLast }: { item: TimelineItem; isLast: boolean }) {
     const status = statusConfig[item.status];
-    const laneColor = item.lane ? laneColors[item.lane] || '#e07b53' : '#e07b53';
+    const laneColor = item.lane ? laneColors[item.lane] || PALETTE.orange : PALETTE.orange;
 
     return (
         <div
@@ -93,7 +94,7 @@ function TimelineItemComponent({ item, isLast }: { item: TimelineItem; isLast: b
                             flex: '1',
                             minHeight: '40px',
                             background:
-                                item.status === 'completed' ? '#00b894' : 'rgba(0,0,0,0.08)',
+                                item.status === 'completed' ? PALETTE.emerald : 'border',
                             marginTop: '2',
                         })}
                     />
@@ -182,7 +183,7 @@ export function DashboardToday({ items }: DashboardTodayProps) {
                 borderRadius: '2xl',
                 padding: '6',
                 border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.06)',
+                borderColor: 'border',
             })}
         >
             <div
@@ -204,7 +205,7 @@ export function DashboardToday({ items }: DashboardTodayProps) {
                             gap: '8px',
                         })}
                     >
-                        <ChefHat size={26} color="#e07b53" />
+                        <ChefHat size={26} color={PALETTE.orange} />
                         Heute beim Kochen
                     </h3>
                     <p
@@ -222,7 +223,7 @@ export function DashboardToday({ items }: DashboardTodayProps) {
                         fontSize: 'sm',
                         fontWeight: '600',
                         color: 'primary',
-                        background: 'rgba(224,123,83,0.1)',
+                        background: 'accentSoft',
                         border: 'none',
                         px: '4',
                         py: '2',
@@ -230,7 +231,7 @@ export function DashboardToday({ items }: DashboardTodayProps) {
                         cursor: 'pointer',
                         transition: 'all 150ms ease',
                         _hover: {
-                            background: 'rgba(224,123,83,0.2)',
+                            background: 'accent.soft',
                         },
                     })}
                 >
@@ -265,7 +266,7 @@ export function DashboardToday({ items }: DashboardTodayProps) {
                             fontSize: '3xl',
                             display: 'block',
                             mb: '2',
-                            color: '#636e72',
+                            color: 'foreground.muted',
                         })}
                     >
                         <Clipboard size={40} />

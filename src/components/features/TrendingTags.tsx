@@ -1,7 +1,7 @@
-import { Flame } from 'lucide-react';
 import Link from 'next/link';
 
 import type { TrendingTagData } from '@app/app/actions/community';
+import { AnimatedFlame } from '@app/components/motion/AnimatedFlame';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
 
@@ -33,7 +33,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                         gap: '6px',
                     })}
                 >
-                    <Flame size={18} />
+                    <AnimatedFlame size={18} />
                     <span>Trending</span>
                 </Heading>
                 <p className={css({ color: 'foreground.muted', fontSize: 'sm' })}>
@@ -63,7 +63,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                         gap: '6px',
                     })}
                 >
-                    <Flame size={18} />
+                    <AnimatedFlame size={18} />
                     <span>Trending</span>
                 </Heading>
             </div>

@@ -15,10 +15,12 @@ import {
     Panel,
 } from '@xyflow/react';
 import { Sparkles } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '@xyflow/react/dist/style.css';
 
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
+import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { AiConversionDialog } from './editor/AiConversionDialog';
@@ -42,7 +44,7 @@ import { useFlowAutoLayout } from './editor/useFlowAutoLayout';
 const NODE_WIDTH = 220;
 const HORIZONTAL_GAP = 80;
 
-const DEFAULT_EDGE_STYLE: React.CSSProperties = { stroke: '#e07b53', strokeWidth: 2 };
+const DEFAULT_EDGE_STYLE: React.CSSProperties = { stroke: PALETTE.orange, strokeWidth: 2 };
 
 /** Stable nodeTypes / edgeTypes — defined once at module level, never recreated. */
 const NODE_TYPES = { recipeStep: RecipeNode };
@@ -111,7 +113,7 @@ function deserializeNodes(nodes: FlowNodeSerialized[]): RecipeFlowNode[] {
     return nodes.map((n) => ({
         id: n.id,
         type: 'recipeStep' as const,
-        position: n.position,
+        position: n.position ?? { x: 0, y: 0 },
         data: {
             stepType: n.type,
             label: n.label,
@@ -144,6 +146,7 @@ export interface FlowEditorProps {
     onAddIngredientToRecipe?: (
         ing: import('@app/components/recipe/RecipeForm/data').IngredientSearchResult,
     ) => void;
+    onAiApply?: (result: AIAnalysisResult, apply: ApplySelection) => void;
 }
 
 /* ── inner component (needs ReactFlowProvider above it) ── */
@@ -154,6 +157,7 @@ function FlowEditorInner({
     initialEdges,
     onChange,
     onAddIngredientToRecipe,
+    onAiApply,
 }: FlowEditorProps) {
     const { screenToFlowPosition, getNodes, getEdges, fitView } = useReactFlow();
     const onChangeRef = useRef(onChange);
@@ -227,6 +231,28 @@ function FlowEditorInner({
         },
         [applyLayout, setNodes, setEdges, notifyChange, fitView],
     );
+
+    /* ── auto-layout on first mount when nodes have no position (e.g. imported recipes) ── */
+
+    const didAutoLayout = useRef(false);
+
+    useEffect(() => {
+        if (didAutoLayout.current) return;
+        if (!initialNodes || initialNodes.length === 0) return;
+
+        // Detect nodes that were saved without position (imported from AI)
+        const needsLayout = initialNodes.some((n) => !n.position);
+        if (!needsLayout) return;
+
+        didAutoLayout.current = true;
+
+        // Small delay to allow ReactFlow to finish its initial render before fitView
+        const timer = setTimeout(() => {
+            autoLayoutAndFit(getNodes() as RecipeFlowNode[], getEdges());
+        }, 50);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     /* ── xyflow callbacks ── */
 
@@ -659,7 +685,7 @@ function FlowEditorInner({
                             style: DEFAULT_EDGE_STYLE,
                         }}
                     >
-                        <Background color="#e07b53" gap={20} size={1} />
+                        <Background color={PALETTE.orange} gap={20} size={1} />
                         <Controls
                             className={controlsClass}
                             showZoom={true}
@@ -717,9 +743,33 @@ function FlowEditorInner({
             <AiConversionDialog
                 open={aiDialogOpen}
                 onClose={() => setAiDialogOpen(false)}
-                onSubmit={(text) => {
-                    // TODO: save rawRecipeText to DB and trigger AI conversion
-                    console.log('[AI] raw recipe text submitted, length:', text.length);
+                onResult={(result, apply) => {
+                    const newNodes: RecipeFlowNode[] = result.flowNodes.map((node) => ({
+                        id: node.id,
+                        type: 'recipeStep' as const,
+                        position: { x: 0, y: 0 },
+                        data: {
+                            stepType: node.type as StepType,
+                            label: node.label,
+                            description: node.description,
+                            duration: node.duration,
+                            ingredientIds: node.ingredientIds,
+                        },
+                    }));
+
+                    const newEdges: Edge[] = result.flowEdges.map((edge) => ({
+                        id: edge.id,
+                        source: edge.source,
+                        target: edge.target,
+                        type: 'insertable',
+                        style: DEFAULT_EDGE_STYLE,
+                    }));
+
+                    // autoLayoutAndFit computes dagre positions, sets state, notifies parent, and fits view
+                    autoLayoutAndFit(newNodes, newEdges);
+                    // Notify parent about metadata to apply (title, description, tags, etc.)
+                    onAiApply?.(result, apply);
+                    setAiDialogOpen(false);
                 }}
             />
         </FlowEditorContext.Provider>
@@ -744,13 +794,13 @@ const canvasContainerClass = css({
     flex: '1',
     border: '1px solid rgba(224,123,83,0.4)',
     borderRadius: 'xl',
-    backgroundColor: '#fdfcfb',
+    backgroundColor: 'surface',
     overflow: 'hidden',
 });
 
 const controlsClass = css({
     '& button': {
-        backgroundColor: 'white',
+        backgroundColor: 'surface',
         border: '1px solid rgba(224,123,83,0.4)',
         borderRadius: 'md',
         color: 'text',
@@ -761,7 +811,7 @@ const controlsClass = css({
 const layoutButtonClass = css({
     py: '2',
     px: '3',
-    backgroundColor: 'white',
+    backgroundColor: 'surface',
     border: '1px solid rgba(224,123,83,0.4)',
     borderRadius: 'md',
     fontSize: 'sm',

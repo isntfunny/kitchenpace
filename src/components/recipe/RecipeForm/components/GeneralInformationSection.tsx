@@ -44,7 +44,7 @@ export function GeneralInformationSection({
                         fontSize: 'md',
                         outline: 'none',
                         _focus: {
-                            borderColor: '#e07b53',
+                            borderColor: 'palette.orange',
                             boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
                         },
                     })}
@@ -82,7 +82,7 @@ export function GeneralInformationSection({
                         resize: 'vertical',
                         outline: 'none',
                         _focus: {
-                            borderColor: '#e07b53',
+                            borderColor: 'palette.orange',
                             boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
                         },
                     })}

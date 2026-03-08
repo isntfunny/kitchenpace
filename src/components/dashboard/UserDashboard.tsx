@@ -4,6 +4,7 @@ import { ChefHat, FileText, Heart, Star } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
@@ -40,17 +41,17 @@ const defaultStats: DashboardStatCard[] = [
         label: 'Rezepte erstellt',
         value: 24,
         icon: <FileText size={20} />,
-        color: '#e07b53',
+        color: PALETTE.orange,
     },
-    { id: '2', label: 'Favoriten', value: 156, icon: <Heart size={20} />, color: '#fd79a8' },
+    { id: '2', label: 'Favoriten', value: 156, icon: <Heart size={20} />, color: PALETTE.pink },
     {
         id: '3',
-        label: 'Gekochte Gerichte',
+        label: 'Zubereitete Gerichte',
         value: 89,
         icon: <ChefHat size={20} />,
-        color: '#00b894',
+        color: PALETTE.emerald,
     },
-    { id: '4', label: 'Bewertungen', value: 34, icon: <Star size={20} />, color: '#f8b500' },
+    { id: '4', label: 'Bewertungen', value: 34, icon: <Star size={20} />, color: PALETTE.gold },
 ];
 
 export function UserDashboard({
@@ -72,7 +73,7 @@ export function UserDashboard({
                     className={css({
                         background: 'surface.elevated',
                         borderRadius: '3xl',
-                        boxShadow: '0 40px 120px rgba(224,123,83,0.25)',
+                        boxShadow: 'shadow.large',
                         padding: { base: '8', md: '14' },
                         mb: '8',
                     })}
@@ -95,8 +96,8 @@ export function UserDashboard({
                                     className={css({
                                         borderRadius: 'full',
                                         objectFit: 'cover',
-                                        border: '4px solid #fff7f1',
-                                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                        border: { base: '4px solid #fff7f1', _dark: '4px solid #2d333b' },
+                                        boxShadow: 'shadow.medium',
                                     })}
                                 />
                             ) : (
@@ -105,14 +106,14 @@ export function UserDashboard({
                                         width: '120px',
                                         height: '120px',
                                         borderRadius: 'full',
-                                        background: 'linear-gradient(135deg, #ffe5d1, #ffc89e)',
+                                        background: { base: 'linear-gradient(135deg, #ffe5d1, #ffc89e)', _dark: 'linear-gradient(135deg, #5a3d2d, #7a5038)' },
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         fontSize: '3xl',
                                         fontWeight: '700',
-                                        border: '4px solid #fff7f1',
-                                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                        border: { base: '4px solid #fff7f1', _dark: '4px solid #2d333b' },
+                                        boxShadow: 'shadow.medium',
                                     })}
                                 >
                                     {userName.slice(0, 2).toUpperCase()}
@@ -141,13 +142,13 @@ export function UserDashboard({
                             className={css({
                                 padding: '3',
                                 borderRadius: 'xl',
-                                background: 'rgba(224,123,83,0.1)',
+                                background: 'accentSoft',
                                 color: 'primary',
                                 fontWeight: '600',
                                 textDecoration: 'none',
                                 transition: 'all 150ms ease',
                                 _hover: {
-                                    background: 'rgba(224,123,83,0.2)',
+                                    background: 'accent.soft',
                                 },
                             })}
                         >
@@ -170,7 +171,7 @@ export function UserDashboard({
                                 bg: 'surface.elevated',
                                 borderRadius: '2xl',
                                 p: '5',
-                                boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+                                boxShadow: 'shadow.medium',
                             })}
                         >
                             <div
@@ -233,11 +234,11 @@ export function UserDashboard({
                             background: 'surface.elevated',
                             textDecoration: 'none',
                             color: 'inherit',
-                            boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.small',
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
-                                borderColor: '#e07b53',
+                                borderColor: 'palette.orange',
                                 boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
                             },
                         })}
@@ -251,7 +252,7 @@ export function UserDashboard({
                     </Link>
 
                     <Link
-                        href="/profile/manage"
+                        href="/profile/settings"
                         className={css({
                             borderRadius: '2xl',
                             padding: '6',
@@ -259,11 +260,11 @@ export function UserDashboard({
                             background: 'surface.elevated',
                             textDecoration: 'none',
                             color: 'inherit',
-                            boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.small',
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
-                                borderColor: '#e07b53',
+                                borderColor: 'palette.orange',
                                 boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
                             },
                         })}
@@ -277,7 +278,7 @@ export function UserDashboard({
                     </Link>
 
                     <Link
-                        href="/favorites"
+                        href="/profile/favorites"
                         className={css({
                             borderRadius: '2xl',
                             padding: '6',
@@ -285,11 +286,11 @@ export function UserDashboard({
                             background: 'surface.elevated',
                             textDecoration: 'none',
                             color: 'inherit',
-                            boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.small',
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
-                                borderColor: '#e07b53',
+                                borderColor: 'palette.orange',
                                 boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
                             },
                         })}
@@ -303,7 +304,7 @@ export function UserDashboard({
                     </Link>
 
                     <Link
-                        href="/my-recipes"
+                        href="/profile/recipes"
                         className={css({
                             borderRadius: '2xl',
                             padding: '6',
@@ -311,11 +312,11 @@ export function UserDashboard({
                             background: 'surface.elevated',
                             textDecoration: 'none',
                             color: 'inherit',
-                            boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.small',
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-2px)',
-                                borderColor: '#e07b53',
+                                borderColor: 'palette.orange',
                                 boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
                             },
                         })}
@@ -350,7 +351,7 @@ export function UserDashboard({
                                     width: '8px',
                                     height: '8px',
                                     borderRadius: 'full',
-                                    background: '#6c5ce7',
+                                    background: 'palette.purple',
                                 })}
                             />
                             Deine Entwürfe
@@ -380,7 +381,7 @@ export function UserDashboard({
                                         transition: 'all 150ms ease',
                                         _hover: {
                                             transform: 'translateY(-2px)',
-                                            borderColor: '#6c5ce7',
+                                            borderColor: 'palette.purple',
                                             background: 'rgba(108,92,231,0.1)',
                                         },
                                     })}

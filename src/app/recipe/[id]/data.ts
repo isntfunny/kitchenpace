@@ -2,6 +2,7 @@ export interface Ingredient {
     name: string;
     amount: number;
     unit: string;
+    notes?: string | null;
 }
 
 export type NodeType = 'prep' | 'cook' | 'wait' | 'season' | 'combine' | 'serve';
@@ -28,6 +29,7 @@ export interface RecipeFlow {
 
 export interface User {
     id: string;
+    slug: string;
     name: string;
     avatar: string;
     bio: string;
@@ -54,6 +56,7 @@ export interface Recipe {
     image: string;
     imageKey?: string | null;
     category: string;
+    categorySlug?: string;
     rating: number;
     prepTime: number;
     cookTime: number;
@@ -66,6 +69,8 @@ export interface Recipe {
     favoriteCount?: number;
     ratingCount?: number;
     cookCount?: number;
+    moderationStatus?: string;
+    moderationNote?: string | null;
     viewer?: {
         id: string;
         isFavorite: boolean;
@@ -80,6 +85,7 @@ export interface Recipe {
 export const users: Record<string, User> = {
     'user-1': {
         id: 'user-1',
+        slug: 'maria-rossi',
         name: 'Maria Rossi',
         avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
         bio: 'Passionierte Hobbyköchin aus Italien.',
@@ -88,6 +94,7 @@ export const users: Record<string, User> = {
     },
     'user-2': {
         id: 'user-2',
+        slug: 'alex-koch',
         name: 'Alex Koch',
         avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
         bio: 'Koch mit Leidenschaft für mediterrane Küche.',

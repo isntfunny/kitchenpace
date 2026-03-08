@@ -30,7 +30,7 @@ const SignOutButton = ({ label = 'Sign Out' }: Props) => {
                 transition: 'all 150ms ease',
                 _hover: {
                     background: 'rgba(224,123,83,0.08)',
-                    color: '#e07b53',
+                    color: 'palette.orange',
                 },
             })}
             onClick={() => {

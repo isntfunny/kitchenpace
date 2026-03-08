@@ -1,4 +1,4 @@
-import { Activity, ShieldCheck, Users, BookOpen, Tag, Settings } from 'lucide-react';
+import { Activity, ShieldCheck, ShieldAlert, Users, BookOpen, Tag, Settings, Sparkles, LayoutList } from 'lucide-react';
 import Link from 'next/link';
 
 import { PageShell } from '@app/components/layouts/PageShell';
@@ -9,6 +9,12 @@ import { STATUS_ORDER, getQueueLabel } from '@worker/queues/job-run-ui';
 import { css } from 'styled-system/css';
 
 const ADMIN_ACTIONS = [
+    {
+        label: 'Moderations-Queue',
+        description: 'Gemeldete Inhalte prüfen, freigeben oder ablehnen.',
+        href: '/moderation',
+        icon: ShieldAlert,
+    },
     {
         label: 'Content Moderation',
         description: 'Startseite: Highlight-Rezept & Top-User auswählen.',
@@ -40,10 +46,22 @@ const ADMIN_ACTIONS = [
         icon: Tag,
     },
     {
+        label: 'Kategorien',
+        description: 'Rezept-Kategorien verwalten und sortieren.',
+        href: '/admin/categories',
+        icon: LayoutList,
+    },
+    {
         label: 'Worker Dashboard',
         description: 'Jobläufe, Zustände und Timeouts im Blick behalten.',
         href: '/admin/worker',
         icon: Activity,
+    },
+    {
+        label: 'KI-Imports',
+        description: 'Import-Verlauf, Kosten und Rezept-Zuweisung.',
+        href: '/admin/imports',
+        icon: Sparkles,
     },
 ];
 

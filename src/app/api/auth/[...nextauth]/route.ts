@@ -1,8 +1,10 @@
+import { PrismaAdapter } from '@auth/prisma-adapter';
 import type { Role } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import NextAuth, { type LoggerInstance, type NextAuthOptions } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import DiscordProvider from 'next-auth/providers/discord';
 
 import { authDebugEnabled, logAuth } from '@app/lib/auth-logger';
 import { prisma } from '@shared/prisma';
@@ -17,10 +19,26 @@ const safeUserMeta = (user?: { id?: string | null; email?: string | null }) => (
 type KitchenPaceToken = JWT & {
     userId?: string;
     role?: Role;
+    userValidatedAt?: number;
 };
 
+const hasDiscord = Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET);
+
+const oauthProviders = [
+    ...(hasDiscord
+        ? [
+              DiscordProvider({
+                  clientId: process.env.DISCORD_CLIENT_ID!,
+                  clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+              }),
+          ]
+        : []),
+];
+
 export const authOptions: NextAuthOptions = {
+    adapter: PrismaAdapter(prisma),
     providers: [
+        ...oauthProviders,
         CredentialsProvider({
             name: 'Email & Password',
             credentials: {
@@ -56,7 +74,7 @@ export const authOptions: NextAuthOptions = {
 
                     if (!user.isActive) {
                         logAuth('warn', 'authorize: account not activated', { userId: user.id });
-                        throw new Error('AccountNotActivated');
+                        return null;
                     }
 
                     logAuth('info', 'authorize: success', { userId: user.id });
@@ -93,10 +111,35 @@ export const authOptions: NextAuthOptions = {
         error: '/auth/error',
     },
     callbacks: {
+        signIn: async ({ user, account }) => {
+            // Credentials: authorize() already handled validation
+            if (account?.provider === 'credentials') {
+                return true;
+            }
+
+            // OAuth: auto-activate user (email is verified by the provider)
+            if (account && user?.id) {
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: user.id },
+                    select: { id: true, isActive: true },
+                });
+
+                if (dbUser && !dbUser.isActive) {
+                    await prisma.user.update({
+                        where: { id: user.id },
+                        data: { isActive: true },
+                    });
+                    logAuth('info', 'signIn: auto-activated OAuth user', { userId: user.id });
+                }
+            }
+
+            return true;
+        },
         jwt: async ({ token, user, trigger, session }) => {
             const nextToken = token as KitchenPaceToken;
             if (user?.id) {
                 nextToken.userId = user.id;
+                nextToken.userValidatedAt = Date.now();
             }
 
             if (user?.role) {
@@ -105,6 +148,39 @@ export const authOptions: NextAuthOptions = {
 
             if (trigger === 'update' && session?.user?.name) {
                 nextToken.name = session.user.name;
+            }
+
+            // Periodically validate user still exists in DB (every 5 minutes)
+            const VALIDATION_INTERVAL_MS = 5 * 60 * 1000;
+            const userId = nextToken.userId ?? nextToken.sub;
+            if (
+                userId &&
+                (!nextToken.userValidatedAt ||
+                    Date.now() - nextToken.userValidatedAt > VALIDATION_INTERVAL_MS)
+            ) {
+                try {
+                    const dbUser = await prisma.user.findUnique({
+                        where: { id: userId },
+                        select: { id: true, isActive: true, role: true },
+                    });
+                    if (!dbUser || !dbUser.isActive) {
+                        logAuth('warn', 'callbacks.jwt: user no longer valid', { userId });
+                        delete nextToken.userId;
+                        delete nextToken.sub;
+                        delete nextToken.role;
+                        delete nextToken.name;
+                        delete nextToken.email;
+                        nextToken.userValidatedAt = undefined;
+                    } else {
+                        nextToken.userValidatedAt = Date.now();
+                        nextToken.role = dbUser.role;
+                    }
+                } catch (error) {
+                    logAuth('error', 'callbacks.jwt: DB validation failed', {
+                        userId,
+                        error: error instanceof Error ? error.message : String(error),
+                    });
+                }
             }
 
             if (authDebugEnabled) {

@@ -13,7 +13,9 @@ datasource db {
 
 enum Role {
   USER
+  MODERATOR
   ADMIN
+  BANNED
 }
 
 enum Difficulty {
@@ -83,6 +85,23 @@ enum ActivityType {
   USER_REGISTERED
   USER_ACTIVATED
   MEAL_PLAN_CREATED
+  SHOPPING_LIST_CREATED
+}
+
+enum PaletteColor {
+  orange
+  gold
+  emerald
+  purple
+  blue
+  pink
+}
+
+enum ModerationStatus {
+  APPROVED
+  PENDING
+  REJECTED
+  AUTO_APPROVED
 }
 
 // ============================================
@@ -141,6 +160,8 @@ model User {
   activationToken String?
   resetToken      String?
   resetTokenExpiry DateTime?
+  banReason       String?   // Shown on /banned page (null = not banned)
+  banExpiresAt    DateTime? // null = permanent ban
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -163,6 +184,11 @@ model User {
   cookHistory    UserCookHistory[]
   pinnedFavorites PinnedFavorite[]
   cookImages     CookImage[]
+  importRuns     ImportRun[]
+  moderationQueueAsAuthor ModerationQueue[] @relation("ModerationQueueAuthor")
+  moderationQueueAsReviewer ModerationQueue[] @relation("ModerationQueueReviewer")
+  moderationLogs ModerationLog[] @relation("ModerationLogActor")
+  reports        Report[] @relation("ReportSubmitter")
 }
 
 model Profile {
@@ -170,6 +196,7 @@ model Profile {
   userId         String   @unique
   email          String
   nickname       String   @db.VarChar(40)
+  slug           String   @unique @db.VarChar(60)
   teaser         String?
   photoUrl       String?
   bio            String?
@@ -223,14 +250,19 @@ model Recipe {
   viewCount    Int         @default(0)
   cookCount    Int         @default(0)
   isTrending   Boolean     @default(false)
-  
+
   // Flow data as JSON
   flowNodes    Json?
   flowEdges    Json?
 
   // AI-assisted flow generation (prepared for future use)
   rawRecipeText String?  // Classic text recipe, sent to AI to generate flow
-  
+
+  // Content moderation
+  moderationStatus  ModerationStatus @default(AUTO_APPROVED)
+  moderationNote    String?
+  aiModerationScore Float?
+
   authorId     String
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
@@ -249,6 +281,7 @@ model Recipe {
   cookHistory  UserCookHistory[]
   pinnedFavorites PinnedFavorite[]
   cookImages   CookImage[]
+  importRuns   ImportRun[]
 
   @@index([authorId])
   @@index([difficulty])
@@ -256,6 +289,54 @@ model Recipe {
   @@index([rating])
   @@index([status])
   @@index([isTrending])
+  @@index([moderationStatus])
+}
+
+// ============================================
+// RECIPE IMPORTER RUNS (audit + cost tracking)
+// ============================================
+
+enum ImportRunStatus {
+  SUCCESS  // AI analyzed + recipe saved
+  FALLBACK // AI failed/unavailable, used regex fallback parser
+  FAILED   // Hard failure (scraping error, unrecoverable)
+}
+
+model ImportRun {
+  id               String          @id @default(cuid())
+  userId           String
+
+  // Source
+  sourceUrl        String?         // null = pasted text (AI dialog in editor)
+  sourceType       String          @default("url") // "url" | "text"
+  markdownLength   Int?            // scraped content size in chars
+
+  // Result
+  status           ImportRunStatus
+  errorType        String?         // maps to ErrorType enum from importer
+  errorMessage     String?
+  recipeId         String?         // linked recipe if successfully saved
+
+  // AI usage (matches OpenAI usage object fields)
+  model             String?         // e.g. "gpt-4o-mini"
+  inputTokens       Int?            // prompt_tokens
+  cachedInputTokens Int?            // prompt_tokens_details.cached_tokens
+  outputTokens      Int?            // completion_tokens
+  // Cost: input $2.50/1M, cached $0.25/1M, output $15.00/1M
+  estimatedCostUsd  Float?
+
+  // Raw OpenAI completion object for debugging & auditing
+  rawApiResponse    Json?
+
+  createdAt        DateTime        @default(now())
+
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe           Recipe?         @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ============================================
@@ -298,13 +379,16 @@ model RecipeIngredient {
 // ============================================
 
 model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  imageUrl    String?
-  color       String?  // Hex color for UI theming
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  name          String   @unique
+  slug          String   @unique
+  description   String?
+  imageUrl      String?
+  color         PaletteColor @default(orange)
+  icon          String?  // Lucide icon name (e.g. "utensils", "cake", "salad")
+  coverImageKey String?  // S3 key for hero/cover image
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
 
   recipes RecipeCategory[]
 }
@@ -347,6 +431,9 @@ model Comment {
   imageUrl  String?
   recipeId  String
   authorId  String
+  moderationStatus ModerationStatus @default(AUTO_APPROVED)
+  isHidden  Boolean  @default(false)
+  moderationNote String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -355,6 +442,7 @@ model Comment {
 
   @@index([recipeId])
   @@index([authorId])
+  @@index([moderationStatus])
 }
 
 // ============================================
@@ -388,6 +476,7 @@ model Favorite {
 
   @@unique([recipeId, userId])
   @@index([userId])
+  @@index([recipeId, createdAt])
 }
 
 // ============================================
@@ -552,6 +641,7 @@ model UserViewHistory {
   @@index([userId])
   @@index([recipeId])
   @@index([userId, viewedAt])
+  @@index([recipeId, viewedAt])
 }
 
 model UserCookHistory {
@@ -570,6 +660,7 @@ model UserCookHistory {
   @@index([userId])
   @@index([recipeId])
   @@index([userId, cookedAt])
+  @@index([recipeId, cookedAt])
 }
 
 // ============================================
@@ -584,6 +675,8 @@ model CookImage {
   imageKey    String?  // S3 key for the image
   blurhash    String?
   caption     String?
+  moderationStatus ModerationStatus @default(AUTO_APPROVED)
+  isHidden    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
@@ -592,6 +685,7 @@ model CookImage {
   @@index([recipeId])
   @@index([userId])
   @@index([createdAt])
+  @@index([moderationStatus])
 }
 
 // ============================================
@@ -614,7 +708,73 @@ model PinnedFavorite {
 }
 
 // ============================================
-// SITE SETTINGS (Content Moderation)
+// CONTENT MODERATION
+// ============================================
+
+model ModerationQueue {
+  id             String           @id @default(cuid())
+  contentType    String           // "recipe" | "comment" | "profile" | "cook_image"
+  contentId      String           // FK to the relevant record
+  authorId       String           // User who submitted the content
+  author         User             @relation("ModerationQueueAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  // AI moderation results
+  aiScore        Float            // 0.0–1.0 highest category score
+  aiFlags        Json             // { hate: 0.01, sexual: 0.82, ... }
+  aiRawResponse  Json             // full OpenAI moderation API response
+
+  // Human review
+  status         ModerationStatus @default(PENDING)
+  reviewedBy     String?          // moderator/admin userId
+  reviewer       User?            @relation("ModerationQueueReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  reviewedAt     DateTime?
+  reviewNote     String?          // internal note from reviewer
+
+  // Content snapshot (so mod can see what was submitted even if edited)
+  contentSnapshot Json            // { title?, description?, imageUrl?, text? }
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([contentType, contentId])
+  @@index([status, createdAt])
+  @@index([authorId])
+}
+
+model ModerationLog {
+  id           String   @id @default(cuid())
+  actorId      String   // who took the action (admin/mod)
+  actor        User     @relation("ModerationLogActor", fields: [actorId], references: [id], onDelete: Cascade)
+  action       String   // "approve" | "reject" | "ban_user" | "unban_user" | "hide_content" | "restore_content"
+  contentType  String?  // "recipe" | "comment" | "user" | etc.
+  contentId    String?  // target content ID
+  reason       String?  // human-provided reason
+  metadata     Json?    // extra context
+  createdAt    DateTime @default(now())
+
+  @@index([actorId])
+  @@index([contentId])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  reporterId  String
+  reporter    User     @relation("ReportSubmitter", fields: [reporterId], references: [id], onDelete: Cascade)
+  contentType String   // "recipe" | "comment" | "user"
+  contentId   String
+  reason      String   // "spam" | "nsfw" | "hate" | "misinformation" | "other"
+  description String?  // optional free text from reporter
+  resolved    Boolean  @default(false)
+  resolvedBy  String?
+  createdAt   DateTime @default(now())
+
+  @@unique([reporterId, contentType, contentId])
+  @@index([contentType, contentId])
+  @@index([resolved])
+}
+
+// ============================================
+// SITE SETTINGS
 // ============================================
 
 model SiteSettings {

@@ -23,19 +23,19 @@ export const PERSONAL_LINKS: NavLinkItem[] = [
     {
         label: 'Favoriten',
         description: 'Gespeicherte Rezepte',
-        href: '/favorites',
+        href: '/profile/favorites',
         icon: Heart,
     },
     {
         label: 'Meine Rezepte',
         description: 'Eigene Sammlung & Drafts',
-        href: '/my-recipes',
+        href: '/profile/recipes',
         icon: FileText,
     },
     {
         label: 'Profil & Einstellungen',
         description: 'Account verwalten',
-        href: '/profile/manage',
+        href: '/profile/settings',
         icon: Settings,
     },
 ];

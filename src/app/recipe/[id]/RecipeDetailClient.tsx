@@ -28,8 +28,11 @@ import { Badge } from '@app/components/atoms/Badge';
 import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { Header } from '@app/components/features/Header';
+import { ReportButton } from '@app/components/features/ReportButton';
+import { ShareButton } from '@app/components/features/ShareButton';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
+import { useIsDark } from '@app/lib/darkMode';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
@@ -55,6 +58,11 @@ type HeroImage = {
     thumbKey?: string | null;
     title: string;
     subtitle?: string;
+    reportable?: {
+        contentType: 'cook_image';
+        contentId: string;
+        ownerId: string;
+    };
 };
 
 type RecipeDetailClientProps = {
@@ -166,14 +174,22 @@ export function RecipeDetailClient({
             src: img.imageUrl,
             thumbKey: img.imageKey ?? null,
             title: img.user.name || img.user.nickname || 'Küchenfreund',
-            subtitle: img.caption || 'Gekochtes Foto',
+            subtitle: img.caption || 'Foto',
+            reportable: {
+                contentType: 'cook_image' as const,
+                contentId: img.id,
+                ownerId: img.user.id,
+            },
         }));
         return [primary, ...extras];
     }, [cookImages, recipe.image, recipe.imageKey, recipe.title]);
 
-    const heroCount = Math.max(1, heroImages.length);
-    const normalizedHeroIndex = heroCount ? heroIndex % heroCount : 0;
-    const heroMeta = heroImages[normalizedHeroIndex];
+    // Only show carousel if there are actual images with src
+    const hasImages = heroImages.some((img) => img.src);
+    const visibleImages = hasImages ? heroImages : [];
+    const heroCount = Math.max(1, visibleImages.length);
+    const normalizedHeroIndex = heroCount && hasImages ? heroIndex % heroCount : 0;
+    const heroMeta = visibleImages[normalizedHeroIndex];
 
     const handleHeroNext = () => setHeroIndex((prev) => (prev + 1) % heroCount);
     const handleHeroPrev = () => setHeroIndex((prev) => (prev - 1 + heroCount) % heroCount);
@@ -207,6 +223,7 @@ export function RecipeDetailClient({
     ]);
 
     const totalTime = recipe.prepTime + recipe.cookTime;
+    const dark = useIsDark();
     const starValues = [1, 2, 3, 4, 5] as const;
     const activeStarValue = viewerRating ?? Math.round(averageRating || 0);
     const ratingLabel = ratingCount === 1 ? 'Bewertung' : 'Bewertungen';
@@ -220,8 +237,12 @@ export function RecipeDetailClient({
         router.push(buildRecipeFilterHref({ tags: [tag] }));
     };
 
-    const handleCategoryClick = (category: string) => {
-        router.push(buildRecipeFilterHref({ mealTypes: [category] }));
+    const handleCategoryClick = () => {
+        if (recipe.categorySlug) {
+            router.push(`/category/${recipe.categorySlug}`);
+        } else {
+            router.push(buildRecipeFilterHref({ mealTypes: [recipe.category] }));
+        }
     };
 
     const handleDifficultyClick = (difficulty: string) => {
@@ -371,6 +392,89 @@ export function RecipeDetailClient({
                     </a>
                 </div>
             )}
+            {recipe.viewer?.isAuthor && recipe.moderationStatus === 'PENDING' && (
+                <div
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '3',
+                        px: '4',
+                        py: '2.5',
+                        backgroundColor: 'rgba(217,173,54,0.1)',
+                        borderBottom: '1px solid rgba(217,173,54,0.25)',
+                        fontSize: 'sm',
+                        color: '#b8860b',
+                        fontWeight: '500',
+                    })}
+                >
+                    <span
+                        className={css({
+                            display: 'inline-block',
+                            px: '2',
+                            py: '0.5',
+                            borderRadius: 'full',
+                            fontSize: 'xs',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            backgroundColor: '#b8860b',
+                            color: 'white',
+                        })}
+                    >
+                        Wird überprüft
+                    </span>
+                    Dein Rezept wird gerade überprüft und ist noch nicht öffentlich sichtbar. Das dauert in der Regel weniger als 24 Stunden.
+                </div>
+            )}
+            {recipe.viewer?.isAuthor && recipe.moderationStatus === 'REJECTED' && (
+                <div
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '3',
+                        px: '4',
+                        py: '2.5',
+                        backgroundColor: 'rgba(220,38,38,0.08)',
+                        borderBottom: '1px solid rgba(220,38,38,0.2)',
+                        fontSize: 'sm',
+                        color: 'status.danger',
+                        fontWeight: '500',
+                    })}
+                >
+                    <span
+                        className={css({
+                            display: 'inline-block',
+                            px: '2',
+                            py: '0.5',
+                            borderRadius: 'full',
+                            fontSize: 'xs',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            backgroundColor: 'status.danger',
+                            color: 'white',
+                        })}
+                    >
+                        Abgelehnt
+                    </span>
+                    {recipe.moderationNote
+                        ? `Dein Rezept wurde abgelehnt: ${recipe.moderationNote}. Du kannst es überarbeiten und erneut einreichen.`
+                        : 'Dein Rezept wurde abgelehnt. Du kannst es überarbeiten und erneut einreichen.'}
+                    <a
+                        href={`/recipe/${recipe.id}/edit`}
+                        className={css({
+                            fontWeight: '600',
+                            textDecoration: 'underline',
+                            textUnderlineOffset: '2px',
+                            _hover: { opacity: '0.75' },
+                        })}
+                    >
+                        Überarbeiten
+                    </a>
+                </div>
+            )}
             <main
                 className={container({
                     maxW: '1400px',
@@ -400,6 +504,22 @@ export function RecipeDetailClient({
                                 gap: '3',
                             })}
                         >
+                            {!hasImages && (
+                                <div
+                                    className={css({
+                                        aspectRatio: '4/3',
+                                        borderRadius: '2xl',
+                                        overflow: 'hidden',
+                                    })}
+                                >
+                                    <SmartImage
+                                        recipeId={recipe.id}
+                                        alt={recipe.title}
+                                        fill
+                                    />
+                                </div>
+                            )}
+                            {hasImages && (<>
                             <div
                                 className={css({
                                     position: 'relative',
@@ -435,13 +555,20 @@ export function RecipeDetailClient({
                                         top: '50%',
                                         transform: 'translateY(-50%)',
                                         left: '2',
-                                        width: '40px',
-                                        height: '40px',
+                                        width: '48px',
+                                        height: '48px',
                                         borderRadius: 'full',
                                         border: 'none',
-                                        bg: 'rgba(0,0,0,0.4)',
+                                        bg: 'rgba(0,0,0,0.5)',
                                         color: 'white',
                                         cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '24px',
+                                        transition: 'all 200ms ease',
+                                        _hover: { bg: 'rgba(0,0,0,0.7)' },
+                                        _active: { transform: 'translateY(-50%) scale(0.95)' },
                                     })}
                                 >
                                     ‹
@@ -455,13 +582,20 @@ export function RecipeDetailClient({
                                         top: '50%',
                                         transform: 'translateY(-50%)',
                                         right: '2',
-                                        width: '40px',
-                                        height: '40px',
+                                        width: '48px',
+                                        height: '48px',
                                         borderRadius: 'full',
                                         border: 'none',
-                                        bg: 'rgba(0,0,0,0.4)',
+                                        bg: 'rgba(0,0,0,0.5)',
                                         color: 'white',
                                         cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '24px',
+                                        transition: 'all 200ms ease',
+                                        _hover: { bg: 'rgba(0,0,0,0.7)' },
+                                        _active: { transform: 'translateY(-50%) scale(0.95)' },
                                     })}
                                 >
                                     ›
@@ -482,10 +616,21 @@ export function RecipeDetailClient({
                                             fontSize: 'sm',
                                             color: 'text-muted',
                                             fontFamily: 'body',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '2',
                                         })}
                                     >
                                         {heroMeta?.subtitle ?? 'Galerie'} ({normalizedHeroIndex + 1}
                                         /{heroCount})
+                                        {heroMeta?.reportable &&
+                                            heroMeta.reportable.ownerId !== viewerId && (
+                                                <ReportButton
+                                                    contentType={heroMeta.reportable.contentType}
+                                                    contentId={heroMeta.reportable.contentId}
+                                                    variant="icon"
+                                                />
+                                            )}
                                     </span>
                                     {heroCount > 1 && (
                                         <span
@@ -512,7 +657,7 @@ export function RecipeDetailClient({
                                         },
                                     })}
                                 >
-                                    {heroImages.map((img, idx) => {
+                                    {visibleImages.map((img, idx) => {
                                         const thumbUrl = img.thumbKey
                                             ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=200&height=200&fit=cover&quality=75`
                                             : img.src;
@@ -529,9 +674,9 @@ export function RecipeDetailClient({
                                                             ? 'primary'
                                                             : 'transparent',
                                                     padding: 0,
-                                                    minWidth: { base: '72px', lg: 'auto' },
-                                                    width: '72px',
-                                                    height: '72px',
+                                                    minWidth: { base: '64px', md: '72px', lg: 'auto' },
+                                                    width: { base: '64px', md: '72px' },
+                                                    height: { base: '64px', md: '72px' },
                                                     flex: { base: '0 0 auto', lg: 'initial' },
                                                     overflow: 'hidden',
                                                     cursor: 'pointer',
@@ -555,6 +700,7 @@ export function RecipeDetailClient({
                                     })}
                                 </div>
                             </div>
+                            </>)}
                         </div>
 
                         <div
@@ -566,7 +712,7 @@ export function RecipeDetailClient({
                         >
                             <div className={flex({ gap: '2', mb: '4', flexWrap: 'wrap' })}>
                                 <button
-                                    onClick={() => handleCategoryClick(recipe.category)}
+                                    onClick={() => handleCategoryClick()}
                                     className={css({ cursor: 'pointer', _hover: { opacity: 0.8 } })}
                                 >
                                     <Badge>{recipe.category}</Badge>
@@ -600,7 +746,7 @@ export function RecipeDetailClient({
                                 {recipe.description}
                             </p>
 
-                            <div className={grid({ columns: 3, gap: '3', mb: '4' })}>
+                            <div className={grid({ columns: { base: 1, sm: 2, lg: 3 }, gap: '3', mb: '4' })}>
                                 <div
                                     className={css({
                                         textAlign: 'center',
@@ -613,7 +759,7 @@ export function RecipeDetailClient({
                                         className={css({
                                             fontSize: '2xl',
                                             mb: '1',
-                                            color: '#e07b53',
+                                            color: 'palette.orange',
                                         })}
                                     >
                                         <Clock size={26} />
@@ -713,7 +859,9 @@ export function RecipeDetailClient({
                                     mb: '4',
                                     borderRadius: 'xl',
                                     p: '4',
-                                    bg: 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(255,246,236,0.9))',
+                                    bg: dark
+                                        ? 'linear-gradient(135deg, rgba(224,123,83,0.12), rgba(224,123,83,0.04))'
+                                        : 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(255,246,236,0.9))',
                                     border: '1px solid',
                                     borderColor: 'rgba(224,123,83,0.2)',
                                     boxShadow: '0 8px 30px rgba(224,123,83,0.12)',
@@ -739,7 +887,7 @@ export function RecipeDetailClient({
                                         })}
                                     >
                                         <span>{averageRating.toFixed(1)}</span>
-                                        <Star size={28} className={css({ color: '#f8b500' })} />
+                                        <Star size={28} className={css({ color: 'palette.gold' })} />
                                     </div>
                                     <div
                                         className={css({
@@ -752,9 +900,10 @@ export function RecipeDetailClient({
                                 </div>
                                 <div
                                     className={flex({
-                                        gap: '2',
+                                        gap: { base: '1.5', md: '2' },
                                         align: 'center',
                                         flexWrap: 'wrap',
+                                        justify: { base: 'flex-start', md: 'center' },
                                     })}
                                 >
                                     {starValues.map((value) => (
@@ -771,7 +920,7 @@ export function RecipeDetailClient({
                                                 background:
                                                     value <= activeStarValue
                                                         ? 'rgba(224,123,83,0.9)'
-                                                        : 'rgba(255,255,255,0.6)',
+                                                        : dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.6)',
                                                 color:
                                                     value <= activeStarValue
                                                         ? 'white'
@@ -818,7 +967,7 @@ export function RecipeDetailClient({
                                                 Deine Bewertung: {viewerRating.toFixed(1)}
                                                 <Star
                                                     size={14}
-                                                    className={css({ color: '#f8b500' })}
+                                                    className={css({ color: 'palette.gold' })}
                                                 />
                                             </>
                                         ) : (
@@ -875,7 +1024,7 @@ export function RecipeDetailClient({
                                             })}
                                         >
                                             <CheckCircle size={16} />
-                                            Gekocht
+                                            Zubereitet
                                         </span>
                                     ) : (
                                         <span
@@ -886,7 +1035,7 @@ export function RecipeDetailClient({
                                             })}
                                         >
                                             <ChefHat size={16} />
-                                            Gekocht
+                                            Zubereitet
                                         </span>
                                     )}{' '}
                                     · {cookCount}
@@ -903,6 +1052,18 @@ export function RecipeDetailClient({
                                         Drucken
                                     </span>
                                 </Button>
+                                <ShareButton
+                                    title={recipe.title}
+                                    slug={recipe.slug}
+                                    imageUrl={recipe.image ?? undefined}
+                                />
+                                {!recipe.viewer?.isAuthor && (
+                                    <ReportButton
+                                        contentType="recipe"
+                                        contentId={recipe.id}
+                                        variant="text"
+                                    />
+                                )}
                             </div>
 
                             {showCookDialog && (
@@ -929,7 +1090,7 @@ export function RecipeDetailClient({
                                         })}
                                     >
                                         <ChefHat size={20} />
-                                        <span>Als gekocht markieren</span>
+                                        <span>Als zubereitet markieren</span>
                                     </h3>
 
                                     <div
@@ -1070,7 +1231,7 @@ export function RecipeDetailClient({
                     <div className={css({ lg: { gridColumn: 'span 4' } })}>
                         <div
                             className={css({
-                                bg: 'white',
+                                bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '5',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
@@ -1113,7 +1274,7 @@ export function RecipeDetailClient({
                                             w: '10',
                                             h: '10',
                                             borderRadius: 'full',
-                                            bg: 'white',
+                                            bg: 'surface',
                                             border: '1px solid',
                                             borderColor: 'border',
                                             cursor: 'pointer',
@@ -1140,7 +1301,7 @@ export function RecipeDetailClient({
                                             w: '10',
                                             h: '10',
                                             borderRadius: 'full',
-                                            bg: 'white',
+                                            bg: 'surface',
                                             border: '1px solid',
                                             borderColor: 'border',
                                             cursor: 'pointer',
@@ -1166,9 +1327,23 @@ export function RecipeDetailClient({
                                             fontFamily: 'body',
                                         })}
                                     >
-                                        <span className={css({ fontWeight: '500' })}>
-                                            {ingredient.name}
-                                        </span>
+                                        <div>
+                                            <span className={css({ fontWeight: '500' })}>
+                                                {ingredient.name}
+                                            </span>
+                                            {ingredient.notes && (
+                                                <span
+                                                    className={css({
+                                                        display: 'block',
+                                                        fontSize: 'xs',
+                                                        color: 'text-muted',
+                                                        fontStyle: 'italic',
+                                                    })}
+                                                >
+                                                    {ingredient.notes}
+                                                </span>
+                                            )}
+                                        </div>
                                         <span className={css({ color: 'text-muted' })}>
                                             {formatAmount(ingredient.amount)} {ingredient.unit}
                                         </span>
@@ -1181,7 +1356,7 @@ export function RecipeDetailClient({
                     <div className={css({ lg: { gridColumn: 'span 8' } })}>
                         <div
                             className={css({
-                                bg: 'white',
+                                bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '5',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
@@ -1207,6 +1382,7 @@ export function RecipeDetailClient({
                                     amount: ing.amount != null ? String(ing.amount) : undefined,
                                     unit: ing.unit,
                                 }))}
+                                recipeSlug={recipe.slug}
                             />
                         </div>
                     </div>
@@ -1226,7 +1402,7 @@ export function RecipeDetailClient({
                         </h2>
                         <div
                             className={css({
-                                bg: 'white',
+                                bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '5',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
@@ -1239,7 +1415,7 @@ export function RecipeDetailClient({
                                     direction: { base: 'column', sm: 'row' },
                                 })}
                             >
-                                <Link href={`/user/${author.id}`}>
+                                <Link href={`/user/${author.slug}`}>
                                     <div
                                         className={css({
                                             position: 'relative',
@@ -1271,7 +1447,7 @@ export function RecipeDetailClient({
                                         })}
                                     >
                                         <div>
-                                            <Link href={`/user/${author.id}`}>
+                                            <Link href={`/user/${author.slug}`}>
                                                 <h3
                                                     className={css({
                                                         fontFamily: 'heading',
@@ -1382,7 +1558,7 @@ export function RecipeDetailClient({
                         </h2>
                         <div
                             className={css({
-                                bg: 'white',
+                                bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '6',
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',

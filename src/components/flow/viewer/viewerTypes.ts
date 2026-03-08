@@ -4,6 +4,8 @@ export interface RecipeStepsViewerProps {
     nodes: FlowNodeSerialized[];
     edges: FlowEdgeSerialized[];
     ingredients?: { id: string; name: string; amount?: string; unit?: string }[];
+    /** Recipe slug — used to send the recipe to a Cast device. */
+    recipeSlug?: string;
 }
 
 export interface TimerState {

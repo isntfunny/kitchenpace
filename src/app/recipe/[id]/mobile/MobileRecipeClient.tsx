@@ -27,7 +27,6 @@ export function MobileRecipeClient({ recipe }: MobileRecipeClientProps) {
                     amount: ing.amount?.toString(),
                     unit: ing.unit,
                 }))}
-                forceViewMode="mobile"
             />
         </div>
     );

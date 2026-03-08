@@ -3,6 +3,8 @@
 import { List, Smartphone, X } from 'lucide-react';
 import { useEffect, useMemo, useReducer, useState } from 'react';
 
+import { CastButton } from '@app/components/cast/CastButton';
+import { useCast } from '@app/hooks/useCast';
 import { css } from 'styled-system/css';
 
 import { CompletionBanner } from './viewer/CompletionBanner';
@@ -14,7 +16,7 @@ import { viewerReducer } from './viewer/viewerTypes';
 import type { RecipeStepsViewerProps, TimerState } from './viewer/viewerTypes';
 import { buildTopology } from './viewer/viewerUtils';
 
-export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsViewerProps) {
+export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: RecipeStepsViewerProps) {
     const { columnGroups, dagreY, outgoing } = useMemo(() => buildTopology(nodes, edges), [nodes, edges]);
 
     const [state, dispatch] = useReducer(viewerReducer, {
@@ -24,6 +26,15 @@ export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsView
 
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'text'>('desktop');
+
+    // ── Google Cast — send recipe slug to TV ─────────────────────────────
+    const { castState, startCast, stopCast, sendMessage } = useCast();
+
+    useEffect(() => {
+        if (castState !== 'connected' || !recipeSlug) return;
+        sendMessage({ type: 'LOAD_RECIPE', slug: recipeSlug });
+    }, [castState, recipeSlug, sendMessage]);
+    // ─────────────────────────────────────────────────────────────────────
 
     // Detect mobile devices
     const [isMobileDevice, setIsMobileDevice] = useState(false);
@@ -124,6 +135,13 @@ export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsView
                         <Smartphone style={{ width: 18, height: 18 }} />
                         Rezept starten
                     </button>
+                    {castState !== 'unavailable' && (
+                        <CastButton
+                            castState={castState}
+                            onStart={startCast}
+                            onStop={stopCast}
+                        />
+                    )}
                     <button
                         type="button"
                         onClick={() => setViewMode('text')}
@@ -160,7 +178,7 @@ export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsView
                     })}
                 >
                     {/* View mode toggle buttons — top right */}
-                    <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', gap: 6 }}>
+                    <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', gap: 6, alignItems: 'center' }}>
                         <button
                             type="button"
                             onClick={() => setViewMode('text')}
@@ -205,6 +223,11 @@ export function RecipeStepsViewer({ nodes, edges, ingredients }: RecipeStepsView
                         >
                             <Smartphone style={{ width: 13, height: 13 }} /> Mobil
                         </button>
+                        <CastButton
+                            castState={castState}
+                            onStart={startCast}
+                            onStop={stopCast}
+                        />
                     </div>
 
                     <DesktopView {...sharedState} nodes={nodes} edges={edges} outgoing={outgoing} />

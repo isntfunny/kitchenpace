@@ -78,25 +78,14 @@ function SignInForm() {
                     textAlign: 'left',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '2',
+                    gap: '1',
                 })}
             >
-                <p
-                    className={css({
-                        textTransform: 'uppercase',
-                        letterSpacing: 'wide',
-                        fontSize: 'xs',
-                        fontWeight: '700',
-                        color: 'foreground.muted',
-                    })}
-                >
-                    Konto-Login
-                </p>
-                <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                     Willkommen zurück
                 </h1>
-                <p className={css({ color: 'foreground.muted', margin: 0 })}>
-                    Deine Rezepte, Favoriten und Pins — alles an einem Ort.
+                <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm' })}>
+                    Melde dich an, um auf deine Rezepte zuzugreifen.
                 </p>
             </div>
 

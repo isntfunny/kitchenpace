@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
                             gap: '3',
                         })}
                     >
-                        <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                        <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                             E-Mail gesendet!
                         </h1>
                         <p
@@ -93,26 +93,14 @@ export default function ForgotPasswordPage() {
                                 textAlign: 'left',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: '2',
+                                gap: '1',
                             })}
                         >
-                            <p
-                                className={css({
-                                    textTransform: 'uppercase',
-                                    letterSpacing: 'wide',
-                                    fontSize: 'xs',
-                                    fontWeight: '700',
-                                    color: 'foreground.muted',
-                                })}
-                            >
-                                Passwort vergessen
-                            </p>
-                            <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                            <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                                 Passwort zurücksetzen
                             </h1>
-                            <p className={css({ color: 'foreground.muted', margin: 0 })}>
-                                Wir senden dir einen Link, mit dem du ein neues Passwort festlegen
-                                kannst.
+                            <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm' })}>
+                                Wir senden dir einen Link zum Zurücksetzen.
                             </p>
                         </div>
 

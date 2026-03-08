@@ -72,7 +72,7 @@ export default function ResendActivationPage() {
                             gap: '3',
                         })}
                     >
-                        <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                        <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                             E-Mail gesendet!
                         </h1>
                         <p
@@ -93,26 +93,14 @@ export default function ResendActivationPage() {
                                 textAlign: 'left',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: '2',
+                                gap: '1',
                             })}
                         >
-                            <p
-                                className={css({
-                                    textTransform: 'uppercase',
-                                    letterSpacing: 'wide',
-                                    fontSize: 'xs',
-                                    fontWeight: '700',
-                                    color: 'foreground.muted',
-                                })}
-                            >
-                                Aktivierungsmail erneut senden
-                            </p>
-                            <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                            <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                                 Neuen Link anfordern
                             </h1>
-                            <p className={css({ color: 'foreground.muted', margin: 0 })}>
-                                Gib deine E-Mail-Adresse ein, um einen neuen Aktivierungslink zu
-                                erhalten.
+                            <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm' })}>
+                                Gib deine E-Mail ein, um einen neuen Aktivierungslink zu erhalten.
                             </p>
                         </div>
 

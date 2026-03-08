@@ -63,8 +63,9 @@ export function HeaderSearch() {
                     onBlur={() => setTimeout(() => setIsFocused(false), 150)}
                     className={css({
                         width: '100%',
-                        padding: '2.5',
-                        paddingLeft: '10',
+                        height: '44px',
+                        paddingLeft: '4',
+                        paddingRight: '10',
                         borderRadius: 'full',
                         border: '1px solid',
                         borderColor: 'border',

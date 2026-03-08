@@ -1,7 +1,7 @@
 'use client';
 
 import { useOpenPanel } from '@openpanel/nextjs';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Monitor, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
@@ -454,6 +454,18 @@ export function RecipeForm({
                 return;
             }
 
+            // Prevent publishing without flow nodes
+            if (
+                saveStatus === 'PUBLISHED' &&
+                flowNodesRef.current.length === 0 &&
+                flowEdgesRef.current.length === 0
+            ) {
+                setError(
+                    'Bitte erstelle zuerst einen Rezept-Flow mit mindestens einem Schritt, bevor du veröffentlichst.',
+                );
+                return;
+            }
+
             const payload = buildPayload(saveStatus);
 
             if (saveStatus === 'PUBLISHED') {
@@ -524,6 +536,60 @@ export function RecipeForm({
                             <PanelLeftClose className={css({ width: '16px', height: '16px' })} />
                         </button>
                     )}
+
+                    {/* Mobile: flow editor not available banner */}
+                    <div
+                        className={css({
+                            display: { base: 'flex', md: 'none' },
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '3',
+                            m: '3',
+                            p: '5',
+                            borderRadius: '2xl',
+                            textAlign: 'center',
+                        })}
+                        style={{
+                            background: `linear-gradient(135deg, ${PALETTE.orange}15, ${PALETTE.gold}10)`,
+                            border: `1px solid ${PALETTE.orange}30`,
+                        }}
+                    >
+                        <div
+                            className={css({
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: 'full',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            })}
+                            style={{
+                                background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
+                            }}
+                        >
+                            <Monitor size={24} color="white" />
+                        </div>
+                        <div>
+                            <p className={css({ fontWeight: '700', fontSize: 'sm', mb: '1' })}>
+                                Flow-Editor nur am Desktop
+                            </p>
+                            <p className={css({ fontSize: 'xs', color: 'foreground.muted', lineHeight: '1.6' })}>
+                                Rezept-Flows kannst du nur am Computer erstellen.
+                                Hier kannst du Titel, Zutaten und alle Details bearbeiten.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Sticky header: autosave + progress */}
+                    <div
+                        className={sidebarStickyHeaderClass}
+                        ref={(el) => {
+                            if (el && window.innerWidth < 768) {
+                                const header = document.querySelector('header');
+                                el.style.top = header ? `${header.offsetHeight}px` : '0px';
+                            }
+                        }}
+                    >
                     {/* Autosave bar */}
                     {autoSaveLabel && (
                         <div className={autoSaveBarClass(autoSaveStatus)}>
@@ -602,6 +668,7 @@ export function RecipeForm({
                                 }}
                             />
                         </div>
+                    </div>
                     </div>
 
                     {/* Flat scrollable sections */}
@@ -832,42 +899,38 @@ const spinnerClass = css({
 
 // Sidebar layout
 const sidebarFormClass = css({
-    display: 'flex',
-    height: '100%',
-    overflow: 'hidden',
-    flex: '1',
+    display: { base: 'block', md: 'flex' },
+    flexDirection: { md: 'row' },
+    height: { base: 'auto', md: '100%' },
+    overflow: { base: 'visible', md: 'hidden' },
+    flex: { md: '1' },
 });
 
 const sidebarClass = css({
-    width: '320px',
-    minWidth: '320px',
+    width: { base: '100%', md: '320px' },
+    minWidth: { base: '100%', md: '320px' },
     flexShrink: '0',
-    borderRight: '1px solid rgba(224,123,83,0.15)',
+    borderRight: { base: 'none', md: '1px solid rgba(224,123,83,0.15)' },
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: 'white',
-    overflowY: 'auto',
-    overflowX: 'hidden',
+    overflowX: { base: 'visible', md: 'hidden' },
     transition: 'width 200ms ease, min-width 200ms ease',
-    // Scrollable sidebar
-    '&::-webkit-scrollbar': { width: '4px' },
-    '&::-webkit-scrollbar-track': { background: 'transparent' },
-    '&::-webkit-scrollbar-thumb': {
-        background: 'rgba(224,123,83,0.2)',
-        borderRadius: '2px',
-    },
 });
 
 const sidebarCollapsedClass = css({
-    width: '0px',
-    minWidth: '0px',
+    width: { base: '100%', md: '0px' },
+    minWidth: { base: '100%', md: '0px' },
     flexShrink: '0',
-    overflow: 'hidden',
+    overflow: { base: 'auto', md: 'hidden' },
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: 'white',
     transition: 'width 200ms ease, min-width 200ms ease',
 });
 
 const sidebarToggleClass = css({
-    display: 'flex',
+    display: { base: 'none', md: 'flex' },
     alignItems: 'center',
     justifyContent: 'center',
     p: '1.5',
@@ -913,7 +976,7 @@ const sidebarReopenClass = css({
 const sidebarFooterClass = css({
     p: '3.5',
     borderTop: '1px solid rgba(224,123,83,0.1)',
-    position: 'sticky',
+    position: { base: 'static', md: 'sticky' },
     bottom: '0',
     backgroundColor: 'white',
     display: 'flex',
@@ -946,11 +1009,24 @@ const progressFillClass = css({
     transition: 'width 0.3s ease',
 });
 
+const sidebarStickyHeaderClass = css({
+    position: { base: 'sticky', md: 'static' },
+    zIndex: '19',
+    backgroundColor: 'white',
+    flexShrink: '0',
+});
+
 // Flat sidebar sections
 const sidebarSectionsClass = css({
     flex: '1',
     overflowY: 'auto',
     overflowX: 'hidden',
+    '&::-webkit-scrollbar': { width: '4px' },
+    '&::-webkit-scrollbar-track': { background: 'transparent' },
+    '&::-webkit-scrollbar-thumb': {
+        background: 'rgba(224,123,83,0.2)',
+        borderRadius: '2px',
+    },
 });
 
 const sidebarSectionClass = css({
@@ -977,7 +1053,7 @@ const sectionHeadingClass = css({
 const canvasAreaClass = css({
     flex: '1',
     overflow: 'hidden',
-    display: 'flex',
+    display: { base: 'none', md: 'flex' },
     flexDirection: 'column',
     minWidth: '0',
     position: 'relative',

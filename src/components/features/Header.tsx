@@ -1,14 +1,25 @@
 'use client';
 
-import { Apple, ChefHat, Droplet, Egg, Flame, Leaf, LayoutGrid, Menu, Plus, Shield, ShieldCheck, Zap } from 'lucide-react';
+import {
+    Apple,
+    ChefHat,
+    Droplet,
+    Egg,
+    Flame,
+    Leaf,
+    LayoutGrid,
+    Menu,
+    Plus,
+    Shield,
+    ShieldCheck,
+    Zap,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
 import { useMemo } from 'react';
 
-import { NotificationBell } from '@app/components/notifications/NotificationBell';
-import { useAdminInboxCount } from '@app/components/notifications/useAdminInboxCount';
 import { HeaderSearch } from '@app/components/search/HeaderSearch';
 import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
@@ -70,10 +81,39 @@ const QUICK_FILTERS = [
     },
 ];
 
-function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean }) {
+const ADMIN_LINK: GeneralNavLinkItem = {
+    label: 'Administration',
+    description: 'Benutzer & Inhalte verwalten',
+    href: '/admin',
+    icon: ShieldCheck,
+};
+
+const MOD_LINK: GeneralNavLinkItem = {
+    label: 'Moderation',
+    description: 'Inhalte prüfen & moderieren',
+    href: '/moderation',
+    icon: Shield,
+};
+
+function HeaderNavigationMenu({
+    isAuthenticated,
+    isAdmin,
+    isModerator,
+}: {
+    isAuthenticated: boolean;
+    isAdmin: boolean;
+    isModerator: boolean;
+}) {
     const availableGeneralLinks = GENERAL_NAV_LINKS.filter(
         (link) => !link.authOnly || isAuthenticated,
     ) as MenuNavLinkItem[];
+
+    const adminLinks: MenuNavLinkItem[] = [];
+    if (isAdmin) {
+        adminLinks.push(ADMIN_LINK, MOD_LINK);
+    } else if (isModerator) {
+        adminLinks.push(MOD_LINK);
+    }
 
     return (
         <DropdownMenu.Root>
@@ -83,11 +123,12 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
                     className={css({
                         display: 'flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: '2',
                         padding: '2',
                         minWidth: '44px',
                         minHeight: '44px',
-                        borderRadius: 'lg',
+                        borderRadius: 'full',
                         border: '1px solid',
                         borderColor: 'border',
                         background: 'surface.elevated',
@@ -120,9 +161,10 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
                         borderRadius: '2xl',
                         border: '1px solid',
                         borderColor: 'border',
-                        padding: '4',
                         boxShadow: '0 40px 120px rgba(0,0,0,0.15)',
                         zIndex: 100,
+                        maxHeight: 'var(--radix-dropdown-menu-content-available-height, calc(100vh - 6rem))',
+                        overflowY: 'auto',
                         transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
                         '&[data-state="open"]': {
                             animation: 'scaleUp 200ms ease',
@@ -130,14 +172,17 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
                         '&[data-state="closed"]': {
                             animation: 'scaleDown 150ms ease',
                         },
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '4',
-                        maxHeight: 'calc(100vh - 6rem)',
-                        overflowY: 'auto',
                     })}
                     sideOffset={8}
                 >
+                    <div
+                        className={css({
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4',
+                            padding: '4',
+                        })}
+                    >
                     <div
                         className={css({
                             display: 'grid',
@@ -149,46 +194,42 @@ function HeaderNavigationMenu({ isAuthenticated }: { isAuthenticated: boolean })
                             className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}
                         >
                             <MenuSection title="Seiten" items={availableGeneralLinks} />
+                            {adminLinks.length > 0 && (
+                                <MenuSection title="Verwaltung" items={adminLinks} />
+                            )}
                         </div>
                         <div
                             className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}
                         >
                             <MenuSection title="Schnelle Filter" items={QUICK_FILTERS} />
-                            <section>
-                                <p
-                                    className={css({
-                                        fontSize: 'xs',
-                                        fontWeight: '600',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: 'wide',
-                                        color: 'text.muted',
-                                        marginBottom: '3',
-                                    })}
-                                >
-                                    Darstellung
-                                </p>
-                                <div
-                                    className={css({
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        gap: '2',
-                                        flexWrap: 'wrap',
-                                    })}
-                                >
-                                    <p
-                                        className={css({
-                                            fontSize: 'sm',
-                                            color: 'text.muted',
-                                            margin: 0,
-                                        })}
-                                    >
-                                        Theme & Layout
-                                    </p>
-                                    <ThemeToggle />
-                                </div>
-                            </section>
                         </div>
+                    </div>
+                    <section>
+                        <div
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '2',
+                                padding: '3',
+                                borderRadius: 'xl',
+                                border: '1px solid',
+                                borderColor: 'border.muted',
+                                background: 'surface',
+                            })}
+                        >
+                            <p
+                                className={css({
+                                    fontSize: 'sm',
+                                    color: 'text.muted',
+                                    margin: 0,
+                                })}
+                            >
+                                Darstellung
+                            </p>
+                            <ThemeToggle />
+                        </div>
+                    </section>
                     </div>
                 </DropdownMenu.Content>
             </DropdownMenu.Portal>
@@ -202,7 +243,6 @@ export function Header() {
     const userRole = session?.user?.role;
     const isAdmin = isAuthenticated && userRole === 'ADMIN';
     const isModerator = isAuthenticated && userRole === 'MODERATOR';
-    const isAdminOrMod = isAdmin || isModerator;
     const dark = useIsDark();
 
     const [Icon1, Icon2, Icon3] = useMemo(() => getRandomIcons(), []);
@@ -278,12 +318,12 @@ export function Header() {
                     pb: '0',
                 })}
             >
+                {/* Desktop: single row — Logo | Search | Menu + Auth */}
                 <div
                     className={css({
-                        display: 'flex',
+                        display: { base: 'none', md: 'flex' },
                         alignItems: 'center',
                         gap: '3',
-                        flexWrap: 'wrap',
                         justifyContent: 'space-between',
                     })}
                 >
@@ -306,8 +346,8 @@ export function Header() {
 
                     <div
                         className={css({
-                            flex: { base: '1 1 180px', sm: '1 1 240px', md: '1 1 320px' },
-                            minWidth: { base: '160px', sm: '180px', md: '220px' },
+                            flex: '1 1 320px',
+                            minWidth: '220px',
                         })}
                     >
                         <HeaderSearch />
@@ -320,13 +360,60 @@ export function Header() {
                             gap: '2',
                         })}
                     >
-                        {isAuthenticated && <NotificationBell />}
-                        <HeaderNavigationMenu isAuthenticated={isAuthenticated} />
-                        {isAdminOrMod && (
-                            <ModerationHeaderLink isAdmin={isAdmin} />
-                        )}
+                        <HeaderNavigationMenu
+                            isAuthenticated={isAuthenticated}
+                            isAdmin={isAdmin}
+                            isModerator={isModerator}
+                        />
                         <HeaderAuth />
                     </div>
+                </div>
+
+                {/* Mobile: row 1 — Logo only */}
+                <div
+                    className={css({
+                        display: { base: 'flex', md: 'none' },
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    })}
+                >
+                    <Link
+                        href="/"
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                        })}
+                    >
+                        <SmartImage
+                            src="/kitchenpace.png"
+                            alt="KüchenTakt Logo"
+                            width={100}
+                            height={39}
+                            className={css({ objectFit: 'contain' })}
+                        />
+                    </Link>
+                </div>
+
+                {/* Mobile: row 2 — Menu | Search | Profile */}
+                <div
+                    className={css({
+                        display: { base: 'flex', md: 'none' },
+                        alignItems: 'center',
+                        gap: '2',
+                        mt: '2',
+                    })}
+                >
+                    <HeaderNavigationMenu
+                        isAuthenticated={isAuthenticated}
+                        isAdmin={isAdmin}
+                        isModerator={isModerator}
+                    />
+
+                    <div className={css({ flex: '1', minWidth: 0 })}>
+                        <HeaderSearch />
+                    </div>
+
+                    <HeaderAuth />
                 </div>
             </div>
 
@@ -334,74 +421,5 @@ export function Header() {
                 <RecipeTabs />
             </div>
         </header>
-    );
-}
-
-function ModerationHeaderLink({ isAdmin }: { isAdmin: boolean }) {
-    const { count } = useAdminInboxCount();
-
-    const Icon = isAdmin ? ShieldCheck : Shield;
-    const href = isAdmin ? '/admin' : '/moderation';
-    const label = isAdmin ? 'Admin' : 'Mod';
-
-    return (
-        <Link
-            href={href}
-            className={css({
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '2',
-                padding: '2',
-                minWidth: '44px',
-                minHeight: '44px',
-                borderRadius: 'lg',
-                border: '1px solid',
-                borderColor: 'border',
-                background: 'surface.elevated',
-                color: 'text',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                transition: 'all 150ms ease',
-                _hover: {
-                    background: 'transparent',
-                    color: 'primary',
-                },
-            })}
-        >
-            <Icon size={18} />
-            <span
-                className={css({
-                    display: { base: 'none', sm: 'inline-flex' },
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                })}
-            >
-                {label}
-            </span>
-            {count > 0 && (
-                <span
-                    className={css({
-                        position: 'absolute',
-                        top: '-4px',
-                        right: '-4px',
-                        minWidth: '18px',
-                        height: '18px',
-                        borderRadius: 'full',
-                        background: 'status.danger',
-                        color: 'white',
-                        fontSize: '0.65rem',
-                        fontWeight: '700',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        px: '1',
-                        lineHeight: '1',
-                    })}
-                >
-                    {count > 99 ? '99+' : count}
-                </span>
-            )}
-        </Link>
     );
 }

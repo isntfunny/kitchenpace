@@ -24,9 +24,10 @@ export function NotificationsPageContent() {
             <header
                 className={css({
                     display: 'flex',
+                    flexDirection: { base: 'column', sm: 'row' },
                     justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    gap: '4',
+                    alignItems: { base: 'flex-start', sm: 'baseline' },
+                    gap: { base: '3', sm: '4' },
                 })}
             >
                 <div>
@@ -41,11 +42,24 @@ export function NotificationsPageContent() {
                     >
                         Benachrichtigungen
                     </p>
-                    <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                    <h1
+                        className={css({
+                            fontSize: { base: 'xl', sm: '3xl' },
+                            fontWeight: '800',
+                            margin: 0,
+                        })}
+                    >
                         Deine Aktivitäten
                     </h1>
                 </div>
-                <div className={css({ display: 'flex', alignItems: 'center', gap: '3' })}>
+                <div
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3',
+                        flexWrap: 'wrap',
+                    })}
+                >
                     <span className={css({ fontSize: 'sm', color: 'text-muted' })}>
                         {unreadCount} ungelesene Nachricht{unreadCount === 1 ? '' : 'en'}
                     </span>

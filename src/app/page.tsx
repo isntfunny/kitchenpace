@@ -87,7 +87,9 @@ export default async function Home() {
                     py: { base: '4', md: '5' },
                 })}
             >
-                <HeroSpotlight />
+                <HeroSpotlight>
+                    {/* <RecipeFlowEmbed recipeId="lachs-mit-bandnudeln-und-tomatensosse" /> */}
+                </HeroSpotlight>
 
                 <div className={css({ mt: '4' })}>
                     <CategoryBar categories={categories} />
@@ -174,6 +176,7 @@ export default async function Home() {
                 <div className={css({ mt: '4' })}>
                     <FlowPillars />
                 </div>
+
             </main>
 
             <footer

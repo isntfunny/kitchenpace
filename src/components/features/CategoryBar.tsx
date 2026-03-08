@@ -48,8 +48,11 @@ export function CategoryBar({ categories }: CategoryBarProps) {
         >
             <div
                 className={css({
-                    display: 'flex',
-                    gap: '3',
+                    display: 'grid',
+                    gridTemplateColumns: { base: 'repeat(4, 1fr)', md: 'repeat(auto-fit, minmax(80px, 1fr))' },
+                    gridTemplateRows: { base: 'repeat(2, auto)', md: 'auto' },
+                    overflow: 'hidden',
+                    gap: { base: '2', md: '3' },
                     pt: '1',
                 })}
             >

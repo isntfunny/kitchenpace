@@ -89,7 +89,7 @@ const accordionTriggerClass = css({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: '3',
-    px: '4',
+    px: '3',
     py: '3',
     cursor: 'pointer',
     background: 'surface',
@@ -109,15 +109,22 @@ const accordionTriggerClass = css({
 
 const accordionContentClass = css({
     borderColor: 'border.muted',
-    px: '4',
-    py: '4',
+    overflow: 'hidden',
+    background: 'surface',
+    '&[data-state="open"]': {
+        animation: 'slideDown 250ms ease-out',
+    },
+    '&[data-state="closed"]': {
+        animation: 'slideUpCollapse 200ms ease-in forwards',
+    },
+});
+
+const accordionContentInnerClass = css({
+    px: '2.5',
+    py: '3',
     display: 'flex',
     flexDirection: 'column',
     gap: '4',
-    background: 'surface',
-    '&[data-state="closed"]': {
-        display: 'none',
-    },
 });
 
 const accordionTitleClass = css({
@@ -156,9 +163,8 @@ const chipGroupClass = css({
 
 const chipItemClass = css({
     borderRadius: 'full',
-    px: '3',
-    py: '2',
-    minHeight: '44px',
+    px: '2.5',
+    py: '1',
     fontSize: 'xs',
     border: '1px solid',
     borderColor: 'border.muted',
@@ -211,7 +217,9 @@ const FilterSection = ({
                 <ChevronDown aria-hidden className={accordionChevronClass} />
             </Accordion.Trigger>
         </Accordion.Header>
-        <Accordion.Content className={accordionContentClass}>{children}</Accordion.Content>
+        <Accordion.Content className={accordionContentClass}>
+            <div className={accordionContentInnerClass}>{children}</div>
+        </Accordion.Content>
     </Accordion.Item>
 );
 

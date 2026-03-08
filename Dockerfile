@@ -14,10 +14,14 @@ FROM node:24-alpine AS prod-deps
 
 WORKDIR /app
 
+ARG DATABASE_URL="postgresql://build:build@localhost:5432/build"
+ENV DATABASE_URL=${DATABASE_URL}
+
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
+COPY prisma.config.ts ./
 
-RUN npm ci --omit=dev --ignore-scripts
+RUN npm ci --omit=dev --ignore-scripts && npx prisma generate
 
 # ── Stage 2: Build Next.js app ────────────────────────────────────────
 FROM node:24-alpine AS builder
@@ -107,11 +111,8 @@ WORKDIR /app
 
 RUN apk add --no-cache postgresql16-client
 
-# Production node_modules (tsx moved to prod deps)
+# Production node_modules incl. generated Prisma client
 COPY --from=prod-deps /app/node_modules ./node_modules
-
-# Prisma client generated in deps stage (via @prisma/client postinstall)
-COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma

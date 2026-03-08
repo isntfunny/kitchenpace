@@ -30,7 +30,8 @@ WORKDIR /app
 ENV NEXT_PUBLIC_DEBUG=${DEBUG}
 
 # Prisma 7 requires DATABASE_URL at build time to load prisma.config.ts
-ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
+ARG DATABASE_URL="postgresql://build:build@localhost:5432/build"
+ENV DATABASE_URL=${DATABASE_URL}
 
 # Copy dependency artifacts (changes least often → best cache layer)
 COPY --from=deps /app/node_modules ./node_modules

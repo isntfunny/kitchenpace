@@ -1,9 +1,9 @@
 'use client';
 
+import { Turnstile } from '@marsidev/react-turnstile';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { TurnstileWidget } from '@app/components/features/TurnstileWidget';
 import {
     authFormStackClass,
     authInputClass,
@@ -28,7 +28,14 @@ export default function RegisterPage() {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const [turnstileKey, setTurnstileKey] = useState(0);
     const utmParams = useUtmParams();
+
+    const resetTurnstile = () => {
+        setTurnstileToken('');
+        setTurnstileKey((k) => k + 1);
+    };
 
     const checkNickname = async (value: string) => {
         if (!value.trim()) {
@@ -99,10 +106,9 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
-            // Get Turnstile token
-            const turnstileToken = (document.getElementById('cf-turnstile-response') as HTMLInputElement)?.value;
             if (!turnstileToken) {
                 setError('Bitte vervollständige die Sicherheitsüberprüfung');
+                setLoading(false);
                 return;
             }
 
@@ -116,6 +122,7 @@ export default function RegisterPage() {
 
             if (!res.ok) {
                 setError(data.message || 'Ein Fehler ist aufgetreten');
+                resetTurnstile();
                 return;
             }
 
@@ -129,6 +136,7 @@ export default function RegisterPage() {
             setNicknameStatus(null);
         } catch {
             setError('Ein Fehler ist aufgetreten');
+            resetTurnstile();
         } finally {
             setLoading(false);
         }
@@ -257,7 +265,14 @@ export default function RegisterPage() {
 
                     {error && <p className={css({ color: 'red.500', fontSize: 'sm' })}>{error}</p>}
 
-                    <TurnstileWidget />
+                    <Turnstile
+                        key={turnstileKey}
+                        siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY ?? ''}
+                        onSuccess={setTurnstileToken}
+                        onError={resetTurnstile}
+                        onExpire={resetTurnstile}
+                        options={{ theme: 'light' }}
+                    />
 
                     <button
                         type="submit"

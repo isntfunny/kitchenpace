@@ -57,6 +57,31 @@ export function useNotifications(options?: { refreshInterval?: number; enabled?:
         };
     }, [enabled, mutate]);
 
+    useEffect(() => {
+        connectStream(STREAM_URL);
+
+        const off = onStreamEvent('notification.created', (event: MessageEvent<string>) => {
+            const payload = JSON.parse(event.data) as NotificationView;
+            mutate((current) => {
+                const existing = current?.notifications ?? [];
+                if (existing.some((notification) => notification.id === payload.id)) {
+                    return current;
+                }
+
+                const notifications = [payload, ...existing].slice(0, 50);
+                return {
+                    notifications,
+                    unreadCount: notifications.filter((notification) => !notification.read).length,
+                };
+            }, false);
+        });
+
+        return () => {
+            off();
+            disconnectStream();
+        };
+    }, [mutate]);
+
     const markAsRead = async (ids: string[], markRead = true) => {
         if (ids.length === 0) {
             return;

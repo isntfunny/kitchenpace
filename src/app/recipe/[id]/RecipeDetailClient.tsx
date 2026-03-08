@@ -32,6 +32,7 @@ import { ReportButton } from '@app/components/features/ReportButton';
 import { ShareButton } from '@app/components/features/ShareButton';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
+import { useIsDark } from '@app/lib/darkMode';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
@@ -217,6 +218,7 @@ export function RecipeDetailClient({
     ]);
 
     const totalTime = recipe.prepTime + recipe.cookTime;
+    const dark = useIsDark();
     const starValues = [1, 2, 3, 4, 5] as const;
     const activeStarValue = viewerRating ?? Math.round(averageRating || 0);
 

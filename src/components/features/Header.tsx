@@ -346,8 +346,8 @@ export function Header() {
 
                     <div
                         className={css({
-                            flex: '1 1 320px',
-                            minWidth: '220px',
+                            flex: { base: '1 1 180px', sm: '1 1 240px', md: '1 1 320px' },
+                            minWidth: { base: '160px', sm: '180px', md: '220px' },
                         })}
                     >
                         <HeaderSearch />
@@ -421,5 +421,74 @@ export function Header() {
                 <RecipeTabs />
             </div>
         </header>
+    );
+}
+
+function ModerationHeaderLink({ isAdmin }: { isAdmin: boolean }) {
+    const { count } = useAdminInboxCount();
+
+    const Icon = isAdmin ? ShieldCheck : Shield;
+    const href = isAdmin ? '/admin' : '/moderation';
+    const label = isAdmin ? 'Admin' : 'Mod';
+
+    return (
+        <Link
+            href={href}
+            className={css({
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2',
+                padding: '2',
+                minWidth: '44px',
+                minHeight: '44px',
+                borderRadius: 'lg',
+                border: '1px solid',
+                borderColor: 'border',
+                background: 'surface.elevated',
+                color: 'text',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                transition: 'all 150ms ease',
+                _hover: {
+                    background: 'transparent',
+                    color: 'primary',
+                },
+            })}
+        >
+            <Icon size={18} />
+            <span
+                className={css({
+                    display: { base: 'none', sm: 'inline-flex' },
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                })}
+            >
+                {label}
+            </span>
+            {count > 0 && (
+                <span
+                    className={css({
+                        position: 'absolute',
+                        top: '-4px',
+                        right: '-4px',
+                        minWidth: '18px',
+                        height: '18px',
+                        borderRadius: 'full',
+                        background: 'status.danger',
+                        color: 'white',
+                        fontSize: '0.65rem',
+                        fontWeight: '700',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        px: '1',
+                        lineHeight: '1',
+                    })}
+                >
+                    {count > 99 ? '99+' : count}
+                </span>
+            )}
+        </Link>
     );
 }

@@ -22,6 +22,10 @@ export function Button({ variant = 'primary', size = 'md', children, ...props }:
         secondary: css.raw({
             bg: 'secondary',
             color: 'white',
+            _dark: {
+                bg: 'rgba(255,255,255,0.14)',
+                color: 'foreground',
+            },
             _hover: {
                 opacity: 0.9,
             },

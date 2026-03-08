@@ -12,7 +12,8 @@ const NOTIFUSE_NOTIFICATION_PASSWORD_RESET =
     process.env.NOTIFUSE_NOTIFICATION_PASSWORD_RESET || 'password_reset';
 const NOTIFUSE_NOTIFICATION_WEEKLY =
     process.env.NOTIFUSE_NOTIFICATION_WEEKLY || 'weekly_newsletter';
-const NOTIFUSE_LIST_KITCHENPACE_USERS = 'kitchenpaceusers';
+const NOTIFUSE_LIST_KITCHENPACE_USERS =
+    process.env.NOTIFUSE_LIST_USERS ?? (process.env.NODE_ENV === 'production' ? 'kitchenpacelive' : 'kitchenpaceusers');
 const NOTIFUSE_LIST_NEWSLETTER = 'newsletter';
 const NOTIFUSE_REQUEST_TIMEOUT_MS = 10_000;
 
@@ -84,6 +85,12 @@ const callNotifuse = async <T extends object>(
 
         if (!response.ok || parsed.success === false) {
             const details = parsed.message || parsed.error || response.statusText;
+            log.error('Notifuse API error', {
+                endpoint,
+                status: response.status,
+                details,
+                rawResponse: text.slice(0, 500),
+            });
             throw new Error(`Notifuse request to ${endpoint} failed: ${details}`);
         }
 
@@ -104,16 +111,27 @@ const callNotifuse = async <T extends object>(
 const upsertContact = async (contact: SyncContactParams & { contactId: string }) => {
     const { workspaceId } = ensureConfig();
 
-    await callNotifuse('contacts.upsert', {
-        workspace_id: workspaceId,
-        contact: {
-            email: contact.contactId,
-            external_id: contact.externalId,
-            first_name: contact.firstName,
-            last_name: contact.lastName,
-            full_name: contact.nickname || contact.firstName,
-        },
-    });
+    try {
+        await callNotifuse('contacts.upsert', {
+            workspace_id: workspaceId,
+            contact: {
+                email: contact.contactId,
+                external_id: contact.externalId,
+                first_name: contact.firstName,
+                last_name: contact.lastName,
+                full_name: contact.nickname || contact.firstName,
+            },
+        });
+    } catch (error) {
+        // Notifuse contacts.upsert has a known bug where it throws a duplicate key
+        // violation for existing contacts instead of updating them. Treat as no-op.
+        const msg = error instanceof Error ? error.message : String(error);
+        if (msg.includes('duplicate key')) {
+            log.debug('Notifuse contact already exists, skipping upsert', { email: contact.contactId });
+            return;
+        }
+        throw error;
+    }
 };
 
 const subscribeContactToList = async (contactId: string, externalId?: string) => {
@@ -162,10 +180,8 @@ const sendTransactionalEmail = async ({
 export async function syncContactToNotifuse(params: SyncContactParams): Promise<void> {
     const contactId = params.email.toLowerCase().trim();
 
-    await Promise.all([
-        upsertContact({ ...params, contactId }),
-        subscribeContactToList(contactId, params.externalId),
-    ]);
+    await upsertContact({ ...params, contactId });
+    await subscribeContactToList(contactId, params.externalId);
 
     log.info('Synced contact to Notifuse', {
         email: contactId,

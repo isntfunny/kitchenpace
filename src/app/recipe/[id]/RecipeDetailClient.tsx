@@ -218,7 +218,7 @@ export function RecipeDetailClient({
     ]);
 
     const totalTime = recipe.prepTime + recipe.cookTime;
-    const dark = useIsDark();
+    const _dark = useIsDark();
     const starValues = [1, 2, 3, 4, 5] as const;
     const activeStarValue = viewerRating ?? Math.round(averageRating || 0);
 

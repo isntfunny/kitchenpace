@@ -44,6 +44,7 @@ jobs:
                   context: ./services/scraper
                   file: ./services/scraper/Dockerfile
                   push: true
+                  provenance: false
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
                   cache-from: type=gha

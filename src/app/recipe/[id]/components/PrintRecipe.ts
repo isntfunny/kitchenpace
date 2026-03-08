@@ -9,7 +9,7 @@ export function printRecipe(recipe: Recipe, servings: number) {
     };
 
     const steps = recipe.flow.nodes
-        .filter((n) => n.type !== 'start' && n.type !== 'prep')
+        .filter((n) => n.id !== 'start' && n.type !== 'prep')
         .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x);
 
     const ingredientRows = recipe.ingredients

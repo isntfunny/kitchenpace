@@ -119,7 +119,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
             <div
                 className={css({
                     display: 'grid',
-                    gridTemplateColumns: { base: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
+                    gridTemplateColumns: 'repeat(3, 1fr)',
                     gap: '2',
                 })}
             >

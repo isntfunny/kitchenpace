@@ -32,11 +32,11 @@ import { ReportButton } from '@app/components/features/ReportButton';
 import { ShareButton } from '@app/components/features/ShareButton';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
-import { useIsDark } from '@app/lib/darkMode';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
 
+import { printRecipe } from './components/PrintRecipe';
 import type { Recipe, User, Activity } from './data';
 
 type CookImageItem = {
@@ -71,12 +71,6 @@ type RecipeDetailClientProps = {
     recipeActivities: Activity[];
     cookImages?: CookImageItem[];
     isDraft?: boolean;
-};
-
-const difficultyFilterMap: Record<string, 'EASY' | 'MEDIUM' | 'HARD'> = {
-    Einfach: 'EASY',
-    Mittel: 'MEDIUM',
-    Schwer: 'HARD',
 };
 
 export function RecipeDetailClient({
@@ -223,10 +217,8 @@ export function RecipeDetailClient({
     ]);
 
     const totalTime = recipe.prepTime + recipe.cookTime;
-    const dark = useIsDark();
     const starValues = [1, 2, 3, 4, 5] as const;
     const activeStarValue = viewerRating ?? Math.round(averageRating || 0);
-    const ratingLabel = ratingCount === 1 ? 'Bewertung' : 'Bewertungen';
 
     const formatAmount = (amount: number): string => {
         const scaled = amount * (servings / recipe.servings);
@@ -245,18 +237,7 @@ export function RecipeDetailClient({
         }
     };
 
-    const handleDifficultyClick = (difficulty: string) => {
-        const filterValue = difficultyFilterMap[difficulty];
-        if (!filterValue) {
-            return;
-        }
-
-        router.push(buildRecipeFilterHref({ difficulty: [filterValue] }));
-    };
-
-    const handlePrint = () => {
-        window.print();
-    };
+    const handlePrint = () => printRecipe(recipe, servings);
 
     const requireAuth = () => {
         if (viewerId) {
@@ -546,6 +527,7 @@ export function RecipeDetailClient({
                                         fill
                                     />
                                 </div>
+                                {heroCount > 1 && (<>
                                 <button
                                     type="button"
                                     onClick={handleHeroPrev}
@@ -600,105 +582,62 @@ export function RecipeDetailClient({
                                 >
                                     ›
                                 </button>
-                            </div>
-
-                            <div className={css({ mt: '1' })}>
-                                <div
-                                    className={flex({
-                                        justify: 'space-between',
-                                        align: 'center',
-                                        mb: '2',
-                                        gap: '2',
-                                    })}
-                                >
-                                    <span
-                                        className={css({
-                                            fontSize: 'sm',
-                                            color: 'text-muted',
-                                            fontFamily: 'body',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '2',
-                                        })}
-                                    >
-                                        {heroMeta?.subtitle ?? 'Galerie'} ({normalizedHeroIndex + 1}
-                                        /{heroCount})
-                                        {heroMeta?.reportable &&
-                                            heroMeta.reportable.ownerId !== viewerId && (
-                                                <ReportButton
-                                                    contentType={heroMeta.reportable.contentType}
-                                                    contentId={heroMeta.reportable.contentId}
-                                                    variant="icon"
-                                                />
-                                            )}
-                                    </span>
-                                    {heroCount > 1 && (
-                                        <span
-                                            className={css({
-                                                fontSize: 'xs',
-                                                color: 'text-muted',
-                                            })}
-                                        >
-                                            Tippe oder swipere über das Bild
-                                        </span>
-                                    )}
-                                </div>
-                                <div
-                                    className={css({
+                                </>)}
+                                {/* Thumbnail strip overlay */}
+                                {heroCount > 1 && (
+                                    <div className={css({
+                                        position: 'absolute',
+                                        bottom: '3',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
                                         display: 'flex',
-                                        gap: '2',
-                                        overflowX: 'auto',
-                                        pb: '2',
-                                        maxW: '100%',
-                                        lg: {
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                                            overflowX: 'visible',
-                                        },
-                                    })}
-                                >
-                                    {visibleImages.map((img, idx) => {
-                                        const thumbUrl = img.thumbKey
-                                            ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=200&height=200&fit=cover&quality=75`
-                                            : img.src;
-                                        return (
-                                            <button
-                                                key={`${idx}-${img.src}`}
-                                                type="button"
-                                                onClick={() => setHeroIndex(idx)}
-                                                className={css({
-                                                    borderRadius: 'lg',
-                                                    border: '2px solid',
-                                                    borderColor:
-                                                        idx === normalizedHeroIndex
-                                                            ? 'primary'
-                                                            : 'transparent',
-                                                    padding: 0,
-                                                    minWidth: { base: '64px', md: '72px', lg: 'auto' },
-                                                    width: { base: '64px', md: '72px' },
-                                                    height: { base: '64px', md: '72px' },
-                                                    flex: { base: '0 0 auto', lg: 'initial' },
-                                                    overflow: 'hidden',
-                                                    cursor: 'pointer',
-                                                })}
-                                            >
-                                                <div
+                                        gap: '1.5',
+                                        p: '1.5',
+                                        borderRadius: 'xl',
+                                        bg: 'rgba(0,0,0,0.5)',
+                                        backdropFilter: 'blur(8px)',
+                                    })}>
+                                        {visibleImages.map((img, idx) => {
+                                            const thumbUrl = img.thumbKey
+                                                ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=100&height=100&fit=cover&quality=60`
+                                                : img.src;
+                                            return (
+                                                <button
+                                                    key={`${idx}-${img.src}`}
+                                                    type="button"
+                                                    onClick={() => setHeroIndex(idx)}
                                                     className={css({
-                                                        position: 'relative',
-                                                        width: '100%',
-                                                        height: '100%',
+                                                        borderRadius: 'md',
+                                                        border: '2px solid',
+                                                        borderColor: idx === normalizedHeroIndex ? 'white' : 'transparent',
+                                                        padding: 0,
+                                                        width: '44px',
+                                                        height: '44px',
+                                                        overflow: 'hidden',
+                                                        cursor: 'pointer',
+                                                        opacity: idx === normalizedHeroIndex ? 1 : 0.7,
+                                                        transition: 'all 150ms ease',
+                                                        _hover: { opacity: 1 },
                                                     })}
                                                 >
-                                                    <SmartImage
-                                                        src={thumbUrl}
-                                                        alt={img.title}
-                                                        fill
-                                                    />
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                                    <div className={css({ position: 'relative', width: '100%', height: '100%' })}>
+                                                        <SmartImage src={thumbUrl} alt={img.title} fill />
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                {/* Image counter + report */}
+                                {heroMeta?.reportable && heroMeta.reportable.ownerId !== viewerId && (
+                                    <div className={css({ position: 'absolute', top: '3', right: '3' })}>
+                                        <ReportButton
+                                            contentType={heroMeta.reportable.contentType}
+                                            contentId={heroMeta.reportable.contentId}
+                                            variant="icon"
+                                        />
+                                    </div>
+                                )}
                             </div>
                             </>)}
                         </div>
@@ -710,202 +649,73 @@ export function RecipeDetailClient({
                                 justifyContent: 'center',
                             })}
                         >
-                            <div className={flex({ gap: '2', mb: '4', flexWrap: 'wrap' })}>
-                                <button
-                                    onClick={() => handleCategoryClick()}
-                                    className={css({ cursor: 'pointer', _hover: { opacity: 0.8 } })}
-                                >
-                                    <Badge>{recipe.category}</Badge>
-                                </button>
-                                <button
-                                    onClick={() => handleDifficultyClick(recipe.difficulty)}
-                                    className={css({
-                                        px: '3',
-                                        py: '1',
-                                        bg: 'light',
-                                        borderRadius: 'full',
-                                        fontSize: 'sm',
-                                        fontFamily: 'body',
-                                        cursor: 'pointer',
-                                        transition: 'all 150ms ease',
-                                        _hover: { bg: '#e8e2d9' },
-                                    })}
-                                >
-                                    {recipe.difficulty}
-                                </button>
-                            </div>
+                            {/* ── Recipe Info Card ── */}
+                            <div className={css({ bg: 'surface', borderRadius: '2xl', p: '5', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', mb: '4' })}>
+                                {/* Meta strip */}
+                                <div className={css({ display: 'flex', alignItems: 'center', gap: '3', flexWrap: 'wrap', fontSize: 'sm', fontFamily: 'body', color: 'text-muted', mb: '3' })}>
+                                    <button
+                                        onClick={() => handleCategoryClick()}
+                                        className={css({ cursor: 'pointer', _hover: { opacity: 0.8 } })}
+                                    >
+                                        <Badge>{recipe.category}</Badge>
+                                    </button>
+                                    <span>{recipe.difficulty}</span>
+                                </div>
 
-                            <p
-                                className={css({
-                                    fontFamily: 'body',
-                                    color: 'text-muted',
-                                    mb: '4',
-                                    lineHeight: 'relaxed',
-                                })}
-                            >
-                                {recipe.description}
-                            </p>
+                                {/* Description */}
+                                <p className={css({ fontFamily: 'body', color: 'text', lineHeight: 'relaxed', fontSize: { base: 'md', md: 'lg' }, mb: '3' })}>
+                                    {recipe.description}
+                                </p>
 
-                            <div className={grid({ columns: { base: 1, sm: 2, lg: 3 }, gap: '3', mb: '4' })}>
-                                <div
-                                    className={css({
-                                        textAlign: 'center',
-                                        p: '3',
-                                        bg: 'light',
-                                        borderRadius: 'xl',
-                                    })}
-                                >
-                                    <div
-                                        className={css({
-                                            fontSize: '2xl',
-                                            mb: '1',
-                                            color: 'palette.orange',
-                                        })}
-                                    >
-                                        <Clock size={26} />
+                                {/* Tags */}
+                                {recipe.tags.length > 0 && (
+                                    <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap', mb: '3' })}>
+                                        {recipe.tags.map((tag) => (
+                                            <button
+                                                key={tag}
+                                                onClick={() => handleTagClick(tag)}
+                                                className={css({
+                                                    fontSize: 'xs',
+                                                    color: 'text-muted',
+                                                    fontFamily: 'body',
+                                                    cursor: 'pointer',
+                                                    px: '2.5',
+                                                    py: '1',
+                                                    borderRadius: 'full',
+                                                    bg: 'light',
+                                                    transition: 'all 150ms ease',
+                                                    _hover: { color: 'primary' },
+                                                })}
+                                            >
+                                                #{tag}
+                                            </button>
+                                        ))}
                                     </div>
-                                    <div
-                                        className={css({
-                                            fontSize: 'sm',
-                                            color: 'text-muted',
-                                            fontFamily: 'body',
-                                        })}
-                                    >
-                                        Gesamt
-                                    </div>
-                                    <div
-                                        className={css({
-                                            fontWeight: '600',
-                                            fontFamily: 'heading',
-                                        })}
-                                    >
-                                        {totalTime} Min.
-                                    </div>
-                                </div>
-                                <div
-                                    className={css({
-                                        textAlign: 'center',
-                                        p: '3',
-                                        bg: 'light',
-                                        borderRadius: 'xl',
-                                    })}
-                                >
-                                    <div
-                                        className={css({
-                                            fontSize: 'xl',
-                                            mb: '1',
-                                            color: '#4caf50',
-                                        })}
-                                    >
-                                        <ChefHat size={24} />
-                                    </div>
-                                    <div
-                                        className={css({
-                                            fontSize: 'sm',
-                                            color: 'text-muted',
-                                            fontFamily: 'body',
-                                        })}
-                                    >
-                                        Arbeit
-                                    </div>
-                                    <div
-                                        className={css({
-                                            fontWeight: '600',
-                                            fontFamily: 'heading',
-                                        })}
-                                    >
-                                        {recipe.prepTime} Min.
-                                    </div>
-                                </div>
-                                <div
-                                    className={css({
-                                        textAlign: 'center',
-                                        p: '3',
-                                        bg: 'light',
-                                        borderRadius: 'xl',
-                                    })}
-                                >
-                                    <div
-                                        className={css({
-                                            fontSize: 'xl',
-                                            mb: '1',
-                                            color: '#ff5722',
-                                        })}
-                                    >
-                                        <Flame size={24} />
-                                    </div>
-                                    <div
-                                        className={css({
-                                            fontSize: 'sm',
-                                            color: 'text-muted',
-                                            fontFamily: 'body',
-                                        })}
-                                    >
-                                        Kochen
-                                    </div>
-                                    <div
-                                        className={css({
-                                            fontWeight: '600',
-                                            fontFamily: 'heading',
-                                        })}
-                                    >
-                                        {recipe.cookTime} Min.
-                                    </div>
-                                </div>
-                            </div>
+                                )}
 
-                            <div
-                                className={css({
-                                    mb: '4',
-                                    borderRadius: 'xl',
-                                    p: '4',
-                                    bg: dark
-                                        ? 'linear-gradient(135deg, rgba(224,123,83,0.12), rgba(224,123,83,0.04))'
-                                        : 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(255,246,236,0.9))',
-                                    border: '1px solid',
-                                    borderColor: 'rgba(224,123,83,0.2)',
-                                    boxShadow: '0 8px 30px rgba(224,123,83,0.12)',
-                                })}
-                            >
-                                <div
-                                    className={flex({
-                                        align: 'center',
-                                        gap: { base: '3', md: '4' },
-                                        flexWrap: 'wrap',
-                                        mb: '3',
-                                    })}
-                                >
-                                    <div
-                                        className={css({
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '2',
-                                            fontSize: { base: '3xl', md: '4xl' },
-                                            fontFamily: 'heading',
-                                            fontWeight: '700',
-                                            color: 'primary',
-                                        })}
-                                    >
-                                        <span>{averageRating.toFixed(1)}</span>
-                                        <Star size={28} className={css({ color: 'palette.gold' })} />
-                                    </div>
-                                    <div
-                                        className={css({
-                                            fontFamily: 'body',
-                                            color: 'text-muted',
-                                        })}
-                                    >
-                                        {ratingCount} {ratingLabel}
-                                    </div>
+                                {/* Divider */}
+                                <div className={css({ h: '1px', bg: 'border', mb: '3' })} />
+
+                                {/* Time breakdown */}
+                                <div className={css({ display: 'flex', gap: '2', mb: '3' })}>
+                                    {[
+                                        { icon: <Clock size={16} color="var(--colors-palette-orange, #e07b53)" />, label: 'Gesamt', value: `${totalTime} Min.` },
+                                        { icon: <ChefHat size={16} color="#4caf50" />, label: 'Arbeit', value: `${recipe.prepTime} Min.` },
+                                        { icon: <Flame size={16} color="#ff5722" />, label: 'Kochen', value: `${recipe.cookTime} Min.` },
+                                    ].map(({ icon, label, value }) => (
+                                        <div key={label} className={css({ flex: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5', p: '2', bg: 'light', borderRadius: 'xl', minWidth: 0 })}>
+                                            {icon}
+                                            <span className={css({ fontSize: '2xs', color: 'text-muted', fontFamily: 'body' })}>{label}</span>
+                                            <span className={css({ fontWeight: '700', fontFamily: 'heading', fontSize: 'xs', whiteSpace: 'nowrap' })}>{value}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div
-                                    className={flex({
-                                        gap: { base: '1.5', md: '2' },
-                                        align: 'center',
-                                        flexWrap: 'wrap',
-                                        justify: { base: 'flex-start', md: 'center' },
-                                    })}
-                                >
+
+                                {/* Divider */}
+                                <div className={css({ h: '1px', bg: 'border', mb: '3' })} />
+
+                                {/* Rating */}
+                                <div className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
                                     {starValues.map((value) => (
                                         <button
                                             key={value}
@@ -913,144 +723,68 @@ export function RecipeDetailClient({
                                             onClick={() => handleRatingSelect(value)}
                                             disabled={isRatingPending}
                                             className={css({
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: 'full',
+                                                padding: 0,
                                                 border: 'none',
-                                                background:
-                                                    value <= activeStarValue
-                                                        ? 'rgba(224,123,83,0.9)'
-                                                        : dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.6)',
-                                                color:
-                                                    value <= activeStarValue
-                                                        ? 'white'
-                                                        : 'rgba(224,123,83,0.7)',
-                                                fontSize: 'lg',
+                                                background: 'none',
                                                 cursor: 'pointer',
-                                                transition: 'all 150ms ease',
-                                                boxShadow:
-                                                    value <= activeStarValue
-                                                        ? '0 6px 16px rgba(224,123,83,0.35)'
-                                                        : 'inset 0 0 0 1px rgba(224,123,83,0.2)',
-                                                _hover: {
-                                                    transform: 'translateY(-1px)',
-                                                },
+                                                transition: 'transform 150ms ease',
+                                                _hover: { transform: 'scale(1.2)' },
                                                 display: 'inline-flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
                                             })}
                                         >
                                             <Star
                                                 size={22}
+                                                fill={value <= activeStarValue ? 'var(--colors-palette-gold, #d9ad36)' : 'none'}
                                                 className={css({
-                                                    color:
-                                                        value <= activeStarValue
-                                                            ? 'white'
-                                                            : 'rgba(224,123,83,0.9)',
+                                                    color: value <= activeStarValue ? 'palette.gold' : 'text-muted',
+                                                    opacity: value <= activeStarValue ? 1 : 0.35,
                                                 })}
                                             />
                                         </button>
                                     ))}
-                                    <span
-                                        className={css({
-                                            fontSize: 'sm',
-                                            color: 'text-muted',
-                                            fontFamily: 'body',
-                                            ml: { base: 0, md: '3' },
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '1',
-                                        })}
-                                    >
-                                        {viewerRating ? (
-                                            <>
-                                                Deine Bewertung: {viewerRating.toFixed(1)}
-                                                <Star
-                                                    size={14}
-                                                    className={css({ color: 'palette.gold' })}
-                                                />
-                                            </>
-                                        ) : (
-                                            'Jetzt bewerten und Feedback geben'
-                                        )}
+                                    <span className={css({ fontSize: 'sm', color: 'text-muted', fontFamily: 'body', ml: '1' })}>
+                                        {ratingCount > 0 ? `${averageRating.toFixed(1)} (${ratingCount})` : 'Bewerten'}
                                     </span>
                                 </div>
                             </div>
 
-                            <div className={flex({ gap: '3', flexWrap: 'wrap', align: 'center' })}>
-                                <Button
-                                    type="button"
-                                    variant={favoriteState.isFavorite ? 'secondary' : 'primary'}
-                                    onClick={handleFavoriteToggle}
-                                    disabled={isFavoritePending}
-                                >
-                                    {favoriteState.isFavorite ? (
-                                        <span
-                                            className={css({
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                            })}
-                                        >
-                                            <Heart size={16} />
-                                            Favorit
-                                        </span>
-                                    ) : (
-                                        <span
-                                            className={css({
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                            })}
-                                        >
-                                            <Bookmark size={16} />
-                                            Speichern
-                                        </span>
-                                    )}{' '}
-                                    · {favoriteState.count}
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={hasCooked ? 'secondary' : 'primary'}
-                                    onClick={handleMarkCooked}
-                                    disabled={isCookPending}
-                                >
-                                    {hasCooked ? (
-                                        <span
-                                            className={css({
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                            })}
-                                        >
-                                            <CheckCircle size={16} />
-                                            Zubereitet
-                                        </span>
-                                    ) : (
-                                        <span
-                                            className={css({
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                            })}
-                                        >
-                                            <ChefHat size={16} />
-                                            Zubereitet
-                                        </span>
-                                    )}{' '}
-                                    · {cookCount}
-                                </Button>
-                                <Button type="button" variant="ghost" onClick={handlePrint}>
-                                    <span
-                                        className={css({
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                        })}
+                            {/* ── Actions ── */}
+                            <div className={css({ display: 'flex', gap: '2', mb: '2' })}>
+                                <div className={css({ flex: '1' })}>
+                                    <Button
+                                        type="button"
+                                        variant={favoriteState.isFavorite ? 'secondary' : 'primary'}
+                                        onClick={handleFavoriteToggle}
+                                        disabled={isFavoritePending}
+                                        style={{ width: '100%', minWidth: 0 }}
                                     >
-                                        <Printer size={16} />
-                                        Drucken
-                                    </span>
+                                        <span className={css({ flexShrink: 0 })}>{favoriteState.isFavorite ? <Heart size={16} /> : <Bookmark size={16} />}</span>
+                                        <span className={css({ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 })}>
+                                            {favoriteState.isFavorite ? 'Favorit' : 'Speichern'}
+                                        </span>
+                                        <span className={css({ opacity: 0.7, fontSize: 'xs', flexShrink: 0 })}>· {favoriteState.count}</span>
+                                    </Button>
+                                </div>
+                                <div className={css({ flex: '1' })}>
+                                    <Button
+                                        type="button"
+                                        variant={hasCooked ? 'secondary' : 'primary'}
+                                        onClick={handleMarkCooked}
+                                        disabled={isCookPending}
+                                        style={{ width: '100%', minWidth: 0 }}
+                                    >
+                                        <span className={css({ flexShrink: 0 })}>{hasCooked ? <CheckCircle size={16} /> : <ChefHat size={16} />}</span>
+                                        <span className={css({ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 })}>
+                                            Zubereitet
+                                        </span>
+                                        <span className={css({ opacity: 0.7, fontSize: 'xs', flexShrink: 0 })}>· {cookCount}</span>
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className={css({ display: 'flex', gap: '1', alignItems: 'center', justifyContent: 'space-evenly' })}>
+                                <Button type="button" variant="ghost" onClick={handlePrint}>
+                                    <Printer size={15} />
+                                    <span className={css({ fontSize: 'sm' })}>Drucken</span>
                                 </Button>
                                 <ShareButton
                                     title={recipe.title}
@@ -1206,23 +940,6 @@ export function RecipeDetailClient({
                                 </div>
                             )}
 
-                            <div className={flex({ gap: '2', mt: '4', flexWrap: 'wrap' })}>
-                                {recipe.tags.map((tag) => (
-                                    <button
-                                        key={tag}
-                                        onClick={() => handleTagClick(tag)}
-                                        className={css({
-                                            fontSize: 'sm',
-                                            color: 'primary',
-                                            fontFamily: 'body',
-                                            cursor: 'pointer',
-                                            _hover: { textDecoration: 'underline' },
-                                        })}
-                                    >
-                                        #{tag}
-                                    </button>
-                                ))}
-                            </div>
                         </div>
                     </div>
                 </div>

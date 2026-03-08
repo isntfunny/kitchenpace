@@ -2,6 +2,7 @@
 
 import { List, Smartphone, X } from 'lucide-react';
 import { useEffect, useMemo, useReducer, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { CastButton } from '@app/components/cast/CastButton';
 import { useCast } from '@app/hooks/useCast';
@@ -236,8 +237,8 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                 </div>
             )}
 
-            {/* Text view overlay */}
-            {viewMode === 'text' && (
+            {/* Portaled overlays — escape any parent transform/stacking context */}
+            {viewMode === 'text' && createPortal(
                 <div
                     className={css({
                         position: 'fixed',
@@ -293,11 +294,11 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                         dispatch={dispatch}
                         ingredients={ingredients}
                     />
-                </div>
+                </div>,
+                document.body,
             )}
 
-            {/* Mobile fullscreen overlay */}
-            {viewMode === 'mobile' && (
+            {viewMode === 'mobile' && createPortal(
                 <div
                     className={css({
                         position: 'fixed',
@@ -341,10 +342,11 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                     </div>
 
                     <MobileView {...mobileProps} />
-                </div>
+                </div>,
+                document.body,
             )}
 
-            {selectedNode && (
+            {selectedNode && createPortal(
                 <NodeDetailModal
                     node={selectedNode}
                     ingredients={ingredients}
@@ -355,7 +357,8 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                     onTimerStart={() => dispatch({ type: 'timerStart', nodeId: selectedNodeId! })}
                     onTimerPause={() => dispatch({ type: 'timerPause', nodeId: selectedNodeId! })}
                     onTimerReset={() => dispatch({ type: 'timerReset', nodeId: selectedNodeId! })}
-                />
+                />,
+                document.body,
             )}
         </>
     );

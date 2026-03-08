@@ -1,11 +1,14 @@
 'use client';
 
 import { Key, LogOut } from 'lucide-react';
+import { motion } from 'motion/react';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
 import { useEffect } from 'react';
 
 import { handleSignIn, handleSignOut } from '@app/components/auth/actions';
+import { useNotifications } from '@app/components/notifications/useNotifications';
 import { useProfile } from '@app/components/providers/ProfileProvider';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
@@ -17,6 +20,9 @@ import { MenuSection, PERSONAL_LINKS } from './HeaderMenuPanel';
 export function HeaderAuth() {
     const { data: session, status } = useSession();
     const { profile } = useProfile();
+    const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
+    const isLoading = status === 'loading';
+    const { unreadCount } = useNotifications({ enabled: isAuthenticated });
 
     const authDebugEnabled =
         process.env.NEXT_PUBLIC_AUTH_DEBUG === '1' || process.env.NODE_ENV !== 'production';
@@ -29,15 +35,14 @@ export function HeaderAuth() {
         });
     }, [status, session?.user?.id, authDebugEnabled]);
 
-    const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
-    const isLoading = status === 'loading';
+    const badgeContent = unreadCount > 9 ? '9+' : unreadCount;
 
     if (isLoading) {
         return (
             <div
                 className={css({
-                    width: '100px',
-                    height: '40px',
+                    width: '44px',
+                    height: '44px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -59,6 +64,74 @@ export function HeaderAuth() {
     }
 
     if (isAuthenticated) {
+        const avatar = (
+            <div className={css({ position: 'relative' })}>
+                {profile?.photoUrl ? (
+                    <SmartImage
+                        src={profile.photoUrl}
+                        alt={profile.nickname || 'Profil'}
+                        width={36}
+                        height={36}
+                        className={css({
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                        })}
+                    />
+                ) : (
+                    <div
+                        className={css({
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: 'sm',
+                            fontWeight: '600',
+                        })}
+                    >
+                        {(profile?.nickname || 'U').charAt(0).toUpperCase()}
+                    </div>
+                )}
+                {unreadCount > 0 && (
+                    <Link
+                        href="/notifications"
+                        onClick={(e) => e.stopPropagation()}
+                        className={css({
+                            position: 'absolute',
+                            top: '-6px',
+                            right: '-8px',
+                            minWidth: '20px',
+                            height: '20px',
+                            borderRadius: 'full',
+                            background: 'status.danger',
+                            color: 'white',
+                            fontSize: '0.65rem',
+                            fontWeight: '700',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            px: '1',
+                            lineHeight: '1',
+                            border: '2px solid',
+                            borderColor: 'surface.elevated',
+                            textDecoration: 'none',
+                            zIndex: 1,
+                        })}
+                    >
+                        <motion.span
+                            animate={{ scale: [1, 1.15, 1] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                        >
+                            {badgeContent}
+                        </motion.span>
+                    </Link>
+                )}
+            </div>
+        );
+
         return (
             <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
@@ -66,48 +139,26 @@ export function HeaderAuth() {
                         className={css({
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '2',
-                            px: '2',
-                            py: '1',
+                            justifyContent: 'center',
+                            width: '44px',
+                            height: '44px',
+                            padding: '0',
                             borderRadius: 'full',
-                            background: 'transparent',
-                            border: 'none',
+                            border: '1px solid',
+                            borderColor: 'border',
+                            background: 'surface.elevated',
                             cursor: 'pointer',
                             transition: 'all 150ms ease',
                             _hover: {
-                                bg: 'rgba(224,123,83,0.08)',
+                                background: 'transparent',
+                                borderColor: 'primary',
+                            },
+                            _focusVisible: {
+                                boxShadow: '0 0 0 3px rgba(224,123,83,0.35)',
                             },
                         })}
                     >
-                        {profile?.photoUrl ? (
-                            <SmartImage
-                                src={profile.photoUrl}
-                                alt={profile.nickname || 'Profil'}
-                                width={32}
-                                height={32}
-                                className={css({
-                                    borderRadius: '50%',
-                                    objectFit: 'cover',
-                                })}
-                            />
-                        ) : (
-                            <div
-                                className={css({
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '50%',
-                                    background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    fontSize: 'sm',
-                                    fontWeight: '600',
-                                })}
-                            >
-                                {(profile?.nickname || 'U').charAt(0).toUpperCase()}
-                            </div>
-                        )}
+                        {avatar}
                     </button>
                 </DropdownMenu.Trigger>
 
@@ -179,28 +230,26 @@ export function HeaderAuth() {
         <button
             onClick={() => handleSignIn()}
             className={css({
-                fontFamily: 'body',
-                fontSize: 'sm',
-                fontWeight: '600',
-                color: 'white',
-                px: '4',
-                py: '2',
-                borderRadius: 'lg',
-                background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '1.5',
-                border: 'none',
+                justifyContent: 'center',
+                width: '44px',
+                height: '44px',
+                padding: '0',
+                borderRadius: 'full',
+                border: '1px solid',
+                borderColor: 'border',
+                background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
+                color: 'white',
                 cursor: 'pointer',
                 transition: 'all 150ms ease',
                 _hover: {
-                    transform: 'translateY(-1px)',
+                    borderColor: 'primary',
                     boxShadow: '0 4px 12px rgba(224,123,83,0.3)',
                 },
             })}
         >
-            <Key size={16} />
-            <span className={css({ display: { base: 'none', md: 'inline-flex' } })}>Anmelden</span>
+            <Key size={18} />
         </button>
     );
 }

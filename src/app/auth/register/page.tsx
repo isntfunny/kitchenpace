@@ -158,26 +158,14 @@ export default function RegisterPage() {
                         textAlign: 'left',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '2',
+                        gap: '1',
                     })}
                 >
-                    <p
-                        className={css({
-                            textTransform: 'uppercase',
-                            letterSpacing: 'wide',
-                            fontSize: 'xs',
-                            fontWeight: '700',
-                            color: 'foreground.muted',
-                        })}
-                    >
-                        Neues Konto
-                    </p>
-                    <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
-                        Starte in unter 30 Sekunden
+                    <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
+                        Konto erstellen
                     </h1>
-                    <p className={css({ color: 'foreground.muted', margin: 0 })}>
-                        Kostenlos registrieren — Rezepte erstellen, Fotos hochladen und
-                        Lieblingsrezepte anpinnen.
+                    <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm' })}>
+                        Kostenlos registrieren — dauert nur wenige Sekunden.
                     </p>
                 </div>
 

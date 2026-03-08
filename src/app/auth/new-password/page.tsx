@@ -86,7 +86,7 @@ function NewPasswordForm() {
                             gap: '2',
                         })}
                     >
-                        <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                        <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                             Ungültiger Link
                         </h1>
                         <p className={css({ color: 'foreground.muted', margin: 0 })}>
@@ -129,7 +129,7 @@ function NewPasswordForm() {
             <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
                 {success ? (
                     <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
-                        <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                        <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                             Passwort zurückgesetzt!
                         </h1>
                         <p className={css({ color: 'foreground.muted', margin: 0 })}>
@@ -144,25 +144,14 @@ function NewPasswordForm() {
                                 textAlign: 'left',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: '2',
+                                gap: '1',
                             })}
                         >
-                            <p
-                                className={css({
-                                    textTransform: 'uppercase',
-                                    letterSpacing: 'wide',
-                                    fontSize: 'xs',
-                                    fontWeight: '700',
-                                    color: 'foreground.muted',
-                                })}
-                            >
-                                Neu vergeben
-                            </p>
-                            <h1 className={css({ fontSize: '3xl', fontWeight: '800', margin: 0 })}>
+                            <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                                 Neues Passwort anlegen
                             </h1>
-                            <p className={css({ color: 'foreground.muted', margin: 0 })}>
-                                Wähle ein sicheres Passwort und bestätige es im zweiten Feld.
+                            <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm' })}>
+                                Wähle ein sicheres Passwort und bestätige es.
                             </p>
                         </div>
 

@@ -22,86 +22,100 @@ Traditionelle Rezepte sind wie eine To-Do-Liste ohne Prioritäten. Sie geben dir
 
 Jedes Rezept wird zu einer **visuellen Landkarte deines Kochabenteuers**:
 
-- **Parallele Welten werden sichtbar**: Die Sauce reduziert sich? Perfekt - die Visualisierung zeigt dir _genau_, was du in dieser Zeit parallel erledigen kannst. Das Gemüse röstet im Ofen? Der Graph zeigt: "Jetzt hast du 15 Minuten für die Beilage."
+- **Parallele Welten werden sichtbar**: Die Sauce reduziert sich? Perfekt - die Visualisierung zeigt dir _genau_, was du in dieser Zeit parallel erledigen kannst.
+- **Struktur in der Gleichzeitigkeit**: Was früher ein mentales Puzzle war - "Wann muss ich was starten, damit alles gleichzeitig fertig ist?" - wird zur klaren, visuellen Wahrheit.
+- **Der kritische Pfad wird erkennbar**: Wie bei einem Projektplan siehst du: _Das_ ist der zeitkritische Strang. _Hier_ muss ich aufmerksam sein, _dort_ kann ich entspannen.
+- **Intuitive Nodes**: Jede Aktion hat ihr eigenes visuelles Symbol. "Würzen" sieht anders aus als "Köcheln lassen" oder "Scharf anbraten". Dein Gehirn erfasst den Flow sofort.
+- **Der große Moment**: Alle Verzweigungen münden am Ende in diesem einen, magischen Punkt - dem fertigen Gericht.
 
-- **Struktur in der Gleichzeitigkeit**: Was früher ein mentales Puzzle war - "Wann muss ich was starten, damit alles gleichzeitig fertig ist?" - wird zur klaren, visuellen Wahrheit. Du siehst die Synchronisation.
+## Tech Stack
 
-- **Der kritische Pfad wird erkennbar**: Wie bei einem Projektplan siehst du: _Das_ ist der zeitkritische Strang. _Das_ kann warten. _Hier_ muss ich aufmerksam sein, _dort_ kann ich entspannen.
-
-- **Intuitive Nodes**: Jede Aktion hat ihr eigenes visuelles Symbol. "Würzen" sieht anders aus als "Köcheln lassen" oder "Scharf anbraten". Dein Gehirn erfasst den Flow sofort - keine kognitive Überlastung mehr.
-
-- **Der große Moment**: Alle Verzweigungen münden am Ende in diesem einen, magischen Punkt - dem fertigen Gericht. Du siehst, wie alles zusammenkommt. Das Chaos ordnet sich.
-
-## Warum ist das revolutionär?
-
-**KitchenPace bringt die Logik von Projektmanagement in die Küche** - aber auf schöne, intuitive Weise. Es nimmt das implizite Wissen von Profiköchen ("Die machen ja immer mehrere Sachen gleichzeitig!") und macht es **explizit und zugänglich**.
-
-Profis haben diese Struktur im Kopf. Sie _sehen_ den Flow. Sie haben gelernt, das Chaos zu strukturieren. **KitchenPace gibt jedem diese Superkraft**.
-
-### Von Stress zu Flow
-
-Statt gestresst zwischen Herd, Schneidebrett und Backofen hin- und herzurennen, befindest du dich plötzlich im **Flow**. Du weißt immer, wo du stehst. Du weißt, was als nächstes kommt. Du hast die Kontrolle.
-
-Das ist nicht nur effizienter - **es macht Kochen wieder zu dem, was es sein sollte: Entspannend, kreativ, genussvoll**.
-
-## Die Zukunft
-
-Stell dir vor:
-
-- **Adaptive Komplexität**: Das Rezept passt sich an deine Küche an - zwei Herdplatten? Der Flow reorganisiert sich automatisch
-- **Echtzeit-Orientierung**: Du markierst Schritte als erledigt, und die Visualisierung zeigt dir sofort: "Du bist hier, das kommt als nächstes"
-- **Zeitmanagement visuell**: Timer direkt in den Nodes - du siehst, wie viel Zeit jeder Strang noch braucht
-- **Chaos-zu-Struktur für alle**: Auch komplexeste Menüs mit vier Gängen werden plötzlich machbar, weil du die Struktur _siehst_
-
-**KitchenPace** ist dein **Kompass im Küchenchaos**. Es verwandelt Überforderung in Übersicht, Stress in Struktur, Panik in Plan.
-
----
-
-Das ist nicht einfach eine weitere Rezept-App. Das ist **der Paradigmenwechsel**: Vom linearen Denken zum **strukturierten, visuellen Kochflow**.
-
-**Endlich Ordnung im schönsten Chaos der Welt.** 🎯✨
+| Category | Technology |
+| --- | --- |
+| Framework | Next.js 16 (App Router) |
+| UI | Radix UI + Panda CSS + Framer Motion |
+| Database | Prisma 7 + PostgreSQL |
+| Flow Editor | React Flow (@xyflow/react v12) + Dagre |
+| Search | OpenSearch |
+| Queue / Jobs | BullMQ + Redis |
+| AI | OpenAI (gpt-5.4 recipe import, omni-moderation-latest) |
+| Realtime | SSE via Redis pub/sub |
+| Storage | S3 / MinIO |
+| Scraper | Python FastAPI + Scrapling/Camoufox |
+| Auth | Logto |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 22+
+- Docker & Docker Compose
+
+### Development
 
 ```bash
+# Start all services (PostgreSQL, Redis, OpenSearch, MinIO)
+docker compose up -d
+
+# Install dependencies
+npm install --include=dev
+
+# Run database migrations
+npx prisma migrate deploy
+
+# Start dev server at http://localhost:3000
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Fresh Development Build
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Fresh Development Builds
-
-For standalone development builds that should ship with a clean database, run:
+For standalone builds with a clean database:
 
 ```bash
 npm run build:dev-seed
 ```
 
-This sets `DEBUG=1`, performs a production build, then reruns Prisma code generation, truncates and rebuilds the schema, and finally reseeds the database so you always work against a fresh dataset. It is intentionally separate from `npm run dev` and only skips database operations on that build command.
+Sets `DEBUG=1`, runs a production build, then truncates and reseeds the database.
 
-## OpenSearch index & ingestion
+## Docker Compose Services
 
-The repository includes an embedded OpenSearch cluster alongside PostgreSQL in `docker-compose.yml`. The `opensearch-sync` worker (in `worker/`) keeps the `recipes` index up to date with typed mappings for keywords, categories, numeric fields, and timestamps.
+| Service | Port | Purpose |
+| --- | --- | --- |
+| postgres | 64000 | Database |
+| redis | 62984 | Cache, queues, pub/sub |
+| opensearch | 9200 | Full-text search |
+| app | 3000 | Next.js application |
+| worker | — | BullMQ job processor |
+| scraper | 34215 | Python recipe scraper |
 
-Start everything during development with:
+## Key Features
 
-```bash
-docker compose up --build
-```
+### Flow Editor
+Visual recipe editor powered by React Flow. Recipes are modeled as directed graphs with typed step nodes (schneiden, kochen, braten, backen, mixen, warten, wuerzen, anrichten, servieren) and edges representing dependencies. Dagre handles automatic layout.
 
-OpenSearch will be reachable at `http://localhost:9200`.
+### AI Recipe Import
+Paste a URL or raw text and let AI (gpt-5.4) convert it into a structured flow diagram. The Python scraper fetches and cleans the source, OpenAI parses it into nodes/edges with strict JSON schema validation, and the result loads directly into the flow editor.
+
+### Content Moderation
+AI-powered auto-moderation (OpenAI omni-moderation-latest, free & multi-modal) with configurable thresholds. Content scoring below 0.40 is auto-approved, 0.40-0.84 is queued for human review, and 0.85+ is auto-rejected. Includes moderator queue UI, user reporting with auto-escalation, and a ban system.
+
+### Real-time Updates
+Redis pub/sub powers SSE streams for live notifications, activity feeds, and moderator alerts. Replaces polling with instant delivery.
+
+### Google Cast (Chromecast)
+Cast any recipe to a TV or Nest Hub. The sender transmits the recipe slug, and the Cast receiver renders a fullscreen mobile-optimized view.
+
+### Search
+OpenSearch indices for recipes and ingredients with full-text search, faceted filtering (tags, ingredients, difficulty, time ranges, meal slots), and autocomplete suggestions.
+
+### Background Jobs (BullMQ)
+Standalone worker process with three queues: OpenSearch sync (watermark-based incremental), scheduled maintenance (trending calculation, contact sync, cache purge), and database backups (pg_dump to S3 with retention policies).
+
+## Git & Release Discipline
+
+- The `live` branch receives only **squash merges** so its history stays linear and clean.
+- Every merge commit targeting `live` must include a changelog entry describing user-visible impact.
+- The **first line** of the commit message must be a compact summary prefixed with the predominant type (`feat`/`fix`/`chore`).
 
 ## Git & Release Discipline
 
@@ -111,40 +125,31 @@ OpenSearch will be reachable at `http://localhost:9200`.
 
 ## Email Templates (MJML)
 
-Email templates are located in `lib/email-templates/mjml/` and use **MJML** format with **Liquid templating** for Notifuse integration.
+Email templates in `lib/email-templates/mjml/` use MJML format with Liquid templating for Notifuse integration.
 
 ### Liquid Variable Reference
 
 #### Contact Variables
 
-| Variable                   | Description          |
-| -------------------------- | -------------------- |
-| `{{ contact.first_name }}` | User's first name    |
-| `{{ contact.last_name }}`  | User's last name     |
-| `{{ contact.email }}`      | User's email address |
+| Variable | Description |
+| --- | --- |
+| `{{ contact.first_name }}` | User's first name |
+| `{{ contact.last_name }}` | User's last name |
+| `{{ contact.email }}` | User's email address |
 
 #### System URLs
 
-| Variable                         | Description                         |
-| -------------------------------- | ----------------------------------- |
-| `{{ unsubscribe_url }}`          | Link to unsubscribe from newsletter |
-| `{{ confirm_subscription_url }}` | Link to confirm subscription        |
-| `{{ notification_center_url }}`  | Link to notification preferences    |
+| Variable | Description |
+| --- | --- |
+| `{{ unsubscribe_url }}` | Unsubscribe link |
+| `{{ confirm_subscription_url }}` | Subscription confirmation |
+| `{{ notification_center_url }}` | Notification preferences |
 
-#### Template Variables
+#### Template Variables (generic.mjml)
 
-**generic.mjml** (main template)
-
-| Variable           | Description                            |
-| ------------------ | -------------------------------------- |
-| `{{{ subject }}}`  | Email subject (triple braces for HTML) |
-| `{{{ message }}}`  | Main content (triple braces for HTML)  |
-| `{{ buttonText }}` | Button text (optional)                 |
-| `{{ buttonLink }}` | Button URL (optional)                  |
-
-### Import to Notifuse
-
-1. Open Notifuse dashboard → Templates
-2. Create New Template
-3. Copy MJML content from `lib/email-templates/mjml/`
-4. Notifuse compiles MJML to responsive HTML automatically
+| Variable | Description |
+| --- | --- |
+| `{{{ subject }}}` | Email subject (triple braces for HTML) |
+| `{{{ message }}}` | Main content (triple braces for HTML) |
+| `{{ buttonText }}` | Button text (optional) |
+| `{{ buttonLink }}` | Button URL (optional) |

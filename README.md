@@ -117,12 +117,6 @@ Standalone worker process with three queues: OpenSearch sync (watermark-based in
 - Every merge commit targeting `live` must include a changelog entry describing user-visible impact.
 - The **first line** of the commit message must be a compact summary prefixed with the predominant type (`feat`/`fix`/`chore`).
 
-## Git & Release Discipline
-
-- The `live` branch receives only **squash merges** so its history stays linear and clean.
-- Every merge commit targeting `live` must include a matching changelog entry describing the user-visible impact.
-- The **first line** of the commit message must be a compact summary of the biggest change, prefixed with the predominant type (`feat`/`fix`/`chore`), e.g. `feat: Autosave cooking progress in background`.
-
 ## Email Templates (MJML)
 
 Email templates in `lib/email-templates/mjml/` use MJML format with Liquid templating for Notifuse integration.

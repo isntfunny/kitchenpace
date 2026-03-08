@@ -29,6 +29,9 @@ WORKDIR /app
 # Make DEBUG available as env var for Next.js build
 ENV NEXT_PUBLIC_DEBUG=${DEBUG}
 
+# Prisma 7 requires DATABASE_URL at build time to load prisma.config.ts
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
+
 # Copy dependency artifacts (changes least often → best cache layer)
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/styled-system ./styled-system

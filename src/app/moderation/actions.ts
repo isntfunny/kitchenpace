@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { publishAdminInboxRemoved } from '@app/lib/admin-inbox';
 import { getServerAuthSession } from '@app/lib/auth';
 import { createUserNotification } from '@app/lib/events/persist';
+import { deleteFile } from '@app/lib/s3';
 import { prisma } from '@shared/prisma';
 
 async function requireModerator() {
@@ -103,6 +104,7 @@ export async function approveContent(queueId: string, reviewNote?: string) {
             },
         });
     }
+    // step_image: already live in S3 + RecipeStepImage row — no action needed on approve
 
     // Write audit log
     await prisma.moderationLog.create({
@@ -176,6 +178,12 @@ export async function rejectContent(queueId: string, reviewNote: string) {
                 isHidden: true,
             },
         });
+    } else if (queueItem.contentType === 'step_image') {
+        // contentId is the S3 key — delete from RecipeStepImage and S3
+        await prisma.recipeStepImage.deleteMany({
+            where: { photoKey: queueItem.contentId },
+        });
+        await deleteFile(queueItem.contentId);
     }
 
     // Write audit log

@@ -7,6 +7,7 @@ import { searchIngredients } from '@app/components/recipe/actions';
 import { SegmentedBar } from '@app/components/recipe/RecipeForm/components/SegmentedBar';
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 import { PALETTE } from '@app/lib/palette';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { css } from 'styled-system/css';
 
 import { DescriptionEditor } from './DescriptionEditor';
@@ -48,7 +49,6 @@ export function NodeEditPanel({
     const [description, setDescription] = useState(data.description);
     const [duration, setDuration] = useState<number | undefined>(data.duration);
     const [photoKey, setPhotoKey] = useState<string | undefined>(data.photoKey);
-    const [photoUrl, setPhotoUrl] = useState<string | undefined>(data.photoUrl);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,7 +66,7 @@ export function NodeEditPanel({
 
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('type', 'recipe');
+        formData.append('type', 'step');
 
         try {
             const res = await fetch('/api/upload', { method: 'POST', body: formData });
@@ -74,9 +74,8 @@ export function NodeEditPanel({
                 const json = await res.json().catch(() => ({}));
                 throw new Error(json.error ?? 'Upload fehlgeschlagen');
             }
-            const { url, key } = await res.json();
+            const { key } = await res.json();
             setPhotoKey(key);
-            setPhotoUrl(url);
         } catch (err) {
             setUploadError(err instanceof Error ? err.message : 'Upload fehlgeschlagen');
         } finally {
@@ -93,9 +92,8 @@ export function NodeEditPanel({
             duration,
             ingredientIds: extractIngredientIds(description),
             photoKey,
-            photoUrl,
         });
-    }, [stepType, label, description, duration, photoKey, photoUrl, onSave]);
+    }, [stepType, label, description, duration, photoKey, onSave]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -132,13 +130,19 @@ export function NodeEditPanel({
                 </div>
 
                 {/* ── Photo banner ── */}
-                {photoUrl && (
+                {photoKey && (
                     <div className={photoBannerClass}>
                         <img
-                            src={photoUrl}
+                            src={getThumbnailUrl(photoKey, {
+                                width: 460,
+                                height: 110,
+                                fit: 'cover',
+                            })}
                             alt="Schrittfoto"
                             className={photoBannerImgClass}
-                            onError={() => setPhotoUrl(undefined)}
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                            }}
                         />
                         <button
                             type="button"
@@ -261,7 +265,7 @@ export function NodeEditPanel({
                     </div>
 
                     {/* ── Photo upload ── */}
-                    {!photoUrl && (
+                    {!photoKey && (
                         <div className={fieldClass}>
                             <input
                                 ref={fileInputRef}
@@ -299,7 +303,7 @@ export function NodeEditPanel({
                         </div>
                     )}
                     {/* Hidden file input for photo replace when banner is visible */}
-                    {photoUrl && (
+                    {photoKey && (
                         <input
                             ref={fileInputRef}
                             type="file"

@@ -71,8 +71,40 @@ export interface FlowNodeInput {
     duration?: number;
     ingredientIds?: string[];
     photoKey?: string;
-    photoUrl?: string;
     position?: { x: number; y: number };
+}
+
+/** Strip photoKey from nodes before writing to the flowNodes JSON column.
+ *  Photos are stored in RecipeStepImage instead. */
+function stripPhotoKeys(nodes: FlowNodeInput[]): object {
+    return nodes.map(({ photoKey: _, ...n }) => n) as unknown as object;
+}
+
+/** Sync RecipeStepImage rows for a recipe after create/update. */
+async function syncStepImages(recipeId: string, nodes: FlowNodeInput[]): Promise<void> {
+    const currentStepIds = nodes.map((n) => n.id);
+
+    // Delete images for steps that were removed or had their photo cleared
+    const stepsWithPhoto = new Set(nodes.filter((n) => n.photoKey).map((n) => n.id));
+    await prisma.recipeStepImage.deleteMany({
+        where: {
+            recipeId,
+            OR: [
+                { stepId: { notIn: currentStepIds } },
+                { stepId: { in: currentStepIds.filter((id) => !stepsWithPhoto.has(id)) } },
+            ],
+        },
+    });
+
+    // Upsert for steps that have a photo
+    for (const node of nodes) {
+        if (!node.photoKey) continue;
+        await prisma.recipeStepImage.upsert({
+            where: { recipeId_stepId: { recipeId, stepId: node.id } },
+            create: { recipeId, stepId: node.id, photoKey: node.photoKey },
+            update: { photoKey: node.photoKey },
+        });
+    }
 }
 
 export interface FlowEdgeInput {
@@ -149,10 +181,15 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
             moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
             aiModerationScore: modResult.score,
             moderationNote: modResult.decision === 'PENDING' ? null : undefined, // clear old note on re-check
-            flowNodes: data.flowNodes ? (data.flowNodes as unknown as object) : undefined,
+            flowNodes: data.flowNodes ? stripPhotoKeys(data.flowNodes) : undefined,
             flowEdges: data.flowEdges ? (data.flowEdges as unknown as object) : undefined,
         },
     });
+
+    // Sync step images (after recipe exists so FK is valid)
+    if (data.flowNodes) {
+        await syncStepImages(recipeId, data.flowNodes);
+    }
 
     // Persist moderation result for audit trail
     await persistModerationResult('recipe', recipe.id, authorId, modResult, {
@@ -310,7 +347,7 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
             aiModerationScore: modResult.score,
             authorId,
-            flowNodes: (data.flowNodes as unknown as object) ?? undefined,
+            flowNodes: data.flowNodes ? stripPhotoKeys(data.flowNodes) : undefined,
             flowEdges: (data.flowEdges as unknown as object) ?? undefined,
             recipeIngredients: {
                 create: syncedIngredients.map((ing, index) => ({
@@ -324,6 +361,11 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             },
         },
     });
+
+    // Sync step images
+    if (data.flowNodes) {
+        await syncStepImages(recipe.id, data.flowNodes);
+    }
 
     // Persist moderation result for audit trail
     await persistModerationResult('recipe', recipe.id, authorId, modResult, {

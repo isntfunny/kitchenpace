@@ -51,7 +51,7 @@ export function useFlowAutoLayout(direction: 'TB' | 'LR' = 'LR') {
                 const measuredH = (node as { measured?: { height?: number } }).measured?.height;
                 const height = measuredH
                     ? measuredH + 20 // add a small buffer around the measured size
-                    : node.data?.photoUrl
+                    : node.data?.photoKey
                       ? NODE_HEIGHT_WITH_IMAGE
                       : NODE_HEIGHT_BASE;
                 g.setNode(node.id, { width: NODE_WIDTH, height });

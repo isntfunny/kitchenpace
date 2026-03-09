@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 
 import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
@@ -95,21 +96,25 @@ export function NodeDetailModal({
                         height: 32,
                         borderRadius: '50%',
                         border: 'none',
-                        backgroundColor: node.photoUrl ? c.closeBgPhoto : c.closeBg,
+                        backgroundColor: node.photoKey ? c.closeBgPhoto : c.closeBg,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        color: node.photoUrl ? 'white' : c.textMid,
+                        color: node.photoKey ? 'white' : c.textMid,
                     }}
                 >
                     <X style={{ width: 16, height: 16 }} />
                 </button>
 
                 {/* Photo */}
-                {node.photoUrl && (
+                {node.photoKey && (
                     <img
-                        src={node.photoUrl}
+                        src={getThumbnailUrl(node.photoKey, {
+                            width: 480,
+                            height: 220,
+                            fit: 'cover',
+                        })}
                         alt=""
                         style={{
                             width: '100%',

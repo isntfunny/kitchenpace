@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 
 import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
@@ -189,7 +190,7 @@ export function StepCard({
                 )}
 
                 {/* Photo */}
-                {node.photoUrl && !compact && (
+                {node.photoKey && !compact && (
                     <div
                         style={{
                             borderRadius: 8,
@@ -199,7 +200,11 @@ export function StepCard({
                         }}
                     >
                         <img
-                            src={node.photoUrl}
+                            src={getThumbnailUrl(node.photoKey, {
+                                width: 220,
+                                height: 72,
+                                fit: 'cover',
+                            })}
                             alt=""
                             style={{
                                 width: '100%',

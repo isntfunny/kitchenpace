@@ -4,6 +4,7 @@ import { Check, Pause, Play, RotateCcw, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { css } from 'styled-system/css';
 
 import type { LaneMode, LaneStep, TimerState } from './types';
@@ -100,10 +101,17 @@ export function StepCard({
             }}
         >
             {/* ── Left image strip (flush, no padding) ── */}
-            {step.photoUrl && (
+            {step.photoKey && (
                 <div className={imageStripClass}>
-                    {}
-                    <img src={step.photoUrl} alt={step.label} className={imageStripImgClass} />
+                    <img
+                        src={getThumbnailUrl(step.photoKey, {
+                            width: 90,
+                            height: 120,
+                            fit: 'cover',
+                        })}
+                        alt={step.label}
+                        className={imageStripImgClass}
+                    />
                 </div>
             )}
 

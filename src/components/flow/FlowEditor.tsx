@@ -96,7 +96,6 @@ function serializeNodes(nodes: RecipeFlowNode[]): FlowNodeSerialized[] {
         duration: n.data.duration,
         ingredientIds: n.data.ingredientIds,
         photoKey: n.data.photoKey,
-        photoUrl: n.data.photoUrl,
         position: n.position,
     }));
 }
@@ -121,7 +120,6 @@ function deserializeNodes(nodes: FlowNodeSerialized[]): RecipeFlowNode[] {
             duration: n.duration,
             ingredientIds: n.ingredientIds,
             photoKey: n.photoKey,
-            photoUrl: n.photoUrl,
         },
     }));
 }

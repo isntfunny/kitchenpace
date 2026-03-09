@@ -57,7 +57,6 @@ export interface FlowNodeInput {
     duration?: number;
     ingredientIds?: string[];
     photoKey?: string;
-    photoUrl?: string;
     // NOTE: No position — Dagre handles layout
 }
 

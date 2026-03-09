@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    if (!type || !['profile', 'recipe', 'comment'].includes(type)) {
+    if (!type || !['profile', 'recipe', 'comment', 'step'].includes(type)) {
         return NextResponse.json({ error: 'Invalid upload type' }, { status: 400 });
     }
 
@@ -50,7 +50,13 @@ export async function POST(request: NextRequest) {
         const modResult = await moderateContent({ imageUrl: result.url });
 
         const modContentType =
-            type === 'recipe' ? 'recipe' : type === 'profile' ? 'profile' : 'comment';
+            type === 'step'
+                ? 'step_image'
+                : type === 'recipe'
+                  ? 'recipe'
+                  : type === 'profile'
+                    ? 'profile'
+                    : 'comment';
         const modSnapshot = {
             contentType: type,
             contentId: result.key,

@@ -21,8 +21,6 @@ export interface RecipeNodeData extends Record<string, unknown> {
     ingredientIds?: string[];
     /** S3 key for the per-step photo, persisted to DB */
     photoKey?: string;
-    /** Full CDN URL for displaying the photo — derived from photoKey at upload time */
-    photoUrl?: string;
 }
 
 /** The xyflow node type for recipe steps */
@@ -37,7 +35,6 @@ export interface FlowNodeSerialized {
     duration?: number;
     ingredientIds?: string[];
     photoKey?: string;
-    photoUrl?: string;
     position?: { x: number; y: number };
 }
 

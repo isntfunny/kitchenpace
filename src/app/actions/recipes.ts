@@ -326,19 +326,30 @@ export async function fetchRecipeForEdit(
     authorId: string,
     isUserAdmin: boolean = false,
 ): Promise<EditRecipeData | null> {
-    const recipe = await prisma.recipe.findFirst({
-        where: isUserAdmin ? { id: recipeId } : { id: recipeId, authorId },
-        include: {
-            categories: true,
-            recipeIngredients: {
-                include: { ingredient: true },
-                orderBy: { position: 'asc' },
+    const [recipe, stepImages] = await Promise.all([
+        prisma.recipe.findFirst({
+            where: isUserAdmin ? { id: recipeId } : { id: recipeId, authorId },
+            include: {
+                categories: true,
+                recipeIngredients: {
+                    include: { ingredient: true },
+                    orderBy: { position: 'asc' },
+                },
+                tags: true,
             },
-            tags: true,
-        },
-    });
+        }),
+        prisma.recipeStepImage.findMany({ where: { recipeId } }),
+    ]);
 
     if (!recipe) return null;
+
+    const photoKeyByStepId = new Map(stepImages.map((si) => [si.stepId, si.photoKey]));
+
+    const rawNodes = (recipe.flowNodes as FlowNodeInput[] | null) ?? [];
+    const flowNodes = rawNodes.map((n) => {
+        const photoKey = photoKeyByStepId.get(n.id);
+        return photoKey ? { ...n, photoKey } : n;
+    });
 
     return {
         id: recipe.id,
@@ -360,7 +371,7 @@ export async function fetchRecipeForEdit(
             notes: ri.notes ?? '',
             isOptional: ri.isOptional,
         })),
-        flowNodes: (recipe.flowNodes as FlowNodeInput[] | null) ?? [],
+        flowNodes,
         flowEdges: (recipe.flowEdges as FlowEdgeInput[] | null) ?? [],
         authorId: recipe.authorId,
     };

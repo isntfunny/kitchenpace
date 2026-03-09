@@ -39,50 +39,77 @@ export const DIFFICULTIES = ['Einfach', 'Mittel', 'Schwer'] as const;
 // ============================================================================
 
 export const LaneStepAISchema = z.object({
-    id: z.string().min(1).describe(
-        'Eindeutige ID des Schritts, z.B. "step-zwiebeln", "step-pasta-kochen". Keine UUIDs — kurze sprechende Slugs.',
-    ),
-    type: z.enum(STEP_TYPES).describe(
-        'Typ des Schritts. "start" nur für den allerersten Schritt im gesamten Rezept, "servieren" nur für den allerletzten.',
-    ),
-    label: z.string().min(1).max(50).describe(
-        'Kurzer Titel, z.B. "Zwiebeln würfeln". Max 50 Zeichen.',
-    ),
-    description: z.string().describe(
-        'Detaillierte Anleitung für diesen Schritt. Kann @[Zutatname](zutat-id) Mentions enthalten.',
-    ),
-    duration: z.number().int().positive().nullable().describe(
-        'Dauer in Minuten, null wenn kein sinnvoller Zeitwert (z.B. reine Schneideschritte).',
-    ),
+    id: z
+        .string()
+        .min(1)
+        .describe(
+            'Eindeutige ID des Schritts, z.B. "step-zwiebeln", "step-pasta-kochen". Keine UUIDs — kurze sprechende Slugs.',
+        ),
+    type: z
+        .enum(STEP_TYPES)
+        .describe(
+            'Typ des Schritts. "start" nur für den allerersten Schritt im gesamten Rezept, "servieren" nur für den allerletzten.',
+        ),
+    label: z
+        .string()
+        .min(1)
+        .max(50)
+        .describe('Kurzer Titel, z.B. "Zwiebeln würfeln". Max 50 Zeichen.'),
+    description: z
+        .string()
+        .describe(
+            'Detaillierte Anleitung für diesen Schritt. Kann @[Zutatname](zutat-id) Mentions enthalten.',
+        ),
+    duration: z
+        .number()
+        .int()
+        .positive()
+        .nullable()
+        .describe(
+            'Dauer in Minuten, null wenn kein sinnvoller Zeitwert (z.B. reine Schneideschritte).',
+        ),
     photoKey: z.null().describe('Immer null — AI kann keine Fotos hochladen.'),
-    photoUrl: z.null().describe('Immer null — AI kann keine Fotos hochladen.'),
-    ingredientIds: z.array(z.string()).describe(
-        'IDs der Zutaten aus dem ingredients-Array, die in diesem Schritt verwendet werden. Leer wenn keine Zutaten direkt zugeordnet.',
-    ),
+    ingredientIds: z
+        .array(z.string())
+        .describe(
+            'IDs der Zutaten aus dem ingredients-Array, die in diesem Schritt verwendet werden. Leer wenn keine Zutaten direkt zugeordnet.',
+        ),
 });
 
 export const LaneSegmentAISchema = z.object({
-    id: z.string().min(1).describe(
-        'Eindeutige Segment-ID, z.B. "seg-start", "seg-gemuese-parallel", "seg-anbraten".',
-    ),
-    columnSpans: z.array(z.number().int().positive()).min(1).describe(
-        'Spaltenbreiten jeder Lane als ganze Zahlen. Summe = effektive Spaltenanzahl des Segments. ' +
-        'Beispiele: [3] = eine volle Lane in 3-Spalten-Kontext, [2,1] = zwei Drittel + ein Drittel, [1,1,1] = drei gleiche. ' +
-        'lanes.length MUSS columnSpans.length entsprechen.',
-    ),
-    lanes: z.array(z.array(LaneStepAISchema)).min(1).describe(
-        'lanes[laneIndex][stepIndex] = Schritt. Jede Lane ist ein Array von aufeinanderfolgenden Schritten. ' +
-        'Leere Lane = leeres Array []. lanes.length MUSS columnSpans.length entsprechen.',
-    ),
+    id: z
+        .string()
+        .min(1)
+        .describe(
+            'Eindeutige Segment-ID, z.B. "seg-start", "seg-gemuese-parallel", "seg-anbraten".',
+        ),
+    columnSpans: z
+        .array(z.number().int().positive())
+        .min(1)
+        .describe(
+            'Spaltenbreiten jeder Lane als ganze Zahlen. Summe = effektive Spaltenanzahl des Segments. ' +
+                'Beispiele: [3] = eine volle Lane in 3-Spalten-Kontext, [2,1] = zwei Drittel + ein Drittel, [1,1,1] = drei gleiche. ' +
+                'lanes.length MUSS columnSpans.length entsprechen.',
+        ),
+    lanes: z
+        .array(z.array(LaneStepAISchema))
+        .min(1)
+        .describe(
+            'lanes[laneIndex][stepIndex] = Schritt. Jede Lane ist ein Array von aufeinanderfolgenden Schritten. ' +
+                'Leere Lane = leeres Array []. lanes.length MUSS columnSpans.length entsprechen.',
+        ),
 });
 
 export const LaneGridAISchema = z.object({
-    segments: z.array(LaneSegmentAISchema).min(2).describe(
-        'Sequenz von Segmenten von oben nach unten. Jeder Split/Merge erzeugt ein neues Segment. ' +
-        'Erstes Segment: eine Lane mit type="start". Letztes Segment: eine Lane mit type="servieren". ' +
-        'Parallele Schritte → ein Segment mit mehreren Lanes. ' +
-        'Zusammenführung → neues Segment mit einer Lane.',
-    ),
+    segments: z
+        .array(LaneSegmentAISchema)
+        .min(2)
+        .describe(
+            'Sequenz von Segmenten von oben nach unten. Jeder Split/Merge erzeugt ein neues Segment. ' +
+                'Erstes Segment: eine Lane mit type="start". Letztes Segment: eine Lane mit type="servieren". ' +
+                'Parallele Schritte → ein Segment mit mehreren Lanes. ' +
+                'Zusammenführung → neues Segment mit einer Lane.',
+        ),
 });
 
 // ============================================================================
@@ -90,15 +117,28 @@ export const LaneGridAISchema = z.object({
 // ============================================================================
 
 export const IngredientSchema = z.object({
-    id: z.string().min(1).describe(
-        'Eindeutige ID, z.B. "zutat-zwiebel". Wird in ingredientIds der Schritte referenziert.',
-    ),
-    name: z.string().min(1).describe(
-        'Name der Zutat auf DEUTSCH, z.B. "Zwiebeln", "Passierte Tomaten". NIEMALS englische Namen.',
-    ),
+    id: z
+        .string()
+        .min(1)
+        .describe(
+            'Eindeutige ID, z.B. "zutat-zwiebel". Wird in ingredientIds der Schritte referenziert.',
+        ),
+    name: z
+        .string()
+        .min(1)
+        .describe(
+            'Name der Zutat auf DEUTSCH, z.B. "Zwiebeln", "Passierte Tomaten". NIEMALS englische Namen.',
+        ),
     amount: z.number().positive().nullable().describe('Menge als Zahl, null wenn nicht klar.'),
-    unit: z.string().min(1).nullable().describe('Einheit, z.B. "g", "ml", "Stück", "EL". null wenn nicht klar.'),
-    notes: z.string().nullable().describe('Zubereitungshinweis, z.B. "fein gehackt". null wenn nicht nötig.'),
+    unit: z
+        .string()
+        .min(1)
+        .nullable()
+        .describe('Einheit, z.B. "g", "ml", "Stück", "EL". null wenn nicht klar.'),
+    notes: z
+        .string()
+        .nullable()
+        .describe('Zubereitungshinweis, z.B. "fein gehackt". null wenn nicht nötig.'),
 });
 
 // ============================================================================
@@ -123,9 +163,9 @@ export const ImportedRecipeWithLaneGridSchema = z.object({
 // TypeScript Types
 // ============================================================================
 
-export type LaneStepAI    = z.infer<typeof LaneStepAISchema>;
+export type LaneStepAI = z.infer<typeof LaneStepAISchema>;
 export type LaneSegmentAI = z.infer<typeof LaneSegmentAISchema>;
-export type LaneGridAI    = z.infer<typeof LaneGridAISchema>;
+export type LaneGridAI = z.infer<typeof LaneGridAISchema>;
 export type ImportedRecipeWithLaneGrid = z.infer<typeof ImportedRecipeWithLaneGridSchema>;
 
 // ============================================================================
@@ -138,16 +178,23 @@ export type ImportedRecipeWithLaneGrid = z.infer<typeof ImportedRecipeWithLaneGr
 const laneStepJsonSchema = {
     type: 'object',
     properties: {
-        id:           { type: 'string', description: 'Eindeutige Schritt-ID, kurzer sprechender Slug.' },
-        type:         { type: 'string', enum: [...STEP_TYPES], description: '"start" nur einmal ganz oben, "servieren" nur einmal ganz unten.' },
-        label:        { type: 'string', description: 'Kurzer Titel, max 50 Zeichen.' },
-        description:  { type: 'string', description: 'Detaillierte Anleitung.' },
-        duration:     { type: ['integer', 'null'], description: 'Dauer in Minuten oder null.' },
-        photoKey:     { type: 'null', description: 'Immer null.' },
-        photoUrl:     { type: 'null', description: 'Immer null.' },
-        ingredientIds: { type: 'array', items: { type: 'string' }, description: 'Zutaten-IDs die in diesem Schritt verwendet werden.' },
+        id: { type: 'string', description: 'Eindeutige Schritt-ID, kurzer sprechender Slug.' },
+        type: {
+            type: 'string',
+            enum: [...STEP_TYPES],
+            description: '"start" nur einmal ganz oben, "servieren" nur einmal ganz unten.',
+        },
+        label: { type: 'string', description: 'Kurzer Titel, max 50 Zeichen.' },
+        description: { type: 'string', description: 'Detaillierte Anleitung.' },
+        duration: { type: ['integer', 'null'], description: 'Dauer in Minuten oder null.' },
+        photoKey: { type: 'null', description: 'Immer null.' },
+        ingredientIds: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Zutaten-IDs die in diesem Schritt verwendet werden.',
+        },
     },
-    required: ['id', 'type', 'label', 'description', 'duration', 'photoKey', 'photoUrl', 'ingredientIds'],
+    required: ['id', 'type', 'label', 'description', 'duration', 'photoKey', 'ingredientIds'],
     additionalProperties: false,
 } as const;
 
@@ -187,26 +234,34 @@ export function getOpenAIResponseFormat() {
             schema: {
                 type: 'object',
                 properties: {
-                    id:          { type: 'string', description: 'UUID des Rezepts.' },
-                    title:       { type: 'string', description: 'Titel auf DEUTSCH.' },
+                    id: { type: 'string', description: 'UUID des Rezepts.' },
+                    title: { type: 'string', description: 'Titel auf DEUTSCH.' },
                     description: { type: 'string', description: 'Kurze Beschreibung.' },
-                    category:    { type: 'string', enum: [...CATEGORIES] },
-                    tags:        { type: 'array', items: { type: 'string' }, description: 'Schlagwörter auf DEUTSCH.' },
-                    prepTime:    { type: 'integer', description: 'Vorbereitungszeit in Minuten.' },
-                    cookTime:    { type: 'integer', description: 'Kochzeit in Minuten.' },
-                    servings:    { type: 'integer', description: 'Portionen.' },
-                    difficulty:  { type: 'string', enum: [...DIFFICULTIES] },
+                    category: { type: 'string', enum: [...CATEGORIES] },
+                    tags: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'Schlagwörter auf DEUTSCH.',
+                    },
+                    prepTime: { type: 'integer', description: 'Vorbereitungszeit in Minuten.' },
+                    cookTime: { type: 'integer', description: 'Kochzeit in Minuten.' },
+                    servings: { type: 'integer', description: 'Portionen.' },
+                    difficulty: { type: 'string', enum: [...DIFFICULTIES] },
                     ingredients: {
                         type: 'array',
-                        description: 'Alle Zutaten. IDs werden in laneGrid.segments[].lanes[][].ingredientIds referenziert.',
+                        description:
+                            'Alle Zutaten. IDs werden in laneGrid.segments[].lanes[][].ingredientIds referenziert.',
                         items: {
                             type: 'object',
                             properties: {
-                                id:     { type: 'string', description: 'Kurzer Slug, z.B. "zutat-zwiebel".' },
-                                name:   { type: 'string', description: 'Name auf DEUTSCH.' },
+                                id: {
+                                    type: 'string',
+                                    description: 'Kurzer Slug, z.B. "zutat-zwiebel".',
+                                },
+                                name: { type: 'string', description: 'Name auf DEUTSCH.' },
                                 amount: { type: ['number', 'null'] },
-                                unit:   { type: ['string', 'null'] },
-                                notes:  { type: ['string', 'null'] },
+                                unit: { type: ['string', 'null'] },
+                                notes: { type: ['string', 'null'] },
                             },
                             required: ['id', 'name', 'amount', 'unit', 'notes'],
                             additionalProperties: false,
@@ -229,9 +284,17 @@ export function getOpenAIResponseFormat() {
                     },
                 },
                 required: [
-                    'id', 'title', 'description', 'category', 'tags',
-                    'prepTime', 'cookTime', 'servings', 'difficulty',
-                    'ingredients', 'laneGrid',
+                    'id',
+                    'title',
+                    'description',
+                    'category',
+                    'tags',
+                    'prepTime',
+                    'cookTime',
+                    'servings',
+                    'difficulty',
+                    'ingredients',
+                    'laneGrid',
                 ],
                 additionalProperties: false,
             },

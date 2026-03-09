@@ -5,6 +5,7 @@ import { Clock, X } from 'lucide-react';
 import { memo, useMemo, useCallback } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { css, cx } from 'styled-system/css';
 
 import { AddNodeButton } from './AddNodeButton';
@@ -177,7 +178,7 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                     )}
                 </div>
 
-                {data.photoUrl && (
+                {data.photoKey && (
                     <div
                         className={css({
                             overflow: 'hidden',
@@ -186,7 +187,11 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                         })}
                     >
                         <img
-                            src={data.photoUrl}
+                            src={getThumbnailUrl(data.photoKey, {
+                                width: 220,
+                                height: 72,
+                                fit: 'cover',
+                            })}
                             alt=""
                             onError={(e) => {
                                 const wrapper = (e.target as HTMLImageElement).parentElement;

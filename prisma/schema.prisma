@@ -281,6 +281,7 @@ model Recipe {
   pinnedFavorites PinnedFavorite[]
   cookImages   CookImage[]
   importRuns   ImportRun[]
+  stepImages   RecipeStepImage[]
 
   @@index([authorId])
   @@index([difficulty])
@@ -289,6 +290,25 @@ model Recipe {
   @@index([status])
   @@index([isTrending])
   @@index([moderationStatus])
+}
+
+// ============================================
+// RECIPE STEP IMAGES
+// ============================================
+
+model RecipeStepImage {
+  id        String   @id @default(cuid())
+  recipeId  String
+  stepId    String
+  photoKey  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, stepId])
+  @@index([recipeId])
+  @@index([photoKey])
 }
 
 // ============================================

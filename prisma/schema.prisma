@@ -194,7 +194,6 @@ model User {
 model Profile {
   id             String   @id @default(cuid())
   userId         String   @unique
-  email          String
   nickname       String   @db.VarChar(40)
   slug           String   @unique @db.VarChar(60)
   teaser         String?

@@ -45,15 +45,24 @@ export const ACTIVITY_DECOR: Record<string, { icon: ActivityIconName; bg: string
     MEAL_PLAN_CREATED: { icon: 'calendar', bg: PALETTE.purple, template: 'hat einen Essensplan erstellt' },
 };
 
-export function formatTimeAgo(date: Date): string {
-    const diff = Date.now() - date.getTime();
+export function formatTimeAgo(
+    date: Date | string,
+    options?: { prefix?: boolean; fallbackToDate?: boolean },
+): string {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const diff = Date.now() - d.getTime();
     const minutes = Math.floor(diff / 60000);
+    const p = options?.prefix;
 
-    if (minutes < 1) return 'Jetzt';
-    if (minutes < 60) return `${minutes} Min.`;
+    if (minutes < 1) return p ? 'Gerade eben' : 'Jetzt';
+    if (minutes < 60) return p ? `Vor ${minutes} Min.` : `${minutes} Min.`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} Std.`;
+    if (hours < 24) return p ? `Vor ${hours} Std.` : `${hours} Std.`;
     const days = Math.floor(hours / 24);
+    if (options?.fallbackToDate && days >= 7) {
+        return d.toLocaleDateString('de-DE', { dateStyle: 'medium' });
+    }
+    if (p) return `Vor ${days} Tag${days === 1 ? '' : 'en'}`;
     return `${days} Tg.`;
 }
 

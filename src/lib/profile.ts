@@ -21,7 +21,7 @@ type ProfileFields = Partial<Pick<Profile, 'nickname' | 'teaser' | 'photoUrl'>> 
     notifyOnNewsletter?: boolean;
 };
 
-export const getOrCreateProfile = async (userId: string, email: string) => {
+export const getOrCreateProfile = async (userId: string) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
         return null;
@@ -37,7 +37,6 @@ export const getOrCreateProfile = async (userId: string, email: string) => {
         where: { userId },
         create: {
             userId,
-            email,
             nickname,
             slug,
         },
@@ -47,7 +46,6 @@ export const getOrCreateProfile = async (userId: string, email: string) => {
 
 export const upsertProfile = async (params: {
     userId: string;
-    email: string;
     data: ProfileFields;
 }) => {
     const definedData = Object.fromEntries(
@@ -84,7 +82,6 @@ export const upsertProfile = async (params: {
         where: { userId: params.userId },
         create: {
             userId: params.userId,
-            email: params.email,
             nickname,
             slug,
             teaser: definedData.teaser,
@@ -104,7 +101,6 @@ export const upsertProfile = async (params: {
             notifyOnSystemMessages: definedData.notifyOnSystemMessages,
         },
         update: {
-            email: params.email,
             nickname,
             ...(definedData.nickname ? { slug } : {}),
             teaser: definedData.teaser,

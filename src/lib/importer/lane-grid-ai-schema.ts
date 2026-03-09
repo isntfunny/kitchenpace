@@ -68,7 +68,6 @@ export const LaneStepAISchema = z.object({
         .describe(
             'Dauer in Minuten, null wenn kein sinnvoller Zeitwert (z.B. reine Schneideschritte).',
         ),
-    photoKey: z.null().describe('Immer null — AI kann keine Fotos hochladen.'),
     ingredientIds: z
         .array(z.string())
         .describe(
@@ -187,14 +186,13 @@ const laneStepJsonSchema = {
         label: { type: 'string', description: 'Kurzer Titel, max 50 Zeichen.' },
         description: { type: 'string', description: 'Detaillierte Anleitung.' },
         duration: { type: ['integer', 'null'], description: 'Dauer in Minuten oder null.' },
-        photoKey: { type: 'null', description: 'Immer null.' },
         ingredientIds: {
             type: 'array',
             items: { type: 'string' },
             description: 'Zutaten-IDs die in diesem Schritt verwendet werden.',
         },
     },
-    required: ['id', 'type', 'label', 'description', 'duration', 'photoKey', 'ingredientIds'],
+    required: ['id', 'type', 'label', 'description', 'duration', 'ingredientIds'],
     additionalProperties: false,
 } as const;
 

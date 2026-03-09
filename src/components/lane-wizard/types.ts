@@ -7,7 +7,6 @@ export interface LaneStep {
     label: string;
     description: string;
     duration?: number;
-    photoKey?: string;
     ingredientIds?: string[];
     /** Visual filler — inherits colour from source step above. Not interactive. */
     continuation?: boolean;

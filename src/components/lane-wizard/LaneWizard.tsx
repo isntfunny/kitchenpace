@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, Upload } from 'lucide-react';
+import { Download, Sparkles, Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useMemo, useReducer, useRef, useState } from 'react';
 
@@ -12,6 +12,8 @@ import { NodeEditPanel } from '@app/components/flow/editor/NodeEditPanel';
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
 import { css } from 'styled-system/css';
 
+import { AiLaneDialog } from './AiLaneDialog';
+import { FlowConnector } from './FlowConnector';
 import {
     deserializeLaneGrid,
     gridReducer,
@@ -42,17 +44,20 @@ const NOOP_FLOW_CTX: FlowEditorContextValue = {
 interface LaneWizardProps {
     initialGrid: LaneGrid;
     mode?: LaneMode;
+    /** Photos loaded from RecipeStepImage table, keyed by step ID */
+    photosByStepId?: Record<string, string>;
 }
 
 type EditingStep = { step: LaneStep; segmentId: string; laneIndex: number };
 
-export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
+export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: LaneWizardProps) {
     const [grid, dispatch] = useReducer(gridReducer, initialGrid, normalizeLaneGrid);
     const [completed, setCompleted] = useState<Set<string>>(new Set());
     const [anyPopupOpen, setAnyPopupOpen] = useState(false);
     const [editingStep, setEditingStep] = useState<EditingStep | null>(null);
     const { timers, start, pause, reset } = useTimers(initialGrid);
     const importInputRef = useRef<HTMLInputElement>(null);
+    const [aiDialogOpen, setAiDialogOpen] = useState(false);
 
     /* ── Import / Export ── */
 
@@ -140,9 +145,31 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
 
     const elements: React.ReactNode[] = [];
 
-    grid.segments.forEach((segment) => {
+    grid.segments.forEach((segment, segIdx) => {
         const laneCount = segment.lanes.length;
         const templateColumns = segment.columnSpans.map((s) => `${s}fr`).join(' ');
+
+        /* Flow connector between segments (always shown, except before first) */
+        if (segIdx > 0) {
+            const prev = grid.segments[segIdx - 1];
+            const prevColors = prev.lanes.map((lane) => {
+                const last = [...lane].reverse().find((s) => !s.continuation);
+                return last ? STEP_CONFIGS[last.type].accent : '#e07b53';
+            });
+            const nextColors = segment.lanes.map((lane) => {
+                const first = lane.find((s) => !s.continuation);
+                return first ? STEP_CONFIGS[first.type].accent : '#e07b53';
+            });
+            elements.push(
+                <FlowConnector
+                    key={`flow-${prev.id}-${segment.id}`}
+                    prevColumnSpans={prev.columnSpans}
+                    nextColumnSpans={segment.columnSpans}
+                    prevColors={prevColors}
+                    nextColors={nextColors}
+                />,
+            );
+        }
 
         /* Segment block */
         elements.push(
@@ -198,6 +225,7 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                                         <StepCard
                                             key={step.id}
                                             step={step}
+                                            photoKey={photosByStepId[step.id]}
                                             mode={mode}
                                             isLast={stepIdx === lane.length - 1}
                                             isDone={completed.has(step.id)}
@@ -290,12 +318,21 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                 <ProgressBar total={totalSteps} done={doneSteps} />
             )}
 
-            {/* Import / Export toolbar (edit mode only) */}
+            {/* Toolbar (edit mode only) */}
             {mode === 'edit' && (
                 <div className={toolbarClass}>
+                    <button
+                        type="button"
+                        className={aiToolbarBtnClass}
+                        onClick={() => setAiDialogOpen(true)}
+                    >
+                        <Sparkles className={css({ w: '13px', h: '13px' })} />
+                        KI generieren
+                    </button>
+                    <div className={css({ flex: '1' })} />
                     <button type="button" className={toolbarBtnClass} onClick={handleExport}>
                         <Download className={css({ w: '13px', h: '13px' })} />
-                        Export JSON
+                        Export
                     </button>
                     <button
                         type="button"
@@ -303,7 +340,7 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                         onClick={() => importInputRef.current?.click()}
                     >
                         <Upload className={css({ w: '13px', h: '13px' })} />
-                        Import JSON
+                        Import
                     </button>
                     <input
                         ref={importInputRef}
@@ -332,7 +369,6 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                             label: editingStep.step.label,
                             description: editingStep.step.description,
                             duration: editingStep.step.duration,
-                            photoKey: editingStep.step.photoKey,
                         }}
                         availableIngredients={[]}
                         onSave={(updates) => {
@@ -346,7 +382,6 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                                         description: updates.description,
                                     }),
                                     duration: updates.duration,
-                                    photoKey: updates.photoKey,
                                 },
                             });
                             setEditingStep(null);
@@ -368,6 +403,13 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                     />
                 </FlowEditorContext.Provider>
             )}
+
+            {/* AI Dialog */}
+            <AiLaneDialog
+                open={aiDialogOpen}
+                onClose={() => setAiDialogOpen(false)}
+                onResult={(grid) => dispatch({ type: 'SET_GRID', grid })}
+            />
         </div>
     );
 }
@@ -499,6 +541,24 @@ const toolbarClass = css({
     px: '20px',
     py: '10px',
     flexShrink: '0',
+});
+
+const aiToolbarBtnClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    px: '14px',
+    py: '7px',
+    borderRadius: 'full',
+    border: 'none',
+    bg: 'linear-gradient(135deg, #e07b53, #f8b500)',
+    color: 'white',
+    fontSize: '12px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    boxShadow: '0 2px 8px rgba(224,123,83,0.3)',
+    _hover: { boxShadow: '0 3px 12px rgba(224,123,83,0.45)', transform: 'translateY(-1px)' },
 });
 
 const toolbarBtnClass = css({

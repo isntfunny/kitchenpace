@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Pause, Play, RotateCcw, Trash2 } from 'lucide-react';
+import { Check, Pause, Pencil, Play, RotateCcw, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
@@ -19,6 +19,7 @@ function formatTimer(s: number) {
 
 interface StepCardProps {
     step: LaneStep;
+    photoKey?: string;
     mode: LaneMode;
     isDone: boolean;
     isLast: boolean;
@@ -35,6 +36,7 @@ interface StepCardProps {
 
 export function StepCard({
     step,
+    photoKey,
     mode,
     isDone,
     isLast,
@@ -101,10 +103,10 @@ export function StepCard({
             }}
         >
             {/* ── Left image strip (flush, no padding) ── */}
-            {step.photoKey && (
+            {photoKey && (
                 <div className={imageStripClass}>
                     <img
-                        src={getThumbnailUrl(step.photoKey, {
+                        src={getThumbnailUrl(photoKey, {
                             width: 90,
                             height: 120,
                             fit: 'cover',
@@ -115,12 +117,17 @@ export function StepCard({
                 </div>
             )}
 
+            {/* ── Edit overlay (edit mode, center of card) ── */}
+            {mode === 'edit' && onEdit && (
+                <button type="button" onClick={onEdit} className={editOverlayClass}>
+                    <div className={editOverlayIconClass}>
+                        <Pencil className={css({ w: '14px', h: '14px' })} />
+                    </div>
+                </button>
+            )}
+
             {/* ── Content ── */}
-            <div
-                className={contentClass}
-                onClick={mode === 'edit' && onEdit ? onEdit : undefined}
-                style={{ cursor: mode === 'edit' && onEdit ? 'pointer' : undefined }}
-            >
+            <div className={contentClass}>
                 {/* ── Header ── */}
                 <div className={headerClass}>
                     <div className={typeBadgeClass} style={{ color: accentColor }}>
@@ -427,6 +434,41 @@ const timerResetClass = css({
     cursor: 'pointer',
     transition: 'all 0.15s ease',
     _hover: { bg: 'rgba(0,0,0,0.04)' },
+});
+
+const editOverlayClass = css({
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    w: '72px',
+    h: '72px',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    bg: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    zIndex: '10',
+    _hover: {
+        '& > div': { opacity: '1', transform: 'scale(1)' },
+    },
+});
+
+const editOverlayIconClass = css({
+    w: '32px',
+    h: '32px',
+    borderRadius: 'full',
+    bg: 'white',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#e07b53',
+    opacity: '0',
+    transform: 'scale(0.8)',
+    transition: 'opacity 0.15s ease, transform 0.15s ease',
 });
 
 const timerDoneClass = css({

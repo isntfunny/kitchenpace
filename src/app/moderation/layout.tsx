@@ -83,7 +83,7 @@ function NavTab({ href, children }: { href: string; children: React.ReactNode })
                 color: 'foreground.muted',
                 textDecoration: 'none',
                 transition: 'all 150ms ease',
-                _hover: { bg: 'rgba(224,123,83,0.08)', color: 'foreground' },
+                _hover: { bg: 'accent.soft', color: 'foreground' },
             })}
         >
             {children}

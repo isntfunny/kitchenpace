@@ -64,7 +64,7 @@ function StatPill({
                 px: '4',
                 py: '2.5',
                 borderRadius: 'xl',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                boxShadow: { base: '0 2px 12px rgba(0,0,0,0.06)', _dark: '0 2px 12px rgba(0,0,0,0.3)' },
                 border: '1px solid',
                 borderColor: 'border',
             })}
@@ -377,7 +377,7 @@ export function CategoryLanding({
                                     p: '5',
                                     borderRadius: '2xl',
                                     bg: 'surface',
-                                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                                    boxShadow: 'shadow.medium',
                                     height: 'fit-content',
                                     position: 'sticky',
                                     top: '100px',

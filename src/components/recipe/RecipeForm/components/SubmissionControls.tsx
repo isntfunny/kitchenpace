@@ -25,7 +25,7 @@ export function SubmissionControls({
                     ? status === 'DRAFT'
                         ? `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`
                         : `linear-gradient(135deg, ${PALETTE.emerald} 0%, ${PALETTE.blue} 100%)`
-                    : 'white',
+                    : 'surface',
             color: saveStatus === status ? 'white' : status === 'DRAFT' ? PALETTE.orange : PALETTE.emerald,
             fontWeight: '600',
             border: `2px solid ${status === 'DRAFT' ? PALETTE.orange : PALETTE.emerald}`,

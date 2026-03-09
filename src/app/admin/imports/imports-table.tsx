@@ -106,7 +106,7 @@ function ImportDetailDialog({ run, open, onClose }: { run: ImportRunRow; open: b
                 <Dialog.Overlay
                     className={css({
                         position: 'fixed', inset: 0,
-                        background: 'rgba(0,0,0,0.55)',
+                        background: 'surface.overlay',
                         zIndex: 50,
                     })}
                 />
@@ -125,7 +125,7 @@ function ImportDetailDialog({ run, open, onClose }: { run: ImportRunRow; open: b
                         display: 'flex',
                         flexDirection: 'column',
                         overflow: 'hidden',
-                        boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+                        boxShadow: { base: '0 25px 60px rgba(0,0,0,0.3)', _dark: '0 25px 60px rgba(0,0,0,0.6)' },
                     })}
                 >
                     {/* Header */}

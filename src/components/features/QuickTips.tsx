@@ -29,14 +29,14 @@ export function QuickTips({ tips }: QuickTipsProps) {
                     p: '4',
                     borderRadius: '2xl',
                     bg: 'surface',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                    boxShadow: 'shadow.medium',
                 })}
             >
                 <Heading
                     as="h3"
                     size="md"
                     className={css({
-                        color: '#00b894',
+                        color: { base: '#00b894', _dark: '#55efc4' },
                         mb: '2',
                         display: 'flex',
                         alignItems: 'center',
@@ -59,7 +59,7 @@ export function QuickTips({ tips }: QuickTipsProps) {
                 p: '4',
                 borderRadius: '2xl',
                 bg: 'surface',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                boxShadow: 'shadow.medium',
             })}
         >
             <div className={css({ mb: '2' })}>
@@ -67,7 +67,7 @@ export function QuickTips({ tips }: QuickTipsProps) {
                     as="h3"
                     size="md"
                     className={css({
-                        color: '#00b894',
+                        color: { base: '#00b894', _dark: '#55efc4' },
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
@@ -87,7 +87,7 @@ export function QuickTips({ tips }: QuickTipsProps) {
                             gap: '2',
                             p: '2',
                             _hover: {
-                                bg: 'rgba(0,0,0,0.02)',
+                                bg: 'surface.muted',
                             },
                             transition: 'background 150ms ease',
                         })}

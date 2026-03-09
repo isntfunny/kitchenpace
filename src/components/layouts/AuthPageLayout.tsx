@@ -73,7 +73,7 @@ export function AuthPageLayout({
                             gridTemplateColumns: { base: '1fr', lg: '1.15fr 0.85fr' },
                             overflow: 'hidden',
                             borderRadius: '3xl',
-                            boxShadow: '0 30px 90px rgba(0,0,0,0.14)',
+                            boxShadow: { base: '0 30px 90px rgba(0,0,0,0.14)', _dark: '0 30px 90px rgba(0,0,0,0.5)' },
                             border: '1px solid',
                             borderColor: 'border',
                             minHeight: { base: 'auto', lg: '580px' },

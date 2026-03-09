@@ -2,7 +2,6 @@ import { ChefHat } from 'lucide-react';
 import Link from 'next/link';
 
 import { Header } from '@app/components/features/Header';
-import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 export default function NotFound() {
@@ -30,41 +29,42 @@ export default function NotFound() {
                     }}
                 >
                     <div
-                        style={{
+                        className={css({
                             width: '120px',
                             height: '120px',
                             borderRadius: '50%',
-                            backgroundColor: 'rgba(224,123,83,0.1)',
-                            border: '3px dashed rgba(224,123,83,0.4)',
+                            bg: 'accent.soft',
+                            border: '3px dashed',
+                            borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(240,144,112,0.5)' },
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             animation: 'spin 12s linear infinite',
-                        }}
+                        })}
                     >
                         <ChefHat
-                            style={{
+                            className={css({
                                 width: '52px',
                                 height: '52px',
-                                color: PALETTE.orange,
-                            }}
+                                color: 'palette.orange',
+                            })}
                         />
                     </div>
                     {/* 404 floating badge */}
                     <div
-                        style={{
+                        className={css({
                             position: 'absolute',
                             top: '-8px',
                             right: '-12px',
-                            backgroundColor: PALETTE.orange,
+                            bg: 'palette.orange',
                             color: 'white',
                             borderRadius: '999px',
                             padding: '4px 10px',
                             fontSize: '13px',
                             fontWeight: 700,
                             letterSpacing: '0.03em',
-                            boxShadow: '0 2px 8px rgba(224,123,83,0.4)',
-                        }}
+                            boxShadow: { base: '0 2px 8px rgba(224,123,83,0.4)', _dark: '0 2px 8px rgba(0,0,0,0.5)' },
+                        })}
                     >
                         404
                     </div>
@@ -106,38 +106,39 @@ export default function NotFound() {
                 >
                     <Link
                         href="/"
-                        style={{
+                        className={css({
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.4rem',
                             padding: '0.65rem 1.4rem',
                             borderRadius: '999px',
-                            backgroundColor: PALETTE.orange,
+                            bg: 'palette.orange',
                             color: 'white',
                             fontWeight: 600,
                             fontSize: '0.9rem',
                             textDecoration: 'none',
                             transition: 'opacity 0.15s',
-                        }}
+                        })}
                     >
                         Zur Startseite
                     </Link>
                     <Link
                         href="/recipes"
-                        style={{
+                        className={css({
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.4rem',
                             padding: '0.65rem 1.4rem',
                             borderRadius: '999px',
-                            backgroundColor: 'transparent',
-                            border: '1.5px solid rgba(224,123,83,0.4)',
-                            color: PALETTE.orange,
+                            bg: 'transparent',
+                            border: '1.5px solid',
+                            borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(240,144,112,0.5)' },
+                            color: 'palette.orange',
                             fontWeight: 600,
                             fontSize: '0.9rem',
                             textDecoration: 'none',
                             transition: 'border-color 0.15s',
-                        }}
+                        })}
                     >
                         Rezepte entdecken
                     </Link>

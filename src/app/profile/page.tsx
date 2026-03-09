@@ -54,7 +54,7 @@ const cardCss = css({
     p: { base: '4', md: '5' },
     borderRadius: '2xl',
     bg: 'surface',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+    boxShadow: 'shadow.medium',
 });
 
 // ---- Recipe mini card ----
@@ -85,7 +85,7 @@ function RecipeMiniCard({
                 _hover: {
                     borderColor: 'primary',
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                    boxShadow: 'shadow.medium',
                 },
             })}
         >
@@ -205,7 +205,7 @@ function DraftSection({ drafts }: { drafts: DraftRecipe[] }) {
                             _hover: {
                                 borderColor: 'primary',
                                 transform: 'translateY(-2px)',
-                                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                                boxShadow: 'shadow.medium',
                             },
                         })}
                     >
@@ -434,7 +434,7 @@ export default async function ProfilePage() {
                                         objectFit: 'cover',
                                         border: '3px solid',
                                         borderColor: 'primary',
-                                        boxShadow: '0 4px 16px rgba(224,123,83,0.25)',
+                                        boxShadow: { base: '0 4px 16px rgba(224,123,83,0.25)', _dark: '0 4px 16px rgba(224,123,83,0.3)' },
                                     })}
                                 />
                             ) : (
@@ -450,7 +450,7 @@ export default async function ProfilePage() {
                                         justifyContent: 'center',
                                         border: '3px solid',
                                         borderColor: 'primary',
-                                        boxShadow: '0 4px 16px rgba(224,123,83,0.25)',
+                                        boxShadow: { base: '0 4px 16px rgba(224,123,83,0.25)', _dark: '0 4px 16px rgba(224,123,83,0.3)' },
                                     })}
                                 >
                                     <ChefHat size={40} color="white" />

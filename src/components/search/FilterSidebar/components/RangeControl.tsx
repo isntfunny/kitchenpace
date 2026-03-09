@@ -45,18 +45,19 @@ const sliderThumbClass = css({
     height: '18px',
     borderRadius: 'full',
     background: 'primary',
-    border: '2px solid white',
-    boxShadow: '0 6px 12px rgba(0,0,0,0.18)',
+    border: '2px solid',
+    borderColor: 'surface',
+    boxShadow: { base: '0 6px 12px rgba(0,0,0,0.18)', _dark: '0 6px 12px rgba(0,0,0,0.5)' },
     cursor: 'grab',
 });
 
 const tooltipContentClass = css({
-    backgroundColor: 'gray.900',
-    color: 'white',
+    backgroundColor: { base: 'gray.900', _dark: 'gray.100' },
+    color: { base: 'white', _dark: 'gray.900' },
     padding: '8px 12px',
     borderRadius: 'lg',
     fontSize: 'xs',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    boxShadow: { base: '0 4px 12px rgba(0,0,0,0.15)', _dark: '0 4px 12px rgba(0,0,0,0.4)' },
     zIndex: 1000,
 });
 

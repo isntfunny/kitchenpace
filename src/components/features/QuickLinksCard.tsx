@@ -29,7 +29,7 @@ export function QuickLinksCard({ userSlug }: { userSlug: string }) {
                 p: { base: '4', md: '5' },
                 borderRadius: '2xl',
                 bg: 'surface',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                boxShadow: 'shadow.medium',
             })}
         >
             <Heading as="h2" size="md" className={css({ mb: '3' })}>

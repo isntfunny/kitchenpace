@@ -107,7 +107,7 @@ function MediaStrip({ media }: { media?: MediaContext }) {
                     className={css({
                         fontSize: 'xs',
                         color: 'primary',
-                        background: 'accentSoft',
+                        background: 'accent.soft',
                         borderRadius: 'full',
                         paddingX: '2',
                         paddingY: '0.5',
@@ -152,11 +152,11 @@ export function InboxItemCard({
                     borderRadius: '2xl',
                     background: emphasized ? 'surfaceElevated' : 'surface',
                     border: '1px solid',
-                    borderColor: emphasized ? 'accentSoft' : 'border',
+                    borderColor: emphasized ? 'accent.soft' : 'border',
                     textDecoration: 'none',
                     color: 'inherit',
                     transition: 'background 150ms ease',
-                    _hover: { background: 'accentSoft' },
+                    _hover: { background: 'accent.soft' },
                 })}
                 onPointerEnter={onHover}
             >

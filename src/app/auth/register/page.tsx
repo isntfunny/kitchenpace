@@ -39,10 +39,10 @@ function RegistrationSuccess({ email }: { email: string }) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
+                    boxShadow: { base: '0 12px 32px rgba(224,123,83,0.35)', _dark: '0 12px 32px rgba(224,123,83,0.25)' },
                 })}
                 style={{
                     background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
-                    boxShadow: `0 12px 32px rgba(224,123,83,0.35)`,
                 }}
             >
                 <Mail size={30} color="#fff6ec" />
@@ -66,9 +66,9 @@ function RegistrationSuccess({ email }: { email: string }) {
             <div
                 className={css({
                     width: '100%',
-                    background: 'rgba(224,123,83,0.07)',
+                    background: 'accent.soft',
                     border: '1px solid',
-                    borderColor: 'rgba(224,123,83,0.2)',
+                    borderColor: { base: 'rgba(224,123,83,0.2)', _dark: 'rgba(240,144,112,0.3)' },
                     borderRadius: 'xl',
                     padding: '4',
                     display: 'flex',

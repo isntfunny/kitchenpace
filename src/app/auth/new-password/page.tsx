@@ -233,7 +233,7 @@ export default function NewPasswordPage() {
                                 height: '32px',
                                 borderRadius: '50%',
                                 border: '3px solid',
-                                borderColor: 'rgba(224,123,83,0.3)',
+                                borderColor: { base: 'rgba(224,123,83,0.3)', _dark: 'rgba(240,144,112,0.4)' },
                                 borderTopColor: 'palette.orange',
                                 animation: 'spin 1s linear infinite',
                             })}

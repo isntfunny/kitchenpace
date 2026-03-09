@@ -76,14 +76,15 @@ export function ReportsTable({ reports }: { reports: ReportItem[] }) {
                         gap: '4',
                         px: '4',
                         py: '3',
-                        border: '1px solid rgba(224,123,83,0.4)',
+                        border: '1px solid',
+                        borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.5)' },
                         borderRadius: 'xl',
                         bg: 'surface',
                     })}
                 >
                     <Flag
                         size={16}
-                        className={css({ color: '#dc2626', flexShrink: '0' })}
+                        className={css({ color: 'status.danger', flexShrink: '0' })}
                     />
 
                     <span
@@ -93,8 +94,8 @@ export function ReportsTable({ reports }: { reports: ReportItem[] }) {
                             borderRadius: 'full',
                             fontSize: 'xs',
                             fontWeight: '600',
-                            bg: 'rgba(239,68,68,0.1)',
-                            color: '#dc2626',
+                            bg: { base: 'rgba(239,68,68,0.1)', _dark: 'rgba(239,68,68,0.15)' },
+                            color: 'status.danger',
                             flexShrink: '0',
                         })}
                     >
@@ -183,13 +184,13 @@ export function ReportsTable({ reports }: { reports: ReportItem[] }) {
                             px: '3',
                             py: '1.5',
                             borderRadius: 'lg',
-                            bg: 'rgba(34,197,94,0.1)',
-                            color: '#16a34a',
+                            bg: { base: 'rgba(34,197,94,0.1)', _dark: 'rgba(34,197,94,0.15)' },
+                            color: 'status.success',
                             fontSize: 'xs',
                             fontWeight: '600',
                             cursor: 'pointer',
                             border: 'none',
-                            _hover: { bg: 'rgba(34,197,94,0.2)' },
+                            _hover: { bg: { base: 'rgba(34,197,94,0.2)', _dark: 'rgba(34,197,94,0.25)' } },
                             _disabled: { opacity: '0.5', cursor: 'not-allowed' },
                         })}
                     >

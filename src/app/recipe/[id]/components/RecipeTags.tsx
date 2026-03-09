@@ -41,7 +41,7 @@ export function RecipeTags({
                         fontFamily: 'body',
                         cursor: 'pointer',
                         transition: 'all 150ms ease',
-                        _hover: { bg: '#e8e2d9' },
+                        _hover: { bg: { base: '#e8e2d9', _dark: 'rgba(255,255,255,0.1)' } },
                     })}
                 >
                     {difficulty}

@@ -218,46 +218,46 @@ interface UserProfileClientProps {
 const AVATAR_SIZE = 180;
 
 // Activity type configurations - supports {recipe} placeholder
-const ACTIVITY_CONFIG: Record<string, { icon: ReactNode; template: string[]; bgColor: string }> = {
+const ACTIVITY_CONFIG: Record<string, { icon: ReactNode; template: string[]; bgCss: string }> = {
     RECIPE_CREATED: {
         icon: <Edit3 size={16} />,
         template: ['hat das Rezept', 'erstellt'],
-        bgColor: '#f3e8ff',
+        bgCss: css({ bg: { base: '#f3e8ff', _dark: 'rgba(168,85,247,0.15)' } }),
     },
     RECIPE_COOKED: {
         icon: <Flame size={16} />,
         template: ['hat', 'zubereitet'],
-        bgColor: '#fef3c7',
+        bgCss: css({ bg: { base: '#fef3c7', _dark: 'rgba(245,158,11,0.15)' } }),
     },
     RECIPE_RATED: {
         icon: <Star size={16} />,
         template: ['hat', 'bewertet'],
-        bgColor: '#fef9c3',
+        bgCss: css({ bg: { base: '#fef9c3', _dark: 'rgba(234,179,8,0.15)' } }),
     },
     RECIPE_COMMENTED: {
         icon: <MessageSquare size={16} />,
         template: ['hat', 'kommentiert'],
-        bgColor: '#fce7f3',
+        bgCss: css({ bg: { base: '#fce7f3', _dark: 'rgba(236,72,153,0.15)' } }),
     },
     RECIPE_FAVORITED: {
         icon: <Bookmark size={16} />,
         template: ['hat', 'gespeichert'],
-        bgColor: '#dbeafe',
+        bgCss: css({ bg: { base: '#dbeafe', _dark: 'rgba(59,130,246,0.15)' } }),
     },
     USER_FOLLOWED: {
         icon: <Handshake size={16} />,
         template: ['ist jetzt Follower'],
-        bgColor: '#d1fae5',
+        bgCss: css({ bg: { base: '#d1fae5', _dark: 'rgba(52,211,153,0.15)' } }),
     },
     SHOPPING_LIST_CREATED: {
         icon: <ShoppingCart size={16} />,
         template: ['hat eine Einkaufsliste erstellt'],
-        bgColor: '#fef3c7',
+        bgCss: css({ bg: { base: '#fef3c7', _dark: 'rgba(245,158,11,0.15)' } }),
     },
     MEAL_PLAN_CREATED: {
         icon: <Calendar size={16} />,
         template: ['hat einen Essensplan erstellt'],
-        bgColor: '#e0e7ff',
+        bgCss: css({ bg: { base: '#e0e7ff', _dark: 'rgba(99,102,241,0.15)' } }),
     },
 };
 
@@ -331,8 +331,10 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 height: `${AVATAR_SIZE}px`,
                                 borderRadius: '3xl',
                                 overflow: 'hidden',
-                                boxShadow:
-                                    `0 0 0 3px white, 0 0 0 6px ${PALETTE.orange}, 0 8px 32px rgba(224, 123, 83, 0.3)`,
+                                boxShadow: {
+                                    base: `0 0 0 3px white, 0 0 0 6px ${PALETTE.orange}, 0 8px 32px rgba(224, 123, 83, 0.3)`,
+                                    _dark: `0 0 0 3px #1c2128, 0 0 0 6px ${PALETTE.orange}, 0 8px 32px rgba(224, 123, 83, 0.35)`,
+                                },
                             })}
                         >
                             {user.avatar ? (
@@ -489,7 +491,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                                 minW: '80px',
                                                 height: '100%',
                                                 _hover: {
-                                                    bg: isFollowing ? 'gray.50' : 'primary-hover',
+                                                    bg: isFollowing ? 'surface.muted' : 'primary-hover',
                                                     borderColor: isFollowing
                                                         ? 'border'
                                                         : 'transparent',
@@ -567,7 +569,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     className={css({
                                         fontSize: 'sm',
                                         color: 'text.muted',
-                                        bg: 'gray.100',
+                                        bg: { base: 'gray.100', _dark: 'rgba(255,255,255,0.06)' },
                                         px: '3',
                                         py: '1',
                                         borderRadius: 'full',
@@ -615,7 +617,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     p: '8',
                                     textAlign: 'center',
                                     border: '1px dashed',
-                                    borderColor: 'gray.200',
+                                    borderColor: 'border',
                                 })}
                             >
                                 <div
@@ -658,7 +660,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                             className={css({
                                                 fontSize: 'sm',
                                                 color: 'text.muted',
-                                                bg: 'gray.100',
+                                                bg: { base: 'gray.100', _dark: 'rgba(255,255,255,0.06)' },
                                                 px: '3',
                                                 py: '1',
                                                 borderRadius: 'full',
@@ -707,8 +709,10 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 className={css({
                                     bg: 'surface.elevated',
                                     borderRadius: 'xl',
-                                    boxShadow:
-                                        '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
+                                    boxShadow: {
+                                        base: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
+                                        _dark: '0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.1)',
+                                    },
                                     overflow: 'hidden',
                                 })}
                             >
@@ -717,7 +721,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         const config = ACTIVITY_CONFIG[activity.type] ?? {
                                             icon: <Clipboard size={16} />,
                                             template: ['war aktiv'],
-                                            bgColor: '#f3f4f6',
+                                            bgCss: css({ bg: { base: '#f3f4f6', _dark: 'rgba(255,255,255,0.06)' } }),
                                         };
 
                                         // Build the activity text
@@ -735,8 +739,8 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                                         index < activities.length - 1
                                                             ? '1px solid'
                                                             : 'none',
-                                                    borderColor: 'gray.100',
-                                                    _hover: { bg: 'gray.50' },
+                                                    borderColor: 'border.muted',
+                                                    _hover: { bg: 'surface.muted' },
                                                     transition: 'background 0.15s',
                                                 })}
                                             >
@@ -747,17 +751,16 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                                     })}
                                                 >
                                                     <div
-                                                        className={css({
+                                                        className={`${css({
                                                             width: '36px',
                                                             height: '36px',
                                                             borderRadius: 'lg',
-                                                            bg: config.bgColor,
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             justifyContent: 'center',
                                                             fontSize: 'lg',
                                                             flexShrink: 0,
-                                                        })}
+                                                        })} ${config.bgCss}`}
                                                     >
                                                         {config.icon}
                                                     </div>
@@ -828,7 +831,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     p: '6',
                                     textAlign: 'center',
                                     border: '1px dashed',
-                                    borderColor: 'gray.200',
+                                    borderColor: 'border',
                                 })}
                             >
                                 <div

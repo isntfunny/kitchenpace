@@ -142,7 +142,7 @@ export function UserDashboard({
                             className={css({
                                 padding: '3',
                                 borderRadius: 'xl',
-                                background: 'accentSoft',
+                                background: 'accent.soft',
                                 color: 'primary',
                                 fontWeight: '600',
                                 textDecoration: 'none',

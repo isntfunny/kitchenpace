@@ -72,8 +72,6 @@ export default defineConfig({
                         'text-muted': { value: '#636e72' },
                         'text-dark': { value: '#f5f5f5' },
                         'text-muted-dark': { value: '#a0a0a0' },
-                        'page-light': { value: '#fffcf9' },
-                        'page-dark': { value: '#121418' },
                         'card-light': { value: '#ffffff' },
                         'card-dark': { value: '#1a1d21' },
                         'admin-header': { value: '#ffe8d6' },
@@ -84,15 +82,11 @@ export default defineConfig({
                         gold: { value: '#f8b500' },
                         emerald: { value: '#00b894' },
                         purple: { value: '#6c5ce7' },
-                        blue: { value: '#0984e3' },
-                        pink: { value: '#fd79a8' },
                         // Dark-mode-friendly variants
                         'orange-dark': { value: '#f09070' },
                         'gold-dark': { value: '#ffc94d' },
                         'emerald-dark': { value: '#2ed8a3' },
                         'purple-dark': { value: '#9b8ff5' },
-                        'blue-dark': { value: '#4ea8f0' },
-                        'pink-dark': { value: '#ff9ec0' },
                     },
                     status: {
                         success: { value: '#22c55e' },
@@ -128,12 +122,6 @@ export default defineConfig({
                             _dark: '{colors.brand.text-dark}',
                         },
                     },
-                    'foreground.muted': {
-                        value: {
-                            base: '{colors.brand.text-muted}',
-                            _dark: '{colors.brand.text-muted-dark}',
-                        },
-                    },
                     border: {
                         value: {
                             base: 'rgba(0,0,0,0.08)',
@@ -147,12 +135,6 @@ export default defineConfig({
                         value: '{colors.brand.primary}',
                     },
                     'accent.soft': {
-                        value: {
-                            base: 'rgba(224,123,83,0.08)',
-                            _dark: 'rgba(224,123,83,0.15)',
-                        },
-                    },
-                    accentSoft: {
                         value: {
                             base: 'rgba(224,123,83,0.08)',
                             _dark: 'rgba(224,123,83,0.15)',
@@ -188,18 +170,6 @@ export default defineConfig({
                             _dark: '{colors.brand.card-dark}',
                         },
                     },
-                    'border.primary': {
-                        value: {
-                            base: '{colors.brand.primary}',
-                            _dark: '{colors.brand.primary-dark}',
-                        },
-                    },
-                    'border.secondary': {
-                        value: {
-                            base: '{colors.brand.secondary}',
-                            _dark: '{colors.brand.secondary}',
-                        },
-                    },
                     'border.muted': {
                         value: {
                             base: 'rgba(0,0,0,0.04)',
@@ -218,18 +188,6 @@ export default defineConfig({
                             _dark: '{colors.brand.text-dark}',
                         },
                     },
-                    'text.primary': {
-                        value: {
-                            base: '{colors.brand.text}',
-                            _dark: '{colors.brand.text-dark}',
-                        },
-                    },
-                    'text.secondary': {
-                        value: {
-                            base: '{colors.brand.text-muted}',
-                            _dark: '{colors.brand.text-muted-dark}',
-                        },
-                    },
                     'text.accent': {
                         value: {
                             base: '{colors.brand.accent}',
@@ -242,22 +200,10 @@ export default defineConfig({
                             _dark: '{colors.brand.primary-dark}',
                         },
                     },
-                    'button.primary': {
-                        value: {
-                            base: '{colors.brand.primary}',
-                            _dark: '{colors.brand.primary-dark}',
-                        },
-                    },
                     'button.primary-hover': {
                         value: {
                             base: '{colors.brand.primary-dark}',
                             _dark: '{colors.brand.primary}',
-                        },
-                    },
-                    'button.secondary': {
-                        value: {
-                            base: '{colors.brand.secondary}',
-                            _dark: '{colors.brand.secondary}',
                         },
                     },
                     'button.secondary-hover': {
@@ -277,12 +223,6 @@ export default defineConfig({
                     },
                     'palette.purple': {
                         value: { base: '#6c5ce7', _dark: '#9b8ff5' },
-                    },
-                    'palette.blue': {
-                        value: { base: '#0984e3', _dark: '#4ea8f0' },
-                    },
-                    'palette.pink': {
-                        value: { base: '#fd79a8', _dark: '#ff9ec0' },
                     },
                     'status.success': {
                         value: { base: '#22c55e', _dark: '#4ade80' },

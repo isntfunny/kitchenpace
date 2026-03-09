@@ -1046,7 +1046,7 @@ const iconWrapperClass = css({
     justifyContent: 'center',
     mx: 'auto',
     mb: '5',
-    boxShadow: '0 8px 32px rgba(224,123,83,0.35)',
+    boxShadow: { base: '0 8px 32px rgba(224,123,83,0.35)', _dark: '0 8px 32px rgba(224,123,83,0.2)' },
 });
 
 const iconClass = css({
@@ -1073,12 +1073,12 @@ const errorWrapperClass = css({
 });
 
 const formWrapperClass = css({
-    backgroundColor: 'white',
+    backgroundColor: { base: 'white', _dark: 'surface' },
     borderRadius: 'xl',
     border: '1px solid',
-    borderColor: 'rgba(224,123,83,0.15)',
+    borderColor: { base: 'rgba(224,123,83,0.15)', _dark: 'rgba(224,123,83,0.2)' },
     p: '6',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+    boxShadow: { base: '0 4px 24px rgba(0,0,0,0.06)', _dark: '0 4px 24px rgba(0,0,0,0.3)' },
 });
 
 const labelClass = css({
@@ -1095,13 +1095,15 @@ const inputClass = css({
     py: '3',
     borderRadius: 'lg',
     border: '1.5px solid',
-    borderColor: 'rgba(224,123,83,0.3)',
+    borderColor: { base: 'rgba(224,123,83,0.3)', _dark: 'rgba(224,123,83,0.35)' },
     fontSize: 'md',
     outline: 'none',
     transition: 'all 0.15s ease',
+    bg: { base: 'transparent', _dark: 'surface' },
+    color: 'text',
     _focus: {
         borderColor: 'palette.orange',
-        boxShadow: '0 0 0 3px rgba(224,123,83,0.1)',
+        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.1)', _dark: '0 0 0 3px rgba(224,123,83,0.15)' },
     },
     _placeholder: {
         color: 'text.muted',
@@ -1140,8 +1142,8 @@ const secondaryButtonClass = css({
     py: '3',
     borderRadius: 'xl',
     border: '1.5px solid',
-    borderColor: 'rgba(224,123,83,0.3)',
-    backgroundColor: 'white',
+    borderColor: { base: 'rgba(224,123,83,0.3)', _dark: 'rgba(224,123,83,0.35)' },
+    backgroundColor: { base: 'white', _dark: 'surface' },
     color: 'text',
     fontSize: 'md',
     fontWeight: '600',
@@ -1194,11 +1196,11 @@ const processingLayoutClass = css({
 const processingSidebarClass = css({
     width: '300px',
     flexShrink: 0,
-    backgroundColor: 'white',
+    backgroundColor: { base: 'white', _dark: 'surface' },
     borderRadius: 'xl',
     border: '1px solid',
-    borderColor: 'rgba(224,123,83,0.12)',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+    borderColor: { base: 'rgba(224,123,83,0.12)', _dark: 'rgba(224,123,83,0.18)' },
+    boxShadow: { base: '0 4px 24px rgba(0,0,0,0.06)', _dark: '0 4px 24px rgba(0,0,0,0.3)' },
     p: '5',
     position: 'sticky',
     top: '8',
@@ -1216,7 +1218,7 @@ const sidebarIconWrapperClass = (isScraping: boolean) =>
         width: '40px',
         height: '40px',
         borderRadius: 'lg',
-        backgroundColor: isScraping ? 'rgba(59,130,246,0.1)' : 'rgba(168,85,247,0.1)',
+        backgroundColor: isScraping ? { base: 'rgba(59,130,246,0.1)', _dark: 'rgba(59,130,246,0.15)' } : { base: 'rgba(168,85,247,0.1)', _dark: 'rgba(168,85,247,0.15)' },
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -1245,7 +1247,7 @@ const sidebarSubtitleClass = css({
 const sidebarProgressTrackClass = css({
     height: '6px',
     width: '100%',
-    backgroundColor: 'rgba(224,123,83,0.1)',
+    backgroundColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
     borderRadius: 'full',
     overflow: 'hidden',
     mb: '5',
@@ -1281,8 +1283,8 @@ const pipelineStepIndicatorClass = (done: boolean, active: boolean) =>
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        color: done ? 'status.success' : active ? 'palette.orange' : 'rgba(0,0,0,0.25)',
-        backgroundColor: done ? 'rgba(34,197,94,0.08)' : active ? 'rgba(224,123,83,0.1)' : 'transparent',
+        color: done ? 'status.success' : active ? 'palette.orange' : { base: 'rgba(0,0,0,0.25)', _dark: 'rgba(255,255,255,0.3)' },
+        backgroundColor: done ? { base: 'rgba(34,197,94,0.08)', _dark: 'rgba(34,197,94,0.12)' } : active ? { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' } : 'transparent',
         zIndex: 1,
     });
 
@@ -1302,7 +1304,7 @@ const pipelineConnectorClass = (done: boolean) =>
         top: '24px',
         width: '2px',
         height: '20px',
-        backgroundColor: done ? 'rgba(34,197,94,0.3)' : 'rgba(0,0,0,0.08)',
+        backgroundColor: done ? { base: 'rgba(34,197,94,0.3)', _dark: 'rgba(34,197,94,0.4)' } : { base: 'rgba(0,0,0,0.08)', _dark: 'rgba(255,255,255,0.1)' },
         zIndex: 0,
     });
 
@@ -1312,7 +1314,7 @@ const sidebarStatsClass = css({
     gap: '2',
     pt: '4',
     borderTop: '1px solid',
-    borderColor: 'rgba(0,0,0,0.06)',
+    borderColor: { base: 'rgba(0,0,0,0.06)', _dark: 'rgba(255,255,255,0.08)' },
 });
 
 const sidebarStatRowClass = css({
@@ -1457,17 +1459,17 @@ const previewHeaderClass = css({
     gap: '4',
     mb: '6',
     p: '5',
-    backgroundColor: 'rgba(0,184,148,0.08)',
+    backgroundColor: { base: 'rgba(0,184,148,0.08)', _dark: 'rgba(0,184,148,0.12)' },
     borderRadius: 'xl',
     border: '1px solid',
-    borderColor: 'rgba(0,184,148,0.2)',
+    borderColor: { base: 'rgba(0,184,148,0.2)', _dark: 'rgba(0,184,148,0.25)' },
 });
 
 const previewIconClass = css({
     width: '56px',
     height: '56px',
     borderRadius: 'full',
-    backgroundColor: 'rgba(0,184,148,0.15)',
+    backgroundColor: { base: 'rgba(0,184,148,0.15)', _dark: 'rgba(0,184,148,0.2)' },
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1500,10 +1502,10 @@ const previewCardsClass = css({
 
 const previewCardClass = css({
     p: '4',
-    backgroundColor: 'white',
+    backgroundColor: { base: 'white', _dark: 'surface' },
     borderRadius: 'lg',
     border: '1px solid',
-    borderColor: 'rgba(224,123,83,0.1)',
+    borderColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
 });
 
 const previewCardLabelClass = css({
@@ -1531,7 +1533,7 @@ const cardIconClass = css({
 const imagePreviewClass = css({
     mb: '6',
     p: '4',
-    backgroundColor: 'rgba(224,123,83,0.05)',
+    backgroundColor: { base: 'rgba(224,123,83,0.05)', _dark: 'rgba(224,123,83,0.08)' },
     borderRadius: 'lg',
 });
 
@@ -1558,9 +1560,9 @@ const imageRemoveButtonClass = css({
     cursor: 'pointer',
     transition: 'all 0.15s',
     _hover: {
-        color: 'red.600',
-        borderColor: 'red.300',
-        backgroundColor: 'red.50',
+        color: { base: 'red.600', _dark: 'red.400' },
+        borderColor: { base: 'red.300', _dark: 'red.700' },
+        backgroundColor: { base: 'red.50', _dark: 'rgba(239,68,68,0.1)' },
     },
 });
 
@@ -1576,7 +1578,7 @@ const imagePreviewImgClass = css({
 const ingredientsPreviewClass = css({
     mb: '6',
     p: '4',
-    backgroundColor: 'rgba(224,123,83,0.05)',
+    backgroundColor: { base: 'rgba(224,123,83,0.05)', _dark: 'rgba(224,123,83,0.08)' },
     borderRadius: 'lg',
 });
 
@@ -1597,20 +1599,20 @@ const ingredientTagClass = css({
     display: 'inline-flex',
     px: '2',
     py: '1',
-    backgroundColor: 'white',
+    backgroundColor: { base: 'white', _dark: 'surface' },
     borderRadius: 'md',
     fontSize: 'xs',
     fontWeight: '500',
     color: 'text',
     border: '1px solid',
-    borderColor: 'rgba(224,123,83,0.15)',
+    borderColor: { base: 'rgba(224,123,83,0.15)', _dark: 'rgba(224,123,83,0.2)' },
 });
 
 const moreTagClass = css({
     display: 'inline-flex',
     px: '2',
     py: '1',
-    backgroundColor: 'rgba(224,123,83,0.1)',
+    backgroundColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
     borderRadius: 'md',
     fontSize: 'xs',
     fontWeight: '500',
@@ -1650,7 +1652,7 @@ const backButtonClass = css({
     cursor: 'pointer',
     mb: '4',
     _hover: {
-        backgroundColor: 'rgba(0,0,0,0.04)',
+        backgroundColor: 'surface.muted',
         color: 'text',
     },
 });
@@ -1674,10 +1676,10 @@ const editSubtitleClass = css({
 });
 
 const editFormClass = css({
-    backgroundColor: 'white',
+    backgroundColor: { base: 'white', _dark: 'surface' },
     borderRadius: 'xl',
     border: '1px solid',
-    borderColor: 'rgba(224,123,83,0.15)',
+    borderColor: { base: 'rgba(224,123,83,0.15)', _dark: 'rgba(224,123,83,0.2)' },
     overflow: 'hidden',
 });
 
@@ -1687,7 +1689,7 @@ const formSectionClass = css({
 
 const formDividerClass = css({
     height: '1px',
-    backgroundColor: 'rgba(224,123,83,0.08)',
+    backgroundColor: { base: 'rgba(224,123,83,0.08)', _dark: 'rgba(224,123,83,0.12)' },
 });
 
 const flowNoteClass = css({
@@ -1697,10 +1699,10 @@ const flowNoteClass = css({
     mx: '6',
     my: '4',
     p: '4',
-    backgroundColor: 'rgba(224,123,83,0.05)',
+    backgroundColor: { base: 'rgba(224,123,83,0.05)', _dark: 'rgba(224,123,83,0.08)' },
     borderRadius: 'lg',
     border: '1px solid',
-    borderColor: 'rgba(224,123,83,0.1)',
+    borderColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
 });
 
 const flowNoteIconClass = css({
@@ -1717,8 +1719,8 @@ const editActionsClass = css({
     justifyContent: 'space-between',
     p: '6',
     borderTop: '1px solid',
-    borderTopColor: 'rgba(224,123,83,0.1)',
-    backgroundColor: 'rgba(224,123,83,0.02)',
+    borderTopColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
+    backgroundColor: { base: 'rgba(224,123,83,0.02)', _dark: 'rgba(224,123,83,0.04)' },
 });
 
 const saveButtonClass = css({

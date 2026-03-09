@@ -330,13 +330,13 @@ const columns: ColumnDef<User>[] = [
                                     height: '8',
                                     borderRadius: 'lg',
                                     border: '1px solid',
-                                    borderColor: 'rgba(34,197,94,0.3)',
+                                    borderColor: { base: 'rgba(34,197,94,0.3)', _dark: 'rgba(34,197,94,0.4)' },
                                     background: 'surface',
                                     cursor: 'pointer',
-                                    color: '#22c55e',
+                                    color: 'status.success',
                                     transition: 'all 0.2s',
                                     _hover: {
-                                        background: 'rgba(34,197,94,0.1)',
+                                        background: { base: 'rgba(34,197,94,0.1)', _dark: 'rgba(34,197,94,0.15)' },
                                     },
                                 })}
                             >
@@ -362,13 +362,13 @@ const columns: ColumnDef<User>[] = [
                                     height: '8',
                                     borderRadius: 'lg',
                                     border: '1px solid',
-                                    borderColor: 'rgba(239,68,68,0.3)',
+                                    borderColor: { base: 'rgba(239,68,68,0.3)', _dark: 'rgba(239,68,68,0.4)' },
                                     background: 'surface',
                                     cursor: 'pointer',
-                                    color: '#ef4444',
+                                    color: 'status.error',
                                     transition: 'all 0.2s',
                                     _hover: {
-                                        background: 'rgba(239,68,68,0.1)',
+                                        background: { base: 'rgba(239,68,68,0.1)', _dark: 'rgba(239,68,68,0.15)' },
                                     },
                                 })}
                             >

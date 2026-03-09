@@ -375,8 +375,8 @@ export function RecipeDetailClient({
                         gap: '3',
                         px: '4',
                         py: '2.5',
-                        backgroundColor: 'rgba(224,123,83,0.1)',
-                        borderBottom: '1px solid rgba(224,123,83,0.25)',
+                        backgroundColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
+                        borderBottom: { base: '1px solid rgba(224,123,83,0.25)', _dark: '1px solid rgba(224,123,83,0.3)' },
                         fontSize: 'sm',
                         color: 'brand.primary',
                         fontWeight: '500',
@@ -421,10 +421,10 @@ export function RecipeDetailClient({
                         gap: '3',
                         px: '4',
                         py: '2.5',
-                        backgroundColor: 'rgba(217,173,54,0.1)',
-                        borderBottom: '1px solid rgba(217,173,54,0.25)',
+                        backgroundColor: { base: 'rgba(217,173,54,0.1)', _dark: 'rgba(217,173,54,0.15)' },
+                        borderBottom: { base: '1px solid rgba(217,173,54,0.25)', _dark: '1px solid rgba(217,173,54,0.3)' },
                         fontSize: 'sm',
-                        color: '#b8860b',
+                        color: { base: '#b8860b', _dark: '#ffc94d' },
                         fontWeight: '500',
                     })}
                 >
@@ -438,7 +438,7 @@ export function RecipeDetailClient({
                             fontWeight: '700',
                             textTransform: 'uppercase',
                             letterSpacing: '0.06em',
-                            backgroundColor: '#b8860b',
+                            backgroundColor: { base: '#b8860b', _dark: '#d4a017' },
                             color: 'white',
                         })}
                     >
@@ -689,7 +689,7 @@ export function RecipeDetailClient({
                             })}
                         >
                             {/* ── Recipe Info Card ── */}
-                            <div className={css({ bg: 'surface', borderRadius: '2xl', p: '5', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', mb: '4' })}>
+                            <div className={css({ bg: 'surface', borderRadius: '2xl', p: '5', boxShadow: 'shadow.medium', mb: '4' })}>
                                 {/* Meta strip */}
                                 <div className={css({ display: 'flex', alignItems: 'center', gap: '3', flexWrap: 'wrap', fontSize: 'sm', fontFamily: 'body', color: 'text-muted', mb: '3' })}>
                                     <button
@@ -870,7 +870,7 @@ export function RecipeDetailClient({
                                 bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '5',
-                                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                                boxShadow: 'shadow.medium',
                             })}
                         >
                             <h2
@@ -995,7 +995,7 @@ export function RecipeDetailClient({
                                 bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '5',
-                                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                                boxShadow: 'shadow.medium',
                             })}
                         >
                             <h2
@@ -1041,7 +1041,7 @@ export function RecipeDetailClient({
                                 bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '5',
-                                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                                boxShadow: 'shadow.medium',
                             })}
                         >
                             <div
@@ -1197,7 +1197,7 @@ export function RecipeDetailClient({
                                 bg: 'surface',
                                 borderRadius: '2xl',
                                 p: '6',
-                                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                                boxShadow: 'shadow.medium',
                             })}
                         >
                             <div className={css({ spaceY: '4' })}>

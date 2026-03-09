@@ -89,7 +89,7 @@ export function PrivacySettingsCard({ profile }: PrivacySettingsCardProps) {
                 p: { base: '4', md: '5' },
                 borderRadius: '2xl',
                 bg: 'surface',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                boxShadow: 'shadow.medium',
             })}
         >
             <div className={css({ mb: '5' })}>
@@ -179,7 +179,7 @@ export function PrivacySettingsCard({ profile }: PrivacySettingsCardProps) {
                                         height: '22px',
                                         borderRadius: 'full',
                                         background: 'surface',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                        boxShadow: { base: '0 2px 4px rgba(0,0,0,0.2)', _dark: '0 2px 4px rgba(0,0,0,0.4)' },
                                         transition: 'left 150ms ease',
                                     })}
                                 />

@@ -1,12 +1,8 @@
 'use client';
 
 import {
-    Apple,
     ChefHat,
-    Droplet,
     Egg,
-    Flame,
-    Leaf,
     LayoutGrid,
     Menu,
     Plus,
@@ -18,7 +14,6 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
-import { useMemo } from 'react';
 
 import { HeaderSearch } from '@app/components/search/HeaderSearch';
 import { useIsDark } from '@app/lib/darkMode';
@@ -35,12 +30,7 @@ import { ThemeToggle } from './ThemeToggle';
 
 type GeneralNavLinkItem = MenuNavLinkItem & { authOnly?: boolean };
 
-const ICON_POOL = [Apple, Egg, Flame, ChefHat, Leaf, Zap, Droplet];
-
-function getRandomIcons() {
-    const shuffled = [...ICON_POOL].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
-}
+const HEADER_ICONS = [Egg, Zap, ChefHat] as const;
 
 const GENERAL_NAV_LINKS: GeneralNavLinkItem[] = [
     {
@@ -245,7 +235,7 @@ export function Header() {
     const isModerator = isAuthenticated && userRole === 'MODERATOR';
     const dark = useIsDark();
 
-    const [Icon1, Icon2, Icon3] = useMemo(() => getRandomIcons(), []);
+    const [Icon1, Icon2, Icon3] = HEADER_ICONS;
 
     return (
         <header

@@ -804,7 +804,7 @@ const controlsClass = css({
         border: '1px solid rgba(224,123,83,0.4)',
         borderRadius: 'md',
         color: 'text',
-        _hover: { backgroundColor: 'accentSoft' },
+        _hover: { backgroundColor: 'accent.soft' },
     },
 });
 
@@ -819,7 +819,7 @@ const layoutButtonClass = css({
     cursor: 'pointer',
     transition: 'all 0.15s ease',
     _hover: {
-        backgroundColor: 'accentSoft',
+        backgroundColor: 'accent.soft',
         borderColor: 'brand.primary',
     },
 });

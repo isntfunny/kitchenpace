@@ -19,10 +19,10 @@ const SignOutPage = () => {
             >
                 <div
                     className={css({
-                        background: 'white',
+                        background: 'surface',
                         borderRadius: 'xl',
                         padding: { base: '6', md: '8' },
-                        boxShadow: '0 18px 45px rgba(224,123,83,0.2)',
+                        boxShadow: { base: '0 18px 45px rgba(224,123,83,0.2)', _dark: '0 18px 45px rgba(0,0,0,0.4)' },
                         width: '100%',
                         maxWidth: '520px',
                         textAlign: 'center',
@@ -55,7 +55,7 @@ const SignOutPage = () => {
                             transition: 'transform 150ms ease, box-shadow 150ms ease',
                             _hover: {
                                 transform: 'translateY(-1px)',
-                                boxShadow: '0 10px 30px rgba(224,123,83,0.35)',
+                                boxShadow: { base: '0 10px 30px rgba(224,123,83,0.35)', _dark: '0 10px 30px rgba(224,123,83,0.25)' },
                             },
                         })}
                     >

@@ -146,13 +146,14 @@ export function FileUpload({
                         justifyContent: 'center',
                         gap: '2',
                         padding: '8',
-                        border: '2px dashed rgba(224,123,83,0.4)',
+                        border: '2px dashed',
+                        borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.45)' },
                         borderRadius: 'xl',
                         cursor: 'pointer',
                         transition: 'all 150ms',
                         _hover: {
                             borderColor: 'palette.orange',
-                            background: 'rgba(224,123,83,0.05)',
+                            background: { base: 'rgba(224,123,83,0.05)', _dark: 'rgba(224,123,83,0.08)' },
                         },
                     })}
                 >
@@ -199,7 +200,7 @@ export function FileUpload({
                     className={css({
                         position: 'absolute',
                         inset: '0',
-                        background: 'rgba(255,255,255,0.8)',
+                        background: { base: 'rgba(255,255,255,0.8)', _dark: 'rgba(0,0,0,0.6)' },
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

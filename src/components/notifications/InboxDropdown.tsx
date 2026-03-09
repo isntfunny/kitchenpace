@@ -116,7 +116,7 @@ export function InboxDropdown({
                                 justifyContent: 'center',
                                 padding: '3',
                                 borderRadius: '2xl',
-                                background: 'accentSoft',
+                                background: 'accent.soft',
                                 color: 'primary',
                                 fontWeight: '700',
                                 textDecoration: 'none',

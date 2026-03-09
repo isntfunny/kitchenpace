@@ -8,11 +8,27 @@ import { deleteUserCookImage, type UserCookImageData } from '@app/app/actions/co
 import { css } from 'styled-system/css';
 
 
-const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-    AUTO_APPROVED: { label: 'Freigegeben', color: '#16a34a', bg: 'rgba(34,197,94,0.1)' },
-    APPROVED: { label: 'Freigegeben', color: '#16a34a', bg: 'rgba(34,197,94,0.1)' },
-    PENDING: { label: 'In Prüfung', color: '#d97706', bg: 'rgba(245,158,11,0.1)' },
-    REJECTED: { label: 'Abgelehnt', color: '#dc2626', bg: 'rgba(239,68,68,0.1)' },
+const STATUS_LABELS: Record<string, { label: string; colorCss: string; bgCss: string }> = {
+    AUTO_APPROVED: {
+        label: 'Freigegeben',
+        colorCss: css({ color: { base: '#16a34a', _dark: '#4ade80' } }),
+        bgCss: css({ bg: { base: 'rgba(34,197,94,0.1)', _dark: 'rgba(34,197,94,0.15)' } }),
+    },
+    APPROVED: {
+        label: 'Freigegeben',
+        colorCss: css({ color: { base: '#16a34a', _dark: '#4ade80' } }),
+        bgCss: css({ bg: { base: 'rgba(34,197,94,0.1)', _dark: 'rgba(34,197,94,0.15)' } }),
+    },
+    PENDING: {
+        label: 'In Prüfung',
+        colorCss: css({ color: { base: '#d97706', _dark: '#fbbf24' } }),
+        bgCss: css({ bg: { base: 'rgba(245,158,11,0.1)', _dark: 'rgba(245,158,11,0.15)' } }),
+    },
+    REJECTED: {
+        label: 'Abgelehnt',
+        colorCss: css({ color: { base: '#dc2626', _dark: '#f87171' } }),
+        bgCss: css({ bg: { base: 'rgba(239,68,68,0.1)', _dark: 'rgba(239,68,68,0.15)' } }),
+    },
 };
 
 function timeAgo(date: Date): string {
@@ -77,7 +93,7 @@ function CookImageCard({ image, onDeleted }: { image: UserCookImageData; onDelet
                 />
                 {/* Status badge */}
                 <span
-                    className={css({
+                    className={`${css({
                         position: 'absolute',
                         top: '2',
                         left: '2',
@@ -86,8 +102,7 @@ function CookImageCard({ image, onDeleted }: { image: UserCookImageData; onDelet
                         borderRadius: 'full',
                         fontSize: '0.65rem',
                         fontWeight: '700',
-                    })}
-                    style={{ background: status.bg, color: status.color }}
+                    })} ${status.bgCss} ${status.colorCss}`}
                 >
                     {status.label}
                 </span>
@@ -143,16 +158,16 @@ function CookImageCard({ image, onDeleted }: { image: UserCookImageData; onDelet
                         border: '1px solid',
                         cursor: 'pointer',
                         transition: 'all 150ms ease',
+                        ...(confirmDelete ? {
+                            bg: { base: 'rgba(239,68,68,0.1)', _dark: 'rgba(239,68,68,0.15)' },
+                            borderColor: { base: 'rgba(239,68,68,0.4)', _dark: 'rgba(239,68,68,0.5)' },
+                            color: { base: '#dc2626', _dark: '#f87171' },
+                        } : {
+                            bg: 'transparent',
+                            borderColor: 'border',
+                            color: 'text.muted',
+                        }),
                     })}
-                    style={confirmDelete ? {
-                        background: 'rgba(239,68,68,0.1)',
-                        borderColor: 'rgba(239,68,68,0.4)',
-                        color: '#dc2626',
-                    } : {
-                        background: 'transparent',
-                        borderColor: 'rgba(0,0,0,0.1)',
-                        color: '#6b7280',
-                    }}
                 >
                     <Trash2 size={12} />
                     {confirmDelete ? 'Sicher löschen?' : 'Löschen'}

@@ -181,7 +181,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                             p: { base: '4', md: '6' },
                             borderRadius: '2xl',
                             bg: 'surface',
-                            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.medium',
                         })}
                     >
                         <div className={css({ mb: '6' })}>
@@ -282,7 +282,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                                                         : nicknameStatus === 'available'
                                                           ? 'green.400'
                                                           : 'primary',
-                                                boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
+                                                boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
                                             },
                                         })}
                                         required
@@ -366,7 +366,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                                         transition: 'all 150ms ease',
                                         _focus: {
                                             borderColor: 'primary',
-                                            boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
+                                            boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
                                         },
                                     })}
                                 />
@@ -401,7 +401,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                             p: { base: '4', md: '6' },
                             borderRadius: '2xl',
                             bg: 'surface',
-                            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.medium',
                         })}
                     >
                         <div className={css({ mb: '5' })}>
@@ -482,7 +482,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                                         transition: 'all 150ms ease',
                                         _focus: {
                                             borderColor: 'primary',
-                                            boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
+                                            boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
                                         },
                                     })}
                                 />
@@ -504,7 +504,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                             p: { base: '4', md: '5' },
                             borderRadius: '2xl',
                             bg: 'surface',
-                            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                            boxShadow: 'shadow.medium',
                         })}
                     >
                         <Heading as="h2" size="md" className={css({ mb: '4' })}>

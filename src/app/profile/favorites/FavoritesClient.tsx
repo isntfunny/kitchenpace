@@ -144,7 +144,7 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                         px: '4',
                         bg: 'surface',
                         borderRadius: '2xl',
-                        boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                        boxShadow: 'shadow.medium',
                     })}
                 >
                     <div
@@ -152,7 +152,7 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                             w: '16',
                             h: '16',
                             borderRadius: 'full',
-                            bg: 'red.50',
+                            bg: { base: 'red.50', _dark: 'rgba(239,68,68,0.1)' },
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -214,7 +214,7 @@ function RemoveButton({
                     className={css({
                         position: 'fixed',
                         inset: 0,
-                        backgroundColor: 'rgba(0,0,0,0.4)',
+                        backgroundColor: 'surface.overlay',
                         zIndex: '40',
                     })}
                 />
@@ -229,7 +229,7 @@ function RemoveButton({
                         bg: 'surface',
                         borderRadius: '2xl',
                         p: '6',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                        boxShadow: { base: '0 10px 40px rgba(0,0,0,0.2)', _dark: '0 10px 40px rgba(0,0,0,0.5)' },
                         zIndex: '50',
                     })}
                 >

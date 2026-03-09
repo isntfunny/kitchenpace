@@ -23,13 +23,13 @@ const SignOutButton = ({ label = 'Sign Out' }: Props) => {
                 fontWeight: '600',
                 fontSize: 'sm',
                 color: 'text',
-                background: 'white',
+                background: 'surface',
                 border: '1px solid',
-                borderColor: 'rgba(224,123,83,0.4)',
+                borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(240,144,112,0.5)' },
                 cursor: 'pointer',
                 transition: 'all 150ms ease',
                 _hover: {
-                    background: 'rgba(224,123,83,0.08)',
+                    background: 'accent.soft',
                     color: 'palette.orange',
                 },
             })}

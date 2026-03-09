@@ -343,7 +343,7 @@ function IngredientRow({
                         cursor: 'pointer',
                         bg: 'transparent',
                         border: 'none',
-                        color: '#aaa',
+                        color: 'foreground.muted',
                         transition: 'color 120ms ease',
                         _hover: { color: 'red.500' },
                     })}
@@ -397,7 +397,7 @@ const amountInputClass = css({
 const amountInputEmptyClass = css({
     ...amountInputBase,
     color: 'text',
-    bg: 'rgba(224,70,70,0.06)',
+    bg: { base: 'rgba(224,70,70,0.06)', _dark: 'rgba(224,70,70,0.1)' },
     _placeholder: { color: '#d44', fontWeight: '700', fontSize: 'lg' },
 });
 
@@ -420,10 +420,13 @@ const inputClass = css({
     width: '100%',
     padding: '3',
     borderRadius: 'xl',
-    border: '1px solid rgba(224,123,83,0.4)',
+    border: '1px solid',
+    borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.45)' },
     fontSize: 'md',
     outline: 'none',
-    _focus: { borderColor: 'palette.orange', boxShadow: '0 0 0 3px rgba(224,123,83,0.15)' },
+    bg: { base: 'transparent', _dark: 'surface' },
+    color: 'text',
+    _focus: { borderColor: 'palette.orange', boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' } },
 });
 
 const dropdownClass = css({
@@ -431,12 +434,13 @@ const dropdownClass = css({
     top: '100%',
     left: '0',
     right: '0',
-    bg: 'white',
+    bg: { base: 'white', _dark: 'surface' },
     borderRadius: 'xl',
-    boxShadow: 'lg',
+    boxShadow: { base: 'lg', _dark: '0 10px 25px rgba(0,0,0,0.4)' },
     zIndex: '10',
     maxH: '200px',
     overflowY: 'auto',
+    border: { base: 'none', _dark: '1px solid rgba(224,123,83,0.15)' },
 });
 
 const resultBtnClass = css({
@@ -446,7 +450,8 @@ const resultBtnClass = css({
     bg: 'transparent',
     border: 'none',
     cursor: 'pointer',
-    _hover: { bg: 'rgba(224,123,83,0.1)' },
+    color: 'text',
+    _hover: { bg: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' } },
 });
 
 const neuBtnClass = css({
@@ -469,10 +474,11 @@ const newCardClass = css({
     top: '100%',
     left: '0',
     right: '0',
-    bg: 'white',
+    bg: { base: 'white', _dark: 'surface' },
     borderRadius: 'xl',
-    boxShadow: 'lg',
+    boxShadow: { base: 'lg', _dark: '0 10px 25px rgba(0,0,0,0.4)' },
     p: '4',
     zIndex: '10',
+    border: { base: 'none', _dark: '1px solid rgba(224,123,83,0.15)' },
 });
 

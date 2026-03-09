@@ -30,10 +30,10 @@ export function IngredientList({
     return (
         <div
             className={css({
-                bg: 'white',
+                bg: 'surface',
                 borderRadius: '2xl',
                 p: '5',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                boxShadow: 'shadow.medium',
             })}
         >
             <h2
@@ -73,7 +73,7 @@ export function IngredientList({
                             w: '10',
                             h: '10',
                             borderRadius: 'full',
-                            bg: 'white',
+                            bg: 'surface',
                             border: '1px solid',
                             borderColor: 'border',
                             cursor: 'pointer',
@@ -100,7 +100,7 @@ export function IngredientList({
                             w: '10',
                             h: '10',
                             borderRadius: 'full',
-                            bg: 'white',
+                            bg: 'surface',
                             border: '1px solid',
                             borderColor: 'border',
                             cursor: 'pointer',

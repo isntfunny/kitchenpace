@@ -124,7 +124,7 @@ function ModerationDetailDialog({
     return (
         <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
             <Dialog.Portal>
-                <Dialog.Overlay className={css({ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 })} />
+                <Dialog.Overlay className={css({ position: 'fixed', inset: 0, background: 'surface.overlay', zIndex: 999 })} />
                 <Dialog.Content
                     className={css({
                         position: 'fixed',
@@ -208,7 +208,7 @@ function ModerationDetailDialog({
                                         borderRadius: 'xl',
                                         borderWidth: '1px',
                                         borderColor: 'border.muted',
-                                        bg: 'rgba(0,0,0,0.02)',
+                                        bg: 'surface.muted',
                                         whiteSpace: 'pre-wrap',
                                         fontSize: 'sm',
                                         maxHeight: '200px',
@@ -293,13 +293,14 @@ function ModerationDetailDialog({
                                             px: '4',
                                             py: '2.5',
                                             borderRadius: 'xl',
-                                            bg: 'rgba(34,197,94,0.1)',
-                                            color: '#16a34a',
+                                            bg: { base: 'rgba(34,197,94,0.1)', _dark: 'rgba(34,197,94,0.15)' },
+                                            color: 'status.success',
                                             fontWeight: '700',
                                             fontSize: 'sm',
                                             cursor: 'pointer',
-                                            border: '1px solid rgba(34,197,94,0.3)',
-                                            _hover: { bg: 'rgba(34,197,94,0.2)' },
+                                            border: '1px solid',
+                                            borderColor: { base: 'rgba(34,197,94,0.3)', _dark: 'rgba(34,197,94,0.4)' },
+                                            _hover: { bg: { base: 'rgba(34,197,94,0.2)', _dark: 'rgba(34,197,94,0.25)' } },
                                         })}
                                     >
                                         <Check size={18} /> Freigeben
@@ -315,13 +316,14 @@ function ModerationDetailDialog({
                                             px: '4',
                                             py: '2.5',
                                             borderRadius: 'xl',
-                                            bg: 'rgba(239,68,68,0.1)',
+                                            bg: { base: 'rgba(239,68,68,0.1)', _dark: 'rgba(239,68,68,0.15)' },
                                             color: 'status.danger',
                                             fontWeight: '700',
                                             fontSize: 'sm',
                                             cursor: 'pointer',
-                                            border: '1px solid rgba(239,68,68,0.3)',
-                                            _hover: { bg: 'rgba(239,68,68,0.2)' },
+                                            border: '1px solid',
+                                            borderColor: { base: 'rgba(239,68,68,0.3)', _dark: 'rgba(239,68,68,0.4)' },
+                                            _hover: { bg: { base: 'rgba(239,68,68,0.2)', _dark: 'rgba(239,68,68,0.25)' } },
                                         })}
                                     >
                                         <X size={18} /> Ablehnen
@@ -359,7 +361,7 @@ function ModerationDetailDialog({
                                                 cursor: 'pointer',
                                                 border: '1px solid',
                                                 borderColor: 'border.muted',
-                                                _hover: { bg: 'rgba(0,0,0,0.03)' },
+                                                _hover: { bg: 'surface.muted' },
                                             })}
                                         >
                                             Abbrechen
@@ -377,7 +379,7 @@ function ModerationDetailDialog({
                                                 fontSize: 'sm',
                                                 cursor: 'pointer',
                                                 border: 'none',
-                                                _hover: { bg: '#b91c1c' },
+                                                _hover: { bg: { base: '#b91c1c', _dark: '#dc2626' } },
                                                 _disabled: { opacity: '0.5', cursor: 'not-allowed' },
                                             })}
                                         >
@@ -426,7 +428,7 @@ export function ModerationQueueTable({ items }: { items: QueueItem[] }) {
                         gap: '3',
                         px: '4',
                         py: '2.5',
-                        bg: 'rgba(0,0,0,0.03)',
+                        bg: 'surface.muted',
                         borderBottom: '1px solid',
                         borderColor: 'border.muted',
                         fontSize: 'xs',
@@ -464,7 +466,7 @@ export function ModerationQueueTable({ items }: { items: QueueItem[] }) {
                                 borderColor: 'border.muted',
                                 cursor: 'pointer',
                                 transition: 'background 100ms',
-                                _hover: { bg: 'rgba(224,123,83,0.03)' },
+                                _hover: { bg: 'accent.soft' },
                                 _last: { borderBottom: 'none' },
                             })}
                             onClick={() => setSelectedItem(item)}
@@ -507,11 +509,11 @@ export function ModerationQueueTable({ items }: { items: QueueItem[] }) {
                                     className={css({
                                         p: '1.5',
                                         borderRadius: 'lg',
-                                        bg: 'rgba(34,197,94,0.1)',
-                                        color: '#16a34a',
+                                        bg: { base: 'rgba(34,197,94,0.1)', _dark: 'rgba(34,197,94,0.15)' },
+                                        color: 'status.success',
                                         cursor: 'pointer',
                                         border: 'none',
-                                        _hover: { bg: 'rgba(34,197,94,0.2)' },
+                                        _hover: { bg: { base: 'rgba(34,197,94,0.2)', _dark: 'rgba(34,197,94,0.25)' } },
                                         _disabled: { opacity: '0.5', cursor: 'not-allowed' },
                                     })}
                                     title="Freigeben"
@@ -524,11 +526,11 @@ export function ModerationQueueTable({ items }: { items: QueueItem[] }) {
                                     className={css({
                                         p: '1.5',
                                         borderRadius: 'lg',
-                                        bg: 'rgba(239,68,68,0.1)',
+                                        bg: { base: 'rgba(239,68,68,0.1)', _dark: 'rgba(239,68,68,0.15)' },
                                         color: 'status.danger',
                                         cursor: 'pointer',
                                         border: 'none',
-                                        _hover: { bg: 'rgba(239,68,68,0.2)' },
+                                        _hover: { bg: { base: 'rgba(239,68,68,0.2)', _dark: 'rgba(239,68,68,0.25)' } },
                                         _disabled: { opacity: '0.5', cursor: 'not-allowed' },
                                     })}
                                     title="Details / Ablehnen"

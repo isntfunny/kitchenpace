@@ -48,10 +48,10 @@ export function AuthorCard({
             </h2>
             <div
                 className={css({
-                    bg: 'white',
+                    bg: 'surface',
                     borderRadius: '2xl',
                     p: '5',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                    boxShadow: 'shadow.medium',
                 })}
             >
                 <div

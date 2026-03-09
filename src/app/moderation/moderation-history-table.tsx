@@ -91,7 +91,7 @@ function HistoryDetailDialog({ entry, open, onClose }: { entry: HistoryEntry; op
     return (
         <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
             <Dialog.Portal>
-                <Dialog.Overlay className={css({ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 })} />
+                <Dialog.Overlay className={css({ position: 'fixed', inset: 0, background: 'surface.overlay', zIndex: 999 })} />
                 <Dialog.Content
                     className={css({
                         position: 'fixed',
@@ -170,7 +170,7 @@ function HistoryDetailDialog({ entry, open, onClose }: { entry: HistoryEntry; op
                     {/* Reason */}
                     {typeof entry.reason === 'string' && entry.reason && (
                         <DetailField label="Begründung">
-                            <div className={css({ p: '3', borderRadius: 'lg', borderWidth: '1px', borderColor: 'border.muted', bg: 'rgba(0,0,0,0.02)' })}>
+                            <div className={css({ p: '3', borderRadius: 'lg', borderWidth: '1px', borderColor: 'border.muted', bg: 'surface.muted' })}>
                                 {entry.reason}
                             </div>
                         </DetailField>
@@ -178,7 +178,7 @@ function HistoryDetailDialog({ entry, open, onClose }: { entry: HistoryEntry; op
 
                     {/* Content preview — hidden for rejected entries (content is deleted) */}
                     {entry.action === 'auto_rejected' || entry.action === 'reject' ? (
-                        <div className={css({ display: 'flex', alignItems: 'center', gap: '2', p: '3', borderRadius: 'lg', borderWidth: '1px', borderColor: 'border.muted', bg: 'rgba(239,68,68,0.04)' })}>
+                        <div className={css({ display: 'flex', alignItems: 'center', gap: '2', p: '3', borderRadius: 'lg', borderWidth: '1px', borderColor: 'border.muted', bg: { base: 'rgba(239,68,68,0.04)', _dark: 'rgba(239,68,68,0.08)' } })}>
                             <X size={14} style={{ color: '#dc2626', flexShrink: 0 }} />
                             <span className={css({ fontSize: 'sm', color: 'foreground.muted' })}>
                                 Inhalt wurde entfernt und ist nicht mehr verfügbar.
@@ -199,7 +199,7 @@ function HistoryDetailDialog({ entry, open, onClose }: { entry: HistoryEntry; op
                             )}
 
                             {(entry.snapshot.description || entry.snapshot.text) && (
-                                <div className={css({ p: '4', borderRadius: 'xl', borderWidth: '1px', borderColor: 'border.muted', bg: 'rgba(0,0,0,0.02)', whiteSpace: 'pre-wrap', fontSize: 'sm', maxHeight: '200px', overflow: 'auto' })}>
+                                <div className={css({ p: '4', borderRadius: 'xl', borderWidth: '1px', borderColor: 'border.muted', bg: 'surface.muted', whiteSpace: 'pre-wrap', fontSize: 'sm', maxHeight: '200px', overflow: 'auto' })}>
                                     {entry.snapshot.description || entry.snapshot.text}
                                 </div>
                             )}
@@ -330,12 +330,18 @@ export function ModerationHistoryTable({
                                 border: '1px solid',
                                 cursor: 'pointer',
                                 transition: 'all 150ms ease',
+                                ...(filter === f
+                                    ? {
+                                        bg: 'accent.soft',
+                                        borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.5)' },
+                                        color: { base: '#c2410c', _dark: '#f09070' },
+                                    }
+                                    : {
+                                        bg: 'transparent',
+                                        borderColor: 'border',
+                                        color: 'foreground.muted',
+                                    }),
                             })}
-                            style={{
-                                background: filter === f ? 'rgba(224,123,83,0.1)' : 'transparent',
-                                borderColor: filter === f ? 'rgba(224,123,83,0.4)' : 'rgba(0,0,0,0.08)',
-                                color: filter === f ? '#c2410c' : undefined,
-                            }}
                         >
                             {f === 'all' ? `Alle (${entries.length})` : f === 'manual' ? `Manuell (${entries.filter(e => e.type === 'manual').length})` : `Automatisch (${entries.filter(e => e.type === 'auto').length})`}
                         </button>
@@ -356,7 +362,7 @@ export function ModerationHistoryTable({
                                 gap: '3',
                                 px: '4',
                                 py: '2.5',
-                                bg: 'rgba(0,0,0,0.03)',
+                                bg: 'surface.muted',
                                 borderBottom: '1px solid',
                                 borderColor: 'border.muted',
                                 fontSize: 'xs',
@@ -392,7 +398,7 @@ export function ModerationHistoryTable({
                                         borderColor: 'border.muted',
                                         cursor: 'pointer',
                                         transition: 'background 100ms',
-                                        _hover: { bg: 'rgba(224,123,83,0.03)' },
+                                        _hover: { bg: 'accent.soft' },
                                         _last: { borderBottom: 'none' },
                                     })}
                                     onClick={() => setSelectedEntry(entry)}

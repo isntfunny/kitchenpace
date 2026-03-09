@@ -176,7 +176,7 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                                     borderRadius: 'xl',
                                     border: '1px solid',
                                     borderColor: 'rgba(224,123,83,0.2)',
-                                    boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
+                                    boxShadow: { base: '0 20px 50px rgba(0,0,0,0.15)', _dark: '0 20px 50px rgba(0,0,0,0.5)' },
                                     padding: '3',
                                     zIndex: 110,
                                     display: { base: 'none', md: 'block' },
@@ -298,7 +298,7 @@ function RecipeChip({
                         px: '3',
                         py: '1.5',
                         borderRadius: 'full',
-                        bg: isPinned ? 'rgba(248,181,0,0.15)' : 'rgba(0,0,0,0.02)',
+                        bg: isPinned ? { base: 'rgba(248,181,0,0.15)', _dark: 'rgba(248,181,0,0.12)' } : 'surface.muted',
                         border: '1px solid',
                         borderColor: isPinned ? 'rgba(248,181,0,0.3)' : 'transparent',
                         fontSize: 'sm',
@@ -471,7 +471,7 @@ export function RecipeTabs() {
                             className={css({
                                 width: '1px',
                                 height: '20px',
-                                bg: 'rgba(0,0,0,0.1)',
+                                bg: 'border',
                                 flexShrink: 0,
                             })}
                         />

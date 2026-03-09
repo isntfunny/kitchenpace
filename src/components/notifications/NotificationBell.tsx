@@ -49,7 +49,7 @@ export function NotificationBell() {
                         justifyContent: 'center',
                         cursor: 'pointer',
                         transition: 'all 150ms ease',
-                        _hover: { background: 'accentSoft' },
+                        _hover: { background: 'accent.soft' },
                     })}
                 >
                     <motion.span

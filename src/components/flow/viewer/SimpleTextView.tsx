@@ -153,7 +153,7 @@ export function SimpleTextView({
                                         <p
                                             className={css({
                                                 fontSize: 'sm',
-                                                color: 'text.secondary',
+                                                color: 'text.muted',
                                                 lineHeight: '1.6',
                                                 m: 0,
                                             })}

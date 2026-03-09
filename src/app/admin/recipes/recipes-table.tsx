@@ -301,8 +301,8 @@ const columns: ColumnDef<Recipe>[] = [
                                 borderRadius: 'full',
                                 fontSize: 'xs',
                                 fontWeight: 'medium',
-                                backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                                color: '#ef4444',
+                                backgroundColor: { base: 'rgba(239, 68, 68, 0.15)', _dark: 'rgba(239, 68, 68, 0.2)' },
+                                color: 'status.error',
                             })}
                         >
                             <Flame size={12} />

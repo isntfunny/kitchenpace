@@ -101,7 +101,7 @@ function CategoryDialog({
                     className={css({
                         position: 'fixed',
                         inset: 0,
-                        background: 'rgba(0,0,0,0.4)',
+                        background: 'surface.overlay',
                         zIndex: 50,
                         backdropFilter: 'blur(2px)',
                     })}
@@ -122,7 +122,7 @@ function CategoryDialog({
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '4',
-                        boxShadow: '0 40px 120px rgba(0,0,0,0.2)',
+                        boxShadow: 'shadow.large',
                     })}
                 >
                     <div

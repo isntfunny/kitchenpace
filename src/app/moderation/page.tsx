@@ -136,10 +136,10 @@ function StatCard({
     variant: 'warning' | 'danger' | 'success' | 'neutral';
 }) {
     const colors = {
-        warning: { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)' },
-        danger: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)' },
-        success: { bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)' },
-        neutral: { bg: 'rgba(0,0,0,0.03)', border: 'border.muted' },
+        warning: { bg: { base: 'rgba(245,158,11,0.1)', _dark: 'rgba(245,158,11,0.15)' }, border: { base: 'rgba(245,158,11,0.3)', _dark: 'rgba(245,158,11,0.4)' } },
+        danger: { bg: { base: 'rgba(239,68,68,0.1)', _dark: 'rgba(239,68,68,0.15)' }, border: { base: 'rgba(239,68,68,0.3)', _dark: 'rgba(239,68,68,0.4)' } },
+        success: { bg: { base: 'rgba(34,197,94,0.1)', _dark: 'rgba(34,197,94,0.15)' }, border: { base: 'rgba(34,197,94,0.3)', _dark: 'rgba(34,197,94,0.4)' } },
+        neutral: { bg: 'surface.muted', border: 'border.muted' },
     };
     const c = colors[variant];
 
@@ -151,8 +151,8 @@ function StatCard({
                 borderRadius: 'xl',
                 border: '1px solid',
                 borderColor: c.border,
+                bg: c.bg,
             })}
-            style={{ background: c.bg }}
         >
             <span className={css({ fontSize: '2xl', fontWeight: '800', color: 'foreground' })}>
                 {value}

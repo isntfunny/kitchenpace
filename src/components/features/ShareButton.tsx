@@ -129,11 +129,11 @@ export function ShareButton({ title, slug, imageUrl }: ShareButtonProps) {
                         top: 'calc(100% + 8px)',
                         left: '0',
                         zIndex: '50',
-                        bg: 'white',
+                        bg: 'surface',
                         borderRadius: 'xl',
                         border: '1px solid',
-                        borderColor: 'gray.200',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                        borderColor: 'border',
+                        boxShadow: { base: '0 8px 32px rgba(0,0,0,0.12)', _dark: '0 8px 32px rgba(0,0,0,0.4)' },
                         minW: '200px',
                         overflow: 'hidden',
                         py: '1',
@@ -156,7 +156,7 @@ export function ShareButton({ title, slug, imageUrl }: ShareButtonProps) {
                             cursor: 'pointer',
                             textAlign: 'left',
                             transition: 'bg 100ms',
-                            _hover: { bg: 'gray.50' },
+                            _hover: { bg: 'surface.muted' },
                         })}
                     >
                         {copied ? (
@@ -170,7 +170,7 @@ export function ShareButton({ title, slug, imageUrl }: ShareButtonProps) {
                     <div
                         className={css({
                             h: '1px',
-                            bg: 'gray.100',
+                            bg: 'border',
                             mx: '3',
                             my: '1',
                         })}
@@ -195,7 +195,7 @@ export function ShareButton({ title, slug, imageUrl }: ShareButtonProps) {
                                 color: 'text',
                                 textDecoration: 'none',
                                 transition: 'bg 100ms',
-                                _hover: { bg: 'gray.50' },
+                                _hover: { bg: 'surface.muted' },
                             })}
                         >
                             <span style={{ color: p.color, display: 'flex', alignItems: 'center' }}>

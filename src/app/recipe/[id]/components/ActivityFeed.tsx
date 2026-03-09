@@ -36,10 +36,10 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
             </h2>
             <div
                 className={css({
-                    bg: 'white',
+                    bg: 'surface',
                     borderRadius: '2xl',
                     p: '6',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                    boxShadow: 'shadow.medium',
                 })}
             >
                 <div className={css({ spaceY: '4' })}>

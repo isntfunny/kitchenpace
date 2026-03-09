@@ -41,7 +41,7 @@ export function FlowPillars() {
             className={css({
                 padding: { base: '4', md: '5' },
                 borderRadius: '2xl',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                boxShadow: 'shadow.medium',
                 bg: 'surface',
             })}
         >

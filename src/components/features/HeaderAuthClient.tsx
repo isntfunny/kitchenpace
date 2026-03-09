@@ -81,7 +81,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                             border: '1px solid',
                             borderColor: 'rgba(224,123,83,0.2)',
                             padding: '2',
-                            boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
+                            boxShadow: { base: '0 20px 50px rgba(0,0,0,0.15)', _dark: '0 20px 50px rgba(0,0,0,0.5)' },
                             zIndex: 100,
                             transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
                             '&[data-state="open"]': {

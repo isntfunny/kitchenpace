@@ -130,7 +130,7 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                         fontSize: 'sm',
                         fontWeight: '600',
                         color: 'primary',
-                        background: 'accentSoft',
+                        background: 'accent.soft',
                         border: 'none',
                         px: '4',
                         py: '2',

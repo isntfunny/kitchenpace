@@ -48,7 +48,7 @@ const tagChipBaseClass = css({
     py: '1',
     border: '1.5px solid rgba(0,0,0,0.1)',
     background: 'surface',
-    color: 'text.primary',
+    color: 'text',
     display: 'inline-flex',
     alignItems: 'center',
     gap: '1.5',
@@ -73,7 +73,7 @@ const tagCountClass = css({
     borderRadius: 'full',
     px: '1.5',
     background: 'rgba(0,0,0,0.06)',
-    color: 'text.secondary',
+    color: 'text.muted',
     fontWeight: '600',
     lineHeight: '1.6',
 });

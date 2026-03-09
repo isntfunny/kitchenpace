@@ -4,7 +4,6 @@ import { AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { Header } from '@app/components/features/Header';
-import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 export default function ErrorPage({
@@ -35,19 +34,20 @@ export default function ErrorPage({
                 }}
             >
                 <div
-                    style={{
+                    className={css({
                         width: '100px',
                         height: '100px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(239,68,68,0.08)',
-                        border: '2px solid rgba(239,68,68,0.25)',
+                        bg: 'error.bg',
+                        border: '2px solid',
+                        borderColor: { base: 'rgba(239,68,68,0.25)', _dark: 'rgba(248,113,113,0.35)' },
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        marginBottom: '1.75rem',
-                    }}
+                        marginBottom: '7',
+                    })}
                 >
-                    <AlertTriangle style={{ width: '44px', height: '44px', color: '#ef4444' }} />
+                    <AlertTriangle className={css({ width: '44px', height: '44px', color: 'status.error' })} />
                 </div>
 
                 <h1
@@ -99,35 +99,36 @@ export default function ErrorPage({
                 >
                     <button
                         onClick={reset}
-                        style={{
+                        className={css({
                             padding: '0.65rem 1.4rem',
                             borderRadius: '999px',
-                            backgroundColor: PALETTE.orange,
+                            bg: 'palette.orange',
                             color: 'white',
                             fontWeight: 600,
                             fontSize: '0.9rem',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'opacity 0.15s',
-                        }}
+                        })}
                     >
                         Erneut versuchen
                     </button>
                     {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                     <a
                         href="/"
-                        style={{
+                        className={css({
                             display: 'inline-flex',
                             alignItems: 'center',
                             padding: '0.65rem 1.4rem',
                             borderRadius: '999px',
-                            backgroundColor: 'transparent',
-                            border: '1.5px solid rgba(224,123,83,0.4)',
-                            color: PALETTE.orange,
+                            bg: 'transparent',
+                            border: '1.5px solid',
+                            borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(240,144,112,0.5)' },
+                            color: 'palette.orange',
                             fontWeight: 600,
                             fontSize: '0.9rem',
                             textDecoration: 'none',
-                        }}
+                        })}
                     >
                         Zur Startseite
                     </a>

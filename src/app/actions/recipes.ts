@@ -1,52 +1,14 @@
 'use server';
 
-import type { Prisma } from '@prisma/client';
-
 import type { FlowEdgeInput, FlowNodeInput } from '@app/components/recipe/createActions';
-import { PALETTE } from '@app/lib/palette';
+import { toRecipeCardData, type RecipeCardData, type RecipeWithCategory } from '@app/lib/recipe-card';
 import { prisma } from '@shared/prisma';
+
+// Re-export for backward compatibility
+export { toRecipeCardData, type RecipeCardData, type RecipeWithCategory };
 
 const DEFAULT_AUTHOR_AVATAR =
     'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80';
-
-export interface RecipeCardData {
-    id: string;
-    slug: string;
-    title: string;
-    category: string;
-    categorySlug?: string;
-    categoryColor?: string;
-    rating: number;
-    time: string;
-    image: string | null;
-    imageKey?: string | null;
-    description?: string;
-}
-
-export type RecipeWithCategory = Prisma.RecipeGetPayload<{
-    include: { categories: { include: { category: true } } };
-}>;
-
-export function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
-    const totalTime = recipe.totalTime ?? (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
-    const cat = recipe.categories[0]?.category;
-
-    return {
-        id: recipe.id,
-        slug: recipe.slug,
-        title: recipe.title,
-        category: cat?.name || 'Hauptgericht',
-        categorySlug: cat?.slug ?? undefined,
-        categoryColor: PALETTE[cat?.color as keyof typeof PALETTE] ?? PALETTE.orange,
-        rating: recipe.rating ?? 0,
-        time: `${totalTime ?? 0} Min.`,
-        image: recipe.imageKey
-            ? `/api/thumbnail?type=recipe&id=${encodeURIComponent(recipe.id)}`
-            : null,
-        imageKey: recipe.imageKey ?? null,
-        description: recipe.description ?? '',
-    };
-}
 
 export async function fetchNewestRecipes(take = 8): Promise<RecipeCardData[]> {
     const recipes = await prisma.recipe.findMany({

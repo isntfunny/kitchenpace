@@ -68,7 +68,10 @@ function MenuCard({ item }: MenuCardProps) {
                     transition: 'all 150ms ease',
                     _hover: {
                         borderColor: 'accent',
-                        boxShadow: { base: '0 10px 30px rgba(0,0,0,0.08)', _dark: '0 10px 30px rgba(0,0,0,0.3)' },
+                        boxShadow: {
+                            base: '0 10px 30px rgba(0,0,0,0.08)',
+                            _dark: '0 10px 30px rgba(0,0,0,0.3)',
+                        },
                     },
                 })}
             >

@@ -68,7 +68,10 @@ export function NodeDetailModal({
                     padding: '24px',
                     maxWidth: '400px',
                     width: '100',
-                    boxShadow: { base: '0 20px 60px rgba(0,0,0,0.3)', _dark: '0 20px 60px rgba(0,0,0,0.5)' },
+                    boxShadow: {
+                        base: '0 20px 60px rgba(0,0,0,0.3)',
+                        _dark: '0 20px 60px rgba(0,0,0,0.5)',
+                    },
                 })}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -172,7 +175,10 @@ export function NodeDetailModal({
                         color: isCompleted ? 'text.muted' : 'white',
                         _hover: {
                             transform: 'translateY(-1px)',
-                            boxShadow: { base: '0 4px 12px rgba(0,0,0,0.15)', _dark: '0 4px 12px rgba(0,0,0,0.35)' },
+                            boxShadow: {
+                                base: '0 4px 12px rgba(0,0,0,0.15)',
+                                _dark: '0 4px 12px rgba(0,0,0,0.35)',
+                            },
                         },
                         display: 'inline-flex',
                         alignItems: 'center',

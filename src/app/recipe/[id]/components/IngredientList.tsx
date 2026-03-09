@@ -4,7 +4,6 @@ import { formatScaledAmount } from '@app/lib/format';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
-
 interface Ingredient {
     name: string;
     amount: number;
@@ -24,7 +23,6 @@ export function IngredientList({
     originalServings,
     onServingsChange,
 }: IngredientListProps) {
-
     return (
         <div
             className={css({
@@ -126,7 +124,8 @@ export function IngredientList({
                     >
                         <span className={css({ fontWeight: '500' })}>{ingredient.name}</span>
                         <span className={css({ color: 'text-muted' })}>
-                            {formatScaledAmount(ingredient.amount, servings, originalServings)} {ingredient.unit}
+                            {formatScaledAmount(ingredient.amount, servings, originalServings)}{' '}
+                            {ingredient.unit}
                         </span>
                     </li>
                 ))}

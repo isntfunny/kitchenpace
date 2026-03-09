@@ -261,7 +261,9 @@ export async function processSyncOpenSearch(
                 }
             }
 
-            console.log(`[OpenSearch] Synced batch of ${recipes.length} recipes (total: ${totalSynced})`);
+            console.log(
+                `[OpenSearch] Synced batch of ${recipes.length} recipes (total: ${totalSynced})`,
+            );
 
             if (recipes.length < pageSize) break;
         }
@@ -296,7 +298,9 @@ export async function processSyncIngredients(
         const watermark = watermarkRaw ? new Date(watermarkRaw) : undefined;
 
         if (watermark) {
-            console.log(`[OpenSearch] Incremental ingredients sync from: ${watermark.toISOString()}`);
+            console.log(
+                `[OpenSearch] Incremental ingredients sync from: ${watermark.toISOString()}`,
+            );
         } else {
             console.log('[OpenSearch] Full ingredients sync (no watermark found)');
         }
@@ -337,14 +341,18 @@ export async function processSyncIngredients(
                 }
             }
 
-            console.log(`[OpenSearch] Synced batch of ${ingredients.length} ingredients (total: ${totalSynced})`);
+            console.log(
+                `[OpenSearch] Synced batch of ${ingredients.length} ingredients (total: ${totalSynced})`,
+            );
 
             if (ingredients.length < pageSize) break;
         }
 
         if (latestCreatedAt) {
             await redis.set(WATERMARK_KEY_INGREDIENTS, latestCreatedAt.toISOString());
-            console.log(`[OpenSearch] Updated ingredients watermark to ${latestCreatedAt.toISOString()}`);
+            console.log(
+                `[OpenSearch] Updated ingredients watermark to ${latestCreatedAt.toISOString()}`,
+            );
         }
 
         console.log(
@@ -423,9 +431,7 @@ export async function processSyncRecipeToOpenSearch(
                 const statusCode = (deleteError as { meta?: { statusCode?: number } })?.meta
                     ?.statusCode;
                 if (statusCode === 404) {
-                    console.log(
-                        `[OpenSearch] Recipe not in index (already absent): ${recipeId}`,
-                    );
+                    console.log(`[OpenSearch] Recipe not in index (already absent): ${recipeId}`);
                 } else {
                     throw deleteError;
                 }

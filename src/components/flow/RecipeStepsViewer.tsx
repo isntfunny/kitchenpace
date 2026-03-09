@@ -17,8 +17,16 @@ import { viewerReducer } from './viewer/viewerTypes';
 import type { RecipeStepsViewerProps, TimerState } from './viewer/viewerTypes';
 import { buildTopology } from './viewer/viewerUtils';
 
-export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: RecipeStepsViewerProps) {
-    const { columnGroups, dagreY, outgoing } = useMemo(() => buildTopology(nodes, edges), [nodes, edges]);
+export function RecipeStepsViewer({
+    nodes,
+    edges,
+    ingredients,
+    recipeSlug,
+}: RecipeStepsViewerProps) {
+    const { columnGroups, dagreY, outgoing } = useMemo(
+        () => buildTopology(nodes, edges),
+        [nodes, edges],
+    );
 
     const [state, dispatch] = useReducer(viewerReducer, {
         completed: new Set<string>(),
@@ -137,11 +145,7 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                         Rezept starten
                     </button>
                     {castState !== 'unavailable' && (
-                        <CastButton
-                            castState={castState}
-                            onStart={startCast}
-                            onStop={stopCast}
-                        />
+                        <CastButton castState={castState} onStart={startCast} onStop={stopCast} />
                     )}
                     <button
                         type="button"
@@ -173,13 +177,26 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                         bg: 'surface',
                         borderRadius: 'xl',
                         border: '1px solid',
-                        borderColor: { base: 'rgba(224,123,83,0.12)', _dark: 'rgba(224,123,83,0.15)' },
+                        borderColor: {
+                            base: 'rgba(224,123,83,0.12)',
+                            _dark: 'rgba(224,123,83,0.15)',
+                        },
                         overflow: 'hidden',
                         position: 'relative',
                     })}
                 >
                     {/* View mode toggle buttons — top right */}
-                    <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <div
+                        style={{
+                            position: 'absolute',
+                            top: 12,
+                            right: 12,
+                            zIndex: 10,
+                            display: 'flex',
+                            gap: 6,
+                            alignItems: 'center',
+                        }}
+                    >
                         <button
                             type="button"
                             onClick={() => setViewMode('text')}
@@ -191,7 +208,10 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                                 py: '1',
                                 px: '2.5',
                                 borderRadius: 'full',
-                                border: { base: '1px solid rgba(224,123,83,0.25)', _dark: '1px solid rgba(224,123,83,0.3)' },
+                                border: {
+                                    base: '1px solid rgba(224,123,83,0.25)',
+                                    _dark: '1px solid rgba(224,123,83,0.3)',
+                                },
                                 bg: { base: 'rgba(255,255,255,0.9)', _dark: 'rgba(30,33,38,0.9)' },
                                 color: 'palette.orange',
                                 fontSize: 'xs',
@@ -213,7 +233,10 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                                 py: '1',
                                 px: '2.5',
                                 borderRadius: 'full',
-                                border: { base: '1px solid rgba(224,123,83,0.25)', _dark: '1px solid rgba(224,123,83,0.3)' },
+                                border: {
+                                    base: '1px solid rgba(224,123,83,0.25)',
+                                    _dark: '1px solid rgba(224,123,83,0.3)',
+                                },
                                 bg: { base: 'rgba(255,255,255,0.9)', _dark: 'rgba(30,33,38,0.9)' },
                                 color: 'palette.orange',
                                 fontSize: 'xs',
@@ -224,11 +247,7 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                         >
                             <Smartphone style={{ width: 13, height: 13 }} /> Mobil
                         </button>
-                        <CastButton
-                            castState={castState}
-                            onStart={startCast}
-                            onStop={stopCast}
-                        />
+                        <CastButton castState={castState} onStart={startCast} onStop={stopCast} />
                     </div>
 
                     <DesktopView {...sharedState} nodes={nodes} edges={edges} outgoing={outgoing} />
@@ -238,128 +257,147 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
             )}
 
             {/* Portaled overlays — escape any parent transform/stacking context */}
-            {viewMode === 'text' && createPortal(
-                <div
-                    className={css({
-                        position: 'fixed',
-                        inset: 0,
-                        zIndex: 300,
-                        bg: 'background',
-                        overflowY: 'auto',
-                    })}
-                >
+            {viewMode === 'text' &&
+                createPortal(
                     <div
-                        style={{
-                            position: 'sticky',
-                            top: 0,
-                            zIndex: 10,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '12px 16px',
-                        }}
                         className={css({
+                            position: 'fixed',
+                            inset: 0,
+                            zIndex: 300,
                             bg: 'background',
-                            borderBottom: '1px solid',
-                            borderColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
+                            overflowY: 'auto',
                         })}
                     >
-                        <span className={css({ fontWeight: 'bold', fontSize: 'md', color: 'text' })}>
-                            Zubereitungsschritte
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => setViewMode('desktop')}
-                            className={css({
+                        <div
+                            style={{
+                                position: 'sticky',
+                                top: 0,
+                                zIndex: 10,
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: 'full',
-                                border: '1px solid',
-                                borderColor: 'rgba(224,123,83,0.2)',
-                                bg: 'surface',
-                                color: 'text.muted',
-                                cursor: 'pointer',
+                                justifyContent: 'space-between',
+                                padding: '12px 16px',
+                            }}
+                            className={css({
+                                bg: 'background',
+                                borderBottom: '1px solid',
+                                borderColor: {
+                                    base: 'rgba(224,123,83,0.1)',
+                                    _dark: 'rgba(224,123,83,0.15)',
+                                },
                             })}
                         >
-                            <X style={{ width: 16, height: 16 }} />
-                        </button>
-                    </div>
-                    <SimpleTextView
-                        columnGroups={columnGroups}
-                        completed={state.completed}
-                        timers={state.timers}
-                        dispatch={dispatch}
-                        ingredients={ingredients}
-                    />
-                </div>,
-                document.body,
-            )}
+                            <span
+                                className={css({
+                                    fontWeight: 'bold',
+                                    fontSize: 'md',
+                                    color: 'text',
+                                })}
+                            >
+                                Zubereitungsschritte
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('desktop')}
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: 'full',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(224,123,83,0.2)',
+                                    bg: 'surface',
+                                    color: 'text.muted',
+                                    cursor: 'pointer',
+                                })}
+                            >
+                                <X style={{ width: 16, height: 16 }} />
+                            </button>
+                        </div>
+                        <SimpleTextView
+                            columnGroups={columnGroups}
+                            completed={state.completed}
+                            timers={state.timers}
+                            dispatch={dispatch}
+                            ingredients={ingredients}
+                        />
+                    </div>,
+                    document.body,
+                )}
 
-            {viewMode === 'mobile' && createPortal(
-                <div
-                    className={css({
-                        position: 'fixed',
-                        inset: 0,
-                        zIndex: 300,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        background: 'linear-gradient(180deg, rgba(26,23,21,0.92) 0%, rgba(35,30,26,0.95) 40%, rgba(28,24,21,0.92) 100%)',
-                        backdropFilter: 'blur(24px)',
-                        // @ts-expect-error vendor prefix not in csstype
-                        WebkitBackdropFilter: 'blur(24px)',
-                    })}
-                >
-                    <style>{`
+            {viewMode === 'mobile' &&
+                createPortal(
+                    <div
+                        className={css({
+                            position: 'fixed',
+                            inset: 0,
+                            zIndex: 300,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            background:
+                                'linear-gradient(180deg, rgba(26,23,21,0.92) 0%, rgba(35,30,26,0.95) 40%, rgba(28,24,21,0.92) 100%)',
+                            backdropFilter: 'blur(24px)',
+                            // @ts-expect-error vendor prefix not in csstype
+                            WebkitBackdropFilter: 'blur(24px)',
+                        })}
+                    >
+                        <style>{`
                         @keyframes branchPulse {
                             0%, 100% { opacity: 0.7; }
                             50% { opacity: 1; }
                         }
                     `}</style>
 
-                    {/* Close button — top right */}
-                    <div style={{ position: 'absolute', top: 12, right: 16, zIndex: 10 }}>
-                        <button
-                            type="button"
-                            onClick={() => setViewMode('desktop')}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: 36,
-                                height: 36,
-                                borderRadius: '50%',
-                                border: '1px solid rgba(255,255,255,0.15)',
-                                backgroundColor: 'rgba(255,255,255,0.08)',
-                                color: 'rgba(255,255,255,0.7)',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            <X style={{ width: 16, height: 16 }} />
-                        </button>
-                    </div>
+                        {/* Close button — top right */}
+                        <div style={{ position: 'absolute', top: 12, right: 16, zIndex: 10 }}>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('desktop')}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: '50%',
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                    backgroundColor: 'rgba(255,255,255,0.08)',
+                                    color: 'rgba(255,255,255,0.7)',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                <X style={{ width: 16, height: 16 }} />
+                            </button>
+                        </div>
 
-                    <MobileView {...mobileProps} />
-                </div>,
-                document.body,
-            )}
+                        <MobileView {...mobileProps} />
+                    </div>,
+                    document.body,
+                )}
 
-            {selectedNode && createPortal(
-                <NodeDetailModal
-                    node={selectedNode}
-                    ingredients={ingredients}
-                    timerState={state.timers.get(selectedNodeId!)}
-                    completed={state.completed.has(selectedNodeId!)}
-                    onClose={() => setSelectedNodeId(null)}
-                    onToggle={() => dispatch({ type: 'toggle', nodeId: selectedNodeId! })}
-                    onTimerStart={() => dispatch({ type: 'timerStart', nodeId: selectedNodeId! })}
-                    onTimerPause={() => dispatch({ type: 'timerPause', nodeId: selectedNodeId! })}
-                    onTimerReset={() => dispatch({ type: 'timerReset', nodeId: selectedNodeId! })}
-                />,
-                document.body,
-            )}
+            {selectedNode &&
+                createPortal(
+                    <NodeDetailModal
+                        node={selectedNode}
+                        ingredients={ingredients}
+                        timerState={state.timers.get(selectedNodeId!)}
+                        completed={state.completed.has(selectedNodeId!)}
+                        onClose={() => setSelectedNodeId(null)}
+                        onToggle={() => dispatch({ type: 'toggle', nodeId: selectedNodeId! })}
+                        onTimerStart={() =>
+                            dispatch({ type: 'timerStart', nodeId: selectedNodeId! })
+                        }
+                        onTimerPause={() =>
+                            dispatch({ type: 'timerPause', nodeId: selectedNodeId! })
+                        }
+                        onTimerReset={() =>
+                            dispatch({ type: 'timerReset', nodeId: selectedNodeId! })
+                        }
+                    />,
+                    document.body,
+                )}
         </>
     );
 }

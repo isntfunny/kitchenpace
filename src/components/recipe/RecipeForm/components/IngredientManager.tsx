@@ -6,7 +6,6 @@ import { useState } from 'react';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
-
 import { AddedIngredient, IngredientSearchResult } from '../data';
 
 import { SegmentedBar } from './SegmentedBar';
@@ -54,7 +53,9 @@ export function IngredientManager({
     onUpdateIngredient,
     onRemoveIngredient,
 }: IngredientManagerProps) {
-    const unitActiveIndex = UNIT_PRESETS.indexOf(newIngredientUnit as (typeof UNIT_PRESETS)[number]);
+    const unitActiveIndex = UNIT_PRESETS.indexOf(
+        newIngredientUnit as (typeof UNIT_PRESETS)[number],
+    );
 
     const handleNeu = () => {
         onNewIngredientNameChange(ingredientQuery);
@@ -69,12 +70,24 @@ export function IngredientManager({
                 <label className={labelSmClass}>Portionen</label>
                 <SegmentedBar
                     items={SERVING_LABELS}
-                    activeIndex={SERVING_PRESETS.indexOf(servings as (typeof SERVING_PRESETS)[number])}
-                    onSelect={(i) => onServingsChange(
-                        SERVING_PRESETS.indexOf(servings as (typeof SERVING_PRESETS)[number]) === i ? 1 : SERVING_PRESETS[i],
+                    activeIndex={SERVING_PRESETS.indexOf(
+                        servings as (typeof SERVING_PRESETS)[number],
                     )}
+                    onSelect={(i) =>
+                        onServingsChange(
+                            SERVING_PRESETS.indexOf(
+                                servings as (typeof SERVING_PRESETS)[number],
+                            ) === i
+                                ? 1
+                                : SERVING_PRESETS[i],
+                        )
+                    }
                     trackingName="servings"
-                    customInput={{ value: servings, onChange: onServingsChange, placeholder: 'z.B. 3' }}
+                    customInput={{
+                        value: servings,
+                        onChange: onServingsChange,
+                        placeholder: 'z.B. 3',
+                    }}
                 />
             </div>
 
@@ -103,7 +116,13 @@ export function IngredientManager({
                                 className={resultBtnClass}
                             >
                                 <span className={css({ fontWeight: '500' })}>{ing.name}</span>
-                                <span className={css({ color: 'text-muted', fontSize: 'sm', ml: '2' })}>
+                                <span
+                                    className={css({
+                                        color: 'text-muted',
+                                        fontSize: 'sm',
+                                        ml: '2',
+                                    })}
+                                >
                                     {ing.category || 'Ohne Kategorie'}
                                 </span>
                             </button>
@@ -126,7 +145,14 @@ export function IngredientManager({
                 {/* Inline new ingredient creation */}
                 {showNewIngredient && (
                     <div className={newCardClass}>
-                        <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '3' })}>
+                        <div
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '2',
+                                mb: '3',
+                            })}
+                        >
                             <input
                                 type="text"
                                 value={newIngredientName}
@@ -145,7 +171,15 @@ export function IngredientManager({
                             />
                         </div>
                         <div className={css({ mb: '3' })}>
-                            <span className={css({ fontSize: 'xs', fontWeight: '600', color: 'foreground.muted', display: 'block', mb: '1' })}>
+                            <span
+                                className={css({
+                                    fontSize: 'xs',
+                                    fontWeight: '600',
+                                    color: 'foreground.muted',
+                                    display: 'block',
+                                    mb: '1',
+                                })}
+                            >
                                 Einheit
                             </span>
                             <SegmentedBar
@@ -175,7 +209,9 @@ export function IngredientManager({
                                     fontSize: 'sm',
                                     cursor: 'pointer',
                                 })}
-                                style={{ background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})` }}
+                                style={{
+                                    background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
+                                }}
                             >
                                 Erstellen
                             </button>
@@ -307,7 +343,11 @@ function IngredientRow({
                         borderLeft: `1px solid ${PALETTE.orange}50`,
                         color: ing.isOptional ? PALETTE.orange : '#aaa',
                     }}
-                    title={ing.isOptional ? 'Optional (klicken zum Ändern)' : 'Pflicht (klicken für optional)'}
+                    title={
+                        ing.isOptional
+                            ? 'Optional (klicken zum Ändern)'
+                            : 'Pflicht (klicken für optional)'
+                    }
                 >
                     Opt
                 </button>
@@ -426,7 +466,13 @@ const inputClass = css({
     outline: 'none',
     bg: { base: 'transparent', _dark: 'surface' },
     color: 'text',
-    _focus: { borderColor: 'palette.orange', boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' } },
+    _focus: {
+        borderColor: 'palette.orange',
+        boxShadow: {
+            base: '0 0 0 3px rgba(224,123,83,0.15)',
+            _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+        },
+    },
 });
 
 const dropdownClass = css({
@@ -481,4 +527,3 @@ const newCardClass = css({
     zIndex: '10',
     border: { base: 'none', _dark: '1px solid rgba(224,123,83,0.15)' },
 });
-

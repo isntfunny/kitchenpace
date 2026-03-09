@@ -36,11 +36,7 @@ export function ActivitySidebar({
             })}
         >
             <div className={css({ mb: '4' })}>
-                <Heading
-                    as="h3"
-                    size="md"
-                    className={css({ color: 'primary' })}
-                >
+                <Heading as="h3" size="md" className={css({ color: 'primary' })}>
                     Aktivität
                 </Heading>
                 <Text size="sm" color="muted" className={css({ fontSize: '0.75rem' })}>

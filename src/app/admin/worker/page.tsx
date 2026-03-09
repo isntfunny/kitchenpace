@@ -46,7 +46,6 @@ type JobCatalogItem = {
     };
 };
 
-
 function JobAccordionSection({ title, jobs }: { title: string; jobs: JobCatalogItem[] }) {
     return (
         <div

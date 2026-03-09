@@ -20,7 +20,9 @@ class SeqFetchTransport extends TransportStream {
     private endpoint: string;
     private apiKey: string;
 
-    constructor(opts: { serverUrl: string; apiKey: string } & TransportStream.TransportStreamOptions) {
+    constructor(
+        opts: { serverUrl: string; apiKey: string } & TransportStream.TransportStreamOptions,
+    ) {
         const { serverUrl, apiKey, ...rest } = opts;
         super(rest);
         this.endpoint = `${serverUrl.replace(/\/$/, '')}/api/events/raw`;

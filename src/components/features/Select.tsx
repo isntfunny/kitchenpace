@@ -36,7 +36,10 @@ const SelectTrigger = React.forwardRef<
             _focus: {
                 outline: 'none',
                 borderColor: 'primary',
-                boxShadow: { base: '0 0 0 2px rgba(224, 123, 83, 0.2)', _dark: '0 0 0 2px rgba(224, 123, 83, 0.15)' },
+                boxShadow: {
+                    base: '0 0 0 2px rgba(224, 123, 83, 0.2)',
+                    _dark: '0 0 0 2px rgba(224, 123, 83, 0.15)',
+                },
             },
         })}
         {...props}
@@ -64,7 +67,10 @@ const SelectContent = React.forwardRef<
                 borderRadius: 'md',
                 border: '1px solid',
                 borderColor: { base: 'rgba(0,0,0,0.1)', _dark: 'rgba(255,255,255,0.12)' },
-                boxShadow: { base: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', _dark: '0 10px 15px -3px rgba(0, 0, 0, 0.4)' },
+                boxShadow: {
+                    base: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                    _dark: '0 10px 15px -3px rgba(0, 0, 0, 0.4)',
+                },
                 overflow: 'hidden',
             })}
             {...props}

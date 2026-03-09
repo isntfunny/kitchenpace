@@ -14,7 +14,10 @@ export async function GET(request: Request) {
             return NextResponse.json({ activities: [] }, { status: 401 });
         }
 
-        const activities = await fetchActivityFeed({ type: 'user', userId: session.user.id }, limit);
+        const activities = await fetchActivityFeed(
+            { type: 'user', userId: session.user.id },
+            limit,
+        );
         return NextResponse.json({ activities });
     }
 

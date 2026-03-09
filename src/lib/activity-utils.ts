@@ -33,16 +33,31 @@ export interface ActivityFeedItem {
 import { PALETTE } from './palette';
 
 /** Template placeholders: {recipe} = linked recipe title, {target} = linked target user */
-export const ACTIVITY_DECOR: Record<string, { icon: ActivityIconName; bg: string; template: string }> = {
+export const ACTIVITY_DECOR: Record<
+    string,
+    { icon: ActivityIconName; bg: string; template: string }
+> = {
     RECIPE_CREATED: { icon: 'edit3', bg: PALETTE.purple, template: 'hat {recipe} erstellt' },
     RECIPE_COOKED: { icon: 'flame', bg: PALETTE.orange, template: 'hat {recipe} zubereitet' },
     RECIPE_RATED: { icon: 'star', bg: PALETTE.gold, template: 'hat {recipe} bewertet' },
-    RECIPE_COMMENTED: { icon: 'message-square', bg: PALETTE.pink, template: 'hat {recipe} kommentiert' },
+    RECIPE_COMMENTED: {
+        icon: 'message-square',
+        bg: PALETTE.pink,
+        template: 'hat {recipe} kommentiert',
+    },
     RECIPE_FAVORITED: { icon: 'bookmark', bg: PALETTE.blue, template: 'hat {recipe} gespeichert' },
     USER_FOLLOWED: { icon: 'handshake', bg: PALETTE.emerald, template: 'hat {target} gefolgt' },
     USER_REGISTERED: { icon: 'user-plus', bg: PALETTE.emerald, template: 'hat sich registriert' },
-    SHOPPING_LIST_CREATED: { icon: 'shopping-cart', bg: PALETTE.gold, template: 'hat eine Einkaufsliste erstellt' },
-    MEAL_PLAN_CREATED: { icon: 'calendar', bg: PALETTE.purple, template: 'hat einen Essensplan erstellt' },
+    SHOPPING_LIST_CREATED: {
+        icon: 'shopping-cart',
+        bg: PALETTE.gold,
+        template: 'hat eine Einkaufsliste erstellt',
+    },
+    MEAL_PLAN_CREATED: {
+        icon: 'calendar',
+        bg: PALETTE.purple,
+        template: 'hat einen Essensplan erstellt',
+    },
 };
 
 export function formatTimeAgo(
@@ -74,7 +89,15 @@ export interface UserWithProfile {
 
 /** Shared mapper: converts a single ActivityLog row into an ActivityFeedItem */
 export function mapLogToFeedItem(
-    log: { id: string; userId: string; type: string; targetType: string | null; targetId: string | null; metadata: unknown; createdAt: Date },
+    log: {
+        id: string;
+        userId: string;
+        type: string;
+        targetType: string | null;
+        targetId: string | null;
+        metadata: unknown;
+        createdAt: Date;
+    },
     userMap: Map<string, UserWithProfile>,
     recipeMap: Map<string, { id: string; title: string; slug: string }>,
     targetUserMap: Map<string, UserWithProfile>,

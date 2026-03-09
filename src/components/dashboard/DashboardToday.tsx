@@ -93,8 +93,7 @@ function TimelineItemComponent({ item, isLast }: { item: TimelineItem; isLast: b
                             width: '2px',
                             flex: '1',
                             minHeight: '40px',
-                            background:
-                                item.status === 'completed' ? PALETTE.emerald : 'border',
+                            background: item.status === 'completed' ? PALETTE.emerald : 'border',
                             marginTop: '2',
                         })}
                     />

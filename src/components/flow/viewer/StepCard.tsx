@@ -60,7 +60,9 @@ export function StepCard({
                 border: 'none',
                 boxShadow:
                     active && !completed
-                        ? c.dark ? '0 4px 20px rgba(224,123,83,0.25)' : '0 4px 20px rgba(224,123,83,0.18)'
+                        ? c.dark
+                            ? '0 4px 20px rgba(224,123,83,0.25)'
+                            : '0 4px 20px rgba(224,123,83,0.18)'
                         : c.shadowSm,
                 transition: 'all 0.2s ease',
                 backgroundImage: config.gradient,
@@ -233,7 +235,11 @@ export function StepCard({
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        if (timerRunning) { onTimerPause(); } else { onTimerStart(); }
+                                        if (timerRunning) {
+                                            onTimerPause();
+                                        } else {
+                                            onTimerStart();
+                                        }
                                     }}
                                     title={timerRunning ? 'Pause' : 'Timer starten'}
                                     style={{
@@ -311,7 +317,11 @@ export function StepCard({
                                     : timerDone
                                       ? PALETTE.emerald
                                       : c.badgeBg,
-                                color: completed ? PALETTE.emerald : timerDone ? 'white' : c.textSubtle,
+                                color: completed
+                                    ? PALETTE.emerald
+                                    : timerDone
+                                      ? 'white'
+                                      : c.textSubtle,
                                 transition: 'all 0.2s ease',
                             }}
                         >

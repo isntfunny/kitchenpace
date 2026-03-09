@@ -3,7 +3,6 @@
 import { ChefHat } from 'lucide-react';
 import { useState } from 'react';
 
-
 import { PALETTE } from '@app/lib/palette';
 import {
     getThumbnailUrl,
@@ -120,7 +119,8 @@ export function SmartImage({
     }
 
     // Recipe fallback on error: swap to placeholder
-    const resolvedSrc = error && recipeId ? RECIPE_PLACEHOLDER : (!thumbnailSrc || error ? fallback : thumbnailSrc);
+    const resolvedSrc =
+        error && recipeId ? RECIPE_PLACEHOLDER : !thumbnailSrc || error ? fallback : thumbnailSrc;
     // Don't attach error handler if we're already showing a fallback
     const isShowingFallback = noImage || error;
 

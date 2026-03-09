@@ -41,14 +41,20 @@ export function GeneralInformationSection({
                         padding: '3',
                         borderRadius: 'xl',
                         border: '1px solid',
-                        borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.45)' },
+                        borderColor: {
+                            base: 'rgba(224,123,83,0.4)',
+                            _dark: 'rgba(224,123,83,0.45)',
+                        },
                         fontSize: 'md',
                         outline: 'none',
                         bg: { base: 'transparent', _dark: 'surface' },
                         color: 'text',
                         _focus: {
                             borderColor: 'palette.orange',
-                            boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
+                            boxShadow: {
+                                base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                            },
                         },
                     })}
                     required
@@ -81,7 +87,10 @@ export function GeneralInformationSection({
                         padding: '3',
                         borderRadius: 'xl',
                         border: '1px solid',
-                        borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.45)' },
+                        borderColor: {
+                            base: 'rgba(224,123,83,0.4)',
+                            _dark: 'rgba(224,123,83,0.45)',
+                        },
                         fontSize: 'md',
                         resize: 'vertical',
                         outline: 'none',
@@ -89,7 +98,10 @@ export function GeneralInformationSection({
                         color: 'text',
                         _focus: {
                             borderColor: 'palette.orange',
-                            boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
+                            boxShadow: {
+                                base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                            },
                         },
                     })}
                 />

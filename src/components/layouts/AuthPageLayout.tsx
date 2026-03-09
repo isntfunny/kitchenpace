@@ -29,8 +29,7 @@ const HERO_POINTS = [
     },
     {
         label: 'Fotos hochladen',
-        description:
-            'Zeig deine Kreationen! Lade eigene Fotos zu jedem Rezeptschritt hoch.',
+        description: 'Zeig deine Kreationen! Lade eigene Fotos zu jedem Rezeptschritt hoch.',
         icon: Camera,
     },
 ];
@@ -73,7 +72,10 @@ export function AuthPageLayout({
                             gridTemplateColumns: { base: '1fr', lg: '1.15fr 0.85fr' },
                             overflow: 'hidden',
                             borderRadius: '3xl',
-                            boxShadow: { base: '0 30px 90px rgba(0,0,0,0.14)', _dark: '0 30px 90px rgba(0,0,0,0.5)' },
+                            boxShadow: {
+                                base: '0 30px 90px rgba(0,0,0,0.14)',
+                                _dark: '0 30px 90px rgba(0,0,0,0.5)',
+                            },
                             border: '1px solid',
                             borderColor: 'border',
                             minHeight: { base: 'auto', lg: '580px' },
@@ -99,14 +101,26 @@ export function AuthPageLayout({
                         >
                             {/* Decorative floating icons */}
                             <motion.div
-                                className={css({ position: 'absolute', top: '-30px', right: '-30px', opacity: 0.12, pointerEvents: 'none' })}
+                                className={css({
+                                    position: 'absolute',
+                                    top: '-30px',
+                                    right: '-30px',
+                                    opacity: 0.12,
+                                    pointerEvents: 'none',
+                                })}
                                 animate={{ y: [0, -10, 0], rotate: [0, 4, 0] }}
                                 transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
                             >
                                 <ChefHat size={160} color="#fff6ec" />
                             </motion.div>
                             <motion.div
-                                className={css({ position: 'absolute', bottom: '60px', left: '-20px', opacity: 0.08, pointerEvents: 'none' })}
+                                className={css({
+                                    position: 'absolute',
+                                    bottom: '60px',
+                                    left: '-20px',
+                                    opacity: 0.08,
+                                    pointerEvents: 'none',
+                                })}
                                 animate={{ y: [0, 8, 0], rotate: [0, -3, 0] }}
                                 transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
                             >
@@ -114,18 +128,56 @@ export function AuthPageLayout({
                             </motion.div>
 
                             {/* Content */}
-                            <div className={css({ position: 'relative', p: { base: '6', md: '8' }, display: 'flex', flexDirection: 'column', gap: '4', height: '100%' })}>
-                                <p className={css({ textTransform: 'uppercase', letterSpacing: 'wide', fontSize: 'xs', fontWeight: '700', color: 'rgba(255,246,236,0.7)' })}>
+                            <div
+                                className={css({
+                                    position: 'relative',
+                                    p: { base: '6', md: '8' },
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4',
+                                    height: '100%',
+                                })}
+                            >
+                                <p
+                                    className={css({
+                                        textTransform: 'uppercase',
+                                        letterSpacing: 'wide',
+                                        fontSize: 'xs',
+                                        fontWeight: '700',
+                                        color: 'rgba(255,246,236,0.7)',
+                                    })}
+                                >
                                     {heroCaption}
                                 </p>
-                                <h2 className={css({ fontSize: { base: '3xl', md: '4xl' }, fontWeight: '800', lineHeight: '1.2', margin: 0, color: '#fff6ec' })}>
+                                <h2
+                                    className={css({
+                                        fontSize: { base: '3xl', md: '4xl' },
+                                        fontWeight: '800',
+                                        lineHeight: '1.2',
+                                        margin: 0,
+                                        color: '#fff6ec',
+                                    })}
+                                >
                                     {heroTitle}
                                 </h2>
-                                <p className={css({ color: 'rgba(255,246,236,0.85)', fontSize: 'md', maxWidth: '420px' })}>
+                                <p
+                                    className={css({
+                                        color: 'rgba(255,246,236,0.85)',
+                                        fontSize: 'md',
+                                        maxWidth: '420px',
+                                    })}
+                                >
                                     {heroSubtitle}
                                 </p>
 
-                                <div className={css({ display: 'flex', flexDirection: 'column', gap: '2.5', marginTop: 'auto' })}>
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '2.5',
+                                        marginTop: 'auto',
+                                    })}
+                                >
                                     {HERO_POINTS.map((point, index) => (
                                         <motion.div
                                             key={point.label}
@@ -141,16 +193,44 @@ export function AuthPageLayout({
                                             })}
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.3, delay: 0.2 + index * 0.06 }}
+                                            transition={{
+                                                duration: 0.3,
+                                                delay: 0.2 + index * 0.06,
+                                            }}
                                         >
-                                            <div className={css({ width: '9', height: '9', borderRadius: 'full', background: 'rgba(255,246,236,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
+                                            <div
+                                                className={css({
+                                                    width: '9',
+                                                    height: '9',
+                                                    borderRadius: 'full',
+                                                    background: 'rgba(255,246,236,0.2)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    flexShrink: 0,
+                                                })}
+                                            >
                                                 <point.icon size={18} color="#fff6ec" />
                                             </div>
                                             <div>
-                                                <p className={css({ fontSize: 'sm', fontWeight: '600', color: '#fff6ec', margin: 0 })}>
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'sm',
+                                                        fontWeight: '600',
+                                                        color: '#fff6ec',
+                                                        margin: 0,
+                                                    })}
+                                                >
                                                     {point.label}
                                                 </p>
-                                                <p className={css({ fontSize: 'xs', color: 'rgba(255,246,236,0.75)', margin: 0, lineHeight: '1.5' })}>
+                                                <p
+                                                    className={css({
+                                                        fontSize: 'xs',
+                                                        color: 'rgba(255,246,236,0.75)',
+                                                        margin: 0,
+                                                        lineHeight: '1.5',
+                                                    })}
+                                                >
                                                     {point.description}
                                                 </p>
                                             </div>

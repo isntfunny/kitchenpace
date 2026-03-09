@@ -573,9 +573,15 @@ export function RecipeForm({
                             <p className={css({ fontWeight: '700', fontSize: 'sm', mb: '1' })}>
                                 Flow-Editor nur am Desktop
                             </p>
-                            <p className={css({ fontSize: 'xs', color: 'foreground.muted', lineHeight: '1.6' })}>
-                                Rezept-Flows kannst du nur am Computer erstellen.
-                                Hier kannst du Titel, Zutaten und alle Details bearbeiten.
+                            <p
+                                className={css({
+                                    fontSize: 'xs',
+                                    color: 'foreground.muted',
+                                    lineHeight: '1.6',
+                                })}
+                            >
+                                Rezept-Flows kannst du nur am Computer erstellen. Hier kannst du
+                                Titel, Zutaten und alle Details bearbeiten.
                             </p>
                         </div>
                     </div>
@@ -590,85 +596,93 @@ export function RecipeForm({
                             }
                         }}
                     >
-                    {/* Autosave bar */}
-                    {autoSaveLabel && (
-                        <div className={autoSaveBarClass(autoSaveStatus)}>
-                            {autoSaveStatus === 'saving' && <span className={spinnerClass} />}
-                            {autoSaveLabel}
-                        </div>
-                    )}
+                        {/* Autosave bar */}
+                        {autoSaveLabel && (
+                            <div className={autoSaveBarClass(autoSaveStatus)}>
+                                {autoSaveStatus === 'saving' && <span className={spinnerClass} />}
+                                {autoSaveLabel}
+                            </div>
+                        )}
 
-                    {/* Progress bar */}
-                    <div className={progressBarWrapperClass}>
-                        <div
-                            className={css({
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                mb: '1',
-                            })}
-                        >
-                            <span
+                        {/* Progress bar */}
+                        <div className={progressBarWrapperClass}>
+                            <div
                                 className={css({
-                                    fontSize: '8px',
-                                    fontWeight: '700',
-                                    color: { base: 'rgba(0,0,0,0.5)', _dark: 'rgba(255,255,255,0.5)' },
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    mb: '1',
                                 })}
                             >
-                                {progressPct}%
-                            </span>
-                            {progressPct >= 100 && (
                                 <span
                                     className={css({
                                         fontSize: '8px',
-                                        color: 'palette.emerald',
                                         fontWeight: '700',
+                                        color: {
+                                            base: 'rgba(0,0,0,0.5)',
+                                            _dark: 'rgba(255,255,255,0.5)',
+                                        },
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.05em',
                                     })}
                                 >
-                                    Vollständig
+                                    {progressPct}%
                                 </span>
-                            )}
-                            {mandatoryMet && progressPct < 100 && (
-                                <span
+                                {progressPct >= 100 && (
+                                    <span
+                                        className={css({
+                                            fontSize: '8px',
+                                            color: 'palette.emerald',
+                                            fontWeight: '700',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                        })}
+                                    >
+                                        Vollständig
+                                    </span>
+                                )}
+                                {mandatoryMet && progressPct < 100 && (
+                                    <span
+                                        className={css({
+                                            fontSize: '8px',
+                                            color: 'palette.emerald',
+                                            fontWeight: '700',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                        })}
+                                    >
+                                        Bereit
+                                    </span>
+                                )}
+                            </div>
+                            {/* Track with 60% milestone marker */}
+                            <div className={progressTrackClass} style={{ position: 'relative' }}>
+                                <div
+                                    className={progressFillClass}
+                                    style={{
+                                        width: `${progressPct}%`,
+                                        backgroundColor: mandatoryMet
+                                            ? PALETTE.emerald
+                                            : PALETTE.orange,
+                                    }}
+                                />
+                                {/* 60% milestone marker */}
+                                <div
                                     className={css({
-                                        fontSize: '8px',
-                                        color: 'palette.emerald',
-                                        fontWeight: '700',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.05em',
+                                        position: 'absolute',
+                                        left: '60%',
+                                        top: '-2px',
+                                        bottom: '-2px',
+                                        width: '1.5px',
+                                        backgroundColor: {
+                                            base: 'rgba(0,0,0,0.15)',
+                                            _dark: 'rgba(255,255,255,0.15)',
+                                        },
+                                        borderRadius: '1px',
                                     })}
-                                >
-                                    Bereit
-                                </span>
-                            )}
+                                />
+                            </div>
                         </div>
-                        {/* Track with 60% milestone marker */}
-                        <div className={progressTrackClass} style={{ position: 'relative' }}>
-                            <div
-                                className={progressFillClass}
-                                style={{
-                                    width: `${progressPct}%`,
-                                    backgroundColor: mandatoryMet ? PALETTE.emerald : PALETTE.orange,
-                                }}
-                            />
-                            {/* 60% milestone marker */}
-                            <div
-                                className={css({
-                                    position: 'absolute',
-                                    left: '60%',
-                                    top: '-2px',
-                                    bottom: '-2px',
-                                    width: '1.5px',
-                                    backgroundColor: { base: 'rgba(0,0,0,0.15)', _dark: 'rgba(255,255,255,0.15)' },
-                                    borderRadius: '1px',
-                                })}
-                            />
-                        </div>
-                    </div>
                     </div>
 
                     {/* Flat scrollable sections */}
@@ -876,14 +890,16 @@ const autoSaveBarClass = (status: AutoSaveStatus) =>
         py: '2',
         fontSize: '8px',
         fontWeight: '600',
-        backgroundColor: status === 'error'
-            ? { base: 'rgba(239,68,68,0.08)', _dark: 'rgba(239,68,68,0.12)' }
-            : { base: 'rgba(224,123,83,0.06)', _dark: 'rgba(224,123,83,0.1)' },
+        backgroundColor:
+            status === 'error'
+                ? { base: 'rgba(239,68,68,0.08)', _dark: 'rgba(239,68,68,0.12)' }
+                : { base: 'rgba(224,123,83,0.06)', _dark: 'rgba(224,123,83,0.1)' },
         color: status === 'error' ? 'red.500' : 'text.muted',
         borderBottom: '1px solid',
-        borderBottomColor: status === 'error'
-            ? { base: 'rgba(239,68,68,0.15)', _dark: 'rgba(239,68,68,0.25)' }
-            : { base: 'rgba(224,123,83,0.12)', _dark: 'rgba(224,123,83,0.18)' },
+        borderBottomColor:
+            status === 'error'
+                ? { base: 'rgba(239,68,68,0.15)', _dark: 'rgba(239,68,68,0.25)' }
+                : { base: 'rgba(224,123,83,0.12)', _dark: 'rgba(224,123,83,0.18)' },
         flexShrink: '0',
         textTransform: 'uppercase',
         letterSpacing: '0.04em',
@@ -914,7 +930,10 @@ const sidebarClass = css({
     width: { base: '100%', md: '320px' },
     minWidth: { base: '100%', md: '320px' },
     flexShrink: '0',
-    borderRight: { base: 'none', md: { base: '1px solid rgba(224,123,83,0.15)', _dark: '1px solid rgba(224,123,83,0.12)' } },
+    borderRight: {
+        base: 'none',
+        md: { base: '1px solid rgba(224,123,83,0.15)', _dark: '1px solid rgba(224,123,83,0.12)' },
+    },
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: 'surface',

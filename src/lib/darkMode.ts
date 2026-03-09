@@ -61,15 +61,9 @@ export function useDarkColors() {
         closeIcon: dark ? '#a0a0a0' : '#636e72',
 
         // Shadows
-        shadow: dark
-            ? '0 24px 64px rgba(0,0,0,0.4)'
-            : '0 24px 64px rgba(0,0,0,0.22)',
-        shadowLg: dark
-            ? '0 24px 80px rgba(0,0,0,0.4)'
-            : '0 24px 80px rgba(0,0,0,0.18)',
-        shadowSm: dark
-            ? '0 2px 8px rgba(0,0,0,0.3)'
-            : '0 2px 8px rgba(0,0,0,0.07)',
+        shadow: dark ? '0 24px 64px rgba(0,0,0,0.4)' : '0 24px 64px rgba(0,0,0,0.22)',
+        shadowLg: dark ? '0 24px 80px rgba(0,0,0,0.4)' : '0 24px 80px rgba(0,0,0,0.18)',
+        shadowSm: dark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.07)',
 
         // Mention highlights
         mentionBg: dark ? 'rgba(224,123,83,0.2)' : 'rgba(224,123,83,0.15)',

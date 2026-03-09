@@ -32,7 +32,10 @@ const tagSearchInputClass = css({
     outline: 'none',
     _focus: {
         borderColor: 'palette.orange',
-        boxShadow: { base: '0 0 0 2px rgba(224,123,83,0.2)', _dark: '0 0 0 2px rgba(224,123,83,0.25)' },
+        boxShadow: {
+            base: '0 0 0 2px rgba(224,123,83,0.2)',
+            _dark: '0 0 0 2px rgba(224,123,83,0.25)',
+        },
     },
 });
 

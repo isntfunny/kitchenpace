@@ -1,15 +1,6 @@
 'use client';
 
-import {
-    ChefHat,
-    Egg,
-    LayoutGrid,
-    Menu,
-    Plus,
-    Shield,
-    ShieldCheck,
-    Zap,
-} from 'lucide-react';
+import { ChefHat, Egg, LayoutGrid, Menu, Plus, Shield, ShieldCheck, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -132,7 +123,10 @@ function HeaderNavigationMenu({
                             color: 'primary',
                         },
                         _focusVisible: {
-                            boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.35)', _dark: '0 0 0 3px rgba(224,123,83,0.3)' },
+                            boxShadow: {
+                                base: '0 0 0 3px rgba(224,123,83,0.35)',
+                                _dark: '0 0 0 3px rgba(224,123,83,0.3)',
+                            },
                         },
                     })}
                 >
@@ -153,7 +147,8 @@ function HeaderNavigationMenu({
                         borderColor: 'border',
                         boxShadow: 'shadow.large',
                         zIndex: 100,
-                        maxHeight: 'var(--radix-dropdown-menu-content-available-height, calc(100vh - 6rem))',
+                        maxHeight:
+                            'var(--radix-dropdown-menu-content-available-height, calc(100vh - 6rem))',
                         overflowY: 'auto',
                         transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
                         '&[data-state="open"]': {
@@ -173,53 +168,64 @@ function HeaderNavigationMenu({
                             padding: '4',
                         })}
                     >
-                    <div
-                        className={css({
-                            display: 'grid',
-                            gridTemplateColumns: { base: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
-                            gap: '4',
-                        })}
-                    >
-                        <div
-                            className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}
-                        >
-                            <MenuSection title="Seiten" items={availableGeneralLinks} />
-                            {adminLinks.length > 0 && (
-                                <MenuSection title="Verwaltung" items={adminLinks} />
-                            )}
-                        </div>
-                        <div
-                            className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}
-                        >
-                            <MenuSection title="Schnelle Filter" items={QUICK_FILTERS} />
-                        </div>
-                    </div>
-                    <section>
                         <div
                             className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '2',
-                                padding: '3',
-                                borderRadius: 'xl',
-                                border: '1px solid',
-                                borderColor: 'border.muted',
-                                background: 'surface',
+                                display: 'grid',
+                                gridTemplateColumns: {
+                                    base: '1fr',
+                                    md: 'repeat(2, minmax(0, 1fr))',
+                                },
+                                gap: '4',
                             })}
                         >
-                            <p
+                            <div
                                 className={css({
-                                    fontSize: 'sm',
-                                    color: 'text.muted',
-                                    margin: 0,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4',
                                 })}
                             >
-                                Darstellung
-                            </p>
-                            <ThemeToggle />
+                                <MenuSection title="Seiten" items={availableGeneralLinks} />
+                                {adminLinks.length > 0 && (
+                                    <MenuSection title="Verwaltung" items={adminLinks} />
+                                )}
+                            </div>
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4',
+                                })}
+                            >
+                                <MenuSection title="Schnelle Filter" items={QUICK_FILTERS} />
+                            </div>
                         </div>
-                    </section>
+                        <section>
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: '2',
+                                    padding: '3',
+                                    borderRadius: 'xl',
+                                    border: '1px solid',
+                                    borderColor: 'border.muted',
+                                    background: 'surface',
+                                })}
+                            >
+                                <p
+                                    className={css({
+                                        fontSize: 'sm',
+                                        color: 'text.muted',
+                                        margin: 0,
+                                    })}
+                                >
+                                    Darstellung
+                                </p>
+                                <ThemeToggle />
+                            </div>
+                        </section>
                     </div>
                 </DropdownMenu.Content>
             </DropdownMenu.Portal>
@@ -244,7 +250,10 @@ export function Header() {
                 top: 0,
                 zIndex: 20,
                 overflow: 'hidden',
-                boxShadow: { base: '0 4px 30px rgba(0,0,0,0.15)', _dark: '0 4px 30px rgba(0,0,0,0.4)' },
+                boxShadow: {
+                    base: '0 4px 30px rgba(0,0,0,0.15)',
+                    _dark: '0 4px 30px rgba(0,0,0,0.4)',
+                },
             })}
             style={{
                 background: dark

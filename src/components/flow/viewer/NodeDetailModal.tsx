@@ -270,7 +270,9 @@ export function NodeDetailModal({
                                         />
                                         <span style={{ fontWeight: 600 }}>{ing.name}</span>
                                         {(ing.amount || ing.unit) && (
-                                            <span style={{ color: c.textSubtle, marginLeft: 'auto' }}>
+                                            <span
+                                                style={{ color: c.textSubtle, marginLeft: 'auto' }}
+                                            >
                                                 {[ing.amount, ing.unit].filter(Boolean).join(' ')}
                                             </span>
                                         )}

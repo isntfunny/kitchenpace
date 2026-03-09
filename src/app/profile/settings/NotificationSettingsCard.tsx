@@ -226,7 +226,10 @@ export function NotificationSettingsCard({ profile }: NotificationSettingsCardPr
                                         height: '22px',
                                         borderRadius: 'full',
                                         background: 'surface',
-                                        boxShadow: { base: '0 2px 4px rgba(0,0,0,0.2)', _dark: '0 2px 4px rgba(0,0,0,0.4)' },
+                                        boxShadow: {
+                                            base: '0 2px 4px rgba(0,0,0,0.2)',
+                                            _dark: '0 2px 4px rgba(0,0,0,0.4)',
+                                        },
                                         transition: 'left 150ms ease',
                                     })}
                                 />

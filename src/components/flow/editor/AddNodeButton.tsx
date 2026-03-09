@@ -66,8 +66,14 @@ function AddNodeButtonComponent({ nodeId, side = 'source' }: AddNodeButtonProps)
                         zIndex: '50',
                         backgroundColor: 'surface',
                         borderRadius: 'xl',
-                        border: { base: '1px solid rgba(224,123,83,0.3)', _dark: '1px solid rgba(224,123,83,0.25)' },
-                        boxShadow: { base: '0 8px 32px rgba(0,0,0,0.12)', _dark: '0 8px 32px rgba(0,0,0,0.35)' },
+                        border: {
+                            base: '1px solid rgba(224,123,83,0.3)',
+                            _dark: '1px solid rgba(224,123,83,0.25)',
+                        },
+                        boxShadow: {
+                            base: '0 8px 32px rgba(0,0,0,0.12)',
+                            _dark: '0 8px 32px rgba(0,0,0,0.35)',
+                        },
                         p: '3',
                         width: '280px',
                     })}
@@ -141,7 +147,10 @@ const circleButtonClass = css({
     flexShrink: '0',
     _hover: {
         transform: 'scale(1.1)',
-        boxShadow: { base: '0 4px 12px rgba(224,123,83,0.4)', _dark: '0 4px 12px rgba(224,123,83,0.5)' },
+        boxShadow: {
+            base: '0 4px 12px rgba(224,123,83,0.4)',
+            _dark: '0 4px 12px rgba(224,123,83,0.5)',
+        },
     },
 });
 
@@ -175,6 +184,9 @@ const stepButtonClass = css({
     _hover: {
         borderColor: 'brand.primary',
         transform: 'translateY(-1px)',
-        boxShadow: { base: '0 2px 8px rgba(224,123,83,0.2)', _dark: '0 2px 8px rgba(224,123,83,0.3)' },
+        boxShadow: {
+            base: '0 2px 8px rgba(224,123,83,0.2)',
+            _dark: '0 2px 8px rgba(224,123,83,0.3)',
+        },
     },
 });

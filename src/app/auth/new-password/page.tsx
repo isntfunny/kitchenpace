@@ -150,7 +150,13 @@ function NewPasswordForm() {
                             <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                                 Neues Passwort anlegen
                             </h1>
-                            <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm' })}>
+                            <p
+                                className={css({
+                                    color: 'foreground.muted',
+                                    margin: 0,
+                                    fontSize: 'sm',
+                                })}
+                            >
                                 Wähle ein sicheres Passwort und bestätige es.
                             </p>
                         </div>
@@ -233,7 +239,10 @@ export default function NewPasswordPage() {
                                 height: '32px',
                                 borderRadius: '50%',
                                 border: '3px solid',
-                                borderColor: { base: 'rgba(224,123,83,0.3)', _dark: 'rgba(240,144,112,0.4)' },
+                                borderColor: {
+                                    base: 'rgba(224,123,83,0.3)',
+                                    _dark: 'rgba(240,144,112,0.4)',
+                                },
                                 borderTopColor: 'palette.orange',
                                 animation: 'spin 1s linear infinite',
                             })}

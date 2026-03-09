@@ -30,7 +30,10 @@ const SignInButton = ({ onSignIn, label = 'Sign In' }: Props) => {
                 transition: 'transform 150ms ease, box-shadow 150ms ease',
                 _hover: {
                     transform: 'translateY(-1px)',
-                    boxShadow: { base: '0 10px 30px rgba(224,123,83,0.35)', _dark: '0 10px 30px rgba(224,123,83,0.25)' },
+                    boxShadow: {
+                        base: '0 10px 30px rgba(224,123,83,0.35)',
+                        _dark: '0 10px 30px rgba(224,123,83,0.25)',
+                    },
                 },
             })}
             onClick={() => {

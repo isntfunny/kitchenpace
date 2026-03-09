@@ -39,10 +39,18 @@ function makeSparks(count: number): Spark[] {
         const spread = Math.PI / 3; // ±60°
         let baseAngle: number;
         switch (edge) {
-            case 0: baseAngle = -Math.PI / 2; break; // top → up
-            case 1: baseAngle = 0; break;             // right → right
-            case 2: baseAngle = Math.PI / 2; break;   // bottom → down
-            default: baseAngle = Math.PI; break;       // left → left
+            case 0:
+                baseAngle = -Math.PI / 2;
+                break; // top → up
+            case 1:
+                baseAngle = 0;
+                break; // right → right
+            case 2:
+                baseAngle = Math.PI / 2;
+                break; // bottom → down
+            default:
+                baseAngle = Math.PI;
+                break; // left → left
         }
         const angle = baseAngle + (Math.random() - 0.5) * spread;
         const distance = 36 + Math.random() * 52;
@@ -64,10 +72,14 @@ function makeSparks(count: number): Spark[] {
 /** Converts an edge + edgePos (0-100%) into CSS top/left on the wrapper */
 function sparkOrigin(spark: Spark): CSSProperties {
     switch (spark.edge) {
-        case 0: return { top: 0,    left: `${spark.edgePos}%` };
-        case 1: return { top: `${spark.edgePos}%`, left: '100%' };
-        case 2: return { top: '100%', left: `${spark.edgePos}%` };
-        default: return { top: `${spark.edgePos}%`, left: 0 };
+        case 0:
+            return { top: 0, left: `${spark.edgePos}%` };
+        case 1:
+            return { top: `${spark.edgePos}%`, left: '100%' };
+        case 2:
+            return { top: '100%', left: `${spark.edgePos}%` };
+        default:
+            return { top: `${spark.edgePos}%`, left: 0 };
     }
 }
 
@@ -81,18 +93,14 @@ interface SparkleEffectProps {
 
 type Burst = { id: number; sparks: Spark[] };
 
-export function SparkleEffect({
-    children,
-    particleCount = 32,
-    style,
-}: SparkleEffectProps) {
+export function SparkleEffect({ children, particleCount = 32, style }: SparkleEffectProps) {
     const [bursts, setBursts] = useState<Burst[]>([]);
 
     const triggerSparkle = useCallback(() => {
         const id = Date.now();
         // Replace any existing burst so rapid clicks don't stack DOM nodes
         setBursts([{ id, sparks: makeSparks(particleCount) }]);
-        setTimeout(() => setBursts(prev => prev.filter(b => b.id !== id)), 1400);
+        setTimeout(() => setBursts((prev) => prev.filter((b) => b.id !== id)), 1400);
     }, [particleCount]);
 
     return (
@@ -108,7 +116,7 @@ export function SparkleEffect({
             {children(triggerSparkle)}
 
             <AnimatePresence>
-                {bursts.map(burst => (
+                {bursts.map((burst) => (
                     <div
                         key={burst.id}
                         style={{
@@ -119,7 +127,7 @@ export function SparkleEffect({
                             zIndex: 10,
                         }}
                     >
-                        {burst.sparks.map(spark => (
+                        {burst.sparks.map((spark) => (
                             <motion.div
                                 key={spark.id}
                                 style={{
@@ -145,7 +153,7 @@ export function SparkleEffect({
                                     delay: spark.delay,
                                     ease: 'easeOut',
                                     opacity: { times: [0, 0.4, 1] },
-                                    scale:   { times: [0, 0.3, 1] },
+                                    scale: { times: [0, 0.3, 1] },
                                 }}
                             />
                         ))}

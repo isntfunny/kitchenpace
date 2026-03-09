@@ -292,19 +292,54 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                         background: `linear-gradient(135deg, color-mix(in srgb, ${PALETTE.orange} 12%, transparent), color-mix(in srgb, ${PALETTE.gold} 8%, transparent))`,
                     }}
                 >
-                    <div className={css({ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '3' })}>
-                        <div className={css({ display: 'flex', flexDirection: 'column', gap: '0.5' })}>
-                            <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-                                <SlidersHorizontal size={18} style={{ color: PALETTE.orange, flexShrink: 0 }} />
-                                <h1 className={css({ fontSize: { base: 'lg', md: 'xl' }, fontWeight: '800', margin: 0, color: 'text' })}>
+                    <div
+                        className={css({
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            gap: '3',
+                        })}
+                    >
+                        <div
+                            className={css({
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.5',
+                            })}
+                        >
+                            <div
+                                className={css({ display: 'flex', alignItems: 'center', gap: '2' })}
+                            >
+                                <SlidersHorizontal
+                                    size={18}
+                                    style={{ color: PALETTE.orange, flexShrink: 0 }}
+                                />
+                                <h1
+                                    className={css({
+                                        fontSize: { base: 'lg', md: 'xl' },
+                                        fontWeight: '800',
+                                        margin: 0,
+                                        color: 'text',
+                                    })}
+                                >
                                     Rezepte entdecken
                                 </h1>
                             </div>
                             <p className={css({ fontSize: 'xs', color: 'text-muted' })}>
-                                {activeFilterCount > 0 ? `${activeFilterCount} Filter aktiv · ` : ''}{resultStatusText}
+                                {activeFilterCount > 0
+                                    ? `${activeFilterCount} Filter aktiv · `
+                                    : ''}
+                                {resultStatusText}
                             </p>
                         </div>
-                        <div className={css({ display: 'flex', gap: '2', alignItems: 'center', flexShrink: 0 })}>
+                        <div
+                            className={css({
+                                display: 'flex',
+                                gap: '2',
+                                alignItems: 'center',
+                                flexShrink: 0,
+                            })}
+                        >
                             {activeFilterCount > 0 && (
                                 <Button variant="ghost" size="sm" onClick={resetFilters}>
                                     Zurücksetzen
@@ -317,7 +352,13 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                     <div className={css({ position: 'relative', maxWidth: '480px' })}>
                         <Search
                             size={16}
-                            className={css({ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' })}
+                            className={css({
+                                position: 'absolute',
+                                left: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                pointerEvents: 'none',
+                            })}
                             style={{ color: PALETTE.orange, opacity: 0.6 }}
                         />
                         <input
@@ -340,7 +381,10 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                 transition: 'border-color 150ms ease, box-shadow 150ms ease',
                                 _focus: {
                                     borderColor: 'accent',
-                                    boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
+                                    boxShadow: {
+                                        base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                        _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                    },
                                 },
                             })}
                         />
@@ -547,7 +591,10 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                 maxWidth: '480px',
                                 borderRadius: '2xl',
                                 background: 'surface.elevated',
-                                boxShadow: { base: '0 24px 60px rgba(0,0,0,0.25)', _dark: '0 24px 60px rgba(0,0,0,0.5)' },
+                                boxShadow: {
+                                    base: '0 24px 60px rgba(0,0,0,0.25)',
+                                    _dark: '0 24px 60px rgba(0,0,0,0.5)',
+                                },
                                 maxHeight: '92vh',
                                 overflowY: 'auto',
                                 overflow: 'hidden',
@@ -571,7 +618,13 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                     background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
                                 }}
                             >
-                                <p className={css({ fontWeight: '700', fontSize: 'md', color: 'white' })}>
+                                <p
+                                    className={css({
+                                        fontWeight: '700',
+                                        fontSize: 'md',
+                                        color: 'white',
+                                    })}
+                                >
                                     Filter
                                 </p>
                                 <button

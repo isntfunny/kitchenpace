@@ -10,7 +10,6 @@ import { buildStreamCursor } from '../notifications/useStreamCursor';
 
 import { ActivityList, ActivitySidebar } from './ActivitySidebar';
 
-
 function useLiveActivity(
     initialActivities: ActivityFeedItem[],
     scope: 'global' | 'user',

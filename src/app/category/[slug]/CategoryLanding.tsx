@@ -37,7 +37,15 @@ function resolveLucideIcon(iconName: string | null): LucideIcon {
     return (icon as LucideIcon) ?? Utensils;
 }
 
-function CategoryIcon({ name, size, color: iconColor }: { name: string | null; size: number; color?: string }) {
+function CategoryIcon({
+    name,
+    size,
+    color: iconColor,
+}: {
+    name: string | null;
+    size: number;
+    color?: string;
+}) {
     return createElement(resolveLucideIcon(name), { size, color: iconColor });
 }
 
@@ -64,7 +72,10 @@ function StatPill({
                 px: '4',
                 py: '2.5',
                 borderRadius: 'xl',
-                boxShadow: { base: '0 2px 12px rgba(0,0,0,0.06)', _dark: '0 2px 12px rgba(0,0,0,0.3)' },
+                boxShadow: {
+                    base: '0 2px 12px rgba(0,0,0,0.06)',
+                    _dark: '0 2px 12px rgba(0,0,0,0.3)',
+                },
                 border: '1px solid',
                 borderColor: 'border',
             })}
@@ -83,10 +94,19 @@ function StatPill({
                 <Icon size={16} />
             </div>
             <div>
-                <div className={css({ fontSize: 'lg', fontWeight: '700', lineHeight: '1.2', color: 'text' })}>
+                <div
+                    className={css({
+                        fontSize: 'lg',
+                        fontWeight: '700',
+                        lineHeight: '1.2',
+                        color: 'text',
+                    })}
+                >
                     {value}
                 </div>
-                <div className={css({ fontSize: '0.7rem', color: 'text-muted', lineHeight: '1.2' })}>
+                <div
+                    className={css({ fontSize: '0.7rem', color: 'text-muted', lineHeight: '1.2' })}
+                >
                     {label}
                 </div>
             </div>
@@ -288,10 +308,30 @@ export function CategoryLanding({
                         })}
                     >
                         {[
-                            { show: true, icon: ChefHat, label: 'Rezepte', value: category.recipeCount },
-                            { show: category.stats.totalCooks > 0, icon: Flame, label: 'Mal zubereitet', value: category.stats.totalCooks },
-                            { show: category.stats.avgRating > 0, icon: Star, label: 'Bewertung', value: `${category.stats.avgRating} ★` },
-                            { show: category.stats.totalRatings > 0, icon: Bookmark, label: 'Bewertungen', value: category.stats.totalRatings },
+                            {
+                                show: true,
+                                icon: ChefHat,
+                                label: 'Rezepte',
+                                value: category.recipeCount,
+                            },
+                            {
+                                show: category.stats.totalCooks > 0,
+                                icon: Flame,
+                                label: 'Mal zubereitet',
+                                value: category.stats.totalCooks,
+                            },
+                            {
+                                show: category.stats.avgRating > 0,
+                                icon: Star,
+                                label: 'Bewertung',
+                                value: `${category.stats.avgRating} ★`,
+                            },
+                            {
+                                show: category.stats.totalRatings > 0,
+                                icon: Bookmark,
+                                label: 'Bewertungen',
+                                value: category.stats.totalRatings,
+                            },
                         ]
                             .filter((s) => s.show)
                             .map((stat, i) => (

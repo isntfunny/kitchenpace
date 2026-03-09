@@ -20,7 +20,9 @@ const SKEW_PX = 60; // how far the diagonal cut shifts
 
 // Get SVG elements from lucide icon by name
 // lucide icons are exported as arrays of [element, attributes] tuples
-function getLucideIconSvgElements(iconName: string | null | undefined): Array<[string, Record<string, string>]> {
+function getLucideIconSvgElements(
+    iconName: string | null | undefined,
+): Array<[string, Record<string, string>]> {
     if (!iconName) return [];
 
     // Convert kebab-case to camelCase for lucide exports
@@ -44,7 +46,10 @@ function getLucideIconSvgElements(iconName: string | null | undefined): Array<[s
 function buildLucideSvgPaths(elements: Array<[string, Record<string, string>]>): string {
     return elements
         .filter(([element]) => element === 'path')
-        .map(([, attrs]) => `<path d="${attrs.d}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`)
+        .map(
+            ([, attrs]) =>
+                `<path d="${attrs.d}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+        )
         .join('');
 }
 
@@ -80,7 +85,10 @@ async function saveToS3Cache(key: string, buffer: Buffer): Promise<void> {
             }),
         );
     } catch (error) {
-        log.warn('Failed to cache OG image', { key, error: error instanceof Error ? error.message : String(error) });
+        log.warn('Failed to cache OG image', {
+            key,
+            error: error instanceof Error ? error.message : String(error),
+        });
     }
 }
 
@@ -149,7 +157,10 @@ function buildPanels(count: number): PanelDef[] {
 
 async function loadRecipeImage(imageKey: string, width: number, height: number): Promise<Buffer> {
     const buf = await getFileBuffer(imageKey);
-    return sharp(buf).resize(width, height, { fit: 'cover', position: 'attention' }).png().toBuffer();
+    return sharp(buf)
+        .resize(width, height, { fit: 'cover', position: 'attention' })
+        .png()
+        .toBuffer();
 }
 
 function buildSvgOverlay(
@@ -162,13 +173,14 @@ function buildSvgOverlay(
     const borderLines = [];
     if (panels.length >= 2) {
         // Parse the cut points from panel clip paths to draw borders
-        const cuts = panels.length === 3
-            ? [Math.round(WIDTH * 0.31), Math.round(WIDTH * 0.62)]
-            : [Math.round(WIDTH * 0.48)];
+        const cuts =
+            panels.length === 3
+                ? [Math.round(WIDTH * 0.31), Math.round(WIDTH * 0.62)]
+                : [Math.round(WIDTH * 0.48)];
 
         for (const cut of cuts) {
             borderLines.push(
-                `<line x1="${cut + SKEW_PX}" y1="0" x2="${cut - SKEW_PX}" y2="${PANEL_H}" stroke="${color}" stroke-width="8" stroke-linecap="round" />`
+                `<line x1="${cut + SKEW_PX}" y1="0" x2="${cut - SKEW_PX}" y2="${PANEL_H}" stroke="${color}" stroke-width="8" stroke-linecap="round" />`,
             );
         }
     }
@@ -271,8 +283,16 @@ async function generateOgImage(
 
 // ─── Fallback (no recipe images) ──────────────────────────────────────────────
 
-function generateFallbackOg(categoryName: string, recipeCount: number, color: string, iconName?: string | null): Promise<Buffer> {
-    const safeName = categoryName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function generateFallbackOg(
+    categoryName: string,
+    recipeCount: number,
+    color: string,
+    iconName?: string | null,
+): Promise<Buffer> {
+    const safeName = categoryName
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
     const countLine =
         recipeCount > 0
             ? `<text x="${WIDTH / 2}" y="${HEIGHT / 2 + (iconName ? 90 : 50)}" fill="#636e72" font-family="system-ui, -apple-system, sans-serif" font-size="28" text-anchor="middle">${recipeCount} Rezept${recipeCount !== 1 ? 'e' : ''}</text>`
@@ -283,17 +303,23 @@ function generateFallbackOg(categoryName: string, recipeCount: number, color: st
 
     // Large background icon (subtle but visible)
     const bgIconSize = 800;
-    const bgIconSvg = iconPaths ? `<g opacity="0.12" transform="translate(${WIDTH / 2 - bgIconSize / 2}, ${HEIGHT / 2 - bgIconSize / 2})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${bgIconSize}" height="${bgIconSize}">${iconPaths.replace(/currentColor/g, color)}</svg></g>` : '';
+    const bgIconSvg = iconPaths
+        ? `<g opacity="0.12" transform="translate(${WIDTH / 2 - bgIconSize / 2}, ${HEIGHT / 2 - bgIconSize / 2})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${bgIconSize}" height="${bgIconSize}">${iconPaths.replace(/currentColor/g, color)}</svg></g>`
+        : '';
 
     // Foreground icon
-    const iconSvg = iconPaths ? `<g transform="translate(${WIDTH / 2 - 60}, ${HEIGHT / 2 - 140})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="120" height="120">${iconPaths.replace(/currentColor/g, color)}</svg></g>` : '';
+    const iconSvg = iconPaths
+        ? `<g transform="translate(${WIDTH / 2 - 60}, ${HEIGHT / 2 - 140})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="120" height="120">${iconPaths.replace(/currentColor/g, color)}</svg></g>`
+        : '';
 
     // Generate decorative circles that fade out (only if no icon)
-    const circles = !iconName ? Array.from({ length: 5 }, (_, i) => {
-        const radius = 80 + i * 40;
-        const opacity = (1 - i / 5) * 0.15;
-        return `<circle cx="${WIDTH * 0.25}" cy="${HEIGHT * 0.3}" r="${radius}" fill="${color}" opacity="${opacity}" />`;
-    }).join('\n  ') : '';
+    const circles = !iconName
+        ? Array.from({ length: 5 }, (_, i) => {
+              const radius = 80 + i * 40;
+              const opacity = (1 - i / 5) * 0.15;
+              return `<circle cx="${WIDTH * 0.25}" cy="${HEIGHT * 0.3}" r="${radius}" fill="${color}" opacity="${opacity}" />`;
+          }).join('\n  ')
+        : '';
 
     const svg = `<svg width="${WIDTH}" height="${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <defs>

@@ -3,6 +3,15 @@
     "version": "0.1.0",
     "private": true,
     "type": "module",
+    "lint-staged": {
+        "*.{ts,tsx,js,jsx,mjs}": [
+            "eslint --fix",
+            "prettier --write"
+        ],
+        "*.{json,css,md,yml,yaml}": [
+            "prettier --write"
+        ]
+    },
     "bin": {
         "kitchen": "./cli/index.ts"
     },
@@ -109,6 +118,7 @@
         "eslint-plugin-unused-imports": "^4.4.1",
         "html-to-image": "^1.11.13",
         "husky": "^9.1.7",
+        "lint-staged": "^16.3.2",
         "lucide": "^0.577.0",
         "node-html-parser": "^7.1.0",
         "prettier": "^3.8.1",

@@ -87,7 +87,9 @@ export async function unbanUser(userId: string) {
         select: { metadata: true },
     });
 
-    const previousRole = (banLog?.metadata as Record<string, string> | null)?.previousRole as Role | undefined;
+    const previousRole = (banLog?.metadata as Record<string, string> | null)?.previousRole as
+        | Role
+        | undefined;
 
     await prisma.user.update({
         where: { id: userId },

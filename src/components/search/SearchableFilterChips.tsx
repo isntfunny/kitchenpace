@@ -43,7 +43,10 @@ const chipItemClass = css({
         borderColor: 'primary',
         background: 'accent.soft',
         color: 'primary',
-        boxShadow: { base: '0 8px 16px rgba(224,123,83,0.15)', _dark: '0 8px 16px rgba(224,123,83,0.12)' },
+        boxShadow: {
+            base: '0 8px 16px rgba(224,123,83,0.15)',
+            _dark: '0 8px 16px rgba(224,123,83,0.12)',
+        },
     },
 });
 
@@ -248,7 +251,9 @@ export function SearchableFilterChips({
                             {displayItems.map((item) => {
                                 const isZeroCount = item.count === 0 && !item.selected;
                                 const isLoadingCount = item.count === -1;
-                                const badgeClass = isZeroCount ? chipBadgeMutedClass : chipBadgeClass;
+                                const badgeClass = isZeroCount
+                                    ? chipBadgeMutedClass
+                                    : chipBadgeClass;
                                 return (
                                     <motion.div
                                         key={item.name}

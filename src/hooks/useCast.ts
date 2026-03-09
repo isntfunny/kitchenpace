@@ -56,10 +56,7 @@ declare global {
 }
 
 interface CastContextInstance {
-    setOptions: (opts: {
-        receiverApplicationId: string;
-        autoJoinPolicy: string;
-    }) => void;
+    setOptions: (opts: { receiverApplicationId: string; autoJoinPolicy: string }) => void;
     requestSession: () => Promise<void>;
     endCurrentSession: (stopCasting: boolean) => void;
     getCurrentSession: () => CastSession | null;

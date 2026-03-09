@@ -7,9 +7,7 @@ import { type ActivityFeedItem } from '@app/lib/activity-utils';
 import { PALETTE } from '@app/lib/palette';
 import { prisma } from '@shared/prisma';
 
-
 export type { ActivityFeedItem, ActivityIconName } from '@app/lib/activity-utils';
-
 
 export type QuickTipIconName =
     | 'tag'
@@ -30,7 +28,14 @@ const TAG_COLORS = [
     PALETTE.pink,
 ];
 
-const TIP_ACCENTS = [PALETTE.orange, PALETTE.emerald, PALETTE.gold, PALETTE.blue, PALETTE.purple, PALETTE.pink];
+const TIP_ACCENTS = [
+    PALETTE.orange,
+    PALETTE.emerald,
+    PALETTE.gold,
+    PALETTE.blue,
+    PALETTE.purple,
+    PALETTE.pink,
+];
 
 export interface TrendingTagData {
     tag: string;

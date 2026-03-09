@@ -56,8 +56,12 @@ export function FlowControls({
                             borderRadius: '6px',
                             border: isCookingMode ? '2px solid #4caf50' : '1px solid',
                             borderColor: isCookingMode ? '#4caf50' : 'border',
-                            backgroundColor: isCookingMode ? { base: '#e8f5e9', _dark: 'rgba(76,175,80,0.15)' } : 'surface',
-                            color: isCookingMode ? { base: '#2e7d32', _dark: '#66bb6a' } : 'text.muted',
+                            backgroundColor: isCookingMode
+                                ? { base: '#e8f5e9', _dark: 'rgba(76,175,80,0.15)' }
+                                : 'surface',
+                            color: isCookingMode
+                                ? { base: '#2e7d32', _dark: '#66bb6a' }
+                                : 'text.muted',
                             fontSize: '11px',
                             fontWeight: '500',
                             cursor: 'pointer',
@@ -152,15 +156,22 @@ export function FlowControls({
                             borderRadius: '8px',
                             border: isCookingMode ? '2px solid #4caf50' : '1px solid',
                             borderColor: isCookingMode ? '#4caf50' : 'border',
-                            backgroundColor: isCookingMode ? { base: '#e8f5e9', _dark: 'rgba(76,175,80,0.15)' } : 'surface',
-                            color: isCookingMode ? { base: '#2e7d32', _dark: '#66bb6a' } : 'text.muted',
+                            backgroundColor: isCookingMode
+                                ? { base: '#e8f5e9', _dark: 'rgba(76,175,80,0.15)' }
+                                : 'surface',
+                            color: isCookingMode
+                                ? { base: '#2e7d32', _dark: '#66bb6a' }
+                                : 'text.muted',
                             fontSize: '13px',
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             _hover: {
                                 transform: 'translateY(-1px)',
-                                boxShadow: { base: '0 2px 6px rgba(0,0,0,0.1)', _dark: '0 2px 6px rgba(0,0,0,0.3)' },
+                                boxShadow: {
+                                    base: '0 2px 6px rgba(0,0,0,0.1)',
+                                    _dark: '0 2px 6px rgba(0,0,0,0.3)',
+                                },
                             },
                         })}
                     >
@@ -185,7 +196,10 @@ export function FlowControls({
                             transition: 'all 0.2s ease',
                             _hover: {
                                 transform: 'translateY(-1px)',
-                                boxShadow: { base: '0 2px 6px rgba(0,0,0,0.1)', _dark: '0 2px 6px rgba(0,0,0,0.3)' },
+                                boxShadow: {
+                                    base: '0 2px 6px rgba(0,0,0,0.1)',
+                                    _dark: '0 2px 6px rgba(0,0,0,0.3)',
+                                },
                             },
                         })}
                     >
@@ -210,7 +224,10 @@ export function FlowControls({
                             transition: 'all 0.2s ease',
                             _hover: {
                                 transform: 'translateY(-1px)',
-                                boxShadow: { base: '0 2px 6px rgba(0,0,0,0.1)', _dark: '0 2px 6px rgba(0,0,0,0.3)' },
+                                boxShadow: {
+                                    base: '0 2px 6px rgba(0,0,0,0.1)',
+                                    _dark: '0 2px 6px rgba(0,0,0,0.3)',
+                                },
                             },
                         })}
                     >
@@ -235,7 +252,10 @@ export function FlowControls({
                             transition: 'all 0.2s ease',
                             _hover: {
                                 transform: 'translateY(-1px)',
-                                boxShadow: { base: '0 2px 6px rgba(0,0,0,0.1)', _dark: '0 2px 6px rgba(0,0,0,0.3)' },
+                                boxShadow: {
+                                    base: '0 2px 6px rgba(0,0,0,0.1)',
+                                    _dark: '0 2px 6px rgba(0,0,0,0.3)',
+                                },
                             },
                         })}
                     >

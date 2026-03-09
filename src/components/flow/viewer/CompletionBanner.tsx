@@ -17,7 +17,9 @@ export function CompletionBanner() {
             }}
         >
             <div style={{ fontSize: 32, marginBottom: 6 }}>
-                <Sparkles style={{ width: 32, height: 32, color: PALETTE.emerald, display: 'inline' }} />
+                <Sparkles
+                    style={{ width: 32, height: 32, color: PALETTE.emerald, display: 'inline' }}
+                />
             </div>
             <div style={{ fontSize: 20, fontWeight: 800, color: PALETTE.emerald, marginBottom: 4 }}>
                 Fertig zubereitet!

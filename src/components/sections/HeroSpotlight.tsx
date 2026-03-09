@@ -106,11 +106,7 @@ export function HeroSpotlight({ children }: { children?: React.ReactNode }) {
                     Parallele Schritte, klar visualisiert.
                 </motion.p>
 
-                {children && (
-                    <div className={css({ mt: '4' })}>
-                        {children}
-                    </div>
-                )}
+                {children && <div className={css({ mt: '4' })}>{children}</div>}
             </motion.div>
         </section>
     );

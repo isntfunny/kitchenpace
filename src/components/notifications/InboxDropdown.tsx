@@ -71,7 +71,9 @@ export function InboxDropdown({
                     >
                         <div>
                             <p className={css({ fontWeight: '800', fontSize: 'md' })}>{title}</p>
-                            <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{subtitle}</p>
+                            <p className={css({ fontSize: 'xs', color: 'text-muted' })}>
+                                {subtitle}
+                            </p>
                         </div>
                         {actionLabel && onAction && (
                             <button
@@ -100,9 +102,13 @@ export function InboxDropdown({
                             maxHeight: '360px',
                         })}
                     >
-                        {isLoading && <p className={css({ color: 'text-muted', fontSize: 'sm' })}>Lädt…</p>}
+                        {isLoading && (
+                            <p className={css({ color: 'text-muted', fontSize: 'sm' })}>Lädt…</p>
+                        )}
                         {!isLoading && isEmpty && (
-                            <p className={css({ color: 'text-muted', fontSize: 'sm' })}>{emptyLabel}</p>
+                            <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                                {emptyLabel}
+                            </p>
                         )}
                         {!isLoading && !isEmpty && children}
                     </div>

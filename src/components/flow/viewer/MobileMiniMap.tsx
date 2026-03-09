@@ -37,9 +37,8 @@ export function MobileMiniMap({
     const colWidth = dotSize + connLen;
     const totalWidth = columnGroups.length * colWidth - connLen;
     const maxLanes = Math.max(1, ...columnGroups.map((g) => g.length));
-    const totalHeight = maxLanes > 1
-        ? maxLanes * (dotSize + padding) - padding + dotSize / 2
-        : dotSize + 12;
+    const totalHeight =
+        maxLanes > 1 ? maxLanes * (dotSize + padding) - padding + dotSize / 2 : dotSize + 12;
 
     // Map dagre Y to pixel Y, preserving dagre's relative spacing
     const getNodeX = (colIdx: number): number => colIdx * colWidth + dotSize / 2;
@@ -164,13 +163,21 @@ export function MobileMiniMap({
                                         }}
                                     >
                                         {isDone ? (
-                                            <Check style={{ width: 11, height: 11, color: PALETTE.emerald }} />
+                                            <Check
+                                                style={{
+                                                    width: 11,
+                                                    height: 11,
+                                                    color: PALETTE.emerald,
+                                                }}
+                                            />
                                         ) : (
                                             <NodeIcon
                                                 style={{
                                                     width: 11,
                                                     height: 11,
-                                                    color: isCurrent ? PALETTE.orange : 'rgba(255,255,255,0.4)',
+                                                    color: isCurrent
+                                                        ? PALETTE.orange
+                                                        : 'rgba(255,255,255,0.4)',
                                                 }}
                                             />
                                         )}

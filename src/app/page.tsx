@@ -146,7 +146,10 @@ export default async function Home() {
                             </div>
                         </div>
 
-                        <FadeInSection delay={0.1} className={css({ lg: { gridColumn: 'span 4' } })}>
+                        <FadeInSection
+                            delay={0.1}
+                            className={css({ lg: { gridColumn: 'span 4' } })}
+                        >
                             <TrendingTags tags={trendingTags} />
                             <div
                                 className={css({
@@ -176,7 +179,6 @@ export default async function Home() {
                 <div className={css({ mt: '4' })}>
                     <FlowPillars />
                 </div>
-
             </main>
 
             <footer

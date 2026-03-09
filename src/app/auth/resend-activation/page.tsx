@@ -99,7 +99,13 @@ export default function ResendActivationPage() {
                             <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                                 Neuen Link anfordern
                             </h1>
-                            <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm' })}>
+                            <p
+                                className={css({
+                                    color: 'foreground.muted',
+                                    margin: 0,
+                                    fontSize: 'sm',
+                                })}
+                            >
                                 Gib deine E-Mail ein, um einen neuen Aktivierungslink zu erhalten.
                             </p>
                         </div>

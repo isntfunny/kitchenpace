@@ -180,7 +180,10 @@ const chipItemClass = css({
         borderColor: 'primary',
         background: 'accent.soft',
         color: 'primary',
-        boxShadow: { base: '0 4px 12px rgba(224,123,83,0.15)', _dark: '0 4px 12px rgba(224,123,83,0.12)' },
+        boxShadow: {
+            base: '0 4px 12px rgba(224,123,83,0.15)',
+            _dark: '0 4px 12px rgba(224,123,83,0.12)',
+        },
     },
 });
 
@@ -387,7 +390,10 @@ export function FilterSidebar({
                     border: '1px solid',
                     borderColor: 'border.muted',
                     background: 'surface',
-                    boxShadow: { base: '0 8px 32px rgba(0,0,0,0.08)', _dark: '0 8px 32px rgba(0,0,0,0.3)' },
+                    boxShadow: {
+                        base: '0 8px 32px rgba(0,0,0,0.08)',
+                        _dark: '0 8px 32px rgba(0,0,0,0.3)',
+                    },
                     width: 'full',
                     maxHeight: 'calc(100vh - 2rem)',
                     overflowY: 'auto',
@@ -604,7 +610,10 @@ export function FilterSidebar({
                                         })}
                                     >
                                         {value.toFixed(1)}
-                                        <Star size={12} className={css({ color: 'palette.gold' })} />
+                                        <Star
+                                            size={12}
+                                            className={css({ color: 'palette.gold' })}
+                                        />
                                     </span>
                                 )}
                             />

@@ -81,7 +81,9 @@ export default function GlobalError({
                         marginBottom: '1.5rem',
                     }}
                 >
-                    <AlertTriangle style={{ width: '40px', height: '40px', color: 'var(--global-error-icon)' }} />
+                    <AlertTriangle
+                        style={{ width: '40px', height: '40px', color: 'var(--global-error-icon)' }}
+                    />
                 </div>
 
                 <h1

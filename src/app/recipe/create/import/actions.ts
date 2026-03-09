@@ -271,9 +271,7 @@ async function logImportRun(data: ImportRunData): Promise<void> {
             cachedInputTokens: data.cachedInputTokens ?? null,
             outputTokens: data.outputTokens ?? null,
             estimatedCostUsd: data.estimatedCostUsd ?? null,
-            rawApiResponse: data.rawApiResponse
-                ? (data.rawApiResponse as object)
-                : undefined,
+            rawApiResponse: data.rawApiResponse ? (data.rawApiResponse as object) : undefined,
         },
     });
 }
@@ -360,7 +358,10 @@ function parseRecipeMarkdownFallback(markdown: string): AnalyzedRecipe {
     let pastTitle = false;
     for (const line of lines) {
         if (line.startsWith('#')) {
-            if (!pastTitle) { pastTitle = true; continue; }
+            if (!pastTitle) {
+                pastTitle = true;
+                continue;
+            }
             break;
         }
         if (pastTitle && !line.startsWith('-') && !line.startsWith('*') && !/^\d+\./.test(line)) {
@@ -388,7 +389,12 @@ function parseRecipeMarkdownFallback(markdown: string): AnalyzedRecipe {
     const stepLines = lines.filter((l) => /^\d+\./.test(l)).slice(0, 10);
 
     const flowNodes: FlowNodeInput[] = [
-        { id: 'start', type: 'start', label: "Los geht's!", description: 'Beginne mit der Zubereitung' },
+        {
+            id: 'start',
+            type: 'start',
+            label: "Los geht's!",
+            description: 'Beginne mit der Zubereitung',
+        },
         ...stepLines.map((line, idx) => ({
             id: `step-${idx + 1}`,
             type: idx === stepLines.length - 1 ? 'anrichten' : 'kochen',
@@ -434,9 +440,12 @@ export async function saveImportedRecipe(
     }
 
     // Find or create ingredients — sequential to avoid race conditions on slug unique constraint
-    const syncedIngredients: (typeof data.ingredients[number] & { ingredientId: string })[] = [];
+    const syncedIngredients: ((typeof data.ingredients)[number] & { ingredientId: string })[] = [];
     for (const ing of data.ingredients) {
-        const slug = ing.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        const slug = ing.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
         const result = await prisma.ingredient.upsert({
             where: { slug },
             update: {},
@@ -506,7 +515,10 @@ export async function saveImportedRecipe(
         const uniqueTagNames = [...new Set(data.tags)];
         const tags: { id: string }[] = [];
         for (const name of uniqueTagNames) {
-            const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            const slug = name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
             const existing = await prisma.tag.findFirst({
                 where: { OR: [{ slug }, { name: { equals: name, mode: 'insensitive' } }] },
             });

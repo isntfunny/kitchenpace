@@ -44,10 +44,7 @@ export const getOrCreateProfile = async (userId: string) => {
     });
 };
 
-export const upsertProfile = async (params: {
-    userId: string;
-    data: ProfileFields;
-}) => {
+export const upsertProfile = async (params: { userId: string; data: ProfileFields }) => {
     const definedData = Object.fromEntries(
         Object.entries(params.data).filter(([, value]) => value !== undefined),
     ) as ProfileFields;
@@ -63,7 +60,9 @@ export const upsertProfile = async (params: {
         });
 
         if (modResult.decision === 'REJECTED') {
-            throw new Error('CONTENT_REJECTED:Dein Profil enthält unzulässige Inhalte — bitte überprüfe deinen Text.');
+            throw new Error(
+                'CONTENT_REJECTED:Dein Profil enthält unzulässige Inhalte — bitte überprüfe deinen Text.',
+            );
         }
     }
 

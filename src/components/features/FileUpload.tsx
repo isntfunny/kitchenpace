@@ -147,13 +147,19 @@ export function FileUpload({
                         gap: '2',
                         padding: '8',
                         border: '2px dashed',
-                        borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.45)' },
+                        borderColor: {
+                            base: 'rgba(224,123,83,0.4)',
+                            _dark: 'rgba(224,123,83,0.45)',
+                        },
                         borderRadius: 'xl',
                         cursor: 'pointer',
                         transition: 'all 150ms',
                         _hover: {
                             borderColor: 'palette.orange',
-                            background: { base: 'rgba(224,123,83,0.05)', _dark: 'rgba(224,123,83,0.08)' },
+                            background: {
+                                base: 'rgba(224,123,83,0.05)',
+                                _dark: 'rgba(224,123,83,0.08)',
+                            },
                         },
                     })}
                 >

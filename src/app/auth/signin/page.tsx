@@ -163,9 +163,7 @@ function SignInForm() {
             )}
 
             <form onSubmit={handleSubmit} className={authFormStackClass}>
-                <label
-                    className={css({ textAlign: 'left', fontWeight: '600', fontSize: 'sm' })}
-                >
+                <label className={css({ textAlign: 'left', fontWeight: '600', fontSize: 'sm' })}>
                     E-Mail
                     <input
                         type="email"
@@ -177,9 +175,7 @@ function SignInForm() {
                     />
                 </label>
 
-                <label
-                    className={css({ textAlign: 'left', fontWeight: '600', fontSize: 'sm' })}
-                >
+                <label className={css({ textAlign: 'left', fontWeight: '600', fontSize: 'sm' })}>
                     Passwort
                     <input
                         type="password"
@@ -193,11 +189,7 @@ function SignInForm() {
 
                 {error && <p className={css({ color: 'red.500', fontSize: 'sm' })}>{error}</p>}
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className={getAuthButtonClass(loading)}
-                >
+                <button type="submit" disabled={loading} className={getAuthButtonClass(loading)}>
                     {loading ? 'Anmeldung läuft…' : 'Anmelden'}
                 </button>
             </form>

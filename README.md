@@ -30,19 +30,19 @@ Jedes Rezept wird zu einer **visuellen Landkarte deines Kochabenteuers**:
 
 ## Tech Stack
 
-| Category | Technology |
-| --- | --- |
-| Framework | Next.js 16 (App Router) |
-| UI | Radix UI + Panda CSS + Framer Motion |
-| Database | Prisma 7 + PostgreSQL |
-| Flow Editor | React Flow (@xyflow/react v12) + Dagre |
-| Search | OpenSearch |
-| Queue / Jobs | BullMQ + Redis |
-| AI | OpenAI (gpt-5.4 recipe import, omni-moderation-latest) |
-| Realtime | SSE via Redis pub/sub |
-| Storage | S3 / MinIO |
-| Scraper | Python FastAPI + Scrapling/Camoufox |
-| Auth | Logto |
+| Category     | Technology                                             |
+| ------------ | ------------------------------------------------------ |
+| Framework    | Next.js 16 (App Router)                                |
+| UI           | Radix UI + Panda CSS + Framer Motion                   |
+| Database     | Prisma 7 + PostgreSQL                                  |
+| Flow Editor  | React Flow (@xyflow/react v12) + Dagre                 |
+| Search       | OpenSearch                                             |
+| Queue / Jobs | BullMQ + Redis                                         |
+| AI           | OpenAI (gpt-5.4 recipe import, omni-moderation-latest) |
+| Realtime     | SSE via Redis pub/sub                                  |
+| Storage      | S3 / MinIO                                             |
+| Scraper      | Python FastAPI + Scrapling/Camoufox                    |
+| Auth         | Logto                                                  |
 
 ## Getting Started
 
@@ -79,36 +79,43 @@ Sets `DEBUG=1`, runs a production build, then truncates and reseeds the database
 
 ## Docker Compose Services
 
-| Service | Port | Purpose |
-| --- | --- | --- |
-| postgres | 64000 | Database |
-| redis | 62984 | Cache, queues, pub/sub |
-| opensearch | 9200 | Full-text search |
-| app | 3000 | Next.js application |
-| worker | — | BullMQ job processor |
-| scraper | 34215 | Python recipe scraper |
+| Service    | Port  | Purpose                |
+| ---------- | ----- | ---------------------- |
+| postgres   | 64000 | Database               |
+| redis      | 62984 | Cache, queues, pub/sub |
+| opensearch | 9200  | Full-text search       |
+| app        | 3000  | Next.js application    |
+| worker     | —     | BullMQ job processor   |
+| scraper    | 34215 | Python recipe scraper  |
 
 ## Key Features
 
 ### Flow Editor
+
 Visual recipe editor powered by React Flow. Recipes are modeled as directed graphs with typed step nodes (schneiden, kochen, braten, backen, mixen, warten, wuerzen, anrichten, servieren) and edges representing dependencies. Dagre handles automatic layout.
 
 ### AI Recipe Import
+
 Paste a URL or raw text and let AI (gpt-5.4) convert it into a structured flow diagram. The Python scraper fetches and cleans the source, OpenAI parses it into nodes/edges with strict JSON schema validation, and the result loads directly into the flow editor.
 
 ### Content Moderation
+
 AI-powered auto-moderation (OpenAI omni-moderation-latest, free & multi-modal) with configurable thresholds. Content scoring below 0.40 is auto-approved, 0.40-0.84 is queued for human review, and 0.85+ is auto-rejected. Includes moderator queue UI, user reporting with auto-escalation, and a ban system.
 
 ### Real-time Updates
+
 Redis pub/sub powers SSE streams for live notifications, activity feeds, and moderator alerts. Replaces polling with instant delivery.
 
 ### Google Cast (Chromecast)
+
 Cast any recipe to a TV or Nest Hub. The sender transmits the recipe slug, and the Cast receiver renders a fullscreen mobile-optimized view.
 
 ### Search
+
 OpenSearch indices for recipes and ingredients with full-text search, faceted filtering (tags, ingredients, difficulty, time ranges, meal slots), and autocomplete suggestions.
 
 ### Background Jobs (BullMQ)
+
 Standalone worker process with three queues: OpenSearch sync (watermark-based incremental), scheduled maintenance (trending calculation, contact sync, cache purge), and database backups (pg_dump to S3 with retention policies).
 
 ## Git & Release Discipline
@@ -125,25 +132,25 @@ Email templates in `lib/email-templates/mjml/` use MJML format with Liquid templ
 
 #### Contact Variables
 
-| Variable | Description |
-| --- | --- |
-| `{{ contact.first_name }}` | User's first name |
-| `{{ contact.last_name }}` | User's last name |
-| `{{ contact.email }}` | User's email address |
+| Variable                   | Description          |
+| -------------------------- | -------------------- |
+| `{{ contact.first_name }}` | User's first name    |
+| `{{ contact.last_name }}`  | User's last name     |
+| `{{ contact.email }}`      | User's email address |
 
 #### System URLs
 
-| Variable | Description |
-| --- | --- |
-| `{{ unsubscribe_url }}` | Unsubscribe link |
+| Variable                         | Description               |
+| -------------------------------- | ------------------------- |
+| `{{ unsubscribe_url }}`          | Unsubscribe link          |
 | `{{ confirm_subscription_url }}` | Subscription confirmation |
-| `{{ notification_center_url }}` | Notification preferences |
+| `{{ notification_center_url }}`  | Notification preferences  |
 
 #### Template Variables (generic.mjml)
 
-| Variable | Description |
-| --- | --- |
-| `{{{ subject }}}` | Email subject (triple braces for HTML) |
-| `{{{ message }}}` | Main content (triple braces for HTML) |
-| `{{ buttonText }}` | Button text (optional) |
-| `{{ buttonLink }}` | Button URL (optional) |
+| Variable           | Description                            |
+| ------------------ | -------------------------------------- |
+| `{{{ subject }}}`  | Email subject (triple braces for HTML) |
+| `{{{ message }}}`  | Main content (triple braces for HTML)  |
+| `{{ buttonText }}` | Button text (optional)                 |
+| `{{ buttonLink }}` | Button URL (optional)                  |

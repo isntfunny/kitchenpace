@@ -133,7 +133,10 @@ export function ShareButton({ title, slug, imageUrl }: ShareButtonProps) {
                         borderRadius: 'xl',
                         border: '1px solid',
                         borderColor: 'border',
-                        boxShadow: { base: '0 8px 32px rgba(0,0,0,0.12)', _dark: '0 8px 32px rgba(0,0,0,0.4)' },
+                        boxShadow: {
+                            base: '0 8px 32px rgba(0,0,0,0.12)',
+                            _dark: '0 8px 32px rgba(0,0,0,0.4)',
+                        },
                         minW: '200px',
                         overflow: 'hidden',
                         py: '1',
@@ -159,11 +162,7 @@ export function ShareButton({ title, slug, imageUrl }: ShareButtonProps) {
                             _hover: { bg: 'surface.muted' },
                         })}
                     >
-                        {copied ? (
-                            <Check size={16} color={PALETTE.emerald} />
-                        ) : (
-                            <Copy size={16} />
-                        )}
+                        {copied ? <Check size={16} color={PALETTE.emerald} /> : <Copy size={16} />}
                         {copied ? 'Link kopiert!' : 'Link kopieren'}
                     </button>
 

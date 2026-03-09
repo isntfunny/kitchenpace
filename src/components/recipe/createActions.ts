@@ -40,7 +40,11 @@ function toShoppingCategory(category?: string): ShoppingCategory | null {
 /**
  * Extract all user-generated text from a recipe for content moderation
  */
-function extractRecipeText(data: { title: string; description?: string; flowNodes?: FlowNodeInput[] }): string {
+function extractRecipeText(data: {
+    title: string;
+    description?: string;
+    flowNodes?: FlowNodeInput[];
+}): string {
     const parts = [data.title, data.description || ''];
     if (data.flowNodes) {
         for (const node of data.flowNodes) {
@@ -108,7 +112,9 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
     const modResult = await moderateContent({ text: recipeText });
 
     if (modResult.decision === 'REJECTED') {
-        throw new Error('CONTENT_REJECTED:Dein Inhalt wurde abgelehnt — bitte überprüfe den Text deines Rezepts.');
+        throw new Error(
+            'CONTENT_REJECTED:Dein Inhalt wurde abgelehnt — bitte überprüfe den Text deines Rezepts.',
+        );
     }
 
     // If moderation flags content for review, force draft status
@@ -259,7 +265,9 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
     const modResult = await moderateContent({ text: recipeText });
 
     if (modResult.decision === 'REJECTED') {
-        throw new Error('CONTENT_REJECTED:Dein Inhalt wurde abgelehnt — bitte überprüfe den Text deines Rezepts.');
+        throw new Error(
+            'CONTENT_REJECTED:Dein Inhalt wurde abgelehnt — bitte überprüfe den Text deines Rezepts.',
+        );
     }
 
     // If moderation flags content for review, force draft status

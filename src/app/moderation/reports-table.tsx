@@ -77,15 +77,15 @@ export function ReportsTable({ reports }: { reports: ReportItem[] }) {
                         px: '4',
                         py: '3',
                         border: '1px solid',
-                        borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.5)' },
+                        borderColor: {
+                            base: 'rgba(224,123,83,0.4)',
+                            _dark: 'rgba(224,123,83,0.5)',
+                        },
                         borderRadius: 'xl',
                         bg: 'surface',
                     })}
                 >
-                    <Flag
-                        size={16}
-                        className={css({ color: 'status.danger', flexShrink: '0' })}
-                    />
+                    <Flag size={16} className={css({ color: 'status.danger', flexShrink: '0' })} />
 
                     <span
                         className={css({
@@ -190,7 +190,9 @@ export function ReportsTable({ reports }: { reports: ReportItem[] }) {
                             fontWeight: '600',
                             cursor: 'pointer',
                             border: 'none',
-                            _hover: { bg: { base: 'rgba(34,197,94,0.2)', _dark: 'rgba(34,197,94,0.25)' } },
+                            _hover: {
+                                bg: { base: 'rgba(34,197,94,0.2)', _dark: 'rgba(34,197,94,0.25)' },
+                            },
                             _disabled: { opacity: '0.5', cursor: 'not-allowed' },
                         })}
                     >

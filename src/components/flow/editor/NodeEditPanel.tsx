@@ -111,9 +111,7 @@ export function NodeEditPanel({
                     style={{ backgroundImage: currentConfig.gradient }}
                 >
                     <div className={headerIconWrapClass}>
-                        <Icon
-                            className={css({ width: '24px', height: '24px', color: 'text' })}
-                        />
+                        <Icon className={css({ width: '24px', height: '24px', color: 'text' })} />
                     </div>
                     <div className={css({ flex: '1' })}>
                         <span className={headerTypeClass}>{currentConfig.label}</span>
@@ -163,7 +161,9 @@ export function NodeEditPanel({
                                                 backgroundImage: isSelected
                                                     ? config.gradient
                                                     : undefined,
-                                                borderColor: isSelected ? PALETTE.orange : undefined,
+                                                borderColor: isSelected
+                                                    ? PALETTE.orange
+                                                    : undefined,
                                             }}
                                             onClick={() => setStepType(type)}
                                         >
@@ -342,7 +342,10 @@ const panelClass = css({
     maxHeight: '90vh',
     backgroundColor: 'surface',
     borderRadius: '2xl',
-    boxShadow: { base: '0 24px 48px rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.04)', _dark: '0 24px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06)' },
+    boxShadow: {
+        base: '0 24px 48px rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.04)',
+        _dark: '0 24px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06)',
+    },
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -474,7 +477,10 @@ const inputClass = css({
     transition: 'all 0.15s ease',
     _focus: {
         borderColor: 'brand.primary',
-        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.12)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
+        boxShadow: {
+            base: '0 0 0 3px rgba(224,123,83,0.12)',
+            _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+        },
     },
 });
 
@@ -495,7 +501,10 @@ const durationWrapClass = css({
     transition: 'all 0.15s ease',
     _focusWithin: {
         borderColor: 'brand.primary',
-        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.12)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
+        boxShadow: {
+            base: '0 0 0 3px rgba(224,123,83,0.12)',
+            _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+        },
     },
 });
 
@@ -614,7 +623,10 @@ const deleteButtonClass = css({
     fontWeight: '500',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
-    _hover: { color: 'red.500', backgroundColor: { base: 'rgba(239,68,68,0.08)', _dark: 'rgba(239,68,68,0.15)' } },
+    _hover: {
+        color: 'red.500',
+        backgroundColor: { base: 'rgba(239,68,68,0.08)', _dark: 'rgba(239,68,68,0.15)' },
+    },
 });
 
 const saveButtonClass = css({
@@ -634,6 +646,9 @@ const saveButtonClass = css({
     boxShadow: { base: '0 2px 8px rgba(224,123,83,0.3)', _dark: '0 2px 8px rgba(224,123,83,0.4)' },
     _hover: {
         transform: 'translateY(-1px)',
-        boxShadow: { base: '0 4px 16px rgba(224,123,83,0.4)', _dark: '0 4px 16px rgba(224,123,83,0.5)' },
+        boxShadow: {
+            base: '0 4px 16px rgba(224,123,83,0.4)',
+            _dark: '0 4px 16px rgba(224,123,83,0.5)',
+        },
     },
 });

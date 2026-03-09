@@ -32,12 +32,26 @@ export default async function MyImagesPage() {
                 {/* Header */}
                 <div>
                     <p className={css({ fontSize: 'xs', color: 'foreground.muted', mb: '1' })}>
-                        <Link href="/profile" className={css({ color: 'foreground.muted', textDecoration: 'none', _hover: { color: 'primary' } })}>
+                        <Link
+                            href="/profile"
+                            className={css({
+                                color: 'foreground.muted',
+                                textDecoration: 'none',
+                                _hover: { color: 'primary' },
+                            })}
+                        >
                             Profil
                         </Link>
                         {' · '}Zubereitet-Bilder
                     </p>
-                    <h1 className={css({ fontSize: '2xl', fontWeight: '800', color: 'foreground', mb: '1' })}>
+                    <h1
+                        className={css({
+                            fontSize: '2xl',
+                            fontWeight: '800',
+                            color: 'foreground',
+                            mb: '1',
+                        })}
+                    >
                         Meine Zubereitet-Bilder
                     </h1>
                     <p className={css({ fontSize: 'sm', color: 'foreground.muted' })}>

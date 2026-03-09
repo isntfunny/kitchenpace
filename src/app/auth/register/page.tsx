@@ -39,7 +39,10 @@ function RegistrationSuccess({ email }: { email: string }) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    boxShadow: { base: '0 12px 32px rgba(224,123,83,0.35)', _dark: '0 12px 32px rgba(224,123,83,0.25)' },
+                    boxShadow: {
+                        base: '0 12px 32px rgba(224,123,83,0.35)',
+                        _dark: '0 12px 32px rgba(224,123,83,0.25)',
+                    },
                 })}
                 style={{
                     background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
@@ -52,10 +55,19 @@ function RegistrationSuccess({ email }: { email: string }) {
                 <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                     Fast geschafft!
                 </h1>
-                <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm', lineHeight: '1.6' })}>
+                <p
+                    className={css({
+                        color: 'foreground.muted',
+                        margin: 0,
+                        fontSize: 'sm',
+                        lineHeight: '1.6',
+                    })}
+                >
                     Wir haben eine Bestätigungs-E-Mail an{' '}
                     {email ? (
-                        <strong className={css({ color: 'foreground', fontWeight: '600' })}>{email}</strong>
+                        <strong className={css({ color: 'foreground', fontWeight: '600' })}>
+                            {email}
+                        </strong>
                     ) : (
                         'deine E-Mail-Adresse'
                     )}{' '}
@@ -77,7 +89,14 @@ function RegistrationSuccess({ email }: { email: string }) {
                     textAlign: 'left',
                 })}
             >
-                <p className={css({ fontSize: 'sm', fontWeight: '600', margin: 0, color: 'foreground' })}>
+                <p
+                    className={css({
+                        fontSize: 'sm',
+                        fontWeight: '600',
+                        margin: 0,
+                        color: 'foreground',
+                    })}
+                >
                     Nächste Schritte:
                 </p>
                 <ol
@@ -102,7 +121,12 @@ function RegistrationSuccess({ email }: { email: string }) {
                 Keine E-Mail erhalten? Schau auch im Spam-Ordner nach oder{' '}
                 <Link
                     href="/auth/resend-activation"
-                    className={css({ color: 'accent', textDecoration: 'none', fontWeight: '600', _hover: { textDecoration: 'underline' } })}
+                    className={css({
+                        color: 'accent',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        _hover: { textDecoration: 'underline' },
+                    })}
                 >
                     sende sie erneut
                 </Link>

@@ -197,9 +197,7 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
         if (successCount > 0) {
             setReviewIndex(0);
             // Load first reviewable item
-            const firstReviewable = processed.find(
-                (p) => p.status === 'done' && p.recipe,
-            );
+            const firstReviewable = processed.find((p) => p.status === 'done' && p.recipe);
             if (firstReviewable?.recipe) {
                 loadEditFields(firstReviewable.recipe, firstReviewable.recipe.imageUrl);
             }
@@ -263,7 +261,16 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
         } finally {
             setSaving(false);
         }
-    }, [currentReviewItem, editTitle, editServings, editDifficulty, editImageUrl, authorId, op, advanceReview]);
+    }, [
+        currentReviewItem,
+        editTitle,
+        editServings,
+        editDifficulty,
+        editImageUrl,
+        authorId,
+        op,
+        advanceReview,
+    ]);
 
     const handleSkip = useCallback(() => {
         if (!currentReviewItem) return;
@@ -374,9 +381,12 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                                 {validUrls.length} gültige URL{validUrls.length !== 1 ? 's' : ''}{' '}
                                 erkannt
                             </span>
-                            {urlText.split('\n').filter((l) => l.trim()).length > validUrls.length && (
+                            {urlText.split('\n').filter((l) => l.trim()).length >
+                                validUrls.length && (
                                 <span className={css({ color: 'status.warning' })}>
-                                    ({urlText.split('\n').filter((l) => l.trim()).length - validUrls.length}{' '}
+                                    (
+                                    {urlText.split('\n').filter((l) => l.trim()).length -
+                                        validUrls.length}{' '}
                                     ungültig)
                                 </span>
                             )}
@@ -416,9 +426,7 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
     if (step === 'processing') {
         const doneCount = items.filter((i) => i.status === 'done' || i.status === 'error').length;
         const progress = Math.round((doneCount / items.length) * 100);
-        const currentItem = items.find(
-            (i) => i.status === 'scraping' || i.status === 'analyzing',
-        );
+        const currentItem = items.find((i) => i.status === 'scraping' || i.status === 'analyzing');
 
         return (
             <div className={processingContainerClass}>
@@ -502,10 +510,7 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                                     />
                                 )}
                                 {item.status === 'error' && (
-                                    <XCircle
-                                        size={16}
-                                        className={css({ color: 'status.error' })}
-                                    />
+                                    <XCircle size={16} className={css({ color: 'status.error' })} />
                                 )}
                             </div>
 
@@ -521,15 +526,15 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                                     })()}
                                 </span>
                                 {item.status === 'done' && item.recipe && (
-                                    <span className={urlItemTitleClass}>
-                                        {item.recipe.title}
-                                    </span>
+                                    <span className={urlItemTitleClass}>{item.recipe.title}</span>
                                 )}
                                 {item.status === 'error' && item.error && (
                                     <span className={urlItemErrorClass}>{item.error}</span>
                                 )}
                                 {item.status === 'scraping' && (
-                                    <span className={urlItemStatusClass}>Seite wird geladen...</span>
+                                    <span className={urlItemStatusClass}>
+                                        Seite wird geladen...
+                                    </span>
                                 )}
                                 {item.status === 'analyzing' && (
                                     <span className={urlItemStatusClass}>
@@ -559,9 +564,7 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
 
     if (step === 'review' && currentReviewItem?.recipe) {
         const recipe = currentReviewItem.recipe;
-        const totalReviewable = items.filter(
-            (i) => i.status === 'done' && i.recipe,
-        ).length;
+        const totalReviewable = items.filter((i) => i.status === 'done' && i.recipe).length;
         const alreadyReviewed = savedItems.length + skippedItems.length;
         const currentNum = alreadyReviewed + 1;
 
@@ -590,11 +593,7 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                                 />
                             ))}
                     </div>
-                    <button
-                        type="button"
-                        onClick={handleSkipAll}
-                        className={skipAllButtonClass}
-                    >
+                    <button type="button" onClick={handleSkipAll} className={skipAllButtonClass}>
                         Alle überspringen
                     </button>
                 </div>
@@ -745,11 +744,7 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
 
                 {/* Action buttons */}
                 <div className={reviewActionsClass}>
-                    <button
-                        type="button"
-                        onClick={handleSkip}
-                        className={skipButtonClass}
-                    >
+                    <button type="button" onClick={handleSkip} className={skipButtonClass}>
                         <SkipForward size={16} />
                         Überspringen
                     </button>
@@ -764,7 +759,10 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                     >
                         {saving ? (
                             <>
-                                <Loader2 size={18} className={css({ animation: 'spin 1s linear infinite' })} />
+                                <Loader2
+                                    size={18}
+                                    className={css({ animation: 'spin 1s linear infinite' })}
+                                />
                                 Speichern...
                             </>
                         ) : (
@@ -795,7 +793,13 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                         transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
                         className={doneIconClass}
                     >
-                        <Check className={css({ width: '28px', height: '28px', color: 'palette.emerald' })} />
+                        <Check
+                            className={css({
+                                width: '28px',
+                                height: '28px',
+                                color: 'palette.emerald',
+                            })}
+                        />
                     </motion.div>
                     <div>
                         <h2 className={doneTitleClass}>Bulk-Import abgeschlossen</h2>
@@ -849,7 +853,10 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                                 <span className={savedItemTitleClass}>
                                     {item.recipe?.title ?? 'Rezept'}
                                 </span>
-                                <ArrowRight size={14} className={css({ color: 'text.dimmed', ml: 'auto' })} />
+                                <ArrowRight
+                                    size={14}
+                                    className={css({ color: 'text.dimmed', ml: 'auto' })}
+                                />
                             </a>
                         ))}
                     </motion.div>
@@ -866,14 +873,29 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                         <h3 className={savedListTitleClass}>Fehlgeschlagen</h3>
                         {failedItems.map((item) => (
                             <div key={item.url} className={failedItemClass}>
-                                <XCircle size={14} className={css({ color: 'status.error', flexShrink: 0 })} />
+                                <XCircle
+                                    size={14}
+                                    className={css({ color: 'status.error', flexShrink: 0 })}
+                                />
                                 <div>
-                                    <span className={css({ fontSize: 'xs', color: 'text.dimmed', display: 'block' })}>
+                                    <span
+                                        className={css({
+                                            fontSize: 'xs',
+                                            color: 'text.dimmed',
+                                            display: 'block',
+                                        })}
+                                    >
                                         {(() => {
-                                            try { return new URL(item.url).hostname; } catch { return item.url; }
+                                            try {
+                                                return new URL(item.url).hostname;
+                                            } catch {
+                                                return item.url;
+                                            }
                                         })()}
                                     </span>
-                                    <span className={css({ fontSize: 'xs', color: 'status.error' })}>
+                                    <span
+                                        className={css({ fontSize: 'xs', color: 'status.error' })}
+                                    >
                                         {item.error}
                                     </span>
                                 </div>
@@ -946,7 +968,10 @@ const iconWrapperClass = css({
     justifyContent: 'center',
     mx: 'auto',
     mb: '5',
-    boxShadow: { base: '0 8px 32px rgba(224,123,83,0.35)', _dark: '0 8px 32px rgba(224,123,83,0.2)' },
+    boxShadow: {
+        base: '0 8px 32px rgba(224,123,83,0.35)',
+        _dark: '0 8px 32px rgba(224,123,83,0.2)',
+    },
 });
 
 const iconClass = css({
@@ -1003,7 +1028,10 @@ const textareaClass = css({
     color: 'text',
     _focus: {
         borderColor: 'palette.orange',
-        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.1)', _dark: '0 0 0 3px rgba(224,123,83,0.15)' },
+        boxShadow: {
+            base: '0 0 0 3px rgba(224,123,83,0.1)',
+            _dark: '0 0 0 3px rgba(224,123,83,0.15)',
+        },
     },
     _placeholder: {
         color: 'text.dimmed',
@@ -1375,7 +1403,10 @@ const reviewInputClass = css({
     color: 'text',
     _focus: {
         borderColor: 'palette.orange',
-        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.1)', _dark: '0 0 0 3px rgba(224,123,83,0.08)' },
+        boxShadow: {
+            base: '0 0 0 3px rgba(224,123,83,0.1)',
+            _dark: '0 0 0 3px rgba(224,123,83,0.08)',
+        },
     },
 });
 
@@ -1621,7 +1652,10 @@ const savedItemClass = css({
     transition: 'all 0.15s ease',
     _hover: {
         borderColor: 'palette.orange',
-        boxShadow: { base: '0 2px 12px rgba(224,123,83,0.1)', _dark: '0 2px 12px rgba(224,123,83,0.08)' },
+        boxShadow: {
+            base: '0 2px 12px rgba(224,123,83,0.1)',
+            _dark: '0 2px 12px rgba(224,123,83,0.08)',
+        },
     },
 });
 

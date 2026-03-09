@@ -29,7 +29,9 @@ interface CategorySelectorProps {
 export function CategorySelector({ categories, selectedIds, onToggle }: CategorySelectorProps) {
     return (
         <div>
-            <label className={css({ fontWeight: '600', display: 'block', mb: '2', fontSize: 'sm' })}>
+            <label
+                className={css({ fontWeight: '600', display: 'block', mb: '2', fontSize: 'sm' })}
+            >
                 Kategorien (mindestens eine)
             </label>
             <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
@@ -42,9 +44,15 @@ export function CategorySelector({ categories, selectedIds, onToggle }: Category
                             type="button"
                             onClick={() => onToggle(cat.id, !selected)}
                             className={cx(pillBase, selected && pillSelected)}
-                            style={selected
-                                ? { background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`, color: 'white', borderColor: PALETTE.orange }
-                                : undefined}
+                            style={
+                                selected
+                                    ? {
+                                          background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
+                                          color: 'white',
+                                          borderColor: PALETTE.orange,
+                                      }
+                                    : undefined
+                            }
                         >
                             {createElement(resolveIcon(cat.icon), { size: 14 })}
                             {cat.name}

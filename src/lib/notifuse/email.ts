@@ -13,7 +13,8 @@ const NOTIFUSE_NOTIFICATION_PASSWORD_RESET =
 const NOTIFUSE_NOTIFICATION_WEEKLY =
     process.env.NOTIFUSE_NOTIFICATION_WEEKLY || 'weekly_newsletter';
 const NOTIFUSE_LIST_KITCHENPACE_USERS =
-    process.env.NOTIFUSE_LIST_USERS ?? (process.env.NODE_ENV === 'production' ? 'kitchenpacelive' : 'kitchenpaceusers');
+    process.env.NOTIFUSE_LIST_USERS ??
+    (process.env.NODE_ENV === 'production' ? 'kitchenpacelive' : 'kitchenpaceusers');
 const NOTIFUSE_LIST_NEWSLETTER = 'newsletter';
 const NOTIFUSE_REQUEST_TIMEOUT_MS = 10_000;
 
@@ -127,7 +128,9 @@ const upsertContact = async (contact: SyncContactParams & { contactId: string })
         // violation for existing contacts instead of updating them. Treat as no-op.
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes('duplicate key')) {
-            log.debug('Notifuse contact already exists, skipping upsert', { email: contact.contactId });
+            log.debug('Notifuse contact already exists, skipping upsert', {
+                email: contact.contactId,
+            });
             return;
         }
         throw error;

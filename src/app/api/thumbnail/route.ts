@@ -40,7 +40,10 @@ let memoryCacheBytes = 0;
 
 function evictMemoryCache(neededBytes: number): void {
     for (const [key, entry] of memoryCache) {
-        if (memoryCacheBytes + neededBytes <= MAX_MEMORY_BYTES && memoryCache.size < MAX_MEMORY_ENTRIES) {
+        if (
+            memoryCacheBytes + neededBytes <= MAX_MEMORY_BYTES &&
+            memoryCache.size < MAX_MEMORY_ENTRIES
+        ) {
             break;
         }
         memoryCacheBytes -= entry.buffer.length;
@@ -119,10 +122,7 @@ async function saveToS3Cache(cacheKey: string, buffer: Buffer, contentType: stri
 // Tier 3: Generate with sharp
 // ---------------------------------------------------------------------------
 
-async function generateThumbnail(
-    originalKey: string,
-    params: ThumbnailParams,
-): Promise<Buffer> {
+async function generateThumbnail(originalKey: string, params: ThumbnailParams): Promise<Buffer> {
     const imageBuffer = await getFileBuffer(originalKey);
     const meta = await sharp(imageBuffer).metadata();
     const srcW = meta.width ?? params.width;

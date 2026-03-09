@@ -54,9 +54,7 @@ export function setup() {
         }
     }
 
-    console.log(
-        `Smoke test setup: ${recipes.length} recipe(s), ${users.length} user(s) found`,
-    );
+    console.log(`Smoke test setup: ${recipes.length} recipe(s), ${users.length} user(s) found`);
 
     return { recipes, users };
 }

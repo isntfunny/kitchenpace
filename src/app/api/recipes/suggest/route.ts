@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { opensearchClient, OPENSEARCH_INDEX, OPENSEARCH_INGREDIENTS_INDEX } from '@shared/opensearch/client';
+import {
+    opensearchClient,
+    OPENSEARCH_INDEX,
+    OPENSEARCH_INGREDIENTS_INDEX,
+} from '@shared/opensearch/client';
 
 type SuggestResult = { name: string; count: number };
 

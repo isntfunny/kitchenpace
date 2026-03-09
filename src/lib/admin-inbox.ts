@@ -89,7 +89,10 @@ async function getRecipeContext(recipeId: string) {
 }
 
 export async function serializeModerationQueueItem(
-    queueItem: Pick<ModerationQueue, 'id' | 'contentType' | 'contentId' | 'authorId' | 'aiScore' | 'createdAt'>,
+    queueItem: Pick<
+        ModerationQueue,
+        'id' | 'contentType' | 'contentId' | 'authorId' | 'aiScore' | 'createdAt'
+    >,
 ): Promise<AdminInboxItem> {
     const actor = await getActorContext(queueItem.authorId);
 
@@ -137,7 +140,10 @@ export async function serializeModerationQueueItem(
 }
 
 export async function serializeReportItem(
-    report: Pick<Report, 'id' | 'reporterId' | 'contentType' | 'contentId' | 'reason' | 'createdAt'>,
+    report: Pick<
+        Report,
+        'id' | 'reporterId' | 'contentType' | 'contentId' | 'reason' | 'createdAt'
+    >,
 ): Promise<AdminInboxItem> {
     const actor = await getActorContext(report.reporterId);
     let recipe = report.contentType === 'recipe' ? await getRecipeContext(report.contentId) : null;

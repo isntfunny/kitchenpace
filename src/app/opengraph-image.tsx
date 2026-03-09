@@ -46,7 +46,9 @@ export default async function Image() {
                 >
                     {(ChefHat as unknown as IconNode)
                         .filter(([tag]) => tag === 'path')
-                        .map(([, attrs], i) => <path key={i} d={attrs.d} />)}
+                        .map(([, attrs], i) => (
+                            <path key={i} d={attrs.d} />
+                        ))}
                 </svg>
             </div>
             <div

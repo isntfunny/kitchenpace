@@ -23,9 +23,13 @@ type AdminNotificationsResponse = {
 };
 
 export function useAdminNotifications() {
-    const { data, error, mutate, isLoading } = useSWR<AdminNotificationsResponse>(API_PATH, fetcher, {
-        refreshInterval: 0,
-    });
+    const { data, error, mutate, isLoading } = useSWR<AdminNotificationsResponse>(
+        API_PATH,
+        fetcher,
+        {
+            refreshInterval: 0,
+        },
+    );
 
     useEffect(() => {
         const cursor = buildStreamCursor(data?.notifications ?? []);

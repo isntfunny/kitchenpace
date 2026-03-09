@@ -24,10 +24,20 @@ export default async function ImportRecipePage() {
     const [categories, tags] = await Promise.all([getAllCategories(), getAllTags()]);
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--colors-background)', color: 'var(--colors-text)' }}>
+        <div
+            style={{
+                minHeight: '100vh',
+                background: 'var(--colors-background)',
+                color: 'var(--colors-text)',
+            }}
+        >
             <Header />
             <main>
-                <ImportModeSwitcher categories={categories} tags={tags} authorId={session.user.id} />
+                <ImportModeSwitcher
+                    categories={categories}
+                    tags={tags}
+                    authorId={session.user.id}
+                />
             </main>
         </div>
     );

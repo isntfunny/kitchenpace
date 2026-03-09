@@ -41,8 +41,12 @@ function MediaStrip({ media }: { media?: MediaContext }) {
     }
 
     const images = [
-        media.actor?.avatar ? { src: media.actor.avatar, alt: media.actor.name ?? 'Nutzerbild' } : null,
-        media.recipe?.image ? { src: media.recipe.image, alt: media.recipe.title ?? 'Rezeptbild' } : null,
+        media.actor?.avatar
+            ? { src: media.actor.avatar, alt: media.actor.name ?? 'Nutzerbild' }
+            : null,
+        media.recipe?.image
+            ? { src: media.recipe.image, alt: media.recipe.title ?? 'Rezeptbild' }
+            : null,
         media.cookImage?.image ? { src: media.cookImage.image, alt: 'Zubereitungsbild' } : null,
     ].filter(Boolean) as Array<{ src: string; alt: string }>;
 
@@ -161,7 +165,11 @@ export function InboxItemCard({
                         {title}
                     </p>
                     <span
-                        className={css({ fontSize: 'xs', color: 'text-muted', whiteSpace: 'nowrap' })}
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'text-muted',
+                            whiteSpace: 'nowrap',
+                        })}
                     >
                         {timeLabel}
                     </span>

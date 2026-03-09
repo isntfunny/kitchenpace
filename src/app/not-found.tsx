@@ -7,7 +7,13 @@ import { css } from 'styled-system/css';
 export default function NotFound() {
     return (
         <div
-            className={css({ minHeight: '100vh', display: 'flex', flexDirection: 'column', bg: 'background', color: 'foreground' })}
+            className={css({
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                bg: 'background',
+                color: 'foreground',
+            })}
         >
             <Header />
             <main
@@ -35,7 +41,10 @@ export default function NotFound() {
                             borderRadius: '50%',
                             bg: 'accent.soft',
                             border: '3px dashed',
-                            borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(240,144,112,0.5)' },
+                            borderColor: {
+                                base: 'rgba(224,123,83,0.4)',
+                                _dark: 'rgba(240,144,112,0.5)',
+                            },
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -63,7 +72,10 @@ export default function NotFound() {
                             fontSize: '13px',
                             fontWeight: 700,
                             letterSpacing: '0.03em',
-                            boxShadow: { base: '0 2px 8px rgba(224,123,83,0.4)', _dark: '0 2px 8px rgba(0,0,0,0.5)' },
+                            boxShadow: {
+                                base: '0 2px 8px rgba(224,123,83,0.4)',
+                                _dark: '0 2px 8px rgba(0,0,0,0.5)',
+                            },
                         })}
                     >
                         404
@@ -132,7 +144,10 @@ export default function NotFound() {
                             borderRadius: '999px',
                             bg: 'transparent',
                             border: '1.5px solid',
-                            borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(240,144,112,0.5)' },
+                            borderColor: {
+                                base: 'rgba(224,123,83,0.4)',
+                                _dark: 'rgba(240,144,112,0.5)',
+                            },
                             color: 'palette.orange',
                             fontWeight: 600,
                             fontSize: '0.9rem',

@@ -92,28 +92,45 @@ const columns: ColumnDef<User>[] = [
             const isBanned = role === 'BANNED';
 
             // Cycle: USER → MODERATOR → ADMIN → USER
-            const nextRole = role === 'USER' ? Role.MODERATOR : role === 'MODERATOR' ? Role.ADMIN : Role.USER;
+            const nextRole =
+                role === 'USER' ? Role.MODERATOR : role === 'MODERATOR' ? Role.ADMIN : Role.USER;
 
             const roleConfig = {
                 ADMIN: {
-                    bg: { base: 'rgba(59, 130, 246, 0.15)', _dark: 'rgba(59, 130, 246, 0.2)' } as const,
+                    bg: {
+                        base: 'rgba(59, 130, 246, 0.15)',
+                        _dark: 'rgba(59, 130, 246, 0.2)',
+                    } as const,
                     color: { base: '#3b82f6', _dark: '#60a5fa' } as const,
-                    icon: <Shield size={12} />, label: 'Admin',
+                    icon: <Shield size={12} />,
+                    label: 'Admin',
                 },
                 MODERATOR: {
-                    bg: { base: 'rgba(168, 85, 247, 0.15)', _dark: 'rgba(168, 85, 247, 0.2)' } as const,
+                    bg: {
+                        base: 'rgba(168, 85, 247, 0.15)',
+                        _dark: 'rgba(168, 85, 247, 0.2)',
+                    } as const,
                     color: { base: '#a855f7', _dark: '#c084fc' } as const,
-                    icon: <ShieldCheck size={12} />, label: 'Moderator',
+                    icon: <ShieldCheck size={12} />,
+                    label: 'Moderator',
                 },
                 USER: {
-                    bg: { base: 'rgba(107, 114, 128, 0.15)', _dark: 'rgba(107, 114, 128, 0.2)' } as const,
+                    bg: {
+                        base: 'rgba(107, 114, 128, 0.15)',
+                        _dark: 'rgba(107, 114, 128, 0.2)',
+                    } as const,
                     color: { base: '#6b7280', _dark: '#9ca3af' } as const,
-                    icon: null, label: 'Benutzer',
+                    icon: null,
+                    label: 'Benutzer',
                 },
                 BANNED: {
-                    bg: { base: 'rgba(239, 68, 68, 0.15)', _dark: 'rgba(239, 68, 68, 0.2)' } as const,
+                    bg: {
+                        base: 'rgba(239, 68, 68, 0.15)',
+                        _dark: 'rgba(239, 68, 68, 0.2)',
+                    } as const,
                     color: { base: '#ef4444', _dark: '#f87171' } as const,
-                    icon: <Ban size={12} />, label: 'Gesperrt',
+                    icon: <Ban size={12} />,
+                    label: 'Gesperrt',
                 },
             };
             const cfg = roleConfig[role] ?? roleConfig.USER;
@@ -218,8 +235,14 @@ const columns: ColumnDef<User>[] = [
                             border: 'none',
                             transition: 'all 0.2s',
                             background: isActive
-                                ? { base: 'rgba(34, 197, 94, 0.15)', _dark: 'rgba(34, 197, 94, 0.2)' }
-                                : { base: 'rgba(239, 68, 68, 0.15)', _dark: 'rgba(239, 68, 68, 0.2)' },
+                                ? {
+                                      base: 'rgba(34, 197, 94, 0.15)',
+                                      _dark: 'rgba(34, 197, 94, 0.2)',
+                                  }
+                                : {
+                                      base: 'rgba(239, 68, 68, 0.15)',
+                                      _dark: 'rgba(239, 68, 68, 0.2)',
+                                  },
                             color: isActive
                                 ? { base: '#22c55e', _dark: '#4ade80' }
                                 : { base: '#ef4444', _dark: '#f87171' },
@@ -348,13 +371,19 @@ const columns: ColumnDef<User>[] = [
                                     height: '8',
                                     borderRadius: 'lg',
                                     border: '1px solid',
-                                    borderColor: { base: 'rgba(34,197,94,0.3)', _dark: 'rgba(34,197,94,0.4)' },
+                                    borderColor: {
+                                        base: 'rgba(34,197,94,0.3)',
+                                        _dark: 'rgba(34,197,94,0.4)',
+                                    },
                                     background: 'surface',
                                     cursor: 'pointer',
                                     color: 'status.success',
                                     transition: 'all 0.2s',
                                     _hover: {
-                                        background: { base: 'rgba(34,197,94,0.1)', _dark: 'rgba(34,197,94,0.15)' },
+                                        background: {
+                                            base: 'rgba(34,197,94,0.1)',
+                                            _dark: 'rgba(34,197,94,0.15)',
+                                        },
                                     },
                                 })}
                             >
@@ -380,13 +409,19 @@ const columns: ColumnDef<User>[] = [
                                     height: '8',
                                     borderRadius: 'lg',
                                     border: '1px solid',
-                                    borderColor: { base: 'rgba(239,68,68,0.3)', _dark: 'rgba(239,68,68,0.4)' },
+                                    borderColor: {
+                                        base: 'rgba(239,68,68,0.3)',
+                                        _dark: 'rgba(239,68,68,0.4)',
+                                    },
                                     background: 'surface',
                                     cursor: 'pointer',
                                     color: 'status.error',
                                     transition: 'all 0.2s',
                                     _hover: {
-                                        background: { base: 'rgba(239,68,68,0.1)', _dark: 'rgba(239,68,68,0.15)' },
+                                        background: {
+                                            base: 'rgba(239,68,68,0.1)',
+                                            _dark: 'rgba(239,68,68,0.15)',
+                                        },
                                     },
                                 })}
                             >

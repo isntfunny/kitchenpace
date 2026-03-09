@@ -19,9 +19,7 @@ type UserWithOptionalProfile = {
     } | null;
 };
 
-export function getUserDisplayName(
-    user: Pick<UserWithOptionalProfile, 'profile'>,
-): string {
+export function getUserDisplayName(user: Pick<UserWithOptionalProfile, 'profile'>): string {
     return user.profile?.nickname ?? 'Unbekannt';
 }
 
@@ -29,9 +27,7 @@ export function getUserAvatarUrl(userId: string): string {
     return `/api/thumbnail?type=user&id=${encodeURIComponent(userId)}`;
 }
 
-export function getUserSlugOrId(
-    user: Pick<UserWithOptionalProfile, 'id' | 'profile'>,
-): string {
+export function getUserSlugOrId(user: Pick<UserWithOptionalProfile, 'id' | 'profile'>): string {
     return user.profile?.slug ?? user.id;
 }
 

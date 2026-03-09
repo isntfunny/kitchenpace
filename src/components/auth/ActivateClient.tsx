@@ -71,7 +71,10 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                         background: 'surface',
                         borderRadius: '2xl',
                         padding: { base: '8', md: '10' },
-                        boxShadow: { base: '0 20px 60px rgba(0,0,0,0.12)', _dark: '0 20px 60px rgba(0,0,0,0.4)' },
+                        boxShadow: {
+                            base: '0 20px 60px rgba(0,0,0,0.12)',
+                            _dark: '0 20px 60px rgba(0,0,0,0.4)',
+                        },
                         maxWidth: '520px',
                         width: '100%',
                         textAlign: 'center',
@@ -87,7 +90,10 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                                     marginBottom: '4',
                                     borderRadius: '50%',
                                     border: '3px solid',
-                                    borderColor: { base: 'rgba(224,123,83,0.3)', _dark: 'rgba(240,144,112,0.4)' },
+                                    borderColor: {
+                                        base: 'rgba(224,123,83,0.3)',
+                                        _dark: 'rgba(240,144,112,0.4)',
+                                    },
                                     borderTopColor: 'palette.orange',
                                     animation: 'spin 1s linear infinite',
                                 })}
@@ -147,7 +153,10 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                                     transition: 'all 150ms ease',
                                     _hover: {
                                         transform: 'translateY(-1px)',
-                                        boxShadow: { base: '0 10px 30px rgba(224,123,83,0.35)', _dark: '0 10px 30px rgba(224,123,83,0.25)' },
+                                        boxShadow: {
+                                            base: '0 10px 30px rgba(224,123,83,0.35)',
+                                            _dark: '0 10px 30px rgba(224,123,83,0.25)',
+                                        },
                                     },
                                 })}
                             >
@@ -199,7 +208,10 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                                     transition: 'all 150ms ease',
                                     _hover: {
                                         transform: 'translateY(-1px)',
-                                        boxShadow: { base: '0 10px 30px rgba(224,123,83,0.35)', _dark: '0 10px 30px rgba(224,123,83,0.25)' },
+                                        boxShadow: {
+                                            base: '0 10px 30px rgba(224,123,83,0.35)',
+                                            _dark: '0 10px 30px rgba(224,123,83,0.25)',
+                                        },
                                     },
                                 })}
                             >

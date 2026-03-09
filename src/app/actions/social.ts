@@ -285,9 +285,8 @@ export async function markRecipeCookedAction(
 
     if (options?.image) {
         const { uploadFile, deleteFile } = await import('@app/lib/s3');
-        const { moderateContent, persistModerationResult } = await import(
-            '@app/lib/moderation/moderationService'
-        );
+        const { moderateContent, persistModerationResult } =
+            await import('@app/lib/moderation/moderationService');
         const arrayBuffer = await options.image.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const file = options.image as File;

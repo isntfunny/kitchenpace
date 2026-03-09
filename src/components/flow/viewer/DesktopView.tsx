@@ -36,7 +36,8 @@ import { timerColor } from './viewerUtils';
 /* ── custom curved edge (higher curvature than default bezier) ── */
 
 function CurvedEdge(props: EdgeProps) {
-    const { sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, markerEnd, style } = props;
+    const { sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, markerEnd, style } =
+        props;
     const [path] = getBezierPath({
         sourceX,
         sourceY,
@@ -214,13 +215,14 @@ function DesktopViewInner({
                 const sourceNode = nodes.find((n) => n.id === edge.source);
                 const sourceDone = completed.has(edge.source) || sourceNode?.type === 'start';
                 const t = timers.get(edge.source);
-                const timerPct =
-                    t && t.total > 0 ? ((t.total - t.remaining) / t.total) * 100 : 0;
+                const timerPct = t && t.total > 0 ? ((t.total - t.remaining) / t.total) * 100 : 0;
                 const stroke = sourceDone
                     ? PALETTE.emerald
                     : timerPct > 0
                       ? timerColor(timerPct)
-                      : dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)';
+                      : dark
+                        ? 'rgba(255,255,255,0.18)'
+                        : 'rgba(0,0,0,0.18)';
                 return {
                     id: edge.id,
                     source: edge.source,
@@ -240,7 +242,12 @@ function DesktopViewInner({
     );
 
     const [rfNodes, setRfNodes] = useState<RFNode[]>(() =>
-        nodes.map((n) => ({ id: n.id, type: n.type, position: n.position ?? { x: 0, y: 0 }, data: makeNodeData(n) })),
+        nodes.map((n) => ({
+            id: n.id,
+            type: n.type,
+            position: n.position ?? { x: 0, y: 0 },
+            data: makeNodeData(n),
+        })),
     );
     const [rfEdges, setRfEdges] = useState(() => buildRfEdges());
     const containerRef = useRef<HTMLDivElement>(null);
@@ -261,7 +268,8 @@ function DesktopViewInner({
                         const allNodes = getNodes();
                         if (allNodes.length === 0 || !containerRef.current) return;
 
-                        let minY = Infinity, maxY = -Infinity;
+                        let minY = Infinity,
+                            maxY = -Infinity;
                         for (const n of allNodes) {
                             const h = n.measured?.height ?? 200;
                             minY = Math.min(minY, n.position.y);
@@ -310,7 +318,10 @@ function DesktopViewInner({
     }, [getNodes]);
 
     return (
-        <div ref={containerRef} style={{ height: 'calc(100vh - 200px)', minHeight: 400, position: 'relative' }}>
+        <div
+            ref={containerRef}
+            style={{ height: 'calc(100vh - 200px)', minHeight: 400, position: 'relative' }}
+        >
             <ReactFlow
                 nodes={rfNodes}
                 edges={rfEdges}
@@ -327,7 +338,11 @@ function DesktopViewInner({
                 zoomOnPinch
                 proOptions={{ hideAttribution: true }}
             >
-                <Background gap={24} color={dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.035)'} size={1} />
+                <Background
+                    gap={24}
+                    color={dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.035)'}
+                    size={1}
+                />
             </ReactFlow>
 
             {/* PDF export button — bottom right */}
@@ -346,7 +361,10 @@ function DesktopViewInner({
                     py: '1.5',
                     px: '3',
                     borderRadius: 'lg',
-                    border: { base: '1px solid rgba(224,123,83,0.2)', _dark: '1px solid rgba(224,123,83,0.15)' },
+                    border: {
+                        base: '1px solid rgba(224,123,83,0.2)',
+                        _dark: '1px solid rgba(224,123,83,0.15)',
+                    },
                     bg: 'surface',
                     color: 'palette.orange',
                     fontSize: 'xs',

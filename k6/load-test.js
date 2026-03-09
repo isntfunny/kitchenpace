@@ -398,7 +398,9 @@ export function setup() {
                 const cats = extractCategoriesFromPayload(payload);
                 if (cats.length > 0) {
                     categories = cats;
-                    console.log(`Loaded ${categories.length} categories from filter API: ${categories.join(', ')}`);
+                    console.log(
+                        `Loaded ${categories.length} categories from filter API: ${categories.join(', ')}`,
+                    );
                 }
                 const tags = extractTagsFromPayload(payload);
                 if (tags.length > 0) {
@@ -450,14 +452,14 @@ export function setup() {
     if (recipes.length === 0) {
         console.error(
             'WARN: No recipe slugs found — recipe detail tests will be skipped. ' +
-            'Make sure the app is running and has published recipes.',
+                'Make sure the app is running and has published recipes.',
         );
         recipes = ['__no-recipes__'];
     }
     if (users.length === 0) {
         console.error(
             'WARN: No user slugs found — user profile tests will be skipped. ' +
-            'Make sure the app is running and users have public profiles.',
+                'Make sure the app is running and users have public profiles.',
         );
         users = ['__no-users__'];
     }
@@ -470,7 +472,9 @@ export function setup() {
         searchTerms = [''];
     }
 
-    console.log(`Setup complete. recipes=${recipes.length}, users=${users.length}, categories=${categories.length}, searchTerms=${searchTerms.length}`);
+    console.log(
+        `Setup complete. recipes=${recipes.length}, users=${users.length}, categories=${categories.length}, searchTerms=${searchTerms.length}`,
+    );
 
     return { recipes, users, categories, searchTerms };
 }

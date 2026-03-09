@@ -238,4 +238,3 @@ export async function fetchUserViewHistory(userId: string, take = 8): Promise<Vi
         recipeImageKey: e.recipe.imageKey,
     }));
 }
-

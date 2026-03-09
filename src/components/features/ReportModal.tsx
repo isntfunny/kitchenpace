@@ -8,7 +8,6 @@ import { useState, useTransition } from 'react';
 import { submitReport } from '@app/app/actions/reports';
 import { css } from 'styled-system/css';
 
-
 const REASONS = [
     { value: 'spam', label: 'Spam' },
     { value: 'nsfw', label: 'Unangemessener Inhalt (NSFW)' },
@@ -102,10 +101,20 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                         width: '90vw',
                         maxWidth: '420px',
                         zIndex: '51',
-                        boxShadow: { base: '0 8px 32px rgba(0,0,0,0.12)', _dark: '0 8px 32px rgba(0,0,0,0.4)' },
+                        boxShadow: {
+                            base: '0 8px 32px rgba(0,0,0,0.12)',
+                            _dark: '0 8px 32px rgba(0,0,0,0.4)',
+                        },
                     })}
                 >
-                    <div className={css({ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '4' })}>
+                    <div
+                        className={css({
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mb: '4',
+                        })}
+                    >
                         <Dialog.Title
                             className={css({
                                 fontSize: 'lg',
@@ -126,7 +135,12 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                 cursor: 'pointer',
                                 border: 'none',
                                 bg: 'transparent',
-                                _hover: { bg: { base: 'rgba(0,0,0,0.05)', _dark: 'rgba(255,255,255,0.05)' } },
+                                _hover: {
+                                    bg: {
+                                        base: 'rgba(0,0,0,0.05)',
+                                        _dark: 'rgba(255,255,255,0.05)',
+                                    },
+                                },
                             })}
                         >
                             <X size={18} />
@@ -134,7 +148,13 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                     </div>
 
                     {result ? (
-                        <p className={css({ color: 'status.success', fontSize: 'sm', fontWeight: '600' })}>
+                        <p
+                            className={css({
+                                color: 'status.success',
+                                fontSize: 'sm',
+                                fontWeight: '600',
+                            })}
+                        >
                             {result}
                         </p>
                     ) : (
@@ -156,7 +176,14 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                 </p>
                             )}
 
-                            <div className={css({ display: 'flex', flexDirection: 'column', gap: '2', mb: '4' })}>
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '2',
+                                    mb: '4',
+                                })}
+                            >
                                 {REASONS.map((r) => (
                                     <label
                                         key={r.value}
@@ -169,7 +196,8 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                             borderRadius: 'lg',
                                             cursor: 'pointer',
                                             border: '1px solid',
-                                            borderColor: reason === r.value ? 'palette.orange' : 'border',
+                                            borderColor:
+                                                reason === r.value ? 'palette.orange' : 'border',
                                             bg: reason === r.value ? 'accent.soft' : 'transparent',
                                             fontSize: 'sm',
                                             transition: 'all 0.15s',
@@ -198,7 +226,10 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                     py: '2',
                                     borderRadius: 'xl',
                                     border: '1px solid',
-                                    borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.45)' },
+                                    borderColor: {
+                                        base: 'rgba(224,123,83,0.4)',
+                                        _dark: 'rgba(224,123,83,0.45)',
+                                    },
                                     fontSize: 'sm',
                                     resize: 'vertical',
                                     minHeight: '60px',
@@ -206,12 +237,21 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                     _focus: {
                                         borderColor: 'palette.orange',
                                         outline: 'none',
-                                        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
+                                        boxShadow: {
+                                            base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                            _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                        },
                                     },
                                 })}
                             />
 
-                            <div className={css({ display: 'flex', gap: '2', justifyContent: 'flex-end' })}>
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    gap: '2',
+                                    justifyContent: 'flex-end',
+                                })}
+                            >
                                 <Dialog.Close
                                     className={css({
                                         px: '4',
@@ -223,7 +263,12 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                         border: '1px solid',
                                         borderColor: 'border',
                                         cursor: 'pointer',
-                                        _hover: { bg: { base: 'rgba(0,0,0,0.03)', _dark: 'rgba(255,255,255,0.03)' } },
+                                        _hover: {
+                                            bg: {
+                                                base: 'rgba(0,0,0,0.03)',
+                                                _dark: 'rgba(255,255,255,0.03)',
+                                            },
+                                        },
                                     })}
                                 >
                                     Abbrechen

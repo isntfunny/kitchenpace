@@ -39,7 +39,12 @@ export const DIFFICULTIES = ['Einfach', 'Mittel', 'Schwer'] as const;
 // ============================================================================
 
 export const IngredientSchema = z.object({
-    name: z.string().min(1).describe('Name der Zutat auf DEUTSCH (nur der reine Name, z.B. "Tomaten", "Linguine", "Maisstärke"). NIEMALS englische Namen — immer ins Deutsche übersetzen.'),
+    name: z
+        .string()
+        .min(1)
+        .describe(
+            'Name der Zutat auf DEUTSCH (nur der reine Name, z.B. "Tomaten", "Linguine", "Maisstärke"). NIEMALS englische Namen — immer ins Deutsche übersetzen.',
+        ),
     amount: z
         .number()
         .positive()

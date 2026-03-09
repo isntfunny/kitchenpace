@@ -84,13 +84,17 @@ const toggleButtonClass = (active: boolean) =>
         fontSize: 'sm',
         fontWeight: active ? '700' : '500',
         color: active ? 'white' : 'text.muted',
-        backgroundColor: active
-            ? 'palette.orange'
-            : 'transparent',
+        backgroundColor: active ? 'palette.orange' : 'transparent',
         border: 'none',
         cursor: 'pointer',
         transition: 'all 0.15s ease',
         _hover: active
             ? {}
-            : { color: 'text', backgroundColor: { base: 'rgba(224,123,83,0.05)', _dark: 'rgba(224,123,83,0.08)' } },
+            : {
+                  color: 'text',
+                  backgroundColor: {
+                      base: 'rgba(224,123,83,0.05)',
+                      _dark: 'rgba(224,123,83,0.08)',
+                  },
+              },
     });

@@ -54,13 +54,48 @@ async function main() {
     // CATEGORIES
     // ============================================
     const categoriesData = [
-        { name: 'Hauptgericht', slug: 'hauptgericht', description: 'Hauptgerichte für Mittag- und Abendessen', color: 'orange' as const },
-        { name: 'Beilage', slug: 'beilage', description: 'Beilagen und Ergänzungen zu Hauptgerichten', color: 'emerald' as const },
-        { name: 'Backen', slug: 'backen', description: 'Backrezepte für Kuchen, Brot und mehr', color: 'gold' as const },
-        { name: 'Dessert', slug: 'dessert', description: 'Süße Nachspeisen', color: 'pink' as const },
-        { name: 'Frühstück', slug: 'fruehstueck', description: 'Frühstücksrezepte', color: 'gold' as const },
-        { name: 'Getränk', slug: 'getraenk', description: 'Heiße und kalte Getränke', color: 'blue' as const },
-        { name: 'Vorspeise', slug: 'vorspeise', description: 'Vorspeisen und Fingerfood', color: 'purple' as const },
+        {
+            name: 'Hauptgericht',
+            slug: 'hauptgericht',
+            description: 'Hauptgerichte für Mittag- und Abendessen',
+            color: 'orange' as const,
+        },
+        {
+            name: 'Beilage',
+            slug: 'beilage',
+            description: 'Beilagen und Ergänzungen zu Hauptgerichten',
+            color: 'emerald' as const,
+        },
+        {
+            name: 'Backen',
+            slug: 'backen',
+            description: 'Backrezepte für Kuchen, Brot und mehr',
+            color: 'gold' as const,
+        },
+        {
+            name: 'Dessert',
+            slug: 'dessert',
+            description: 'Süße Nachspeisen',
+            color: 'pink' as const,
+        },
+        {
+            name: 'Frühstück',
+            slug: 'fruehstueck',
+            description: 'Frühstücksrezepte',
+            color: 'gold' as const,
+        },
+        {
+            name: 'Getränk',
+            slug: 'getraenk',
+            description: 'Heiße und kalte Getränke',
+            color: 'blue' as const,
+        },
+        {
+            name: 'Vorspeise',
+            slug: 'vorspeise',
+            description: 'Vorspeisen und Fingerfood',
+            color: 'purple' as const,
+        },
         { name: 'Salat', slug: 'salat', description: 'Frische Salate', color: 'emerald' as const },
     ];
 
@@ -1009,7 +1044,10 @@ async function main() {
                 profile: {
                     create: {
                         nickname: u.nickname,
-                        slug: u.nickname.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+                        slug: u.nickname
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]+/g, '-')
+                            .replace(/^-+|-+$/g, ''),
                         bio: u.bio,
                         photoUrl: u.photoUrl,
                         followerCount: u.followerCount,

@@ -204,8 +204,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const payload = await request.json();
-    const newEmail =
-        typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : null;
+    const newEmail = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : null;
 
     if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
         return NextResponse.json({ message: 'Ungültige E-Mail-Adresse' }, { status: 400 });

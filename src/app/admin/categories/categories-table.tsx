@@ -800,8 +800,7 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
                         </button>
                     </div>
                     <span className={css({ fontSize: 'sm', color: 'foreground.muted' })}>
-                        Seite {table.getState().pagination.pageIndex + 1} von{' '}
-                        {table.getPageCount()}
+                        Seite {table.getState().pagination.pageIndex + 1} von {table.getPageCount()}
                     </span>
                 </div>
             </div>

@@ -62,7 +62,11 @@ export async function hydrateActivityFeedItems(
 
     const visibleUserIds =
         scope === 'global'
-            ? new Set(users.filter((user) => user.profile?.showInActivity !== false).map((user) => user.id))
+            ? new Set(
+                  users
+                      .filter((user) => user.profile?.showInActivity !== false)
+                      .map((user) => user.id),
+              )
             : null;
 
     // Build per-user privacy maps for granular activity type filtering (global scope only)

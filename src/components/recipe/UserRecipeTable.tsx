@@ -202,7 +202,10 @@ function RecipeCardActions({
                             padding: '6',
                             maxWidth: '400px',
                             width: '90%',
-                            boxShadow: { base: '0 24px 60px rgba(0,0,0,0.25)', _dark: '0 24px 60px rgba(0,0,0,0.5)' },
+                            boxShadow: {
+                                base: '0 24px 60px rgba(0,0,0,0.25)',
+                                _dark: '0 24px 60px rgba(0,0,0,0.5)',
+                            },
                         })}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -314,7 +317,10 @@ function UserRecipeCard({ recipe }: { recipe: UserRecipe }) {
                             fontWeight: '700',
                             letterSpacing: 'wide',
                             textTransform: 'uppercase',
-                            boxShadow: { base: '0 2px 8px rgba(0,0,0,0.15)', _dark: '0 2px 8px rgba(0,0,0,0.4)' },
+                            boxShadow: {
+                                base: '0 2px 8px rgba(0,0,0,0.15)',
+                                _dark: '0 2px 8px rgba(0,0,0,0.4)',
+                            },
                         })}
                         style={{
                             background: isPublished ? '#16a34a' : PALETTE.gold,
@@ -376,11 +382,7 @@ function UserRecipeCard({ recipe }: { recipe: UserRecipe }) {
                                 </span>
                             </span>
                         )}
-                        {recipe.cookCount > 0 && (
-                            <span>
-                                {recipe.cookCount}x zubereitet
-                            </span>
-                        )}
+                        {recipe.cookCount > 0 && <span>{recipe.cookCount}x zubereitet</span>}
                         <span>{date.toLocaleDateString('de-DE')}</span>
                     </div>
                 </div>

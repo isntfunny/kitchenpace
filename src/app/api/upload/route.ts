@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
         // Run AI image moderation
         const modResult = await moderateContent({ imageUrl: result.url });
 
-        const modContentType = type === 'recipe' ? 'recipe' : type === 'profile' ? 'profile' : 'comment';
+        const modContentType =
+            type === 'recipe' ? 'recipe' : type === 'profile' ? 'profile' : 'comment';
         const modSnapshot = {
             contentType: type,
             contentId: result.key,
@@ -59,7 +60,13 @@ export async function POST(request: NextRequest) {
 
         if (modResult.decision === 'REJECTED') {
             await deleteFile(result.key);
-            await persistModerationResult(modContentType, result.key, session.user.id, modResult, modSnapshot);
+            await persistModerationResult(
+                modContentType,
+                result.key,
+                session.user.id,
+                modResult,
+                modSnapshot,
+            );
 
             logAuth('warn', 'POST /api/upload: image rejected by moderation', {
                 userId: session.user.id,
@@ -77,7 +84,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Persist all moderation results (PENDING + AUTO_APPROVED) for audit trail
-        await persistModerationResult(modContentType, result.key, session.user.id, modResult, modSnapshot);
+        await persistModerationResult(
+            modContentType,
+            result.key,
+            session.user.id,
+            modResult,
+            modSnapshot,
+        );
 
         if (modResult.decision === 'PENDING') {
             logAuth('info', 'POST /api/upload: image queued for moderation', {

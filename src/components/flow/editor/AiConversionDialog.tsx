@@ -5,7 +5,11 @@ import { Dialog } from 'radix-ui';
 import { useState, useRef, useEffect } from 'react';
 
 import { useDarkColors } from '@app/lib/darkMode';
-import { analyzeRecipeText, type AIAnalysisResult, type ApplySelection } from '@app/lib/importer/ai-text-analysis';
+import {
+    analyzeRecipeText,
+    type AIAnalysisResult,
+    type ApplySelection,
+} from '@app/lib/importer/ai-text-analysis';
 import { PALETTE } from '@app/lib/palette';
 
 type PhaseColors = ReturnType<typeof useDarkColors>;
@@ -216,7 +220,11 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     }}
                                 >
                                     <X
-                                        style={{ width: '14px', height: '14px', color: c.closeIcon }}
+                                        style={{
+                                            width: '14px',
+                                            height: '14px',
+                                            color: c.closeIcon,
+                                        }}
                                     />
                                 </button>
                             </Dialog.Close>
@@ -225,10 +233,19 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
 
                     {/* Body */}
                     <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
-                        {phase === 'input' && <InputPhase text={text} onChange={setText} colors={c} />}
-                        {phase === 'processing' && <ProcessingPhase stepIndex={stepIndex} colors={c} />}
+                        {phase === 'input' && (
+                            <InputPhase text={text} onChange={setText} colors={c} />
+                        )}
+                        {phase === 'processing' && (
+                            <ProcessingPhase stepIndex={stepIndex} colors={c} />
+                        )}
                         {phase === 'review' && result && (
-                            <ReviewPhase result={result} apply={apply} onToggle={toggleApply} colors={c} />
+                            <ReviewPhase
+                                result={result}
+                                apply={apply}
+                                onToggle={toggleApply}
+                                colors={c}
+                            />
                         )}
                         {phase === 'done' && <DonePhase result={result} colors={c} />}
                         {phase === 'error' && <ErrorPhase error={error || ''} colors={c} />}
@@ -352,8 +369,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                         padding: '8px 20px',
                                         borderRadius: '999px',
                                         border: 'none',
-                                        background:
-                                            `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
+                                        background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
                                         color: 'white',
                                         fontWeight: 700,
                                         fontSize: '13px',
@@ -413,7 +429,15 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
 
 /* -- Sub-phases ------------------------------------------------ */
 
-function InputPhase({ text, onChange, colors }: { text: string; onChange: (v: string) => void; colors: PhaseColors }) {
+function InputPhase({
+    text,
+    onChange,
+    colors,
+}: {
+    text: string;
+    onChange: (v: string) => void;
+    colors: PhaseColors;
+}) {
     return (
         <div>
             <p
@@ -484,7 +508,9 @@ function ProcessingPhase({ stepIndex, colors }: { stepIndex: number; colors: Pha
                 <div style={orbitDot(2)} />
             </div>
 
-            <h3 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 700, color: colors.text }}>
+            <h3
+                style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 700, color: colors.text }}
+            >
                 KI analysiert dein Rezept...
             </h3>
             <p style={{ margin: '0 0 28px', fontSize: '13px', color: colors.textMuted }}>
@@ -527,7 +553,9 @@ function ProcessingPhase({ stepIndex, colors }: { stepIndex: number; colors: Pha
                                         : active
                                           ? 'rgba(224,123,83,0.2)'
                                           : colors.stepInactiveBg,
-                                    border: active ? `2px solid ${PALETTE.orange}` : '2px solid transparent',
+                                    border: active
+                                        ? `2px solid ${PALETTE.orange}`
+                                        : '2px solid transparent',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -560,7 +588,11 @@ function ProcessingPhase({ stepIndex, colors }: { stepIndex: number; colors: Pha
                             <span
                                 style={{
                                     fontSize: '13px',
-                                    color: done ? colors.text : active ? PALETTE.orange : colors.textLight,
+                                    color: done
+                                        ? colors.text
+                                        : active
+                                          ? PALETTE.orange
+                                          : colors.textLight,
                                     fontWeight: active || done ? 500 : 400,
                                     transition: 'color 0.3s ease',
                                 }}
@@ -650,10 +682,7 @@ function ReviewPhase({ result, apply, onToggle, colors }: ReviewPhaseProps) {
         {
             field: 'tags',
             label: 'Tags',
-            value:
-                result.tags && result.tags.length > 0
-                    ? result.tags.join(', ')
-                    : 'Keine erkannt',
+            value: result.tags && result.tags.length > 0 ? result.tags.join(', ') : 'Keine erkannt',
         },
         {
             field: 'prepTime',
@@ -695,8 +724,8 @@ function ReviewPhase({ result, apply, onToggle, colors }: ReviewPhaseProps) {
                     lineHeight: 1.6,
                 }}
             >
-                Die KI hat folgende Daten erkannt. Der Flow-Diagram wird immer übernommen.
-                Wähle aus, welche weiteren Felder du in das Formular übernehmen möchtest.
+                Die KI hat folgende Daten erkannt. Der Flow-Diagram wird immer übernommen. Wähle
+                aus, welche weiteren Felder du in das Formular übernehmen möchtest.
             </p>
 
             {/* Always-applied note */}
@@ -847,7 +876,9 @@ function DonePhase({ result, colors }: { result: AIAnalysisResult | null; colors
             >
                 <CheckCircle2 style={{ width: '40px', height: '40px', color: '#22c55e' }} />
             </div>
-            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: colors.text }}>
+            <h3
+                style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: colors.text }}
+            >
                 Flow wurde erstellt!
             </h3>
             <p
@@ -893,7 +924,9 @@ function DonePhase({ result, colors }: { result: AIAnalysisResult | null; colors
                         >
                             {stat.value}
                         </div>
-                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px' }}>
+                        <div
+                            style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px' }}
+                        >
                             {stat.label}
                         </div>
                     </div>
@@ -921,7 +954,9 @@ function ErrorPhase({ error, colors }: { error: string; colors: PhaseColors }) {
             >
                 <AlertCircle style={{ width: '40px', height: '40px', color: '#ef4444' }} />
             </div>
-            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: colors.text }}>
+            <h3
+                style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: colors.text }}
+            >
                 Fehler bei der Analyse
             </h3>
             <p

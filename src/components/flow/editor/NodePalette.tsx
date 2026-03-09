@@ -162,7 +162,10 @@ const paletteClass = css({
 
 const headerClass = css({
     p: '2',
-    borderBottom: { base: '1px solid rgba(224,123,83,0.15)', _dark: '1px solid rgba(224,123,83,0.12)' },
+    borderBottom: {
+        base: '1px solid rgba(224,123,83,0.15)',
+        _dark: '1px solid rgba(224,123,83,0.12)',
+    },
 });
 
 const headerTitleClass = css({
@@ -192,7 +195,10 @@ const searchInputClass = css({
     _placeholder: { color: 'text.muted' },
     _focus: {
         borderColor: 'brand.primary',
-        boxShadow: { base: '0 0 0 2px rgba(224,123,83,0.1)', _dark: '0 0 0 2px rgba(224,123,83,0.15)' },
+        boxShadow: {
+            base: '0 0 0 2px rgba(224,123,83,0.1)',
+            _dark: '0 0 0 2px rgba(224,123,83,0.15)',
+        },
     },
 });
 

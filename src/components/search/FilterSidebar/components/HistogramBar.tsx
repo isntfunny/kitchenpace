@@ -83,7 +83,10 @@ export function HistogramBar({ facet, min, max, interval, onClick }: HistogramBa
                                         padding: '8px 12px',
                                         borderRadius: 'lg',
                                         fontSize: 'xs',
-                                        boxShadow: { base: '0 4px 12px rgba(0,0,0,0.15)', _dark: '0 4px 12px rgba(0,0,0,0.4)' },
+                                        boxShadow: {
+                                            base: '0 4px 12px rgba(0,0,0,0.15)',
+                                            _dark: '0 4px 12px rgba(0,0,0,0.4)',
+                                        },
                                         zIndex: 1000,
                                     })}
                                     sideOffset={5}

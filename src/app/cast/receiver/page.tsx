@@ -48,14 +48,18 @@ export default function CastReceiverPage() {
             // The receiver SDK exposes CastReceiverContext on window.cast.framework.
             // We access it via an untyped cast to avoid conflicting with the sender SDK's
             // global Window augmentation (which declares a different shape for window.cast).
-             
+
             const framework = (window as any).cast?.framework as CastReceiverFramework | undefined;
             const ctx = framework?.CastReceiverContext.getInstance();
             if (!ctx) return;
 
             ctx.addCustomMessageListener(CAST_NAMESPACE, ({ data }: { data: string }) => {
                 let msg: CastMessage;
-                try { msg = JSON.parse(data) as CastMessage; } catch { return; }
+                try {
+                    msg = JSON.parse(data) as CastMessage;
+                } catch {
+                    return;
+                }
 
                 if (msg.type === 'LOAD_RECIPE') {
                     setRecipeUrl(`/recipe/${msg.slug}/mobile`);
@@ -85,24 +89,35 @@ export default function CastReceiverPage() {
     // ── Waiting screen ──────────────────────────────────────────────────
     if (!recipeUrl) {
         return (
-            <div style={{
-                minHeight: '100vh',
-                background: '#111',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 20,
-                fontFamily: '-apple-system, Inter, sans-serif',
-            }}>
-                <div style={{
-                    width: 88, height: 88, borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${PALETTE.orange} 0%, #f8b500 100%)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40,
-                }}>
+            <div
+                style={{
+                    minHeight: '100vh',
+                    background: '#111',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 20,
+                    fontFamily: '-apple-system, Inter, sans-serif',
+                }}
+            >
+                <div
+                    style={{
+                        width: 88,
+                        height: 88,
+                        borderRadius: '50%',
+                        background: `linear-gradient(135deg, ${PALETTE.orange} 0%, #f8b500 100%)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 40,
+                    }}
+                >
                     🍳
                 </div>
-                <div style={{ fontSize: 38, fontWeight: 900, color: '#fff', letterSpacing: '-1px' }}>
+                <div
+                    style={{ fontSize: 38, fontWeight: 900, color: '#fff', letterSpacing: '-1px' }}
+                >
                     KüchenTakt
                 </div>
                 <div style={{ fontSize: 18, color: 'rgba(255,255,255,0.38)' }}>
@@ -110,12 +125,17 @@ export default function CastReceiverPage() {
                 </div>
                 <div style={{ display: 'flex', gap: 7, marginTop: 6 }}>
                     {[0, 1, 2].map((i) => (
-                        <div key={i} style={{
-                            width: 9, height: 9, borderRadius: '50%',
-                            backgroundColor: PALETTE.orange,
-                            animation: `w 1.4s ease-in-out ${i * 0.22}s infinite`,
-                            opacity: 0.6,
-                        }} />
+                        <div
+                            key={i}
+                            style={{
+                                width: 9,
+                                height: 9,
+                                borderRadius: '50%',
+                                backgroundColor: PALETTE.orange,
+                                animation: `w 1.4s ease-in-out ${i * 0.22}s infinite`,
+                                opacity: 0.6,
+                            }}
+                        />
                     ))}
                 </div>
                 <style>{`

@@ -142,7 +142,11 @@ export async function POST(request: NextRequest) {
                             })
                             .catch((err: unknown) => console.error('ImportRun log failed:', err));
                     }
-                    send({ type: 'error', message: result.error.message, errorType: result.error.type });
+                    send({
+                        type: 'error',
+                        message: result.error.message,
+                        errorType: result.error.type,
+                    });
                     return;
                 }
 
@@ -192,7 +196,7 @@ export async function POST(request: NextRequest) {
         headers: {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
+            Connection: 'keep-alive',
         },
     });
 }

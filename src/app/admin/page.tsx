@@ -1,4 +1,14 @@
-import { Activity, ShieldCheck, ShieldAlert, Users, BookOpen, Tag, Settings, Sparkles, LayoutList } from 'lucide-react';
+import {
+    Activity,
+    ShieldCheck,
+    ShieldAlert,
+    Users,
+    BookOpen,
+    Tag,
+    Settings,
+    Sparkles,
+    LayoutList,
+} from 'lucide-react';
 import Link from 'next/link';
 
 import { PageShell } from '@app/components/layouts/PageShell';

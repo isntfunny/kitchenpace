@@ -56,7 +56,9 @@ function renderTemplate(activity: ActivityFeedItem) {
                     {activity.recipeTitle}
                 </Link>
             ) : (
-                <span key={i} className={linkCss}>{activity.recipeTitle}</span>
+                <span key={i} className={linkCss}>
+                    {activity.recipeTitle}
+                </span>
             );
         }
 
@@ -67,13 +69,19 @@ function renderTemplate(activity: ActivityFeedItem) {
                     {activity.targetUserName}
                 </Link>
             ) : (
-                <span key={i} className={linkCss}>{activity.targetUserName}</span>
+                <span key={i} className={linkCss}>
+                    {activity.targetUserName}
+                </span>
             );
         }
 
         if (part === '{recipe}' || part === '{target}') return null;
 
-        return <span key={i} className={mutedCss}>{part}</span>;
+        return (
+            <span key={i} className={mutedCss}>
+                {part}
+            </span>
+        );
     });
 }
 
@@ -94,7 +102,11 @@ function ActivityDetailExtras({ activity }: { activity: ActivityFeedItem }) {
                             size={14}
                             fill={star <= rating ? '#f8b500' : 'none'}
                             color={star <= rating ? '#f8b500' : undefined}
-                            className={star <= rating ? undefined : css({ color: { base: '#e0e0e0', _dark: '#4a4a4a' } })}
+                            className={
+                                star <= rating
+                                    ? undefined
+                                    : css({ color: { base: '#e0e0e0', _dark: '#4a4a4a' } })
+                            }
                         />
                     ))}
                 </span>
@@ -110,7 +122,13 @@ function ActivityDetailExtras({ activity }: { activity: ActivityFeedItem }) {
             <Text
                 size="sm"
                 color="muted"
-                className={css({ mt: '1', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' })}
+                className={css({
+                    mt: '1',
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                })}
             >
                 <Camera size={14} />
                 <span>Mit Bild</span>
@@ -164,9 +182,15 @@ export function ActivityItem({ activity }: { activity: ActivityFeedItem }) {
                 <IconComponent size={18} color="white" />
             </span>
             <div className={css({ flex: 1 })}>
-                <Text size="sm" className={css({ fontWeight: '600', color: 'text', lineHeight: '1.5' })}>
+                <Text
+                    size="sm"
+                    className={css({ fontWeight: '600', color: 'text', lineHeight: '1.5' })}
+                >
                     {userLink ? (
-                        <Link href={userLink} className={css({ color: 'text', textDecoration: 'none' })}>
+                        <Link
+                            href={userLink}
+                            className={css({ color: 'text', textDecoration: 'none' })}
+                        >
                             {activity.userName}
                         </Link>
                     ) : (

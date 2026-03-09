@@ -301,7 +301,10 @@ const columns: ColumnDef<Recipe>[] = [
                                 borderRadius: 'full',
                                 fontSize: 'xs',
                                 fontWeight: 'medium',
-                                backgroundColor: { base: 'rgba(239, 68, 68, 0.15)', _dark: 'rgba(239, 68, 68, 0.2)' },
+                                backgroundColor: {
+                                    base: 'rgba(239, 68, 68, 0.15)',
+                                    _dark: 'rgba(239, 68, 68, 0.2)',
+                                },
                                 color: 'status.error',
                             })}
                         >

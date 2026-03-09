@@ -44,7 +44,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             siteName: 'KüchenTakt',
             type: 'website',
             locale: 'de_DE',
-            images: [{ url: ogImageUrl, width: 1200, height: 630, alt: `${category.name} Rezepte` }],
+            images: [
+                { url: ogImageUrl, width: 1200, height: 630, alt: `${category.name} Rezepte` },
+            ],
         },
         twitter: {
             card: 'summary_large_image',

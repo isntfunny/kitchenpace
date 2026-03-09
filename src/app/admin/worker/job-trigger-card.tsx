@@ -104,7 +104,7 @@ export function JobTriggerCard({ item }: { item: JobCatalogItem }) {
                 >
                     {item.type === 'worker'
                         ? `${item.meta.concurrency ?? 1}⚡`
-                        : item.meta.repeatPattern ?? 'adhoc'}
+                        : (item.meta.repeatPattern ?? 'adhoc')}
                 </span>
             </div>
 
@@ -141,7 +141,9 @@ export function JobTriggerCard({ item }: { item: JobCatalogItem }) {
                                         min={field.min}
                                         max={field.max}
                                         value={(fieldValues[key] as number) ?? field.default ?? 0}
-                                        onChange={(e) => handleFieldChange(key, Number(e.target.value))}
+                                        onChange={(e) =>
+                                            handleFieldChange(key, Number(e.target.value))
+                                        }
                                         className={css({
                                             width: '100%',
                                             padding: '0.5',
@@ -193,10 +195,16 @@ export function JobTriggerCard({ item }: { item: JobCatalogItem }) {
                                     >
                                         <input
                                             type="checkbox"
-                                            checked={Boolean(fieldValues[key] ?? field.default ?? false)}
-                                            onChange={(e) => handleFieldChange(key, e.target.checked)}
+                                            checked={Boolean(
+                                                fieldValues[key] ?? field.default ?? false,
+                                            )}
+                                            onChange={(e) =>
+                                                handleFieldChange(key, e.target.checked)
+                                            }
                                         />
-                                        <span className={css({ fontSize: 'xs', color: 'foreground' })}>
+                                        <span
+                                            className={css({ fontSize: 'xs', color: 'foreground' })}
+                                        >
                                             Aktiviert
                                         </span>
                                     </label>

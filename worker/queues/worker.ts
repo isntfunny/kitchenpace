@@ -22,26 +22,38 @@ import { QueueName } from './types';
 const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
     [QueueName.OPENSEARCH]: async (job) => {
         switch (job.name) {
-            case 'sync-opensearch': return processSyncOpenSearch(job);
-            case 'sync-ingredients': return processSyncIngredients(job);
-            case 'sync-recipe': return processSyncRecipeToOpenSearch(job);
-            default: throw new Error(`Unknown opensearch job: ${job.name}`);
+            case 'sync-opensearch':
+                return processSyncOpenSearch(job);
+            case 'sync-ingredients':
+                return processSyncIngredients(job);
+            case 'sync-recipe':
+                return processSyncRecipeToOpenSearch(job);
+            default:
+                throw new Error(`Unknown opensearch job: ${job.name}`);
         }
     },
     [QueueName.SCHEDULED]: async (job) => {
         switch (job.name) {
-            case 'trending-recipes': return processTrendingRecipes(job);
-            case 'sync-contacts-notifuse': return processSyncContactsNotifuse(job);
-            case 'backup-database-hourly': return processBackupDatabase(job, 'hourly');
-            case 'backup-database-daily': return processBackupDatabase(job, 'daily');
-            case 'purge-thumbnail-cache': return processCachePurge(job);
-            default: throw new Error(`Unknown scheduled job: ${job.name}`);
+            case 'trending-recipes':
+                return processTrendingRecipes(job);
+            case 'sync-contacts-notifuse':
+                return processSyncContactsNotifuse(job);
+            case 'backup-database-hourly':
+                return processBackupDatabase(job, 'hourly');
+            case 'backup-database-daily':
+                return processBackupDatabase(job, 'daily');
+            case 'purge-thumbnail-cache':
+                return processCachePurge(job);
+            default:
+                throw new Error(`Unknown scheduled job: ${job.name}`);
         }
     },
     [QueueName.BACKUP]: async (job) => {
         switch (job.name) {
-            case 'database-backup': return processDatabaseBackup(job);
-            default: throw new Error(`Unknown backup job: ${job.name}`);
+            case 'database-backup':
+                return processDatabaseBackup(job);
+            default:
+                throw new Error(`Unknown backup job: ${job.name}`);
         }
     },
 };
@@ -84,7 +96,10 @@ export function getWorkerDefinitions(): WorkerDefinitionSummary[] {
 export function startWorkers(): void {
     console.log('[Worker] Starting BullMQ workers...');
 
-    for (const [queueName, processor] of Object.entries(queueProcessors) as [QueueName, (job: Job) => Promise<unknown>][]) {
+    for (const [queueName, processor] of Object.entries(queueProcessors) as [
+        QueueName,
+        (job: Job) => Promise<unknown>,
+    ][]) {
         const worker = new Worker(
             queueName,
             async (job) => {

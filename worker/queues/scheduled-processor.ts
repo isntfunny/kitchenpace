@@ -31,9 +31,7 @@ export async function processTrendingRecipes(
         // Step 1: Calculate trending IDs within a transaction
         const trendingIds = await prisma.$transaction(async (tx) => {
             // Calculate trending scores for recipes published in last 30 days
-            const scored = await tx.$queryRaw<
-                Array<{ id: string; score: number }>
-            >`
+            const scored = await tx.$queryRaw<Array<{ id: string; score: number }>>`
                 WITH recent_recipes AS (
                     SELECT r.id, r."imageKey" IS NOT NULL as has_image, r."rating", r."ratingCount"
                     FROM "Recipe" r

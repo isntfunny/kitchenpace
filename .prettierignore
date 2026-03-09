@@ -5,3 +5,4 @@ node_modules
 styled-system
 pnpm-lock.yaml
 package-lock.json
+k6/results

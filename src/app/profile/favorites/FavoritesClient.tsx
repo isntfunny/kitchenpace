@@ -98,27 +98,31 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                             viewport={{ once: true, margin: '-30px' }}
                             transition={{ duration: 0.35, delay: Math.min(index, 5) * 0.06 }}
                         >
-                        <RecipeCard
-                            recipe={recipe}
-                            footer={
-                                <div
-                                    className={flex({
-                                        justify: 'space-between',
-                                        align: 'center',
-                                        px: '1',
-                                    })}
-                                >
-                                    <Text size="sm" color="muted">
-                                        Gespeichert {formatTimeAgo(recipe.savedAt, { prefix: true, fallbackToDate: true })}
-                                    </Text>
-                                    <RemoveButton
-                                        title={recipe.title}
-                                        onRemove={() => handleRemove(recipe.id)}
-                                        isRemoving={isPending}
-                                    />
-                                </div>
-                            }
-                        />
+                            <RecipeCard
+                                recipe={recipe}
+                                footer={
+                                    <div
+                                        className={flex({
+                                            justify: 'space-between',
+                                            align: 'center',
+                                            px: '1',
+                                        })}
+                                    >
+                                        <Text size="sm" color="muted">
+                                            Gespeichert{' '}
+                                            {formatTimeAgo(recipe.savedAt, {
+                                                prefix: true,
+                                                fallbackToDate: true,
+                                            })}
+                                        </Text>
+                                        <RemoveButton
+                                            title={recipe.title}
+                                            onRemove={() => handleRemove(recipe.id)}
+                                            isRemoving={isPending}
+                                        />
+                                    </div>
+                                }
+                            />
                         </motion.div>
                     ))}
                 </div>
@@ -215,7 +219,10 @@ function RemoveButton({
                         bg: 'surface',
                         borderRadius: '2xl',
                         p: '6',
-                        boxShadow: { base: '0 10px 40px rgba(0,0,0,0.2)', _dark: '0 10px 40px rgba(0,0,0,0.5)' },
+                        boxShadow: {
+                            base: '0 10px 40px rgba(0,0,0,0.2)',
+                            _dark: '0 10px 40px rgba(0,0,0,0.5)',
+                        },
                         zIndex: '50',
                     })}
                 >

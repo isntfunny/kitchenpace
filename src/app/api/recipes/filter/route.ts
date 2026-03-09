@@ -120,21 +120,21 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        pushClause({ term: { 'status': 'PUBLISHED' } });
+        pushClause({ term: { status: 'PUBLISHED' } });
 
         if (mealTypes.length > 0) {
-            pushClause({ terms: { 'category': mealTypes } });
+            pushClause({ terms: { category: mealTypes } });
         }
 
         if (tags.length > 0) {
-            pushClause({ bool: { must: tags.map((tag) => ({ term: { 'tags': tag } })) } });
+            pushClause({ bool: { must: tags.map((tag) => ({ term: { tags: tag } })) } });
         }
 
         if (ingredients.length > 0) {
             pushClause({
                 bool: {
                     must: ingredients.map((ingredient) => ({
-                        term: { 'ingredients': ingredient },
+                        term: { ingredients: ingredient },
                     })),
                 },
             });
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
 
         if (difficulty.length > 0) {
             pushClause({
-                terms: { 'difficulty': difficulty.map((value) => value.toUpperCase()) },
+                terms: { difficulty: difficulty.map((value) => value.toUpperCase()) },
             });
         }
 
@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
         }
 
         if (excludeIngredients.length > 0) {
-            boolQuery.bool.must_not.push({ terms: { 'ingredients': excludeIngredients } });
+            boolQuery.bool.must_not.push({ terms: { ingredients: excludeIngredients } });
         }
 
         if (clauses.length > 0) {
@@ -256,9 +256,7 @@ export async function GET(request: NextRequest) {
                     ),
                     ingredients: buildTermsAggregation(
                         getTermsBuckets(
-                            response.body.aggregations?.ingredients as
-                                | TermsAggregation
-                                | undefined,
+                            response.body.aggregations?.ingredients as TermsAggregation | undefined,
                         ),
                     ),
                     difficulties: buildTermsAggregation(
@@ -270,39 +268,27 @@ export async function GET(request: NextRequest) {
                     ),
                     categories: buildTermsAggregation(
                         getTermsBuckets(
-                            response.body.aggregations?.categories as
-                                | TermsAggregation
-                                | undefined,
+                            response.body.aggregations?.categories as TermsAggregation | undefined,
                         ),
                     ),
                     totalTime: buildHistogramFacet(
-                        response.body.aggregations?.totalTime as
-                            | HistogramAggregation
-                            | undefined,
+                        response.body.aggregations?.totalTime as HistogramAggregation | undefined,
                         5,
                     ),
                     prepTime: buildHistogramFacet(
-                        response.body.aggregations?.prepTime as
-                            | HistogramAggregation
-                            | undefined,
+                        response.body.aggregations?.prepTime as HistogramAggregation | undefined,
                         5,
                     ),
                     cookTime: buildHistogramFacet(
-                        response.body.aggregations?.cookTime as
-                            | HistogramAggregation
-                            | undefined,
+                        response.body.aggregations?.cookTime as HistogramAggregation | undefined,
                         5,
                     ),
                     rating: buildHistogramFacet(
-                        response.body.aggregations?.rating as
-                            | HistogramAggregation
-                            | undefined,
+                        response.body.aggregations?.rating as HistogramAggregation | undefined,
                         1,
                     ),
                     cookCount: buildHistogramFacet(
-                        response.body.aggregations?.cookCount as
-                            | HistogramAggregation
-                            | undefined,
+                        response.body.aggregations?.cookCount as HistogramAggregation | undefined,
                         10,
                     ),
                 },

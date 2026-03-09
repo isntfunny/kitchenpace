@@ -172,7 +172,10 @@ export function DashboardWelcome({ userName = 'KüchenFan', userPhoto }: Dashboa
                                 objectFit: 'cover',
                                 border: '3px solid',
                                 borderColor: 'surface',
-                                boxShadow: { base: '0 4px 12px rgba(0,0,0,0.1)', _dark: '0 4px 12px rgba(0,0,0,0.4)' },
+                                boxShadow: {
+                                    base: '0 4px 12px rgba(0,0,0,0.1)',
+                                    _dark: '0 4px 12px rgba(0,0,0,0.4)',
+                                },
                             })}
                         />
                     ) : (
@@ -190,7 +193,10 @@ export function DashboardWelcome({ userName = 'KüchenFan', userPhoto }: Dashboa
                                 color: 'white',
                                 border: '3px solid',
                                 borderColor: 'surface',
-                                boxShadow: { base: '0 4px 12px rgba(0,0,0,0.1)', _dark: '0 4px 12px rgba(0,0,0,0.4)' },
+                                boxShadow: {
+                                    base: '0 4px 12px rgba(0,0,0,0.1)',
+                                    _dark: '0 4px 12px rgba(0,0,0,0.4)',
+                                },
                             })}
                         >
                             {userName.slice(0, 2).toUpperCase()}

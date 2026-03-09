@@ -96,7 +96,10 @@ export function UserDashboard({
                                     className={css({
                                         borderRadius: 'full',
                                         objectFit: 'cover',
-                                        border: { base: '4px solid #fff7f1', _dark: '4px solid #2d333b' },
+                                        border: {
+                                            base: '4px solid #fff7f1',
+                                            _dark: '4px solid #2d333b',
+                                        },
                                         boxShadow: 'shadow.medium',
                                     })}
                                 />
@@ -106,13 +109,19 @@ export function UserDashboard({
                                         width: '120px',
                                         height: '120px',
                                         borderRadius: 'full',
-                                        background: { base: 'linear-gradient(135deg, #ffe5d1, #ffc89e)', _dark: 'linear-gradient(135deg, #5a3d2d, #7a5038)' },
+                                        background: {
+                                            base: 'linear-gradient(135deg, #ffe5d1, #ffc89e)',
+                                            _dark: 'linear-gradient(135deg, #5a3d2d, #7a5038)',
+                                        },
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         fontSize: '3xl',
                                         fontWeight: '700',
-                                        border: { base: '4px solid #fff7f1', _dark: '4px solid #2d333b' },
+                                        border: {
+                                            base: '4px solid #fff7f1',
+                                            _dark: '4px solid #2d333b',
+                                        },
                                         boxShadow: 'shadow.medium',
                                     })}
                                 >
@@ -239,7 +248,10 @@ export function UserDashboard({
                             _hover: {
                                 transform: 'translateY(-2px)',
                                 borderColor: 'palette.orange',
-                                boxShadow: { base: '0 12px 40px rgba(224,123,83,0.15)', _dark: '0 12px 40px rgba(224,123,83,0.12)' },
+                                boxShadow: {
+                                    base: '0 12px 40px rgba(224,123,83,0.15)',
+                                    _dark: '0 12px 40px rgba(224,123,83,0.12)',
+                                },
                             },
                         })}
                     >
@@ -265,7 +277,10 @@ export function UserDashboard({
                             _hover: {
                                 transform: 'translateY(-2px)',
                                 borderColor: 'palette.orange',
-                                boxShadow: { base: '0 12px 40px rgba(224,123,83,0.15)', _dark: '0 12px 40px rgba(224,123,83,0.12)' },
+                                boxShadow: {
+                                    base: '0 12px 40px rgba(224,123,83,0.15)',
+                                    _dark: '0 12px 40px rgba(224,123,83,0.12)',
+                                },
                             },
                         })}
                     >
@@ -291,7 +306,10 @@ export function UserDashboard({
                             _hover: {
                                 transform: 'translateY(-2px)',
                                 borderColor: 'palette.orange',
-                                boxShadow: { base: '0 12px 40px rgba(224,123,83,0.15)', _dark: '0 12px 40px rgba(224,123,83,0.12)' },
+                                boxShadow: {
+                                    base: '0 12px 40px rgba(224,123,83,0.15)',
+                                    _dark: '0 12px 40px rgba(224,123,83,0.12)',
+                                },
                             },
                         })}
                     >
@@ -317,7 +335,10 @@ export function UserDashboard({
                             _hover: {
                                 transform: 'translateY(-2px)',
                                 borderColor: 'palette.orange',
-                                boxShadow: { base: '0 12px 40px rgba(224,123,83,0.15)', _dark: '0 12px 40px rgba(224,123,83,0.12)' },
+                                boxShadow: {
+                                    base: '0 12px 40px rgba(224,123,83,0.15)',
+                                    _dark: '0 12px 40px rgba(224,123,83,0.12)',
+                                },
                             },
                         })}
                     >

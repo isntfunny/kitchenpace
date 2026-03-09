@@ -24,10 +24,16 @@ const toggleStyles = css({
     cursor: 'pointer',
     _hover: {
         borderColor: 'accent',
-        boxShadow: { base: '0 4px 24px rgba(224,123,83,0.15)', _dark: '0 4px 24px rgba(224,123,83,0.12)' },
+        boxShadow: {
+            base: '0 4px 24px rgba(224,123,83,0.15)',
+            _dark: '0 4px 24px rgba(224,123,83,0.12)',
+        },
     },
     _focusVisible: {
-        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.35)', _dark: '0 0 0 3px rgba(224,123,83,0.3)' },
+        boxShadow: {
+            base: '0 0 0 3px rgba(224,123,83,0.35)',
+            _dark: '0 0 0 3px rgba(224,123,83,0.3)',
+        },
     },
     _pressed: {
         transform: 'scale(0.97)',

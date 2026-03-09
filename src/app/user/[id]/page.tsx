@@ -34,8 +34,11 @@ const KNOWN_ACTIVITY_TYPES: ActivityType[] = [
     'MEAL_PLAN_CREATED',
 ];
 
-
-const buildUserMetadata = async (name: string, userId: string, userSlug: string): Promise<Metadata> => {
+const buildUserMetadata = async (
+    name: string,
+    userId: string,
+    userSlug: string,
+): Promise<Metadata> => {
     const profileImageUrl = await getThumbnailUrlBySource(
         { type: 'user', id: userId },
         {
@@ -142,9 +145,10 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
     if (profile?.followsPublic === false) hiddenActivityTypes.add('USER_FOLLOWED');
 
     // Filter activities by privacy
-    const visibleActivities = hiddenActivityTypes.size > 0
-        ? user.activities.filter((a) => !hiddenActivityTypes.has(a.type))
-        : user.activities;
+    const visibleActivities =
+        hiddenActivityTypes.size > 0
+            ? user.activities.filter((a) => !hiddenActivityTypes.has(a.type))
+            : user.activities;
 
     // Fetch recipe details for recipe-related activities
     const recipeIds = visibleActivities

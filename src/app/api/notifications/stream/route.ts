@@ -72,19 +72,13 @@ export async function GET(request: Request) {
 
             send('ready', { ok: true });
 
-            const unsubscribe = await subscribeToRealtimeChannels(
-                channels,
-                (_channel, event) => {
-                    if (
-                        event.type !== 'admin-inbox.removed' &&
-                        !isEntityAfterCursor(event, cursor)
-                    ) {
-                        return;
-                    }
+            const unsubscribe = await subscribeToRealtimeChannels(channels, (_channel, event) => {
+                if (event.type !== 'admin-inbox.removed' && !isEntityAfterCursor(event, cursor)) {
+                    return;
+                }
 
-                    send(event.type, event.payload);
-                },
-            );
+                send(event.type, event.payload);
+            });
 
             const heartbeat = setInterval(() => {
                 controller.enqueue(encoder.encode(': keepalive\n\n'));
@@ -93,7 +87,11 @@ export async function GET(request: Request) {
             request.signal.addEventListener('abort', async () => {
                 clearInterval(heartbeat);
                 await unsubscribe();
-                try { controller.close(); } catch { /* already closed by runtime */ }
+                try {
+                    controller.close();
+                } catch {
+                    /* already closed by runtime */
+                }
             });
         },
     });

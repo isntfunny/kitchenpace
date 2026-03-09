@@ -105,24 +105,14 @@ function RecipeMiniCard({
                 >
                     {title}
                 </p>
-                {meta && (
-                    <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{meta}</p>
-                )}
+                {meta && <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{meta}</p>}
             </div>
         </Link>
     );
 }
 
 // ---- Section header ----
-function SectionHeader({
-    title,
-    count,
-    href,
-}: {
-    title: string;
-    count?: number;
-    href?: string;
-}) {
+function SectionHeader({ title, count, href }: { title: string; count?: number; href?: string }) {
     return (
         <div
             className={css({
@@ -168,7 +158,11 @@ function DraftSection({ drafts }: { drafts: DraftRecipe[] }) {
     if (drafts.length === 0) return null;
     return (
         <section>
-            <SectionHeader title="Aktuelle Entwürfe" count={drafts.length} href="/profile/recipes" />
+            <SectionHeader
+                title="Aktuelle Entwürfe"
+                count={drafts.length}
+                href="/profile/recipes"
+            />
             <div
                 className={grid({
                     columns: { base: 2, sm: 3, md: 4 },
@@ -224,7 +218,14 @@ function DraftSection({ drafts }: { drafts: DraftRecipe[] }) {
                         >
                             {draft.title}
                         </p>
-                        <p className={css({ fontSize: 'xs', color: 'text-muted', mt: 'auto', pt: '1' })}>
+                        <p
+                            className={css({
+                                fontSize: 'xs',
+                                color: 'text-muted',
+                                mt: 'auto',
+                                pt: '1',
+                            })}
+                        >
                             {formatTimeAgo(draft.updatedAt, { prefix: true, fallbackToDate: true })}
                         </p>
                     </Link>
@@ -249,10 +250,7 @@ function TopRecipesSection({ recipes }: { recipes: TopRecipeEntry[] }) {
                         textAlign: 'center',
                     })}
                 >
-                    <ChefHat
-                        size={36}
-                        className={css({ color: 'primary', mx: 'auto', mb: '2' })}
-                    />
+                    <ChefHat size={36} className={css({ color: 'primary', mx: 'auto', mb: '2' })} />
                     <Text size="sm" color="muted">
                         Noch keine veröffentlichten Rezepte.
                     </Text>
@@ -401,171 +399,176 @@ export default async function ProfilePage() {
             >
                 {/* ── Profile Hero ─────────────────────────────── */}
                 <FadeInSection y={16} duration={0.4}>
-                <div className={cardCss}>
-                    <div
-                        className={css({
-                            display: 'flex',
-                            flexDir: { base: 'column', sm: 'row' },
-                            gap: '5',
-                            alignItems: { base: 'center', sm: 'flex-start' },
-                        })}
-                    >
-                        {/* Avatar */}
-                        <div className={css({ flexShrink: 0 })}>
-                            {profile.photoUrl ? (
-                                <SmartImage
-                                    src={profile.photoUrl}
-                                    alt={profile.nickname ?? 'Profilfoto'}
-                                    width={96}
-                                    height={96}
-                                    className={css({
-                                        borderRadius: 'full',
-                                        objectFit: 'cover',
-                                        border: '3px solid',
-                                        borderColor: 'primary',
-                                        boxShadow: { base: '0 4px 16px rgba(224,123,83,0.25)', _dark: '0 4px 16px rgba(224,123,83,0.3)' },
-                                    })}
-                                />
-                            ) : (
-                                <div
-                                    className={css({
-                                        w: '24',
-                                        h: '24',
-                                        borderRadius: 'full',
-                                        background:
-                                            `linear-gradient(135deg, ${PALETTE.orange} 0%, #c4623d 100%)`,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        border: '3px solid',
-                                        borderColor: 'primary',
-                                        boxShadow: { base: '0 4px 16px rgba(224,123,83,0.25)', _dark: '0 4px 16px rgba(224,123,83,0.3)' },
-                                    })}
-                                >
-                                    <ChefHat size={40} color="white" />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Info */}
-                        <div
-                            className={css({
-                                flex: 1,
-                                textAlign: { base: 'center', sm: 'left' },
-                                minW: 0,
-                            })}
-                        >
-                            <Text size="sm" color="muted" className={css({ mb: '1' })}>
-                                KüchenTakt Profil
-                            </Text>
-                            <Heading as="h1" size="xl" className={css({ mb: '1' })}>
-                                {profile.nickname ?? 'Neuer KüchenFan'}
-                            </Heading>
-                            {profile.teaser && (
-                                <Text
-                                    color="muted"
-                                    className={css({ mb: '2', maxW: '48ch', lineClamp: '2' })}
-                                >
-                                    {profile.teaser}
-                                </Text>
-                            )}
-                            <div
-                                className={css({
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                    gap: '3',
-                                    fontSize: 'xs',
-                                    color: 'text-muted',
-                                    justifyContent: { base: 'center', sm: 'flex-start' },
-                                })}
-                            >
-                                <span>{session.user.email}</span>
-                                <span>·</span>
-                                <span>Mitglied seit {memberSince}</span>
-                            </div>
-
-                            {/* Stats Pills */}
-                            <div
-                                className={css({
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                    gap: '2',
-                                    mt: '3',
-                                    justifyContent: { base: 'center', sm: 'flex-start' },
-                                })}
-                            >
-                                {[
-                                    { label: 'Rezepte', value: stats.recipeCount },
-                                    { label: 'Favoriten', value: stats.favoriteCount },
-                                    { label: 'Mal zubereitet', value: stats.cookedCount },
-                                    { label: 'Bewertungen', value: stats.ratingCount },
-                                    { label: 'Entwürfe', value: stats.draftCount },
-                                ].map(({ label, value }) => (
-                                    <span
-                                        key={label}
-                                        className={css({
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '1',
-                                            bg: 'surface.elevated',
-                                            border: '1px solid',
-                                            borderColor: 'border',
-                                            borderRadius: 'full',
-                                            px: '3',
-                                            py: '1',
-                                            fontSize: 'xs',
-                                            fontWeight: '500',
-                                        })}
-                                    >
-                                        <span
-                                            className={css({
-                                                fontWeight: '700',
-                                                color: 'primary',
-                                            })}
-                                        >
-                                            {value}
-                                        </span>{' '}
-                                        {label}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Action Buttons */}
+                    <div className={cardCss}>
                         <div
                             className={css({
                                 display: 'flex',
-                                flexDir: { base: 'row', sm: 'column' },
-                                flexWrap: 'wrap',
-                                gap: '2',
-                                alignItems: 'stretch',
-                                justifyContent: 'center',
-                                flexShrink: 0,
+                                flexDir: { base: 'column', sm: 'row' },
+                                gap: '5',
+                                alignItems: { base: 'center', sm: 'flex-start' },
                             })}
                         >
-                            <Link href="/profile/edit">
-                                <Button variant="primary" size="sm">
-                                    <Edit3 size={15} />
-                                    Profil bearbeiten
-                                </Button>
-                            </Link>
-                            <Link href="/profile/settings">
-                                <Button variant="secondary" size="sm">
-                                    <Settings size={15} />
-                                    Einstellungen
-                                </Button>
-                            </Link>
-                            {profile.userId && (
-                                <Link href={`/user/${profile.slug}`}>
-                                    <Button variant="ghost" size="sm">
-                                        <User size={15} />
-                                        Öffentlich
+                            {/* Avatar */}
+                            <div className={css({ flexShrink: 0 })}>
+                                {profile.photoUrl ? (
+                                    <SmartImage
+                                        src={profile.photoUrl}
+                                        alt={profile.nickname ?? 'Profilfoto'}
+                                        width={96}
+                                        height={96}
+                                        className={css({
+                                            borderRadius: 'full',
+                                            objectFit: 'cover',
+                                            border: '3px solid',
+                                            borderColor: 'primary',
+                                            boxShadow: {
+                                                base: '0 4px 16px rgba(224,123,83,0.25)',
+                                                _dark: '0 4px 16px rgba(224,123,83,0.3)',
+                                            },
+                                        })}
+                                    />
+                                ) : (
+                                    <div
+                                        className={css({
+                                            w: '24',
+                                            h: '24',
+                                            borderRadius: 'full',
+                                            background: `linear-gradient(135deg, ${PALETTE.orange} 0%, #c4623d 100%)`,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '3px solid',
+                                            borderColor: 'primary',
+                                            boxShadow: {
+                                                base: '0 4px 16px rgba(224,123,83,0.25)',
+                                                _dark: '0 4px 16px rgba(224,123,83,0.3)',
+                                            },
+                                        })}
+                                    >
+                                        <ChefHat size={40} color="white" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Info */}
+                            <div
+                                className={css({
+                                    flex: 1,
+                                    textAlign: { base: 'center', sm: 'left' },
+                                    minW: 0,
+                                })}
+                            >
+                                <Text size="sm" color="muted" className={css({ mb: '1' })}>
+                                    KüchenTakt Profil
+                                </Text>
+                                <Heading as="h1" size="xl" className={css({ mb: '1' })}>
+                                    {profile.nickname ?? 'Neuer KüchenFan'}
+                                </Heading>
+                                {profile.teaser && (
+                                    <Text
+                                        color="muted"
+                                        className={css({ mb: '2', maxW: '48ch', lineClamp: '2' })}
+                                    >
+                                        {profile.teaser}
+                                    </Text>
+                                )}
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '3',
+                                        fontSize: 'xs',
+                                        color: 'text-muted',
+                                        justifyContent: { base: 'center', sm: 'flex-start' },
+                                    })}
+                                >
+                                    <span>{session.user.email}</span>
+                                    <span>·</span>
+                                    <span>Mitglied seit {memberSince}</span>
+                                </div>
+
+                                {/* Stats Pills */}
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '2',
+                                        mt: '3',
+                                        justifyContent: { base: 'center', sm: 'flex-start' },
+                                    })}
+                                >
+                                    {[
+                                        { label: 'Rezepte', value: stats.recipeCount },
+                                        { label: 'Favoriten', value: stats.favoriteCount },
+                                        { label: 'Mal zubereitet', value: stats.cookedCount },
+                                        { label: 'Bewertungen', value: stats.ratingCount },
+                                        { label: 'Entwürfe', value: stats.draftCount },
+                                    ].map(({ label, value }) => (
+                                        <span
+                                            key={label}
+                                            className={css({
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '1',
+                                                bg: 'surface.elevated',
+                                                border: '1px solid',
+                                                borderColor: 'border',
+                                                borderRadius: 'full',
+                                                px: '3',
+                                                py: '1',
+                                                fontSize: 'xs',
+                                                fontWeight: '500',
+                                            })}
+                                        >
+                                            <span
+                                                className={css({
+                                                    fontWeight: '700',
+                                                    color: 'primary',
+                                                })}
+                                            >
+                                                {value}
+                                            </span>{' '}
+                                            {label}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    flexDir: { base: 'row', sm: 'column' },
+                                    flexWrap: 'wrap',
+                                    gap: '2',
+                                    alignItems: 'stretch',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                })}
+                            >
+                                <Link href="/profile/edit">
+                                    <Button variant="primary" size="sm">
+                                        <Edit3 size={15} />
+                                        Profil bearbeiten
                                     </Button>
                                 </Link>
-                            )}
+                                <Link href="/profile/settings">
+                                    <Button variant="secondary" size="sm">
+                                        <Settings size={15} />
+                                        Einstellungen
+                                    </Button>
+                                </Link>
+                                {profile.userId && (
+                                    <Link href={`/user/${profile.slug}`}>
+                                        <Button variant="ghost" size="sm">
+                                            <User size={15} />
+                                            Öffentlich
+                                        </Button>
+                                    </Link>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
                 </FadeInSection>
 
                 {/* ── 2-col layout ─────────────────────────────── */}
@@ -591,10 +594,7 @@ export default async function ProfilePage() {
                             items={favoriteItems}
                             href="/profile/favorites"
                         />
-                        <HistorySection
-                            title="Zuletzt angesehen"
-                            items={viewItems}
-                        />
+                        <HistorySection title="Zuletzt angesehen" items={viewItems} />
                     </div>
 
                     {/* ── Right: sidebar ── */}

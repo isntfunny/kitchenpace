@@ -7,7 +7,6 @@ import { useState, useTransition } from 'react';
 import { deleteUserCookImage, type UserCookImageData } from '@app/app/actions/cooks';
 import { css } from 'styled-system/css';
 
-
 const STATUS_LABELS: Record<string, { label: string; colorCss: string; bgCss: string }> = {
     AUTO_APPROVED: {
         label: 'Freigegeben',
@@ -37,11 +36,22 @@ function timeAgo(date: Date): string {
     if (days === 0) return 'Heute';
     if (days === 1) return 'Gestern';
     if (days < 7) return `Vor ${days} Tagen`;
-    if (days < 30) return `Vor ${Math.floor(days / 7)} Woche${Math.floor(days / 7) === 1 ? '' : 'n'}`;
-    return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
+    if (days < 30)
+        return `Vor ${Math.floor(days / 7)} Woche${Math.floor(days / 7) === 1 ? '' : 'n'}`;
+    return new Date(date).toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    });
 }
 
-function CookImageCard({ image, onDeleted }: { image: UserCookImageData; onDeleted: (id: string) => void }) {
+function CookImageCard({
+    image,
+    onDeleted,
+}: {
+    image: UserCookImageData;
+    onDeleted: (id: string) => void;
+}) {
     const [isPending, startTransition] = useTransition();
     const [confirmDelete, setConfirmDelete] = useState(false);
     const status = STATUS_LABELS[image.moderationStatus] ?? STATUS_LABELS.AUTO_APPROVED;
@@ -80,7 +90,7 @@ function CookImageCard({ image, onDeleted }: { image: UserCookImageData; onDelet
                     overflow: 'hidden',
                 })}
             >
-                { }
+                {}
                 <img
                     src={image.imageUrl}
                     alt={image.caption ?? image.recipe.title}
@@ -109,7 +119,15 @@ function CookImageCard({ image, onDeleted }: { image: UserCookImageData; onDelet
             </div>
 
             {/* Info */}
-            <div className={css({ p: '3', display: 'flex', flexDirection: 'column', gap: '2', flex: '1' })}>
+            <div
+                className={css({
+                    p: '3',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2',
+                    flex: '1',
+                })}
+            >
                 <Link
                     href={`/recipe/${image.recipe.slug}`}
                     className={css({
@@ -130,12 +148,27 @@ function CookImageCard({ image, onDeleted }: { image: UserCookImageData; onDelet
                 </Link>
 
                 {image.caption && (
-                    <p className={css({ fontSize: 'xs', color: 'foreground.muted', lineClamp: '2' })}>
+                    <p
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                            lineClamp: '2',
+                        })}
+                    >
                         {image.caption}
                     </p>
                 )}
 
-                <div className={css({ display: 'flex', alignItems: 'center', gap: '1', color: 'foreground.muted', fontSize: 'xs', mt: 'auto' })}>
+                <div
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1',
+                        color: 'foreground.muted',
+                        fontSize: 'xs',
+                        mt: 'auto',
+                    })}
+                >
                     <Clock size={11} />
                     <span>{timeAgo(image.createdAt)}</span>
                 </div>
@@ -158,15 +191,23 @@ function CookImageCard({ image, onDeleted }: { image: UserCookImageData; onDelet
                         border: '1px solid',
                         cursor: 'pointer',
                         transition: 'all 150ms ease',
-                        ...(confirmDelete ? {
-                            bg: { base: 'rgba(239,68,68,0.1)', _dark: 'rgba(239,68,68,0.15)' },
-                            borderColor: { base: 'rgba(239,68,68,0.4)', _dark: 'rgba(239,68,68,0.5)' },
-                            color: { base: '#dc2626', _dark: '#f87171' },
-                        } : {
-                            bg: 'transparent',
-                            borderColor: 'border',
-                            color: 'text.muted',
-                        }),
+                        ...(confirmDelete
+                            ? {
+                                  bg: {
+                                      base: 'rgba(239,68,68,0.1)',
+                                      _dark: 'rgba(239,68,68,0.15)',
+                                  },
+                                  borderColor: {
+                                      base: 'rgba(239,68,68,0.4)',
+                                      _dark: 'rgba(239,68,68,0.5)',
+                                  },
+                                  color: { base: '#dc2626', _dark: '#f87171' },
+                              }
+                            : {
+                                  bg: 'transparent',
+                                  borderColor: 'border',
+                                  color: 'text.muted',
+                              }),
                     })}
                 >
                     <Trash2 size={12} />
@@ -213,9 +254,7 @@ export function UserCookImagesClient({ images: initialImages }: { images: UserCo
                 })}
             >
                 <p className={css({ fontSize: 'lg', mb: '2' })}>Noch keine Bilder hochgeladen</p>
-                <p className={css({ fontSize: 'sm' })}>
-                    Lade beim nächsten Kochen ein Foto hoch!
-                </p>
+                <p className={css({ fontSize: 'sm' })}>Lade beim nächsten Kochen ein Foto hoch!</p>
             </div>
         );
     }

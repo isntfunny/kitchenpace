@@ -69,9 +69,7 @@ export async function fetchCategoryBySlug(slug: string): Promise<CategoryPageDat
     const ids = recipeIds.map((r) => r.recipeId);
 
     const [cookCount, ratingAgg] = await Promise.all([
-        ids.length > 0
-            ? prisma.userCookHistory.count({ where: { recipeId: { in: ids } } })
-            : 0,
+        ids.length > 0 ? prisma.userCookHistory.count({ where: { recipeId: { in: ids } } }) : 0,
         ids.length > 0
             ? prisma.recipe.aggregate({
                   where: { id: { in: ids }, ratingCount: { gt: 0 } },
@@ -98,10 +96,7 @@ export async function fetchCategoryBySlug(slug: string): Promise<CategoryPageDat
     };
 }
 
-export async function fetchCategoryNewest(
-    categoryId: string,
-    take = 8,
-): Promise<RecipeCardData[]> {
+export async function fetchCategoryNewest(categoryId: string, take = 8): Promise<RecipeCardData[]> {
     const recipes = await prisma.recipe.findMany({
         where: publishedInCategory(categoryId),
         include: { categories: { include: { category: true } } },
@@ -223,7 +218,11 @@ export async function fetchCategoryActivity(
     return logs
         .filter((l) => visibleUserIds.has(l.userId))
         .slice(0, limit)
-        .map((log) => mapLogToFeedItem(log, userMap, recipeMap, emptyTargetMap, { respectShowInActivity: true }))
+        .map((log) =>
+            mapLogToFeedItem(log, userMap, recipeMap, emptyTargetMap, {
+                respectShowInActivity: true,
+            }),
+        )
         .filter((item): item is ActivityFeedItem => item !== null);
 }
 

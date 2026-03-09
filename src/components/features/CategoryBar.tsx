@@ -79,7 +79,8 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                 _hover: {
                                     borderColor: 'var(--cat-color)',
                                     transform: 'translateY(-2px)',
-                                    boxShadow: '0 8px 24px color-mix(in srgb, var(--cat-color) 15%, transparent)',
+                                    boxShadow:
+                                        '0 8px 24px color-mix(in srgb, var(--cat-color) 15%, transparent)',
                                 },
                             })}
                             style={{ '--cat-color': color } as React.CSSProperties}

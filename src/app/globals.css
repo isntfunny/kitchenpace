@@ -63,7 +63,7 @@
     scrollbar-color: rgba(224, 123, 83, 0.35) transparent;
 }
 
-[data-theme="dark"] * {
+[data-theme='dark'] * {
     scrollbar-color: rgba(224, 123, 83, 0.5) transparent;
 }
 
@@ -78,7 +78,7 @@
     border-radius: 3px;
 }
 
-[data-theme="dark"] ::-webkit-scrollbar-track {
+[data-theme='dark'] ::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.04);
 }
 
@@ -91,11 +91,11 @@
     background: rgba(224, 123, 83, 0.55);
 }
 
-[data-theme="dark"] ::-webkit-scrollbar-thumb {
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
     background: rgba(224, 123, 83, 0.5);
 }
 
-[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
     background: rgba(224, 123, 83, 0.75);
 }
 

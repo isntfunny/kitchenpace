@@ -63,7 +63,14 @@ export function QuickLinksCard({ userSlug }: { userSlug: string }) {
                         </Link>
                     );
                 })}
-                <div className={css({ pt: '1', mt: '1', borderTop: '1px solid', borderColor: 'border' })}>
+                <div
+                    className={css({
+                        pt: '1',
+                        mt: '1',
+                        borderTop: '1px solid',
+                        borderColor: 'border',
+                    })}
+                >
                     <SignOutButton label="Abmelden" />
                 </div>
             </div>

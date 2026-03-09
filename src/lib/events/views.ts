@@ -24,10 +24,7 @@ export function serializeNotification(notification: Notification): NotificationV
     };
 }
 
-export async function serializeActivityLog(
-    activity: ActivityLog,
-    scope: ActivityFeedScope,
-) {
+export async function serializeActivityLog(activity: ActivityLog, scope: ActivityFeedScope) {
     const items = await hydrateActivityFeedItems([activity], scope);
     return items[0] ?? null;
 }

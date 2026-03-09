@@ -25,8 +25,6 @@ import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 
-
-
 import { CategorySelector } from '@app/components/recipe/RecipeForm/components/CategorySelector';
 import { ErrorBanner } from '@app/components/recipe/RecipeForm/components/ErrorBanner';
 import { GeneralInformationSection } from '@app/components/recipe/RecipeForm/components/GeneralInformationSection';
@@ -45,7 +43,6 @@ import {
     type FlowNodeInput,
     type FlowEdgeInput,
 } from './actions';
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -179,7 +176,10 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
         try {
             // ── PHASE 1: SCRAPING ──
             addStreamEvent({ type: 'progress', message: 'GET ' + url.trim() });
-            addStreamEvent({ type: 'progress', message: 'Warte auf Antwort des Scrapling-Dienstes...' });
+            addStreamEvent({
+                type: 'progress',
+                message: 'Warte auf Antwort des Scrapling-Dienstes...',
+            });
             setStatus((prev) => ({ ...prev, message: 'Seite wird geladen...', progress: 20 }));
 
             const scraped = await scrapeRecipe(url);
@@ -219,7 +219,11 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                 progress: 60,
                 liveData: { markdownLength: scraped.markdown.length },
             });
-            addStreamEvent({ type: 'progress', message: 'POST /api/ai/import-stream', detail: 'model=gpt-5.4  stream=true  response_format=json_schema' });
+            addStreamEvent({
+                type: 'progress',
+                message: 'POST /api/ai/import-stream',
+                detail: 'model=gpt-5.4  stream=true  response_format=json_schema',
+            });
 
             const streamResponse = await fetch('/api/ai/import-stream', {
                 method: 'POST',
@@ -258,7 +262,11 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                     }
 
                     if (event.type === 'start') {
-                        addStreamEvent({ type: 'progress', message: 'Stream geöffnet', detail: `model=${event.model as string}` });
+                        addStreamEvent({
+                            type: 'progress',
+                            message: 'Stream geöffnet',
+                            detail: `model=${event.model as string}`,
+                        });
                     } else if (event.type === 'delta') {
                         setStreamingBuffer((prev) => prev + (event.text as string));
                     } else if (event.type === 'usage') {
@@ -266,9 +274,17 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                         const cached = event.cachedInputTokens as number | null;
                         const out = event.outputTokens as number | null;
                         const cost = event.estimatedCostUsd as number | null;
-                        addStreamEvent({ type: 'data', message: 'tokens', detail: `in=${inp ?? '?'} cached=${cached ?? 0} out=${out ?? '?'}` });
+                        addStreamEvent({
+                            type: 'data',
+                            message: 'tokens',
+                            detail: `in=${inp ?? '?'} cached=${cached ?? 0} out=${out ?? '?'}`,
+                        });
                         if (cost != null) {
-                            addStreamEvent({ type: 'data', message: 'estimated_cost', detail: `$${cost.toFixed(6)}` });
+                            addStreamEvent({
+                                type: 'data',
+                                message: 'estimated_cost',
+                                detail: `$${cost.toFixed(6)}`,
+                            });
                         }
                     } else if (event.type === 'done') {
                         const raw = event.data as AnalyzedRecipe;
@@ -308,11 +324,31 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
             });
 
             addStreamEvent({ type: 'complete', message: 'OpenAI response received' });
-            addStreamEvent({ type: 'data', message: 'recipe.title', detail: `"${analyzed.title}"` });
-            addStreamEvent({ type: 'data', message: 'recipe.difficulty', detail: analyzed.difficulty ?? 'MEDIUM' });
-            addStreamEvent({ type: 'data', message: 'ingredients.length', detail: String(analyzed.ingredients.length) });
-            addStreamEvent({ type: 'data', message: 'flowNodes.length', detail: String(analyzed.flowNodes.length) });
-            addStreamEvent({ type: 'data', message: 'flowEdges.length', detail: String(analyzed.flowEdges.length) });
+            addStreamEvent({
+                type: 'data',
+                message: 'recipe.title',
+                detail: `"${analyzed.title}"`,
+            });
+            addStreamEvent({
+                type: 'data',
+                message: 'recipe.difficulty',
+                detail: analyzed.difficulty ?? 'MEDIUM',
+            });
+            addStreamEvent({
+                type: 'data',
+                message: 'ingredients.length',
+                detail: String(analyzed.ingredients.length),
+            });
+            addStreamEvent({
+                type: 'data',
+                message: 'flowNodes.length',
+                detail: String(analyzed.flowNodes.length),
+            });
+            addStreamEvent({
+                type: 'data',
+                message: 'flowEdges.length',
+                detail: String(analyzed.flowEdges.length),
+            });
             if (analyzed.tags?.length) {
                 addStreamEvent({ type: 'data', message: 'tags', detail: analyzed.tags.join(', ') });
             }
@@ -527,7 +563,13 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
 
         const pipelineSteps = [
             { id: 'fetch', label: 'URL laden', icon: Globe, done: true, active: false },
-            { id: 'scraping', label: 'Seite scrapen', icon: ArrowDownToLine, done: !isScraping, active: isScraping },
+            {
+                id: 'scraping',
+                label: 'Seite scrapen',
+                icon: ArrowDownToLine,
+                done: !isScraping,
+                active: isScraping,
+            },
             { id: 'analyzing', label: 'KI-Analyse', icon: Brain, done: false, active: !isScraping },
             { id: 'preview', label: 'Vorschau', icon: Check, done: false, active: false },
         ];
@@ -543,18 +585,29 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                     <div className={sidebarHeaderClass}>
                         <motion.div
                             animate={isScraping ? { rotate: 360 } : { scale: [1, 1.15, 1] }}
-                            transition={isScraping
-                                ? { repeat: Infinity, duration: 2, ease: 'linear' }
-                                : { repeat: Infinity, duration: 1.5 }}
+                            transition={
+                                isScraping
+                                    ? { repeat: Infinity, duration: 2, ease: 'linear' }
+                                    : { repeat: Infinity, duration: 1.5 }
+                            }
                             className={sidebarIconWrapperClass(isScraping)}
                         >
-                            {isScraping ? <Globe className={sidebarIconClass} /> : <Brain className={sidebarIconClass} />}
+                            {isScraping ? (
+                                <Globe className={sidebarIconClass} />
+                            ) : (
+                                <Brain className={sidebarIconClass} />
+                            )}
                         </motion.div>
                         <div>
                             <h2 className={sidebarTitleClass}>
                                 {isScraping ? 'Seite wird geladen' : 'KI analysiert Rezept'}
                             </h2>
-                            <motion.p key={status.message} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={sidebarSubtitleClass}>
+                            <motion.p
+                                key={status.message}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className={sidebarSubtitleClass}
+                            >
                                 {status.message}
                             </motion.p>
                         </div>
@@ -577,14 +630,23 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                                     {step.done ? (
                                         <CheckCircle2 size={16} />
                                     ) : step.active ? (
-                                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}>
+                                        <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={{
+                                                repeat: Infinity,
+                                                duration: 1.2,
+                                                ease: 'linear',
+                                            }}
+                                        >
                                             <LoaderCircle size={16} />
                                         </motion.div>
                                     ) : (
                                         <Circle size={16} />
                                     )}
                                 </div>
-                                <span className={pipelineStepLabelClass(step.done, step.active)}>{step.label}</span>
+                                <span className={pipelineStepLabelClass(step.done, step.active)}>
+                                    {step.label}
+                                </span>
                                 {idx < pipelineSteps.length - 1 && (
                                     <div className={pipelineConnectorClass(step.done)} />
                                 )}
@@ -598,7 +660,9 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                             {status.liveData.markdownLength != null && (
                                 <div className={sidebarStatRowClass}>
                                     <FileText size={12} />
-                                    <span>{status.liveData.markdownLength.toLocaleString()} chars</span>
+                                    <span>
+                                        {status.liveData.markdownLength.toLocaleString()} chars
+                                    </span>
                                 </div>
                             )}
                             {status.liveData.nodesFound != null && (
@@ -633,7 +697,8 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                     {/* Terminal body */}
                     <div className={terminalBodyClass} ref={terminalRef}>
                         <div className={terminalInitClass}>
-                            KitchenPace Import Engine v1.0 — {new Date().toISOString().split('T')[0]}
+                            KitchenPace Import Engine v1.0 —{' '}
+                            {new Date().toISOString().split('T')[0]}
                         </div>
                         {streamEvents.map((event, idx) => (
                             <motion.div
@@ -645,11 +710,21 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                             >
                                 <span className={terminalTimestampClass}>{event.timestamp}</span>
                                 <span className={terminalPromptClass(event.type)}>
-                                    {event.type === 'complete' ? '✓' : event.type === 'error' ? '✗' : event.type === 'data' ? '·' : '›'}
+                                    {event.type === 'complete'
+                                        ? '✓'
+                                        : event.type === 'error'
+                                          ? '✗'
+                                          : event.type === 'data'
+                                            ? '·'
+                                            : '›'}
                                 </span>
-                                <span className={terminalMessageClass(event.type)}>{event.message}</span>
+                                <span className={terminalMessageClass(event.type)}>
+                                    {event.message}
+                                </span>
                                 {event.detail && (
-                                    <span className={terminalDetailClass(event.type)}>{event.detail}</span>
+                                    <span className={terminalDetailClass(event.type)}>
+                                        {event.detail}
+                                    </span>
                                 )}
                             </motion.div>
                         ))}
@@ -658,27 +733,35 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                             <div className={terminalLineClass}>
                                 <span className={terminalTimestampClass}>live</span>
                                 <span className={terminalPromptClass('data')}>·</span>
-                                <span className={css({
-                                    fontFamily: 'monospace',
-                                    fontSize: '11px',
-                                    color: '#6b9e6b',
-                                    flex: '1',
-                                    overflow: 'hidden',
-                                    whiteSpace: 'nowrap',
-                                    display: 'block',
-                                })}>
-                                    {streamingBuffer.length > 160 ? '…' + streamingBuffer.slice(-160) : streamingBuffer}
+                                <span
+                                    className={css({
+                                        fontFamily: 'monospace',
+                                        fontSize: '11px',
+                                        color: '#6b9e6b',
+                                        flex: '1',
+                                        overflow: 'hidden',
+                                        whiteSpace: 'nowrap',
+                                        display: 'block',
+                                    })}
+                                >
+                                    {streamingBuffer.length > 160
+                                        ? '…' + streamingBuffer.slice(-160)
+                                        : streamingBuffer}
                                 </span>
                             </div>
                         )}
                         {/* Blinking cursor */}
                         <div className={terminalCursorLineClass}>
-                            <span className={terminalTimestampClass}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                            <span className={terminalTimestampClass}>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            </span>
                             <motion.span
                                 animate={{ opacity: [1, 0, 1] }}
                                 transition={{ repeat: Infinity, duration: 1 }}
                                 className={terminalCursorClass}
-                            >█</motion.span>
+                            >
+                                █
+                            </motion.span>
                         </div>
                     </div>
                 </div>
@@ -1046,7 +1129,10 @@ const iconWrapperClass = css({
     justifyContent: 'center',
     mx: 'auto',
     mb: '5',
-    boxShadow: { base: '0 8px 32px rgba(224,123,83,0.35)', _dark: '0 8px 32px rgba(224,123,83,0.2)' },
+    boxShadow: {
+        base: '0 8px 32px rgba(224,123,83,0.35)',
+        _dark: '0 8px 32px rgba(224,123,83,0.2)',
+    },
 });
 
 const iconClass = css({
@@ -1103,7 +1189,10 @@ const inputClass = css({
     color: 'text',
     _focus: {
         borderColor: 'palette.orange',
-        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.1)', _dark: '0 0 0 3px rgba(224,123,83,0.15)' },
+        boxShadow: {
+            base: '0 0 0 3px rgba(224,123,83,0.1)',
+            _dark: '0 0 0 3px rgba(224,123,83,0.15)',
+        },
     },
     _placeholder: {
         color: 'text.muted',
@@ -1218,7 +1307,9 @@ const sidebarIconWrapperClass = (isScraping: boolean) =>
         width: '40px',
         height: '40px',
         borderRadius: 'lg',
-        backgroundColor: isScraping ? { base: 'rgba(59,130,246,0.1)', _dark: 'rgba(59,130,246,0.15)' } : { base: 'rgba(168,85,247,0.1)', _dark: 'rgba(168,85,247,0.15)' },
+        backgroundColor: isScraping
+            ? { base: 'rgba(59,130,246,0.1)', _dark: 'rgba(59,130,246,0.15)' }
+            : { base: 'rgba(168,85,247,0.1)', _dark: 'rgba(168,85,247,0.15)' },
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -1283,8 +1374,16 @@ const pipelineStepIndicatorClass = (done: boolean, active: boolean) =>
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        color: done ? 'status.success' : active ? 'palette.orange' : { base: 'rgba(0,0,0,0.25)', _dark: 'rgba(255,255,255,0.3)' },
-        backgroundColor: done ? { base: 'rgba(34,197,94,0.08)', _dark: 'rgba(34,197,94,0.12)' } : active ? { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' } : 'transparent',
+        color: done
+            ? 'status.success'
+            : active
+              ? 'palette.orange'
+              : { base: 'rgba(0,0,0,0.25)', _dark: 'rgba(255,255,255,0.3)' },
+        backgroundColor: done
+            ? { base: 'rgba(34,197,94,0.08)', _dark: 'rgba(34,197,94,0.12)' }
+            : active
+              ? { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' }
+              : 'transparent',
         zIndex: 1,
     });
 
@@ -1304,7 +1403,9 @@ const pipelineConnectorClass = (done: boolean) =>
         top: '24px',
         width: '2px',
         height: '20px',
-        backgroundColor: done ? { base: 'rgba(34,197,94,0.3)', _dark: 'rgba(34,197,94,0.4)' } : { base: 'rgba(0,0,0,0.08)', _dark: 'rgba(255,255,255,0.1)' },
+        backgroundColor: done
+            ? { base: 'rgba(34,197,94,0.3)', _dark: 'rgba(34,197,94,0.4)' }
+            : { base: 'rgba(0,0,0,0.08)', _dark: 'rgba(255,255,255,0.1)' },
         zIndex: 0,
     });
 
@@ -1408,10 +1509,13 @@ const terminalPromptClass = (type: string) =>
         fontSize: 'xs',
         flexShrink: 0,
         color:
-            type === 'complete' ? '#28c840' :
-            type === 'error'    ? '#ff5f57' :
-            type === 'data'     ? '#6699cc' :
-                                  'rgba(255,255,255,0.35)',
+            type === 'complete'
+                ? '#28c840'
+                : type === 'error'
+                  ? '#ff5f57'
+                  : type === 'data'
+                    ? '#6699cc'
+                    : 'rgba(255,255,255,0.35)',
         fontFamily: 'inherit',
     });
 
@@ -1419,10 +1523,13 @@ const terminalMessageClass = (type: string) =>
     css({
         fontSize: 'xs',
         color:
-            type === 'complete' ? 'rgba(40,200,64,0.85)' :
-            type === 'error'    ? '#ff5f57' :
-            type === 'data'     ? 'rgba(255,255,255,0.5)' :
-                                  'rgba(255,255,255,0.75)',
+            type === 'complete'
+                ? 'rgba(40,200,64,0.85)'
+                : type === 'error'
+                  ? '#ff5f57'
+                  : type === 'data'
+                    ? 'rgba(255,255,255,0.5)'
+                    : 'rgba(255,255,255,0.75)',
         fontFamily: 'inherit',
         flexShrink: 0,
     });
@@ -1431,10 +1538,13 @@ const terminalDetailClass = (type: string) =>
     css({
         fontSize: 'xs',
         color:
-            type === 'complete' ? 'rgba(40,200,64,0.6)' :
-            type === 'error'    ? 'rgba(255,95,87,0.7)' :
-            type === 'data'     ? 'palette.gold' :
-                                  'rgba(255,255,255,0.4)',
+            type === 'complete'
+                ? 'rgba(40,200,64,0.6)'
+                : type === 'error'
+                  ? 'rgba(255,95,87,0.7)'
+                  : type === 'data'
+                    ? 'palette.gold'
+                    : 'rgba(255,255,255,0.4)',
         fontFamily: 'inherit',
         wordBreak: 'break-all',
     });

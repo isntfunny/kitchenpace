@@ -254,13 +254,19 @@ const nodeCardClass = css({
     fontFamily: 'body',
     overflow: 'visible',
     _hover: {
-        boxShadow: { base: '0 4px 16px rgba(224,123,83,0.2)', _dark: '0 4px 16px rgba(224,123,83,0.3)' },
+        boxShadow: {
+            base: '0 4px 16px rgba(224,123,83,0.2)',
+            _dark: '0 4px 16px rgba(224,123,83,0.3)',
+        },
     },
 });
 
 const nodeSelectedClass = css({
     borderColor: 'brand.primary',
-    boxShadow: { base: '0 4px 16px rgba(224,123,83,0.2)', _dark: '0 4px 16px rgba(224,123,83,0.3)' },
+    boxShadow: {
+        base: '0 4px 16px rgba(224,123,83,0.2)',
+        _dark: '0 4px 16px rgba(224,123,83,0.3)',
+    },
 });
 
 const typeBadgeClass = css({

@@ -278,7 +278,10 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                                                         : nicknameStatus === 'available'
                                                           ? 'green.400'
                                                           : 'primary',
-                                                boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
+                                                boxShadow: {
+                                                    base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                                    _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                                },
                                             },
                                         })}
                                         required
@@ -362,7 +365,10 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                                         transition: 'all 150ms ease',
                                         _focus: {
                                             borderColor: 'primary',
-                                            boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
+                                            boxShadow: {
+                                                base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                                _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                            },
                                         },
                                     })}
                                 />
@@ -420,8 +426,7 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                                 E-Mail-Adresse ändern
                             </Heading>
                             <Text color="muted" size="sm">
-                                Aktuelle Adresse:{' '}
-                                <strong>{email || '–'}</strong>
+                                Aktuelle Adresse: <strong>{email || '–'}</strong>
                             </Text>
                         </div>
 
@@ -460,7 +465,9 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                             <label
                                 className={css({ display: 'flex', flexDir: 'column', gap: '2' })}
                             >
-                                <span className={css({ fontWeight: '600' })}>Neue E-Mail-Adresse</span>
+                                <span className={css({ fontWeight: '600' })}>
+                                    Neue E-Mail-Adresse
+                                </span>
                                 <input
                                     type="email"
                                     value={newEmail}
@@ -478,7 +485,10 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                                         transition: 'all 150ms ease',
                                         _focus: {
                                             borderColor: 'primary',
-                                            boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
+                                            boxShadow: {
+                                                base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                                _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                            },
                                         },
                                     })}
                                 />

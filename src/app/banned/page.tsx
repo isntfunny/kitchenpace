@@ -25,9 +25,7 @@ export default async function BannedPage() {
 
         if (user?.role !== 'BANNED') {
             // Not actually banned — redirect home
-            return (
-                <meta httpEquiv="refresh" content="0;url=/" />
-            );
+            return <meta httpEquiv="refresh" content="0;url=/" />;
         }
 
         banReason = user.banReason;
@@ -41,7 +39,10 @@ export default async function BannedPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: { base: 'linear-gradient(180deg, #fff8f4 0%, #fef0e8 40%, #fceadd 100%)', _dark: 'linear-gradient(180deg, #1a1715 0%, #231e1a 40%, #1c1815 100%)' },
+                background: {
+                    base: 'linear-gradient(180deg, #fff8f4 0%, #fef0e8 40%, #fceadd 100%)',
+                    _dark: 'linear-gradient(180deg, #1a1715 0%, #231e1a 40%, #1c1815 100%)',
+                },
                 px: '4',
             })}
         >

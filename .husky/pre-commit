@@ -1,4 +1,4 @@
-npm run lint:fix
+npx lint-staged
 
 # Only reformat if MJML files are staged
 if git diff --cached --name-only | grep -q '\.mjml$'; then

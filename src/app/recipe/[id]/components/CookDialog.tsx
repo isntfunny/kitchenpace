@@ -35,7 +35,9 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
         } else {
             document.body.style.overflow = '';
         }
-        return () => { document.body.style.overflow = ''; };
+        return () => {
+            document.body.style.overflow = '';
+        };
     }, [isOpen]);
 
     const handleSubmit = () => {
@@ -88,7 +90,10 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
                             maxWidth: '480px',
                             bg: 'surface.elevated',
                             borderRadius: '2xl',
-                            boxShadow: { base: '0 24px 64px rgba(0,0,0,0.22)', _dark: '0 24px 64px rgba(0,0,0,0.5)' },
+                            boxShadow: {
+                                base: '0 24px 64px rgba(0,0,0,0.22)',
+                                _dark: '0 24px 64px rgba(0,0,0,0.5)',
+                            },
                             overflow: 'hidden',
                         })}
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -161,7 +166,13 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
                                     justifyContent: 'space-between',
                                 })}
                             >
-                                <span className={css({ fontSize: 'sm', fontWeight: '600', color: 'foreground' })}>
+                                <span
+                                    className={css({
+                                        fontSize: 'sm',
+                                        fontWeight: '600',
+                                        color: 'foreground',
+                                    })}
+                                >
                                     Foto
                                 </span>
                                 <span
@@ -197,7 +208,9 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
                                         bg: 'rgba(224,123,83,0.06)',
                                     },
                                 })}
-                                onClick={() => document.getElementById('cook-image-input-modal')?.click()}
+                                onClick={() =>
+                                    document.getElementById('cook-image-input-modal')?.click()
+                                }
                             >
                                 <input
                                     id="cook-image-input-modal"
@@ -218,7 +231,13 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
                                         >
                                             <CheckCircle size={32} />
                                         </div>
-                                        <p className={css({ fontSize: 'sm', fontWeight: '500', m: 0 })}>
+                                        <p
+                                            className={css({
+                                                fontSize: 'sm',
+                                                fontWeight: '500',
+                                                m: 0,
+                                            })}
+                                        >
                                             {uploadedImage.name}
                                         </p>
                                         <p
@@ -244,7 +263,13 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
                                         >
                                             <Camera size={40} />
                                         </div>
-                                        <p className={css({ fontSize: 'sm', fontWeight: '500', m: 0 })}>
+                                        <p
+                                            className={css({
+                                                fontSize: 'sm',
+                                                fontWeight: '500',
+                                                m: 0,
+                                            })}
+                                        >
                                             Foto hinzufügen
                                         </p>
                                         <p

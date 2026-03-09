@@ -44,7 +44,12 @@ export function TimeAndDifficultySection({
                     activeIndex={prepIdx}
                     onSelect={(i) => onPrepTimeChange(prepIdx === i ? 0 : TIME_PRESETS[i])}
                     trackingName="prep_time"
-                    customInput={{ value: prepTime, onChange: onPrepTimeChange, placeholder: 'z.B. 120', suffix: 'Min' }}
+                    customInput={{
+                        value: prepTime,
+                        onChange: onPrepTimeChange,
+                        placeholder: 'z.B. 120',
+                        suffix: 'Min',
+                    }}
                 />
             </div>
             <div>
@@ -54,7 +59,12 @@ export function TimeAndDifficultySection({
                     activeIndex={cookIdx}
                     onSelect={(i) => onCookTimeChange(cookIdx === i ? 0 : TIME_PRESETS[i])}
                     trackingName="cook_time"
-                    customInput={{ value: cookTime, onChange: onCookTimeChange, placeholder: 'z.B. 120', suffix: 'Min' }}
+                    customInput={{
+                        value: cookTime,
+                        onChange: onCookTimeChange,
+                        placeholder: 'z.B. 120',
+                        suffix: 'Min',
+                    }}
                 />
             </div>
             <div>

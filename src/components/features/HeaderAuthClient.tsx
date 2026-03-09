@@ -79,9 +79,15 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                             background: 'surface.elevated',
                             borderRadius: 'xl',
                             border: '1px solid',
-                            borderColor: { base: 'rgba(224,123,83,0.2)', _dark: 'rgba(224,123,83,0.25)' },
+                            borderColor: {
+                                base: 'rgba(224,123,83,0.2)',
+                                _dark: 'rgba(224,123,83,0.25)',
+                            },
                             padding: '2',
-                            boxShadow: { base: '0 20px 50px rgba(0,0,0,0.15)', _dark: '0 20px 50px rgba(0,0,0,0.5)' },
+                            boxShadow: {
+                                base: '0 20px 50px rgba(0,0,0,0.15)',
+                                _dark: '0 20px 50px rgba(0,0,0,0.5)',
+                            },
                             zIndex: 100,
                             transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
                             '&[data-state="open"]': {
@@ -148,7 +154,10 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                         <DropdownMenu.Separator
                             className={css({
                                 height: '1px',
-                                background: { base: 'rgba(224,123,83,0.2)', _dark: 'rgba(224,123,83,0.25)' },
+                                background: {
+                                    base: 'rgba(224,123,83,0.2)',
+                                    _dark: 'rgba(224,123,83,0.25)',
+                                },
                                 margin: '2',
                             })}
                         />
@@ -207,7 +216,10 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                 transition: 'all 150ms ease',
                 _hover: {
                     transform: 'translateY(-1px)',
-                    boxShadow: { base: '0 4px 12px rgba(224,123,83,0.3)', _dark: '0 4px 12px rgba(224,123,83,0.35)' },
+                    boxShadow: {
+                        base: '0 4px 12px rgba(224,123,83,0.3)',
+                        _dark: '0 4px 12px rgba(224,123,83,0.35)',
+                    },
                 },
             })}
         >

@@ -404,7 +404,10 @@ export async function streamRecipeFromMarkdown(
         if (!fullContent) {
             return {
                 success: false,
-                error: { type: 'EMPTY_RESPONSE', message: 'OpenAI hat keine Antwort zurückgegeben' },
+                error: {
+                    type: 'EMPTY_RESPONSE',
+                    message: 'OpenAI hat keine Antwort zurückgegeben',
+                },
             };
         }
 
@@ -466,7 +469,12 @@ export async function streamRecipeFromMarkdown(
 
         return { success: true, data: validationResult.data, metadata };
     } catch (error) {
-        const apiError = error as { status?: number; code?: string; type?: string; message?: string };
+        const apiError = error as {
+            status?: number;
+            code?: string;
+            type?: string;
+            message?: string;
+        };
         if (apiError.status || apiError.code) {
             return {
                 success: false,
@@ -507,7 +515,6 @@ interface FlowValidationResult {
 function validateFlowGraph(recipe: ImportedRecipe): FlowValidationResult {
     const issues: string[] = [];
     const { flowNodes, flowEdges } = recipe;
-
 
     // 1. Prüfe auf Start- und Servieren-Knoten (beide Pflicht)
     const startNodes = flowNodes.filter((n) => n.type === 'start');
@@ -563,9 +570,7 @@ function validateFlowGraph(recipe: ImportedRecipe): FlowValidationResult {
 
         // Alle Knoten außer "start" müssen mindestens einen incoming Edge haben
         if (node.type !== 'start' && incoming.length === 0) {
-            issues.push(
-                `Knoten "${node.label}" (${node.id}) hat keinen incoming Edge`,
-            );
+            issues.push(`Knoten "${node.label}" (${node.id}) hat keinen incoming Edge`);
         }
 
         // Alle Knoten außer "servieren" müssen mindestens einen outgoing Edge haben

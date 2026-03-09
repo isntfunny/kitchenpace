@@ -13,22 +13,22 @@ The app takes the stress out of multi-tasking in the kitchen by showing:
 
 ## Technology Stack
 
-| Category | Tech Stack |
-| --- | --- |
-| **Framework** | Next.js 16 (App Router) |
-| **UI Library** | Radix UI + Panda CSS + Framer Motion |
-| **Database** | Prisma 7 + PostgreSQL |
-| **Flow Editor** | React Flow (@xyflow/react v12) + Dagre auto-layout |
-| **Styling** | Panda CSS (semantic dark-mode tokens) |
-| **Language** | TypeScript |
-| **User Auth** | Logto |
-| **Search** | OpenSearch (recipes + ingredients indices) |
-| **Queue / Jobs** | BullMQ + Redis (ioredis) |
-| **AI** | OpenAI (gpt-5.4 for recipe import, omni-moderation-latest for content moderation) |
-| **Realtime** | SSE via Redis pub/sub |
-| **Storage** | S3 / MinIO |
-| **Scraper** | Python FastAPI + Scrapling/Camoufox |
-| **Monitoring** | Seq (winston-seq-updated), Sentry |
+| Category         | Tech Stack                                                                        |
+| ---------------- | --------------------------------------------------------------------------------- |
+| **Framework**    | Next.js 16 (App Router)                                                           |
+| **UI Library**   | Radix UI + Panda CSS + Framer Motion                                              |
+| **Database**     | Prisma 7 + PostgreSQL                                                             |
+| **Flow Editor**  | React Flow (@xyflow/react v12) + Dagre auto-layout                                |
+| **Styling**      | Panda CSS (semantic dark-mode tokens)                                             |
+| **Language**     | TypeScript                                                                        |
+| **User Auth**    | Logto                                                                             |
+| **Search**       | OpenSearch (recipes + ingredients indices)                                        |
+| **Queue / Jobs** | BullMQ + Redis (ioredis)                                                          |
+| **AI**           | OpenAI (gpt-5.4 for recipe import, omni-moderation-latest for content moderation) |
+| **Realtime**     | SSE via Redis pub/sub                                                             |
+| **Storage**      | S3 / MinIO                                                                        |
+| **Scraper**      | Python FastAPI + Scrapling/Camoufox                                               |
+| **Monitoring**   | Seq (winston-seq-updated), Sentry                                                 |
 
 ---
 
@@ -120,25 +120,25 @@ The worker is a standalone Node.js process (`worker/entrypoint.ts`) separate fro
 
 ### Queues
 
-| Queue | Purpose | Concurrency | Rate Limit |
-| --- | --- | --- | --- |
-| `opensearch` | Search index sync | 5 | 10/1000ms |
-| `scheduled` | Recurring maintenance | 5 | 10/1000ms |
-| `backup` | Database backups | 1 | 1/60s |
+| Queue        | Purpose               | Concurrency | Rate Limit |
+| ------------ | --------------------- | ----------- | ---------- |
+| `opensearch` | Search index sync     | 5           | 10/1000ms  |
+| `scheduled`  | Recurring maintenance | 5           | 10/1000ms  |
+| `backup`     | Database backups      | 1           | 1/60s      |
 
 ### Jobs
 
-| Job | Queue | Schedule | What it does |
-| --- | --- | --- | --- |
-| `sync-opensearch` | opensearch | Every 15 min | Incremental recipe sync (watermark-based) |
-| `sync-ingredients` | opensearch | Every 1h | Incremental ingredient sync |
-| `sync-recipe` | opensearch | On-demand | Single recipe upsert/delete after publish/update |
-| `trending-recipes` | scheduled | Daily 06:00 | Weighted trending score: cooks (8pt), ratings (6pt), favorites (4pt), views (2pt) |
-| `sync-contacts-notifuse` | scheduled | Every 6h | Sync user contacts to email service |
-| `backup-database-hourly` | scheduled | Every 1h | Enqueues hourly backup job |
-| `backup-database-daily` | scheduled | Daily 02:00 | Enqueues daily backup job |
-| `purge-thumbnail-cache` | scheduled | Every 1h | Clean S3 cache objects older than 3 days |
-| `database-backup` | backup | On-demand | `pg_dump` → S3 upload → retention cleanup |
+| Job                      | Queue      | Schedule     | What it does                                                                      |
+| ------------------------ | ---------- | ------------ | --------------------------------------------------------------------------------- |
+| `sync-opensearch`        | opensearch | Every 15 min | Incremental recipe sync (watermark-based)                                         |
+| `sync-ingredients`       | opensearch | Every 1h     | Incremental ingredient sync                                                       |
+| `sync-recipe`            | opensearch | On-demand    | Single recipe upsert/delete after publish/update                                  |
+| `trending-recipes`       | scheduled  | Daily 06:00  | Weighted trending score: cooks (8pt), ratings (6pt), favorites (4pt), views (2pt) |
+| `sync-contacts-notifuse` | scheduled  | Every 6h     | Sync user contacts to email service                                               |
+| `backup-database-hourly` | scheduled  | Every 1h     | Enqueues hourly backup job                                                        |
+| `backup-database-daily`  | scheduled  | Daily 02:00  | Enqueues daily backup job                                                         |
+| `purge-thumbnail-cache`  | scheduled  | Every 1h     | Clean S3 cache objects older than 3 days                                          |
+| `database-backup`        | backup     | On-demand    | `pg_dump` → S3 upload → retention cleanup                                         |
 
 ### Backup Processor
 
@@ -168,20 +168,20 @@ Every job execution creates a `JobRun` DB record with status (PENDING → PROCES
 
 ### Key Files
 
-| What | Path |
-| --- | --- |
-| Worker entrypoint | `worker/entrypoint.ts` |
-| Queue definitions | `worker/queues/queue.ts` |
-| Job types | `worker/queues/types.ts` |
-| Scheduler (cron) | `worker/queues/scheduler.ts` |
-| Worker bootstrap | `worker/queues/worker.ts` |
+| What                 | Path                                    |
+| -------------------- | --------------------------------------- |
+| Worker entrypoint    | `worker/entrypoint.ts`                  |
+| Queue definitions    | `worker/queues/queue.ts`                |
+| Job types            | `worker/queues/types.ts`                |
+| Scheduler (cron)     | `worker/queues/scheduler.ts`            |
+| Worker bootstrap     | `worker/queues/worker.ts`               |
 | OpenSearch processor | `worker/queues/opensearch-processor.ts` |
-| Scheduled processor | `worker/queues/scheduled-processor.ts` |
-| Backup processor | `worker/queues/backup-processor.ts` |
-| Job run tracking | `worker/queues/job-run.ts` |
-| Queue insights | `worker/queues/insights.ts` |
-| Redis connection | `worker/queues/connection.ts` |
-| Public enqueue API | `worker/queues/index.ts` |
+| Scheduled processor  | `worker/queues/scheduled-processor.ts`  |
+| Backup processor     | `worker/queues/backup-processor.ts`     |
+| Job run tracking     | `worker/queues/job-run.ts`              |
+| Queue insights       | `worker/queues/insights.ts`             |
+| Redis connection     | `worker/queues/connection.ts`           |
+| Public enqueue API   | `worker/queues/index.ts`                |
 
 ---
 
@@ -194,6 +194,7 @@ Converts unstructured recipe text or scraped URLs into structured flow diagrams.
 **Pipeline:** URL → Python scraper → Markdown → OpenAI (structured JSON) → Flow nodes/edges
 
 **Configuration:**
+
 - Model: `gpt-5.4` (temperature 0.1, strict JSON mode)
 - Pricing: Input $2.50/1M, cached $0.25/1M, output $15.00/1M tokens
 - System prompt: ~130 lines in German covering ingredient parsing, flow node generation, edge validation
@@ -202,12 +203,14 @@ Converts unstructured recipe text or scraped URLs into structured flow diagrams.
 `start | schneiden | kochen | braten | backen | mixen | warten | wuerzen | anrichten | servieren`
 
 **AI Conversion Dialog (FlowEditor):**
+
 1. **Input** — user pastes recipe text
 2. **Processing** — animated step log
 3. **Review** — toggles for which fields to apply (title, description, category, tags, ingredients, flow)
 4. **Apply** — creates nodes, runs `autoLayoutAndFit()` via Dagre
 
 **Import from URL:**
+
 1. `scrapeRecipe()` calls Python scraper at `SCRAPLER_URL` (timeout 120s)
 2. `analyzeWithAI()` sends markdown + DB context (existing tags, top 100 ingredients)
 3. `transformImportedRecipe()` maps AI IDs to real IDs, resolves `@mentions`
@@ -221,28 +224,28 @@ Free, multi-modal moderation API for text and images. See Content Moderation sec
 
 ### Key Files
 
-| What | Path |
-| --- | --- |
-| OpenAI client (singleton) | `src/lib/importer/openai-client.ts` |
-| Recipe JSON schema (Zod + strict) | `src/lib/importer/openai-recipe-schema.ts` |
-| Import server actions | `src/app/recipe/create/import/actions.ts` |
-| Import UI | `src/app/recipe/create/import/ImportRecipeClient.tsx` |
-| Analyze-recipe API | `src/app/api/ai/analyze-recipe/route.ts` |
-| Streaming import API | `src/app/api/ai/import-stream/route.ts` |
-| AI conversion dialog | `src/components/flow/editor/AiConversionDialog.tsx` |
-| Client-side AI wrapper | `src/lib/importer/ai-text-analysis.ts` |
-| Ingredient mention resolver | `src/lib/importer/resolve-mentions.ts` |
-| Types | `src/lib/importer/types.ts` |
+| What                              | Path                                                  |
+| --------------------------------- | ----------------------------------------------------- |
+| OpenAI client (singleton)         | `src/lib/importer/openai-client.ts`                   |
+| Recipe JSON schema (Zod + strict) | `src/lib/importer/openai-recipe-schema.ts`            |
+| Import server actions             | `src/app/recipe/create/import/actions.ts`             |
+| Import UI                         | `src/app/recipe/create/import/ImportRecipeClient.tsx` |
+| Analyze-recipe API                | `src/app/api/ai/analyze-recipe/route.ts`              |
+| Streaming import API              | `src/app/api/ai/import-stream/route.ts`               |
+| AI conversion dialog              | `src/components/flow/editor/AiConversionDialog.tsx`   |
+| Client-side AI wrapper            | `src/lib/importer/ai-text-analysis.ts`                |
+| Ingredient mention resolver       | `src/lib/importer/resolve-mentions.ts`                |
+| Types                             | `src/lib/importer/types.ts`                           |
 
 ### Python Scraper Service
 
-| What | Detail |
-| --- | --- |
-| Stack | Python FastAPI + Scrapling + Camoufox |
-| Port | 34215 (mapped from container 8000) |
-| Env var | `SCRAPLER_URL=http://localhost:34215` |
-| Location | `services/scraper/` |
-| CI/CD | `.github/workflows/scraper-image.yml` |
+| What     | Detail                                |
+| -------- | ------------------------------------- |
+| Stack    | Python FastAPI + Scrapling + Camoufox |
+| Port     | 34215 (mapped from container 8000)    |
+| Env var  | `SCRAPLER_URL=http://localhost:34215` |
+| Location | `services/scraper/`                   |
+| CI/CD    | `.github/workflows/scraper-image.yml` |
 
 ---
 
@@ -258,11 +261,11 @@ Complete moderation system: AI-powered auto-moderation, human review queue, user
 - Returns category scores (0.0–1.0) per category
 - Decision thresholds (env-configurable):
 
-| Score | Decision | Action |
-| --- | --- | --- |
-| < 0.40 | AUTO_APPROVED | Saved normally |
-| 0.40–0.84 | PENDING | Forced to DRAFT, queued for moderator review |
-| >= 0.85 | REJECTED | Blocked (images deleted from S3) |
+| Score     | Decision      | Action                                       |
+| --------- | ------------- | -------------------------------------------- |
+| < 0.40    | AUTO_APPROVED | Saved normally                               |
+| 0.40–0.84 | PENDING       | Forced to DRAFT, queued for moderator review |
+| >= 0.85   | REJECTED      | Blocked (images deleted from S3)             |
 
 - On API error: defaults to AUTO_APPROVED (doesn't block users)
 
@@ -286,6 +289,7 @@ Complete moderation system: AI-powered auto-moderation, human review queue, user
 ### Moderation Queue UI (`/moderation`)
 
 Three tabs:
+
 - **Queue** — PENDING items with AI score badges, approve/reject actions, detail dialogs with category score breakdown + content snapshot + raw AI response
 - **Reports** — User-submitted reports with reason badges, resolve action
 - **History** — Audit trail of all manual + auto decisions
@@ -314,24 +318,24 @@ Three tabs:
 
 ### Key Files
 
-| What | Path |
-| --- | --- |
-| Moderation service | `src/lib/moderation/moderationService.ts` |
-| Types | `src/lib/moderation/types.ts` |
-| Thresholds | `src/lib/moderation/thresholds.ts` |
-| Recipe text moderation | `src/components/recipe/createActions.ts` |
-| Image upload moderation | `src/app/api/upload/route.ts` |
-| Mod queue page | `src/app/moderation/page.tsx` |
-| Mod queue actions | `src/app/moderation/actions.ts` |
-| Queue table | `src/app/moderation/moderation-queue-table.tsx` |
-| Reports table | `src/app/moderation/reports-table.tsx` |
-| History table | `src/app/moderation/moderation-history-table.tsx` |
-| Report button/modal | `src/components/features/ReportButton.tsx`, `ReportModal.tsx` |
-| Report server action | `src/app/actions/reports.ts` |
-| Ban/unban actions | `src/app/admin/accounts/actions.ts` |
-| Banned page | `src/app/banned/page.tsx` |
-| Turnstile widget | `src/components/features/TurnstileWidget.tsx` |
-| Moderator guard | `src/lib/admin/ensure-moderator.ts` |
+| What                    | Path                                                          |
+| ----------------------- | ------------------------------------------------------------- |
+| Moderation service      | `src/lib/moderation/moderationService.ts`                     |
+| Types                   | `src/lib/moderation/types.ts`                                 |
+| Thresholds              | `src/lib/moderation/thresholds.ts`                            |
+| Recipe text moderation  | `src/components/recipe/createActions.ts`                      |
+| Image upload moderation | `src/app/api/upload/route.ts`                                 |
+| Mod queue page          | `src/app/moderation/page.tsx`                                 |
+| Mod queue actions       | `src/app/moderation/actions.ts`                               |
+| Queue table             | `src/app/moderation/moderation-queue-table.tsx`               |
+| Reports table           | `src/app/moderation/reports-table.tsx`                        |
+| History table           | `src/app/moderation/moderation-history-table.tsx`             |
+| Report button/modal     | `src/components/features/ReportButton.tsx`, `ReportModal.tsx` |
+| Report server action    | `src/app/actions/reports.ts`                                  |
+| Ban/unban actions       | `src/app/admin/accounts/actions.ts`                           |
+| Banned page             | `src/app/banned/page.tsx`                                     |
+| Turnstile widget        | `src/components/features/TurnstileWidget.tsx`                 |
+| Moderator guard         | `src/lib/admin/ensure-moderator.ts`                           |
 
 ---
 
@@ -343,21 +347,21 @@ Redis pub/sub powers server-sent events for live updates. `clientStream.ts` pool
 
 ### Channels
 
-| Channel | SSE Endpoint | Used for |
-| --- | --- | --- |
-| `notifications:user:{id}` | `/api/notifications/stream` | User notifications (replaces SWR polling) |
-| `admin-notifications` | `/api/admin/notifications/stream` | Mod queue + report alerts |
-| `activity:global` | `/api/activity/stream` | Global activity feed |
-| `activity:user:{id}` | `/api/activity/stream` | User-specific activity feed |
+| Channel                   | SSE Endpoint                      | Used for                                  |
+| ------------------------- | --------------------------------- | ----------------------------------------- |
+| `notifications:user:{id}` | `/api/notifications/stream`       | User notifications (replaces SWR polling) |
+| `admin-notifications`     | `/api/admin/notifications/stream` | Mod queue + report alerts                 |
+| `activity:global`         | `/api/activity/stream`            | Global activity feed                      |
+| `activity:user:{id}`      | `/api/activity/stream`            | User-specific activity feed               |
 
 ### Key Files
 
-| What | Path |
-| --- | --- |
-| Broker (publish/subscribe) | `src/lib/realtime/broker.ts` |
-| Client stream manager | `src/lib/realtime/clientStream.ts` |
-| Redis connection | `src/lib/realtime/redis.ts` |
-| Cursor tracking | `src/lib/realtime/cursor.ts` |
+| What                       | Path                               |
+| -------------------------- | ---------------------------------- |
+| Broker (publish/subscribe) | `src/lib/realtime/broker.ts`       |
+| Client stream manager      | `src/lib/realtime/clientStream.ts` |
+| Redis connection           | `src/lib/realtime/redis.ts`        |
+| Cursor tracking            | `src/lib/realtime/cursor.ts`       |
 
 ---
 
@@ -372,11 +376,11 @@ Redis pub/sub powers server-sent events for live updates. `clientStream.ts` pool
 
 ### Key Files
 
-| What | Path |
-| --- | --- |
-| Cast hook | `src/hooks/useCast.ts` |
-| Cast button | `src/components/cast/CastButton.tsx` |
-| Receiver page | `src/app/cast/receiver/page.tsx` |
+| What               | Path                                  |
+| ------------------ | ------------------------------------- |
+| Cast hook          | `src/hooks/useCast.ts`                |
+| Cast button        | `src/components/cast/CastButton.tsx`  |
+| Receiver page      | `src/app/cast/receiver/page.tsx`      |
 | Mobile recipe view | `src/app/recipe/[id]/mobile/page.tsx` |
 
 ---
@@ -404,10 +408,10 @@ Redis pub/sub powers server-sent events for live updates. `clientStream.ts` pool
 
 ### Indices
 
-| Index | Key Mappings |
-| --- | --- |
-| `recipes` | title (text+keyword), description, category, tags, ingredients, difficulty, totalTime, rating, cookCount, publishedAt |
-| `ingredients` | name (text+keyword), slug, category, units |
+| Index         | Key Mappings                                                                                                          |
+| ------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `recipes`     | title (text+keyword), description, category, tags, ingredients, difficulty, totalTime, rating, cookCount, publishedAt |
+| `ingredients` | name (text+keyword), slug, category, units                                                                            |
 
 ### Search Features (via `/api/recipes/filter`)
 
@@ -439,21 +443,21 @@ Redis pub/sub powers server-sent events for live updates. `clientStream.ts` pool
 
 ### Key Files
 
-| What | Path |
-| --- | --- |
-| Flow editor (main) | `src/components/flow/FlowEditor.tsx` |
-| Editor types | `src/components/flow/editor/editorTypes.ts` |
-| RecipeNode | `src/components/flow/editor/RecipeNode.tsx` |
-| NodeEditPanel | `src/components/flow/editor/NodeEditPanel.tsx` |
-| NodePalette | `src/components/flow/editor/NodePalette.tsx` |
-| DescriptionEditor (@mentions) | `src/components/flow/editor/DescriptionEditor.tsx` |
-| FlowEditorContext | `src/components/flow/editor/FlowEditorContext.ts` |
-| Dagre auto-layout hook | `src/components/flow/editor/useFlowAutoLayout.ts` |
-| AI conversion dialog | `src/components/flow/editor/AiConversionDialog.tsx` |
-| Recipe form | `src/components/recipe/RecipeForm.tsx` |
-| Create/Update actions | `src/components/recipe/createActions.ts` |
-| RecipeStepsViewer | `src/components/flow/RecipeStepsViewer.tsx` |
-| Viewer components | `src/components/flow/viewer/` |
+| What                          | Path                                                |
+| ----------------------------- | --------------------------------------------------- |
+| Flow editor (main)            | `src/components/flow/FlowEditor.tsx`                |
+| Editor types                  | `src/components/flow/editor/editorTypes.ts`         |
+| RecipeNode                    | `src/components/flow/editor/RecipeNode.tsx`         |
+| NodeEditPanel                 | `src/components/flow/editor/NodeEditPanel.tsx`      |
+| NodePalette                   | `src/components/flow/editor/NodePalette.tsx`        |
+| DescriptionEditor (@mentions) | `src/components/flow/editor/DescriptionEditor.tsx`  |
+| FlowEditorContext             | `src/components/flow/editor/FlowEditorContext.ts`   |
+| Dagre auto-layout hook        | `src/components/flow/editor/useFlowAutoLayout.ts`   |
+| AI conversion dialog          | `src/components/flow/editor/AiConversionDialog.tsx` |
+| Recipe form                   | `src/components/recipe/RecipeForm.tsx`              |
+| Create/Update actions         | `src/components/recipe/createActions.ts`            |
+| RecipeStepsViewer             | `src/components/flow/RecipeStepsViewer.tsx`         |
+| Viewer components             | `src/components/flow/viewer/`                       |
 
 ---
 
@@ -540,14 +544,14 @@ NEXT_PUBLIC_CAST_APP_ID=CC1AD845
 
 ## Docker Compose Services
 
-| Service | Port | Purpose |
-| --- | --- | --- |
-| postgres | 64000 | Database |
-| redis | 62984 | Cache, queues, pub/sub |
-| opensearch | 9200 | Full-text search |
-| app | 3000 | Next.js application |
-| worker | — | BullMQ job processor |
-| scraper | 34215 | Python recipe scraper |
+| Service    | Port  | Purpose                |
+| ---------- | ----- | ---------------------- |
+| postgres   | 64000 | Database               |
+| redis      | 62984 | Cache, queues, pub/sub |
+| opensearch | 9200  | Full-text search       |
+| app        | 3000  | Next.js application    |
+| worker     | —     | BullMQ job processor   |
+| scraper    | 34215 | Python recipe scraper  |
 
 ## Development Setup
 

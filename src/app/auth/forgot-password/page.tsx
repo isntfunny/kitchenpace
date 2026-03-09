@@ -99,7 +99,13 @@ export default function ForgotPasswordPage() {
                             <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                                 Passwort zurücksetzen
                             </h1>
-                            <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm' })}>
+                            <p
+                                className={css({
+                                    color: 'foreground.muted',
+                                    margin: 0,
+                                    fontSize: 'sm',
+                                })}
+                            >
                                 Wir senden dir einen Link zum Zurücksetzen.
                             </p>
                         </div>

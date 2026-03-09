@@ -77,7 +77,10 @@ export function HeaderSearch() {
                         _placeholder: { color: 'text-muted' },
                         _focus: {
                             borderColor: 'accent',
-                            boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.12)' },
+                            boxShadow: {
+                                base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                _dark: '0 0 0 3px rgba(224,123,83,0.12)',
+                            },
                         },
                     })}
                 />
@@ -106,7 +109,10 @@ export function HeaderSearch() {
                         borderRadius: 'xl',
                         border: '1px solid',
                         borderColor: 'border',
-                        boxShadow: { base: '0 20px 40px rgba(0,0,0,0.1)', _dark: '0 20px 40px rgba(0,0,0,0.35)' },
+                        boxShadow: {
+                            base: '0 20px 40px rgba(0,0,0,0.1)',
+                            _dark: '0 20px 40px rgba(0,0,0,0.35)',
+                        },
                         zIndex: 50,
                     })}
                 >

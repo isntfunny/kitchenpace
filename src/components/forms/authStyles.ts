@@ -21,7 +21,10 @@ export const authInputClass = css({
     transition: 'border-color 150ms ease, box-shadow 150ms ease',
     _focus: {
         borderColor: 'accent',
-        boxShadow: { base: '0 0 0 4px rgba(224,123,83,0.18)', _dark: '0 0 0 4px rgba(240,144,112,0.2)' },
+        boxShadow: {
+            base: '0 0 0 4px rgba(224,123,83,0.18)',
+            _dark: '0 0 0 4px rgba(240,144,112,0.2)',
+        },
     },
 });
 
@@ -48,7 +51,10 @@ export function getAuthButtonClass(disabled?: boolean) {
             ? {}
             : {
                   transform: 'translateY(-1px)',
-                  boxShadow: { base: '0 10px 30px rgba(224,123,83,0.35)', _dark: '0 10px 30px rgba(224,123,83,0.25)' },
+                  boxShadow: {
+                      base: '0 10px 30px rgba(224,123,83,0.35)',
+                      _dark: '0 10px 30px rgba(224,123,83,0.25)',
+                  },
               },
     });
 }

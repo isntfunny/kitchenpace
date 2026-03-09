@@ -19,7 +19,13 @@ export default function ErrorPage({
 
     return (
         <div
-            className={css({ minHeight: '100vh', display: 'flex', flexDirection: 'column', bg: 'background', color: 'foreground' })}
+            className={css({
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                bg: 'background',
+                color: 'foreground',
+            })}
         >
             <Header />
             <main
@@ -40,14 +46,19 @@ export default function ErrorPage({
                         borderRadius: '50%',
                         bg: 'error.bg',
                         border: '2px solid',
-                        borderColor: { base: 'rgba(239,68,68,0.25)', _dark: 'rgba(248,113,113,0.35)' },
+                        borderColor: {
+                            base: 'rgba(239,68,68,0.25)',
+                            _dark: 'rgba(248,113,113,0.35)',
+                        },
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginBottom: '7',
                     })}
                 >
-                    <AlertTriangle className={css({ width: '44px', height: '44px', color: 'status.error' })} />
+                    <AlertTriangle
+                        className={css({ width: '44px', height: '44px', color: 'status.error' })}
+                    />
                 </div>
 
                 <h1
@@ -123,7 +134,10 @@ export default function ErrorPage({
                             borderRadius: '999px',
                             bg: 'transparent',
                             border: '1.5px solid',
-                            borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(240,144,112,0.5)' },
+                            borderColor: {
+                                base: 'rgba(224,123,83,0.4)',
+                                _dark: 'rgba(240,144,112,0.5)',
+                            },
                             color: 'palette.orange',
                             fontWeight: 600,
                             fontSize: '0.9rem',

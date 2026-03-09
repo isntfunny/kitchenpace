@@ -18,7 +18,6 @@ import { PALETTE } from '@app/lib/palette';
 import type { FlowEdgeSerialized, FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
 
-
 import { MobileMiniMap } from './MobileMiniMap';
 import { useMobileNavigation } from './useMobileNavigation';
 import type { RecipeStepsViewerProps, TimerState, ViewerAction } from './viewerTypes';
@@ -63,14 +62,16 @@ function BranchHint({
             }}
         >
             {isUp && <ChevronUp style={{ width: 16, height: 16, opacity: 0.6 }} />}
-            <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                fontSize: 11,
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-            }}>
+            <span
+                style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                }}
+            >
                 <Icon style={{ width: 12, height: 12 }} />
                 {node.label.length > 20 ? node.label.slice(0, 20) + '\u2026' : node.label}
             </span>
@@ -183,54 +184,62 @@ export function MobileView({
                 {canBranchDown && (
                     <BranchHint
                         direction="down"
-                        node={hasLaneBelow ? currentGroup[row + 1] : parallelBranches[parallelBranches.length - 1]?.node}
+                        node={
+                            hasLaneBelow
+                                ? currentGroup[row + 1]
+                                : parallelBranches[parallelBranches.length - 1]?.node
+                        }
                         onClick={goLaneDown}
                     />
                 )}
 
                 {/* Lane indicator when branches are available */}
-                {hasBranching && (() => {
-                    const totalBranches = hasMultipleLanes
-                        ? currentGroup.length
-                        : 1 + parallelBranches.length;
-                    const currentBranch = hasMultipleLanes ? row + 1 : 1;
-                    return (
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 8,
-                                marginBottom: 12,
-                            }}
-                        >
-                            <span style={{
-                                fontSize: 10,
-                                fontWeight: 700,
-                                textTransform: 'uppercase' as const,
-                                letterSpacing: '0.08em',
-                                color: 'rgba(255,255,255,0.4)',
-                            }}>
-                                Branch {currentBranch}/{totalBranches}
-                            </span>
-                            <div style={{ display: 'flex', gap: 4 }}>
-                                {Array.from({ length: totalBranches }, (_, idx) => (
-                                    <div
-                                        key={idx}
-                                        style={{
-                                            width: idx === currentBranch - 1 ? 16 : 6,
-                                            height: 6,
-                                            borderRadius: 3,
-                                            backgroundColor: idx === currentBranch - 1
-                                                ? PALETTE.orange
-                                                : 'rgba(255,255,255,0.2)',
-                                            transition: 'all 0.2s ease',
-                                        }}
-                                    />
-                                ))}
+                {hasBranching &&
+                    (() => {
+                        const totalBranches = hasMultipleLanes
+                            ? currentGroup.length
+                            : 1 + parallelBranches.length;
+                        const currentBranch = hasMultipleLanes ? row + 1 : 1;
+                        return (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    marginBottom: 12,
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                        textTransform: 'uppercase' as const,
+                                        letterSpacing: '0.08em',
+                                        color: 'rgba(255,255,255,0.4)',
+                                    }}
+                                >
+                                    Branch {currentBranch}/{totalBranches}
+                                </span>
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                    {Array.from({ length: totalBranches }, (_, idx) => (
+                                        <div
+                                            key={idx}
+                                            style={{
+                                                width: idx === currentBranch - 1 ? 16 : 6,
+                                                height: 6,
+                                                borderRadius: 3,
+                                                backgroundColor:
+                                                    idx === currentBranch - 1
+                                                        ? PALETTE.orange
+                                                        : 'rgba(255,255,255,0.2)',
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                        />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    );
-                })()}
+                        );
+                    })()}
 
                 {/* Step type badge */}
                 <div
@@ -314,7 +323,11 @@ export function MobileView({
                                 fontSize: 'clamp(36px, 10vw, 56px)',
                                 fontWeight: 800,
                                 fontVariantNumeric: 'tabular-nums',
-                                color: timerDone ? PALETTE.emerald : timerRunning ? '#f39c12' : 'rgba(255,255,255,0.6)',
+                                color: timerDone
+                                    ? PALETTE.emerald
+                                    : timerRunning
+                                      ? '#f39c12'
+                                      : 'rgba(255,255,255,0.6)',
                                 letterSpacing: '0.02em',
                                 lineHeight: 1,
                                 marginBottom: 12,
@@ -350,9 +363,15 @@ export function MobileView({
                                     type="button"
                                     onClick={() => {
                                         if (timerRunning) {
-                                            dispatch({ type: 'timerPause', nodeId: currentNode.id });
+                                            dispatch({
+                                                type: 'timerPause',
+                                                nodeId: currentNode.id,
+                                            });
                                         } else {
-                                            dispatch({ type: 'timerStart', nodeId: currentNode.id });
+                                            dispatch({
+                                                type: 'timerStart',
+                                                nodeId: currentNode.id,
+                                            });
                                         }
                                     }}
                                     style={{
@@ -362,7 +381,9 @@ export function MobileView({
                                         padding: '10px 20px',
                                         borderRadius: 999,
                                         border: '1.5px solid rgba(255,255,255,0.25)',
-                                        backgroundColor: timerRunning ? 'rgba(231,76,60,0.2)' : 'rgba(255,255,255,0.12)',
+                                        backgroundColor: timerRunning
+                                            ? 'rgba(231,76,60,0.2)'
+                                            : 'rgba(255,255,255,0.12)',
                                         color: 'white',
                                         fontSize: 14,
                                         fontWeight: 700,
@@ -370,15 +391,21 @@ export function MobileView({
                                     }}
                                 >
                                     {timerRunning ? (
-                                        <><Pause style={{ width: 14, height: 14 }} /> Pause</>
+                                        <>
+                                            <Pause style={{ width: 14, height: 14 }} /> Pause
+                                        </>
                                     ) : (
-                                        <><Play style={{ width: 14, height: 14 }} /> Start</>
+                                        <>
+                                            <Play style={{ width: 14, height: 14 }} /> Start
+                                        </>
                                     )}
                                 </button>
                                 {pct > 0 && (
                                     <button
                                         type="button"
-                                        onClick={() => dispatch({ type: 'timerReset', nodeId: currentNode.id })}
+                                        onClick={() =>
+                                            dispatch({ type: 'timerReset', nodeId: currentNode.id })
+                                        }
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
@@ -423,9 +450,13 @@ export function MobileView({
                         }}
                     >
                         {isDone ? (
-                            <><CheckCircle2 style={{ width: 18, height: 18 }} /> Erledigt</>
+                            <>
+                                <CheckCircle2 style={{ width: 18, height: 18 }} /> Erledigt
+                            </>
                         ) : timerDone ? (
-                            <><Check style={{ width: 18, height: 18 }} /> Timer fertig — Erledigt?</>
+                            <>
+                                <Check style={{ width: 18, height: 18 }} /> Timer fertig — Erledigt?
+                            </>
                         ) : (
                             'Erledigt'
                         )}

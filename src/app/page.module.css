@@ -122,11 +122,11 @@ a.secondary {
     }
 }
 
-[data-theme="dark"] .logo {
+[data-theme='dark'] .logo {
     filter: invert();
 }
 
-[data-theme="dark"] .page {
+[data-theme='dark'] .page {
     --background: #000;
     --foreground: #000;
 

@@ -98,7 +98,10 @@ export function NodeCard({
                 transition: 'all 0.2s ease',
                 _hover: {
                     transform: 'translateY(-2px)',
-                    boxShadow: { base: '0 4px 16px rgba(0,0,0,0.12)', _dark: '0 4px 16px rgba(0,0,0,0.3)' },
+                    boxShadow: {
+                        base: '0 4px 16px rgba(0,0,0,0.12)',
+                        _dark: '0 4px 16px rgba(0,0,0,0.3)',
+                    },
                 },
                 position: 'relative',
                 overflow: 'hidden',
@@ -106,7 +109,9 @@ export function NodeCard({
             })}
             style={{
                 backgroundColor: isCompleted
-                    ? (dark ? '#1a3d1a' : '#f0f9f0')
+                    ? dark
+                        ? '#1a3d1a'
+                        : '#f0f9f0'
                     : getTypeColor(node.type, dark),
                 border: isActive
                     ? '2px solid #2196f3'
@@ -156,7 +161,9 @@ export function NodeCard({
                         })}
                         style={{
                             color: dark ? '#808080' : '#888',
-                            backgroundColor: dark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.7)',
+                            backgroundColor: dark
+                                ? 'rgba(255,255,255,0.1)'
+                                : 'rgba(255,255,255,0.7)',
                         }}
                     >
                         {node.duration} Min.
@@ -171,9 +178,7 @@ export function NodeCard({
                     marginBottom: '4px',
                 })}
                 style={{
-                    color: isCompleted
-                        ? (dark ? '#808080' : '#666')
-                        : (dark ? '#e0e0e0' : '#333'),
+                    color: isCompleted ? (dark ? '#808080' : '#666') : dark ? '#e0e0e0' : '#333',
                 }}
             >
                 {node.label}
@@ -186,9 +191,7 @@ export function NodeCard({
                     textDecoration: isCompleted ? 'line-through' : 'none',
                 })}
                 style={{
-                    color: isCompleted
-                        ? (dark ? '#606060' : '#888')
-                        : (dark ? '#a0a0a0' : '#666'),
+                    color: isCompleted ? (dark ? '#606060' : '#888') : dark ? '#a0a0a0' : '#666',
                 }}
             >
                 {node.description}
@@ -239,16 +242,19 @@ export function NodeCard({
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         _hover: {
-                            boxShadow: { base: '0 2px 6px rgba(0,0,0,0.1)', _dark: '0 2px 6px rgba(0,0,0,0.3)' },
+                            boxShadow: {
+                                base: '0 2px 6px rgba(0,0,0,0.1)',
+                                _dark: '0 2px 6px rgba(0,0,0,0.3)',
+                            },
                         },
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '1',
                     })}
                     style={{
-                        border: isCompleted ? 'none' : (dark ? '1px solid #444' : '1px solid #ddd'),
-                        backgroundColor: isCompleted ? '#4caf50' : (dark ? '#2a2a2a' : 'white'),
-                        color: isCompleted ? 'white' : (dark ? '#a0a0a0' : '#666'),
+                        border: isCompleted ? 'none' : dark ? '1px solid #444' : '1px solid #ddd',
+                        backgroundColor: isCompleted ? '#4caf50' : dark ? '#2a2a2a' : 'white',
+                        color: isCompleted ? 'white' : dark ? '#a0a0a0' : '#666',
                     }}
                 >
                     {isCompleted ? <Check size={14} /> : 'Fertig'}

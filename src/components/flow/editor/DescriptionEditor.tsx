@@ -400,7 +400,10 @@ const textareaClass = css({
     _placeholder: { color: 'text.muted' },
     _focus: {
         borderColor: 'brand.primary',
-        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
+        boxShadow: {
+            base: '0 0 0 3px rgba(224,123,83,0.15)',
+            _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+        },
     },
 });
 
@@ -481,7 +484,10 @@ const fractionBtnClass = css({
     fontWeight: '700',
     color: 'brand.primary',
     backgroundColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
-    border: { base: '1.5px solid rgba(224,123,83,0.25)', _dark: '1.5px solid rgba(224,123,83,0.3)' },
+    border: {
+        base: '1.5px solid rgba(224,123,83,0.25)',
+        _dark: '1.5px solid rgba(224,123,83,0.3)',
+    },
     borderRadius: 'md',
     px: '1.5',
     py: '0.5',

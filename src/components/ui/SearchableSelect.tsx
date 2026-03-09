@@ -205,7 +205,8 @@ export function SearchableSelect({
                                                 flexShrink: '0',
                                             })}
                                             onError={(e) => {
-                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                (e.target as HTMLImageElement).style.display =
+                                                    'none';
                                             }}
                                         />
                                     )}

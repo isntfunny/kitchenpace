@@ -55,7 +55,11 @@ export async function GET(request: Request) {
             request.signal.addEventListener('abort', async () => {
                 clearInterval(heartbeat);
                 await unsubscribe();
-                try { controller.close(); } catch { /* already closed by runtime */ }
+                try {
+                    controller.close();
+                } catch {
+                    /* already closed by runtime */
+                }
             });
         },
     });

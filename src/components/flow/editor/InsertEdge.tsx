@@ -136,12 +136,16 @@ function InsertEdgeComponent({
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     cursor: 'pointer',
-                                    boxShadow: dark ? '0 2px 10px rgba(224,123,83,0.45)' : '0 2px 10px rgba(224,123,83,0.35)',
+                                    boxShadow: dark
+                                        ? '0 2px 10px rgba(224,123,83,0.45)'
+                                        : '0 2px 10px rgba(224,123,83,0.35)',
                                     transition: 'all 0.15s ease',
                                     padding: 0,
                                 }}
                             >
-                                <Plus style={{ width: '13px', height: '13px', color: PALETTE.orange }} />
+                                <Plus
+                                    style={{ width: '13px', height: '13px', color: PALETTE.orange }}
+                                />
                             </button>
 
                             {/* Delete button — visible when edge is selected */}
@@ -163,7 +167,9 @@ function InsertEdgeComponent({
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         cursor: 'pointer',
-                                        boxShadow: dark ? '0 2px 10px rgba(231,76,60,0.4)' : '0 2px 10px rgba(231,76,60,0.3)',
+                                        boxShadow: dark
+                                            ? '0 2px 10px rgba(231,76,60,0.4)'
+                                            : '0 2px 10px rgba(231,76,60,0.3)',
                                         transition: 'all 0.15s ease',
                                         padding: 0,
                                     }}
@@ -185,8 +191,12 @@ function InsertEdgeComponent({
                                     transform: 'translateX(-50%)',
                                     backgroundColor: dark ? '#1a1d21' : 'white',
                                     borderRadius: '12px',
-                                    border: dark ? '1px solid rgba(224,123,83,0.25)' : '1px solid rgba(224,123,83,0.3)',
-                                    boxShadow: dark ? '0 8px 32px rgba(0,0,0,0.4)' : '0 8px 32px rgba(0,0,0,0.14)',
+                                    border: dark
+                                        ? '1px solid rgba(224,123,83,0.25)'
+                                        : '1px solid rgba(224,123,83,0.3)',
+                                    boxShadow: dark
+                                        ? '0 8px 32px rgba(0,0,0,0.4)'
+                                        : '0 8px 32px rgba(0,0,0,0.14)',
                                     padding: '12px',
                                     width: '280px',
                                     zIndex: 1001,

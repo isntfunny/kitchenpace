@@ -34,7 +34,13 @@ interface SegmentedBarProps {
     customInput?: CustomNumberInput | CustomStringInput;
 }
 
-export function SegmentedBar({ items, activeIndex, onSelect, trackingName, customInput }: SegmentedBarProps) {
+export function SegmentedBar({
+    items,
+    activeIndex,
+    onSelect,
+    trackingName,
+    customInput,
+}: SegmentedBarProps) {
     const [customMode, setCustomMode] = useState(false);
     const op = useOpenPanel();
     const isStringInput = customInput?.type === 'string';
@@ -46,15 +52,27 @@ export function SegmentedBar({ items, activeIndex, onSelect, trackingName, custo
     if (showCustom && customInput) {
         return (
             <div
-                className={css({ display: 'flex', alignItems: 'center', gap: '2', borderRadius: 'lg', overflow: 'hidden' })}
-                style={{ border: `1px solid ${PALETTE.orange}`, height: BAR_HEIGHT, padding: '0 12px' }}
+                className={css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2',
+                    borderRadius: 'lg',
+                    overflow: 'hidden',
+                })}
+                style={{
+                    border: `1px solid ${PALETTE.orange}`,
+                    height: BAR_HEIGHT,
+                    padding: '0 12px',
+                }}
             >
                 {isStringInput ? (
                     <input
                         type="text"
                         value={(customInput as CustomStringInput).value}
                         placeholder={customInput.placeholder ?? ''}
-                        onChange={(e) => (customInput as CustomStringInput).onChange(e.target.value)}
+                        onChange={(e) =>
+                            (customInput as CustomStringInput).onChange(e.target.value)
+                        }
                         autoFocus
                         className={customInputClass}
                     />
@@ -65,13 +83,21 @@ export function SegmentedBar({ items, activeIndex, onSelect, trackingName, custo
                         max={999}
                         value={(customInput as CustomNumberInput).value || ''}
                         placeholder={customInput.placeholder ?? ''}
-                        onChange={(e) => (customInput as CustomNumberInput).onChange(Number(e.target.value) || 0)}
+                        onChange={(e) =>
+                            (customInput as CustomNumberInput).onChange(Number(e.target.value) || 0)
+                        }
                         autoFocus
                         className={customInputClass}
                     />
                 )}
                 {customInput.suffix && (
-                    <span className={css({ fontSize: 'xs', color: 'foreground.muted', whiteSpace: 'nowrap' })}>
+                    <span
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                            whiteSpace: 'nowrap',
+                        })}
+                    >
                         {customInput.suffix}
                     </span>
                 )}
@@ -82,7 +108,13 @@ export function SegmentedBar({ items, activeIndex, onSelect, trackingName, custo
                         if (isStringInput) (customInput as CustomStringInput).onChange('');
                         else (customInput as CustomNumberInput).onChange(0);
                     }}
-                    className={css({ fontSize: 'xs', fontWeight: '600', cursor: 'pointer', color: 'foreground.muted', _hover: { color: 'primary' } })}
+                    className={css({
+                        fontSize: 'xs',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        color: 'foreground.muted',
+                        _hover: { color: 'primary' },
+                    })}
                 >
                     ✕
                 </button>
@@ -102,13 +134,20 @@ export function SegmentedBar({ items, activeIndex, onSelect, trackingName, custo
                         key={label}
                         type="button"
                         onClick={() => {
-                            if (trackingName) op.track('segmented_bar_tap', { bar: trackingName, value: label });
+                            if (trackingName)
+                                op.track('segmented_bar_tap', { bar: trackingName, value: label });
                             onSelect(i);
                         }}
                         className={cx(segBtn, active && segBtnActive)}
-                        style={active
-                            ? { background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`, color: 'white', borderLeft: i === 0 ? 'none' : `1px solid ${PALETTE.orange}` }
-                            : { borderLeft: i === 0 ? 'none' : `1px solid ${PALETTE.orange}` }}
+                        style={
+                            active
+                                ? {
+                                      background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
+                                      color: 'white',
+                                      borderLeft: i === 0 ? 'none' : `1px solid ${PALETTE.orange}`,
+                                  }
+                                : { borderLeft: i === 0 ? 'none' : `1px solid ${PALETTE.orange}` }
+                        }
                     >
                         {label}
                     </button>
@@ -118,7 +157,8 @@ export function SegmentedBar({ items, activeIndex, onSelect, trackingName, custo
                 <button
                     type="button"
                     onClick={() => {
-                        if (trackingName) op.track('segmented_bar_tap', { bar: trackingName, value: 'custom' });
+                        if (trackingName)
+                            op.track('segmented_bar_tap', { bar: trackingName, value: 'custom' });
                         setCustomMode(true);
                     }}
                     className={segBtn}

@@ -68,9 +68,7 @@ export function SimpleTextView({
                                     transition: 'all 0.2s ease',
                                 })}
                                 style={{
-                                    backgroundColor: isDone
-                                        ? c.successBgLight
-                                        : 'transparent',
+                                    backgroundColor: isDone ? c.successBgLight : 'transparent',
                                     opacity: isDone ? 0.7 : 1,
                                 }}
                             >
@@ -158,7 +156,11 @@ export function SimpleTextView({
                                                 m: 0,
                                             })}
                                         >
-                                            {renderDescription(node.description, ingredients, c.dark)}
+                                            {renderDescription(
+                                                node.description,
+                                                ingredients,
+                                                c.dark,
+                                            )}
                                         </p>
                                     )}
 
@@ -176,7 +178,9 @@ export function SimpleTextView({
                                                 type="button"
                                                 onClick={() =>
                                                     dispatch({
-                                                        type: timerRunning ? 'timerPause' : 'timerStart',
+                                                        type: timerRunning
+                                                            ? 'timerPause'
+                                                            : 'timerStart',
                                                         nodeId: node.id,
                                                     })
                                                 }
@@ -217,28 +221,38 @@ export function SimpleTextView({
                                                 ) : (
                                                     <Play style={{ width: 12, height: 12 }} />
                                                 )}
-                                                <Clock style={{ width: 11, height: 11, opacity: 0.7 }} />
+                                                <Clock
+                                                    style={{ width: 11, height: 11, opacity: 0.7 }}
+                                                />
                                                 {formatTime(timer!.remaining)}
                                             </button>
-                                            {(timerRunning || timer!.remaining < timer!.total) && !timerDone && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => dispatch({ type: 'timerReset', nodeId: node.id })}
-                                                    className={css({
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        p: '1',
-                                                        borderRadius: 'full',
-                                                        border: 'none',
-                                                        bg: 'transparent',
-                                                        color: 'text.muted',
-                                                        cursor: 'pointer',
-                                                    })}
-                                                    title="Zurücksetzen"
-                                                >
-                                                    <RotateCcw style={{ width: 12, height: 12 }} />
-                                                </button>
-                                            )}
+                                            {(timerRunning || timer!.remaining < timer!.total) &&
+                                                !timerDone && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            dispatch({
+                                                                type: 'timerReset',
+                                                                nodeId: node.id,
+                                                            })
+                                                        }
+                                                        className={css({
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            p: '1',
+                                                            borderRadius: 'full',
+                                                            border: 'none',
+                                                            bg: 'transparent',
+                                                            color: 'text.muted',
+                                                            cursor: 'pointer',
+                                                        })}
+                                                        title="Zurücksetzen"
+                                                    >
+                                                        <RotateCcw
+                                                            style={{ width: 12, height: 12 }}
+                                                        />
+                                                    </button>
+                                                )}
                                         </div>
                                     )}
                                 </div>

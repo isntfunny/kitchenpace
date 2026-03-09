@@ -3,6 +3,8 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useMemo, useReducer, useState } from 'react';
 
+import { FlowEditorContext, type FlowEditorContextValue } from '@app/components/flow/editor/FlowEditorContext';
+import { NodeEditPanel } from '@app/components/flow/editor/NodeEditPanel';
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
 import { css } from 'styled-system/css';
 
@@ -10,8 +12,18 @@ import { gridReducer, normalizeLaneGrid, uid } from './gridReducer';
 import { SegmentDivider } from './SegmentDivider';
 import { StepCard } from './StepCard';
 import { StepTypePicker } from './StepTypePicker';
-import type { LaneGrid, LaneMode } from './types';
+import type { LaneGrid, LaneMode, LaneStep } from './types';
 import { useTimers } from './useTimers';
+
+/** Minimal no-op context so NodeEditPanel can render without a full FlowEditor */
+const NOOP_FLOW_CTX: FlowEditorContextValue = {
+    availableIngredients: [],
+    onSelectNode: () => {},
+    onDeleteNode: () => {},
+    nodeOutgoingEdges: new Map<string, number>(),
+    nodeIncomingEdges: new Map<string, number>(),
+    onAddNodeAfter: () => {},
+};
 
 /* ══════════════════════════════════════════════════════════════
    LaneWizard
@@ -22,10 +34,13 @@ interface LaneWizardProps {
     mode?: LaneMode;
 }
 
+type EditingStep = { step: LaneStep; segmentId: string; laneIndex: number };
+
 export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
     const [grid, dispatch] = useReducer(gridReducer, initialGrid, normalizeLaneGrid);
     const [completed, setCompleted] = useState<Set<string>>(new Set());
     const [anyPopupOpen, setAnyPopupOpen] = useState(false);
+    const [editingStep, setEditingStep] = useState<EditingStep | null>(null);
     const { timers, start, pause, reset } = useTimers(initialGrid);
 
     /* ── Callbacks ── */
@@ -127,7 +142,10 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                                         onClose={() => {}}
                                     />
                                 )}
-                                {lane.map((step, stepIdx) => (
+                                {lane.map((step, stepIdx) => {
+                                    const canEdit = mode === 'edit' && !step.continuation;
+                                    const canDelete = canEdit && step.type !== 'start' && step.type !== 'servieren';
+                                    return (
                                     <StepCard
                                         key={step.id}
                                         step={step}
@@ -139,11 +157,9 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                                         onTimerStart={() => start(step.id)}
                                         onTimerPause={() => pause(step.id)}
                                         onTimerReset={() => reset(step.id)}
+                                        onEdit={canEdit ? () => setEditingStep({ step, segmentId: segment.id, laneIndex: laneIdx }) : undefined}
                                         onDelete={
-                                            mode === 'edit' &&
-                                            step.type !== 'start' &&
-                                            step.type !== 'servieren' &&
-                                            !step.continuation
+                                            canDelete
                                                 ? () => dispatch({
                                                     type: 'DELETE_STEP',
                                                     segmentId: segment.id,
@@ -153,7 +169,8 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                                                 : undefined
                                         }
                                     />
-                                ))}
+                                    );
+                                })}
                             </AnimatePresence>
                         </div>
                     ))}
@@ -213,6 +230,51 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                     {elements}
                 </AnimatePresence>
             </div>
+
+            {/* Step edit panel — reuses NodeEditPanel from FlowEditor */}
+            {editingStep && (
+                <FlowEditorContext.Provider value={NOOP_FLOW_CTX}>
+                    <NodeEditPanel
+                        key={editingStep.step.id}
+                        nodeId={editingStep.step.id}
+                        data={{
+                            stepType: editingStep.step.type,
+                            label: editingStep.step.label,
+                            description: editingStep.step.description,
+                            duration: editingStep.step.duration,
+                            photoKey: editingStep.step.photoKey,
+                            photoUrl: editingStep.step.photoUrl,
+                        }}
+                        availableIngredients={[]}
+                        onSave={(updates) => {
+                            dispatch({
+                                type: 'UPDATE_STEP',
+                                stepId: editingStep.step.id,
+                                updates: {
+                                    ...(updates.stepType && { type: updates.stepType }),
+                                    ...(updates.label !== undefined && { label: updates.label }),
+                                    ...(updates.description !== undefined && { description: updates.description }),
+                                    duration: updates.duration,
+                                    photoKey: updates.photoKey,
+                                    photoUrl: updates.photoUrl,
+                                },
+                            });
+                            setEditingStep(null);
+                        }}
+                        onClose={() => setEditingStep(null)}
+                        canDelete={editingStep.step.type !== 'start' && editingStep.step.type !== 'servieren'}
+                        onDelete={() => {
+                            dispatch({
+                                type: 'DELETE_STEP',
+                                segmentId: editingStep.segmentId,
+                                laneIndex: editingStep.laneIndex,
+                                stepId: editingStep.step.id,
+                            });
+                            setEditingStep(null);
+                        }}
+                    />
+                </FlowEditorContext.Provider>
+            )}
         </div>
     );
 }

@@ -28,6 +28,7 @@ interface StepCardProps {
     onTimerPause: () => void;
     onTimerReset: () => void;
     onDelete?: () => void;
+    onEdit?: () => void;
 }
 
 /* ── Component ── */
@@ -43,6 +44,7 @@ export function StepCard({
     onTimerPause,
     onTimerReset,
     onDelete,
+    onEdit,
 }: StepCardProps) {
     const config = STEP_CONFIGS[step.type];
 
@@ -107,7 +109,11 @@ export function StepCard({
             )}
 
             {/* ── Content ── */}
-            <div className={contentClass}>
+            <div
+                className={contentClass}
+                onClick={mode === 'edit' && onEdit ? onEdit : undefined}
+                style={{ cursor: mode === 'edit' && onEdit ? 'pointer' : undefined }}
+            >
                 {/* ── Header ── */}
                 <div className={headerClass}>
                     <div className={typeBadgeClass} style={{ color: accentColor }}>

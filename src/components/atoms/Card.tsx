@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { css } from 'styled-system/css';
+import { css, cx } from 'styled-system/css';
 
 import { SmartImage } from './SmartImage';
 
@@ -21,11 +21,8 @@ const baseCardClass = css({
     },
 });
 
-const combineClasses = (...classes: Array<string | undefined | unknown>) =>
-    classes.filter((cls): cls is string => typeof cls === 'string' && cls.length > 0).join(' ');
-
 export function Card({ children, className }: CardProps) {
-    return <div className={combineClasses(baseCardClass, className)}>{children}</div>;
+    return <div className={cx(baseCardClass, className)}>{children}</div>;
 }
 
 export function CardImage({

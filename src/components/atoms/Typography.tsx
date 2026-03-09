@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { css } from 'styled-system/css';
+import { css, cx } from 'styled-system/css';
 
 interface HeadingProps extends React.HTMLAttributes<HTMLHeadingElement> {
     children: React.ReactNode;
@@ -24,12 +24,9 @@ export function Heading({
         sm: css.raw({ fontSize: 'lg', fontWeight: '600' }),
     };
 
-    const combineClasses = (...classes: Array<string | undefined>) =>
-        classes.filter(Boolean).join(' ');
-
     return (
         <Component
-            className={combineClasses(
+            className={cx(
                 css(
                     {
                         fontFamily: 'heading',
@@ -66,12 +63,9 @@ export function Text({ children, size = 'md', color = 'default', className, ...p
         lg: css.raw({ fontSize: 'lg' }),
     };
 
-    const combineClasses = (...classes: Array<string | undefined>) =>
-        classes.filter(Boolean).join(' ');
-
     return (
         <p
-            className={combineClasses(
+            className={cx(
                 css(
                     {
                         fontFamily: 'body',

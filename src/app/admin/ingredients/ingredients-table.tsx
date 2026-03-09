@@ -704,6 +704,7 @@ export function IngredientsTable({ ingredients }: { ingredients: Ingredient[] })
     const [isMerging, setIsMerging] = useState(false);
     const [error, setError] = useState('');
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data: ingredients,
         columns,

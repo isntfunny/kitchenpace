@@ -439,6 +439,7 @@ export function AccountsTable({ users }: { users: User[] }) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data: users,
         columns,

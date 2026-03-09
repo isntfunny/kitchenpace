@@ -684,6 +684,7 @@ export function ImportsTable({ runs }: { runs: ImportRunRow[] }) {
 
     const filtered = statusFilter === 'ALL' ? runs : runs.filter((r) => r.status === statusFilter);
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data: filtered,
         columns,

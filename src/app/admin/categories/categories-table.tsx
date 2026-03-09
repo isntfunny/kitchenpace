@@ -554,6 +554,7 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
         setDialogOpen(true);
     });
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data: categories,
         columns,

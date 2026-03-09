@@ -299,6 +299,7 @@ export function TagsTable({ tags }: { tags: Tag[] }) {
 
     const columns = getColumns((id) => setEditingId(id));
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data: tags,
         columns,

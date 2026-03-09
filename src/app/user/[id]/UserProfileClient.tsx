@@ -304,6 +304,9 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
             {/* Profile Header */}
             <div
                 className={css({
+                    bg: 'surface',
+                    boxShadow: 'shadow.medium',
+                    borderRadius: '2xl',
                     pt: { base: '4', md: '6' },
                     pb: { base: '4', md: '5' },
                 })}

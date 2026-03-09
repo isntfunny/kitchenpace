@@ -103,13 +103,7 @@ function SingleStar({ rating }: { rating: number }) {
 // Category badge rendered on image overlay
 // ---------------------------------------------------------------------------
 
-function CategoryOverlay({
-    recipe,
-    link,
-}: {
-    recipe: RecipeCardRecipe;
-    link?: boolean;
-}) {
+function CategoryOverlay({ recipe, link }: { recipe: RecipeCardRecipe; link?: boolean }) {
     const router = useRouter();
     const color = recipe.categoryColor || categoryColors[recipe.category] || PALETTE.orange;
 
@@ -117,7 +111,6 @@ function CategoryOverlay({
         position: 'absolute',
         top: '2',
         left: '2',
-        background: color,
         color: 'white',
         padding: '2px 10px',
         borderRadius: 'full',
@@ -142,13 +135,18 @@ function CategoryOverlay({
                     router.push(`/category/${recipe.categorySlug}`);
                 }}
                 className={badgeStyle}
+                style={{ background: color }}
             >
                 {recipe.category}
             </button>
         );
     }
 
-    return <span className={badgeStyle}>{recipe.category}</span>;
+    return (
+        <span className={badgeStyle} style={{ background: color }}>
+            {recipe.category}
+        </span>
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -259,16 +257,18 @@ export function RecipeCard({
                         color: 'text-muted',
                     })}
                 >
-                    {recipe.rating != null && recipe.rating > 0 && (
-                        starRating ? (
+                    {recipe.rating != null &&
+                        recipe.rating > 0 &&
+                        (starRating ? (
                             <StarRating rating={recipe.rating} />
                         ) : (
                             <SingleStar rating={recipe.rating} />
-                        )
-                    )}
+                        ))}
                     {recipe.time && (
                         <span className={flex({ align: 'center', gap: '1' })}>
-                            {isCompact ? null : <Clock size={14} className={css({ color: 'foreground.muted' })} />}
+                            {isCompact ? null : (
+                                <Clock size={14} className={css({ color: 'foreground.muted' })} />
+                            )}
                             {recipe.time}
                         </span>
                     )}
@@ -280,7 +280,10 @@ export function RecipeCard({
     if (footer) {
         return (
             <div className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
-                <Link href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none', color: 'inherit' })}>
+                <Link
+                    href={`/recipe/${recipe.slug}`}
+                    className={css({ textDecoration: 'none', color: 'inherit' })}
+                >
                     {card}
                 </Link>
                 {footer}
@@ -289,7 +292,10 @@ export function RecipeCard({
     }
 
     return (
-        <Link href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none', color: 'inherit' })}>
+        <Link
+            href={`/recipe/${recipe.slug}`}
+            className={css({ textDecoration: 'none', color: 'inherit' })}
+        >
             {card}
         </Link>
     );

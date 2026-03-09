@@ -158,28 +158,42 @@ export function DashboardRecentRecipes({ recipes }: DashboardRecentRecipesProps)
                     <button
                         key={filter.id}
                         onClick={() => setActiveFilter(filter.id)}
-                        className={css({
-                            fontSize: 'sm',
-                            fontWeight: '500',
-                            px: '4',
-                            py: '2',
-                            borderRadius: 'full',
-                            border: 'none',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                            transition: 'all 150ms ease',
-                            background:
-                                activeFilter === filter.id
-                                    ? `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`
-                                    : 'surface.muted',
-                            color: activeFilter === filter.id ? 'white' : 'text-muted',
-                            _hover: {
-                                background:
-                                    activeFilter === filter.id
-                                        ? `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`
-                                        : 'button.secondary-hover',
-                            },
-                        })}
+                        className={
+                            activeFilter === filter.id
+                                ? css({
+                                      fontSize: 'sm',
+                                      fontWeight: '500',
+                                      px: '4',
+                                      py: '2',
+                                      borderRadius: 'full',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      whiteSpace: 'nowrap',
+                                      transition: 'all 150ms ease',
+                                      color: 'white',
+                                  })
+                                : css({
+                                      fontSize: 'sm',
+                                      fontWeight: '500',
+                                      px: '4',
+                                      py: '2',
+                                      borderRadius: 'full',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      whiteSpace: 'nowrap',
+                                      transition: 'all 150ms ease',
+                                      background: 'surface.muted',
+                                      color: 'text-muted',
+                                      _hover: { background: 'button.secondary-hover' },
+                                  })
+                        }
+                        style={
+                            activeFilter === filter.id
+                                ? {
+                                      background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
+                                  }
+                                : undefined
+                        }
                     >
                         {filter.label}
                     </button>

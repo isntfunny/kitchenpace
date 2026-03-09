@@ -67,22 +67,40 @@ function ShoppingItemRow({
         >
             <button
                 onClick={() => onToggle(item.id)}
-                className={css({
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: 'full',
-                    border: item.checked ? 'none' : '2px solid',
-                    borderColor: item.checked ? PALETTE.emerald : 'border',
-                    background: item.checked ? PALETTE.emerald : 'transparent',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 'sm',
-                    color: 'white',
-                    flexShrink: 0,
-                    transition: 'all 150ms ease',
-                })}
+                className={
+                    item.checked
+                        ? css({
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: 'full',
+                              border: 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: 'sm',
+                              color: 'white',
+                              flexShrink: 0,
+                              transition: 'all 150ms ease',
+                          })
+                        : css({
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: 'full',
+                              border: '2px solid',
+                              borderColor: 'border',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: 'sm',
+                              color: 'white',
+                              flexShrink: 0,
+                              transition: 'all 150ms ease',
+                          })
+                }
+                style={item.checked ? { background: PALETTE.emerald } : undefined}
             >
                 {item.checked && <Check size={12} />}
             </button>
@@ -218,11 +236,13 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
                 <div
                     className={css({
                         height: '100%',
-                        width: `${progress}%`,
-                        background: `linear-gradient(90deg, ${PALETTE.orange}, ${PALETTE.gold})`,
                         borderRadius: 'full',
                         transition: 'width 300ms ease',
                     })}
+                    style={{
+                        width: `${progress}%`,
+                        background: `linear-gradient(90deg, ${PALETTE.orange}, ${PALETTE.gold})`,
+                    }}
                 />
             </div>
 

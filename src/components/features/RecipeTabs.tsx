@@ -176,7 +176,10 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                                     borderRadius: 'xl',
                                     border: '1px solid',
                                     borderColor: 'rgba(224,123,83,0.2)',
-                                    boxShadow: { base: '0 20px 50px rgba(0,0,0,0.15)', _dark: '0 20px 50px rgba(0,0,0,0.5)' },
+                                    boxShadow: {
+                                        base: '0 20px 50px rgba(0,0,0,0.15)',
+                                        _dark: '0 20px 50px rgba(0,0,0,0.5)',
+                                    },
                                     padding: '3',
                                     zIndex: 110,
                                     display: { base: 'none', md: 'block' },
@@ -189,75 +192,84 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                                 exit={{ opacity: 0, y: -4, scale: 0.97 }}
                                 transition={{ duration: 0.15 }}
                             >
-                        <SmartImage
-                            src={recipe.imageUrl ?? undefined}
-                            alt={recipe.title}
-                            recipeId={recipe.id}
-                            width={400}
-                            height={120}
-                            className={css({
-                                width: '100%',
-                                height: '120px',
-                                objectFit: 'cover',
-                                borderRadius: 'lg',
-                                marginBottom: '2',
-                            })}
-                        />
-                        <h4
-                            className={css({
-                                fontSize: 'sm',
-                                fontWeight: '600',
-                                color: 'text',
-                                marginBottom: '1',
-                            })}
-                        >
-                            {recipe.title}
-                        </h4>
-                        <div
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '2',
-                                fontSize: 'xs',
-                                color: 'foreground.muted',
-                                marginBottom: '2',
-                            })}
-                        >
-                            {totalTime > 0 && (
-                                <>
-                                    <Clock size={12} />
-                                    <span>{totalTime} min</span>
-                                </>
-                            )}
-                            {recipe.difficulty && (
-                                <>
-                                    <span>•</span>
-                                    <span>{recipe.difficulty}</span>
-                                </>
-                            )}
-                        </div>
-                        <Link
-                            href={recipe.slug ? `/recipe/${recipe.slug}` : `/recipe/${recipe.id}`}
-                            className={css({
-                                display: 'block',
-                                width: '100%',
-                                textAlign: 'center',
-                                padding: '2',
-                                background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
-                                color: 'white',
-                                borderRadius: 'lg',
-                                fontSize: 'xs',
-                                fontWeight: '600',
-                                textDecoration: 'none',
-                                transition: 'all 150ms ease',
-                                _hover: {
-                                    transform: 'translateY(-1px)',
-                                    boxShadow: { base: '0 4px 12px rgba(224,123,83,0.3)', _dark: '0 4px 12px rgba(224,123,83,0.25)' },
-                                },
-                            })}
-                        >
-                            Öffnen
-                        </Link>
+                                <SmartImage
+                                    src={recipe.imageUrl ?? undefined}
+                                    alt={recipe.title}
+                                    recipeId={recipe.id}
+                                    width={400}
+                                    height={120}
+                                    className={css({
+                                        width: '100%',
+                                        height: '120px',
+                                        objectFit: 'cover',
+                                        borderRadius: 'lg',
+                                        marginBottom: '2',
+                                    })}
+                                />
+                                <h4
+                                    className={css({
+                                        fontSize: 'sm',
+                                        fontWeight: '600',
+                                        color: 'text',
+                                        marginBottom: '1',
+                                    })}
+                                >
+                                    {recipe.title}
+                                </h4>
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '2',
+                                        fontSize: 'xs',
+                                        color: 'foreground.muted',
+                                        marginBottom: '2',
+                                    })}
+                                >
+                                    {totalTime > 0 && (
+                                        <>
+                                            <Clock size={12} />
+                                            <span>{totalTime} min</span>
+                                        </>
+                                    )}
+                                    {recipe.difficulty && (
+                                        <>
+                                            <span>•</span>
+                                            <span>{recipe.difficulty}</span>
+                                        </>
+                                    )}
+                                </div>
+                                <Link
+                                    href={
+                                        recipe.slug
+                                            ? `/recipe/${recipe.slug}`
+                                            : `/recipe/${recipe.id}`
+                                    }
+                                    className={css({
+                                        display: 'block',
+                                        width: '100%',
+                                        textAlign: 'center',
+                                        padding: '2',
+                                        color: 'white',
+                                        borderRadius: 'lg',
+                                        fontSize: 'xs',
+                                        fontWeight: '600',
+                                        textDecoration: 'none',
+                                        transition: 'all 150ms ease',
+                                        _hover: {
+                                            transform: 'translateY(-1px)',
+                                            boxShadow: {
+                                                base: '0 4px 12px rgba(224,123,83,0.3)',
+                                                _dark: '0 4px 12px rgba(224,123,83,0.25)',
+                                            },
+                                        },
+                                    })}
+                                    style={{
+                                        background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
+                                    }}
+                                >
+                                    Öffnen
+                                </Link>
                             </motion.div>
                         )}
                     </AnimatePresence>,
@@ -298,7 +310,9 @@ function RecipeChip({
                         px: '3',
                         py: '1.5',
                         borderRadius: 'full',
-                        bg: isPinned ? { base: 'rgba(248,181,0,0.15)', _dark: 'rgba(248,181,0,0.12)' } : 'surface.muted',
+                        bg: isPinned
+                            ? { base: 'rgba(248,181,0,0.15)', _dark: 'rgba(248,181,0,0.12)' }
+                            : 'surface.muted',
                         border: '1px solid',
                         borderColor: isPinned ? 'rgba(248,181,0,0.3)' : 'transparent',
                         fontSize: 'sm',
@@ -365,7 +379,9 @@ function RecipeChip({
                     <motion.span
                         className={css({ whiteSpace: 'nowrap', position: 'relative' })}
                         variants={{
-                            rest: { color: isPinned ? 'var(--colors-text)' : 'var(--colors-text-muted)' },
+                            rest: {
+                                color: isPinned ? 'var(--colors-text)' : 'var(--colors-text-muted)',
+                            },
                             hover: { color: 'var(--colors-text)' },
                         }}
                         transition={{ duration: 0.2 }}

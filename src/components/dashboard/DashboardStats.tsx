@@ -19,11 +19,12 @@ interface DashboardStatsProps {
 }
 
 function StatCard({ stat }: { stat: StatCard }) {
-    const changeColors = {
-        positive: PALETTE.emerald,
-        negative: '#ff7675',
-        neutral: 'text-muted',
-    };
+    const changeColor =
+        stat.changeType === 'positive'
+            ? PALETTE.emerald
+            : stat.changeType === 'negative'
+              ? '#ff7675'
+              : '#9ca3af';
 
     return (
         <div
@@ -68,12 +69,14 @@ function StatCard({ stat }: { stat: StatCard }) {
                         className={css({
                             fontSize: 'xs',
                             fontWeight: '600',
-                            color: changeColors[stat.changeType || 'neutral'],
-                            background: `${changeColors[stat.changeType || 'neutral']}15`,
                             px: '2',
                             py: '1',
                             borderRadius: 'full',
                         })}
+                        style={{
+                            color: changeColor,
+                            background: `${changeColor}20`,
+                        }}
                     >
                         {stat.change}
                     </span>

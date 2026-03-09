@@ -1,235 +1,433 @@
-# LaneWizard — Multi-Column Recipe Step View
+# LaneWizard — Grid-Based Recipe Editor & Viewer
 
 ## Kernidee
 
-Statt einem Schritt auf einmal (MobileView) oder einer flachen Liste (SimpleTextView) zeigt **LaneWizard** eine **"Phase"** auf einmal — also alle Schritte, die laut Rezeptgraph gleichzeitig passieren können (= dieselbe Dagre-Spalte / dasselbe Rank).
+LaneWizard ersetzt **alles**: FlowEditor (xyflow), RecipeFlow, SimpleTextView, MobileView. Eine einzige Komponente für Erstellen UND Anzeigen von Rezeptabläufen.
 
-Ein Wisch nach rechts → nächste Phase. Das ist kognitiv das Natürlichste beim Kochen:
-*"Was mache ich jetzt alles, bevor ich weiterkomme?"*
+Das Prinzip: Ein **vertikales Grid** (wie eine Tabelle), das von oben nach unten fließt. Spalten = parallele Lanes. Zeilen = sequentielle Schritte. Der Benutzer baut sein Rezept mit drei simplen Operationen:
 
----
+- **(+)** — Schritt hinzufügen (innerhalb einer Lane)
+- **(Split)** — Lane aufteilen (Parallelarbeit starten)
+- **(Merge)** — Lanes zusammenführen (Parallelarbeit beenden)
 
-## Visuelle Struktur (eine Phase / ein Screen)
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  Phase 3 von 7                          ● ● ● ◉ ● ● ●  │  ← Phase-Progress-Dots (swipeable)
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ┌──────────────────┐  ┌──────────────────┐            │
-│  │ 🔥 Anbraten      │  │ 🥣 Marinade       │  ← Lanes  │
-│  │──────────────────│  │──────────────────│            │
-│  │ Zwiebeln bei     │  │ Olivenöl, Knob-  │            │
-│  │ mittl. Hitze...  │  │ lauch, Zitrone   │            │
-│  │                  │  │ vermengen        │            │
-│  │ ⏱ 5:00           │  │                  │            │
-│  │ [▶ Start] [✓]    │  │         [✓]      │            │
-│  └──────────────────┘  └──────────────────┘            │
-│                                                         │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │ 🌡 Ofen vorheizen                                 │  ← Einzelne Lane (volle Breite)
-│  │──────────────────────────────────────────────────│  │
-│  │ Auf 180 °C Ober-/Unterhitze vorheizen            │  │
-│  │                          [✓ Erledigt]            │  │
-│  └──────────────────────────────────────────────────┘  │
-│                                                         │
-├─────────────────────────────────────────────────────────┤
-│  ← Zurück                              Weiter →        │  ← Sticky Nav
-└─────────────────────────────────────────────────────────┘
-```
-
-**Regeln:**
-- 1 Lane in der Phase → volle Breite (wie SimpleTextView)
-- 2 Lanes → 50/50 nebeneinander
-- 3+ Lanes → 33/33/33, oder bei engen Screens: horizontal scrollbar innerhalb der Phase
-- Abgeschlossene Schritte: Karte wird kleiner/gedimmt, aber bleibt sichtbar (kein Wegflipppen)
+Das Grid **ist** der DAG. Kein Graphen-Denken nötig, keine Edges, keine Handles. Strukturell korrekt by design — Zyklen und disconnected Nodes sind unmöglich.
 
 ---
 
-## Datenmodell — was wir schon haben
+## Visuelles Modell
 
-`buildTopology()` liefert exakt das, was wir brauchen:
+### Grundstruktur
 
-```ts
-columnGroups: FlowNodeSerialized[][]
-// columnGroups[i] = alle Knoten in Phase i (sortiert nach dagreY = Lane-Position)
+```
+┌─────────────────────────────┐
+│        🚀 Start             │  ← immer Zeile 0, immer volle Breite
+├─────────────────────────────┤
+│      (+)  (↔ Split)         │  ← Aktionsleiste zwischen Zeilen
+├──────────────┬──────────────┤
+│  🔪 Zwiebeln │  🔪 Karotten │  ← Split erzeugte 2 Lanes
+│  würfeln     │  würfeln     │
+├──────────────┤              │  ← (+) in linker Lane → neue Zeile nur links
+│  🧂 Würzen   │              │     Rechte Lane dehnt sich (leere Zelle)
+│              │              │
+├──────────────┴──────────────┤
+│      (+)  (↔ Split) (⊕ Merge)│ ← Merge-Option erscheint bei >1 Lane
+├─────────────────────────────┤
+│  🔥 Anbraten                │  ← nach Merge wieder 1 Lane
+├─────────────────────────────┤
+│      (+)  (↔ Split)         │
+├──────────────┬──────────────┤
+│  🍳 Soße     │  🍳 Pasta    │  ← erneuter Split
+│  köcheln     │  kochen      │
+│  ⏱ 25:00     │  ⏱ 11:00     │
+├──────────────┤              │  ← Soße hat mehr Zeilen als Pasta
+│  🧂 Ab-      │              │     Pasta-Lane dehnt sich automatisch
+│  schmecken   │              │
+├──────────────┴──────────────┤
+│        🍽 Anrichten          │  ← Merge
+├─────────────────────────────┤
+│        ✅ Servieren          │  ← immer letzte Zeile, immer volle Breite
+└─────────────────────────────┘
 ```
 
-Der **dagreY-Wert** bestimmt, welche Lane ein Knoten in einer Phase gehört:
-- Gleicher dagreY → gleiche Zeile (sind jedoch im echten Graphen eher selten exakt gleich)
-- Wir können dagreY zur Sortierung nutzen; verschiedene Y-Werte in derselben Spalte = parallele Lanes
+### 3+ Lanes (komplexes Beispiel)
 
-Ein `laneGroups`-Helper (innerhalb von LaneWizard) gruppiert die Knoten einer Phase nach ihrer Spur:
+```
+┌─────────────────────────────────────────┐
+│              🚀 Start                    │
+├─────────────┬─────────────┬─────────────┤
+│  🔪 Gemüse  │  🍳 Brühe   │  🫕 Ofen    │  ← 3 Lanes nach Split
+│  schneiden  │  aufsetzen  │  vorheizen  │
+├─────────────┤             │             │
+│  🧂 Würzen  │             │             │  ← nur Lane 1 hat extra Zeile
+│             │             │             │     Lane 2+3 dehnen sich
+├─────────────┴─────────────┤             │
+│  🔥 Gemüse in Brühe       │             │  ← Partial Merge: Lane 1+2
+│  geben                    │             │     Lane 3 läuft weiter
+├────────────────────────────┴─────────────┤
+│              🍽 Anrichten                 │  ← finaler Merge aller Lanes
+└──────────────────────────────────────────┘
+```
 
-```ts
-// Innerhalb einer Phase: Knoten per dagreY-Cluster zu Lanes gruppieren
-function toLaneRows(
-  nodes: FlowNodeSerialized[],
-  dagreY: Map<string, number>
-): FlowNodeSerialized[][] {
-  // Knoten sind bereits nach dagreY sortiert (buildTopology macht das)
-  // Einfach als einzelne Lanes behandeln (jeder Knoten eine eigene Lane),
-  // da dagre Knoten auf diskrete Y-Positionen legt.
-  return nodes.map(n => [n]);
+---
+
+## Die drei Operationen
+
+### (+) Schritt hinzufügen
+
+- Erscheint am **unteren Rand jeder einzelnen Lane**
+- Jede Lane hat ihren eigenen (+) Button — unabhängig von Geschwister-Lanes
+- Klick öffnet den **Step-Type-Picker** (gleiche Icons/Farben wie bisher: schneiden, kochen, braten, backen, mixen, warten, würzen, anrichten)
+- Erzeugt eine neue Zeile **nur in dieser Lane**
+- Geschwister-Lanes dehnen sich automatisch (leere Zelle, kein Inhalt)
+
+### (↔ Split) Lane aufteilen
+
+- Erscheint in der **Aktionsleiste zwischen Zeilen** (nur bei hover/tap)
+- Erzeugt eine neue Zeile mit N+1 Spalten
+- Jede neue Spalte zeigt eine **leere Zelle** mit Step-Type-Icons zum Anklicken
+- Split ist nur möglich, wenn die aktuelle Zeile eine einzige Lane hat ODER am Ende aller aktuellen Lanes
+
+### (⊕ Merge) Lanes zusammenführen
+
+- Erscheint nur wenn **>1 Lane** aktiv ist
+- Merge führt immer **mindestens 2 Lanes** zusammen, kann aber auch **alle** mergen
+- **2 Lanes**: Klick merged sofort beide zu 1 Lane (kein Auswahl-Dialog nötig)
+- **3+ Lanes**: Klick zeigt eine **Checkbox-Overlay** über den Lanes — Benutzer wählt mindestens 2 Lanes aus. Kann alle auswählen für vollständigen Merge. Nicht ausgewählte Lanes laufen unverändert weiter.
+- **Lanes werden beim Merge automatisch umsortiert.** Wenn der Benutzer nicht-benachbarte Lanes auswählt (z.B. A+C bei `[A] [B] [C]`), ordnet das Grid die Lanes automatisch so um, dass die ausgewählten Lanes nebeneinander liegen, bevor der Merge ausgeführt wird. Kein manuelles Drag nötig — das System macht das Richtige.
+- **Merge erzeugt immer einen neuen Schritt (Node).** Der Benutzer muss beschreiben, was beim Zusammenführen passiert — z.B. "Pasta mit Soße vermengen" oder "Alles in die Auflaufform geben". Der Step-Type-Picker öffnet sich direkt nach dem Merge. Typische Typen für Merge-Schritte: `anrichten`, `mixen`, `kochen`, aber jeder Typ ist erlaubt.
+- Nach Merge: die gemergte Zeile enthält den neuen Schritt über die zusammengeführten Lanes hinweg
+
+### Aktionsleiste
+
+**Per Lane:** Jede Lane hat ihren eigenen (+) am unteren Rand.
+
+**Zwischen Segmenten** (volle Breite, zwischen Zeilen):
+```
+Einzelne Lane:     ──── (↔ Split) ────
+Mehrere Lanes:     ──── (↔ Split) ──── (⊕ Merge) ────
+```
+
+- Segment-Aktionen erscheinen **am Ende des aktuellen Segments** im Edit-Modus
+- Im View-Modus (Kochen) sind alle Aktionsleisten unsichtbar
+- (↔) splittet die aktuelle Lane-Struktur in mehr Lanes
+- (⊕) merged ausgewählte Lanes zusammen
+
+---
+
+## Leere Zellen (Lane-Stretching)
+
+Wenn eine Lane mehr Zeilen hat als ihre Geschwister, dehnen sich die kürzeren Lanes automatisch:
+
+```
+┌──────────────┬──────────────┐
+│  🍳 Soße     │  🍳 Pasta    │  ← Zeile 1: beide gefüllt
+│  köcheln     │  kochen      │
+│  ⏱ 25:00     │  ⏱ 11:00     │
+├──────────────┤              │
+│  🧂 Ab-      │              │  ← Zeile 2: nur links gefüllt
+│  schmecken   │   (leer)     │     rechts = leere Zelle, gleiche Höhe
+├──────────────┤              │
+│  🌿 Basilikum│              │  ← Zeile 3: nur links gefüllt
+│  einrühren   │   (leer)     │
+├──────────────┴──────────────┤
+```
+
+**Leere Zellen** im Edit-Modus:
+- Zeigen Step-Type-Icons (blasse Silhouetten) zum Anklicken
+- Oder bleiben leer mit gestricheltem Rand
+
+**Leere Zellen** im View-Modus:
+- Unsichtbar (kein Rand, kein Hintergrund)
+- Lane-Breite wird an die gefüllten Zellen verteilt
+
+---
+
+## Zellen-Inhalt (identisch zu bisherigen Nodes)
+
+Jede gefüllte Zelle hat die **gleichen Funktionen** wie die bisherigen xyflow-Nodes:
+
+### Anzeige
+- **Step-Type-Farbe** als Hintergrund (gleiche Farben wie stepConfig.ts)
+- **Icon** + **Typ-Label** (z.B. 🔥 Braten)
+- **Titel** (fett, z.B. "Zwiebeln anbraten")
+- **Beschreibung** mit **@Zutaten-Mentions** als farbige Chips
+- **Dauer-Badge** (z.B. "8 Min.")
+- **Foto-Thumbnail** (optional, aus S3)
+- **Zutaten-Chips** unterhalb der Beschreibung
+
+### Timer (View-Modus)
+- Timer-Fortschritt füllt die **Hintergrundfarbe der Zelle von links nach rechts**
+- Start/Pause/Reset-Buttons innerhalb der Zelle
+- Zeitanzeige: `MM:SS`
+- Bei Timer-Ende: "Fertig!"-Button erscheint
+
+```
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│     │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│     │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+│▓▓ 🔥 Braten ▓▓▓▓▓│     │▓▓ 🔥 Braten ▓▓▓▓▓│     │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+│▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│     │▓▓▓▓▓ 3:24 ▓▓▓▓▓▓│     │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+│▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│     │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│     │▓▓▓ ✅ Fertig! ▓▓▓│
+│                  │     │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│     │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+│  [▶ Start]       │     │                  │     │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+│                  │     │  [⏸] [↺]         │     │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+└──────────────────┘     └──────────────────┘     └──────────────────┘
+     idle                    60% done                  100% done
+```
+
+### Erledigt-State (View-Modus)
+- Zelle wird gedimmt (opacity 0.55)
+- Titel durchgestrichen
+- Check-Circle oben rechts
+
+### Edit-Modus (Zelle bearbeiten)
+- Klick auf Zelle → Inline-Edit-Panel expandiert (oder Modal)
+- Felder: Typ-Wechsel, Titel, Dauer, Beschreibung (@mentions), Foto-Upload
+- Gleiche Inputs wie bisheriges NodeEditPanel
+
+---
+
+## Datenmodell
+
+### `LaneStep` (Runtime)
+
+```typescript
+interface LaneStep {
+    id: string;
+    type: StepType;          // 'start' | 'schneiden' | 'kochen' | ... | 'servieren'
+    label: string;
+    description: string;     // Plaintext oder @[Name](id) Mentions
+    duration?: number;       // Minuten
+    photoKey?: string;       // S3-Key
+    photoUrl?: string;
+    ingredientIds?: string[];
+    continuation?: boolean;  // Runtime-only: visueller Filler nach Partial-Merge, nie gespeichert
 }
 ```
 
-Da dagre jeden Knoten auf eine eindeutige Y-Position legt, hat jeder Knoten in einer Phase seine eigene "Zeile" (Lane). Mehrere Knoten in derselben Phase = Parallelarbeit → werden nebeneinander dargestellt.
+### `LaneSegment`
+
+```typescript
+interface LaneSegment {
+    id: string;
+    lanes: LaneStep[][];     // lanes[laneIndex][stepIndex]
+    columnSpans: number[];   // Breite jeder Lane in fr-Einheiten
+                             // Summe = effektive Spaltenanzahl
+                             // z.B. [3] = volle Breite, [2,1] = 2/3+1/3, [1,1,1] = drei gleich
+                             // lanes.length === columnSpans.length immer
+}
+```
+
+### `LaneGrid` (gesamtes Rezept)
+
+```typescript
+interface LaneGrid {
+    segments: LaneSegment[];   // von oben nach unten; Split/Merge erzeugt neues Segment
+}
+```
+
+### Spalten-Vererbung (`columnSpans`)
+
+Jedes Segment erbt seinen Spalten-Kontext vom Vorgänger. Beispiel:
+
+```
+seg-start:    columnSpans: [3]      → 1 Lane, volle 3-Spalten-Breite
+seg-parallel: columnSpans: [1,1,1]  → 3 gleiche Lanes
+seg-merge:    columnSpans: [3]      → wieder volle Breite
+seg-2lanes:   columnSpans: [2,1]    → 2/3 + 1/3 (erbt 3-Spalten-Kontext)
+```
+
+Beim Hinzufügen einer Lane zu einem Segment mit `columnSpans: [3]` entsteht `[2,1]` (nicht `[1,1]`), weil der 3-Spalten-Kontext berücksichtigt wird.
+
+### DB-Speicherung
+
+Prisma `Recipe` Modell — ein einziges JSON-Feld:
+```prisma
+model Recipe {
+  // ... bestehende Felder ...
+  laneGrid    Json?      // LaneGridStored als JSON — ersetzt flowNodes + flowEdges
+}
+```
+
+`flowNodes` und `flowEdges` werden vollständig entfernt. Keine Datenmigration nötig.
+
+### Gespeichertes Format (`LaneGridStored`)
+
+Identisch zur Runtime-Struktur, aber `continuation`-Steps werden **nie gespeichert** — sie sind abgeleiteter Zustand.
+
+```typescript
+type LaneStepStored    = Omit<LaneStep, 'continuation'>;
+type LaneSegmentStored = { id: string; lanes: LaneStepStored[][]; columnSpans: number[] };
+type LaneGridStored    = { segments: LaneSegmentStored[] };
+```
+
+Vollständiges Zod-Schema + OpenAI Response Format: `src/lib/importer/lane-grid-ai-schema.ts`
 
 ---
 
-## Komponenten-Architektur
+## Horizontaler Overflow & Mobile-Navigation
+
+Wenn Lanes breiter als der Bildschirm sind (typisch: >2 Lanes auf Mobile, >4 auf Desktop):
+
+### Scroll-Verhalten
+- Grid wird horizontal scrollbar mit **Scroll-Snapping** an Lane-Grenzen (`scroll-snap-type: x mandatory`)
+- Touch: Swipe horizontal zum Scrollen zwischen Lanes
+- Desktop: Scroll-Pfeile links/rechts
+
+### Lane-Indicator (Minimap für parallele Schritte)
+
+Über dem Segment erscheint eine **Lane-Leiste** — zeigt alle parallelen Lanes als benannte Tabs:
 
 ```
-LaneWizardView.tsx          ← neue Hauptkomponente (Datei: src/components/flow/viewer/LaneWizardView.tsx)
-├── LaneWizardPhaseHeader   ← Phase-Nummer + Progress-Dots
-├── LaneCard                ← eine Karte für einen Schritt (wiederverwendet StepCard-Logik)
-│   ├── Timer-Controls      ← aus MobileView extrahiert oder inline
-│   └── Done-Button         ← dispatch({ type: 'toggle' })
-└── LaneWizardNav           ← Zurück/Weiter + Swipe-Handler
+┌─────────────────────────────────────────────┐
+│  [🍳 Soße köcheln]  [🍳 Pasta kochen]  ←→  │  ← Lane-Tabs mit Schritt-Name + Icon
+├─────────────────────────────────────────────┤
+│                                             │
+│  Aktuell sichtbare Lane                     │
+│                                             │
+└─────────────────────────────────────────────┘
 ```
 
-**Kein neuer State-Manager nötig** — LaneWizardView bekommt dieselben Props wie SimpleTextView:
-```ts
-{
-  columnGroups: FlowNodeSerialized[][];
-  dagreY: Map<string, number>;
-  completed: Set<string>;
-  timers: Map<string, TimerState>;
-  dispatch: Dispatch<ViewerAction>;
-  ingredients?: RecipeStepsViewerProps['ingredients'];
+---
+
+## Zwei Modi: Edit & View
+
+### Edit-Modus (Rezept erstellen/bearbeiten)
+
+- Aktionsleisten zwischen Zeilen sichtbar: (+), (↔ Split), (⊕ Merge)
+- Leere Zellen zeigen Step-Type-Icons zum Anklicken
+- Zellen klickbar → öffnet Inline-Edit
+- Start-Zelle (oben) und Servieren-Zelle (unten) immer vorhanden, nicht löschbar
+- Delete-Button (×) auf jeder Zelle bei Hover
+- Add-Lane-Buttons (+) erscheinen links/rechts bei Hover auf ein Segment
+
+### View-Modus (Rezept kochen)
+
+- Keine Aktionsleisten, keine Edit-Buttons
+- Timer-Controls in Zellen mit Dauer
+- Done-Checkboxes auf jeder Zelle
+- Fortschrittsanzeige: erledigte Zellen zählen gegen Gesamtanzahl
+- Leere Zellen unsichtbar
+- Timer füllt Hintergrund von links nach rechts
+
+---
+
+## Komponenten-Architektur (aktuell implementiert)
+
+```
+src/components/lane-wizard/
+├── index.ts                ← Barrel exports
+├── types.ts                ← LaneStep, LaneSegment, LaneGrid, LaneAction, LaneGridStored, …
+├── gridReducer.ts          ← Reducer + column helpers (distribute, scaleSpans, propagate,
+│                              normalizeLaneGrid, serializeLaneGrid, deserializeLaneGrid)
+├── useTimers.ts            ← Timer-Intervall-Management (start, pause, reset)
+├── LaneWizard.tsx          ← Hauptkomponente: useReducer + Layout + Segment-Loop
+├── StepCard.tsx            ← Zellen-Rendering (edit + view, Timer, DoneToggle, continuation)
+├── SegmentDivider.tsx      ← Hover-Zone zwischen Segmenten (+ Split + Merge)
+├── StepTypePicker.tsx      ← Step-Typ-Auswahl (inline + floating)
+└── MergeOverlay.tsx        ← Checkbox-Dialog für Partial-Merge (3+ Lanes)
+```
+
+**Noch nicht implementiert:**
+- `StepEditPanel` — Inline-Edit für Label, Beschreibung, Dauer, Foto-Upload
+- `onChange` Callback (aktuell nur interner State)
+- @mentions in Beschreibungen
+- Mobile Lane-Tabs / Overflow-Scroll
+
+---
+
+## Props (Ziel-Interface)
+
+```typescript
+interface LaneWizardProps {
+    initialGrid: LaneGrid;
+    ingredients?: AddedIngredient[];    // für @mentions
+
+    mode?: 'edit' | 'view';
+
+    // Edit
+    onChange?: (grid: LaneGrid) => void;
+
+    // View-State (extern steuerbar, z.B. für Server-Side-Restore)
+    completed?: Set<string>;
+    timers?: Map<string, TimerState>;
+    onToggleComplete?: (stepId: string) => void;
+    onTimerAction?: (stepId: string, action: 'start' | 'pause' | 'reset') => void;
 }
 ```
 
 ---
 
-## Swipe-Logik
+## Farbschema (Zellen-States)
 
-Sehr simpel — nur horizontales Swipen zwischen Phasen, kein vertikales Navigieren mehr nötig (weil alle Lanes einer Phase gleichzeitig sichtbar sind):
-
-```ts
-const [phaseIndex, setPhaseIndex] = useState(0);
-
-// Touch-Handler (wie in MobileView, vereinfacht):
-const swipeThreshold = 50;
-let touchStartX = 0;
-
-onTouchStart: (e) => { touchStartX = e.touches[0].clientX; }
-onTouchEnd: (e) => {
-  const dx = touchStartX - e.changedTouches[0].clientX;
-  if (dx > swipeThreshold && phaseIndex < columnGroups.length - 1) setPhaseIndex(p => p + 1);
-  if (dx < -swipeThreshold && phaseIndex > 0) setPhaseIndex(p => p - 1);
-}
+```
+Ausstehend:     bg: white              border: rgba(224,123,83,0.2)    text: normal
+Aktiv/Timer:    bg: step-color fill →  border: #f39c12                 text: normal
+Erledigt:       bg: rgba(0,184,148,0.06)  border: rgba(0,184,148,0.3) text: line-through, opacity 0.55
+Leer (edit):    bg: rgba(0,0,0,0.02)   border: 1px dashed rgba(0,0,0,0.1)
+Leer (view):    unsichtbar
+Continuation:   bg: step-color (flach) flexGrow: 1 — visueller Filler, kein Inhalt
 ```
 
 ---
 
-## Phasen-Fortschritt (intelligente Progress-Dots)
+## Was verschwindet
 
-Eine Phase gilt als **abgeschlossen**, wenn alle Schritte in `columnGroups[i]` in `completed` sind.
-
-```ts
-const phaseStatus = columnGroups.map(group =>
-  group.every(n => n.type === 'start' || completed.has(n.id))
-    ? 'done'
-    : group.some(n => completed.has(n.id))
-      ? 'partial'
-      : 'pending'
-);
-```
-
-Progress-Dots: ✅ grün / 🟧 halb (orange Ring) / ⬜ leer.
-
----
-
-## Wo einbinden
-
-`RecipeStepsViewer.tsx` hat bereits einen `viewMode`-Schalter (`'simple' | 'mobile'`). Wir fügen `'lane'` hinzu:
-
-```tsx
-// In RecipeStepsViewer.tsx
-{viewMode === 'lane' && (
-  <LaneWizardView
-    columnGroups={columnGroups}
-    dagreY={dagreY}
-    completed={state.completed}
-    timers={state.timers}
-    dispatch={dispatch}
-    ingredients={ingredients}
-  />
-)}
-```
-
-Ein Button-Toggle im Header der `RecipeStepsViewer`-Komponente (neben dem existierenden Graph/Liste-Schalter) schaltet zwischen den Modi um.
-
----
-
-## Mock-Implementierung (Phase 1 — nur UI)
-
-Die erste Version ist **nur ein Mock** — kein echter State, hardcodierte Daten:
-
-```
-src/components/flow/viewer/LaneWizardView.tsx   ← neue Datei
-src/app/lane-wizard-mock/page.tsx               ← Testpage mit Mock-Daten
-```
-
-**Mock-Datensatz** (Beispielrezept "Pasta Bolognese"):
-- Phase 1: [Wasser aufsetzen]
-- Phase 2: [Zwiebeln schneiden], [Knoblauch pressen], [Karotten würfeln]
-- Phase 3: [Anbraten]
-- Phase 4: [Soße köcheln], [Pasta kochen]
-- Phase 5: [Servieren]
-
----
-
-## Visual Design-Prinzipien
-
-| Prinzip | Umsetzung |
+| Komponente | Ersatz |
 |---|---|
-| Klare Phasen-Trennung | Große Phase-Nummer oben, schwache Trennlinie |
-| Parallelarbeit sichtbar | Nebeneinander-Karten, gleiche Höhe innerhalb Phase |
-| Fortschritt greifbar | Karte wird bei ✓ grün+durchgestrichen, schrumpft leicht |
-| Timer sofort erkennbar | Großes Zeitdisplay oben in der Karte, Fortschrittsbalken |
-| Kein scrollen nötig | Max 3-4 Schritte pro Phase typischerweise; bei mehr: Karten verkleinern |
-| Light Mode | Heller Hintergrund (im Gegensatz zur dunklen MobileView) |
-| Touch-First | Swipe between phases, tap targets ≥ 44px |
-
----
-
-## Farbschema (Karten-States)
-
-```
-Ausstehend:     bg: white          border: rgba(224,123,83,0.2)   text: normal
-Aktiv/Timer:    bg: rgba(243,156,18,0.06)  border: #f39c12       text: normal
-Erledigt:       bg: rgba(0,184,148,0.06)   border: rgba(0,184,148,0.3)  text: line-through, opacity 0.7
-```
-
----
-
-## Abgrenzung zu bestehenden Views
-
-| Feature | SimpleTextView | MobileView | LaneWizardView |
-|---|---|---|---|
-| Alle Schritte sichtbar | ✅ | ❌ (1 auf einmal) | ✅ (pro Phase) |
-| Parallelität erkennbar | ❌ (flache Liste) | ✅ (Branching-Hints) | ✅ (Nebeneinander-Karten) |
-| Swipe-Navigation | ❌ | ✅ | ✅ |
-| Ohne xyflow | ✅ | ✅ | ✅ |
-| Optimal für Cast/TV | ❌ | ✅ | ✅ |
-| Optimal für Desktop | ✅ | ❌ | ✅ |
+| `FlowEditor.tsx` (xyflow) | LaneWizard edit-Modus |
+| `RecipeFlow.tsx` (custom viewer) | LaneWizard view-Modus |
+| `SimpleTextView` | LaneWizard mit 1 Lane |
+| `MobileView` | LaneWizard ist touch-first |
+| `@xyflow/react` | Dependency entfällt |
+| `dagre` | Kein Layout-Algorithmus nötig |
+| `editor/RecipeNode.tsx` | `StepCard.tsx` |
+| `editor/NodeEditPanel.tsx` | `StepEditPanel.tsx` (noch zu bauen) |
+| `editor/NodePalette.tsx` | `StepTypePicker.tsx` |
+| `editor/FlowEditorContext.ts` | Nicht mehr nötig |
+| `editor/useFlowAutoLayout.ts` | Grid braucht kein Auto-Layout |
+| `recipe.flowNodes` + `recipe.flowEdges` | `recipe.laneGrid` (ein JSON-Feld) |
 
 ---
 
 ## Implementierungs-Reihenfolge
 
-1. **`/lane-wizard-mock/page.tsx`** — statische Mock-Page mit hardcodierten Daten (kein echter State, kein Dispatch). Nur Optik + Swipe.
-2. **`LaneWizardView.tsx`** — echte Komponente mit Props + `dispatch` (viewerReducer).
-3. **In `RecipeStepsViewer.tsx` einhängen** — als dritten `viewMode`.
-4. **(Optional)** Als Cast-Receiver-View verwenden — großer TV-Bildschirm profitiert vom Nebeneinander-Layout.
+### Phase 1: Mock ✅
+- `/lane-wizard-mock/page.tsx` mit hardcodierten Daten
+- LaneWizard Komponente mit Edit + View Modus
+- Alle drei Operationen funktional: (+), Split, Merge
+- Step-Type-Picker, Zellen-Styling, Timer
+- Column-Inheritance-System (`columnSpans`, `propagate`, `scaleSpans`)
+- Serialisierung: `serializeLaneGrid` / `deserializeLaneGrid`
+- Zod-Schema + OpenAI Response Format: `lane-grid-ai-schema.ts`
+
+### Phase 2: Echte Komponente
+- `StepEditPanel` mit Titel, Beschreibung (@mentions), Dauer, Foto-Upload
+- `onChange` Callback aus LaneWizard nach außen
+- In `RecipeForm.tsx` einbinden (ersetzt FlowEditor)
+
+### Phase 3: DB-Migration
+- `laneGrid Json?` zu Prisma Schema hinzufügen, `flowNodes` + `flowEdges` entfernen
+- `createActions.ts` / `updateActions.ts` anpassen (`serializeLaneGrid` / `deserializeLaneGrid`)
+- Recipe Detail Page: LaneWizard im View-Modus
+
+### Phase 4: Aufräumen
+- xyflow + dagre Dependencies entfernen
+- Alte Editor-Dateien löschen (FlowEditor, RecipeFlow, SimpleTextView, MobileView)
+- `openai-recipe-schema.ts` → `lane-grid-ai-schema.ts` in AI-Importer einbinden
+- GAMEPLAN.md aktualisieren
+
+### Phase 5: Polish
+- Mobile Lane-Tabs + horizontales Scroll-Snapping
+- Drag & Drop zum Umordnen von Schritten
+- Keyboard shortcuts (Delete, Escape)
+- Animationen (Segment-Übergänge)
 
 ---
 
-## Offene Fragen / Entscheidungen
+## Offene Design-Entscheidungen
 
-- **Kartenbreite bei vielen Lanes**: Ab 4+ Lanes in einer Phase → horizontal scroll innerhalb der Phase? Oder Karten compacten?
-- **Start/Servieren-Knoten**: Wie beim SimpleTextView und MobileView — als Sonderfall darstellen (zentriert, volle Breite, anderes Styling)?
-- **Nächste Phase auto-vorwärts**: Wenn alle Karten einer Phase ✓ sind → automatisch zur nächsten Phase wechseln? (Opt-in)
+1. **Leere Zellen im Edit-Modus**: Step-Type-Icons direkt anzeigen oder erst bei Klick/Hover? → aktuell: direkt anzeigen (inline StepTypePicker)
+2. **Zellen-Edit**: Inline-Expand (Akkordeon unter der Zelle) oder Side-Panel? → offen
+3. **Maximum Lanes**: Hard-Limit bei 5? Oder unbegrenzt mit Scroll?
+4. **Auto-Advance im View-Modus**: Wenn alle Zellen einer Zeile erledigt → automatisch nächste Zeile highlighten?
+5. **Merge-Step-Typ**: Aktuell immer `anrichten` vorausgewählt — sollte der Step-Type-Picker nach dem Merge öffnen?

@@ -54,7 +54,7 @@ export function HeaderAuth() {
                         height: '24px',
                         borderRadius: '50%',
                         border: '2px solid',
-                        borderColor: 'rgba(224,123,83,0.3)',
+                        borderColor: { base: 'rgba(224,123,83,0.3)', _dark: 'rgba(224,123,83,0.35)' },
                         borderTopColor: 'palette.orange',
                         animation: 'spin 1s linear infinite',
                     })}
@@ -154,7 +154,7 @@ export function HeaderAuth() {
                                 borderColor: 'primary',
                             },
                             _focusVisible: {
-                                boxShadow: '0 0 0 3px rgba(224,123,83,0.35)',
+                                boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.35)', _dark: '0 0 0 3px rgba(224,123,83,0.4)' },
                             },
                         })}
                     >
@@ -171,7 +171,7 @@ export function HeaderAuth() {
                             border: '1px solid',
                             borderColor: 'border',
                             padding: '3',
-                            boxShadow: '0 30px 80px rgba(0,0,0,0.14)',
+                            boxShadow: { base: '0 30px 80px rgba(0,0,0,0.14)', _dark: '0 30px 80px rgba(0,0,0,0.5)' },
                             zIndex: 100,
                             display: 'flex',
                             flexDirection: 'column',
@@ -212,7 +212,7 @@ export function HeaderAuth() {
                                     transition: 'all 150ms ease',
                                     _hover: {
                                         borderColor: 'red.500',
-                                        boxShadow: '0 10px 30px rgba(224,123,83,0.25)',
+                                        boxShadow: { base: '0 10px 30px rgba(224,123,83,0.25)', _dark: '0 10px 30px rgba(224,123,83,0.3)' },
                                     },
                                 })}
                             >
@@ -245,7 +245,7 @@ export function HeaderAuth() {
                 transition: 'all 150ms ease',
                 _hover: {
                     borderColor: 'primary',
-                    boxShadow: '0 4px 12px rgba(224,123,83,0.3)',
+                    boxShadow: { base: '0 4px 12px rgba(224,123,83,0.3)', _dark: '0 4px 12px rgba(224,123,83,0.35)' },
                 },
             })}
         >

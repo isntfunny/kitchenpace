@@ -98,7 +98,7 @@ export function NodeCard({
                 transition: 'all 0.2s ease',
                 _hover: {
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                    boxShadow: { base: '0 4px 16px rgba(0,0,0,0.12)', _dark: '0 4px 16px rgba(0,0,0,0.3)' },
                 },
                 position: 'relative',
                 overflow: 'hidden',
@@ -239,7 +239,7 @@ export function NodeCard({
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         _hover: {
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                            boxShadow: { base: '0 2px 6px rgba(0,0,0,0.1)', _dark: '0 2px 6px rgba(0,0,0,0.3)' },
                         },
                         display: 'inline-flex',
                         alignItems: 'center',

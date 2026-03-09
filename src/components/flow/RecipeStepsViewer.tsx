@@ -173,7 +173,7 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                         bg: 'surface',
                         borderRadius: 'xl',
                         border: '1px solid',
-                        borderColor: 'rgba(224,123,83,0.12)',
+                        borderColor: { base: 'rgba(224,123,83,0.12)', _dark: 'rgba(224,123,83,0.15)' },
                         overflow: 'hidden',
                         position: 'relative',
                     })}
@@ -191,9 +191,9 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                                 py: '1',
                                 px: '2.5',
                                 borderRadius: 'full',
-                                border: '1px solid rgba(224,123,83,0.25)',
-                                bg: 'rgba(255,255,255,0.9)',
-                                color: '#c45e30',
+                                border: { base: '1px solid rgba(224,123,83,0.25)', _dark: '1px solid rgba(224,123,83,0.3)' },
+                                bg: { base: 'rgba(255,255,255,0.9)', _dark: 'rgba(30,33,38,0.9)' },
+                                color: 'palette.orange',
                                 fontSize: 'xs',
                                 fontWeight: '600',
                                 cursor: 'pointer',
@@ -213,9 +213,9 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                                 py: '1',
                                 px: '2.5',
                                 borderRadius: 'full',
-                                border: '1px solid rgba(224,123,83,0.25)',
-                                bg: 'rgba(255,255,255,0.9)',
-                                color: '#c45e30',
+                                border: { base: '1px solid rgba(224,123,83,0.25)', _dark: '1px solid rgba(224,123,83,0.3)' },
+                                bg: { base: 'rgba(255,255,255,0.9)', _dark: 'rgba(30,33,38,0.9)' },
+                                color: 'palette.orange',
                                 fontSize: 'xs',
                                 fontWeight: '600',
                                 cursor: 'pointer',
@@ -261,7 +261,7 @@ export function RecipeStepsViewer({ nodes, edges, ingredients, recipeSlug }: Rec
                         className={css({
                             bg: 'background',
                             borderBottom: '1px solid',
-                            borderColor: 'rgba(224,123,83,0.1)',
+                            borderColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
                         })}
                     >
                         <span className={css({ fontWeight: 'bold', fontSize: 'md', color: 'text' })}>

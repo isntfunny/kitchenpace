@@ -326,7 +326,7 @@ export function NodeEditPanel({
 const overlayClass = css({
     position: 'fixed',
     inset: '0',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'surface.overlay',
     backdropFilter: 'blur(4px)',
     zIndex: '40',
     display: 'flex',
@@ -340,9 +340,9 @@ const panelClass = css({
     width: '100%',
     maxWidth: '500px',
     maxHeight: '90vh',
-    backgroundColor: 'white',
+    backgroundColor: 'surface',
     borderRadius: '2xl',
-    boxShadow: '0 24px 48px rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.04)',
+    boxShadow: { base: '0 24px 48px rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.04)', _dark: '0 24px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06)' },
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -363,7 +363,7 @@ const headerIconWrapClass = css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: { base: 'rgba(255,255,255,0.7)', _dark: 'rgba(255,255,255,0.12)' },
     borderRadius: 'xl',
     backdropFilter: 'blur(8px)',
     flexShrink: '0',
@@ -381,7 +381,7 @@ const headerTypeClass = css({
 const headerSubtitleClass = css({
     display: 'block',
     fontSize: 'xs',
-    color: 'rgba(45,52,54,0.6)',
+    color: { base: 'rgba(45,52,54,0.6)', _dark: 'rgba(255,255,255,0.5)' },
     mt: '0.5',
 });
 
@@ -394,13 +394,13 @@ const closeButtonClass = css({
     borderRadius: 'lg',
     cursor: 'pointer',
     border: 'none',
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: { base: 'rgba(255,255,255,0.5)', _dark: 'rgba(255,255,255,0.1)' },
     color: 'text',
     backdropFilter: 'blur(8px)',
     transition: 'all 0.15s ease',
     flexShrink: '0',
     _hover: {
-        backgroundColor: 'rgba(255,255,255,0.8)',
+        backgroundColor: { base: 'rgba(255,255,255,0.8)', _dark: 'rgba(255,255,255,0.2)' },
         transform: 'scale(1.05)',
     },
 });
@@ -464,15 +464,17 @@ const labelClass = css({
 
 const inputClass = css({
     p: '2.5',
-    border: '1px solid rgba(224,123,83,0.3)',
+    border: { base: '1px solid rgba(224,123,83,0.3)', _dark: '1px solid rgba(224,123,83,0.25)' },
     borderRadius: 'xl',
     fontSize: 'sm',
     fontFamily: 'body',
     outline: 'none',
+    backgroundColor: 'surface',
+    color: 'text',
     transition: 'all 0.15s ease',
     _focus: {
         borderColor: 'brand.primary',
-        boxShadow: '0 0 0 3px rgba(224,123,83,0.12)',
+        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.12)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
     },
 });
 
@@ -487,12 +489,13 @@ const durationWrapClass = css({
     alignItems: 'center',
     gap: '1.5',
     p: '2.5',
-    border: '1px solid rgba(224,123,83,0.3)',
+    border: { base: '1px solid rgba(224,123,83,0.3)', _dark: '1px solid rgba(224,123,83,0.25)' },
     borderRadius: 'xl',
+    backgroundColor: 'surface',
     transition: 'all 0.15s ease',
     _focusWithin: {
         borderColor: 'brand.primary',
-        boxShadow: '0 0 0 3px rgba(224,123,83,0.12)',
+        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.12)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
     },
 });
 
@@ -503,6 +506,8 @@ const durationInputClass = css({
     fontSize: 'sm',
     fontFamily: 'body',
     textAlign: 'center',
+    backgroundColor: 'transparent',
+    color: 'text',
     appearance: 'textfield',
     /* Chrome: hide spinner */
     '&::-webkit-inner-spin-button, &::-webkit-outer-spin-button': {
@@ -533,11 +538,11 @@ const typeButtonClass = css({
     border: '2px solid transparent',
     borderRadius: 'xl',
     cursor: 'pointer',
-    backgroundColor: 'rgba(0,0,0,0.02)',
+    backgroundColor: { base: 'rgba(0,0,0,0.02)', _dark: 'rgba(255,255,255,0.04)' },
     transition: 'all 0.15s ease',
     _hover: {
         transform: 'translateY(-1px)',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        boxShadow: { base: '0 2px 8px rgba(0,0,0,0.08)', _dark: '0 2px 8px rgba(0,0,0,0.25)' },
     },
 });
 
@@ -560,7 +565,7 @@ const typeCheckClass = css({
     backgroundColor: 'brand.primary',
     color: 'white',
     borderRadius: 'full',
-    border: '2px solid white',
+    border: { base: '2px solid white', _dark: '2px solid {colors.surface}' },
 });
 
 const uploadButtonClass = css({
@@ -569,9 +574,9 @@ const uploadButtonClass = css({
     justifyContent: 'center',
     gap: '2',
     py: '3',
-    border: '2px dashed rgba(224,123,83,0.3)',
+    border: { base: '2px dashed rgba(224,123,83,0.3)', _dark: '2px dashed rgba(224,123,83,0.25)' },
     borderRadius: 'xl',
-    backgroundColor: 'rgba(224,123,83,0.02)',
+    backgroundColor: { base: 'rgba(224,123,83,0.02)', _dark: 'rgba(224,123,83,0.05)' },
     color: 'text.muted',
     fontSize: 'sm',
     fontWeight: '500',
@@ -580,7 +585,7 @@ const uploadButtonClass = css({
     _hover: {
         borderColor: 'brand.primary',
         color: 'brand.primary',
-        backgroundColor: 'rgba(224,123,83,0.05)',
+        backgroundColor: { base: 'rgba(224,123,83,0.05)', _dark: 'rgba(224,123,83,0.1)' },
     },
     _disabled: { opacity: '0.6', cursor: 'not-allowed' },
 });
@@ -591,8 +596,8 @@ const footerClass = css({
     justifyContent: 'space-between',
     px: '4',
     py: '3',
-    borderTop: '1px solid rgba(0,0,0,0.06)',
-    backgroundColor: 'rgba(0,0,0,0.01)',
+    borderTop: { base: '1px solid rgba(0,0,0,0.06)', _dark: '1px solid rgba(255,255,255,0.08)' },
+    backgroundColor: { base: 'rgba(0,0,0,0.01)', _dark: 'rgba(255,255,255,0.02)' },
 });
 
 const deleteButtonClass = css({
@@ -609,7 +614,7 @@ const deleteButtonClass = css({
     fontWeight: '500',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
-    _hover: { color: 'red.500', backgroundColor: 'rgba(239,68,68,0.08)' },
+    _hover: { color: 'red.500', backgroundColor: { base: 'rgba(239,68,68,0.08)', _dark: 'rgba(239,68,68,0.15)' } },
 });
 
 const saveButtonClass = css({
@@ -626,9 +631,9 @@ const saveButtonClass = css({
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
-    boxShadow: '0 2px 8px rgba(224,123,83,0.3)',
+    boxShadow: { base: '0 2px 8px rgba(224,123,83,0.3)', _dark: '0 2px 8px rgba(224,123,83,0.4)' },
     _hover: {
         transform: 'translateY(-1px)',
-        boxShadow: '0 4px 16px rgba(224,123,83,0.4)',
+        boxShadow: { base: '0 4px 16px rgba(224,123,83,0.4)', _dark: '0 4px 16px rgba(224,123,83,0.5)' },
     },
 });

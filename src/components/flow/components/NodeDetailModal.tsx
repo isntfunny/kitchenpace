@@ -52,7 +52,7 @@ export function NodeDetailModal({
             className={css({
                 position: 'fixed',
                 inset: '0',
-                backgroundColor: 'rgba(0,0,0,0.5)',
+                backgroundColor: 'surface.overlay',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -63,12 +63,12 @@ export function NodeDetailModal({
         >
             <div
                 className={css({
-                    backgroundColor: 'white',
+                    backgroundColor: 'surface',
                     borderRadius: '20px',
                     padding: '24px',
                     maxWidth: '400px',
                     width: '100',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                    boxShadow: { base: '0 20px 60px rgba(0,0,0,0.3)', _dark: '0 20px 60px rgba(0,0,0,0.5)' },
                 })}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -94,7 +94,7 @@ export function NodeDetailModal({
                                 className={css({
                                     fontSize: '11px',
                                     fontWeight: '600',
-                                    color: '#666',
+                                    color: 'text.muted',
                                     textTransform: 'uppercase',
                                 })}
                             >
@@ -104,7 +104,7 @@ export function NodeDetailModal({
                                 className={css({
                                     fontSize: '18px',
                                     fontWeight: '700',
-                                    color: '#333',
+                                    color: 'text',
                                 })}
                             >
                                 {node.label}
@@ -118,9 +118,9 @@ export function NodeDetailModal({
                             border: 'none',
                             fontSize: '24px',
                             cursor: 'pointer',
-                            color: '#999',
+                            color: { base: '#999', _dark: '#777' },
                             lineHeight: '1',
-                            _hover: { color: '#333' },
+                            _hover: { color: 'text' },
                         })}
                     >
                         <X size={24} />
@@ -131,7 +131,7 @@ export function NodeDetailModal({
                     className={css({
                         fontSize: '15px',
                         lineHeight: '1.6',
-                        color: '#333',
+                        color: 'text',
                         marginBottom: '16px',
                     })}
                 >
@@ -144,11 +144,11 @@ export function NodeDetailModal({
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            backgroundColor: '#f5f5f5',
+                            backgroundColor: 'surface.muted',
                             padding: '8px 12px',
                             borderRadius: '8px',
                             fontSize: '14px',
-                            color: '#666',
+                            color: 'text.muted',
                             marginBottom: '16px',
                         })}
                     >
@@ -168,11 +168,11 @@ export function NodeDetailModal({
                         fontWeight: '600',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
-                        backgroundColor: isCompleted ? '#f5f5f5' : '#4caf50',
-                        color: isCompleted ? '#666' : 'white',
+                        backgroundColor: isCompleted ? 'surface.muted' : '#4caf50',
+                        color: isCompleted ? 'text.muted' : 'white',
                         _hover: {
                             transform: 'translateY(-1px)',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            boxShadow: { base: '0 4px 12px rgba(0,0,0,0.15)', _dark: '0 4px 12px rgba(0,0,0,0.35)' },
                         },
                         display: 'inline-flex',
                         alignItems: 'center',

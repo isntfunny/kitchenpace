@@ -93,7 +93,8 @@ function ActivityDetailExtras({ activity }: { activity: ActivityFeedItem }) {
                             key={star}
                             size={14}
                             fill={star <= rating ? '#f8b500' : 'none'}
-                            color={star <= rating ? '#f8b500' : '#e0e0e0'}
+                            color={star <= rating ? '#f8b500' : undefined}
+                            className={star <= rating ? undefined : css({ color: { base: '#e0e0e0', _dark: '#4a4a4a' } })}
                         />
                     ))}
                 </span>
@@ -145,7 +146,7 @@ export function ActivityItem({ activity }: { activity: ActivityFeedItem }) {
                 gap: '3',
                 p: '3',
                 borderRadius: 'xl',
-                _hover: { bg: 'rgba(224,123,83,0.05)' },
+                _hover: { bg: 'accent.soft' },
                 transition: 'background 150ms ease',
             })}
         >

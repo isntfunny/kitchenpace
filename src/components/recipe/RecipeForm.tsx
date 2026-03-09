@@ -612,7 +612,7 @@ export function RecipeForm({
                                 className={css({
                                     fontSize: '8px',
                                     fontWeight: '700',
-                                    color: 'rgba(0,0,0,0.5)',
+                                    color: { base: 'rgba(0,0,0,0.5)', _dark: 'rgba(255,255,255,0.5)' },
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.05em',
                                 })}
@@ -657,15 +657,15 @@ export function RecipeForm({
                             />
                             {/* 60% milestone marker */}
                             <div
-                                style={{
+                                className={css({
                                     position: 'absolute',
                                     left: '60%',
                                     top: '-2px',
                                     bottom: '-2px',
                                     width: '1.5px',
-                                    backgroundColor: 'rgba(0,0,0,0.15)',
+                                    backgroundColor: { base: 'rgba(0,0,0,0.15)', _dark: 'rgba(255,255,255,0.15)' },
                                     borderRadius: '1px',
-                                }}
+                                })}
                             />
                         </div>
                     </div>
@@ -876,10 +876,14 @@ const autoSaveBarClass = (status: AutoSaveStatus) =>
         py: '2',
         fontSize: '8px',
         fontWeight: '600',
-        backgroundColor: status === 'error' ? 'rgba(239,68,68,0.08)' : 'rgba(224,123,83,0.06)',
+        backgroundColor: status === 'error'
+            ? { base: 'rgba(239,68,68,0.08)', _dark: 'rgba(239,68,68,0.12)' }
+            : { base: 'rgba(224,123,83,0.06)', _dark: 'rgba(224,123,83,0.1)' },
         color: status === 'error' ? 'red.500' : 'text.muted',
         borderBottom: '1px solid',
-        borderBottomColor: status === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(224,123,83,0.12)',
+        borderBottomColor: status === 'error'
+            ? { base: 'rgba(239,68,68,0.15)', _dark: 'rgba(239,68,68,0.25)' }
+            : { base: 'rgba(224,123,83,0.12)', _dark: 'rgba(224,123,83,0.18)' },
         flexShrink: '0',
         textTransform: 'uppercase',
         letterSpacing: '0.04em',
@@ -910,10 +914,10 @@ const sidebarClass = css({
     width: { base: '100%', md: '320px' },
     minWidth: { base: '100%', md: '320px' },
     flexShrink: '0',
-    borderRight: { base: 'none', md: '1px solid rgba(224,123,83,0.15)' },
+    borderRight: { base: 'none', md: { base: '1px solid rgba(224,123,83,0.15)', _dark: '1px solid rgba(224,123,83,0.12)' } },
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: 'white',
+    backgroundColor: 'surface',
     overflowX: { base: 'visible', md: 'hidden' },
     transition: 'width 200ms ease, min-width 200ms ease',
 });
@@ -925,7 +929,7 @@ const sidebarCollapsedClass = css({
     overflow: { base: 'auto', md: 'hidden' },
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: 'white',
+    backgroundColor: 'surface',
     transition: 'width 200ms ease, min-width 200ms ease',
 });
 
@@ -945,7 +949,7 @@ const sidebarToggleClass = css({
     alignSelf: 'flex-end',
     transition: 'all 0.15s ease',
     _hover: {
-        backgroundColor: 'rgba(224,123,83,0.08)',
+        backgroundColor: { base: 'rgba(224,123,83,0.08)', _dark: 'rgba(224,123,83,0.13)' },
         color: 'text',
     },
 });
@@ -961,24 +965,24 @@ const sidebarReopenClass = css({
     width: '32px',
     height: '32px',
     borderRadius: 'md',
-    border: '1px solid rgba(224,123,83,0.3)',
-    backgroundColor: 'white',
+    border: { base: '1px solid rgba(224,123,83,0.3)', _dark: '1px solid rgba(224,123,83,0.25)' },
+    backgroundColor: 'surface',
     color: 'text.muted',
     cursor: 'pointer',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    boxShadow: { base: '0 2px 8px rgba(0,0,0,0.08)', _dark: '0 2px 8px rgba(0,0,0,0.25)' },
     transition: 'all 0.15s ease',
     _hover: {
-        backgroundColor: 'rgba(224,123,83,0.08)',
+        backgroundColor: { base: 'rgba(224,123,83,0.08)', _dark: 'rgba(224,123,83,0.13)' },
         color: 'text',
     },
 });
 
 const sidebarFooterClass = css({
     p: '3.5',
-    borderTop: '1px solid rgba(224,123,83,0.1)',
+    borderTop: { base: '1px solid rgba(224,123,83,0.1)', _dark: '1px solid rgba(224,123,83,0.08)' },
     position: { base: 'static', md: 'sticky' },
     bottom: '0',
-    backgroundColor: 'white',
+    backgroundColor: 'surface',
     display: 'flex',
     flexDirection: 'column',
     gap: '2.5',
@@ -997,7 +1001,7 @@ const progressTrackClass = css({
     width: '100%',
     height: '3px',
     borderRadius: 'full',
-    backgroundColor: 'rgba(224,123,83,0.1)',
+    backgroundColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
     overflow: 'visible',
     position: 'relative',
 });
@@ -1012,7 +1016,7 @@ const progressFillClass = css({
 const sidebarStickyHeaderClass = css({
     position: { base: 'sticky', md: 'static' },
     zIndex: '19',
-    backgroundColor: 'white',
+    backgroundColor: 'surface',
     flexShrink: '0',
 });
 
@@ -1037,7 +1041,7 @@ const sidebarSectionClass = css({
 const sidebarDividerClass = css({
     height: '1px',
     mx: '3.5',
-    backgroundColor: 'rgba(224,123,83,0.08)',
+    backgroundColor: { base: 'rgba(224,123,83,0.08)', _dark: 'rgba(224,123,83,0.12)' },
 });
 
 const sectionHeadingClass = css({
@@ -1045,7 +1049,7 @@ const sectionHeadingClass = css({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
-    color: 'rgba(0,0,0,0.55)',
+    color: { base: 'rgba(0,0,0,0.55)', _dark: 'rgba(255,255,255,0.5)' },
     mb: '2',
 });
 

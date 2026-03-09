@@ -95,10 +95,26 @@ const columns: ColumnDef<User>[] = [
             const nextRole = role === 'USER' ? Role.MODERATOR : role === 'MODERATOR' ? Role.ADMIN : Role.USER;
 
             const roleConfig = {
-                ADMIN: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', icon: <Shield size={12} />, label: 'Admin' },
-                MODERATOR: { bg: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', icon: <ShieldCheck size={12} />, label: 'Moderator' },
-                USER: { bg: 'rgba(107, 114, 128, 0.15)', color: '#6b7280', icon: null, label: 'Benutzer' },
-                BANNED: { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', icon: <Ban size={12} />, label: 'Gesperrt' },
+                ADMIN: {
+                    bg: { base: 'rgba(59, 130, 246, 0.15)', _dark: 'rgba(59, 130, 246, 0.2)' } as const,
+                    color: { base: '#3b82f6', _dark: '#60a5fa' } as const,
+                    icon: <Shield size={12} />, label: 'Admin',
+                },
+                MODERATOR: {
+                    bg: { base: 'rgba(168, 85, 247, 0.15)', _dark: 'rgba(168, 85, 247, 0.2)' } as const,
+                    color: { base: '#a855f7', _dark: '#c084fc' } as const,
+                    icon: <ShieldCheck size={12} />, label: 'Moderator',
+                },
+                USER: {
+                    bg: { base: 'rgba(107, 114, 128, 0.15)', _dark: 'rgba(107, 114, 128, 0.2)' } as const,
+                    color: { base: '#6b7280', _dark: '#9ca3af' } as const,
+                    icon: null, label: 'Benutzer',
+                },
+                BANNED: {
+                    bg: { base: 'rgba(239, 68, 68, 0.15)', _dark: 'rgba(239, 68, 68, 0.2)' } as const,
+                    color: { base: '#ef4444', _dark: '#f87171' } as const,
+                    icon: <Ban size={12} />, label: 'Gesperrt',
+                },
             };
             const cfg = roleConfig[role] ?? roleConfig.USER;
 
@@ -114,8 +130,9 @@ const columns: ColumnDef<User>[] = [
                             borderRadius: 'full',
                             fontSize: 'xs',
                             fontWeight: 'medium',
+                            background: cfg.bg,
+                            color: cfg.color,
                         })}
-                        style={{ backgroundColor: cfg.bg, color: cfg.color }}
                     >
                         {cfg.icon}
                         {cfg.label}
@@ -142,8 +159,9 @@ const columns: ColumnDef<User>[] = [
                             cursor: 'pointer',
                             border: 'none',
                             transition: 'all 0.2s',
+                            background: cfg.bg,
+                            color: cfg.color,
                         })}
-                        style={{ backgroundColor: cfg.bg, color: cfg.color }}
                     >
                         {cfg.icon}
                         {cfg.label}
@@ -199,13 +217,13 @@ const columns: ColumnDef<User>[] = [
                             cursor: 'pointer',
                             border: 'none',
                             transition: 'all 0.2s',
+                            background: isActive
+                                ? { base: 'rgba(34, 197, 94, 0.15)', _dark: 'rgba(34, 197, 94, 0.2)' }
+                                : { base: 'rgba(239, 68, 68, 0.15)', _dark: 'rgba(239, 68, 68, 0.2)' },
+                            color: isActive
+                                ? { base: '#22c55e', _dark: '#4ade80' }
+                                : { base: '#ef4444', _dark: '#f87171' },
                         })}
-                        style={{
-                            backgroundColor: isActive
-                                ? 'rgba(34, 197, 94, 0.15)'
-                                : 'rgba(239, 68, 68, 0.15)',
-                            color: isActive ? '#22c55e' : '#ef4444',
-                        }}
                     >
                         {isActive ? 'Aktiv' : 'Inaktiv'}
                     </button>

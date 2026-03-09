@@ -86,7 +86,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                     className={css({
                         position: 'fixed',
                         inset: '0',
-                        bg: 'rgba(0,0,0,0.4)',
+                        bg: 'surface.overlay',
                         zIndex: '50',
                     })}
                 />
@@ -102,7 +102,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                         width: '90vw',
                         maxWidth: '420px',
                         zIndex: '51',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                        boxShadow: { base: '0 8px 32px rgba(0,0,0,0.12)', _dark: '0 8px 32px rgba(0,0,0,0.4)' },
                     })}
                 >
                     <div className={css({ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '4' })}>
@@ -126,7 +126,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                 cursor: 'pointer',
                                 border: 'none',
                                 bg: 'transparent',
-                                _hover: { bg: 'rgba(0,0,0,0.05)' },
+                                _hover: { bg: { base: 'rgba(0,0,0,0.05)', _dark: 'rgba(255,255,255,0.05)' } },
                             })}
                         >
                             <X size={18} />
@@ -169,8 +169,8 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                             borderRadius: 'lg',
                                             cursor: 'pointer',
                                             border: '1px solid',
-                                            borderColor: reason === r.value ? 'palette.orange' : 'rgba(0,0,0,0.08)',
-                                            bg: reason === r.value ? 'rgba(224,123,83,0.05)' : 'transparent',
+                                            borderColor: reason === r.value ? 'palette.orange' : 'border',
+                                            bg: reason === r.value ? 'accent.soft' : 'transparent',
                                             fontSize: 'sm',
                                             transition: 'all 0.15s',
                                         })}
@@ -197,7 +197,8 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                     px: '3',
                                     py: '2',
                                     borderRadius: 'xl',
-                                    border: '1px solid rgba(224,123,83,0.4)',
+                                    border: '1px solid',
+                                    borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.45)' },
                                     fontSize: 'sm',
                                     resize: 'vertical',
                                     minHeight: '60px',
@@ -205,7 +206,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                     _focus: {
                                         borderColor: 'palette.orange',
                                         outline: 'none',
-                                        boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
+                                        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
                                     },
                                 })}
                             />
@@ -219,9 +220,10 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                         fontSize: 'sm',
                                         fontWeight: '600',
                                         bg: 'transparent',
-                                        border: '1px solid rgba(0,0,0,0.1)',
+                                        border: '1px solid',
+                                        borderColor: 'border',
                                         cursor: 'pointer',
-                                        _hover: { bg: 'rgba(0,0,0,0.03)' },
+                                        _hover: { bg: { base: 'rgba(0,0,0,0.03)', _dark: 'rgba(255,255,255,0.03)' } },
                                     })}
                                 >
                                     Abbrechen
@@ -240,7 +242,7 @@ export function ReportModal({ contentType, contentId, trigger }: ReportModalProp
                                         color: 'white',
                                         border: 'none',
                                         cursor: 'pointer',
-                                        _hover: { bg: '#b91c1c' },
+                                        _hover: { bg: 'red.700' },
                                         _disabled: { opacity: '0.5', cursor: 'not-allowed' },
                                     })}
                                 >

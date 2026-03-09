@@ -10,6 +10,7 @@ import {
 import { Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
+import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 
 import type { StepType } from './editorTypes';
@@ -32,6 +33,7 @@ function InsertEdgeComponent({
 }: EdgeProps) {
     const { onInsertOnEdge } = useFlowEditor();
     const { deleteElements } = useReactFlow();
+    const dark = useIsDark();
     const [isHovered, setIsHovered] = useState(false);
     const [popoverOpen, setPopoverOpen] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
@@ -129,12 +131,12 @@ function InsertEdgeComponent({
                                     height: '26px',
                                     borderRadius: '50%',
                                     border: `2px solid ${PALETTE.orange}`,
-                                    backgroundColor: 'white',
+                                    backgroundColor: dark ? '#1a1d21' : 'white',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     cursor: 'pointer',
-                                    boxShadow: '0 2px 10px rgba(224,123,83,0.35)',
+                                    boxShadow: dark ? '0 2px 10px rgba(224,123,83,0.45)' : '0 2px 10px rgba(224,123,83,0.35)',
                                     transition: 'all 0.15s ease',
                                     padding: 0,
                                 }}
@@ -156,12 +158,12 @@ function InsertEdgeComponent({
                                         height: '26px',
                                         borderRadius: '50%',
                                         border: '2px solid #e74c3c',
-                                        backgroundColor: 'white',
+                                        backgroundColor: dark ? '#1a1d21' : 'white',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         cursor: 'pointer',
-                                        boxShadow: '0 2px 10px rgba(231,76,60,0.3)',
+                                        boxShadow: dark ? '0 2px 10px rgba(231,76,60,0.4)' : '0 2px 10px rgba(231,76,60,0.3)',
                                         transition: 'all 0.15s ease',
                                         padding: 0,
                                     }}
@@ -181,10 +183,10 @@ function InsertEdgeComponent({
                                     top: 'calc(100% + 8px)',
                                     left: '50%',
                                     transform: 'translateX(-50%)',
-                                    backgroundColor: 'white',
+                                    backgroundColor: dark ? '#1a1d21' : 'white',
                                     borderRadius: '12px',
-                                    border: '1px solid rgba(224,123,83,0.3)',
-                                    boxShadow: '0 8px 32px rgba(0,0,0,0.14)',
+                                    border: dark ? '1px solid rgba(224,123,83,0.25)' : '1px solid rgba(224,123,83,0.3)',
+                                    boxShadow: dark ? '0 8px 32px rgba(0,0,0,0.4)' : '0 8px 32px rgba(0,0,0,0.14)',
                                     padding: '12px',
                                     width: '280px',
                                     zIndex: 1001,
@@ -195,7 +197,7 @@ function InsertEdgeComponent({
                                     style={{
                                         fontSize: '11px',
                                         fontWeight: 600,
-                                        color: '#636e72',
+                                        color: dark ? '#a0a0a0' : '#636e72',
                                         marginBottom: '8px',
                                         textAlign: 'center',
                                         textTransform: 'uppercase',
@@ -230,7 +232,7 @@ function InsertEdgeComponent({
                                                     cursor: 'pointer',
                                                     fontSize: '9px',
                                                     fontWeight: 600,
-                                                    color: '#2d3436',
+                                                    color: dark ? '#e0e0e0' : '#2d3436',
                                                     backgroundColor: config.color,
                                                     backgroundImage: config.gradient,
                                                     transition: 'all 0.12s ease',

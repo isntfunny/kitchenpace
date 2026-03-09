@@ -60,8 +60,8 @@ export function StepCard({
                 border: 'none',
                 boxShadow:
                     active && !completed
-                        ? '0 4px 20px rgba(224,123,83,0.18)'
-                        : '0 2px 8px rgba(0,0,0,0.07)',
+                        ? c.dark ? '0 4px 20px rgba(224,123,83,0.25)' : '0 4px 20px rgba(224,123,83,0.18)'
+                        : c.shadowSm,
                 transition: 'all 0.2s ease',
                 backgroundImage: config.gradient,
                 backgroundColor: config.color,

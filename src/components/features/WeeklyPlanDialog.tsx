@@ -29,7 +29,7 @@ const weeklyPlan = [
 const overlayClass = css({
     position: 'fixed',
     inset: 0,
-    bg: 'rgba(15, 23, 42, 0.7)',
+    bg: 'surface.overlay',
 });
 
 const contentClass = css({
@@ -43,7 +43,7 @@ const contentClass = css({
     bg: 'surface.elevated',
     border: '1px solid',
     borderColor: 'border.muted',
-    boxShadow: '0 25px 55px rgba(0,0,0,0.12)',
+    boxShadow: { base: '0 25px 55px rgba(0,0,0,0.12)', _dark: '0 25px 55px rgba(0,0,0,0.4)' },
 });
 
 const closeButtonClass = css({
@@ -59,9 +59,9 @@ const closeButtonClass = css({
 const planItemClass = css({
     borderRadius: 'xl',
     border: '1px solid',
-    borderColor: 'rgba(0,0,0,0.04)',
+    borderColor: 'border',
     padding: '4',
-    bg: 'white',
+    bg: 'surface',
     marginBottom: '3',
 });
 

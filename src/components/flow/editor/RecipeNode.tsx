@@ -247,20 +247,20 @@ const nodeCardClass = css({
     width: '220px',
     borderRadius: 'xl',
     border: '2px solid transparent',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+    boxShadow: { base: '0 2px 8px rgba(0,0,0,0.07)', _dark: '0 2px 8px rgba(0,0,0,0.25)' },
     transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
     cursor: 'pointer',
     position: 'relative',
     fontFamily: 'body',
     overflow: 'visible',
     _hover: {
-        boxShadow: '0 4px 16px rgba(224,123,83,0.2)',
+        boxShadow: { base: '0 4px 16px rgba(224,123,83,0.2)', _dark: '0 4px 16px rgba(224,123,83,0.3)' },
     },
 });
 
 const nodeSelectedClass = css({
     borderColor: 'brand.primary',
-    boxShadow: '0 4px 16px rgba(224,123,83,0.2)',
+    boxShadow: { base: '0 4px 16px rgba(224,123,83,0.2)', _dark: '0 4px 16px rgba(224,123,83,0.3)' },
 });
 
 const typeBadgeClass = css({
@@ -272,7 +272,7 @@ const typeBadgeClass = css({
     borderRadius: 'full',
     fontSize: '10px',
     fontWeight: '600',
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: { base: 'rgba(255,255,255,0.6)', _dark: 'rgba(255,255,255,0.15)' },
 });
 
 const titleClass = css({
@@ -327,7 +327,7 @@ const deleteButtonClass = css({
 const ingredientListClass = css({
     mt: '1.5',
     pt: '1.5',
-    borderTop: '1px solid rgba(0,0,0,0.06)',
+    borderTop: { base: '1px solid rgba(0,0,0,0.06)', _dark: '1px solid rgba(255,255,255,0.08)' },
 });
 
 const ingredientListLabelClass = css({
@@ -351,7 +351,7 @@ const ingredientChipClass = css({
     alignItems: 'center',
     px: '1.5',
     py: '0.5',
-    backgroundColor: 'rgba(224,123,83,0.12)',
+    backgroundColor: { base: 'rgba(224,123,83,0.12)', _dark: 'rgba(224,123,83,0.17)' },
     borderRadius: 'full',
     fontSize: '9px',
     fontWeight: '600',

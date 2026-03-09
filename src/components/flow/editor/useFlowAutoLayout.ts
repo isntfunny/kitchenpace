@@ -63,8 +63,46 @@ export function useFlowAutoLayout(direction: 'TB' | 'LR' = 'LR') {
 
             dagre.layout(g);
 
+            // Build adjacency for downstream depth calculation
+            const children = new Map<string, string[]>();
+            for (const node of nodes) children.set(node.id, []);
+            for (const edge of edges) children.get(edge.source)?.push(edge.target);
+
+            // maxDepth = longest downstream chain length from each node (memoised)
+            const depthCache = new Map<string, number>();
+            function maxDepth(id: string): number {
+                if (depthCache.has(id)) return depthCache.get(id)!;
+                const kids = children.get(id) ?? [];
+                const d = kids.length === 0 ? 0 : 1 + Math.max(...kids.map(maxDepth));
+                depthCache.set(id, d);
+                return d;
+            }
+
+            // Collect dagre positions
+            const pos = new Map<string, { x: number; y: number }>();
+            for (const node of nodes) pos.set(node.id, g.node(node.id));
+
+            // Group nodes by dagre X (same rank), reorder Y so longest lane is first (top)
+            const byX = new Map<number, string[]>();
+            for (const node of nodes) {
+                const x = pos.get(node.id)!.x;
+                if (!byX.has(x)) byX.set(x, []);
+                byX.get(x)!.push(node.id);
+            }
+            for (const ids of byX.values()) {
+                if (ids.length < 2) continue;
+                // Capture original Y slots (sorted ascending)
+                const ySlots = ids.map((id) => pos.get(id)!.y).sort((a, b) => a - b);
+                // Sort node IDs by longest downstream path descending
+                ids.sort((a, b) => maxDepth(b) - maxDepth(a));
+                // Assign sorted nodes to the original Y slots
+                for (let i = 0; i < ids.length; i++) {
+                    pos.get(ids[i])!.y = ySlots[i];
+                }
+            }
+
             return nodes.map((node) => {
-                const { x, y } = g.node(node.id);
+                const { x, y } = pos.get(node.id)!;
                 return {
                     ...node,
                     position: {

@@ -190,7 +190,7 @@ function RecipeCardActions({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        background: 'rgba(0, 0, 0, 0.5)',
+                        background: 'surface.overlay',
                         zIndex: 50,
                     })}
                     onClick={() => !isDeleting && setDeleteConfirm(false)}
@@ -202,7 +202,7 @@ function RecipeCardActions({
                             padding: '6',
                             maxWidth: '400px',
                             width: '90%',
-                            boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
+                            boxShadow: { base: '0 24px 60px rgba(0,0,0,0.25)', _dark: '0 24px 60px rgba(0,0,0,0.5)' },
                         })}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -273,7 +273,7 @@ function UserRecipeCard({ recipe }: { recipe: UserRecipe }) {
                 background: 'surface.elevated',
                 borderRadius: 'xl',
                 border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.06)',
+                borderColor: 'border',
                 overflow: 'hidden',
                 transition: 'all 200ms ease',
                 _hover: {
@@ -314,7 +314,7 @@ function UserRecipeCard({ recipe }: { recipe: UserRecipe }) {
                             fontWeight: '700',
                             letterSpacing: 'wide',
                             textTransform: 'uppercase',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            boxShadow: { base: '0 2px 8px rgba(0,0,0,0.15)', _dark: '0 2px 8px rgba(0,0,0,0.4)' },
                         })}
                         style={{
                             background: isPublished ? '#16a34a' : PALETTE.gold,

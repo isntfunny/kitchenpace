@@ -28,7 +28,7 @@ export function ReportButton({ contentType, contentId, variant = 'text' }: Repor
                             border: 'none',
                             cursor: 'pointer',
                             color: 'text.muted',
-                            _hover: { color: '#dc2626', bg: 'rgba(239,68,68,0.08)' },
+                            _hover: { color: 'red.600', bg: { base: 'rgba(239,68,68,0.08)', _dark: 'rgba(239,68,68,0.13)' } },
                         })}
                         title="Inhalt melden"
                     >
@@ -50,7 +50,7 @@ export function ReportButton({ contentType, contentId, variant = 'text' }: Repor
                             color: 'text.muted',
                             fontSize: 'xs',
                             fontWeight: '500',
-                            _hover: { color: '#dc2626', bg: 'rgba(239,68,68,0.05)' },
+                            _hover: { color: 'red.600', bg: { base: 'rgba(239,68,68,0.05)', _dark: 'rgba(239,68,68,0.1)' } },
                         })}
                     >
                         <Flag size={12} />

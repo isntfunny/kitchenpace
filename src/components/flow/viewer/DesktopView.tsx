@@ -346,7 +346,7 @@ function DesktopViewInner({
                     py: '1.5',
                     px: '3',
                     borderRadius: 'lg',
-                    border: '1px solid rgba(224,123,83,0.2)',
+                    border: { base: '1px solid rgba(224,123,83,0.2)', _dark: '1px solid rgba(224,123,83,0.15)' },
                     bg: 'surface',
                     color: 'palette.orange',
                     fontSize: 'xs',

@@ -152,9 +152,9 @@ export const NodePalette = memo(NodePaletteComponent);
 const paletteClass = css({
     width: '220px',
     height: '100%',
-    backgroundColor: 'white',
+    backgroundColor: 'surface',
     borderRadius: 'xl',
-    border: '1px solid rgba(224,123,83,0.2)',
+    border: { base: '1px solid rgba(224,123,83,0.2)', _dark: '1px solid rgba(224,123,83,0.15)' },
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
@@ -162,7 +162,7 @@ const paletteClass = css({
 
 const headerClass = css({
     p: '2',
-    borderBottom: '1px solid rgba(224,123,83,0.15)',
+    borderBottom: { base: '1px solid rgba(224,123,83,0.15)', _dark: '1px solid rgba(224,123,83,0.12)' },
 });
 
 const headerTitleClass = css({
@@ -183,14 +183,16 @@ const searchInputClass = css({
     py: '1.5',
     pl: '7',
     pr: '1.5',
-    border: '1px solid rgba(224,123,83,0.2)',
+    border: { base: '1px solid rgba(224,123,83,0.2)', _dark: '1px solid rgba(224,123,83,0.15)' },
     borderRadius: 'md',
     fontSize: 'xs',
     outline: 'none',
+    backgroundColor: 'surface',
+    color: 'text',
     _placeholder: { color: 'text.muted' },
     _focus: {
         borderColor: 'brand.primary',
-        boxShadow: '0 0 0 2px rgba(224,123,83,0.1)',
+        boxShadow: { base: '0 0 0 2px rgba(224,123,83,0.1)', _dark: '0 0 0 2px rgba(224,123,83,0.15)' },
     },
 });
 
@@ -225,9 +227,11 @@ const triggerClass = css({
     py: '1.5',
     pl: '2',
     pr: '1.5',
-    backgroundImage:
-        'linear-gradient(135deg, rgba(224,123,83,0.06) 0%, rgba(224,123,83,0.02) 100%)',
-    border: '1px solid rgba(224,123,83,0.1)',
+    backgroundImage: {
+        base: 'linear-gradient(135deg, rgba(224,123,83,0.06) 0%, rgba(224,123,83,0.02) 100%)',
+        _dark: 'linear-gradient(135deg, rgba(224,123,83,0.1) 0%, rgba(224,123,83,0.04) 100%)',
+    },
+    border: { base: '1px solid rgba(224,123,83,0.1)', _dark: '1px solid rgba(224,123,83,0.15)' },
     borderRadius: 'lg',
     mb: '1',
     fontSize: 'xs',
@@ -236,9 +240,11 @@ const triggerClass = css({
     cursor: 'pointer',
     transition: 'all 0.15s ease',
     _hover: {
-        backgroundImage:
-            'linear-gradient(135deg, rgba(224,123,83,0.12) 0%, rgba(224,123,83,0.06) 100%)',
-        borderColor: 'rgba(224,123,83,0.2)',
+        backgroundImage: {
+            base: 'linear-gradient(135deg, rgba(224,123,83,0.12) 0%, rgba(224,123,83,0.06) 100%)',
+            _dark: 'linear-gradient(135deg, rgba(224,123,83,0.18) 0%, rgba(224,123,83,0.08) 100%)',
+        },
+        borderColor: { base: 'rgba(224,123,83,0.2)', _dark: 'rgba(224,123,83,0.25)' },
     },
 });
 
@@ -267,7 +273,7 @@ const stepItemClass = css({
     pl: '2',
     pr: '1.5',
     backgroundColor: 'transparent',
-    border: '1px solid rgba(224,123,83,0.1)',
+    border: { base: '1px solid rgba(224,123,83,0.1)', _dark: '1px solid rgba(224,123,83,0.15)' },
     borderRadius: 'lg',
     mb: '1',
     fontSize: 'xs',
@@ -276,7 +282,7 @@ const stepItemClass = css({
     transition: 'all 0.15s ease',
     _hover: {
         backgroundImage: 'var(--gradient)',
-        borderColor: 'rgba(224,123,83,0.25)',
+        borderColor: { base: 'rgba(224,123,83,0.25)', _dark: 'rgba(224,123,83,0.3)' },
         transform: 'translateX(2px)',
     },
 });

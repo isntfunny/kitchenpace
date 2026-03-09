@@ -23,7 +23,8 @@ const tagSearchInputClass = css({
     width: '100%',
     mt: '2',
     borderRadius: 'xl',
-    border: '1px solid rgba(224,123,83,0.4)',
+    border: '1px solid',
+    borderColor: { base: 'rgba(224,123,83,0.4)', _dark: 'rgba(224,123,83,0.45)' },
     background: 'surface',
     px: '3',
     py: '2.5',
@@ -31,7 +32,7 @@ const tagSearchInputClass = css({
     outline: 'none',
     _focus: {
         borderColor: 'palette.orange',
-        boxShadow: '0 0 0 2px rgba(224,123,83,0.2)',
+        boxShadow: { base: '0 0 0 2px rgba(224,123,83,0.2)', _dark: '0 0 0 2px rgba(224,123,83,0.25)' },
     },
 });
 
@@ -46,7 +47,8 @@ const tagChipBaseClass = css({
     borderRadius: 'full',
     px: '2.5',
     py: '1',
-    border: '1.5px solid rgba(0,0,0,0.1)',
+    border: '1.5px solid',
+    borderColor: 'border',
     background: 'surface',
     color: 'text',
     display: 'inline-flex',
@@ -57,14 +59,14 @@ const tagChipBaseClass = css({
     cursor: 'pointer',
     transition: 'all 150ms ease',
     _hover: {
-        borderColor: 'rgba(224,123,83,0.5)',
-        background: 'rgba(224,123,83,0.04)',
+        borderColor: { base: 'rgba(224,123,83,0.5)', _dark: 'rgba(224,123,83,0.55)' },
+        background: 'accent.soft',
     },
 });
 
 const tagChipSelectedClass = css({
     borderColor: 'palette.orange',
-    background: 'rgba(224,123,83,0.12)',
+    background: { base: 'rgba(224,123,83,0.12)', _dark: 'rgba(224,123,83,0.17)' },
     color: 'primary',
 });
 
@@ -72,14 +74,14 @@ const tagCountClass = css({
     fontSize: '10px',
     borderRadius: 'full',
     px: '1.5',
-    background: 'rgba(0,0,0,0.06)',
+    background: { base: 'rgba(0,0,0,0.06)', _dark: 'rgba(255,255,255,0.06)' },
     color: 'text.muted',
     fontWeight: '600',
     lineHeight: '1.6',
 });
 
 const tagCountSelectedClass = css({
-    background: 'rgba(192,98,46,0.15)',
+    background: { base: 'rgba(192,98,46,0.15)', _dark: 'rgba(192,98,46,0.2)' },
     color: 'primary',
 });
 

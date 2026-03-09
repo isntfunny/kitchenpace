@@ -35,13 +35,13 @@ export function FlowControls({
                             alignItems: 'center',
                             fontSize: '14px',
                             fontWeight: '600',
-                            color: '#333',
+                            color: 'text',
                         })}
                     >
                         <Map size={16} />
                         <span>Koch-Flow</span>
                     </div>
-                    <div className={css({ fontSize: '11px', color: '#666' })}>
+                    <div className={css({ fontSize: '11px', color: 'text.muted' })}>
                         {completedCount} von {totalCount} erledigt
                     </div>
                 </div>
@@ -54,9 +54,10 @@ export function FlowControls({
                             gap: '4px',
                             padding: '6px 10px',
                             borderRadius: '6px',
-                            border: isCookingMode ? '2px solid #4caf50' : '1px solid #ddd',
-                            backgroundColor: isCookingMode ? '#e8f5e9' : 'white',
-                            color: isCookingMode ? '#2e7d32' : '#666',
+                            border: isCookingMode ? '2px solid #4caf50' : '1px solid',
+                            borderColor: isCookingMode ? '#4caf50' : 'border',
+                            backgroundColor: isCookingMode ? { base: '#e8f5e9', _dark: 'rgba(76,175,80,0.15)' } : 'surface',
+                            color: isCookingMode ? { base: '#2e7d32', _dark: '#66bb6a' } : 'text.muted',
                             fontSize: '11px',
                             fontWeight: '500',
                             cursor: 'pointer',
@@ -74,9 +75,10 @@ export function FlowControls({
                             gap: '4px',
                             padding: '6px 10px',
                             borderRadius: '6px',
-                            border: '1px solid #ddd',
-                            backgroundColor: 'white',
-                            color: '#666',
+                            border: '1px solid',
+                            borderColor: 'border',
+                            backgroundColor: 'surface',
+                            color: 'text.muted',
                             fontSize: '11px',
                             fontWeight: '500',
                             cursor: 'pointer',
@@ -99,13 +101,13 @@ export function FlowControls({
                             alignItems: 'center',
                             fontSize: '16px',
                             fontWeight: '700',
-                            color: '#333',
+                            color: 'text',
                         })}
                     >
                         <Map size={18} />
                         <span>Koch-Flow</span>
                     </div>
-                    <div className={css({ fontSize: '12px', color: '#666' })}>
+                    <div className={css({ fontSize: '12px', color: 'text.muted' })}>
                         {completedCount} von {totalCount} erledigt
                     </div>
                 </div>
@@ -115,7 +117,7 @@ export function FlowControls({
                             className={css({
                                 width: '80px',
                                 height: '6px',
-                                backgroundColor: '#e0e0e0',
+                                backgroundColor: { base: '#e0e0e0', _dark: '#3a3a3a' },
                                 borderRadius: '3px',
                                 overflow: 'hidden',
                             })}
@@ -148,16 +150,17 @@ export function FlowControls({
                             gap: '6px',
                             padding: '8px 14px',
                             borderRadius: '8px',
-                            border: isCookingMode ? '2px solid #4caf50' : '1px solid #ddd',
-                            backgroundColor: isCookingMode ? '#e8f5e9' : 'white',
-                            color: isCookingMode ? '#2e7d32' : '#666',
+                            border: isCookingMode ? '2px solid #4caf50' : '1px solid',
+                            borderColor: isCookingMode ? '#4caf50' : 'border',
+                            backgroundColor: isCookingMode ? { base: '#e8f5e9', _dark: 'rgba(76,175,80,0.15)' } : 'surface',
+                            color: isCookingMode ? { base: '#2e7d32', _dark: '#66bb6a' } : 'text.muted',
                             fontSize: '13px',
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             _hover: {
                                 transform: 'translateY(-1px)',
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                                boxShadow: { base: '0 2px 6px rgba(0,0,0,0.1)', _dark: '0 2px 6px rgba(0,0,0,0.3)' },
                             },
                         })}
                     >
@@ -172,16 +175,17 @@ export function FlowControls({
                             gap: '6px',
                             padding: '8px 14px',
                             borderRadius: '8px',
-                            border: '1px solid #ddd',
-                            backgroundColor: 'white',
-                            color: '#666',
+                            border: '1px solid',
+                            borderColor: 'border',
+                            backgroundColor: 'surface',
+                            color: 'text.muted',
                             fontSize: '13px',
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             _hover: {
                                 transform: 'translateY(-1px)',
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                                boxShadow: { base: '0 2px 6px rgba(0,0,0,0.1)', _dark: '0 2px 6px rgba(0,0,0,0.3)' },
                             },
                         })}
                     >
@@ -196,16 +200,17 @@ export function FlowControls({
                             gap: '6px',
                             padding: '8px 14px',
                             borderRadius: '8px',
-                            border: '1px solid #ddd',
-                            backgroundColor: 'white',
-                            color: '#666',
+                            border: '1px solid',
+                            borderColor: 'border',
+                            backgroundColor: 'surface',
+                            color: 'text.muted',
                             fontSize: '13px',
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             _hover: {
                                 transform: 'translateY(-1px)',
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                                boxShadow: { base: '0 2px 6px rgba(0,0,0,0.1)', _dark: '0 2px 6px rgba(0,0,0,0.3)' },
                             },
                         })}
                     >
@@ -220,16 +225,17 @@ export function FlowControls({
                             gap: '6px',
                             padding: '8px 14px',
                             borderRadius: '8px',
-                            border: '1px solid #ddd',
-                            backgroundColor: 'white',
-                            color: '#666',
+                            border: '1px solid',
+                            borderColor: 'border',
+                            backgroundColor: 'surface',
+                            color: 'text.muted',
                             fontSize: '13px',
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             _hover: {
                                 transform: 'translateY(-1px)',
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                                boxShadow: { base: '0 2px 6px rgba(0,0,0,0.1)', _dark: '0 2px 6px rgba(0,0,0,0.3)' },
                             },
                         })}
                     >

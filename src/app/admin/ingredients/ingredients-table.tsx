@@ -232,7 +232,7 @@ function EditableRow({ ingredient, onCancel }: { ingredient: Ingredient; onCance
                                 borderRadius: 'md',
                                 border: '1px solid',
                                 borderColor: 'green.500',
-                                background: 'green.50',
+                                background: { base: 'green.50', _dark: 'rgba(34,197,94,0.1)' },
                                 cursor: 'pointer',
                                 color: 'green.600',
                                 transition: 'all 0.2s',
@@ -432,8 +432,8 @@ const columns: ColumnDef<Ingredient>[] = [
                                 color: 'foreground.muted',
                                 transition: 'all 0.2s',
                                 _hover: {
-                                    background: 'red.50',
-                                    borderColor: 'red.200',
+                                    background: { base: 'red.50', _dark: 'rgba(239,68,68,0.1)' },
+                                    borderColor: { base: 'red.200', _dark: 'rgba(239,68,68,0.3)' },
                                     color: 'red.600',
                                 },
                             })}
@@ -478,7 +478,7 @@ function MergeModal({ ingredients, onClose }: { ingredients: Ingredient[]; onClo
             className={css({
                 position: 'fixed',
                 inset: '0',
-                background: 'rgba(0,0,0,0.5)',
+                background: 'surface.overlay',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -542,9 +542,9 @@ function MergeModal({ ingredients, onClose }: { ingredients: Ingredient[]; onClo
                         className={css({
                             padding: '3',
                             borderRadius: 'lg',
-                            background: 'red.50',
+                            background: { base: 'red.50', _dark: 'rgba(239,68,68,0.1)' },
                             borderWidth: '1px',
-                            borderColor: 'red.200',
+                            borderColor: { base: 'red.200', _dark: 'rgba(239,68,68,0.3)' },
                             marginBottom: '4',
                         })}
                     >
@@ -841,8 +841,8 @@ export function IngredientsTable({ ingredients }: { ingredients: Ingredient[] })
                         className={css({
                             padding: '3',
                             borderBottomWidth: '1px',
-                            borderColor: 'red.200',
-                            background: 'red.50',
+                            borderColor: { base: 'red.200', _dark: 'rgba(239,68,68,0.3)' },
+                            background: { base: 'red.50', _dark: 'rgba(239,68,68,0.1)' },
                         })}
                     >
                         <p className={css({ fontSize: 'sm', color: 'red.600' })}>{error}</p>

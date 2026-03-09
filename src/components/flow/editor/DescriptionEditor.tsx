@@ -370,12 +370,13 @@ const previewClass = css({
     width: '100%',
     minHeight: '80px',
     p: '2.5',
-    border: '1px solid rgba(224,123,83,0.4)',
+    border: { base: '1px solid rgba(224,123,83,0.4)', _dark: '1px solid rgba(224,123,83,0.3)' },
     borderRadius: 'xl',
     fontSize: 'sm',
     lineHeight: '1.6',
     cursor: 'text',
     color: 'text',
+    backgroundColor: 'surface',
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-word',
     _hover: {
@@ -387,17 +388,19 @@ const textareaClass = css({
     width: '100%',
     minHeight: '80px',
     p: '2.5',
-    border: '1px solid rgba(224,123,83,0.4)',
+    border: { base: '1px solid rgba(224,123,83,0.4)', _dark: '1px solid rgba(224,123,83,0.3)' },
     borderRadius: 'xl',
     fontSize: 'sm',
     fontFamily: 'body',
     lineHeight: '1.6',
     resize: 'vertical',
     outline: 'none',
+    backgroundColor: 'surface',
+    color: 'text',
     _placeholder: { color: 'text.muted' },
     _focus: {
         borderColor: 'brand.primary',
-        boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
+        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
     },
 });
 
@@ -415,10 +418,10 @@ const dropdownClass = css({
     mt: '1',
     maxHeight: '200px',
     overflowY: 'auto',
-    backgroundColor: 'white',
-    border: '1px solid rgba(224,123,83,0.3)',
+    backgroundColor: 'surface',
+    border: { base: '1px solid rgba(224,123,83,0.3)', _dark: '1px solid rgba(224,123,83,0.25)' },
     borderRadius: 'lg',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+    boxShadow: { base: '0 8px 24px rgba(0,0,0,0.12)', _dark: '0 8px 24px rgba(0,0,0,0.35)' },
     p: '1',
     zIndex: '50',
 });
@@ -431,7 +434,7 @@ const separatorClass = css({
     color: 'text.muted',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
-    borderTop: '1px solid rgba(224,123,83,0.15)',
+    borderTop: { base: '1px solid rgba(224,123,83,0.15)', _dark: '1px solid rgba(224,123,83,0.2)' },
     mt: '1',
 });
 
@@ -446,7 +449,7 @@ const itemClass = css({
     fontSize: 'sm',
     color: 'text',
     transition: 'background-color 0.1s ease',
-    _hover: { backgroundColor: 'rgba(224,123,83,0.08)' },
+    _hover: { backgroundColor: { base: 'rgba(224,123,83,0.08)', _dark: 'rgba(224,123,83,0.13)' } },
 });
 
 const ingredientNameClass = css({ fontWeight: '500' });
@@ -461,7 +464,7 @@ const addBadgeClass = css({
     fontSize: '11px',
     fontWeight: '600',
     color: 'brand.primary',
-    backgroundColor: 'rgba(224,123,83,0.1)',
+    backgroundColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
     px: '1.5',
     py: '0.5',
     borderRadius: 'md',
@@ -477,8 +480,8 @@ const fractionBtnClass = css({
     fontSize: '13px',
     fontWeight: '700',
     color: 'brand.primary',
-    backgroundColor: 'rgba(224,123,83,0.1)',
-    border: '1.5px solid rgba(224,123,83,0.25)',
+    backgroundColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
+    border: { base: '1.5px solid rgba(224,123,83,0.25)', _dark: '1.5px solid rgba(224,123,83,0.3)' },
     borderRadius: 'md',
     px: '1.5',
     py: '0.5',
@@ -486,7 +489,7 @@ const fractionBtnClass = css({
     lineHeight: '1',
     transition: 'all 0.1s ease',
     _hover: {
-        backgroundColor: 'rgba(224,123,83,0.2)',
+        backgroundColor: { base: 'rgba(224,123,83,0.2)', _dark: 'rgba(224,123,83,0.25)' },
         borderColor: 'brand.primary',
     },
 });

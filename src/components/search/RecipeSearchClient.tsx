@@ -340,7 +340,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                 transition: 'border-color 150ms ease, box-shadow 150ms ease',
                                 _focus: {
                                     borderColor: 'accent',
-                                    boxShadow: '0 0 0 3px rgba(224,123,83,0.15)',
+                                    boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.2)' },
                                 },
                             })}
                         />
@@ -547,7 +547,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                 maxWidth: '480px',
                                 borderRadius: '2xl',
                                 background: 'surface.elevated',
-                                boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
+                                boxShadow: { base: '0 24px 60px rgba(0,0,0,0.25)', _dark: '0 24px 60px rgba(0,0,0,0.5)' },
                                 maxHeight: '92vh',
                                 overflowY: 'auto',
                                 overflow: 'hidden',

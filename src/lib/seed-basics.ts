@@ -421,7 +421,7 @@ async function main() {
             name: 'KüchenTakt',
             role: 'ADMIN',
             isActive: true,
-            profile: { create: { email: 'system@kitchenpace.internal', nickname: 'KüchenTakt', slug: 'kuechentakt' } },
+            profile: { create: { nickname: 'KüchenTakt', slug: 'kuechentakt' } },
         },
     });
     console.log(`✅ System user: ${systemUser.email}`);
@@ -440,7 +440,7 @@ async function main() {
             hashedPassword: adminHash,
             role: 'ADMIN',
             isActive: true,
-            profile: { create: { email: 'info@isntfunny.de', nickname: 'Admin', slug: 'admin' } },
+            profile: { create: { nickname: 'Admin', slug: 'admin' } },
         },
     });
     console.log(`✅ Admin user:  ${adminUser.email} (role: ${adminUser.role})`);

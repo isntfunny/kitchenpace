@@ -23,7 +23,7 @@ export default async function MyRecipesPage() {
         redirect('/auth/signin');
     }
 
-    const profile = await getOrCreateProfile(session.user.id, session.user.email ?? '');
+    const profile = await getOrCreateProfile(session.user.id);
 
     if (!profile) {
         redirect('/auth/signin');

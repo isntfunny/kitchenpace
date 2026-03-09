@@ -86,7 +86,6 @@ program
                     await tx.profile.create({
                         data: {
                             userId: created.id,
-                            email,
                             nickname,
                             slug,
                         },

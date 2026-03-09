@@ -1,8 +1,9 @@
 'use client';
 
+import debounce from 'lodash/debounce';
 import { ArrowLeft, Camera, Check, Loader2, Mail, Save, User, X } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
@@ -25,7 +26,6 @@ type NicknameStatus = 'idle' | 'checking' | 'available' | 'taken';
 interface ProfileData {
     id: string;
     userId: string;
-    email: string;
     nickname: string | null;
     teaser: string | null;
     photoUrl: string | null;
@@ -33,9 +33,10 @@ interface ProfileData {
 
 interface ProfileEditClientProps {
     profile: ProfileData;
+    email: string;
 }
 
-export function ProfileEditClient({ profile }: ProfileEditClientProps) {
+export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
     const [photoUrl, setPhotoUrl] = useState(profile.photoUrl || '');
     const [nickname, setNickname] = useState(profile.nickname || '');
     const [teaser, setTeaser] = useState(profile.teaser || '');
@@ -48,42 +49,37 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
     const [emailError, setEmailError] = useState<string | null>(null);
     const [emailSuccess, setEmailSuccess] = useState(false);
 
-    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const originalNickname = profile.nickname || '';
+
+    const checkNickname = useMemo(
+        () =>
+            debounce(async (trimmed: string) => {
+                try {
+                    const res = await fetch(
+                        `/api/profile/check-nickname?nickname=${encodeURIComponent(trimmed)}`,
+                    );
+                    const data = await res.json();
+                    setNicknameStatus(data.available ? 'available' : 'taken');
+                } catch {
+                    setNicknameStatus('idle');
+                }
+            }, 500),
+        [],
+    );
 
     useEffect(() => {
         const trimmed = nickname.trim();
 
-        if (!trimmed || trimmed === originalNickname) {
-            setNicknameStatus('idle');
-            return;
-        }
-
-        if (trimmed.length < 2) {
+        if (!trimmed || trimmed === originalNickname || trimmed.length < 2) {
             setNicknameStatus('idle');
             return;
         }
 
         setNicknameStatus('checking');
+        checkNickname(trimmed);
 
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-
-        debounceRef.current = setTimeout(async () => {
-            try {
-                const res = await fetch(
-                    `/api/profile/check-nickname?nickname=${encodeURIComponent(trimmed)}`,
-                );
-                const data = await res.json();
-                setNicknameStatus(data.available ? 'available' : 'taken');
-            } catch {
-                setNicknameStatus('idle');
-            }
-        }, 500);
-
-        return () => {
-            if (debounceRef.current) clearTimeout(debounceRef.current);
-        };
-    }, [nickname, originalNickname]);
+        return () => checkNickname.cancel();
+    }, [nickname, originalNickname, checkNickname]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -425,7 +421,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                             </Heading>
                             <Text color="muted" size="sm">
                                 Aktuelle Adresse:{' '}
-                                <strong>{profile.email || '–'}</strong>
+                                <strong>{email || '–'}</strong>
                             </Text>
                         </div>
 

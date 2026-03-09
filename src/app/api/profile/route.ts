@@ -61,7 +61,7 @@ export async function GET() {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const profile = await getOrCreateProfile(session.userId, session.email);
+    const profile = await getOrCreateProfile(session.userId);
 
     if (!profile) {
         logAuth('warn', 'GET /api/profile: profile not found', {
@@ -176,7 +176,6 @@ export async function PUT(request: NextRequest) {
     try {
         const profile = await upsertProfile({
             userId: session.userId,
-            email: session.email,
             data: profileUpdates,
         });
 
@@ -224,13 +223,7 @@ export async function PATCH(request: NextRequest) {
         );
     }
 
-    await prisma.$transaction([
-        prisma.user.update({ where: { id: session.userId }, data: { email: newEmail } }),
-        prisma.profile.update({
-            where: { userId: session.userId },
-            data: { email: newEmail },
-        }),
-    ]);
+    await prisma.user.update({ where: { id: session.userId }, data: { email: newEmail } });
 
     logAuth('info', 'PATCH /api/profile: email updated', { userId: session.userId });
 

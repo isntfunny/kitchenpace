@@ -38,14 +38,12 @@ function buildRecipePaths(recipeId: string, slug?: string | null) {
 
 async function ensureProfileCounts(
     userId: string,
-    emailFallback: string,
     data: Partial<{ followerCount: number; followingCount: number }>,
 ) {
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { email: true, name: true },
+        select: { name: true },
     });
-    const email = user?.email ?? emailFallback;
     const nickname = user?.name ?? `user_${userId.slice(0, 8)}`;
 
     const slug = await generateUniqueSlug(
@@ -57,7 +55,6 @@ async function ensureProfileCounts(
         where: { userId },
         create: {
             userId,
-            email,
             nickname,
             slug,
             followerCount: data.followerCount ?? 0,
@@ -235,8 +232,8 @@ export async function toggleFollowAction(targetUserId: string, options?: { recip
     ]);
 
     await Promise.all([
-        ensureProfileCounts(targetUserId, `${targetUserId}@kitchenpace.local`, { followerCount }),
-        ensureProfileCounts(viewer.id, `${viewer.id}@kitchenpace.local`, { followingCount }),
+        ensureProfileCounts(targetUserId, { followerCount }),
+        ensureProfileCounts(viewer.id, { followingCount }),
     ]);
 
     const [targetProfile, viewerProfile] = await Promise.all([

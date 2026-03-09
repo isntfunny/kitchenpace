@@ -170,7 +170,6 @@ export async function POST(request: Request) {
         await prisma.profile.create({
             data: {
                 userId: user.id,
-                email: normalizedEmail,
                 nickname: nickname.trim(),
                 slug: profileSlug,
             },

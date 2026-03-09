@@ -10,6 +10,7 @@ import { toggleFavoriteAction } from '@app/app/actions/social';
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { RecipeCard } from '@app/components/features/RecipeCard';
+import { formatTimeAgo } from '@app/lib/activity-utils';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 
@@ -27,21 +28,6 @@ export interface FavoriteRecipeCard {
 
 interface FavoritesClientProps {
     initialFavorites: FavoriteRecipeCard[];
-}
-
-function formatTimeAgo(date: Date | string): string {
-    const now = new Date();
-    const saved = new Date(date);
-    const diffMs = now.getTime() - saved.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Gerade eben';
-    if (diffMins < 60) return `vor ${diffMins} Min.`;
-    if (diffHours < 24) return `vor ${diffHours} Std.`;
-    if (diffDays < 7) return `vor ${diffDays} Tagen`;
-    return saved.toLocaleDateString('de-DE');
 }
 
 export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
@@ -123,7 +109,7 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                                     })}
                                 >
                                     <Text size="sm" color="muted">
-                                        Gespeichert {formatTimeAgo(recipe.savedAt)}
+                                        Gespeichert {formatTimeAgo(recipe.savedAt, { prefix: true, fallbackToDate: true })}
                                     </Text>
                                     <RemoveButton
                                         title={recipe.title}

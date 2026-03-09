@@ -24,6 +24,7 @@ import { LiveUserActivityList } from '@app/components/features/LiveActivityFeed'
 import { QuickLinksCard } from '@app/components/features/QuickLinksCard';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { FadeInSection } from '@app/components/motion/FadeInSection';
+import { formatTimeAgo } from '@app/lib/activity-utils';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { PALETTE } from '@app/lib/palette';
 import { getOrCreateProfile } from '@app/lib/profile';
@@ -36,18 +37,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
-
-function formatTimeAgo(date: Date): string {
-    const diff = Date.now() - new Date(date).getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 2) return 'Gerade eben';
-    if (minutes < 60) return `Vor ${minutes} Min.`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `Vor ${hours} Std.`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `Vor ${days} Tag${days === 1 ? '' : 'en'}`;
-    return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
-}
 
 // ---- Shared card styles ----
 const cardCss = css({
@@ -236,7 +225,7 @@ function DraftSection({ drafts }: { drafts: DraftRecipe[] }) {
                             {draft.title}
                         </p>
                         <p className={css({ fontSize: 'xs', color: 'text-muted', mt: 'auto', pt: '1' })}>
-                            {formatTimeAgo(draft.updatedAt)}
+                            {formatTimeAgo(draft.updatedAt, { prefix: true, fallbackToDate: true })}
                         </p>
                     </Link>
                 ))}
@@ -334,7 +323,7 @@ function HistorySection({
                         id={item.recipeId}
                         title={item.recipeTitle}
                         slug={item.recipeSlug}
-                        meta={formatTimeAgo(item.date)}
+                        meta={formatTimeAgo(item.date, { prefix: true, fallbackToDate: true })}
                     />
                 ))}
             </div>
@@ -351,7 +340,7 @@ export default async function ProfilePage() {
         redirect('/auth/signin');
     }
 
-    const profile = await getOrCreateProfile(session.user.id, session.user.email ?? '');
+    const profile = await getOrCreateProfile(session.user.id);
 
     if (!profile) {
         redirect('/auth/signin');

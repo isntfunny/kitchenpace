@@ -15,7 +15,7 @@ export default async function ProfileEditPage() {
         redirect('/auth/signin');
     }
 
-    const profile = await getOrCreateProfile(session.user.id, session.user.email ?? '');
+    const profile = await getOrCreateProfile(session.user.id);
 
     if (!profile) {
         logAuth('warn', 'profile/edit: profile missing', {
@@ -26,7 +26,7 @@ export default async function ProfileEditPage() {
 
     return (
         <PageShell>
-            <ProfileEditClient profile={profile} />
+            <ProfileEditClient profile={profile} email={session.user.email ?? ''} />
         </PageShell>
     );
 }

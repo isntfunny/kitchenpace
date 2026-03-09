@@ -39,7 +39,7 @@ const ManageProfilePage = async () => {
         redirect('/auth/signin');
     }
 
-    const profile = await getOrCreateProfile(session.user.id, session.user.email ?? '');
+    const profile = await getOrCreateProfile(session.user.id);
 
     if (!profile) {
         logAuth('warn', 'profile/settings: profile missing', {

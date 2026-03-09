@@ -358,7 +358,6 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
             setCurrentStep('url');
             setStatus({ step: 'url', message: '', progress: 0 });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [url, addStreamEvent, clearStreamEvents, categories]);
 
     const handleContinueToEdit = useCallback(() => {

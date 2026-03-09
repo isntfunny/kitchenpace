@@ -94,7 +94,6 @@ export function MobileView({
     completed: Set<string>;
     timers: Map<string, TimerState>;
     dispatch: Dispatch<ViewerAction>;
-    // eslint-disable-next-line react/no-unused-prop-types
     onOpenDetail: (nodeId: string) => void;
     ingredients?: RecipeStepsViewerProps['ingredients'];
 }) {

@@ -1,7 +1,9 @@
 'use client';
 
+import { formatScaledAmount } from '@app/lib/format';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
+
 
 interface Ingredient {
     name: string;
@@ -22,10 +24,6 @@ export function IngredientList({
     originalServings,
     onServingsChange,
 }: IngredientListProps) {
-    const formatAmount = (amount: number): string => {
-        const scaled = amount * (servings / originalServings);
-        return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
-    };
 
     return (
         <div
@@ -128,7 +126,7 @@ export function IngredientList({
                     >
                         <span className={css({ fontWeight: '500' })}>{ingredient.name}</span>
                         <span className={css({ color: 'text-muted' })}>
-                            {formatAmount(ingredient.amount)} {ingredient.unit}
+                            {formatScaledAmount(ingredient.amount, servings, originalServings)} {ingredient.unit}
                         </span>
                     </li>
                 ))}

@@ -1,12 +1,9 @@
+import { formatScaledAmount } from '@app/lib/format';
+
 import type { Recipe } from '../data';
 
 export function printRecipe(recipe: Recipe, servings: number) {
     const totalTime = recipe.prepTime + recipe.cookTime;
-
-    const formatAmount = (amount: number): string => {
-        const scaled = amount * (servings / recipe.servings);
-        return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
-    };
 
     const steps = recipe.flow.nodes
         .filter((n) => n.id !== 'start' && n.type !== 'prep')
@@ -15,7 +12,7 @@ export function printRecipe(recipe: Recipe, servings: number) {
     const ingredientRows = recipe.ingredients
         .map(
             (ing) =>
-                `<tr><td style="padding:4px 12px 4px 0">${ing.name}${ing.notes ? ` <small style="color:#888">(${ing.notes})</small>` : ''}</td><td style="padding:4px 0;text-align:right;white-space:nowrap">${formatAmount(ing.amount)} ${ing.unit}</td></tr>`,
+                `<tr><td style="padding:4px 12px 4px 0">${ing.name}${ing.notes ? ` <small style="color:#888">(${ing.notes})</small>` : ''}</td><td style="padding:4px 0;text-align:right;white-space:nowrap">${formatScaledAmount(ing.amount, servings, recipe.servings)} ${ing.unit}</td></tr>`,
         )
         .join('');
 

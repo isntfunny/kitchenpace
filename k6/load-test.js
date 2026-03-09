@@ -22,6 +22,14 @@ import { check, group, sleep } from 'k6';
 import http from 'k6/http';
 import { Rate, Trend, Counter } from 'k6/metrics';
 
+import {
+    extractRecipeSlugsFromPayload,
+    extractCategoriesFromPayload,
+    extractTagsFromPayload,
+    extractUserSlugsFromHtml,
+    fetchRecipesPageSlugs,
+} from './helpers.js';
+
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 const SCENARIO = __ENV.SCENARIO || 'all'; // Options: all, light, medium, heavy, granular
 
@@ -181,11 +189,6 @@ function randomSleepMs(minMs, maxMs) {
     sleep(waitMs / 1000);
 }
 
-// Legacy wrapper for backward compatibility (converts seconds to ms)
-function randomSleep(min = 1, max = 3) {
-    randomSleepMs(min * 1000, max * 1000);
-}
-
 // Per-user behavior profile (each VU gets a "personality")
 const userProfiles = [
     { name: 'speed', weight: 0.2, minMs: 200, maxMs: 800 }, // 20%: Speed surfers
@@ -228,56 +231,8 @@ function randomElement(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// Sample search terms
-const searchTerms = [
-    'pasta',
-    'chicken',
-    'salad',
-    'soup',
-    'cake',
-    'pizza',
-    'rice',
-    'beef',
-    'fish',
-    'vegetarian',
-    'vegan',
-    'dessert',
-    'breakfast',
-    'nudeln',
-    'hähnchen',
-    'salat',
-    'suppe',
-    'kuchen',
-    'reis',
-    'rind',
-    'fisch',
-    'vegan',
-    'nachtisch',
-    'frühstück',
-];
-
-// Sample filter categories
-const categories = ['Hauptgericht', 'Vorspeise', 'Dessert', 'Frühstück', 'Beilage'];
-
-// Sample recipe slugs (these would ideally be fetched dynamically)
-const sampleRecipeSlugs = [
-    'spaghetti-carbonara',
-    'caesar-salad',
-    'chicken-curry',
-    'beef-bourguignon',
-    'tiramisu',
-    'pancakes',
-    'guacamole',
-    'lasagna',
-    'pad-thai',
-    'chocolate-cake',
-];
-
-// Sample user IDs
-const sampleUserIds = ['user-1', 'user-2', 'user-3', 'user-4', 'user-5', 'user-6'];
-
 // Main test function
-export function runTest() {
+export function runTest(data) {
     const profile = getUserProfile();
     // Log user profile type on first iteration for debugging
     if (__ITER === 0) {
@@ -298,32 +253,32 @@ export function runTest() {
     if (rand < 0.4) {
         // 40% chance: Navigate to recipes and explore
         group('Recipe Exploration', () => {
-            navigateRecipes();
+            navigateRecipes(data);
         });
     } else if (rand < 0.7) {
         // 30% chance: View specific recipe
         group('Recipe Detail', () => {
-            viewRandomRecipe();
+            viewRandomRecipe(data);
         });
     } else if (rand < 0.85) {
         // 15% chance: View user profile
         group('User Profile', () => {
-            viewRandomUser();
+            viewRandomUser(data);
         });
     } else if (rand < 0.95) {
         // 10% chance: Use search
         group('Search', () => {
-            performSearch();
+            performSearch(data);
         });
     } else {
         // 5% chance: Apply filters
         group('Filters', () => {
-            useFilters();
+            useFilters(data);
         });
     }
 }
 
-function navigateRecipes() {
+function navigateRecipes(data) {
     // Go to recipes page
     makeRequest(`${BASE_URL}/recipes`, 'Recipes List');
     // Variable browsing time per user type
@@ -331,12 +286,12 @@ function navigateRecipes() {
 
     // Maybe view a specific recipe from the list
     if (Math.random() < 0.6) {
-        viewRandomRecipe();
+        viewRandomRecipe(data);
     }
 }
 
-function viewRandomRecipe() {
-    const recipeSlug = randomElement(sampleRecipeSlugs);
+function viewRandomRecipe(data) {
+    const recipeSlug = randomElement(data.recipes);
     const url = `${BASE_URL}/recipe/${recipeSlug}`;
 
     makeRequest(url, 'Recipe Detail');
@@ -347,13 +302,13 @@ function viewRandomRecipe() {
     // Maybe explore related content
     if (Math.random() < 0.3) {
         // View another random recipe
-        viewRandomRecipe();
+        viewRandomRecipe(data);
     }
 }
 
-function viewRandomUser() {
-    const userId = randomElement(sampleUserIds);
-    const url = `${BASE_URL}/user/${userId}`;
+function viewRandomUser(data) {
+    const userSlug = randomElement(data.users);
+    const url = `${BASE_URL}/user/${userSlug}`;
 
     makeRequest(url, 'User Profile');
     userViews.add(1);
@@ -364,12 +319,12 @@ function viewRandomUser() {
     if (Math.random() < 0.4) {
         variableSleep(800, 2000);
         // Simulate clicking on a recipe from user's profile
-        viewRandomRecipe();
+        viewRandomRecipe(data);
     }
 }
 
-function performSearch() {
-    const term = randomElement(searchTerms);
+function performSearch(data) {
+    const term = randomElement(data.searchTerms);
     const url = `${BASE_URL}/recipes?q=${encodeURIComponent(term)}`;
 
     makeRequest(url, 'Search');
@@ -379,17 +334,17 @@ function performSearch() {
 
     // Maybe click on a search result
     if (Math.random() < 0.5) {
-        viewRandomRecipe();
+        viewRandomRecipe(data);
     }
 }
 
-function useFilters() {
+function useFilters(data) {
     // Build random filter combination
     const filters = [];
 
     // Add category filter 50% of the time
     if (Math.random() < 0.5) {
-        filters.push(`category=${encodeURIComponent(randomElement(categories))}`);
+        filters.push(`category=${encodeURIComponent(randomElement(data.categories))}`);
     }
 
     // Add time filter 30% of the time
@@ -413,39 +368,116 @@ function useFilters() {
 
     // Maybe view a filtered result
     if (Math.random() < 0.4) {
-        viewRandomRecipe();
+        viewRandomRecipe(data);
     }
 }
 
-// Handle setup - fetch actual IDs from the API
+// Handle setup - fetch actual data from the live site
 export function setup() {
     console.log(`Starting load test against: ${BASE_URL}`);
 
-    // Try to fetch actual recipe and user IDs
+    let recipes = [];
+    let users = [];
+    let categories = [];
+    let searchTerms = [];
+    let payload = null;
+
+    // Fetch recipe slugs + facets (categories, tags) from the filter API
     try {
-        const recipesResponse = http.get(`${BASE_URL}/api/recipes?limit=50`);
-        if (recipesResponse.status === 200) {
+        const filterResponse = http.get(`${BASE_URL}/api/recipes/filter?limit=50`, {
+            responseType: 'text',
+        });
+        if (filterResponse.status === 200) {
             try {
-                const recipes = JSON.parse(recipesResponse.body);
-                if (recipes && recipes.length > 0) {
-                    return { recipes: recipes.map((r) => r.id || r.slug).filter(Boolean) };
+                payload = JSON.parse(filterResponse.body);
+                const slugs = extractRecipeSlugsFromPayload(payload);
+                if (slugs.length > 0) {
+                    recipes = slugs;
+                    console.log(`Loaded ${recipes.length} recipe slugs from filter API`);
+                }
+                const cats = extractCategoriesFromPayload(payload);
+                if (cats.length > 0) {
+                    categories = cats;
+                    console.log(`Loaded ${categories.length} categories from filter API: ${categories.join(', ')}`);
+                }
+                const tags = extractTagsFromPayload(payload);
+                if (tags.length > 0) {
+                    searchTerms = tags;
+                    console.log(`Loaded ${searchTerms.length} search terms from filter API tags`);
                 }
             } catch (e) {
-                console.log('Could not parse recipes response, using sample IDs');
+                console.log(`Could not parse filter API response: ${e}`);
             }
         }
     } catch (e) {
-        console.log('Could not fetch recipes, using sample IDs');
+        console.log(`Could not fetch filter API: ${e}`);
     }
 
-    return {
-        recipes: sampleRecipeSlugs,
-        users: sampleUserIds,
-    };
+    // Fetch /recipes HTML once — used for recipe fallback + user slugs
+    try {
+        const page = fetchRecipesPageSlugs(BASE_URL, http);
+        if (recipes.length === 0 && page.recipes.length > 0) {
+            recipes = page.recipes;
+            console.log(`Loaded ${recipes.length} recipe slugs from recipes page HTML`);
+        }
+        if (users.length === 0 && page.users.length > 0) {
+            users = page.users;
+            console.log(`Loaded ${users.length} user slugs from recipes page HTML`);
+        }
+    } catch (e) {
+        console.log(`Could not parse recipes page HTML: ${e}`);
+    }
+
+    // If we still have no user slugs, try scraping a recipe detail page for the author link
+    if (users.length === 0 && recipes.length > 0) {
+        try {
+            const recipeResponse = http.get(`${BASE_URL}/recipe/${recipes[0]}`, {
+                responseType: 'text',
+            });
+            if (recipeResponse.status === 200 && recipeResponse.body) {
+                const slugs = extractUserSlugsFromHtml(recipeResponse.body);
+                if (slugs.length > 0) {
+                    users = slugs;
+                    console.log(`Loaded ${users.length} user slugs from recipe detail page`);
+                }
+            }
+        } catch (e) {
+            console.log(`Could not extract user slugs from recipe detail page: ${e}`);
+        }
+    }
+
+    // Guard: abort if we couldn't get any real data to test with
+    if (recipes.length === 0) {
+        console.error(
+            'WARN: No recipe slugs found — recipe detail tests will be skipped. ' +
+            'Make sure the app is running and has published recipes.',
+        );
+        recipes = ['__no-recipes__'];
+    }
+    if (users.length === 0) {
+        console.error(
+            'WARN: No user slugs found — user profile tests will be skipped. ' +
+            'Make sure the app is running and users have public profiles.',
+        );
+        users = ['__no-users__'];
+    }
+    if (categories.length === 0) {
+        console.error('WARN: No categories found from API — filter tests will use empty category.');
+        categories = [''];
+    }
+    if (searchTerms.length === 0) {
+        console.error('WARN: No search terms found from API — search tests will use empty query.');
+        searchTerms = [''];
+    }
+
+    console.log(`Setup complete. recipes=${recipes.length}, users=${users.length}, categories=${categories.length}, searchTerms=${searchTerms.length}`);
+
+    return { recipes, users, categories, searchTerms };
 }
 
 // Handle teardown
 export function teardown(data) {
     console.log('Load test completed');
-    console.log(`Total recipe views: ${data.recipes ? data.recipes.length : 'N/A'}`);
+    console.log(`Recipe pool size: ${data.recipes ? data.recipes.length : 'N/A'}`);
+    console.log(`User pool size: ${data.users ? data.users.length : 'N/A'}`);
 }

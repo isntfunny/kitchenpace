@@ -522,6 +522,7 @@ export function RecipesTable({ recipes }: { recipes: Recipe[] }) {
     const filteredRecipes =
         statusFilter === 'ALL' ? recipes : recipes.filter((r) => r.status === statusFilter);
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data: filteredRecipes,
         columns,

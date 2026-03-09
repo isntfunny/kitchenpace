@@ -23,6 +23,10 @@ export interface StepConfig {
     icon: LucideIcon;
     color: string;
     gradient: string;
+    /** Subtle flat tint used for LaneWizard step cards */
+    flatBg: string;
+    /** Accent colour used for icons / badges in LaneWizard */
+    accent: string;
     category: StepCategory;
     canHaveIncomingEdge: boolean;
     canHaveOutgoingEdge: boolean;
@@ -44,6 +48,8 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         icon: PlayCircle,
         color: '#f0f4ff',
         gradient: 'linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%)',
+        flatBg: 'rgba(39,174,96,0.07)',
+        accent: '#27ae60',
         category: 'vorbereitung',
         canHaveIncomingEdge: false,
         canHaveOutgoingEdge: true,
@@ -55,6 +61,8 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         icon: Scissors,
         color: '#e3f2fd',
         gradient: 'linear-gradient(135deg, #e3f2fd 0%, #d4ecf9 100%)',
+        flatBg: 'rgba(61,154,232,0.07)',
+        accent: '#3d9ae8',
         category: 'vorbereitung',
         canHaveIncomingEdge: true,
         canHaveOutgoingEdge: true,
@@ -66,6 +74,8 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         icon: Flame,
         color: '#fff3e0',
         gradient: 'linear-gradient(135deg, #fff3e0 0%, #ffecd9 100%)',
+        flatBg: 'rgba(224,123,83,0.07)',
+        accent: '#e07b53',
         category: 'kochen',
         canHaveIncomingEdge: true,
         canHaveOutgoingEdge: true,
@@ -77,6 +87,8 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         icon: Beef,
         color: '#fbe9e7',
         gradient: 'linear-gradient(135deg, #fbe9e7 0%, #fadbd8 100%)',
+        flatBg: 'rgba(230,126,34,0.08)',
+        accent: '#e67e22',
         category: 'kochen',
         canHaveIncomingEdge: true,
         canHaveOutgoingEdge: true,
@@ -88,6 +100,8 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         icon: UtensilsCrossed,
         color: '#fce4ec',
         gradient: 'linear-gradient(135deg, #fce4ec 0%, #fad0e4 100%)',
+        flatBg: 'rgba(142,68,173,0.07)',
+        accent: '#8e44ad',
         category: 'kochen',
         canHaveIncomingEdge: true,
         canHaveOutgoingEdge: true,
@@ -99,6 +113,8 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         icon: Blend,
         color: '#e8eaf6',
         gradient: 'linear-gradient(135deg, #e8eaf6 0%, #d9dcf2 100%)',
+        flatBg: 'rgba(22,160,133,0.07)',
+        accent: '#16a085',
         category: 'vorbereitung',
         canHaveIncomingEdge: true,
         canHaveOutgoingEdge: true,
@@ -110,6 +126,8 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         icon: Clock,
         color: '#f3e5f5',
         gradient: 'linear-gradient(135deg, #f3e5f5 0%, #ead6f0 100%)',
+        flatBg: 'rgba(127,140,141,0.06)',
+        accent: '#7f8c8d',
         category: 'warten',
         canHaveIncomingEdge: true,
         canHaveOutgoingEdge: true,
@@ -121,6 +139,8 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         icon: Leaf,
         color: '#e8f5e9',
         gradient: 'linear-gradient(135deg, #e8f5e9 0%, #d4e9d1 100%)',
+        flatBg: 'rgba(243,156,18,0.07)',
+        accent: '#f39c12',
         category: 'wuerzen',
         canHaveIncomingEdge: true,
         canHaveOutgoingEdge: true,
@@ -132,6 +152,8 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         icon: Layers,
         color: '#fff8e1',
         gradient: 'linear-gradient(135deg, #fff8e1 0%, #ffecd8 100%)',
+        flatBg: 'rgba(46,204,113,0.07)',
+        accent: '#2ecc71',
         category: 'fertig',
         canHaveIncomingEdge: true,
         canHaveOutgoingEdge: true,
@@ -143,6 +165,8 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         icon: Sparkles,
         color: '#ffebee',
         gradient: 'linear-gradient(135deg, #ffebee 0%, #ffd9df 100%)',
+        flatBg: 'rgba(39,174,96,0.07)',
+        accent: '#27ae60',
         category: 'fertig',
         canHaveIncomingEdge: true,
         canHaveOutgoingEdge: false,

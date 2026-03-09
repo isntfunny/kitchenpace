@@ -1,7 +1,8 @@
 'use client';
 
+import debounce from 'lodash/debounce';
 import { Search } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { css } from 'styled-system/css';
 
@@ -45,7 +46,6 @@ export function SearchableSelect({
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
-    const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     const search = useCallback(
         async (q: string) => {
@@ -64,16 +64,17 @@ export function SearchableSelect({
         [searchFn],
     );
 
+    const debouncedSearch = useMemo(() => debounce(search, 300), [search]);
+
     const handleInputChange = (value: string) => {
         setQuery(value);
         setIsOpen(true);
-        clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => search(value), 300);
+        debouncedSearch(value);
     };
 
     useEffect(() => {
-        return () => clearTimeout(debounceRef.current);
-    }, []);
+        return () => debouncedSearch.cancel();
+    }, [debouncedSearch]);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {

@@ -1,5 +1,6 @@
 'use client';
 
+import groupBy from 'lodash/groupBy';
 import {
     Apple,
     Box,
@@ -140,16 +141,7 @@ export function DashboardShoppingList({ items: initialItems }: DashboardShopping
     const totalCount = items.length;
     const progress = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
 
-    const groupedItems = items.reduce(
-        (acc, item) => {
-            if (!acc[item.category]) {
-                acc[item.category] = [];
-            }
-            acc[item.category].push(item);
-            return acc;
-        },
-        {} as Record<string, ShoppingItem[]>,
-    );
+    const groupedItems = groupBy(items, 'category');
 
     return (
         <div

@@ -1,3 +1,5 @@
+import sumBy from 'lodash/sumBy';
+
 import { PageShell } from '@app/components/layouts/PageShell';
 import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 import { prisma } from '@shared/prisma';
@@ -45,7 +47,7 @@ export default async function ImportsPage() {
     await ensureAdminSession('admin-imports');
     const runs = await getImportRuns();
 
-    const totalCost = runs.reduce((sum, r) => sum + (r.estimatedCostUsd ?? 0), 0);
+    const totalCost = sumBy(runs, (r) => r.estimatedCostUsd ?? 0);
     const successCount = runs.filter((r) => r.status === 'SUCCESS').length;
     const failedCount = runs.filter((r) => r.status === 'FAILED').length;
 

@@ -6,4 +6,3 @@ export { IngredientList } from './IngredientList';
 export { RecipeActionButtons } from './RecipeActionButtons';
 export { RecipeMetaStats } from './RecipeMetaStats';
 export { RecipeTags } from './RecipeTags';
-export { RatingSection } from './RatingSection';

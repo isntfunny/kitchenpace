@@ -2,7 +2,6 @@
 
 import {
     Bookmark,
-    Camera,
     Check,
     CheckCircle,
     ChefHat,
@@ -12,9 +11,10 @@ import {
     Printer,
     Star,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 
@@ -27,6 +27,7 @@ import {
 import { Badge } from '@app/components/atoms/Badge';
 import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
+import { SparkleEffect } from '@app/components/atoms/SparkleEffect';
 import { Header } from '@app/components/features/Header';
 import { ReportButton } from '@app/components/features/ReportButton';
 import { ShareButton } from '@app/components/features/ShareButton';
@@ -36,8 +37,33 @@ import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
 import { flex, grid, container } from 'styled-system/patterns';
 
+import { CookDialog } from './components/CookDialog';
 import { printRecipe } from './components/PrintRecipe';
 import type { Recipe, User, Activity } from './data';
+
+// ── Inline star sparkle ───────────────────────────────────────────────────────
+// Stars are size=22 inside a borderless button (≈22×22px).
+// Outer star tips sit at ~43% of button size from center.
+const _STAR_TIPS = Array.from({ length: 5 }, (_, k) => {
+    const angle = -Math.PI / 2 + (k * 2 * Math.PI) / 5;
+    return { x: 50 + 43 * Math.cos(angle), y: 50 + 43 * Math.sin(angle), angle };
+});
+const _STAR_COLORS = ['#f8b500', '#e07b53', '#f76b15', '#ffd166', '#ffb347', '#ff9a5c'];
+
+interface _StarSpark { id: number; x: string; y: string; dx: number; dy: number; color: string; size: number; duration: number; delay: number }
+interface _StarBurst { id: number; starIndex: number; sparks: _StarSpark[] }
+
+function _makeStarSparks(): _StarSpark[] {
+    const sparks: _StarSpark[] = [];
+    _STAR_TIPS.forEach((tip, ti) => {
+        for (let i = 0; i < 3; i++) {
+            const angle = tip.angle + (Math.random() - 0.5) * (Math.PI / 3.5);
+            const dist = 14 + Math.random() * 24;
+            sparks.push({ id: ti * 10 + i, x: `${tip.x}%`, y: `${tip.y}%`, dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist, color: _STAR_COLORS[Math.floor(Math.random() * _STAR_COLORS.length)], size: 2 + Math.random() * 3, duration: 0.42 + Math.random() * 0.3, delay: Math.random() * 0.08 });
+        }
+    });
+    return sparks;
+}
 
 type CookImageItem = {
     id: string;
@@ -95,6 +121,7 @@ export function RecipeDetailClient({
     const [viewerRating, setViewerRating] = useState<number | null>(initialViewer?.rating ?? null);
     const [averageRating, setAverageRating] = useState(recipe.rating ?? 0);
     const [ratingCount, setRatingCount] = useState(recipe.ratingCount ?? 0);
+    const [starBursts, setStarBursts] = useState<_StarBurst[]>([]);
     const [isFavoritePending, startFavoriteTransition] = useTransition();
     const [isFollowPending, startFollowTransition] = useTransition();
     const [isRatingPending, startRatingTransition] = useTransition();
@@ -102,8 +129,6 @@ export function RecipeDetailClient({
     const [showCookDialog, setShowCookDialog] = useState(false);
     const [cookCount, setCookCount] = useState(recipe.cookCount ?? 0);
     const [hasCooked, setHasCooked] = useState(initialViewer?.hasCooked ?? false);
-    const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-    const [cookNotes, setCookNotes] = useState('');
     const [heroIndex, setHeroIndex] = useState(0);
     const [viewerId, setViewerId] = useState(initialViewer?.id ?? null);
 
@@ -280,8 +305,24 @@ export function RecipeDetailClient({
         });
     };
 
+    const triggerStarBurst = useCallback((starIndex: number) => {
+        const id = Date.now() + starIndex;
+        setStarBursts(prev => [...prev, { id, starIndex, sparks: _makeStarSparks() }]);
+        setTimeout(() => setStarBursts(prev => prev.filter(b => b.id !== id)), 1000);
+    }, []);
+
     const handleRatingSelect = (value: number) => {
         if (!requireAuth()) return;
+
+        // Cascade sparkle across newly-lit stars
+        const prev = viewerRating ?? 0;
+        if (value > prev) {
+            for (let v = prev + 1; v <= value; v++) {
+                setTimeout(() => triggerStarBurst(v), (v - prev - 1) * 75);
+            }
+        } else {
+            triggerStarBurst(value);
+        }
 
         startRatingTransition(async () => {
             try {
@@ -300,14 +341,14 @@ export function RecipeDetailClient({
         setShowCookDialog(true);
     };
 
-    const handleSubmitCook = async () => {
+    const handleSubmitCook = async ({ notes, image }: { notes: string; image: File | null }) => {
         if (!requireAuth()) return;
 
         startCookTransition(async () => {
             try {
                 const result = await markRecipeCookedAction(recipe.id, {
-                    notes: cookNotes || undefined,
-                    image: uploadedImage,
+                    notes: notes || undefined,
+                    image,
                 });
 
                 if (result.hasImage) {
@@ -316,8 +357,6 @@ export function RecipeDetailClient({
                 setHasCooked(true);
                 setCookCount(result.cookCount);
                 setShowCookDialog(false);
-                setUploadedImage(null);
-                setCookNotes('');
             } catch (error) {
                 console.error(error);
             }
@@ -717,30 +756,46 @@ export function RecipeDetailClient({
                                 {/* Rating */}
                                 <div className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
                                     {starValues.map((value) => (
-                                        <button
-                                            key={value}
-                                            type="button"
-                                            onClick={() => handleRatingSelect(value)}
-                                            disabled={isRatingPending}
-                                            className={css({
-                                                padding: 0,
-                                                border: 'none',
-                                                background: 'none',
-                                                cursor: 'pointer',
-                                                transition: 'transform 150ms ease',
-                                                _hover: { transform: 'scale(1.2)' },
-                                                display: 'inline-flex',
-                                            })}
-                                        >
-                                            <Star
-                                                size={22}
-                                                fill={value <= activeStarValue ? 'var(--colors-palette-gold, #d9ad36)' : 'none'}
+                                        <div key={value} style={{ position: 'relative', display: 'inline-flex', overflow: 'visible' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRatingSelect(value)}
+                                                disabled={isRatingPending}
                                                 className={css({
-                                                    color: value <= activeStarValue ? 'palette.gold' : 'text-muted',
-                                                    opacity: value <= activeStarValue ? 1 : 0.35,
+                                                    padding: 0,
+                                                    border: 'none',
+                                                    background: 'none',
+                                                    cursor: 'pointer',
+                                                    transition: 'transform 150ms ease',
+                                                    _hover: { transform: 'scale(1.2)' },
+                                                    display: 'inline-flex',
                                                 })}
-                                            />
-                                        </button>
+                                            >
+                                                <Star
+                                                    size={22}
+                                                    fill={value <= activeStarValue ? 'var(--colors-palette-gold, #d9ad36)' : 'none'}
+                                                    className={css({
+                                                        color: value <= activeStarValue ? 'palette.gold' : 'text-muted',
+                                                        opacity: value <= activeStarValue ? 1 : 0.35,
+                                                    })}
+                                                />
+                                            </button>
+                                            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible', zIndex: 10 }}>
+                                                <AnimatePresence>
+                                                    {starBursts.filter(b => b.starIndex === value).map(burst =>
+                                                        burst.sparks.map(spark => (
+                                                            <motion.div
+                                                                key={`${burst.id}-${spark.id}`}
+                                                                style={{ position: 'absolute', left: spark.x, top: spark.y, width: spark.size, height: spark.size, borderRadius: '50%', background: spark.color, boxShadow: `0 0 ${spark.size * 2}px ${spark.color}`, translateX: '-50%', translateY: '-50%' }}
+                                                                initial={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+                                                                animate={{ x: spark.dx, y: spark.dy, opacity: [1, 1, 0], scale: [1, 1.4, 0] }}
+                                                                transition={{ duration: spark.duration, delay: spark.delay, ease: 'easeOut', opacity: { times: [0, 0.35, 1] }, scale: { times: [0, 0.25, 1] } }}
+                                                            />
+                                                        ))
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
                                     ))}
                                     <span className={css({ fontSize: 'sm', color: 'text-muted', fontFamily: 'body', ml: '1' })}>
                                         {ratingCount > 0 ? `${averageRating.toFixed(1)} (${ratingCount})` : 'Bewerten'}
@@ -751,19 +806,23 @@ export function RecipeDetailClient({
                             {/* ── Actions ── */}
                             <div className={css({ display: 'flex', gap: '2', mb: '2' })}>
                                 <div className={css({ flex: '1' })}>
-                                    <Button
-                                        type="button"
-                                        variant={favoriteState.isFavorite ? 'secondary' : 'primary'}
-                                        onClick={handleFavoriteToggle}
-                                        disabled={isFavoritePending}
-                                        style={{ width: '100%', minWidth: 0 }}
-                                    >
-                                        <span className={css({ flexShrink: 0 })}>{favoriteState.isFavorite ? <Heart size={16} /> : <Bookmark size={16} />}</span>
-                                        <span className={css({ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 })}>
-                                            {favoriteState.isFavorite ? 'Favorit' : 'Speichern'}
-                                        </span>
-                                        <span className={css({ opacity: 0.7, fontSize: 'xs', flexShrink: 0 })}>· {favoriteState.count}</span>
-                                    </Button>
+                                    <SparkleEffect>
+                                        {(triggerSparkle) => (
+                                            <Button
+                                                type="button"
+                                                variant={favoriteState.isFavorite ? 'secondary' : 'primary'}
+                                                onClick={() => { if (!favoriteState.isFavorite) triggerSparkle(); handleFavoriteToggle(); }}
+                                                disabled={isFavoritePending}
+                                                style={{ width: '100%', minWidth: 0 }}
+                                            >
+                                                <span className={css({ flexShrink: 0 })}>{favoriteState.isFavorite ? <Heart size={16} /> : <Bookmark size={16} />}</span>
+                                                <span className={css({ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 })}>
+                                                    {favoriteState.isFavorite ? 'Favorit' : 'Speichern'}
+                                                </span>
+                                                <span className={css({ opacity: 0.7, fontSize: 'xs', flexShrink: 0 })}>· {favoriteState.count}</span>
+                                            </Button>
+                                        )}
+                                    </SparkleEffect>
                                 </div>
                                 <div className={css({ flex: '1' })}>
                                     <Button
@@ -799,146 +858,6 @@ export function RecipeDetailClient({
                                     />
                                 )}
                             </div>
-
-                            {showCookDialog && (
-                                <div
-                                    className={css({
-                                        mt: '4',
-                                        p: '5',
-                                        bg: 'surface.elevated',
-                                        borderRadius: 'xl',
-                                        border: '1px solid',
-                                        borderColor: 'gray.200',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                                    })}
-                                >
-                                    <h3
-                                        className={css({
-                                            fontSize: 'base',
-                                            fontWeight: '700',
-                                            fontFamily: 'heading',
-                                            mb: '3',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                        })}
-                                    >
-                                        <ChefHat size={20} />
-                                        <span>Als zubereitet markieren</span>
-                                    </h3>
-
-                                    <div
-                                        className={css({
-                                            border: '2px dashed',
-                                            borderColor: 'gray.300',
-                                            borderRadius: 'lg',
-                                            p: '6',
-                                            textAlign: 'center',
-                                            cursor: 'pointer',
-                                            transition: 'all 150ms ease',
-                                            bg: 'gray.50',
-                                            _hover: {
-                                                borderColor: 'primary',
-                                                bg: 'rgba(224,123,83,0.05)',
-                                            },
-                                        })}
-                                        onClick={() =>
-                                            document.getElementById('cook-image-input')?.click()
-                                        }
-                                    >
-                                        <input
-                                            id="cook-image-input"
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) =>
-                                                setUploadedImage(e.target.files?.[0] ?? null)
-                                            }
-                                            className={css({ display: 'none' })}
-                                        />
-                                        {uploadedImage ? (
-                                            <div className={css({})}>
-                                                <div
-                                                    className={css({
-                                                        fontSize: 'xl',
-                                                        mb: '2',
-                                                        color: '#4caf50',
-                                                    })}
-                                                >
-                                                    <CheckCircle size={32} />
-                                                </div>
-                                                <p
-                                                    className={css({
-                                                        fontSize: 'sm',
-                                                        fontWeight: '500',
-                                                    })}
-                                                >
-                                                    {uploadedImage.name}
-                                                </p>
-                                                <p
-                                                    className={css({
-                                                        fontSize: 'xs',
-                                                        color: 'text-muted',
-                                                        mt: '1',
-                                                    })}
-                                                >
-                                                    Klicken zum Ändern
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <div className={css({})}>
-                                                <div
-                                                    className={css({
-                                                        fontSize: '2xl',
-                                                        mb: '2',
-                                                        color: '#4a5568',
-                                                    })}
-                                                >
-                                                    <Camera size={40} />
-                                                </div>
-                                                <p
-                                                    className={css({
-                                                        fontSize: 'sm',
-                                                        fontWeight: '500',
-                                                    })}
-                                                >
-                                                    Bild hierher ziehen oder klicken
-                                                </p>
-                                                <p
-                                                    className={css({
-                                                        fontSize: 'xs',
-                                                        color: 'text-muted',
-                                                        mt: '1',
-                                                    })}
-                                                >
-                                                    Optional - du kannst auch ohne Bild fortfahren
-                                                </p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className={flex({ gap: '3', mt: '4' })}>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            onClick={() => {
-                                                setShowCookDialog(false);
-                                                setUploadedImage(null);
-                                                setCookNotes('');
-                                            }}
-                                        >
-                                            Abbrechen
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="primary"
-                                            onClick={handleSubmitCook}
-                                            disabled={isCookPending}
-                                        >
-                                            {isCookPending ? 'Speichern...' : 'Absenden'}
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
 
                         </div>
                     </div>
@@ -1371,6 +1290,13 @@ export function RecipeDetailClient({
                     },
                 }}
                 carousel={{ preload: 2 }}
+            />
+
+            <CookDialog
+                isOpen={showCookDialog}
+                onClose={() => setShowCookDialog(false)}
+                onSubmit={handleSubmitCook}
+                isPending={isCookPending}
             />
         </div>
     );

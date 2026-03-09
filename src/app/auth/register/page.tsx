@@ -1,6 +1,7 @@
 'use client';
 
 import { Turnstile } from '@marsidev/react-turnstile';
+import { Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -11,9 +12,128 @@ import {
 } from '@app/components/forms/authStyles';
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
 import { useUtmParams } from '@app/lib/hooks/useUtmParams';
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 const MAX_NICKNAME_LENGTH = 40;
+
+function RegistrationSuccess({ email }: { email: string }) {
+    return (
+        <div
+            className={css({
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                gap: '4',
+                paddingY: '4',
+            })}
+        >
+            {/* Icon circle */}
+            <div
+                className={css({
+                    width: '72px',
+                    height: '72px',
+                    borderRadius: 'full',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                })}
+                style={{
+                    background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
+                    boxShadow: `0 12px 32px rgba(224,123,83,0.35)`,
+                }}
+            >
+                <Mail size={30} color="#fff6ec" />
+            </div>
+
+            <div className={css({ display: 'flex', flexDirection: 'column', gap: '1' })}>
+                <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
+                    Fast geschafft!
+                </h1>
+                <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm', lineHeight: '1.6' })}>
+                    Wir haben eine Bestätigungs-E-Mail an{' '}
+                    {email ? (
+                        <strong className={css({ color: 'foreground', fontWeight: '600' })}>{email}</strong>
+                    ) : (
+                        'deine E-Mail-Adresse'
+                    )}{' '}
+                    geschickt.
+                </p>
+            </div>
+
+            <div
+                className={css({
+                    width: '100%',
+                    background: 'rgba(224,123,83,0.07)',
+                    border: '1px solid',
+                    borderColor: 'rgba(224,123,83,0.2)',
+                    borderRadius: 'xl',
+                    padding: '4',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2',
+                    textAlign: 'left',
+                })}
+            >
+                <p className={css({ fontSize: 'sm', fontWeight: '600', margin: 0, color: 'foreground' })}>
+                    Nächste Schritte:
+                </p>
+                <ol
+                    className={css({
+                        fontSize: 'sm',
+                        color: 'foreground.muted',
+                        margin: 0,
+                        paddingLeft: '4',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1',
+                        lineHeight: '1.6',
+                    })}
+                >
+                    <li>Öffne dein E-Mail-Postfach</li>
+                    <li>Klicke auf den Bestätigungslink</li>
+                    <li>Melde dich an und leg los!</li>
+                </ol>
+            </div>
+
+            <p className={css({ fontSize: 'xs', color: 'foreground.muted', margin: 0 })}>
+                Keine E-Mail erhalten? Schau auch im Spam-Ordner nach oder{' '}
+                <Link
+                    href="/auth/resend-activation"
+                    className={css({ color: 'accent', textDecoration: 'none', fontWeight: '600', _hover: { textDecoration: 'underline' } })}
+                >
+                    sende sie erneut
+                </Link>
+                .
+            </p>
+
+            <Link
+                href="/auth/signin"
+                className={css({
+                    marginTop: '2',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingX: '6',
+                    paddingY: '3',
+                    borderRadius: 'full',
+                    fontWeight: '600',
+                    fontSize: 'md',
+                    color: 'foreground.muted',
+                    border: '1px solid',
+                    borderColor: 'border',
+                    textDecoration: 'none',
+                    transition: 'all 150ms ease',
+                    _hover: { borderColor: 'accent', color: 'accent' },
+                })}
+            >
+                Zur Anmeldung
+            </Link>
+        </div>
+    );
+}
 
 export default function RegisterPage() {
     const [email, setEmail] = useState('');
@@ -26,7 +146,8 @@ export default function RegisterPage() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+    const [registeredEmail, setRegisteredEmail] = useState('');
+    const [registered, setRegistered] = useState(false);
     const [loading, setLoading] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState('');
     const [turnstileKey, setTurnstileKey] = useState(0);
@@ -126,14 +247,8 @@ export default function RegisterPage() {
                 return;
             }
 
-            setSuccessMessage(
-                data.message || 'Registrierung erfolgreich – bitte prüfe deine E-Mails.',
-            );
-            setEmail('');
-            setNickname('');
-            setPassword('');
-            setConfirmPassword('');
-            setNicknameStatus(null);
+            setRegisteredEmail(email);
+            setRegistered(true);
         } catch {
             setError('Ein Fehler ist aufgetreten');
             resetTurnstile();
@@ -141,6 +256,17 @@ export default function RegisterPage() {
             setLoading(false);
         }
     };
+
+    if (registered) {
+        return (
+            <AuthPageLayout
+                heroTitle="Willkommen in der Küche!"
+                heroSubtitle="Dein Konto ist fast fertig. Bestätige deine E-Mail und du kannst sofort loslegen."
+            >
+                <RegistrationSuccess email={registeredEmail} />
+            </AuthPageLayout>
+        );
+    }
 
     return (
         <AuthPageLayout
@@ -281,12 +407,6 @@ export default function RegisterPage() {
                     >
                         {loading ? 'Registrierung läuft…' : 'Jetzt registrieren'}
                     </button>
-
-                    {successMessage && (
-                        <p className={css({ color: 'green.600', fontSize: 'sm' })}>
-                            {successMessage}
-                        </p>
-                    )}
                 </form>
             </div>
         </AuthPageLayout>

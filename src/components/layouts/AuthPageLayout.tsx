@@ -54,7 +54,8 @@ export function AuthPageLayout({
         <PageShell>
             <section
                 className={css({
-                    paddingY: { base: '8', md: '10' },
+                    paddingY: { base: '6', md: '10' },
+                    paddingX: { base: '4', sm: '6', lg: '6' },
                     display: 'flex',
                     justifyContent: 'center',
                 })}
@@ -62,29 +63,32 @@ export function AuthPageLayout({
                 <div
                     className={css({
                         width: '100%',
-                        maxWidth: '1400px',
-                        marginX: 'auto',
-                        paddingX: { base: '0', md: '2' },
+                        maxWidth: '1200px',
                     })}
                 >
+                    {/* Seamless card: overflow:hidden clips both panels with the outer border-radius */}
                     <div
                         className={css({
                             display: 'grid',
                             gridTemplateColumns: { base: '1fr', lg: '1.15fr 0.85fr' },
-                            '& > :first-child': { order: { base: 2, lg: 1 } },
-                            '& > :last-child': { order: { base: 1, lg: 2 } },
-                            gap: { base: '6', lg: '10' },
+                            overflow: 'hidden',
+                            borderRadius: '3xl',
+                            boxShadow: '0 30px 90px rgba(0,0,0,0.14)',
+                            border: '1px solid',
+                            borderColor: 'border',
+                            minHeight: { base: 'auto', lg: '580px' },
                         })}
                     >
+                        {/* Hero panel — below form on small, left on large */}
                         <motion.div
                             className={css({
-                                position: 'relative',
-                                borderRadius: '3xl',
-                                overflow: 'hidden',
-                                minHeight: { base: '320px', lg: '100%' },
                                 display: 'flex',
+                                order: { base: 2, lg: 1 },
+                                position: 'relative',
+                                overflow: 'hidden',
                                 flexDirection: 'column',
                                 justifyContent: 'flex-end',
+                                minHeight: { base: '300px', lg: 'auto' },
                             })}
                             style={{
                                 background: `linear-gradient(135deg, color-mix(in srgb, ${PALETTE.orange} 90%, black), ${PALETTE.orange}, color-mix(in srgb, ${PALETTE.orange} 75%, white))`,
@@ -156,10 +160,15 @@ export function AuthPageLayout({
                             </div>
                         </motion.div>
 
+                        {/* Form panel */}
                         <motion.div
                             className={css({
+                                background: 'surface.elevated',
                                 display: 'flex',
+                                order: { base: 1, lg: 2 },
+                                flexDirection: 'column',
                                 justifyContent: 'center',
+                                padding: { base: '6', md: '10' },
                             })}
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -168,42 +177,35 @@ export function AuthPageLayout({
                             <div
                                 className={css({
                                     width: '100%',
-                                    maxWidth: '560px',
-                                    background: 'surface.elevated',
-                                    borderRadius: '3xl',
-                                    padding: { base: '6', md: '8' },
-                                    boxShadow: '0 30px 90px rgba(0,0,0,0.12)',
-                                    border: '1px solid',
-                                    borderColor: 'border',
+                                    maxWidth: '460px',
+                                    marginX: 'auto',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4',
                                 })}
                             >
+                                {children}
+                            </div>
+                            {formFooter && (
                                 <div
                                     className={css({
+                                        width: '100%',
+                                        maxWidth: '460px',
+                                        marginX: 'auto',
+                                        marginTop: '5',
+                                        borderTop: '1px solid',
+                                        borderColor: 'border.muted',
+                                        paddingTop: '4',
+                                        fontSize: 'sm',
+                                        color: 'foreground.muted',
                                         display: 'flex',
                                         flexDirection: 'column',
-                                        gap: '4',
+                                        gap: '2',
                                     })}
                                 >
-                                    {children}
+                                    {formFooter}
                                 </div>
-                                {formFooter && (
-                                    <div
-                                        className={css({
-                                            marginTop: '5',
-                                            borderTop: '1px solid',
-                                            borderColor: 'border.muted',
-                                            paddingTop: '4',
-                                            fontSize: 'sm',
-                                            color: 'foreground.muted',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '2',
-                                        })}
-                                    >
-                                        {formFooter}
-                                    </div>
-                                )}
-                            </div>
+                            )}
                         </motion.div>
                     </div>
                 </div>

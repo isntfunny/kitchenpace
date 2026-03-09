@@ -1,17 +1,10 @@
 'use server';
 
 import { getServerAuthSession } from '@app/lib/auth';
+import { type FollowUser, mapUserToFollowDisplay } from '@app/lib/user-utils';
 import { prisma } from '@shared/prisma';
 
-export interface FollowUser {
-    id: string;
-    name: string | null;
-    nickname: string | null;
-    avatar: string | null;
-    bio: string | null;
-    recipeCount: number;
-    followerCount: number;
-}
+export type { FollowUser };
 
 export async function fetchUserFollowers(userId: string, take = 20): Promise<FollowUser[]> {
     const follows = await prisma.follow.findMany({
@@ -30,15 +23,8 @@ export async function fetchUserFollowers(userId: string, take = 20): Promise<Fol
 
     return follows.map((f) => {
         const user = userMap.get(f.followerId);
-        return {
-            id: user?.id ?? f.followerId,
-            name: user?.name ?? null,
-            nickname: user?.profile?.nickname ?? null,
-            avatar: user?.profile?.photoUrl ?? user?.image ?? null,
-            bio: user?.profile?.bio ?? null,
-            recipeCount: user?.profile?.recipeCount ?? 0,
-            followerCount: user?.profile?.followerCount ?? 0,
-        };
+        if (!user) return mapUserToFollowDisplay({ id: f.followerId });
+        return mapUserToFollowDisplay(user);
     });
 }
 
@@ -59,15 +45,8 @@ export async function fetchUserFollowing(userId: string, take = 20): Promise<Fol
 
     return follows.map((f) => {
         const user = userMap.get(f.followingId);
-        return {
-            id: user?.id ?? f.followingId,
-            name: user?.name ?? null,
-            nickname: user?.profile?.nickname ?? null,
-            avatar: user?.profile?.photoUrl ?? user?.image ?? null,
-            bio: user?.profile?.bio ?? null,
-            recipeCount: user?.profile?.recipeCount ?? 0,
-            followerCount: user?.profile?.followerCount ?? 0,
-        };
+        if (!user) return mapUserToFollowDisplay({ id: f.followingId });
+        return mapUserToFollowDisplay(user);
     });
 }
 

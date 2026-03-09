@@ -1,14 +1,11 @@
 'use server';
 
-import type { Prisma } from '@prisma/client';
-
-
 import type { ActivityFeedItem } from '@app/lib/activity-utils';
 import { mapLogToFeedItem } from '@app/lib/activity-utils';
 import { PALETTE } from '@app/lib/palette';
 import { prisma } from '@shared/prisma';
 
-import type { RecipeCardData } from './recipes';
+import { type RecipeCardData, toRecipeCardData } from './recipes';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -36,31 +33,6 @@ export interface CategoryRecipeSection {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_COLOR = PALETTE.orange;
-
-type RecipeWithCategory = Prisma.RecipeGetPayload<{
-    include: { categories: { include: { category: true } } };
-}>;
-
-function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
-    const totalTime = recipe.totalTime ?? (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
-    const cat = recipe.categories[0]?.category;
-
-    return {
-        id: recipe.id,
-        slug: recipe.slug,
-        title: recipe.title,
-        category: cat?.name || 'Hauptgericht',
-        categorySlug: cat?.slug ?? undefined,
-        categoryColor: PALETTE[cat?.color as keyof typeof PALETTE] ?? PALETTE.orange,
-        rating: recipe.rating ?? 0,
-        time: `${totalTime ?? 0} Min.`,
-        image: recipe.imageKey
-            ? `/api/thumbnail?type=recipe&id=${encodeURIComponent(recipe.id)}`
-            : null,
-        imageKey: recipe.imageKey ?? null,
-        description: recipe.description ?? '',
-    };
-}
 
 const publishedInCategory = (categoryId: string) => ({
     publishedAt: { not: null } as const,

@@ -1,5 +1,7 @@
 'use server';
 
+import shuffle from 'lodash/shuffle';
+
 import { fetchActivityFeed } from '@app/lib/activity-feed';
 import { type ActivityFeedItem } from '@app/lib/activity-utils';
 import { PALETTE } from '@app/lib/palette';
@@ -371,8 +373,7 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
         });
     }
 
-    const shuffled = tips.sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
+    return shuffle(tips).slice(0, 3);
 }
 
 export async function fetchUserActivityFeedItems(

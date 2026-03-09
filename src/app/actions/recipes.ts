@@ -23,11 +23,11 @@ export interface RecipeCardData {
     description?: string;
 }
 
-type RecipeWithCategory = Prisma.RecipeGetPayload<{
+export type RecipeWithCategory = Prisma.RecipeGetPayload<{
     include: { categories: { include: { category: true } } };
 }>;
 
-function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
+export function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
     const totalTime = recipe.totalTime ?? (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
     const cat = recipe.categories[0]?.category;
 

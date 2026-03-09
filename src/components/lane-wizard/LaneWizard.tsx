@@ -1,7 +1,8 @@
 'use client';
 
+import { Download, Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useMemo, useReducer, useState } from 'react';
+import { useCallback, useMemo, useReducer, useRef, useState } from 'react';
 
 import {
     FlowEditorContext,
@@ -11,7 +12,13 @@ import { NodeEditPanel } from '@app/components/flow/editor/NodeEditPanel';
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
 import { css } from 'styled-system/css';
 
-import { gridReducer, normalizeLaneGrid, uid } from './gridReducer';
+import {
+    deserializeLaneGrid,
+    gridReducer,
+    normalizeLaneGrid,
+    serializeLaneGrid,
+    uid,
+} from './gridReducer';
 import { SegmentDivider } from './SegmentDivider';
 import { StepCard } from './StepCard';
 import { StepTypePicker } from './StepTypePicker';
@@ -45,6 +52,36 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
     const [anyPopupOpen, setAnyPopupOpen] = useState(false);
     const [editingStep, setEditingStep] = useState<EditingStep | null>(null);
     const { timers, start, pause, reset } = useTimers(initialGrid);
+    const importInputRef = useRef<HTMLInputElement>(null);
+
+    /* ── Import / Export ── */
+
+    const handleExport = useCallback(() => {
+        const stored = serializeLaneGrid(grid);
+        const blob = new Blob([JSON.stringify(stored, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'recipe-grid.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }, [grid]);
+
+    const handleImportFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const stored = JSON.parse(ev.target?.result as string);
+                dispatch({ type: 'SET_GRID', grid: deserializeLaneGrid(stored) });
+            } catch {
+                // ignore parse errors
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    }, []);
 
     /* ── Callbacks ── */
 
@@ -253,6 +290,31 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                 <ProgressBar total={totalSteps} done={doneSteps} />
             )}
 
+            {/* Import / Export toolbar (edit mode only) */}
+            {mode === 'edit' && (
+                <div className={toolbarClass}>
+                    <button type="button" className={toolbarBtnClass} onClick={handleExport}>
+                        <Download className={css({ w: '13px', h: '13px' })} />
+                        Export JSON
+                    </button>
+                    <button
+                        type="button"
+                        className={toolbarBtnClass}
+                        onClick={() => importInputRef.current?.click()}
+                    >
+                        <Upload className={css({ w: '13px', h: '13px' })} />
+                        Import JSON
+                    </button>
+                    <input
+                        ref={importInputRef}
+                        type="file"
+                        accept=".json"
+                        style={{ display: 'none' }}
+                        onChange={handleImportFile}
+                    />
+                </div>
+            )}
+
             <div className={gridWrapClass}>
                 <AnimatePresence mode="popLayout" initial={false}>
                     {elements}
@@ -271,7 +333,6 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                             description: editingStep.step.description,
                             duration: editingStep.step.duration,
                             photoKey: editingStep.step.photoKey,
-                            photoUrl: editingStep.step.photoUrl,
                         }}
                         availableIngredients={[]}
                         onSave={(updates) => {
@@ -286,7 +347,6 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                                     }),
                                     duration: updates.duration,
                                     photoKey: updates.photoKey,
-                                    photoUrl: updates.photoUrl,
                                 },
                             });
                             setEditingStep(null);
@@ -431,4 +491,30 @@ const progressBarFillClass = css({
     h: '100%',
     borderRadius: 'full',
     bg: '#00b894',
+});
+
+const toolbarClass = css({
+    display: 'flex',
+    gap: '8px',
+    px: '20px',
+    py: '10px',
+    flexShrink: '0',
+});
+
+const toolbarBtnClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    px: '12px',
+    py: '6px',
+    borderRadius: 'full',
+    border: '1px solid rgba(0,0,0,0.1)',
+    bg: 'white',
+    color: 'rgba(0,0,0,0.55)',
+    fontSize: '11px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+    _hover: { borderColor: '#e07b53', color: '#e07b53', bg: 'rgba(224,123,83,0.05)' },
 });

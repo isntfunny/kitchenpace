@@ -17,59 +17,140 @@ const BOLOGNESE_GRID: LaneGrid = {
     segments: [
         {
             id: 'seg-start',
-            lanes: [[
-                { id: 'start', type: 'start', label: 'Pasta Bolognese', description: 'Klassische Bolognese mit frischen Zutaten. Dauer: ~50 Min.' },
-            ]],
+            lanes: [
+                [
+                    {
+                        id: 'start',
+                        type: 'start',
+                        label: 'Pasta Bolognese',
+                        description: 'Klassische Bolognese mit frischen Zutaten. Dauer: ~50 Min.',
+                    },
+                ],
+            ],
             columnSpans: [3],
         },
         {
             id: 'seg-wasser',
-            lanes: [[
-                { id: 'wasser', type: 'kochen', label: 'Wasser aufsetzen', description: 'Großen Topf mit gut gesalzenem Wasser zum Kochen bringen.', duration: 10 },
-            ]],
+            lanes: [
+                [
+                    {
+                        id: 'wasser',
+                        type: 'kochen',
+                        label: 'Wasser aufsetzen',
+                        description: 'Großen Topf mit gut gesalzenem Wasser zum Kochen bringen.',
+                        duration: 10,
+                    },
+                ],
+            ],
             columnSpans: [3],
         },
         {
             id: 'seg-gemuese',
             lanes: [
-                [{ id: 'zwiebeln', type: 'schneiden', label: 'Zwiebeln würfeln', description: '2 mittelgroße Zwiebeln in feine Würfel schneiden.' }],
-                [{ id: 'knoblauch', type: 'schneiden', label: 'Knoblauch hacken', description: '3 Zehen Knoblauch fein hacken oder durch die Presse drücken.' }],
-                [{ id: 'karotten', type: 'schneiden', label: 'Karotten würfeln', description: '2 Karotten schälen und in kleine Würfel (ca. 5 mm) schneiden.' }],
+                [
+                    {
+                        id: 'zwiebeln',
+                        type: 'schneiden',
+                        label: 'Zwiebeln würfeln',
+                        description: '2 mittelgroße Zwiebeln in feine Würfel schneiden.',
+                    },
+                ],
+                [
+                    {
+                        id: 'knoblauch',
+                        type: 'schneiden',
+                        label: 'Knoblauch hacken',
+                        description: '3 Zehen Knoblauch fein hacken oder durch die Presse drücken.',
+                    },
+                ],
+                [
+                    {
+                        id: 'karotten',
+                        type: 'schneiden',
+                        label: 'Karotten würfeln',
+                        description:
+                            '2 Karotten schälen und in kleine Würfel (ca. 5 mm) schneiden.',
+                    },
+                ],
             ],
             columnSpans: [1, 1, 1],
         },
         {
             id: 'seg-anbraten',
-            lanes: [[
-                { id: 'anbraten', type: 'braten', label: 'Gemüse & Hackfleisch anbraten', description: 'Olivenöl in großer Pfanne erhitzen. Zwiebeln glasig dünsten, Knoblauch und Karotten dazugeben. Hackfleisch zugeben und krümelig braten.', duration: 8 },
-            ]],
+            lanes: [
+                [
+                    {
+                        id: 'anbraten',
+                        type: 'braten',
+                        label: 'Gemüse & Hackfleisch anbraten',
+                        description:
+                            'Olivenöl in großer Pfanne erhitzen. Zwiebeln glasig dünsten, Knoblauch und Karotten dazugeben. Hackfleisch zugeben und krümelig braten.',
+                        duration: 8,
+                    },
+                ],
+            ],
             columnSpans: [3],
         },
         {
             id: 'seg-kochen',
             lanes: [
                 [
-                    { id: 'sauce', type: 'kochen', label: 'Soße köcheln lassen', description: 'Tomatenmark einrühren, mit Rotwein ablöschen. Passierte Tomaten, Oregano, Salz und Pfeffer zugeben. Bei niedriger Hitze köcheln.', duration: 25 },
-                    { id: 'wuerzen', type: 'wuerzen', label: 'Abschmecken', description: 'Soße mit Salz, Pfeffer und einer Prise Zucker abschmecken. Frisches Basilikum einreißen.' },
+                    {
+                        id: 'sauce',
+                        type: 'kochen',
+                        label: 'Soße köcheln lassen',
+                        description:
+                            'Tomatenmark einrühren, mit Rotwein ablöschen. Passierte Tomaten, Oregano, Salz und Pfeffer zugeben. Bei niedriger Hitze köcheln.',
+                        duration: 25,
+                    },
+                    {
+                        id: 'wuerzen',
+                        type: 'wuerzen',
+                        label: 'Abschmecken',
+                        description:
+                            'Soße mit Salz, Pfeffer und einer Prise Zucker abschmecken. Frisches Basilikum einreißen.',
+                    },
                 ],
                 [
-                    { id: 'pasta', type: 'kochen', label: 'Pasta kochen', description: '400 g Spaghetti ins sprudelnde Salzwasser geben und al dente kochen (Packungsangabe).', duration: 11 },
+                    {
+                        id: 'pasta',
+                        type: 'kochen',
+                        label: 'Pasta kochen',
+                        description:
+                            '400 g Spaghetti ins sprudelnde Salzwasser geben und al dente kochen (Packungsangabe).',
+                        duration: 11,
+                    },
                 ],
             ],
             columnSpans: [2, 1],
         },
         {
             id: 'seg-anrichten',
-            lanes: [[
-                { id: 'anrichten', type: 'anrichten', label: 'Pasta anrichten', description: 'Pasta in tiefen Tellern anrichten, Soße großzügig darüber geben. Frischen Parmesan reiben und mit Basilikum garnieren.', photoUrl: 'https://www.familienkost.de/images/bolognese.jpg' },
-            ]],
+            lanes: [
+                [
+                    {
+                        id: 'anrichten',
+                        type: 'anrichten',
+                        label: 'Pasta anrichten',
+                        description:
+                            'Pasta in tiefen Tellern anrichten, Soße großzügig darüber geben. Frischen Parmesan reiben und mit Basilikum garnieren.',
+                    },
+                ],
+            ],
             columnSpans: [3],
         },
         {
             id: 'seg-servieren',
-            lanes: [[
-                { id: 'servieren', type: 'servieren', label: 'Servieren', description: 'Heiß servieren — Guten Appetit!' },
-            ]],
+            lanes: [
+                [
+                    {
+                        id: 'servieren',
+                        type: 'servieren',
+                        label: 'Servieren',
+                        description: 'Heiß servieren — Guten Appetit!',
+                    },
+                ],
+            ],
             columnSpans: [3],
         },
     ],

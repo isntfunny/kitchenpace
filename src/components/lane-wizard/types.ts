@@ -8,7 +8,6 @@ export interface LaneStep {
     description: string;
     duration?: number;
     photoKey?: string;
-    photoUrl?: string;
     ingredientIds?: string[];
     /** Visual filler — inherits colour from source step above. Not interactive. */
     continuation?: boolean;
@@ -61,7 +60,8 @@ export type LaneAction =
     | { type: 'SPLIT'; afterSegmentId: string; laneCount: number; splitAtIndex?: number }
     | { type: 'MERGE'; afterSegmentId: string; laneIndices: number[]; mergeStep: LaneStep }
     | { type: 'ADD_LANE'; segmentId: string; atIndex?: number }
-    | { type: 'UPDATE_STEP'; stepId: string; updates: Partial<LaneStep> };
+    | { type: 'UPDATE_STEP'; stepId: string; updates: Partial<LaneStep> }
+    | { type: 'SET_GRID'; grid: LaneGrid };
 
 /* ── Timer state ─────────────────────────────────────────── */
 

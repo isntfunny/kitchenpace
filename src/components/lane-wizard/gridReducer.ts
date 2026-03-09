@@ -28,9 +28,7 @@ function inheritedCols(segments: LaneSegment[], idx: number): number {
 function distribute(totalCols: number, laneCount: number): number[] {
     const base = Math.floor(totalCols / laneCount);
     const remainder = totalCols % laneCount;
-    return Array.from({ length: laneCount }, (_, i) =>
-        base + (i < remainder ? 1 : 0),
-    );
+    return Array.from({ length: laneCount }, (_, i) => base + (i < remainder ? 1 : 0));
 }
 
 /**
@@ -51,7 +49,12 @@ function scaleSpans(spans: number[], target: number): number[] {
     spans
         .map((_, i) => ({ i, frac: scaled[i] - result[i] }))
         .sort((a, b) => b.frac - a.frac)
-        .forEach(({ i }) => { if (remaining > 0) { result[i]++; remaining--; } });
+        .forEach(({ i }) => {
+            if (remaining > 0) {
+                result[i]++;
+                remaining--;
+            }
+        });
 
     return result.map((v) => Math.max(1, v));
 }
@@ -66,18 +69,20 @@ function propagate(segments: LaneSegment[], changedIdx: number, newEffective: nu
         const s = segments[i];
         const sum = colSum(s);
         if (sum >= newEffective) break;
-        segments[i] = s.lanes.length === 1
-            ? { ...s, columnSpans: [newEffective] }
-            : { ...s, columnSpans: scaleSpans(s.columnSpans, newEffective) };
+        segments[i] =
+            s.lanes.length === 1
+                ? { ...s, columnSpans: [newEffective] }
+                : { ...s, columnSpans: scaleSpans(s.columnSpans, newEffective) };
     }
     // Upward
     for (let i = changedIdx - 1; i >= 0; i--) {
         const s = segments[i];
         const sum = colSum(s);
         if (sum >= newEffective) break;
-        segments[i] = s.lanes.length === 1
-            ? { ...s, columnSpans: [newEffective] }
-            : { ...s, columnSpans: scaleSpans(s.columnSpans, newEffective) };
+        segments[i] =
+            s.lanes.length === 1
+                ? { ...s, columnSpans: [newEffective] }
+                : { ...s, columnSpans: scaleSpans(s.columnSpans, newEffective) };
     }
 }
 
@@ -154,6 +159,8 @@ export function gridReducer(state: LaneGrid, action: LaneAction): LaneGrid {
             return addLane(state, action.segmentId, action.atIndex);
         case 'UPDATE_STEP':
             return updateStep(state, action.stepId, action.updates);
+        case 'SET_GRID':
+            return normalizeLaneGrid(action.grid);
         default:
             return state;
     }
@@ -168,15 +175,18 @@ function addStep(state: LaneGrid, segmentId: string, laneIndex: number, step: La
             if (seg.id !== segmentId) return seg;
             return {
                 ...seg,
-                lanes: seg.lanes.map((lane, i) =>
-                    i === laneIndex ? [...lane, step] : lane,
-                ),
+                lanes: seg.lanes.map((lane, i) => (i === laneIndex ? [...lane, step] : lane)),
             };
         }),
     };
 }
 
-function deleteStep(state: LaneGrid, segmentId: string, laneIndex: number, stepId: string): LaneGrid {
+function deleteStep(
+    state: LaneGrid,
+    segmentId: string,
+    laneIndex: number,
+    stepId: string,
+): LaneGrid {
     const updated = {
         ...state,
         segments: state.segments.map((seg) => {
@@ -209,9 +219,8 @@ function split(
 
     // Splitting a single-lane segment always produces equal lanes (fresh start).
     // Only preserve the inherited column count when splitting an existing multi-lane segment.
-    const effective = parentSeg.lanes.length === 1
-        ? laneCount
-        : Math.max(parentEffective, laneCount);
+    const effective =
+        parentSeg.lanes.length === 1 ? laneCount : Math.max(parentEffective, laneCount);
     const spans = distribute(effective, laneCount);
 
     // Generate lanes for the new segment.
@@ -227,7 +236,15 @@ function split(
         const parentLaneIdx = newIdx < splitAtIndex ? newIdx : newIdx - 1;
         const sourceLane = parentSeg.lanes[parentLaneIdx];
         const lastStep = sourceLane[sourceLane.length - 1];
-        return [{ id: uid(), type: lastStep?.type ?? 'warten', label: lastStep?.label ?? '', description: '', continuation: true }];
+        return [
+            {
+                id: uid(),
+                type: lastStep?.type ?? 'warten',
+                label: lastStep?.label ?? '',
+                description: '',
+                continuation: true,
+            },
+        ];
     });
 
     const newSeg: LaneSegment = {
@@ -305,13 +322,15 @@ function merge(
         } else if (!mergedSet.has(i)) {
             const sourceLane = currentSeg.lanes[i];
             const lastStep = sourceLane[sourceLane.length - 1];
-            newLanes.push([{
-                id: uid(),
-                type: lastStep?.type ?? 'warten',
-                label: lastStep?.label ?? '',
-                description: '',
-                continuation: true,
-            }]);
+            newLanes.push([
+                {
+                    id: uid(),
+                    type: lastStep?.type ?? 'warten',
+                    label: lastStep?.label ?? '',
+                    description: '',
+                    continuation: true,
+                },
+            ]);
             newSpans.push(currentSeg.columnSpans[i]);
         }
     }
@@ -336,9 +355,7 @@ function addLane(state: LaneGrid, segmentId: string, atIndex?: number): LaneGrid
 
     if (seg.lanes.length === 1 && effective >= 2) {
         /* Splitting a full-width lane within inherited column context */
-        newSpans = insertIdx === 0
-            ? [1, effective - 1]
-            : [effective - 1, 1];
+        newSpans = insertIdx === 0 ? [1, effective - 1] : [effective - 1, 1];
     } else {
         /* Multi-lane: new lane takes 1 column from its neighbour */
         const old = [...seg.columnSpans];
@@ -374,9 +391,7 @@ function updateStep(state: LaneGrid, stepId: string, updates: Partial<LaneStep>)
         segments: state.segments.map((seg) => ({
             ...seg,
             lanes: seg.lanes.map((lane) =>
-                lane.map((step) =>
-                    step.id === stepId ? { ...step, ...updates } : step,
-                ),
+                lane.map((step) => (step.id === stepId ? { ...step, ...updates } : step)),
             ),
         })),
     };

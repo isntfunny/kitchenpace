@@ -14,7 +14,9 @@ import {
     ShoppingCart,
     Star,
     UserPlus,
+    Utensils,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ReactNode, useState, useTransition } from 'react';
@@ -301,31 +303,65 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                 minH: '100vh',
             })}
         >
-            {/* Profile Header */}
+            {/* ── Hero Banner ── */}
             <div
                 className={css({
-                    bg: 'surface',
-                    boxShadow: 'shadow.medium',
+                    position: 'relative',
+                    overflow: 'hidden',
                     borderRadius: '2xl',
-                    pt: { base: '4', md: '6' },
-                    pb: { base: '4', md: '5' },
+                    mb: '6',
                 })}
+                style={{
+                    background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.orange}cc, #c4623d)`,
+                }}
             >
-                <div
+                {/* Decorative floating icons */}
+                <motion.div
                     className={css({
-                        maxW: '1000px',
-                        mx: 'auto',
-                        px: { base: '4', md: '6' },
+                        position: 'absolute',
+                        top: '-40px',
+                        right: '-40px',
+                        opacity: 0.12,
+                        pointerEvents: 'none',
                     })}
+                    animate={{ y: [0, -12, 0], rotate: [0, 4, 0] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                    <ChefHat size={200} color="white" />
+                </motion.div>
+                <motion.div
+                    className={css({
+                        position: 'absolute',
+                        bottom: '-60px',
+                        left: '22%',
+                        opacity: 0.07,
+                        pointerEvents: 'none',
+                    })}
+                    animate={{ y: [0, 10, 0], rotate: [0, -3, 0] }}
+                    transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                    <Utensils size={280} color="white" />
+                </motion.div>
+
+                <motion.div
+                    className={css({
+                        position: 'relative',
+                        zIndex: 1,
+                        px: { base: '5', md: '8' },
+                        py: { base: '7', md: '10' },
+                    })}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
                 >
                     <div
                         className={flex({
                             direction: { base: 'column', md: 'row' },
                             align: { base: 'center', md: 'flex-start' },
-                            gap: { base: '5', md: '8' },
+                            gap: { base: '5', md: '7' },
                         })}
                     >
-                        {/* Avatar - Direct on Image */}
+                        {/* Avatar */}
                         <div
                             className={css({
                                 position: 'relative',
@@ -334,10 +370,8 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 height: `${AVATAR_SIZE}px`,
                                 borderRadius: '3xl',
                                 overflow: 'hidden',
-                                boxShadow: {
-                                    base: `0 0 0 3px white, 0 0 0 6px ${PALETTE.orange}, 0 8px 32px rgba(224, 123, 83, 0.3)`,
-                                    _dark: `0 0 0 3px #1c2128, 0 0 0 6px ${PALETTE.orange}, 0 8px 32px rgba(224, 123, 83, 0.35)`,
-                                },
+                                boxShadow:
+                                    '0 0 0 4px rgba(255,255,255,0.4), 0 8px 32px rgba(0,0,0,0.25)',
                             })}
                         >
                             {user.avatar ? (
@@ -346,18 +380,15 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     alt={user.name}
                                     fill
                                     userId={user.id}
-                                    className={css({
-                                        objectFit: 'cover',
-                                        display: 'block',
-                                    })}
+                                    className={css({ objectFit: 'cover', display: 'block' })}
                                 />
                             ) : (
                                 <div
                                     className={css({
                                         width: '100%',
                                         height: '100%',
-                                        background:
-                                            `linear-gradient(135deg, ${PALETTE.orange} 0%, #c4623d 100%)`,
+                                        bg: 'rgba(255,255,255,0.2)',
+                                        backdropFilter: 'blur(8px)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -381,11 +412,11 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                         >
                             <p
                                 className={css({
-                                    color: 'primary',
+                                    color: 'rgba(255,255,255,0.7)',
                                     fontSize: 'xs',
                                     fontWeight: '600',
                                     textTransform: 'uppercase',
-                                    letterSpacing: '0.1em',
+                                    letterSpacing: '0.12em',
                                     mb: '2',
                                 })}
                             >
@@ -396,128 +427,192 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     fontSize: { base: '2xl', md: '3xl', lg: '4xl' },
                                     fontWeight: '800',
                                     fontFamily: 'heading',
-                                    color: 'text',
-                                    mb: '3',
-                                    lineHeight: '1.2',
+                                    color: 'white',
+                                    mb: '2',
+                                    lineHeight: '1.15',
                                 })}
                             >
                                 {user.name}
                             </h1>
                             {user.bio && (
-                                <p
+                                <motion.p
                                     className={css({
-                                        color: 'text.muted',
+                                        color: 'rgba(255,255,255,0.85)',
                                         fontSize: { base: 'sm', md: 'base' },
                                         lineHeight: '1.6',
-                                        mb: '4',
+                                        mb: '5',
                                         maxW: { base: 'full', md: '500px' },
                                         mx: { base: 'auto', md: '0' },
                                     })}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.2, duration: 0.4 }}
                                 >
                                     {user.bio}
-                                </p>
+                                </motion.p>
                             )}
 
-                            {/* Stats Row + Follow Button */}
+                            {/* Stats + Follow */}
                             <div
                                 className={flex({
-                                    direction: { base: 'column', md: 'row' },
-                                    align: { base: 'stretch', md: 'center' },
+                                    direction: { base: 'row', md: 'row' },
+                                    align: 'center',
                                     justify: { base: 'center', md: 'flex-start' },
-                                    gap: '4',
-                                    mt: '4',
+                                    gap: '3',
+                                    mt: user.bio ? '0' : '4',
+                                    flexWrap: 'wrap',
                                 })}
                             >
                                 <div
-                                    className={flex({
-                                        gap: '3',
-                                        align: 'center',
-                                        justify: { base: 'center', md: 'flex-start' },
-                                        flexWrap: 'wrap',
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '2',
+                                        bg: 'rgba(255,255,255,0.18)',
+                                        backdropFilter: 'blur(8px)',
+                                        px: '3',
+                                        py: '2',
+                                        borderRadius: 'xl',
+                                        border: '1px solid rgba(255,255,255,0.3)',
                                     })}
                                 >
-                                    <StatCard
-                                        value={user.recipeCount}
-                                        label="Rezepte"
-                                        icon={<ChefHat size={16} />}
-                                    />
-                                    {user.showFollowerCount !== false && (
-                                        <StatCard
-                                            value={followerTotal}
-                                            label="Follower"
-                                            icon={<Handshake size={16} />}
-                                        />
-                                    )}
-                                    {recipes.length > 0 && (
-                                        <StatCard
-                                            value={
-                                                recipes.reduce((sum, r) => sum + r.rating, 0) /
-                                                recipes.length
-                                            }
-                                            label="Ø Rating"
-                                            icon={
-                                                <Star
-                                                    size={16}
-                                                    className={css({ color: 'palette.gold' })}
-                                                />
-                                            }
-                                            isDecimal
-                                        />
-                                    )}
+                                    <ChefHat size={15} color="white" />
+                                    <span
+                                        className={css({
+                                            fontWeight: '700',
+                                            fontSize: 'sm',
+                                            color: 'white',
+                                        })}
+                                    >
+                                        {user.recipeCount}
+                                    </span>
+                                    <span
+                                        className={css({
+                                            fontSize: 'xs',
+                                            color: 'rgba(255,255,255,0.7)',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                        })}
+                                    >
+                                        Rezepte
+                                    </span>
                                 </div>
 
-                                {showFollowButton && (
+                                {user.showFollowerCount !== false && (
                                     <div
                                         className={css({
                                             display: 'flex',
                                             alignItems: 'center',
+                                            gap: '2',
+                                            bg: 'rgba(255,255,255,0.18)',
+                                            backdropFilter: 'blur(8px)',
+                                            px: '3',
+                                            py: '2',
+                                            borderRadius: 'xl',
+                                            border: '1px solid rgba(255,255,255,0.3)',
                                         })}
                                     >
-                                        <button
-                                            type="button"
-                                            onClick={handleFollowToggle}
-                                            disabled={isPending}
+                                        <Handshake size={15} color="white" />
+                                        <span
                                             className={css({
-                                                bg: isFollowing ? 'transparent' : 'primary',
-                                                color: isFollowing ? 'text' : 'white',
-                                                border: isFollowing ? '1px solid' : 'none',
-                                                borderColor: isFollowing ? 'border' : 'transparent',
-                                                borderRadius: 'lg',
-                                                px: '4',
-                                                py: '3',
-                                                fontWeight: '600',
+                                                fontWeight: '700',
                                                 fontSize: 'sm',
-                                                cursor: isPending ? 'not-allowed' : 'pointer',
-                                                opacity: isPending ? 0.7 : 1,
-                                                transition: 'all 150ms',
-                                                whiteSpace: 'nowrap',
-                                                minW: '80px',
-                                                height: '100%',
-                                                _hover: {
-                                                    bg: isFollowing ? 'surface.muted' : 'primary-hover',
-                                                    borderColor: isFollowing
-                                                        ? 'border'
-                                                        : 'transparent',
-                                                },
+                                                color: 'white',
                                             })}
                                         >
-                                            <span
-                                                className={css({
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '2',
-                                                })}
-                                            >
-                                                {isFollowing ? (
-                                                    <Check size={14} />
-                                                ) : (
-                                                    <UserPlus size={14} />
-                                                )}
-                                                {isFollowing ? 'Folgst du' : 'Folgen'}
-                                            </span>
-                                        </button>
+                                            {followerTotal}
+                                        </span>
+                                        <span
+                                            className={css({
+                                                fontSize: 'xs',
+                                                color: 'rgba(255,255,255,0.7)',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em',
+                                            })}
+                                        >
+                                            Follower
+                                        </span>
                                     </div>
                                 )}
+
+                                {recipes.length > 0 && (
+                                    <div
+                                        className={css({
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '2',
+                                            bg: 'rgba(255,255,255,0.18)',
+                                            backdropFilter: 'blur(8px)',
+                                            px: '3',
+                                            py: '2',
+                                            borderRadius: 'xl',
+                                            border: '1px solid rgba(255,255,255,0.3)',
+                                        })}
+                                    >
+                                        <Star size={15} color="white" />
+                                        <span
+                                            className={css({
+                                                fontWeight: '700',
+                                                fontSize: 'sm',
+                                                color: 'white',
+                                            })}
+                                        >
+                                            {(
+                                                recipes.reduce((sum, r) => sum + r.rating, 0) /
+                                                recipes.length
+                                            ).toFixed(1)}
+                                        </span>
+                                        <span
+                                            className={css({
+                                                fontSize: 'xs',
+                                                color: 'rgba(255,255,255,0.7)',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em',
+                                            })}
+                                        >
+                                            Ø Rating
+                                        </span>
+                                    </div>
+                                )}
+
+                                {showFollowButton && (
+                                    <button
+                                        type="button"
+                                        onClick={handleFollowToggle}
+                                        disabled={isPending}
+                                        className={css({
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '2',
+                                            bg: isFollowing ? 'rgba(255,255,255,0.2)' : 'white',
+                                            color: isFollowing
+                                                ? 'white'
+                                                : (PALETTE.orange as string),
+                                            border: '1px solid',
+                                            borderColor: isFollowing
+                                                ? 'rgba(255,255,255,0.4)'
+                                                : 'transparent',
+                                            borderRadius: 'lg',
+                                            px: '4',
+                                            py: '2',
+                                            fontWeight: '700',
+                                            fontSize: 'sm',
+                                            cursor: isPending ? 'not-allowed' : 'pointer',
+                                            opacity: isPending ? 0.7 : 1,
+                                            transition: 'all 150ms',
+                                            whiteSpace: 'nowrap',
+                                            _hover: {
+                                                bg: isFollowing
+                                                    ? 'rgba(255,255,255,0.3)'
+                                                    : 'rgba(255,255,255,0.9)',
+                                            },
+                                        })}
+                                    >
+                                        {isFollowing ? <Check size={14} /> : <UserPlus size={14} />}
+                                        {isFollowing ? 'Folgst du' : 'Folgen'}
+                                    </button>
+                                )}
+
                                 {!viewer?.isSelf && (
                                     <ReportButton
                                         contentType="user"
@@ -528,7 +623,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* Main Content */}
@@ -663,7 +758,10 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                             className={css({
                                                 fontSize: 'sm',
                                                 color: 'text.muted',
-                                                bg: { base: 'gray.100', _dark: 'rgba(255,255,255,0.06)' },
+                                                bg: {
+                                                    base: 'gray.100',
+                                                    _dark: 'rgba(255,255,255,0.06)',
+                                                },
                                                 px: '3',
                                                 py: '1',
                                                 borderRadius: 'full',
@@ -724,7 +822,12 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         const config = ACTIVITY_CONFIG[activity.type] ?? {
                                             icon: <Clipboard size={16} />,
                                             template: ['war aktiv'],
-                                            bgCss: css({ bg: { base: '#f3f4f6', _dark: 'rgba(255,255,255,0.06)' } }),
+                                            bgCss: css({
+                                                bg: {
+                                                    base: '#f3f4f6',
+                                                    _dark: 'rgba(255,255,255,0.06)',
+                                                },
+                                            }),
                                         };
 
                                         // Build the activity text
@@ -838,7 +941,11 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 })}
                             >
                                 <div
-                                    className={css({ fontSize: '2xl', mb: '2', color: 'foreground.muted' })}
+                                    className={css({
+                                        fontSize: '2xl',
+                                        mb: '2',
+                                        color: 'foreground.muted',
+                                    })}
                                 >
                                     <FileText size={36} />
                                 </div>
@@ -853,73 +960,3 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
         </div>
     );
 }
-
-// Stat Card Component - Small cards with backgrounds
-function StatCard({
-    value,
-    label,
-    icon,
-    isDecimal = false,
-}: {
-    value: number;
-    label: ReactNode;
-    icon?: ReactNode;
-    isDecimal?: boolean;
-}) {
-    return (
-        <div
-            className={css({
-                bg: 'surface.card',
-                borderRadius: 'lg',
-                px: '4',
-                py: '3',
-                boxShadow: 'shadow.small',
-                border: '1px solid',
-                borderColor: 'border',
-                textAlign: 'center',
-                minW: '80px',
-            })}
-        >
-            <div
-                className={flex({
-                    align: 'center',
-                    justify: 'center',
-                    gap: '2',
-                    mb: '1',
-                })}
-            >
-                {icon && (
-                    <span
-                        className={css({
-                            color: 'primary',
-                        })}
-                    >
-                        {icon}
-                    </span>
-                )}
-                <div
-                    className={css({
-                        fontSize: 'lg',
-                        fontWeight: '700',
-                        color: 'text',
-                        fontFamily: 'heading',
-                    })}
-                >
-                    {isDecimal ? value.toFixed(1) : value}
-                </div>
-            </div>
-            <div
-                className={css({
-                    fontSize: 'xs',
-                    color: 'text.muted',
-                    fontWeight: '500',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                })}
-            >
-                {label}
-            </div>
-        </div>
-    );
-}
-

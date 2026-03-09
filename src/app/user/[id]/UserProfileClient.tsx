@@ -23,6 +23,7 @@ import { ReactNode, useState, useTransition } from 'react';
 
 import { toggleFollowAction } from '@app/app/actions/social';
 import { SmartImage } from '@app/components/atoms/SmartImage';
+import { SparkleEffect } from '@app/components/atoms/SparkleEffect';
 import { RecipeCard as SharedRecipeCard } from '@app/components/features/RecipeCard';
 import { ReportButton } from '@app/components/features/ReportButton';
 import { PALETTE } from '@app/lib/palette';
@@ -576,41 +577,54 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 )}
 
                                 {showFollowButton && (
-                                    <button
-                                        type="button"
-                                        onClick={handleFollowToggle}
-                                        disabled={isPending}
-                                        className={css({
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '2',
-                                            bg: isFollowing ? 'rgba(255,255,255,0.2)' : 'white',
-                                            color: isFollowing
-                                                ? 'white'
-                                                : (PALETTE.orange as string),
-                                            border: '1px solid',
-                                            borderColor: isFollowing
-                                                ? 'rgba(255,255,255,0.4)'
-                                                : 'transparent',
-                                            borderRadius: 'lg',
-                                            px: '4',
-                                            py: '2',
-                                            fontWeight: '700',
-                                            fontSize: 'sm',
-                                            cursor: isPending ? 'not-allowed' : 'pointer',
-                                            opacity: isPending ? 0.7 : 1,
-                                            transition: 'all 150ms',
-                                            whiteSpace: 'nowrap',
-                                            _hover: {
-                                                bg: isFollowing
-                                                    ? 'rgba(255,255,255,0.3)'
-                                                    : 'rgba(255,255,255,0.9)',
-                                            },
-                                        })}
-                                    >
-                                        {isFollowing ? <Check size={14} /> : <UserPlus size={14} />}
-                                        {isFollowing ? 'Folgst du' : 'Folgen'}
-                                    </button>
+                                    <SparkleEffect style={{ display: 'inline-flex' }}>
+                                        {(triggerSparkle) => (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!isFollowing) triggerSparkle();
+                                                    handleFollowToggle();
+                                                }}
+                                                disabled={isPending}
+                                                className={css({
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '2',
+                                                    bg: isFollowing
+                                                        ? 'rgba(255,255,255,0.2)'
+                                                        : 'white',
+                                                    border: '1px solid',
+                                                    borderColor: isFollowing
+                                                        ? 'rgba(255,255,255,0.4)'
+                                                        : 'transparent',
+                                                    borderRadius: 'lg',
+                                                    px: '4',
+                                                    py: '2',
+                                                    fontWeight: '700',
+                                                    fontSize: 'sm',
+                                                    cursor: isPending ? 'not-allowed' : 'pointer',
+                                                    opacity: isPending ? 0.7 : 1,
+                                                    transition: 'all 150ms',
+                                                    whiteSpace: 'nowrap',
+                                                    _hover: {
+                                                        bg: isFollowing
+                                                            ? 'rgba(255,255,255,0.3)'
+                                                            : 'rgba(255,255,255,0.9)',
+                                                    },
+                                                })}
+                                                style={{
+                                                    color: isFollowing ? 'white' : PALETTE.orange,
+                                                }}
+                                            >
+                                                {isFollowing ? (
+                                                    <Check size={14} />
+                                                ) : (
+                                                    <UserPlus size={14} />
+                                                )}
+                                                {isFollowing ? 'Folgst du' : 'Folgen'}
+                                            </button>
+                                        )}
+                                    </SparkleEffect>
                                 )}
 
                                 {!viewer?.isSelf && (

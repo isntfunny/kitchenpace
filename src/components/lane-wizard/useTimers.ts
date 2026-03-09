@@ -27,10 +27,11 @@ export function useTimers(grid: LaneGrid) {
     const [timers, setTimers] = useState<Map<string, TimerState>>(() => buildInitialTimers(grid));
     const intervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
 
-    // Cleanup on unmount
+    // Cleanup on unmount — capture ref value so the cleanup sees the same Map
     useEffect(() => {
+        const intervals = intervalsRef.current;
         return () => {
-            for (const interval of intervalsRef.current.values()) {
+            for (const interval of intervals.values()) {
                 clearInterval(interval);
             }
         };

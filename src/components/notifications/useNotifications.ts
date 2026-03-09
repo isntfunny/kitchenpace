@@ -22,12 +22,17 @@ type NotificationsResponse = {
     unreadCount: number;
 };
 
-export function useNotifications(options?: { refreshInterval?: number }) {
-    const { data, error, mutate, isLoading } = useSWR<NotificationsResponse>(API_PATH, fetcher, {
-        refreshInterval: options?.refreshInterval ?? 60_000,
-    });
+export function useNotifications(options?: { refreshInterval?: number; enabled?: boolean }) {
+    const enabled = options?.enabled ?? true;
+
+    const { data, error, mutate, isLoading } = useSWR<NotificationsResponse>(
+        enabled ? API_PATH : null,
+        fetcher,
+        { refreshInterval: options?.refreshInterval ?? 60_000 },
+    );
 
     useEffect(() => {
+        if (!enabled) return;
         connectStream(STREAM_URL);
 
         const off = onStreamEvent('notification.created', (event: MessageEvent<string>) => {
@@ -50,7 +55,7 @@ export function useNotifications(options?: { refreshInterval?: number }) {
             off();
             disconnectStream();
         };
-    }, [mutate]);
+    }, [enabled, mutate]);
 
     const markAsRead = async (ids: string[], markRead = true) => {
         if (ids.length === 0) {

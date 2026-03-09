@@ -1,21 +1,6 @@
 version: '3.8'
 
 services:
-    postgres:
-        image: postgres:16-alpine
-        container_name: kitchenpace-db
-        environment:
-            POSTGRES_USER: kitchenpace
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kitchenpace_secret}
-            POSTGRES_DB: ${POSTGRES_DB:-live_kitchenpace}
-        volumes:
-            - postgres_data:/var/lib/postgresql/data
-        healthcheck:
-            test: ['CMD-SHELL', 'pg_isready -U kitchenpace -d ${POSTGRES_DB:-live_kitchenpace}']
-            interval: 10s
-            timeout: 5s
-            retries: 5
-
     redis:
         image: redis:7-alpine
         container_name: kitchenpace-redis
@@ -40,7 +25,7 @@ services:
         environment:
             discovery.type: single-node
             plugins.security.disabled: 'true'
-            OPENSEARCH_JAVA_OPTS: '-Xms512m -Xmx512m'
+            OPENSEARCH_JAVA_OPTS: '-Xms128m -Xmx256m -XX:MaxDirectMemorySize=64m'
             bootstrap.memory_lock: 'true'
             OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-1snt-Funny1}
         ulimits:
@@ -60,32 +45,44 @@ services:
             retries: 5
 
     app:
-        image: registry.isntfunny.de/kitchenpace/app:live
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: runner
+            extra_hosts:
+                - 'host.docker.internal:host-gateway'
+            args:
+                - DATABASE_URL=${DATABASE_URL}
         container_name: kitchenpace-app
         env_file:
             - .env
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
         depends_on:
-            postgres:
-                condition: service_healthy
             redis:
                 condition: service_healthy
             opensearch:
                 condition: service_healthy
+            scraper:
+                condition: service_healthy
         restart: unless-stopped
 
     worker:
-        image: registry.isntfunny.de/kitchenpace/worker:live
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: worker
         container_name: kitchenpace-worker
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
         depends_on:
-            postgres:
-                condition: service_healthy
             redis:
                 condition: service_healthy
             opensearch:
                 condition: service_healthy
         restart: unless-stopped
         environment:
-            DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/live_kitchenpace}
+            DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@host.docker.internal:5432/live_kitchenpace}
             REDIS_HOST: redis
             REDIS_PORT: 6379
             REDIS_PASSWORD: ${REDIS_PASSWORD:-}
@@ -96,8 +93,17 @@ services:
         volumes:
             - worker_backups:/app/backups
 
+    scraper:
+        image: registry.isntfunny.de/kitchenpace/scraper:latest
+        container_name: kitchenpace-scraper
+        healthcheck:
+            test: ['CMD', 'curl', '-f', 'http://127.0.0.1:8000/health']
+            interval: 1s
+            timeout: 3s
+            retries: 10
+        restart: always
+
 volumes:
-    postgres_data:
     redis_data:
     opensearch_data:
     worker_backups:

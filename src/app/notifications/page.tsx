@@ -19,6 +19,7 @@ export default function NotificationsPage() {
                     className={css({
                         maxW: '960px',
                         marginX: 'auto',
+                        px: { base: '4', md: '0' },
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '6',

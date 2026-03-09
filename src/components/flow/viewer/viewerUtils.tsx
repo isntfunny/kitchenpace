@@ -81,11 +81,17 @@ export function buildTopology(nodes: FlowNodeSerialized[], edges: FlowEdgeSerial
         xToNodes.get(x)!.push(n);
     }
 
-    // Sort columns by X value, sort nodes within each column by Y
+    // Sort columns by X value; within each column sort by duration descending
+    // (longest task first, so parallel steps that take longest are encountered first
+    // when swiping — they need to be started earliest). Fall back to dagre Y as tiebreaker.
     const sortedXValues = [...xToNodes.keys()].sort((a, b) => a - b);
     const groups: FlowNodeSerialized[][] = sortedXValues.map((x) => {
         const col = xToNodes.get(x)!;
-        col.sort((a, b) => (dagreY.get(a.id) ?? 0) - (dagreY.get(b.id) ?? 0));
+        col.sort((a, b) => {
+            const durationDiff = (b.duration ?? 0) - (a.duration ?? 0);
+            if (durationDiff !== 0) return durationDiff;
+            return (dagreY.get(a.id) ?? 0) - (dagreY.get(b.id) ?? 0);
+        });
         return col;
     });
 
@@ -105,6 +111,7 @@ const MENTION_REGEX = /@\[(.*?)(?:\|(.*?))?\]\((.*?)\)/g;
 export function renderDescription(
     text: string,
     ingredients: { id: string; name: string; amount?: string; unit?: string }[] | undefined,
+    dark?: boolean,
 ): ReactNode[] {
     const parts: ReactNode[] = [];
     let lastIndex = 0;
@@ -124,8 +131,8 @@ export function renderDescription(
             <span
                 key={match.index}
                 style={{
-                    backgroundColor: 'rgba(224,123,83,0.15)',
-                    color: '#c45e30',
+                    backgroundColor: dark ? 'rgba(224,123,83,0.2)' : 'rgba(224,123,83,0.15)',
+                    color: dark ? '#f09070' : '#c45e30',
                     borderRadius: 4,
                     padding: '0 3px',
                     fontWeight: 600,

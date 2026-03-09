@@ -1,11 +1,24 @@
 'use client';
 
-import { Check } from 'lucide-react';
-import { Checkbox } from 'radix-ui';
+import type { LucideIcon } from 'lucide-react';
+import * as icons from 'lucide-react';
+import { Utensils } from 'lucide-react';
+import { createElement } from 'react';
 
-import { css } from 'styled-system/css';
+import { PALETTE } from '@app/lib/palette';
+import { css, cx } from 'styled-system/css';
 
 import { Category } from '../data';
+
+function resolveIcon(iconName: string | null): LucideIcon {
+    if (!iconName) return Utensils;
+    const pascal = iconName
+        .split('-')
+        .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+        .join('');
+    const icon = (icons as Record<string, unknown>)[pascal];
+    return (icon as LucideIcon) ?? Utensils;
+}
 
 interface CategorySelectorProps {
     categories: Category[];
@@ -16,65 +29,53 @@ interface CategorySelectorProps {
 export function CategorySelector({ categories, selectedIds, onToggle }: CategorySelectorProps) {
     return (
         <div>
-            <label className={css({ fontWeight: '600', display: 'block', mb: '2' })}>
+            <label className={css({ fontWeight: '600', display: 'block', mb: '2', fontSize: 'sm' })}>
                 Kategorien (mindestens eine)
             </label>
-            <div
-                className={css({
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '2',
-                    maxHeight: '200px',
-                    overflowY: 'auto',
-                    padding: '2',
-                    border: '1px solid rgba(224,123,83,0.4)',
-                    borderRadius: 'xl',
-                })}
-            >
-                {categories.map((cat) => (
-                    <label
-                        key={cat.id}
-                        className={css({
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '2',
-                            cursor: 'pointer',
-                            padding: '1',
-                            borderRadius: 'md',
-                            _hover: { bg: 'gray.50' },
-                        })}
-                    >
-                        <Checkbox.Root
-                            checked={selectedIds.includes(cat.id)}
-                            onCheckedChange={(checked) => {
-                                onToggle(cat.id, checked === true);
-                            }}
-                            className={css({
-                                width: '4',
-                                height: '4',
-                                backgroundColor: 'white',
-                                borderRadius: 'sm',
-                                border: '2px solid',
-                                borderColor: selectedIds.includes(cat.id)
-                                    ? 'brand.primary'
-                                    : 'gray.300',
-                                cursor: 'pointer',
-                                transition: 'all 150ms ease',
-                                _hover: { borderColor: 'brand.primary' },
-                                '&[data-state="checked"]': {
-                                    backgroundColor: 'brand.primary',
-                                    borderColor: 'brand.primary',
-                                },
-                            })}
+            <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
+                {categories.map((cat) => {
+                    const selected = selectedIds.includes(cat.id);
+
+                    return (
+                        <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => onToggle(cat.id, !selected)}
+                            className={cx(pillBase, selected && pillSelected)}
+                            style={selected
+                                ? { background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`, color: 'white', borderColor: PALETTE.orange }
+                                : undefined}
                         >
-                            <Checkbox.Indicator>
-                                <Check color="white" size={12} />
-                            </Checkbox.Indicator>
-                        </Checkbox.Root>
-                        <span>{cat.name}</span>
-                    </label>
-                ))}
+                            {createElement(resolveIcon(cat.icon), { size: 14 })}
+                            {cat.name}
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );
 }
+
+const pillBase = css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '1.5',
+    px: '3',
+    py: '2',
+    borderRadius: 'full',
+    fontSize: 'xs',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 150ms ease',
+    border: '2px solid',
+    borderColor: 'border.muted',
+    background: 'surface',
+    color: 'foreground.muted',
+    flex: '1 0 auto',
+    minWidth: 'calc(25% - 6px)',
+});
+
+const pillSelected = css({
+    fontWeight: '700',
+});

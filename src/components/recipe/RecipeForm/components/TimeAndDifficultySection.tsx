@@ -1,7 +1,8 @@
 'use client';
 
 import { css } from 'styled-system/css';
-import { grid } from 'styled-system/patterns';
+
+import { SegmentedBar } from './SegmentedBar';
 
 interface TimeAndDifficultySectionProps {
     prepTime: number;
@@ -12,6 +13,16 @@ interface TimeAndDifficultySectionProps {
     onDifficultyChange: (value: 'EASY' | 'MEDIUM' | 'HARD') => void;
 }
 
+const TIME_PRESETS = [5, 10, 15, 20, 30, 45, 60, 90] as const;
+const TIME_LABELS = TIME_PRESETS.map(String);
+
+const DIFFICULTY_OPTIONS = [
+    { value: 'EASY' as const, label: 'Einfach' },
+    { value: 'MEDIUM' as const, label: 'Mittel' },
+    { value: 'HARD' as const, label: 'Schwer' },
+];
+const DIFFICULTY_LABELS = DIFFICULTY_OPTIONS.map((o) => o.label);
+
 export function TimeAndDifficultySection({
     prepTime,
     onPrepTimeChange,
@@ -20,77 +31,48 @@ export function TimeAndDifficultySection({
     difficulty,
     onDifficultyChange,
 }: TimeAndDifficultySectionProps) {
-    const inputClass = css({
-        width: '100%',
-        padding: '3',
-        borderRadius: 'xl',
-        border: '1px solid rgba(224,123,83,0.4)',
-        fontSize: 'md',
-        outline: 'none',
-        _focus: {
-            borderColor: 'palette.orange',
-        },
-    });
-
-    const labelClass = css({
-        fontWeight: '600',
-        display: 'block',
-        mb: '2',
-        fontSize: 'sm',
-    });
+    const prepIdx = TIME_PRESETS.indexOf(prepTime as (typeof TIME_PRESETS)[number]);
+    const cookIdx = TIME_PRESETS.indexOf(cookTime as (typeof TIME_PRESETS)[number]);
+    const diffIdx = DIFFICULTY_OPTIONS.findIndex((o) => o.value === difficulty);
 
     return (
-        <div
-            className={grid({
-                columns: 1,
-                gap: '4',
-            })}
-        >
+        <div className={css({ display: 'flex', flexDirection: 'column', gap: '5' })}>
             <div>
-                <label className={labelClass}>Vorbereitung (Min)</label>
-                <input
-                    type="number"
-                    min={0}
-                    value={prepTime}
-                    onChange={(e) => onPrepTimeChange(Number(e.target.value))}
-                    className={inputClass}
+                <span className={labelClass}>Vorbereitung (Min)</span>
+                <SegmentedBar
+                    items={TIME_LABELS}
+                    activeIndex={prepIdx}
+                    onSelect={(i) => onPrepTimeChange(prepIdx === i ? 0 : TIME_PRESETS[i])}
+                    trackingName="prep_time"
+                    customInput={{ value: prepTime, onChange: onPrepTimeChange, placeholder: 'z.B. 120', suffix: 'Min' }}
                 />
             </div>
             <div>
-                <label className={labelClass}>Kochen (Min)</label>
-                <input
-                    type="number"
-                    min={0}
-                    value={cookTime}
-                    onChange={(e) => onCookTimeChange(Number(e.target.value))}
-                    className={inputClass}
+                <span className={labelClass}>Kochen (Min)</span>
+                <SegmentedBar
+                    items={TIME_LABELS}
+                    activeIndex={cookIdx}
+                    onSelect={(i) => onCookTimeChange(cookIdx === i ? 0 : TIME_PRESETS[i])}
+                    trackingName="cook_time"
+                    customInput={{ value: cookTime, onChange: onCookTimeChange, placeholder: 'z.B. 120', suffix: 'Min' }}
                 />
             </div>
             <div>
-                <label className={labelClass}>Schwierigkeit</label>
-                <select
-                    value={difficulty}
-                    onChange={(e) =>
-                        onDifficultyChange(e.target.value as 'EASY' | 'MEDIUM' | 'HARD')
-                    }
-                    className={css({
-                        width: '100%',
-                        padding: '3',
-                        borderRadius: 'xl',
-                        border: '1px solid rgba(224,123,83,0.4)',
-                        fontSize: 'md',
-                        outline: 'none',
-                        bg: 'white',
-                        _focus: {
-                            borderColor: 'palette.orange',
-                        },
-                    })}
-                >
-                    <option value="EASY">Einfach</option>
-                    <option value="MEDIUM">Mittel</option>
-                    <option value="HARD">Schwer</option>
-                </select>
+                <span className={labelClass}>Schwierigkeit</span>
+                <SegmentedBar
+                    items={DIFFICULTY_LABELS}
+                    activeIndex={diffIdx}
+                    onSelect={(i) => onDifficultyChange(DIFFICULTY_OPTIONS[i].value)}
+                    trackingName="difficulty"
+                />
             </div>
         </div>
     );
 }
+
+const labelClass = css({
+    fontWeight: '600',
+    display: 'block',
+    mb: '2',
+    fontSize: 'sm',
+});

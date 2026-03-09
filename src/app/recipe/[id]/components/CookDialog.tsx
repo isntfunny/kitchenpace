@@ -1,11 +1,11 @@
 'use client';
 
-import { Camera, CheckCircle, ChefHat } from 'lucide-react';
-import { useState } from 'react';
+import { Camera, CheckCircle, ChefHat, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
 import { css } from 'styled-system/css';
-import { flex } from 'styled-system/patterns';
 
 interface CookDialogProps {
     isOpen: boolean;
@@ -18,7 +18,25 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
     const [uploadedImage, setUploadedImage] = useState<File | null>(null);
     const [cookNotes, setCookNotes] = useState('');
 
-    if (!isOpen) return null;
+    // Close on Escape key
+    useEffect(() => {
+        if (!isOpen) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, [isOpen, onClose]);
+
+    // Prevent body scroll when open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [isOpen]);
 
     const handleSubmit = () => {
         onSubmit({ notes: cookNotes, image: uploadedImage });
@@ -33,125 +51,254 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
     };
 
     return (
-        <div
-            className={css({
-                mt: '4',
-                p: '5',
-                bg: 'surface.elevated',
-                borderRadius: 'xl',
-                border: '1px solid',
-                borderColor: 'gray.200',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            })}
-        >
-            <h3
-                className={css({
-                    fontSize: 'base',
-                    fontWeight: '700',
-                    fontFamily: 'heading',
-                    mb: '3',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                })}
-            >
-                <ChefHat size={20} />
-                <span>Als zubereitet markieren</span>
-            </h3>
+        <AnimatePresence>
+            {isOpen && (
+                <div
+                    className={css({
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 9999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '4',
+                    })}
+                >
+                    {/* Backdrop */}
+                    <motion.div
+                        className={css({
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'rgba(0,0,0,0.5)',
+                            backdropFilter: 'blur(4px)',
+                        })}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={handleCancel}
+                    />
 
-            <div
-                className={css({
-                    border: '2px dashed',
-                    borderColor: 'gray.300',
-                    borderRadius: 'lg',
-                    p: '6',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 150ms ease',
-                    bg: 'gray.50',
-                    _hover: {
-                        borderColor: 'primary',
-                        bg: 'rgba(224,123,83,0.05)',
-                    },
-                })}
-                onClick={() => document.getElementById('cook-image-input')?.click()}
-            >
-                <input
-                    id="cook-image-input"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setUploadedImage(e.target.files?.[0] ?? null)}
-                    className={css({ display: 'none' })}
-                />
-                {uploadedImage ? (
-                    <div>
+                    {/* Dialog card */}
+                    <motion.div
+                        className={css({
+                            position: 'relative',
+                            zIndex: 1,
+                            width: '100%',
+                            maxWidth: '480px',
+                            bg: 'surface.elevated',
+                            borderRadius: '2xl',
+                            boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+                            overflow: 'hidden',
+                        })}
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.96, y: 10 }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
                         <div
                             className={css({
-                                fontSize: 'xl',
-                                mb: '2',
-                                color: '#4caf50',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                px: '5',
+                                py: '4',
+                                borderBottom: '1px solid',
+                                borderColor: 'border.muted',
                             })}
                         >
-                            <CheckCircle size={32} />
+                            <h3
+                                className={css({
+                                    fontSize: 'base',
+                                    fontWeight: '700',
+                                    fontFamily: 'heading',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    margin: 0,
+                                })}
+                            >
+                                <ChefHat size={20} />
+                                Als zubereitet markieren
+                            </h3>
+                            <button
+                                onClick={handleCancel}
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    w: '8',
+                                    h: '8',
+                                    borderRadius: 'full',
+                                    border: 'none',
+                                    background: 'transparent',
+                                    cursor: 'pointer',
+                                    color: 'foreground.muted',
+                                    transition: 'all 120ms ease',
+                                    _hover: { background: 'gray.100', color: 'foreground' },
+                                })}
+                                aria-label="Schließen"
+                            >
+                                <X size={18} />
+                            </button>
                         </div>
-                        <p
-                            className={css({
-                                fontSize: 'sm',
-                                fontWeight: '500',
-                            })}
-                        >
-                            {uploadedImage.name}
-                        </p>
-                        <p
-                            className={css({
-                                fontSize: 'xs',
-                                color: 'text-muted',
-                                mt: '1',
-                            })}
-                        >
-                            Klicken zum Ändern
-                        </p>
-                    </div>
-                ) : (
-                    <div>
+
+                        {/* Body */}
                         <div
                             className={css({
-                                fontSize: '2xl',
-                                mb: '2',
-                                color: '#4a5568',
+                                p: '5',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '4',
                             })}
                         >
-                            <Camera size={40} />
-                        </div>
-                        <p
-                            className={css({
-                                fontSize: 'sm',
-                                fontWeight: '500',
-                            })}
-                        >
-                            Bild hierher ziehen oder klicken
-                        </p>
-                        <p
-                            className={css({
-                                fontSize: 'xs',
-                                color: 'text-muted',
-                                mt: '1',
-                            })}
-                        >
-                            Optional - du kannst auch ohne Bild fortfahren
-                        </p>
-                    </div>
-                )}
-            </div>
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                })}
+                            >
+                                <span className={css({ fontSize: 'sm', fontWeight: '600', color: 'foreground' })}>
+                                    Foto
+                                </span>
+                                <span
+                                    className={css({
+                                        fontSize: 'xs',
+                                        fontWeight: '600',
+                                        color: 'foreground.muted',
+                                        bg: 'gray.100',
+                                        px: '2',
+                                        py: '0.5',
+                                        borderRadius: 'full',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: 'wide',
+                                    })}
+                                >
+                                    Optional
+                                </span>
+                            </div>
 
-            <div className={flex({ gap: '3', mt: '4' })}>
-                <Button type="button" variant="ghost" onClick={handleCancel}>
-                    Abbrechen
-                </Button>
-                <Button type="button" variant="primary" onClick={handleSubmit} disabled={isPending}>
-                    {isPending ? 'Speichern...' : 'Absenden'}
-                </Button>
-            </div>
-        </div>
+                            {/* File upload zone */}
+                            <div
+                                className={css({
+                                    border: '2px dashed',
+                                    borderColor: 'border',
+                                    borderRadius: 'xl',
+                                    p: '6',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    transition: 'all 150ms ease',
+                                    bg: 'surface',
+                                    _hover: {
+                                        borderColor: 'accent',
+                                        bg: 'rgba(224,123,83,0.06)',
+                                    },
+                                })}
+                                onClick={() => document.getElementById('cook-image-input-modal')?.click()}
+                            >
+                                <input
+                                    id="cook-image-input-modal"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setUploadedImage(e.target.files?.[0] ?? null)}
+                                    className={css({ display: 'none' })}
+                                />
+                                {uploadedImage ? (
+                                    <div>
+                                        <div
+                                            className={css({
+                                                mb: '2',
+                                                color: 'green.500',
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                            })}
+                                        >
+                                            <CheckCircle size={32} />
+                                        </div>
+                                        <p className={css({ fontSize: 'sm', fontWeight: '500', m: 0 })}>
+                                            {uploadedImage.name}
+                                        </p>
+                                        <p
+                                            className={css({
+                                                fontSize: 'xs',
+                                                color: 'foreground.muted',
+                                                mt: '1',
+                                                m: 0,
+                                            })}
+                                        >
+                                            Klicken zum Ändern
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <div
+                                            className={css({
+                                                mb: '2',
+                                                color: 'foreground.muted',
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                            })}
+                                        >
+                                            <Camera size={40} />
+                                        </div>
+                                        <p className={css({ fontSize: 'sm', fontWeight: '500', m: 0 })}>
+                                            Foto hinzufügen
+                                        </p>
+                                        <p
+                                            className={css({
+                                                fontSize: 'xs',
+                                                color: 'foreground.muted',
+                                                mt: '1',
+                                                m: 0,
+                                            })}
+                                        >
+                                            Freiwillig — kein Foto? Einfach unten bestätigen.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Actions */}
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '3',
+                                })}
+                            >
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    onClick={handleSubmit}
+                                    disabled={isPending}
+                                    style={{ width: '100%' }}
+                                >
+                                    {isPending ? 'Speichern...' : 'Als zubereitet markieren'}
+                                </Button>
+                                <button
+                                    type="button"
+                                    onClick={handleCancel}
+                                    className={css({
+                                        fontSize: 'sm',
+                                        color: 'foreground.muted',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        padding: '0',
+                                        textAlign: 'center',
+                                        _hover: { color: 'foreground' },
+                                    })}
+                                >
+                                    Abbrechen
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
     );
 }

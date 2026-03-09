@@ -24,9 +24,10 @@ const SelectTrigger = React.forwardRef<
             py: '2',
             fontFamily: 'body',
             fontSize: 'sm',
-            bg: 'white',
+            bg: 'surface',
+            color: 'text',
             border: '1px solid',
-            borderColor: 'rgba(0,0,0,0.1)',
+            borderColor: { base: 'rgba(0,0,0,0.1)', _dark: 'rgba(255,255,255,0.12)' },
             borderRadius: 'md',
             cursor: 'pointer',
             _hover: {
@@ -58,11 +59,12 @@ const SelectContent = React.forwardRef<
             className={css({
                 zIndex: 50,
                 minW: '200px',
-                bg: 'white',
+                bg: 'surface',
+                color: 'text',
                 borderRadius: 'md',
                 border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.1)',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                borderColor: { base: 'rgba(0,0,0,0.1)', _dark: 'rgba(255,255,255,0.12)' },
+                boxShadow: { base: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', _dark: '0 10px 15px -3px rgba(0, 0, 0, 0.4)' },
                 overflow: 'hidden',
             })}
             {...props}
@@ -92,13 +94,14 @@ const SelectItem = React.forwardRef<
             py: '2',
             fontFamily: 'body',
             fontSize: 'sm',
+            color: 'text',
             cursor: 'pointer',
             borderRadius: 'sm',
             _hover: {
-                bg: 'light',
+                bg: 'surface.muted',
             },
             _focus: {
-                bg: 'light',
+                bg: 'surface.muted',
                 outline: 'none',
             },
         })}

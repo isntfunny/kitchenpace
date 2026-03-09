@@ -128,10 +128,7 @@ export async function POST(request: Request) {
             const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
             const activationLink = `${appUrl}/auth/activate?token=${activationToken}`;
 
-            await sendNotifuseActivationEmail({
-                email: normalizedEmail,
-                activationLink,
-            });
+            await sendNotifuseActivationEmail({ email: normalizedEmail, activationLink });
 
             log.info('Resent activation email', { email: normalizedEmail });
 
@@ -188,10 +185,7 @@ export async function POST(request: Request) {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
         const activationLink = `${appUrl}/auth/activate?token=${activationToken}`;
 
-        await sendNotifuseActivationEmail({
-            email: normalizedEmail,
-            activationLink,
-        });
+        await sendNotifuseActivationEmail({ email: normalizedEmail, activationLink });
 
         await fireEvent({
             event: 'userRegistered',

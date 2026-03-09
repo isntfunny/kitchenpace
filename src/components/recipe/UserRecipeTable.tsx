@@ -1,224 +1,20 @@
 'use client';
 
-import {
-    type ColumnDef,
-    type SortingState,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useReactTable,
-    flexRender,
-} from '@tanstack/react-table';
-import { ArrowUpDown, Search, Edit2, Trash2, Send, Archive } from 'lucide-react';
+import { Archive, Edit2, Plus, Search, Send, Star, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
 import type { UserRecipe } from '@app/app/actions/user';
 import { Button } from '@app/components/atoms/Button';
-import { css } from 'styled-system/css';
+import { SmartImage } from '@app/components/atoms/SmartImage';
+import { PALETTE } from '@app/lib/palette';
+import { css, cx } from 'styled-system/css';
 
-type RecipeWithActions = UserRecipe;
+// ---------------------------------------------------------------------------
+// Recipe Card Actions
+// ---------------------------------------------------------------------------
 
-const columns: ColumnDef<RecipeWithActions>[] = [
-    {
-        accessorKey: 'title',
-        header: ({ column }) => {
-            return (
-                <button
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        fontWeight: 600,
-                        fontSize: 'sm',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        color: 'muted',
-                        cursor: 'pointer',
-                        _hover: { color: 'text' },
-                    })}
-                    onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                >
-                    Titel
-                    <ArrowUpDown size={14} />
-                </button>
-            );
-        },
-        cell: ({ row }) => (
-            <div className={css({ display: 'flex', flexDirection: 'column', gap: '0.375rem' })}>
-                <Link
-                    href={`/recipe/${row.original.slug}`}
-                    className={css({
-                        fontWeight: 600,
-                        fontSize: 'base',
-                        color: 'text',
-                        textDecoration: 'none',
-                        _hover: { color: 'primary' },
-                    })}
-                >
-                    {row.original.title}
-                </Link>
-            </div>
-        ),
-    },
-    {
-        accessorKey: 'status',
-        header: ({ column }) => {
-            return (
-                <button
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        fontWeight: 600,
-                        fontSize: 'sm',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        color: 'muted',
-                        cursor: 'pointer',
-                        _hover: { color: 'text' },
-                    })}
-                    onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                >
-                    Status
-                    <ArrowUpDown size={14} />
-                </button>
-            );
-        },
-        cell: ({ row }) => {
-            const isPublished = row.original.status === 'PUBLISHED';
-            return (
-                <span
-                    className={css({
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        paddingX: '0.75rem',
-                        paddingY: '0.5rem',
-                        borderRadius: 'sm',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        background: isPublished ? 'green-100' : 'amber-100',
-                        color: isPublished ? 'green-800' : 'amber-800',
-                    })}
-                >
-                    {isPublished ? 'Veröffentlicht' : 'Entwurf'}
-                </span>
-            );
-        },
-    },
-    {
-        accessorKey: 'rating',
-        header: ({ column }) => {
-            return (
-                <button
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        fontWeight: 600,
-                        fontSize: 'sm',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        color: 'muted',
-                        cursor: 'pointer',
-                        _hover: { color: 'text' },
-                    })}
-                    onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                >
-                    Bewertung
-                    <ArrowUpDown size={14} />
-                </button>
-            );
-        },
-        cell: ({ row }) => (
-            <div className={css({ display: 'flex', flexDirection: 'column', gap: '0.25rem' })}>
-                <span className={css({ fontSize: 'sm', fontWeight: 600 })}>
-                    {row.original.ratingCount > 0 ? `★ ${row.original.rating.toFixed(1)}` : '—'}
-                </span>
-                <span className={css({ fontSize: '0.75rem', color: 'muted' })}>
-                    {row.original.ratingCount}{' '}
-                    {row.original.ratingCount === 1 ? 'Bewertung' : 'Bewertungen'}
-                </span>
-            </div>
-        ),
-    },
-    {
-        accessorKey: 'cookCount',
-        header: ({ column }) => {
-            return (
-                <button
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        fontWeight: 600,
-                        fontSize: 'sm',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        color: 'muted',
-                        cursor: 'pointer',
-                        _hover: { color: 'text' },
-                    })}
-                    onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                >
-                    Zubereitet
-                    <ArrowUpDown size={14} />
-                </button>
-            );
-        },
-        cell: ({ row }) => (
-            <span className={css({ fontSize: 'sm', fontWeight: 500 })}>
-                {row.original.cookCount} {row.original.cookCount === 1 ? 'mal' : 'mal'}
-            </span>
-        ),
-    },
-    {
-        accessorKey: 'updatedAt',
-        header: ({ column }) => {
-            return (
-                <button
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        fontWeight: 600,
-                        fontSize: 'sm',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        color: 'muted',
-                        cursor: 'pointer',
-                        _hover: { color: 'text' },
-                    })}
-                    onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                >
-                    Aktualisiert
-                    <ArrowUpDown size={14} />
-                </button>
-            );
-        },
-        cell: ({ row }) => {
-            const date = new Date(row.original.updatedAt);
-            return (
-                <span className={css({ fontSize: 'sm', color: 'muted' })}>
-                    {date.toLocaleDateString('de-DE')}
-                </span>
-            );
-        },
-    },
-    {
-        id: 'actions',
-        cell: ({ row }) => (
-            <RecipeRowActions
-                recipeId={row.original.id}
-                title={row.original.title}
-                status={row.original.status}
-            />
-        ),
-    },
-];
-
-function RecipeRowActions({
+function RecipeCardActions({
     recipeId,
     title,
     status,
@@ -280,115 +76,111 @@ function RecipeRowActions({
         }
     };
 
+    const actionBtnClass = css({
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '1.5',
+        px: '3',
+        py: '2',
+        borderRadius: 'lg',
+        border: '1px solid',
+        borderColor: 'border.muted',
+        background: 'surface',
+        fontSize: 'xs',
+        fontWeight: '600',
+        cursor: 'pointer',
+        transition: 'all 150ms ease',
+        color: 'foreground',
+        _disabled: { opacity: 0.5, pointerEvents: 'none' },
+    });
+
     return (
-        <div className={css({ display: 'flex', gap: '0.75rem' })}>
-            <Link
-                href={`/recipe/${recipeId}/edit`}
-                className={css({
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '2.5rem',
-                    height: '2.5rem',
-                    borderRadius: 'md',
-                    background: 'surface.card',
-                    color: 'muted',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s ease',
-                    _hover: {
-                        background: 'primary',
-                        color: 'white',
-                    },
-                })}
-                title="Bearbeiten"
-            >
-                <Edit2 size={18} />
-            </Link>
-
-            {!isPublished && (
-                <button
-                    onClick={handlePublish}
-                    disabled={isUpdating}
+        <>
+            <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
+                <Link
+                    href={`/recipe/${recipeId}/edit`}
                     className={css({
                         display: 'inline-flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '2.5rem',
-                        height: '2.5rem',
-                        borderRadius: 'md',
-                        background: 'surface.card',
-                        color: 'muted',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        opacity: isUpdating ? 0.5 : 1,
-                        pointerEvents: isUpdating ? 'none' : 'auto',
+                        gap: '1.5',
+                        px: '3',
+                        py: '2',
+                        borderRadius: 'lg',
+                        border: '1px solid',
+                        borderColor: 'border.muted',
+                        background: 'surface',
+                        fontSize: 'xs',
+                        fontWeight: '600',
+                        color: 'foreground',
+                        textDecoration: 'none',
+                        transition: 'all 150ms ease',
                         _hover: {
-                            background: 'green.100',
-                            color: 'green.600',
+                            borderColor: 'primary',
+                            color: 'primary',
                         },
                     })}
-                    title="Veröffentlichen"
                 >
-                    <Send size={18} />
-                </button>
-            )}
+                    <Edit2 size={14} />
+                    Bearbeiten
+                </Link>
 
-            {isPublished && (
+                {!isPublished && (
+                    <button
+                        onClick={handlePublish}
+                        disabled={isUpdating}
+                        className={actionBtnClass}
+                        style={{ '--hover-color': '#16a34a' } as React.CSSProperties}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = '#16a34a';
+                            e.currentTarget.style.color = '#16a34a';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = '';
+                            e.currentTarget.style.color = '';
+                        }}
+                    >
+                        <Send size={14} />
+                        Veröffentlichen
+                    </button>
+                )}
+
+                {isPublished && (
+                    <button
+                        onClick={handleUnpublish}
+                        disabled={isUpdating}
+                        className={actionBtnClass}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = '#d97706';
+                            e.currentTarget.style.color = '#d97706';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = '';
+                            e.currentTarget.style.color = '';
+                        }}
+                    >
+                        <Archive size={14} />
+                        Zurückziehen
+                    </button>
+                )}
+
                 <button
-                    onClick={handleUnpublish}
-                    disabled={isUpdating}
-                    className={css({
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '2.5rem',
-                        height: '2.5rem',
-                        borderRadius: 'md',
-                        background: 'surface.card',
-                        color: 'muted',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        opacity: isUpdating ? 0.5 : 1,
-                        pointerEvents: isUpdating ? 'none' : 'auto',
-                        _hover: {
-                            background: 'amber.100',
-                            color: 'amber.600',
-                        },
-                    })}
-                    title="Zurückziehen"
+                    onClick={() => setDeleteConfirm(true)}
+                    disabled={isDeleting || isUpdating}
+                    className={actionBtnClass}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#dc2626';
+                        e.currentTarget.style.color = '#dc2626';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '';
+                        e.currentTarget.style.color = '';
+                    }}
                 >
-                    <Archive size={18} />
+                    <Trash2 size={14} />
+                    Löschen
                 </button>
-            )}
-
-            <button
-                onClick={() => setDeleteConfirm(true)}
-                disabled={isDeleting || isUpdating}
-                className={css({
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '2.5rem',
-                    height: '2.5rem',
-                    borderRadius: 'md',
-                    background: 'surface.card',
-                    color: 'muted',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    opacity: isDeleting || isUpdating ? 0.5 : 1,
-                    pointerEvents: isDeleting || isUpdating ? 'none' : 'auto',
-                    _hover: {
-                        background: 'red.100',
-                        color: 'red.600',
-                    },
-                })}
-                title="Löschen"
-            >
-                <Trash2 size={18} />
-            </button>
+            </div>
 
             {deleteConfirm && (
                 <div
@@ -406,19 +198,19 @@ function RecipeRowActions({
                     <div
                         className={css({
                             background: 'surface.elevated',
-                            borderRadius: 'lg',
-                            padding: '2rem',
+                            borderRadius: 'xl',
+                            padding: '6',
                             maxWidth: '400px',
                             width: '90%',
-                            boxShadow: 'shadow.lg',
+                            boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
                         })}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <h3
                             className={css({
-                                fontSize: '1.25rem',
+                                fontSize: 'lg',
                                 fontWeight: 700,
-                                marginBottom: '1rem',
+                                marginBottom: '3',
                                 color: 'red.600',
                             })}
                         >
@@ -426,18 +218,19 @@ function RecipeRowActions({
                         </h3>
                         <p
                             className={css({
-                                color: 'muted',
-                                marginBottom: '1.5rem',
+                                color: 'foreground.muted',
+                                marginBottom: '5',
                                 lineHeight: 1.6,
+                                fontSize: 'sm',
                             })}
                         >
-                            "{title}" wird endgültig gelöscht und kann nicht wiederhergestellt
-                            werden.
+                            &ldquo;{title}&rdquo; wird endgültig gelöscht und kann nicht
+                            wiederhergestellt werden.
                         </p>
                         <div
                             className={css({
                                 display: 'flex',
-                                gap: '0.75rem',
+                                gap: '3',
                                 justifyContent: 'flex-end',
                             })}
                         >
@@ -462,59 +255,244 @@ function RecipeRowActions({
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 }
 
-export function UserRecipeTable({ recipes }: { recipes: UserRecipe[] }) {
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [globalFilter, setGlobalFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'ALL' | 'DRAFT' | 'PUBLISHED'>('ALL');
+// ---------------------------------------------------------------------------
+// Single Recipe Card
+// ---------------------------------------------------------------------------
 
-    const filteredRecipes =
-        statusFilter === 'ALL' ? recipes : recipes.filter((r) => r.status === statusFilter);
-
-    // eslint-disable-next-line react-hooks/incompatible-library
-    const table = useReactTable({
-        data: filteredRecipes,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        onSortingChange: setSorting,
-        onGlobalFilterChange: setGlobalFilter,
-        state: {
-            sorting,
-            globalFilter,
-        },
-        initialState: {
-            pagination: {
-                pageSize: 10,
-            },
-        },
-    });
+function UserRecipeCard({ recipe }: { recipe: UserRecipe }) {
+    const isPublished = recipe.status === 'PUBLISHED';
+    const date = new Date(recipe.updatedAt);
 
     return (
         <div
             className={css({
-                borderRadius: 'lg',
-                borderWidth: '1px',
-                borderColor: 'border',
                 background: 'surface.elevated',
+                borderRadius: 'xl',
+                border: '1px solid',
+                borderColor: 'rgba(0,0,0,0.06)',
                 overflow: 'hidden',
+                transition: 'all 200ms ease',
+                _hover: {
+                    borderColor: 'primary',
+                    boxShadow: `0 12px 28px ${PALETTE.orange}15`,
+                },
             })}
         >
-            {/* Header */}
+            {/* Image + Status Badge */}
+            <Link
+                href={`/recipe/${recipe.slug}`}
+                className={css({ textDecoration: 'none', color: 'inherit' })}
+            >
+                <div
+                    className={css({
+                        position: 'relative',
+                        aspectRatio: '16/9',
+                        overflow: 'hidden',
+                        background: 'surface',
+                    })}
+                >
+                    <SmartImage
+                        alt={recipe.title}
+                        fill
+                        imageKey={recipe.imageKey}
+                        recipeId={recipe.id}
+                        className={css({ objectFit: 'cover' })}
+                    />
+                    <span
+                        className={css({
+                            position: 'absolute',
+                            top: '2.5',
+                            left: '2.5',
+                            px: '2.5',
+                            py: '1',
+                            borderRadius: 'full',
+                            fontSize: '0.7rem',
+                            fontWeight: '700',
+                            letterSpacing: 'wide',
+                            textTransform: 'uppercase',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                        })}
+                        style={{
+                            background: isPublished ? '#16a34a' : PALETTE.gold,
+                            color: 'white',
+                        }}
+                    >
+                        {isPublished ? 'Live' : 'Entwurf'}
+                    </span>
+                </div>
+            </Link>
+
+            {/* Content */}
+            <div className={css({ p: '4', display: 'flex', flexDirection: 'column', gap: '3' })}>
+                <div>
+                    <Link
+                        href={`/recipe/${recipe.slug}`}
+                        className={css({
+                            textDecoration: 'none',
+                            color: 'inherit',
+                        })}
+                    >
+                        <h3
+                            className={css({
+                                fontWeight: '700',
+                                fontSize: 'base',
+                                lineHeight: 'tight',
+                                lineClamp: 2,
+                                color: 'text',
+                                _hover: { color: 'primary' },
+                            })}
+                        >
+                            {recipe.title}
+                        </h3>
+                    </Link>
+
+                    {/* Meta row */}
+                    <div
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3',
+                            mt: '2',
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                        })}
+                    >
+                        {recipe.ratingCount > 0 && (
+                            <span
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1',
+                                })}
+                            >
+                                <Star size={13} className={css({ color: 'palette.gold' })} />
+                                {recipe.rating.toFixed(1)}
+                                <span className={css({ color: 'foreground.muted' })}>
+                                    ({recipe.ratingCount})
+                                </span>
+                            </span>
+                        )}
+                        {recipe.cookCount > 0 && (
+                            <span>
+                                {recipe.cookCount}x zubereitet
+                            </span>
+                        )}
+                        <span>{date.toLocaleDateString('de-DE')}</span>
+                    </div>
+                </div>
+
+                {/* Action Buttons */}
+                <RecipeCardActions
+                    recipeId={recipe.id}
+                    title={recipe.title}
+                    status={recipe.status}
+                />
+            </div>
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Empty State
+// ---------------------------------------------------------------------------
+
+function EmptyState() {
+    return (
+        <div
+            className={css({
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: '16',
+                gap: '4',
+            })}
+        >
             <div
                 className={css({
-                    padding: '1.5rem',
-                    borderBottomWidth: '1px',
-                    borderColor: 'border',
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: 'full',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '1.5rem',
+                    justifyContent: 'center',
+                })}
+                style={{
+                    background: `linear-gradient(135deg, ${PALETTE.orange}20, ${PALETTE.gold}20)`,
+                }}
+            >
+                <Plus size={28} color={PALETTE.orange} />
+            </div>
+            <div className={css({ textAlign: 'center' })}>
+                <p className={css({ fontWeight: '600', fontSize: 'lg', mb: '1' })}>
+                    Noch keine Rezepte
+                </p>
+                <p className={css({ color: 'foreground.muted', fontSize: 'sm', mb: '4' })}>
+                    Erstelle dein erstes Rezept und teile es mit der Community.
+                </p>
+            </div>
+            <Link
+                href="/recipe/create"
+                className={css({
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2',
+                    px: '5',
+                    py: '3',
+                    borderRadius: 'xl',
+                    color: 'white',
+                    fontWeight: '600',
+                    fontSize: 'sm',
+                    textDecoration: 'none',
+                    transition: 'all 150ms ease',
+                    _hover: {
+                        boxShadow: `0 8px 24px ${PALETTE.orange}40`,
+                    },
+                })}
+                style={{
+                    background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
+                }}
+            >
+                <Plus size={18} />
+                Rezept erstellen
+            </Link>
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Main Component
+// ---------------------------------------------------------------------------
+
+export function UserRecipeTable({ recipes }: { recipes: UserRecipe[] }) {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'ALL' | 'DRAFT' | 'PUBLISHED'>('ALL');
+
+    const filtered = recipes
+        .filter((r) => {
+            if (statusFilter === 'ALL') return true;
+            if (statusFilter === 'PUBLISHED') return r.status === 'PUBLISHED';
+            // "Entwürfe" = everything that's not published (DRAFT + ARCHIVED)
+            return r.status !== 'PUBLISHED';
+        })
+        .filter(
+            (r) =>
+                !searchQuery.trim() ||
+                r.title.toLowerCase().includes(searchQuery.trim().toLowerCase()),
+        );
+
+    return (
+        <div className={css({ display: 'flex', flexDirection: 'column', gap: '5' })}>
+            {/* Toolbar */}
+            <div
+                className={css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3',
                     flexWrap: 'wrap',
                 })}
             >
@@ -522,23 +500,27 @@ export function UserRecipeTable({ recipes }: { recipes: UserRecipe[] }) {
                     className={css({
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.75rem',
-                        background: 'surface.card',
-                        borderRadius: 'md',
-                        borderWidth: '1px',
-                        borderColor: 'border',
-                        paddingX: '1rem',
-                        paddingY: '0.75rem',
+                        gap: '2',
+                        background: 'surface.elevated',
+                        borderRadius: 'xl',
+                        border: '1px solid',
+                        borderColor: 'border.muted',
+                        px: '3',
+                        py: '2.5',
                         flex: '1',
-                        maxWidth: '350px',
+                        minWidth: '180px',
+                        maxWidth: '360px',
                     })}
                 >
-                    <Search size={18} className={css({ color: 'muted', flexShrink: 0 })} />
+                    <Search
+                        size={16}
+                        className={css({ color: 'foreground.muted', flexShrink: 0 })}
+                    />
                     <input
                         type="text"
                         placeholder="Rezepte suchen..."
-                        value={globalFilter}
-                        onChange={(e) => setGlobalFilter(e.target.value)}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className={css({
                             background: 'transparent',
                             border: 'none',
@@ -546,181 +528,86 @@ export function UserRecipeTable({ recipes }: { recipes: UserRecipe[] }) {
                             fontSize: 'sm',
                             color: 'text',
                             width: '100%',
-                            '&::placeholder': { color: 'muted' },
+                            '&::placeholder': { color: 'foreground.muted' },
                         })}
                     />
                 </div>
-                <select
-                    value={statusFilter}
-                    onChange={(e) =>
-                        setStatusFilter(e.target.value as 'ALL' | 'DRAFT' | 'PUBLISHED')
-                    }
+
+                <div className={css({ display: 'flex', gap: '1.5' })}>
+                    {(['ALL', 'PUBLISHED', 'DRAFT'] as const).map((f) => {
+                        const labels = { ALL: 'Alle', PUBLISHED: 'Live', DRAFT: 'Entwürfe' };
+                        const isActive = statusFilter === f;
+                        return (
+                            <button
+                                key={f}
+                                type="button"
+                                onClick={() => setStatusFilter(f)}
+                                className={cx(
+                                    css({
+                                        px: '3',
+                                        py: '2',
+                                        borderRadius: 'lg',
+                                        fontSize: 'xs',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        border: '1px solid',
+                                        transition: 'all 150ms ease',
+                                        borderColor: 'border.muted',
+                                        background: 'surface',
+                                        color: 'foreground.muted',
+                                    }),
+                                    isActive &&
+                                        css({
+                                            borderColor: 'primary',
+                                            background: 'accent.soft',
+                                            color: 'primary',
+                                        }),
+                                )}
+                            >
+                                {labels[f]}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <span className={css({ fontSize: 'xs', color: 'foreground.muted', ml: 'auto' })}>
+                    {filtered.length} {filtered.length === 1 ? 'Rezept' : 'Rezepte'}
+                </span>
+            </div>
+
+            {/* Card Grid or Empty State */}
+            {filtered.length === 0 ? (
+                recipes.length === 0 ? (
+                    <EmptyState />
+                ) : (
+                    <p
+                        className={css({
+                            textAlign: 'center',
+                            py: '12',
+                            color: 'foreground.muted',
+                            fontSize: 'sm',
+                        })}
+                    >
+                        Keine Rezepte gefunden.
+                    </p>
+                )
+            ) : (
+                <div
                     className={css({
-                        paddingX: '1rem',
-                        paddingY: '0.75rem',
-                        borderRadius: 'md',
-                        borderWidth: '1px',
-                        borderColor: 'border',
-                        background: 'surface.card',
-                        fontSize: 'sm',
-                        color: 'text',
-                        outline: 'none',
-                        cursor: 'pointer',
+                        display: 'grid',
+                        gridTemplateColumns: {
+                            base: '1fr',
+                            sm: 'repeat(2, 1fr)',
+                            lg: 'repeat(3, 1fr)',
+                        },
+                        gap: '4',
                     })}
                 >
-                    <option value="ALL">Alle Status</option>
-                    <option value="DRAFT">Entwürfe</option>
-                    <option value="PUBLISHED">Veröffentlicht</option>
-                </select>
-            </div>
-
-            {/* Table */}
-            <div className={css({ overflowX: 'auto' })}>
-                <table className={css({ width: '100%', borderCollapse: 'collapse' })}>
-                    <thead>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <tr
-                                key={headerGroup.id}
-                                className={css({
-                                    borderBottomWidth: '1px',
-                                    borderColor: 'border',
-                                })}
-                            >
-                                {headerGroup.headers.map((header) => (
-                                    <th
-                                        key={header.id}
-                                        className={css({
-                                            padding: '1.25rem 1.5rem',
-                                            textAlign: 'left',
-                                            background: 'surface.card',
-                                        })}
-                                    >
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                  header.column.columnDef.header,
-                                                  header.getContext(),
-                                              )}
-                                    </th>
-                                ))}
-                            </tr>
-                        ))}
-                    </thead>
-                    <tbody>
-                        {table.getRowModel().rows.length === 0 ? (
-                            <tr>
-                                <td
-                                    colSpan={columns.length}
-                                    className={css({
-                                        padding: '3rem 1.5rem',
-                                        textAlign: 'center',
-                                        color: 'muted',
-                                    })}
-                                >
-                                    <p className={css({ marginBottom: '0.5rem' })}>
-                                        Keine Rezepte gefunden
-                                    </p>
-                                    <Link
-                                        href="/recipe/create"
-                                        className={css({
-                                            color: 'primary',
-                                            textDecoration: 'underline',
-                                            fontSize: 'sm',
-                                        })}
-                                    >
-                                        Erstes Rezept erstellen
-                                    </Link>
-                                </td>
-                            </tr>
-                        ) : (
-                            table.getRowModel().rows.map((row) => (
-                                <tr
-                                    key={row.id}
-                                    className={css({
-                                        borderBottomWidth: '1px',
-                                        borderColor: 'border',
-                                        transition: 'background 0.2s',
-                                        _hover: { background: 'surface.card' },
-                                    })}
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <td
-                                            key={cell.id}
-                                            className={css({ padding: '1.25rem 1.5rem' })}
-                                        >
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext(),
-                                            )}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Footer */}
-            <div
-                className={css({
-                    padding: '1.5rem',
-                    borderTopWidth: '1px',
-                    borderColor: 'border',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '1.5rem',
-                    flexWrap: 'wrap',
-                })}
-            >
-                <span className={css({ fontSize: 'sm', color: 'muted' })}>
-                    {table.getFilteredRowModel().rows.length} von {filteredRecipes.length} Rezepten
-                </span>
-                <div className={css({ display: 'flex', gap: '0.75rem' })}>
-                    <button
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                        className={css({
-                            paddingX: '1rem',
-                            paddingY: '0.625rem',
-                            borderRadius: 'md',
-                            borderWidth: '1px',
-                            borderColor: 'border',
-                            background: 'surface.card',
-                            fontSize: 'sm',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            opacity: table.getCanPreviousPage() ? 1 : 0.5,
-                            pointerEvents: table.getCanPreviousPage() ? 'auto' : 'none',
-                        })}
-                    >
-                        ← Zurück
-                    </button>
-                    <span className={css({ fontSize: 'sm', color: 'muted', alignSelf: 'center' })}>
-                        Seite {table.getState().pagination.pageIndex + 1} von {table.getPageCount()}
-                    </span>
-                    <button
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                        className={css({
-                            paddingX: '1rem',
-                            paddingY: '0.625rem',
-                            borderRadius: 'md',
-                            borderWidth: '1px',
-                            borderColor: 'border',
-                            background: 'surface.card',
-                            fontSize: 'sm',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            opacity: table.getCanNextPage() ? 1 : 0.5,
-                            pointerEvents: table.getCanNextPage() ? 'auto' : 'none',
-                        })}
-                    >
-                        Weiter →
-                    </button>
+                    {filtered.map((recipe) => (
+                        <UserRecipeCard key={recipe.id} recipe={recipe} />
+                    ))}
                 </div>
-            </div>
+            )}
         </div>
     );
 }

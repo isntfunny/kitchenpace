@@ -1,15 +1,17 @@
 import { Sparkles } from 'lucide-react';
 
+import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 
 export function CompletionBanner() {
+    const c = useDarkColors();
     return (
         <div
             style={{
                 margin: '0 24px 24px',
                 padding: '20px 24px',
-                backgroundColor: '#e8faf4',
-                border: '1px solid rgba(0,184,148,0.25)',
+                backgroundColor: c.completionBg,
+                border: `1px solid ${c.completionBorder}`,
                 borderRadius: 16,
                 textAlign: 'center',
             }}
@@ -20,7 +22,7 @@ export function CompletionBanner() {
             <div style={{ fontSize: 20, fontWeight: 800, color: PALETTE.emerald, marginBottom: 4 }}>
                 Fertig zubereitet!
             </div>
-            <div style={{ fontSize: 14, color: '#55b89a' }}>Guten Appetit!</div>
+            <div style={{ fontSize: 14, color: c.completionText }}>Guten Appetit!</div>
         </div>
     );
 }

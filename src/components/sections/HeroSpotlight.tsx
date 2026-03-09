@@ -2,12 +2,13 @@
 
 import { ChefHat, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
+import React from 'react';
 
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
-export function HeroSpotlight() {
+export function HeroSpotlight({ children }: { children?: React.ReactNode }) {
     return (
         <section
             className={css({
@@ -104,6 +105,12 @@ export function HeroSpotlight() {
                     Sieh auf einen Blick, was gleichzeitig laeuft &ndash; ohne lange Listen.
                     Parallele Schritte, klar visualisiert.
                 </motion.p>
+
+                {children && (
+                    <div className={css({ mt: '4' })}>
+                        {children}
+                    </div>
+                )}
             </motion.div>
         </section>
     );

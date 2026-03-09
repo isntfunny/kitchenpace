@@ -33,29 +33,18 @@ export default async function MyRecipesPage() {
 
     return (
         <PageShell>
-            <div
-                className={css({
-                    maxWidth: '1400px',
-                    marginLeft: 'auto',
-                    marginRight: 'auto',
-                    paddingLeft: '1.5rem',
-                    paddingRight: '1.5rem',
-                    paddingTop: '2rem',
-                    paddingBottom: '2rem',
-                })}
-            >
-                <div className={css({ marginBottom: '2.5rem' })}>
+            <div className={css({ display: 'flex', flexDirection: 'column', gap: '6' })}>
+                <div>
                     <h1
                         className={css({
-                            fontSize: '2.25rem',
+                            fontSize: '2xl',
                             fontWeight: 800,
-                            marginBottom: '0.75rem',
                             color: 'text',
                         })}
                     >
                         Meine Rezepte
                     </h1>
-                    <p className={css({ color: 'muted', fontSize: 'base' })}>
+                    <p className={css({ color: 'foreground.muted', fontSize: 'sm', mt: '1' })}>
                         Verwalte deine Entwürfe und veröffentlichten Rezepte.
                     </p>
                 </div>

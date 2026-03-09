@@ -1,7 +1,7 @@
 'use client';
 
 import { Slider, Tooltip } from 'radix-ui';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
@@ -169,10 +169,18 @@ export function RangeControl({
         onFiltersChange(update);
     };
 
-    const sliderValue = maxField ? [lowerValue, upperValue] : [lowerValue];
+    const committedValue = maxField ? [lowerValue, upperValue] : [lowerValue];
+    const [localValue, setLocalValue] = useState<number[] | null>(null);
+    const sliderValue = localValue ?? committedValue;
 
-    const handleSliderChange = (values: number[]) => {
+    const handleSliderDrag = (values: number[]) => {
         if (values.length === 0) return;
+        setLocalValue(values);
+    };
+
+    const handleSliderCommit = (values: number[]) => {
+        if (values.length === 0) return;
+        setLocalValue(null);
         if (maxField) {
             const [first, second = first] = values;
             const nextLower = Math.min(first, second);
@@ -218,7 +226,8 @@ export function RangeControl({
                 max={sliderMax}
                 step={stepValue}
                 value={sliderValue}
-                onValueChange={handleSliderChange}
+                onValueChange={handleSliderDrag}
+                onValueCommit={handleSliderCommit}
                 aria-label={label}
             >
                 <Slider.Track

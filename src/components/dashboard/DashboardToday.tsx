@@ -22,8 +22,8 @@ interface DashboardTodayProps {
 
 const statusConfig = {
     pending: {
-        bg: 'rgba(0,0,0,0.04)',
-        border: 'rgba(0,0,0,0.1)',
+        bg: 'surface.muted',
+        border: 'border',
         text: 'text-muted',
         icon: <Hourglass size={18} color="#636e72" />,
     },
@@ -94,7 +94,7 @@ function TimelineItemComponent({ item, isLast }: { item: TimelineItem; isLast: b
                             flex: '1',
                             minHeight: '40px',
                             background:
-                                item.status === 'completed' ? PALETTE.emerald : 'rgba(0,0,0,0.08)',
+                                item.status === 'completed' ? PALETTE.emerald : 'border',
                             marginTop: '2',
                         })}
                     />
@@ -183,7 +183,7 @@ export function DashboardToday({ items }: DashboardTodayProps) {
                 borderRadius: '2xl',
                 padding: '6',
                 border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.06)',
+                borderColor: 'border',
             })}
         >
             <div
@@ -223,7 +223,7 @@ export function DashboardToday({ items }: DashboardTodayProps) {
                         fontSize: 'sm',
                         fontWeight: '600',
                         color: 'primary',
-                        background: 'rgba(224,123,83,0.1)',
+                        background: 'accentSoft',
                         border: 'none',
                         px: '4',
                         py: '2',
@@ -231,7 +231,7 @@ export function DashboardToday({ items }: DashboardTodayProps) {
                         cursor: 'pointer',
                         transition: 'all 150ms ease',
                         _hover: {
-                            background: 'rgba(224,123,83,0.2)',
+                            background: 'accent.soft',
                         },
                     })}
                 >

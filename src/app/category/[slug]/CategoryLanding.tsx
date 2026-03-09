@@ -184,9 +184,9 @@ export function CategoryLanding({
                 className={css({
                     position: 'relative',
                     overflow: 'hidden',
-                    borderRadius: { base: '0', md: '2xl' },
-                    mx: { base: '0', md: '6' },
-                    mt: { base: '0', md: '5' },
+                    borderRadius: '2xl',
+                    mx: { base: '3', md: '6' },
+                    mt: { base: '3', md: '5' },
                 })}
                 style={{
                     background: `linear-gradient(135deg, ${color}, ${color}dd, ${color}aa)`,

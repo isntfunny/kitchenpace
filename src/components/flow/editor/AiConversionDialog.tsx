@@ -1,11 +1,14 @@
 'use client';
 
-import { Sparkles, ChefHat, CheckCircle2, X, Wand2, AlertCircle, Check } from 'lucide-react';
+import { AlertCircle, Check, CheckCircle2, ChefHat, Sparkles, Wand2, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { useState, useRef, useEffect } from 'react';
 
+import { useDarkColors } from '@app/lib/darkMode';
 import { analyzeRecipeText, type AIAnalysisResult, type ApplySelection } from '@app/lib/importer/ai-text-analysis';
 import { PALETTE } from '@app/lib/palette';
+
+type PhaseColors = ReturnType<typeof useDarkColors>;
 
 interface AiConversionDialogProps {
     open: boolean;
@@ -44,6 +47,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
     const [result, setResult] = useState<AIAnalysisResult | null>(null);
     const [apply, setApply] = useState<ApplySelection>(DEFAULT_APPLY);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const c = useDarkColors();
 
     // Cleanup timers on unmount
     useEffect(() => {
@@ -115,7 +119,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                     style={{
                         position: 'fixed',
                         inset: 0,
-                        backgroundColor: 'rgba(0,0,0,0.45)',
+                        backgroundColor: c.overlay,
                         backdropFilter: 'blur(4px)',
                         zIndex: 9000,
                         animation: 'fadeIn 0.2s ease',
@@ -128,9 +132,9 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
                         zIndex: 9001,
-                        backgroundColor: 'white',
+                        backgroundColor: c.surface,
                         borderRadius: '20px',
-                        boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
+                        boxShadow: c.shadowLg,
                         width: phase === 'review' ? 'min(640px, 95vw)' : 'min(580px, 95vw)',
                         maxHeight: '90vh',
                         display: 'flex',
@@ -172,7 +176,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     margin: 0,
                                     fontSize: '16px',
                                     fontWeight: 700,
-                                    color: '#2d3436',
+                                    color: c.text,
                                     lineHeight: 1.2,
                                 }}
                             >
@@ -184,7 +188,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                 style={{
                                     margin: 0,
                                     fontSize: '12px',
-                                    color: '#636e72',
+                                    color: c.textMuted,
                                     marginTop: '2px',
                                 }}
                             >
@@ -203,7 +207,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                         height: '30px',
                                         borderRadius: '8px',
                                         border: 'none',
-                                        backgroundColor: 'rgba(0,0,0,0.06)',
+                                        backgroundColor: c.closeBg,
                                         cursor: 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -212,7 +216,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     }}
                                 >
                                     <X
-                                        style={{ width: '14px', height: '14px', color: '#636e72' }}
+                                        style={{ width: '14px', height: '14px', color: c.closeIcon }}
                                     />
                                 </button>
                             </Dialog.Close>
@@ -221,13 +225,13 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
 
                     {/* Body */}
                     <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
-                        {phase === 'input' && <InputPhase text={text} onChange={setText} />}
-                        {phase === 'processing' && <ProcessingPhase stepIndex={stepIndex} />}
+                        {phase === 'input' && <InputPhase text={text} onChange={setText} colors={c} />}
+                        {phase === 'processing' && <ProcessingPhase stepIndex={stepIndex} colors={c} />}
                         {phase === 'review' && result && (
-                            <ReviewPhase result={result} apply={apply} onToggle={toggleApply} />
+                            <ReviewPhase result={result} apply={apply} onToggle={toggleApply} colors={c} />
                         )}
-                        {phase === 'done' && <DonePhase result={result} />}
-                        {phase === 'error' && <ErrorPhase error={error || ''} />}
+                        {phase === 'done' && <DonePhase result={result} colors={c} />}
+                        {phase === 'error' && <ErrorPhase error={error || ''} colors={c} />}
                     </div>
 
                     {/* Footer */}
@@ -267,8 +271,8 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     border: 'none',
                                     background: text.trim()
                                         ? `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`
-                                        : 'rgba(0,0,0,0.1)',
-                                    color: text.trim() ? 'white' : '#b2bec3',
+                                        : c.disabledBg,
+                                    color: text.trim() ? 'white' : c.disabledText,
                                     fontWeight: 600,
                                     fontSize: '13px',
                                     cursor: text.trim() ? 'pointer' : 'not-allowed',
@@ -331,9 +335,9 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                     style={{
                                         padding: '8px 18px',
                                         borderRadius: '999px',
-                                        border: '1.5px solid rgba(0,0,0,0.12)',
+                                        border: `1.5px solid ${c.borderMedium}`,
                                         backgroundColor: 'transparent',
-                                        color: '#636e72',
+                                        color: c.textMuted,
                                         fontWeight: 600,
                                         fontSize: '13px',
                                         cursor: 'pointer',
@@ -397,7 +401,7 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
                                             : 'none',
                                 }}
                             >
-                                {phase === 'done' ? 'Flow ansehen ✨' : 'Schließen'}
+                                {phase === 'done' ? 'Flow ansehen' : 'Schliessen'}
                             </button>
                         </div>
                     )}
@@ -407,16 +411,16 @@ export function AiConversionDialog({ open, onClose, onResult }: AiConversionDial
     );
 }
 
-/* ── Sub-phases ────────────────────────────────────────────── */
+/* -- Sub-phases ------------------------------------------------ */
 
-function InputPhase({ text, onChange }: { text: string; onChange: (v: string) => void }) {
+function InputPhase({ text, onChange, colors }: { text: string; onChange: (v: string) => void; colors: PhaseColors }) {
     return (
         <div>
             <p
                 style={{
                     margin: '0 0 12px',
                     fontSize: '13px',
-                    color: '#636e72',
+                    color: colors.textMuted,
                     lineHeight: 1.6,
                 }}
             >
@@ -438,7 +442,8 @@ function InputPhase({ text, onChange }: { text: string; onChange: (v: string) =>
                     lineHeight: 1.65,
                     resize: 'vertical',
                     outline: 'none',
-                    color: '#2d3436',
+                    color: colors.text,
+                    backgroundColor: colors.surface,
                     boxSizing: 'border-box',
                     transition: 'border-color 0.15s ease',
                 }}
@@ -446,14 +451,14 @@ function InputPhase({ text, onChange }: { text: string; onChange: (v: string) =>
                 onBlur={(e) => (e.target.style.borderColor = 'rgba(224,123,83,0.35)')}
                 autoFocus
             />
-            <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#b2bec3' }}>
+            <p style={{ margin: '8px 0 0', fontSize: '11px', color: colors.textLight }}>
                 Tipp: Kopiere einfach ein Rezept aus dem Internet oder tippe es ab.
             </p>
         </div>
     );
 }
 
-function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
+function ProcessingPhase({ stepIndex, colors }: { stepIndex: number; colors: PhaseColors }) {
     return (
         <div style={{ textAlign: 'center', padding: '32px 0' }}>
             {/* Animated orb */}
@@ -479,10 +484,10 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
                 <div style={orbitDot(2)} />
             </div>
 
-            <h3 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 700, color: '#2d3436' }}>
-                KI analysiert dein Rezept…
+            <h3 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 700, color: colors.text }}>
+                KI analysiert dein Rezept...
             </h3>
-            <p style={{ margin: '0 0 28px', fontSize: '13px', color: '#636e72' }}>
+            <p style={{ margin: '0 0 28px', fontSize: '13px', color: colors.textMuted }}>
                 Das dauert nur einen Moment
             </p>
 
@@ -521,7 +526,7 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
                                         ? PALETTE.orange
                                         : active
                                           ? 'rgba(224,123,83,0.2)'
-                                          : 'rgba(0,0,0,0.08)',
+                                          : colors.stepInactiveBg,
                                     border: active ? `2px solid ${PALETTE.orange}` : '2px solid transparent',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -555,7 +560,7 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
                             <span
                                 style={{
                                     fontSize: '13px',
-                                    color: done ? '#2d3436' : active ? PALETTE.orange : '#b2bec3',
+                                    color: done ? colors.text : active ? PALETTE.orange : colors.textLight,
                                     fontWeight: active || done ? 500 : 400,
                                     transition: 'color 0.3s ease',
                                 }}
@@ -589,7 +594,7 @@ function ProcessingPhase({ stepIndex }: { stepIndex: number }) {
     );
 }
 
-/* ── Review Phase ──────────────────────────────────────────── */
+/* -- Review Phase ---------------------------------------------- */
 
 const DIFFICULTY_LABEL: Record<string, string> = {
     EASY: 'Einfach',
@@ -612,9 +617,10 @@ interface ReviewPhaseProps {
     result: AIAnalysisResult;
     apply: ApplySelection;
     onToggle: (field: keyof ApplySelection) => void;
+    colors: PhaseColors;
 }
 
-function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
+function ReviewPhase({ result, apply, onToggle, colors }: ReviewPhaseProps) {
     const rows: Array<{
         field: keyof ApplySelection;
         label: string;
@@ -631,7 +637,7 @@ function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
             label: 'Beschreibung',
             value: result.description
                 ? result.description.length > 120
-                    ? result.description.slice(0, 120) + '…'
+                    ? result.description.slice(0, 120) + '...'
                     : result.description
                 : '—',
             subtle: true,
@@ -685,7 +691,7 @@ function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
                 style={{
                     margin: '0 0 16px',
                     fontSize: '13px',
-                    color: '#636e72',
+                    color: colors.textMuted,
                     lineHeight: 1.6,
                 }}
             >
@@ -731,10 +737,10 @@ function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
                                 borderRadius: '10px',
                                 border: checked
                                     ? '1.5px solid rgba(224,123,83,0.4)'
-                                    : '1.5px solid rgba(0,0,0,0.07)',
+                                    : `1.5px solid ${colors.borderLight}`,
                                 backgroundColor: checked
                                     ? 'rgba(224,123,83,0.05)'
-                                    : 'rgba(0,0,0,0.02)',
+                                    : colors.mutedBgXLight,
                                 cursor: 'pointer',
                                 textAlign: 'left',
                                 width: '100%',
@@ -749,10 +755,10 @@ function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
                                     borderRadius: '5px',
                                     flexShrink: 0,
                                     marginTop: '1px',
-                                    backgroundColor: checked ? PALETTE.orange : 'white',
+                                    backgroundColor: checked ? PALETTE.orange : colors.checkboxBg,
                                     border: checked
                                         ? `1.5px solid ${PALETTE.orange}`
-                                        : '1.5px solid rgba(0,0,0,0.2)',
+                                        : `1.5px solid ${colors.checkboxBorder}`,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -776,7 +782,7 @@ function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
                                     style={{
                                         fontSize: '11px',
                                         fontWeight: 600,
-                                        color: checked ? PALETTE.orange : '#b2bec3',
+                                        color: checked ? PALETTE.orange : colors.textLight,
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.05em',
                                         marginBottom: '2px',
@@ -790,9 +796,9 @@ function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
                                         fontSize: '13px',
                                         color: checked
                                             ? subtle
-                                                ? '#636e72'
-                                                : '#2d3436'
-                                            : '#b2bec3',
+                                                ? colors.textMuted
+                                                : colors.text
+                                            : colors.textLight,
                                         lineHeight: 1.4,
                                         wordBreak: 'break-word',
                                         transition: 'color 0.15s ease',
@@ -809,9 +815,9 @@ function ReviewPhase({ result, apply, onToggle }: ReviewPhaseProps) {
     );
 }
 
-/* ── Done / Error phases ───────────────────────────────────── */
+/* -- Done / Error phases --------------------------------------- */
 
-function DonePhase({ result }: { result: AIAnalysisResult | null }) {
+function DonePhase({ result, colors }: { result: AIAnalysisResult | null; colors: PhaseColors }) {
     const stats = result
         ? [
               { label: 'Schritte erkannt', value: String(result.flowNodes?.length || 0) },
@@ -841,14 +847,14 @@ function DonePhase({ result }: { result: AIAnalysisResult | null }) {
             >
                 <CheckCircle2 style={{ width: '40px', height: '40px', color: '#22c55e' }} />
             </div>
-            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: '#2d3436' }}>
-                Flow wurde erstellt! 🎉
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: colors.text }}>
+                Flow wurde erstellt!
             </h3>
             <p
                 style={{
                     margin: '0 0 24px',
                     fontSize: '13px',
-                    color: '#636e72',
+                    color: colors.textMuted,
                     maxWidth: '360px',
                     marginLeft: 'auto',
                     marginRight: 'auto',
@@ -887,7 +893,7 @@ function DonePhase({ result }: { result: AIAnalysisResult | null }) {
                         >
                             {stat.value}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#636e72', marginTop: '4px' }}>
+                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px' }}>
                             {stat.label}
                         </div>
                     </div>
@@ -897,7 +903,7 @@ function DonePhase({ result }: { result: AIAnalysisResult | null }) {
     );
 }
 
-function ErrorPhase({ error }: { error: string }) {
+function ErrorPhase({ error, colors }: { error: string; colors: PhaseColors }) {
     return (
         <div style={{ textAlign: 'center', padding: '32px 0' }}>
             <div
@@ -915,14 +921,14 @@ function ErrorPhase({ error }: { error: string }) {
             >
                 <AlertCircle style={{ width: '40px', height: '40px', color: '#ef4444' }} />
             </div>
-            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: '#2d3436' }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: colors.text }}>
                 Fehler bei der Analyse
             </h3>
             <p
                 style={{
                     margin: '0 0 24px',
                     fontSize: '13px',
-                    color: '#636e72',
+                    color: colors.textMuted,
                     maxWidth: '360px',
                     marginLeft: 'auto',
                     marginRight: 'auto',
@@ -935,7 +941,7 @@ function ErrorPhase({ error }: { error: string }) {
     );
 }
 
-/* ── helpers ────────────────────────────────────────────────── */
+/* -- helpers ---------------------------------------------------- */
 
 function orbitDot(index: number): React.CSSProperties {
     const startDeg = index * 120;

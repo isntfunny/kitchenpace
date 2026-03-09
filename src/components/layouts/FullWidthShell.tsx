@@ -11,11 +11,17 @@ type FullWidthShellProps = {
 };
 
 export function FullWidthShell({ children }: FullWidthShellProps) {
-    // Lock body scroll while this full-screen shell is mounted
+    // Lock body scroll on desktop while this full-screen shell is mounted
     useEffect(() => {
+        const mq = window.matchMedia('(min-width: 768px)');
+        const apply = () => {
+            document.body.style.overflow = mq.matches ? 'hidden' : '';
+        };
         const prev = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
+        apply();
+        mq.addEventListener('change', apply);
         return () => {
+            mq.removeEventListener('change', apply);
             document.body.style.overflow = prev;
         };
     }, []);
@@ -29,17 +35,17 @@ export function FullWidthShell({ children }: FullWidthShellProps) {
 }
 
 const shellClass = css({
-    h: '100vh',
-    overflow: 'hidden',
+    h: { base: 'auto', md: '100vh' },
+    overflow: { base: 'visible', md: 'hidden' },
     color: 'text',
     bg: 'background',
-    display: 'flex',
+    display: { base: 'block', md: 'flex' },
     flexDirection: 'column',
 });
 
 const mainClass = css({
-    flex: '1',
-    height: 'calc(100vh - 64px)',
-    overflow: 'hidden',
-    display: 'flex',
+    flex: { md: '1' },
+    height: { base: 'auto', md: 'calc(100vh - 64px)' },
+    overflow: { base: 'visible', md: 'hidden' },
+    display: { base: 'block', md: 'flex' },
 });

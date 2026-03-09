@@ -1,7 +1,9 @@
-import { ChefHat } from 'lucide-react';
+import { ChefHat } from 'lucide';
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
+
+type IconNode = [string, Record<string, string>][];
 
 export const alt = 'KüchenTakt - Deine Rezepte im Takt';
 export const size = {
@@ -26,12 +28,26 @@ export default async function Image() {
         >
             <div
                 style={{
-                    fontSize: 100,
+                    display: 'flex',
                     marginBottom: 20,
                     color: '#f05454',
                 }}
             >
-                <ChefHat size={120} />
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="120"
+                    height="120"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                >
+                    {(ChefHat as unknown as IconNode)
+                        .filter(([tag]) => tag === 'path')
+                        .map(([, attrs], i) => <path key={i} d={attrs.d} />)}
+                </svg>
             </div>
             <div
                 style={{

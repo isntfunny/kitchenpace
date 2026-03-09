@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 
 import { Header } from '@app/components/features/Header';
 import { PALETTE } from '@app/lib/palette';
+import { css } from 'styled-system/css';
 
 export default function ErrorPage({
     error,
@@ -19,13 +20,7 @@ export default function ErrorPage({
 
     return (
         <div
-            style={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                backgroundColor: '#fffcf9',
-                color: '#2d3436',
-            }}
+            className={css({ minHeight: '100vh', display: 'flex', flexDirection: 'column', bg: 'background', color: 'foreground' })}
         >
             <Header />
             <main
@@ -56,22 +51,22 @@ export default function ErrorPage({
                 </div>
 
                 <h1
+                    className={css({ color: 'text' })}
                     style={{
                         fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
                         fontWeight: 800,
                         fontFamily: 'Georgia, serif',
                         marginBottom: '0.75rem',
                         lineHeight: 1.15,
-                        color: '#2d3436',
                     }}
                 >
                     Etwas ist schiefgelaufen
                 </h1>
 
                 <p
+                    className={css({ color: 'foreground.muted' })}
                     style={{
                         fontSize: '1rem',
-                        color: '#636e72',
                         maxWidth: '400px',
                         lineHeight: 1.65,
                         marginBottom: '2rem',
@@ -83,9 +78,9 @@ export default function ErrorPage({
 
                 {error.digest && (
                     <p
+                        className={css({ color: 'text.muted' })}
                         style={{
                             fontSize: '0.75rem',
-                            color: '#b2bec3',
                             fontFamily: 'monospace',
                             marginBottom: '2rem',
                         }}

@@ -201,52 +201,43 @@ export async function GET(request: NextRequest) {
         const openSearchPage = Math.max(0, page - 1);
         const from = openSearchPage * limit;
 
-        const [dataResponse, facetsResponse] = await Promise.all([
-            opensearchClient.search({
-                index: OPENSEARCH_INDEX,
-                body: {
-                    query: sanitizedQuery,
-                    sort: [{ rating: 'desc' }, { publishedAt: 'desc' }],
-                    from,
-                    size: limit,
-                    track_total_hits: true,
-                },
-            }),
-            opensearchClient.search({
-                index: OPENSEARCH_INDEX,
-                body: {
-                    query: sanitizedQuery,
-                    size: 0,
-                    aggs: {
-                        tags: { terms: { field: 'tags', size: 60 } },
-                        ingredients: { terms: { field: 'ingredients', size: 60 } },
-                        difficulties: { terms: { field: 'difficulty', size: 5 } },
-                        categories: { terms: { field: 'category', size: 8 } },
-                        totalTime: {
-                            histogram: { field: 'totalTime', interval: 5, min_doc_count: 0 },
-                        },
-                        prepTime: {
-                            histogram: { field: 'prepTime', interval: 5, min_doc_count: 0 },
-                        },
-                        cookTime: {
-                            histogram: { field: 'cookTime', interval: 5, min_doc_count: 0 },
-                        },
-                        rating: { histogram: { field: 'rating', interval: 1, min_doc_count: 0 } },
-                        cookCount: {
-                            histogram: { field: 'cookCount', interval: 10, min_doc_count: 0 },
-                        },
+        const response = await opensearchClient.search({
+            index: OPENSEARCH_INDEX,
+            body: {
+                query: sanitizedQuery,
+                sort: [{ rating: 'desc' }, { publishedAt: 'desc' }],
+                from,
+                size: limit,
+                track_total_hits: true,
+                aggs: {
+                    tags: { terms: { field: 'tags', size: 60 } },
+                    ingredients: { terms: { field: 'ingredients', size: 60 } },
+                    difficulties: { terms: { field: 'difficulty', size: 5 } },
+                    categories: { terms: { field: 'category', size: 8 } },
+                    totalTime: {
+                        histogram: { field: 'totalTime', interval: 5, min_doc_count: 0 },
+                    },
+                    prepTime: {
+                        histogram: { field: 'prepTime', interval: 5, min_doc_count: 0 },
+                    },
+                    cookTime: {
+                        histogram: { field: 'cookTime', interval: 5, min_doc_count: 0 },
+                    },
+                    rating: { histogram: { field: 'rating', interval: 1, min_doc_count: 0 } },
+                    cookCount: {
+                        histogram: { field: 'cookCount', interval: 10, min_doc_count: 0 },
                     },
                 },
-            }),
-        ]);
+            },
+        });
 
-        const hits = (dataResponse.body.hits?.hits ?? []) as Array<{
+        const hits = (response.body.hits?.hits ?? []) as Array<{
             _source?: Record<string, unknown>;
         }>;
         const total =
-            typeof dataResponse.body.hits?.total === 'number'
-                ? dataResponse.body.hits.total
-                : (dataResponse.body.hits?.total?.value ?? 0);
+            typeof response.body.hits?.total === 'number'
+                ? response.body.hits.total
+                : (response.body.hits?.total?.value ?? 0);
 
         const payload = {
             data: hits
@@ -260,56 +251,56 @@ export async function GET(request: NextRequest) {
                 facets: {
                     tags: buildTermsAggregation(
                         getTermsBuckets(
-                            facetsResponse.body.aggregations?.tags as TermsAggregation | undefined,
+                            response.body.aggregations?.tags as TermsAggregation | undefined,
                         ),
                     ),
                     ingredients: buildTermsAggregation(
                         getTermsBuckets(
-                            facetsResponse.body.aggregations?.ingredients as
+                            response.body.aggregations?.ingredients as
                                 | TermsAggregation
                                 | undefined,
                         ),
                     ),
                     difficulties: buildTermsAggregation(
                         getTermsBuckets(
-                            facetsResponse.body.aggregations?.difficulties as
+                            response.body.aggregations?.difficulties as
                                 | TermsAggregation
                                 | undefined,
                         ),
                     ),
                     categories: buildTermsAggregation(
                         getTermsBuckets(
-                            facetsResponse.body.aggregations?.categories as
+                            response.body.aggregations?.categories as
                                 | TermsAggregation
                                 | undefined,
                         ),
                     ),
                     totalTime: buildHistogramFacet(
-                        facetsResponse.body.aggregations?.totalTime as
+                        response.body.aggregations?.totalTime as
                             | HistogramAggregation
                             | undefined,
                         5,
                     ),
                     prepTime: buildHistogramFacet(
-                        facetsResponse.body.aggregations?.prepTime as
+                        response.body.aggregations?.prepTime as
                             | HistogramAggregation
                             | undefined,
                         5,
                     ),
                     cookTime: buildHistogramFacet(
-                        facetsResponse.body.aggregations?.cookTime as
+                        response.body.aggregations?.cookTime as
                             | HistogramAggregation
                             | undefined,
                         5,
                     ),
                     rating: buildHistogramFacet(
-                        facetsResponse.body.aggregations?.rating as
+                        response.body.aggregations?.rating as
                             | HistogramAggregation
                             | undefined,
                         1,
                     ),
                     cookCount: buildHistogramFacet(
-                        facetsResponse.body.aggregations?.cookCount as
+                        response.body.aggregations?.cookCount as
                             | HistogramAggregation
                             | undefined,
                         10,

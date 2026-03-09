@@ -1,6 +1,7 @@
 import { Check, CheckCircle2, Clock, Pause, Play, RotateCcw } from 'lucide-react';
 import type { CSSProperties } from 'react';
 
+import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
@@ -36,6 +37,7 @@ export function StepCard({
     compact?: boolean;
     fullWidth?: boolean;
 }) {
+    const c = useDarkColors();
     const config = getStepConfig(node.type as StepType);
     const Icon = config.icon;
     const hasTimer = !!timerState;
@@ -70,7 +72,7 @@ export function StepCard({
         >
             {/* Timer progress bar at top */}
             {hasTimer && (
-                <div style={{ height: 3, backgroundColor: 'rgba(0,0,0,0.06)' }}>
+                <div style={{ height: 3, backgroundColor: c.progressTrack }}>
                     <div
                         style={{
                             height: '100%',
@@ -102,12 +104,12 @@ export function StepCard({
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 4,
-                            backgroundColor: 'rgba(255,255,255,0.65)',
+                            backgroundColor: c.badgeBg,
                             borderRadius: 999,
                             padding: '2px 8px',
                             fontSize: 10,
                             fontWeight: 700,
-                            color: '#555',
+                            color: c.badgeText,
                         }}
                     >
                         <Icon style={{ width: 11, height: 11 }} />
@@ -120,7 +122,7 @@ export function StepCard({
                                 alignItems: 'center',
                                 gap: 3,
                                 fontSize: 10,
-                                color: timerRunning ? PALETTE.orange : '#888',
+                                color: timerRunning ? PALETTE.orange : c.textSubtle,
                                 marginLeft: 'auto',
                                 fontWeight: timerRunning ? 700 : 400,
                                 transition: 'color 0.2s ease',
@@ -156,7 +158,7 @@ export function StepCard({
                     style={{
                         fontSize: compact ? 13 : 14,
                         fontWeight: 700,
-                        color: '#1a1a1a',
+                        color: c.textDark,
                         marginBottom: 4,
                         lineHeight: 1.3,
                     }}
@@ -170,7 +172,7 @@ export function StepCard({
                         style={
                             {
                                 fontSize: 12,
-                                color: '#666',
+                                color: c.textBody,
                                 lineHeight: 1.5,
                                 marginBottom: 8,
                                 overflow: 'hidden',
@@ -180,7 +182,7 @@ export function StepCard({
                             } as CSSProperties
                         }
                     >
-                        {renderDescription(node.description, ingredients)}
+                        {renderDescription(node.description, ingredients, c.dark)}
                     </div>
                 )}
 
@@ -270,10 +272,10 @@ export function StepCard({
                                             width: 26,
                                             height: 26,
                                             borderRadius: '50%',
-                                            backgroundColor: 'rgba(0,0,0,0.05)',
-                                            border: '1.5px solid rgba(0,0,0,0.1)',
+                                            backgroundColor: c.mutedBgLight,
+                                            border: `1.5px solid ${c.borderInput}`,
                                             cursor: 'pointer',
-                                            color: '#999',
+                                            color: c.textSubtle,
                                         }}
                                     >
                                         <RotateCcw style={{ width: 10, height: 10 }} />
@@ -303,13 +305,13 @@ export function StepCard({
                                     ? '1.5px solid rgba(0,184,148,0.3)'
                                     : timerDone
                                       ? `1.5px solid ${PALETTE.emerald}`
-                                      : '1.5px solid rgba(0,0,0,0.12)',
+                                      : `1.5px solid ${c.borderMedium}`,
                                 backgroundColor: completed
                                     ? 'rgba(0,184,148,0.1)'
                                     : timerDone
                                       ? PALETTE.emerald
-                                      : 'rgba(255,255,255,0.7)',
-                                color: completed ? PALETTE.emerald : timerDone ? 'white' : '#888',
+                                      : c.badgeBg,
+                                color: completed ? PALETTE.emerald : timerDone ? 'white' : c.textSubtle,
                                 transition: 'all 0.2s ease',
                             }}
                         >

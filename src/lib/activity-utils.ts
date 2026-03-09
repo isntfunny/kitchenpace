@@ -41,7 +41,6 @@ export const ACTIVITY_DECOR: Record<string, { icon: ActivityIconName; bg: string
     RECIPE_FAVORITED: { icon: 'bookmark', bg: PALETTE.blue, template: 'hat {recipe} gespeichert' },
     USER_FOLLOWED: { icon: 'handshake', bg: PALETTE.emerald, template: 'hat {target} gefolgt' },
     USER_REGISTERED: { icon: 'user-plus', bg: PALETTE.emerald, template: 'hat sich registriert' },
-    USER_ACTIVATED: { icon: 'user-check', bg: PALETTE.blue, template: 'ist jetzt aktiv' },
     SHOPPING_LIST_CREATED: { icon: 'shopping-cart', bg: PALETTE.gold, template: 'hat eine Einkaufsliste erstellt' },
     MEAL_PLAN_CREATED: { icon: 'calendar', bg: PALETTE.purple, template: 'hat einen Essensplan erstellt' },
 };

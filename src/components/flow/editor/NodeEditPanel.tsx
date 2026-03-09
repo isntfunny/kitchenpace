@@ -1,9 +1,10 @@
 'use client';
 
-import { X, Upload, Loader2, Clock, Trash2, Check } from 'lucide-react';
+import { X, Upload, Loader2, Trash2, Check } from 'lucide-react';
 import { useRef, useState, useCallback, useEffect } from 'react';
 
 import { searchIngredients } from '@app/components/recipe/actions';
+import { SegmentedBar } from '@app/components/recipe/RecipeForm/components/SegmentedBar';
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
@@ -12,6 +13,9 @@ import { DescriptionEditor } from './DescriptionEditor';
 import type { RecipeNodeData, StepType } from './editorTypes';
 import { useFlowEditor } from './FlowEditorContext';
 import { ADDABLE_STEP_TYPES, STEP_CONFIGS } from './stepConfig';
+
+const DURATION_PRESETS = [1, 5, 10, 15, 20, 30, 45, 60] as const;
+const DURATION_LABELS = DURATION_PRESETS.map(String);
 
 interface NodeEditPanelProps {
     nodeId: string;
@@ -51,6 +55,7 @@ export function NodeEditPanel({
 
     const currentConfig = STEP_CONFIGS[stepType];
     const Icon = currentConfig.icon;
+    const accent = currentConfig.accent;
 
     const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -66,8 +71,8 @@ export function NodeEditPanel({
         try {
             const res = await fetch('/api/upload', { method: 'POST', body: formData });
             if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                throw new Error(data.error ?? 'Upload fehlgeschlagen');
+                const json = await res.json().catch(() => ({}));
+                throw new Error(json.error ?? 'Upload fehlgeschlagen');
             }
             const { url, key } = await res.json();
             setPhotoKey(key);
@@ -105,20 +110,24 @@ export function NodeEditPanel({
     return (
         <div className={overlayClass} onClick={onClose}>
             <div className={panelClass} onClick={(e) => e.stopPropagation()}>
-                {/* ── Colored header band ── */}
-                <div
-                    className={headerBandClass}
-                    style={{ backgroundImage: currentConfig.gradient }}
-                >
-                    <div className={headerIconWrapClass}>
-                        <Icon className={css({ width: '24px', height: '24px', color: 'text' })} />
+                {/* ── Header ── */}
+                <div className={headerClass} style={{ backgroundColor: `${accent}18` }}>
+                    <div
+                        className={headerIconClass}
+                        style={{ backgroundColor: `${accent}22`, color: accent }}
+                    >
+                        <Icon style={{ width: 22, height: 22 }} />
                     </div>
-                    <div className={css({ flex: '1' })}>
-                        <span className={headerTypeClass}>{currentConfig.label}</span>
-                        <span className={headerSubtitleClass}>Schritt bearbeiten</span>
+
+                    <div className={css({ flex: '1', minWidth: '0' })}>
+                        <div className={headerTitleClass} style={{ color: accent }}>
+                            {currentConfig.label}
+                        </div>
+                        <div className={headerSubtitleClass}>Schritt bearbeiten</div>
                     </div>
+
                     <button type="button" className={closeButtonClass} onClick={onClose}>
-                        <X className={css({ width: '18px', height: '18px' })} />
+                        <X style={{ width: 16, height: 16 }} />
                     </button>
                 </div>
 
@@ -136,7 +145,7 @@ export function NodeEditPanel({
                             className={photoReplaceClass}
                             onClick={() => fileInputRef.current?.click()}
                         >
-                            <Upload className={css({ width: '12px', height: '12px' })} />
+                            <Upload style={{ width: 12, height: 12 }} />
                             Ersetzen
                         </button>
                     </div>
@@ -146,7 +155,7 @@ export function NodeEditPanel({
                     {/* ── Type selector ── */}
                     {!isStartOrServieren && (
                         <div className={fieldClass}>
-                            <label className={labelClass}>Typ ändern</label>
+                            <div className={sectionLabelClass}>Typ</div>
                             <div className={typeGridClass}>
                                 {ADDABLE_STEP_TYPES.map((type) => {
                                     const config = STEP_CONFIGS[type];
@@ -157,37 +166,43 @@ export function NodeEditPanel({
                                             key={type}
                                             type="button"
                                             className={typeButtonClass}
-                                            style={{
-                                                backgroundImage: isSelected
-                                                    ? config.gradient
-                                                    : undefined,
-                                                borderColor: isSelected
-                                                    ? PALETTE.orange
-                                                    : undefined,
-                                            }}
+                                            style={
+                                                isSelected
+                                                    ? {
+                                                          border: `1px solid ${config.accent}`,
+                                                          backgroundColor: `${config.accent}15`,
+                                                          boxShadow: `0 0 0 1px ${config.accent}40`,
+                                                      }
+                                                    : {
+                                                          border: `1px solid ${PALETTE.orange}40`,
+                                                      }
+                                            }
                                             onClick={() => setStepType(type)}
                                         >
                                             <TypeIcon
-                                                className={css({
-                                                    width: '16px',
-                                                    height: '16px',
-                                                    opacity: isSelected ? '1' : '0.6',
-                                                })}
+                                                style={{
+                                                    width: 18,
+                                                    height: 18,
+                                                    color: isSelected ? config.accent : undefined,
+                                                    opacity: isSelected ? 1 : 0.45,
+                                                }}
                                             />
                                             <span
                                                 className={typeLabelClass}
-                                                style={{ fontWeight: isSelected ? '700' : '500' }}
+                                                style={
+                                                    isSelected
+                                                        ? { color: config.accent, fontWeight: 700 }
+                                                        : undefined
+                                                }
                                             >
                                                 {config.label}
                                             </span>
                                             {isSelected && (
-                                                <div className={typeCheckClass}>
-                                                    <Check
-                                                        className={css({
-                                                            width: '8px',
-                                                            height: '8px',
-                                                        })}
-                                                    />
+                                                <div
+                                                    className={typeCheckClass}
+                                                    style={{ backgroundColor: config.accent }}
+                                                >
+                                                    <Check style={{ width: 7, height: 7 }} />
                                                 </div>
                                             )}
                                         </button>
@@ -197,51 +212,45 @@ export function NodeEditPanel({
                         </div>
                     )}
 
-                    {/* ── Title + Duration row ── */}
-                    <div className={twoColRowClass}>
-                        <div className={css({ flex: '1' })}>
-                            <label className={labelClass}>Titel</label>
-                            <input
-                                type="text"
-                                className={inputClass}
-                                value={label}
-                                onChange={(e) => setLabel(e.target.value)}
-                                placeholder="z.B. Pasta kochen"
-                            />
-                        </div>
-                        <div className={css({ width: '120px', flexShrink: '0' })}>
-                            <label className={labelClass}>Dauer</label>
-                            <div className={durationWrapClass}>
-                                <Clock
-                                    className={css({
-                                        width: '14px',
-                                        height: '14px',
-                                        color: 'text.muted',
-                                        flexShrink: '0',
-                                    })}
-                                />
-                                <input
-                                    type="number"
-                                    className={durationInputClass}
-                                    value={duration ?? ''}
-                                    onChange={(e) =>
-                                        setDuration(
-                                            e.target.value
-                                                ? parseInt(e.target.value, 10)
-                                                : undefined,
-                                        )
-                                    }
-                                    placeholder="0"
-                                    min="0"
-                                />
-                                <span className={durationSuffixClass}>Min.</span>
-                            </div>
-                        </div>
+                    {/* ── Title ── */}
+                    <div className={fieldClass}>
+                        <div className={sectionLabelClass}>Titel</div>
+                        <input
+                            type="text"
+                            className={inputClass}
+                            style={{ border: `1px solid ${PALETTE.orange}40` }}
+                            value={label}
+                            onChange={(e) => setLabel(e.target.value)}
+                            placeholder="z.B. Pasta kochen"
+                        />
+                    </div>
+
+                    {/* ── Duration ── */}
+                    <div className={fieldClass}>
+                        <div className={sectionLabelClass}>Dauer</div>
+                        <SegmentedBar
+                            items={DURATION_LABELS}
+                            activeIndex={DURATION_PRESETS.indexOf(
+                                duration as (typeof DURATION_PRESETS)[number],
+                            )}
+                            onSelect={(i) => {
+                                const preset = DURATION_PRESETS[i];
+                                setDuration(duration === preset ? undefined : preset);
+                            }}
+                            trackingName="step_duration"
+                            customInput={{
+                                type: 'number',
+                                value: duration ?? 0,
+                                onChange: (v) => setDuration(v || undefined),
+                                placeholder: 'Min.',
+                                suffix: 'Min.',
+                            }}
+                        />
                     </div>
 
                     {/* ── Description ── */}
                     <div className={fieldClass}>
-                        <label className={labelClass}>Beschreibung</label>
+                        <div className={sectionLabelClass}>Beschreibung</div>
                         <DescriptionEditor
                             value={description}
                             onChange={setDescription}
@@ -270,13 +279,13 @@ export function NodeEditPanel({
                                 {isUploading ? (
                                     <Loader2
                                         className={css({
-                                            width: '18px',
-                                            height: '18px',
+                                            width: '16px',
+                                            height: '16px',
                                             animation: 'spin 0.7s linear infinite',
                                         })}
                                     />
                                 ) : (
-                                    <Upload className={css({ width: '18px', height: '18px' })} />
+                                    <Upload style={{ width: 16, height: 16 }} />
                                 )}
                                 <span>
                                     {isUploading ? 'Wird hochgeladen...' : 'Foto hinzufügen'}
@@ -305,14 +314,19 @@ export function NodeEditPanel({
                 <div className={footerClass}>
                     {canDelete ? (
                         <button type="button" className={deleteButtonClass} onClick={onDelete}>
-                            <Trash2 className={css({ width: '14px', height: '14px' })} />
+                            <Trash2 style={{ width: 14, height: 14 }} />
                             Löschen
                         </button>
                     ) : (
                         <div />
                     )}
-                    <button type="button" className={saveButtonClass} onClick={handleSave}>
-                        <Check className={css({ width: '16px', height: '16px' })} />
+                    <button
+                        type="button"
+                        className={saveButtonClass}
+                        style={{ backgroundColor: accent, boxShadow: `0 2px 10px ${accent}50` }}
+                        onClick={handleSave}
+                    >
+                        <Check style={{ width: 15, height: 15 }} />
                         Fertig
                     </button>
                 </div>
@@ -338,13 +352,13 @@ const overlayClass = css({
 
 const panelClass = css({
     width: '100%',
-    maxWidth: '500px',
+    maxWidth: '460px',
     maxHeight: '90vh',
     backgroundColor: 'surface',
     borderRadius: '2xl',
     boxShadow: {
-        base: '0 24px 48px rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.04)',
-        _dark: '0 24px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06)',
+        base: '0 24px 48px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)',
+        _dark: '0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.07)',
     },
     overflow: 'hidden',
     display: 'flex',
@@ -352,7 +366,8 @@ const panelClass = css({
     animation: 'slideUp 0.2s ease-out',
 });
 
-const headerBandClass = css({
+/* Header */
+const headerClass = css({
     display: 'flex',
     alignItems: 'center',
     gap: '3',
@@ -360,57 +375,53 @@ const headerBandClass = css({
     py: '3.5',
 });
 
-const headerIconWrapClass = css({
+const headerIconClass = css({
     width: '40px',
     height: '40px',
+    borderRadius: 'xl',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: { base: 'rgba(255,255,255,0.7)', _dark: 'rgba(255,255,255,0.12)' },
-    borderRadius: 'xl',
-    backdropFilter: 'blur(8px)',
     flexShrink: '0',
 });
 
-const headerTypeClass = css({
-    display: 'block',
-    fontSize: 'md',
+const headerTitleClass = css({
+    fontSize: 'lg',
     fontWeight: '700',
     fontFamily: 'heading',
-    color: 'text',
     lineHeight: '1.2',
 });
 
 const headerSubtitleClass = css({
-    display: 'block',
     fontSize: 'xs',
-    color: { base: 'rgba(45,52,54,0.6)', _dark: 'rgba(255,255,255,0.5)' },
+    color: 'text.muted',
     mt: '0.5',
+    lineHeight: '1',
 });
 
 const closeButtonClass = css({
-    width: '32px',
-    height: '32px',
+    width: '30px',
+    height: '30px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 'lg',
     cursor: 'pointer',
-    border: 'none',
-    backgroundColor: { base: 'rgba(255,255,255,0.5)', _dark: 'rgba(255,255,255,0.1)' },
-    color: 'text',
-    backdropFilter: 'blur(8px)',
+    border: { base: '1px solid rgba(0,0,0,0.08)', _dark: '1px solid rgba(255,255,255,0.1)' },
+    backgroundColor: { base: 'rgba(0,0,0,0.04)', _dark: 'rgba(255,255,255,0.06)' },
+    color: 'text.muted',
     transition: 'all 0.15s ease',
     flexShrink: '0',
     _hover: {
-        backgroundColor: { base: 'rgba(255,255,255,0.8)', _dark: 'rgba(255,255,255,0.2)' },
-        transform: 'scale(1.05)',
+        backgroundColor: { base: 'rgba(0,0,0,0.08)', _dark: 'rgba(255,255,255,0.12)' },
+        color: 'text',
     },
 });
 
+/* Photo banner */
 const photoBannerClass = css({
     position: 'relative',
-    height: '120px',
+    height: '110px',
     overflow: 'hidden',
 });
 
@@ -441,14 +452,16 @@ const photoReplaceClass = css({
     _hover: { backgroundColor: 'rgba(0,0,0,0.7)' },
 });
 
+/* Content */
 const contentClass = css({
     flex: '1',
     overflowY: 'auto',
     px: '4',
-    py: '3',
+    pt: '3',
+    pb: '2',
     display: 'flex',
     flexDirection: 'column',
-    gap: '4',
+    gap: '3.5',
 });
 
 const fieldClass = css({
@@ -457,80 +470,32 @@ const fieldClass = css({
     gap: '1.5',
 });
 
-const labelClass = css({
+const sectionLabelClass = css({
     fontSize: '11px',
     fontWeight: '700',
     color: 'text.muted',
     textTransform: 'uppercase',
-    letterSpacing: '0.08em',
+    letterSpacing: '0.07em',
 });
 
 const inputClass = css({
-    p: '2.5',
-    border: { base: '1px solid rgba(224,123,83,0.3)', _dark: '1px solid rgba(224,123,83,0.25)' },
+    px: '3',
+    py: '2.5',
     borderRadius: 'xl',
     fontSize: 'sm',
     fontFamily: 'body',
     outline: 'none',
-    backgroundColor: 'surface',
+    backgroundColor: { base: 'rgba(0,0,0,0.02)', _dark: 'rgba(255,255,255,0.04)' },
     color: 'text',
     transition: 'all 0.15s ease',
     _focus: {
         borderColor: 'brand.primary',
-        boxShadow: {
-            base: '0 0 0 3px rgba(224,123,83,0.12)',
-            _dark: '0 0 0 3px rgba(224,123,83,0.2)',
-        },
+        backgroundColor: 'surface',
+        boxShadow: '0 0 0 3px rgba(224,123,83,0.12)',
     },
 });
 
-const twoColRowClass = css({
-    display: 'flex',
-    gap: '3',
-    alignItems: 'flex-start',
-});
-
-const durationWrapClass = css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1.5',
-    p: '2.5',
-    border: { base: '1px solid rgba(224,123,83,0.3)', _dark: '1px solid rgba(224,123,83,0.25)' },
-    borderRadius: 'xl',
-    backgroundColor: 'surface',
-    transition: 'all 0.15s ease',
-    _focusWithin: {
-        borderColor: 'brand.primary',
-        boxShadow: {
-            base: '0 0 0 3px rgba(224,123,83,0.12)',
-            _dark: '0 0 0 3px rgba(224,123,83,0.2)',
-        },
-    },
-});
-
-const durationInputClass = css({
-    width: '36px',
-    border: 'none',
-    outline: 'none',
-    fontSize: 'sm',
-    fontFamily: 'body',
-    textAlign: 'center',
-    backgroundColor: 'transparent',
-    color: 'text',
-    appearance: 'textfield',
-    /* Chrome: hide spinner */
-    '&::-webkit-inner-spin-button, &::-webkit-outer-spin-button': {
-        appearance: 'none',
-        margin: '0',
-    },
-});
-
-const durationSuffixClass = css({
-    fontSize: 'xs',
-    color: 'text.muted',
-    fontWeight: '500',
-});
-
+/* Type grid */
 const typeGridClass = css({
     display: 'grid',
     gridTemplateColumns: 'repeat(4, 1fr)',
@@ -542,50 +507,51 @@ const typeButtonClass = css({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '0.5',
-    p: '2',
-    border: '2px solid transparent',
+    gap: '1',
+    py: '2.5',
+    px: '1',
     borderRadius: 'xl',
     cursor: 'pointer',
-    backgroundColor: { base: 'rgba(0,0,0,0.02)', _dark: 'rgba(255,255,255,0.04)' },
+    backgroundColor: { base: 'rgba(0,0,0,0.02)', _dark: 'rgba(255,255,255,0.03)' },
     transition: 'all 0.15s ease',
     _hover: {
+        backgroundColor: { base: 'rgba(0,0,0,0.05)', _dark: 'rgba(255,255,255,0.07)' },
         transform: 'translateY(-1px)',
-        boxShadow: { base: '0 2px 8px rgba(0,0,0,0.08)', _dark: '0 2px 8px rgba(0,0,0,0.25)' },
     },
 });
 
 const typeLabelClass = css({
     fontSize: '10px',
-    color: 'text',
+    color: 'text.muted',
+    fontWeight: '500',
     lineHeight: '1.2',
     textAlign: 'center',
 });
 
 const typeCheckClass = css({
     position: 'absolute',
-    top: '-3px',
-    right: '-3px',
+    top: '-4px',
+    right: '-4px',
     width: '14px',
     height: '14px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'brand.primary',
     color: 'white',
     borderRadius: 'full',
     border: { base: '2px solid white', _dark: '2px solid {colors.surface}' },
 });
 
+/* Upload button */
 const uploadButtonClass = css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '2',
-    py: '3',
-    border: { base: '2px dashed rgba(224,123,83,0.3)', _dark: '2px dashed rgba(224,123,83,0.25)' },
+    py: '2.5',
+    border: { base: '1.5px dashed rgba(0,0,0,0.12)', _dark: '1.5px dashed rgba(255,255,255,0.12)' },
     borderRadius: 'xl',
-    backgroundColor: { base: 'rgba(224,123,83,0.02)', _dark: 'rgba(224,123,83,0.05)' },
+    backgroundColor: 'transparent',
     color: 'text.muted',
     fontSize: 'sm',
     fontWeight: '500',
@@ -594,19 +560,19 @@ const uploadButtonClass = css({
     _hover: {
         borderColor: 'brand.primary',
         color: 'brand.primary',
-        backgroundColor: { base: 'rgba(224,123,83,0.05)', _dark: 'rgba(224,123,83,0.1)' },
+        backgroundColor: { base: 'rgba(224,123,83,0.04)', _dark: 'rgba(224,123,83,0.08)' },
     },
     _disabled: { opacity: '0.6', cursor: 'not-allowed' },
 });
 
+/* Footer */
 const footerClass = css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     px: '4',
     py: '3',
-    borderTop: { base: '1px solid rgba(0,0,0,0.06)', _dark: '1px solid rgba(255,255,255,0.08)' },
-    backgroundColor: { base: 'rgba(0,0,0,0.01)', _dark: 'rgba(255,255,255,0.02)' },
+    borderTop: { base: '1px solid rgba(0,0,0,0.06)', _dark: '1px solid rgba(255,255,255,0.07)' },
 });
 
 const deleteButtonClass = css({
@@ -637,18 +603,13 @@ const saveButtonClass = css({
     py: '2.5',
     border: 'none',
     borderRadius: 'xl',
-    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
     color: 'white',
     fontSize: 'sm',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
-    boxShadow: { base: '0 2px 8px rgba(224,123,83,0.3)', _dark: '0 2px 8px rgba(224,123,83,0.4)' },
     _hover: {
         transform: 'translateY(-1px)',
-        boxShadow: {
-            base: '0 4px 16px rgba(224,123,83,0.4)',
-            _dark: '0 4px 16px rgba(224,123,83,0.5)',
-        },
+        filter: 'brightness(1.1)',
     },
 });

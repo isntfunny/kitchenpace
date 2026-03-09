@@ -577,7 +577,9 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 )}
 
                                 {showFollowButton && (
-                                    <SparkleEffect style={{ display: 'inline-flex' }}>
+                                    <SparkleEffect
+                                        style={{ display: 'inline-flex', width: 'fit-content' }}
+                                    >
                                         {(triggerSparkle) => (
                                             <button
                                                 type="button"

@@ -3,6 +3,11 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useMemo, useReducer, useState } from 'react';
 
+import {
+    FlowEditorContext,
+    type FlowEditorContextValue,
+} from '@app/components/flow/editor/FlowEditorContext';
+import { NodeEditPanel } from '@app/components/flow/editor/NodeEditPanel';
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
 import { css } from 'styled-system/css';
 
@@ -10,8 +15,18 @@ import { gridReducer, normalizeLaneGrid, uid } from './gridReducer';
 import { SegmentDivider } from './SegmentDivider';
 import { StepCard } from './StepCard';
 import { StepTypePicker } from './StepTypePicker';
-import type { LaneGrid, LaneMode } from './types';
+import type { LaneGrid, LaneMode, LaneStep } from './types';
 import { useTimers } from './useTimers';
+
+/** Minimal no-op context so NodeEditPanel can render without a full FlowEditor */
+const NOOP_FLOW_CTX: FlowEditorContextValue = {
+    availableIngredients: [],
+    onSelectNode: () => {},
+    onDeleteNode: () => {},
+    nodeOutgoingEdges: new Map<string, number>(),
+    nodeIncomingEdges: new Map<string, number>(),
+    onAddNodeAfter: () => {},
+};
 
 /* ══════════════════════════════════════════════════════════════
    LaneWizard
@@ -22,10 +37,13 @@ interface LaneWizardProps {
     mode?: LaneMode;
 }
 
+type EditingStep = { step: LaneStep; segmentId: string; laneIndex: number };
+
 export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
     const [grid, dispatch] = useReducer(gridReducer, initialGrid, normalizeLaneGrid);
     const [completed, setCompleted] = useState<Set<string>>(new Set());
     const [anyPopupOpen, setAnyPopupOpen] = useState(false);
+    const [editingStep, setEditingStep] = useState<EditingStep | null>(null);
     const { timers, start, pause, reset } = useTimers(initialGrid);
 
     /* ── Callbacks ── */
@@ -39,14 +57,17 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
         });
     }, []);
 
-    const handleSplit = useCallback((segmentId: string, currentLaneCount: number, splitAtIndex: number) => {
-        dispatch({
-            type: 'SPLIT',
-            afterSegmentId: segmentId,
-            laneCount: currentLaneCount + 1,
-            splitAtIndex,
-        });
-    }, []);
+    const handleSplit = useCallback(
+        (segmentId: string, currentLaneCount: number, splitAtIndex: number) => {
+            dispatch({
+                type: 'SPLIT',
+                afterSegmentId: segmentId,
+                laneCount: currentLaneCount + 1,
+                splitAtIndex,
+            });
+        },
+        [],
+    );
 
     const handleMergeConfirm = useCallback((segmentId: string, laneIndices: number[]) => {
         const config = STEP_CONFIGS['anrichten'];
@@ -70,7 +91,8 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
         for (const seg of grid.segments) {
             for (const lane of seg.lanes) {
                 for (const step of lane) {
-                    if (step.type !== 'start' && step.type !== 'servieren' && !step.continuation) total++;
+                    if (step.type !== 'start' && step.type !== 'servieren' && !step.continuation)
+                        total++;
                 }
             }
         }
@@ -96,17 +118,14 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 className={segmentOuterClass}
             >
-                <div
-                    className={segmentGridClass}
-                    style={{ gridTemplateColumns: templateColumns }}
-                >
+                <div className={segmentGridClass} style={{ gridTemplateColumns: templateColumns }}>
                     {segment.lanes.map((lane, laneIdx) => (
                         <div
                             key={`lane-${segment.id}-${laneIdx}`}
                             className={laneColClass}
                             style={{
-                                borderRight: laneIdx < laneCount - 1
-                                    ? '1px solid rgba(0,0,0,0.07)' : 'none',
+                                borderRight:
+                                    laneIdx < laneCount - 1 ? '1px solid rgba(0,0,0,0.07)' : 'none',
                             }}
                         >
                             <AnimatePresence mode="popLayout" initial={false}>
@@ -121,59 +140,87 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                                                 type: 'ADD_STEP',
                                                 segmentId: segment.id,
                                                 laneIndex: laneIdx,
-                                                step: { id: uid(), type, label: config.label, description: '' },
+                                                step: {
+                                                    id: uid(),
+                                                    type,
+                                                    label: config.label,
+                                                    description: '',
+                                                },
                                             });
                                         }}
                                         onClose={() => {}}
                                     />
                                 )}
-                                {lane.map((step, stepIdx) => (
-                                    <StepCard
-                                        key={step.id}
-                                        step={step}
-                                        mode={mode}
-                                        isLast={stepIdx === lane.length - 1}
-                                        isDone={completed.has(step.id)}
-                                        timer={timers.get(step.id)}
-                                        onToggleDone={() => toggleDone(step.id)}
-                                        onTimerStart={() => start(step.id)}
-                                        onTimerPause={() => pause(step.id)}
-                                        onTimerReset={() => reset(step.id)}
-                                        onDelete={
-                                            mode === 'edit' &&
-                                            step.type !== 'start' &&
-                                            step.type !== 'servieren' &&
-                                            !step.continuation
-                                                ? () => dispatch({
-                                                    type: 'DELETE_STEP',
-                                                    segmentId: segment.id,
-                                                    laneIndex: laneIdx,
-                                                    stepId: step.id,
-                                                })
-                                                : undefined
-                                        }
-                                    />
-                                ))}
+                                {lane.map((step, stepIdx) => {
+                                    const canEdit = mode === 'edit' && !step.continuation;
+                                    const canDelete =
+                                        canEdit &&
+                                        step.type !== 'start' &&
+                                        step.type !== 'servieren';
+                                    return (
+                                        <StepCard
+                                            key={step.id}
+                                            step={step}
+                                            mode={mode}
+                                            isLast={stepIdx === lane.length - 1}
+                                            isDone={completed.has(step.id)}
+                                            timer={timers.get(step.id)}
+                                            onToggleDone={() => toggleDone(step.id)}
+                                            onTimerStart={() => start(step.id)}
+                                            onTimerPause={() => pause(step.id)}
+                                            onTimerReset={() => reset(step.id)}
+                                            onEdit={
+                                                canEdit
+                                                    ? () =>
+                                                          setEditingStep({
+                                                              step,
+                                                              segmentId: segment.id,
+                                                              laneIndex: laneIdx,
+                                                          })
+                                                    : undefined
+                                            }
+                                            onDelete={
+                                                canDelete
+                                                    ? () =>
+                                                          dispatch({
+                                                              type: 'DELETE_STEP',
+                                                              segmentId: segment.id,
+                                                              laneIndex: laneIdx,
+                                                              stepId: step.id,
+                                                          })
+                                                    : undefined
+                                            }
+                                        />
+                                    );
+                                })}
                             </AnimatePresence>
                         </div>
                     ))}
                 </div>
 
                 {/* ── Add-lane edge buttons (edit mode, CSS hover, max 4 lanes) ── */}
-                {mode === 'edit' && laneCount < 4 && (<>
-                    <button
-                        type="button"
-                        title="Lane links hinzufügen"
-                        className={addLaneBtnLeftClass}
-                        onClick={() => dispatch({ type: 'ADD_LANE', segmentId: segment.id, atIndex: 0 })}
-                    >+</button>
-                    <button
-                        type="button"
-                        title="Lane rechts hinzufügen"
-                        className={addLaneBtnRightClass}
-                        onClick={() => dispatch({ type: 'ADD_LANE', segmentId: segment.id })}
-                    >+</button>
-                </>)}
+                {mode === 'edit' && laneCount < 4 && (
+                    <>
+                        <button
+                            type="button"
+                            title="Lane links hinzufügen"
+                            className={addLaneBtnLeftClass}
+                            onClick={() =>
+                                dispatch({ type: 'ADD_LANE', segmentId: segment.id, atIndex: 0 })
+                            }
+                        >
+                            +
+                        </button>
+                        <button
+                            type="button"
+                            title="Lane rechts hinzufügen"
+                            className={addLaneBtnRightClass}
+                            onClick={() => dispatch({ type: 'ADD_LANE', segmentId: segment.id })}
+                        >
+                            +
+                        </button>
+                    </>
+                )}
             </motion.div>,
         );
 
@@ -184,9 +231,7 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                     key={`div-${segment.id}`}
                     laneCount={laneCount}
                     templateColumns={templateColumns}
-                    laneLabels={segment.lanes.map(
-                        (lane, i) => lane[0]?.label ?? `Lane ${i + 1}`,
-                    )}
+                    laneLabels={segment.lanes.map((lane, i) => lane[0]?.label ?? `Lane ${i + 1}`)}
                     onAddStep={(laneIndex, step) =>
                         dispatch({ type: 'ADD_STEP', segmentId: segment.id, laneIndex, step })
                     }
@@ -213,6 +258,56 @@ export function LaneWizard({ initialGrid, mode = 'edit' }: LaneWizardProps) {
                     {elements}
                 </AnimatePresence>
             </div>
+
+            {/* Step edit panel — reuses NodeEditPanel from FlowEditor */}
+            {editingStep && (
+                <FlowEditorContext.Provider value={NOOP_FLOW_CTX}>
+                    <NodeEditPanel
+                        key={editingStep.step.id}
+                        nodeId={editingStep.step.id}
+                        data={{
+                            stepType: editingStep.step.type,
+                            label: editingStep.step.label,
+                            description: editingStep.step.description,
+                            duration: editingStep.step.duration,
+                            photoKey: editingStep.step.photoKey,
+                            photoUrl: editingStep.step.photoUrl,
+                        }}
+                        availableIngredients={[]}
+                        onSave={(updates) => {
+                            dispatch({
+                                type: 'UPDATE_STEP',
+                                stepId: editingStep.step.id,
+                                updates: {
+                                    ...(updates.stepType && { type: updates.stepType }),
+                                    ...(updates.label !== undefined && { label: updates.label }),
+                                    ...(updates.description !== undefined && {
+                                        description: updates.description,
+                                    }),
+                                    duration: updates.duration,
+                                    photoKey: updates.photoKey,
+                                    photoUrl: updates.photoUrl,
+                                },
+                            });
+                            setEditingStep(null);
+                        }}
+                        onClose={() => setEditingStep(null)}
+                        canDelete={
+                            editingStep.step.type !== 'start' &&
+                            editingStep.step.type !== 'servieren'
+                        }
+                        onDelete={() => {
+                            dispatch({
+                                type: 'DELETE_STEP',
+                                segmentId: editingStep.segmentId,
+                                laneIndex: editingStep.laneIndex,
+                                stepId: editingStep.step.id,
+                            });
+                            setEditingStep(null);
+                        }}
+                    />
+                </FlowEditorContext.Provider>
+            )}
         </div>
     );
 }
@@ -242,7 +337,6 @@ function ProgressBar({ total, done }: { total: number; done: number }) {
         </div>
     );
 }
-
 
 /* ══════════════════════════════════════════════════════════════
    Styles
@@ -302,7 +396,7 @@ const _addLaneBtnBase = css({
     _hover: { bg: 'rgba(224,123,83,0.07)', borderColor: '#e07b53' },
 });
 
-const addLaneBtnLeftClass  = `${_addLaneBtnBase} lwz-add-lane ${css({ left: '6px' })}`;
+const addLaneBtnLeftClass = `${_addLaneBtnBase} lwz-add-lane ${css({ left: '6px' })}`;
 const addLaneBtnRightClass = `${_addLaneBtnBase} lwz-add-lane ${css({ right: '6px' })}`;
 
 /* CSS grid inside the block — stretch so all lane columns reach the same height */
@@ -317,8 +411,6 @@ const laneColClass = css({
     flexDirection: 'column',
     minWidth: 0,
 });
-
-
 
 const progressWrapClass = css({
     p: '4',

@@ -8,7 +8,6 @@ import { css } from 'styled-system/css';
 
 import type { LaneMode, LaneStep, TimerState } from './types';
 
-
 function formatTimer(s: number) {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -28,6 +27,7 @@ interface StepCardProps {
     onTimerPause: () => void;
     onTimerReset: () => void;
     onDelete?: () => void;
+    onEdit?: () => void;
 }
 
 /* ── Component ── */
@@ -43,6 +43,7 @@ export function StepCard({
     onTimerPause,
     onTimerReset,
     onDelete,
+    onEdit,
 }: StepCardProps) {
     const config = STEP_CONFIGS[step.type];
 
@@ -101,13 +102,17 @@ export function StepCard({
             {/* ── Left image strip (flush, no padding) ── */}
             {step.photoUrl && (
                 <div className={imageStripClass}>
-                    { }
+                    {}
                     <img src={step.photoUrl} alt={step.label} className={imageStripImgClass} />
                 </div>
             )}
 
             {/* ── Content ── */}
-            <div className={contentClass}>
+            <div
+                className={contentClass}
+                onClick={mode === 'edit' && onEdit ? onEdit : undefined}
+                style={{ cursor: mode === 'edit' && onEdit ? 'pointer' : undefined }}
+            >
                 {/* ── Header ── */}
                 <div className={headerClass}>
                     <div className={typeBadgeClass} style={{ color: accentColor }}>
@@ -122,7 +127,9 @@ export function StepCard({
                     {timer && !isDone && (
                         <span
                             className={timerDisplayClass}
-                            style={{ color: timerDone ? '#00b894' : timerRunning ? '#f39c12' : '#999' }}
+                            style={{
+                                color: timerDone ? '#00b894' : timerRunning ? '#f39c12' : '#999',
+                            }}
                         >
                             {formatTimer(timer.remaining)}
                         </span>
@@ -133,7 +140,12 @@ export function StepCard({
                     )}
 
                     {mode === 'edit' && !isSpecial && onDelete && (
-                        <button type="button" onClick={onDelete} className={deleteClass} title="Löschen">
+                        <button
+                            type="button"
+                            onClick={onDelete}
+                            className={deleteClass}
+                            title="Löschen"
+                        >
                             <Trash2 className={css({ w: '11px', h: '11px' })} />
                         </button>
                     )}
@@ -142,7 +154,10 @@ export function StepCard({
                 {/* ── Title ── */}
                 <div
                     className={titleClass}
-                    style={{ textDecoration: isDone ? 'line-through' : 'none', textDecorationColor: '#00b89460' }}
+                    style={{
+                        textDecoration: isDone ? 'line-through' : 'none',
+                        textDecorationColor: '#00b89460',
+                    }}
                 >
                     {step.label}
                 </div>
@@ -194,22 +209,47 @@ function DoneToggle({ isDone, onClick }: { isDone: boolean; onClick: () => void 
 }
 
 function TimerControls({
-    pct, running, done, accent, onStart, onPause, onReset, onToggleDone,
+    pct,
+    running,
+    done,
+    accent,
+    onStart,
+    onPause,
+    onReset,
+    onToggleDone,
 }: {
-    pct: number; running: boolean; done: boolean; accent: string;
-    onStart: () => void; onPause: () => void; onReset: () => void; onToggleDone: () => void;
+    pct: number;
+    running: boolean;
+    done: boolean;
+    accent: string;
+    onStart: () => void;
+    onPause: () => void;
+    onReset: () => void;
+    onToggleDone: () => void;
 }) {
     return (
         <div className={timerWrapClass}>
             <div className={css({ display: 'flex', gap: '1', alignItems: 'center' })}>
                 {!done && (
-                    <button type="button" onClick={running ? onPause : onStart} className={timerBtnClass}
-                        style={{ color: accent, borderColor: `${accent}33`, background: `${accent}0d` }}
+                    <button
+                        type="button"
+                        onClick={running ? onPause : onStart}
+                        className={timerBtnClass}
+                        style={{
+                            color: accent,
+                            borderColor: `${accent}33`,
+                            background: `${accent}0d`,
+                        }}
                     >
-                        {running
-                            ? <><Pause className={css({ w: '10px', h: '10px' })} /> Pause</>
-                            : <><Play className={css({ w: '10px', h: '10px' })} /> Start</>
-                        }
+                        {running ? (
+                            <>
+                                <Pause className={css({ w: '10px', h: '10px' })} /> Pause
+                            </>
+                        ) : (
+                            <>
+                                <Play className={css({ w: '10px', h: '10px' })} /> Start
+                            </>
+                        )}
                     </button>
                 )}
                 {pct > 0 && !done && (
@@ -260,7 +300,6 @@ const contentClass = css({
     flexDirection: 'column',
     gap: '4px',
 });
-
 
 const headerClass = css({
     display: 'flex',
@@ -346,7 +385,6 @@ const deleteClass = css({
     transition: 'all 0.15s ease',
     _hover: { color: '#e74c3c', bg: 'rgba(231,76,60,0.07)' },
 });
-
 
 const timerWrapClass = css({
     mt: '4px',

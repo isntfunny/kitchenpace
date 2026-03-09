@@ -21,7 +21,7 @@ export function RecipeScrollServer({ title, recipes, icon: Icon, accentColor }: 
                     p: '5',
                     borderRadius: '2xl',
                     bg: 'surface',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                    boxShadow: 'shadow.medium',
                     textAlign: 'center',
                 })}
             >
@@ -39,7 +39,7 @@ export function RecipeScrollServer({ title, recipes, icon: Icon, accentColor }: 
                 p: '4',
                 borderRadius: '2xl',
                 bg: 'surface',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                boxShadow: 'shadow.medium',
             })}
         >
             <div className={flex({ align: 'center', gap: '3' })}>

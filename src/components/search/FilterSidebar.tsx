@@ -180,7 +180,7 @@ const chipItemClass = css({
         borderColor: 'primary',
         background: 'accent.soft',
         color: 'primary',
-        boxShadow: '0 4px 12px rgba(224,123,83,0.15)',
+        boxShadow: { base: '0 4px 12px rgba(224,123,83,0.15)', _dark: '0 4px 12px rgba(224,123,83,0.12)' },
     },
 });
 
@@ -387,7 +387,7 @@ export function FilterSidebar({
                     border: '1px solid',
                     borderColor: 'border.muted',
                     background: 'surface',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                    boxShadow: { base: '0 8px 32px rgba(0,0,0,0.08)', _dark: '0 8px 32px rgba(0,0,0,0.3)' },
                     width: 'full',
                     maxHeight: 'calc(100vh - 2rem)',
                     overflowY: 'auto',

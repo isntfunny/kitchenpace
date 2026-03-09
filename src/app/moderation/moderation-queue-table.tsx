@@ -344,7 +344,7 @@ function ModerationDetailDialog({
                                             fontSize: 'sm',
                                             resize: 'vertical',
                                             minHeight: '80px',
-                                            _focus: { borderColor: 'palette.orange', outline: 'none', boxShadow: '0 0 0 3px rgba(224,123,83,0.15)' },
+                                            _focus: { borderColor: 'palette.orange', outline: 'none', boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.15)', _dark: '0 0 0 3px rgba(224,123,83,0.12)' } },
                                         })}
                                     />
                                     <div className={css({ display: 'flex', gap: '2' })}>

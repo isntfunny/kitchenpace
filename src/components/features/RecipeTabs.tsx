@@ -252,7 +252,7 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                                 transition: 'all 150ms ease',
                                 _hover: {
                                     transform: 'translateY(-1px)',
-                                    boxShadow: '0 4px 12px rgba(224,123,83,0.3)',
+                                    boxShadow: { base: '0 4px 12px rgba(224,123,83,0.3)', _dark: '0 4px 12px rgba(224,123,83,0.25)' },
                                 },
                             })}
                         >

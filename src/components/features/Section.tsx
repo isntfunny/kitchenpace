@@ -31,7 +31,7 @@ export function Section({
                 p: '4',
                 borderRadius: '2xl',
                 bg: 'surface',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                boxShadow: 'shadow.medium',
             })}
         >
             <div

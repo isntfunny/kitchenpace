@@ -36,7 +36,7 @@ const SelectTrigger = React.forwardRef<
             _focus: {
                 outline: 'none',
                 borderColor: 'primary',
-                boxShadow: '0 0 0 2px rgba(224, 123, 83, 0.2)',
+                boxShadow: { base: '0 0 0 2px rgba(224, 123, 83, 0.2)', _dark: '0 0 0 2px rgba(224, 123, 83, 0.15)' },
             },
         })}
         {...props}

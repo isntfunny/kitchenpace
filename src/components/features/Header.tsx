@@ -132,7 +132,7 @@ function HeaderNavigationMenu({
                             color: 'primary',
                         },
                         _focusVisible: {
-                            boxShadow: '0 0 0 3px rgba(224,123,83,0.35)',
+                            boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.35)', _dark: '0 0 0 3px rgba(224,123,83,0.3)' },
                         },
                     })}
                 >
@@ -151,7 +151,7 @@ function HeaderNavigationMenu({
                         borderRadius: '2xl',
                         border: '1px solid',
                         borderColor: 'border',
-                        boxShadow: '0 40px 120px rgba(0,0,0,0.15)',
+                        boxShadow: 'shadow.large',
                         zIndex: 100,
                         maxHeight: 'var(--radix-dropdown-menu-content-available-height, calc(100vh - 6rem))',
                         overflowY: 'auto',
@@ -244,7 +244,7 @@ export function Header() {
                 top: 0,
                 zIndex: 20,
                 overflow: 'hidden',
-                boxShadow: '0 4px 30px rgba(0,0,0,0.15)',
+                boxShadow: { base: '0 4px 30px rgba(0,0,0,0.15)', _dark: '0 4px 30px rgba(0,0,0,0.4)' },
             })}
             style={{
                 background: dark

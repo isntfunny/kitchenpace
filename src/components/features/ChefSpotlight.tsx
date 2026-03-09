@@ -23,7 +23,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                     p: '5',
                     borderRadius: '2xl',
                     bg: 'surface',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                    boxShadow: 'shadow.medium',
                 })}
             >
                 <div className={css({ mb: '2', fontWeight: '600', color: 'text' })}>
@@ -47,7 +47,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                 p: '5',
                 borderRadius: '2xl',
                 bg: 'surface',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                boxShadow: 'shadow.medium',
             })}
         >
             <div

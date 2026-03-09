@@ -19,7 +19,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                     p: '4',
                     borderRadius: '2xl',
                     bg: 'surface',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                    boxShadow: 'shadow.medium',
                 })}
             >
                 <Heading
@@ -49,7 +49,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                 p: '4',
                 borderRadius: '2xl',
                 bg: 'surface',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                boxShadow: 'shadow.medium',
             })}
         >
             <div className={css({ mb: '2' })}>

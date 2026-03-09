@@ -125,7 +125,7 @@ function CategoryOverlay({
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 'wide',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+        boxShadow: { base: '0 2px 8px rgba(0,0,0,0.2)', _dark: '0 2px 8px rgba(0,0,0,0.5)' },
         border: 'none',
         cursor: link ? 'pointer' : 'default',
         transition: 'all 150ms ease',

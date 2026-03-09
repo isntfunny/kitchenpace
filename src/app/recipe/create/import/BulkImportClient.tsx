@@ -1375,7 +1375,7 @@ const reviewInputClass = css({
     color: 'text',
     _focus: {
         borderColor: 'palette.orange',
-        boxShadow: '0 0 0 3px rgba(224,123,83,0.1)',
+        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.1)', _dark: '0 0 0 3px rgba(224,123,83,0.08)' },
     },
 });
 
@@ -1621,7 +1621,7 @@ const savedItemClass = css({
     transition: 'all 0.15s ease',
     _hover: {
         borderColor: 'palette.orange',
-        boxShadow: '0 2px 12px rgba(224,123,83,0.1)',
+        boxShadow: { base: '0 2px 12px rgba(224,123,83,0.1)', _dark: '0 2px 12px rgba(224,123,83,0.08)' },
     },
 });
 

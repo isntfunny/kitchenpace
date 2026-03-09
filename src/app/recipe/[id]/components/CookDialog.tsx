@@ -69,7 +69,7 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
                         className={css({
                             position: 'absolute',
                             inset: 0,
-                            background: 'rgba(0,0,0,0.5)',
+                            background: 'surface.overlay',
                             backdropFilter: 'blur(4px)',
                         })}
                         initial={{ opacity: 0 }}
@@ -88,7 +88,7 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
                             maxWidth: '480px',
                             bg: 'surface.elevated',
                             borderRadius: '2xl',
-                            boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+                            boxShadow: { base: '0 24px 64px rgba(0,0,0,0.22)', _dark: '0 24px 64px rgba(0,0,0,0.5)' },
                             overflow: 'hidden',
                         })}
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}

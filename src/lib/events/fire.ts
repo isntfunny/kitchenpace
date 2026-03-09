@@ -71,7 +71,7 @@ export async function fireEvent<T extends EventName>(
         recipientProfile: (recipient?.profile ?? null) as NotificationProfile | null,
     };
 
-    let activity = null;
+    const activity = null;
 
     if (definition.activity && !payload.skipActivity) {
         const metadataFromDefinition = definition.activity.getMetadata?.(context);
@@ -80,15 +80,15 @@ export async function fireEvent<T extends EventName>(
                 ? { ...(metadataFromDefinition ?? {}), ...(payload.metadata ?? {}) }
                 : undefined;
 
-        activity = await createActivityLog({
+        // Fire-and-forget: ActivityLog creation is non-blocking
+        // Main operation (e.g., rating) completes immediately
+        createActivityLog({
             userId: actor.id,
             type: definition.activity.type,
             targetId: definition.activity.getTargetId(context) ?? null,
             targetType: definition.activity.targetType,
-            ...(metadataPayload
-                ? { metadata: metadataPayload as Prisma.InputJsonValue }
-                : {}),
-        });
+            ...(metadataPayload ? { metadata: metadataPayload as Prisma.InputJsonValue } : {}),
+        }).catch((err) => console.error('[ActivityLog] Failed to create:', err));
     }
 
     let notification = null;

@@ -19,15 +19,15 @@ const toggleStyles = css({
     borderColor: 'border.milk',
     background: 'surface.elevated',
     color: 'foreground',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+    boxShadow: 'shadow.medium',
     transition: 'all 150ms ease',
     cursor: 'pointer',
     _hover: {
         borderColor: 'accent',
-        boxShadow: '0 4px 24px rgba(224,123,83,0.15)',
+        boxShadow: { base: '0 4px 24px rgba(224,123,83,0.15)', _dark: '0 4px 24px rgba(224,123,83,0.12)' },
     },
     _focusVisible: {
-        boxShadow: '0 0 0 3px rgba(224,123,83,0.35)',
+        boxShadow: { base: '0 0 0 3px rgba(224,123,83,0.35)', _dark: '0 0 0 3px rgba(224,123,83,0.3)' },
     },
     _pressed: {
         transform: 'scale(0.97)',

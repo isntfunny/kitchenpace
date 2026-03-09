@@ -3,6 +3,7 @@
 import Link from 'next/link';
 
 import { SmartImage } from '@app/components/atoms/SmartImage';
+import { formatTimeAgo } from '@app/lib/activity-utils';
 import { css } from 'styled-system/css';
 
 type MediaContext = {
@@ -33,19 +34,6 @@ type InboxItemCardProps = {
     onAction?: () => void;
     media?: MediaContext;
 };
-
-function formatRelativeTime(value: string) {
-    const diffMs = Date.now() - new Date(value).getTime();
-    const seconds = Math.round(diffMs / 1000);
-    if (seconds < 60) return 'gerade eben';
-    const minutes = Math.round(seconds / 60);
-    if (minutes < 60) return `${minutes} min`;
-    const hours = Math.round(minutes / 60);
-    if (hours < 24) return `${hours} h`;
-    const days = Math.round(hours / 24);
-    if (days < 7) return `${days} Tage`;
-    return new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' }).format(new Date(value));
-}
 
 function MediaStrip({ media }: { media?: MediaContext }) {
     if (!media) {
@@ -132,7 +120,7 @@ export function InboxItemCard({
     onAction,
     media,
 }: InboxItemCardProps) {
-    const timeLabel = formatRelativeTime(createdAt);
+    const timeLabel = formatTimeAgo(createdAt, { fallbackToDate: true });
 
     return (
         <div

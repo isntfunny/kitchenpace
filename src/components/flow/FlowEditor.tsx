@@ -843,7 +843,7 @@ const aiButtonClass = css({
     _hover: {
         background: 'linear-gradient(135deg, rgba(147,51,234,0.15) 0%, rgba(224,123,83,0.12) 100%)',
         borderColor: 'rgba(147,51,234,0.55)',
-        boxShadow: '0 2px 12px rgba(147,51,234,0.25)',
+        boxShadow: { base: '0 2px 12px rgba(147,51,234,0.25)', _dark: '0 2px 12px rgba(147,51,234,0.2)' },
     },
 });
 

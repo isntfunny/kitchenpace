@@ -45,7 +45,7 @@ export function InboxDropdown({
                         border: '1px solid',
                         borderColor: 'border',
                         background: 'surface',
-                        boxShadow: '0 40px 120px rgba(0,0,0,0.15)',
+                        boxShadow: 'shadow.large',
                         padding: '4',
                         display: 'flex',
                         transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',

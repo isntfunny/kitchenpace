@@ -43,7 +43,7 @@ const chipItemClass = css({
         borderColor: 'primary',
         background: 'accent.soft',
         color: 'primary',
-        boxShadow: '0 8px 16px rgba(224,123,83,0.15)',
+        boxShadow: { base: '0 8px 16px rgba(224,123,83,0.15)', _dark: '0 8px 16px rgba(224,123,83,0.12)' },
     },
 });
 

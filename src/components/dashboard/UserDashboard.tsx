@@ -239,7 +239,7 @@ export function UserDashboard({
                             _hover: {
                                 transform: 'translateY(-2px)',
                                 borderColor: 'palette.orange',
-                                boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
+                                boxShadow: { base: '0 12px 40px rgba(224,123,83,0.15)', _dark: '0 12px 40px rgba(224,123,83,0.12)' },
                             },
                         })}
                     >
@@ -265,7 +265,7 @@ export function UserDashboard({
                             _hover: {
                                 transform: 'translateY(-2px)',
                                 borderColor: 'palette.orange',
-                                boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
+                                boxShadow: { base: '0 12px 40px rgba(224,123,83,0.15)', _dark: '0 12px 40px rgba(224,123,83,0.12)' },
                             },
                         })}
                     >
@@ -291,7 +291,7 @@ export function UserDashboard({
                             _hover: {
                                 transform: 'translateY(-2px)',
                                 borderColor: 'palette.orange',
-                                boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
+                                boxShadow: { base: '0 12px 40px rgba(224,123,83,0.15)', _dark: '0 12px 40px rgba(224,123,83,0.12)' },
                             },
                         })}
                     >
@@ -317,7 +317,7 @@ export function UserDashboard({
                             _hover: {
                                 transform: 'translateY(-2px)',
                                 borderColor: 'palette.orange',
-                                boxShadow: '0 12px 40px rgba(224,123,83,0.15)',
+                                boxShadow: { base: '0 12px 40px rgba(224,123,83,0.15)', _dark: '0 12px 40px rgba(224,123,83,0.12)' },
                             },
                         })}
                     >

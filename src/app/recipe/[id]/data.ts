@@ -57,6 +57,7 @@ export interface Recipe {
     imageKey?: string | null;
     category: string;
     categorySlug?: string;
+    categoryColor?: string;
     rating: number;
     prepTime: number;
     cookTime: number;

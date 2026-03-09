@@ -24,11 +24,11 @@ import {
     toggleFollowAction,
     markRecipeCookedAction,
 } from '@app/app/actions/social';
-import { Badge } from '@app/components/atoms/Badge';
 import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { SparkleEffect } from '@app/components/atoms/SparkleEffect';
 import { Header } from '@app/components/features/Header';
+import { categoryColors } from '@app/components/features/RecipeCard';
 import { ReportButton } from '@app/components/features/ReportButton';
 import { ShareButton } from '@app/components/features/ShareButton';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
@@ -50,8 +50,22 @@ const _STAR_TIPS = Array.from({ length: 5 }, (_, k) => {
 });
 const _STAR_COLORS = ['#f8b500', '#e07b53', '#f76b15', '#ffd166', '#ffb347', '#ff9a5c'];
 
-interface _StarSpark { id: number; x: string; y: string; dx: number; dy: number; color: string; size: number; duration: number; delay: number }
-interface _StarBurst { id: number; starIndex: number; sparks: _StarSpark[] }
+interface _StarSpark {
+    id: number;
+    x: string;
+    y: string;
+    dx: number;
+    dy: number;
+    color: string;
+    size: number;
+    duration: number;
+    delay: number;
+}
+interface _StarBurst {
+    id: number;
+    starIndex: number;
+    sparks: _StarSpark[];
+}
 
 function _makeStarSparks(): _StarSpark[] {
     const sparks: _StarSpark[] = [];
@@ -59,7 +73,17 @@ function _makeStarSparks(): _StarSpark[] {
         for (let i = 0; i < 3; i++) {
             const angle = tip.angle + (Math.random() - 0.5) * (Math.PI / 3.5);
             const dist = 14 + Math.random() * 24;
-            sparks.push({ id: ti * 10 + i, x: `${tip.x}%`, y: `${tip.y}%`, dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist, color: _STAR_COLORS[Math.floor(Math.random() * _STAR_COLORS.length)], size: 2 + Math.random() * 3, duration: 0.42 + Math.random() * 0.3, delay: Math.random() * 0.08 });
+            sparks.push({
+                id: ti * 10 + i,
+                x: `${tip.x}%`,
+                y: `${tip.y}%`,
+                dx: Math.cos(angle) * dist,
+                dy: Math.sin(angle) * dist,
+                color: _STAR_COLORS[Math.floor(Math.random() * _STAR_COLORS.length)],
+                size: 2 + Math.random() * 3,
+                duration: 0.42 + Math.random() * 0.3,
+                delay: Math.random() * 0.08,
+            });
         }
     });
     return sparks;
@@ -254,14 +278,6 @@ export function RecipeDetailClient({
         router.push(buildRecipeFilterHref({ tags: [tag] }));
     };
 
-    const handleCategoryClick = () => {
-        if (recipe.categorySlug) {
-            router.push(`/category/${recipe.categorySlug}`);
-        } else {
-            router.push(buildRecipeFilterHref({ mealTypes: [recipe.category] }));
-        }
-    };
-
     const handlePrint = () => printRecipe(recipe, servings);
 
     const requireAuth = () => {
@@ -307,8 +323,8 @@ export function RecipeDetailClient({
 
     const triggerStarBurst = useCallback((starIndex: number) => {
         const id = Date.now() + starIndex;
-        setStarBursts(prev => [...prev, { id, starIndex, sparks: _makeStarSparks() }]);
-        setTimeout(() => setStarBursts(prev => prev.filter(b => b.id !== id)), 1000);
+        setStarBursts((prev) => [...prev, { id, starIndex, sparks: _makeStarSparks() }]);
+        setTimeout(() => setStarBursts((prev) => prev.filter((b) => b.id !== id)), 1000);
     }, []);
 
     const handleRatingSelect = (value: number) => {
@@ -375,8 +391,14 @@ export function RecipeDetailClient({
                         gap: '3',
                         px: '4',
                         py: '2.5',
-                        backgroundColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
-                        borderBottom: { base: '1px solid rgba(224,123,83,0.25)', _dark: '1px solid rgba(224,123,83,0.3)' },
+                        backgroundColor: {
+                            base: 'rgba(224,123,83,0.1)',
+                            _dark: 'rgba(224,123,83,0.15)',
+                        },
+                        borderBottom: {
+                            base: '1px solid rgba(224,123,83,0.25)',
+                            _dark: '1px solid rgba(224,123,83,0.3)',
+                        },
                         fontSize: 'sm',
                         color: 'brand.primary',
                         fontWeight: '500',
@@ -421,8 +443,14 @@ export function RecipeDetailClient({
                         gap: '3',
                         px: '4',
                         py: '2.5',
-                        backgroundColor: { base: 'rgba(217,173,54,0.1)', _dark: 'rgba(217,173,54,0.15)' },
-                        borderBottom: { base: '1px solid rgba(217,173,54,0.25)', _dark: '1px solid rgba(217,173,54,0.3)' },
+                        backgroundColor: {
+                            base: 'rgba(217,173,54,0.1)',
+                            _dark: 'rgba(217,173,54,0.15)',
+                        },
+                        borderBottom: {
+                            base: '1px solid rgba(217,173,54,0.25)',
+                            _dark: '1px solid rgba(217,173,54,0.3)',
+                        },
                         fontSize: 'sm',
                         color: { base: '#b8860b', _dark: '#ffc94d' },
                         fontWeight: '500',
@@ -444,7 +472,8 @@ export function RecipeDetailClient({
                     >
                         Wird überprüft
                     </span>
-                    Dein Rezept wird gerade überprüft und ist noch nicht öffentlich sichtbar. Das dauert in der Regel weniger als 24 Stunden.
+                    Dein Rezept wird gerade überprüft und ist noch nicht öffentlich sichtbar. Das
+                    dauert in der Regel weniger als 24 Stunden.
                 </div>
             )}
             {recipe.viewer?.isAuthor && recipe.moderationStatus === 'REJECTED' && (
@@ -532,153 +561,186 @@ export function RecipeDetailClient({
                                         overflow: 'hidden',
                                     })}
                                 >
-                                    <SmartImage
-                                        recipeId={recipe.id}
-                                        alt={recipe.title}
-                                        fill
-                                    />
+                                    <SmartImage recipeId={recipe.id} alt={recipe.title} fill />
                                 </div>
                             )}
-                            {hasImages && (<>
-                            <div
-                                className={css({
-                                    position: 'relative',
-                                    borderRadius: '2xl',
-                                    overflow: 'hidden',
-                                    bg: 'black',
-                                })}
-                                data-debug-image-container
-                            >
-                                <div
-                                    className={css({
-                                        aspectRatio: '4/3',
-                                        position: 'relative',
-                                        cursor: 'pointer',
-                                    })}
-                                    onClick={() => {
-                                        setLightboxIndex(normalizedHeroIndex);
-                                        setLightboxOpen(true);
-                                    }}
-                                >
-                                    <SmartImage
-                                        src={heroMeta?.src || recipe.image}
-                                        alt={heroMeta?.title ?? recipe.title}
-                                        fill
-                                    />
-                                </div>
-                                {heroCount > 1 && (<>
-                                <button
-                                    type="button"
-                                    onClick={handleHeroPrev}
-                                    aria-label="Vorheriges Bild"
-                                    className={css({
-                                        position: 'absolute',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        left: '2',
-                                        width: '48px',
-                                        height: '48px',
-                                        borderRadius: 'full',
-                                        border: 'none',
-                                        bg: 'rgba(0,0,0,0.5)',
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '24px',
-                                        transition: 'all 200ms ease',
-                                        _hover: { bg: 'rgba(0,0,0,0.7)' },
-                                        _active: { transform: 'translateY(-50%) scale(0.95)' },
-                                    })}
-                                >
-                                    ‹
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleHeroNext}
-                                    aria-label="Nächstes Bild"
-                                    className={css({
-                                        position: 'absolute',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        right: '2',
-                                        width: '48px',
-                                        height: '48px',
-                                        borderRadius: 'full',
-                                        border: 'none',
-                                        bg: 'rgba(0,0,0,0.5)',
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '24px',
-                                        transition: 'all 200ms ease',
-                                        _hover: { bg: 'rgba(0,0,0,0.7)' },
-                                        _active: { transform: 'translateY(-50%) scale(0.95)' },
-                                    })}
-                                >
-                                    ›
-                                </button>
-                                </>)}
-                                {/* Thumbnail strip overlay */}
-                                {heroCount > 1 && (
-                                    <div className={css({
-                                        position: 'absolute',
-                                        bottom: '3',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        display: 'flex',
-                                        gap: '1.5',
-                                        p: '1.5',
-                                        borderRadius: 'xl',
-                                        bg: 'rgba(0,0,0,0.5)',
-                                        backdropFilter: 'blur(8px)',
-                                    })}>
-                                        {visibleImages.map((img, idx) => {
-                                            const thumbUrl = img.thumbKey
-                                                ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=100&height=100&fit=cover&quality=60`
-                                                : img.src;
-                                            return (
+                            {hasImages && (
+                                <>
+                                    <div
+                                        className={css({
+                                            position: 'relative',
+                                            borderRadius: '2xl',
+                                            overflow: 'hidden',
+                                            bg: 'black',
+                                        })}
+                                        data-debug-image-container
+                                    >
+                                        <div
+                                            className={css({
+                                                aspectRatio: '4/3',
+                                                position: 'relative',
+                                                cursor: 'pointer',
+                                            })}
+                                            onClick={() => {
+                                                setLightboxIndex(normalizedHeroIndex);
+                                                setLightboxOpen(true);
+                                            }}
+                                        >
+                                            <SmartImage
+                                                src={heroMeta?.src || recipe.image}
+                                                alt={heroMeta?.title ?? recipe.title}
+                                                fill
+                                            />
+                                        </div>
+                                        {heroCount > 1 && (
+                                            <>
                                                 <button
-                                                    key={`${idx}-${img.src}`}
                                                     type="button"
-                                                    onClick={() => setHeroIndex(idx)}
+                                                    onClick={handleHeroPrev}
+                                                    aria-label="Vorheriges Bild"
                                                     className={css({
-                                                        borderRadius: 'md',
-                                                        border: '2px solid',
-                                                        borderColor: idx === normalizedHeroIndex ? 'white' : 'transparent',
-                                                        padding: 0,
-                                                        width: '44px',
-                                                        height: '44px',
-                                                        overflow: 'hidden',
+                                                        position: 'absolute',
+                                                        top: '50%',
+                                                        transform: 'translateY(-50%)',
+                                                        left: '2',
+                                                        width: '48px',
+                                                        height: '48px',
+                                                        borderRadius: 'full',
+                                                        border: 'none',
+                                                        bg: 'rgba(0,0,0,0.5)',
+                                                        color: 'white',
                                                         cursor: 'pointer',
-                                                        opacity: idx === normalizedHeroIndex ? 1 : 0.7,
-                                                        transition: 'all 150ms ease',
-                                                        _hover: { opacity: 1 },
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '24px',
+                                                        transition: 'all 200ms ease',
+                                                        _hover: { bg: 'rgba(0,0,0,0.7)' },
+                                                        _active: {
+                                                            transform:
+                                                                'translateY(-50%) scale(0.95)',
+                                                        },
                                                     })}
                                                 >
-                                                    <div className={css({ position: 'relative', width: '100%', height: '100%' })}>
-                                                        <SmartImage src={thumbUrl} alt={img.title} fill />
-                                                    </div>
+                                                    ‹
                                                 </button>
-                                            );
-                                        })}
+                                                <button
+                                                    type="button"
+                                                    onClick={handleHeroNext}
+                                                    aria-label="Nächstes Bild"
+                                                    className={css({
+                                                        position: 'absolute',
+                                                        top: '50%',
+                                                        transform: 'translateY(-50%)',
+                                                        right: '2',
+                                                        width: '48px',
+                                                        height: '48px',
+                                                        borderRadius: 'full',
+                                                        border: 'none',
+                                                        bg: 'rgba(0,0,0,0.5)',
+                                                        color: 'white',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '24px',
+                                                        transition: 'all 200ms ease',
+                                                        _hover: { bg: 'rgba(0,0,0,0.7)' },
+                                                        _active: {
+                                                            transform:
+                                                                'translateY(-50%) scale(0.95)',
+                                                        },
+                                                    })}
+                                                >
+                                                    ›
+                                                </button>
+                                            </>
+                                        )}
+                                        {/* Thumbnail strip overlay */}
+                                        {heroCount > 1 && (
+                                            <div
+                                                className={css({
+                                                    position: 'absolute',
+                                                    bottom: '3',
+                                                    left: '50%',
+                                                    transform: 'translateX(-50%)',
+                                                    display: 'flex',
+                                                    gap: '1.5',
+                                                    p: '1.5',
+                                                    borderRadius: 'xl',
+                                                    bg: 'rgba(0,0,0,0.5)',
+                                                    backdropFilter: 'blur(8px)',
+                                                })}
+                                            >
+                                                {visibleImages.map((img, idx) => {
+                                                    const thumbUrl = img.thumbKey
+                                                        ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=100&height=100&fit=cover&quality=60`
+                                                        : img.src;
+                                                    return (
+                                                        <button
+                                                            key={`${idx}-${img.src}`}
+                                                            type="button"
+                                                            onClick={() => setHeroIndex(idx)}
+                                                            className={css({
+                                                                borderRadius: 'md',
+                                                                border: '2px solid',
+                                                                borderColor:
+                                                                    idx === normalizedHeroIndex
+                                                                        ? 'white'
+                                                                        : 'transparent',
+                                                                padding: 0,
+                                                                width: '44px',
+                                                                height: '44px',
+                                                                overflow: 'hidden',
+                                                                cursor: 'pointer',
+                                                                opacity:
+                                                                    idx === normalizedHeroIndex
+                                                                        ? 1
+                                                                        : 0.7,
+                                                                transition: 'all 150ms ease',
+                                                                _hover: { opacity: 1 },
+                                                            })}
+                                                        >
+                                                            <div
+                                                                className={css({
+                                                                    position: 'relative',
+                                                                    width: '100%',
+                                                                    height: '100%',
+                                                                })}
+                                                            >
+                                                                <SmartImage
+                                                                    src={thumbUrl}
+                                                                    alt={img.title}
+                                                                    fill
+                                                                />
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                        {/* Image counter + report */}
+                                        {heroMeta?.reportable &&
+                                            heroMeta.reportable.ownerId !== viewerId && (
+                                                <div
+                                                    className={css({
+                                                        position: 'absolute',
+                                                        top: '3',
+                                                        right: '3',
+                                                    })}
+                                                >
+                                                    <ReportButton
+                                                        contentType={
+                                                            heroMeta.reportable.contentType
+                                                        }
+                                                        contentId={heroMeta.reportable.contentId}
+                                                        variant="icon"
+                                                    />
+                                                </div>
+                                            )}
                                     </div>
-                                )}
-                                {/* Image counter + report */}
-                                {heroMeta?.reportable && heroMeta.reportable.ownerId !== viewerId && (
-                                    <div className={css({ position: 'absolute', top: '3', right: '3' })}>
-                                        <ReportButton
-                                            contentType={heroMeta.reportable.contentType}
-                                            contentId={heroMeta.reportable.contentId}
-                                            variant="icon"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                            </>)}
+                                </>
+                            )}
                         </div>
 
                         <div
@@ -689,26 +751,90 @@ export function RecipeDetailClient({
                             })}
                         >
                             {/* ── Recipe Info Card ── */}
-                            <div className={css({ bg: 'surface', borderRadius: '2xl', p: '5', boxShadow: 'shadow.medium', mb: '4' })}>
+                            <div
+                                className={css({
+                                    bg: 'surface',
+                                    borderRadius: '2xl',
+                                    p: '5',
+                                    boxShadow: 'shadow.medium',
+                                    mb: '4',
+                                })}
+                            >
                                 {/* Meta strip */}
-                                <div className={css({ display: 'flex', alignItems: 'center', gap: '3', flexWrap: 'wrap', fontSize: 'sm', fontFamily: 'body', color: 'text-muted', mb: '3' })}>
-                                    <button
-                                        onClick={() => handleCategoryClick()}
-                                        className={css({ cursor: 'pointer', _hover: { opacity: 0.8 } })}
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '3',
+                                        flexWrap: 'wrap',
+                                        fontSize: 'sm',
+                                        fontFamily: 'body',
+                                        color: 'text-muted',
+                                        mb: '3',
+                                    })}
+                                >
+                                    <Link
+                                        href={
+                                            recipe.categorySlug
+                                                ? `/category/${recipe.categorySlug}`
+                                                : buildRecipeFilterHref({
+                                                      mealTypes: [recipe.category],
+                                                  })
+                                        }
+                                        className={css({
+                                            textDecoration: 'none',
+                                            _hover: { opacity: 0.85 },
+                                        })}
                                     >
-                                        <Badge>{recipe.category}</Badge>
-                                    </button>
+                                        <span
+                                            className={css({
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                px: '2.5',
+                                                py: '0.5',
+                                                fontSize: 'xs',
+                                                fontWeight: '600',
+                                                borderRadius: 'full',
+                                                fontFamily: 'body',
+                                                color: 'white',
+                                                transition: 'opacity 150ms',
+                                            })}
+                                            style={{
+                                                backgroundColor:
+                                                    recipe.categoryColor ||
+                                                    categoryColors[recipe.category] ||
+                                                    '#e07b53',
+                                            }}
+                                        >
+                                            {recipe.category}
+                                        </span>
+                                    </Link>
                                     <span>{recipe.difficulty}</span>
                                 </div>
 
                                 {/* Description */}
-                                <p className={css({ fontFamily: 'body', color: 'text', lineHeight: 'relaxed', fontSize: { base: 'md', md: 'lg' }, mb: '3' })}>
+                                <p
+                                    className={css({
+                                        fontFamily: 'body',
+                                        color: 'text',
+                                        lineHeight: 'relaxed',
+                                        fontSize: { base: 'md', md: 'lg' },
+                                        mb: '3',
+                                    })}
+                                >
                                     {recipe.description}
                                 </p>
 
                                 {/* Tags */}
                                 {recipe.tags.length > 0 && (
-                                    <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap', mb: '3' })}>
+                                    <div
+                                        className={css({
+                                            display: 'flex',
+                                            gap: '2',
+                                            flexWrap: 'wrap',
+                                            mb: '3',
+                                        })}
+                                    >
                                         {recipe.tags.map((tag) => (
                                             <button
                                                 key={tag}
@@ -738,14 +864,61 @@ export function RecipeDetailClient({
                                 {/* Time breakdown */}
                                 <div className={css({ display: 'flex', gap: '2', mb: '3' })}>
                                     {[
-                                        { icon: <Clock size={16} color="var(--colors-palette-orange, #e07b53)" />, label: 'Gesamt', value: `${totalTime} Min.` },
-                                        { icon: <ChefHat size={16} color="#4caf50" />, label: 'Arbeit', value: `${recipe.prepTime} Min.` },
-                                        { icon: <Flame size={16} color="#ff5722" />, label: 'Kochen', value: `${recipe.cookTime} Min.` },
+                                        {
+                                            icon: (
+                                                <Clock
+                                                    size={16}
+                                                    color="var(--colors-palette-orange, #e07b53)"
+                                                />
+                                            ),
+                                            label: 'Gesamt',
+                                            value: `${totalTime} Min.`,
+                                        },
+                                        {
+                                            icon: <ChefHat size={16} color="#4caf50" />,
+                                            label: 'Arbeit',
+                                            value: `${recipe.prepTime} Min.`,
+                                        },
+                                        {
+                                            icon: <Flame size={16} color="#ff5722" />,
+                                            label: 'Kochen',
+                                            value: `${recipe.cookTime} Min.`,
+                                        },
                                     ].map(({ icon, label, value }) => (
-                                        <div key={label} className={css({ flex: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5', p: '2', bg: 'light', borderRadius: 'xl', minWidth: 0 })}>
+                                        <div
+                                            key={label}
+                                            className={css({
+                                                flex: '1',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: '0.5',
+                                                p: '2',
+                                                bg: 'light',
+                                                borderRadius: 'xl',
+                                                minWidth: 0,
+                                            })}
+                                        >
                                             {icon}
-                                            <span className={css({ fontSize: '2xs', color: 'text-muted', fontFamily: 'body' })}>{label}</span>
-                                            <span className={css({ fontWeight: '700', fontFamily: 'heading', fontSize: 'xs', whiteSpace: 'nowrap' })}>{value}</span>
+                                            <span
+                                                className={css({
+                                                    fontSize: '2xs',
+                                                    color: 'text-muted',
+                                                    fontFamily: 'body',
+                                                })}
+                                            >
+                                                {label}
+                                            </span>
+                                            <span
+                                                className={css({
+                                                    fontWeight: '700',
+                                                    fontFamily: 'heading',
+                                                    fontSize: 'xs',
+                                                    whiteSpace: 'nowrap',
+                                                })}
+                                            >
+                                                {value}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
@@ -754,9 +927,22 @@ export function RecipeDetailClient({
                                 <div className={css({ h: '1px', bg: 'border', mb: '3' })} />
 
                                 {/* Rating */}
-                                <div className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '1.5',
+                                    })}
+                                >
                                     {starValues.map((value) => (
-                                        <div key={value} style={{ position: 'relative', display: 'inline-flex', overflow: 'visible' }}>
+                                        <div
+                                            key={value}
+                                            style={{
+                                                position: 'relative',
+                                                display: 'inline-flex',
+                                                overflow: 'visible',
+                                            }}
+                                        >
                                             <button
                                                 type="button"
                                                 onClick={() => handleRatingSelect(value)}
@@ -773,32 +959,90 @@ export function RecipeDetailClient({
                                             >
                                                 <Star
                                                     size={22}
-                                                    fill={value <= activeStarValue ? 'var(--colors-palette-gold, #d9ad36)' : 'none'}
+                                                    fill={
+                                                        value <= activeStarValue
+                                                            ? 'var(--colors-palette-gold, #d9ad36)'
+                                                            : 'none'
+                                                    }
                                                     className={css({
-                                                        color: value <= activeStarValue ? 'palette.gold' : 'text-muted',
-                                                        opacity: value <= activeStarValue ? 1 : 0.35,
+                                                        color:
+                                                            value <= activeStarValue
+                                                                ? 'palette.gold'
+                                                                : 'text-muted',
+                                                        opacity:
+                                                            value <= activeStarValue ? 1 : 0.35,
                                                     })}
                                                 />
                                             </button>
-                                            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible', zIndex: 10 }}>
+                                            <div
+                                                style={{
+                                                    position: 'absolute',
+                                                    inset: 0,
+                                                    pointerEvents: 'none',
+                                                    overflow: 'visible',
+                                                    zIndex: 10,
+                                                }}
+                                            >
                                                 <AnimatePresence>
-                                                    {starBursts.filter(b => b.starIndex === value).map(burst =>
-                                                        burst.sparks.map(spark => (
-                                                            <motion.div
-                                                                key={`${burst.id}-${spark.id}`}
-                                                                style={{ position: 'absolute', left: spark.x, top: spark.y, width: spark.size, height: spark.size, borderRadius: '50%', background: spark.color, boxShadow: `0 0 ${spark.size * 2}px ${spark.color}`, translateX: '-50%', translateY: '-50%' }}
-                                                                initial={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-                                                                animate={{ x: spark.dx, y: spark.dy, opacity: [1, 1, 0], scale: [1, 1.4, 0] }}
-                                                                transition={{ duration: spark.duration, delay: spark.delay, ease: 'easeOut', opacity: { times: [0, 0.35, 1] }, scale: { times: [0, 0.25, 1] } }}
-                                                            />
-                                                        ))
-                                                    )}
+                                                    {starBursts
+                                                        .filter((b) => b.starIndex === value)
+                                                        .map((burst) =>
+                                                            burst.sparks.map((spark) => (
+                                                                <motion.div
+                                                                    key={`${burst.id}-${spark.id}`}
+                                                                    style={{
+                                                                        position: 'absolute',
+                                                                        left: spark.x,
+                                                                        top: spark.y,
+                                                                        width: spark.size,
+                                                                        height: spark.size,
+                                                                        borderRadius: '50%',
+                                                                        background: spark.color,
+                                                                        boxShadow: `0 0 ${spark.size * 2}px ${spark.color}`,
+                                                                        translateX: '-50%',
+                                                                        translateY: '-50%',
+                                                                    }}
+                                                                    initial={{
+                                                                        opacity: 1,
+                                                                        x: 0,
+                                                                        y: 0,
+                                                                        scale: 1,
+                                                                    }}
+                                                                    animate={{
+                                                                        x: spark.dx,
+                                                                        y: spark.dy,
+                                                                        opacity: [1, 1, 0],
+                                                                        scale: [1, 1.4, 0],
+                                                                    }}
+                                                                    transition={{
+                                                                        duration: spark.duration,
+                                                                        delay: spark.delay,
+                                                                        ease: 'easeOut',
+                                                                        opacity: {
+                                                                            times: [0, 0.35, 1],
+                                                                        },
+                                                                        scale: {
+                                                                            times: [0, 0.25, 1],
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            )),
+                                                        )}
                                                 </AnimatePresence>
                                             </div>
                                         </div>
                                     ))}
-                                    <span className={css({ fontSize: 'sm', color: 'text-muted', fontFamily: 'body', ml: '1' })}>
-                                        {ratingCount > 0 ? `${averageRating.toFixed(1)} (${ratingCount})` : 'Bewerten'}
+                                    <span
+                                        className={css({
+                                            fontSize: 'sm',
+                                            color: 'text-muted',
+                                            fontFamily: 'body',
+                                            ml: '1',
+                                        })}
+                                    >
+                                        {ratingCount > 0
+                                            ? `${averageRating.toFixed(1)} (${ratingCount})`
+                                            : 'Bewerten'}
                                     </span>
                                 </div>
                             </div>
@@ -810,16 +1054,46 @@ export function RecipeDetailClient({
                                         {(triggerSparkle) => (
                                             <Button
                                                 type="button"
-                                                variant={favoriteState.isFavorite ? 'secondary' : 'primary'}
-                                                onClick={() => { if (!favoriteState.isFavorite) triggerSparkle(); handleFavoriteToggle(); }}
+                                                variant={
+                                                    favoriteState.isFavorite
+                                                        ? 'secondary'
+                                                        : 'primary'
+                                                }
+                                                onClick={() => {
+                                                    if (!favoriteState.isFavorite) triggerSparkle();
+                                                    handleFavoriteToggle();
+                                                }}
                                                 disabled={isFavoritePending}
                                                 style={{ width: '100%', minWidth: 0 }}
                                             >
-                                                <span className={css({ flexShrink: 0 })}>{favoriteState.isFavorite ? <Heart size={16} /> : <Bookmark size={16} />}</span>
-                                                <span className={css({ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 })}>
-                                                    {favoriteState.isFavorite ? 'Favorit' : 'Speichern'}
+                                                <span className={css({ flexShrink: 0 })}>
+                                                    {favoriteState.isFavorite ? (
+                                                        <Heart size={16} />
+                                                    ) : (
+                                                        <Bookmark size={16} />
+                                                    )}
                                                 </span>
-                                                <span className={css({ opacity: 0.7, fontSize: 'xs', flexShrink: 0 })}>· {favoriteState.count}</span>
+                                                <span
+                                                    className={css({
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                        minWidth: 0,
+                                                    })}
+                                                >
+                                                    {favoriteState.isFavorite
+                                                        ? 'Favorit'
+                                                        : 'Speichern'}
+                                                </span>
+                                                <span
+                                                    className={css({
+                                                        opacity: 0.7,
+                                                        fontSize: 'xs',
+                                                        flexShrink: 0,
+                                                    })}
+                                                >
+                                                    · {favoriteState.count}
+                                                </span>
                                             </Button>
                                         )}
                                     </SparkleEffect>
@@ -832,15 +1106,43 @@ export function RecipeDetailClient({
                                         disabled={isCookPending}
                                         style={{ width: '100%', minWidth: 0 }}
                                     >
-                                        <span className={css({ flexShrink: 0 })}>{hasCooked ? <CheckCircle size={16} /> : <ChefHat size={16} />}</span>
-                                        <span className={css({ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 })}>
+                                        <span className={css({ flexShrink: 0 })}>
+                                            {hasCooked ? (
+                                                <CheckCircle size={16} />
+                                            ) : (
+                                                <ChefHat size={16} />
+                                            )}
+                                        </span>
+                                        <span
+                                            className={css({
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                                minWidth: 0,
+                                            })}
+                                        >
                                             Zubereitet
                                         </span>
-                                        <span className={css({ opacity: 0.7, fontSize: 'xs', flexShrink: 0 })}>· {cookCount}</span>
+                                        <span
+                                            className={css({
+                                                opacity: 0.7,
+                                                fontSize: 'xs',
+                                                flexShrink: 0,
+                                            })}
+                                        >
+                                            · {cookCount}
+                                        </span>
                                     </Button>
                                 </div>
                             </div>
-                            <div className={css({ display: 'flex', gap: '1', alignItems: 'center', justifyContent: 'space-evenly' })}>
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    gap: '1',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-evenly',
+                                })}
+                            >
                                 <Button type="button" variant="ghost" onClick={handlePrint}>
                                     <Printer size={15} />
                                     <span className={css({ fontSize: 'sm' })}>Drucken</span>
@@ -858,7 +1160,6 @@ export function RecipeDetailClient({
                                     />
                                 )}
                             </div>
-
                         </div>
                     </div>
                 </div>

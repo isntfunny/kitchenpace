@@ -1,7 +1,12 @@
 'use server';
 
 import type { FlowEdgeInput, FlowNodeInput } from '@app/components/recipe/createActions';
-import { toRecipeCardData, type RecipeCardData, type RecipeWithCategory } from '@app/lib/recipe-card';
+import { PALETTE } from '@app/lib/palette';
+import {
+    toRecipeCardData,
+    type RecipeCardData,
+    type RecipeWithCategory,
+} from '@app/lib/recipe-card';
 import { prisma } from '@shared/prisma';
 
 // Re-export for backward compatibility
@@ -95,6 +100,7 @@ export interface RecipeDetailData {
     imageKey?: string | null;
     category: string;
     categorySlug?: string;
+    categoryColor?: string;
     rating: number;
     prepTime: number;
     cookTime: number;
@@ -232,6 +238,10 @@ export async function fetchRecipeBySlug(
         image: `/api/thumbnail?type=recipe&id=${encodeURIComponent(recipe.id)}`,
         category: recipe.categories[0]?.category?.name || 'Hauptgericht',
         categorySlug: recipe.categories[0]?.category?.slug ?? undefined,
+        categoryColor: recipe.categories[0]?.category?.color
+            ? ((PALETTE[recipe.categories[0].category.color as keyof typeof PALETTE] as string) ??
+              undefined)
+            : undefined,
         rating: recipe.rating ?? 0,
         prepTime: recipe.prepTime ?? 0,
         cookTime: recipe.cookTime ?? 0,

@@ -5,7 +5,7 @@ import { Header } from '@app/components/features/Header';
 import { getAllCategories, getAllTags } from '@app/components/recipe/actions';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 
-import { ImportRecipeClient } from './ImportRecipeClient';
+import { ImportModeSwitcher } from './ImportModeSwitcher';
 
 // NEVER index this page — it is a private AI tool for authenticated users only
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export default async function ImportRecipePage() {
         <div style={{ minHeight: '100vh', background: 'var(--colors-background)', color: 'var(--colors-text)' }}>
             <Header />
             <main>
-                <ImportRecipeClient categories={categories} tags={tags} authorId={session.user.id} />
+                <ImportModeSwitcher categories={categories} tags={tags} authorId={session.user.id} />
             </main>
         </div>
     );

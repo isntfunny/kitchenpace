@@ -8,37 +8,39 @@ import { IngredientsTable } from './ingredients-table';
 export const dynamic = 'force-dynamic';
 
 async function getIngredients() {
-    const ingredients = await prisma.ingredient.findMany({
-        select: {
-            id: true,
-            name: true,
-            slug: true,
-            category: true,
-            units: true,
-            _count: {
-                select: {
-                    recipes: true,
-                },
+    const [ingredients, needsReviewCount] = await Promise.all([
+        prisma.ingredient.findMany({
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                category: true,
+                units: true,
+                needsReview: true,
+                _count: { select: { recipes: true } },
             },
-        },
-        orderBy: {
-            name: 'asc',
-        },
-    });
+            orderBy: [{ needsReview: 'desc' }, { name: 'asc' }],
+        }),
+        prisma.ingredient.count({ where: { needsReview: true } }),
+    ]);
 
-    return ingredients.map((ing) => ({
-        id: ing.id,
-        name: ing.name,
-        slug: ing.slug,
-        category: ing.category ?? 'SONSTIGES',
-        units: ing.units ?? [],
-        recipeCount: ing._count.recipes,
-    }));
+    return {
+        ingredients: ingredients.map((ing) => ({
+            id: ing.id,
+            name: ing.name,
+            slug: ing.slug,
+            category: ing.category ?? 'SONSTIGES',
+            units: ing.units ?? [],
+            needsReview: ing.needsReview,
+            recipeCount: ing._count.recipes,
+        })),
+        needsReviewCount,
+    };
 }
 
 export default async function IngredientsPage() {
     await ensureAdminSession('admin-ingredients');
-    const ingredients = await getIngredients();
+    const { ingredients, needsReviewCount } = await getIngredients();
 
     return (
         <PageShell>
@@ -81,6 +83,34 @@ export default async function IngredientsPage() {
                         Kategorien und Einheiten für Zutaten verwalten.
                     </p>
                 </header>
+
+                {needsReviewCount > 0 && (
+                    <div
+                        className={css({
+                            borderRadius: 'xl',
+                            border: '1px solid rgba(224,123,83,0.4)',
+                            backgroundColor: 'rgba(224,123,83,0.06)',
+                            padding: '4',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3',
+                        })}
+                    >
+                        <span
+                            className={css({
+                                fontWeight: '700',
+                                fontSize: 'lg',
+                                color: 'brand.primary',
+                            })}
+                        >
+                            {needsReviewCount}
+                        </span>
+                        <p className={css({ fontSize: 'sm', color: 'text' })}>
+                            neue Zutat{needsReviewCount !== 1 ? 'en' : ''} von Nutzern erstellt –
+                            bitte Einheit{needsReviewCount !== 1 ? 'en' : ''} prüfen und ergänzen.
+                        </p>
+                    </div>
+                )}
 
                 <IngredientsTable ingredients={ingredients} />
             </div>

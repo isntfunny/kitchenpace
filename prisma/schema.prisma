@@ -370,7 +370,8 @@ model Ingredient {
   units     String[]
   recipes   RecipeIngredient[]
   shoppingItems ShoppingItem[]
-  createdAt DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+  needsReview Boolean           @default(false)
 
   @@index([name])
 }

@@ -24,6 +24,7 @@ type Ingredient = {
     slug: string;
     category: ShoppingCategory;
     units: string[];
+    needsReview?: boolean;
     recipeCount: number;
 };
 
@@ -1000,6 +1001,7 @@ export function IngredientsTable({ ingredients }: { ingredients: Ingredient[] })
                                                 transition: 'background 0.2s',
                                                 _hover: { background: 'surface' },
                                             })}
+                                            style={row.original.needsReview ? { borderLeft: '3px solid rgba(224,123,83,0.7)' } : undefined}
                                         >
                                             {row.getVisibleCells().map((cell) => (
                                                 <td

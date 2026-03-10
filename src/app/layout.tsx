@@ -230,7 +230,8 @@ export default async function RootLayout({
     }
 
     const openPanelClientId = process.env.OPENPANEL_CLIENT_ID ?? process.env.OPENPANEL_ID ?? '';
-    const hasOpenPanelId = Boolean(openPanelClientId);
+    const openPanelApiUrl = process.env.OPENPANEL_API_URL;
+    const hasOpenPanel = Boolean(openPanelClientId && openPanelApiUrl);
     const userName = session?.user?.name?.trim() ?? '';
     const nameParts = userName.split(/\s+/).filter(Boolean);
     const firstName = nameParts[0];
@@ -260,24 +261,27 @@ export default async function RootLayout({
                     dangerouslySetInnerHTML={{ __html: themeInitScript }}
                 />
             </head>
-            <body className={`${playfair.variable} ${inter.variable}`}>
+            <body className={`${playfair.variable} ${inter.variable}`} suppressHydrationWarning>
                 <script
                     type="application/ld+json"
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
                 />
                 <ChatwootWidgetComponent />
-                <OpenPanelComponent
-                    clientId={openPanelClientId}
-                    apiUrl="/api/op"
-                    cdnUrl="/api/op/op1.js"
-                    trackScreenViews={true}
-                    trackAttributes={true}
-                    waitForProfile={Boolean(identifyProps)}
-                    disabled={!hasOpenPanelId}
-                    globalProperties={openPanelGlobalProperties}
-                />
-                {identifyProps && <IdentifyComponent {...identifyProps} />}
+                {hasOpenPanel && (
+                    <>
+                        <OpenPanelComponent
+                            clientId={openPanelClientId}
+                            apiUrl="/api/op"
+                            cdnUrl="/api/op/op1.js"
+                            trackScreenViews={true}
+                            trackAttributes={true}
+                            waitForProfile={Boolean(identifyProps)}
+                            globalProperties={openPanelGlobalProperties}
+                        />
+                        {identifyProps && <IdentifyComponent {...identifyProps} />}
+                    </>
+                )}
                 <PageProgress />
                 <ThemeProvider>
                     <AuthProvider session={session}>

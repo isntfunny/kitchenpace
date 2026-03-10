@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Pause, Pencil, Play, RotateCcw, Trash2 } from 'lucide-react';
+import { Check, Pause, Pencil, Play, RotateCcw, Timer, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
@@ -23,6 +23,7 @@ interface StepCardProps {
     mode: LaneMode;
     isDone: boolean;
     isLast: boolean;
+    isCriticalPath?: boolean;
     timer?: TimerState;
     onToggleDone: () => void;
     onTimerStart: () => void;
@@ -40,6 +41,7 @@ export function StepCard({
     mode,
     isDone,
     isLast,
+    isCriticalPath = false,
     timer,
     onToggleDone,
     onTimerStart,
@@ -99,6 +101,7 @@ export function StepCard({
             style={{
                 background: bg,
                 borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.07)',
+                borderLeft: isCriticalPath ? '3px solid #f39c12' : undefined,
                 flexGrow: isLast ? 1 : 0,
             }}
         >
@@ -132,7 +135,17 @@ export function StepCard({
                     </div>
 
                     {step.duration && !timer && (
-                        <span className={durationClass}>{step.duration} Min.</span>
+                        isCriticalPath ? (
+                            <span
+                                className={criticalDurationClass}
+                                title="Roter Faden — bestimmt die Gesamtdauer des Rezepts"
+                            >
+                                <Timer className={css({ w: '9px', h: '9px', flexShrink: '0' })} />
+                                {step.duration} Min. · Roter Faden
+                            </span>
+                        ) : (
+                            <span className={durationClass}>{step.duration} Min.</span>
+                        )
                     )}
 
                     {timer && !isDone && (
@@ -465,6 +478,20 @@ const editOverlayIconClass = css({
     opacity: '0',
     transform: 'scale(0.8)',
     transition: 'opacity 0.15s ease, transform 0.15s ease',
+});
+
+const criticalDurationClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '3px',
+    flexShrink: '0',
+    fontSize: '11px',
+    fontWeight: '700',
+    color: '#d68910',
+    bg: 'rgba(243,156,18,0.12)',
+    px: '7px',
+    py: '2px',
+    borderRadius: 'full',
 });
 
 const timerDoneClass = css({

@@ -2,7 +2,7 @@
 
 import { Download, Sparkles, Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useMemo, useReducer, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useReducer, useRef, useState } from 'react';
 
 import {
     FlowEditorContext,
@@ -13,7 +13,7 @@ import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
 import { css } from 'styled-system/css';
 
 import { AiLaneDialog } from './AiLaneDialog';
-import { FlowConnector } from './FlowConnector';
+import { FlowConnector, IntraLaneConnector } from './FlowConnector';
 import {
     deserializeLaneGrid,
     gridReducer,
@@ -126,6 +126,27 @@ export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: 
         });
     }, []);
 
+    /* ── Critical path ── */
+
+    const criticalStepIds = useMemo(() => {
+        const ids = new Set<string>();
+        for (const segment of grid.segments) {
+            const laneDurs = segment.lanes.map((lane) =>
+                lane
+                    .filter((s) => !s.continuation)
+                    .reduce((acc, s) => acc + (s.duration ?? 0), 0),
+            );
+            const max = Math.max(...laneDurs);
+            if (max === 0) continue;
+            segment.lanes.forEach((lane, i) => {
+                if (laneDurs[i] === max) {
+                    lane.filter((s) => !s.continuation && s.duration).forEach((s) => ids.add(s.id));
+                }
+            });
+        }
+        return ids;
+    }, [grid]);
+
     /* ── Progress ── */
 
     const { totalSteps, doneSteps } = useMemo(() => {
@@ -149,17 +170,32 @@ export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: 
         const laneCount = segment.lanes.length;
         const templateColumns = segment.columnSpans.map((s) => `${s}fr`).join(' ');
 
-        /* Flow connector between segments (always shown, except before first) */
+        const segmentColors = (lane: typeof segment.lanes[number], pickLast: boolean) => {
+            const step = pickLast
+                ? [...lane].reverse().find((s) => !s.continuation)
+                : lane.find((s) => !s.continuation);
+            return step ? STEP_CONFIGS[step.type].accent : '#e07b53';
+        };
+
+        /* Flow connector before first segment */
+        if (segIdx === 0) {
+            const colors = segment.lanes.map((lane) => segmentColors(lane, false));
+            elements.push(
+                <FlowConnector
+                    key={`flow-before-${segment.id}`}
+                    prevColumnSpans={segment.columnSpans}
+                    nextColumnSpans={segment.columnSpans}
+                    prevColors={colors}
+                    nextColors={colors}
+                />,
+            );
+        }
+
+        /* Flow connector between segments */
         if (segIdx > 0) {
             const prev = grid.segments[segIdx - 1];
-            const prevColors = prev.lanes.map((lane) => {
-                const last = [...lane].reverse().find((s) => !s.continuation);
-                return last ? STEP_CONFIGS[last.type].accent : '#e07b53';
-            });
-            const nextColors = segment.lanes.map((lane) => {
-                const first = lane.find((s) => !s.continuation);
-                return first ? STEP_CONFIGS[first.type].accent : '#e07b53';
-            });
+            const prevColors = prev.lanes.map((lane) => segmentColors(lane, true));
+            const nextColors = segment.lanes.map((lane) => segmentColors(lane, false));
             elements.push(
                 <FlowConnector
                     key={`flow-${prev.id}-${segment.id}`}
@@ -221,14 +257,24 @@ export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: 
                                         canEdit &&
                                         step.type !== 'start' &&
                                         step.type !== 'servieren';
+                                    const prevStep = stepIdx > 0 ? lane[stepIdx - 1] : null;
+                                    const showIntraConnector =
+                                        prevStep && !step.continuation && !prevStep.continuation;
                                     return (
+                                        <React.Fragment key={step.id}>
+                                        {showIntraConnector && (
+                                            <IntraLaneConnector
+                                                fromColor={STEP_CONFIGS[prevStep.type].accent}
+                                                toColor={STEP_CONFIGS[step.type].accent}
+                                            />
+                                        )}
                                         <StepCard
-                                            key={step.id}
                                             step={step}
                                             photoKey={photosByStepId[step.id]}
                                             mode={mode}
                                             isLast={stepIdx === lane.length - 1}
                                             isDone={completed.has(step.id)}
+                                            isCriticalPath={criticalStepIds.has(step.id)}
                                             timer={timers.get(step.id)}
                                             onToggleDone={() => toggleDone(step.id)}
                                             onTimerStart={() => start(step.id)}
@@ -256,6 +302,7 @@ export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: 
                                                     : undefined
                                             }
                                         />
+                                        </React.Fragment>
                                     );
                                 })}
                             </AnimatePresence>
@@ -307,6 +354,20 @@ export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: 
                 />,
             );
         }
+
+        /* Flow connector after last segment */
+        if (segIdx === grid.segments.length - 1) {
+            const colors = segment.lanes.map((lane) => segmentColors(lane, true));
+            elements.push(
+                <FlowConnector
+                    key={`flow-after-${segment.id}`}
+                    prevColumnSpans={segment.columnSpans}
+                    nextColumnSpans={segment.columnSpans}
+                    prevColors={colors}
+                    nextColors={colors}
+                />,
+            );
+        }
     });
 
     /* ── Render ── */
@@ -351,6 +412,8 @@ export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: 
                     />
                 </div>
             )}
+
+            <TimeRuler grid={grid} />
 
             <div className={gridWrapClass}>
                 <AnimatePresence mode="popLayout" initial={false}>
@@ -435,6 +498,129 @@ function ProgressBar({ total, done }: { total: number; done: number }) {
                     animate={{ width: `${total > 0 ? (done / total) * 100 : 0}%` }}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 />
+            </div>
+        </div>
+    );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TimeRuler
+   ══════════════════════════════════════════════════════════════ */
+
+function TimeRuler({ grid }: { grid: LaneGrid }) {
+    type SegEntry = {
+        id: string;
+        dur: number; // 0 = untimed
+        label: string;
+        color: string;
+        parallelCount: number;
+    };
+
+    const segData: SegEntry[] = [];
+
+    for (const seg of grid.segments) {
+        // Skip structural start/servieren-only segments — they're milestones, not steps
+        const realSteps = seg.lanes.flat().filter((s) => !s.continuation);
+        if (realSteps.every((s) => s.type === 'start' || s.type === 'servieren')) continue;
+
+        const laneDurs = seg.lanes.map((lane) =>
+            lane.filter((s) => !s.continuation).reduce((acc, s) => acc + (s.duration ?? 0), 0),
+        );
+        const maxDur = Math.max(0, ...laneDurs);
+
+        if (maxDur > 0) {
+            // Timed: use critical lane step for label + color
+            const critIdx = laneDurs.indexOf(maxDur);
+            const critStep = seg.lanes[critIdx]?.find((s) => !s.continuation && s.duration);
+            const parallelCount = seg.lanes.filter(
+                (_, i) => i !== critIdx && laneDurs[i] > 0,
+            ).length;
+            segData.push({
+                id: seg.id,
+                dur: maxDur,
+                label: critStep?.label ?? '',
+                color: critStep ? STEP_CONFIGS[critStep.type].accent : '#e07b53',
+                parallelCount,
+            });
+        } else {
+            // Untimed: first real step gives label + color
+            const first = realSteps[0];
+            const parallelCount = seg.lanes.filter(
+                (lane) => lane.filter((s) => !s.continuation).length > 0,
+            ).length - 1;
+            segData.push({
+                id: seg.id,
+                dur: 0,
+                label: first?.label ?? '',
+                color: first ? STEP_CONFIGS[first.type].accent : '#aaa',
+                parallelCount: Math.max(0, parallelCount),
+            });
+        }
+    }
+
+    const timedTotal = segData.reduce((a, d) => a + d.dur, 0);
+    // Only render if at least one segment has a duration
+    if (timedTotal === 0) return null;
+
+    return (
+        <div className={rulerWrapClass}>
+            {/* Header */}
+            <div className={rulerHeaderClass}>
+                <span>Zeitplan</span>
+                <span>
+                    {timedTotal} Min.{' '}
+                    {segData.some((d) => d.dur === 0) && (
+                        <span style={{ opacity: 0.55 }}>+ unbekannte Schritte</span>
+                    )}
+                </span>
+            </div>
+
+            {/* Gantt-style blocks */}
+            <div className={rulerRowClass}>
+                {segData.map((d) => {
+                    const isTimed = d.dur > 0;
+                    const narrow = isTimed && (d.dur / timedTotal) * 100 < 14;
+                    return (
+                        <div
+                            key={d.id}
+                            className={isTimed ? rulerBlockClass : rulerBlockUntimedClass}
+                            style={
+                                isTimed
+                                    ? { flex: d.dur, background: d.color }
+                                    : { borderColor: `${d.color}60` }
+                            }
+                            title={
+                                isTimed
+                                    ? `${d.label} · ${d.dur} Min.`
+                                    : `${d.label} · Keine Zeit eingetragen`
+                            }
+                        >
+                            {!narrow && (
+                                <span
+                                    className={
+                                        isTimed ? rulerBlockNameClass : rulerBlockNameUntimedClass
+                                    }
+                                >
+                                    {d.label}
+                                </span>
+                            )}
+                            <div className={rulerBlockFootClass}>
+                                {isTimed ? (
+                                    <>
+                                        <span className={rulerBlockDurClass}>{d.dur}m</span>
+                                        {d.parallelCount > 0 && (
+                                            <span className={rulerParallelClass}>
+                                                +{d.parallelCount}∥
+                                            </span>
+                                        )}
+                                    </>
+                                ) : (
+                                    <span className={rulerUnknownDurClass}>?</span>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
@@ -577,4 +763,116 @@ const toolbarBtnClass = css({
     transition: 'all 0.15s ease',
     boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
     _hover: { borderColor: '#e07b53', color: '#e07b53', bg: 'rgba(224,123,83,0.05)' },
+});
+
+const rulerWrapClass = css({
+    mx: '20px',
+    mt: '14px',
+    mb: '0',
+    flexShrink: '0',
+});
+
+const rulerHeaderClass = css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    mb: '6px',
+    fontSize: '10px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    color: 'rgba(0,0,0,0.35)',
+});
+
+/* Gantt row — flex, no overflow clip so labels aren't cut */
+const rulerRowClass = css({
+    display: 'flex',
+    gap: '3px',
+    alignItems: 'stretch',
+});
+
+/* Individual timed block — flex proportional */
+const rulerBlockClass = css({
+    flexShrink: '0',
+    borderRadius: '6px',
+    px: '10px',
+    py: '7px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    gap: '3px',
+    opacity: '0.88',
+    transition: 'opacity 0.15s ease, transform 0.15s ease',
+    overflow: 'hidden',
+    cursor: 'default',
+    minW: '0',
+    _hover: { opacity: '1', transform: 'translateY(-1px)' },
+});
+
+/* Untimed block — fixed compact width, dashed border */
+const rulerBlockUntimedClass = css({
+    flex: '0 0 auto',
+    minW: '72px',
+    borderRadius: '6px',
+    px: '10px',
+    py: '7px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    gap: '3px',
+    border: '1.5px dashed',
+    bg: 'rgba(0,0,0,0.03)',
+    overflow: 'hidden',
+    cursor: 'default',
+    opacity: '0.75',
+    transition: 'opacity 0.15s ease',
+    _hover: { opacity: '1' },
+});
+
+const rulerBlockNameClass = css({
+    fontSize: '11px',
+    fontWeight: '700',
+    color: 'white',
+    lineHeight: '1.2',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+});
+
+const rulerBlockNameUntimedClass = css({
+    fontSize: '11px',
+    fontWeight: '600',
+    color: 'rgba(0,0,0,0.5)',
+    lineHeight: '1.2',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+});
+
+const rulerBlockFootClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+});
+
+const rulerBlockDurClass = css({
+    fontSize: '10px',
+    fontWeight: '800',
+    color: 'rgba(255,255,255,0.8)',
+    fontVariantNumeric: 'tabular-nums',
+    lineHeight: '1',
+});
+
+const rulerParallelClass = css({
+    fontSize: '9px',
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.55)',
+    lineHeight: '1',
+});
+
+const rulerUnknownDurClass = css({
+    fontSize: '11px',
+    fontWeight: '800',
+    color: 'rgba(0,0,0,0.25)',
+    lineHeight: '1',
+    fontVariantNumeric: 'tabular-nums',
 });

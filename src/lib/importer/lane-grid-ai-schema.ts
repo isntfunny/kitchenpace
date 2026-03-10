@@ -145,7 +145,6 @@ export const IngredientSchema = z.object({
 // ============================================================================
 
 export const ImportedRecipeWithLaneGridSchema = z.object({
-    id: z.string().uuid().describe('UUID des Rezepts.'),
     title: z.string().min(1).max(200).describe('Titel des Rezepts auf DEUTSCH.'),
     description: z.string().min(10).describe('Kurze Beschreibung des Gerichts (2–4 Sätze).'),
     category: z.enum(CATEGORIES).describe('Kategorie des Rezepts.'),
@@ -232,7 +231,6 @@ export function getOpenAIResponseFormat() {
             schema: {
                 type: 'object',
                 properties: {
-                    id: { type: 'string', description: 'UUID des Rezepts.' },
                     title: { type: 'string', description: 'Titel auf DEUTSCH.' },
                     description: { type: 'string', description: 'Kurze Beschreibung.' },
                     category: { type: 'string', enum: [...CATEGORIES] },
@@ -282,7 +280,6 @@ export function getOpenAIResponseFormat() {
                     },
                 },
                 required: [
-                    'id',
                     'title',
                     'description',
                     'category',

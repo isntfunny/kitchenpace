@@ -23,7 +23,7 @@ const BOLOGNESE_GRID: LaneGrid = {
                         id: 'start',
                         type: 'start',
                         label: 'Pasta Bolognese',
-                        description: 'Klassische Bolognese mit frischen Zutaten. Dauer: ~50 Min.',
+                        description: 'Klassische Bolognese mit frischen Zutaten. Dauer: ~48 Min.',
                     },
                 ],
             ],
@@ -197,7 +197,7 @@ export default function LaneWizardMockPage() {
             <div className={titleBarClass}>
                 <span className={css({ fontSize: 'xl' })}>&#x1F35D;</span>
                 <h1 className={titleClass}>Pasta Bolognese</h1>
-                <span className={timeBadgeClass}>~50 Min.</span>
+                <span className={timeBadgeClass}>~48 Min.</span>
             </div>
 
             {/* LaneWizard */}

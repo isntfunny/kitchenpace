@@ -57,6 +57,12 @@ export default defineConfig({
                     from: { opacity: '1', transform: 'scale(1) translateY(0)' },
                     to: { opacity: '0', transform: 'scale(0.96) translateY(-4px)' },
                 },
+                shimmerDown: {
+                    '0%': { transform: 'translateY(-12px)', opacity: '0' },
+                    '15%': { opacity: '0.8' },
+                    '85%': { opacity: '0.8' },
+                    '100%': { transform: 'translateY(36px)', opacity: '0' },
+                },
             },
 
             tokens: {

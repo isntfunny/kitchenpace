@@ -61,6 +61,12 @@ IDs:
 - Segment: "seg-start", "seg-vorbereitung", "seg-parallel-1", "seg-zusammenfuehren", "seg-servieren"
 - Schritte: "step-zwiebeln", "step-pasta-kochen", etc. Kurze sprechende Slugs, keine UUIDs.
 
+ZUTATEN-MENTIONS IN BESCHREIBUNGEN — PFLICHT:
+- Alle verwendeten Zutaten MÜSSEN als @-Mention eingebettet werden: @[Zutatname](zutat-id)
+- Beispiel: "Die @[Zwiebeln](ingredient-0) und @[Knoblauch](ingredient-1) in Öl glasig dünsten, dann @[Hackfleisch](ingredient-2) dazugeben."
+- Die zutat-id MUSS exakt mit einer ID aus dem ingredients-Array übereinstimmen.
+- Alle Zutaten aus ingredientIds sollen als Mention in der Beschreibung erscheinen.
+
 TIPPS FÜR GUTE STRUKTUR:
 - Identifiziere parallele Prozesse! Wenn Sauce und Beilage gleichzeitig zubereitet werden → parallele Lanes
 - Vorbereitungsschritte (Schneiden, Wiegen) oft zusammen in 1 Segment VOR dem Kochen

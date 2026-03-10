@@ -78,11 +78,7 @@ export function FitsNow() {
                 <div
                     className={css({
                         display: 'grid',
-                        gridTemplateColumns: {
-                            base: '1fr', // 1 on mobile
-                            sm: 'repeat(2, 1fr)', // 2 on small screens
-                            lg: 'repeat(3, 1fr)', // 3 on desktop
-                        },
+                        gridTemplateColumns: 'repeat(3, 1fr)',
                         gap: '6',
                     })}
                 >

@@ -48,8 +48,11 @@ export function CategoryBar({ categories }: CategoryBarProps) {
         >
             <div
                 className={css({
-                    display: 'flex',
-                    flexWrap: 'wrap',
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        base: 'repeat(3, 1fr)',
+                        md: 'repeat(auto-fill, minmax(80px, 1fr))',
+                    },
                     gap: { base: '2', md: '3' },
                     pt: '1',
                 })}
@@ -62,8 +65,6 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                             key={cat.slug}
                             href={`/category/${cat.slug}`}
                             className={css({
-                                flex: '1 1 80px',
-                                maxWidth: { base: 'calc(25% - token(spacing.2))', md: '120px' },
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',

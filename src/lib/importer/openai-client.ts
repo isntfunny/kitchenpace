@@ -14,21 +14,35 @@ import type { ImportRunMetadata, RecipeParseResult } from './types';
 // OpenAI Client Initialisierung
 // ============================================================================
 
+/** Default model — configurable via RECIPE_IMPORT_MODEL env var */
+export const DEFAULT_IMPORT_MODEL = process.env.RECIPE_IMPORT_MODEL || 'openai/gpt-4.1';
+
 /**
- * Erstellt einen OpenAI Client mit den Umgebungsvariablen
+ * Erstellt einen OpenAI-kompatiblen Client.
+ * Uses OpenRouter (OPENROUTER_API_KEY) by default, falls back to direct
+ * OpenAI (OPENAI_API_KEY) if set.
  */
 export function createOpenAIClient(): OpenAI {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
 
-    if (!apiKey) {
-        throw new Error('OPENAI_API_KEY ist nicht konfiguriert');
+    if (openRouterKey) {
+        return new OpenAI({
+            apiKey: openRouterKey,
+            baseURL: 'https://openrouter.ai/api/v1',
+        });
     }
 
-    return new OpenAI({
-        apiKey,
-        // Optional: Organization ID für Enterprise Accounts
-        organization: process.env.OPENAI_ORG_ID,
-    });
+    if (openaiKey) {
+        return new OpenAI({
+            apiKey: openaiKey,
+            organization: process.env.OPENAI_ORG_ID,
+        });
+    }
+
+    throw new Error(
+        'Weder OPENROUTER_API_KEY noch OPENAI_API_KEY ist konfiguriert',
+    );
 }
 
 // Singleton-Instance für wiederverwendeten Client
@@ -167,10 +181,10 @@ ${markdown}
 Bitte analysiere den Inhalt und gib die strukturierten Rezeptdaten zurück.`;
 }
 
-// Pricing (USD per 1M tokens) — gpt-5.4
+// Rough pricing estimate (USD per 1M tokens) — varies by model/provider
 const PRICE_INPUT = 2.5 / 1_000_000;
 const PRICE_CACHED = 0.25 / 1_000_000;
-const PRICE_OUTPUT = 15.0 / 1_000_000;
+const PRICE_OUTPUT = 10.0 / 1_000_000;
 
 function computeCost(
     inputTokens: number | null,
@@ -216,7 +230,7 @@ export async function importRecipeFromMarkdown(
     sourceUrl: string,
     options: ImportRecipeOptions = {},
 ): Promise<RecipeParseResult> {
-    const { model = 'gpt-5.4', temperature = 0.1, context } = options;
+    const { model = DEFAULT_IMPORT_MODEL, temperature = 0.1, context } = options;
 
     try {
         const openai = getOpenAIClient();
@@ -366,7 +380,7 @@ export async function streamRecipeFromMarkdown(
     options: ImportRecipeOptions = {},
     onDelta: (text: string) => void,
 ): Promise<RecipeParseResult> {
-    const { model = 'gpt-5.4', temperature = 0.1, context } = options;
+    const { model = DEFAULT_IMPORT_MODEL, temperature = 0.1, context } = options;
 
     try {
         const openai = getOpenAIClient();

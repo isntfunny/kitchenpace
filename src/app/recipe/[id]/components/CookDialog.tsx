@@ -5,17 +5,21 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
+import { QRUploadButton } from '@app/components/features/QRUploadButton';
 import { css } from 'styled-system/css';
 
 interface CookDialogProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: { notes: string; image: File | null }) => void;
+    onSubmit: (data: { notes: string; image: File | null; imageKey?: string }) => void;
     isPending: boolean;
+    recipeId?: string;
+    recipeTitle?: string;
 }
 
-export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogProps) {
+export function CookDialog({ isOpen, onClose, onSubmit, isPending, recipeId, recipeTitle }: CookDialogProps) {
     const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+    const [uploadedImageKey, setUploadedImageKey] = useState<string | undefined>(undefined);
     const [cookNotes, setCookNotes] = useState('');
 
     // Close on Escape key
@@ -41,13 +45,15 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
     }, [isOpen]);
 
     const handleSubmit = () => {
-        onSubmit({ notes: cookNotes, image: uploadedImage });
+        onSubmit({ notes: cookNotes, image: uploadedImage, imageKey: uploadedImageKey });
         setUploadedImage(null);
+        setUploadedImageKey(undefined);
         setCookNotes('');
     };
 
     const handleCancel = () => {
         setUploadedImage(null);
+        setUploadedImageKey(undefined);
         setCookNotes('');
         onClose();
     };
@@ -216,10 +222,45 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
                                     id="cook-image-input-modal"
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) => setUploadedImage(e.target.files?.[0] ?? null)}
+                                    onChange={(e) => {
+                                        setUploadedImage(e.target.files?.[0] ?? null);
+                                        setUploadedImageKey(undefined);
+                                    }}
                                     className={css({ display: 'none' })}
                                 />
-                                {uploadedImage ? (
+                                {uploadedImageKey ? (
+                                    <div>
+                                        <div
+                                            className={css({
+                                                mb: '2',
+                                                color: 'green.500',
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                            })}
+                                        >
+                                            <CheckCircle size={32} />
+                                        </div>
+                                        <p
+                                            className={css({
+                                                fontSize: 'sm',
+                                                fontWeight: '500',
+                                                m: 0,
+                                            })}
+                                        >
+                                            Foto vom Handy empfangen
+                                        </p>
+                                        <p
+                                            className={css({
+                                                fontSize: 'xs',
+                                                color: 'foreground.muted',
+                                                mt: '1',
+                                                m: 0,
+                                            })}
+                                        >
+                                            Klicken zum Ändern
+                                        </p>
+                                    </div>
+                                ) : uploadedImage ? (
                                     <div>
                                         <div
                                             className={css({
@@ -285,6 +326,21 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending }: CookDialogP
                                     </div>
                                 )}
                             </div>
+
+                            {/* QR upload for mobile */}
+                            {!uploadedImage && !uploadedImageKey && (
+                                <div className={css({ display: 'flex', justifyContent: 'center' })}>
+                                    <QRUploadButton
+                                        uploadType="cook"
+                                        recipeId={recipeId}
+                                        label={recipeTitle ? `Koch-Foto für ${recipeTitle}` : 'Koch-Foto'}
+                                        onImageUploaded={(key) => {
+                                            setUploadedImageKey(key);
+                                            setUploadedImage(null);
+                                        }}
+                                    />
+                                </div>
+                            )}
 
                             {/* Actions */}
                             <div

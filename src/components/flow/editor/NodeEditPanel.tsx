@@ -1,6 +1,8 @@
 'use client';
 
 import { X, Upload, Loader2, Trash2, Check } from 'lucide-react';
+
+import { QRUploadButton } from '@app/components/features/QRUploadButton';
 import { useRef, useState, useCallback, useEffect } from 'react';
 
 import { searchIngredients } from '@app/components/recipe/actions';
@@ -270,27 +272,36 @@ export function NodeEditPanel({
                                 className={css({ display: 'none' })}
                                 onChange={handleFileChange}
                             />
-                            <button
-                                type="button"
-                                className={uploadButtonClass}
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={isUploading}
-                            >
-                                {isUploading ? (
-                                    <Loader2
-                                        className={css({
-                                            width: '16px',
-                                            height: '16px',
-                                            animation: 'spin 0.7s linear infinite',
-                                        })}
-                                    />
-                                ) : (
-                                    <Upload style={{ width: 16, height: 16 }} />
-                                )}
-                                <span>
-                                    {isUploading ? 'Wird hochgeladen...' : 'Foto hinzufügen'}
-                                </span>
-                            </button>
+                            <div className={css({ display: 'flex', gap: '2' })}>
+                                <button
+                                    type="button"
+                                    className={uploadButtonClass}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                    style={{ flex: 1 }}
+                                >
+                                    {isUploading ? (
+                                        <Loader2
+                                            className={css({
+                                                width: '16px',
+                                                height: '16px',
+                                                animation: 'spin 0.7s linear infinite',
+                                            })}
+                                        />
+                                    ) : (
+                                        <Upload style={{ width: 16, height: 16 }} />
+                                    )}
+                                    <span>
+                                        {isUploading ? 'Wird hochgeladen...' : 'Foto hinzufügen'}
+                                    </span>
+                                </button>
+                                <QRUploadButton
+                                    uploadType="step"
+                                    stepId={_nodeId}
+                                    label="Schritt-Foto"
+                                    onImageUploaded={setPhotoKey}
+                                />
+                            </div>
                             {uploadError && (
                                 <p className={css({ fontSize: 'xs', color: 'red.500', mt: '1' })}>
                                     {uploadError}

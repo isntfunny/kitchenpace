@@ -6,6 +6,8 @@ import { useState, useRef, useCallback } from 'react';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { css } from 'styled-system/css';
 
+import { QRUploadButton } from './QRUploadButton';
+
 type UploadType = 'profile' | 'recipe' | 'comment';
 
 interface FileUploadProps {
@@ -14,6 +16,8 @@ interface FileUploadProps {
     onChange: (url: string) => void;
     accept?: string;
     maxSize?: number;
+    recipeId?: string;
+    label?: string;
 }
 
 export function FileUpload({
@@ -22,6 +26,8 @@ export function FileUpload({
     onChange,
     accept = 'image/jpeg,image/png,image/gif,image/webp',
     maxSize = 5 * 1024 * 1024,
+    recipeId,
+    label,
 }: FileUploadProps) {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -139,6 +145,7 @@ export function FileUpload({
                     </button>
                 </div>
             ) : (
+                <div className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
                 <label
                     htmlFor={`file-upload-${type}`}
                     className={css({
@@ -190,6 +197,13 @@ export function FileUpload({
                         JPEG, PNG, GIF, WebP (max 5MB)
                     </span>
                 </label>
+                <QRUploadButton
+                    uploadType={type}
+                    recipeId={recipeId}
+                    label={label}
+                    onImageUploaded={onChange}
+                />
+                </div>
             )}
 
             {error && (

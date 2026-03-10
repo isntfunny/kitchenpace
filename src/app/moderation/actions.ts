@@ -141,11 +141,18 @@ export async function approveContent(queueId: string, reviewNote?: string) {
     });
 
     // Send notification to author
+    const isImage = ['cook_image', 'recipe_image', 'step_image', 'profile'].includes(
+        queueItem.contentType,
+    );
     await createUserNotification({
         userId: queueItem.authorId,
         type: 'SYSTEM',
-        title: 'Inhalt freigegeben',
-        message: 'Dein Inhalt wurde überprüft und freigegeben.',
+        title: isImage ? 'Bild freigegeben' : queueItem.contentType === 'recipe' ? 'Rezept freigegeben' : 'Inhalt freigegeben',
+        message: isImage
+            ? 'Dein Bild ist jetzt sichtbar!'
+            : queueItem.contentType === 'recipe'
+              ? 'Dein Rezept wurde geprüft und ist jetzt öffentlich sichtbar!'
+              : 'Dein Inhalt wurde überprüft und freigegeben.',
     });
 
     await publishAdminInboxRemoved(`moderation_queue:${queueItem.id}`);
@@ -222,11 +229,18 @@ export async function rejectContent(queueId: string, reviewNote: string) {
     });
 
     // Send notification to author
+    const isImageReject = ['cook_image', 'recipe_image', 'step_image', 'profile'].includes(
+        queueItem.contentType,
+    );
     await createUserNotification({
         userId: queueItem.authorId,
         type: 'SYSTEM',
-        title: 'Inhalt abgelehnt',
-        message: `Dein Inhalt wurde abgelehnt: ${reviewNote}`,
+        title: isImageReject ? 'Bild abgelehnt' : queueItem.contentType === 'recipe' ? 'Rezept abgelehnt' : 'Inhalt abgelehnt',
+        message: isImageReject
+            ? `Dein Bild entspricht leider nicht unseren Richtlinien: ${reviewNote}`
+            : queueItem.contentType === 'recipe'
+              ? `Dein Rezept wurde abgelehnt: ${reviewNote}`
+              : `Dein Inhalt wurde abgelehnt: ${reviewNote}`,
     });
 
     await publishAdminInboxRemoved(`moderation_queue:${queueItem.id}`);

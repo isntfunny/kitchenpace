@@ -2,13 +2,15 @@
 
 import { Key, LogOut } from 'lucide-react';
 import { motion } from 'motion/react';
-import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
 import { useEffect } from 'react';
 
 import { handleSignIn, handleSignOut } from '@app/components/auth/actions';
+import { InboxDropdown } from '@app/components/notifications/InboxDropdown';
+import { NotificationItem } from '@app/components/notifications/NotificationItem';
 import { useNotifications } from '@app/components/notifications/useNotifications';
+import { resolveNotificationHref } from '@app/components/notifications/utils';
 import { useProfile } from '@app/components/providers/ProfileProvider';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
@@ -21,8 +23,14 @@ export function HeaderAuth() {
     const { data: session, status } = useSession();
     const { profile } = useProfile();
     const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
-    const isLoading = status === 'loading';
-    const { unreadCount } = useNotifications({ enabled: isAuthenticated });
+    const isAuthLoading = status === 'loading';
+    const {
+        notifications,
+        unreadCount,
+        isLoading: isNotificationsLoading,
+        markAsRead,
+        markAllAsRead,
+    } = useNotifications({ enabled: isAuthenticated });
 
     const authDebugEnabled =
         process.env.NEXT_PUBLIC_AUTH_DEBUG === '1' || process.env.NODE_ENV !== 'production';
@@ -37,7 +45,7 @@ export function HeaderAuth() {
 
     const badgeContent = unreadCount > 9 ? '9+' : unreadCount;
 
-    if (isLoading) {
+    if (isAuthLoading) {
         return (
             <div
                 className={css({
@@ -101,38 +109,63 @@ export function HeaderAuth() {
                     </div>
                 )}
                 {unreadCount > 0 && (
-                    <Link
-                        href="/notifications"
-                        onClick={(e) => e.stopPropagation()}
-                        className={css({
-                            position: 'absolute',
-                            top: '-6px',
-                            right: '-8px',
-                            minWidth: '20px',
-                            height: '20px',
-                            borderRadius: 'full',
-                            background: 'status.danger',
-                            color: 'white',
-                            fontSize: '0.65rem',
-                            fontWeight: '700',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            px: '1',
-                            lineHeight: '1',
-                            border: '2px solid',
-                            borderColor: 'surface.elevated',
-                            textDecoration: 'none',
-                            zIndex: 1,
-                        })}
+                    <InboxDropdown
+                        trigger={
+                            <button
+                                type="button"
+                                aria-label="Benachrichtigungen öffnen"
+                                onClick={(e) => e.stopPropagation()}
+                                className={css({
+                                    position: 'absolute',
+                                    top: '-6px',
+                                    right: '-8px',
+                                    minWidth: '20px',
+                                    height: '20px',
+                                    borderRadius: 'full',
+                                    background: 'status.danger',
+                                    color: 'white',
+                                    fontSize: '0.65rem',
+                                    fontWeight: '700',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    px: '1',
+                                    lineHeight: '1',
+                                    border: '2px solid',
+                                    borderColor: 'surface.elevated',
+                                    cursor: 'pointer',
+                                    zIndex: 1,
+                                })}
+                            >
+                                <motion.span
+                                    animate={{ scale: [1, 1.15, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                                >
+                                    {badgeContent}
+                                </motion.span>
+                            </button>
+                        }
+                        title="Benachrichtigungen"
+                        subtitle="Die neuesten 19 Einträge"
+                        actionLabel={notifications.length > 0 ? 'Alle lesen' : undefined}
+                        onAction={notifications.length > 0 ? () => markAllAsRead() : undefined}
+                        isLoading={isNotificationsLoading}
+                        isEmpty={notifications.length === 0}
+                        emptyLabel="Noch keine Benachrichtigungen"
+                        footerHref="/notifications"
+                        footerLabel="Alle anzeigen"
                     >
-                        <motion.span
-                            animate={{ scale: [1, 1.15, 1] }}
-                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                        >
-                            {badgeContent}
-                        </motion.span>
-                    </Link>
+                        {notifications.slice(0, 19).map((notification) => (
+                            <NotificationItem
+                                key={notification.id}
+                                notification={notification}
+                                onHover={() => {
+                                    if (!notification.read) markAsRead([notification.id]);
+                                }}
+                                href={resolveNotificationHref(notification)}
+                            />
+                        ))}
+                    </InboxDropdown>
                 )}
             </div>
         );

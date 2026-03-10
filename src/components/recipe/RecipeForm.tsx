@@ -99,9 +99,6 @@ export function RecipeForm({
     // ── ingredient search state ─────────────────────────────
     const [ingredientQuery, setIngredientQuery] = useState('');
     const [searchResults, setSearchResults] = useState<IngredientSearchResult[]>([]);
-    const [showNewIngredient, setShowNewIngredient] = useState(false);
-    const [newIngredientName, setNewIngredientName] = useState('');
-    const [newIngredientUnit, setNewIngredientUnit] = useState('');
 
     // ── flow state (stored in refs — changes don't re-render form) ──
     const flowNodesRef = useRef<FlowNodeInput[]>(initialData?.flowNodes ?? []);
@@ -109,6 +106,7 @@ export function RecipeForm({
 
     // ── auto-save ────────────────────────────────────────────
     const autoSavedIdRef = useRef<string | null>(initialData?.id ?? null);
+    const [savedRecipeId, setSavedRecipeId] = useState<string | undefined>(initialData?.id);
     const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle');
     const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
     const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -182,6 +180,7 @@ export function RecipeForm({
             } else {
                 const recipe = await createRecipe(payload, authorId);
                 autoSavedIdRef.current = recipe.id;
+                setSavedRecipeId(recipe.id);
                 window.history.replaceState({}, '', `/recipe/${recipe.id}/edit`);
             }
 
@@ -336,26 +335,20 @@ export function RecipeForm({
         setSearchResults([]);
     };
 
-    const handleCreateNewIngredient = async () => {
-        if (!newIngredientName.trim()) return;
-        const unit = newIngredientUnit.trim() || 'Stück';
-        const created = await createIngredient(newIngredientName.trim(), undefined, [unit]);
+    const handleAddNewIngredient = async (name: string) => {
+        const created = await createIngredient(name, undefined, []);
         setIngredients((prev) => [
             ...prev,
             {
                 id: created.id,
                 name: created.name,
                 amount: '',
-                unit,
+                unit: '',
                 notes: '',
                 isOptional: false,
                 isNew: true,
             },
         ]);
-        setNewIngredientName('');
-        setNewIngredientUnit('');
-        setShowNewIngredient(false);
-        setIngredientQuery('');
     };
 
     const handleRemoveIngredient = (index: number) => {
@@ -519,6 +512,7 @@ export function RecipeForm({
                 onChange={handleFlowChange}
                 onAddIngredientToRecipe={handleAddIngredient}
                 onAiApply={handleAiApply}
+                recipeId={savedRecipeId}
             />
             {flowEditorDisabled && (
                 <div
@@ -743,6 +737,7 @@ export function RecipeForm({
                                 imageKey={imageKey}
                                 onImageKeyChange={setImageKey}
                                 showAutoSaveHint={false}
+                                recipeId={savedRecipeId}
                             />
                         </div>
 
@@ -817,15 +812,9 @@ export function RecipeForm({
                                 ingredientQuery={ingredientQuery}
                                 onIngredientQueryChange={setIngredientQuery}
                                 searchResults={searchResults}
-                                showNewIngredient={showNewIngredient}
-                                onShowNewIngredient={setShowNewIngredient}
-                                newIngredientName={newIngredientName}
-                                onNewIngredientNameChange={setNewIngredientName}
-                                newIngredientUnit={newIngredientUnit}
-                                onNewIngredientUnitChange={setNewIngredientUnit}
-                                onCreateNewIngredient={handleCreateNewIngredient}
                                 ingredients={ingredients}
                                 onAddIngredient={handleAddIngredient}
+                                onAddNewIngredient={handleAddNewIngredient}
                                 onUpdateIngredient={updateIngredient}
                                 onRemoveIngredient={handleRemoveIngredient}
                             />
@@ -874,6 +863,7 @@ export function RecipeForm({
                     imageKey={imageKey}
                     onImageKeyChange={setImageKey}
                     showAutoSaveHint={true}
+                    recipeId={savedRecipeId}
                 />
 
                 <TimeAndDifficultySection
@@ -905,15 +895,9 @@ export function RecipeForm({
                     ingredientQuery={ingredientQuery}
                     onIngredientQueryChange={setIngredientQuery}
                     searchResults={searchResults}
-                    showNewIngredient={showNewIngredient}
-                    onShowNewIngredient={setShowNewIngredient}
-                    newIngredientName={newIngredientName}
-                    onNewIngredientNameChange={setNewIngredientName}
-                    newIngredientUnit={newIngredientUnit}
-                    onNewIngredientUnitChange={setNewIngredientUnit}
-                    onCreateNewIngredient={handleCreateNewIngredient}
                     ingredients={ingredients}
                     onAddIngredient={handleAddIngredient}
+                    onAddNewIngredient={handleAddNewIngredient}
                     onUpdateIngredient={updateIngredient}
                     onRemoveIngredient={handleRemoveIngredient}
                 />
@@ -995,8 +979,8 @@ const sidebarFormClass = css({
 });
 
 const sidebarClass = css({
-    width: { base: '100%', md: '320px' },
-    minWidth: { base: '100%', md: '320px' },
+    width: { base: '100%', md: '360px', lg: '420px', xl: '480px', '2xl': '540px' },
+    minWidth: { base: '100%', md: '360px', lg: '420px', xl: '480px', '2xl': '540px' },
     flexShrink: '0',
     borderRight: {
         base: 'none',

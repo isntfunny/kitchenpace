@@ -11,6 +11,7 @@ interface GeneralInformationSectionProps {
     imageKey?: string;
     onImageKeyChange?: (value: string) => void;
     showAutoSaveHint?: boolean;
+    recipeId?: string;
 }
 
 export function GeneralInformationSection({
@@ -21,11 +22,18 @@ export function GeneralInformationSection({
     imageKey = '',
     onImageKeyChange = () => {},
     showAutoSaveHint = false,
+    recipeId,
 }: GeneralInformationSectionProps) {
     return (
         <div>
             <div className={css({ fontWeight: '600', display: 'block', mb: '2' })}>Rezeptbild</div>
-            <FileUpload type="recipe" value={imageKey} onChange={onImageKeyChange} />
+            <FileUpload
+                type="recipe"
+                value={imageKey}
+                onChange={onImageKeyChange}
+                recipeId={recipeId}
+                label="Rezeptbild"
+            />
 
             <div className={css({ mt: '6' })}>
                 <label className={css({ fontWeight: '600', display: 'block', mb: '2' })}>

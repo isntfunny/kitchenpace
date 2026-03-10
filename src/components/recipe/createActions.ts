@@ -477,7 +477,8 @@ export async function createIngredient(name: string, category?: string, units: s
             name,
             slug,
             category: toShoppingCategory(category),
-            units: units.length > 0 ? units : [name.includes('g') ? 'g' : 'Stück'],
+            units: units.length > 0 ? units : [],
+            needsReview: true,
         },
     });
 }

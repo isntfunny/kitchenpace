@@ -1031,15 +1031,9 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                             ingredientQuery=""
                             onIngredientQueryChange={() => {}}
                             searchResults={[]}
-                            showNewIngredient={false}
-                            onShowNewIngredient={() => {}}
-                            newIngredientName=""
-                            onNewIngredientNameChange={() => {}}
-                            newIngredientUnit=""
-                            onNewIngredientUnitChange={() => {}}
-                            onCreateNewIngredient={async () => {}}
                             ingredients={ingredients}
                             onAddIngredient={() => {}}
+                            onAddNewIngredient={async () => {}}
                             onUpdateIngredient={(idx, changes) => {
                                 setIngredients((prev) => {
                                     const next = [...prev];

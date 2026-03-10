@@ -1,7 +1,7 @@
 'use client';
 
 import { MessageSquare, X } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
@@ -13,24 +13,15 @@ import { SegmentedBar } from './SegmentedBar';
 const SERVING_PRESETS = [1, 2, 4, 6, 8] as const;
 const SERVING_LABELS = SERVING_PRESETS.map(String);
 
-const UNIT_PRESETS = ['g', 'ml', 'EL', 'TL', 'Stk'] as const;
-const UNIT_LABELS = [...UNIT_PRESETS] as string[];
-
 interface IngredientManagerProps {
     servings: number;
     onServingsChange: (value: number) => void;
     ingredientQuery: string;
     onIngredientQueryChange: (value: string) => void;
     searchResults: IngredientSearchResult[];
-    showNewIngredient: boolean;
-    onShowNewIngredient: (value: boolean) => void;
-    newIngredientName: string;
-    onNewIngredientNameChange: (value: string) => void;
-    newIngredientUnit: string;
-    onNewIngredientUnitChange: (value: string) => void;
-    onCreateNewIngredient: () => void;
     ingredients: AddedIngredient[];
     onAddIngredient: (ingredient: IngredientSearchResult) => void;
+    onAddNewIngredient: (name: string) => Promise<void>;
     onUpdateIngredient: (index: number, changes: Partial<AddedIngredient>) => void;
     onRemoveIngredient: (index: number) => void;
 }
@@ -41,26 +32,44 @@ export function IngredientManager({
     ingredientQuery,
     onIngredientQueryChange,
     searchResults,
-    showNewIngredient,
-    onShowNewIngredient,
-    newIngredientName,
-    onNewIngredientNameChange,
-    newIngredientUnit,
-    onNewIngredientUnitChange,
-    onCreateNewIngredient,
     ingredients,
     onAddIngredient,
+    onAddNewIngredient,
     onUpdateIngredient,
     onRemoveIngredient,
 }: IngredientManagerProps) {
-    const unitActiveIndex = UNIT_PRESETS.indexOf(
-        newIngredientUnit as (typeof UNIT_PRESETS)[number],
-    );
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    const handleNeu = () => {
-        onNewIngredientNameChange(ingredientQuery);
-        onNewIngredientUnitChange('g');
-        onShowNewIngredient(true);
+    const showDropdown = ingredientQuery.length >= 2;
+    const showAddNew = ingredientQuery.length >= 2;
+
+    // Ghost autocomplete: top result whose name starts with the current query
+    const topResult = searchResults[0] ?? null;
+    const ghostCompletion =
+        topResult && ingredientQuery.length >= 1
+            ? topResult.name.toLowerCase().startsWith(ingredientQuery.toLowerCase())
+                ? topResult.name.slice(ingredientQuery.length)
+                : ''
+            : '';
+
+    const acceptGhost = () => {
+        if (!ghostCompletion || !topResult) return;
+        onAddIngredient(topResult);
+        onIngredientQueryChange('');
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (ghostCompletion && (e.key === 'Tab' || e.key === 'ArrowRight')) {
+            e.preventDefault();
+            acceptGhost();
+        }
+    };
+
+    const handleAddNew = async () => {
+        const name = ingredientQuery.trim();
+        if (!name) return;
+        await onAddNewIngredient(name);
+        onIngredientQueryChange('');
     };
 
     return (
@@ -94,25 +103,36 @@ export function IngredientManager({
             {/* Ingredient search */}
             <label className={labelClass}>Zutaten *</label>
             <div className={css({ position: 'relative', mb: '4' })}>
+                {/* Ghost text overlay — sits behind the input, same padding/font */}
+                <div className={ghostOverlayClass} aria-hidden>
+                    <span style={{ visibility: 'hidden', whiteSpace: 'pre' }}>
+                        {ingredientQuery}
+                    </span>
+                    <span className={ghostTextClass}>{ghostCompletion}</span>
+                </div>
                 <input
+                    ref={inputRef}
                     type="text"
                     value={ingredientQuery}
-                    onChange={(e) => {
-                        onIngredientQueryChange(e.target.value);
-                        onShowNewIngredient(false);
-                    }}
-                    placeholder="Zutat suchen oder neu erstellen..."
+                    onChange={(e) => onIngredientQueryChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Zutat suchen oder hinzufügen..."
                     className={inputClass}
+                    style={{ background: 'transparent', position: 'relative' }}
+                    autoComplete="off"
                 />
 
-                {/* Search results dropdown */}
-                {searchResults.length > 0 && !showNewIngredient && (
+                {/* Dropdown: search results + add-new option */}
+                {showDropdown && (searchResults.length > 0 || showAddNew) && (
                     <div className={dropdownClass}>
                         {searchResults.map((ing) => (
                             <button
                                 key={ing.id}
                                 type="button"
-                                onClick={() => onAddIngredient(ing)}
+                                onClick={() => {
+                                    onAddIngredient(ing);
+                                    onIngredientQueryChange('');
+                                }}
                                 className={resultBtnClass}
                             >
                                 <span className={css({ fontWeight: '500' })}>{ing.name}</span>
@@ -127,111 +147,18 @@ export function IngredientManager({
                                 </span>
                             </button>
                         ))}
-                    </div>
-                )}
-
-                {/* "+ Neu" button inside search field */}
-                {ingredientQuery.length >= 2 && !showNewIngredient && (
-                    <button
-                        type="button"
-                        onClick={handleNeu}
-                        className={neuBtnClass}
-                        style={{ background: PALETTE.orange }}
-                    >
-                        + Neu
-                    </button>
-                )}
-
-                {/* Inline new ingredient creation */}
-                {showNewIngredient && (
-                    <div className={newCardClass}>
-                        <div
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '2',
-                                mb: '3',
-                            })}
-                        >
-                            <input
-                                type="text"
-                                value={newIngredientName}
-                                onChange={(e) => onNewIngredientNameChange(e.target.value)}
-                                placeholder="Name der Zutat"
-                                autoFocus
-                                className={css({
-                                    flex: '1',
-                                    padding: '2',
-                                    borderRadius: 'lg',
-                                    fontSize: 'sm',
-                                    fontWeight: '500',
-                                    outline: 'none',
-                                })}
-                                style={{ border: `1px solid ${PALETTE.orange}40` }}
-                            />
-                        </div>
-                        <div className={css({ mb: '3' })}>
-                            <span
-                                className={css({
-                                    fontSize: 'xs',
-                                    fontWeight: '600',
-                                    color: 'foreground.muted',
-                                    display: 'block',
-                                    mb: '1',
-                                })}
-                            >
-                                Einheit
-                            </span>
-                            <SegmentedBar
-                                items={UNIT_LABELS}
-                                activeIndex={unitActiveIndex}
-                                onSelect={(i) => onNewIngredientUnitChange(UNIT_PRESETS[i])}
-                                trackingName="ingredient_unit"
-                                customInput={{
-                                    type: 'string',
-                                    value: unitActiveIndex === -1 ? newIngredientUnit : '',
-                                    onChange: onNewIngredientUnitChange,
-                                    placeholder: 'z.B. Prise, Bund',
-                                }}
-                            />
-                        </div>
-                        <div className={css({ display: 'flex', gap: '2' })}>
+                        {showAddNew && (
                             <button
                                 type="button"
-                                onClick={onCreateNewIngredient}
-                                className={css({
-                                    flex: '1',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: 'lg',
-                                    py: '2',
-                                    fontWeight: '600',
-                                    fontSize: 'sm',
-                                    cursor: 'pointer',
-                                })}
-                                style={{
-                                    background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
-                                }}
+                                onClick={handleAddNew}
+                                className={addNewBtnClass}
                             >
-                                Erstellen
+                                <span className={css({ color: PALETTE.orange, fontWeight: '700', mr: '1' })}>+</span>
+                                <span>
+                                    &ldquo;{ingredientQuery.trim()}&rdquo; hinzufügen
+                                </span>
                             </button>
-                            <button
-                                type="button"
-                                onClick={() => onShowNewIngredient(false)}
-                                className={css({
-                                    flex: '1',
-                                    bg: 'transparent',
-                                    color: 'text',
-                                    borderRadius: 'lg',
-                                    py: '2',
-                                    fontSize: 'sm',
-                                    cursor: 'pointer',
-                                })}
-                                style={{ border: `1px solid ${PALETTE.orange}40` }}
-                            >
-                                Abbrechen
-                            </button>
-                        </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -456,6 +383,24 @@ const unitInputClass = css({
 const labelSmClass = css({ fontWeight: '600', display: 'block', mb: '2', fontSize: 'sm' });
 const labelClass = css({ fontWeight: '600', display: 'block', mb: '2' });
 
+const ghostOverlayClass = css({
+    position: 'absolute',
+    inset: '0',
+    padding: '3',
+    borderRadius: 'xl',
+    fontSize: 'md',
+    pointerEvents: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    color: 'text',
+});
+
+const ghostTextClass = css({
+    color: { base: 'rgba(0,0,0,0.3)', _dark: 'rgba(255,255,255,0.28)' },
+});
+
 const inputClass = css({
     width: '100%',
     padding: '3',
@@ -500,30 +445,17 @@ const resultBtnClass = css({
     _hover: { bg: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' } },
 });
 
-const neuBtnClass = css({
-    position: 'absolute',
-    right: '2',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    color: 'white',
+const addNewBtnClass = css({
+    width: '100%',
+    padding: '3',
+    textAlign: 'left',
+    bg: 'transparent',
     border: 'none',
-    borderRadius: 'lg',
-    px: '3',
-    py: '1',
-    fontSize: 'sm',
-    fontWeight: '600',
+    borderTop: { base: '1px dashed rgba(224,123,83,0.25)', _dark: '1px dashed rgba(224,123,83,0.2)' },
     cursor: 'pointer',
-});
-
-const newCardClass = css({
-    position: 'absolute',
-    top: '100%',
-    left: '0',
-    right: '0',
-    bg: { base: 'white', _dark: 'surface' },
-    borderRadius: 'xl',
-    boxShadow: { base: 'lg', _dark: '0 10px 25px rgba(0,0,0,0.4)' },
-    p: '4',
-    zIndex: '10',
-    border: { base: 'none', _dark: '1px solid rgba(224,123,83,0.15)' },
+    color: 'text.muted',
+    fontSize: 'sm',
+    display: 'flex',
+    alignItems: 'center',
+    _hover: { bg: { base: 'rgba(224,123,83,0.06)', _dark: 'rgba(224,123,83,0.1)' }, color: 'text' },
 });

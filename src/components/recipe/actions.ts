@@ -41,7 +41,7 @@ export async function searchIngredients(query: string): Promise<IngredientSearch
                 multi_match: {
                     query,
                     type: 'phrase_prefix',
-                    fields: ['name^3', 'slug', 'keywords'],
+                    fields: ['name^3', 'keywords'],
                 },
             },
             sort: [{ _score: { order: 'desc' } }, { 'name.keyword': { order: 'asc' } }],

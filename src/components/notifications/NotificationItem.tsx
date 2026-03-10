@@ -33,6 +33,7 @@ export function NotificationItem({
             createdAt={notification.createdAt}
             dense={dense}
             emphasized={!notification.read}
+            notificationType={notification.type}
             onHover={onHover}
         />
     );

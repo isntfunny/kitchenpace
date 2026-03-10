@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { prisma } from '@shared/prisma';
 
 export async function setFeaturedRecipe(recipeId: string | null) {
@@ -78,7 +79,7 @@ export async function getContentSettings() {
                       id: true,
                       name: true,
                       image: true,
-                      profile: { select: { id: true, nickname: true, photoUrl: true } },
+                      profile: { select: { id: true, nickname: true, photoKey: true } },
                   },
               })
             : null,
@@ -90,7 +91,10 @@ export async function getContentSettings() {
             ? {
                   id: topUser.id,
                   name: topUser.name ?? topUser.profile?.nickname ?? 'Unbekannt',
-                  avatar: topUser.profile?.photoUrl ?? topUser.image,
+                  photoKey: topUser.profile?.photoKey ?? null,
+                  avatar: topUser.profile?.photoKey
+                      ? getThumbnailUrl(topUser.profile.photoKey, '1:1', 96)
+                      : (topUser.image ?? null),
               }
             : null,
     };
@@ -112,7 +116,7 @@ export async function getSelectableUsers() {
             id: true,
             name: true,
             image: true,
-            profile: { select: { id: true, nickname: true, photoUrl: true, recipeCount: true } },
+            profile: { select: { id: true, nickname: true, photoKey: true, recipeCount: true } },
         },
         orderBy: { name: 'asc' },
     });

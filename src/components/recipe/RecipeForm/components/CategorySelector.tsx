@@ -27,12 +27,30 @@ interface CategorySelectorProps {
 }
 
 export function CategorySelector({ categories, selectedIds, onToggle }: CategorySelectorProps) {
+    const noneSelected = selectedIds.length === 0;
     return (
         <div>
             <label
-                className={css({ fontWeight: '600', display: 'block', mb: '2', fontSize: 'sm' })}
+                className={css({
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1',
+                    mb: '2',
+                    fontSize: 'sm',
+                })}
             >
-                Kategorien (mindestens eine)
+                Kategorien
+                <span
+                    className={css({
+                        color: noneSelected ? 'palette.orange' : 'text.muted',
+                        fontWeight: noneSelected ? '700' : '400',
+                        fontSize: 'sm',
+                        transition: 'color 200ms',
+                    })}
+                >
+                    *
+                </span>
             </label>
             <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
                 {categories.map((cat) => {

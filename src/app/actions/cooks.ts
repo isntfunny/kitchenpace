@@ -3,12 +3,12 @@
 import { revalidatePath } from 'next/cache';
 
 import { getServerAuthSession } from '@app/lib/auth';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { prisma } from '@shared/prisma';
 
 export interface CookImageData {
     id: string;
-    imageUrl: string;
-    imageKey?: string | null;
+    imageKey: string;
     caption: string | null;
     createdAt: Date;
     user: {
@@ -42,7 +42,7 @@ export async function fetchRecipeCookImages(slugOrId: string): Promise<CookImage
                     profile: {
                         select: {
                             nickname: true,
-                            photoUrl: true,
+                            photoKey: true,
                         },
                     },
                 },
@@ -52,22 +52,22 @@ export async function fetchRecipeCookImages(slugOrId: string): Promise<CookImage
 
     return images.map((img) => ({
         id: img.id,
-        imageUrl: img.imageUrl,
-        imageKey: img.imageKey ?? null,
+        imageKey: img.imageKey,
         caption: img.caption,
         createdAt: img.createdAt,
         user: {
             id: img.user.id,
             name: img.user.name ?? img.user.profile?.nickname ?? 'Unbekannt',
             nickname: img.user.profile?.nickname ?? null,
-            avatar: img.user.profile?.photoUrl ?? null,
+            avatar: img.user.profile?.photoKey
+                ? getThumbnailUrl(img.user.profile.photoKey, '1:1', 96)
+                : null,
         },
     }));
 }
 
 export interface UserCookImageData {
     id: string;
-    imageUrl: string;
     imageKey: string | null;
     caption: string | null;
     moderationStatus: string;
@@ -92,7 +92,6 @@ export async function fetchUserOwnCookImages(userId: string): Promise<UserCookIm
 
     return images.map((img) => ({
         id: img.id,
-        imageUrl: img.imageUrl,
         imageKey: img.imageKey ?? null,
         caption: img.caption,
         moderationStatus: img.moderationStatus,

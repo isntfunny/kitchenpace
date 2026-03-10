@@ -280,40 +280,39 @@ export async function markRecipeCookedAction(
         throw new Error('RECIPE_NOT_FOUND');
     }
 
-    let imageUrl: string | undefined;
     let imageKey: string | undefined;
 
     if (options?.image) {
-        const { uploadFile, deleteFile } = await import('@app/lib/s3');
+        const { uploadFile } = await import('@app/lib/s3');
         const { moderateContent, persistModerationResult } =
             await import('@app/lib/moderation/moderationService');
+        const { rejectCookImage: _rejectCookImage } = await import('@app/lib/image-approval');
         const arrayBuffer = await options.image.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const file = options.image as File;
         const result = await uploadFile(buffer, file.name, file.type, 'cook');
 
         // Run AI image moderation
-        const modResult = await moderateContent({ imageUrl: result.url });
+        const modResult = await moderateContent({ imageKey: result.key });
 
         if (modResult.decision === 'REJECTED') {
-            await deleteFile(result.key);
+            await _rejectCookImage(result.key);
             await persistModerationResult('cook_image', result.key, viewer.id, modResult, {
-                imageUrl: result.url,
+                imageKey: result.key,
                 recipeId,
             });
             // Don't block the cook action, just skip the image
         } else {
-            imageUrl = result.url;
             imageKey = result.key;
 
             await persistModerationResult('cook_image', result.key, viewer.id, modResult, {
-                imageUrl: result.url,
+                imageKey: result.key,
                 recipeId,
             });
         }
     }
 
-    const hasImage = Boolean(imageUrl);
+    const hasImage = Boolean(imageKey);
 
     const cookHistory = await prisma.userCookHistory.create({
         data: {
@@ -321,7 +320,6 @@ export async function markRecipeCookedAction(
             recipeId,
             servings: options?.servings,
             notes: options?.notes,
-            imageUrl,
             imageKey,
         },
     });
@@ -331,8 +329,7 @@ export async function markRecipeCookedAction(
             data: {
                 userId: viewer.id,
                 recipeId,
-                imageUrl: imageUrl!,
-                imageKey,
+                imageKey: imageKey!,
             },
         });
     }
@@ -361,7 +358,7 @@ export async function markRecipeCookedAction(
     return {
         success: true,
         cookId: cookHistory.id,
-        hasImage: Boolean(imageUrl),
+        hasImage: Boolean(imageKey),
         cookCount: (recipe.cookCount ?? 0) + 1,
     };
 }

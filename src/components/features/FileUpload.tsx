@@ -48,7 +48,7 @@ export function FileUpload({
                 }
 
                 const data = await response.json();
-                onChange(data.url);
+                onChange(data.key);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Upload failed');
             } finally {
@@ -104,9 +104,11 @@ export function FileUpload({
                     })}
                 >
                     <SmartImage
-                        src={value}
+                        imageKey={value}
                         alt="Uploaded preview"
+                        aspect="16:9"
                         fill
+                        sizes="100vw"
                         className={css({
                             objectFit: 'cover',
                         })}

@@ -4,7 +4,9 @@ import { Star, User } from 'lucide-react';
 import { useState } from 'react';
 import { useTransition } from 'react';
 
+import { SmartImage } from '@app/components/atoms/SmartImage';
 import { SearchableSelect } from '@app/components/ui/SearchableSelect';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { css } from 'styled-system/css';
 
 import { setFeaturedRecipe, setTopUser } from './actions';
@@ -21,6 +23,7 @@ interface CurrentRecipe {
 interface CurrentUser {
     id: string;
     name: string;
+    photoKey: string | null;
     avatar: string | null;
 }
 
@@ -102,7 +105,7 @@ export function ContentModerationForm({
                         >
                             {currentFeatured.imageKey && (
                                 <img
-                                    src={`https://storage.kitchenpace.cloud/${currentFeatured.imageKey}`}
+                                    src={getThumbnailUrl(currentFeatured.imageKey, '1:1', 320)}
                                     alt={currentFeatured.title}
                                     className={css({
                                         width: 'full',
@@ -140,9 +143,7 @@ export function ContentModerationForm({
                         return {
                             label: title,
                             sublabel: rating ? `${rating.toFixed(1)} ★` : undefined,
-                            avatar: imageKey
-                                ? `https://storage.kitchenpace.cloud/${imageKey}`
-                                : undefined,
+                            avatar: imageKey ? getThumbnailUrl(imageKey, '1:1', 320) : undefined,
                         };
                     }}
                     emptyMessage="Keine Rezepte gefunden"
@@ -205,18 +206,18 @@ export function ContentModerationForm({
                                 overflow: 'hidden',
                             })}
                         >
-                            {currentTopUser.avatar ? (
-                                <img
-                                    src={currentTopUser.avatar}
+                            {currentTopUser.photoKey || currentTopUser.avatar ? (
+                                <SmartImage
+                                    imageKey={currentTopUser.photoKey ?? undefined}
+                                    src={
+                                        !currentTopUser.photoKey
+                                            ? (currentTopUser.avatar ?? undefined)
+                                            : undefined
+                                    }
                                     alt={currentTopUser.name}
-                                    className={css({
-                                        width: 'full',
-                                        height: 'full',
-                                        objectFit: 'cover',
-                                    })}
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
+                                    aspect="1:1"
+                                    sizes="48px"
+                                    fill
                                 />
                             ) : (
                                 <div
@@ -267,11 +268,14 @@ export function ContentModerationForm({
                     renderOption={(item) => {
                         const name = String(item.name || item.title || '');
                         const recipeCount = item.recipeCount as number | undefined;
+                        const photoKey = (item as { photoKey?: string | null }).photoKey;
                         const avatar = item.avatar as string | null | undefined;
                         return {
                             label: name,
                             sublabel: recipeCount ? `${recipeCount} Rezepte` : undefined,
-                            avatar: avatar ?? undefined,
+                            avatar: photoKey
+                                ? getThumbnailUrl(photoKey, '1:1', 72)
+                                : (avatar ?? undefined),
                         };
                     }}
                     emptyMessage="Keine User gefunden"

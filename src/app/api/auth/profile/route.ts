@@ -36,7 +36,7 @@ export async function GET() {
     return NextResponse.json({
         profile: profile
             ? {
-                  photoUrl: profile.photoUrl,
+                  photoKey: profile.photoKey,
                   nickname: profile.nickname,
               }
             : null,

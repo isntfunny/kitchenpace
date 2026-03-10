@@ -22,7 +22,7 @@ interface DraftRecipe {
     id: string;
     title: string;
     slug: string;
-    imageUrl: string | null;
+    imageKey: string | null;
     createdAt: Date;
     updatedAt: Date;
 }

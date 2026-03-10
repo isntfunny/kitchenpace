@@ -69,13 +69,15 @@ export function HeaderAuth() {
     if (isAuthenticated) {
         const avatar = (
             <div className={css({ position: 'relative' })}>
-                {profile?.photoUrl ? (
+                {profile?.photoKey ? (
                     <SmartImage
-                        src={profile.photoUrl}
+                        imageKey={profile.photoKey}
                         alt={profile.nickname || 'Profil'}
-                        width={36}
-                        height={36}
+                        aspect="1:1"
+                        sizes="36px"
                         className={css({
+                            width: '36px',
+                            height: '36px',
                             borderRadius: '50%',
                             objectFit: 'cover',
                         })}

@@ -106,11 +106,7 @@ export function StepCard({
             {photoKey && (
                 <div className={imageStripClass}>
                     <img
-                        src={getThumbnailUrl(photoKey, {
-                            width: 90,
-                            height: 120,
-                            fit: 'cover',
-                        })}
+                        src={getThumbnailUrl(photoKey, '3:4', 320)}
                         alt={step.label}
                         className={imageStripImgClass}
                     />

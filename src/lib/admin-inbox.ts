@@ -1,5 +1,6 @@
 import type { ModerationQueue, Report } from '@prisma/client';
 
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { prisma } from '@shared/prisma';
 
 import { publishRealtimeEvent } from './realtime/broker';
@@ -48,7 +49,7 @@ async function getActorContext(userId: string) {
     return {
         id: user.id,
         name: user.profile?.nickname ?? user.name ?? 'Unbekannt',
-        avatar: user.profile?.photoUrl ?? null,
+        avatar: user.profile?.photoKey ? getThumbnailUrl(user.profile.photoKey, '1:1', 96) : null,
         slug: user.profile?.slug ?? user.id,
     };
 }

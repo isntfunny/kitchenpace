@@ -8,8 +8,8 @@ interface GeneralInformationSectionProps {
     onTitleChange: (value: string) => void;
     description: string;
     onDescriptionChange: (value: string) => void;
-    imageUrl: string;
-    onImageUrlChange: (value: string) => void;
+    imageKey?: string;
+    onImageKeyChange?: (value: string) => void;
     showAutoSaveHint?: boolean;
 }
 
@@ -18,14 +18,14 @@ export function GeneralInformationSection({
     onTitleChange,
     description,
     onDescriptionChange,
-    imageUrl,
-    onImageUrlChange,
+    imageKey = '',
+    onImageKeyChange = () => {},
     showAutoSaveHint = false,
 }: GeneralInformationSectionProps) {
     return (
         <div>
             <div className={css({ fontWeight: '600', display: 'block', mb: '2' })}>Rezeptbild</div>
-            <FileUpload type="recipe" value={imageUrl} onChange={onImageUrlChange} />
+            <FileUpload type="recipe" value={imageKey} onChange={onImageKeyChange} />
 
             <div className={css({ mt: '6' })}>
                 <label className={css({ fontWeight: '600', display: 'block', mb: '2' })}>

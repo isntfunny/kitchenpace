@@ -2,7 +2,9 @@ import { ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { Job } from 'bullmq';
 
 import { syncContactToNotifuse } from '@app/lib/notifuse/email';
-import { s3Client, BUCKET } from '@app/lib/s3';
+import { s3Client, BUCKET, generateOgImage, ogThumbKey, exists } from '@app/lib/s3';
+
+import type { GenerateRecipeOgJob, GenerateOgImagesJob } from './types';
 
 import { prisma } from './prisma';
 import { getBackupQueue } from './queue';
@@ -256,12 +258,12 @@ export async function processCachePurge(
         let continuationToken: string | undefined;
         let scannedCount = 0;
 
-        // Paginate through all cache/ objects
+        // Paginate through all thumbs/ objects
         do {
             const response = await s3Client.send(
                 new ListObjectsV2Command({
                     Bucket: BUCKET,
-                    Prefix: 'cache/',
+                    Prefix: 'thumbs/',
                     ContinuationToken: continuationToken,
                 }),
             );
@@ -305,6 +307,90 @@ export async function processCachePurge(
         console.error(`[CachePurge] purge-thumbnail-cache job ${job.id} failed`, {
             error: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined,
+        });
+        throw error;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// OG image generation
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate OG image (1200x630 JPEG) for a single recipe.
+ * Triggered on-demand when a recipe image is approved.
+ */
+export async function processGenerateRecipeOg(
+    job: Job<GenerateRecipeOgJob>,
+): Promise<{ success: boolean; key?: string; skipped?: boolean }> {
+    const { recipeId, imageKey } = job.data;
+    console.log(`[OgWorker] Generating OG image for recipe ${recipeId}, key: ${imageKey}`);
+
+    try {
+        const tKey = ogThumbKey(imageKey);
+
+        // Skip if already generated
+        if (await exists(tKey)) {
+            console.log(`[OgWorker] OG already exists for ${recipeId}, skipping`);
+            return { success: true, skipped: true };
+        }
+
+        const key = await generateOgImage(imageKey);
+        console.log(`[OgWorker] Generated OG for recipe ${recipeId}: ${key}`);
+        return { success: true, key };
+    } catch (error) {
+        console.error(`[OgWorker] generate-recipe-og job ${job.id} failed`, {
+            recipeId,
+            imageKey,
+            error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+    }
+}
+
+/**
+ * Scheduled job: find all published recipes with an imageKey but missing OG cache,
+ * and enqueue individual generate-recipe-og jobs for each.
+ */
+export async function processGenerateOgImages(
+    job: Job<GenerateOgImagesJob>,
+): Promise<{ success: boolean; enqueued: number }> {
+    const batchSize = job.data.batchSize ?? 50;
+    console.log(`[OgWorker] Scanning for recipes missing OG images (batch: ${batchSize})`);
+
+    try {
+        const recipes = await prisma.recipe.findMany({
+            where: {
+                status: 'PUBLISHED',
+                imageKey: { not: null },
+            },
+            select: { id: true, imageKey: true },
+            take: batchSize,
+        });
+
+        const { getScheduledQueue } = await import('./queue');
+        const queue = getScheduledQueue();
+        let enqueued = 0;
+
+        for (const recipe of recipes) {
+            if (!recipe.imageKey) continue;
+
+            const tKey = ogThumbKey(recipe.imageKey);
+            if (await exists(tKey)) continue; // already cached
+
+            await queue.add(
+                'generate-recipe-og',
+                { recipeId: recipe.id, imageKey: recipe.imageKey },
+                { priority: 1 },
+            );
+            enqueued++;
+        }
+
+        console.log(`[OgWorker] Enqueued ${enqueued} OG generation jobs`);
+        return { success: true, enqueued };
+    } catch (error) {
+        console.error(`[OgWorker] generate-og-images job ${job.id} failed`, {
+            error: error instanceof Error ? error.message : String(error),
         });
         throw error;
     }

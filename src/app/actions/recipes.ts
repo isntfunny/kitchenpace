@@ -7,6 +7,7 @@ import {
     type RecipeCardData,
     type RecipeWithCategory,
 } from '@app/lib/recipe-card';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { prisma } from '@shared/prisma';
 
 // Re-export for backward compatibility
@@ -217,9 +218,10 @@ export async function fetchRecipeBySlug(
           ])
         : null;
 
-    const [favoriteCount, viewerData] = await Promise.all([
+    const [favoriteCount, viewerData, stepImages] = await Promise.all([
         prisma.favorite.count({ where: { recipeId: recipe.id } }),
         viewerPromise,
+        prisma.recipeStepImage.findMany({ where: { recipeId: recipe.id } }),
     ]);
 
     const [favorite, rating, follow, cookHistory] = viewerData ?? [];
@@ -255,7 +257,13 @@ export async function fetchRecipeBySlug(
             notes: ri.notes,
         })),
         flow: {
-            nodes: (recipe.flowNodes as any[]) || [],
+            nodes: (() => {
+                const photoKeyByStepId = new Map(stepImages.map((si) => [si.stepId, si.photoKey]));
+                return ((recipe.flowNodes as any[]) || []).map((n: any) => {
+                    const photoKey = photoKeyByStepId.get(n.id);
+                    return photoKey ? { ...n, photoKey } : n;
+                });
+            })(),
             edges: (recipe.flowEdges as any[]) || [],
         },
         tags: recipe.tags.map((rt: any) => rt.tag.name),
@@ -266,7 +274,9 @@ export async function fetchRecipeBySlug(
                   id: recipe.author.id,
                   slug: recipe.author.profile?.slug ?? recipe.author.id,
                   name: recipe.author.name || 'Unbekannt',
-                  avatar: recipe.author.profile?.photoUrl || DEFAULT_AUTHOR_AVATAR,
+                  avatar: recipe.author.profile?.photoKey
+                      ? getThumbnailUrl(recipe.author.profile.photoKey, '1:1', 96)
+                      : DEFAULT_AUTHOR_AVATAR,
                   bio: recipe.author.profile?.bio || null,
                   recipeCount: recipe.author.profile?.recipeCount ?? 0,
                   followerCount: recipe.author.profile?.followerCount ?? 0,
@@ -307,7 +317,7 @@ export interface EditRecipeData {
     id: string;
     title: string;
     description: string;
-    imageUrl?: string;
+    imageKey?: string;
     servings: number;
     prepTime: number;
     cookTime: number;
@@ -355,7 +365,7 @@ export async function fetchRecipeForEdit(
         id: recipe.id,
         title: recipe.title,
         description: recipe.description ?? '',
-        imageUrl: recipe.imageKey ?? undefined,
+        imageKey: recipe.imageKey ?? undefined,
         servings: recipe.servings,
         prepTime: recipe.prepTime,
         cookTime: recipe.cookTime,

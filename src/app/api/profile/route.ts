@@ -7,7 +7,7 @@ import { prisma } from '@shared/prisma';
 
 const MAX_NICKNAME_LENGTH = 40;
 const MAX_TEASER_LENGTH = 160;
-const MAX_PHOTO_URL_LENGTH = 2048;
+const MAX_PHOTO_KEY_LENGTH = 2048;
 
 const sanitizeString = (value: unknown, maxLength: number): string | null => {
     if (typeof value !== 'string') {
@@ -97,7 +97,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const teaser = sanitizeString(payload.teaser, MAX_TEASER_LENGTH);
-    const photoUrl = sanitizeString(payload.photoUrl, MAX_PHOTO_URL_LENGTH);
+    const photoKey = sanitizeString(payload.photoKey, MAX_PHOTO_KEY_LENGTH);
     const ratingsPublic = sanitizeBoolean(payload.ratingsPublic);
     const followsPublic = sanitizeBoolean(payload.followsPublic);
     const favoritesPublic = sanitizeBoolean(payload.favoritesPublic);
@@ -121,8 +121,8 @@ export async function PUT(request: NextRequest) {
     if (teaser) {
         profileUpdates.teaser = teaser;
     }
-    if (photoUrl) {
-        profileUpdates.photoUrl = photoUrl;
+    if (photoKey) {
+        profileUpdates.photoKey = photoKey;
     }
 
     if (ratingsPublic !== undefined) {

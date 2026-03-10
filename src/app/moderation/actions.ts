@@ -6,7 +6,19 @@ import { revalidatePath } from 'next/cache';
 import { publishAdminInboxRemoved } from '@app/lib/admin-inbox';
 import { getServerAuthSession } from '@app/lib/auth';
 import { createUserNotification } from '@app/lib/events/persist';
-import { deleteFile } from '@app/lib/s3';
+import {
+    approveRecipeImage,
+    approveRecipeImageByKey,
+    approveCommentImage,
+    approveCookImage,
+    approveStepImage,
+    approveProfileImage,
+    rejectRecipeImageByKey,
+    rejectCommentImage,
+    rejectCookImage,
+    rejectStepImage,
+    rejectProfileImage,
+} from '@app/lib/image-approval';
 import { prisma } from '@shared/prisma';
 
 async function requireModerator() {
@@ -78,33 +90,44 @@ export async function approveContent(queueId: string, reviewNote?: string) {
         const snapshot = queueItem.contentSnapshot as Record<string, unknown> | null;
         const intendedPublish = snapshot?.intendedStatus === 'PUBLISHED';
 
-        await prisma.recipe.update({
+        const updatedRecipe = await prisma.recipe.update({
             where: { id: queueItem.contentId },
             data: {
                 moderationStatus: 'APPROVED',
                 moderationNote: null,
                 ...(intendedPublish ? { status: 'PUBLISHED', publishedAt: new Date() } : {}),
             },
+            select: { id: true, imageKey: true },
         });
+
+        if (updatedRecipe.imageKey) {
+            await approveRecipeImage(updatedRecipe.id, updatedRecipe.imageKey);
+        }
+    } else if (queueItem.contentType === 'recipe_image') {
+        await approveRecipeImageByKey(queueItem.contentId);
     } else if (queueItem.contentType === 'comment') {
-        await prisma.comment.update({
+        const comment = await prisma.comment.update({
             where: { id: queueItem.contentId },
-            data: {
-                moderationStatus: 'APPROVED',
-                isHidden: false,
-                moderationNote: null,
-            },
+            data: { moderationStatus: 'APPROVED', isHidden: false, moderationNote: null },
+            select: { id: true, imageKey: true },
         });
+        if (comment.imageKey) {
+            await approveCommentImage(comment.id, comment.imageKey);
+        }
     } else if (queueItem.contentType === 'cook_image') {
-        await prisma.cookImage.update({
+        const cookImage = await prisma.cookImage.update({
             where: { id: queueItem.contentId },
-            data: {
-                moderationStatus: 'APPROVED',
-                isHidden: false,
-            },
+            data: { moderationStatus: 'APPROVED', isHidden: false },
+            select: { id: true, imageKey: true },
         });
+        if (cookImage.imageKey) {
+            await approveCookImage(cookImage.id, cookImage.imageKey);
+        }
+    } else if (queueItem.contentType === 'step_image') {
+        await approveStepImage(queueItem.contentId);
+    } else if (queueItem.contentType === 'profile') {
+        await approveProfileImage(queueItem.authorId, queueItem.contentId);
     }
-    // step_image: already live in S3 + RecipeStepImage row — no action needed on approve
 
     // Write audit log
     await prisma.moderationLog.create({
@@ -153,37 +176,38 @@ export async function rejectContent(queueId: string, reviewNote: string) {
 
     // Update the original content record
     if (queueItem.contentType === 'recipe') {
-        await prisma.recipe.update({
+        const recipe = await prisma.recipe.update({
             where: { id: queueItem.contentId },
-            data: {
-                moderationStatus: 'REJECTED',
-                moderationNote: reviewNote,
-                status: 'ARCHIVED',
-            },
+            data: { moderationStatus: 'REJECTED', moderationNote: reviewNote, status: 'ARCHIVED' },
+            select: { imageKey: true },
         });
+        if (recipe.imageKey) {
+            await rejectRecipeImageByKey(recipe.imageKey);
+        }
+    } else if (queueItem.contentType === 'recipe_image') {
+        await rejectRecipeImageByKey(queueItem.contentId);
     } else if (queueItem.contentType === 'comment') {
-        await prisma.comment.update({
+        const comment = await prisma.comment.update({
             where: { id: queueItem.contentId },
-            data: {
-                moderationStatus: 'REJECTED',
-                isHidden: true,
-                moderationNote: reviewNote,
-            },
+            data: { moderationStatus: 'REJECTED', isHidden: true, moderationNote: reviewNote },
+            select: { imageKey: true },
         });
+        if (comment.imageKey) {
+            await rejectCommentImage(comment.imageKey);
+        }
     } else if (queueItem.contentType === 'cook_image') {
-        await prisma.cookImage.update({
+        const cookImage = await prisma.cookImage.update({
             where: { id: queueItem.contentId },
-            data: {
-                moderationStatus: 'REJECTED',
-                isHidden: true,
-            },
+            data: { moderationStatus: 'REJECTED', isHidden: true },
+            select: { imageKey: true },
         });
+        if (cookImage.imageKey) {
+            await rejectCookImage(cookImage.imageKey);
+        }
     } else if (queueItem.contentType === 'step_image') {
-        // contentId is the S3 key — delete from RecipeStepImage and S3
-        await prisma.recipeStepImage.deleteMany({
-            where: { photoKey: queueItem.contentId },
-        });
-        await deleteFile(queueItem.contentId);
+        await rejectStepImage(queueItem.contentId);
+    } else if (queueItem.contentType === 'profile') {
+        await rejectProfileImage(queueItem.contentId);
     }
 
     // Write audit log

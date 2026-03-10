@@ -379,8 +379,8 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 <SmartImage
                                     src={user.avatar}
                                     alt={user.name}
+                                    aspect="1:1"
                                     fill
-                                    userId={user.id}
                                     className={css({ objectFit: 'cover', display: 'block' })}
                                 />
                             ) : (

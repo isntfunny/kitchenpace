@@ -96,6 +96,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                     <SmartImage
                         src={avatar}
                         alt={displayName}
+                        aspect="1:1"
                         fill
                         className={css({ objectFit: 'cover' })}
                     />

@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
 import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
-import { deleteFile, uploadFile, UploadType } from '@app/lib/s3';
+import { upload, generateUploadKey, trashKeyFrom, moveObject, deleteObject } from '@app/lib/s3';
+import type { UploadType } from '@app/lib/s3';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 export async function POST(request: NextRequest) {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    if (!type || !['profile', 'recipe', 'comment', 'step'].includes(type)) {
+    if (!type || !['profile', 'recipe', 'comment', 'step', 'cook'].includes(type)) {
         return NextResponse.json({ error: 'Invalid upload type' }, { status: 400 });
     }
 
@@ -39,36 +39,46 @@ export async function POST(request: NextRequest) {
 
     try {
         const buffer = Buffer.from(await file.arrayBuffer());
-        const result = await uploadFile(buffer, file.name, file.type, type);
+        const key = generateUploadKey(type, file.name);
+
+        // Upload to uploads/ prefix (private staging area)
+        await upload(key, buffer, file.type);
 
         logAuth('info', 'POST /api/upload: file uploaded', {
             userId: session.user.id,
             type,
+            key,
         });
 
-        // Run AI image moderation
-        const modResult = await moderateContent({ imageUrl: result.url });
+        // Run AI image moderation using base64 data URL (bucket is private)
+        const base64Url = `data:${file.type};base64,${buffer.toString('base64')}`;
+        const modResult = await moderateContent({ imageKey: base64Url });
 
         const modContentType =
             type === 'step'
                 ? 'step_image'
                 : type === 'recipe'
-                  ? 'recipe'
+                  ? 'recipe_image'
                   : type === 'profile'
                     ? 'profile'
-                    : 'comment';
+                    : type === 'cook'
+                      ? 'cook_image'
+                      : 'comment';
         const modSnapshot = {
             contentType: type,
-            contentId: result.key,
+            contentId: key,
             authorId: session.user.id,
-            imageUrl: result.url,
+            imageKey: key,
         };
 
         if (modResult.decision === 'REJECTED') {
-            await deleteFile(result.key);
+            // Move to trash/ instead of deleting
+            const trashKey = trashKeyFrom(key);
+            await moveObject(key, trashKey);
+
             await persistModerationResult(
                 modContentType,
-                result.key,
+                key,
                 session.user.id,
                 modResult,
                 modSnapshot,
@@ -89,14 +99,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Persist all moderation results (PENDING + AUTO_APPROVED) for audit trail
-        await persistModerationResult(
-            modContentType,
-            result.key,
-            session.user.id,
-            modResult,
-            modSnapshot,
-        );
+        // Persist moderation result for audit trail (PENDING + AUTO_APPROVED)
+        await persistModerationResult(modContentType, key, session.user.id, modResult, modSnapshot);
 
         if (modResult.decision === 'PENDING') {
             logAuth('info', 'POST /api/upload: image queued for moderation', {
@@ -106,9 +110,13 @@ export async function POST(request: NextRequest) {
             });
         }
 
+        // AUTO_APPROVED: move to approved/ prefix
+        // For now we keep it in uploads/ and let the consumer handle approval
+        // since we don't know the entityId yet (recipe/step may not be saved yet)
+        // The approveImage flow will be triggered when the entity is persisted
+
         return NextResponse.json({
-            url: result.url,
-            key: result.key,
+            key,
             moderationStatus: modResult.decision,
         });
     } catch (error) {

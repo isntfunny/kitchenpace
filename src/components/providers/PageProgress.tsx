@@ -1,6 +1,10 @@
 'use client';
 
-import { AppProgressBar } from 'next-nprogress-bar';
+import dynamic from 'next/dynamic';
+
+const AppProgressBar = dynamic(() => import('next-nprogress-bar').then((m) => m.AppProgressBar), {
+    ssr: false,
+});
 
 export function PageProgress() {
     return (

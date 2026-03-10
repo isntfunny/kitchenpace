@@ -5,13 +5,15 @@
  * NextAuth field that is never synced after registration.
  */
 
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
+
 type UserWithOptionalProfile = {
     id: string;
     name?: string | null;
     image?: string | null;
     profile?: {
         nickname?: string | null;
-        photoUrl?: string | null;
+        photoKey?: string | null;
         slug?: string | null;
         bio?: string | null;
         recipeCount?: number;
@@ -23,8 +25,8 @@ export function getUserDisplayName(user: Pick<UserWithOptionalProfile, 'profile'
     return user.profile?.nickname ?? 'Unbekannt';
 }
 
-export function getUserAvatarUrl(userId: string): string {
-    return `/api/thumbnail?type=user&id=${encodeURIComponent(userId)}`;
+export function getUserAvatarUrl(photoKey: string): string {
+    return getThumbnailUrl(photoKey, '1:1', 96);
 }
 
 export function getUserSlugOrId(user: Pick<UserWithOptionalProfile, 'id' | 'profile'>): string {
@@ -50,7 +52,9 @@ export function mapUserToFollowDisplay(user: UserWithOptionalProfile): FollowUse
         id: user.id,
         name: user.name ?? null,
         nickname: user.profile?.nickname ?? null,
-        avatar: user.profile?.photoUrl ?? user.image ?? null,
+        avatar: user.profile?.photoKey
+            ? getThumbnailUrl(user.profile.photoKey, '1:1', 96)
+            : (user.image ?? null),
         bio: user.profile?.bio ?? null,
         recipeCount: user.profile?.recipeCount ?? 0,
         followerCount: user.profile?.followerCount ?? 0,

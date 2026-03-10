@@ -3,7 +3,7 @@
 import { createContext, useContext, ReactNode } from 'react';
 
 export interface ProfileData {
-    photoUrl: string | null;
+    photoKey: string | null;
     nickname: string | null;
 }
 

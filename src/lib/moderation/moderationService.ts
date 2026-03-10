@@ -32,8 +32,14 @@ export async function moderateContent(input: ContentModerationInput): Promise<Mo
         moderationInput.push({ type: 'text', text: input.text });
     }
 
-    if (input.imageUrl) {
-        moderationInput.push({ type: 'image_url', image_url: { url: input.imageUrl } });
+    if (input.imageKey) {
+        // The upload route already passes base64 data URLs directly via imageKey
+        // when it's a data: URL; otherwise treat as an S3 key path (not directly accessible)
+        // For S3 keys, we pass the thumbnail URL which is publicly accessible
+        const imageUrl = input.imageKey.startsWith('data:')
+            ? input.imageKey
+            : `/api/thumbnail?key=${encodeURIComponent(input.imageKey)}`;
+        moderationInput.push({ type: 'image_url', image_url: { url: imageUrl } });
     }
 
     if (moderationInput.length === 0) {

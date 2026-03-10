@@ -28,9 +28,7 @@ const mapDocumentToRecipeCard = (document: Record<string, unknown>): RecipeCardD
         category: (document.category as string) || 'Hauptgericht',
         rating,
         time: `${totalTime} Min.`,
-        image:
-            (document.imageUrl as string) ??
-            'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&q=80',
+        image: (document.imageKey as string) ?? null,
         imageKey: (document.imageKey as string) ?? null,
         description: (document.description as string) || '',
     };

@@ -3,9 +3,11 @@
 import { fireEvent } from '@app/lib/events/fire';
 import { createActivityLog } from '@app/lib/events/persist';
 import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
+import { moveObject } from '@app/lib/s3';
+import { approvedKey } from '@app/lib/s3/keys';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
-import { addSyncRecipeJob } from '@worker/queues';
+import { addSyncRecipeJob, addGenerateRecipeOgJob } from '@worker/queues';
 
 type ShoppingCategory =
     | 'GEMUESE'
@@ -96,13 +98,24 @@ async function syncStepImages(recipeId: string, nodes: FlowNodeInput[]): Promise
         },
     });
 
-    // Upsert for steps that have a photo
+    // Upsert for steps that have a photo; move uploads/ → approved/ if needed
     for (const node of nodes) {
         if (!node.photoKey) continue;
+        let photoKey = node.photoKey;
+        if (photoKey.startsWith('uploads/')) {
+            const filename = photoKey.split('/').pop() ?? photoKey;
+            const destKey = `approved/step/${filename}`;
+            try {
+                await moveObject(photoKey, destKey);
+                photoKey = destKey;
+            } catch {
+                // already moved or missing — keep original key
+            }
+        }
         await prisma.recipeStepImage.upsert({
             where: { recipeId_stepId: { recipeId, stepId: node.id } },
-            create: { recipeId, stepId: node.id, photoKey: node.photoKey },
-            update: { photoKey: node.photoKey },
+            create: { recipeId, stepId: node.id, photoKey },
+            update: { photoKey },
         });
     }
 }
@@ -116,7 +129,7 @@ export interface FlowEdgeInput {
 export interface UpdateRecipeInput {
     title: string;
     description?: string;
-    imageUrl?: string;
+    imageKey?: string;
     servings: number;
     prepTime: number;
     cookTime: number;
@@ -170,7 +183,7 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
             title: data.title,
             slug,
             description: data.description,
-            imageKey: data.imageUrl,
+            imageKey: data.imageKey,
             servings: data.servings,
             prepTime: data.prepTime,
             cookTime: data.cookTime,
@@ -191,6 +204,16 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
         await syncStepImages(recipeId, data.flowNodes);
     }
 
+    // Move recipe image from uploads/ to approved/ if auto-approved
+    let finalImageKey = recipe.imageKey;
+    if (modResult.decision === 'AUTO_APPROVED' && recipe.imageKey?.startsWith('uploads/')) {
+        const ext = recipe.imageKey.split('.').pop() ?? 'jpg';
+        const destKey = approvedKey('recipe', recipe.id, ext);
+        await moveObject(recipe.imageKey, destKey);
+        await prisma.recipe.update({ where: { id: recipe.id }, data: { imageKey: destKey } });
+        finalImageKey = destKey;
+    }
+
     // Persist moderation result for audit trail
     await persistModerationResult('recipe', recipe.id, authorId, modResult, {
         contentType: 'recipe',
@@ -199,7 +222,15 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
         title: data.title,
         description: data.description,
         text: recipeText,
+        imageKey: finalImageKey ?? undefined,
     });
+
+    // Queue OG image generation for auto-approved recipes with an image
+    if (modResult.decision === 'AUTO_APPROVED' && finalImageKey) {
+        addGenerateRecipeOgJob(recipe.id, finalImageKey).catch((err) => {
+            console.error('[createActions] Failed to enqueue OG job', err);
+        });
+    }
 
     // Replace categories
     await prisma.recipeCategory.deleteMany({ where: { recipeId } });
@@ -278,7 +309,7 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
 export interface CreateRecipeInput {
     title: string;
     description: string;
-    imageUrl?: string;
+    imageKey?: string;
     servings: number;
     prepTime: number;
     cookTime: number;
@@ -336,7 +367,7 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             title: data.title,
             slug: slug,
             description: data.description,
-            imageKey: data.imageUrl,
+            imageKey: data.imageKey,
             servings: data.servings,
             prepTime: data.prepTime,
             cookTime: data.cookTime,
@@ -367,6 +398,16 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         await syncStepImages(recipe.id, data.flowNodes);
     }
 
+    // Move recipe image from uploads/ to approved/ if auto-approved
+    let finalImageKey = recipe.imageKey;
+    if (modResult.decision === 'AUTO_APPROVED' && recipe.imageKey?.startsWith('uploads/')) {
+        const ext = recipe.imageKey.split('.').pop() ?? 'jpg';
+        const destKey = approvedKey('recipe', recipe.id, ext);
+        await moveObject(recipe.imageKey, destKey);
+        await prisma.recipe.update({ where: { id: recipe.id }, data: { imageKey: destKey } });
+        finalImageKey = destKey;
+    }
+
     // Persist moderation result for audit trail
     await persistModerationResult('recipe', recipe.id, authorId, modResult, {
         contentType: 'recipe',
@@ -375,7 +416,15 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         title: data.title,
         description: data.description,
         text: recipeText,
+        imageKey: finalImageKey ?? undefined,
     });
+
+    // Queue OG image generation for auto-approved recipes with an image
+    if (modResult.decision === 'AUTO_APPROVED' && finalImageKey) {
+        addGenerateRecipeOgJob(recipe.id, finalImageKey).catch((err) => {
+            console.error('[createActions] Failed to enqueue OG job for new recipe', err);
+        });
+    }
 
     if (isPublished) {
         await createActivityLog({

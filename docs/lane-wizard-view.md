@@ -102,6 +102,7 @@ Das Grid **ist** der DAG. Kein Graphen-Denken nötig, keine Edges, keine Handles
 **Per Lane:** Jede Lane hat ihren eigenen (+) am unteren Rand.
 
 **Zwischen Segmenten** (volle Breite, zwischen Zeilen):
+
 ```
 Einzelne Lane:     ──── (↔ Split) ────
 Mehrere Lanes:     ──── (↔ Split) ──── (⊕ Merge) ────
@@ -133,10 +134,12 @@ Wenn eine Lane mehr Zeilen hat als ihre Geschwister, dehnen sich die kürzeren L
 ```
 
 **Leere Zellen** im Edit-Modus:
+
 - Zeigen Step-Type-Icons (blasse Silhouetten) zum Anklicken
 - Oder bleiben leer mit gestricheltem Rand
 
 **Leere Zellen** im View-Modus:
+
 - Unsichtbar (kein Rand, kein Hintergrund)
 - Lane-Breite wird an die gefüllten Zellen verteilt
 
@@ -147,6 +150,7 @@ Wenn eine Lane mehr Zeilen hat als ihre Geschwister, dehnen sich die kürzeren L
 Jede gefüllte Zelle hat die **gleichen Funktionen** wie die bisherigen xyflow-Nodes:
 
 ### Anzeige
+
 - **Step-Type-Farbe** als Hintergrund (gleiche Farben wie stepConfig.ts)
 - **Icon** + **Typ-Label** (z.B. 🔥 Braten)
 - **Titel** (fett, z.B. "Zwiebeln anbraten")
@@ -156,6 +160,7 @@ Jede gefüllte Zelle hat die **gleichen Funktionen** wie die bisherigen xyflow-N
 - **Zutaten-Chips** unterhalb der Beschreibung
 
 ### Timer (View-Modus)
+
 - Timer-Fortschritt füllt die **Hintergrundfarbe der Zelle von links nach rechts**
 - Start/Pause/Reset-Buttons innerhalb der Zelle
 - Zeitanzeige: `MM:SS`
@@ -175,11 +180,13 @@ Jede gefüllte Zelle hat die **gleichen Funktionen** wie die bisherigen xyflow-N
 ```
 
 ### Erledigt-State (View-Modus)
+
 - Zelle wird gedimmt (opacity 0.55)
 - Titel durchgestrichen
 - Check-Circle oben rechts
 
 ### Edit-Modus (Zelle bearbeiten)
+
 - Klick auf Zelle → Inline-Edit-Panel expandiert (oder Modal)
 - Felder: Typ-Wechsel, Titel, Dauer, Beschreibung (@mentions), Foto-Upload
 - Gleiche Inputs wie bisheriges NodeEditPanel
@@ -193,14 +200,14 @@ Jede gefüllte Zelle hat die **gleichen Funktionen** wie die bisherigen xyflow-N
 ```typescript
 interface LaneStep {
     id: string;
-    type: StepType;          // 'start' | 'schneiden' | 'kochen' | ... | 'servieren'
+    type: StepType; // 'start' | 'schneiden' | 'kochen' | ... | 'servieren'
     label: string;
-    description: string;     // Plaintext oder @[Name](id) Mentions
-    duration?: number;       // Minuten
-    photoKey?: string;       // S3-Key
+    description: string; // Plaintext oder @[Name](id) Mentions
+    duration?: number; // Minuten
+    photoKey?: string; // S3-Key
     photoUrl?: string;
     ingredientIds?: string[];
-    continuation?: boolean;  // Runtime-only: visueller Filler nach Partial-Merge, nie gespeichert
+    continuation?: boolean; // Runtime-only: visueller Filler nach Partial-Merge, nie gespeichert
 }
 ```
 
@@ -209,11 +216,11 @@ interface LaneStep {
 ```typescript
 interface LaneSegment {
     id: string;
-    lanes: LaneStep[][];     // lanes[laneIndex][stepIndex]
-    columnSpans: number[];   // Breite jeder Lane in fr-Einheiten
-                             // Summe = effektive Spaltenanzahl
-                             // z.B. [3] = volle Breite, [2,1] = 2/3+1/3, [1,1,1] = drei gleich
-                             // lanes.length === columnSpans.length immer
+    lanes: LaneStep[][]; // lanes[laneIndex][stepIndex]
+    columnSpans: number[]; // Breite jeder Lane in fr-Einheiten
+    // Summe = effektive Spaltenanzahl
+    // z.B. [3] = volle Breite, [2,1] = 2/3+1/3, [1,1,1] = drei gleich
+    // lanes.length === columnSpans.length immer
 }
 ```
 
@@ -221,7 +228,7 @@ interface LaneSegment {
 
 ```typescript
 interface LaneGrid {
-    segments: LaneSegment[];   // von oben nach unten; Split/Merge erzeugt neues Segment
+    segments: LaneSegment[]; // von oben nach unten; Split/Merge erzeugt neues Segment
 }
 ```
 
@@ -241,6 +248,7 @@ Beim Hinzufügen einer Lane zu einem Segment mit `columnSpans: [3]` entsteht `[2
 ### DB-Speicherung
 
 Prisma `Recipe` Modell — ein einziges JSON-Feld:
+
 ```prisma
 model Recipe {
   // ... bestehende Felder ...
@@ -255,9 +263,9 @@ model Recipe {
 Identisch zur Runtime-Struktur, aber `continuation`-Steps werden **nie gespeichert** — sie sind abgeleiteter Zustand.
 
 ```typescript
-type LaneStepStored    = Omit<LaneStep, 'continuation'>;
+type LaneStepStored = Omit<LaneStep, 'continuation'>;
 type LaneSegmentStored = { id: string; lanes: LaneStepStored[][]; columnSpans: number[] };
-type LaneGridStored    = { segments: LaneSegmentStored[] };
+type LaneGridStored = { segments: LaneSegmentStored[] };
 ```
 
 Vollständiges Zod-Schema + OpenAI Response Format: `src/lib/importer/lane-grid-ai-schema.ts`
@@ -269,6 +277,7 @@ Vollständiges Zod-Schema + OpenAI Response Format: `src/lib/importer/lane-grid-
 Wenn Lanes breiter als der Bildschirm sind (typisch: >2 Lanes auf Mobile, >4 auf Desktop):
 
 ### Scroll-Verhalten
+
 - Grid wird horizontal scrollbar mit **Scroll-Snapping** an Lane-Grenzen (`scroll-snap-type: x mandatory`)
 - Touch: Swipe horizontal zum Scrollen zwischen Lanes
 - Desktop: Scroll-Pfeile links/rechts
@@ -328,6 +337,7 @@ src/components/lane-wizard/
 ```
 
 **Noch nicht implementiert:**
+
 - `StepEditPanel` — Inline-Edit für Label, Beschreibung, Dauer, Foto-Upload
 - `onChange` Callback (aktuell nur interner State)
 - @mentions in Beschreibungen
@@ -340,7 +350,7 @@ src/components/lane-wizard/
 ```typescript
 interface LaneWizardProps {
     initialGrid: LaneGrid;
-    ingredients?: AddedIngredient[];    // für @mentions
+    ingredients?: AddedIngredient[]; // für @mentions
 
     mode?: 'edit' | 'view';
 
@@ -372,26 +382,27 @@ Continuation:   bg: step-color (flach) flexGrow: 1 — visueller Filler, kein In
 
 ## Was verschwindet
 
-| Komponente | Ersatz |
-|---|---|
-| `FlowEditor.tsx` (xyflow) | LaneWizard edit-Modus |
-| `RecipeFlow.tsx` (custom viewer) | LaneWizard view-Modus |
-| `SimpleTextView` | LaneWizard mit 1 Lane |
-| `MobileView` | LaneWizard ist touch-first |
-| `@xyflow/react` | Dependency entfällt |
-| `dagre` | Kein Layout-Algorithmus nötig |
-| `editor/RecipeNode.tsx` | `StepCard.tsx` |
-| `editor/NodeEditPanel.tsx` | `StepEditPanel.tsx` (noch zu bauen) |
-| `editor/NodePalette.tsx` | `StepTypePicker.tsx` |
-| `editor/FlowEditorContext.ts` | Nicht mehr nötig |
-| `editor/useFlowAutoLayout.ts` | Grid braucht kein Auto-Layout |
-| `recipe.flowNodes` + `recipe.flowEdges` | `recipe.laneGrid` (ein JSON-Feld) |
+| Komponente                              | Ersatz                              |
+| --------------------------------------- | ----------------------------------- |
+| `FlowEditor.tsx` (xyflow)               | LaneWizard edit-Modus               |
+| `RecipeFlow.tsx` (custom viewer)        | LaneWizard view-Modus               |
+| `SimpleTextView`                        | LaneWizard mit 1 Lane               |
+| `MobileView`                            | LaneWizard ist touch-first          |
+| `@xyflow/react`                         | Dependency entfällt                 |
+| `dagre`                                 | Kein Layout-Algorithmus nötig       |
+| `editor/RecipeNode.tsx`                 | `StepCard.tsx`                      |
+| `editor/NodeEditPanel.tsx`              | `StepEditPanel.tsx` (noch zu bauen) |
+| `editor/NodePalette.tsx`                | `StepTypePicker.tsx`                |
+| `editor/FlowEditorContext.ts`           | Nicht mehr nötig                    |
+| `editor/useFlowAutoLayout.ts`           | Grid braucht kein Auto-Layout       |
+| `recipe.flowNodes` + `recipe.flowEdges` | `recipe.laneGrid` (ein JSON-Feld)   |
 
 ---
 
 ## Implementierungs-Reihenfolge
 
 ### Phase 1: Mock ✅
+
 - `/lane-wizard-mock/page.tsx` mit hardcodierten Daten
 - LaneWizard Komponente mit Edit + View Modus
 - Alle drei Operationen funktional: (+), Split, Merge
@@ -401,22 +412,26 @@ Continuation:   bg: step-color (flach) flexGrow: 1 — visueller Filler, kein In
 - Zod-Schema + OpenAI Response Format: `lane-grid-ai-schema.ts`
 
 ### Phase 2: Echte Komponente
+
 - `StepEditPanel` mit Titel, Beschreibung (@mentions), Dauer, Foto-Upload
 - `onChange` Callback aus LaneWizard nach außen
 - In `RecipeForm.tsx` einbinden (ersetzt FlowEditor)
 
 ### Phase 3: DB-Migration
+
 - `laneGrid Json?` zu Prisma Schema hinzufügen, `flowNodes` + `flowEdges` entfernen
 - `createActions.ts` / `updateActions.ts` anpassen (`serializeLaneGrid` / `deserializeLaneGrid`)
 - Recipe Detail Page: LaneWizard im View-Modus
 
 ### Phase 4: Aufräumen
+
 - xyflow + dagre Dependencies entfernen
 - Alte Editor-Dateien löschen (FlowEditor, RecipeFlow, SimpleTextView, MobileView)
 - `openai-recipe-schema.ts` → `lane-grid-ai-schema.ts` in AI-Importer einbinden
 - GAMEPLAN.md aktualisieren
 
 ### Phase 5: Polish
+
 - Mobile Lane-Tabs + horizontales Scroll-Snapping
 - Drag & Drop zum Umordnen von Schritten
 - Keyboard shortcuts (Delete, Escape)

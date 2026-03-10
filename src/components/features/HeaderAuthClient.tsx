@@ -13,7 +13,7 @@ import { SmartImage } from '../atoms/SmartImage';
 interface HeaderAuthClientProps {
     isAuthenticated: boolean;
     profile: {
-        photoUrl: string | null;
+        photoKey: string | null;
         nickname: string | null;
     } | null;
 }
@@ -40,9 +40,9 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                             },
                         })}
                     >
-                        {profile?.photoUrl ? (
+                        {profile?.photoKey ? (
                             <SmartImage
-                                src={profile.photoUrl}
+                                imageKey={profile.photoKey}
                                 alt={profile.nickname || 'Profil'}
                                 width={32}
                                 height={32}

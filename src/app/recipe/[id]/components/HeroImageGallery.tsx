@@ -147,7 +147,7 @@ export function HeroImageGallery({
                 >
                     {images.map((img, idx) => {
                         const thumbUrl = img.thumbKey
-                            ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=200&height=200&fit=cover&quality=75`
+                            ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&aspect=1:1&w=320`
                             : img.src;
                         return (
                             <button

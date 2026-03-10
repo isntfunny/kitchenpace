@@ -4,7 +4,7 @@
 
 export interface ContentModerationInput {
     text?: string; // recipe text, comment, bio, etc.
-    imageUrl?: string; // S3 URL for image moderation
+    imageKey?: string; // S3 key for image moderation
 }
 
 export interface ModerationResult {

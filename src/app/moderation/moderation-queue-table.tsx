@@ -15,6 +15,7 @@ import {
 import { Dialog } from 'radix-ui';
 import { useState, useTransition } from 'react';
 
+import { getThumbnailUrl, extractKeyFromUrl } from '@app/lib/thumbnail-client';
 import { css } from 'styled-system/css';
 
 import { approveContent, rejectContent } from './actions';
@@ -28,14 +29,17 @@ type ModerationContentSnapshot = {
     description?: string;
     text?: string;
     imageUrl?: string;
+    imageKey?: string;
     [key: string]: unknown;
 };
 
 const TYPE_LABELS: Record<string, { label: string; icon: typeof BookOpen }> = {
     recipe: { label: 'Rezept', icon: BookOpen },
+    recipe_image: { label: 'Rezeptbild', icon: Image },
     comment: { label: 'Kommentar', icon: MessageSquare },
     profile: { label: 'Profil', icon: UserIcon },
     cook_image: { label: 'Bild', icon: Image },
+    step_image: { label: 'Schrittbild', icon: Image },
 };
 
 function ScoreBadge({ score, size = 'sm' }: { score: number; size?: 'sm' | 'lg' }) {
@@ -272,7 +276,10 @@ function ModerationDetailDialog({
                     </div>
 
                     {/* Content preview */}
-                    {(snapshot?.description || snapshot?.text || snapshot?.imageUrl) && (
+                    {(snapshot?.description ||
+                        snapshot?.text ||
+                        snapshot?.imageUrl ||
+                        snapshot?.imageKey) && (
                         <div
                             className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}
                         >
@@ -288,9 +295,15 @@ function ModerationDetailDialog({
                                 Inhalt
                             </span>
 
-                            {snapshot?.imageUrl && (
+                            {(snapshot?.imageKey || snapshot?.imageUrl) && (
                                 <img
-                                    src={String(snapshot.imageUrl)}
+                                    src={getThumbnailUrl(
+                                        snapshot.imageKey ??
+                                            extractKeyFromUrl(String(snapshot.imageUrl)) ??
+                                            undefined,
+                                        'original',
+                                        960,
+                                    )}
                                     alt="Geprüfter Inhalt"
                                     className={css({
                                         maxWidth: '100%',
@@ -736,9 +749,15 @@ export function ModerationQueueTable({ items }: { items: QueueItem[] }) {
                                     overflow: 'hidden',
                                 })}
                             >
-                                {snapshot?.imageUrl && (
+                                {(snapshot?.imageKey || snapshot?.imageUrl) && (
                                     <img
-                                        src={String(snapshot.imageUrl)}
+                                        src={getThumbnailUrl(
+                                            snapshot?.imageKey ??
+                                                extractKeyFromUrl(String(snapshot?.imageUrl)) ??
+                                                undefined,
+                                            '1:1',
+                                            64,
+                                        )}
                                         alt=""
                                         className={css({
                                             width: '32px',

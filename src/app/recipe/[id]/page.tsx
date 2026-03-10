@@ -5,7 +5,7 @@ import { fetchRecipeCookImages } from '@app/app/actions/cooks';
 import { fetchRecipeBySlug } from '@app/app/actions/recipes';
 import { isAdmin } from '@app/lib/admin/check-admin';
 import { getServerAuthSession } from '@app/lib/auth';
-import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { APP_URL } from '@app/lib/url';
 
 import { RecipeDetailClient } from './RecipeDetailClient';
@@ -22,10 +22,10 @@ type RecipePageProps = {
     params: RecipePageParams | Promise<RecipePageParams>;
 };
 
-const buildRecipeMetadata = async (
+const buildRecipeMetadata = (
     recipe: Awaited<ReturnType<typeof fetchRecipeBySlug>>,
     isDraft = false,
-): Promise<Metadata> => {
+): Metadata => {
     if (!recipe) {
         return {
             title: 'Rezept nicht gefunden | KüchenTakt',
@@ -36,13 +36,9 @@ const buildRecipeMetadata = async (
     const fallbackDescription = `Rezept von ${recipe.author?.name ?? 'KüchenTakt'} – Zutaten, Schritte und Zeiten auf einen Blick.`;
     const description = recipe.description || fallbackDescription;
 
-    const bannerUrl =
-        recipe.imageKey && recipe.id
-            ? await getThumbnailUrlBySource(
-                  { type: 'recipe', id: recipe.id },
-                  { width: 1200, height: 630 },
-              )
-            : '/og-image.png';
+    const bannerUrl = recipe.imageKey
+        ? getThumbnailUrl(recipe.imageKey, '16:9', 1280)
+        : '/og-image.png';
 
     const recipeUrl = `${APP_URL}/recipe/${recipe.slug}`;
 
@@ -113,13 +109,9 @@ export default async function RecipePage({ params }: RecipePageProps) {
     const cookImages = await fetchRecipeCookImages(resolvedParams.id);
     const isDraft = recipe.status !== 'PUBLISHED';
 
-    const ogImageUrl =
-        recipe.imageKey && recipe.id
-            ? await getThumbnailUrlBySource(
-                  { type: 'recipe', id: recipe.id },
-                  { width: 1200, height: 630 },
-              )
-            : '/og-image.png';
+    const ogImageUrl = recipe.imageKey
+        ? getThumbnailUrl(recipe.imageKey, '16:9', 1280)
+        : '/og-image.png';
 
     return (
         <>

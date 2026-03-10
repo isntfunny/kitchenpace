@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 
 import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
@@ -39,14 +40,7 @@ const buildUserMetadata = async (
     userId: string,
     userSlug: string,
 ): Promise<Metadata> => {
-    const profileImageUrl = await getThumbnailUrlBySource(
-        { type: 'user', id: userId },
-        {
-            width: 400,
-            height: 400,
-            fit: 'cover',
-        },
-    );
+    const profileImageUrl = await getThumbnailUrlBySource({ type: 'user', id: userId }, '1:1', 640);
 
     return {
         title: `${name} | KüchenTakt`,
@@ -209,7 +203,9 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
         id: user.id,
         slug: user.profile?.slug ?? user.id,
         name: user.name ?? user.profile?.nickname ?? 'Unbekannt',
-        avatar: user.profile?.photoUrl ?? user.image ?? null,
+        avatar: user.profile?.photoKey
+            ? getThumbnailUrl(user.profile.photoKey, '1:1', 96)
+            : (user.image ?? null),
         bio: user.profile?.bio ?? null,
         recipeCount: user.profile?.recipeCount ?? user._count.recipes,
         followerCount: user.profile?.followerCount ?? 0,

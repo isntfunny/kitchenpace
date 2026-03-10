@@ -28,7 +28,7 @@ interface ProfileData {
     userId: string;
     nickname: string | null;
     teaser: string | null;
-    photoUrl: string | null;
+    photoKey: string | null;
 }
 
 interface ProfileEditClientProps {
@@ -37,7 +37,7 @@ interface ProfileEditClientProps {
 }
 
 export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
-    const [photoUrl, setPhotoUrl] = useState(profile.photoUrl || '');
+    const [photoKey, setPhotoKey] = useState(profile.photoKey || '');
     const [nickname, setNickname] = useState(profile.nickname || '');
     const [teaser, setTeaser] = useState(profile.teaser || '');
     const [saving, setSaving] = useState(false);
@@ -95,7 +95,7 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                 body: JSON.stringify({
                     nickname: clamp(nickname, MAX_NICKNAME_LENGTH),
                     teaser: clamp(teaser, MAX_TEASER_LENGTH),
-                    photoUrl: clamp(photoUrl, 2048),
+                    photoKey: photoKey || null,
                 }),
             });
 
@@ -239,8 +239,8 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                                 </label>
                                 <FileUpload
                                     type="profile"
-                                    value={photoUrl}
-                                    onChange={setPhotoUrl}
+                                    value={photoKey}
+                                    onChange={setPhotoKey}
                                 />
                             </div>
 

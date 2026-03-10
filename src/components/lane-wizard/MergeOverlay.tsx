@@ -22,11 +22,11 @@ export function MergeOverlay({ laneCount, laneLabels, onConfirm, onCancel }: Mer
 
     const toggle = (i: number) => {
         setRange(([s, e]) => {
-            if (i < s) return [i, e];           // expand left
-            if (i > e) return [s, i];           // expand right
+            if (i < s) return [i, e]; // expand left
+            if (i > e) return [s, i]; // expand right
             if (i === s && e > s) return [s + 1, e]; // shrink from left edge
             if (i === e && e > s) return [s, e - 1]; // shrink from right edge
-            return [s, e];                      // middle lane — range stays
+            return [s, e]; // middle lane — range stays
         });
     };
 
@@ -67,7 +67,9 @@ export function MergeOverlay({ laneCount, laneLabels, onConfirm, onCancel }: Mer
                 })}
             </div>
 
-            <div className={css({ display: 'flex', gap: '2', mt: '3', justifyContent: 'flex-end' })}>
+            <div
+                className={css({ display: 'flex', gap: '2', mt: '3', justifyContent: 'flex-end' })}
+            >
                 <button type="button" onClick={onCancel} className={cancelBtnClass}>
                     Abbrechen
                 </button>

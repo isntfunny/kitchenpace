@@ -68,8 +68,12 @@ export function SegmentDivider({
 
     function handleMergeClick(e: React.MouseEvent) {
         e.stopPropagation();
-        if (laneCount === 2) { onMerge([0, 1]); }
-        else { setShowMerge(true); onPopupChange?.(true); }
+        if (laneCount === 2) {
+            onMerge([0, 1]);
+        } else {
+            setShowMerge(true);
+            onPopupChange?.(true);
+        }
     }
 
     function closeMerge() {
@@ -78,19 +82,15 @@ export function SegmentDivider({
     }
 
     return (
-        <div
-            className={wrapClass}
-            onMouseLeave={() => setActiveLane(null)}
-        >
+        <div className={wrapClass} onMouseLeave={() => setActiveLane(null)}>
             {/* Hover zone + lane grid — disabled while a popup is open */}
             <div
                 className={zoneClass}
-                style={{ pointerEvents: pickerLane !== null || showMerge || locked ? 'none' : 'auto' }}
+                style={{
+                    pointerEvents: pickerLane !== null || showMerge || locked ? 'none' : 'auto',
+                }}
             >
-                <div
-                    className={laneGridClass}
-                    style={{ gridTemplateColumns: templateColumns }}
-                >
+                <div className={laneGridClass} style={{ gridTemplateColumns: templateColumns }}>
                     {Array.from({ length: laneCount }).map((_, i) => (
                         <div
                             key={i}
@@ -120,24 +120,34 @@ export function SegmentDivider({
                                             initial={{ opacity: 0, y: 4 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: 3 }}
-                                            transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+                                            transition={{
+                                                type: 'spring',
+                                                stiffness: 500,
+                                                damping: 28,
+                                            }}
                                             className={btnRowClass}
                                         >
                                             {laneCount < 4 && (
-                                            <button
-                                                type="button"
-                                                title="Split"
-                                                onClick={(e) => { e.stopPropagation(); onSplit(i); }}
-                                                className={iconBtnClass}
-                                            >
-                                                <GitBranch style={{ width: 12, height: 12 }} />
-                                            </button>
+                                                <button
+                                                    type="button"
+                                                    title="Split"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onSplit(i);
+                                                    }}
+                                                    className={iconBtnClass}
+                                                >
+                                                    <GitBranch style={{ width: 12, height: 12 }} />
+                                                </button>
                                             )}
 
                                             <motion.button
                                                 type="button"
                                                 title="Schritt hinzufügen"
-                                                onClick={(e) => { e.stopPropagation(); openPicker(i); }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openPicker(i);
+                                                }}
                                                 className={addBtnClass}
                                                 whileHover={{ scale: 1.12 }}
                                                 whileTap={{ scale: 0.9 }}
@@ -170,7 +180,11 @@ export function SegmentDivider({
                                             initial={{ opacity: 0, y: 8, scale: 0.95 }}
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: 4, scale: 0.96 }}
-                                            transition={{ type: 'spring', stiffness: 460, damping: 28 }}
+                                            transition={{
+                                                type: 'spring',
+                                                stiffness: 460,
+                                                damping: 28,
+                                            }}
                                         >
                                             <StepTypePicker
                                                 onSelect={handlePickType}
@@ -193,7 +207,10 @@ export function SegmentDivider({
                         <MergeOverlay
                             laneCount={laneCount}
                             laneLabels={laneLabels}
-                            onConfirm={(indices) => { onMerge(indices); closeMerge(); }}
+                            onConfirm={(indices) => {
+                                onMerge(indices);
+                                closeMerge();
+                            }}
                             onCancel={closeMerge}
                         />
                     </div>

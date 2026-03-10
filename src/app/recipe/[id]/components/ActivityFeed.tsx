@@ -67,6 +67,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                                 <SmartImage
                                     src={activity.user.avatar ?? '/kitchenpace_icon.png'}
                                     alt={activity.user.name ?? 'Benutzer'}
+                                    aspect="1:1"
                                     fill
                                     sizes="48px"
                                     className={css({ objectFit: 'cover' })}

@@ -66,7 +66,15 @@ function PhaseDots({
     onJump: (i: number) => void;
 }) {
     return (
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div
+            style={{
+                display: 'flex',
+                gap: 6,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+            }}
+        >
             {Array.from({ length: total }, (_, i) => (
                 <button
                     key={i}
@@ -79,11 +87,8 @@ function PhaseDots({
                         border: 'none',
                         cursor: 'pointer',
                         transition: 'all 0.25s ease',
-                        backgroundColor: i === current
-                            ? ORANGE
-                            : doneFlags[i]
-                              ? EMERALD
-                              : 'rgba(0,0,0,0.12)',
+                        backgroundColor:
+                            i === current ? ORANGE : doneFlags[i] ? EMERALD : 'rgba(0,0,0,0.12)',
                         padding: 0,
                         flexShrink: 0,
                     }}
@@ -124,7 +129,10 @@ function LaneCard({
     return (
         <div
             style={{
-                flex: colCount === 1 ? '1 1 100%' : `1 1 calc(${100 / Math.min(colCount, 3)}% - 12px)`,
+                flex:
+                    colCount === 1
+                        ? '1 1 100%'
+                        : `1 1 calc(${100 / Math.min(colCount, 3)}% - 12px)`,
                 minWidth: colCount > 1 ? 'min(260px, calc(50vw - 40px))' : 'unset',
                 maxWidth: colCount === 1 ? '600px' : undefined,
                 borderRadius: 16,
@@ -295,7 +303,9 @@ function LaneCard({
                                 borderColor: timerRunning
                                     ? 'rgba(243,156,18,0.3)'
                                     : 'rgba(224,123,83,0.25)',
-                                backgroundColor: timerRunning ? 'rgba(243,156,18,0.1)' : 'rgba(224,123,83,0.08)',
+                                backgroundColor: timerRunning
+                                    ? 'rgba(243,156,18,0.1)'
+                                    : 'rgba(224,123,83,0.08)',
                                 color: timerRunning ? AMBER : ORANGE,
                                 fontSize: 12,
                                 fontWeight: 600,
@@ -303,9 +313,13 @@ function LaneCard({
                             }}
                         >
                             {timerRunning ? (
-                                <><Pause style={{ width: 11, height: 11 }} /> Pause</>
+                                <>
+                                    <Pause style={{ width: 11, height: 11 }} /> Pause
+                                </>
                             ) : (
-                                <><Play style={{ width: 11, height: 11 }} /> Start</>
+                                <>
+                                    <Play style={{ width: 11, height: 11 }} /> Start
+                                </>
                             )}
                         </button>
                         {pct > 0 && !timerDone && (
@@ -369,7 +383,7 @@ function LaneCard({
                         padding: '4px 0 2px',
                     }}
                 >
-                    {step.type === 'start' ? 'Los geht\'s!' : 'Guten Appetit!'}
+                    {step.type === 'start' ? "Los geht's!" : 'Guten Appetit!'}
                 </div>
             )}
         </div>
@@ -403,8 +417,12 @@ export function LaneWizardView({ phases }: { phases: LanePhase[] }) {
     const canGoLeft = phaseIndex > 0;
     const canGoRight = phaseIndex < phases.length - 1;
 
-    const goLeft = () => { if (canGoLeft) setPhaseIndex((p) => p - 1); };
-    const goRight = () => { if (canGoRight) setPhaseIndex((p) => p + 1); };
+    const goLeft = () => {
+        if (canGoLeft) setPhaseIndex((p) => p - 1);
+    };
+    const goRight = () => {
+        if (canGoRight) setPhaseIndex((p) => p + 1);
+    };
 
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStartX.current = e.touches[0].clientX;
@@ -434,7 +452,10 @@ export function LaneWizardView({ phases }: { phases: LanePhase[] }) {
             const interval = setInterval(() => {
                 setTimers((cur) => {
                     const ct = cur.get(id);
-                    if (!ct || !ct.running) { clearInterval(interval); return cur; }
+                    if (!ct || !ct.running) {
+                        clearInterval(interval);
+                        return cur;
+                    }
                     if (ct.remaining <= 1) {
                         clearInterval(interval);
                         const m = new Map(cur);
@@ -478,7 +499,10 @@ export function LaneWizardView({ phases }: { phases: LanePhase[] }) {
     );
 
     const currentPhase = phases[phaseIndex];
-    const totalSteps = phases.reduce((sum, p) => sum + p.steps.filter((s) => s.type !== 'start').length, 0);
+    const totalSteps = phases.reduce(
+        (sum, p) => sum + p.steps.filter((s) => s.type !== 'start').length,
+        0,
+    );
     const completedSteps = completed.size;
 
     return (
@@ -508,7 +532,13 @@ export function LaneWizardView({ phases }: { phases: LanePhase[] }) {
                 }}
             >
                 {/* Top row: phase label + overall progress */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                    }}
+                >
                     <div>
                         <span
                             style={{
@@ -532,7 +562,8 @@ export function LaneWizardView({ phases }: { phases: LanePhase[] }) {
                         >
                             {phaseIndex + 1}
                             <span style={{ fontSize: 14, color: '#bbb', fontWeight: 500 }}>
-                                {' '}/{' '}{phases.length}
+                                {' '}
+                                / {phases.length}
                             </span>
                         </span>
                     </div>
@@ -564,7 +595,8 @@ export function LaneWizardView({ phases }: { phases: LanePhase[] }) {
                     <div
                         style={{
                             height: '100%',
-                            width: totalSteps > 0 ? `${(completedSteps / totalSteps) * 100}%` : '0%',
+                            width:
+                                totalSteps > 0 ? `${(completedSteps / totalSteps) * 100}%` : '0%',
                             backgroundColor: EMERALD,
                             borderRadius: 2,
                             transition: 'width 0.3s ease',

@@ -1,5 +1,6 @@
 'use server';
 
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { prisma } from '@shared/prisma';
 
 export async function searchUsers(query: string) {
@@ -19,7 +20,7 @@ export async function searchUsers(query: string) {
             id: true,
             name: true,
             image: true,
-            profile: { select: { id: true, nickname: true, photoUrl: true, recipeCount: true } },
+            profile: { select: { id: true, nickname: true, photoKey: true, recipeCount: true } },
         },
         orderBy: { name: 'asc' },
         take: 10,
@@ -29,7 +30,10 @@ export async function searchUsers(query: string) {
         id: user.id,
         name: user.name ?? user.profile?.nickname ?? 'Unbekannt',
         nickname: user.profile?.nickname ?? null,
-        avatar: user.profile?.photoUrl ?? user.image,
+        photoKey: user.profile?.photoKey ?? null,
+        avatar: user.profile?.photoKey
+            ? getThumbnailUrl(user.profile.photoKey, '1:1', 96)
+            : (user.image ?? null),
         recipeCount: user.profile?.recipeCount ?? 0,
     }));
 }

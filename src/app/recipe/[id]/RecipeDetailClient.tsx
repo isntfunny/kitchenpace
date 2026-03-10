@@ -91,8 +91,7 @@ function _makeStarSparks(): _StarSpark[] {
 
 type CookImageItem = {
     id: string;
-    imageUrl: string;
-    imageKey?: string | null;
+    imageKey: string;
     caption: string | null;
     createdAt: Date;
     user: {
@@ -214,8 +213,8 @@ export function RecipeDetailClient({
             subtitle: 'Rezeptbild',
         };
         const extras = cookImages.map((img) => ({
-            src: img.imageUrl,
-            thumbKey: img.imageKey ?? null,
+            src: img.imageKey,
+            thumbKey: img.imageKey,
             title: img.user.name || img.user.nickname || 'Küchenfreund',
             subtitle: img.caption || 'Foto',
             reportable: {
@@ -250,7 +249,7 @@ export function RecipeDetailClient({
             id: recipe.id,
             title: recipe.title,
             slug: recipe.id,
-            imageUrl: recipe.image,
+            imageKey: recipe.imageKey ?? undefined,
             prepTime: recipe.prepTime,
             cookTime: recipe.cookTime,
             difficulty: recipe.difficulty,
@@ -674,7 +673,7 @@ export function RecipeDetailClient({
                                             >
                                                 {visibleImages.map((img, idx) => {
                                                     const thumbUrl = img.thumbKey
-                                                        ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&width=100&height=100&fit=cover&quality=60`
+                                                        ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&aspect=1:1&w=320`
                                                         : img.src;
                                                     return (
                                                         <button
@@ -923,15 +922,18 @@ export function RecipeDetailClient({
                                     ))}
                                 </div>
 
-                                {/* Divider */}
+                                {/* Divider + Rating + Actions — hidden for drafts */}
+                                {!isDraft && (
                                 <div className={css({ h: '1px', bg: 'border', mb: '3' })} />
 
-                                {/* Rating */}
+                                )}
+                                {!isDraft && (
                                 <div
                                     className={css({
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '1.5',
+                                        mb: '3',
                                     })}
                                 >
                                     {starValues.map((value) => (
@@ -1045,9 +1047,11 @@ export function RecipeDetailClient({
                                             : 'Bewerten'}
                                     </span>
                                 </div>
+                                )}
                             </div>
 
                             {/* ── Actions ── */}
+                            {!isDraft && (
                             <div className={css({ display: 'flex', gap: '2', mb: '2' })}>
                                 <div className={css({ flex: '1' })}>
                                     <SparkleEffect>
@@ -1135,6 +1139,7 @@ export function RecipeDetailClient({
                                     </Button>
                                 </div>
                             </div>
+                            )}
                             <div
                                 className={css({
                                     display: 'flex',
@@ -1150,7 +1155,7 @@ export function RecipeDetailClient({
                                 <ShareButton
                                     title={recipe.title}
                                     slug={recipe.slug}
-                                    imageUrl={recipe.image ?? undefined}
+                                    imageKey={recipe.imageKey ?? undefined}
                                 />
                                 {!recipe.viewer?.isAuthor && (
                                     <ReportButton
@@ -1367,6 +1372,7 @@ export function RecipeDetailClient({
                                         <SmartImage
                                             src={author.avatar}
                                             alt={author.name}
+                                            aspect="1:1"
                                             fill
                                             sizes="80px"
                                             className={css({ objectFit: 'cover' })}
@@ -1526,6 +1532,7 @@ export function RecipeDetailClient({
                                             <SmartImage
                                                 src={activity.user.avatar}
                                                 alt={activity.user.name}
+                                                aspect="1:1"
                                                 fill
                                                 sizes="48px"
                                                 className={css({ objectFit: 'cover' })}

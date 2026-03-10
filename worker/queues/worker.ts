@@ -13,6 +13,8 @@ import {
     processSyncContactsNotifuse,
     processBackupDatabase,
     processCachePurge,
+    processGenerateRecipeOg,
+    processGenerateOgImages,
 } from './scheduled-processor';
 import { QueueName } from './types';
 
@@ -44,6 +46,10 @@ const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
                 return processBackupDatabase(job, 'daily');
             case 'purge-thumbnail-cache':
                 return processCachePurge(job);
+            case 'generate-recipe-og':
+                return processGenerateRecipeOg(job);
+            case 'generate-og-images':
+                return processGenerateOgImages(job);
             default:
                 throw new Error(`Unknown scheduled job: ${job.name}`);
         }

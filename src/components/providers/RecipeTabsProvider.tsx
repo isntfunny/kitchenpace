@@ -8,7 +8,6 @@ export interface RecipeTabItem {
     title: string;
     slug?: string;
     emoji?: string;
-    imageUrl?: string;
     imageKey?: string | null;
     prepTime?: number;
     cookTime?: number;

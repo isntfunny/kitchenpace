@@ -1049,7 +1049,6 @@ async function main() {
                             .replace(/[^a-z0-9]+/g, '-')
                             .replace(/^-+|-+$/g, ''),
                         bio: u.bio,
-                        photoUrl: u.photoUrl,
                         followerCount: u.followerCount,
                         followingCount: u.followingCount,
                         recipeCount: u.recipeCount,

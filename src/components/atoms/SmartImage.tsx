@@ -7,9 +7,11 @@ import { PALETTE } from '@app/lib/palette';
 import {
     getThumbnailUrl,
     getThumbnailUrlById,
+    getSrcSet,
+    getSrcSetById,
     extractKeyFromUrl,
-    ThumbnailOptions,
 } from '@app/lib/thumbnail-client';
+import type { AspectRatio } from '@app/lib/thumbnail-client';
 import { css, cx } from 'styled-system/css';
 
 export const RECIPE_PLACEHOLDER = '/recipe_placeholder.jpg';
@@ -17,72 +19,63 @@ export const RECIPE_PLACEHOLDER = '/recipe_placeholder.jpg';
 interface SmartImageProps {
     src?: string;
     alt?: string;
-    width?: number;
-    height?: number;
+    aspect?: AspectRatio;
+    sizes?: string;
     fill?: boolean;
-    thumbnailOptions?: ThumbnailOptions;
-    fallback?: string;
     className?: string;
     onLoad?: () => void;
     onError?: () => void;
     recipeId?: string;
     userId?: string;
-    /** @deprecated Ignored - kept for backwards compatibility */
+    fallback?: string;
+    /** Direct S3 key — preferred over src */
     imageKey?: string | null;
-    /** @deprecated Ignored - kept for backwards compatibility */
-    sizes?: string;
-    /** @deprecated Ignored - kept for backwards compatibility */
-    priority?: boolean;
+    /** @deprecated Use aspect instead */
+    width?: number;
+    /** @deprecated Use aspect instead */
+    height?: number;
 }
 
 export function SmartImage({
     src,
     alt = '',
-    width = 400,
-    height = 300,
+    aspect = 'original',
+    sizes = '(max-width: 768px) 100vw, 50vw',
     fill,
-    thumbnailOptions,
-    fallback = '/kitchenpace_icon.png',
     className,
     onLoad,
     onError,
     recipeId,
     userId,
-    imageKey: _imageKey,
-    sizes: _sizes,
-    priority: _priority,
+    fallback = '/kitchenpace_icon.png',
+    imageKey,
+    width,
+    height,
 }: SmartImageProps) {
     const [error, setError] = useState(false);
 
-    // If recipeId is provided but there's no src, skip the network round-trip
-    // and render the placeholder immediately
-    const noImage = recipeId && !src;
+    // If recipeId is provided but no src, render placeholder immediately
+    const noImage = recipeId && !src && !imageKey;
 
     let thumbnailSrc: string;
+    let srcSet: string | undefined;
 
     if (noImage) {
         thumbnailSrc = RECIPE_PLACEHOLDER;
     } else if (recipeId) {
-        thumbnailSrc = getThumbnailUrlById(recipeId, 'recipe', {
-            width: fill ? undefined : width,
-            height: fill ? undefined : height,
-            ...thumbnailOptions,
-        });
+        thumbnailSrc = getThumbnailUrlById(recipeId, 'recipe', aspect, 960);
+        srcSet = getSrcSetById(recipeId, 'recipe', aspect);
     } else if (userId) {
-        thumbnailSrc = getThumbnailUrlById(userId, 'user', {
-            width: fill ? undefined : width,
-            height: fill ? undefined : height,
-            ...thumbnailOptions,
-        });
+        thumbnailSrc = getThumbnailUrlById(userId, 'user', aspect, 960);
+        srcSet = getSrcSetById(userId, 'user', aspect);
     } else {
-        const key = _imageKey || (src ? extractKeyFromUrl(src) : null);
-        thumbnailSrc = key
-            ? getThumbnailUrl(key, {
-                  width: fill ? undefined : width,
-                  height: fill ? undefined : height,
-                  ...thumbnailOptions,
-              })
-            : src || fallback;
+        const key = imageKey || (src ? extractKeyFromUrl(src) : null);
+        if (key) {
+            thumbnailSrc = getThumbnailUrl(key, aspect, 960);
+            srcSet = getSrcSet(key, aspect);
+        } else {
+            thumbnailSrc = src || fallback;
+        }
     }
 
     const handleError = () => {
@@ -96,7 +89,7 @@ export function SmartImage({
 
     // User fallback: gradient with ChefHat icon
     if (error && userId) {
-        const iconSize = fill ? '40%' : Math.round(Math.min(width, height) * 0.4);
+        const iconSize = fill ? '40%' : Math.round(Math.min(width ?? 80, height ?? 80) * 0.4);
         return (
             <div
                 className={cx(
@@ -109,7 +102,10 @@ export function SmartImage({
                     }),
                     fill
                         ? css({ width: '100%', height: '100%' })
-                        : css({ width: `${width}px`, height: `${height}px` }),
+                        : css({
+                              width: width ? `${width}px` : '100%',
+                              height: height ? `${height}px` : '100%',
+                          }),
                     className,
                 )}
             >
@@ -121,12 +117,13 @@ export function SmartImage({
     // Recipe fallback on error: swap to placeholder
     const resolvedSrc =
         error && recipeId ? RECIPE_PLACEHOLDER : !thumbnailSrc || error ? fallback : thumbnailSrc;
-    // Don't attach error handler if we're already showing a fallback
     const isShowingFallback = noImage || error;
 
     return (
         <img
             src={resolvedSrc}
+            srcSet={isShowingFallback ? undefined : srcSet}
+            sizes={isShowingFallback ? undefined : sizes}
             alt={alt || ''}
             width={fill ? undefined : width}
             height={fill ? undefined : height}
@@ -139,11 +136,15 @@ export function SmartImage({
                           width: '100%',
                           height: '100%',
                       })
-                    : css({
-                          width: `${width}px`,
-                          height: `${height}px`,
-                          objectFit: 'cover',
-                      }),
+                    : width && height
+                      ? css({
+                            width: `${width}px`,
+                            height: `${height}px`,
+                            objectFit: 'cover',
+                        })
+                      : css({
+                            objectFit: 'cover',
+                        }),
                 className,
             )}
         />

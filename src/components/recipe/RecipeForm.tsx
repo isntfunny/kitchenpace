@@ -67,7 +67,7 @@ export function RecipeForm({
     // ── form state ──────────────────────────────────────────
     const [title, setTitle] = useState(initialData?.title ?? '');
     const [description, setDescription] = useState(initialData?.description ?? '');
-    const [imageUrl, setImageUrl] = useState(initialData?.imageUrl ?? '');
+    const [imageKey, setImageKey] = useState(initialData?.imageKey ?? '');
     const [servings, setServings] = useState(initialData?.servings ?? 4);
     const [prepTime, setPrepTime] = useState(initialData?.prepTime ?? 0);
     const [cookTime, setCookTime] = useState(initialData?.cookTime ?? 0);
@@ -133,7 +133,7 @@ export function RecipeForm({
         (status: 'DRAFT' | 'PUBLISHED') => ({
             title: title.trim(),
             description: description.trim(),
-            imageUrl: imageUrl || undefined,
+            imageKey: imageKey || undefined,
             servings,
             prepTime,
             cookTime,
@@ -155,7 +155,7 @@ export function RecipeForm({
         [
             title,
             description,
-            imageUrl,
+            imageKey,
             servings,
             prepTime,
             cookTime,
@@ -215,7 +215,7 @@ export function RecipeForm({
         isPublished,
         title,
         description,
-        imageUrl,
+        imageKey,
         servings,
         prepTime,
         cookTime,
@@ -471,7 +471,7 @@ export function RecipeForm({
             if (saveStatus === 'PUBLISHED') {
                 op.track('recipe_published', {
                     is_edit: isEditMode,
-                    has_image: Boolean(imageUrl),
+                    has_image: Boolean(imageKey),
                     has_flow: flowNodesRef.current.length > 0,
                     step_count: flowNodesRef.current.length,
                     ingredient_count: ingredients.length,
@@ -508,15 +508,61 @@ export function RecipeForm({
 
     /* ── shared components ── */
 
+    const flowEditorDisabled = !titleDone || !kategorieDone;
+
     const flowEditor = (
-        <FlowEditor
-            availableIngredients={ingredients}
-            initialNodes={(initialData?.flowNodes ?? []) as unknown as FlowNodeSerialized[]}
-            initialEdges={initialData?.flowEdges as unknown as FlowEdgeSerialized[]}
-            onChange={handleFlowChange}
-            onAddIngredientToRecipe={handleAddIngredient}
-            onAiApply={handleAiApply}
-        />
+        <div className={css({ position: 'relative', width: '100%', height: '100%' })}>
+            <FlowEditor
+                availableIngredients={ingredients}
+                initialNodes={(initialData?.flowNodes ?? []) as unknown as FlowNodeSerialized[]}
+                initialEdges={initialData?.flowEdges as unknown as FlowEdgeSerialized[]}
+                onChange={handleFlowChange}
+                onAddIngredientToRecipe={handleAddIngredient}
+                onAiApply={handleAiApply}
+            />
+            {flowEditorDisabled && (
+                <div
+                    className={css({
+                        position: 'absolute',
+                        inset: 0,
+                        zIndex: 10,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '3',
+                        backdropFilter: 'blur(4px)',
+                        background: {
+                            base: 'rgba(255,255,255,0.6)',
+                            _dark: 'rgba(20,20,20,0.6)',
+                        },
+                        pointerEvents: 'all',
+                    })}
+                >
+                    <span
+                        className={css({
+                            fontSize: 'xl',
+                            fontWeight: '700',
+                            color: 'text',
+                        })}
+                    >
+                        Ablauf-Editor
+                    </span>
+                    <span
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'text.muted',
+                            textAlign: 'center',
+                            maxWidth: '280px',
+                        })}
+                    >
+                        {!titleDone
+                            ? 'Bitte gib zuerst einen Titel ein.'
+                            : 'Bitte wähle zuerst eine Kategorie aus.'}
+                    </span>
+                </div>
+            )}
+        </div>
     );
 
     /* ── sidebar / accordion layout ── */
@@ -694,9 +740,42 @@ export function RecipeForm({
                                 onTitleChange={setTitle}
                                 description={description}
                                 onDescriptionChange={setDescription}
-                                imageUrl={imageUrl}
-                                onImageUrlChange={setImageUrl}
+                                imageKey={imageKey}
+                                onImageKeyChange={setImageKey}
                                 showAutoSaveHint={false}
+                            />
+                        </div>
+
+                        <div className={sidebarDividerClass} />
+
+                        {/* Categories — required, moved above Details */}
+                        <div className={sidebarSectionClass}>
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                    mb: '2',
+                                })}
+                            >
+                                {!kategorieDone && (
+                                    <span
+                                        className={css({
+                                            display: 'inline-block',
+                                            width: '8px',
+                                            height: '8px',
+                                            borderRadius: 'full',
+                                            background: 'palette.orange',
+                                            flexShrink: 0,
+                                            animation: 'pulse 2s ease-in-out infinite',
+                                        })}
+                                    />
+                                )}
+                            </div>
+                            <CategorySelector
+                                categories={categories}
+                                selectedIds={categoryIds}
+                                onToggle={handleCategoryToggle}
                             />
                         </div>
 
@@ -712,17 +791,6 @@ export function RecipeForm({
                                 onCookTimeChange={setCookTime}
                                 difficulty={difficulty}
                                 onDifficultyChange={setDifficulty}
-                            />
-                        </div>
-
-                        <div className={sidebarDividerClass} />
-
-                        {/* Categories */}
-                        <div className={sidebarSectionClass}>
-                            <CategorySelector
-                                categories={categories}
-                                selectedIds={categoryIds}
-                                onToggle={handleCategoryToggle}
                             />
                         </div>
 
@@ -803,8 +871,8 @@ export function RecipeForm({
                     onTitleChange={setTitle}
                     description={description}
                     onDescriptionChange={setDescription}
-                    imageUrl={imageUrl}
-                    onImageUrlChange={setImageUrl}
+                    imageKey={imageKey}
+                    onImageKeyChange={setImageKey}
                     showAutoSaveHint={true}
                 />
 

@@ -1,59 +1,70 @@
-export interface ThumbnailOptions {
-    width?: number;
-    height?: number;
-    quality?: number;
-    fit?: 'cover' | 'contain' | 'fill';
-}
+import type { AspectRatio } from './s3/keys';
 
-const DEFAULT_OPTIONS: ThumbnailOptions = {
-    width: 400,
-    height: 300,
-    quality: 80,
-    fit: 'cover',
-};
+const BREAKPOINTS = [320, 640, 960, 1280, 1920];
 
-function buildUrl(baseParams: Record<string, string>, options: ThumbnailOptions): string {
-    const opts = { ...DEFAULT_OPTIONS, ...options };
-    const params = new URLSearchParams(baseParams);
+// ---------------------------------------------------------------------------
+// URL builders
+// ---------------------------------------------------------------------------
 
-    if (opts.width) params.set('width', opts.width.toString());
-    if (opts.height) params.set('height', opts.height.toString());
-    if (opts.quality && opts.quality !== 80) params.set('quality', opts.quality.toString());
-    if (opts.fit && opts.fit !== 'cover') params.set('fit', opts.fit);
-
+/** Build a thumbnail URL for a given key, aspect ratio, and width */
+export function getThumbnailUrl(
+    key: string | null | undefined,
+    aspect: AspectRatio = 'original',
+    width?: number,
+): string {
+    if (!key) return '/placeholder.jpg';
+    const params = new URLSearchParams({ key, aspect });
+    if (width) params.set('w', width.toString());
     return `/api/thumbnail?${params.toString()}`;
 }
 
-export function getThumbnailUrl(
-    key: string | null | undefined,
-    options: ThumbnailOptions = {},
-): string {
-    if (!key) return '/placeholder.jpg';
-    return buildUrl({ key }, options);
-}
-
+/** Build a thumbnail URL for a recipe or user by ID */
 export function getThumbnailUrlById(
     id: string,
     type: 'recipe' | 'user',
-    options: ThumbnailOptions = {},
+    aspect: AspectRatio = 'original',
+    width?: number,
 ): string {
-    return buildUrl({ type, id }, options);
+    const params = new URLSearchParams({ type, id, aspect });
+    if (width) params.set('w', width.toString());
+    return `/api/thumbnail?${params.toString()}`;
 }
+
+/** Generate a full srcset string for all breakpoints */
+export function getSrcSet(key: string, aspect: AspectRatio = 'original'): string {
+    return BREAKPOINTS.map((w) => `${getThumbnailUrl(key, aspect, w)} ${w}w`).join(', ');
+}
+
+/** Generate a full srcset string by ID (recipe/user) */
+export function getSrcSetById(
+    id: string,
+    type: 'recipe' | 'user',
+    aspect: AspectRatio = 'original',
+): string {
+    return BREAKPOINTS.map((w) => `${getThumbnailUrlById(id, type, aspect, w)} ${w}w`).join(', ');
+}
+
+// ---------------------------------------------------------------------------
+// Key extraction (backward compat)
+// ---------------------------------------------------------------------------
 
 export function extractKeyFromUrl(url: string): string | null {
     if (!url) return null;
 
+    // New format: /api/thumbnail?key=approved/...&aspect=...
+    if (url.startsWith('/api/thumbnail')) {
+        try {
+            const params = new URLSearchParams(url.split('?')[1] ?? '');
+            return params.get('key') || null;
+        } catch {
+            return null;
+        }
+    }
+
     if (url.startsWith('/')) return null;
 
+    // Legacy: https://.../{bucket}/key
     const bucket = process.env.S3_BUCKET || 'kitchenpace';
-    const endpoint = process.env.S3_ENDPOINT || '';
-
-    const cleanEndpoint = endpoint.replace(/^https?:\/\//, '');
-    const pattern = `${cleanEndpoint}/${bucket}/(.+)`;
-    const match = url.match(new RegExp(pattern));
-
-    if (match) return match[1];
-
     if (url.includes(`/${bucket}/`)) {
         const parts = url.split(`/${bucket}/`);
         return parts[1] || null;
@@ -61,3 +72,6 @@ export function extractKeyFromUrl(url: string): string | null {
 
     return null;
 }
+
+// Re-export AspectRatio for convenience
+export type { AspectRatio };

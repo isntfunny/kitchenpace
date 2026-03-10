@@ -91,6 +91,20 @@ const scheduledJobs: ScheduledJobDefinition[] = [
         },
     },
     {
+        name: 'generate-og-images',
+        queue: QueueName.SCHEDULED,
+        data: { batchSize: 50 },
+        schema: {
+            batchSize: { type: 'number', label: 'Batch Size', default: 50, min: 1, max: 200 },
+        },
+        options: {
+            repeat: {
+                pattern: '0 */2 * * *', // every 2 hours
+                tz: 'Europe/Berlin',
+            },
+        },
+    },
+    {
         name: 'purge-thumbnail-cache',
         queue: QueueName.SCHEDULED,
         data: { maxAgeDays: 3 },

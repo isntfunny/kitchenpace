@@ -187,11 +187,7 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                         })}
                     >
                         <img
-                            src={getThumbnailUrl(data.photoKey, {
-                                width: 220,
-                                height: 72,
-                                fit: 'cover',
-                            })}
+                            src={getThumbnailUrl(data.photoKey, '3:1', 320)}
                             alt=""
                             onError={(e) => {
                                 const wrapper = (e.target as HTMLImageElement).parentElement;

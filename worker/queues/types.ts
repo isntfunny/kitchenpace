@@ -32,12 +32,23 @@ export interface BackupJob {
     type: 'hourly' | 'daily';
 }
 
+export interface GenerateRecipeOgJob {
+    recipeId: string;
+    imageKey: string;
+}
+
+export interface GenerateOgImagesJob {
+    batchSize?: number;
+}
+
 export type ScheduledJob =
     | { name: 'opensearch-sync'; data: SyncOpenSearchJob }
     | { name: 'sync-ingredients'; data: SyncIngredientsJob }
     | { name: 'trending-recipes'; data: Record<string, unknown> }
     | { name: 'backup-database-hourly'; data: Record<string, unknown> }
-    | { name: 'backup-database-daily'; data: Record<string, unknown> };
+    | { name: 'backup-database-daily'; data: Record<string, unknown> }
+    | { name: 'generate-recipe-og'; data: GenerateRecipeOgJob }
+    | { name: 'generate-og-images'; data: GenerateOgImagesJob };
 
 export type AllJob = OpenSearchJob | ScheduledJob;
 

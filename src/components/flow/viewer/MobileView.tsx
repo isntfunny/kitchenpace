@@ -14,6 +14,7 @@ import {
 import { type Dispatch } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 
 import type { FlowEdgeSerialized, FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
@@ -313,6 +314,34 @@ export function MobileView({
                     >
                         {renderDescription(currentNode.description, ingredients)}
                     </p>
+                )}
+
+                {/* Step photo */}
+                {currentNode.photoKey && (
+                    <div
+                        style={{
+                            borderRadius: 12,
+                            overflow: 'hidden',
+                            marginBottom: 20,
+                            width: '100%',
+                            maxWidth: 360,
+                        }}
+                    >
+                        <img
+                            src={getThumbnailUrl(currentNode.photoKey, '3:2', 640)}
+                            alt=""
+                            style={{
+                                width: '100%',
+                                height: 160,
+                                objectFit: 'cover',
+                                display: 'block',
+                            }}
+                            onError={(e) => {
+                                const wrapper = (e.target as HTMLImageElement).parentElement;
+                                if (wrapper) wrapper.style.display = 'none';
+                            }}
+                        />
+                    </div>
                 )}
 
                 {/* Timer display */}

@@ -1,6 +1,7 @@
 import { prisma } from '@shared/prisma';
 
-import { extractKeyFromUrl, getThumbnailUrl, ThumbnailOptions } from './thumbnail-client';
+import { getThumbnailUrl } from './thumbnail-client';
+import type { AspectRatio } from './thumbnail-client';
 
 export type ThumbnailSource =
     | { type: 'recipe'; id: string }
@@ -9,7 +10,8 @@ export type ThumbnailSource =
 
 export async function getThumbnailUrlBySource(
     source: ThumbnailSource,
-    options: ThumbnailOptions = {},
+    aspect: AspectRatio = 'original',
+    width?: number,
 ): Promise<string> {
     let key: string | null | undefined;
 
@@ -28,12 +30,12 @@ export async function getThumbnailUrlBySource(
         case 'user': {
             const profile = await prisma.profile.findUnique({
                 where: { userId: source.id },
-                select: { photoUrl: true },
+                select: { photoKey: true },
             });
-            key = profile?.photoUrl ? extractKeyFromUrl(profile.photoUrl) : null;
+            key = profile?.photoKey ?? null;
             break;
         }
     }
 
-    return getThumbnailUrl(key, options);
+    return getThumbnailUrl(key, aspect, width);
 }

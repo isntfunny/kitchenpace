@@ -410,13 +410,15 @@ export default async function ProfilePage() {
                         >
                             {/* Avatar */}
                             <div className={css({ flexShrink: 0 })}>
-                                {profile.photoUrl ? (
+                                {profile.photoKey ? (
                                     <SmartImage
-                                        src={profile.photoUrl}
+                                        imageKey={profile.photoKey}
                                         alt={profile.nickname ?? 'Profilfoto'}
-                                        width={96}
-                                        height={96}
+                                        aspect="1:1"
+                                        sizes="96px"
                                         className={css({
+                                            width: '96px',
+                                            height: '96px',
                                             borderRadius: 'full',
                                             objectFit: 'cover',
                                             border: '3px solid',

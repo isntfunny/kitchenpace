@@ -21,7 +21,6 @@ export async function GET(_request: Request, { params }: Params) {
     const recipe = await prisma.recipe.findFirst({
         where: {
             OR: [{ slug: resolvedParams.id }, { id: resolvedParams.id }],
-            publishedAt: { not: null },
         },
         select: {
             id: true,

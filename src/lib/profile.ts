@@ -4,7 +4,7 @@ import { moderateContent, persistModerationResult } from '@app/lib/moderation/mo
 import { generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
-type ProfileFields = Partial<Pick<Profile, 'nickname' | 'teaser' | 'photoUrl'>> & {
+type ProfileFields = Partial<Pick<Profile, 'nickname' | 'teaser' | 'photoKey'>> & {
     ratingsPublic?: boolean;
     followsPublic?: boolean;
     favoritesPublic?: boolean;
@@ -84,7 +84,7 @@ export const upsertProfile = async (params: { userId: string; data: ProfileField
             nickname,
             slug,
             teaser: definedData.teaser,
-            photoUrl: definedData.photoUrl,
+            photoKey: definedData.photoKey,
             ratingsPublic: definedData.ratingsPublic,
             followsPublic: definedData.followsPublic,
             favoritesPublic: definedData.favoritesPublic,
@@ -103,7 +103,7 @@ export const upsertProfile = async (params: { userId: string; data: ProfileField
             nickname,
             ...(definedData.nickname ? { slug } : {}),
             teaser: definedData.teaser,
-            photoUrl: definedData.photoUrl,
+            photoKey: definedData.photoKey,
             ratingsPublic: definedData.ratingsPublic,
             followsPublic: definedData.followsPublic,
             favoritesPublic: definedData.favoritesPublic,

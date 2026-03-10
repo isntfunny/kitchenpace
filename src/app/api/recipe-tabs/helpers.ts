@@ -8,7 +8,6 @@ export type RecipeSummary = {
     id: string;
     title: string;
     slug?: string;
-    imageUrl?: string;
     imageKey?: string | null;
     prepTime?: number;
     cookTime?: number;
@@ -21,7 +20,6 @@ function mapRecipeToSummary(
         id: string;
         title: string;
         slug?: string | null;
-        imageUrl?: string | null;
         imageKey?: string | null;
         prepTime?: number | null;
         cookTime?: number | null;
@@ -33,7 +31,6 @@ function mapRecipeToSummary(
         id: recipe.id,
         title: recipe.title,
         slug: recipe.slug ?? undefined,
-        imageUrl: recipe.imageUrl ?? undefined,
         imageKey: recipe.imageKey ?? null,
         prepTime: recipe.prepTime ?? undefined,
         cookTime: recipe.cookTime ?? undefined,

@@ -988,8 +988,6 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                             onTitleChange={setTitle}
                             description={description}
                             onDescriptionChange={setDescription}
-                            imageUrl={imageUrl}
-                            onImageUrlChange={setImageUrl}
                             showAutoSaveHint={false}
                         />
                     </div>

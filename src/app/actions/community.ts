@@ -3,6 +3,7 @@
 import shuffle from 'lodash/shuffle';
 
 import { fetchActivityFeed } from '@app/lib/activity-feed';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { type ActivityFeedItem } from '@app/lib/activity-utils';
 import { PALETTE } from '@app/lib/palette';
 import { prisma } from '@shared/prisma';
@@ -128,7 +129,7 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
                 name: profile.user.name || profile.nickname,
                 nickname: profile.nickname,
                 bio: profile.bio,
-                avatar: profile.photoUrl,
+                avatar: profile.photoKey ? getThumbnailUrl(profile.photoKey!, '1:1', 96) : null,
                 followerCount: profile.followerCount,
                 recipeCount: profile.recipeCount,
                 topRecipes: profile.user.recipes.map((recipe) => ({
@@ -168,7 +169,7 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
         name: profile.user.name || profile.nickname,
         nickname: profile.nickname,
         bio: profile.bio,
-        avatar: profile.photoUrl,
+        avatar: profile.photoKey ? getThumbnailUrl(profile.photoKey, '1:1', 96) : null,
         followerCount: profile.followerCount,
         recipeCount: profile.recipeCount,
         topRecipes: profile.user.recipes.map((recipe) => ({

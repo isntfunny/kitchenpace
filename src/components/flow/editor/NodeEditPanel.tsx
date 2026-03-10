@@ -133,11 +133,7 @@ export function NodeEditPanel({
                 {photoKey && (
                     <div className={photoBannerClass}>
                         <img
-                            src={getThumbnailUrl(photoKey, {
-                                width: 460,
-                                height: 110,
-                                fit: 'cover',
-                            })}
+                            src={getThumbnailUrl(photoKey, '4:1', 460)}
                             alt="Schrittfoto"
                             className={photoBannerImgClass}
                             onError={(e) => {

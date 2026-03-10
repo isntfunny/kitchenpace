@@ -200,11 +200,7 @@ export function StepCard({
                         }}
                     >
                         <img
-                            src={getThumbnailUrl(node.photoKey, {
-                                width: 220,
-                                height: 72,
-                                fit: 'cover',
-                            })}
+                            src={getThumbnailUrl(node.photoKey, '3:1', 320)}
                             alt=""
                             style={{
                                 width: '100%',

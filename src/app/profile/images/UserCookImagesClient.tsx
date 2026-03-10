@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState, useTransition } from 'react';
 
 import { deleteUserCookImage, type UserCookImageData } from '@app/app/actions/cooks';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { css } from 'styled-system/css';
 
 const STATUS_LABELS: Record<string, { label: string; colorCss: string; bgCss: string }> = {
@@ -92,7 +93,7 @@ function CookImageCard({
             >
                 {}
                 <img
-                    src={image.imageUrl}
+                    src={getThumbnailUrl(image.imageKey, '1:1', 640)}
                     alt={image.caption ?? image.recipe.title}
                     className={css({
                         width: '100%',

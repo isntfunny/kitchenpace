@@ -110,11 +110,7 @@ export function NodeDetailModal({
                 {/* Photo */}
                 {node.photoKey && (
                     <img
-                        src={getThumbnailUrl(node.photoKey, {
-                            width: 480,
-                            height: 220,
-                            fit: 'cover',
-                        })}
+                        src={getThumbnailUrl(node.photoKey, '2:1', 640)}
                         alt=""
                         style={{
                             width: '100%',

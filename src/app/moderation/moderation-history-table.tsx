@@ -6,6 +6,7 @@ import { Check, X, Ban, Unlock, Flag, Bot, ShieldCheck, Eye, ChevronRight } from
 import { Dialog } from 'radix-ui';
 import { useState } from 'react';
 
+import { getThumbnailUrl, extractKeyFromUrl } from '@app/lib/thumbnail-client';
 import { css } from 'styled-system/css';
 
 type LogItem = ModerationLog & {
@@ -21,6 +22,7 @@ type ModerationContentSnapshot = {
     description?: string;
     text?: string;
     imageUrl?: string;
+    imageKey?: string;
 };
 
 type HistoryEntry = {
@@ -310,7 +312,12 @@ function HistoryDetailDialog({
 
                                 {entry.snapshot.imageUrl && (
                                     <img
-                                        src={String(entry.snapshot.imageUrl)}
+                                        src={getThumbnailUrl(
+                                            (entry.snapshot.imageKey as string) ??
+                                                extractKeyFromUrl(String(entry.snapshot.imageUrl)),
+                                            'original',
+                                            960,
+                                        )}
                                         alt="Geprüfter Inhalt"
                                         className={css({
                                             maxWidth: '100%',

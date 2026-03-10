@@ -193,7 +193,7 @@ function HoverPreview({ recipe, children }: HoverPreviewProps) {
                                 transition={{ duration: 0.15 }}
                             >
                                 <SmartImage
-                                    src={recipe.imageUrl ?? undefined}
+                                    imageKey={recipe.imageKey ?? undefined}
                                     alt={recipe.title}
                                     recipeId={recipe.id}
                                     width={400}
@@ -363,7 +363,7 @@ function RecipeChip({
                         transition={{ duration: 0.2 }}
                     >
                         <SmartImage
-                            src={recipe.imageUrl ?? undefined}
+                            imageKey={recipe.imageKey ?? undefined}
                             alt=""
                             recipeId={recipe.id}
                             width={20}

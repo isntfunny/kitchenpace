@@ -3,6 +3,7 @@ import type { Dispatch } from 'react';
 
 import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { css } from 'styled-system/css';
 
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
@@ -162,6 +163,34 @@ export function SimpleTextView({
                                                 c.dark,
                                             )}
                                         </p>
+                                    )}
+
+                                    {/* Step photo */}
+                                    {node.photoKey && (
+                                        <div
+                                            style={{
+                                                marginTop: 10,
+                                                borderRadius: 8,
+                                                overflow: 'hidden',
+                                            }}
+                                        >
+                                            <img
+                                                src={getThumbnailUrl(node.photoKey, '3:1', 640)}
+                                                alt=""
+                                                style={{
+                                                    width: '100%',
+                                                    height: 120,
+                                                    objectFit: 'cover',
+                                                    display: 'block',
+                                                }}
+                                                onError={(e) => {
+                                                    const wrapper = (
+                                                        e.target as HTMLImageElement
+                                                    ).parentElement;
+                                                    if (wrapper) wrapper.style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
                                     )}
 
                                     {/* Timer controls */}

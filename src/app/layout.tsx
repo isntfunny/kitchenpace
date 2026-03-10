@@ -138,12 +138,12 @@ export default async function RootLayout({
 }>) {
     const session = await getServerAuthSession('openpanel-root-layout');
 
-    let profile: { photoUrl: string | null; nickname: string | null } | null = null;
+    let profile: { photoKey: string | null; nickname: string | null } | null = null;
     let pinnedRecipes: Array<{
         id: string;
         title: string;
         slug?: string;
-        imageUrl?: string;
+        imageKey?: string | null;
         prepTime?: number;
         cookTime?: number;
         difficulty?: string;
@@ -153,7 +153,7 @@ export default async function RootLayout({
         id: string;
         title: string;
         slug?: string;
-        imageUrl?: string;
+        imageKey?: string | null;
         prepTime?: number;
         cookTime?: number;
         difficulty?: string;
@@ -167,7 +167,7 @@ export default async function RootLayout({
         });
         if (userProfile) {
             profile = {
-                photoUrl: userProfile.photoUrl,
+                photoKey: userProfile.photoKey,
                 nickname: userProfile.nickname,
             };
         }
@@ -177,7 +177,7 @@ export default async function RootLayout({
             id: e.id,
             title: e.title,
             slug: e.slug,
-            imageUrl: e.imageUrl,
+            imageKey: e.imageKey,
             prepTime: e.prepTime,
             cookTime: e.cookTime,
             difficulty: e.difficulty,

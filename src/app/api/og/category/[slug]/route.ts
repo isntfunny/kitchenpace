@@ -1,10 +1,9 @@
-import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import * as lucideIcons from 'lucide';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 
 import { PALETTE } from '@app/lib/palette';
-import { getFileBuffer, BUCKET, s3Client } from '@app/lib/s3';
+import { getBuffer, exists, putObject, categoryOgKey } from '@app/lib/s3';
 import { createLogger } from '@shared/logger';
 import { prisma } from '@shared/prisma';
 
@@ -55,38 +54,22 @@ function buildLucideSvgPaths(elements: Array<[string, Record<string, string>]>):
 
 // ─── S3 cache helpers ─────────────────────────────────────────────────────────
 
-function cacheKey(slug: string): string {
-    return `cache/og-category-${slug}.png`;
-}
-
-async function getFromS3Cache(key: string): Promise<Buffer | null> {
+async function getFromS3Cache(slug: string): Promise<Buffer | null> {
     try {
-        const response = await s3Client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
-        if (!response.Body) return null;
-        const chunks: Uint8Array[] = [];
-        for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
-            chunks.push(chunk);
-        }
-        return Buffer.concat(chunks);
+        const key = categoryOgKey(slug);
+        if (!(await exists(key))) return null;
+        return await getBuffer(key);
     } catch {
         return null;
     }
 }
 
-async function saveToS3Cache(key: string, buffer: Buffer): Promise<void> {
+async function saveToS3Cache(slug: string, buffer: Buffer): Promise<void> {
     try {
-        await s3Client.send(
-            new PutObjectCommand({
-                Bucket: BUCKET,
-                Key: key,
-                Body: buffer,
-                ContentType: 'image/png',
-                CacheControl: 'public, max-age=86400',
-            }),
-        );
+        await putObject(categoryOgKey(slug), buffer, 'image/png', 'public, max-age=86400');
     } catch (error) {
         log.warn('Failed to cache OG image', {
-            key,
+            slug,
             error: error instanceof Error ? error.message : String(error),
         });
     }
@@ -156,7 +139,7 @@ function buildPanels(count: number): PanelDef[] {
 }
 
 async function loadRecipeImage(imageKey: string, width: number, height: number): Promise<Buffer> {
-    const buf = await getFileBuffer(imageKey);
+    const buf = await getBuffer(imageKey);
     return sharp(buf)
         .resize(width, height, { fit: 'cover', position: 'attention' })
         .png()
@@ -376,7 +359,7 @@ export async function GET(
     try {
         // Check S3 cache first (skip in dev for fast iteration)
         if (!IS_DEV) {
-            const cached = await getFromS3Cache(cacheKey(slug));
+            const cached = await getFromS3Cache(slug);
             if (cached) {
                 return new Response(Uint8Array.from(cached), {
                     headers: {
@@ -430,7 +413,7 @@ export async function GET(
 
         // Cache to S3 (fire-and-forget, skip in dev)
         if (!IS_DEV) {
-            saveToS3Cache(cacheKey(slug), buffer);
+            saveToS3Cache(slug, buffer);
         }
 
         return new Response(Uint8Array.from(buffer), {

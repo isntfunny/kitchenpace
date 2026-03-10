@@ -5,6 +5,7 @@ import { Command } from 'commander';
 
 import { generateUniqueSlug } from '@app/lib/slug';
 
+import { registerImportCommand } from './commands/import.js';
 import { generateCompletions } from './lib/complete.js';
 import { db, Role, RecipeStatus } from './lib/db.js';
 import { triggerJobNow, getJobDefinitions } from './lib/jobs.js';
@@ -330,6 +331,8 @@ program
 
         await queue.close();
     });
+
+registerImportCommand(program);
 
 program
     .command('completion')

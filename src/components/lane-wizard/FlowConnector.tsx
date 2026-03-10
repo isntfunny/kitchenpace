@@ -53,13 +53,7 @@ export function FlowConnector({
 }
 
 /** Small connector between cards within the same lane */
-export function IntraLaneConnector({
-    fromColor,
-    toColor,
-}: {
-    fromColor: string;
-    toColor: string;
-}) {
+export function IntraLaneConnector({ fromColor, toColor }: { fromColor: string; toColor: string }) {
     return (
         <div className={intraWrapClass}>
             <div

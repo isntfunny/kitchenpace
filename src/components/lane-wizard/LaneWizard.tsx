@@ -132,9 +132,7 @@ export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: 
         const ids = new Set<string>();
         for (const segment of grid.segments) {
             const laneDurs = segment.lanes.map((lane) =>
-                lane
-                    .filter((s) => !s.continuation)
-                    .reduce((acc, s) => acc + (s.duration ?? 0), 0),
+                lane.filter((s) => !s.continuation).reduce((acc, s) => acc + (s.duration ?? 0), 0),
             );
             const max = Math.max(...laneDurs);
             if (max === 0) continue;
@@ -170,7 +168,7 @@ export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: 
         const laneCount = segment.lanes.length;
         const templateColumns = segment.columnSpans.map((s) => `${s}fr`).join(' ');
 
-        const segmentColors = (lane: typeof segment.lanes[number], pickLast: boolean) => {
+        const segmentColors = (lane: (typeof segment.lanes)[number], pickLast: boolean) => {
             const step = pickLast
                 ? [...lane].reverse().find((s) => !s.continuation)
                 : lane.find((s) => !s.continuation);
@@ -262,46 +260,46 @@ export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: 
                                         prevStep && !step.continuation && !prevStep.continuation;
                                     return (
                                         <React.Fragment key={step.id}>
-                                        {showIntraConnector && (
-                                            <IntraLaneConnector
-                                                fromColor={STEP_CONFIGS[prevStep.type].accent}
-                                                toColor={STEP_CONFIGS[step.type].accent}
+                                            {showIntraConnector && (
+                                                <IntraLaneConnector
+                                                    fromColor={STEP_CONFIGS[prevStep.type].accent}
+                                                    toColor={STEP_CONFIGS[step.type].accent}
+                                                />
+                                            )}
+                                            <StepCard
+                                                step={step}
+                                                photoKey={photosByStepId[step.id]}
+                                                mode={mode}
+                                                isLast={stepIdx === lane.length - 1}
+                                                isDone={completed.has(step.id)}
+                                                isCriticalPath={criticalStepIds.has(step.id)}
+                                                timer={timers.get(step.id)}
+                                                onToggleDone={() => toggleDone(step.id)}
+                                                onTimerStart={() => start(step.id)}
+                                                onTimerPause={() => pause(step.id)}
+                                                onTimerReset={() => reset(step.id)}
+                                                onEdit={
+                                                    canEdit
+                                                        ? () =>
+                                                              setEditingStep({
+                                                                  step,
+                                                                  segmentId: segment.id,
+                                                                  laneIndex: laneIdx,
+                                                              })
+                                                        : undefined
+                                                }
+                                                onDelete={
+                                                    canDelete
+                                                        ? () =>
+                                                              dispatch({
+                                                                  type: 'DELETE_STEP',
+                                                                  segmentId: segment.id,
+                                                                  laneIndex: laneIdx,
+                                                                  stepId: step.id,
+                                                              })
+                                                        : undefined
+                                                }
                                             />
-                                        )}
-                                        <StepCard
-                                            step={step}
-                                            photoKey={photosByStepId[step.id]}
-                                            mode={mode}
-                                            isLast={stepIdx === lane.length - 1}
-                                            isDone={completed.has(step.id)}
-                                            isCriticalPath={criticalStepIds.has(step.id)}
-                                            timer={timers.get(step.id)}
-                                            onToggleDone={() => toggleDone(step.id)}
-                                            onTimerStart={() => start(step.id)}
-                                            onTimerPause={() => pause(step.id)}
-                                            onTimerReset={() => reset(step.id)}
-                                            onEdit={
-                                                canEdit
-                                                    ? () =>
-                                                          setEditingStep({
-                                                              step,
-                                                              segmentId: segment.id,
-                                                              laneIndex: laneIdx,
-                                                          })
-                                                    : undefined
-                                            }
-                                            onDelete={
-                                                canDelete
-                                                    ? () =>
-                                                          dispatch({
-                                                              type: 'DELETE_STEP',
-                                                              segmentId: segment.id,
-                                                              laneIndex: laneIdx,
-                                                              stepId: step.id,
-                                                          })
-                                                    : undefined
-                                            }
-                                        />
                                         </React.Fragment>
                                     );
                                 })}
@@ -545,9 +543,9 @@ function TimeRuler({ grid }: { grid: LaneGrid }) {
         } else {
             // Untimed: first real step gives label + color
             const first = realSteps[0];
-            const parallelCount = seg.lanes.filter(
-                (lane) => lane.filter((s) => !s.continuation).length > 0,
-            ).length - 1;
+            const parallelCount =
+                seg.lanes.filter((lane) => lane.filter((s) => !s.continuation).length > 0).length -
+                1;
             segData.push({
                 id: seg.id,
                 dur: 0,

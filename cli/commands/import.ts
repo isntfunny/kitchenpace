@@ -52,7 +52,9 @@ export function registerImportCommand(program: Command): void {
             }
 
             if (allUrls.length === 0) {
-                console.error(chalk.red('No URLs provided. Pass URLs as arguments or use -f <file>.'));
+                console.error(
+                    chalk.red('No URLs provided. Pass URLs as arguments or use -f <file>.'),
+                );
                 process.exit(1);
             }
 
@@ -178,12 +180,17 @@ async function importSingle(user: ResolvedUser, url: string): Promise<void> {
 async function importBatch(user: ResolvedUser, urls: string[]): Promise<void> {
     console.log(chalk.bold(`\nBatch import: ${urls.length} URLs\n`));
 
-    const results: { url: string; status: 'ok' | 'skipped' | 'error'; title?: string; slug?: string; error?: string }[] =
-        [];
+    const results: {
+        url: string;
+        status: 'ok' | 'skipped' | 'error';
+        title?: string;
+        slug?: string;
+        error?: string;
+    }[] = [];
 
     for (let i = 0; i < urls.length; i++) {
         const url = urls[i];
-        console.log(chalk.bold(`\n[${ i + 1}/${urls.length}] ${url}`));
+        console.log(chalk.bold(`\n[${i + 1}/${urls.length}] ${url}`));
         console.log(chalk.dim('─'.repeat(60)));
 
         const analyzed = await scrapeAndAnalyze(user, url);
@@ -285,10 +292,7 @@ async function importBatch(user: ResolvedUser, urls: string[]): Promise<void> {
 // Shared helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function scrapeAndAnalyze(
-    user: ResolvedUser,
-    url: string,
-): Promise<AnalyzedRecipe | null> {
+async function scrapeAndAnalyze(user: ResolvedUser, url: string): Promise<AnalyzedRecipe | null> {
     // Scrape
     const scrapeSpinner = ora(`Scraping ${chalk.cyan(url)}...`).start();
     let scraped;
@@ -341,9 +345,7 @@ function printRecipeSummary(analyzed: AnalyzedRecipe): void {
     }
 
     console.log(
-        chalk.dim(
-            `Flow: ${analyzed.flowNodes.length} Knoten, ${analyzed.flowEdges.length} Kanten`,
-        ),
+        chalk.dim(`Flow: ${analyzed.flowNodes.length} Knoten, ${analyzed.flowEdges.length} Kanten`),
     );
     console.log();
 }

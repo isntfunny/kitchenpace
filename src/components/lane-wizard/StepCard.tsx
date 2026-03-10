@@ -134,8 +134,9 @@ export function StepCard({
                         <span>{config.label}</span>
                     </div>
 
-                    {step.duration && !timer && (
-                        isCriticalPath ? (
+                    {step.duration &&
+                        !timer &&
+                        (isCriticalPath ? (
                             <span
                                 className={criticalDurationClass}
                                 title="Roter Faden — bestimmt die Gesamtdauer des Rezepts"
@@ -145,8 +146,7 @@ export function StepCard({
                             </span>
                         ) : (
                             <span className={durationClass}>{step.duration} Min.</span>
-                        )
-                    )}
+                        ))}
 
                     {timer && !isDone && (
                         <span

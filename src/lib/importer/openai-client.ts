@@ -40,9 +40,7 @@ export function createOpenAIClient(): OpenAI {
         });
     }
 
-    throw new Error(
-        'Weder OPENROUTER_API_KEY noch OPENAI_API_KEY ist konfiguriert',
-    );
+    throw new Error('Weder OPENROUTER_API_KEY noch OPENAI_API_KEY ist konfiguriert');
 }
 
 // Singleton-Instance für wiederverwendeten Client

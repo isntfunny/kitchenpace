@@ -17,11 +17,7 @@ import { prisma } from '@shared/prisma';
 
 // Re-export types that the UI layer needs
 export type { ScrapedContent } from '@app/lib/importer/scraper';
-export type {
-    AnalyzedRecipe,
-    FlowEdgeInput,
-    FlowNodeInput,
-} from '@app/lib/importer/transform';
+export type { AnalyzedRecipe, FlowEdgeInput, FlowNodeInput } from '@app/lib/importer/transform';
 
 // Re-export scrapeRecipe and checkScraplerHealth as server actions
 export { checkScraplerHealth, scrapeRecipe };

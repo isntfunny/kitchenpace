@@ -62,8 +62,8 @@ function categoryToSlug(category: string): string {
         Beilage: 'beilage',
         Backen: 'backen',
         Dessert: 'dessert',
-        'Frühstück': 'fruehstueck',
-        'Getränk': 'getraenk',
+        Frühstück: 'fruehstueck',
+        Getränk: 'getraenk',
         Vorspeise: 'vorspeise',
         Salat: 'salat',
     };

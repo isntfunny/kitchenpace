@@ -184,9 +184,8 @@ export function SimpleTextView({
                                                     display: 'block',
                                                 }}
                                                 onError={(e) => {
-                                                    const wrapper = (
-                                                        e.target as HTMLImageElement
-                                                    ).parentElement;
+                                                    const wrapper = (e.target as HTMLImageElement)
+                                                        .parentElement;
                                                     if (wrapper) wrapper.style.display = 'none';
                                                 }}
                                             />

@@ -924,221 +924,222 @@ export function RecipeDetailClient({
 
                                 {/* Divider + Rating + Actions — hidden for drafts */}
                                 {!isDraft && (
-                                <div className={css({ h: '1px', bg: 'border', mb: '3' })} />
-
+                                    <div className={css({ h: '1px', bg: 'border', mb: '3' })} />
                                 )}
                                 {!isDraft && (
-                                <div
-                                    className={css({
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '1.5',
-                                        mb: '3',
-                                    })}
-                                >
-                                    {starValues.map((value) => (
-                                        <div
-                                            key={value}
-                                            style={{
-                                                position: 'relative',
-                                                display: 'inline-flex',
-                                                overflow: 'visible',
-                                            }}
-                                        >
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRatingSelect(value)}
-                                                disabled={isRatingPending}
-                                                className={css({
-                                                    padding: 0,
-                                                    border: 'none',
-                                                    background: 'none',
-                                                    cursor: 'pointer',
-                                                    transition: 'transform 150ms ease',
-                                                    _hover: { transform: 'scale(1.2)' },
-                                                    display: 'inline-flex',
-                                                })}
-                                            >
-                                                <Star
-                                                    size={22}
-                                                    fill={
-                                                        value <= activeStarValue
-                                                            ? 'var(--colors-palette-gold, #d9ad36)'
-                                                            : 'none'
-                                                    }
-                                                    className={css({
-                                                        color:
-                                                            value <= activeStarValue
-                                                                ? 'palette.gold'
-                                                                : 'text-muted',
-                                                        opacity:
-                                                            value <= activeStarValue ? 1 : 0.35,
-                                                    })}
-                                                />
-                                            </button>
-                                            <div
-                                                style={{
-                                                    position: 'absolute',
-                                                    inset: 0,
-                                                    pointerEvents: 'none',
-                                                    overflow: 'visible',
-                                                    zIndex: 10,
-                                                }}
-                                            >
-                                                <AnimatePresence>
-                                                    {starBursts
-                                                        .filter((b) => b.starIndex === value)
-                                                        .map((burst) =>
-                                                            burst.sparks.map((spark) => (
-                                                                <motion.div
-                                                                    key={`${burst.id}-${spark.id}`}
-                                                                    style={{
-                                                                        position: 'absolute',
-                                                                        left: spark.x,
-                                                                        top: spark.y,
-                                                                        width: spark.size,
-                                                                        height: spark.size,
-                                                                        borderRadius: '50%',
-                                                                        background: spark.color,
-                                                                        boxShadow: `0 0 ${spark.size * 2}px ${spark.color}`,
-                                                                        translateX: '-50%',
-                                                                        translateY: '-50%',
-                                                                    }}
-                                                                    initial={{
-                                                                        opacity: 1,
-                                                                        x: 0,
-                                                                        y: 0,
-                                                                        scale: 1,
-                                                                    }}
-                                                                    animate={{
-                                                                        x: spark.dx,
-                                                                        y: spark.dy,
-                                                                        opacity: [1, 1, 0],
-                                                                        scale: [1, 1.4, 0],
-                                                                    }}
-                                                                    transition={{
-                                                                        duration: spark.duration,
-                                                                        delay: spark.delay,
-                                                                        ease: 'easeOut',
-                                                                        opacity: {
-                                                                            times: [0, 0.35, 1],
-                                                                        },
-                                                                        scale: {
-                                                                            times: [0, 0.25, 1],
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            )),
-                                                        )}
-                                                </AnimatePresence>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <span
+                                    <div
                                         className={css({
-                                            fontSize: 'sm',
-                                            color: 'text-muted',
-                                            fontFamily: 'body',
-                                            ml: '1',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '1.5',
+                                            mb: '3',
                                         })}
                                     >
-                                        {ratingCount > 0
-                                            ? `${averageRating.toFixed(1)} (${ratingCount})`
-                                            : 'Bewerten'}
-                                    </span>
-                                </div>
+                                        {starValues.map((value) => (
+                                            <div
+                                                key={value}
+                                                style={{
+                                                    position: 'relative',
+                                                    display: 'inline-flex',
+                                                    overflow: 'visible',
+                                                }}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRatingSelect(value)}
+                                                    disabled={isRatingPending}
+                                                    className={css({
+                                                        padding: 0,
+                                                        border: 'none',
+                                                        background: 'none',
+                                                        cursor: 'pointer',
+                                                        transition: 'transform 150ms ease',
+                                                        _hover: { transform: 'scale(1.2)' },
+                                                        display: 'inline-flex',
+                                                    })}
+                                                >
+                                                    <Star
+                                                        size={22}
+                                                        fill={
+                                                            value <= activeStarValue
+                                                                ? 'var(--colors-palette-gold, #d9ad36)'
+                                                                : 'none'
+                                                        }
+                                                        className={css({
+                                                            color:
+                                                                value <= activeStarValue
+                                                                    ? 'palette.gold'
+                                                                    : 'text-muted',
+                                                            opacity:
+                                                                value <= activeStarValue ? 1 : 0.35,
+                                                        })}
+                                                    />
+                                                </button>
+                                                <div
+                                                    style={{
+                                                        position: 'absolute',
+                                                        inset: 0,
+                                                        pointerEvents: 'none',
+                                                        overflow: 'visible',
+                                                        zIndex: 10,
+                                                    }}
+                                                >
+                                                    <AnimatePresence>
+                                                        {starBursts
+                                                            .filter((b) => b.starIndex === value)
+                                                            .map((burst) =>
+                                                                burst.sparks.map((spark) => (
+                                                                    <motion.div
+                                                                        key={`${burst.id}-${spark.id}`}
+                                                                        style={{
+                                                                            position: 'absolute',
+                                                                            left: spark.x,
+                                                                            top: spark.y,
+                                                                            width: spark.size,
+                                                                            height: spark.size,
+                                                                            borderRadius: '50%',
+                                                                            background: spark.color,
+                                                                            boxShadow: `0 0 ${spark.size * 2}px ${spark.color}`,
+                                                                            translateX: '-50%',
+                                                                            translateY: '-50%',
+                                                                        }}
+                                                                        initial={{
+                                                                            opacity: 1,
+                                                                            x: 0,
+                                                                            y: 0,
+                                                                            scale: 1,
+                                                                        }}
+                                                                        animate={{
+                                                                            x: spark.dx,
+                                                                            y: spark.dy,
+                                                                            opacity: [1, 1, 0],
+                                                                            scale: [1, 1.4, 0],
+                                                                        }}
+                                                                        transition={{
+                                                                            duration:
+                                                                                spark.duration,
+                                                                            delay: spark.delay,
+                                                                            ease: 'easeOut',
+                                                                            opacity: {
+                                                                                times: [0, 0.35, 1],
+                                                                            },
+                                                                            scale: {
+                                                                                times: [0, 0.25, 1],
+                                                                            },
+                                                                        }}
+                                                                    />
+                                                                )),
+                                                            )}
+                                                    </AnimatePresence>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <span
+                                            className={css({
+                                                fontSize: 'sm',
+                                                color: 'text-muted',
+                                                fontFamily: 'body',
+                                                ml: '1',
+                                            })}
+                                        >
+                                            {ratingCount > 0
+                                                ? `${averageRating.toFixed(1)} (${ratingCount})`
+                                                : 'Bewerten'}
+                                        </span>
+                                    </div>
                                 )}
                             </div>
 
                             {/* ── Actions ── */}
                             {!isDraft && (
-                            <div className={css({ display: 'flex', gap: '2', mb: '2' })}>
-                                <div className={css({ flex: '1' })}>
-                                    <SparkleEffect>
-                                        {(triggerSparkle) => (
-                                            <Button
-                                                type="button"
-                                                variant={
-                                                    favoriteState.isFavorite
-                                                        ? 'secondary'
-                                                        : 'primary'
-                                                }
-                                                onClick={() => {
-                                                    if (!favoriteState.isFavorite) triggerSparkle();
-                                                    handleFavoriteToggle();
-                                                }}
-                                                disabled={isFavoritePending}
-                                                style={{ width: '100%', minWidth: 0 }}
-                                            >
-                                                <span className={css({ flexShrink: 0 })}>
-                                                    {favoriteState.isFavorite ? (
-                                                        <Heart size={16} />
-                                                    ) : (
-                                                        <Bookmark size={16} />
-                                                    )}
-                                                </span>
-                                                <span
-                                                    className={css({
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap',
-                                                        minWidth: 0,
-                                                    })}
+                                <div className={css({ display: 'flex', gap: '2', mb: '2' })}>
+                                    <div className={css({ flex: '1' })}>
+                                        <SparkleEffect>
+                                            {(triggerSparkle) => (
+                                                <Button
+                                                    type="button"
+                                                    variant={
+                                                        favoriteState.isFavorite
+                                                            ? 'secondary'
+                                                            : 'primary'
+                                                    }
+                                                    onClick={() => {
+                                                        if (!favoriteState.isFavorite)
+                                                            triggerSparkle();
+                                                        handleFavoriteToggle();
+                                                    }}
+                                                    disabled={isFavoritePending}
+                                                    style={{ width: '100%', minWidth: 0 }}
                                                 >
-                                                    {favoriteState.isFavorite
-                                                        ? 'Favorit'
-                                                        : 'Speichern'}
-                                                </span>
-                                                <span
-                                                    className={css({
-                                                        opacity: 0.7,
-                                                        fontSize: 'xs',
-                                                        flexShrink: 0,
-                                                    })}
-                                                >
-                                                    · {favoriteState.count}
-                                                </span>
-                                            </Button>
-                                        )}
-                                    </SparkleEffect>
-                                </div>
-                                <div className={css({ flex: '1' })}>
-                                    <Button
-                                        type="button"
-                                        variant={hasCooked ? 'secondary' : 'primary'}
-                                        onClick={handleMarkCooked}
-                                        disabled={isCookPending}
-                                        style={{ width: '100%', minWidth: 0 }}
-                                    >
-                                        <span className={css({ flexShrink: 0 })}>
-                                            {hasCooked ? (
-                                                <CheckCircle size={16} />
-                                            ) : (
-                                                <ChefHat size={16} />
+                                                    <span className={css({ flexShrink: 0 })}>
+                                                        {favoriteState.isFavorite ? (
+                                                            <Heart size={16} />
+                                                        ) : (
+                                                            <Bookmark size={16} />
+                                                        )}
+                                                    </span>
+                                                    <span
+                                                        className={css({
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                            minWidth: 0,
+                                                        })}
+                                                    >
+                                                        {favoriteState.isFavorite
+                                                            ? 'Favorit'
+                                                            : 'Speichern'}
+                                                    </span>
+                                                    <span
+                                                        className={css({
+                                                            opacity: 0.7,
+                                                            fontSize: 'xs',
+                                                            flexShrink: 0,
+                                                        })}
+                                                    >
+                                                        · {favoriteState.count}
+                                                    </span>
+                                                </Button>
                                             )}
-                                        </span>
-                                        <span
-                                            className={css({
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                                minWidth: 0,
-                                            })}
+                                        </SparkleEffect>
+                                    </div>
+                                    <div className={css({ flex: '1' })}>
+                                        <Button
+                                            type="button"
+                                            variant={hasCooked ? 'secondary' : 'primary'}
+                                            onClick={handleMarkCooked}
+                                            disabled={isCookPending}
+                                            style={{ width: '100%', minWidth: 0 }}
                                         >
-                                            Zubereitet
-                                        </span>
-                                        <span
-                                            className={css({
-                                                opacity: 0.7,
-                                                fontSize: 'xs',
-                                                flexShrink: 0,
-                                            })}
-                                        >
-                                            · {cookCount}
-                                        </span>
-                                    </Button>
+                                            <span className={css({ flexShrink: 0 })}>
+                                                {hasCooked ? (
+                                                    <CheckCircle size={16} />
+                                                ) : (
+                                                    <ChefHat size={16} />
+                                                )}
+                                            </span>
+                                            <span
+                                                className={css({
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                    minWidth: 0,
+                                                })}
+                                            >
+                                                Zubereitet
+                                            </span>
+                                            <span
+                                                className={css({
+                                                    opacity: 0.7,
+                                                    fontSize: 'xs',
+                                                    flexShrink: 0,
+                                                })}
+                                            >
+                                                · {cookCount}
+                                            </span>
+                                        </Button>
+                                    </div>
                                 </div>
-                            </div>
                             )}
                             <div
                                 className={css({

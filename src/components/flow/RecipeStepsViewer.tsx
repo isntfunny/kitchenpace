@@ -41,7 +41,20 @@ export function RecipeStepsViewer({
 
     useEffect(() => {
         if (castState !== 'connected' || !recipeSlug) return;
-        sendMessage({ type: 'LOAD_RECIPE', slug: recipeSlug });
+        // Send immediately, then retry with delays to handle the async script-
+        // load race condition on the receiver (Cast SDK loads dynamically, so
+        // the receiver's message listener may not be registered when the first
+        // message arrives right after SESSION_STARTED).
+        const msg = { type: 'LOAD_RECIPE' as const, slug: recipeSlug };
+        sendMessage(msg);
+        const t1 = setTimeout(() => sendMessage(msg), 1500);
+        const t2 = setTimeout(() => sendMessage(msg), 4000);
+        const t3 = setTimeout(() => sendMessage(msg), 9000);
+        return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+            clearTimeout(t3);
+        };
     }, [castState, recipeSlug, sendMessage]);
     // ─────────────────────────────────────────────────────────────────────
 

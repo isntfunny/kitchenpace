@@ -30,6 +30,8 @@ interface CastReceiverContext {
     start: (options?: CastReceiverOptions) => void;
     addCustomMessageListener: (ns: string, handler: (ev: { data: string }) => void) => void;
     getDeviceCapabilities: () => { touch_input_supported?: boolean } | null;
+    /** Sets the status text shown on the Cast device — also keeps the session alive. */
+    setApplicationState: (state: string) => void;
 }
 
 interface CastReceiverFramework {
@@ -63,10 +65,20 @@ export default function CastReceiverPage() {
 
                 if (msg.type === 'LOAD_RECIPE') {
                     setRecipeUrl(`/recipe/${msg.slug}/mobile`);
+                    // Signal to the Cast framework that the app is active so
+                    // it doesn't terminate the session due to perceived idleness.
+                    ctx.setApplicationState('Rezept wird angezeigt');
                 }
             });
 
-            ctx.start({ touchScreenOptimizedApp: true, maxInactivity: 3600 });
+            // maxInactivity: 0 = never shut down due to sender inactivity.
+            // touchScreenOptimizedApp prevents the framework from showing its
+            // own media controls overlay on Nest Hub / touch Cast devices.
+            ctx.start({ touchScreenOptimizedApp: true, maxInactivity: 0 });
+
+            // Signal immediately that the receiver is ready — this keeps the
+            // Cast session alive even before a recipe message arrives.
+            ctx.setApplicationState('KüchenTakt bereit');
 
             // ── Home Assistant touch hack ─────────────────────────────
             // The Cast framework injects a <touch-controls> element that

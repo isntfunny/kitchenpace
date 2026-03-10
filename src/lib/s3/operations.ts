@@ -8,6 +8,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 
+// eslint-disable-next-line import/order
 import { BUCKET, s3Client } from './client';
 
 // ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
 import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
-import { upload, generateUploadKey, trashKeyFrom, moveObject, deleteObject } from '@app/lib/s3';
+import { upload, generateUploadKey, trashKeyFrom, moveObject } from '@app/lib/s3';
 import type { UploadType } from '@app/lib/s3';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;

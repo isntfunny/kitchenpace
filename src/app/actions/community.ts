@@ -3,9 +3,9 @@
 import shuffle from 'lodash/shuffle';
 
 import { fetchActivityFeed } from '@app/lib/activity-feed';
-import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { type ActivityFeedItem } from '@app/lib/activity-utils';
 import { PALETTE } from '@app/lib/palette';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { prisma } from '@shared/prisma';
 
 export type { ActivityFeedItem, ActivityIconName } from '@app/lib/activity-utils';

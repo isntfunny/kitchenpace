@@ -4,10 +4,10 @@ import { Job } from 'bullmq';
 import { syncContactToNotifuse } from '@app/lib/notifuse/email';
 import { s3Client, BUCKET, generateOgImage, ogThumbKey, exists } from '@app/lib/s3';
 
-import type { GenerateRecipeOgJob, GenerateOgImagesJob } from './types';
 
 import { prisma } from './prisma';
 import { getBackupQueue } from './queue';
+import type { GenerateRecipeOgJob, GenerateOgImagesJob } from './types';
 import { BackupJob } from './types';
 
 console.log('[DEBUG] scheduled-processor.ts module loaded');

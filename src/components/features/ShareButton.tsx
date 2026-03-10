@@ -3,8 +3,8 @@
 import { Check, Copy, Facebook, Share2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { PALETTE } from '@app/lib/palette';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { css } from 'styled-system/css';
 
 interface ShareButtonProps {

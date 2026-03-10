@@ -11,8 +11,8 @@
 
 import { moveObject } from '@app/lib/s3';
 import { approvedKey, trashKeyFrom } from '@app/lib/s3/keys';
-import { addGenerateRecipeOgJob } from '@worker/queues';
 import { prisma } from '@shared/prisma';
+import { addGenerateRecipeOgJob } from '@worker/queues';
 
 // ---------------------------------------------------------------------------
 // Approve

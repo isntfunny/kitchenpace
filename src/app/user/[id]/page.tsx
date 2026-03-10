@@ -3,8 +3,8 @@ import { Metadata } from 'next';
 
 import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
-import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 import { css } from 'styled-system/css';

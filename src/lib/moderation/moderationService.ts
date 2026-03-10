@@ -8,11 +8,64 @@ import {
     publishAdminInboxRemoved,
     serializeModerationQueueItem,
 } from '@app/lib/admin-inbox';
+import { createUserNotification } from '@app/lib/events/persist';
 import { getOpenAIClient } from '@app/lib/importer/openai-client';
 import { prisma } from '@shared/prisma';
 
 import { getThreshold } from './thresholds';
 import { ContentModerationInput, ModerationResult, ContentModerationSnapshot } from './types';
+
+function getModerationNotification(
+    decision: 'AUTO_APPROVED' | 'PENDING' | 'REJECTED',
+    contentType: string,
+): { title: string; message: string } {
+    const isImage =
+        contentType === 'cook_image' ||
+        contentType === 'recipe_image' ||
+        contentType === 'step_image' ||
+        contentType === 'profile';
+    const isRecipe = contentType === 'recipe';
+
+    if (decision === 'AUTO_APPROVED') {
+        if (isImage) return { title: 'Bild freigegeben', message: 'Dein Bild ist jetzt sichtbar!' };
+        if (isRecipe)
+            return { title: 'Rezept freigegeben', message: 'Dein Rezept ist jetzt öffentlich sichtbar!' };
+        return { title: 'Inhalt freigegeben', message: 'Dein Inhalt ist jetzt sichtbar!' };
+    }
+
+    if (decision === 'PENDING') {
+        if (isImage)
+            return {
+                title: 'Bild wird geprüft',
+                message: 'Wir prüfen dein Bild noch – es wird bald sichtbar.',
+            };
+        if (isRecipe)
+            return {
+                title: 'Rezept wird geprüft',
+                message: 'Wir prüfen dein Rezept noch – es wird bald sichtbar.',
+            };
+        return {
+            title: 'Inhalt wird geprüft',
+            message: 'Wir prüfen deinen Inhalt noch – er wird bald sichtbar.',
+        };
+    }
+
+    // REJECTED
+    if (isImage)
+        return {
+            title: 'Bild abgelehnt',
+            message: 'Dein Bild entspricht leider nicht unseren Richtlinien.',
+        };
+    if (isRecipe)
+        return {
+            title: 'Rezept abgelehnt',
+            message: 'Dein Rezept entspricht leider nicht unseren Richtlinien.',
+        };
+    return {
+        title: 'Inhalt abgelehnt',
+        message: 'Dein Inhalt entspricht leider nicht unseren Richtlinien.',
+    };
+}
 
 /**
  * Moderate content using OpenAI Moderation API (free)
@@ -177,6 +230,10 @@ export async function persistModerationResult(
                 );
             }
         }
+
+        // Notify the author about the moderation result
+        const { title, message } = getModerationNotification(result.decision, contentType);
+        await createUserNotification({ userId: authorId, type: 'SYSTEM', title, message });
     }
 }
 

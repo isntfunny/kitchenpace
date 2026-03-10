@@ -8,7 +8,7 @@ import type { PrismaClient } from '@prisma/client';
 
 import { generateUniqueSlug } from '@app/lib/slug';
 
-import { DEFAULT_IMPORT_MODEL, importRecipeFromMarkdown } from './openai-client';
+import { importRecipeFromMarkdown } from './openai-client';
 import {
     type AnalyzedRecipe,
     parseRecipeMarkdownFallback,
@@ -74,15 +74,15 @@ export async function analyzeWithAI(
         throw new Error('Kein Inhalt zum Analysieren vorhanden.');
     }
 
-    if (!process.env.OPENROUTER_API_KEY && !process.env.OPENAI_API_KEY) {
-        console.warn('Neither OPENROUTER_API_KEY nor OPENAI_API_KEY set — using fallback parser');
+    if (!process.env.OPENAI_API_KEY) {
+        console.warn('OPENAI_API_KEY not set — using fallback parser');
         if (userId) {
             await logImportRun(db, {
                 userId,
                 sourceUrl,
                 markdownLength: markdown.length,
                 status: 'FALLBACK',
-                errorMessage: 'No API key configured (OPENROUTER_API_KEY / OPENAI_API_KEY)',
+                errorMessage: 'No API key configured (OPENAI_API_KEY)',
             });
         }
         return parseRecipeMarkdownFallback(markdown);
@@ -99,7 +99,7 @@ export async function analyzeWithAI(
     ]);
 
     const result = await importRecipeFromMarkdown(markdown, sourceUrl, {
-        model: DEFAULT_IMPORT_MODEL,
+        model: 'gpt-5.4',
         temperature: 0.1,
         context: {
             availableTags: allTags.map((t) => t.name),
@@ -226,13 +226,18 @@ export async function saveImportedRecipe(
     });
 
     if (data.categoryIds?.length) {
-        await db.recipeCategory.createMany({
-            data: data.categoryIds.map((categoryId, index) => ({
-                recipeId: recipe.id,
-                categoryId,
-                position: index,
-            })),
+        const categories = await db.category.findMany({
+            where: { slug: { in: data.categoryIds } },
+            select: { id: true, slug: true },
         });
+        const slugToId = Object.fromEntries(categories.map((c) => [c.slug, c.id]));
+        const validEntries = data.categoryIds
+            .map((slug, index) => ({ slug, index }))
+            .filter(({ slug }) => slugToId[slug])
+            .map(({ slug, index }) => ({ recipeId: recipe.id, categoryId: slugToId[slug], position: index }));
+        if (validEntries.length) {
+            await db.recipeCategory.createMany({ data: validEntries });
+        }
     }
 
     // Find or create tags

@@ -45,7 +45,7 @@ export function NodeEditPanel({
     onDelete,
     canDelete = true,
 }: NodeEditPanelProps) {
-    const { onAddIngredientToRecipe } = useFlowEditor();
+    const { onAddIngredientToRecipe, recipeId: contextRecipeId } = useFlowEditor();
     const [stepType, setStepType] = useState<StepType>(data.stepType);
     const [label, setLabel] = useState(data.label);
     const [description, setDescription] = useState(data.description);
@@ -297,6 +297,7 @@ export function NodeEditPanel({
                                 </button>
                                 <QRUploadButton
                                     uploadType="step"
+                                    recipeId={contextRecipeId}
                                     stepId={_nodeId}
                                     label="Schritt-Foto"
                                     onImageUploaded={setPhotoKey}

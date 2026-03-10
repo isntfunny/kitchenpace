@@ -150,7 +150,7 @@ export const NodePalette = memo(NodePaletteComponent);
 /* ── styles ──────────────────────────────────────────────── */
 
 const paletteClass = css({
-    width: '220px',
+    width: '260px',
     height: '100%',
     backgroundColor: 'surface',
     borderRadius: 'xl',

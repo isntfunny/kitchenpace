@@ -145,6 +145,7 @@ export interface FlowEditorProps {
         ing: import('@app/components/recipe/RecipeForm/data').IngredientSearchResult,
     ) => void;
     onAiApply?: (result: AIAnalysisResult, apply: ApplySelection) => void;
+    recipeId?: string;
 }
 
 /* ── inner component (needs ReactFlowProvider above it) ── */
@@ -156,6 +157,7 @@ function FlowEditorInner({
     onChange,
     onAddIngredientToRecipe,
     onAiApply,
+    recipeId,
 }: FlowEditorProps) {
     const { screenToFlowPosition, getNodes, getEdges, fitView } = useReactFlow();
     const onChangeRef = useRef(onChange);
@@ -638,6 +640,7 @@ function FlowEditorInner({
             onAddNodeBefore: handleAddNodeBefore,
             onAddIngredientToRecipe,
             onInsertOnEdge: handleInsertOnEdge,
+            recipeId,
         }),
         [
             availableIngredients,
@@ -649,6 +652,7 @@ function FlowEditorInner({
             handleAddNodeBefore,
             onAddIngredientToRecipe,
             handleInsertOnEdge,
+            recipeId,
         ],
     );
 

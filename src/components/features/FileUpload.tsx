@@ -29,37 +29,47 @@ export function FileUpload({
     recipeId,
     label,
 }: FileUploadProps) {
-    const [uploading, setUploading] = useState(false);
+    const [progress, setProgress] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    const uploading = progress !== null;
+
     const handleUpload = useCallback(
-        async (file: File) => {
-            setUploading(true);
+        (file: File) => {
+            setProgress(0);
             setError(null);
 
-            try {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('type', type);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', type);
 
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
+            const xhr = new XMLHttpRequest();
 
-                if (!response.ok) {
-                    const data = await response.json();
-                    throw new Error(data.error || 'Upload failed');
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    setProgress(Math.round((e.loaded / e.total) * 100));
                 }
+            });
 
-                const data = await response.json();
-                onChange(data.key);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Upload failed');
-            } finally {
-                setUploading(false);
-            }
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const data = JSON.parse(xhr.responseText) as { key: string };
+                    onChange(data.key);
+                } else {
+                    const data = JSON.parse(xhr.responseText) as { error?: string };
+                    setError(data.error || 'Upload fehlgeschlagen');
+                }
+                setProgress(null);
+            });
+
+            xhr.addEventListener('error', () => {
+                setError('Verbindungsfehler – bitte nochmal versuchen.');
+                setProgress(null);
+            });
+
+            xhr.open('POST', '/api/upload');
+            xhr.send(formData);
         },
         [type, onChange],
     );
@@ -156,26 +166,50 @@ export function FileUpload({
                         gap: '2',
                         padding: '8',
                         border: '2px dashed',
-                        borderColor: {
-                            base: 'rgba(224,123,83,0.4)',
-                            _dark: 'rgba(224,123,83,0.45)',
-                        },
+                        borderColor: uploading
+                            ? 'palette.orange'
+                            : {
+                                  base: 'rgba(224,123,83,0.4)',
+                                  _dark: 'rgba(224,123,83,0.45)',
+                              },
                         borderRadius: 'xl',
-                        cursor: 'pointer',
+                        cursor: uploading ? 'default' : 'pointer',
                         transition: 'all 150ms',
-                        _hover: {
-                            borderColor: 'palette.orange',
-                            background: {
-                                base: 'rgba(224,123,83,0.05)',
-                                _dark: 'rgba(224,123,83,0.08)',
-                            },
-                        },
+                        position: 'relative',
+                        overflow: 'hidden',
+                        _hover: uploading
+                            ? {}
+                            : {
+                                  borderColor: 'palette.orange',
+                                  background: {
+                                      base: 'rgba(224,123,83,0.05)',
+                                      _dark: 'rgba(224,123,83,0.08)',
+                                  },
+                              },
                     })}
                 >
+                    {/* Progress fill — grows left to right */}
+                    {uploading && (
+                        <div
+                            style={{ width: `${progress ?? 0}%` }}
+                            className={css({
+                                position: 'absolute',
+                                insetY: '0',
+                                left: '0',
+                                background: {
+                                    base: 'rgba(224,123,83,0.15)',
+                                    _dark: 'rgba(224,123,83,0.2)',
+                                },
+                                transition: 'width 200ms ease-out',
+                                pointerEvents: 'none',
+                            })}
+                        />
+                    )}
                     <div
                         className={css({
                             fontSize: '2xl',
-                            color: 'rgba(224,123,83,0.7)',
+                            color: uploading ? 'palette.orange' : 'rgba(224,123,83,0.7)',
+                            transition: 'color 150ms',
                         })}
                     >
                         +
@@ -184,17 +218,19 @@ export function FileUpload({
                         className={css({
                             color: 'text-muted',
                             fontSize: 'sm',
+                            position: 'relative',
                         })}
                     >
-                        {uploading ? 'Uploading...' : 'Click to upload an image'}
+                        {uploading ? `${progress ?? 0} %` : 'Klicken zum Hochladen'}
                     </span>
                     <span
                         className={css({
                             color: 'text-muted',
                             fontSize: 'xs',
+                            position: 'relative',
                         })}
                     >
-                        JPEG, PNG, GIF, WebP (max 5MB)
+                        {uploading ? 'Wird hochgeladen…' : 'JPEG, PNG, GIF, WebP (max 5 MB)'}
                     </span>
                 </label>
                 <QRUploadButton
@@ -217,20 +253,6 @@ export function FileUpload({
                 </p>
             )}
 
-            {uploading && (
-                <div
-                    className={css({
-                        position: 'absolute',
-                        inset: '0',
-                        background: { base: 'rgba(255,255,255,0.8)', _dark: 'rgba(0,0,0,0.6)' },
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    })}
-                >
-                    <span className={css({ color: 'text' })}>Uploading...</span>
-                </div>
-            )}
         </div>
     );
 }

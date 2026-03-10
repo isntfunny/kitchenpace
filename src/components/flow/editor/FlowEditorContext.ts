@@ -21,6 +21,8 @@ export interface FlowEditorContextValue {
     onAddIngredientToRecipe?: (ing: IngredientSearchResult) => void;
     /** Insert a new node onto an existing edge, splitting it into two edges */
     onInsertOnEdge?: (edgeId: string, source: string, target: string, stepType: StepType) => void;
+    /** Recipe ID — passed from RecipeForm, used by QRUploadButton in NodeEditPanel */
+    recipeId?: string;
 }
 
 export const FlowEditorContext = createContext<FlowEditorContextValue | null>(null);

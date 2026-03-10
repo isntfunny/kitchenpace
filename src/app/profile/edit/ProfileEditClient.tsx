@@ -241,6 +241,7 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                                     type="profile"
                                     value={photoKey}
                                     onChange={setPhotoKey}
+                                    label="Profilfoto"
                                 />
                             </div>
 

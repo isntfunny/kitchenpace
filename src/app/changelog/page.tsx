@@ -67,10 +67,6 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'feat',
             },
             {
-                text: 'CLI-Tool `kitchen import` für Einzel- und Batch-Import von Rezepten mit interaktiver Zutatenliste',
-                tag: 'feat',
-            },
-            {
                 text: 'QR-Code Upload — Fotos direkt vom Handy über QR-Code ins Rezept hochladen',
                 tag: 'feat',
             },

@@ -2,11 +2,8 @@ name: Deploy Live
 
 on:
     push:
-        branches: [live]
-        paths-ignore:
-            - 'services/scraper/**'
-            - 'k6/**'
-            - '*.md'
+        tags:
+            - 'v*'
     workflow_dispatch:
 
 env:

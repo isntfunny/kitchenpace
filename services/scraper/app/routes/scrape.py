@@ -1,13 +1,18 @@
 """Scrape API endpoints using Scrapling CLI."""
 
+import asyncio
+import json
+import logging
+import os
+import tempfile
+import time
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, HttpUrl
-from typing import Optional
-import asyncio
-import json
-import tempfile
-import os
+
+logger = logging.getLogger("scraper")
 
 router = APIRouter(prefix="/api", tags=["scrape"])
 
@@ -135,9 +140,8 @@ async def scrape_url(request: ScrapeRequest) -> ScrapeResponse:
     - Otherwise, auto-detection tries schema.org Recipe, <article>, <main>,
       [role="main"] in order. Falls back to full page if none match.
     """
-    import time
-
     url = str(request.url)
+    logger.info("SCRAPE %s (mode=%s, timeout=%ds)", url, request.mode, request.timeout)
     start_time = time.time()
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
@@ -147,15 +151,15 @@ async def scrape_url(request: ScrapeRequest) -> ScrapeResponse:
         selectors_to_try: list[Optional[str]]
 
         if request.css_selector:
-            # Explicit selector — try only that, fallback to full page
             selectors_to_try = [request.css_selector, None]
         else:
-            # Auto-detect: recipe selectors first, then full page
             selectors_to_try = [*RECIPE_SELECTORS, None]
 
         markdown_content = ""
 
         for selector in selectors_to_try:
+            label = selector or "full page"
+            logger.info("  trying selector: %s", label)
             cmd = _build_base_cmd(
                 mode=request.mode,
                 url=url,
@@ -168,18 +172,24 @@ async def scrape_url(request: ScrapeRequest) -> ScrapeResponse:
 
             try:
                 markdown_content = await _run_scrape(cmd)
-            except Exception:
-                # Selector failed (element not found) — try next
+            except Exception as e:
+                logger.info("  selector %s failed: %s", label, str(e)[:100])
                 continue
 
             if len(markdown_content.strip()) >= MIN_CONTENT_LENGTH:
+                logger.info("  matched %s (%d chars)", label, len(markdown_content))
                 break
+            else:
+                logger.info("  selector %s too short (%d chars)", label, len(markdown_content))
 
         if not markdown_content.strip():
+            logger.warning("SCRAPE FAILED %s — no content extracted", url)
             raise Exception("No content extracted from page")
 
         title = _extract_title(markdown_content)
         extraction_time = int((time.time() - start_time) * 1000)
+
+        logger.info("SCRAPE OK %s — %d chars, %dms, title=%s", url, len(markdown_content), extraction_time, title)
 
         return ScrapeResponse(
             success=True,
@@ -192,6 +202,7 @@ async def scrape_url(request: ScrapeRequest) -> ScrapeResponse:
         )
 
     except Exception as e:
+        logger.error("SCRAPE ERROR %s — %s", url, str(e))
         raise HTTPException(status_code=500, detail=f"Scraping error: {str(e)}")
     finally:
         if os.path.exists(output_file):

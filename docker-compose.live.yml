@@ -96,6 +96,9 @@ services:
     scraper:
         image: registry.isntfunny.de/kitchenpace/scraper:latest
         container_name: kitchenpace-scraper
+        environment:
+            SEQ_URL: ${SEQ_URL:-}
+            SEQ_API_KEY: ${SEQ_API_KEY:-}
         healthcheck:
             test: ['CMD', 'curl', '-f', 'http://127.0.0.1:8000/health']
             interval: 1s

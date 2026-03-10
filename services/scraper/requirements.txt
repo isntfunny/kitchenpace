@@ -28,6 +28,9 @@ python-multipart>=0.0.0
 # Serialization - Required by scrapling's validators
 msgspec>=0.18.0
 
+# Structured logging to Seq
+seqlog>=0.4.0
+
 # Additional utilities
 httpx>=0.25.0
 aiohttp>=3.9.0

@@ -1,10 +1,9 @@
+'use client';
+
+import { motion } from 'motion/react';
+
 import { PageShell } from '@app/components/layouts/PageShell';
 import { css } from 'styled-system/css';
-
-export const metadata = {
-    title: 'Changelog — KüchenTakt',
-    description: 'Was gibt es Neues bei KüchenTakt?',
-};
 
 type ChangelogItem = {
     text: string;
@@ -131,7 +130,10 @@ export default function ChangelogPage() {
     return (
         <PageShell>
             <div className={css({ maxW: '720px', mx: 'auto', py: { base: '4', md: '8' } })}>
-                <h1
+                <motion.h1
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
                     className={css({
                         fontFamily: 'heading',
                         fontSize: { base: '2xl', md: '3xl' },
@@ -140,15 +142,23 @@ export default function ChangelogPage() {
                     })}
                 >
                     Changelog
-                </h1>
-                <p className={css({ color: 'text-muted', fontSize: 'sm', mb: '8' })}>
+                </motion.h1>
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                    className={css({ color: 'text-muted', fontSize: 'sm', mb: '8' })}
+                >
                     Was gibt es Neues bei KüchenTakt?
-                </p>
+                </motion.p>
 
                 <div className={css({ display: 'flex', flexDirection: 'column', gap: '8' })}>
-                    {CHANGELOG.map((entry) => (
-                        <article
+                    {CHANGELOG.map((entry, entryIndex) => (
+                        <motion.article
                             key={entry.date}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5, delay: 0.2 + entryIndex * 0.15 }}
                             className={css({
                                 position: 'relative',
                                 pl: '6',
@@ -157,7 +167,15 @@ export default function ChangelogPage() {
                             })}
                         >
                             {/* Timeline dot */}
-                            <div
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{
+                                    type: 'spring',
+                                    stiffness: 400,
+                                    damping: 15,
+                                    delay: 0.3 + entryIndex * 0.15,
+                                }}
                                 className={css({
                                     position: 'absolute',
                                     left: '-7px',
@@ -230,11 +248,17 @@ export default function ChangelogPage() {
                                     m: 0,
                                 })}
                             >
-                                {entry.items.map((item) => {
+                                {entry.items.map((item, itemIndex) => {
                                     const tagStyle = item.tag ? TAG_STYLES[item.tag] : null;
                                     return (
-                                        <li
+                                        <motion.li
                                             key={item.text}
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{
+                                                duration: 0.3,
+                                                delay: 0.4 + entryIndex * 0.15 + itemIndex * 0.04,
+                                            }}
                                             className={css({
                                                 fontSize: 'sm',
                                                 color: 'text-muted',
@@ -272,11 +296,11 @@ export default function ChangelogPage() {
                                                 </span>
                                             )}
                                             <span>{item.text}</span>
-                                        </li>
+                                        </motion.li>
                                     );
                                 })}
                             </ul>
-                        </article>
+                        </motion.article>
                     ))}
                 </div>
             </div>

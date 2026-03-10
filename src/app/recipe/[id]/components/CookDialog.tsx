@@ -17,7 +17,14 @@ interface CookDialogProps {
     recipeTitle?: string;
 }
 
-export function CookDialog({ isOpen, onClose, onSubmit, isPending, recipeId, recipeTitle }: CookDialogProps) {
+export function CookDialog({
+    isOpen,
+    onClose,
+    onSubmit,
+    isPending,
+    recipeId,
+    recipeTitle,
+}: CookDialogProps) {
     const [uploadedImage, setUploadedImage] = useState<File | null>(null);
     const [uploadedImageKey, setUploadedImageKey] = useState<string | undefined>(undefined);
     const [cookNotes, setCookNotes] = useState('');
@@ -333,7 +340,11 @@ export function CookDialog({ isOpen, onClose, onSubmit, isPending, recipeId, rec
                                     <QRUploadButton
                                         uploadType="cook"
                                         recipeId={recipeId}
-                                        label={recipeTitle ? `Koch-Foto für ${recipeTitle}` : 'Koch-Foto'}
+                                        label={
+                                            recipeTitle
+                                                ? `Koch-Foto für ${recipeTitle}`
+                                                : 'Koch-Foto'
+                                        }
                                         onImageUploaded={(key) => {
                                             setUploadedImageKey(key);
                                             setUploadedImage(null);

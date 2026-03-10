@@ -233,10 +233,7 @@ export function InboxItemCard({
                         backgroundColor: emphasized ? iconBg : `${iconBg}20`,
                     }}
                 >
-                    <Icon
-                        size={15}
-                        color={emphasized ? 'white' : iconBg}
-                    />
+                    <Icon size={15} color={emphasized ? 'white' : iconBg} />
                 </div>
 
                 {/* Content */}

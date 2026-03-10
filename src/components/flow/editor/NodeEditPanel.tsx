@@ -1,10 +1,9 @@
 'use client';
 
 import { X, Upload, Loader2, Trash2, Check } from 'lucide-react';
-
-import { QRUploadButton } from '@app/components/features/QRUploadButton';
 import { useRef, useState, useCallback, useEffect } from 'react';
 
+import { QRUploadButton } from '@app/components/features/QRUploadButton';
 import { searchIngredients } from '@app/components/recipe/actions';
 import { SegmentedBar } from '@app/components/recipe/RecipeForm/components/SegmentedBar';
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';

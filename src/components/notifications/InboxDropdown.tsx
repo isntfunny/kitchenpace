@@ -85,7 +85,9 @@ export function InboxDropdown({
                                 gap: '3',
                             })}
                         >
-                            <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                            <div
+                                className={css({ display: 'flex', alignItems: 'center', gap: '2' })}
+                            >
                                 <div
                                     className={css({
                                         width: '28px',
@@ -101,10 +103,22 @@ export function InboxDropdown({
                                     <Bell size={14} color="white" />
                                 </div>
                                 <div>
-                                    <p className={css({ fontWeight: '700', fontSize: 'sm', lineHeight: '1.2' })}>
+                                    <p
+                                        className={css({
+                                            fontWeight: '700',
+                                            fontSize: 'sm',
+                                            lineHeight: '1.2',
+                                        })}
+                                    >
                                         {title}
                                     </p>
-                                    <p className={css({ fontSize: '2xs', color: 'text-muted', lineHeight: '1.2' })}>
+                                    <p
+                                        className={css({
+                                            fontSize: '2xs',
+                                            color: 'text-muted',
+                                            lineHeight: '1.2',
+                                        })}
+                                    >
                                         {subtitle}
                                     </p>
                                 </div>
@@ -157,54 +171,61 @@ export function InboxDropdown({
                                 zIndex: 1,
                             })}
                         />
-                    <div
-                        className={css({
-                            display: 'flex',
-                            flexDirection: 'column',
-                            overflowY: 'auto',
-                            maxHeight: '340px',
-                            py: '1',
-                        })}
-                    >
-                        {isLoading && (
-                            <div className={css({ display: 'flex', alignItems: 'center', justifyContent: 'center', py: '8' })}>
+                        <div
+                            className={css({
+                                display: 'flex',
+                                flexDirection: 'column',
+                                overflowY: 'auto',
+                                maxHeight: '340px',
+                                py: '1',
+                            })}
+                        >
+                            {isLoading && (
                                 <div
                                     className={css({
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '50%',
-                                        border: '2px solid',
-                                        borderColor: 'border',
-                                        borderTopColor: 'primary',
-                                        animation: 'spin 1s linear infinite',
-                                    })}
-                                />
-                            </div>
-                        )}
-                        {!isLoading && isEmpty && (
-                            <div className={css({ textAlign: 'center', py: '8', px: '4' })}>
-                                <div
-                                    className={css({
-                                        width: '40px',
-                                        height: '40px',
-                                        borderRadius: 'full',
-                                        background: 'accent.soft',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        mx: 'auto',
-                                        mb: '2',
+                                        py: '8',
                                     })}
                                 >
-                                    <Bell size={18} className={css({ color: 'text-muted' })} />
+                                    <div
+                                        className={css({
+                                            width: '20px',
+                                            height: '20px',
+                                            borderRadius: '50%',
+                                            border: '2px solid',
+                                            borderColor: 'border',
+                                            borderTopColor: 'primary',
+                                            animation: 'spin 1s linear infinite',
+                                        })}
+                                    />
                                 </div>
-                                <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
-                                    {emptyLabel}
-                                </p>
-                            </div>
-                        )}
-                        {!isLoading && !isEmpty && children}
-                    </div>
+                            )}
+                            {!isLoading && isEmpty && (
+                                <div className={css({ textAlign: 'center', py: '8', px: '4' })}>
+                                    <div
+                                        className={css({
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: 'full',
+                                            background: 'accent.soft',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            mx: 'auto',
+                                            mb: '2',
+                                        })}
+                                    >
+                                        <Bell size={18} className={css({ color: 'text-muted' })} />
+                                    </div>
+                                    <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                                        {emptyLabel}
+                                    </p>
+                                </div>
+                            )}
+                            {!isLoading && !isEmpty && children}
+                        </div>
                         {/* Fade-out gradient at bottom of list */}
                         <div
                             className={css({
@@ -225,7 +246,14 @@ export function InboxDropdown({
 
                     {/* Footer */}
                     {footerHref && footerLabel && (
-                        <div className={css({ px: '3', py: '2.5', display: 'flex', justifyContent: 'center' })}>
+                        <div
+                            className={css({
+                                px: '3',
+                                py: '2.5',
+                                display: 'flex',
+                                justifyContent: 'center',
+                            })}
+                        >
                             <Link
                                 href={footerHref}
                                 className={css({

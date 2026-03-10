@@ -156,89 +156,89 @@ export function FileUpload({
                 </div>
             ) : (
                 <div className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
-                <label
-                    htmlFor={`file-upload-${type}`}
-                    className={css({
-                        display: 'flex',
-                        flexDir: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '2',
-                        padding: '8',
-                        border: '2px dashed',
-                        borderColor: uploading
-                            ? 'palette.orange'
-                            : {
-                                  base: 'rgba(224,123,83,0.4)',
-                                  _dark: 'rgba(224,123,83,0.45)',
-                              },
-                        borderRadius: 'xl',
-                        cursor: uploading ? 'default' : 'pointer',
-                        transition: 'all 150ms',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        _hover: uploading
-                            ? {}
-                            : {
-                                  borderColor: 'palette.orange',
-                                  background: {
-                                      base: 'rgba(224,123,83,0.05)',
-                                      _dark: 'rgba(224,123,83,0.08)',
+                    <label
+                        htmlFor={`file-upload-${type}`}
+                        className={css({
+                            display: 'flex',
+                            flexDir: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2',
+                            padding: '8',
+                            border: '2px dashed',
+                            borderColor: uploading
+                                ? 'palette.orange'
+                                : {
+                                      base: 'rgba(224,123,83,0.4)',
+                                      _dark: 'rgba(224,123,83,0.45)',
                                   },
-                              },
-                    })}
-                >
-                    {/* Progress fill — grows left to right */}
-                    {uploading && (
+                            borderRadius: 'xl',
+                            cursor: uploading ? 'default' : 'pointer',
+                            transition: 'all 150ms',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            _hover: uploading
+                                ? {}
+                                : {
+                                      borderColor: 'palette.orange',
+                                      background: {
+                                          base: 'rgba(224,123,83,0.05)',
+                                          _dark: 'rgba(224,123,83,0.08)',
+                                      },
+                                  },
+                        })}
+                    >
+                        {/* Progress fill — grows left to right */}
+                        {uploading && (
+                            <div
+                                style={{ width: `${progress ?? 0}%` }}
+                                className={css({
+                                    position: 'absolute',
+                                    insetY: '0',
+                                    left: '0',
+                                    background: {
+                                        base: 'rgba(224,123,83,0.15)',
+                                        _dark: 'rgba(224,123,83,0.2)',
+                                    },
+                                    transition: 'width 200ms ease-out',
+                                    pointerEvents: 'none',
+                                })}
+                            />
+                        )}
                         <div
-                            style={{ width: `${progress ?? 0}%` }}
                             className={css({
-                                position: 'absolute',
-                                insetY: '0',
-                                left: '0',
-                                background: {
-                                    base: 'rgba(224,123,83,0.15)',
-                                    _dark: 'rgba(224,123,83,0.2)',
-                                },
-                                transition: 'width 200ms ease-out',
-                                pointerEvents: 'none',
+                                fontSize: '2xl',
+                                color: uploading ? 'palette.orange' : 'rgba(224,123,83,0.7)',
+                                transition: 'color 150ms',
                             })}
-                        />
-                    )}
-                    <div
-                        className={css({
-                            fontSize: '2xl',
-                            color: uploading ? 'palette.orange' : 'rgba(224,123,83,0.7)',
-                            transition: 'color 150ms',
-                        })}
-                    >
-                        +
-                    </div>
-                    <span
-                        className={css({
-                            color: 'text-muted',
-                            fontSize: 'sm',
-                            position: 'relative',
-                        })}
-                    >
-                        {uploading ? `${progress ?? 0} %` : 'Klicken zum Hochladen'}
-                    </span>
-                    <span
-                        className={css({
-                            color: 'text-muted',
-                            fontSize: 'xs',
-                            position: 'relative',
-                        })}
-                    >
-                        {uploading ? 'Wird hochgeladen…' : 'JPEG, PNG, GIF, WebP (max 5 MB)'}
-                    </span>
-                </label>
-                <QRUploadButton
-                    uploadType={type}
-                    recipeId={recipeId}
-                    label={label}
-                    onImageUploaded={onChange}
-                />
+                        >
+                            +
+                        </div>
+                        <span
+                            className={css({
+                                color: 'text-muted',
+                                fontSize: 'sm',
+                                position: 'relative',
+                            })}
+                        >
+                            {uploading ? `${progress ?? 0} %` : 'Klicken zum Hochladen'}
+                        </span>
+                        <span
+                            className={css({
+                                color: 'text-muted',
+                                fontSize: 'xs',
+                                position: 'relative',
+                            })}
+                        >
+                            {uploading ? 'Wird hochgeladen…' : 'JPEG, PNG, GIF, WebP (max 5 MB)'}
+                        </span>
+                    </label>
+                    <QRUploadButton
+                        uploadType={type}
+                        recipeId={recipeId}
+                        label={label}
+                        onImageUploaded={onChange}
+                    />
                 </div>
             )}
 
@@ -252,7 +252,6 @@ export function FileUpload({
                     {error}
                 </p>
             )}
-
         </div>
     );
 }

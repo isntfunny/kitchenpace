@@ -234,7 +234,11 @@ export async function saveImportedRecipe(
         const validEntries = data.categoryIds
             .map((slug, index) => ({ slug, index }))
             .filter(({ slug }) => slugToId[slug])
-            .map(({ slug, index }) => ({ recipeId: recipe.id, categoryId: slugToId[slug], position: index }));
+            .map(({ slug, index }) => ({
+                recipeId: recipe.id,
+                categoryId: slugToId[slug],
+                position: index,
+            }));
         if (validEntries.length) {
             await db.recipeCategory.createMany({ data: validEntries });
         }

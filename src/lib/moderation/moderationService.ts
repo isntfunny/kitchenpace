@@ -29,7 +29,10 @@ function getModerationNotification(
     if (decision === 'AUTO_APPROVED') {
         if (isImage) return { title: 'Bild freigegeben', message: 'Dein Bild ist jetzt sichtbar!' };
         if (isRecipe)
-            return { title: 'Rezept freigegeben', message: 'Dein Rezept ist jetzt öffentlich sichtbar!' };
+            return {
+                title: 'Rezept freigegeben',
+                message: 'Dein Rezept ist jetzt öffentlich sichtbar!',
+            };
         return { title: 'Inhalt freigegeben', message: 'Dein Inhalt ist jetzt sichtbar!' };
     }
 

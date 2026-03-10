@@ -20,7 +20,10 @@ export async function POST(request: NextRequest) {
     try {
         payload = await verifyQRToken(token);
     } catch {
-        return NextResponse.json({ error: 'Ungültiger oder abgelaufener QR-Code' }, { status: 401 });
+        return NextResponse.json(
+            { error: 'Ungültiger oder abgelaufener QR-Code' },
+            { status: 401 },
+        );
     }
 
     const state = await getTokenValue(payload.tokenId);

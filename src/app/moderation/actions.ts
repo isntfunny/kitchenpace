@@ -147,7 +147,11 @@ export async function approveContent(queueId: string, reviewNote?: string) {
     await createUserNotification({
         userId: queueItem.authorId,
         type: 'SYSTEM',
-        title: isImage ? 'Bild freigegeben' : queueItem.contentType === 'recipe' ? 'Rezept freigegeben' : 'Inhalt freigegeben',
+        title: isImage
+            ? 'Bild freigegeben'
+            : queueItem.contentType === 'recipe'
+              ? 'Rezept freigegeben'
+              : 'Inhalt freigegeben',
         message: isImage
             ? 'Dein Bild ist jetzt sichtbar!'
             : queueItem.contentType === 'recipe'
@@ -235,7 +239,11 @@ export async function rejectContent(queueId: string, reviewNote: string) {
     await createUserNotification({
         userId: queueItem.authorId,
         type: 'SYSTEM',
-        title: isImageReject ? 'Bild abgelehnt' : queueItem.contentType === 'recipe' ? 'Rezept abgelehnt' : 'Inhalt abgelehnt',
+        title: isImageReject
+            ? 'Bild abgelehnt'
+            : queueItem.contentType === 'recipe'
+              ? 'Rezept abgelehnt'
+              : 'Inhalt abgelehnt',
         message: isImageReject
             ? `Dein Bild entspricht leider nicht unseren Richtlinien: ${reviewNote}`
             : queueItem.contentType === 'recipe'

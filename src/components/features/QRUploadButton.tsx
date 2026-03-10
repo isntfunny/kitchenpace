@@ -105,15 +105,10 @@ export function QRUploadButton({
         }, 2500);
 
         return clearTimers;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, tokenData]);
 
-    const timerColor =
-        secondsLeft < 30
-            ? '#ef4444'
-            : secondsLeft < 120
-              ? '#eab308'
-              : '#6b7280';
+    const timerColor = secondsLeft < 30 ? '#ef4444' : secondsLeft < 120 ? '#eab308' : '#6b7280';
 
     return (
         <>
@@ -131,7 +126,10 @@ export function QRUploadButton({
                     fontWeight: '600',
                     color: 'text.muted',
                     background: 'transparent',
-                    border: { base: '1px solid rgba(0,0,0,0.1)', _dark: '1px solid rgba(255,255,255,0.1)' },
+                    border: {
+                        base: '1px solid rgba(0,0,0,0.1)',
+                        _dark: '1px solid rgba(255,255,255,0.1)',
+                    },
                     borderRadius: 'lg',
                     cursor: 'pointer',
                     transition: 'all 150ms',
@@ -203,7 +201,10 @@ export function QRUploadButton({
                                 h: '7',
                                 borderRadius: 'full',
                                 border: 'none',
-                                background: { base: 'rgba(0,0,0,0.06)', _dark: 'rgba(255,255,255,0.08)' },
+                                background: {
+                                    base: 'rgba(0,0,0,0.06)',
+                                    _dark: 'rgba(255,255,255,0.08)',
+                                },
                                 cursor: 'pointer',
                                 color: 'text.muted',
                                 _hover: { color: 'text' },

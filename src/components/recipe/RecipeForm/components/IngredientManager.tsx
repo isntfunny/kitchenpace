@@ -148,15 +148,17 @@ export function IngredientManager({
                             </button>
                         ))}
                         {showAddNew && (
-                            <button
-                                type="button"
-                                onClick={handleAddNew}
-                                className={addNewBtnClass}
-                            >
-                                <span className={css({ color: PALETTE.orange, fontWeight: '700', mr: '1' })}>+</span>
-                                <span>
-                                    &ldquo;{ingredientQuery.trim()}&rdquo; hinzufügen
+                            <button type="button" onClick={handleAddNew} className={addNewBtnClass}>
+                                <span
+                                    className={css({
+                                        color: PALETTE.orange,
+                                        fontWeight: '700',
+                                        mr: '1',
+                                    })}
+                                >
+                                    +
                                 </span>
+                                <span>&ldquo;{ingredientQuery.trim()}&rdquo; hinzufügen</span>
                             </button>
                         )}
                     </div>
@@ -451,7 +453,10 @@ const addNewBtnClass = css({
     textAlign: 'left',
     bg: 'transparent',
     border: 'none',
-    borderTop: { base: '1px dashed rgba(224,123,83,0.25)', _dark: '1px dashed rgba(224,123,83,0.2)' },
+    borderTop: {
+        base: '1px dashed rgba(224,123,83,0.25)',
+        _dark: '1px dashed rgba(224,123,83,0.2)',
+    },
     cursor: 'pointer',
     color: 'text.muted',
     fontSize: 'sm',

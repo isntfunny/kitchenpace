@@ -27,6 +27,70 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 const CHANGELOG: ChangelogEntry[] = [
     {
         date: '11. März 2026',
+        version: 'v2026-03-11.2',
+        emoji: '🛠️',
+        title: 'Feedback-Runde: Bugs & UX-Feinschliff',
+        items: [
+            {
+                text: 'Light/Dark-Toggle ist jetzt im Profil-Menü — nicht mehr im Entdecken-Dropdown',
+                tag: 'fix',
+            },
+            {
+                text: 'Favorit-Button blieb nach dem Klick unsichtbar — Styling-Bug behoben',
+                tag: 'fix',
+            },
+            {
+                text: 'Graph-Scroll hat den Seiten-Scroll übernommen — Scroll-Verhalten korrigiert',
+                tag: 'fix',
+            },
+            {
+                text: 'Flow-Kacheln außerhalb des Sichtbereichs sind jetzt durch Herauszoomen erreichbar',
+                tag: 'fix',
+            },
+            {
+                text: 'Timer-Reset im Koch-Modus fragt jetzt zur Sicherheit nach',
+                tag: 'fix',
+            },
+            {
+                text: 'Kategorie-Hover: Beschriftungen waren schwer lesbar — Kontrast verbessert',
+                tag: 'fix',
+            },
+            {
+                text: 'Kalorien können jetzt beim Rezept eingetragen und angezeigt werden',
+                tag: 'feat',
+            },
+            {
+                text: 'Ungespeicherte Änderungen in den Einstellungen werden durch Browser-Dialog und visuellen Indikator am Speichern-Button signalisiert',
+                tag: 'feat',
+            },
+            {
+                text: 'Parallele Schritte im Koch-Flow haben jetzt ein ⚡ Parallel-Badge',
+                tag: 'feat',
+            },
+            {
+                text: 'Entwurf-Banner auf Rezept-Detailseiten ist jetzt deutlich sichtbarer',
+                tag: 'feat',
+            },
+            {
+                text: 'Chat-Bubble auf Mobile blockiert nicht mehr Inhalte dahinter',
+                tag: 'fix',
+            },
+            {
+                text: 'Profil-Bearbeitung: Tipps und Schnellleiste an richtiger Position',
+                tag: 'fix',
+            },
+            {
+                text: 'Passwort-Seite: Design ans Profil-Layout angeglichen',
+                tag: 'fix',
+            },
+            {
+                text: 'Welcome-Mail trägt jetzt korrekt den Namen KüchenTakt',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
+        date: '11. März 2026',
         emoji: '🚀',
         title: 'Bulk-Import Turbo & Rebranding',
         items: [

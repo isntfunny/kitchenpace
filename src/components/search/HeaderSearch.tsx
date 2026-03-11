@@ -1,13 +1,15 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { BookOpen, Carrot, Search, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import { SmartImage } from '@app/components/atoms/SmartImage';
+import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
 
-import { useRecipeSearch } from './useRecipeSearch';
+import type { MultiSearchRecipe, SuggestItem } from './useMultiSearch';
+import { useMultiSearch } from './useMultiSearch';
 
 export function HeaderSearch() {
     const router = useRouter();
@@ -16,47 +18,33 @@ export function HeaderSearch() {
 
     const trimmedQuery = inputValue.trim();
 
-    const filters = useMemo<RecipeFilterSearchParams>(
-        () => ({
-            query: trimmedQuery || undefined,
-            limit: 5,
-            page: 1,
-        }),
-        [trimmedQuery],
-    );
-
-    const { data, loading } = useRecipeSearch(filters, {
-        enabled: trimmedQuery.length > 0,
-        debounceMs: 200,
+    const { recipes, ingredients, tags, loading } = useMultiSearch(trimmedQuery, {
+        enabled: isFocused && trimmedQuery.length >= 2,
     });
 
-    const hasResults = data.length > 0;
+    const hasAnyResults = recipes.length > 0 || ingredients.length > 0 || tags.length > 0;
+    const showDropdown =
+        isFocused && trimmedQuery.length >= 2 && (loading || hasAnyResults || !loading);
 
-    const navigateToSearch = (term: string) => {
-        const query = term.trim();
-        const href = query ? `/recipes?query=${encodeURIComponent(query)}` : '/recipes';
+    const navigate = (href: string) => {
         router.push(href);
+        setInputValue('');
+        setIsFocused(false);
     };
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!trimmedQuery) return;
-        navigateToSearch(trimmedQuery);
-    };
-
-    const handleResultClick = (slug: string) => {
-        router.push(`/recipe/${slug}`);
-        setInputValue('');
-        setIsFocused(false);
+        navigate(`/recipes?query=${encodeURIComponent(trimmedQuery)}`);
     };
 
     return (
-        <div className={css({ position: 'relative' })}>
+        <div className={css({ position: 'relative', zIndex: 10 })}>
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
                     aria-label="Rezepte suchen"
-                    placeholder="Was möchtest du kochen?"
+                    placeholder="Rezepte, Zutaten, Tags suchen…"
                     value={inputValue}
                     onChange={(event) => setInputValue(event.target.value)}
                     onFocus={() => setIsFocused(true)}
@@ -74,7 +62,7 @@ export function HeaderSearch() {
                         fontFamily: 'body',
                         outline: 'none',
                         transition: 'all 150ms ease',
-                        _placeholder: { color: 'text-muted' },
+                        _placeholder: { color: 'text.muted' },
                         _focus: {
                             borderColor: 'accent',
                             boxShadow: {
@@ -98,13 +86,16 @@ export function HeaderSearch() {
                 </span>
             </form>
 
-            {isFocused && (loading || hasResults) && (
+            {showDropdown && (
                 <div
                     className={css({
                         position: 'absolute',
                         top: 'calc(100% + 8px)',
                         left: 0,
                         right: 0,
+                        minWidth: '360px',
+                        maxHeight: '420px',
+                        overflowY: 'auto',
                         background: 'surface.elevated',
                         borderRadius: 'xl',
                         border: '1px solid',
@@ -116,79 +107,86 @@ export function HeaderSearch() {
                         zIndex: 50,
                     })}
                 >
-                    <div className={css({ p: '3' })}>
-                        {loading && (
-                            <div
-                                className={css({
-                                    fontSize: 'sm',
-                                    color: 'foreground.muted',
-                                })}
-                            >
-                                Lädt…
-                            </div>
-                        )}
-                        {!loading && !hasResults && (
-                            <div
-                                className={css({
-                                    fontSize: 'sm',
-                                    color: 'foreground.muted',
-                                })}
-                            >
-                                Keine schnellen Treffer
-                            </div>
-                        )}
-                        {!loading && hasResults && (
-                            <div className={css({ display: 'grid', gap: '2' })}>
-                                {data.map((recipe) => (
-                                    <button
-                                        key={recipe.id}
-                                        type="button"
-                                        onMouseDown={() => handleResultClick(recipe.slug)}
-                                        className={css({
-                                            width: '100%',
-                                            textAlign: 'left',
-                                            borderRadius: 'md',
-                                            padding: '2.5',
-                                            fontFamily: 'body',
-                                            fontSize: 'sm',
-                                            border: '1px solid',
-                                            borderColor: 'transparent',
-                                            bg: 'surface',
-                                            cursor: 'pointer',
-                                            transition: 'border 150ms ease, background 150ms ease',
-                                            _hover: {
-                                                borderColor: 'border',
-                                                background: 'surface.elevated',
-                                            },
-                                        })}
-                                    >
-                                        <div className={css({ fontWeight: '600', color: 'text' })}>
-                                            {recipe.title}
-                                        </div>
-                                        <div
-                                            className={css({ fontSize: 'xs', color: 'text-muted' })}
-                                        >
-                                            {recipe.category} · {recipe.time}
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    {!loading && hasResults && (
+                    {loading && (
+                        <div
+                            className={css({
+                                p: '4',
+                                fontSize: 'sm',
+                                color: 'foreground.muted',
+                                fontFamily: 'body',
+                            })}
+                        >
+                            Suche…
+                        </div>
+                    )}
+
+                    {!loading && !hasAnyResults && (
+                        <div
+                            className={css({
+                                p: '4',
+                                fontSize: 'sm',
+                                color: 'foreground.muted',
+                                fontFamily: 'body',
+                            })}
+                        >
+                            Keine Ergebnisse gefunden
+                        </div>
+                    )}
+
+                    {!loading && hasAnyResults && (
+                        <>
+                            {recipes.length > 0 && (
+                                <RecipeSection
+                                    recipes={recipes}
+                                    onSelect={(slug) => navigate(`/recipe/${slug}`)}
+                                />
+                            )}
+
+                            {ingredients.length > 0 && (
+                                <SuggestSection
+                                    icon={<Carrot size={14} />}
+                                    title="Zutaten"
+                                    items={ingredients}
+                                    onSelect={(name) =>
+                                        navigate(buildRecipeFilterHref({ ingredients: [name] }))
+                                    }
+                                />
+                            )}
+
+                            {tags.length > 0 && (
+                                <SuggestSection
+                                    icon={<Tag size={14} />}
+                                    title="Tags"
+                                    items={tags}
+                                    onSelect={(name) =>
+                                        navigate(buildRecipeFilterHref({ tags: [name] }))
+                                    }
+                                />
+                            )}
+                        </>
+                    )}
+
+                    {!loading && hasAnyResults && (
                         <button
                             type="button"
-                            onMouseDown={() => navigateToSearch(trimmedQuery)}
+                            onMouseDown={() =>
+                                navigate(`/recipes?query=${encodeURIComponent(trimmedQuery)}`)
+                            }
                             className={css({
                                 width: '100%',
                                 borderTop: '1px solid',
                                 borderColor: 'border',
-                                px: '3',
-                                py: '2',
+                                px: '4',
+                                py: '2.5',
                                 fontSize: 'xs',
                                 fontWeight: '600',
-                                color: 'accent',
+                                fontFamily: 'body',
+                                color: 'primary',
                                 textAlign: 'left',
+                                cursor: 'pointer',
+                                background: 'transparent',
+                                transition: 'background 150ms ease',
+                                _hover: { bg: 'accent.soft' },
                             })}
                         >
                             Alle Ergebnisse anzeigen
@@ -196,6 +194,183 @@ export function HeaderSearch() {
                     )}
                 </div>
             )}
+        </div>
+    );
+}
+
+/* ── Section: Recipes ──────────────────────────────────── */
+
+function RecipeSection({
+    recipes,
+    onSelect,
+}: {
+    recipes: MultiSearchRecipe[];
+    onSelect: (slug: string) => void;
+}) {
+    return (
+        <div className={css({ borderBottom: '1px solid', borderColor: 'border' })}>
+            <SectionHeader icon={<BookOpen size={14} />} title="Rezepte" />
+            <div className={css({ px: '2', pb: '2', display: 'grid', gap: '1' })}>
+                {recipes.map((recipe) => (
+                    <button
+                        key={recipe.id}
+                        type="button"
+                        onMouseDown={() => onSelect(recipe.slug)}
+                        className={css({
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3',
+                            textAlign: 'left',
+                            borderRadius: 'lg',
+                            padding: '2',
+                            fontFamily: 'body',
+                            cursor: 'pointer',
+                            border: '1px solid transparent',
+                            background: 'transparent',
+                            transition: 'all 150ms ease',
+                            _hover: {
+                                bg: 'accent.soft',
+                                borderColor: 'border',
+                            },
+                        })}
+                    >
+                        <div
+                            className={css({
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: 'md',
+                                overflow: 'hidden',
+                                flexShrink: 0,
+                                bg: 'surface.muted',
+                            })}
+                        >
+                            <SmartImage
+                                imageKey={recipe.imageKey}
+                                alt={recipe.title}
+                                aspect="1:1"
+                                sizes="48px"
+                            />
+                        </div>
+                        <div className={css({ minWidth: 0, flex: 1 })}>
+                            <div
+                                className={css({
+                                    fontSize: 'sm',
+                                    fontWeight: '600',
+                                    color: 'text',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                })}
+                            >
+                                {recipe.title}
+                            </div>
+                            <div className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
+                                {recipe.category} · {recipe.totalTime} Min.
+                            </div>
+                        </div>
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/* ── Section: Suggest (Ingredients / Tags) ─────────────── */
+
+function SuggestSection({
+    icon,
+    title,
+    items,
+    onSelect,
+}: {
+    icon: React.ReactNode;
+    title: string;
+    items: SuggestItem[];
+    onSelect: (name: string) => void;
+}) {
+    return (
+        <div
+            className={css({
+                borderBottom: '1px solid',
+                borderColor: 'border',
+                _last: { borderBottom: 'none' },
+            })}
+        >
+            <SectionHeader icon={icon} title={title} />
+            <div className={css({ px: '2', pb: '2', display: 'grid', gap: '1' })}>
+                {items.map((item) => (
+                    <button
+                        key={item.name}
+                        type="button"
+                        onMouseDown={() => onSelect(item.name)}
+                        className={css({
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            textAlign: 'left',
+                            borderRadius: 'lg',
+                            px: '3',
+                            py: '2',
+                            fontFamily: 'body',
+                            cursor: 'pointer',
+                            border: '1px solid transparent',
+                            background: 'transparent',
+                            transition: 'all 150ms ease',
+                            _hover: {
+                                bg: 'accent.soft',
+                                borderColor: 'border',
+                            },
+                        })}
+                    >
+                        <span className={css({ fontSize: 'sm', color: 'text', fontWeight: '500' })}>
+                            {item.name}
+                        </span>
+                        <span
+                            className={css({
+                                fontSize: 'xs',
+                                color: 'foreground.muted',
+                                flexShrink: 0,
+                                ml: '3',
+                            })}
+                        >
+                            {item.count} {item.count === 1 ? 'Rezept' : 'Rezepte'}
+                        </span>
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/* ── Section Header ────────────────────────────────────── */
+
+function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+    return (
+        <div
+            className={css({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2',
+                px: '4',
+                pt: '3',
+                pb: '1.5',
+            })}
+        >
+            <span className={css({ color: 'primary', display: 'flex' })}>{icon}</span>
+            <span
+                className={css({
+                    fontSize: 'xs',
+                    fontWeight: '600',
+                    fontFamily: 'body',
+                    color: 'foreground.muted',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                })}
+            >
+                {title}
+            </span>
         </div>
     );
 }

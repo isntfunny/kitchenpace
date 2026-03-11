@@ -27,6 +27,30 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 const CHANGELOG: ChangelogEntry[] = [
     {
         date: '11. März 2026',
+        version: 'v2026-03-11.4',
+        emoji: '🔧',
+        title: 'Profilbilder & Performance',
+        items: [
+            {
+                text: 'Profilbilder in „Chef des Monats" und auf Rezept-Detailseiten werden jetzt korrekt aus dem eigenen Upload-Speicher geladen',
+                tag: 'fix',
+            },
+            {
+                text: 'Startseite lädt Sektionen parallel und streamt sie einzeln — schnellerer erster Seitenaufbau',
+                tag: 'feat',
+            },
+            {
+                text: 'E2E-Smoke-Tests laufen jetzt automatisch in der CI-Pipeline als Deployment-Gate',
+                tag: 'feat',
+            },
+            {
+                text: 'Tote Links und robots.txt bereinigt',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
+        date: '11. März 2026',
         version: 'v2026-03-11.3',
         emoji: '🎨',
         title: 'Flow-Editor Turbo & erweiterte Suche',

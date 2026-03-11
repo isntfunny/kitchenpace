@@ -33,7 +33,7 @@
             <mj-section font-family="Poppins, Arial, sans-serif" padding="0" />
             <mj-column font-family="Poppins, Arial, sans-serif" width="100%" />
         </mj-attributes>
-        <mj-preview>Deine wöchentlichen KitchenPace Highlights 🍳</mj-preview>
+        <mj-preview>Deine wöchentlichen KüchenTakt Highlights 🍳</mj-preview>
         <mj-style>
             a {
                 color: #e07b53;
@@ -396,7 +396,7 @@
                     padding-bottom="14px"
                 />
                 <mj-text align="center" font-size="14px" color="#888888" padding-bottom="4px"
-                    >KitchenPace · Deine Küche, dein Tempo</mj-text
+                    >KüchenTakt · Deine Küche, dein Tempo</mj-text
                 >
                 <mj-text align="center" font-size="12px" color="#aaaaaa" padding-top="0"
                     ><a href="{{ global_feed.unsubscribe_url }}" style="color: #aaaaaa"

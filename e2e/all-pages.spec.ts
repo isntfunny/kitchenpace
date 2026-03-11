@@ -50,7 +50,7 @@ function createErrorCatcher(page: Page) {
 async function expectNoErrorsOnPage(page: Page, url: string) {
     const checkErrors = createErrorCatcher(page);
     await page.goto(url);
-    await expect(page).toHaveTitle(/KüchenTakt|KitchenPace/i);
+    await expect(page).toHaveTitle(/KüchenTakt/i);
     checkErrors();
 }
 

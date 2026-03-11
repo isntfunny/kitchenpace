@@ -15,7 +15,7 @@ import {
     Panel,
 } from '@xyflow/react';
 import { Sparkles } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefCallback } from 'react';
 import '@xyflow/react/dist/style.css';
 
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
@@ -627,6 +627,31 @@ function FlowEditorInner({
         requestAnimationFrame(() => fitView({ padding: 0.2, duration: 200 }));
     }, [getNodes, getEdges, applyLayout, setNodes, notifyChange, fitView]);
 
+    /* ── auto fitView on container resize (window resize / sidebar toggle) ── */
+
+    const canvasRef = useRef<HTMLDivElement | null>(null);
+    const canvasRefCallback: RefCallback<HTMLDivElement> = useCallback((el) => {
+        canvasRef.current = el;
+    }, []);
+
+    useEffect(() => {
+        const el = canvasRef.current;
+        if (!el) return;
+
+        let timer: ReturnType<typeof setTimeout>;
+        const ro = new ResizeObserver(() => {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                fitView({ padding: 0.2, duration: 200 });
+            }, 250);
+        });
+        ro.observe(el);
+        return () => {
+            clearTimeout(timer);
+            ro.disconnect();
+        };
+    }, [fitView]);
+
     /* ── context value (stable unless ingredients/callbacks change) ── */
 
     const contextValue = useMemo<FlowEditorContextValue>(
@@ -663,6 +688,7 @@ function FlowEditorInner({
                     <NodePalette onAddNode={addNewNode} />
                 </div>
                 <div
+                    ref={canvasRefCallback}
                     className={canvasContainerClass}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}

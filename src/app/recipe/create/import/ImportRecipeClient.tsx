@@ -690,14 +690,14 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                             <span className={terminalDotClass('#febc2e')} />
                             <span className={terminalDotClass('#28c840')} />
                         </div>
-                        <span className={terminalTitleClass}>kitchenpace — import-log</span>
+                        <span className={terminalTitleClass}>küchentakt — import-log</span>
                         <div className={css({ width: '52px' })} />
                     </div>
 
                     {/* Terminal body */}
                     <div className={terminalBodyClass} ref={terminalRef}>
                         <div className={terminalInitClass}>
-                            KitchenPace Import Engine v1.0 —{' '}
+                            KüchenTakt Import Engine v1.0 —{' '}
                             {new Date().toISOString().split('T')[0]}
                         </div>
                         {streamEvents.map((event, idx) => (

@@ -936,8 +936,8 @@ async function main() {
         },
         {
             email: 'chef@example.com',
-            name: 'KitchenPace Chef',
-            nickname: 'KitchenPace Chef',
+            name: 'KüchenTakt Chef',
+            nickname: 'KüchenTakt Chef',
             bio: 'Offizieller Demo-Account',
             photoUrl: null,
             followerCount: 42,

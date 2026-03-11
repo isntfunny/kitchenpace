@@ -124,7 +124,7 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                                     marginBottom: '3',
                                 })}
                             >
-                                Willkommen bei KitchenPace!
+                                Willkommen bei KüchenTakt!
                             </h1>
                             <p
                                 className={css({

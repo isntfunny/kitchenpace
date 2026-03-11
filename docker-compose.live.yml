@@ -95,6 +95,7 @@ services:
 
     scraper:
         image: registry.isntfunny.de/kitchenpace/scraper:latest
+        pull_policy: always
         container_name: kitchenpace-scraper
         environment:
             SEQ_URL: ${SEQ_URL:-}

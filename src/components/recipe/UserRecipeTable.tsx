@@ -102,12 +102,15 @@ function RecipeCardActions({
                     <button
                         onClick={handlePublish}
                         disabled={isUpdating}
-                        className={cx(actionBtnClass, css({
-                            gridColumn: 'span 2',
-                            borderColor: '#16a34a',
-                            color: '#16a34a',
-                            _hover: { background: '#16a34a15' },
-                        }))}
+                        className={cx(
+                            actionBtnClass,
+                            css({
+                                gridColumn: 'span 2',
+                                borderColor: '#16a34a',
+                                color: '#16a34a',
+                                _hover: { background: '#16a34a15' },
+                            }),
+                        )}
                     >
                         <Send size={14} />
                         Veröffentlichen
@@ -118,10 +121,17 @@ function RecipeCardActions({
                     <button
                         onClick={handleUnpublish}
                         disabled={isUpdating}
-                        className={cx(actionBtnClass, css({
-                            gridColumn: 'span 2',
-                            _hover: { background: '#d9770615', borderColor: '#d97706', color: '#d97706' },
-                        }))}
+                        className={cx(
+                            actionBtnClass,
+                            css({
+                                gridColumn: 'span 2',
+                                _hover: {
+                                    background: '#d9770615',
+                                    borderColor: '#d97706',
+                                    color: '#d97706',
+                                },
+                            }),
+                        )}
                     >
                         <Archive size={14} />
                         Zurückziehen
@@ -325,7 +335,15 @@ function UserRecipeCard({ recipe }: { recipe: UserRecipe }) {
             </Link>
 
             {/* Content */}
-            <div className={css({ p: '4', display: 'flex', flexDirection: 'column', gap: '3', flex: '1' })}>
+            <div
+                className={css({
+                    p: '4',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '3',
+                    flex: '1',
+                })}
+            >
                 <div className={css({ flex: '1' })}>
                     <Link
                         href={`/recipe/${recipe.slug}`}

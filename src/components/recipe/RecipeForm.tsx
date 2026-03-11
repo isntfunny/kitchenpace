@@ -181,7 +181,10 @@ export function RecipeForm({
             const payload = buildPayloadRef.current('DRAFT');
 
             if (autoSavedIdRef.current) {
-                await updateRecipe(autoSavedIdRef.current, payload, authorId);
+                const result = await updateRecipe(autoSavedIdRef.current, payload, authorId);
+                if (result.imageKey && result.imageKey !== payload.imageKey) {
+                    setImageKey(result.imageKey);
+                }
             } else {
                 const recipe = await createRecipe(payload, authorId);
                 autoSavedIdRef.current = recipe.id;

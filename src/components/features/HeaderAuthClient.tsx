@@ -10,7 +10,6 @@ import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
 
-
 interface HeaderAuthClientProps {
     isAuthenticated: boolean;
     profile: {

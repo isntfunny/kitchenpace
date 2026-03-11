@@ -86,4 +86,3 @@ const labelClass = css({
     mb: '2',
     fontSize: 'sm',
 });
-

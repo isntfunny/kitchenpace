@@ -211,7 +211,13 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
     if (modResult.decision === 'AUTO_APPROVED' && recipe.imageKey?.startsWith('uploads/')) {
         const ext = recipe.imageKey.split('.').pop() ?? 'jpg';
         const destKey = approvedKey('recipe', recipe.id, ext);
-        await moveObject(recipe.imageKey, destKey);
+        try {
+            await moveObject(recipe.imageKey, destKey);
+        } catch (err: unknown) {
+            const s3Err = err as { Code?: string };
+            if (s3Err.Code !== 'NoSuchKey') throw err;
+            // File was already moved on a previous save (stale uploads/ key from client) — just fix the DB key
+        }
         await prisma.recipe.update({ where: { id: recipe.id }, data: { imageKey: destKey } });
         finalImageKey = destKey;
     }
@@ -305,7 +311,7 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
         );
     }
 
-    return recipe;
+    return { ...recipe, imageKey: finalImageKey };
 }
 
 export interface CreateRecipeInput {

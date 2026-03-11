@@ -72,12 +72,7 @@ export function RecipeActionButtons({
                     Favorisieren · {favoriteCount}
                 </Button>
             )}
-            <Button
-                type="button"
-                variant="primary"
-                onClick={onCookToggle}
-                disabled={isCookPending}
-            >
+            <Button type="button" variant="primary" onClick={onCookToggle} disabled={isCookPending}>
                 {hasCooked ? <CheckCircle size={16} /> : <ChefHat size={16} />}
                 Zubereitet · {cookCount}
             </Button>

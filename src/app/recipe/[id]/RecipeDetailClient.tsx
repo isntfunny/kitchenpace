@@ -1,13 +1,6 @@
 'use client';
 
-import {
-    Bookmark,
-    Check,
-    CheckCircle,
-    ChefHat,
-    Printer,
-    Star,
-} from 'lucide-react';
+import { Bookmark, Check, CheckCircle, ChefHat, Printer, Star } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -354,14 +347,14 @@ export function RecipeDetailClient({
         setShowCookDialog(true);
     };
 
-    const handleSubmitCook = async ({ notes, image }: { notes: string; image: File | null }) => {
+    const handleSubmitCook = async ({ notes, imageKey }: { notes: string; imageKey?: string }) => {
         if (!requireAuth()) return;
 
         startCookTransition(async () => {
             try {
                 const result = await markRecipeCookedAction(recipe.id, {
                     notes: notes || undefined,
-                    image,
+                    imageKey,
                 });
 
                 if (result.hasImage) {
@@ -545,7 +538,7 @@ export function RecipeDetailClient({
                             {recipe.title}
                         </h1>
                     </div>
-                    <div className={grid({ columns: { base: 1, lg: 2 }, gap: '5' })}>
+                    <div className={grid({ columns: { base: 1, md: 2 }, gap: '5' })}>
                         <div
                             className={css({
                                 display: 'flex',
@@ -1018,7 +1011,10 @@ export function RecipeDetailClient({
                                                 >
                                                     <span className={css({ flexShrink: 0 })}>
                                                         {favoriteState.isFavorite ? (
-                                                            <Bookmark size={16} fill="currentColor" />
+                                                            <Bookmark
+                                                                size={16}
+                                                                fill="currentColor"
+                                                            />
                                                         ) : (
                                                             <Bookmark size={16} />
                                                         )}
@@ -1115,8 +1111,8 @@ export function RecipeDetailClient({
                     </div>
                 </div>
 
-                <div className={grid({ columns: { base: 1, lg: 12 }, gap: '5' })}>
-                    <div className={css({ lg: { gridColumn: 'span 4' } })}>
+                <div className={grid({ columns: { base: 1, md: 12 }, gap: '5' })}>
+                    <div className={css({ md: { gridColumn: 'span 4' } })}>
                         <div
                             className={css({
                                 bg: 'surface',
@@ -1255,14 +1251,15 @@ export function RecipeDetailClient({
                                 >
                                     <span>Kalorien</span>
                                     <span className={css({ fontWeight: '600', color: 'text' })}>
-                                        {Math.round(recipe.calories * (servings / recipe.servings))} kcal
+                                        {Math.round(recipe.calories * (servings / recipe.servings))}{' '}
+                                        kcal
                                     </span>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    <div className={css({ lg: { gridColumn: 'span 8' } })}>
+                    <div className={css({ md: { gridColumn: 'span 8' } })}>
                         <div
                             className={css({
                                 bg: 'surface',

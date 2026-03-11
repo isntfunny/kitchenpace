@@ -212,6 +212,9 @@ export async function GET(request: NextRequest) {
         const response: MultiSearchResponse = { recipes, ingredients, tags, users };
         return NextResponse.json(response);
     } catch {
-        return NextResponse.json({ recipes: [], ingredients: [], tags: [], users: [] }, { status: 500 });
+        return NextResponse.json(
+            { recipes: [], ingredients: [], tags: [], users: [] },
+            { status: 500 },
+        );
     }
 }

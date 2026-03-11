@@ -7,7 +7,6 @@ import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
 
 import { HeaderSearch } from '@app/components/search/HeaderSearch';
-import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
@@ -234,8 +233,6 @@ export function Header() {
     const userRole = session?.user?.role;
     const isAdmin = isAuthenticated && userRole === 'ADMIN';
     const isModerator = isAuthenticated && userRole === 'MODERATOR';
-    const dark = useIsDark();
-
     const [Icon1, Icon2, Icon3] = HEADER_ICONS;
 
     return (
@@ -248,13 +245,12 @@ export function Header() {
                     base: '0 4px 30px rgba(0,0,0,0.15)',
                     _dark: '0 4px 30px rgba(0,0,0,0.4)',
                 },
-            })}
-            style={{
-                background: dark
-                    ? 'linear-gradient(135deg, rgba(30,28,26,0.92), rgba(30,28,26,0.90))'
-                    : 'linear-gradient(135deg, rgba(255,252,248,0.92), rgba(255,250,245,0.90))',
+                background: {
+                    base: 'linear-gradient(135deg, rgba(255,252,248,0.92), rgba(255,250,245,0.90))',
+                    _dark: 'linear-gradient(135deg, rgba(30,28,26,0.92), rgba(30,28,26,0.90))',
+                },
                 backdropFilter: 'blur(8px)',
-            }}
+            })}
         >
             {/* Animated floating background elements — clipped to header bounds */}
             <div

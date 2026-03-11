@@ -98,6 +98,40 @@ function RecipeCardActions({
     return (
         <>
             <div className={css({ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5' })}>
+                {!isPublished && (
+                    <button
+                        onClick={handlePublish}
+                        disabled={isUpdating}
+                        className={cx(actionBtnClass, css({
+                            gridColumn: 'span 2',
+                            py: '2.5',
+                            fontSize: 'sm',
+                            borderColor: '#16a34a',
+                            color: '#16a34a',
+                            _hover: { background: '#16a34a15' },
+                        }))}
+                    >
+                        <Send size={14} />
+                        Veröffentlichen
+                    </button>
+                )}
+
+                {isPublished && (
+                    <button
+                        onClick={handleUnpublish}
+                        disabled={isUpdating}
+                        className={cx(actionBtnClass, css({
+                            gridColumn: 'span 2',
+                            py: '2.5',
+                            fontSize: 'sm',
+                            _hover: { background: '#d9770615', borderColor: '#d97706', color: '#d97706' },
+                        }))}
+                    >
+                        <Archive size={14} />
+                        Zurückziehen
+                    </button>
+                )}
+
                 <Link
                     href={`/recipe/${recipeId}/edit`}
                     className={css({
@@ -116,59 +150,17 @@ function RecipeCardActions({
                         color: 'foreground',
                         textDecoration: 'none',
                         transition: 'all 150ms ease',
-                        _hover: {
-                            borderColor: 'primary',
-                            color: 'primary',
-                        },
+                        _hover: { borderColor: 'primary', color: 'primary' },
                     })}
                 >
                     <Edit2 size={13} />
                     Bearbeiten
                 </Link>
 
-                {!isPublished && (
-                    <button
-                        onClick={handlePublish}
-                        disabled={isUpdating}
-                        className={actionBtnClass}
-                        style={{ '--hover-color': '#16a34a' } as React.CSSProperties}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = '#16a34a';
-                            e.currentTarget.style.color = '#16a34a';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = '';
-                            e.currentTarget.style.color = '';
-                        }}
-                    >
-                        <Send size={13} />
-                        Veröffentlichen
-                    </button>
-                )}
-
-                {isPublished && (
-                    <button
-                        onClick={handleUnpublish}
-                        disabled={isUpdating}
-                        className={actionBtnClass}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = '#d97706';
-                            e.currentTarget.style.color = '#d97706';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = '';
-                            e.currentTarget.style.color = '';
-                        }}
-                    >
-                        <Archive size={13} />
-                        Zurückziehen
-                    </button>
-                )}
-
                 <button
                     onClick={() => setDeleteConfirm(true)}
                     disabled={isDeleting || isUpdating}
-                    className={cx(actionBtnClass, css({ gridColumn: 'span 2' }))}
+                    className={actionBtnClass}
                     onMouseEnter={(e) => {
                         e.currentTarget.style.borderColor = '#dc2626';
                         e.currentTarget.style.color = '#dc2626';

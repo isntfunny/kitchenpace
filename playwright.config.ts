@@ -13,7 +13,7 @@ export default defineConfig({
     reporter: process.env.CI ? [['github'], ['html']] : [['html']],
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 1 : undefined,
+    workers: process.env.CI ? 2 : undefined,
     use: {
         baseURL: remoteUrl ?? 'http://localhost:3100',
         viewport: { width: 1280, height: 720 },

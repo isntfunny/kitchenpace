@@ -73,17 +73,34 @@ async function visitAndCheck(page: Page, path: string) {
     const checkErrors = createErrorCatcher(page);
     const url = path.startsWith('http') ? path : `${BASE}${path}`;
 
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 30_000 });
+    // Track failed network requests from our own origin
+    const failedRequests: string[] = [];
+    page.on('response', (response) => {
+        const status = response.status();
+        const reqUrl = response.url();
+        // Only care about our own domain, ignore third-party
+        if (!reqUrl.includes('xn--kchentakt-q9a.de') && !reqUrl.includes('localhost')) return;
+        if (status >= 400 && status !== 404) {
+            failedRequests.push(`${status} ${reqUrl}`);
+        }
+    });
+
+    await page.goto(url, { waitUntil: 'load', timeout: 30_000 });
     await expect(page).toHaveTitle(/KüchenTakt|Authentifizierung|Passwort|Changelog/i);
 
     // Soak for 5 seconds to catch late-firing errors (hydration, lazy loads, SSE)
     await page.waitForTimeout(5_000);
 
+    if (failedRequests.length > 0) {
+        console.error('Failed requests:', failedRequests);
+    }
+    expect(failedRequests, 'Expected no failed requests from own origin').toHaveLength(0);
+
     checkErrors();
 }
 
 async function login(page: Page) {
-    await page.goto(`${BASE}/auth/signin`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE}/auth/signin`, { waitUntil: 'load' });
     await page.fill('input[name="email"]', E2E_EMAIL);
     await page.fill('input[name="password"]', E2E_PASSWORD);
     await page.click('button[type="submit"]');

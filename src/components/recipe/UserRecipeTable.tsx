@@ -267,6 +267,9 @@ function UserRecipeCard({ recipe }: { recipe: UserRecipe }) {
                 border: '1px solid',
                 borderColor: 'border',
                 overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
                 transition: 'all 200ms ease',
                 _hover: {
                     borderColor: 'primary',
@@ -322,8 +325,8 @@ function UserRecipeCard({ recipe }: { recipe: UserRecipe }) {
             </Link>
 
             {/* Content */}
-            <div className={css({ p: '4', display: 'flex', flexDirection: 'column', gap: '3' })}>
-                <div>
+            <div className={css({ p: '4', display: 'flex', flexDirection: 'column', gap: '3', flex: '1' })}>
+                <div className={css({ flex: '1' })}>
                     <Link
                         href={`/recipe/${recipe.slug}`}
                         className={css({

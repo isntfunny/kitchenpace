@@ -26,6 +26,29 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '11. März 2026',
+        emoji: '🚀',
+        title: 'Bulk-Import Turbo & Rebranding',
+        items: [
+            {
+                text: 'Bulk-Import verarbeitet jetzt bis zu 10 Rezepte gleichzeitig statt nacheinander',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Neues Branding: KüchenTakt — frischer Name, gleicher Geschmack',
+                tag: 'feat',
+            },
+            {
+                text: 'Flow-Editor passt sich automatisch an Fenstergrößenänderungen an (fitView)',
+                tag: 'feat',
+            },
+            {
+                text: 'Bulk-Import Review-Wizard konnte nach ca. 5 Rezepten mit leerem Bildschirm abstürzen',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '10. März 2026',
         emoji: '✨',
         title: 'Quality of Life — alles wird besser!',

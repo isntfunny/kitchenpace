@@ -294,8 +294,14 @@ function UserSection({
     onSelect: (slug: string) => void;
 }) {
     return (
-        <div className={css({ borderBottom: '1px solid', borderColor: 'border', _last: { borderBottom: 'none' } })}>
-            <SectionHeader icon={<User size={14} />} title="Köche" />
+        <div
+            className={css({
+                borderBottom: '1px solid',
+                borderColor: 'border',
+                _last: { borderBottom: 'none' },
+            })}
+        >
+            <SectionHeader icon={<User size={14} />} title="Profile" />
             <div className={css({ px: '2', pb: '2', display: 'grid', gap: '1' })}>
                 {users.map((user) => (
                     <button

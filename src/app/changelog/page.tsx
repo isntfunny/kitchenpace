@@ -27,6 +27,51 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 const CHANGELOG: ChangelogEntry[] = [
     {
         date: '11. März 2026',
+        version: 'v2026-03-11.3',
+        emoji: '🎨',
+        title: 'Flow-Editor Turbo & erweiterte Suche',
+        items: [
+            // ── Spotlight ──
+            {
+                text: 'Flow-Editor mit verstellbaren Seitenleisten — Palette und Bearbeitungs-Panel können per Drag vergrößert/verkleinert werden, Größen bleiben gespeichert',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Suche findet jetzt auch Profile — Rezepte, Zutaten, Tags und Benutzer in einem einzigen Suchfeld',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Gekochte Rezepte auf dem Profil — neue Datenschutz-Einstellung steuert, ob Besucher sehen können was du gekocht hast',
+                tag: 'spotlight',
+            },
+
+            // ── Features ──
+            {
+                text: 'Kalorien eintragen — Gesamt-Kalorien beim Rezept hinterlegen, auf der Detail-Seite automatisch auf die gewählte Portionszahl umgerechnet',
+                tag: 'feat',
+            },
+            {
+                text: 'Bild-Upload mit Drag-Drop und QR-Code jetzt einheitlich in Profil, Rezept und Koch-Modus',
+                tag: 'feat',
+            },
+
+            // ── Fixes ──
+            {
+                text: 'Buttons auf Rezeptkarten neu ausgerichtet — Veröffentlichen-Button full-width, Bearbeiten und Löschen gleichmäßig darunter',
+                tag: 'fix',
+            },
+            {
+                text: 'Flow-Editor ruckelte bei komplexen Rezepten — Render-Loop-Bug behoben',
+                tag: 'fix',
+            },
+            {
+                text: 'Favoriten-Icon ist jetzt ein Lesezeichen statt einem Herz — klare Unterscheidung zu "Gekocht"',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
+        date: '11. März 2026',
         version: 'v2026-03-11.2',
         emoji: '🛠️',
         title: 'Feedback-Runde: Bugs & UX-Feinschliff',

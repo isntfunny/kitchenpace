@@ -809,8 +809,6 @@ export function RecipeForm({
                                 onPrepTimeChange={setPrepTime}
                                 cookTime={cookTime}
                                 onCookTimeChange={setCookTime}
-                                calories={calories}
-                                onCaloriesChange={setCalories}
                                 difficulty={difficulty}
                                 onDifficultyChange={setDifficulty}
                             />
@@ -844,6 +842,8 @@ export function RecipeForm({
                                 onAddNewIngredient={handleAddNewIngredient}
                                 onUpdateIngredient={updateIngredient}
                                 onRemoveIngredient={handleRemoveIngredient}
+                                calories={calories}
+                                onCaloriesChange={setCalories}
                             />
                         </div>
                     </div>
@@ -898,8 +898,6 @@ export function RecipeForm({
                     onPrepTimeChange={setPrepTime}
                     cookTime={cookTime}
                     onCookTimeChange={setCookTime}
-                    calories={calories}
-                    onCaloriesChange={setCalories}
                     difficulty={difficulty}
                     onDifficultyChange={setDifficulty}
                 />
@@ -929,6 +927,8 @@ export function RecipeForm({
                     onAddNewIngredient={handleAddNewIngredient}
                     onUpdateIngredient={updateIngredient}
                     onRemoveIngredient={handleRemoveIngredient}
+                    calories={calories}
+                    onCaloriesChange={setCalories}
                 />
 
                 <div>

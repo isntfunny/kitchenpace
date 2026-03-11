@@ -9,8 +9,6 @@ interface TimeAndDifficultySectionProps {
     onPrepTimeChange: (value: number) => void;
     cookTime: number;
     onCookTimeChange: (value: number) => void;
-    calories?: number;
-    onCaloriesChange?: (value: number | undefined) => void;
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
     onDifficultyChange: (value: 'EASY' | 'MEDIUM' | 'HARD') => void;
 }
@@ -30,8 +28,6 @@ export function TimeAndDifficultySection({
     onPrepTimeChange,
     cookTime,
     onCookTimeChange,
-    calories,
-    onCaloriesChange,
     difficulty,
     onDifficultyChange,
 }: TimeAndDifficultySectionProps) {
@@ -80,33 +76,6 @@ export function TimeAndDifficultySection({
                     trackingName="difficulty"
                 />
             </div>
-            {onCaloriesChange && (
-                <div>
-                    <span className={labelClass}>Kalorien (kcal, optional)</span>
-                    <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-                        <input
-                            type="number"
-                            min={0}
-                            value={calories ?? ''}
-                            onChange={(e) => {
-                                const v = e.target.value;
-                                onCaloriesChange(v === '' ? undefined : Number(v));
-                            }}
-                            placeholder="z.B. 450"
-                            className={caloriesInputClass}
-                        />
-                        <span
-                            className={css({
-                                fontSize: 'sm',
-                                color: 'text.muted',
-                                flexShrink: '0',
-                            })}
-                        >
-                            kcal / Portion
-                        </span>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
@@ -118,16 +87,3 @@ const labelClass = css({
     fontSize: 'sm',
 });
 
-const caloriesInputClass = css({
-    w: '100px',
-    px: '3',
-    py: '2',
-    fontSize: 'sm',
-    borderRadius: 'md',
-    border: '1.5px solid',
-    borderColor: 'rgba(0,0,0,0.12)',
-    outline: 'none',
-    fontFamily: 'body',
-    _focus: { borderColor: 'brand.primary' },
-    _dark: { borderColor: 'rgba(255,255,255,0.15)', bg: 'rgba(255,255,255,0.05)', color: 'white' },
-});

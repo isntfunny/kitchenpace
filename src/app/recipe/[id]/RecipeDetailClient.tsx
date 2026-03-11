@@ -5,9 +5,6 @@ import {
     Check,
     CheckCircle,
     ChefHat,
-    Clock,
-    Flame,
-    Heart,
     Printer,
     Star,
 } from 'lucide-react';
@@ -39,6 +36,7 @@ import { flex, grid, container } from 'styled-system/patterns';
 
 import { CookDialog } from './components/CookDialog';
 import { printRecipe } from './components/PrintRecipe';
+import { RecipeMetaStats } from './components/RecipeMetaStats';
 import type { Recipe, User, Activity } from './data';
 
 // ── Inline star sparkle ───────────────────────────────────────────────────────
@@ -865,75 +863,10 @@ export function RecipeDetailClient({
                                 <div className={css({ h: '1px', bg: 'border', mb: '3' })} />
 
                                 {/* Time breakdown */}
-                                <div className={css({ display: 'flex', gap: '2', mb: '3' })}>
-                                    {[
-                                        {
-                                            icon: (
-                                                <Clock
-                                                    size={16}
-                                                    color="var(--colors-palette-orange, #e07b53)"
-                                                />
-                                            ),
-                                            label: 'Gesamt',
-                                            value: `${totalTime} Min.`,
-                                        },
-                                        {
-                                            icon: <ChefHat size={16} color="#4caf50" />,
-                                            label: 'Arbeit',
-                                            value: `${recipe.prepTime} Min.`,
-                                        },
-                                        {
-                                            icon: <Flame size={16} color="#ff5722" />,
-                                            label: 'Kochen',
-                                            value: `${recipe.cookTime} Min.`,
-                                        },
-                                        ...(recipe.calories
-                                            ? [
-                                                  {
-                                                      icon: <Flame size={16} color="#f39c12" />,
-                                                      label: 'Kalorien',
-                                                      value: `${recipe.calories} kcal`,
-                                                  },
-                                              ]
-                                            : []),
-                                    ].map(({ icon, label, value }) => (
-                                        <div
-                                            key={label}
-                                            className={css({
-                                                flex: '1',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                gap: '0.5',
-                                                p: '2',
-                                                bg: 'light',
-                                                borderRadius: 'xl',
-                                                minWidth: 0,
-                                            })}
-                                        >
-                                            {icon}
-                                            <span
-                                                className={css({
-                                                    fontSize: '2xs',
-                                                    color: 'text-muted',
-                                                    fontFamily: 'body',
-                                                })}
-                                            >
-                                                {label}
-                                            </span>
-                                            <span
-                                                className={css({
-                                                    fontWeight: '700',
-                                                    fontFamily: 'heading',
-                                                    fontSize: 'xs',
-                                                    whiteSpace: 'nowrap',
-                                                })}
-                                            >
-                                                {value}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
+                                <RecipeMetaStats
+                                    prepTime={recipe.prepTime}
+                                    cookTime={recipe.cookTime}
+                                />
 
                                 {/* Divider + Rating + Actions — hidden for drafts */}
                                 {!isDraft && (
@@ -1086,7 +1019,7 @@ export function RecipeDetailClient({
                                                 >
                                                     <span className={css({ flexShrink: 0 })}>
                                                         {favoriteState.isFavorite ? (
-                                                            <Heart size={16} />
+                                                            <Bookmark size={16} fill="currentColor" />
                                                         ) : (
                                                             <Bookmark size={16} />
                                                         )}
@@ -1119,7 +1052,7 @@ export function RecipeDetailClient({
                                     <div className={css({ flex: '1' })}>
                                         <Button
                                             type="button"
-                                            variant={hasCooked ? 'secondary' : 'primary'}
+                                            variant="primary"
                                             onClick={handleMarkCooked}
                                             disabled={isCookPending}
                                             style={{ width: '100%', minWidth: 0 }}
@@ -1306,6 +1239,27 @@ export function RecipeDetailClient({
                                     </li>
                                 ))}
                             </ul>
+
+                            {recipe.calories != null && recipe.calories > 0 && (
+                                <div
+                                    className={css({
+                                        mt: '3',
+                                        pt: '3',
+                                        borderTop: '1px solid',
+                                        borderColor: 'border',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        fontSize: 'sm',
+                                        color: 'text-muted',
+                                    })}
+                                >
+                                    <span>Kalorien</span>
+                                    <span className={css({ fontWeight: '600', color: 'text' })}>
+                                        {Math.round(recipe.calories * (servings / recipe.servings))} kcal
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
 

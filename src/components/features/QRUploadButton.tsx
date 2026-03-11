@@ -141,7 +141,7 @@ export function QRUploadButton({
                 })}
             >
                 <QrCode size={14} />
-                Handy
+                Vom Handy hochladen
             </button>
 
             {open && tokenData && (

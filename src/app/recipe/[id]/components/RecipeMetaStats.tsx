@@ -7,17 +7,16 @@ import { css } from 'styled-system/css';
 interface RecipeMetaStatsProps {
     prepTime: number;
     cookTime: number;
-    calories?: number | null;
 }
 
-export function RecipeMetaStats({ prepTime, cookTime, calories }: RecipeMetaStatsProps) {
+export function RecipeMetaStats({ prepTime, cookTime }: RecipeMetaStatsProps) {
     const totalTime = prepTime + cookTime;
 
     const statStyle = css({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '1',
+        gap: '0.5',
         p: '2',
         bg: 'light',
         borderRadius: 'xl',
@@ -26,7 +25,7 @@ export function RecipeMetaStats({ prepTime, cookTime, calories }: RecipeMetaStat
     });
 
     const labelStyle = css({
-        fontSize: 'sm',
+        fontSize: 'xs',
         color: 'text-muted',
         fontFamily: 'body',
     });
@@ -34,7 +33,7 @@ export function RecipeMetaStats({ prepTime, cookTime, calories }: RecipeMetaStat
     const valueStyle = css({
         fontWeight: '700',
         fontFamily: 'heading',
-        fontSize: 'md',
+        fontSize: 'sm',
         whiteSpace: 'nowrap',
     });
 
@@ -43,31 +42,24 @@ export function RecipeMetaStats({ prepTime, cookTime, calories }: RecipeMetaStat
             className={css({
                 display: 'flex',
                 gap: '2',
-                mb: '4',
+                mb: '3',
             })}
         >
             <div className={statStyle}>
-                <Clock size={20} color="var(--colors-palette-orange, #e07b53)" />
+                <Clock size={16} color="var(--colors-palette-orange, #e07b53)" />
                 <span className={labelStyle}>Gesamt</span>
                 <span className={valueStyle}>{totalTime} Min.</span>
             </div>
             <div className={statStyle}>
-                <ChefHat size={20} color="#4caf50" />
+                <ChefHat size={16} color="#4caf50" />
                 <span className={labelStyle}>Arbeit</span>
                 <span className={valueStyle}>{prepTime} Min.</span>
             </div>
             <div className={statStyle}>
-                <Flame size={20} color="#ff5722" />
+                <Flame size={16} color="#ff5722" />
                 <span className={labelStyle}>Kochen</span>
                 <span className={valueStyle}>{cookTime} Min.</span>
             </div>
-            {calories != null && calories > 0 && (
-                <div className={statStyle}>
-                    <Flame size={20} color="#f39c12" />
-                    <span className={labelStyle}>Kalorien</span>
-                    <span className={valueStyle}>{calories} kcal</span>
-                </div>
-            )}
         </div>
     );
 }

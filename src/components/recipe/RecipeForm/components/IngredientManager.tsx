@@ -24,6 +24,8 @@ interface IngredientManagerProps {
     onAddNewIngredient: (name: string) => Promise<void>;
     onUpdateIngredient: (index: number, changes: Partial<AddedIngredient>) => void;
     onRemoveIngredient: (index: number) => void;
+    calories?: number;
+    onCaloriesChange?: (value: number | undefined) => void;
 }
 
 export function IngredientManager({
@@ -37,6 +39,8 @@ export function IngredientManager({
     onAddNewIngredient,
     onUpdateIngredient,
     onRemoveIngredient,
+    calories,
+    onCaloriesChange,
 }: IngredientManagerProps) {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -183,9 +187,64 @@ export function IngredientManager({
                     ))}
                 </div>
             )}
+            {onCaloriesChange && (
+                <div className={css({ mt: '4' })}>
+                    <span className={labelClass}>Kalorien (optional)</span>
+                    <div
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '2',
+                            borderRadius: 'lg',
+                            px: '3',
+                        })}
+                        style={{
+                            border: `1px solid ${PALETTE.orange}`,
+                            height: 36,
+                        }}
+                    >
+                        <input
+                            type="number"
+                            min={0}
+                            value={calories ?? ''}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                onCaloriesChange(v === '' ? undefined : Number(v));
+                            }}
+                            placeholder="z.B. 450"
+                            className={css({
+                                flex: '1',
+                                fontSize: 'sm',
+                                fontWeight: '600',
+                                outline: 'none',
+                                background: 'transparent',
+                                color: 'text',
+                                height: '100%',
+                            })}
+                        />
+                        <span
+                            className={css({
+                                fontSize: 'xs',
+                                color: 'text.muted',
+                                flexShrink: '0',
+                                whiteSpace: 'nowrap',
+                            })}
+                        >
+                            kcal gesamt
+                        </span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+
+const labelClass = css({
+    fontWeight: '600',
+    display: 'block',
+    mb: '2',
+    fontSize: 'sm',
+});
 
 function IngredientRow({
     ing,
@@ -383,7 +442,6 @@ const unitInputClass = css({
 });
 
 const labelSmClass = css({ fontWeight: '600', display: 'block', mb: '2', fontSize: 'sm' });
-const labelClass = css({ fontWeight: '600', display: 'block', mb: '2' });
 
 const ghostOverlayClass = css({
     position: 'absolute',

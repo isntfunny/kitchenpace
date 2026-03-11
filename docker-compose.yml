@@ -64,7 +64,7 @@ services:
             timeout: 5s
             retries: 5
 
-    app:
+    beta-kitchenpace:
         build:
             context: .
             dockerfile: Dockerfile

@@ -75,7 +75,6 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
     const [urlText, setUrlText] = useState('');
     const [items, setItems] = useState<BulkItem[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [reviewIndex, setReviewIndex] = useState(0);
     const [saving, setSaving] = useState(false);
 
     // For inline edit during review
@@ -110,7 +109,8 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
         (item) => item.status === 'done' && item.recipe && !item.savedId && !item.skipped,
     );
 
-    const currentReviewItem = reviewableItems[reviewIndex] ?? null;
+    // Always review the first remaining item — the list shrinks as items get saved/skipped
+    const currentReviewItem = reviewableItems[0] ?? null;
 
     // Load edit fields when review item changes
     const loadEditFields = useCallback((recipe: AnalyzedRecipe, imageUrl?: string) => {
@@ -120,7 +120,7 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
         setEditImageUrl(imageUrl ?? recipe.imageUrl ?? '');
     }, []);
 
-    // ── Start bulk processing ────────────────────────────────────────────────
+    // ── Start bulk processing (parallel, up to 10 at once) ──────────────────
 
     const startBulkImport = useCallback(async () => {
         if (validUrls.length === 0) {
@@ -141,35 +141,40 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
         op.track('bulk_import_started', { url_count: validUrls.length });
 
         // Check scraper health first
-        const healthy = await checkScraplerHealth();
+        let healthy = false;
+        try {
+            healthy = await checkScraplerHealth();
+        } catch {
+            // scraper unreachable
+        }
         if (!healthy) {
             setError('Der Scraping-Dienst ist nicht erreichbar. Bitte später erneut versuchen.');
             setStep('urls');
             return;
         }
 
-        // Process each URL sequentially
-        const processed = [...initialItems];
+        // Mutable results array — each worker updates its own index
+        const results: BulkItem[] = [...initialItems];
 
-        for (let i = 0; i < processed.length; i++) {
-            if (abortRef.current) break;
+        const updateItem = (index: number, patch: Partial<BulkItem>) => {
+            results[index] = { ...results[index], ...patch };
+            setItems([...results]);
+        };
 
-            // Mark as scraping
-            processed[i] = { ...processed[i], status: 'scraping' };
-            setItems([...processed]);
+        // Process a single URL
+        const processOne = async (index: number) => {
+            if (abortRef.current) return;
+
+            updateItem(index, { status: 'scraping' });
 
             try {
-                // Scrape
-                const scraped = await scrapeRecipe(processed[i].url);
+                const scraped = await scrapeRecipe(results[index].url);
 
-                // Mark as analyzing
-                processed[i] = { ...processed[i], status: 'analyzing' };
-                setItems([...processed]);
+                if (abortRef.current) return;
+                updateItem(index, { status: 'analyzing' });
 
-                // AI analysis
-                const analyzed = await analyzeWithAI(scraped.markdown, processed[i].url);
+                const analyzed = await analyzeWithAI(scraped.markdown, results[index].url);
 
-                // Resolve category slugs → IDs
                 const resolvedCategoryIds = (analyzed.categoryIds ?? [])
                     .map((slug) => categories.find((c) => c.slug === slug)?.id)
                     .filter((id): id is string => id != null);
@@ -180,24 +185,38 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                     imageUrl: scraped.imageUrl || analyzed.imageUrl,
                 };
 
-                processed[i] = { ...processed[i], status: 'done', recipe };
-                setItems([...processed]);
+                updateItem(index, { status: 'done', recipe });
             } catch (err) {
-                processed[i] = {
-                    ...processed[i],
+                updateItem(index, {
                     status: 'error',
                     error: err instanceof Error ? err.message : 'Unbekannter Fehler',
-                };
-                setItems([...processed]);
+                });
             }
-        }
+        };
+
+        // Parallel queue: up to 10 concurrent workers
+        const CONCURRENCY = 10;
+        const queue = [...initialItems.keys()]; // [0, 1, 2, ...]
+        let cursor = 0;
+
+        const worker = async () => {
+            while (cursor < queue.length) {
+                if (abortRef.current) break;
+                const idx = cursor++;
+                if (idx < queue.length) {
+                    await processOne(idx);
+                }
+            }
+        };
+
+        await Promise.all(
+            Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => worker()),
+        );
 
         // Move to review if we have any successes
-        const successCount = processed.filter((p) => p.status === 'done').length;
+        const successCount = results.filter((p) => p.status === 'done').length;
         if (successCount > 0) {
-            setReviewIndex(0);
-            // Load first reviewable item
-            const firstReviewable = processed.find((p) => p.status === 'done' && p.recipe);
+            const firstReviewable = results.find((p) => p.status === 'done' && p.recipe);
             if (firstReviewable?.recipe) {
                 loadEditFields(firstReviewable.recipe, firstReviewable.recipe.imageUrl);
             }
@@ -209,24 +228,26 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
 
         op.track('bulk_import_processing_done', {
             success: successCount,
-            failed: processed.filter((p) => p.status === 'error').length,
+            failed: results.filter((p) => p.status === 'error').length,
         });
     }, [validUrls, categories, op, loadEditFields]);
 
     // ── Review actions ───────────────────────────────────────────────────────
 
     const advanceReview = useCallback(() => {
-        const nextIndex = reviewIndex + 1;
-        if (nextIndex < reviewableItems.length) {
-            setReviewIndex(nextIndex);
-            const nextItem = reviewableItems[nextIndex];
+        // After save/skip, reviewableItems will shrink by 1 on next render.
+        // If only 1 left (the one we just handled), we're done.
+        if (reviewableItems.length <= 1) {
+            setStep('done');
+        } else {
+            // The next item becomes reviewableItems[0] after state update,
+            // but we can preload from [1] (the next one after current).
+            const nextItem = reviewableItems[1];
             if (nextItem?.recipe) {
                 loadEditFields(nextItem.recipe, nextItem.recipe.imageUrl);
             }
-        } else {
-            setStep('done');
         }
-    }, [reviewIndex, reviewableItems, loadEditFields]);
+    }, [reviewableItems, loadEditFields]);
 
     const handleSaveAndNext = useCallback(async () => {
         if (!currentReviewItem?.recipe) return;
@@ -779,7 +800,8 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
 
     // ── Render: Done Summary ─────────────────────────────────────────────────
 
-    if (step === 'done') {
+    // Also covers: step === 'review' but no reviewable items left
+    if (step === 'done' || step === 'review') {
         return (
             <div className={containerClass}>
                 <motion.div
@@ -917,7 +939,6 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                             setStep('urls');
                             setUrlText('');
                             setItems([]);
-                            setReviewIndex(0);
                             setError(null);
                         }}
                         className={secondaryButtonClass}

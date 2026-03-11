@@ -35,6 +35,10 @@ import {
     checkScraplerHealth,
     type AnalyzedRecipe,
 } from './actions';
+import { ImportPageHeader } from './components/ImportPageHeader';
+import { ProgressBar } from './components/ProgressBar';
+import { SuccessBanner } from './components/SuccessBanner';
+import { containerClass, labelClass, primaryButtonClass } from './importStyles';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -325,39 +329,11 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
     if (step === 'urls') {
         return (
             <div className={containerClass}>
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className={headerClass}
-                >
-                    <motion.div
-                        initial={{ scale: 0.8 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                        className={iconWrapperClass}
-                    >
-                        <List className={iconClass} />
-                    </motion.div>
-
-                    <motion.h1
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                        className={titleClass}
-                    >
-                        Bulk-Import
-                    </motion.h1>
-
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className={subtitleClass}
-                    >
-                        Importiere mehrere Rezepte auf einmal. Eine URL pro Zeile.
-                    </motion.p>
-                </motion.div>
+                <ImportPageHeader
+                    icon={List}
+                    title="Bulk-Import"
+                    subtitle="Importiere mehrere Rezepte auf einmal. Eine URL pro Zeile."
+                />
 
                 {error && (
                     <motion.div
@@ -476,12 +452,8 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                 </div>
 
                 {/* Overall progress */}
-                <div className={progressTrackClass}>
-                    <motion.div
-                        className={progressFillClass}
-                        animate={{ width: `${progress}%` }}
-                        transition={{ type: 'spring', stiffness: 80 }}
-                    />
+                <div className={css({ mb: '6' })}>
+                    <ProgressBar progress={progress} />
                 </div>
 
                 {/* URL list with statuses */}
@@ -804,33 +776,10 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
     if (step === 'done' || step === 'review') {
         return (
             <div className={containerClass}>
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={doneHeaderClass}
-                >
-                    <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-                        className={doneIconClass}
-                    >
-                        <Check
-                            className={css({
-                                width: '28px',
-                                height: '28px',
-                                color: 'palette.emerald',
-                            })}
-                        />
-                    </motion.div>
-                    <div>
-                        <h2 className={doneTitleClass}>Bulk-Import abgeschlossen</h2>
-                        <p className={doneSubtitleClass}>
-                            {savedItems.length} gespeichert, {skippedItems.length} übersprungen
-                            {failedItems.length > 0 && `, ${failedItems.length} fehlgeschlagen`}
-                        </p>
-                    </div>
-                </motion.div>
+                <SuccessBanner
+                    title="Bulk-Import abgeschlossen"
+                    subtitle={`${savedItems.length} gespeichert, ${skippedItems.length} übersprungen${failedItems.length > 0 ? `, ${failedItems.length} fehlgeschlagen` : ''}`}
+                />
 
                 {/* Summary cards */}
                 <motion.div
@@ -967,53 +916,6 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
 // Styles
 // ─────────────────────────────────────────────────────────────────────────────
 
-const containerClass = css({
-    maxWidth: '640px',
-    mx: 'auto',
-    px: '6',
-    py: '12',
-});
-
-const headerClass = css({
-    textAlign: 'center',
-    mb: '8',
-});
-
-const iconWrapperClass = css({
-    width: '72px',
-    height: '72px',
-    borderRadius: '20px',
-    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    mx: 'auto',
-    mb: '5',
-    boxShadow: {
-        base: '0 8px 32px rgba(224,123,83,0.35)',
-        _dark: '0 8px 32px rgba(224,123,83,0.2)',
-    },
-});
-
-const iconClass = css({
-    width: '32px',
-    height: '32px',
-    color: 'white',
-});
-
-const titleClass = css({
-    fontSize: '2xl',
-    fontWeight: '800',
-    color: 'text',
-    mb: '2',
-});
-
-const subtitleClass = css({
-    fontSize: 'md',
-    color: 'text.muted',
-    lineHeight: '1.6',
-});
-
 const formCardClass = css({
     backgroundColor: { base: 'white', _dark: 'surface' },
     borderRadius: 'xl',
@@ -1021,14 +923,6 @@ const formCardClass = css({
     borderColor: { base: 'rgba(224,123,83,0.15)', _dark: 'rgba(224,123,83,0.2)' },
     p: '6',
     boxShadow: { base: '0 4px 24px rgba(0,0,0,0.06)', _dark: '0 4px 24px rgba(0,0,0,0.3)' },
-});
-
-const labelClass = css({
-    display: 'block',
-    fontSize: 'sm',
-    fontWeight: '600',
-    color: 'text',
-    mb: '2',
 });
 
 const textareaClass = css({
@@ -1067,29 +961,6 @@ const urlCountClass = css({
     fontSize: 'sm',
     color: 'text.muted',
     fontWeight: '500',
-});
-
-const primaryButtonClass = css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '2',
-    width: '100%',
-    mt: '4',
-    px: '6',
-    py: '3',
-    borderRadius: 'xl',
-    border: 'none',
-    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
-    color: 'white',
-    fontSize: 'md',
-    fontWeight: '700',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    _disabled: {
-        opacity: 0.5,
-        cursor: 'not-allowed',
-    },
 });
 
 const primaryButtonCompactClass = css({
@@ -1168,21 +1039,6 @@ const processingSubtitleClass = css({
     fontSize: 'sm',
     color: 'text.muted',
     mt: '0.5',
-});
-
-const progressTrackClass = css({
-    height: '6px',
-    width: '100%',
-    backgroundColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
-    borderRadius: 'full',
-    overflow: 'hidden',
-    mb: '6',
-});
-
-const progressFillClass = css({
-    height: '100%',
-    background: 'linear-gradient(90deg, #e07b53, #f8b500)',
-    borderRadius: 'full',
 });
 
 const urlListClass = css({
@@ -1566,40 +1422,6 @@ const skipButtonClass = css({
 });
 
 // ── Done ────────────────────────────────────────────────────────────────────
-
-const doneHeaderClass = css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4',
-    mb: '6',
-    p: '5',
-    backgroundColor: { base: 'rgba(0,184,148,0.08)', _dark: 'rgba(0,184,148,0.12)' },
-    borderRadius: 'xl',
-    border: '1px solid',
-    borderColor: { base: 'rgba(0,184,148,0.2)', _dark: 'rgba(0,184,148,0.25)' },
-});
-
-const doneIconClass = css({
-    width: '56px',
-    height: '56px',
-    borderRadius: 'full',
-    backgroundColor: { base: 'rgba(0,184,148,0.15)', _dark: 'rgba(0,184,148,0.2)' },
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-});
-
-const doneTitleClass = css({
-    fontSize: 'lg',
-    fontWeight: '700',
-    color: 'text',
-});
-
-const doneSubtitleClass = css({
-    fontSize: 'sm',
-    color: 'text.muted',
-});
 
 const summaryGridClass = css({
     display: 'grid',

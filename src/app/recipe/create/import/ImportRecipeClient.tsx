@@ -43,6 +43,10 @@ import {
     type FlowNodeInput,
     type FlowEdgeInput,
 } from './actions';
+import { ImportPageHeader } from './components/ImportPageHeader';
+import { ProgressBar } from './components/ProgressBar';
+import { SuccessBanner } from './components/SuccessBanner';
+import { containerClass, labelClass, primaryButtonClass } from './importStyles';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -462,40 +466,11 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
     if (currentStep === 'url') {
         return (
             <div className={containerClass}>
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                    className={headerClass}
-                >
-                    <motion.div
-                        initial={{ scale: 0.8 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                        className={iconWrapperClass}
-                    >
-                        <Download className={iconClass} />
-                    </motion.div>
-
-                    <motion.h1
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                        className={titleClass}
-                    >
-                        Rezept importieren
-                    </motion.h1>
-
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className={subtitleClass}
-                    >
-                        Importiere ein Rezept von einer externen URL. Die KI analysiert das Rezept
-                        und erstellt automatisch einen Flow.
-                    </motion.p>
-                </motion.div>
+                <ImportPageHeader
+                    icon={Download}
+                    title="Rezept importieren"
+                    subtitle="Importiere ein Rezept von einer externen URL. Die KI analysiert das Rezept und erstellt automatisch einen Flow."
+                />
 
                 {error && (
                     <motion.div
@@ -614,12 +589,8 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                     </div>
 
                     {/* Progress bar */}
-                    <div className={sidebarProgressTrackClass}>
-                        <motion.div
-                            className={sidebarProgressFillClass}
-                            animate={{ width: `${status.progress}%` }}
-                            transition={{ type: 'spring', stiffness: 80 }}
-                        />
+                    <div className={css({ mb: '5' })}>
+                        <ProgressBar progress={status.progress} />
                     </div>
 
                     {/* Pipeline steps */}
@@ -772,38 +743,10 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
     if (currentStep === 'preview' && analyzedRecipe) {
         return (
             <div className={containerClass}>
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={previewHeaderClass}
-                >
-                    <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-                        className={previewIconClass}
-                    >
-                        <Check className={checkIconClass} />
-                    </motion.div>
-                    <div>
-                        <motion.h2
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className={previewTitleClass}
-                        >
-                            Rezept erfolgreich importiert!
-                        </motion.h2>
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.4 }}
-                            className={previewSubtitleClass}
-                        >
-                            Du kannst das Rezept jetzt überprüfen und bearbeiten
-                        </motion.p>
-                    </div>
-                </motion.div>
+                <SuccessBanner
+                    title="Rezept erfolgreich importiert!"
+                    subtitle="Du kannst das Rezept jetzt überprüfen und bearbeiten"
+                />
 
                 {error && (
                     <div className={errorWrapperClass}>
@@ -1098,53 +1041,6 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
 // Styles
 // ─────────────────────────────────────────────────────────────────────────────
 
-const containerClass = css({
-    maxWidth: '640px',
-    mx: 'auto',
-    px: '6',
-    py: '12',
-});
-
-const headerClass = css({
-    textAlign: 'center',
-    mb: '8',
-});
-
-const iconWrapperClass = css({
-    width: '72px',
-    height: '72px',
-    borderRadius: '20px',
-    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    mx: 'auto',
-    mb: '5',
-    boxShadow: {
-        base: '0 8px 32px rgba(224,123,83,0.35)',
-        _dark: '0 8px 32px rgba(224,123,83,0.2)',
-    },
-});
-
-const iconClass = css({
-    width: '32px',
-    height: '32px',
-    color: 'white',
-});
-
-const titleClass = css({
-    fontSize: '2xl',
-    fontWeight: '800',
-    color: 'text',
-    mb: '2',
-});
-
-const subtitleClass = css({
-    fontSize: 'md',
-    color: 'text.muted',
-    lineHeight: '1.6',
-});
-
 const errorWrapperClass = css({
     mb: '6',
 });
@@ -1156,14 +1052,6 @@ const formWrapperClass = css({
     borderColor: { base: 'rgba(224,123,83,0.15)', _dark: 'rgba(224,123,83,0.2)' },
     p: '6',
     boxShadow: { base: '0 4px 24px rgba(0,0,0,0.06)', _dark: '0 4px 24px rgba(0,0,0,0.3)' },
-});
-
-const labelClass = css({
-    display: 'block',
-    fontSize: 'sm',
-    fontWeight: '600',
-    color: 'text',
-    mb: '2',
 });
 
 const inputClass = css({
@@ -1187,29 +1075,6 @@ const inputClass = css({
     },
     _placeholder: {
         color: 'text.muted',
-    },
-});
-
-const primaryButtonClass = css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '2',
-    width: '100%',
-    mt: '4',
-    px: '6',
-    py: '3',
-    borderRadius: 'xl',
-    border: 'none',
-    background: 'linear-gradient(135deg, #e07b53 0%, #f8b500 100%)',
-    color: 'white',
-    fontSize: 'md',
-    fontWeight: '700',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    _disabled: {
-        opacity: 0.5,
-        cursor: 'not-allowed',
     },
 });
 
@@ -1324,21 +1189,6 @@ const sidebarSubtitleClass = css({
     fontSize: 'xs',
     color: 'text.muted',
     mt: '0.5',
-});
-
-const sidebarProgressTrackClass = css({
-    height: '6px',
-    width: '100%',
-    backgroundColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
-    borderRadius: 'full',
-    overflow: 'hidden',
-    mb: '5',
-});
-
-const sidebarProgressFillClass = css({
-    height: '100%',
-    background: 'linear-gradient(90deg, #e07b53, #f8b500)',
-    borderRadius: 'full',
 });
 
 // Pipeline steps
@@ -1554,46 +1404,6 @@ const terminalCursorClass = css({
 });
 
 // Preview
-const previewHeaderClass = css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4',
-    mb: '6',
-    p: '5',
-    backgroundColor: { base: 'rgba(0,184,148,0.08)', _dark: 'rgba(0,184,148,0.12)' },
-    borderRadius: 'xl',
-    border: '1px solid',
-    borderColor: { base: 'rgba(0,184,148,0.2)', _dark: 'rgba(0,184,148,0.25)' },
-});
-
-const previewIconClass = css({
-    width: '56px',
-    height: '56px',
-    borderRadius: 'full',
-    backgroundColor: { base: 'rgba(0,184,148,0.15)', _dark: 'rgba(0,184,148,0.2)' },
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-});
-
-const checkIconClass = css({
-    width: '28px',
-    height: '28px',
-    color: 'palette.emerald',
-});
-
-const previewTitleClass = css({
-    fontSize: 'lg',
-    fontWeight: '700',
-    color: 'text',
-});
-
-const previewSubtitleClass = css({
-    fontSize: 'sm',
-    color: 'text.muted',
-});
-
 const previewCardsClass = css({
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',

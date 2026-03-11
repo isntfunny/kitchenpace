@@ -263,7 +263,6 @@ export function RecipeDetailClient({
         addToRecent,
     ]);
 
-    const totalTime = recipe.prepTime + recipe.cookTime;
     const starValues = [1, 2, 3, 4, 5] as const;
     const activeStarValue = viewerRating ?? Math.round(averageRating || 0);
 

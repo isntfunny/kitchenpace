@@ -8,6 +8,7 @@ type ProfileFields = Partial<Pick<Profile, 'nickname' | 'teaser' | 'photoKey'>> 
     ratingsPublic?: boolean;
     followsPublic?: boolean;
     favoritesPublic?: boolean;
+    cookedPublic?: boolean;
     showInActivity?: boolean;
     notifyOnAnonymous?: boolean;
     notifyOnNewFollower?: boolean;
@@ -88,6 +89,7 @@ export const upsertProfile = async (params: { userId: string; data: ProfileField
             ratingsPublic: definedData.ratingsPublic,
             followsPublic: definedData.followsPublic,
             favoritesPublic: definedData.favoritesPublic,
+            cookedPublic: definedData.cookedPublic,
             showInActivity: definedData.showInActivity,
             notifyOnAnonymous: definedData.notifyOnAnonymous,
             notifyOnNewFollower: definedData.notifyOnNewFollower,
@@ -107,6 +109,7 @@ export const upsertProfile = async (params: { userId: string; data: ProfileField
             ratingsPublic: definedData.ratingsPublic,
             followsPublic: definedData.followsPublic,
             favoritesPublic: definedData.favoritesPublic,
+            cookedPublic: definedData.cookedPublic,
             showInActivity: definedData.showInActivity,
             notifyOnAnonymous: definedData.notifyOnAnonymous,
             notifyOnNewFollower: definedData.notifyOnNewFollower,

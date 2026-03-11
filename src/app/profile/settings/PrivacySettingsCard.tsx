@@ -8,7 +8,7 @@ import { Heading, Text } from '@app/components/atoms/Typography';
 import { useBeforeUnload } from '@app/lib/hooks/useBeforeUnload';
 import { css } from 'styled-system/css';
 
-type SettingKey = 'ratingsPublic' | 'followsPublic' | 'favoritesPublic' | 'showInActivity';
+type SettingKey = 'ratingsPublic' | 'followsPublic' | 'favoritesPublic' | 'cookedPublic' | 'showInActivity';
 
 const SETTING_COPY: Record<
     SettingKey,
@@ -41,6 +41,13 @@ const SETTING_COPY: Record<
             'Lege fest, ob deine favorisierten Rezepte für andere Nutzer*innen sichtbar sind.',
         labelOn: 'Favoriten sichtbar',
         labelOff: 'Favoriten verborgen',
+    },
+    cookedPublic: {
+        title: 'Zubereitete Rezepte öffentlich',
+        description:
+            'Bestimme, ob andere sehen dürfen, welche Rezepte du bereits zubereitet hast.',
+        labelOn: 'Zubereitet sichtbar',
+        labelOff: 'Zubereitet verborgen',
     },
 };
 

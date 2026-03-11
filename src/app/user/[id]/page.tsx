@@ -131,12 +131,14 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
     const profile = user.profile;
     const showFollowerCount = profile?.followsPublic !== false;
     const showFavorites = profile?.favoritesPublic !== false;
+    const showCooked = profile?.cookedPublic !== false;
 
     // Build set of activity types to hide based on privacy settings
     const hiddenActivityTypes = new Set<string>();
     if (profile?.ratingsPublic === false) hiddenActivityTypes.add('RECIPE_RATED');
     if (profile?.favoritesPublic === false) hiddenActivityTypes.add('RECIPE_FAVORITED');
     if (profile?.followsPublic === false) hiddenActivityTypes.add('USER_FOLLOWED');
+    if (profile?.cookedPublic === false) hiddenActivityTypes.add('RECIPE_COOKED');
 
     // Filter activities by privacy
     const visibleActivities =
@@ -159,32 +161,42 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
 
     const recipeMap = new Map(recipes.map((r) => [r.id, r]));
 
-    // Fetch public favorites if enabled
-    const favoriteRecipes = showFavorites
-        ? await prisma.favorite.findMany({
-              where: { userId: user.id, recipe: { publishedAt: { not: null } } },
-              orderBy: { createdAt: 'desc' },
-              take: 12,
-              select: {
-                  recipe: {
-                      select: {
-                          id: true,
-                          slug: true,
-                          title: true,
-                          description: true,
-                          imageKey: true,
-                          rating: true,
-                          prepTime: true,
-                          cookTime: true,
-                          categories: {
-                              select: { category: { select: { name: true } } },
-                              take: 1,
-                          },
-                      },
-                  },
-              },
-          })
-        : [];
+    // Fetch public favorites and cooked recipes if enabled (in parallel)
+    const recipeSelect = {
+        id: true,
+        slug: true,
+        title: true,
+        description: true,
+        imageKey: true,
+        rating: true,
+        prepTime: true,
+        cookTime: true,
+        categories: {
+            select: { category: { select: { name: true } } },
+            take: 1,
+        },
+    };
+
+    const [favoriteRecipes, cookedRecipes] = await Promise.all([
+        showFavorites
+            ? prisma.favorite.findMany({
+                  where: { userId: user.id, recipe: { publishedAt: { not: null } } },
+                  orderBy: { createdAt: 'desc' },
+                  take: 12,
+                  select: { recipe: { select: recipeSelect } },
+              })
+            : Promise.resolve([]),
+        showCooked
+            ? prisma.userCookHistory.findMany({
+                  where: { userId: user.id, recipe: { publishedAt: { not: null } } },
+                  orderBy: { cookedAt: 'desc' },
+                  distinct: ['recipeId'],
+                  take: 12,
+                  select: { recipe: { select: recipeSelect } },
+              })
+            : Promise.resolve([]),
+    ]);
+
 
     // Format time ago on server side
     const formatTimeAgo = (date: Date): string => {
@@ -211,6 +223,7 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
         followerCount: user.profile?.followerCount ?? 0,
         showFollowerCount,
         showFavorites,
+        showCooked,
         currentPage: page,
         totalPages: Math.ceil(user._count.recipes / PAGE_SIZE),
         recipes: user.recipes.map((recipe) => ({
@@ -236,6 +249,18 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
             rating: fav.recipe.rating ?? 0,
             prepTime: fav.recipe.prepTime,
             cookTime: fav.recipe.cookTime,
+        })),
+        cooked: cookedRecipes.map((c) => ({
+            id: c.recipe.id,
+            slug: c.recipe.slug,
+            title: c.recipe.title,
+            description: c.recipe.description ?? '',
+            image: c.recipe.imageKey ?? null,
+            imageKey: c.recipe.imageKey ?? null,
+            category: c.recipe.categories[0]?.category?.name ?? 'Allgemein',
+            rating: c.recipe.rating ?? 0,
+            prepTime: c.recipe.prepTime,
+            cookTime: c.recipe.cookTime,
         })),
         activities: visibleActivities.map((activity) => {
             const recipe = activity.targetId ? recipeMap.get(activity.targetId) : null;

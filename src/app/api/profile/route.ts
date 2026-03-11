@@ -101,6 +101,7 @@ export async function PUT(request: NextRequest) {
     const ratingsPublic = sanitizeBoolean(payload.ratingsPublic);
     const followsPublic = sanitizeBoolean(payload.followsPublic);
     const favoritesPublic = sanitizeBoolean(payload.favoritesPublic);
+    const cookedPublic = sanitizeBoolean(payload.cookedPublic);
     const showInActivity = sanitizeBoolean(payload.showInActivity);
     const notifyOnAnonymous = sanitizeBoolean(payload.notifyOnAnonymous);
     const notifyOnNewFollower = sanitizeBoolean(payload.notifyOnNewFollower);
@@ -135,6 +136,10 @@ export async function PUT(request: NextRequest) {
 
     if (favoritesPublic !== undefined) {
         profileUpdates.favoritesPublic = favoritesPublic;
+    }
+
+    if (cookedPublic !== undefined) {
+        profileUpdates.cookedPublic = cookedPublic;
     }
 
     if (showInActivity !== undefined) {

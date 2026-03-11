@@ -258,6 +258,7 @@ export function RecipeDetailClient({
         recipe.id,
         recipe.title,
         recipe.image,
+        recipe.imageKey,
         recipe.prepTime,
         recipe.cookTime,
         recipe.difficulty,

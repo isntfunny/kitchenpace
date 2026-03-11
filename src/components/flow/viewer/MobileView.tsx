@@ -96,7 +96,6 @@ export function MobileView({
     completed: Set<string>;
     timers: Map<string, TimerState>;
     dispatch: Dispatch<ViewerAction>;
-    onOpenDetail: (nodeId: string) => void;
     ingredients?: RecipeStepsViewerProps['ingredients'];
 }) {
     const {

@@ -394,7 +394,7 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
             setCurrentStep('url');
             setStatus({ step: 'url', message: '', progress: 0 });
         }
-    }, [url, addStreamEvent, clearStreamEvents, categories]);
+    }, [url, addStreamEvent, clearStreamEvents, categories, op]);
 
     const handleContinueToEdit = useCallback(() => {
         setCurrentStep('edit');

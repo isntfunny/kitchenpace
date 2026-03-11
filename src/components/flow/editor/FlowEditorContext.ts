@@ -17,6 +17,8 @@ export interface FlowEditorContextValue {
     nodeIncomingEdges: Map<string, number>;
     onAddNodeAfter: (parentNodeId: string, stepType: StepType) => void;
     onAddNodeBefore?: (childNodeId: string, stepType: StepType) => void;
+    /** Fork: add a new node on a brand-new edge without rewiring existing edges */
+    onForkNodeAfter?: (parentNodeId: string, stepType: StepType) => void;
     /** Add a DB ingredient to the recipe (called when user @-mentions it in a step) */
     onAddIngredientToRecipe?: (ing: IngredientSearchResult) => void;
     /** Insert a new node onto an existing edge, splitting it into two edges */

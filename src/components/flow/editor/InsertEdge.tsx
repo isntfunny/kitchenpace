@@ -8,14 +8,15 @@ import {
     type EdgeProps,
 } from '@xyflow/react';
 import { Plus, Trash2 } from 'lucide-react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
 
+import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
 import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
+import { css } from 'styled-system/css';
 
 import type { StepType } from './editorTypes';
 import { useFlowEditor } from './FlowEditorContext';
-import { ADDABLE_STEP_TYPES, STEP_CONFIGS } from './stepConfig';
 
 function InsertEdgeComponent({
     id,
@@ -47,19 +48,6 @@ function InsertEdgeComponent({
         targetPosition,
     });
 
-    // Close popover on outside click
-    useEffect(() => {
-        if (!popoverOpen) return;
-        const handler = (e: MouseEvent) => {
-            if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-                setPopoverOpen(false);
-                setIsHovered(false);
-            }
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, [popoverOpen]);
-
     const handleSelect = useCallback(
         (stepType: StepType) => {
             setPopoverOpen(false);
@@ -68,6 +56,11 @@ function InsertEdgeComponent({
         },
         [id, source, target, onInsertOnEdge],
     );
+
+    const handleClose = useCallback(() => {
+        setPopoverOpen(false);
+        setIsHovered(false);
+    }, []);
 
     const showButton = isHovered || popoverOpen;
 
@@ -184,76 +177,22 @@ function InsertEdgeComponent({
                         {/* Step picker popover */}
                         {popoverOpen && (
                             <div
-                                style={{
+                                className={css({
                                     position: 'absolute',
+                                    zIndex: '50',
+                                })}
+                                style={{
                                     top: 'calc(100% + 8px)',
                                     left: '50%',
                                     transform: 'translateX(-50%)',
-                                    backgroundColor: dark ? '#1a1d21' : 'white',
-                                    borderRadius: '12px',
-                                    border: dark
-                                        ? '1px solid rgba(224,123,83,0.25)'
-                                        : '1px solid rgba(224,123,83,0.3)',
-                                    boxShadow: dark
-                                        ? '0 8px 32px rgba(0,0,0,0.4)'
-                                        : '0 8px 32px rgba(0,0,0,0.14)',
-                                    padding: '12px',
-                                    width: '280px',
-                                    zIndex: 1001,
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <div
-                                    style={{
-                                        fontSize: '11px',
-                                        fontWeight: 600,
-                                        color: dark ? '#a0a0a0' : '#636e72',
-                                        marginBottom: '8px',
-                                        textAlign: 'center',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.06em',
-                                    }}
-                                >
-                                    Schritt hier einfügen
-                                </div>
-                                <div
-                                    style={{
-                                        display: 'grid',
-                                        gridTemplateColumns: 'repeat(4, 1fr)',
-                                        gap: '6px',
-                                    }}
-                                >
-                                    {ADDABLE_STEP_TYPES.map((type) => {
-                                        const config = STEP_CONFIGS[type];
-                                        const Icon = config.icon;
-                                        return (
-                                            <button
-                                                key={type}
-                                                type="button"
-                                                onClick={() => handleSelect(type)}
-                                                style={{
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'center',
-                                                    gap: '4px',
-                                                    padding: '8px 4px',
-                                                    borderRadius: '8px',
-                                                    border: '2px solid transparent',
-                                                    cursor: 'pointer',
-                                                    fontSize: '9px',
-                                                    fontWeight: 600,
-                                                    color: dark ? '#e0e0e0' : '#2d3436',
-                                                    backgroundColor: config.color,
-                                                    backgroundImage: config.gradient,
-                                                    transition: 'all 0.12s ease',
-                                                }}
-                                            >
-                                                <Icon style={{ width: '18px', height: '18px' }} />
-                                                <span>{config.label}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                <StepTypePicker
+                                    title="Schritt hier einfügen"
+                                    onSelect={handleSelect}
+                                    onClose={handleClose}
+                                />
                             </div>
                         )}
                     </div>

@@ -14,7 +14,7 @@ import {
     ReactFlowProvider,
     Panel,
 } from '@xyflow/react';
-import { Sparkles } from 'lucide-react';
+import { ChevronLeft, Plus, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefCallback } from 'react';
 import '@xyflow/react/dist/style.css';
 
@@ -44,6 +44,18 @@ import { useFlowAutoLayout } from './editor/useFlowAutoLayout';
 const NODE_WIDTH = 220;
 const HORIZONTAL_GAP = 80;
 
+/* ── sidebar resize constants ────────────────────────────── */
+
+const LS_LEFT_W = 'flow-left-width';
+const LS_RIGHT_W = 'flow-right-width';
+const LS_LEFT_VIS = 'flow-left-visible';
+const LEFT_W_DEFAULT = 220;
+const RIGHT_W_DEFAULT = 300;
+const LEFT_W_MIN = 160;
+const LEFT_W_MAX = 400;
+const RIGHT_W_MIN = 240;
+const RIGHT_W_MAX = 500;
+
 const DEFAULT_EDGE_STYLE: React.CSSProperties = { stroke: PALETTE.orange, strokeWidth: 2 };
 
 /** Stable nodeTypes / edgeTypes / edgeOptions — defined once at module level, never recreated. */
@@ -52,6 +64,14 @@ const EDGE_TYPES = { insertable: InsertEdge };
 const DEFAULT_EDGE_OPTIONS = { type: 'insertable', style: DEFAULT_EDGE_STYLE } as const;
 const FIT_VIEW_OPTIONS = { padding: 0.2 } as const;
 const FIT_VIEW_ANIMATE = { padding: 0.2, duration: 200 } as const;
+
+/** Adaptive padding for single-node fitView: tighter on narrow canvases */
+function nodeFitPadding(canvasEl: HTMLElement | null): number {
+    const w = canvasEl?.clientWidth ?? 1200;
+    if (w < 600) return 1;
+    if (w < 900) return 2;
+    return 3;
+}
 const DELETE_KEY_CODE = ['Backspace', 'Delete'];
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -202,6 +222,69 @@ function FlowEditorInner({
     const [aiDialogOpen, setAiDialogOpen] = useState(false);
     const applyLayout = useFlowAutoLayout();
 
+    /* ── sidebar resize / visibility ── */
+
+    const [leftWidth, setLeftWidth] = useState(LEFT_W_DEFAULT);
+    const [rightWidth, setRightWidth] = useState(RIGHT_W_DEFAULT);
+    const [leftVisible, setLeftVisible] = useState(true);
+
+    // Restore from localStorage after mount (avoids SSR/client hydration mismatch)
+    useEffect(() => {
+        const lw = Number(localStorage.getItem(LS_LEFT_W)) || LEFT_W_DEFAULT;
+        const rw = Number(localStorage.getItem(LS_RIGHT_W)) || RIGHT_W_DEFAULT;
+        const lv = localStorage.getItem(LS_LEFT_VIS) !== 'false';
+        setLeftWidth(lw);
+        setRightWidth(rw);
+        setLeftVisible(lv);
+    }, []);
+
+    // Persist to localStorage
+    useEffect(() => {
+        localStorage.setItem(LS_LEFT_W, String(leftWidth));
+    }, [leftWidth]);
+    useEffect(() => {
+        localStorage.setItem(LS_RIGHT_W, String(rightWidth));
+    }, [rightWidth]);
+    useEffect(() => {
+        localStorage.setItem(LS_LEFT_VIS, String(leftVisible));
+    }, [leftVisible]);
+
+    // Refs so resize handlers always read the current width without stale closures
+    const leftWidthRef = useRef(leftWidth);
+    leftWidthRef.current = leftWidth;
+    const rightWidthRef = useRef(rightWidth);
+    rightWidthRef.current = rightWidth;
+
+    const startLeftResize = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        const startX = e.clientX;
+        const startW = leftWidthRef.current;
+        const onMove = (ev: MouseEvent) =>
+            setLeftWidth(Math.max(LEFT_W_MIN, Math.min(LEFT_W_MAX, startW + ev.clientX - startX)));
+        const onUp = () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+    }, []);
+
+    const startRightResize = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        const startX = e.clientX;
+        const startW = rightWidthRef.current;
+        const onMove = (ev: MouseEvent) =>
+            setRightWidth(
+                Math.max(RIGHT_W_MIN, Math.min(RIGHT_W_MAX, startW + startX - ev.clientX)),
+            );
+        const onUp = () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+    }, []);
+
     /* ── derived: edge counts per node ── */
 
     const nodeOutgoingEdges = useMemo<Map<string, number>>(() => {
@@ -259,7 +342,10 @@ function FlowEditorInner({
 
         // Small delay to allow ReactFlow to finish its initial render before fitView
         const timer = setTimeout(() => {
-            autoLayoutAndFit(rfRef.current.getNodes() as RecipeFlowNode[], rfRef.current.getEdges());
+            autoLayoutAndFit(
+                rfRef.current.getNodes() as RecipeFlowNode[],
+                rfRef.current.getEdges(),
+            );
         }, 50);
         return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -284,7 +370,10 @@ function FlowEditorInner({
             } else {
                 // Selection changes etc — just notify with latest store state
                 queueMicrotask(() => {
-                    notifyChange(rfRef.current.getNodes() as RecipeFlowNode[], rfRef.current.getEdges());
+                    notifyChange(
+                        rfRef.current.getNodes() as RecipeFlowNode[],
+                        rfRef.current.getEdges(),
+                    );
                 });
             }
         },
@@ -296,7 +385,10 @@ function FlowEditorInner({
             onNodesChange(changes);
             // Read latest state from xyflow store after React processes the change
             queueMicrotask(() => {
-                notifyChange(rfRef.current.getNodes() as RecipeFlowNode[], rfRef.current.getEdges());
+                notifyChange(
+                    rfRef.current.getNodes() as RecipeFlowNode[],
+                    rfRef.current.getEdges(),
+                );
             });
         },
         [onNodesChange, notifyChange],
@@ -433,6 +525,36 @@ function FlowEditorInner({
         [autoLayoutAndFit],
     );
 
+    /** Fork: always appends a new edge from parent without removing/rewiring anything */
+    const handleForkNodeAfter = useCallback(
+        (parentNodeId: string, stepType: StepType) => {
+            const newId = generateId();
+            const currentNodes = rfRef.current.getNodes() as RecipeFlowNode[];
+            const currentEdges = rfRef.current.getEdges();
+
+            const newNode: RecipeFlowNode = {
+                id: newId,
+                type: 'recipeStep',
+                position: { x: 0, y: 0 },
+                data: { stepType, label: '', description: '' },
+            };
+
+            const nextEdges: Edge[] = [
+                ...currentEdges,
+                {
+                    id: `${parentNodeId}-${newId}`,
+                    source: parentNodeId,
+                    target: newId,
+                    type: 'insertable',
+                    style: DEFAULT_EDGE_STYLE,
+                },
+            ];
+
+            autoLayoutAndFit([...currentNodes, newNode] as RecipeFlowNode[], nextEdges);
+        },
+        [autoLayoutAndFit],
+    );
+
     const handleAddNodeBefore = useCallback(
         (childNodeId: string, stepType: StepType) => {
             const _config = getStepConfig(stepType);
@@ -522,6 +644,13 @@ function FlowEditorInner({
 
     const handleSelectNode = useCallback((nodeId: string) => {
         setSelectedNodeId(nodeId);
+        requestAnimationFrame(() => {
+            rfRef.current.fitView({
+                nodes: [{ id: nodeId }],
+                padding: nodeFitPadding(canvasRef.current),
+                duration: 300,
+            });
+        });
     }, []);
 
     const handleUpdateNode = useCallback(
@@ -530,7 +659,10 @@ function FlowEditorInner({
                 nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...updates } } : n)),
             );
             queueMicrotask(() => {
-                notifyChange(rfRef.current.getNodes() as RecipeFlowNode[], rfRef.current.getEdges());
+                notifyChange(
+                    rfRef.current.getNodes() as RecipeFlowNode[],
+                    rfRef.current.getEdges(),
+                );
             });
         },
         [setNodes, notifyChange],
@@ -619,6 +751,10 @@ function FlowEditorInner({
         canvasRef.current = el;
     }, []);
 
+    // Track selected node id in a ref so the resize observer can read it without deps
+    const selectedNodeIdRef = useRef(selectedNodeId);
+    selectedNodeIdRef.current = selectedNodeId;
+
     useEffect(() => {
         const el = canvasRef.current;
         if (!el) return;
@@ -627,7 +763,13 @@ function FlowEditorInner({
         const ro = new ResizeObserver(() => {
             clearTimeout(timer);
             timer = setTimeout(() => {
-                rfRef.current.fitView(FIT_VIEW_ANIMATE);
+                const nodeId = selectedNodeIdRef.current;
+                const p = nodeFitPadding(canvasRef.current);
+                if (nodeId) {
+                    rfRef.current.fitView({ nodes: [{ id: nodeId }], padding: p, duration: 300 });
+                } else {
+                    rfRef.current.fitView(FIT_VIEW_ANIMATE);
+                }
             }, 250);
         });
         ro.observe(el);
@@ -635,8 +777,7 @@ function FlowEditorInner({
             clearTimeout(timer);
             ro.disconnect();
         };
-        // rfRef is a stable ref — intentionally excluded from deps
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // rfRef and selectedNodeIdRef are stable refs — intentionally excluded from deps
     }, []);
 
     /* ── context value (stable unless ingredients/callbacks change) ── */
@@ -650,6 +791,7 @@ function FlowEditorInner({
             nodeIncomingEdges,
             onAddNodeAfter: handleAddNodeAfter,
             onAddNodeBefore: handleAddNodeBefore,
+            onForkNodeAfter: handleForkNodeAfter,
             onAddIngredientToRecipe,
             onInsertOnEdge: handleInsertOnEdge,
             recipeId,
@@ -662,6 +804,7 @@ function FlowEditorInner({
             nodeIncomingEdges,
             handleAddNodeAfter,
             handleAddNodeBefore,
+            handleForkNodeAfter,
             onAddIngredientToRecipe,
             handleInsertOnEdge,
             recipeId,
@@ -671,9 +814,37 @@ function FlowEditorInner({
     return (
         <FlowEditorContext.Provider value={contextValue}>
             <div className={editorContainerClass}>
-                <div className={paletteContainerClass}>
-                    <NodePalette onAddNode={addNewNode} />
-                </div>
+                {/* ── Left palette ── */}
+                {leftVisible ? (
+                    <div
+                        className="group"
+                        style={{ width: leftWidth, flexShrink: 0, position: 'relative' }}
+                    >
+                        <NodePalette onAddNode={addNewNode} />
+                        <div className={leftResizeHandleClass} onMouseDown={startLeftResize}>
+                            <button
+                                type="button"
+                                className={sidebarToggleButtonClass}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setLeftVisible(false);
+                                }}
+                                title="Palette ausblenden"
+                            >
+                                <ChevronLeft style={{ width: 12, height: 12 }} />
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <button
+                        type="button"
+                        className={paletteShowButtonClass}
+                        onClick={() => setLeftVisible(true)}
+                        title="Palette öffnen"
+                    >
+                        <Plus style={{ width: 12, height: 12 }} />
+                    </button>
+                )}
                 <div
                     ref={canvasRefCallback}
                     className={canvasContainerClass}
@@ -695,6 +866,7 @@ function FlowEditorInner({
                         maxZoom={2}
                         deleteKeyCode={DELETE_KEY_CODE}
                         zoomOnScroll={false}
+                        panOnScroll={true}
                         edgesReconnectable
                         defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
                     >
@@ -734,23 +906,26 @@ function FlowEditorInner({
                         </Panel>
                     </ReactFlow>
                 </div>
+                {/* ── Right edit panel ── */}
                 {selectedNode && (
-                    <NodeEditPanel
-                        key={selectedNode.id}
-                        nodeId={selectedNode.id}
-                        data={selectedNode.data as RecipeNodeData}
-                        availableIngredients={availableIngredients}
-                        onSave={(updates) => {
-                            handleUpdateNode(selectedNode.id, updates);
-                            handleCloseEditPanel();
-                        }}
-                        onClose={handleCloseEditPanel}
-                        onDelete={() => handleDeleteNode(selectedNode.id)}
-                        canDelete={
-                            selectedNode.data.stepType !== 'start' &&
-                            selectedNode.data.stepType !== 'servieren'
-                        }
-                    />
+                    <div style={{ width: rightWidth, flexShrink: 0, position: 'relative' }}>
+                        <div className={rightResizeHandleClass} onMouseDown={startRightResize} />
+                        <NodeEditPanel
+                            key={selectedNode.id}
+                            nodeId={selectedNode.id}
+                            data={selectedNode.data as RecipeNodeData}
+                            availableIngredients={availableIngredients}
+                            onSave={(updates) => {
+                                handleUpdateNode(selectedNode.id, updates);
+                            }}
+                            onClose={handleCloseEditPanel}
+                            onDelete={() => handleDeleteNode(selectedNode.id)}
+                            canDelete={
+                                selectedNode.data.stepType !== 'start' &&
+                                selectedNode.data.stepType !== 'servieren'
+                            }
+                        />
+                    </div>
                 )}
             </div>
             <AiConversionDialog
@@ -799,8 +974,93 @@ const editorContainerClass = css({
     minHeight: '400px',
 });
 
-const paletteContainerClass = css({
+const leftResizeHandleClass = css({
+    position: 'absolute',
+    top: '0',
+    bottom: '0',
+    right: '-6px',
+    width: '12px',
+    cursor: 'col-resize',
+    zIndex: '10',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    '&::before': {
+        content: '""',
+        display: 'block',
+        width: '2px',
+        height: '32px',
+        borderRadius: 'full',
+        backgroundColor: { base: 'rgba(224,123,83,0.0)', _dark: 'rgba(224,123,83,0.0)' },
+        transition: 'background-color 0.15s ease',
+    },
+    _hover: {
+        '&::before': {
+            backgroundColor: { base: 'rgba(224,123,83,0.5)', _dark: 'rgba(224,123,83,0.4)' },
+        },
+    },
+});
+
+const rightResizeHandleClass = css({
+    position: 'absolute',
+    top: '0',
+    bottom: '0',
+    left: '-6px',
+    width: '12px',
+    cursor: 'col-resize',
+    zIndex: '10',
+    '&::before': {
+        content: '""',
+        display: 'block',
+        width: '2px',
+        height: '32px',
+        borderRadius: 'full',
+        mx: 'auto',
+        backgroundColor: { base: 'rgba(224,123,83,0.0)', _dark: 'rgba(224,123,83,0.0)' },
+        transition: 'background-color 0.15s ease',
+    },
+    _hover: {
+        '&::before': {
+            backgroundColor: { base: 'rgba(224,123,83,0.5)', _dark: 'rgba(224,123,83,0.4)' },
+        },
+    },
+});
+
+const sidebarToggleButtonClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '18px',
+    height: '18px',
+    borderRadius: 'full',
+    border: { base: '1px solid rgba(224,123,83,0.35)', _dark: '1px solid rgba(224,123,83,0.25)' },
+    backgroundColor: { base: 'white', _dark: '#1a1d21' },
+    color: { base: 'rgba(224,123,83,0.8)', _dark: 'rgba(224,123,83,0.7)' },
+    cursor: 'pointer',
+    opacity: '0',
+    transition: 'opacity 0.15s ease',
+    '.group:hover &': { opacity: '1' },
+});
+
+const paletteShowButtonClass = css({
     flexShrink: '0',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '1',
+    width: '24px',
+    borderRadius: 'xl',
+    border: { base: '1px solid rgba(224,123,83,0.3)', _dark: '1px solid rgba(224,123,83,0.2)' },
+    backgroundColor: { base: 'surface', _dark: 'surface' },
+    color: { base: 'rgba(224,123,83,0.7)', _dark: 'rgba(224,123,83,0.6)' },
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    _hover: {
+        backgroundColor: 'accent.soft',
+        color: 'brand.primary',
+        borderColor: { base: 'rgba(224,123,83,0.6)', _dark: 'rgba(224,123,83,0.5)' },
+    },
 });
 
 const canvasContainerClass = css({

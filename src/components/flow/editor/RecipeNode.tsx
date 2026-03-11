@@ -1,9 +1,11 @@
 'use client';
 
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Clock, X } from 'lucide-react';
-import { memo, useMemo, useCallback } from 'react';
+import { Clock, GitBranch, X } from 'lucide-react';
+import { memo, useMemo, useCallback, useState } from 'react';
 
+import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
+import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { css, cx } from 'styled-system/css';
@@ -62,6 +64,55 @@ function renderDescription(
     return parts;
 }
 
+/** Small (+) button below a node that forks a new parallel branch */
+function ForkButton({ nodeId }: { nodeId: string }) {
+    const { onForkNodeAfter } = useFlowEditor();
+    const [open, setOpen] = useState(false);
+
+    if (!onForkNodeAfter) return null;
+
+    return (
+        <div
+            className={forkWrapperClass}
+            style={open ? { opacity: 1, pointerEvents: 'auto' } : undefined}
+        >
+            <button
+                type="button"
+                className={forkButtonClass}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setOpen((v) => !v);
+                }}
+                title="Parallelen Schritt hinzufügen"
+            >
+                <GitBranch className={css({ width: '10px', height: '10px' })} />
+            </button>
+
+            {open && (
+                <div
+                    className={css({
+                        position: 'absolute',
+                        top: 'calc(100% + 8px)',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: '50',
+                    })}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <StepTypePicker
+                        title="Was passiert parallel?"
+                        onSelect={(type) => {
+                            setOpen(false);
+                            onForkNodeAfter(nodeId, type);
+                        }}
+                        onClose={() => setOpen(false)}
+                    />
+                </div>
+            )}
+        </div>
+    );
+}
+
 function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) {
     const {
         availableIngredients,
@@ -71,6 +122,7 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
         nodeIncomingEdges,
     } = useFlowEditor();
     const config = getStepConfig(data.stepType);
+    const isDark = useIsDark();
 
     const ingredientChips = useMemo(() => {
         if (!data.description) return [];
@@ -116,6 +168,7 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
     const showAddAfter = config.canHaveOutgoingEdge && outgoingCount === 0;
     const showAddBefore =
         config.canHaveIncomingEdge && incomingCount === 0 && data.stepType !== 'start';
+    const showFork = config.canHaveOutgoingEdge;
 
     return (
         <div className={nodeWrapperClass}>
@@ -123,25 +176,14 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
 
             <div
                 className={cx(nodeCardClass, selected && nodeSelectedClass, 'group')}
-                style={{ backgroundImage: config.gradient, backgroundColor: config.color }}
+                style={{
+                    backgroundImage: isDark ? config.darkGradient : config.gradient,
+                    backgroundColor: isDark ? config.darkColor : config.color,
+                }}
                 onClick={handleClick}
             >
                 {config.canHaveIncomingEdge && (
-                    <>
-                        <Handle type="target" position={Position.Left} style={handleStyle} />
-                        <Handle
-                            id="top-in"
-                            type="target"
-                            position={Position.Top}
-                            style={handleStyleSecondary}
-                        />
-                        <Handle
-                            id="bottom-in"
-                            type="target"
-                            position={Position.Bottom}
-                            style={handleStyleSecondary}
-                        />
-                    </>
+                    <Handle type="target" position={Position.Left} style={handleStyle} />
                 )}
 
                 <div className={css({ p: '2.5' })}>
@@ -210,22 +252,9 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                 )}
 
                 {config.canHaveOutgoingEdge && (
-                    <>
-                        <Handle type="source" position={Position.Right} style={handleStyle} />
-                        <Handle
-                            id="top-out"
-                            type="source"
-                            position={Position.Top}
-                            style={handleStyleSecondary}
-                        />
-                        <Handle
-                            id="bottom-out"
-                            type="source"
-                            position={Position.Bottom}
-                            style={handleStyleSecondary}
-                        />
-                    </>
+                    <Handle type="source" position={Position.Right} style={handleStyle} />
                 )}
+                {showFork && <ForkButton nodeId={id} />}
             </div>
 
             {showAddAfter && <AddNodeButton nodeId={id} side="source" />}
@@ -365,17 +394,53 @@ const ingredientChipClass = css({
     color: 'palette.orange',
 });
 
+/* Fork button — absolutely positioned below the card, no impact on measured node height */
+const forkWrapperClass = css({
+    position: 'absolute',
+    bottom: '0',
+    left: '50%',
+    transform: 'translate(-50%, 50%)',
+    display: 'flex',
+    justifyContent: 'center',
+    zIndex: '10',
+    opacity: '0',
+    pointerEvents: 'none',
+    transition: 'opacity 0.15s ease',
+    _groupHover: {
+        opacity: '1',
+        pointerEvents: 'auto',
+    },
+});
+
+const forkButtonClass = css({
+    width: '22px',
+    height: '22px',
+    borderRadius: 'full',
+    border: {
+        base: '1.5px dashed rgba(224,123,83,0.45)',
+        _dark: '1.5px dashed rgba(224,123,83,0.35)',
+    },
+    backgroundColor: {
+        base: 'rgba(255,255,255,0.8)',
+        _dark: 'rgba(26,29,33,0.8)',
+    },
+    color: { base: 'rgba(224,123,83,0.7)', _dark: 'rgba(224,123,83,0.6)' },
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    _hover: {
+        backgroundColor: { base: 'rgba(224,123,83,0.08)', _dark: 'rgba(224,123,83,0.15)' },
+        borderColor: { base: 'rgba(224,123,83,0.7)', _dark: 'rgba(224,123,83,0.55)' },
+        color: 'brand.primary',
+        transform: 'scale(1.1)',
+    },
+});
+
 const handleStyle: React.CSSProperties = {
     background: PALETTE.orange,
     width: 8,
     height: 8,
     border: '2px solid white',
-};
-
-const handleStyleSecondary: React.CSSProperties = {
-    background: '#c0a090',
-    width: 6,
-    height: 6,
-    border: '1.5px solid white',
-    opacity: 0.5,
 };

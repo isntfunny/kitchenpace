@@ -1,9 +1,9 @@
 'use client';
 
-import { X, Upload, Loader2, Trash2, Check } from 'lucide-react';
+import { X, Upload, Trash2, Check } from 'lucide-react';
 import { useRef, useState, useCallback, useEffect } from 'react';
 
-import { QRUploadButton } from '@app/components/features/QRUploadButton';
+import { UploadArea } from '@app/components/features/UploadArea';
 import { searchIngredients } from '@app/components/recipe/actions';
 import { SegmentedBar } from '@app/components/recipe/RecipeForm/components/SegmentedBar';
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
@@ -50,8 +50,6 @@ export function NodeEditPanel({
     const [description, setDescription] = useState(data.description);
     const [duration, setDuration] = useState<number | undefined>(data.duration);
     const [photoKey, setPhotoKey] = useState<string | undefined>(data.photoKey);
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadError, setUploadError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const currentConfig = STEP_CONFIGS[stepType];
@@ -89,33 +87,6 @@ export function NodeEditPanel({
         };
     }, []);
 
-    const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploading(true);
-        setUploadError(null);
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', 'step');
-
-        try {
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
-            if (!res.ok) {
-                const json = await res.json().catch(() => ({}));
-                throw new Error(json.error ?? 'Upload fehlgeschlagen');
-            }
-            const { key } = await res.json();
-            setPhotoKey(key);
-        } catch (err) {
-            setUploadError(err instanceof Error ? err.message : 'Upload fehlgeschlagen');
-        } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-        }
-    }, []);
-
     const handleSave = useCallback(() => {
         savedRef.current = true;
         onSave({
@@ -126,7 +97,8 @@ export function NodeEditPanel({
             ingredientIds: extractIngredientIds(description),
             photoKey,
         });
-    }, [stepType, label, description, duration, photoKey, onSave]);
+        onClose();
+    }, [stepType, label, description, duration, photoKey, onSave, onClose]);
 
     const handleDiscard = useCallback(() => {
         discardRef.current = true;
@@ -144,249 +116,236 @@ export function NodeEditPanel({
     const isStartOrServieren = data.stepType === 'start' || data.stepType === 'servieren';
 
     return (
-        <div className={overlayClass} onClick={onClose}>
-            <div className={panelClass} onClick={(e) => e.stopPropagation()}>
-                {/* ── Header ── */}
-                <div className={headerClass} style={{ backgroundColor: `${accent}18` }}>
-                    <div
-                        className={headerIconClass}
-                        style={{ backgroundColor: `${accent}22`, color: accent }}
-                    >
-                        <Icon style={{ width: 22, height: 22 }} />
-                    </div>
-
-                    <div className={css({ flex: '1', minWidth: '0' })}>
-                        <div className={headerTitleClass} style={{ color: accent }}>
-                            {currentConfig.label}
-                        </div>
-                        <div className={headerSubtitleClass}>Schritt bearbeiten</div>
-                    </div>
-
-                    <button type="button" className={closeButtonClass} onClick={onClose}>
-                        <X style={{ width: 16, height: 16 }} />
-                    </button>
+        <div className={panelClass}>
+            {/* ── Header ── */}
+            <div className={headerClass} style={{ backgroundColor: `${accent}18` }}>
+                <div
+                    className={headerIconClass}
+                    style={{ backgroundColor: `${accent}22`, color: accent }}
+                >
+                    <Icon style={{ width: 22, height: 22 }} />
                 </div>
 
-                {/* ── Photo banner ── */}
-                {photoKey && (
-                    <div className={photoBannerClass}>
-                        <img
-                            src={getThumbnailUrl(photoKey, '4:1', 460)}
-                            alt="Schrittfoto"
-                            className={photoBannerImgClass}
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                        />
-                        <button
-                            type="button"
-                            className={photoReplaceClass}
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            <Upload style={{ width: 12, height: 12 }} />
-                            Ersetzen
-                        </button>
+                <div className={css({ flex: '1', minWidth: '0' })}>
+                    <div className={headerTitleClass} style={{ color: accent }}>
+                        {currentConfig.label}
+                    </div>
+                    <div className={headerSubtitleClass}>Schritt bearbeiten</div>
+                </div>
+
+                <button type="button" className={closeButtonClass} onClick={onClose}>
+                    <X style={{ width: 16, height: 16 }} />
+                </button>
+            </div>
+
+            <div className={contentClass}>
+                {/* ── Type selector ── */}
+                {!isStartOrServieren && (
+                    <div className={fieldClass}>
+                        <div className={sectionLabelClass}>Typ</div>
+                        <div className={typeGridClass}>
+                            {ADDABLE_STEP_TYPES.map((type) => {
+                                const config = STEP_CONFIGS[type];
+                                const TypeIcon = config.icon;
+                                const isSelected = stepType === type;
+                                return (
+                                    <button
+                                        key={type}
+                                        type="button"
+                                        className={typeButtonClass}
+                                        style={
+                                            isSelected
+                                                ? {
+                                                      border: `1px solid ${config.accent}`,
+                                                      backgroundColor: `${config.accent}15`,
+                                                      boxShadow: `0 0 0 1px ${config.accent}40`,
+                                                  }
+                                                : {
+                                                      border: `1px solid ${PALETTE.orange}40`,
+                                                  }
+                                        }
+                                        onClick={() => setStepType(type)}
+                                    >
+                                        <TypeIcon
+                                            style={{
+                                                width: 18,
+                                                height: 18,
+                                                color: isSelected ? config.accent : undefined,
+                                                opacity: isSelected ? 1 : 0.45,
+                                            }}
+                                        />
+                                        <span
+                                            className={typeLabelClass}
+                                            style={
+                                                isSelected
+                                                    ? { color: config.accent, fontWeight: 700 }
+                                                    : undefined
+                                            }
+                                        >
+                                            {config.label}
+                                        </span>
+                                        {isSelected && (
+                                            <div
+                                                className={typeCheckClass}
+                                                style={{ backgroundColor: config.accent }}
+                                            >
+                                                <Check style={{ width: 7, height: 7 }} />
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
 
-                <div className={contentClass}>
-                    {/* ── Type selector ── */}
-                    {!isStartOrServieren && (
-                        <div className={fieldClass}>
-                            <div className={sectionLabelClass}>Typ</div>
-                            <div className={typeGridClass}>
-                                {ADDABLE_STEP_TYPES.map((type) => {
-                                    const config = STEP_CONFIGS[type];
-                                    const TypeIcon = config.icon;
-                                    const isSelected = stepType === type;
-                                    return (
-                                        <button
-                                            key={type}
-                                            type="button"
-                                            className={typeButtonClass}
-                                            style={
-                                                isSelected
-                                                    ? {
-                                                          border: `1px solid ${config.accent}`,
-                                                          backgroundColor: `${config.accent}15`,
-                                                          boxShadow: `0 0 0 1px ${config.accent}40`,
-                                                      }
-                                                    : {
-                                                          border: `1px solid ${PALETTE.orange}40`,
-                                                      }
-                                            }
-                                            onClick={() => setStepType(type)}
-                                        >
-                                            <TypeIcon
-                                                style={{
-                                                    width: 18,
-                                                    height: 18,
-                                                    color: isSelected ? config.accent : undefined,
-                                                    opacity: isSelected ? 1 : 0.45,
-                                                }}
-                                            />
-                                            <span
-                                                className={typeLabelClass}
-                                                style={
-                                                    isSelected
-                                                        ? { color: config.accent, fontWeight: 700 }
-                                                        : undefined
-                                                }
-                                            >
-                                                {config.label}
-                                            </span>
-                                            {isSelected && (
-                                                <div
-                                                    className={typeCheckClass}
-                                                    style={{ backgroundColor: config.accent }}
-                                                >
-                                                    <Check style={{ width: 7, height: 7 }} />
-                                                </div>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
+                {/* ── Title ── */}
+                <div className={fieldClass}>
+                    <div className={sectionLabelClass}>Titel</div>
+                    <input
+                        type="text"
+                        className={inputClass}
+                        style={{ border: `1px solid ${PALETTE.orange}40` }}
+                        value={label}
+                        onChange={(e) => setLabel(e.target.value)}
+                        placeholder={`Neuer ${currentConfig.label}-Schritt`}
+                    />
+                </div>
 
-                    {/* ── Title ── */}
-                    <div className={fieldClass}>
-                        <div className={sectionLabelClass}>Titel</div>
-                        <input
-                            type="text"
-                            className={inputClass}
-                            style={{ border: `1px solid ${PALETTE.orange}40` }}
-                            value={label}
-                            onChange={(e) => setLabel(e.target.value)}
-                            placeholder={`Neuer ${currentConfig.label}-Schritt`}
-                        />
-                    </div>
+                {/* ── Duration ── */}
+                <div className={fieldClass}>
+                    <div className={sectionLabelClass}>Dauer</div>
+                    <SegmentedBar
+                        items={DURATION_LABELS}
+                        activeIndex={DURATION_PRESETS.indexOf(
+                            duration as (typeof DURATION_PRESETS)[number],
+                        )}
+                        onSelect={(i) => {
+                            const preset = DURATION_PRESETS[i];
+                            setDuration(duration === preset ? undefined : preset);
+                        }}
+                        trackingName="step_duration"
+                        customInput={{
+                            type: 'number',
+                            value: duration ?? 0,
+                            onChange: (v) => setDuration(v || undefined),
+                            placeholder: 'Min.',
+                            suffix: 'Min.',
+                        }}
+                    />
+                </div>
 
-                    {/* ── Duration ── */}
-                    <div className={fieldClass}>
-                        <div className={sectionLabelClass}>Dauer</div>
-                        <SegmentedBar
-                            items={DURATION_LABELS}
-                            activeIndex={DURATION_PRESETS.indexOf(
-                                duration as (typeof DURATION_PRESETS)[number],
-                            )}
-                            onSelect={(i) => {
-                                const preset = DURATION_PRESETS[i];
-                                setDuration(duration === preset ? undefined : preset);
-                            }}
-                            trackingName="step_duration"
-                            customInput={{
-                                type: 'number',
-                                value: duration ?? 0,
-                                onChange: (v) => setDuration(v || undefined),
-                                placeholder: 'Min.',
-                                suffix: 'Min.',
-                            }}
-                        />
-                    </div>
+                {/* ── Description ── */}
+                <div className={fieldClass}>
+                    <div className={sectionLabelClass}>Beschreibung</div>
+                    <DescriptionEditor
+                        value={description}
+                        onChange={setDescription}
+                        availableIngredients={availableIngredients}
+                        onSearchIngredients={searchIngredients}
+                        onAddIngredient={onAddIngredientToRecipe}
+                    />
+                </div>
 
-                    {/* ── Description ── */}
-                    <div className={fieldClass}>
-                        <div className={sectionLabelClass}>Beschreibung</div>
-                        <DescriptionEditor
-                            value={description}
-                            onChange={setDescription}
-                            availableIngredients={availableIngredients}
-                            onSearchIngredients={searchIngredients}
-                            onAddIngredient={onAddIngredientToRecipe}
-                        />
-                    </div>
-
-                    {/* ── Photo upload ── */}
-                    {!photoKey && (
-                        <div className={fieldClass}>
+                {/* ── Photo ── */}
+                <div className={fieldClass}>
+                    {photoKey ? (
+                        <div className={photoPreviewClass}>
                             <input
                                 ref={fileInputRef}
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp,image/gif"
                                 className={css({ display: 'none' })}
-                                onChange={handleFileChange}
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const formData = new FormData();
+                                    formData.append('file', file);
+                                    formData.append('type', 'step');
+                                    const res = await fetch('/api/upload', {
+                                        method: 'POST',
+                                        body: formData,
+                                    });
+                                    if (res.ok) {
+                                        const { key } = (await res.json()) as { key: string };
+                                        setPhotoKey(key);
+                                    }
+                                    if (fileInputRef.current) fileInputRef.current.value = '';
+                                }}
                             />
-                            <div className={css({ display: 'flex', gap: '2' })}>
+                            <img
+                                src={getThumbnailUrl(photoKey, '3:1', 460)}
+                                alt="Schrittfoto"
+                                className={css({
+                                    width: '100%',
+                                    height: '90px',
+                                    objectFit: 'cover',
+                                    display: 'block',
+                                })}
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                            />
+                            <div className={photoPreviewActionsClass}>
                                 <button
                                     type="button"
-                                    className={uploadButtonClass}
+                                    className={photoActionButtonClass}
                                     onClick={() => fileInputRef.current?.click()}
-                                    disabled={isUploading}
-                                    style={{ flex: 1 }}
                                 >
-                                    {isUploading ? (
-                                        <Loader2
-                                            className={css({
-                                                width: '16px',
-                                                height: '16px',
-                                                animation: 'spin 0.7s linear infinite',
-                                            })}
-                                        />
-                                    ) : (
-                                        <Upload style={{ width: 16, height: 16 }} />
-                                    )}
-                                    <span>
-                                        {isUploading ? 'Wird hochgeladen...' : 'Foto hinzufügen'}
-                                    </span>
+                                    <Upload style={{ width: 11, height: 11 }} />
+                                    Ersetzen
                                 </button>
-                                <QRUploadButton
-                                    uploadType="step"
-                                    recipeId={contextRecipeId}
-                                    stepId={_nodeId}
-                                    label="Schritt-Foto"
-                                    onImageUploaded={setPhotoKey}
-                                />
+                                <button
+                                    type="button"
+                                    className={photoActionButtonClass}
+                                    onClick={() => setPhotoKey(undefined)}
+                                >
+                                    <X style={{ width: 11, height: 11 }} />
+                                    Entfernen
+                                </button>
                             </div>
-                            {uploadError && (
-                                <p className={css({ fontSize: 'xs', color: 'red.500', mt: '1' })}>
-                                    {uploadError}
-                                </p>
-                            )}
                         </div>
-                    )}
-                    {/* Hidden file input for photo replace when banner is visible */}
-                    {photoKey && (
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp,image/gif"
-                            className={css({ display: 'none' })}
-                            onChange={handleFileChange}
+                    ) : (
+                        <UploadArea
+                            uploadType="step"
+                            recipeId={contextRecipeId}
+                            stepId={_nodeId}
+                            label="Schritt-Foto"
+                            onUploaded={setPhotoKey}
                         />
                     )}
                 </div>
+            </div>
 
-                {/* ── Footer ── */}
-                <div className={footerClass}>
-                    {canDelete ? (
+            {/* ── Footer ── */}
+            <div className={footerClass}>
+                <div
+                    className={css({
+                        display: 'flex',
+                        gap: '2',
+                        alignItems: 'center',
+                        width: '100%',
+                    })}
+                >
+                    {canDelete && (
                         <button type="button" className={deleteButtonClass} onClick={onDelete}>
                             <Trash2 style={{ width: 14, height: 14 }} />
                             Löschen
                         </button>
-                    ) : (
-                        <div />
                     )}
-                    <div className={css({ display: 'flex', gap: '2', alignItems: 'center' })}>
-                        <button
-                            type="button"
-                            className={discardButtonClass}
-                            onClick={handleDiscard}
-                        >
-                            Abbrechen
-                        </button>
-                        <button
-                            type="button"
-                            className={saveButtonClass}
-                            style={{ backgroundColor: accent, boxShadow: `0 2px 10px ${accent}50` }}
-                            onClick={handleSave}
-                        >
-                            <Check style={{ width: 15, height: 15 }} />
-                            Fertig
-                        </button>
-                    </div>
+                    <button type="button" className={discardButtonClass} onClick={handleDiscard}>
+                        Abbrechen
+                    </button>
                 </div>
+                <button
+                    type="button"
+                    className={saveButtonClass}
+                    style={{ backgroundColor: accent, boxShadow: `0 2px 10px ${accent}50` }}
+                    onClick={handleSave}
+                >
+                    <Check style={{ width: 15, height: 15 }} />
+                    Fertig
+                </button>
             </div>
         </div>
     );
@@ -394,33 +353,20 @@ export function NodeEditPanel({
 
 /* ── styles ──────────────────────────────────────────────── */
 
-const overlayClass = css({
-    position: 'fixed',
-    inset: '0',
-    backgroundColor: 'surface.overlay',
-    backdropFilter: 'blur(4px)',
-    zIndex: '40',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    p: '4',
-    animation: 'fadeIn 0.15s ease-out',
-});
-
 const panelClass = css({
     width: '100%',
-    maxWidth: '460px',
-    maxHeight: '90vh',
+    height: '100%',
     backgroundColor: 'surface',
-    borderRadius: '2xl',
+    borderRadius: 'xl',
+    border: '1px solid rgba(224,123,83,0.4)',
     boxShadow: {
-        base: '0 24px 48px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)',
-        _dark: '0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.07)',
+        base: '0 4px 16px rgba(0,0,0,0.08)',
+        _dark: '0 4px 16px rgba(0,0,0,0.3)',
     },
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    animation: 'slideUp 0.2s ease-out',
+    animation: 'slideUp 0.15s ease-out',
 });
 
 /* Header */
@@ -475,38 +421,50 @@ const closeButtonClass = css({
     },
 });
 
-/* Photo banner */
-const photoBannerClass = css({
-    position: 'relative',
-    height: '110px',
-    overflow: 'hidden',
-});
-
-const photoBannerImgClass = css({
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-});
-
-const photoReplaceClass = css({
-    position: 'absolute',
-    bottom: '2',
-    right: '2',
+/* Photo preview (inline in content area) */
+const photoPreviewClass = css({
     display: 'flex',
+    flexDirection: 'column',
+    borderRadius: 'xl',
+    overflow: 'hidden',
+    border: {
+        base: '1.5px dashed rgba(0,0,0,0.12)',
+        _dark: '1.5px dashed rgba(255,255,255,0.12)',
+    },
+});
+
+const photoPreviewActionsClass = css({
+    display: 'flex',
+    borderTop: {
+        base: '1px solid rgba(0,0,0,0.07)',
+        _dark: '1px solid rgba(255,255,255,0.08)',
+    },
+});
+
+const photoActionButtonClass = css({
+    display: 'flex',
+    flex: '1',
     alignItems: 'center',
-    gap: '1',
-    px: '2',
-    py: '1',
-    fontSize: 'xs',
-    fontWeight: '600',
-    color: 'white',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    backdropFilter: 'blur(8px)',
+    justifyContent: 'center',
+    gap: '1.5',
+    py: '2',
+    fontSize: '11px',
+    fontWeight: '500',
+    color: 'text.muted',
+    backgroundColor: 'transparent',
     border: 'none',
-    borderRadius: 'md',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
-    _hover: { backgroundColor: 'rgba(0,0,0,0.7)' },
+    _hover: {
+        color: 'brand.primary',
+        backgroundColor: { base: 'rgba(224,123,83,0.04)', _dark: 'rgba(224,123,83,0.08)' },
+    },
+    '&:not(:first-child)': {
+        borderLeft: {
+            base: '1px solid rgba(0,0,0,0.07)',
+            _dark: '1px solid rgba(255,255,255,0.08)',
+        },
+    },
 });
 
 /* Content */
@@ -599,34 +557,11 @@ const typeCheckClass = css({
     border: { base: '2px solid white', _dark: '2px solid {colors.surface}' },
 });
 
-/* Upload button */
-const uploadButtonClass = css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '2',
-    py: '2.5',
-    border: { base: '1.5px dashed rgba(0,0,0,0.12)', _dark: '1.5px dashed rgba(255,255,255,0.12)' },
-    borderRadius: 'xl',
-    backgroundColor: 'transparent',
-    color: 'text.muted',
-    fontSize: 'sm',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-    _hover: {
-        borderColor: 'brand.primary',
-        color: 'brand.primary',
-        backgroundColor: { base: 'rgba(224,123,83,0.04)', _dark: 'rgba(224,123,83,0.08)' },
-    },
-    _disabled: { opacity: '0.6', cursor: 'not-allowed' },
-});
-
 /* Footer */
 const footerClass = css({
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    gap: '2',
     px: '4',
     py: '3',
     borderTop: { base: '1px solid rgba(0,0,0,0.06)', _dark: '1px solid rgba(255,255,255,0.07)' },
@@ -634,7 +569,9 @@ const footerClass = css({
 
 const deleteButtonClass = css({
     display: 'flex',
+    flex: '1',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: '1.5',
     px: '3',
     py: '2',
@@ -654,7 +591,9 @@ const deleteButtonClass = css({
 
 const discardButtonClass = css({
     display: 'flex',
+    flex: '1',
     alignItems: 'center',
+    justifyContent: 'center',
     px: '4',
     py: '2.5',
     border: { base: '1px solid rgba(0,0,0,0.1)', _dark: '1px solid rgba(255,255,255,0.1)' },
@@ -674,7 +613,9 @@ const discardButtonClass = css({
 const saveButtonClass = css({
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: '1.5',
+    width: '100%',
     px: '5',
     py: '2.5',
     border: 'none',

@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 
 import type { StepType } from '@app/components/flow/editor/editorTypes';
 import { ADDABLE_STEP_TYPES, STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
+import { useIsDark } from '@app/lib/darkMode';
 import { css } from 'styled-system/css';
 
 interface StepTypePickerProps {
@@ -21,6 +22,7 @@ export function StepTypePicker({
     inline = false,
 }: StepTypePickerProps) {
     const ref = useRef<HTMLDivElement>(null);
+    const dark = useIsDark();
 
     useEffect(() => {
         if (inline) return;
@@ -44,7 +46,11 @@ export function StepTypePicker({
                                 key={type}
                                 type="button"
                                 className={itemClass}
-                                style={{ background: config.flatBg, color: config.accent }}
+                                style={{
+                                    background: dark ? config.darkColor : config.flatBg,
+                                    backgroundImage: dark ? config.darkGradient : undefined,
+                                    color: config.accent,
+                                }}
                                 onClick={() => onSelect(type)}
                             >
                                 <Icon className={css({ w: '18px', h: '18px' })} />
@@ -76,7 +82,11 @@ export function StepTypePicker({
                             key={type}
                             type="button"
                             className={itemClass}
-                            style={{ background: config.flatBg, color: config.accent }}
+                            style={{
+                                background: dark ? config.darkColor : config.flatBg,
+                                backgroundImage: dark ? config.darkGradient : undefined,
+                                color: config.accent,
+                            }}
                             onClick={() => onSelect(type)}
                         >
                             <Icon className={css({ w: '20px', h: '20px' })} />
@@ -109,10 +119,16 @@ const inlineGridClass = css({
 });
 
 const containerClass = css({
-    bg: 'white',
+    bg: 'surface',
     borderRadius: 'xl',
-    border: '1px solid rgba(224,123,83,0.3)',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+    border: {
+        base: '1px solid rgba(224,123,83,0.3)',
+        _dark: '1px solid rgba(224,123,83,0.25)',
+    },
+    boxShadow: {
+        base: '0 8px 32px rgba(0,0,0,0.12)',
+        _dark: '0 8px 32px rgba(0,0,0,0.35)',
+    },
     p: '3',
     w: '280px',
 });
@@ -146,7 +162,10 @@ const itemClass = css({
     _hover: {
         borderColor: 'brand.primary',
         transform: 'translateY(-1px)',
-        boxShadow: '0 2px 8px rgba(224,123,83,0.2)',
+        boxShadow: {
+            base: '0 2px 8px rgba(224,123,83,0.2)',
+            _dark: '0 2px 8px rgba(224,123,83,0.3)',
+        },
     },
 });
 
@@ -161,5 +180,7 @@ const cancelClass = css({
     color: 'text.muted',
     fontSize: 'xs',
     cursor: 'pointer',
-    _hover: { bg: 'rgba(0,0,0,0.04)' },
+    _hover: {
+        bg: { base: 'rgba(0,0,0,0.04)', _dark: 'rgba(255,255,255,0.06)' },
+    },
 });

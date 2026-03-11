@@ -20,7 +20,15 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Download } from 'lucide-react';
-import { type ComponentType, type Dispatch, useCallback, useEffect, useRef, useState } from 'react';
+import {
+    type ComponentType,
+    type Dispatch,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 
 import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
@@ -189,10 +197,15 @@ function DesktopViewInner({
     onOpenDetail,
     ingredients,
 }: DesktopViewProps) {
-    const dark = useIsDark();
+    // Defer dark mode until after mount to avoid SSR/client hydration mismatch
+    // (ThemeProvider reads localStorage on client → different initial value than server's 'light')
+    const darkRaw = useIsDark();
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    const dark = mounted ? darkRaw : false;
 
     // Compute which nodes are in a parallel group (share a fork parent)
-    const parallelNodeIds = useCallback(() => {
+    const parallelNodeIds = useMemo(() => {
         const parallel = new Set<string>();
         for (const [, targets] of outgoing) {
             if (targets.length > 1) {
@@ -200,7 +213,7 @@ function DesktopViewInner({
             }
         }
         return parallel;
-    }, [outgoing])();
+    }, [outgoing]);
 
     const makeNodeData = useCallback(
         (node: FlowNodeSerialized): ViewerNodeData => ({

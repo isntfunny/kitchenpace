@@ -23,8 +23,7 @@ const HERO_POINTS = [
     },
     {
         label: 'Favoriten & Sammlungen',
-        description:
-            'Favorisiere Rezepte anderer Köche und finde sie jederzeit wieder.',
+        description: 'Favorisiere Rezepte anderer Köche und finde sie jederzeit wieder.',
         icon: Star,
     },
     {

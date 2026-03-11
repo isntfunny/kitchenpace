@@ -562,7 +562,11 @@ export default async function ProfilePage() {
                                 </Link>
                                 {profile.userId && (
                                     <Link href={`/user/${profile.slug}`} style={{ width: '100%' }}>
-                                        <Button variant="secondary" size="sm" style={{ width: '100%' }}>
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            style={{ width: '100%' }}
+                                        >
                                             <User size={15} />
                                             Öffentlich
                                         </Button>

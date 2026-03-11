@@ -816,62 +816,60 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                             )}
 
                         {/* Cooked Section */}
-                        {user.showCooked !== false &&
-                            user.cooked &&
-                            user.cooked.length > 0 && (
-                                <div className={css({ mt: '10' })}>
-                                    <div
-                                        className={flex({
-                                            justify: 'space-between',
-                                            align: 'center',
-                                            mb: '5',
+                        {user.showCooked !== false && user.cooked && user.cooked.length > 0 && (
+                            <div className={css({ mt: '10' })}>
+                                <div
+                                    className={flex({
+                                        justify: 'space-between',
+                                        align: 'center',
+                                        mb: '5',
+                                    })}
+                                >
+                                    <h2
+                                        className={css({
+                                            fontSize: 'lg',
+                                            fontWeight: '700',
+                                            color: 'text',
+                                            fontFamily: 'heading',
                                         })}
                                     >
-                                        <h2
-                                            className={css({
-                                                fontSize: 'lg',
-                                                fontWeight: '700',
-                                                color: 'text',
-                                                fontFamily: 'heading',
-                                            })}
-                                        >
-                                            Zubereitet
-                                        </h2>
-                                        <span
-                                            className={css({
-                                                fontSize: 'sm',
-                                                color: 'text.muted',
-                                                bg: {
-                                                    base: 'gray.100',
-                                                    _dark: 'rgba(255,255,255,0.06)',
-                                                },
-                                                px: '3',
-                                                py: '1',
-                                                borderRadius: 'full',
-                                            })}
-                                        >
-                                            {user.cooked.length} Rezepte
-                                        </span>
-                                    </div>
-                                    <div
-                                        className={grid({
-                                            columns: { base: 1, sm: 2, md: 3, xl: 4 },
-                                            gap: '4',
+                                        Zubereitet
+                                    </h2>
+                                    <span
+                                        className={css({
+                                            fontSize: 'sm',
+                                            color: 'text.muted',
+                                            bg: {
+                                                base: 'gray.100',
+                                                _dark: 'rgba(255,255,255,0.06)',
+                                            },
+                                            px: '3',
+                                            py: '1',
+                                            borderRadius: 'full',
                                         })}
                                     >
-                                        {user.cooked.map((recipe) => (
-                                            <SharedRecipeCard
-                                                key={`cooked-${recipe.id}`}
-                                                recipe={{
-                                                    ...recipe,
-                                                    time: `${recipe.prepTime + recipe.cookTime} Min.`,
-                                                }}
-                                                categoryOnImage
-                                            />
-                                        ))}
-                                    </div>
+                                        {user.cooked.length} Rezepte
+                                    </span>
                                 </div>
-                            )}
+                                <div
+                                    className={grid({
+                                        columns: { base: 1, sm: 2, md: 3, xl: 4 },
+                                        gap: '4',
+                                    })}
+                                >
+                                    {user.cooked.map((recipe) => (
+                                        <SharedRecipeCard
+                                            key={`cooked-${recipe.id}`}
+                                            recipe={{
+                                                ...recipe,
+                                                time: `${recipe.prepTime + recipe.cookTime} Min.`,
+                                            }}
+                                            categoryOnImage
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Activity Sidebar */}

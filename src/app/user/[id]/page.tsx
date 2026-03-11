@@ -197,7 +197,6 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
             : Promise.resolve([]),
     ]);
 
-
     // Format time ago on server side
     const formatTimeAgo = (date: Date): string => {
         const diff = Date.now() - new Date(date).getTime();

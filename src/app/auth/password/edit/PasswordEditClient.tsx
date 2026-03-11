@@ -146,9 +146,7 @@ export function PasswordEditClient({ userSlug }: { userSlug?: string }) {
                                 <Heading as="h2" size="lg">
                                     Passwort gespeichert
                                 </Heading>
-                                <Text color="muted">
-                                    Dein Passwort wurde erfolgreich geändert.
-                                </Text>
+                                <Text color="muted">Dein Passwort wurde erfolgreich geändert.</Text>
                                 <Link href="/profile">
                                     <Button type="button" variant="primary">
                                         Zurück zum Profil

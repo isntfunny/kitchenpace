@@ -125,8 +125,7 @@ const ManageProfilePage = async () => {
                             notifyOnRecipeComment: privacyReadyProfile.notifyOnRecipeComment,
                             notifyOnRecipeRating: privacyReadyProfile.notifyOnRecipeRating,
                             notifyOnRecipeCooked: privacyReadyProfile.notifyOnRecipeCooked,
-                            notifyOnRecipePublished:
-                                privacyReadyProfile.notifyOnRecipePublished,
+                            notifyOnRecipePublished: privacyReadyProfile.notifyOnRecipePublished,
                             notifyOnWeeklyPlanReminder:
                                 privacyReadyProfile.notifyOnWeeklyPlanReminder,
                             notifyOnSystemMessages: privacyReadyProfile.notifyOnSystemMessages,
@@ -137,8 +136,7 @@ const ManageProfilePage = async () => {
                     {/* Email Settings */}
                     <EmailSettingsCard
                         profile={{
-                            notifyOnRecipePublished:
-                                privacyReadyProfile.notifyOnRecipePublished,
+                            notifyOnRecipePublished: privacyReadyProfile.notifyOnRecipePublished,
                             notifyOnNewsletter: privacyReadyProfile.notifyOnNewsletter,
                             notifyOnWeeklyPlanReminder:
                                 privacyReadyProfile.notifyOnWeeklyPlanReminder,

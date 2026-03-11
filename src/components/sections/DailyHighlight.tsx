@@ -40,9 +40,10 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                             })}
                         >
                             <SmartImage
-                                src={recipe.image ?? undefined}
+                                imageKey={recipe.imageKey}
                                 alt={recipe.title}
                                 fill
+                                aspect="16:9"
                                 recipeId={recipe.id}
                                 sizes="(max-width: 768px) 100vw, 600px"
                                 className={css({ objectFit: 'cover' })}

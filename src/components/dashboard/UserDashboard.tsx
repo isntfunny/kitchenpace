@@ -1,6 +1,6 @@
 'use client';
 
-import { ChefHat, FileText, Heart, Star } from 'lucide-react';
+import { Bookmark, ChefHat, FileText, Star } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
@@ -43,7 +43,7 @@ const defaultStats: DashboardStatCard[] = [
         icon: <FileText size={20} />,
         color: PALETTE.orange,
     },
-    { id: '2', label: 'Favoriten', value: 156, icon: <Heart size={20} />, color: PALETTE.pink },
+    { id: '2', label: 'Favoriten', value: 156, icon: <Bookmark size={20} />, color: PALETTE.pink },
     {
         id: '3',
         label: 'Zubereitete Gerichte',

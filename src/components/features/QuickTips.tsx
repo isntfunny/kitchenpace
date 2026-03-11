@@ -1,4 +1,4 @@
-import { BarChart3, Clock, Flame, Tag, Users, BookOpen, Heart, Star } from 'lucide-react';
+import { BarChart3, Bookmark, Clock, Flame, Tag, Users, BookOpen, Heart, Star } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import type { QuickTipData, QuickTipIconName } from '@app/app/actions/community';
@@ -13,6 +13,7 @@ const TIP_ICON_MAP: Record<QuickTipIconName, LucideIcon> = {
     users: Users,
     book: BookOpen,
     heart: Heart,
+    bookmark: Bookmark,
     star: Star,
     chart: BarChart3,
 };

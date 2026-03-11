@@ -24,7 +24,7 @@ const HERO_POINTS = [
     {
         label: 'Favoriten & Sammlungen',
         description:
-            'Speichere Rezepte anderer Köche als Favoriten und finde sie jederzeit wieder.',
+            'Favorisiere Rezepte anderer Köche und finde sie jederzeit wieder.',
         icon: Star,
     },
     {
@@ -186,9 +186,9 @@ export function AuthPageLayout({
                                                 gap: '3',
                                                 p: '3',
                                                 borderRadius: 'xl',
-                                                background: 'rgba(255,246,236,0.15)',
+                                                background: 'rgba(0,0,0,0.18)',
                                                 backdropFilter: 'blur(12px)',
-                                                border: '1px solid rgba(255,246,236,0.1)',
+                                                border: '1px solid rgba(255,246,236,0.12)',
                                                 alignItems: 'center',
                                             })}
                                             initial={{ opacity: 0, y: 10 }}
@@ -203,7 +203,7 @@ export function AuthPageLayout({
                                                     width: '9',
                                                     height: '9',
                                                     borderRadius: 'full',
-                                                    background: 'rgba(255,246,236,0.2)',
+                                                    background: 'rgba(255,246,236,0.25)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -226,7 +226,7 @@ export function AuthPageLayout({
                                                 <p
                                                     className={css({
                                                         fontSize: 'xs',
-                                                        color: 'rgba(255,246,236,0.88)',
+                                                        color: 'rgba(255,246,236,0.95)',
                                                         margin: 0,
                                                         lineHeight: '1.5',
                                                     })}

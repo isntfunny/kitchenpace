@@ -1,11 +1,11 @@
 'use client';
 
 import {
+    Bookmark,
     BookOpen,
     Calendar,
     ChefHat,
     Flame,
-    Heart,
     MessageSquare,
     Star,
     UserPlus,
@@ -23,7 +23,7 @@ import { css } from 'styled-system/css';
 const NOTIFICATION_STYLES: Record<string, { icon: LucideIcon; bg: string }> = {
     RECIPE_PUBLISHED: { icon: ChefHat, bg: '#00b894' },
     RECIPE_COMMENT: { icon: MessageSquare, bg: '#6c5ce7' },
-    RECIPE_LIKE: { icon: Heart, bg: '#fd79a8' },
+    RECIPE_LIKE: { icon: Bookmark, bg: '#fd79a8' },
     RECIPE_RATING: { icon: Star, bg: '#f8b500' },
     RECIPE_COOKED: { icon: Flame, bg: '#e07b53' },
     NEW_FOLLOWER: { icon: UserPlus, bg: '#0984e3' },

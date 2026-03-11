@@ -17,6 +17,7 @@ import { SmartImage } from '../atoms/SmartImage';
 import { HeaderAuth } from './HeaderAuth';
 import { MenuSection, type NavLinkItem as MenuNavLinkItem } from './HeaderMenuPanel';
 import { RecipeTabs } from './RecipeTabs';
+import { ThemeToggle } from './ThemeToggle';
 
 type GeneralNavLinkItem = MenuNavLinkItem & { authOnly?: boolean };
 
@@ -131,7 +132,7 @@ function HeaderNavigationMenu({
                 >
                     <Menu size={18} />
                     <span className={css({ display: { base: 'none', sm: 'inline-flex' } })}>
-                        Entdecken
+                        Menü
                     </span>
                 </button>
             </DropdownMenu.Trigger>
@@ -184,7 +185,7 @@ function HeaderNavigationMenu({
                                     gap: '4',
                                 })}
                             >
-                                <MenuSection title="Seiten" items={availableGeneralLinks} />
+                                <MenuSection items={availableGeneralLinks} />
                                 {adminLinks.length > 0 && (
                                     <MenuSection title="Verwaltung" items={adminLinks} />
                                 )}
@@ -196,7 +197,28 @@ function HeaderNavigationMenu({
                                     gap: '4',
                                 })}
                             >
-                                <MenuSection title="Schnelle Filter" items={QUICK_FILTERS} />
+                                <MenuSection items={QUICK_FILTERS} />
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        px: '3',
+                                        py: '2',
+                                        borderRadius: 'lg',
+                                        mt: '2',
+                                    })}
+                                >
+                                    <span
+                                        className={css({
+                                            fontSize: 'sm',
+                                            color: 'text.muted',
+                                        })}
+                                    >
+                                        Darstellung
+                                    </span>
+                                    <ThemeToggle />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -229,8 +251,8 @@ export function Header() {
             })}
             style={{
                 background: dark
-                    ? 'linear-gradient(135deg, rgba(224,123,83,0.08), rgba(248,181,0,0.04))'
-                    : 'linear-gradient(135deg, rgba(224,123,83,0.05), rgba(248,181,0,0.02))',
+                    ? 'linear-gradient(135deg, rgba(30,28,26,0.92), rgba(30,28,26,0.90))'
+                    : 'linear-gradient(135deg, rgba(255,252,248,0.92), rgba(255,250,245,0.90))',
                 backdropFilter: 'blur(8px)',
             }}
         >
@@ -290,7 +312,7 @@ export function Header() {
             <div
                 className={css({
                     position: 'relative',
-                    zIndex: 1,
+                    zIndex: 2,
                     maxWidth: '1400px',
                     marginX: 'auto',
                     width: '100%',

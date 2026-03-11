@@ -63,7 +63,6 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                             href={`/category/${cat.slug}`}
                             className={css({
                                 flex: '1 1 80px',
-                                maxWidth: { base: 'calc(25% - token(spacing.2))', md: '120px' },
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
@@ -79,23 +78,23 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                 _hover: {
                                     borderColor: 'var(--cat-color)',
                                     transform: 'translateY(-2px)',
-                                    bg: 'color-mix(in srgb, var(--cat-color) 10%, {colors.surface})',
                                     boxShadow:
                                         '0 8px 24px color-mix(in srgb, var(--cat-color) 15%, transparent)',
                                     '& [data-cat-name]': { color: 'var(--cat-color)' },
-                                    '& [data-cat-count]': { color: 'text' },
                                 },
                             })}
                             style={{ '--cat-color': color } as React.CSSProperties}
                         >
                             <div
                                 className={css({
-                                    width: '48px',
-                                    height: '48px',
+                                    width: '64px',
+                                    height: '64px',
                                     borderRadius: 'xl',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
+                                    gap: '1.5',
                                     transition: 'all 200ms ease',
                                 })}
                                 style={{
@@ -104,6 +103,17 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                 }}
                             >
                                 <DynamicIcon name={cat.icon} size={22} />
+                                <span
+                                    data-cat-count
+                                    className={css({
+                                        fontSize: '0.85rem',
+                                        fontWeight: '700',
+                                        lineHeight: '1',
+                                        transition: 'color 200ms ease',
+                                    })}
+                                >
+                                    {cat.recipeCount}
+                                </span>
                             </div>
                             <span
                                 data-cat-name
@@ -118,18 +128,6 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                 })}
                             >
                                 {cat.name}
-                            </span>
-                            <span
-                                data-cat-count
-                                className={css({
-                                    fontSize: { base: '0.78rem', md: '0.82rem' },
-                                    fontWeight: '500',
-                                    color: 'text-muted',
-                                    whiteSpace: 'nowrap',
-                                    transition: 'color 200ms ease',
-                                })}
-                            >
-                                {cat.recipeCount} Rezepte
                             </span>
                         </Link>
                     );

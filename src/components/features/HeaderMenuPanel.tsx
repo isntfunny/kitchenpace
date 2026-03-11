@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Heart, Settings, User, type LucideIcon } from 'lucide-react';
+import { Bookmark, FileText, Settings, User, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
 
@@ -22,9 +22,9 @@ export const PERSONAL_LINKS: NavLinkItem[] = [
     },
     {
         label: 'Favoriten',
-        description: 'Gespeicherte Rezepte',
+        description: 'Favorisierte Rezepte',
         href: '/profile/favorites',
-        icon: Heart,
+        icon: Bookmark,
     },
     {
         label: 'Meine Rezepte',
@@ -41,7 +41,7 @@ export const PERSONAL_LINKS: NavLinkItem[] = [
 ];
 
 type MenuSectionProps = {
-    title: string;
+    title?: string;
     items: NavLinkItem[];
 };
 
@@ -94,18 +94,20 @@ function MenuCard({ item }: MenuCardProps) {
 export function MenuSection({ title, items }: MenuSectionProps) {
     return (
         <section>
-            <p
-                className={css({
-                    fontSize: 'xs',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    letterSpacing: 'wide',
-                    color: 'foreground.muted',
-                    marginBottom: '3',
-                })}
-            >
-                {title}
-            </p>
+            {title && (
+                <p
+                    className={css({
+                        fontSize: 'xs',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: 'wide',
+                        color: 'foreground.muted',
+                        marginBottom: '3',
+                    })}
+                >
+                    {title}
+                </p>
+            )}
             <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
                 {items.map((item) => (
                     <MenuCard key={item.label} item={item} />

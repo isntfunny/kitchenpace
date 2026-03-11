@@ -1,82 +1,40 @@
-import { Clock, Star } from 'lucide-react';
+import { Suspense } from 'react';
 
-import { fetchCategoriesForBar } from '@app/app/actions/category';
-import {
-    fetchChefSpotlight,
-    fetchQuickTips,
-    fetchRecentActivities,
-    fetchTrendingTags,
-} from '@app/app/actions/community';
-import {
-    fetchFeaturedRecipe,
-    fetchNewestRecipes,
-    fetchTopRatedRecipes,
-} from '@app/app/actions/recipes';
-import { CategoryBar } from '@app/components/features/CategoryBar';
-import { ChefSpotlight } from '@app/components/features/ChefSpotlight';
 import { Header } from '@app/components/features/Header';
-import { LiveActivitySidebar } from '@app/components/features/LiveActivityFeed';
-import { QuickTips } from '@app/components/features/QuickTips';
-import { RecipeScrollServer } from '@app/components/features/RecipeScrollServer';
-import { TrendingTags } from '@app/components/features/TrendingTags';
+import { CategoryBarSection } from '@app/components/home/CategoryBarSection';
+import { ChefSpotlightSection } from '@app/components/home/ChefSpotlightSection';
+import { DailyHighlightSection } from '@app/components/home/DailyHighlightSection';
+import { LiveActivitySection } from '@app/components/home/LiveActivitySection';
+import { NewestRecipesSection } from '@app/components/home/NewestRecipesSection';
+import { QuickTipsSection } from '@app/components/home/QuickTipsSection';
+import { TopRatedSection } from '@app/components/home/TopRatedSection';
+import { TrendingTagsSection } from '@app/components/home/TrendingTagsSection';
 import { AnimatedChefHat } from '@app/components/motion/AnimatedChefHat';
 import { FadeInSection } from '@app/components/motion/FadeInSection';
-import { DailyHighlight } from '@app/components/sections/DailyHighlight';
 import { FitsNow } from '@app/components/sections/FitsNow';
 import { FlowPillars } from '@app/components/sections/FlowPillars';
 import { HeroSpotlight } from '@app/components/sections/HeroSpotlight';
-import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
 export const revalidate = 60;
 
-export default async function Home() {
-    const [
-        featuredResult,
-        newestResult,
-        topRatedResult,
-        trendingTagsResult,
-        chefSpotlightResult,
-        quickTipsResult,
-        recentActivitiesResult,
-        categoriesResult,
-    ] = await Promise.allSettled([
-        fetchFeaturedRecipe(),
-        fetchNewestRecipes(),
-        fetchTopRatedRecipes(),
-        fetchTrendingTags(),
-        fetchChefSpotlight(),
-        fetchQuickTips(),
-        fetchRecentActivities(),
-        fetchCategoriesForBar(),
-    ]);
-
-    const handleSettled = <T,>(result: PromiseSettledResult<T>, fallback: T, label: string): T => {
-        if (result.status === 'fulfilled') {
-            return result.value;
-        }
-
-        console.error(`[Home] ${label} failed:`, result.reason);
-        return fallback;
-    };
-
-    const featuredRecipe = handleSettled(featuredResult, null, 'fetchFeaturedRecipe');
-    const newestRecipes = handleSettled(newestResult, [], 'fetchNewestRecipes');
-    const topRatedRecipes = handleSettled(topRatedResult, [], 'fetchTopRatedRecipes');
-    const trendingTags = handleSettled(trendingTagsResult, [], 'fetchTrendingTags');
-    const chefSpotlight = handleSettled(chefSpotlightResult, null, 'fetchChefSpotlight');
-    const quickTips = handleSettled(quickTipsResult, [], 'fetchQuickTips');
-    const recentActivities = handleSettled(recentActivitiesResult, [], 'fetchRecentActivities');
-    const categories = handleSettled(categoriesResult, [], 'fetchCategoriesForBar');
-
+function SectionSkeleton({ height = '200px' }: { height?: string }) {
     return (
         <div
             className={css({
-                minH: '100vh',
-                color: 'text',
+                borderRadius: '2xl',
+                bg: 'surface',
+                animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             })}
-        >
+            style={{ height }}
+        />
+    );
+}
+
+export default function Home() {
+    return (
+        <div className={css({ minH: '100vh', color: 'text' })}>
             <Header />
 
             <main
@@ -87,62 +45,35 @@ export default async function Home() {
                     py: { base: '4', md: '5' },
                 })}
             >
-                <HeroSpotlight>
-                    {/* <RecipeFlowEmbed recipeId="lachs-mit-bandnudeln-und-tomatensosse" /> */}
-                </HeroSpotlight>
+                <HeroSpotlight />
 
                 <div className={css({ mt: '4' })}>
-                    <CategoryBar categories={categories} />
+                    <Suspense fallback={<SectionSkeleton height="48px" />}>
+                        <CategoryBarSection />
+                    </Suspense>
                 </div>
 
-                <div
-                    className={css({
-                        marginTop: '4',
-                    })}
-                >
-                    <div
-                        className={grid({
-                            columns: { base: 1, lg: 12 },
-                            gap: '4',
-                        })}
-                    >
+                <div className={css({ marginTop: '4' })}>
+                    <div className={grid({ columns: { base: 1, lg: 12 }, gap: '4' })}>
                         <div className={css({ lg: { gridColumn: 'span 8' } })}>
-                            <FadeInSection>
-                                <DailyHighlight recipe={featuredRecipe} />
-                            </FadeInSection>
+                            <Suspense fallback={<SectionSkeleton height="320px" />}>
+                                <DailyHighlightSection />
+                            </Suspense>
 
-                            <div
-                                className={css({
-                                    marginTop: '4',
-                                })}
-                            >
-                                <RecipeScrollServer
-                                    title="Neuste Rezepte"
-                                    recipes={newestRecipes}
-                                    icon={Clock}
-                                    accentColor={PALETTE.orange}
-                                />
+                            <div className={css({ marginTop: '4' })}>
+                                <Suspense fallback={<SectionSkeleton height="240px" />}>
+                                    <NewestRecipesSection />
+                                </Suspense>
                             </div>
 
-                            <div
-                                className={css({
-                                    marginTop: '4',
-                                })}
-                            >
+                            <div className={css({ marginTop: '4' })}>
                                 <FitsNow />
                             </div>
 
-                            <div
-                                className={css({
-                                    marginTop: '4',
-                                })}
-                            >
-                                <RecipeScrollServer
-                                    title="Top Rated"
-                                    recipes={topRatedRecipes}
-                                    icon={Star}
-                                    accentColor={PALETTE.gold}
-                                />
+                            <div className={css({ marginTop: '4' })}>
+                                <Suspense fallback={<SectionSkeleton height="240px" />}>
+                                    <TopRatedSection />
+                                </Suspense>
                             </div>
                         </div>
 
@@ -150,27 +81,26 @@ export default async function Home() {
                             delay={0.1}
                             className={css({ lg: { gridColumn: 'span 4' } })}
                         >
-                            <TrendingTags tags={trendingTags} />
-                            <div
-                                className={css({
-                                    marginTop: '4',
-                                })}
-                            >
-                                <ChefSpotlight chef={chefSpotlight} />
+                            <Suspense fallback={<SectionSkeleton height="140px" />}>
+                                <TrendingTagsSection />
+                            </Suspense>
+
+                            <div className={css({ marginTop: '4' })}>
+                                <Suspense fallback={<SectionSkeleton height="280px" />}>
+                                    <ChefSpotlightSection />
+                                </Suspense>
                             </div>
-                            <div
-                                className={css({
-                                    marginTop: '4',
-                                })}
-                            >
-                                <QuickTips tips={quickTips} />
+
+                            <div className={css({ marginTop: '4' })}>
+                                <Suspense fallback={<SectionSkeleton height="200px" />}>
+                                    <QuickTipsSection />
+                                </Suspense>
                             </div>
-                            <div
-                                className={css({
-                                    marginTop: '4',
-                                })}
-                            >
-                                <LiveActivitySidebar initialActivities={recentActivities} />
+
+                            <div className={css({ marginTop: '4' })}>
+                                <Suspense fallback={<SectionSkeleton height="300px" />}>
+                                    <LiveActivitySection />
+                                </Suspense>
                             </div>
                         </FadeInSection>
                     </div>

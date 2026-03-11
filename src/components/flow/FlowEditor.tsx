@@ -46,9 +46,13 @@ const HORIZONTAL_GAP = 80;
 
 const DEFAULT_EDGE_STYLE: React.CSSProperties = { stroke: PALETTE.orange, strokeWidth: 2 };
 
-/** Stable nodeTypes / edgeTypes — defined once at module level, never recreated. */
+/** Stable nodeTypes / edgeTypes / edgeOptions — defined once at module level, never recreated. */
 const NODE_TYPES = { recipeStep: RecipeNode };
 const EDGE_TYPES = { insertable: InsertEdge };
+const DEFAULT_EDGE_OPTIONS = { type: 'insertable', style: DEFAULT_EDGE_STYLE } as const;
+const FIT_VIEW_OPTIONS = { padding: 0.2 } as const;
+const FIT_VIEW_ANIMATE = { padding: 0.2, duration: 200 } as const;
+const DELETE_KEY_CODE = ['Backspace', 'Delete'];
 
 /* ── helpers ─────────────────────────────────────────────── */
 
@@ -160,6 +164,13 @@ function FlowEditorInner({
     recipeId,
 }: FlowEditorProps) {
     const { screenToFlowPosition, getNodes, getEdges, fitView } = useReactFlow();
+
+    // Wrap xyflow imperative APIs in a ref — they return new function references every render,
+    // so any useCallback that lists them as deps would change every render, causing
+    // StoreUpdater.useEffect to fire → zustand setState → forceStoreRerender → infinite loop.
+    const rfRef = useRef({ screenToFlowPosition, getNodes, getEdges, fitView });
+    rfRef.current = { screenToFlowPosition, getNodes, getEdges, fitView };
+
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
 
@@ -227,9 +238,9 @@ function FlowEditorInner({
             setNodes(laid);
             setEdges(nextEdges);
             notifyChange(laid, nextEdges);
-            requestAnimationFrame(() => fitView({ padding: 0.2, duration: 200 }));
+            requestAnimationFrame(() => rfRef.current.fitView(FIT_VIEW_ANIMATE));
         },
-        [applyLayout, setNodes, setEdges, notifyChange, fitView],
+        [applyLayout, setNodes, setEdges, notifyChange],
     );
 
     /* ── auto-layout on first mount when nodes have no position (e.g. imported recipes) ── */
@@ -248,7 +259,7 @@ function FlowEditorInner({
 
         // Small delay to allow ReactFlow to finish its initial render before fitView
         const timer = setTimeout(() => {
-            autoLayoutAndFit(getNodes() as RecipeFlowNode[], getEdges());
+            autoLayoutAndFit(rfRef.current.getNodes() as RecipeFlowNode[], rfRef.current.getEdges());
         }, 50);
         return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,67 +274,45 @@ function FlowEditorInner({
             if (hasRemoval) {
                 // After edge removal, re-layout and notify
                 queueMicrotask(() => {
-                    const currentNodes = getNodes() as RecipeFlowNode[];
-                    const currentEdges = getEdges();
+                    const currentNodes = rfRef.current.getNodes() as RecipeFlowNode[];
+                    const currentEdges = rfRef.current.getEdges();
                     const laid = applyLayout(currentNodes, currentEdges);
                     setNodes(laid);
                     notifyChange(laid, currentEdges);
-                    requestAnimationFrame(() => fitView({ padding: 0.2, duration: 200 }));
+                    requestAnimationFrame(() => rfRef.current.fitView(FIT_VIEW_ANIMATE));
                 });
             } else {
-                // Selection changes etc — just pass through
+                // Selection changes etc — just notify with latest store state
                 queueMicrotask(() => {
-                    setNodes((nds) => {
-                        setEdges((eds) => {
-                            notifyChange(nds as RecipeFlowNode[], eds);
-                            return eds;
-                        });
-                        return nds;
-                    });
+                    notifyChange(rfRef.current.getNodes() as RecipeFlowNode[], rfRef.current.getEdges());
                 });
             }
         },
-        [
-            handleEdgesChange,
-            getNodes,
-            getEdges,
-            applyLayout,
-            setNodes,
-            setEdges,
-            notifyChange,
-            fitView,
-        ],
+        [handleEdgesChange, applyLayout, setNodes, notifyChange],
     );
 
     const handleNodesChange: typeof onNodesChange = useCallback(
         (changes) => {
             onNodesChange(changes);
-            // Position changes are high-frequency — notify after the state update
-            // We use a microtask to read the latest state after React processes the change
+            // Read latest state from xyflow store after React processes the change
             queueMicrotask(() => {
-                setNodes((currentNodes) => {
-                    setEdges((currentEdges) => {
-                        notifyChange(currentNodes as RecipeFlowNode[], currentEdges);
-                        return currentEdges;
-                    });
-                    return currentNodes;
-                });
+                notifyChange(rfRef.current.getNodes() as RecipeFlowNode[], rfRef.current.getEdges());
             });
         },
-        [onNodesChange, setNodes, setEdges, notifyChange],
+        [onNodesChange, notifyChange],
     );
 
     const onConnect = useCallback(
         (connection: Connection) => {
-            const currentNodes = getNodes() as RecipeFlowNode[];
-            const currentEdges = getEdges();
+            const currentNodes = rfRef.current.getNodes() as RecipeFlowNode[];
+            const currentEdges = rfRef.current.getEdges();
             const nextEdges = addEdge(
                 { ...connection, type: 'insertable', style: DEFAULT_EDGE_STYLE },
                 currentEdges,
             );
             autoLayoutAndFit(currentNodes, nextEdges);
         },
-        [getNodes, getEdges, autoLayoutAndFit],
+        [autoLayoutAndFit],
     );
 
     /* ── connection validation ── */
@@ -343,8 +332,8 @@ function FlowEditorInner({
         (stepType: StepType, position?: { x: number; y: number }) => {
             const _config = getStepConfig(stepType);
             const newId = generateId();
-            const currentNodes = getNodes() as RecipeFlowNode[];
-            const currentEdges = getEdges();
+            const currentNodes = rfRef.current.getNodes() as RecipeFlowNode[];
+            const currentEdges = rfRef.current.getEdges();
 
             const newNode: RecipeFlowNode = {
                 id: newId,
@@ -387,15 +376,15 @@ function FlowEditorInner({
 
             autoLayoutAndFit(nextNodes, nextEdges);
         },
-        [getNodes, getEdges, autoLayoutAndFit],
+        [autoLayoutAndFit],
     );
 
     const handleAddNodeAfter = useCallback(
         (parentNodeId: string, stepType: StepType) => {
             const _config = getStepConfig(stepType);
             const newId = generateId();
-            const currentNodes = getNodes() as RecipeFlowNode[];
-            const currentEdges = getEdges();
+            const currentNodes = rfRef.current.getNodes() as RecipeFlowNode[];
+            const currentEdges = rfRef.current.getEdges();
 
             const newNode: RecipeFlowNode = {
                 id: newId,
@@ -441,15 +430,15 @@ function FlowEditorInner({
 
             autoLayoutAndFit(nextNodes, nextEdges);
         },
-        [getNodes, getEdges, autoLayoutAndFit],
+        [autoLayoutAndFit],
     );
 
     const handleAddNodeBefore = useCallback(
         (childNodeId: string, stepType: StepType) => {
             const _config = getStepConfig(stepType);
             const newId = generateId();
-            const currentNodes = getNodes() as RecipeFlowNode[];
-            const currentEdges = getEdges();
+            const currentNodes = rfRef.current.getNodes() as RecipeFlowNode[];
+            const currentEdges = rfRef.current.getEdges();
 
             const newNode: RecipeFlowNode = {
                 id: newId,
@@ -493,7 +482,7 @@ function FlowEditorInner({
 
             autoLayoutAndFit(nextNodes, nextEdges);
         },
-        [getNodes, getEdges, autoLayoutAndFit],
+        [autoLayoutAndFit],
     );
 
     const handleDeleteNode = useCallback(
@@ -501,8 +490,8 @@ function FlowEditorInner({
             if (nodeId === 'start' || nodeId === 'servieren') return;
             setSelectedNodeId((prev) => (prev === nodeId ? null : prev));
 
-            const currentNodes = getNodes() as RecipeFlowNode[];
-            const currentEdges = getEdges();
+            const currentNodes = rfRef.current.getNodes() as RecipeFlowNode[];
+            const currentEdges = rfRef.current.getEdges();
 
             // Rewire: if the deleted node has exactly one incoming and one outgoing edge, connect them
             const incoming = currentEdges.filter((e) => e.target === nodeId);
@@ -528,7 +517,7 @@ function FlowEditorInner({
             const nextNodes = currentNodes.filter((n) => n.id !== nodeId);
             autoLayoutAndFit(nextNodes, nextEdges);
         },
-        [getNodes, getEdges, autoLayoutAndFit],
+        [autoLayoutAndFit],
     );
 
     const handleSelectNode = useCallback((nodeId: string) => {
@@ -537,18 +526,14 @@ function FlowEditorInner({
 
     const handleUpdateNode = useCallback(
         (nodeId: string, updates: Partial<RecipeNodeData>) => {
-            setNodes((nds) => {
-                const next = nds.map((n) =>
-                    n.id === nodeId ? { ...n, data: { ...n.data, ...updates } } : n,
-                );
-                setEdges((eds) => {
-                    notifyChange(next as RecipeFlowNode[], eds);
-                    return eds;
-                });
-                return next;
+            setNodes((nds) =>
+                nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...updates } } : n)),
+            );
+            queueMicrotask(() => {
+                notifyChange(rfRef.current.getNodes() as RecipeFlowNode[], rfRef.current.getEdges());
             });
         },
-        [setNodes, setEdges, notifyChange],
+        [setNodes, notifyChange],
     );
 
     const handleCloseEditPanel = useCallback(() => {
@@ -561,8 +546,8 @@ function FlowEditorInner({
         (edgeId: string, sourceId: string, targetId: string, stepType: StepType) => {
             const _config = getStepConfig(stepType);
             const newId = generateId();
-            const currentNodes = getNodes() as RecipeFlowNode[];
-            const currentEdges = getEdges();
+            const currentNodes = rfRef.current.getNodes() as RecipeFlowNode[];
+            const currentEdges = rfRef.current.getEdges();
 
             const newNode: RecipeFlowNode = {
                 id: newId,
@@ -592,7 +577,7 @@ function FlowEditorInner({
 
             autoLayoutAndFit(nextNodes, nextEdges);
         },
-        [getNodes, getEdges, autoLayoutAndFit],
+        [autoLayoutAndFit],
     );
 
     /* ── drag & drop from palette ── */
@@ -602,13 +587,13 @@ function FlowEditorInner({
             event.preventDefault();
             const stepType = event.dataTransfer.getData('application/step-type') as StepType;
             if (!stepType) return;
-            const position = screenToFlowPosition({
+            const position = rfRef.current.screenToFlowPosition({
                 x: event.clientX,
                 y: event.clientY,
             });
             addNewNode(stepType, position);
         },
-        [screenToFlowPosition, addNewNode],
+        [addNewNode],
     );
 
     const handleDragOver = useCallback((event: React.DragEvent) => {
@@ -619,13 +604,13 @@ function FlowEditorInner({
     /* ── auto-layout ── */
 
     const handleAutoLayout = useCallback(() => {
-        const currentNodes = getNodes() as RecipeFlowNode[];
-        const currentEdges = getEdges();
+        const currentNodes = rfRef.current.getNodes() as RecipeFlowNode[];
+        const currentEdges = rfRef.current.getEdges();
         const laid = applyLayout(currentNodes, currentEdges);
         setNodes(laid);
         notifyChange(laid, currentEdges);
-        requestAnimationFrame(() => fitView({ padding: 0.2, duration: 200 }));
-    }, [getNodes, getEdges, applyLayout, setNodes, notifyChange, fitView]);
+        requestAnimationFrame(() => rfRef.current.fitView(FIT_VIEW_ANIMATE));
+    }, [applyLayout, setNodes, notifyChange]);
 
     /* ── auto fitView on container resize (window resize / sidebar toggle) ── */
 
@@ -642,7 +627,7 @@ function FlowEditorInner({
         const ro = new ResizeObserver(() => {
             clearTimeout(timer);
             timer = setTimeout(() => {
-                fitView({ padding: 0.2, duration: 200 });
+                rfRef.current.fitView(FIT_VIEW_ANIMATE);
             }, 250);
         });
         ro.observe(el);
@@ -650,7 +635,9 @@ function FlowEditorInner({
             clearTimeout(timer);
             ro.disconnect();
         };
-    }, [fitView]);
+        // rfRef is a stable ref — intentionally excluded from deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     /* ── context value (stable unless ingredients/callbacks change) ── */
 
@@ -703,16 +690,13 @@ function FlowEditorInner({
                         nodeTypes={NODE_TYPES}
                         edgeTypes={EDGE_TYPES}
                         fitView
-                        fitViewOptions={{ padding: 0.2 }}
+                        fitViewOptions={FIT_VIEW_OPTIONS}
                         minZoom={0.1}
                         maxZoom={2}
-                        deleteKeyCode={['Backspace', 'Delete']}
+                        deleteKeyCode={DELETE_KEY_CODE}
                         zoomOnScroll={false}
                         edgesReconnectable
-                        defaultEdgeOptions={{
-                            type: 'insertable',
-                            style: DEFAULT_EDGE_STYLE,
-                        }}
+                        defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
                     >
                         <Background color={PALETTE.orange} gap={20} size={1} />
                         <Controls

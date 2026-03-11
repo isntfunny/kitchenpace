@@ -234,9 +234,11 @@ export async function persistModerationResult(
             }
         }
 
-        // Notify the author about the moderation result
-        const { title, message } = getModerationNotification(result.decision, contentType);
-        await createUserNotification({ userId: authorId, type: 'SYSTEM', title, message });
+        // Notify the author about the moderation result (skip AUTO_APPROVED — it's noise)
+        if (result.decision !== 'AUTO_APPROVED') {
+            const { title, message } = getModerationNotification(result.decision, contentType);
+            await createUserNotification({ userId: authorId, type: 'SYSTEM', title, message });
+        }
     }
 }
 

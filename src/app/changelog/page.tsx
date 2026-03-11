@@ -287,7 +287,7 @@ export default function ChangelogPage() {
                 <div className={css({ display: 'flex', flexDirection: 'column', gap: '8' })}>
                     {CHANGELOG.map((entry, entryIndex) => (
                         <motion.article
-                            key={entry.date}
+                            key={entry.version ?? entry.date}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5, delay: 0.2 + entryIndex * 0.15 }}

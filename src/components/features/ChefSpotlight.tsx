@@ -38,8 +38,6 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
     }
 
     const displayName = chef.name || chef.nickname || 'Chef des Monats';
-    const avatar =
-        chef.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
 
     return (
         <div
@@ -94,7 +92,8 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                     })}
                 >
                     <SmartImage
-                        src={avatar}
+                        imageKey={chef.photoKey}
+                        userId={chef.id}
                         alt={displayName}
                         aspect="1:1"
                         fill

@@ -5,7 +5,6 @@ import shuffle from 'lodash/shuffle';
 import { fetchActivityFeed } from '@app/lib/activity-feed';
 import { type ActivityFeedItem } from '@app/lib/activity-utils';
 import { PALETTE } from '@app/lib/palette';
-import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { prisma } from '@shared/prisma';
 
 export type { ActivityFeedItem, ActivityIconName } from '@app/lib/activity-utils';
@@ -51,7 +50,7 @@ export interface ChefSpotlightData {
     name: string;
     nickname?: string | null;
     bio?: string | null;
-    avatar?: string | null;
+    photoKey?: string | null;
     followerCount: number;
     recipeCount: number;
     topRecipes: Array<{
@@ -130,7 +129,7 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
                 name: profile.user.name || profile.nickname,
                 nickname: profile.nickname,
                 bio: profile.bio,
-                avatar: profile.photoKey ? getThumbnailUrl(profile.photoKey!, '1:1', 96) : null,
+                photoKey: profile.photoKey ?? null,
                 followerCount: profile.followerCount,
                 recipeCount: profile.recipeCount,
                 topRecipes: profile.user.recipes.map((recipe) => ({
@@ -170,7 +169,7 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
         name: profile.user.name || profile.nickname,
         nickname: profile.nickname,
         bio: profile.bio,
-        avatar: profile.photoKey ? getThumbnailUrl(profile.photoKey, '1:1', 96) : null,
+        photoKey: profile.photoKey ?? null,
         followerCount: profile.followerCount,
         recipeCount: profile.recipeCount,
         topRecipes: profile.user.recipes.map((recipe) => ({

@@ -1334,7 +1334,8 @@ export function RecipeDetailClient({
                                         })}
                                     >
                                         <SmartImage
-                                            src={author.avatar}
+                                            imageKey={author.avatar}
+                                            userId={author.id}
                                             alt={author.name}
                                             aspect="1:1"
                                             fill

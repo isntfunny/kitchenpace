@@ -74,7 +74,8 @@ export function AuthorCard({
                             })}
                         >
                             <SmartImage
-                                src={author.avatar ?? '/kitchenpace_icon.png'}
+                                imageKey={author.avatar}
+                                userId={author.id}
                                 alt={author.name ?? 'Autor'}
                                 aspect="1:1"
                                 fill

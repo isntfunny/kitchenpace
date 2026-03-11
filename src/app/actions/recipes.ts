@@ -7,14 +7,10 @@ import {
     type RecipeCardData,
     type RecipeWithCategory,
 } from '@app/lib/recipe-card';
-import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { prisma } from '@shared/prisma';
 
 // Re-export for backward compatibility
 export { toRecipeCardData, type RecipeCardData, type RecipeWithCategory };
-
-const DEFAULT_AUTHOR_AVATAR =
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80';
 
 export async function fetchNewestRecipes(take = 8): Promise<RecipeCardData[]> {
     const recipes = await prisma.recipe.findMany({
@@ -137,7 +133,7 @@ export interface RecipeDetailData {
         id: string;
         slug: string;
         name: string;
-        avatar: string;
+        avatar: string | null;
         bio: string | null;
         recipeCount: number;
         followerCount: number;
@@ -276,9 +272,7 @@ export async function fetchRecipeBySlug(
                   id: recipe.author.id,
                   slug: recipe.author.profile?.slug ?? recipe.author.id,
                   name: recipe.author.name || 'Unbekannt',
-                  avatar: recipe.author.profile?.photoKey
-                      ? getThumbnailUrl(recipe.author.profile.photoKey, '1:1', 96)
-                      : DEFAULT_AUTHOR_AVATAR,
+                  avatar: recipe.author.profile?.photoKey ?? null,
                   bio: recipe.author.profile?.bio || null,
                   recipeCount: recipe.author.profile?.recipeCount ?? 0,
                   followerCount: recipe.author.profile?.followerCount ?? 0,

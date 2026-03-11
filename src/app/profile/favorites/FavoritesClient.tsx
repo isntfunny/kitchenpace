@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart, Trash2 } from 'lucide-react';
+import { Bookmark, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { AlertDialog } from 'radix-ui';
@@ -68,7 +68,7 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                             flexShrink: '0',
                         })}
                     >
-                        <Heart size={20} />
+                        <Bookmark size={20} />
                     </div>
                     <Heading as="h1" size="xl">
                         Meine Favoriten
@@ -76,10 +76,10 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                 </div>
                 <Text color="muted" className={css({ pl: '13' })}>
                     {initialFavorites.length === 0
-                        ? 'Noch keine gespeicherten Rezepte'
+                        ? 'Noch keine favorisierten Rezepte'
                         : initialFavorites.length === 1
-                          ? '1 gespeichertes Rezept'
-                          : `${initialFavorites.length} gespeicherte Rezepte`}
+                          ? '1 favorisiertes Rezept'
+                          : `${initialFavorites.length} favorisierte Rezepte`}
                 </Text>
             </div>
 
@@ -151,13 +151,13 @@ export function FavoritesClient({ initialFavorites }: FavoritesClientProps) {
                             mb: '4',
                         })}
                     >
-                        <Heart size={32} />
+                        <Bookmark size={32} />
                     </div>
                     <Heading as="h2" size="lg" className={css({ mb: '2' })}>
                         Noch keine Favoriten
                     </Heading>
                     <Text color="muted" className={css({ mb: '6' })}>
-                        Speichere Rezepte, die du später kochen möchtest.
+                        Favorisiere Rezepte, die du später kochen möchtest.
                     </Text>
                     <Link href="/">
                         <Button variant="primary">Rezepte entdecken</Button>

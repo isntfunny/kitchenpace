@@ -3,13 +3,12 @@ import { Shield } from 'lucide-react';
 import { redirect } from 'next/navigation';
 
 import { Heading, Text } from '@app/components/atoms/Typography';
-import { QuickLinksCard } from '@app/components/features/QuickLinksCard';
 import { PageShell } from '@app/components/layouts/PageShell';
+import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayout';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
 import { getOrCreateProfile } from '@app/lib/profile';
 import { css } from 'styled-system/css';
-import { grid } from 'styled-system/patterns';
 
 import { EmailSettingsCard } from './EmailSettingsCard';
 import { NotificationSettingsCard } from './NotificationSettingsCard';
@@ -105,67 +104,46 @@ const ManageProfilePage = async () => {
                     </div>
                 </div>
 
-                {/* Main Content Grid */}
-                <div
-                    className={grid({
-                        columns: { base: 1, lg: 12 },
-                        gap: '4',
-                    })}
-                >
-                    {/* Left Column - Settings */}
-                    <div
-                        className={css({
-                            lg: { gridColumn: 'span 8' },
-                            display: 'flex',
-                            flexDir: 'column',
-                            gap: '4',
-                        })}
-                    >
-                        {/* Privacy Settings */}
-                        <PrivacySettingsCard
-                            profile={{
-                                showInActivity: privacyReadyProfile.showInActivity,
-                                ratingsPublic: privacyReadyProfile.ratingsPublic,
-                                followsPublic: privacyReadyProfile.followsPublic,
-                                favoritesPublic: privacyReadyProfile.favoritesPublic,
-                            }}
-                        />
+                <ProfileSidebarLayout userSlug={profile.slug}>
+                    {/* Privacy Settings */}
+                    <PrivacySettingsCard
+                        profile={{
+                            showInActivity: privacyReadyProfile.showInActivity,
+                            ratingsPublic: privacyReadyProfile.ratingsPublic,
+                            followsPublic: privacyReadyProfile.followsPublic,
+                            favoritesPublic: privacyReadyProfile.favoritesPublic,
+                        }}
+                    />
 
-                        {/* Notification Settings */}
-                        <NotificationSettingsCard
-                            profile={{
-                                notifyOnAnonymous: privacyReadyProfile.notifyOnAnonymous,
-                                notifyOnNewFollower: privacyReadyProfile.notifyOnNewFollower,
-                                notifyOnRecipeLike: privacyReadyProfile.notifyOnRecipeLike,
-                                notifyOnRecipeComment: privacyReadyProfile.notifyOnRecipeComment,
-                                notifyOnRecipeRating: privacyReadyProfile.notifyOnRecipeRating,
-                                notifyOnRecipeCooked: privacyReadyProfile.notifyOnRecipeCooked,
-                                notifyOnRecipePublished:
-                                    privacyReadyProfile.notifyOnRecipePublished,
-                                notifyOnWeeklyPlanReminder:
-                                    privacyReadyProfile.notifyOnWeeklyPlanReminder,
-                                notifyOnSystemMessages: privacyReadyProfile.notifyOnSystemMessages,
-                                notifyOnNewsletter: privacyReadyProfile.notifyOnNewsletter,
-                            }}
-                        />
+                    {/* Notification Settings */}
+                    <NotificationSettingsCard
+                        profile={{
+                            notifyOnAnonymous: privacyReadyProfile.notifyOnAnonymous,
+                            notifyOnNewFollower: privacyReadyProfile.notifyOnNewFollower,
+                            notifyOnRecipeLike: privacyReadyProfile.notifyOnRecipeLike,
+                            notifyOnRecipeComment: privacyReadyProfile.notifyOnRecipeComment,
+                            notifyOnRecipeRating: privacyReadyProfile.notifyOnRecipeRating,
+                            notifyOnRecipeCooked: privacyReadyProfile.notifyOnRecipeCooked,
+                            notifyOnRecipePublished:
+                                privacyReadyProfile.notifyOnRecipePublished,
+                            notifyOnWeeklyPlanReminder:
+                                privacyReadyProfile.notifyOnWeeklyPlanReminder,
+                            notifyOnSystemMessages: privacyReadyProfile.notifyOnSystemMessages,
+                            notifyOnNewsletter: privacyReadyProfile.notifyOnNewsletter,
+                        }}
+                    />
 
-                        {/* Email Settings */}
-                        <EmailSettingsCard
-                            profile={{
-                                notifyOnRecipePublished:
-                                    privacyReadyProfile.notifyOnRecipePublished,
-                                notifyOnNewsletter: privacyReadyProfile.notifyOnNewsletter,
-                                notifyOnWeeklyPlanReminder:
-                                    privacyReadyProfile.notifyOnWeeklyPlanReminder,
-                            }}
-                        />
-                    </div>
-
-                    {/* Right Column - Quick Actions */}
-                    <div className={css({ lg: { gridColumn: 'span 4' } })}>
-                        <QuickLinksCard userSlug={profile.slug} />
-                    </div>
-                </div>
+                    {/* Email Settings */}
+                    <EmailSettingsCard
+                        profile={{
+                            notifyOnRecipePublished:
+                                privacyReadyProfile.notifyOnRecipePublished,
+                            notifyOnNewsletter: privacyReadyProfile.notifyOnNewsletter,
+                            notifyOnWeeklyPlanReminder:
+                                privacyReadyProfile.notifyOnWeeklyPlanReminder,
+                        }}
+                    />
+                </ProfileSidebarLayout>
             </section>
         </PageShell>
     );

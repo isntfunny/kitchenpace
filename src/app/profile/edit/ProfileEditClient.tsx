@@ -8,9 +8,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { FileUpload } from '@app/components/features/FileUpload';
-import { QuickLinksCard } from '@app/components/features/QuickLinksCard';
+import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayout';
 import { css } from 'styled-system/css';
-import { grid } from 'styled-system/patterns';
 
 const MAX_NICKNAME_LENGTH = 32;
 const MAX_TEASER_LENGTH = 160;
@@ -166,22 +165,9 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                 <Text size="sm">Zurück zum Profil</Text>
             </Link>
 
-            <div
-                className={grid({
-                    columns: { base: 1, lg: 12 },
-                    gap: '4',
-                })}
-            >
-                {/* Right Column - Quick Links + Tips (rendered first for sticky sidebar) */}
-                <div
-                    className={css({
-                        lg: { gridColumn: 'span 4', gridRow: '1 / span 2' },
-                        display: 'flex',
-                        flexDir: 'column',
-                        gap: '4',
-                        order: { base: -1, lg: 1 },
-                    })}
-                >
+            <ProfileSidebarLayout
+                userSlug={profile.slug ?? profile.userId}
+                sidebarExtra={
                     <div
                         className={css({
                             p: { base: '4', md: '5' },
@@ -226,19 +212,8 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                             ))}
                         </div>
                     </div>
-                    <QuickLinksCard userSlug={profile.slug ?? profile.userId} />
-                </div>
-
-                {/* Left Column - Main Form */}
-                <div
-                    className={css({
-                        lg: { gridColumn: 'span 8' },
-                        display: 'flex',
-                        flexDir: 'column',
-                        gap: '4',
-                        order: { base: 1, lg: 0 },
-                    })}
-                >
+                }
+            >
                     {/* Main Form */}
                     <div>
                         <div
@@ -587,8 +562,7 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                             </form>
                         </div>
                     </div>
-                </div>
-            </div>
+            </ProfileSidebarLayout>
         </section>
     );
 }

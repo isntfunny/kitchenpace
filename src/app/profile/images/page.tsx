@@ -4,7 +4,9 @@ import { redirect } from 'next/navigation';
 
 import { fetchUserOwnCookImages } from '@app/app/actions/cooks';
 import { PageShell } from '@app/components/layouts/PageShell';
+import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayout';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
+import { getOrCreateProfile } from '@app/lib/profile';
 import { css } from 'styled-system/css';
 
 import { UserCookImagesClient } from './UserCookImagesClient';
@@ -24,13 +26,16 @@ export default async function MyImagesPage() {
         redirect('/auth/signin');
     }
 
-    const images = await fetchUserOwnCookImages(session.user.id);
+    const [images, profile] = await Promise.all([
+        fetchUserOwnCookImages(session.user.id),
+        getOrCreateProfile(session.user.id),
+    ]);
 
     return (
         <PageShell>
-            <div className={css({ display: 'flex', flexDirection: 'column', gap: '6', pb: '12' })}>
+            <section className={css({ py: { base: '4', md: '6' } })}>
                 {/* Header */}
-                <div>
+                <div className={css({ mb: '6' })}>
                     <p className={css({ fontSize: 'xs', color: 'foreground.muted', mb: '1' })}>
                         <Link
                             href="/profile"
@@ -61,8 +66,10 @@ export default async function MyImagesPage() {
                     </p>
                 </div>
 
-                <UserCookImagesClient images={images} />
-            </div>
+                <ProfileSidebarLayout userSlug={profile?.slug ?? undefined}>
+                    <UserCookImagesClient images={images} />
+                </ProfileSidebarLayout>
+            </section>
         </PageShell>
     );
 }

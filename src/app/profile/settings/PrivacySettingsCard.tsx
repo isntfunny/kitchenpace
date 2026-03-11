@@ -38,7 +38,7 @@ const SETTING_COPY: Record<
     favoritesPublic: {
         title: 'Favoriten öffentlich',
         description:
-            'Lege fest, ob deine gespeicherten Rezepte (Favoriten) für andere Nutzer*innen sichtbar sind.',
+            'Lege fest, ob deine favorisierten Rezepte für andere Nutzer*innen sichtbar sind.',
         labelOn: 'Favoriten sichtbar',
         labelOff: 'Favoriten verborgen',
     },

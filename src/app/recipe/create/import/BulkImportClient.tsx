@@ -897,7 +897,7 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                     </button>
                     <button
                         type="button"
-                        onClick={() => router.push('/my-recipes')}
+                        onClick={() => router.push('/profile/recipes')}
                         className={primaryButtonCompactClass}
                     >
                         Meine Rezepte

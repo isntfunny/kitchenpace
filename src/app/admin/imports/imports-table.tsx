@@ -523,7 +523,7 @@ function buildColumns(): ColumnDef<ImportRunRow>[] {
             header: ({ column }) => <SortHeader label="Benutzer" column={column} />,
             cell: ({ row }) => (
                 <Link
-                    href={`/admin/users/${row.original.userId}`}
+                    href={`/user/${row.original.userId}`}
                     onClick={(e) => e.stopPropagation()}
                     className={css({
                         fontSize: 'base',

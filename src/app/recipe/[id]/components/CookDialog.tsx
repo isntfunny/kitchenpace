@@ -1,17 +1,18 @@
 'use client';
 
-import { Camera, CheckCircle, ChefHat, X } from 'lucide-react';
+import { CheckCircle, ChefHat, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
-import { QRUploadButton } from '@app/components/features/QRUploadButton';
+import { UploadArea } from '@app/components/features/UploadArea';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { css } from 'styled-system/css';
 
 interface CookDialogProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: { notes: string; image: File | null; imageKey?: string }) => void;
+    onSubmit: (data: { notes: string; imageKey?: string }) => void;
     isPending: boolean;
     recipeId?: string;
     recipeTitle?: string;
@@ -25,7 +26,6 @@ export function CookDialog({
     recipeId,
     recipeTitle,
 }: CookDialogProps) {
-    const [uploadedImage, setUploadedImage] = useState<File | null>(null);
     const [uploadedImageKey, setUploadedImageKey] = useState<string | undefined>(undefined);
     const [cookNotes, setCookNotes] = useState('');
 
@@ -52,14 +52,12 @@ export function CookDialog({
     }, [isOpen]);
 
     const handleSubmit = () => {
-        onSubmit({ notes: cookNotes, image: uploadedImage, imageKey: uploadedImageKey });
-        setUploadedImage(null);
+        onSubmit({ notes: cookNotes, imageKey: uploadedImageKey });
         setUploadedImageKey(undefined);
         setCookNotes('');
     };
 
     const handleCancel = () => {
-        setUploadedImage(null);
         setUploadedImageKey(undefined);
         setCookNotes('');
         onClose();
@@ -205,152 +203,80 @@ export function CookDialog({
                                 </span>
                             </div>
 
-                            {/* File upload zone */}
-                            <div
-                                className={css({
-                                    border: '2px dashed',
-                                    borderColor: 'border',
-                                    borderRadius: 'xl',
-                                    p: '6',
-                                    textAlign: 'center',
-                                    cursor: 'pointer',
-                                    transition: 'all 150ms ease',
-                                    bg: 'surface',
-                                    _hover: {
-                                        borderColor: 'accent',
-                                        bg: 'rgba(224,123,83,0.06)',
-                                    },
-                                })}
-                                onClick={() =>
-                                    document.getElementById('cook-image-input-modal')?.click()
-                                }
-                            >
-                                <input
-                                    id="cook-image-input-modal"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        setUploadedImage(e.target.files?.[0] ?? null);
-                                        setUploadedImageKey(undefined);
-                                    }}
-                                    className={css({ display: 'none' })}
-                                />
-                                {uploadedImageKey ? (
-                                    <div>
-                                        <div
-                                            className={css({
-                                                mb: '2',
-                                                color: 'green.500',
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                            })}
-                                        >
-                                            <CheckCircle size={32} />
-                                        </div>
-                                        <p
-                                            className={css({
-                                                fontSize: 'sm',
-                                                fontWeight: '500',
-                                                m: 0,
-                                            })}
-                                        >
-                                            Foto vom Handy empfangen
-                                        </p>
-                                        <p
-                                            className={css({
-                                                fontSize: 'xs',
-                                                color: 'foreground.muted',
-                                                mt: '1',
-                                                m: 0,
-                                            })}
-                                        >
-                                            Klicken zum Ändern
-                                        </p>
-                                    </div>
-                                ) : uploadedImage ? (
-                                    <div>
-                                        <div
-                                            className={css({
-                                                mb: '2',
-                                                color: 'green.500',
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                            })}
-                                        >
-                                            <CheckCircle size={32} />
-                                        </div>
-                                        <p
-                                            className={css({
-                                                fontSize: 'sm',
-                                                fontWeight: '500',
-                                                m: 0,
-                                            })}
-                                        >
-                                            {uploadedImage.name}
-                                        </p>
-                                        <p
-                                            className={css({
-                                                fontSize: 'xs',
-                                                color: 'foreground.muted',
-                                                mt: '1',
-                                                m: 0,
-                                            })}
-                                        >
-                                            Klicken zum Ändern
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <div
-                                            className={css({
-                                                mb: '2',
-                                                color: 'foreground.muted',
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                            })}
-                                        >
-                                            <Camera size={40} />
-                                        </div>
-                                        <p
-                                            className={css({
-                                                fontSize: 'sm',
-                                                fontWeight: '500',
-                                                m: 0,
-                                            })}
-                                        >
-                                            Foto hinzufügen
-                                        </p>
-                                        <p
-                                            className={css({
-                                                fontSize: 'xs',
-                                                color: 'foreground.muted',
-                                                mt: '1',
-                                                m: 0,
-                                            })}
-                                        >
-                                            Freiwillig — kein Foto? Einfach unten bestätigen.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* QR upload for mobile */}
-                            {!uploadedImage && !uploadedImageKey && (
-                                <div className={css({ display: 'flex', justifyContent: 'center' })}>
-                                    <QRUploadButton
-                                        uploadType="cook"
-                                        recipeId={recipeId}
-                                        label={
-                                            recipeTitle
-                                                ? `Koch-Foto für ${recipeTitle}`
-                                                : 'Koch-Foto'
-                                        }
-                                        onImageUploaded={(key) => {
-                                            setUploadedImageKey(key);
-                                            setUploadedImage(null);
-                                        }}
+                            {/* Upload zone / preview */}
+                            {uploadedImageKey ? (
+                                <div
+                                    className={css({
+                                        position: 'relative',
+                                        borderRadius: 'xl',
+                                        overflow: 'hidden',
+                                        height: '140px',
+                                    })}
+                                >
+                                    <img
+                                        src={getThumbnailUrl(uploadedImageKey, '16:9', 640)}
+                                        alt="Hochgeladenes Foto"
+                                        className={css({
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover',
+                                            display: 'block',
+                                        })}
                                     />
+                                    <div
+                                        className={css({
+                                            position: 'absolute',
+                                            bottom: '2',
+                                            right: '2',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '1',
+                                            px: '2',
+                                            py: '1',
+                                            fontSize: 'xs',
+                                            fontWeight: '600',
+                                            color: 'white',
+                                            backgroundColor: 'rgba(0,0,0,0.55)',
+                                            backdropFilter: 'blur(6px)',
+                                            borderRadius: 'md',
+                                        })}
+                                    >
+                                        <CheckCircle style={{ width: 12, height: 12 }} />
+                                        Foto hochgeladen
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setUploadedImageKey(undefined)}
+                                        className={css({
+                                            position: 'absolute',
+                                            top: '2',
+                                            right: '2',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: '28px',
+                                            height: '28px',
+                                            borderRadius: 'full',
+                                            border: 'none',
+                                            background: 'rgba(0,0,0,0.55)',
+                                            color: 'white',
+                                            cursor: 'pointer',
+                                            backdropFilter: 'blur(6px)',
+                                            _hover: { background: 'rgba(0,0,0,0.75)' },
+                                        })}
+                                    >
+                                        <X style={{ width: 14, height: 14 }} />
+                                    </button>
                                 </div>
+                            ) : (
+                                <UploadArea
+                                    uploadType="cook"
+                                    recipeId={recipeId}
+                                    label={
+                                        recipeTitle ? `Koch-Foto für ${recipeTitle}` : 'Koch-Foto'
+                                    }
+                                    onUploaded={setUploadedImageKey}
+                                />
                             )}
 
                             {/* Actions */}

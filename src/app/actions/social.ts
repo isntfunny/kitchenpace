@@ -266,7 +266,8 @@ export async function markRecipeCookedAction(
     options?: {
         servings?: number;
         notes?: string;
-        image?: Blob | null;
+        /** S3 key of an already-uploaded (and moderated) cook image */
+        imageKey?: string;
     },
 ) {
     const viewer = await requireAuth('markRecipeCookedAction');
@@ -280,38 +281,8 @@ export async function markRecipeCookedAction(
         throw new Error('RECIPE_NOT_FOUND');
     }
 
-    let imageKey: string | undefined;
-
-    if (options?.image) {
-        const { uploadFile } = await import('@app/lib/s3');
-        const { moderateContent, persistModerationResult } =
-            await import('@app/lib/moderation/moderationService');
-        const { rejectCookImage: _rejectCookImage } = await import('@app/lib/image-approval');
-        const arrayBuffer = await options.image.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const file = options.image as File;
-        const result = await uploadFile(buffer, file.name, file.type, 'cook');
-
-        // Run AI image moderation
-        const modResult = await moderateContent({ imageKey: result.key });
-
-        if (modResult.decision === 'REJECTED') {
-            await _rejectCookImage(result.key);
-            await persistModerationResult('cook_image', result.key, viewer.id, modResult, {
-                imageKey: result.key,
-                recipeId,
-            });
-            // Don't block the cook action, just skip the image
-        } else {
-            imageKey = result.key;
-
-            await persistModerationResult('cook_image', result.key, viewer.id, modResult, {
-                imageKey: result.key,
-                recipeId,
-            });
-        }
-    }
-
+    // Image is already uploaded + moderated by /api/upload — use key directly
+    const imageKey = options?.imageKey ?? undefined;
     const hasImage = Boolean(imageKey);
 
     const cookHistory = await prisma.userCookHistory.create({

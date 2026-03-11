@@ -55,6 +55,8 @@ function createErrorCatcher(page: Page) {
             if (text.includes('script-src') && text.includes('not explicitly set')) return;
             // Ignore failed resource loads from captcha
             if (text.includes('the server respon') && text.includes('challenges')) return;
+            // Ignore transient rate-limit errors (sequential test runs hitting limits)
+            if (text.includes('429')) return;
             errors.push(text);
         }
     });

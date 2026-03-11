@@ -104,8 +104,6 @@ function RecipeCardActions({
                         disabled={isUpdating}
                         className={cx(actionBtnClass, css({
                             gridColumn: 'span 2',
-                            py: '2.5',
-                            fontSize: 'sm',
                             borderColor: '#16a34a',
                             color: '#16a34a',
                             _hover: { background: '#16a34a15' },
@@ -122,8 +120,6 @@ function RecipeCardActions({
                         disabled={isUpdating}
                         className={cx(actionBtnClass, css({
                             gridColumn: 'span 2',
-                            py: '2.5',
-                            fontSize: 'sm',
                             _hover: { background: '#d9770615', borderColor: '#d97706', color: '#d97706' },
                         }))}
                     >

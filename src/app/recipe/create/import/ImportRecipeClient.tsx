@@ -697,8 +697,7 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                     {/* Terminal body */}
                     <div className={terminalBodyClass} ref={terminalRef}>
                         <div className={terminalInitClass}>
-                            KüchenTakt Import Engine v1.0 —{' '}
-                            {new Date().toISOString().split('T')[0]}
+                            KüchenTakt Import Engine v1.0 — {new Date().toISOString().split('T')[0]}
                         </div>
                         {streamEvents.map((event, idx) => (
                             <motion.div

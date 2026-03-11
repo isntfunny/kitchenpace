@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Carrot, Search, Tag } from 'lucide-react';
+import { BookOpen, Carrot, Search, Tag, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -8,7 +8,7 @@ import { SmartImage } from '@app/components/atoms/SmartImage';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
 
-import type { MultiSearchRecipe, SuggestItem } from './useMultiSearch';
+import type { MultiSearchRecipe, MultiSearchUser, SuggestItem } from './useMultiSearch';
 import { useMultiSearch } from './useMultiSearch';
 
 export function HeaderSearch() {
@@ -18,11 +18,12 @@ export function HeaderSearch() {
 
     const trimmedQuery = inputValue.trim();
 
-    const { recipes, ingredients, tags, loading } = useMultiSearch(trimmedQuery, {
+    const { recipes, ingredients, tags, users, loading } = useMultiSearch(trimmedQuery, {
         enabled: isFocused && trimmedQuery.length >= 2,
     });
 
-    const hasAnyResults = recipes.length > 0 || ingredients.length > 0 || tags.length > 0;
+    const hasAnyResults =
+        recipes.length > 0 || ingredients.length > 0 || tags.length > 0 || users.length > 0;
     const showDropdown =
         isFocused && trimmedQuery.length >= 2 && (loading || hasAnyResults || !loading);
 
@@ -163,6 +164,13 @@ export function HeaderSearch() {
                                     }
                                 />
                             )}
+
+                            {users.length > 0 && (
+                                <UserSection
+                                    users={users}
+                                    onSelect={(slug) => navigate(`/user/${slug}`)}
+                                />
+                            )}
                         </>
                     )}
 
@@ -267,6 +275,88 @@ function RecipeSection({
                             </div>
                             <div className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
                                 {recipe.category} · {recipe.totalTime} Min.
+                            </div>
+                        </div>
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/* ── Section: Users ────────────────────────────────────── */
+
+function UserSection({
+    users,
+    onSelect,
+}: {
+    users: MultiSearchUser[];
+    onSelect: (slug: string) => void;
+}) {
+    return (
+        <div className={css({ borderBottom: '1px solid', borderColor: 'border', _last: { borderBottom: 'none' } })}>
+            <SectionHeader icon={<User size={14} />} title="Köche" />
+            <div className={css({ px: '2', pb: '2', display: 'grid', gap: '1' })}>
+                {users.map((user) => (
+                    <button
+                        key={user.id}
+                        type="button"
+                        onMouseDown={() => onSelect(user.slug)}
+                        className={css({
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3',
+                            textAlign: 'left',
+                            borderRadius: 'lg',
+                            padding: '2',
+                            fontFamily: 'body',
+                            cursor: 'pointer',
+                            border: '1px solid transparent',
+                            background: 'transparent',
+                            transition: 'all 150ms ease',
+                            _hover: { bg: 'accent.soft', borderColor: 'border' },
+                        })}
+                    >
+                        <div
+                            className={css({
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: 'full',
+                                overflow: 'hidden',
+                                flexShrink: 0,
+                                bg: 'surface.muted',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            })}
+                        >
+                            {user.photoKey ? (
+                                <SmartImage
+                                    imageKey={user.photoKey}
+                                    alt={user.nickname}
+                                    aspect="1:1"
+                                    sizes="36px"
+                                />
+                            ) : (
+                                <User size={16} color="var(--colors-text-muted)" />
+                            )}
+                        </div>
+                        <div className={css({ minWidth: 0, flex: 1 })}>
+                            <div
+                                className={css({
+                                    fontSize: 'sm',
+                                    fontWeight: '600',
+                                    color: 'text',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                })}
+                            >
+                                {user.nickname}
+                            </div>
+                            <div className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
+                                {user.recipeCount} {user.recipeCount === 1 ? 'Rezept' : 'Rezepte'}
                             </div>
                         </div>
                     </button>

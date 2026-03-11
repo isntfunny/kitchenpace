@@ -15,10 +15,19 @@ export type MultiSearchRecipe = {
 
 export type SuggestItem = { name: string; count: number };
 
+export type MultiSearchUser = {
+    id: string;
+    slug: string;
+    nickname: string;
+    photoKey: string | null;
+    recipeCount: number;
+};
+
 export type MultiSearchResult = {
     recipes: MultiSearchRecipe[];
     ingredients: SuggestItem[];
     tags: SuggestItem[];
+    users: MultiSearchUser[];
     loading: boolean;
 };
 
@@ -34,6 +43,7 @@ export function useMultiSearch(query: string, options?: Options): MultiSearchRes
         recipes: [],
         ingredients: [],
         tags: [],
+        users: [],
         loading: false,
     });
 
@@ -51,7 +61,7 @@ export function useMultiSearch(query: string, options?: Options): MultiSearchRes
 
     useEffect(() => {
         if (!enabled || debouncedQuery.length < 2) {
-            setState({ recipes: [], ingredients: [], tags: [], loading: false });
+            setState({ recipes: [], ingredients: [], tags: [], users: [], loading: false });
             return;
         }
 
@@ -70,17 +80,19 @@ export function useMultiSearch(query: string, options?: Options): MultiSearchRes
                     recipes: MultiSearchRecipe[];
                     ingredients: SuggestItem[];
                     tags: SuggestItem[];
+                    users: MultiSearchUser[];
                 } = await response.json();
 
                 setState({
                     recipes: data.recipes,
                     ingredients: data.ingredients,
                     tags: data.tags,
+                    users: data.users ?? [],
                     loading: false,
                 });
             } catch (error) {
                 if ((error as Error).name === 'AbortError') return;
-                setState({ recipes: [], ingredients: [], tags: [], loading: false });
+                setState({ recipes: [], ingredients: [], tags: [], users: [], loading: false });
             }
         }
 

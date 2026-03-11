@@ -5,6 +5,7 @@ import {
     OPENSEARCH_INDEX,
     OPENSEARCH_INGREDIENTS_INDEX,
 } from '@shared/opensearch/client';
+import { prisma } from '@shared/prisma';
 
 type RecipeHit = {
     id: string;
@@ -19,10 +20,19 @@ type RecipeHit = {
 
 type SuggestItem = { name: string; count: number };
 
+type UserHit = {
+    id: string;
+    slug: string;
+    nickname: string;
+    photoKey: string | null;
+    recipeCount: number;
+};
+
 type MultiSearchResponse = {
     recipes: RecipeHit[];
     ingredients: SuggestItem[];
     tags: SuggestItem[];
+    users: UserHit[];
 };
 
 export async function GET(request: NextRequest) {
@@ -105,10 +115,29 @@ export async function GET(request: NextRequest) {
             },
         });
 
-        const [recipesResult, tagsResult, ingredientsResult] = await Promise.all([
+        // Query 4: User search (Prisma)
+        const usersPromise = prisma.profile.findMany({
+            where: {
+                OR: [
+                    { nickname: { contains: query, mode: 'insensitive' } },
+                    { user: { name: { contains: query, mode: 'insensitive' } } },
+                ],
+            },
+            take: 4,
+            select: {
+                slug: true,
+                nickname: true,
+                photoKey: true,
+                recipeCount: true,
+                userId: true,
+            },
+        });
+
+        const [recipesResult, tagsResult, ingredientsResult, usersResult] = await Promise.all([
             recipesPromise,
             tagsPromise,
             ingredientsPromise,
+            usersPromise,
         ]);
 
         // Parse recipe hits
@@ -172,9 +201,17 @@ export async function GET(request: NextRequest) {
                 .filter((item) => item.count > 0);
         }
 
-        const response: MultiSearchResponse = { recipes, ingredients, tags };
+        const users: UserHit[] = usersResult.map((p) => ({
+            id: p.userId,
+            slug: p.slug,
+            nickname: p.nickname,
+            photoKey: p.photoKey,
+            recipeCount: p.recipeCount,
+        }));
+
+        const response: MultiSearchResponse = { recipes, ingredients, tags, users };
         return NextResponse.json(response);
     } catch {
-        return NextResponse.json({ recipes: [], ingredients: [], tags: [] }, { status: 500 });
+        return NextResponse.json({ recipes: [], ingredients: [], tags: [], users: [] }, { status: 500 });
     }
 }

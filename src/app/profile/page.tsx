@@ -548,21 +548,21 @@ export default async function ProfilePage() {
                                     flexShrink: 0,
                                 })}
                             >
-                                <Link href="/profile/edit">
-                                    <Button variant="primary" size="sm">
+                                <Link href="/profile/edit" style={{ width: '100%' }}>
+                                    <Button variant="primary" size="sm" style={{ width: '100%' }}>
                                         <Edit3 size={15} />
                                         Profil bearbeiten
                                     </Button>
                                 </Link>
-                                <Link href="/profile/settings">
-                                    <Button variant="secondary" size="sm">
+                                <Link href="/profile/settings" style={{ width: '100%' }}>
+                                    <Button variant="secondary" size="sm" style={{ width: '100%' }}>
                                         <Settings size={15} />
                                         Einstellungen
                                     </Button>
                                 </Link>
                                 {profile.userId && (
-                                    <Link href={`/user/${profile.slug}`}>
-                                        <Button variant="ghost" size="sm">
+                                    <Link href={`/user/${profile.slug}`} style={{ width: '100%' }}>
+                                        <Button variant="secondary" size="sm" style={{ width: '100%' }}>
                                             <User size={15} />
                                             Öffentlich
                                         </Button>

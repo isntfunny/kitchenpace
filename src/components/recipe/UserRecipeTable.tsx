@@ -77,11 +77,11 @@ function RecipeCardActions({
     };
 
     const actionBtnClass = css({
-        display: 'inline-flex',
+        display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         gap: '1.5',
-        px: '3',
+        px: '2',
         py: '2',
         borderRadius: 'lg',
         border: '1px solid',
@@ -97,14 +97,15 @@ function RecipeCardActions({
 
     return (
         <>
-            <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
+            <div className={css({ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5' })}>
                 <Link
                     href={`/recipe/${recipeId}/edit`}
                     className={css({
-                        display: 'inline-flex',
+                        display: 'flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: '1.5',
-                        px: '3',
+                        px: '2',
                         py: '2',
                         borderRadius: 'lg',
                         border: '1px solid',
@@ -121,7 +122,7 @@ function RecipeCardActions({
                         },
                     })}
                 >
-                    <Edit2 size={14} />
+                    <Edit2 size={13} />
                     Bearbeiten
                 </Link>
 
@@ -140,7 +141,7 @@ function RecipeCardActions({
                             e.currentTarget.style.color = '';
                         }}
                     >
-                        <Send size={14} />
+                        <Send size={13} />
                         Veröffentlichen
                     </button>
                 )}
@@ -159,7 +160,7 @@ function RecipeCardActions({
                             e.currentTarget.style.color = '';
                         }}
                     >
-                        <Archive size={14} />
+                        <Archive size={13} />
                         Zurückziehen
                     </button>
                 )}
@@ -167,7 +168,7 @@ function RecipeCardActions({
                 <button
                     onClick={() => setDeleteConfirm(true)}
                     disabled={isDeleting || isUpdating}
-                    className={actionBtnClass}
+                    className={cx(actionBtnClass, css({ gridColumn: 'span 2' }))}
                     onMouseEnter={(e) => {
                         e.currentTarget.style.borderColor = '#dc2626';
                         e.currentTarget.style.color = '#dc2626';
@@ -177,7 +178,7 @@ function RecipeCardActions({
                         e.currentTarget.style.color = '';
                     }}
                 >
-                    <Trash2 size={14} />
+                    <Trash2 size={13} />
                     Löschen
                 </button>
             </div>

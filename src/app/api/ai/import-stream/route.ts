@@ -2,74 +2,11 @@ import { NextRequest } from 'next/server';
 
 import { getServerAuthSession } from '@app/lib/auth';
 import { streamRecipeFromMarkdown } from '@app/lib/importer/openai-client';
-import type { ImportedRecipe } from '@app/lib/importer/openai-recipe-schema';
-import { resolveIngredientMentions } from '@app/lib/importer/resolve-mentions';
+import { transformImportedRecipe } from '@app/lib/importer/transform';
 import { prisma } from '@shared/prisma';
 
 // Allow streaming responses up to 5 minutes
 export const maxDuration = 300;
-
-const DIFFICULTY_MAP: Record<string, 'EASY' | 'MEDIUM' | 'HARD'> = {
-    Einfach: 'EASY',
-    Mittel: 'MEDIUM',
-    Schwer: 'HARD',
-};
-
-/** Maps AI category name → DB slug */
-const CATEGORY_MAP: Record<string, string> = {
-    Hauptgericht: 'hauptgericht',
-    Beilage: 'beilage',
-    Backen: 'backen',
-    Dessert: 'dessert',
-    Frühstück: 'fruehstueck',
-    Getränk: 'getraenk',
-    Vorspeise: 'vorspeise',
-    Salat: 'salat',
-};
-
-function transformRecipe(data: ImportedRecipe) {
-    // Build ingredient refs for mention resolution:
-    // AI uses "ingredient-0" etc., we map to "imported_0" which is the client-side ID
-    const ingredientRefs = data.ingredients.map((ing, idx) => ({
-        id: `imported_${idx}`,
-        name: ing.name,
-    }));
-
-    const rawNodes = data.flowNodes.map((node) => ({
-        id: node.id,
-        type: node.type,
-        label: node.label,
-        description: node.description,
-        duration: node.duration ?? undefined,
-        ingredientIds: node.ingredientIds,
-    }));
-
-    const resolvedNodes = resolveIngredientMentions(rawNodes, ingredientRefs);
-
-    return {
-        title: data.title,
-        description: data.description,
-        servings: data.servings,
-        prepTime: data.prepTime,
-        cookTime: data.cookTime,
-        difficulty: DIFFICULTY_MAP[data.difficulty] ?? 'MEDIUM',
-        categoryIds: [CATEGORY_MAP[data.category] ?? 'hauptgericht'],
-        tags: data.tags,
-        ingredients: data.ingredients.map((ing) => ({
-            name: ing.name,
-            amount: ing.amount != null ? String(ing.amount) : '',
-            unit: ing.unit ?? 'Stück',
-            notes: ing.notes ?? '',
-            isOptional: false,
-        })),
-        flowNodes: resolvedNodes,
-        flowEdges: data.flowEdges.map((edge) => ({
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
-        })),
-    };
-}
 
 export async function POST(request: NextRequest) {
     const session = await getServerAuthSession('api/ai/import-stream');
@@ -180,7 +117,7 @@ export async function POST(request: NextRequest) {
                         .catch((err: unknown) => console.error('ImportRun log failed:', err));
                 }
 
-                send({ type: 'done', data: transformRecipe(result.data) });
+                send({ type: 'done', data: transformImportedRecipe(result.data) });
             } catch (err) {
                 send({
                     type: 'error',

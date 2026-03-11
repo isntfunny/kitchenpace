@@ -17,7 +17,6 @@ import { SmartImage } from '../atoms/SmartImage';
 import { HeaderAuth } from './HeaderAuth';
 import { MenuSection, type NavLinkItem as MenuNavLinkItem } from './HeaderMenuPanel';
 import { RecipeTabs } from './RecipeTabs';
-import { ThemeToggle } from './ThemeToggle';
 
 type GeneralNavLinkItem = MenuNavLinkItem & { authOnly?: boolean };
 
@@ -31,7 +30,7 @@ const GENERAL_NAV_LINKS: GeneralNavLinkItem[] = [
         icon: LayoutGrid,
     },
     {
-        label: 'Rezept speichern',
+        label: 'Rezept erstellen',
         description: 'Neue Idee festhalten',
         href: '/recipe/create',
         icon: Plus,
@@ -200,32 +199,6 @@ function HeaderNavigationMenu({
                                 <MenuSection title="Schnelle Filter" items={QUICK_FILTERS} />
                             </div>
                         </div>
-                        <section>
-                            <div
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    gap: '2',
-                                    padding: '3',
-                                    borderRadius: 'xl',
-                                    border: '1px solid',
-                                    borderColor: 'border.muted',
-                                    background: 'surface',
-                                })}
-                            >
-                                <p
-                                    className={css({
-                                        fontSize: 'sm',
-                                        color: 'text.muted',
-                                        margin: 0,
-                                    })}
-                                >
-                                    Darstellung
-                                </p>
-                                <ThemeToggle />
-                            </div>
-                        </section>
                     </div>
                 </DropdownMenu.Content>
             </DropdownMenu.Portal>
@@ -249,7 +222,6 @@ export function Header() {
                 position: 'sticky',
                 top: 0,
                 zIndex: 20,
-                overflow: 'hidden',
                 boxShadow: {
                     base: '0 4px 30px rgba(0,0,0,0.15)',
                     _dark: '0 4px 30px rgba(0,0,0,0.4)',
@@ -262,49 +234,59 @@ export function Header() {
                 backdropFilter: 'blur(8px)',
             }}
         >
-            {/* Animated floating background elements */}
-            <motion.div
+            {/* Animated floating background elements — clipped to header bounds */}
+            <div
                 className={css({
                     position: 'absolute',
-                    top: '-20px',
-                    right: '10%',
-                    opacity: 0.08,
+                    inset: 0,
+                    overflow: 'hidden',
                     pointerEvents: 'none',
                     zIndex: 0,
                 })}
-                animate={{ y: [0, -20, 0], rotate: [0, 3, 0] }}
-                transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
             >
-                <Icon1 size={140} color={PALETTE.orange} />
-            </motion.div>
-            <motion.div
-                className={css({
-                    position: 'absolute',
-                    top: '50%',
-                    left: '-30px',
-                    opacity: 0.07,
-                    pointerEvents: 'none',
-                    zIndex: 0,
-                })}
-                animate={{ y: [0, 18, 0], rotate: [0, -4, 0] }}
-                transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-            >
-                <Icon2 size={120} color={PALETTE.orange} />
-            </motion.div>
-            <motion.div
-                className={css({
-                    position: 'absolute',
-                    bottom: '-25px',
-                    right: '20%',
-                    opacity: 0.05,
-                    pointerEvents: 'none',
-                    zIndex: 0,
-                })}
-                animate={{ y: [0, 20, 0], rotate: [0, 2, 0] }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-            >
-                <Icon3 size={160} color={PALETTE.gold} />
-            </motion.div>
+                <motion.div
+                    className={css({
+                        position: 'absolute',
+                        top: '-20px',
+                        right: '10%',
+                        opacity: 0.08,
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                    })}
+                    animate={{ y: [0, -20, 0], rotate: [0, 3, 0] }}
+                    transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                    <Icon1 size={140} color={PALETTE.orange} />
+                </motion.div>
+                <motion.div
+                    className={css({
+                        position: 'absolute',
+                        top: '50%',
+                        left: '-30px',
+                        opacity: 0.07,
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                    })}
+                    animate={{ y: [0, 18, 0], rotate: [0, -4, 0] }}
+                    transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                    <Icon2 size={120} color={PALETTE.orange} />
+                </motion.div>
+                <motion.div
+                    className={css({
+                        position: 'absolute',
+                        bottom: '-25px',
+                        right: '20%',
+                        opacity: 0.05,
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                    })}
+                    animate={{ y: [0, 20, 0], rotate: [0, 2, 0] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                    <Icon3 size={160} color={PALETTE.gold} />
+                </motion.div>
+            </div>
             <div
                 className={css({
                     position: 'relative',
@@ -364,6 +346,33 @@ export function Header() {
                             isAdmin={isAdmin}
                             isModerator={isModerator}
                         />
+                        {isAuthenticated && (
+                            <Link
+                                href="/recipe/create"
+                                className={css({
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '1.5',
+                                    px: '3.5',
+                                    py: '2',
+                                    borderRadius: 'full',
+                                    fontSize: 'sm',
+                                    fontWeight: '600',
+                                    fontFamily: 'body',
+                                    color: 'white',
+                                    bg: 'primary',
+                                    textDecoration: 'none',
+                                    transition: 'all 150ms ease',
+                                    _hover: {
+                                        opacity: 0.9,
+                                        transform: 'translateY(-1px)',
+                                    },
+                                })}
+                            >
+                                <Plus size={15} />
+                                Erstellen
+                            </Link>
+                        )}
                         <HeaderAuth />
                     </div>
                 </div>

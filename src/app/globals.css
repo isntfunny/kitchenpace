@@ -102,3 +102,12 @@
 ::-webkit-scrollbar-corner {
     background: transparent;
 }
+
+/* ── Chatwoot chat bubble — mobile repositioning ──────────────────────── */
+/* Push the widget above the mobile browser navigation bar */
+@media (max-width: 768px) {
+    .woot-widget-holder,
+    .woot--bubble-holder {
+        bottom: 72px !important;
+    }
+}

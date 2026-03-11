@@ -124,7 +124,7 @@ export function IngredientManager({
 
                 {/* Dropdown: search results + add-new option */}
                 {showDropdown && (searchResults.length > 0 || showAddNew) && (
-                    <div className={dropdownClass}>
+                    <div className={dropdownClass} onMouseDown={(e) => e.preventDefault()}>
                         {searchResults.map((ing) => (
                             <button
                                 key={ing.id}

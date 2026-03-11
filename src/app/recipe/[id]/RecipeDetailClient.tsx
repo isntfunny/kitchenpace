@@ -390,47 +390,50 @@ export function RecipeDetailClient({
                         justifyContent: 'center',
                         gap: '3',
                         px: '4',
-                        py: '2.5',
+                        py: '3',
                         backgroundColor: {
-                            base: 'rgba(224,123,83,0.1)',
-                            _dark: 'rgba(224,123,83,0.15)',
+                            base: 'rgba(224,123,83,0.15)',
+                            _dark: 'rgba(224,123,83,0.2)',
                         },
                         borderBottom: {
-                            base: '1px solid rgba(224,123,83,0.25)',
-                            _dark: '1px solid rgba(224,123,83,0.3)',
+                            base: '2px solid rgba(224,123,83,0.4)',
+                            _dark: '2px solid rgba(224,123,83,0.45)',
                         },
                         fontSize: 'sm',
                         color: 'brand.primary',
-                        fontWeight: '500',
+                        fontWeight: '600',
                     })}
                 >
                     <span
                         className={css({
-                            display: 'inline-block',
-                            px: '2',
-                            py: '0.5',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            px: '2.5',
+                            py: '1',
                             borderRadius: 'full',
                             fontSize: 'xs',
-                            fontWeight: '700',
+                            fontWeight: '800',
                             textTransform: 'uppercase',
-                            letterSpacing: '0.06em',
+                            letterSpacing: '0.08em',
                             backgroundColor: 'brand.primary',
                             color: 'white',
+                            flexShrink: '0',
                         })}
                     >
                         Entwurf
                     </span>
-                    Dieses Rezept ist noch nicht veröffentlicht und nur für dich sichtbar.
+                    Dieses Rezept ist noch nicht veröffentlicht — nur du kannst es sehen.
                     <a
                         href={`/recipe/${recipe.id}/edit`}
                         className={css({
-                            fontWeight: '600',
+                            fontWeight: '700',
                             textDecoration: 'underline',
                             textUnderlineOffset: '2px',
+                            flexShrink: '0',
                             _hover: { opacity: '0.75' },
                         })}
                     >
-                        Bearbeiten
+                        Jetzt bearbeiten →
                     </a>
                 </div>
             )}
@@ -884,6 +887,15 @@ export function RecipeDetailClient({
                                             label: 'Kochen',
                                             value: `${recipe.cookTime} Min.`,
                                         },
+                                        ...(recipe.calories
+                                            ? [
+                                                  {
+                                                      icon: <Flame size={16} color="#f39c12" />,
+                                                      label: 'Kalorien',
+                                                      value: `${recipe.calories} kcal`,
+                                                  },
+                                              ]
+                                            : []),
                                     ].map(({ icon, label, value }) => (
                                         <div
                                             key={label}
@@ -1088,8 +1100,8 @@ export function RecipeDetailClient({
                                                         })}
                                                     >
                                                         {favoriteState.isFavorite
-                                                            ? 'Favorit'
-                                                            : 'Speichern'}
+                                                            ? 'Favorisiert'
+                                                            : 'Favorisieren'}
                                                     </span>
                                                     <span
                                                         className={css({
@@ -1151,8 +1163,8 @@ export function RecipeDetailClient({
                                 })}
                             >
                                 <Button type="button" variant="ghost" onClick={handlePrint}>
-                                    <Printer size={15} />
-                                    <span className={css({ fontSize: 'sm' })}>Drucken</span>
+                                    <Printer size={16} />
+                                    Drucken
                                 </Button>
                                 <ShareButton
                                     title={recipe.title}

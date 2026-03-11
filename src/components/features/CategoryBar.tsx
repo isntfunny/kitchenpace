@@ -79,8 +79,11 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                 _hover: {
                                     borderColor: 'var(--cat-color)',
                                     transform: 'translateY(-2px)',
+                                    bg: 'color-mix(in srgb, var(--cat-color) 10%, {colors.surface})',
                                     boxShadow:
                                         '0 8px 24px color-mix(in srgb, var(--cat-color) 15%, transparent)',
+                                    '& [data-cat-name]': { color: 'var(--cat-color)' },
+                                    '& [data-cat-count]': { color: 'text' },
                                 },
                             })}
                             style={{ '--cat-color': color } as React.CSSProperties}
@@ -103,6 +106,7 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                 <DynamicIcon name={cat.icon} size={22} />
                             </div>
                             <span
+                                data-cat-name
                                 className={css({
                                     fontSize: { base: '0.75rem', md: '0.8rem' },
                                     fontWeight: '600',
@@ -110,18 +114,22 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                     whiteSpace: 'nowrap',
                                     textAlign: 'center',
                                     lineClamp: '1',
+                                    transition: 'color 200ms ease',
                                 })}
                             >
                                 {cat.name}
                             </span>
                             <span
+                                data-cat-count
                                 className={css({
-                                    fontSize: { base: '0.6rem', md: '0.65rem' },
+                                    fontSize: { base: '0.78rem', md: '0.82rem' },
+                                    fontWeight: '500',
                                     color: 'text-muted',
                                     whiteSpace: 'nowrap',
+                                    transition: 'color 200ms ease',
                                 })}
                             >
-                                {cat.recipeCount}
+                                {cat.recipeCount} Rezepte
                             </span>
                         </Link>
                     );

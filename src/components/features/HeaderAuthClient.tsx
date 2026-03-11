@@ -10,6 +10,8 @@ import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';
 
+import { ThemeToggle } from './ThemeToggle';
+
 interface HeaderAuthClientProps {
     isAuthenticated: boolean;
     profile: {
@@ -150,6 +152,27 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                                 <span>Einstellungen</span>
                             </Link>
                         </DropdownMenu.Item>
+
+                        <div
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                px: '3',
+                                py: '2',
+                                borderRadius: 'lg',
+                            })}
+                        >
+                            <span
+                                className={css({
+                                    fontSize: 'sm',
+                                    color: 'text.muted',
+                                })}
+                            >
+                                Darstellung
+                            </span>
+                            <ThemeToggle />
+                        </div>
 
                         <DropdownMenu.Separator
                             className={css({

@@ -274,8 +274,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (totalRecipes > 0) {
         tips.push({
             icon: 'book',
-            title: 'Rezepte gesamt',
-            content: `${totalRecipes} Rezepte warten auf dich`,
+            title: `${totalRecipes} Rezepte`,
+            content: 'Jedes davon wartet darauf, von dir entdeckt zu werden.',
             iconBg: TIP_ACCENTS[0],
         });
     }
@@ -283,8 +283,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (totalUsers > 0) {
         tips.push({
             icon: 'users',
-            title: 'Küchen-Enthusiasten',
-            content: `${totalUsers} aktive Köche in der Community`,
+            title: `${totalUsers} Köche`,
+            content: 'Eine wachsende Community voller Küchenbegeisterter.',
             iconBg: TIP_ACCENTS[1],
         });
     }
@@ -292,8 +292,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (totalRatings > 0) {
         tips.push({
             icon: 'star',
-            title: 'Bewertungen',
-            content: `${totalRatings} Rezept-Bewertungen abgegeben`,
+            title: `${totalRatings} Bewertungen`,
+            content: 'So viel ehrliches Feedback steckt in unserer Community.',
             iconBg: TIP_ACCENTS[2],
         });
     }
@@ -301,8 +301,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (totalFavorites > 0) {
         tips.push({
             icon: 'heart',
-            title: 'Favoriten',
-            content: `${totalFavorites} Rezepte als Favoriten gespeichert`,
+            title: `${totalFavorites}× Favorisiert`,
+            content: 'So oft wurde ein Rezept mit einem Herz gerettet.',
             iconBg: TIP_ACCENTS[3],
         });
     }
@@ -310,8 +310,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (topCategory) {
         tips.push({
             icon: 'tag',
-            title: 'Beliebteste Kategorie',
-            content: `${topCategory.name} · ${topCategoryCount} Rezepte`,
+            title: `#1: ${topCategory.name}`,
+            content: `Mit ${topCategoryCount} Rezepten die beliebteste Kategorie.`,
             iconBg: TIP_ACCENTS[4],
         });
     }
@@ -319,8 +319,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (topTag) {
         tips.push({
             icon: 'flame',
-            title: 'Trend-Tag',
-            content: `${topTag.name} · ${topTagGroup?._count?.tagId ?? 0} Erwähnungen`,
+            title: `#${topTag.name} liegt im Trend`,
+            content: `${topTagGroup?._count?.tagId ?? 0} Rezepte tragen dieses Tag.`,
             iconBg: TIP_ACCENTS[5],
         });
     }
@@ -328,8 +328,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (fastRecipe) {
         tips.push({
             icon: 'clock',
-            title: 'Schnellstes Rezept',
-            content: `${fastRecipe.title} in nur ${fastRecipe.totalTime ?? 0} Min.`,
+            title: 'Blitznell: ' + fastRecipe.title,
+            content: `Fertig in nur ${fastRecipe.totalTime ?? 0} Minuten — probier's aus!`,
             iconBg: TIP_ACCENTS[0],
         });
     }
@@ -337,8 +337,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (slowRecipe && slowRecipe.totalTime && slowRecipe.totalTime > 30) {
         tips.push({
             icon: 'clock',
-            title: 'Für Geduldige',
-            content: `${slowRecipe.title} · ${slowRecipe.totalTime} Min.`,
+            title: 'Für Genießer',
+            content: `${slowRecipe.title} — ${slowRecipe.totalTime} Min. pure Kochkunst.`,
             iconBg: TIP_ACCENTS[1],
         });
     }
@@ -346,8 +346,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (topRatedRecipe && topRatedRecipe.ratingCount && topRatedRecipe.ratingCount > 0) {
         tips.push({
             icon: 'star',
-            title: 'Bestbewertet',
-            content: `${topRatedRecipe.title} · ${topRatedRecipe.rating?.toFixed(1)} ★`,
+            title: `${topRatedRecipe.rating?.toFixed(1)} ★ — das Beste`,
+            content: `"${topRatedRecipe.title}" ist der Community-Liebling.`,
             iconBg: TIP_ACCENTS[2],
         });
     }
@@ -355,8 +355,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (avgTime > 0) {
         tips.push({
             icon: 'chart',
-            title: 'Durchschnittszeit',
-            content: `Rezepte brauchen im Schnitt ${avgTime} Min.`,
+            title: `Ø ${avgTime} Min. pro Rezept`,
+            content: 'So lange stehen unsere Köche durchschnittlich am Herd.',
             iconBg: TIP_ACCENTS[3],
         });
     }
@@ -364,8 +364,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (topProfile && topProfile.recipeCount > 0) {
         tips.push({
             icon: 'users',
-            title: 'Fleißigster Koch',
-            content: `${topProfile.nickname ?? 'Jemand'} mit ${topProfile.recipeCount} Rezepten`,
+            title: `${topProfile.nickname ?? 'Jemand'} kocht am meisten`,
+            content: `${topProfile.recipeCount} Rezepte — ein echter Küchen-Profi!`,
             iconBg: TIP_ACCENTS[4],
         });
     }
@@ -373,8 +373,8 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
     if (totalCooks > 0) {
         tips.push({
             icon: 'flame',
-            title: 'Zubereitet wurde',
-            content: `${totalCooks} Mal wurden Rezepte nachgemacht`,
+            title: `${totalCooks}× nachgekocht`,
+            content: 'So oft wurde ein Rezept aus dieser Community tatsächlich gemacht.',
             iconBg: TIP_ACCENTS[5],
         });
     }

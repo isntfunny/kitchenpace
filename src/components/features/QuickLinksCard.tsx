@@ -15,12 +15,14 @@ const links = [
     { href: '/auth/password/edit', label: 'Passwort ändern', IconEl: Lock },
 ];
 
-export function QuickLinksCard({ userSlug }: { userSlug: string }) {
+export function QuickLinksCard({ userSlug }: { userSlug?: string }) {
     const pathname = usePathname();
 
     const allLinks = [
         ...links,
-        { href: `/user/${userSlug}`, label: 'Öffentliches Profil', IconEl: User },
+        ...(userSlug
+            ? [{ href: `/user/${userSlug}`, label: 'Öffentliches Profil', IconEl: User }]
+            : []),
     ];
 
     return (
@@ -65,8 +67,8 @@ export function QuickLinksCard({ userSlug }: { userSlug: string }) {
                 })}
                 <div
                     className={css({
-                        pt: '1',
-                        mt: '1',
+                        pt: '3',
+                        mt: '5',
                         borderTop: '1px solid',
                         borderColor: 'border',
                     })}

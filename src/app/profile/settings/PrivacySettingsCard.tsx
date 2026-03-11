@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
+import { useBeforeUnload } from '@app/lib/hooks/useBeforeUnload';
 import { css } from 'styled-system/css';
 
 type SettingKey = 'ratingsPublic' | 'followsPublic' | 'favoritesPublic' | 'showInActivity';
@@ -51,10 +52,14 @@ export function PrivacySettingsCard({ profile }: PrivacySettingsCardProps) {
     const [settings, setSettings] = useState(profile);
     const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [isDirty, setIsDirty] = useState(false);
+
+    useBeforeUnload(isDirty);
 
     const toggleSetting = (key: SettingKey) => {
         setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
         setStatus('idle');
+        setIsDirty(true);
     };
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -74,6 +79,7 @@ export function PrivacySettingsCard({ profile }: PrivacySettingsCardProps) {
             }
 
             setStatus('success');
+            setIsDirty(false);
         } catch (error) {
             console.error('Privacy settings update failed', error);
             setStatus('error');
@@ -203,7 +209,11 @@ export function PrivacySettingsCard({ profile }: PrivacySettingsCardProps) {
             >
                 <Button type="submit" variant="primary" disabled={saving}>
                     <Save size={18} />
-                    {saving ? 'Speichern...' : 'Einstellungen speichern'}
+                    {saving
+                        ? 'Speichern...'
+                        : isDirty
+                          ? 'Änderungen speichern ●'
+                          : 'Einstellungen speichern'}
                 </Button>
 
                 {status === 'success' && (

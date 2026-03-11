@@ -58,6 +58,18 @@ export function RecipeStepsViewer({
     }, [castState, recipeSlug, sendMessage]);
     // ─────────────────────────────────────────────────────────────────────
 
+    // Lock body scroll when overlay is open
+    useEffect(() => {
+        if (viewMode === 'mobile' || viewMode === 'text') {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [viewMode]);
+
     // Detect mobile devices
     const [isMobileDevice, setIsMobileDevice] = useState(false);
     useEffect(() => {

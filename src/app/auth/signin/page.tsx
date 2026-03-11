@@ -84,7 +84,7 @@ function SignInForm() {
                 <h1 className={css({ fontSize: '2xl', fontWeight: '800', margin: 0 })}>
                     Willkommen zurück
                 </h1>
-                <p className={css({ color: 'foreground.muted', margin: 0, fontSize: 'sm' })}>
+                <p className={css({ color: 'text.muted', margin: 0, fontSize: 'sm' })}>
                     Melde dich an, um auf deine Rezepte zuzugreifen.
                 </p>
             </div>

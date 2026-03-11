@@ -7,9 +7,10 @@ import { css } from 'styled-system/css';
 interface RecipeMetaStatsProps {
     prepTime: number;
     cookTime: number;
+    calories?: number | null;
 }
 
-export function RecipeMetaStats({ prepTime, cookTime }: RecipeMetaStatsProps) {
+export function RecipeMetaStats({ prepTime, cookTime, calories }: RecipeMetaStatsProps) {
     const totalTime = prepTime + cookTime;
 
     const statStyle = css({
@@ -25,7 +26,7 @@ export function RecipeMetaStats({ prepTime, cookTime }: RecipeMetaStatsProps) {
     });
 
     const labelStyle = css({
-        fontSize: 'xs',
+        fontSize: 'sm',
         color: 'text-muted',
         fontFamily: 'body',
     });
@@ -33,7 +34,7 @@ export function RecipeMetaStats({ prepTime, cookTime }: RecipeMetaStatsProps) {
     const valueStyle = css({
         fontWeight: '700',
         fontFamily: 'heading',
-        fontSize: 'sm',
+        fontSize: 'md',
         whiteSpace: 'nowrap',
     });
 
@@ -60,6 +61,13 @@ export function RecipeMetaStats({ prepTime, cookTime }: RecipeMetaStatsProps) {
                 <span className={labelStyle}>Kochen</span>
                 <span className={valueStyle}>{cookTime} Min.</span>
             </div>
+            {calories != null && calories > 0 && (
+                <div className={statStyle}>
+                    <Flame size={20} color="#f39c12" />
+                    <span className={labelStyle}>Kalorien</span>
+                    <span className={valueStyle}>{calories} kcal</span>
+                </div>
+            )}
         </div>
     );
 }

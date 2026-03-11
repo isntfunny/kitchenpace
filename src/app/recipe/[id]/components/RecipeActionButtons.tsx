@@ -1,6 +1,6 @@
 'use client';
 
-import { Bookmark, ChefHat, CheckCircle, Heart, Printer } from 'lucide-react';
+import { ChefHat, CheckCircle, Heart, Printer } from 'lucide-react';
 
 import { Button } from '@app/components/atoms/Button';
 import { css } from 'styled-system/css';
@@ -17,6 +17,27 @@ interface RecipeActionButtonsProps {
     onPrint: () => void;
 }
 
+const activeButtonClass = css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '2',
+    px: '4',
+    py: '2',
+    fontSize: 'md',
+    fontWeight: '500',
+    fontFamily: 'body',
+    borderRadius: 'md',
+    cursor: 'pointer',
+    transition: 'all 150ms ease-in-out',
+    border: '2px solid',
+    borderColor: 'brand.primary',
+    color: 'brand.primary',
+    bg: { base: 'rgba(224,123,83,0.08)', _dark: 'rgba(224,123,83,0.15)' },
+    _hover: { bg: { base: 'rgba(224,123,83,0.14)', _dark: 'rgba(224,123,83,0.22)' } },
+    _disabled: { opacity: 0.5, cursor: 'not-allowed' },
+});
+
 export function RecipeActionButtons({
     isFavorite,
     favoriteCount,
@@ -30,79 +51,51 @@ export function RecipeActionButtons({
 }: RecipeActionButtonsProps) {
     return (
         <div className={css({ display: 'flex', gap: '3', flexWrap: 'wrap', alignItems: 'center' })}>
-            <Button
-                type="button"
-                variant={isFavorite ? 'secondary' : 'primary'}
-                onClick={onFavoriteToggle}
-                disabled={isFavoritePending}
-            >
-                {isFavorite ? (
-                    <span
-                        className={css({
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                        })}
-                    >
-                        <Heart size={16} />
-                        Favorit
-                    </span>
-                ) : (
-                    <span
-                        className={css({
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                        })}
-                    >
-                        <Bookmark size={16} />
-                        Speichern
-                    </span>
-                )}{' '}
-                · {favoriteCount}
-            </Button>
-            <Button
-                type="button"
-                variant={hasCooked ? 'secondary' : 'primary'}
-                onClick={onCookToggle}
-                disabled={isCookPending}
-            >
-                {hasCooked ? (
-                    <span
-                        className={css({
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                        })}
-                    >
-                        <CheckCircle size={16} />
-                        Zubereitet
-                    </span>
-                ) : (
-                    <span
-                        className={css({
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                        })}
-                    >
-                        <ChefHat size={16} />
-                        Zubereitet
-                    </span>
-                )}{' '}
-                · {cookCount}
-            </Button>
-            <Button type="button" variant="ghost" onClick={onPrint}>
-                <span
-                    className={css({
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                    })}
+            {isFavorite ? (
+                <button
+                    type="button"
+                    className={activeButtonClass}
+                    onClick={onFavoriteToggle}
+                    disabled={isFavoritePending}
                 >
-                    <Printer size={16} />
-                    Drucken
-                </span>
+                    <Heart size={16} fill="currentColor" />
+                    Favorit · {favoriteCount}
+                </button>
+            ) : (
+                <Button
+                    type="button"
+                    variant="primary"
+                    onClick={onFavoriteToggle}
+                    disabled={isFavoritePending}
+                >
+                    <Heart size={16} />
+                    Favorit · {favoriteCount}
+                </Button>
+            )}
+            {hasCooked ? (
+                <button
+                    type="button"
+                    className={activeButtonClass}
+                    onClick={onCookToggle}
+                    disabled={isCookPending}
+                >
+                    <CheckCircle size={16} />
+                    Zubereitet · {cookCount}
+                </button>
+            ) : (
+                <Button
+                    type="button"
+                    variant="primary"
+                    onClick={onCookToggle}
+                    disabled={isCookPending}
+                >
+                    <ChefHat size={16} />
+                    Zubereitet · {cookCount}
+                </Button>
+            )}
+            <Button type="button" variant="ghost" onClick={onPrint}>
+                <Printer size={16} />
+                Drucken
             </Button>
         </div>
     );

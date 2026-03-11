@@ -133,6 +133,7 @@ export interface UpdateRecipeInput {
     servings: number;
     prepTime: number;
     cookTime: number;
+    calories?: number;
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
     categoryIds: string[];
     tagIds?: string[];
@@ -188,6 +189,7 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
             prepTime: data.prepTime,
             cookTime: data.cookTime,
             totalTime: data.prepTime + data.cookTime,
+            calories: data.calories ?? null,
             difficulty: data.difficulty,
             status: recipeStatus as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED',
             publishedAt: isPublishing ? new Date() : undefined,
@@ -313,6 +315,7 @@ export interface CreateRecipeInput {
     servings: number;
     prepTime: number;
     cookTime: number;
+    calories?: number;
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
     categoryIds: string[]; // Changed from categoryId to categoryIds array
     tagIds?: string[];
@@ -372,6 +375,7 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             prepTime: data.prepTime,
             cookTime: data.cookTime,
             totalTime: data.prepTime + data.cookTime,
+            calories: data.calories ?? null,
             difficulty: data.difficulty,
             status: recipeStatus,
             publishedAt: isPublished ? new Date() : null,

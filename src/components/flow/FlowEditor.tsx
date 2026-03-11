@@ -341,7 +341,7 @@ function FlowEditorInner({
 
     const addNewNode = useCallback(
         (stepType: StepType, position?: { x: number; y: number }) => {
-            const config = getStepConfig(stepType);
+            const _config = getStepConfig(stepType);
             const newId = generateId();
             const currentNodes = getNodes() as RecipeFlowNode[];
             const currentEdges = getEdges();
@@ -350,7 +350,7 @@ function FlowEditorInner({
                 id: newId,
                 type: 'recipeStep',
                 position: position ?? { x: 0, y: 0 },
-                data: { stepType, label: `Neuer ${config.label}-Schritt`, description: '' },
+                data: { stepType, label: '', description: '' },
             };
 
             const nextNodes = [...currentNodes, newNode] as RecipeFlowNode[];
@@ -392,7 +392,7 @@ function FlowEditorInner({
 
     const handleAddNodeAfter = useCallback(
         (parentNodeId: string, stepType: StepType) => {
-            const config = getStepConfig(stepType);
+            const _config = getStepConfig(stepType);
             const newId = generateId();
             const currentNodes = getNodes() as RecipeFlowNode[];
             const currentEdges = getEdges();
@@ -401,7 +401,7 @@ function FlowEditorInner({
                 id: newId,
                 type: 'recipeStep',
                 position: { x: 0, y: 0 },
-                data: { stepType, label: `Neuer ${config.label}-Schritt`, description: '' },
+                data: { stepType, label: '', description: '' },
             };
 
             const nextNodes = [...currentNodes, newNode] as RecipeFlowNode[];
@@ -446,7 +446,7 @@ function FlowEditorInner({
 
     const handleAddNodeBefore = useCallback(
         (childNodeId: string, stepType: StepType) => {
-            const config = getStepConfig(stepType);
+            const _config = getStepConfig(stepType);
             const newId = generateId();
             const currentNodes = getNodes() as RecipeFlowNode[];
             const currentEdges = getEdges();
@@ -455,7 +455,7 @@ function FlowEditorInner({
                 id: newId,
                 type: 'recipeStep',
                 position: { x: 0, y: 0 },
-                data: { stepType, label: `Neuer ${config.label}-Schritt`, description: '' },
+                data: { stepType, label: '', description: '' },
             };
 
             const nextNodes = [...currentNodes, newNode] as RecipeFlowNode[];
@@ -559,7 +559,7 @@ function FlowEditorInner({
 
     const handleInsertOnEdge = useCallback(
         (edgeId: string, sourceId: string, targetId: string, stepType: StepType) => {
-            const config = getStepConfig(stepType);
+            const _config = getStepConfig(stepType);
             const newId = generateId();
             const currentNodes = getNodes() as RecipeFlowNode[];
             const currentEdges = getEdges();
@@ -568,7 +568,7 @@ function FlowEditorInner({
                 id: newId,
                 type: 'recipeStep',
                 position: { x: 0, y: 0 },
-                data: { stepType, label: `Neuer ${config.label}-Schritt`, description: '' },
+                data: { stepType, label: '', description: '' },
             };
 
             const nextNodes = [...currentNodes, newNode] as RecipeFlowNode[];
@@ -707,6 +707,7 @@ function FlowEditorInner({
                         minZoom={0.1}
                         maxZoom={2}
                         deleteKeyCode={['Backspace', 'Delete']}
+                        zoomOnScroll={false}
                         edgesReconnectable
                         defaultEdgeOptions={{
                             type: 'insertable',

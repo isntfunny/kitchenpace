@@ -9,7 +9,6 @@ import {
     getViewportForBounds,
     Handle,
     MarkerType,
-    PanOnScrollMode,
     Position,
     ReactFlow,
     ReactFlowProvider,
@@ -110,6 +109,7 @@ interface ViewerNodeData extends Record<string, unknown> {
     sNode: FlowNodeSerialized;
     completed: boolean;
     active: boolean;
+    isParallel: boolean;
     timerState: TimerState | undefined;
     onToggle: () => void;
     onTimerStart: () => void;
@@ -132,6 +132,7 @@ function ViewerNodeRenderer({ data }: NodeProps) {
                 node={d.sNode}
                 completed={d.completed}
                 active={d.active}
+                isParallel={d.isParallel}
                 timerState={d.timerState}
                 onToggle={d.onToggle}
                 onTimerStart={d.onTimerStart}
@@ -190,6 +191,17 @@ function DesktopViewInner({
 }: DesktopViewProps) {
     const dark = useIsDark();
 
+    // Compute which nodes are in a parallel group (share a fork parent)
+    const parallelNodeIds = useCallback(() => {
+        const parallel = new Set<string>();
+        for (const [, targets] of outgoing) {
+            if (targets.length > 1) {
+                for (const t of targets) parallel.add(t);
+            }
+        }
+        return parallel;
+    }, [outgoing])();
+
     const makeNodeData = useCallback(
         (node: FlowNodeSerialized): ViewerNodeData => ({
             sNode: node,
@@ -198,6 +210,7 @@ function DesktopViewInner({
                 !completed.has(node.id) &&
                 (outgoing.get(node.id)?.every((c) => completed.has(c)) === false ||
                     node.type === 'start'),
+            isParallel: parallelNodeIds.has(node.id),
             timerState: timers.get(node.id),
             onToggle: () => dispatch({ type: 'toggle', nodeId: node.id }),
             onTimerStart: () => dispatch({ type: 'timerStart', nodeId: node.id }),
@@ -206,7 +219,7 @@ function DesktopViewInner({
             onOpenDetail: () => onOpenDetail(node.id),
             ingredients,
         }),
-        [completed, timers, outgoing, dispatch, onOpenDetail, ingredients],
+        [completed, timers, outgoing, parallelNodeIds, dispatch, onOpenDetail, ingredients],
     );
 
     const buildRfEdges = useCallback(
@@ -259,7 +272,7 @@ function DesktopViewInner({
         (changes: NodeChange[]) => {
             setRfNodes((nds) => applyNodeChanges(changes, nds));
 
-            // After xyflow measures node dimensions, fit zoom to match container height
+            // After xyflow measures node dimensions, fit all nodes into view
             if (!hasFitRef.current) {
                 const measured = getNodes();
                 if (measured.length > 0 && measured[0].measured?.width) {
@@ -268,27 +281,33 @@ function DesktopViewInner({
                         const allNodes = getNodes();
                         if (allNodes.length === 0 || !containerRef.current) return;
 
+                        let minX = Infinity,
+                            maxX = -Infinity;
                         let minY = Infinity,
                             maxY = -Infinity;
                         for (const n of allNodes) {
+                            const w = n.measured?.width ?? 220;
                             const h = n.measured?.height ?? 200;
+                            minX = Math.min(minX, n.position.x);
+                            maxX = Math.max(maxX, n.position.x + w);
                             minY = Math.min(minY, n.position.y);
                             maxY = Math.max(maxY, n.position.y + h);
                         }
 
-                        const contentHeight = maxY - minY;
+                        const contentW = maxX - minX;
+                        const contentH = maxY - minY;
+                        const containerWidth = containerRef.current.clientWidth;
                         const containerHeight = containerRef.current.clientHeight;
-                        const paddingPx = 20; // small margin top+bottom in screen pixels
-                        const zoom = Math.min(
-                            (containerHeight - paddingPx * 2) / contentHeight,
-                            3.0,
-                        );
+                        const padding = 32;
 
-                        // Center vertically, start near left edge
-                        const centerY = (minY + maxY) / 2;
-                        const viewportY = containerHeight / 2 - centerY * zoom;
+                        const zoomX = (containerWidth - padding * 2) / contentW;
+                        const zoomY = (containerHeight - padding * 2) / contentH;
+                        const zoom = Math.min(zoomX, zoomY, 2.0);
 
-                        setViewport({ x: 20, y: viewportY, zoom }, { duration: 300 });
+                        const viewportX = containerWidth / 2 - ((minX + maxX) / 2) * zoom;
+                        const viewportY = containerHeight / 2 - ((minY + maxY) / 2) * zoom;
+
+                        setViewport({ x: viewportX, y: viewportY, zoom }, { duration: 300 });
                     });
                 }
             }
@@ -331,11 +350,12 @@ function DesktopViewInner({
                 nodesDraggable={false}
                 nodesConnectable={false}
                 elementsSelectable={false}
-                panOnDrag={[1, 2]}
-                panOnScroll
-                panOnScrollMode={PanOnScrollMode.Horizontal}
+                panOnDrag
                 zoomOnScroll={false}
                 zoomOnPinch
+                preventScrolling={false}
+                minZoom={0.1}
+                maxZoom={2}
                 proOptions={{ hideAttribution: true }}
             >
                 <Background

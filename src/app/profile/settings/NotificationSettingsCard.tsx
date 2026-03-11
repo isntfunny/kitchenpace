@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { PushSubscriptionToggle } from '@app/components/notifications/PushSubscriptionToggle';
+import { useBeforeUnload } from '@app/lib/hooks/useBeforeUnload';
 import { css } from 'styled-system/css';
 
 type NotificationSettingKey =
@@ -95,10 +96,14 @@ export function NotificationSettingsCard({ profile }: NotificationSettingsCardPr
     const [settings, setSettings] = useState(profile);
     const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [isDirty, setIsDirty] = useState(false);
+
+    useBeforeUnload(isDirty);
 
     const toggleSetting = (key: NotificationSettingKey) => {
         setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
         setStatus('idle');
+        setIsDirty(true);
     };
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -118,6 +123,7 @@ export function NotificationSettingsCard({ profile }: NotificationSettingsCardPr
             }
 
             setStatus('success');
+            setIsDirty(false);
         } catch (error) {
             console.error('Notification settings update failed', error);
             setStatus('error');
@@ -250,7 +256,11 @@ export function NotificationSettingsCard({ profile }: NotificationSettingsCardPr
             >
                 <Button type="submit" variant="primary" disabled={saving}>
                     <Save size={18} />
-                    {saving ? 'Speichern...' : 'Benachrichtigungen speichern'}
+                    {saving
+                        ? 'Speichern...'
+                        : isDirty
+                          ? 'Änderungen speichern ●'
+                          : 'Benachrichtigungen speichern'}
                 </Button>
 
                 {status === 'success' && (

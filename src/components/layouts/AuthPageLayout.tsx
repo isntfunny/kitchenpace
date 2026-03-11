@@ -144,7 +144,7 @@ export function AuthPageLayout({
                                         letterSpacing: 'wide',
                                         fontSize: 'xs',
                                         fontWeight: '700',
-                                        color: 'rgba(255,246,236,0.7)',
+                                        color: 'rgba(255,246,236,0.85)',
                                     })}
                                 >
                                     {heroCaption}
@@ -226,7 +226,7 @@ export function AuthPageLayout({
                                                 <p
                                                     className={css({
                                                         fontSize: 'xs',
-                                                        color: 'rgba(255,246,236,0.75)',
+                                                        color: 'rgba(255,246,236,0.88)',
                                                         margin: 0,
                                                         lineHeight: '1.5',
                                                     })}

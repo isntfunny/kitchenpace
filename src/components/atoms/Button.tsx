@@ -23,8 +23,9 @@ export function Button({ variant = 'primary', size = 'md', children, ...props }:
             bg: 'secondary',
             color: 'white',
             _dark: {
-                bg: 'rgba(255,255,255,0.14)',
+                bg: 'rgba(255,255,255,0.12)',
                 color: 'foreground',
+                border: '1px solid rgba(255,255,255,0.18)',
             },
             _hover: {
                 opacity: 0.9,

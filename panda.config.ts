@@ -188,6 +188,12 @@ export default defineConfig({
                             _dark: '{colors.brand.text-muted-dark}',
                         },
                     },
+                    'foreground.muted': {
+                        value: {
+                            base: '{colors.brand.text-muted}',
+                            _dark: '{colors.brand.text-muted-dark}',
+                        },
+                    },
                     text: {
                         value: {
                             base: '{colors.brand.text}',

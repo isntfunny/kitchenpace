@@ -59,7 +59,7 @@ ANFORDERUNGEN:
 1. **UUID**: Generiere eine gültige UUID v4 für das Rezept (Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx)
 2. **Titel**: Extrahiere den vollständigen Rezepttitel (auf Deutsch)
 3. **Beschreibung**: Erstelle eine prägnante Beschreibung (1-3 Sätze, auf Deutsch)
-4. **Kategorie**: Wähle die passendste aus: "Hauptgericht", "Beilage", "Backen", "Dessert", "Frühstück", "Getränk", "Vorspeise", "Salat"
+4. **Kategorien** (PFLICHTFELD): Wähle 1–3 passende Kategorien aus: "Hauptgericht", "Beilage", "Backen", "Dessert", "Frühstück", "Getränk", "Vorspeise", "Salat". Mindestens eine Kategorie ist IMMER Pflicht.
 5. **Tags**: Generiere 3-10 relevante Tags auf Deutsch (z.B. "Italienisch", "Vegetarisch", "Schnell")
 6. **Zeitangaben**:
    - prepTime: Vorbereitungszeit in Minuten (Schneiden, Wiegen, etc.)

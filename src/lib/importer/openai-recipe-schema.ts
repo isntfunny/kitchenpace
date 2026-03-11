@@ -97,7 +97,11 @@ export const ImportedRecipeSchema = z.object({
     id: z.string().uuid().describe('UUID des Rezepts'),
     title: z.string().min(1).max(200).describe('Titel des Rezepts'),
     description: z.string().min(10).describe('Beschreibung/Zubereitungshinweis'),
-    category: z.enum(CATEGORIES).describe('Kategorie des Rezepts'),
+    categories: z
+        .array(z.enum(CATEGORIES))
+        .min(1)
+        .max(3)
+        .describe('Kategorien des Rezepts (mindestens 1, maximal 3)'),
     tags: z
         .array(z.string().min(1))
         .min(1)
@@ -155,10 +159,14 @@ export function getOpenAIResponseFormat() {
                         type: 'string',
                         description: 'Beschreibung/Zubereitungshinweis',
                     },
-                    category: {
-                        type: 'string',
-                        enum: [...CATEGORIES],
-                        description: 'Kategorie des Rezepts',
+                    categories: {
+                        type: 'array',
+                        items: {
+                            type: 'string',
+                            enum: [...CATEGORIES],
+                        },
+                        description:
+                            'Kategorien des Rezepts (mindestens 1, maximal 3). PFLICHTFELD — muss immer mindestens eine Kategorie enthalten.',
                     },
                     tags: {
                         type: 'array',
@@ -271,7 +279,7 @@ export function getOpenAIResponseFormat() {
                     'id',
                     'title',
                     'description',
-                    'category',
+                    'categories',
                     'tags',
                     'prepTime',
                     'cookTime',

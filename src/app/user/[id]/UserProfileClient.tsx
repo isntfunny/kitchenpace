@@ -298,12 +298,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
     };
 
     return (
-        <div
-            id="user-profile-page"
-            className={css({
-                minH: '100vh',
-            })}
-        >
+        <div id="user-profile-page">
             {/* ── Hero Banner ── */}
             <div
                 className={css({
@@ -490,9 +485,10 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     <span
                                         className={css({
                                             fontSize: 'xs',
-                                            color: 'rgba(255,255,255,0.7)',
+                                            color: 'rgba(255,255,255,0.9)',
                                             textTransform: 'uppercase',
                                             letterSpacing: '0.05em',
+                                            fontWeight: '500',
                                         })}
                                     >
                                         Rezepte
@@ -526,9 +522,10 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         <span
                                             className={css({
                                                 fontSize: 'xs',
-                                                color: 'rgba(255,255,255,0.7)',
+                                                color: 'rgba(255,255,255,0.9)',
                                                 textTransform: 'uppercase',
                                                 letterSpacing: '0.05em',
+                                                fontWeight: '500',
                                             })}
                                         >
                                             Follower
@@ -566,9 +563,10 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                         <span
                                             className={css({
                                                 fontSize: 'xs',
-                                                color: 'rgba(255,255,255,0.7)',
+                                                color: 'rgba(255,255,255,0.9)',
                                                 textTransform: 'uppercase',
                                                 letterSpacing: '0.05em',
+                                                fontWeight: '500',
                                             })}
                                         >
                                             Ø Rating
@@ -633,7 +631,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     <ReportButton
                                         contentType="user"
                                         contentId={user.id}
-                                        variant="icon"
+                                        variant="icon-overlay"
                                     />
                                 )}
                             </div>
@@ -682,11 +680,20 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 <span
                                     className={css({
                                         fontSize: 'sm',
-                                        color: 'text.muted',
-                                        bg: { base: 'gray.100', _dark: 'rgba(255,255,255,0.06)' },
+                                        color: 'brand.primary',
+                                        bg: {
+                                            base: 'rgba(224,123,83,0.1)',
+                                            _dark: 'rgba(224,123,83,0.15)',
+                                        },
+                                        border: '1px solid',
+                                        borderColor: {
+                                            base: 'rgba(224,123,83,0.25)',
+                                            _dark: 'rgba(224,123,83,0.3)',
+                                        },
                                         px: '3',
                                         py: '1',
                                         borderRadius: 'full',
+                                        fontWeight: '500',
                                     })}
                                 >
                                     {user.recipeCount} insgesamt

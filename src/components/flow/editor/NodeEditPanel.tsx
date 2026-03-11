@@ -58,6 +58,37 @@ export function NodeEditPanel({
     const Icon = currentConfig.icon;
     const accent = currentConfig.accent;
 
+    // Keep latest values + callbacks in refs so the unmount cleanup can read them
+    const onSaveRef = useRef(onSave);
+    useEffect(() => {
+        onSaveRef.current = onSave;
+    });
+    const latestDataRef = useRef({ stepType, label, description, duration, photoKey });
+    useEffect(() => {
+        latestDataRef.current = { stepType, label, description, duration, photoKey };
+    });
+
+    // Flags for the unmount-save guard
+    const discardRef = useRef(false); // "Abbrechen" sets this → skip save
+    const savedRef = useRef(false); // explicit save already done → skip double-save
+
+    // Auto-save on unmount (handles: click on canvas, switch to another node, etc.)
+    useEffect(() => {
+        return () => {
+            if (!discardRef.current && !savedRef.current) {
+                const d = latestDataRef.current;
+                onSaveRef.current({
+                    stepType: d.stepType,
+                    label: d.label,
+                    description: d.description,
+                    duration: d.duration,
+                    ingredientIds: extractIngredientIds(d.description),
+                    photoKey: d.photoKey,
+                });
+            }
+        };
+    }, []);
+
     const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -86,6 +117,7 @@ export function NodeEditPanel({
     }, []);
 
     const handleSave = useCallback(() => {
+        savedRef.current = true;
         onSave({
             stepType,
             label,
@@ -95,6 +127,11 @@ export function NodeEditPanel({
             photoKey,
         });
     }, [stepType, label, description, duration, photoKey, onSave]);
+
+    const handleDiscard = useCallback(() => {
+        discardRef.current = true;
+        onClose();
+    }, [onClose]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -222,7 +259,7 @@ export function NodeEditPanel({
                             style={{ border: `1px solid ${PALETTE.orange}40` }}
                             value={label}
                             onChange={(e) => setLabel(e.target.value)}
-                            placeholder="z.B. Pasta kochen"
+                            placeholder={`Neuer ${currentConfig.label}-Schritt`}
                         />
                     </div>
 
@@ -331,15 +368,24 @@ export function NodeEditPanel({
                     ) : (
                         <div />
                     )}
-                    <button
-                        type="button"
-                        className={saveButtonClass}
-                        style={{ backgroundColor: accent, boxShadow: `0 2px 10px ${accent}50` }}
-                        onClick={handleSave}
-                    >
-                        <Check style={{ width: 15, height: 15 }} />
-                        Fertig
-                    </button>
+                    <div className={css({ display: 'flex', gap: '2', alignItems: 'center' })}>
+                        <button
+                            type="button"
+                            className={discardButtonClass}
+                            onClick={handleDiscard}
+                        >
+                            Abbrechen
+                        </button>
+                        <button
+                            type="button"
+                            className={saveButtonClass}
+                            style={{ backgroundColor: accent, boxShadow: `0 2px 10px ${accent}50` }}
+                            onClick={handleSave}
+                        >
+                            <Check style={{ width: 15, height: 15 }} />
+                            Fertig
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -603,6 +649,25 @@ const deleteButtonClass = css({
     _hover: {
         color: 'red.500',
         backgroundColor: { base: 'rgba(239,68,68,0.08)', _dark: 'rgba(239,68,68,0.15)' },
+    },
+});
+
+const discardButtonClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    px: '4',
+    py: '2.5',
+    border: { base: '1px solid rgba(0,0,0,0.1)', _dark: '1px solid rgba(255,255,255,0.1)' },
+    borderRadius: 'xl',
+    backgroundColor: 'transparent',
+    color: 'text.muted',
+    fontSize: 'sm',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    _hover: {
+        backgroundColor: { base: 'rgba(0,0,0,0.05)', _dark: 'rgba(255,255,255,0.08)' },
+        color: 'text',
     },
 });
 

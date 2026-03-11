@@ -46,7 +46,10 @@
         "db:fresh": "npm run db:generate && prisma migrate reset --force && npx prisma db push --accept-data-loss && npm run db:seed",
         "build:dev-seed": "DEBUG=1 npm run build && npm run db:fresh",
         "worker": "tsx worker/entrypoint.ts",
-        "cli": "tsx cli/index.ts"
+        "cli": "tsx cli/index.ts",
+        "emails:push": "node email-templates/push.mjs",
+        "emails:push:dry": "node email-templates/push.mjs --dry-run",
+        "emails:validate": "node email-templates/validate.mjs"
     },
     "prisma": {
         "prisma": {
@@ -125,6 +128,7 @@
         "husky": "^9.1.7",
         "lint-staged": "^16.3.2",
         "lucide": "^0.577.0",
+        "mjml-parser-xml": "^4.18.0",
         "node-html-parser": "^7.1.0",
         "prettier": "^3.8.1",
         "typescript": "^5",

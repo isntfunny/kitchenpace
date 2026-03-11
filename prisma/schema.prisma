@@ -241,6 +241,7 @@ model Recipe {
   prepTime     Int         @default(0)
   cookTime     Int         @default(0)
   totalTime    Int         @default(0)
+  calories     Int?
   difficulty   Difficulty  @default(MEDIUM)
   status       RecipeStatus @default(DRAFT)
   publishedAt  DateTime?

@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { FileUpload } from '@app/components/features/FileUpload';
+import { QuickLinksCard } from '@app/components/features/QuickLinksCard';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
@@ -29,6 +30,7 @@ interface ProfileData {
     nickname: string | null;
     teaser: string | null;
     photoKey: string | null;
+    slug: string | null;
 }
 
 interface ProfileEditClientProps {
@@ -170,342 +172,16 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                     gap: '4',
                 })}
             >
-                {/* Main Form */}
-                <div className={css({ lg: { gridColumn: 'span 8' } })}>
-                    <div
-                        className={css({
-                            p: { base: '4', md: '6' },
-                            borderRadius: '2xl',
-                            bg: 'surface',
-                            boxShadow: 'shadow.medium',
-                        })}
-                    >
-                        <div className={css({ mb: '6' })}>
-                            <div
-                                className={css({
-                                    w: '12',
-                                    h: '12',
-                                    borderRadius: 'xl',
-                                    bg: 'primary',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    mb: '4',
-                                })}
-                            >
-                                <User size={24} />
-                            </div>
-                            <Heading as="h1" size="xl" className={css({ mb: '2' })}>
-                                Profil bearbeiten
-                            </Heading>
-                            <Text color="muted">
-                                Teile deine Persönlichkeit mit der KüchenTakt Community.
-                            </Text>
-                        </div>
-
-                        <form
-                            onSubmit={handleSubmit}
-                            className={css({ display: 'flex', flexDir: 'column', gap: '6' })}
-                        >
-                            {error && (
-                                <div
-                                    className={css({
-                                        p: '3',
-                                        bg: 'red.50',
-                                        color: 'red.600',
-                                        borderRadius: 'lg',
-                                        border: '1px solid',
-                                        borderColor: 'red.200',
-                                    })}
-                                >
-                                    <Text size="sm">{error}</Text>
-                                </div>
-                            )}
-
-                            {/* Profile Photo */}
-                            <div>
-                                <label
-                                    className={css({
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '2',
-                                        fontWeight: '600',
-                                        mb: '3',
-                                    })}
-                                >
-                                    <Camera size={18} />
-                                    Profilfoto
-                                </label>
-                                <FileUpload
-                                    type="profile"
-                                    value={photoKey}
-                                    onChange={setPhotoKey}
-                                    label="Profilfoto"
-                                />
-                            </div>
-
-                            {/* Nickname */}
-                            <div className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
-                                <span className={css({ fontWeight: '600' })}>Nickname</span>
-                                <div className={css({ position: 'relative' })}>
-                                    <input
-                                        type="text"
-                                        name="nickname"
-                                        maxLength={32}
-                                        value={nickname}
-                                        onChange={(e) => setNickname(e.target.value)}
-                                        placeholder="Dein öffentlicher Name"
-                                        className={css({
-                                            w: '100%',
-                                            borderRadius: 'xl',
-                                            border: '1px solid',
-                                            borderColor:
-                                                nicknameStatus === 'taken'
-                                                    ? 'red.400'
-                                                    : nicknameStatus === 'available'
-                                                      ? 'green.400'
-                                                      : 'border',
-                                            p: '3',
-                                            pr: '10',
-                                            fontSize: 'md',
-                                            outline: 'none',
-                                            bg: 'background',
-                                            transition: 'all 150ms ease',
-                                            _focus: {
-                                                borderColor:
-                                                    nicknameStatus === 'taken'
-                                                        ? 'red.400'
-                                                        : nicknameStatus === 'available'
-                                                          ? 'green.400'
-                                                          : 'primary',
-                                                boxShadow: {
-                                                    base: '0 0 0 3px rgba(224,123,83,0.15)',
-                                                    _dark: '0 0 0 3px rgba(224,123,83,0.2)',
-                                                },
-                                            },
-                                        })}
-                                        required
-                                    />
-                                    {nicknameStatus === 'checking' && (
-                                        <Loader2
-                                            size={16}
-                                            className={css({
-                                                position: 'absolute',
-                                                right: '12px',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                color: 'text-muted',
-                                                animation: 'spin 1s linear infinite',
-                                            })}
-                                        />
-                                    )}
-                                    {nicknameStatus === 'available' && (
-                                        <Check
-                                            size={16}
-                                            className={css({
-                                                position: 'absolute',
-                                                right: '12px',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                color: 'green.500',
-                                            })}
-                                        />
-                                    )}
-                                    {nicknameStatus === 'taken' && (
-                                        <X
-                                            size={16}
-                                            className={css({
-                                                position: 'absolute',
-                                                right: '12px',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                color: 'red.500',
-                                            })}
-                                        />
-                                    )}
-                                </div>
-                                {nicknameStatus === 'taken' && (
-                                    <Text size="sm" className={css({ color: 'red.500' })}>
-                                        Dieser Nickname ist bereits vergeben.
-                                    </Text>
-                                )}
-                                {nicknameStatus === 'available' && (
-                                    <Text size="sm" className={css({ color: 'green.600' })}>
-                                        Nickname ist verfügbar.
-                                    </Text>
-                                )}
-                                {nicknameStatus !== 'taken' && nicknameStatus !== 'available' && (
-                                    <Text size="sm" color="muted">
-                                        Maximal {MAX_NICKNAME_LENGTH} Zeichen
-                                    </Text>
-                                )}
-                            </div>
-
-                            {/* Teaser */}
-                            <label
-                                className={css({ display: 'flex', flexDir: 'column', gap: '2' })}
-                            >
-                                <span className={css({ fontWeight: '600' })}>Teaser Text</span>
-                                <textarea
-                                    name="teaser"
-                                    maxLength={160}
-                                    value={teaser}
-                                    onChange={(e) => setTeaser(e.target.value)}
-                                    placeholder="Beschreibe deine Koch-DNA in wenigen Worten"
-                                    className={css({
-                                        borderRadius: 'xl',
-                                        border: '1px solid',
-                                        borderColor: 'border',
-                                        p: '3',
-                                        minH: '28',
-                                        fontSize: 'md',
-                                        resize: 'vertical',
-                                        outline: 'none',
-                                        bg: 'background',
-                                        transition: 'all 150ms ease',
-                                        _focus: {
-                                            borderColor: 'primary',
-                                            boxShadow: {
-                                                base: '0 0 0 3px rgba(224,123,83,0.15)',
-                                                _dark: '0 0 0 3px rgba(224,123,83,0.2)',
-                                            },
-                                        },
-                                    })}
-                                />
-                                <Text size="sm" color="muted">
-                                    Maximal {MAX_TEASER_LENGTH} Zeichen
-                                </Text>
-                            </label>
-
-                            <div className={css({ display: 'flex', gap: '3', mt: '2' })}>
-                                <Button
-                                    type="submit"
-                                    variant="primary"
-                                    disabled={saving || nicknameStatus === 'taken'}
-                                >
-                                    <Save size={18} />
-                                    {saving ? 'Speichern...' : 'Änderungen speichern'}
-                                </Button>
-                                <Link href="/profile">
-                                    <Button type="button" variant="ghost">
-                                        Abbrechen
-                                    </Button>
-                                </Link>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                {/* Email Change Card */}
-                <div className={css({ lg: { gridColumn: 'span 8' } })}>
-                    <div
-                        className={css({
-                            p: { base: '4', md: '6' },
-                            borderRadius: '2xl',
-                            bg: 'surface',
-                            boxShadow: 'shadow.medium',
-                        })}
-                    >
-                        <div className={css({ mb: '5' })}>
-                            <div
-                                className={css({
-                                    w: '12',
-                                    h: '12',
-                                    borderRadius: 'xl',
-                                    bg: 'primary',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    mb: '4',
-                                })}
-                            >
-                                <Mail size={24} />
-                            </div>
-                            <Heading as="h2" size="lg" className={css({ mb: '1' })}>
-                                E-Mail-Adresse ändern
-                            </Heading>
-                            <Text color="muted" size="sm">
-                                Aktuelle Adresse: <strong>{email || '–'}</strong>
-                            </Text>
-                        </div>
-
-                        <form
-                            onSubmit={handleEmailSave}
-                            className={css({ display: 'flex', flexDir: 'column', gap: '4' })}
-                        >
-                            {emailError && (
-                                <div
-                                    className={css({
-                                        p: '3',
-                                        bg: 'red.50',
-                                        color: 'red.600',
-                                        borderRadius: 'lg',
-                                        border: '1px solid',
-                                        borderColor: 'red.200',
-                                    })}
-                                >
-                                    <Text size="sm">{emailError}</Text>
-                                </div>
-                            )}
-                            {emailSuccess && (
-                                <div
-                                    className={css({
-                                        p: '3',
-                                        bg: 'green.50',
-                                        color: 'green.700',
-                                        borderRadius: 'lg',
-                                        border: '1px solid',
-                                        borderColor: 'green.200',
-                                    })}
-                                >
-                                    <Text size="sm">E-Mail-Adresse erfolgreich geändert.</Text>
-                                </div>
-                            )}
-                            <label
-                                className={css({ display: 'flex', flexDir: 'column', gap: '2' })}
-                            >
-                                <span className={css({ fontWeight: '600' })}>
-                                    Neue E-Mail-Adresse
-                                </span>
-                                <input
-                                    type="email"
-                                    value={newEmail}
-                                    onChange={(e) => setNewEmail(e.target.value)}
-                                    placeholder="neue@adresse.de"
-                                    required
-                                    className={css({
-                                        borderRadius: 'xl',
-                                        border: '1px solid',
-                                        borderColor: 'border',
-                                        p: '3',
-                                        fontSize: 'md',
-                                        outline: 'none',
-                                        bg: 'background',
-                                        transition: 'all 150ms ease',
-                                        _focus: {
-                                            borderColor: 'primary',
-                                            boxShadow: {
-                                                base: '0 0 0 3px rgba(224,123,83,0.15)',
-                                                _dark: '0 0 0 3px rgba(224,123,83,0.2)',
-                                            },
-                                        },
-                                    })}
-                                />
-                            </label>
-                            <div>
-                                <Button type="submit" variant="primary" disabled={emailSaving}>
-                                    <Mail size={18} />
-                                    {emailSaving ? 'Speichern...' : 'E-Mail ändern'}
-                                </Button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                {/* Sidebar - Tips */}
-                <div className={css({ lg: { gridColumn: 'span 4' } })}>
+                {/* Right Column - Quick Links + Tips (rendered first for sticky sidebar) */}
+                <div
+                    className={css({
+                        lg: { gridColumn: 'span 4', gridRow: '1 / span 2' },
+                        display: 'flex',
+                        flexDir: 'column',
+                        gap: '4',
+                        order: { base: -1, lg: 1 },
+                    })}
+                >
                     <div
                         className={css({
                             p: { base: '4', md: '5' },
@@ -517,56 +193,398 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                         <Heading as="h2" size="md" className={css({ mb: '4' })}>
                             Tipps für dein Profil
                         </Heading>
+                        <div className={css({ display: 'flex', flexDir: 'column', gap: '3' })}>
+                            {[
+                                {
+                                    title: 'Wähle ein ansprechendes Foto',
+                                    desc: 'Ein freundliches Profilbild hilft anderen, sich mit dir zu verbinden.',
+                                },
+                                {
+                                    title: 'Schreib einen kurzen Teaser',
+                                    desc: 'Beschreibe deine kulinarischen Vorlieben in wenigen Worten.',
+                                },
+                                {
+                                    title: 'Bleib authentisch',
+                                    desc: 'Dein Nickname sollte deine Persönlichkeit widerspiegeln.',
+                                },
+                            ].map(({ title, desc }) => (
+                                <div
+                                    key={title}
+                                    className={css({
+                                        p: '3',
+                                        borderRadius: 'xl',
+                                        bg: 'background',
+                                    })}
+                                >
+                                    <Text size="sm" className={css({ fontWeight: '600', mb: '1' })}>
+                                        {title}
+                                    </Text>
+                                    <Text size="sm" color="muted">
+                                        {desc}
+                                    </Text>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <QuickLinksCard userSlug={profile.slug ?? profile.userId} />
+                </div>
+
+                {/* Left Column - Main Form */}
+                <div
+                    className={css({
+                        lg: { gridColumn: 'span 8' },
+                        display: 'flex',
+                        flexDir: 'column',
+                        gap: '4',
+                        order: { base: 1, lg: 0 },
+                    })}
+                >
+                    {/* Main Form */}
+                    <div>
                         <div
                             className={css({
-                                display: 'flex',
-                                flexDir: 'column',
-                                gap: '3',
+                                p: { base: '4', md: '6' },
+                                borderRadius: '2xl',
+                                bg: 'surface',
+                                boxShadow: 'shadow.medium',
                             })}
                         >
-                            <div
-                                className={css({
-                                    p: '3',
-                                    borderRadius: 'xl',
-                                    bg: 'background',
-                                })}
-                            >
-                                <Text size="sm" className={css({ fontWeight: '600', mb: '1' })}>
-                                    Wähle ein ansprechendes Foto
-                                </Text>
-                                <Text size="sm" color="muted">
-                                    Ein freundliches Profilbild hilft anderen, sich mit dir zu
-                                    verbinden.
-                                </Text>
-                            </div>
-                            <div
-                                className={css({
-                                    p: '3',
-                                    borderRadius: 'xl',
-                                    bg: 'background',
-                                })}
-                            >
-                                <Text size="sm" className={css({ fontWeight: '600', mb: '1' })}>
-                                    Schreib einen kurzen Teaser
-                                </Text>
-                                <Text size="sm" color="muted">
-                                    Beschreibe deine kulinarischen Vorlieben in wenigen Worten.
+                            <div className={css({ mb: '6' })}>
+                                <div
+                                    className={css({
+                                        w: '12',
+                                        h: '12',
+                                        borderRadius: 'xl',
+                                        bg: 'primary',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                        mb: '4',
+                                    })}
+                                >
+                                    <User size={24} />
+                                </div>
+                                <Heading as="h1" size="xl" className={css({ mb: '2' })}>
+                                    Profil bearbeiten
+                                </Heading>
+                                <Text color="muted">
+                                    Teile deine Persönlichkeit mit der KüchenTakt Community.
                                 </Text>
                             </div>
-                            <div
-                                className={css({
-                                    p: '3',
-                                    borderRadius: 'xl',
-                                    bg: 'background',
-                                })}
+
+                            <form
+                                onSubmit={handleSubmit}
+                                className={css({ display: 'flex', flexDir: 'column', gap: '6' })}
                             >
-                                <Text size="sm" className={css({ fontWeight: '600', mb: '1' })}>
-                                    Bleib authentisch
-                                </Text>
-                                <Text size="sm" color="muted">
-                                    Dein Nickname sollte deine Persönlichkeit widerspiegeln.
+                                {error && (
+                                    <div
+                                        className={css({
+                                            p: '3',
+                                            bg: 'red.50',
+                                            color: 'red.600',
+                                            borderRadius: 'lg',
+                                            border: '1px solid',
+                                            borderColor: 'red.200',
+                                        })}
+                                    >
+                                        <Text size="sm">{error}</Text>
+                                    </div>
+                                )}
+
+                                {/* Profile Photo */}
+                                <div>
+                                    <label
+                                        className={css({
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '2',
+                                            fontWeight: '600',
+                                            mb: '3',
+                                        })}
+                                    >
+                                        <Camera size={18} />
+                                        Profilfoto
+                                    </label>
+                                    <FileUpload
+                                        type="profile"
+                                        value={photoKey}
+                                        onChange={setPhotoKey}
+                                        label="Profilfoto"
+                                    />
+                                </div>
+
+                                {/* Nickname */}
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        flexDir: 'column',
+                                        gap: '2',
+                                    })}
+                                >
+                                    <span className={css({ fontWeight: '600' })}>Nickname</span>
+                                    <div className={css({ position: 'relative' })}>
+                                        <input
+                                            type="text"
+                                            name="nickname"
+                                            maxLength={32}
+                                            value={nickname}
+                                            onChange={(e) => setNickname(e.target.value)}
+                                            placeholder="Dein öffentlicher Name"
+                                            className={css({
+                                                w: '100%',
+                                                borderRadius: 'xl',
+                                                border: '1px solid',
+                                                borderColor:
+                                                    nicknameStatus === 'taken'
+                                                        ? 'red.400'
+                                                        : nicknameStatus === 'available'
+                                                          ? 'green.400'
+                                                          : 'border',
+                                                p: '3',
+                                                pr: '10',
+                                                fontSize: 'md',
+                                                outline: 'none',
+                                                bg: 'background',
+                                                transition: 'all 150ms ease',
+                                                _focus: {
+                                                    borderColor:
+                                                        nicknameStatus === 'taken'
+                                                            ? 'red.400'
+                                                            : nicknameStatus === 'available'
+                                                              ? 'green.400'
+                                                              : 'primary',
+                                                    boxShadow: {
+                                                        base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                                        _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                                    },
+                                                },
+                                            })}
+                                            required
+                                        />
+                                        {nicknameStatus === 'checking' && (
+                                            <Loader2
+                                                size={16}
+                                                className={css({
+                                                    position: 'absolute',
+                                                    right: '12px',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    color: 'text-muted',
+                                                    animation: 'spin 1s linear infinite',
+                                                })}
+                                            />
+                                        )}
+                                        {nicknameStatus === 'available' && (
+                                            <Check
+                                                size={16}
+                                                className={css({
+                                                    position: 'absolute',
+                                                    right: '12px',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    color: 'green.500',
+                                                })}
+                                            />
+                                        )}
+                                        {nicknameStatus === 'taken' && (
+                                            <X
+                                                size={16}
+                                                className={css({
+                                                    position: 'absolute',
+                                                    right: '12px',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    color: 'red.500',
+                                                })}
+                                            />
+                                        )}
+                                    </div>
+                                    {nicknameStatus === 'taken' && (
+                                        <Text size="sm" className={css({ color: 'red.500' })}>
+                                            Dieser Nickname ist bereits vergeben.
+                                        </Text>
+                                    )}
+                                    {nicknameStatus === 'available' && (
+                                        <Text size="sm" className={css({ color: 'green.600' })}>
+                                            Nickname ist verfügbar.
+                                        </Text>
+                                    )}
+                                    {nicknameStatus !== 'taken' &&
+                                        nicknameStatus !== 'available' && (
+                                            <Text size="sm" color="muted">
+                                                Maximal {MAX_NICKNAME_LENGTH} Zeichen
+                                            </Text>
+                                        )}
+                                </div>
+
+                                {/* Teaser */}
+                                <label
+                                    className={css({
+                                        display: 'flex',
+                                        flexDir: 'column',
+                                        gap: '2',
+                                    })}
+                                >
+                                    <span className={css({ fontWeight: '600' })}>Teaser Text</span>
+                                    <textarea
+                                        name="teaser"
+                                        maxLength={160}
+                                        value={teaser}
+                                        onChange={(e) => setTeaser(e.target.value)}
+                                        placeholder="Beschreibe deine Koch-DNA in wenigen Worten"
+                                        className={css({
+                                            borderRadius: 'xl',
+                                            border: '1px solid',
+                                            borderColor: 'border',
+                                            p: '3',
+                                            minH: '28',
+                                            fontSize: 'md',
+                                            resize: 'vertical',
+                                            outline: 'none',
+                                            bg: 'background',
+                                            transition: 'all 150ms ease',
+                                            _focus: {
+                                                borderColor: 'primary',
+                                                boxShadow: {
+                                                    base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                                    _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                                },
+                                            },
+                                        })}
+                                    />
+                                    <Text size="sm" color="muted">
+                                        Maximal {MAX_TEASER_LENGTH} Zeichen
+                                    </Text>
+                                </label>
+
+                                <div className={css({ display: 'flex', gap: '3', mt: '2' })}>
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        disabled={saving || nicknameStatus === 'taken'}
+                                    >
+                                        <Save size={18} />
+                                        {saving ? 'Speichern...' : 'Änderungen speichern'}
+                                    </Button>
+                                    <Link href="/profile">
+                                        <Button type="button" variant="ghost">
+                                            Abbrechen
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {/* Email Change Card */}
+                    <div>
+                        <div
+                            className={css({
+                                p: { base: '4', md: '6' },
+                                borderRadius: '2xl',
+                                bg: 'surface',
+                                boxShadow: 'shadow.medium',
+                            })}
+                        >
+                            <div className={css({ mb: '5' })}>
+                                <div
+                                    className={css({
+                                        w: '12',
+                                        h: '12',
+                                        borderRadius: 'xl',
+                                        bg: 'primary',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                        mb: '4',
+                                    })}
+                                >
+                                    <Mail size={24} />
+                                </div>
+                                <Heading as="h2" size="lg" className={css({ mb: '1' })}>
+                                    E-Mail-Adresse ändern
+                                </Heading>
+                                <Text color="muted" size="sm">
+                                    Aktuelle Adresse: <strong>{email || '–'}</strong>
                                 </Text>
                             </div>
+
+                            <form
+                                onSubmit={handleEmailSave}
+                                className={css({ display: 'flex', flexDir: 'column', gap: '4' })}
+                            >
+                                {emailError && (
+                                    <div
+                                        className={css({
+                                            p: '3',
+                                            bg: 'red.50',
+                                            color: 'red.600',
+                                            borderRadius: 'lg',
+                                            border: '1px solid',
+                                            borderColor: 'red.200',
+                                        })}
+                                    >
+                                        <Text size="sm">{emailError}</Text>
+                                    </div>
+                                )}
+                                {emailSuccess && (
+                                    <div
+                                        className={css({
+                                            p: '3',
+                                            bg: 'green.50',
+                                            color: 'green.700',
+                                            borderRadius: 'lg',
+                                            border: '1px solid',
+                                            borderColor: 'green.200',
+                                        })}
+                                    >
+                                        <Text size="sm">E-Mail-Adresse erfolgreich geändert.</Text>
+                                    </div>
+                                )}
+                                <label
+                                    className={css({
+                                        display: 'flex',
+                                        flexDir: 'column',
+                                        gap: '2',
+                                    })}
+                                >
+                                    <span className={css({ fontWeight: '600' })}>
+                                        Neue E-Mail-Adresse
+                                    </span>
+                                    <input
+                                        type="email"
+                                        value={newEmail}
+                                        onChange={(e) => setNewEmail(e.target.value)}
+                                        placeholder="neue@adresse.de"
+                                        required
+                                        className={css({
+                                            borderRadius: 'xl',
+                                            border: '1px solid',
+                                            borderColor: 'border',
+                                            p: '3',
+                                            fontSize: 'md',
+                                            outline: 'none',
+                                            bg: 'background',
+                                            transition: 'all 150ms ease',
+                                            _focus: {
+                                                borderColor: 'primary',
+                                                boxShadow: {
+                                                    base: '0 0 0 3px rgba(224,123,83,0.15)',
+                                                    _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                                },
+                                            },
+                                        })}
+                                    />
+                                </label>
+                                <div>
+                                    <Button type="submit" variant="primary" disabled={emailSaving}>
+                                        <Mail size={18} />
+                                        {emailSaving ? 'Speichern...' : 'E-Mail ändern'}
+                                    </Button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>

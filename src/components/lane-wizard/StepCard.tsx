@@ -277,7 +277,13 @@ function TimerControls({
                     </button>
                 )}
                 {pct > 0 && !done && (
-                    <button type="button" onClick={onReset} className={timerResetClass}>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (window.confirm('Timer zurücksetzen?')) onReset();
+                        }}
+                        className={timerResetClass}
+                    >
                         <RotateCcw className={css({ w: '10px', h: '10px' })} />
                     </button>
                 )}

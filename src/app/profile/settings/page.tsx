@@ -150,7 +150,15 @@ const ManageProfilePage = async () => {
                         />
 
                         {/* Email Settings */}
-                        <EmailSettingsCard />
+                        <EmailSettingsCard
+                            profile={{
+                                notifyOnRecipePublished:
+                                    privacyReadyProfile.notifyOnRecipePublished,
+                                notifyOnNewsletter: privacyReadyProfile.notifyOnNewsletter,
+                                notifyOnWeeklyPlanReminder:
+                                    privacyReadyProfile.notifyOnWeeklyPlanReminder,
+                            }}
+                        />
                     </div>
 
                     {/* Right Column - Quick Actions */}

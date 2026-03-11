@@ -1,7 +1,7 @@
 'use client';
 
 import { useOpenPanel } from '@openpanel/nextjs';
-import { Monitor, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Lock, Monitor, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
@@ -71,6 +71,9 @@ export function RecipeForm({
     const [servings, setServings] = useState(initialData?.servings ?? 4);
     const [prepTime, setPrepTime] = useState(initialData?.prepTime ?? 0);
     const [cookTime, setCookTime] = useState(initialData?.cookTime ?? 0);
+    const [calories, setCalories] = useState<number | undefined>(
+        initialData?.calories ?? undefined,
+    );
     const [difficulty, setDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>(
         initialData?.difficulty ?? 'MEDIUM',
     );
@@ -135,6 +138,7 @@ export function RecipeForm({
             servings,
             prepTime,
             cookTime,
+            calories,
             difficulty,
             categoryIds,
             tagIds: selectedTags,
@@ -157,6 +161,7 @@ export function RecipeForm({
             servings,
             prepTime,
             cookTime,
+            calories,
             difficulty,
             categoryIds,
             selectedTags,
@@ -525,22 +530,42 @@ export function RecipeForm({
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '3',
-                        backdropFilter: 'blur(4px)',
+                        backdropFilter: 'blur(6px)',
                         background: {
-                            base: 'rgba(255,255,255,0.6)',
-                            _dark: 'rgba(20,20,20,0.6)',
+                            base: 'rgba(248,248,248,0.82)',
+                            _dark: 'rgba(10,10,10,0.82)',
                         },
                         pointerEvents: 'all',
                     })}
                 >
+                    <div
+                        className={css({
+                            w: '12',
+                            h: '12',
+                            borderRadius: 'full',
+                            bg: {
+                                base: 'rgba(224,123,83,0.12)',
+                                _dark: 'rgba(224,123,83,0.18)',
+                            },
+                            border: '2px solid',
+                            borderColor: 'rgba(224,123,83,0.35)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'brand.primary',
+                            mb: '2',
+                        })}
+                    >
+                        <Lock size={22} />
+                    </div>
                     <span
                         className={css({
-                            fontSize: 'xl',
+                            fontSize: 'lg',
                             fontWeight: '700',
                             color: 'text',
                         })}
                     >
-                        Ablauf-Editor
+                        Ablauf-Editor gesperrt
                     </span>
                     <span
                         className={css({
@@ -784,6 +809,8 @@ export function RecipeForm({
                                 onPrepTimeChange={setPrepTime}
                                 cookTime={cookTime}
                                 onCookTimeChange={setCookTime}
+                                calories={calories}
+                                onCaloriesChange={setCalories}
                                 difficulty={difficulty}
                                 onDifficultyChange={setDifficulty}
                             />
@@ -871,6 +898,8 @@ export function RecipeForm({
                     onPrepTimeChange={setPrepTime}
                     cookTime={cookTime}
                     onCookTimeChange={setCookTime}
+                    calories={calories}
+                    onCaloriesChange={setCalories}
                     difficulty={difficulty}
                     onDifficultyChange={setDifficulty}
                 />
@@ -1096,6 +1125,8 @@ const sidebarSectionsClass = css({
     flex: '1',
     overflowY: 'auto',
     overflowX: 'hidden',
+    scrollBehavior: 'smooth',
+    overscrollBehaviorY: 'contain',
     '&::-webkit-scrollbar': { width: '4px' },
     '&::-webkit-scrollbar-track': { background: 'transparent' },
     '&::-webkit-scrollbar-thumb': {

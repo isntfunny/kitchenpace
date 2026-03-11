@@ -104,7 +104,7 @@ export function transformImportedRecipe(data: ImportedRecipe): AnalyzedRecipe {
         prepTime: data.prepTime,
         cookTime: data.cookTime,
         difficulty: difficultyMap[data.difficulty] ?? 'MEDIUM',
-        categoryIds: [categoryToSlug(data.category)],
+        categoryIds: data.categories.map(categoryToSlug),
         tags: data.tags,
         ingredients: data.ingredients.map((ing) => ({
             name: ing.name,

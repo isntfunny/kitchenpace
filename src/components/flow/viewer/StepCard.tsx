@@ -15,6 +15,7 @@ export function StepCard({
     node,
     completed,
     active,
+    isParallel = false,
     timerState,
     onToggle,
     onTimerStart,
@@ -28,6 +29,7 @@ export function StepCard({
     node: FlowNodeSerialized;
     completed: boolean;
     active: boolean;
+    isParallel?: boolean;
     timerState?: TimerState;
     onToggle: () => void;
     onTimerStart: () => void;
@@ -118,6 +120,24 @@ export function StepCard({
                         <Icon style={{ width: 11, height: 11 }} />
                         {config.label}
                     </span>
+                    {isParallel && !isSpecial && (
+                        <span
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 3,
+                                backgroundColor: 'rgba(99,179,237,0.2)',
+                                borderRadius: 999,
+                                padding: '2px 7px',
+                                fontSize: 10,
+                                fontWeight: 700,
+                                color: '#3182ce',
+                                border: '1px solid rgba(99,179,237,0.35)',
+                            }}
+                        >
+                            ⚡ Parallel
+                        </span>
+                    )}
                     {hasTimer && (
                         <span
                             style={{

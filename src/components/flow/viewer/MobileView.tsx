@@ -431,15 +431,20 @@ export function MobileView({
                                 {pct > 0 && (
                                     <button
                                         type="button"
-                                        onClick={() =>
-                                            dispatch({ type: 'timerReset', nodeId: currentNode.id })
-                                        }
+                                        onClick={() => {
+                                            if (window.confirm('Timer wirklich zurücksetzen?')) {
+                                                dispatch({
+                                                    type: 'timerReset',
+                                                    nodeId: currentNode.id,
+                                                });
+                                            }
+                                        }}
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            width: 42,
-                                            height: 42,
+                                            width: 48,
+                                            height: 48,
                                             borderRadius: '50%',
                                             border: '1.5px solid rgba(255,255,255,0.2)',
                                             backgroundColor: 'rgba(255,255,255,0.08)',
@@ -510,17 +515,18 @@ export function MobileView({
                         display: 'flex',
                         alignItems: 'center',
                         gap: 6,
-                        padding: '10px 16px',
-                        borderRadius: 12,
+                        padding: '13px 20px',
+                        minHeight: 48,
+                        borderRadius: 14,
                         border: 'none',
                         backgroundColor: canGoLeft ? 'rgba(255,255,255,0.12)' : 'transparent',
                         color: canGoLeft ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)',
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: 600,
                         cursor: canGoLeft ? 'pointer' : 'default',
                     }}
                 >
-                    <ChevronLeft style={{ width: 16, height: 16 }} />
+                    <ChevronLeft style={{ width: 18, height: 18 }} />
                     Zurück
                 </button>
 
@@ -539,18 +545,19 @@ export function MobileView({
                         display: 'flex',
                         alignItems: 'center',
                         gap: 6,
-                        padding: '10px 16px',
-                        borderRadius: 12,
+                        padding: '13px 20px',
+                        minHeight: 48,
+                        borderRadius: 14,
                         border: 'none',
                         backgroundColor: canGoRight ? 'rgba(255,255,255,0.12)' : 'transparent',
                         color: canGoRight ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)',
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: 600,
                         cursor: canGoRight ? 'pointer' : 'default',
                     }}
                 >
                     Weiter
-                    <ChevronRight style={{ width: 16, height: 16 }} />
+                    <ChevronRight style={{ width: 18, height: 18 }} />
                 </button>
             </div>
         </div>

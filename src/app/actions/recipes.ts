@@ -106,6 +106,7 @@ export interface RecipeDetailData {
     prepTime: number;
     cookTime: number;
     totalTime: number;
+    calories?: number | null;
     servings: number;
     difficulty: 'Einfach' | 'Mittel' | 'Schwer';
     ingredients: Array<{
@@ -248,6 +249,7 @@ export async function fetchRecipeBySlug(
         prepTime: recipe.prepTime ?? 0,
         cookTime: recipe.cookTime ?? 0,
         totalTime: recipe.totalTime ?? 0,
+        calories: recipe.calories ?? null,
         servings: recipe.servings ?? 4,
         difficulty: difficultyMap[recipe.difficulty] || 'Mittel',
         ingredients: recipe.recipeIngredients.map((ri: any) => ({
@@ -321,6 +323,7 @@ export interface EditRecipeData {
     servings: number;
     prepTime: number;
     cookTime: number;
+    calories?: number;
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
     status: 'DRAFT' | 'PUBLISHED';
     categoryIds: string[];
@@ -369,6 +372,7 @@ export async function fetchRecipeForEdit(
         servings: recipe.servings,
         prepTime: recipe.prepTime,
         cookTime: recipe.cookTime,
+        calories: recipe.calories ?? undefined,
         difficulty: recipe.difficulty as 'EASY' | 'MEDIUM' | 'HARD',
         status: (recipe.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT') as 'DRAFT' | 'PUBLISHED',
         categoryIds: recipe.categories.map((c) => c.categoryId),

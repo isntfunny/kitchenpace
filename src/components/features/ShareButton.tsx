@@ -106,7 +106,7 @@ export function ShareButton({ title, slug, imageKey }: ShareButtonProps) {
                 className={css({
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    gap: '2',
                     px: '4',
                     py: '2',
                     fontSize: 'md',

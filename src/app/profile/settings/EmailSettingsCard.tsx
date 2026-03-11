@@ -1,17 +1,21 @@
 'use client';
 
-import { Check, Mail } from 'lucide-react';
+import { Check, Mail, Save } from 'lucide-react';
 import { Checkbox } from 'radix-ui';
+import { useState } from 'react';
 
+import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
+import { useBeforeUnload } from '@app/lib/hooks/useBeforeUnload';
 import { css } from 'styled-system/css';
 
 interface CheckboxItemProps {
     label: string;
-    defaultChecked?: boolean;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
 }
 
-function CheckboxItem({ label, defaultChecked = false }: CheckboxItemProps) {
+function CheckboxItem({ label, checked, onChange }: CheckboxItemProps) {
     return (
         <label
             className={css({
@@ -34,7 +38,8 @@ function CheckboxItem({ label, defaultChecked = false }: CheckboxItemProps) {
                 {label}
             </Text>
             <Checkbox.Root
-                defaultChecked={defaultChecked}
+                checked={checked}
+                onCheckedChange={(val) => onChange(val === true)}
                 className={css({
                     width: '20px',
                     height: '20px',
@@ -64,9 +69,51 @@ function CheckboxItem({ label, defaultChecked = false }: CheckboxItemProps) {
     );
 }
 
-export function EmailSettingsCard() {
+interface EmailSettingsCardProps {
+    profile: {
+        notifyOnRecipePublished: boolean;
+        notifyOnNewsletter: boolean;
+        notifyOnWeeklyPlanReminder: boolean;
+    };
+}
+
+export function EmailSettingsCard({ profile }: EmailSettingsCardProps) {
+    const [settings, setSettings] = useState(profile);
+    const [saving, setSaving] = useState(false);
+    const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [isDirty, setIsDirty] = useState(false);
+
+    useBeforeUnload(isDirty);
+
+    const toggle = (key: keyof typeof settings) => {
+        setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+        setStatus('idle');
+        setIsDirty(true);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        setStatus('idle');
+        try {
+            const res = await fetch('/api/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings),
+            });
+            if (!res.ok) throw new Error('Failed');
+            setStatus('success');
+            setIsDirty(false);
+        } catch {
+            setStatus('error');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     return (
-        <div
+        <form
+            onSubmit={handleSubmit}
             className={css({
                 p: { base: '4', md: '5' },
                 borderRadius: '2xl',
@@ -106,12 +153,42 @@ export function EmailSettingsCard() {
                     display: 'flex',
                     flexDir: 'column',
                     gap: '2',
+                    mb: '4',
                 })}
             >
-                <CheckboxItem label="Neue Rezepte von anderen Kochbegeisterten" defaultChecked />
-                <CheckboxItem label="Wöchentlicher Koch-Newsletter" defaultChecked />
-                <CheckboxItem label="Erinnerungen an geplante Mahlzeiten" />
+                <CheckboxItem
+                    label="Neue Rezepte von Köchen, denen du folgst"
+                    checked={settings.notifyOnRecipePublished}
+                    onChange={() => toggle('notifyOnRecipePublished')}
+                />
+                <CheckboxItem
+                    label="Wöchentlicher Koch-Newsletter"
+                    checked={settings.notifyOnNewsletter}
+                    onChange={() => toggle('notifyOnNewsletter')}
+                />
+                <CheckboxItem
+                    label="Erinnerungen an geplante Mahlzeiten"
+                    checked={settings.notifyOnWeeklyPlanReminder}
+                    onChange={() => toggle('notifyOnWeeklyPlanReminder')}
+                />
             </div>
-        </div>
+
+            <div className={css({ display: 'flex', alignItems: 'center', gap: '3' })}>
+                <Button type="submit" variant="primary" disabled={saving}>
+                    <Save size={16} />
+                    {saving ? 'Speichern...' : isDirty ? 'Änderungen speichern ●' : 'Speichern'}
+                </Button>
+                {status === 'success' && (
+                    <span className={css({ fontSize: 'sm', color: 'palette.emerald' })}>
+                        Gespeichert ✓
+                    </span>
+                )}
+                {status === 'error' && (
+                    <span className={css({ fontSize: 'sm', color: 'red.500' })}>
+                        Fehler beim Speichern
+                    </span>
+                )}
+            </div>
+        </form>
     );
 }

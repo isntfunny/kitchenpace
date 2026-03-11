@@ -1,6 +1,6 @@
 'use client';
 
-import { ChefHat, CheckCircle, Heart, Printer } from 'lucide-react';
+import { Bookmark, ChefHat, CheckCircle, Printer } from 'lucide-react';
 
 import { Button } from '@app/components/atoms/Button';
 import { css } from 'styled-system/css';
@@ -58,8 +58,8 @@ export function RecipeActionButtons({
                     onClick={onFavoriteToggle}
                     disabled={isFavoritePending}
                 >
-                    <Heart size={16} fill="currentColor" />
-                    Favorit · {favoriteCount}
+                    <Bookmark size={16} fill="currentColor" />
+                    Favorisiert · {favoriteCount}
                 </button>
             ) : (
                 <Button
@@ -68,31 +68,19 @@ export function RecipeActionButtons({
                     onClick={onFavoriteToggle}
                     disabled={isFavoritePending}
                 >
-                    <Heart size={16} />
-                    Favorit · {favoriteCount}
+                    <Bookmark size={16} />
+                    Favorisieren · {favoriteCount}
                 </Button>
             )}
-            {hasCooked ? (
-                <button
-                    type="button"
-                    className={activeButtonClass}
-                    onClick={onCookToggle}
-                    disabled={isCookPending}
-                >
-                    <CheckCircle size={16} />
-                    Zubereitet · {cookCount}
-                </button>
-            ) : (
-                <Button
-                    type="button"
-                    variant="primary"
-                    onClick={onCookToggle}
-                    disabled={isCookPending}
-                >
-                    <ChefHat size={16} />
-                    Zubereitet · {cookCount}
-                </Button>
-            )}
+            <Button
+                type="button"
+                variant="primary"
+                onClick={onCookToggle}
+                disabled={isCookPending}
+            >
+                {hasCooked ? <CheckCircle size={16} /> : <ChefHat size={16} />}
+                Zubereitet · {cookCount}
+            </Button>
             <Button type="button" variant="ghost" onClick={onPrint}>
                 <Printer size={16} />
                 Drucken

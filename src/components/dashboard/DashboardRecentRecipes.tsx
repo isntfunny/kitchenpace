@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Calendar, CheckCircle, Heart, Sparkles } from 'lucide-react';
+import { Bookmark, BookOpen, Calendar, CheckCircle, Sparkles } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
@@ -26,7 +26,7 @@ const filters = [
 
 const statusIcons: Record<string, ReactNode> = {
     cooked: <CheckCircle size={14} color={PALETTE.emerald} />,
-    favorite: <Heart size={14} color={PALETTE.pink} />,
+    favorite: <Bookmark size={14} color={PALETTE.pink} />,
     planned: <Calendar size={14} color={PALETTE.purple} />,
     new: <Sparkles size={14} color={PALETTE.orange} />,
 };

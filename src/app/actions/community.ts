@@ -17,6 +17,7 @@ export type QuickTipIconName =
     | 'users'
     | 'book'
     | 'heart'
+    | 'bookmark'
     | 'star'
     | 'chart';
 
@@ -300,9 +301,9 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
 
     if (totalFavorites > 0) {
         tips.push({
-            icon: 'heart',
+            icon: 'bookmark',
             title: `${totalFavorites}× Favorisiert`,
-            content: 'So oft wurde ein Rezept mit einem Herz gerettet.',
+            content: 'So oft wurden deine Rezepte favorisiert.',
             iconBg: TIP_ACCENTS[3],
         });
     }

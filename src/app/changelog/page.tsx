@@ -26,6 +26,50 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '12. März 2026',
+        version: 'v2026-03-12',
+        emoji: '🚀',
+        title: 'Rezeptsuche, Server Actions & E2E-Tests',
+        items: [
+            {
+                text: 'Rezeptsuche komplett überarbeitet — SSR-Initial-Rendering, Sortierung, Grid/Listen-Ansicht und Skeleton-Loading',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Rezeptkarten zeigen jetzt die Anzahl der Zubereitungsschritte und haben eine kompakte Listen-Variante',
+                tag: 'feat',
+            },
+            {
+                text: 'Rezept-Tabs (Zuletzt & Angepinnt) nutzen jetzt Server Actions statt API-Routes — schnellere Ladezeit, kein doppeltes Laden mehr',
+                tag: 'feat',
+            },
+            {
+                text: 'Rezepte werden in OpenSearch mit Schritt-Anzahl indexiert',
+                tag: 'feat',
+            },
+            {
+                text: 'Chatwoot-Support-Widget erkennt eingeloggte Nutzer und zeigt den richtigen Namen',
+                tag: 'feat',
+            },
+            {
+                text: 'Infrastruktur: Redis AOF-Persistenz, Prometheus-Exporter für Redis und OpenSearch',
+                tag: 'feat',
+            },
+            {
+                text: 'Veraltete Background-Jobs werden beim Scheduler-Start automatisch bereinigt',
+                tag: 'feat',
+            },
+            {
+                text: 'Benachrichtigungs-Polling läuft nicht mehr für ausgeloggte Besucher — weniger unnötige 401-Fehler',
+                tag: 'fix',
+            },
+            {
+                text: 'E2E-Tests stabilisiert und als Deployment-Gate in der CI-Pipeline reaktiviert',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '11. März 2026',
         version: 'v2026-03-11.4',
         emoji: '🔧',

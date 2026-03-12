@@ -42,7 +42,7 @@ export interface GenerateOgImagesJob {
 }
 
 export type ScheduledJob =
-    | { name: 'opensearch-sync'; data: SyncOpenSearchJob }
+    | { name: 'sync-opensearch'; data: SyncOpenSearchJob }
     | { name: 'sync-ingredients'; data: SyncIngredientsJob }
     | { name: 'trending-recipes'; data: Record<string, unknown> }
     | { name: 'backup-database-hourly'; data: Record<string, unknown> }

@@ -109,7 +109,7 @@ FROM node:24-alpine AS worker
 
 WORKDIR /app
 
-RUN apk add --no-cache postgresql16-client
+RUN apk add --no-cache postgresql17-client
 
 # Production node_modules incl. generated Prisma client
 COPY --from=prod-deps /app/node_modules ./node_modules

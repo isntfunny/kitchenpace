@@ -77,7 +77,10 @@ function withDefaultEmoji(recipe: RecipeTabItem): RecipeTabItem {
     };
 }
 
-function applyTabsResult(result: { pinned: RecipeTabItem[]; recent: RecipeTabItem[] }): RecipeTabsState {
+function applyTabsResult(result: {
+    pinned: RecipeTabItem[];
+    recent: RecipeTabItem[];
+}): RecipeTabsState {
     return {
         pinned: result.pinned
             .map(withDefaultEmoji)

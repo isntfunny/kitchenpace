@@ -128,4 +128,3 @@ export async function markHistoryPinned(userId: string, recipeId: string, pinned
         },
     });
 }
-

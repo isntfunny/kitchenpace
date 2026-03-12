@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
@@ -49,23 +49,34 @@ export type RecipeSearchResult = {
     error?: string;
 };
 
+export type InitialSearchData = {
+    data: RecipeCardData[];
+    meta: RecipeSearchMeta;
+};
+
 export type UseRecipeSearchOptions = {
     enabled?: boolean;
     debounceMs?: number;
+    initialData?: InitialSearchData;
 };
 
 export function useRecipeSearch(
     filters: RecipeFilterSearchParams,
     options?: UseRecipeSearchOptions,
 ): RecipeSearchResult {
-    const { enabled = true, debounceMs = 0 } = options ?? {};
-    const [state, setState] = useState<RecipeSearchResult>({
-        data: [],
-        meta: null,
-        loading: enabled,
+    const { enabled = true, debounceMs = 0, initialData } = options ?? {};
+
+    const [state, setState] = useState<RecipeSearchResult>(() => ({
+        data: initialData?.data ?? [],
+        meta: initialData?.meta ?? null,
+        loading: enabled && !initialData,
         error: undefined,
-    });
+    }));
+
     const [debouncedFilters, setDebouncedFilters] = useState(filters);
+
+    // Skip the very first fetch when initialData was provided for these exact filters
+    const skipNextFetchRef = useRef(!!initialData);
 
     useEffect(() => {
         if (!enabled) {
@@ -88,12 +99,13 @@ export function useRecipeSearch(
 
     useEffect(() => {
         if (!enabled) {
-            setState((current) => ({
-                ...current,
-                data: [],
-                meta: null,
-                loading: false,
-            }));
+            setState((current) => ({ ...current, data: [], meta: null, loading: false }));
+            return;
+        }
+
+        // Skip the initial fetch when server already provided this data
+        if (skipNextFetchRef.current) {
+            skipNextFetchRef.current = false;
             return;
         }
 

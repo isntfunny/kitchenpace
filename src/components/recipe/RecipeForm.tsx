@@ -2,6 +2,7 @@
 
 import { useOpenPanel } from '@openpanel/nextjs';
 import { Lock, Monitor, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
@@ -10,7 +11,11 @@ import type {
     FlowEdgeSerialized,
     FlowNodeSerialized,
 } from '@app/components/flow/editor/editorTypes';
-import { FlowEditor } from '@app/components/flow/FlowEditor';
+
+const FlowEditor = dynamic(
+    () => import('@app/components/flow/FlowEditor').then((m) => m.FlowEditor),
+    { ssr: false },
+);
 import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
@@ -511,7 +516,17 @@ export function RecipeForm({
 
     const flowEditorDisabled = !titleDone || !kategorieDone;
 
-    const flowEditor = (
+    /* ── only load FlowEditor JS on desktop (mobile never shows it) ── */
+    const [isDesktop, setIsDesktop] = useState(false);
+    useEffect(() => {
+        const mq = window.matchMedia('(min-width: 768px)');
+        setIsDesktop(mq.matches);
+        const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+        mq.addEventListener('change', handler);
+        return () => mq.removeEventListener('change', handler);
+    }, []);
+
+    const flowEditor = !isDesktop ? null : (
         <div className={css({ position: 'relative', width: '100%', height: '100%' })}>
             <FlowEditor
                 availableIngredients={ingredients}
@@ -1126,10 +1141,10 @@ const sidebarStickyHeaderClass = css({
 // Flat sidebar sections
 const sidebarSectionsClass = css({
     flex: '1',
-    overflowY: 'auto',
+    overflowY: { base: 'visible', md: 'auto' },
     overflowX: 'hidden',
     scrollBehavior: 'smooth',
-    overscrollBehaviorY: 'contain',
+    overscrollBehaviorY: { base: 'auto', md: 'contain' },
     '&::-webkit-scrollbar': { width: '4px' },
     '&::-webkit-scrollbar-track': { background: 'transparent' },
     '&::-webkit-scrollbar-thumb': {

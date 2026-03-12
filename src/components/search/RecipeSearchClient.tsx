@@ -1,6 +1,6 @@
 'use client';
 
-import { SlidersHorizontal, Search, X } from 'lucide-react';
+import { SlidersHorizontal, Search, X, LayoutGrid, List, UtensilsCrossed } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { usePathname } from 'next/navigation';
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -9,13 +9,17 @@ import type { CategoryOption } from '@app/app/actions/filters';
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import { Button } from '@app/components/atoms/Button';
 import { RecipeCard } from '@app/components/features/RecipeCard';
+import { RecipeCardSkeleton } from '@app/components/features/RecipeCardSkeleton';
+import { useLocalStorage } from '@app/hooks/useLocalStorage';
 import { PALETTE } from '@app/lib/palette';
 import { buildRecipeFilterQuery, MULTI_VALUE_KEYS, NUMBER_KEYS } from '@app/lib/recipeFilters';
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import type { RecipeFilterSearchParams, RecipeSortOption } from '@app/lib/recipeFilters';
+import { STORAGE_KEYS } from '@app/lib/storageKeys';
 import { css } from 'styled-system/css';
 
 import { ActiveFilters } from './ActiveFilters';
 import { FilterSidebar } from './FilterSidebar';
+import type { InitialSearchData } from './useRecipeSearch';
 import { useRecipeSearch } from './useRecipeSearch';
 
 type FilterOptions = {
@@ -27,6 +31,7 @@ type FilterOptions = {
 type RecipeSearchClientProps = {
     initialFilters: RecipeFilterSearchParams;
     filterOptions: FilterOptions;
+    initialData?: InitialSearchData;
 };
 
 const ARRAY_FILTER_KEYS = MULTI_VALUE_KEYS;
@@ -58,11 +63,17 @@ const buildNonSliderSignature = (filters: RecipeFilterSearchParams) =>
 export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     initialFilters,
     filterOptions,
+    initialData,
 }) => {
-    const [filters, setFilters] = useState(initialFilters);
+    const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>(STORAGE_KEYS.searchViewMode, 'grid');
+    const [savedSort, setSavedSort] = useLocalStorage<RecipeSortOption>(STORAGE_KEYS.searchSort, 'rating');
+    const [filters, setFilters] = useState({
+        ...initialFilters,
+        sort: initialFilters.sort ?? savedSort,
+    });
     const [queryInput, setQueryInput] = useState(initialFilters.query ?? '');
     const [showMobileFilters, setShowMobileFilters] = useState(false);
-    const { data, meta, loading, error } = useRecipeSearch(filters);
+    const { data, meta, loading, error } = useRecipeSearch(filters, { initialData });
     const facets = meta?.facets;
     const pathname = usePathname();
     const sliderSignature = useMemo(() => buildSliderSignature(filters), [filters]);
@@ -72,7 +83,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     const prevSliderSignatureRef = useRef(sliderSignature);
     const prevNonSliderSignatureRef = useRef(nonSliderSignature);
     const prevFiltersRef = useRef(filters);
-    const [stableFacets, setStableFacets] = useState(facets);
+    const [stableFacets, setStableFacets] = useState(() => facets);
     const currentPage = filters.page ?? 1;
     const pageSize = meta?.limit ?? filters.limit ?? 30;
     const totalResults = meta?.total ?? 0;
@@ -223,32 +234,32 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         const prevFilters = prevFiltersRef.current;
         prevFiltersRef.current = filters;
 
+        // No filter change (e.g. initial data arrival) — just sync facets
         if (!sliderChanged && !nonSliderChanged) {
-            if (!stableFacets) {
-                setStableFacets(facets);
-            }
+            setStableFacets(facets);
             return;
         }
 
-        const sliderRelaxed = sliderChanged
-            ? [
-                  evaluateMinChange(prevFilters.minTotalTime, filters.minTotalTime),
-                  evaluateMaxChange(prevFilters.maxTotalTime, filters.maxTotalTime),
-                  evaluateMinChange(prevFilters.minPrepTime, filters.minPrepTime),
-                  evaluateMaxChange(prevFilters.maxPrepTime, filters.maxPrepTime),
-                  evaluateMinChange(prevFilters.minCookTime, filters.minCookTime),
-                  evaluateMaxChange(prevFilters.maxCookTime, filters.maxCookTime),
-                  evaluateMinChange(prevFilters.minRating, filters.minRating),
-                  evaluateMinChange(prevFilters.minCookCount, filters.minCookCount),
-              ].some((result) => result === 'relax')
-            : false;
+        // Only slider changed and it was a restriction (narrowing) — keep current facets
+        // so the filter sidebar doesn't jump while the user is dragging
+        if (sliderChanged && !nonSliderChanged) {
+            const sliderRelaxed = [
+                evaluateMinChange(prevFilters.minTotalTime, filters.minTotalTime),
+                evaluateMaxChange(prevFilters.maxTotalTime, filters.maxTotalTime),
+                evaluateMinChange(prevFilters.minPrepTime, filters.minPrepTime),
+                evaluateMaxChange(prevFilters.maxPrepTime, filters.maxPrepTime),
+                evaluateMinChange(prevFilters.minCookTime, filters.minCookTime),
+                evaluateMaxChange(prevFilters.maxCookTime, filters.maxCookTime),
+                evaluateMinChange(prevFilters.minRating, filters.minRating),
+                evaluateMinChange(prevFilters.minCookCount, filters.minCookCount),
+            ].some((result) => result === 'relax');
 
-        if (sliderChanged && !nonSliderChanged && !sliderRelaxed) {
-            return;
+            if (!sliderRelaxed) return;
         }
 
         setStableFacets(facets);
-    }, [facets, filters, sliderSignature, nonSliderSignature, stableFacets]);
+         
+    }, [facets, filters, sliderSignature, nonSliderSignature]);
 
     return (
         <div
@@ -415,6 +426,77 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                             </button>
                         )}
                     </div>
+
+                    {/* Sort + view toggle row */}
+                    <div
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '2',
+                        })}
+                    >
+                        <select
+                            value={filters.sort ?? 'rating'}
+                            onChange={(e) => {
+                                const sort = e.target.value as RecipeSortOption;
+                                setSavedSort(sort);
+                                updateFilters({ sort });
+                            }}
+                            aria-label="Sortierung"
+                            className={css({
+                                fontSize: 'xs',
+                                fontWeight: '600',
+                                border: '1px solid',
+                                borderColor: 'border.muted',
+                                borderRadius: 'lg',
+                                bg: 'surface',
+                                color: 'text',
+                                px: '2.5',
+                                py: '1.5',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                _focus: { borderColor: 'accent' },
+                            })}
+                        >
+                            <option value="rating">Beste Bewertung</option>
+                            <option value="newest">Neueste</option>
+                            <option value="fastest">Schnellste</option>
+                            <option value="popular">Beliebteste</option>
+                        </select>
+
+                        <div className={css({ display: 'flex', gap: '1' })}>
+                            {(['grid', 'list'] as const).map((mode) => (
+                                <button
+                                    key={mode}
+                                    type="button"
+                                    onClick={() => setViewMode(mode)}
+                                    aria-label={mode === 'grid' ? 'Gitteransicht' : 'Listenansicht'}
+                                    aria-pressed={viewMode === mode}
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: 'lg',
+                                        border: '1px solid',
+                                        borderColor: viewMode === mode ? 'accent' : 'border.muted',
+                                        bg: viewMode === mode ? 'accent' : 'surface',
+                                        color: viewMode === mode ? 'white' : 'text-muted',
+                                        cursor: 'pointer',
+                                        transition: 'all 150ms ease',
+                                        _hover: {
+                                            borderColor: 'accent',
+                                            color: viewMode === mode ? 'white' : 'text',
+                                        },
+                                    })}
+                                >
+                                    {mode === 'grid' ? <LayoutGrid size={14} /> : <List size={14} />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 <div aria-live="polite">
@@ -423,37 +505,99 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
 
                 {error ? (
                     <p className={css({ fontSize: 'sm', color: 'text-muted' })}>{error}</p>
-                ) : loading ? (
-                    <p className={css({ fontSize: 'sm', color: 'text-muted' })}>
-                        Rezepte werden geladen…
-                    </p>
-                ) : data.length === 0 ? (
-                    <p className={css({ fontSize: 'sm', color: 'text-muted' })}>
-                        Keine Rezepte mit den aktuellen Filtern gefunden.
-                    </p>
+                ) : !loading && data.length === 0 ? (
+                    <div
+                        className={css({
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            textAlign: 'center',
+                            py: '8',
+                            px: '6',
+                            gap: '4',
+                        })}
+                    >
+                        <div
+                            className={css({
+                                width: '64px',
+                                height: '64px',
+                                borderRadius: 'full',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                bg: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
+                                color: 'brand.primary',
+                            })}
+                        >
+                            <UtensilsCrossed size={28} />
+                        </div>
+                        <div className={css({ display: 'flex', flexDirection: 'column', gap: '1.5' })}>
+                            <p className={css({ fontSize: 'md', fontWeight: '700', color: 'text' })}>
+                                Keine Rezepte gefunden
+                            </p>
+                            <p className={css({ fontSize: 'sm', color: 'text-muted', maxWidth: '300px', lineHeight: '1.6' })}>
+                                Mit den aktuellen Filtern gibt es leider keine Treffer. Versuche weniger Filter oder eine andere Suche.
+                            </p>
+                        </div>
+                        {activeFilterCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={resetFilters}
+                                className={css({
+                                    fontSize: 'sm',
+                                    fontWeight: '600',
+                                    color: 'white',
+                                    bg: 'brand.primary',
+                                    border: 'none',
+                                    borderRadius: 'lg',
+                                    px: '4',
+                                    py: '2',
+                                    cursor: 'pointer',
+                                    transition: 'opacity 150ms ease',
+                                    _hover: { opacity: '0.85' },
+                                })}
+                            >
+                                Filter zurücksetzen
+                            </button>
+                        )}
+                    </div>
                 ) : (
                     <>
                         <div
                             className={css({
                                 display: 'grid',
-                                gridTemplateColumns: {
-                                    base: '1fr',
-                                    sm: 'repeat(2, minmax(0, 1fr))',
-                                    lg: 'repeat(3, minmax(0, 1fr))',
-                                },
-                                gap: '4',
+                                gridTemplateColumns: viewMode === 'list'
+                                    ? '1fr'
+                                    : {
+                                          base: '1fr',
+                                          xs: 'repeat(2, minmax(0, 1fr))',
+                                          xl: 'repeat(3, minmax(0, 1fr))',
+                                      },
+                                gap: viewMode === 'list' ? '2' : '4',
                             })}
                         >
-                            {data.map((recipe: RecipeCardData, index: number) => (
-                                <motion.div
-                                    key={recipe.id}
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.3, delay: Math.min(index, 5) * 0.05 }}
-                                >
-                                    <RecipeCard recipe={recipe} />
-                                </motion.div>
-                            ))}
+                            {loading
+                                ? Array.from({ length: data.length || 6 }).map((_, index) => (
+                                      <RecipeCardSkeleton
+                                          key={index}
+                                          variant={viewMode === 'list' ? 'list' : 'default'}
+                                              categoryOnImage
+                                      />
+                                  ))
+                                : data.map((recipe: RecipeCardData, index: number) => (
+                                      <motion.div
+                                          key={recipe.id}
+                                          initial={{ opacity: 0, y: 12 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          transition={{ duration: 0.3, delay: Math.min(index, 5) * 0.05 }}
+                                      >
+                                          <RecipeCard
+                                              recipe={recipe}
+                                              variant={viewMode === 'list' ? 'list' : 'default'}
+                                              categoryOnImage
+                                          />
+                                      </motion.div>
+                                  ))}
                         </div>
 
                         {totalPages > 1 && (

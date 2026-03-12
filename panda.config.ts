@@ -57,6 +57,10 @@ export default defineConfig({
                     from: { opacity: '1', transform: 'scale(1) translateY(0)' },
                     to: { opacity: '0', transform: 'scale(0.96) translateY(-4px)' },
                 },
+                skeletonPulse: {
+                    '0%, 100%': { opacity: '0.45' },
+                    '50%': { opacity: '1' },
+                },
                 shimmerDown: {
                     '0%': { transform: 'translateY(-12px)', opacity: '0' },
                     '15%': { opacity: '0.8' },
@@ -294,6 +298,7 @@ export default defineConfig({
             },
 
             breakpoints: {
+                xs: '540px',
                 sm: '640px',
                 md: '768px',
                 lg: '1024px',

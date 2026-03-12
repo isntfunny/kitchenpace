@@ -23,6 +23,9 @@ export const NUMBER_KEYS = [
 const DEFAULT_LIMIT = 30;
 const DEFAULT_PAGE = 1;
 const DEFAULT_FILTER_MODE: RecipeFilterSearchParams['filterMode'] = 'and';
+const DEFAULT_SORT: RecipeSortOption = 'rating';
+
+export type RecipeSortOption = 'rating' | 'newest' | 'fastest' | 'popular';
 
 export type RecipeFilterParams = {
     query?: string;
@@ -46,6 +49,7 @@ export type RecipeFilterSearchParams = RecipeFilterParams & {
     page?: number;
     limit?: number;
     filterMode?: 'and' | 'or';
+    sort?: RecipeSortOption;
 };
 
 const toNumber = (value: string | null): MaybeNumber => {
@@ -85,6 +89,11 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
     const pageValue = toNumber(params.get('page'));
     const limitValue = toNumber(params.get('limit'));
     const modeParam = params.get('mode');
+    const sortParam = params.get('sort');
+    const validSorts: RecipeSortOption[] = ['rating', 'newest', 'fastest', 'popular'];
+    const sort = validSorts.includes(sortParam as RecipeSortOption)
+        ? (sortParam as RecipeSortOption)
+        : DEFAULT_SORT;
 
     const result: RecipeFilterSearchParams = {
         query: params.get('query')?.trim() || undefined,
@@ -109,6 +118,7 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
             ? Math.min(Math.max(1, limitValue ?? DEFAULT_LIMIT), DEFAULT_LIMIT)
             : DEFAULT_LIMIT,
         filterMode: modeParam === 'or' || modeParam === 'OR' ? 'or' : DEFAULT_FILTER_MODE,
+        sort,
     };
 
     return result;
@@ -158,6 +168,10 @@ export function buildRecipeFilterQuery(filters: RecipeFilterSearchParams): URLSe
         params.set('mode', filters.filterMode);
     }
 
+    if (filters.sort && filters.sort !== DEFAULT_SORT) {
+        params.set('sort', filters.sort);
+    }
+
     if (filters.page && filters.page !== DEFAULT_PAGE) {
         params.set('page', String(filters.page));
     }
@@ -174,4 +188,8 @@ export function buildRecipeFilterHref(filters: Partial<RecipeFilterSearchParams>
     return params ? `/recipes?${params}` : '/recipes';
 }
 
-export { DEFAULT_LIMIT as RECIPE_FILTER_DEFAULT_LIMIT, DEFAULT_PAGE as RECIPE_FILTER_DEFAULT_PAGE };
+export {
+    DEFAULT_LIMIT as RECIPE_FILTER_DEFAULT_LIMIT,
+    DEFAULT_PAGE as RECIPE_FILTER_DEFAULT_PAGE,
+    DEFAULT_SORT as RECIPE_FILTER_DEFAULT_SORT,
+};

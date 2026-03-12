@@ -4,7 +4,6 @@ import { RECIPE_FILTER_DEFAULT_LIMIT } from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 import { opensearchClient, OPENSEARCH_INDEX } from '@shared/opensearch/client';
 
-
 export type RecipeSearchResult = {
     data: RecipeCardData[];
     meta: RecipeSearchMeta;
@@ -241,9 +240,7 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
             ),
         ),
         categories: buildTermsAggregation(
-            getTermsBuckets(
-                response.body.aggregations?.categories as TermsAggregation | undefined,
-            ),
+            getTermsBuckets(response.body.aggregations?.categories as TermsAggregation | undefined),
         ),
         totalTime: buildHistogramFacet(
             response.body.aggregations?.totalTime as HistogramAggregation | undefined,

@@ -9,19 +9,17 @@ import { CastButton } from '@app/components/cast/CastButton';
 import { useCast } from '@app/hooks/useCast';
 import { css } from 'styled-system/css';
 
-
 import { CompletionBanner } from './viewer/CompletionBanner';
 import { MobileView } from './viewer/MobileView';
-
-const DesktopView = dynamic(
-    () => import('./viewer/DesktopView').then((m) => m.DesktopView),
-    { ssr: false },
-);
 import { NodeDetailModal } from './viewer/NodeDetailModal';
 import { SimpleTextView } from './viewer/SimpleTextView';
 import { viewerReducer } from './viewer/viewerTypes';
 import type { RecipeStepsViewerProps, TimerState } from './viewer/viewerTypes';
 import { buildTopology } from './viewer/viewerUtils';
+
+const DesktopView = dynamic(() => import('./viewer/DesktopView').then((m) => m.DesktopView), {
+    ssr: false,
+});
 
 export function RecipeStepsViewer({
     nodes,

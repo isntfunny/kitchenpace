@@ -271,24 +271,52 @@ export function RecipeCard({
                         minWidth: '110px',
                     })}
                 >
-                    <span className={flex({ align: 'center', gap: '1', fontSize: 'xs', color: 'text-muted' })}>
+                    <span
+                        className={flex({
+                            align: 'center',
+                            gap: '1',
+                            fontSize: 'xs',
+                            color: 'text-muted',
+                        })}
+                    >
                         <Star size={12} className={css({ color: 'palette.gold' })} />
                         {recipe.rating != null && recipe.rating > 0 ? recipe.rating : '—'}
                     </span>
                     {recipe.time && (
-                        <span className={flex({ align: 'center', gap: '1', fontSize: 'xs', color: 'text-muted' })}>
+                        <span
+                            className={flex({
+                                align: 'center',
+                                gap: '1',
+                                fontSize: 'xs',
+                                color: 'text-muted',
+                            })}
+                        >
                             <Clock size={12} />
                             {recipe.time}
                         </span>
                     )}
                     {recipe.stepCount != null && (
-                        <span className={flex({ align: 'center', gap: '1', fontSize: 'xs', color: 'text-muted' })}>
+                        <span
+                            className={flex({
+                                align: 'center',
+                                gap: '1',
+                                fontSize: 'xs',
+                                color: 'text-muted',
+                            })}
+                        >
                             <ListOrdered size={12} />
                             {recipe.stepCount}
                         </span>
                     )}
                     {recipe.difficulty && (
-                        <span className={flex({ align: 'center', gap: '1', fontSize: 'xs', color: 'text-muted' })}>
+                        <span
+                            className={flex({
+                                align: 'center',
+                                gap: '1',
+                                fontSize: 'xs',
+                                color: 'text-muted',
+                            })}
+                        >
                             <ChefHat size={12} />
                             {recipe.difficulty}
                         </span>
@@ -300,7 +328,10 @@ export function RecipeCard({
         if (footer) {
             return (
                 <div className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
-                    <Link href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none', color: 'inherit' })}>
+                    <Link
+                        href={`/recipe/${recipe.slug}`}
+                        className={css({ textDecoration: 'none', color: 'inherit' })}
+                    >
                         {listCard}
                     </Link>
                     {footer}
@@ -309,7 +340,10 @@ export function RecipeCard({
         }
 
         return (
-            <Link href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none', color: 'inherit' })}>
+            <Link
+                href={`/recipe/${recipe.slug}`}
+                className={css({ textDecoration: 'none', color: 'inherit' })}
+            >
                 {listCard}
             </Link>
         );
@@ -361,7 +395,14 @@ export function RecipeCard({
             </div>
 
             {/* Content */}
-            <div className={css({ p: isCompact ? '3' : '4', flex: '1', display: 'flex', flexDirection: 'column' })}>
+            <div
+                className={css({
+                    p: isCompact ? '3' : '4',
+                    flex: '1',
+                    display: 'flex',
+                    flexDirection: 'column',
+                })}
+            >
                 {!hideCategory && !categoryOnImage && (
                     <div className={css({ mb: '2' })}>
                         <Badge>{recipe.category}</Badge>
@@ -415,18 +456,18 @@ export function RecipeCard({
                         ) : (
                             <span className={flex({ align: 'center', gap: '1' })}>
                                 <Star size={14} className={css({ color: 'palette.gold' })} />
-                                <span className={css({ fontSize: 'xs', color: 'text-muted' })}>—</span>
+                                <span className={css({ fontSize: 'xs', color: 'text-muted' })}>
+                                    —
+                                </span>
                             </span>
                         )
+                    ) : recipe.rating != null && recipe.rating > 0 ? (
+                        <SingleStar rating={recipe.rating} />
                     ) : (
-                        recipe.rating != null && recipe.rating > 0 ? (
-                            <SingleStar rating={recipe.rating} />
-                        ) : (
-                            <span className={flex({ align: 'center', gap: '1' })}>
-                                <Star size={14} className={css({ color: 'palette.gold' })} />
-                                <span>—</span>
-                            </span>
-                        )
+                        <span className={flex({ align: 'center', gap: '1' })}>
+                            <Star size={14} className={css({ color: 'palette.gold' })} />
+                            <span>—</span>
+                        </span>
                     )}
                     {!isCompact && recipe.stepCount != null && (
                         <span className={flex({ align: 'center', gap: '1' })}>

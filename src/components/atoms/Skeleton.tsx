@@ -6,6 +6,12 @@ const baseClass = css({
     bg: { base: 'rgba(0,0,0,0.08)', _dark: 'rgba(255,255,255,0.08)' },
 });
 
-export function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
+export function Skeleton({
+    className,
+    style,
+}: {
+    className?: string;
+    style?: React.CSSProperties;
+}) {
     return <div className={cx(baseClass, className)} style={style} aria-hidden />;
 }

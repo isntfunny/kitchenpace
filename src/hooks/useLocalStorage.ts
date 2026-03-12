@@ -9,7 +9,10 @@ import { useCallback, useEffect, useState } from 'react';
  * - Handles JSON serialization for objects/arrays; stores primitives as-is
  * - Silently falls back to in-memory state if localStorage is unavailable
  */
-export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T | ((prev: T) => T)) => void] {
+export function useLocalStorage<T>(
+    key: string,
+    defaultValue: T,
+): [T, (value: T | ((prev: T) => T)) => void] {
     const [value, setValue] = useState<T>(() => {
         if (typeof window === 'undefined') return defaultValue;
         try {
@@ -29,15 +32,12 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T 
         }
     }, [key, value]);
 
-    const set = useCallback(
-        (next: T | ((prev: T) => T)) => {
-            setValue((prev) => {
-                const resolved = typeof next === 'function' ? (next as (prev: T) => T)(prev) : next;
-                return resolved;
-            });
-        },
-        [],
-    );
+    const set = useCallback((next: T | ((prev: T) => T)) => {
+        setValue((prev) => {
+            const resolved = typeof next === 'function' ? (next as (prev: T) => T)(prev) : next;
+            return resolved;
+        });
+    }, []);
 
     return [value, set];
 }

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
 
-
 import { Header } from '@app/components/features/Header';
 import { css } from 'styled-system/css';
 
@@ -57,13 +56,19 @@ export function PageShell({ children }: PageShellProps) {
                     <span>© {new Date().getFullYear()} KüchenTakt</span>
                     <Link
                         href="/impressum"
-                        className={css({ _hover: { color: 'palette.orange' }, transition: 'color 0.15s' })}
+                        className={css({
+                            _hover: { color: 'palette.orange' },
+                            transition: 'color 0.15s',
+                        })}
                     >
                         Impressum
                     </Link>
                     <Link
                         href="/datenschutz"
-                        className={css({ _hover: { color: 'palette.orange' }, transition: 'color 0.15s' })}
+                        className={css({
+                            _hover: { color: 'palette.orange' },
+                            transition: 'color 0.15s',
+                        })}
                     >
                         Datenschutz
                     </Link>

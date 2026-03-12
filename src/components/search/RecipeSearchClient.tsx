@@ -65,8 +65,14 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     filterOptions,
     initialData,
 }) => {
-    const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>(STORAGE_KEYS.searchViewMode, 'grid');
-    const [savedSort, setSavedSort] = useLocalStorage<RecipeSortOption>(STORAGE_KEYS.searchSort, 'rating');
+    const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>(
+        STORAGE_KEYS.searchViewMode,
+        'grid',
+    );
+    const [savedSort, setSavedSort] = useLocalStorage<RecipeSortOption>(
+        STORAGE_KEYS.searchSort,
+        'rating',
+    );
     const [filters, setFilters] = useState({
         ...initialFilters,
         sort: initialFilters.sort ?? savedSort,
@@ -258,7 +264,6 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         }
 
         setStableFacets(facets);
-         
     }, [facets, filters, sliderSignature, nonSliderSignature]);
 
     return (
@@ -492,7 +497,11 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                         },
                                     })}
                                 >
-                                    {mode === 'grid' ? <LayoutGrid size={14} /> : <List size={14} />}
+                                    {mode === 'grid' ? (
+                                        <LayoutGrid size={14} />
+                                    ) : (
+                                        <List size={14} />
+                                    )}
                                 </button>
                             ))}
                         </div>
@@ -525,18 +534,41 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                bg: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
+                                bg: {
+                                    base: 'rgba(224,123,83,0.1)',
+                                    _dark: 'rgba(224,123,83,0.15)',
+                                },
                                 color: 'brand.primary',
                             })}
                         >
                             <UtensilsCrossed size={28} />
                         </div>
-                        <div className={css({ display: 'flex', flexDirection: 'column', gap: '1.5' })}>
-                            <p className={css({ fontSize: 'md', fontWeight: '700', color: 'text' })}>
+                        <div
+                            className={css({
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '1.5',
+                            })}
+                        >
+                            <p
+                                className={css({
+                                    fontSize: 'md',
+                                    fontWeight: '700',
+                                    color: 'text',
+                                })}
+                            >
                                 Keine Rezepte gefunden
                             </p>
-                            <p className={css({ fontSize: 'sm', color: 'text-muted', maxWidth: '300px', lineHeight: '1.6' })}>
-                                Mit den aktuellen Filtern gibt es leider keine Treffer. Versuche weniger Filter oder eine andere Suche.
+                            <p
+                                className={css({
+                                    fontSize: 'sm',
+                                    color: 'text-muted',
+                                    maxWidth: '300px',
+                                    lineHeight: '1.6',
+                                })}
+                            >
+                                Mit den aktuellen Filtern gibt es leider keine Treffer. Versuche
+                                weniger Filter oder eine andere Suche.
                             </p>
                         </div>
                         {activeFilterCount > 0 && (
@@ -566,13 +598,14 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                         <div
                             className={css({
                                 display: 'grid',
-                                gridTemplateColumns: viewMode === 'list'
-                                    ? '1fr'
-                                    : {
-                                          base: '1fr',
-                                          xs: 'repeat(2, minmax(0, 1fr))',
-                                          xl: 'repeat(3, minmax(0, 1fr))',
-                                      },
+                                gridTemplateColumns:
+                                    viewMode === 'list'
+                                        ? '1fr'
+                                        : {
+                                              base: '1fr',
+                                              xs: 'repeat(2, minmax(0, 1fr))',
+                                              xl: 'repeat(3, minmax(0, 1fr))',
+                                          },
                                 gap: viewMode === 'list' ? '2' : '4',
                             })}
                         >
@@ -581,7 +614,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                       <RecipeCardSkeleton
                                           key={index}
                                           variant={viewMode === 'list' ? 'list' : 'default'}
-                                              categoryOnImage
+                                          categoryOnImage
                                       />
                                   ))
                                 : data.map((recipe: RecipeCardData, index: number) => (
@@ -589,7 +622,10 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                           key={recipe.id}
                                           initial={{ opacity: 0, y: 12 }}
                                           animate={{ opacity: 1, y: 0 }}
-                                          transition={{ duration: 0.3, delay: Math.min(index, 5) * 0.05 }}
+                                          transition={{
+                                              duration: 0.3,
+                                              delay: Math.min(index, 5) * 0.05,
+                                          }}
                                       >
                                           <RecipeCard
                                               recipe={recipe}

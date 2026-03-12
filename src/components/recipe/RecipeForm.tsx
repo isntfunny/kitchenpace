@@ -11,15 +11,15 @@ import type {
     FlowEdgeSerialized,
     FlowNodeSerialized,
 } from '@app/components/flow/editor/editorTypes';
+import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
+import { PALETTE } from '@app/lib/palette';
+import { css } from 'styled-system/css';
+import { stack } from 'styled-system/patterns';
 
 const FlowEditor = dynamic(
     () => import('@app/components/flow/FlowEditor').then((m) => m.FlowEditor),
     { ssr: false },
 );
-import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
-import { PALETTE } from '@app/lib/palette';
-import { css } from 'styled-system/css';
-import { stack } from 'styled-system/patterns';
 
 import { searchIngredients, searchTags } from '../recipe/actions';
 import {

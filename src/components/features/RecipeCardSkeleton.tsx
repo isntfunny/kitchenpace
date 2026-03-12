@@ -19,7 +19,9 @@ export function RecipeCardSkeleton({ variant = 'default' }: RecipeCardSkeletonPr
                     flexDirection: 'row',
                 })}
             >
-                <Skeleton className={css({ flexShrink: '0', width: '120px', aspectRatio: '4/3' })} />
+                <Skeleton
+                    className={css({ flexShrink: '0', width: '120px', aspectRatio: '4/3' })}
+                />
                 <div
                     className={css({
                         flex: '1',
@@ -31,9 +33,15 @@ export function RecipeCardSkeleton({ variant = 'default' }: RecipeCardSkeletonPr
                         gap: '2',
                     })}
                 >
-                    <Skeleton className={css({ height: '14px', width: '40%', borderRadius: 'full' })} />
-                    <Skeleton className={css({ height: '16px', width: '80%', borderRadius: 'full' })} />
-                    <Skeleton className={css({ height: '12px', width: '55%', borderRadius: 'full' })} />
+                    <Skeleton
+                        className={css({ height: '14px', width: '40%', borderRadius: 'full' })}
+                    />
+                    <Skeleton
+                        className={css({ height: '16px', width: '80%', borderRadius: 'full' })}
+                    />
+                    <Skeleton
+                        className={css({ height: '12px', width: '55%', borderRadius: 'full' })}
+                    />
                 </div>
             </div>
         );
@@ -55,8 +63,12 @@ export function RecipeCardSkeleton({ variant = 'default' }: RecipeCardSkeletonPr
                 <Skeleton className={css({ height: '18px', width: '85%', borderRadius: 'full' })} />
                 <Skeleton className={css({ height: '14px', width: '65%', borderRadius: 'full' })} />
                 <div className={css({ display: 'flex', justifyContent: 'space-between', mt: '1' })}>
-                    <Skeleton className={css({ height: '12px', width: '25%', borderRadius: 'full' })} />
-                    <Skeleton className={css({ height: '12px', width: '20%', borderRadius: 'full' })} />
+                    <Skeleton
+                        className={css({ height: '12px', width: '25%', borderRadius: 'full' })}
+                    />
+                    <Skeleton
+                        className={css({ height: '12px', width: '20%', borderRadius: 'full' })}
+                    />
                 </div>
             </div>
         </div>

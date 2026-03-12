@@ -22,7 +22,7 @@ The app takes the stress out of multi-tasking in the kitchen by showing:
 | **Styling**      | Panda CSS (semantic dark-mode tokens)                                             |
 | **Language**     | TypeScript                                                                        |
 | **User Auth**    | Logto                                                                             |
-| **Search**       | OpenSearch (recipes + ingredients indices)                                        |
+| **Search**       | OpenSearch (recipes + ingredients + tags indices)                                 |
 | **Queue / Jobs** | BullMQ + Redis (ioredis)                                                          |
 | **AI**           | OpenAI (gpt-5.4 for recipe import, omni-moderation-latest for content moderation) |
 | **Realtime**     | SSE via Redis pub/sub                                                             |
@@ -130,8 +130,9 @@ The worker is a standalone Node.js process (`worker/entrypoint.ts`) separate fro
 
 | Job                      | Queue      | Schedule     | What it does                                                                      |
 | ------------------------ | ---------- | ------------ | --------------------------------------------------------------------------------- |
-| `sync-opensearch`        | opensearch | Every 15 min | Incremental recipe sync (watermark-based)                                         |
+| `sync-recipes`           | opensearch | Every 15 min | Incremental recipe sync (watermark-based)                                         |
 | `sync-ingredients`       | opensearch | Every 1h     | Incremental ingredient sync                                                       |
+| `sync-tags`              | opensearch | Every 1h     | Incremental tag sync                                                              |
 | `sync-recipe`            | opensearch | On-demand    | Single recipe upsert/delete after publish/update                                  |
 | `trending-recipes`       | scheduled  | Daily 06:00  | Weighted trending score: cooks (8pt), ratings (6pt), favorites (4pt), views (2pt) |
 | `sync-contacts-notifuse` | scheduled  | Every 6h     | Sync user contacts to email service                                               |
@@ -150,9 +151,9 @@ The worker is a standalone Node.js process (`worker/entrypoint.ts`) separate fro
 
 ### OpenSearch Sync (Watermark Pattern)
 
-- Stores last-synced timestamp in Redis (`opensearch:watermark:recipes`)
+- Stores last-synced timestamp in Redis (`opensearch:watermark:recipes`, `opensearch:watermark:ingredients`, `opensearch:watermark:tags`)
 - Queries only records changed since watermark
-- Paginates in batches (default 150 recipes, 500 ingredients)
+- Paginates in batches (default 150 recipes, 500 ingredients/tags)
 - First run = full sync (no watermark)
 
 ### Job Run Tracking
@@ -411,7 +412,8 @@ Redis pub/sub powers server-sent events for live updates. `clientStream.ts` pool
 | Index         | Key Mappings                                                                                                          |
 | ------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `recipes`     | title (text+keyword), description, category, tags, ingredients, difficulty, totalTime, rating, cookCount, publishedAt |
-| `ingredients` | name (text+keyword), slug, category, units                                                                            |
+| `ingredients` | name (text+keyword), slug, category, units, keywords                                                                  |
+| `tags`        | name (text+keyword), slug, keywords                                                                                   |
 
 ### Search Features (via `/api/recipes/filter`)
 

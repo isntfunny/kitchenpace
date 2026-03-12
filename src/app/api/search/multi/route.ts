@@ -4,6 +4,7 @@ import {
     opensearchClient,
     OPENSEARCH_INDEX,
     OPENSEARCH_INGREDIENTS_INDEX,
+    OPENSEARCH_TAGS_INDEX,
 } from '@shared/opensearch/client';
 import { prisma } from '@shared/prisma';
 
@@ -43,17 +44,6 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // Build case-insensitive regex: "abc" → "[aA][bB][cC]"
-        const ciRegex = escapedQuery
-            .split('')
-            .map((ch) => {
-                const lower = ch.toLowerCase();
-                const upper = ch.toUpperCase();
-                return lower !== upper ? `[${lower}${upper}]` : ch;
-            })
-            .join('');
-
         // Query 1: Recipe search
         const recipesPromise = opensearchClient.search({
             index: OPENSEARCH_INDEX,
@@ -78,47 +68,36 @@ export async function GET(request: NextRequest) {
             },
         });
 
-        // Query 2a: Tag search — substring match via case-insensitive regex
-        const tagsRegexPromise = opensearchClient.search({
-            index: OPENSEARCH_INDEX,
-            body: {
-                query: { term: { status: 'PUBLISHED' } },
-                size: 0,
-                aggs: {
-                    matching_tags: {
-                        terms: {
-                            field: 'tags',
-                            size: 10,
-                            include: `.*${ciRegex}.*`,
-                        },
-                    },
-                },
-            },
-        });
-
-        // Query 2b: Tag search — fuzzy match via keywords field, then aggregate tags
-        const tagsFuzzyPromise = opensearchClient.search({
-            index: OPENSEARCH_INDEX,
+        // Query 2: Tag search (dedicated tags index)
+        // Combines prefix, fuzzy, and wildcard for typo tolerance + substring matching
+        const tagsPromise = opensearchClient.search({
+            index: OPENSEARCH_TAGS_INDEX,
             body: {
                 query: {
                     bool: {
-                        must: [
-                            { match: { keywords: { query, fuzziness: 'AUTO', prefix_length: 1 } } },
+                        should: [
+                            { prefix: { 'name.keyword': { value: query, boost: 3 } } },
+                            { match: { name: { query, fuzziness: 'AUTO', prefix_length: 1 } } },
+                            { match: { keywords: { query, fuzziness: 'AUTO' } } },
+                            {
+                                wildcard: {
+                                    'name.keyword': {
+                                        value: `*${query}*`,
+                                        case_insensitive: true,
+                                    },
+                                },
+                            },
                         ],
-                        filter: [{ term: { status: 'PUBLISHED' } }],
+                        minimum_should_match: 1,
                     },
                 },
-                size: 0,
-                aggs: {
-                    matching_tags: {
-                        terms: { field: 'tags', size: 10 },
-                    },
-                },
+                size: 10,
+                _source: ['name'],
             },
         });
 
-        // Query 3: Ingredient name search (separate index)
-        // Combines fuzzy (typo tolerance) + wildcard (substring/compound word matching)
+        // Query 3: Ingredient search (dedicated ingredients index)
+        // Combines prefix, fuzzy, and wildcard for typo tolerance + substring matching
         const ingredientsPromise = opensearchClient.search({
             index: OPENSEARCH_INGREDIENTS_INDEX,
             body: {
@@ -163,14 +142,12 @@ export async function GET(request: NextRequest) {
             },
         });
 
-        const [recipesResult, tagsRegexResult, tagsFuzzyResult, ingredientsResult, usersResult] =
-            await Promise.all([
-                recipesPromise,
-                tagsRegexPromise,
-                tagsFuzzyPromise,
-                ingredientsPromise,
-                usersPromise,
-            ]);
+        const [recipesResult, tagsResult, ingredientsResult, usersResult] = await Promise.all([
+            recipesPromise,
+            tagsPromise,
+            ingredientsPromise,
+            usersPromise,
+        ]);
 
         // Parse recipe hits
         const hits = (recipesResult.body.hits?.hits ?? []) as Array<{
@@ -190,35 +167,47 @@ export async function GET(request: NextRequest) {
                 description: (doc!.description as string) || '',
             }));
 
-        // Parse & merge tags from regex + fuzzy results
-        type TagBucket = { key: string; doc_count: number };
-        const parseTagBuckets = (result: typeof tagsRegexResult) =>
-            (
-                (
-                    result.body.aggregations?.matching_tags as
-                        | { buckets?: TagBucket[] }
-                        | undefined
-                )?.buckets ?? []
-            ).map((b) => [b.key, b.doc_count] as const);
+        // Parse tag names from tags index
+        const tagNames = (tagsResult.body.hits?.hits ?? [])
+            .map((hit: { _source?: { name?: string } }) => hit._source?.name)
+            .filter((name: string | undefined): name is string => Boolean(name));
 
-        const tagCountMap = new Map<string, number>();
-        for (const [key, count] of [
-            ...parseTagBuckets(tagsRegexResult),
-            ...parseTagBuckets(tagsFuzzyResult),
-        ]) {
-            tagCountMap.set(key, Math.max(tagCountMap.get(key) ?? 0, count));
+        // Get recipe counts for matched tags
+        let tags: SuggestItem[] = [];
+        if (tagNames.length > 0) {
+            const { body: tagCountBody } = await opensearchClient.search({
+                index: OPENSEARCH_INDEX,
+                body: {
+                    query: { term: { status: 'PUBLISHED' } },
+                    size: 0,
+                    aggs: {
+                        filtered: {
+                            terms: {
+                                field: 'tags',
+                                include: tagNames,
+                                size: tagNames.length,
+                            },
+                        },
+                    },
+                },
+            });
+
+            const tagAgg = tagCountBody.aggregations?.filtered as
+                | { buckets?: Array<{ key: string; doc_count: number }> }
+                | undefined;
+            const tagCountMap = new Map((tagAgg?.buckets ?? []).map((b) => [b.key, b.doc_count]));
+            tags = tagNames
+                .map((name) => ({ name, count: tagCountMap.get(name) ?? 0 }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 5);
         }
-        const tags: SuggestItem[] = [...tagCountMap.entries()]
-            .map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 5);
 
-        // Parse ingredient names
+        // Parse ingredient names from ingredients index
         const ingredientNames = (ingredientsResult.body.hits?.hits ?? [])
             .map((hit: { _source?: { name?: string } }) => hit._source?.name)
             .filter((name: string | undefined): name is string => Boolean(name));
 
-        // Query 3: Get recipe counts for matched ingredients (sequential, needs names)
+        // Get recipe counts for matched ingredients
         let ingredients: SuggestItem[] = [];
         if (ingredientNames.length > 0) {
             const { body: countBody } = await opensearchClient.search({

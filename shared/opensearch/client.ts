@@ -3,10 +3,12 @@ import { Client } from '@opensearch-project/opensearch';
 const nodeUrl = process.env.OPENSEARCH_URL ?? 'http://localhost:9200';
 const recipesIndex = process.env.OPENSEARCH_INDEX ?? 'recipes';
 const ingredientsIndex = process.env.OPENSEARCH_INGREDIENTS_INDEX ?? 'ingredients';
+const tagsIndex = process.env.OPENSEARCH_TAGS_INDEX ?? 'tags';
 
 export const opensearchClient = new Client({ node: nodeUrl });
 export const OPENSEARCH_INDEX = recipesIndex;
 export const OPENSEARCH_INGREDIENTS_INDEX = ingredientsIndex;
+export const OPENSEARCH_TAGS_INDEX = tagsIndex;
 
 const RECIPES_MAPPINGS = {
     properties: {
@@ -43,6 +45,15 @@ const INGREDIENTS_MAPPINGS = {
     },
 };
 
+const TAGS_MAPPINGS = {
+    properties: {
+        id: { type: 'keyword' },
+        name: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
+        slug: { type: 'keyword' },
+        keywords: { type: 'text' },
+    },
+};
+
 /**
  * Ensure OpenSearch indices exist with correct mappings.
  * Safe to call repeatedly — skips creation if the index already exists.
@@ -51,6 +62,7 @@ export async function ensureIndices(): Promise<void> {
     for (const [index, mappings] of [
         [OPENSEARCH_INDEX, RECIPES_MAPPINGS],
         [OPENSEARCH_INGREDIENTS_INDEX, INGREDIENTS_MAPPINGS],
+        [OPENSEARCH_TAGS_INDEX, TAGS_MAPPINGS],
     ] as const) {
         const { body: exists } = await opensearchClient.indices.exists({ index });
         if (!exists) {

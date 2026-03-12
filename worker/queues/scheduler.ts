@@ -17,7 +17,7 @@ export interface ScheduledJobDefinition {
 
 const scheduledJobs: ScheduledJobDefinition[] = [
     {
-        name: 'sync-opensearch',
+        name: 'sync-recipes',
         queue: QueueName.OPENSEARCH,
         data: { batchSize: 150 },
         schema: {
@@ -31,6 +31,20 @@ const scheduledJobs: ScheduledJobDefinition[] = [
     },
     {
         name: 'sync-ingredients',
+        queue: QueueName.OPENSEARCH,
+        data: { batchSize: 500 },
+        schema: {
+            batchSize: { type: 'number', label: 'Batch Size', default: 500, min: 1, max: 2000 },
+        },
+        options: {
+            repeat: {
+                pattern: '0 */1 * * *',
+                tz: 'Europe/Berlin',
+            },
+        },
+    },
+    {
+        name: 'sync-tags',
         queue: QueueName.OPENSEARCH,
         data: { batchSize: 500 },
         schema: {

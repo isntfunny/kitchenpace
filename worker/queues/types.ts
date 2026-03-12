@@ -11,7 +11,7 @@ export enum JobPriority {
     CRITICAL = 4,
 }
 
-export interface SyncOpenSearchJob {
+export interface SyncRecipesJob {
     batchSize?: number;
 }
 
@@ -23,10 +23,15 @@ export interface SyncIngredientsJob {
     batchSize?: number;
 }
 
+export interface SyncTagsJob {
+    batchSize?: number;
+}
+
 export type OpenSearchJob =
-    | { name: 'sync-opensearch'; data: SyncOpenSearchJob }
+    | { name: 'sync-recipes'; data: SyncRecipesJob }
     | { name: 'sync-recipe'; data: SyncRecipeToOpenSearchJob }
-    | { name: 'sync-ingredients'; data: SyncIngredientsJob };
+    | { name: 'sync-ingredients'; data: SyncIngredientsJob }
+    | { name: 'sync-tags'; data: SyncTagsJob };
 
 export interface BackupJob {
     type: 'hourly' | 'daily';
@@ -42,8 +47,9 @@ export interface GenerateOgImagesJob {
 }
 
 export type ScheduledJob =
-    | { name: 'sync-opensearch'; data: SyncOpenSearchJob }
+    | { name: 'sync-recipes'; data: SyncRecipesJob }
     | { name: 'sync-ingredients'; data: SyncIngredientsJob }
+    | { name: 'sync-tags'; data: SyncTagsJob }
     | { name: 'trending-recipes'; data: Record<string, unknown> }
     | { name: 'backup-database-hourly'; data: Record<string, unknown> }
     | { name: 'backup-database-daily'; data: Record<string, unknown> }

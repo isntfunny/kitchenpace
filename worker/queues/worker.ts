@@ -5,8 +5,9 @@ import { getRedis } from './connection';
 import { createJobRun, updateJobRun } from './job-run';
 import {
     processSyncIngredients,
-    processSyncOpenSearch,
+    processSyncRecipes,
     processSyncRecipeToOpenSearch,
+    processSyncTags,
 } from './opensearch-processor';
 import {
     processTrendingRecipes,
@@ -24,10 +25,12 @@ import { QueueName } from './types';
 const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
     [QueueName.OPENSEARCH]: async (job) => {
         switch (job.name) {
-            case 'sync-opensearch':
-                return processSyncOpenSearch(job);
+            case 'sync-recipes':
+                return processSyncRecipes(job);
             case 'sync-ingredients':
                 return processSyncIngredients(job);
+            case 'sync-tags':
+                return processSyncTags(job);
             case 'sync-recipe':
                 return processSyncRecipeToOpenSearch(job);
             default:

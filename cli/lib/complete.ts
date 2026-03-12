@@ -38,10 +38,10 @@ _kitchen_completions() {
                 job)
                     case "\${COMP_WORDS[2]}" in
                         opensearch)
-                            COMPREPLY=(\$(compgen -W "sync-opensearch sync-recipe sync-ingredients" -- \${cur}))
+                            COMPREPLY=(\$(compgen -W "sync-recipes sync-recipe sync-ingredients sync-tags" -- \${cur}))
                             ;;
                         scheduled)
-                            COMPREPLY=(\$(compgen -W "opensearch-sync sync-ingredients trending-recipes" -- \${cur}))
+                            COMPREPLY=(\$(compgen -W "trending-recipes sync-contacts-notifuse backup-database-hourly backup-database-daily purge-thumbnail-cache generate-og-images" -- \${cur}))
                             ;;
                     esac
                     ;;
@@ -74,16 +74,20 @@ _kitchen() {
 
     local -a opensearch_jobs
     opensearch_jobs=(
-        'sync-opensearch:Sync all to OpenSearch'
+        'sync-recipes:Sync all recipes'
         'sync-recipe:Sync single recipe'
         'sync-ingredients:Sync ingredients'
+        'sync-tags:Sync tags'
     )
 
     local -a scheduled_jobs
     scheduled_jobs=(
-        'opensearch-sync:OpenSearch sync'
-        'sync-ingredients:Sync ingredients'
         'trending-recipes:Calculate trending'
+        'sync-contacts-notifuse:Sync contacts'
+        'backup-database-hourly:Hourly backup'
+        'backup-database-daily:Daily backup'
+        'purge-thumbnail-cache:Purge thumb cache'
+        'generate-og-images:Generate OG images'
     )
 
     case "\${words[1]}" in
@@ -143,14 +147,18 @@ complete -c kitchen -n '__fish_seen_subcommand_from job' -a 'scheduled' -d 'Sche
 complete -c kitchen -n '__fish_seen_subcommand_from job' -l list -d 'List available jobs'
 
 # job -> opensearch
-complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from opensearch' -a 'sync-opensearch' -d 'Sync all'
-complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from opensearch' -a 'sync-recipe' -d 'Sync recipe'
+complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from opensearch' -a 'sync-recipes' -d 'Sync all recipes'
+complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from opensearch' -a 'sync-recipe' -d 'Sync single recipe'
 complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from opensearch' -a 'sync-ingredients' -d 'Sync ingredients'
+complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from opensearch' -a 'sync-tags' -d 'Sync tags'
 
-# job -> scheduled  
-complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from scheduled' -a 'opensearch-sync' -d 'OpenSearch sync'
-complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from scheduled' -a 'sync-ingredients' -d 'Sync ingredients'
-complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from scheduled' -a 'trending-recipes' -d 'Trending recipes'`;
+# job -> scheduled
+complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from scheduled' -a 'trending-recipes' -d 'Trending recipes'
+complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from scheduled' -a 'sync-contacts-notifuse' -d 'Sync contacts'
+complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from scheduled' -a 'backup-database-hourly' -d 'Hourly backup'
+complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from scheduled' -a 'backup-database-daily' -d 'Daily backup'
+complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from scheduled' -a 'purge-thumbnail-cache' -d 'Purge thumb cache'
+complete -c kitchen -n '__fish_seen_subcommand_from job; and __fish_seen_subcommand_from scheduled' -a 'generate-og-images' -d 'Generate OG images'`;
 
         default:
             console.error('Unsupported shell. Use: bash, zsh, or fish');

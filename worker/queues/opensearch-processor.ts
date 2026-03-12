@@ -4,14 +4,21 @@ import {
     opensearchClient,
     OPENSEARCH_INDEX,
     OPENSEARCH_INGREDIENTS_INDEX,
+    OPENSEARCH_TAGS_INDEX,
 } from '@shared/opensearch/client';
 
 import { getRedis } from './connection';
 import { prisma } from './prisma';
-import { SyncIngredientsJob, SyncOpenSearchJob, SyncRecipeToOpenSearchJob } from './types';
+import {
+    SyncIngredientsJob,
+    SyncRecipesJob,
+    SyncRecipeToOpenSearchJob,
+    SyncTagsJob,
+} from './types';
 
 const WATERMARK_KEY_RECIPES = 'opensearch:watermark:recipes';
 const WATERMARK_KEY_INGREDIENTS = 'opensearch:watermark:ingredients';
+const WATERMARK_KEY_TAGS = 'opensearch:watermark:tags';
 
 /** Max documents per bulk request (each document = 2 bulk entries: action + body) */
 const BULK_DOCS_PER_CHUNK = 1000;
@@ -197,12 +204,10 @@ async function runBulkOperations(operations: BulkOperation[]): Promise<void> {
     }
 }
 
-export async function processSyncOpenSearch(
-    job: Job<SyncOpenSearchJob>,
-): Promise<{ synced: number }> {
+export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ synced: number }> {
     const pageSize = job.data.batchSize ?? 150;
 
-    console.log(`[OpenSearch] Processing sync-opensearch job ${job.id}`, { pageSize });
+    console.log(`[OpenSearch] Processing sync-recipes job ${job.id}`, { pageSize });
 
     try {
         const redis = getRedis();
@@ -282,7 +287,7 @@ export async function processSyncOpenSearch(
 
         return { synced: totalSynced };
     } catch (error) {
-        console.error(`[OpenSearch] sync-opensearch job ${job.id} failed`, {
+        console.error(`[OpenSearch] sync-recipes job ${job.id} failed`, {
             error: error instanceof Error ? error.message : String(error),
         });
         throw error;
@@ -459,6 +464,119 @@ export async function processSyncRecipeToOpenSearch(
     } catch (error) {
         console.error(`[OpenSearch] sync-recipe job ${job.id} failed`, {
             recipeId,
+            error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+    }
+}
+
+// ── Tag sync ──────────────────────────────────────────────────────────
+
+type TagWithDetails = {
+    id: string;
+    name: string;
+    slug: string;
+    createdAt: Date;
+};
+
+type TagDocument = {
+    id: string;
+    name: string;
+    slug: string;
+    keywords: string[];
+};
+
+function transformTagToDocument(tag: TagWithDetails): TagDocument {
+    const keywords = Array.from(
+        new Set(
+            [tag.name, tag.slug]
+                .filter((entry): entry is string => Boolean(entry))
+                .map((value) => value.toLowerCase()),
+        ),
+    );
+
+    return {
+        id: tag.id,
+        name: tag.name,
+        slug: tag.slug,
+        keywords,
+    };
+}
+
+function buildTagBulkOperations(tags: TagWithDetails[]): BulkOperation[] {
+    const operations: BulkOperation[] = [];
+    for (const tag of tags) {
+        operations.push({ index: { _index: OPENSEARCH_TAGS_INDEX, _id: tag.id } });
+        operations.push(transformTagToDocument(tag));
+    }
+    return operations;
+}
+
+export async function processSyncTags(job: Job<SyncTagsJob>): Promise<{ synced: number }> {
+    const pageSize = job.data.batchSize ?? 500;
+
+    console.log(`[OpenSearch] Processing sync-tags job ${job.id}`, { pageSize });
+
+    try {
+        const redis = getRedis();
+        const watermarkRaw = await redis.get(WATERMARK_KEY_TAGS);
+        const watermark = watermarkRaw ? new Date(watermarkRaw) : undefined;
+
+        if (watermark) {
+            console.log(`[OpenSearch] Incremental tags sync from: ${watermark.toISOString()}`);
+        } else {
+            console.log('[OpenSearch] Full tags sync (no watermark found)');
+        }
+
+        let totalSynced = 0;
+        let cursor: string | undefined;
+        let latestCreatedAt: Date | undefined;
+
+        while (true) {
+            const tags = await prisma.tag.findMany({
+                where: {
+                    ...(watermark ? { createdAt: { gt: watermark } } : {}),
+                    ...(cursor ? { id: { gt: cursor } } : {}),
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    createdAt: true,
+                },
+                orderBy: { id: 'asc' },
+                take: pageSize,
+            });
+
+            if (tags.length === 0) break;
+
+            const operations = buildTagBulkOperations(tags);
+            await runBulkOperations(operations);
+
+            totalSynced += tags.length;
+            cursor = tags[tags.length - 1].id;
+
+            for (const tag of tags) {
+                if (!latestCreatedAt || tag.createdAt > latestCreatedAt) {
+                    latestCreatedAt = tag.createdAt;
+                }
+            }
+
+            console.log(`[OpenSearch] Synced batch of ${tags.length} tags (total: ${totalSynced})`);
+
+            if (tags.length < pageSize) break;
+        }
+
+        if (latestCreatedAt) {
+            await redis.set(WATERMARK_KEY_TAGS, latestCreatedAt.toISOString());
+            console.log(`[OpenSearch] Updated tags watermark to ${latestCreatedAt.toISOString()}`);
+        }
+
+        console.log(`[OpenSearch] Synced ${totalSynced} tags to index ${OPENSEARCH_TAGS_INDEX}`);
+
+        return { synced: totalSynced };
+    } catch (error) {
+        console.error(`[OpenSearch] sync-tags job ${job.id} failed`, {
             error: error instanceof Error ? error.message : String(error),
         });
         throw error;

@@ -1,9 +1,10 @@
 export {
     QueueName,
     type AllJob,
-    type SyncOpenSearchJob,
+    type SyncRecipesJob,
     type SyncRecipeToOpenSearchJob,
     type SyncIngredientsJob,
+    type SyncTagsJob,
 } from './types';
 export { getOpenSearchQueue, getScheduledQueue, closeAllQueues } from './queue';
 export { getRedis, getSubscriber, disconnectRedis, redisConfig } from './connection';
@@ -18,14 +19,19 @@ export { prisma } from './prisma';
 
 import { getOpenSearchQueue, getScheduledQueue } from './queue';
 
-export async function addOpenSearchSyncJob(data?: { batchSize?: number }): Promise<void> {
+export async function addRecipesSyncJob(data?: { batchSize?: number }): Promise<void> {
     const queue = getOpenSearchQueue();
-    await queue.add('sync-opensearch', data ?? {});
+    await queue.add('sync-recipes', data ?? {});
 }
 
 export async function addSyncIngredientsJob(data?: { batchSize?: number }): Promise<void> {
     const queue = getOpenSearchQueue();
     await queue.add('sync-ingredients', data ?? {});
+}
+
+export async function addSyncTagsJob(data?: { batchSize?: number }): Promise<void> {
+    const queue = getOpenSearchQueue();
+    await queue.add('sync-tags', data ?? {});
 }
 
 export async function addSyncRecipeJob(recipeId: string): Promise<void> {

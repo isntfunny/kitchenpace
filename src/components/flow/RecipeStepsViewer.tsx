@@ -1,6 +1,7 @@
 'use client';
 
 import { List, Smartphone, X } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -8,9 +9,14 @@ import { CastButton } from '@app/components/cast/CastButton';
 import { useCast } from '@app/hooks/useCast';
 import { css } from 'styled-system/css';
 
+
 import { CompletionBanner } from './viewer/CompletionBanner';
-import { DesktopView } from './viewer/DesktopView';
 import { MobileView } from './viewer/MobileView';
+
+const DesktopView = dynamic(
+    () => import('./viewer/DesktopView').then((m) => m.DesktopView),
+    { ssr: false },
+);
 import { NodeDetailModal } from './viewer/NodeDetailModal';
 import { SimpleTextView } from './viewer/SimpleTextView';
 import { viewerReducer } from './viewer/viewerTypes';

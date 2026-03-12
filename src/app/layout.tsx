@@ -1,3 +1,5 @@
+import { createHmac } from 'crypto';
+
 import { IdentifyComponent, OpenPanelComponent } from '@openpanel/nextjs';
 import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
@@ -229,6 +231,21 @@ export default async function RootLayout({
         );
     }
 
+    let chatwootUser = null;
+    if (session?.user?.id) {
+        const chatwootHmacToken = process.env.CHATWOOT_IDENTITY_TOKEN;
+        const identifier = session.user.id;
+        const identifierHash = chatwootHmacToken
+            ? createHmac('sha256', chatwootHmacToken).update(identifier).digest('hex')
+            : undefined;
+        chatwootUser = {
+            id: identifier,
+            name: profile?.nickname ?? session.user.name ?? undefined,
+            email: session.user.email ?? undefined,
+            identifierHash,
+        };
+    }
+
     const openPanelClientId = process.env.OPENPANEL_CLIENT_ID ?? process.env.OPENPANEL_ID ?? '';
     const openPanelApiUrl = process.env.OPENPANEL_API_URL;
     const hasOpenPanel = Boolean(openPanelClientId && openPanelApiUrl);
@@ -267,7 +284,7 @@ export default async function RootLayout({
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
                 />
-                <ChatwootWidgetComponent />
+                <ChatwootWidgetComponent user={chatwootUser} />
                 {hasOpenPanel && (
                     <>
                         <OpenPanelComponent

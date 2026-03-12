@@ -103,7 +103,11 @@
     background: transparent;
 }
 
-/* ── Chatwoot chat bubble — mobile repositioning ──────────────────────── */
+/* ── Chatwoot chat bubble ─────────────────────────────────────────────── */
+.woot--bubble-holder .woot-widget-bubble {
+    transform: scale(0.72) !important;
+}
+
 /* Push the widget above the mobile browser navigation bar */
 @media (max-width: 768px) {
     .woot-widget-holder,

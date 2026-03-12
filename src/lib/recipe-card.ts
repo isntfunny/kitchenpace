@@ -14,6 +14,8 @@ export interface RecipeCardData {
     image: string | null;
     imageKey?: string | null;
     description?: string;
+    stepCount?: number;
+    difficulty?: string;
 }
 
 export type RecipeWithCategory = Prisma.RecipeGetPayload<{
@@ -38,5 +40,11 @@ export function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
             : null,
         imageKey: recipe.imageKey ?? null,
         description: recipe.description ?? '',
+        difficulty:
+            recipe.difficulty === 'EASY'
+                ? 'Einfach'
+                : recipe.difficulty === 'HARD'
+                  ? 'Schwer'
+                  : 'Mittel',
     };
 }

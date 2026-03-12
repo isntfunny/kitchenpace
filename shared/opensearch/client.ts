@@ -25,6 +25,7 @@ const RECIPES_MAPPINGS = {
         cookTime: { type: 'integer' },
         rating: { type: 'float' },
         cookCount: { type: 'integer' },
+        stepCount: { type: 'integer' },
         imageKey: { type: 'keyword' },
         publishedAt: { type: 'date' },
         keywords: { type: 'text' },

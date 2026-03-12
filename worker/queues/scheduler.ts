@@ -156,8 +156,38 @@ function getQueueForName(queueName: QueueName) {
     }
 }
 
+/**
+ * Remove repeatable jobs from a queue that are no longer defined in scheduledJobs.
+ * This prevents stale/renamed jobs from firing indefinitely in Redis.
+ */
+async function pruneStaleRepeatables(): Promise<void> {
+    const expectedByQueue = new Map<QueueName, Set<string>>();
+    for (const job of scheduledJobs) {
+        if (!expectedByQueue.has(job.queue)) {
+            expectedByQueue.set(job.queue, new Set());
+        }
+        expectedByQueue.get(job.queue)!.add(job.name);
+    }
+
+    for (const [queueName, expectedNames] of expectedByQueue) {
+        const queue = getQueueForName(queueName);
+        const repeatables = await queue.getRepeatableJobs();
+
+        for (const rep of repeatables) {
+            if (!expectedNames.has(rep.name)) {
+                await queue.removeRepeatableByKey(rep.key);
+                console.log(
+                    `[Scheduler] Removed stale repeatable job: "${rep.name}" from queue "${queueName}"`,
+                );
+            }
+        }
+    }
+}
+
 export async function startScheduler(): Promise<void> {
     console.log('[Scheduler] Starting job scheduler...');
+
+    await pruneStaleRepeatables();
 
     for (const job of scheduledJobs) {
         await addRepeatableJob(job);

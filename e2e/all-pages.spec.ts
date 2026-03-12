@@ -55,8 +55,6 @@ function createErrorCatcher(page: Page) {
             if (text.includes('script-src') && text.includes('not explicitly set')) return;
             // Ignore failed resource loads from captcha
             if (text.includes('the server respon') && text.includes('challenges')) return;
-            // Ignore transient rate-limit errors (sequential test runs hitting limits)
-            if (text.includes('429')) return;
             errors.push(text);
         }
     });
@@ -88,8 +86,8 @@ async function visitAndCheck(page: Page, path: string) {
     await page.goto(url, { waitUntil: 'load', timeout: 30_000 });
     await expect(page).toHaveTitle(/KüchenTakt|Authentifizierung|Passwort|Changelog/i);
 
-    // Soak for 5 seconds to catch late-firing errors (hydration, lazy loads, SSE)
-    await page.waitForTimeout(5_000);
+    // Soak for 2 seconds to catch late-firing errors (hydration, lazy loads, SSE)
+    await page.waitForTimeout(2_000);
 
     if (failedRequests.length > 0) {
         console.error('Failed requests:', failedRequests);

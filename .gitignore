@@ -55,3 +55,4 @@ docs/chefkoch*
 __pycache__
 
 /.playwright-mcp
+/playwright-report

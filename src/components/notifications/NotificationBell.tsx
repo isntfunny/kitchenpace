@@ -13,11 +13,12 @@ import { resolveNotificationHref } from './utils';
 
 export function NotificationBell() {
     const { data: session, status } = useSession();
-    const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications();
+    const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
+    const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications({
+        enabled: isAuthenticated,
+    });
     const visibleNotifications = notifications.slice(0, 19);
     const badgeContent = unreadCount > 9 ? '9+' : unreadCount;
-
-    const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
 
     if (!isAuthenticated) {
         return null;

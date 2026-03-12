@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
             },
         });
 
-        // Query 2: Tag search (all published recipes, case-insensitive regex)
-        const tagsPromise = opensearchClient.search({
+        // Query 2a: Tag search — substring match via case-insensitive regex
+        const tagsRegexPromise = opensearchClient.search({
             index: OPENSEARCH_INDEX,
             body: {
                 query: { term: { status: 'PUBLISHED' } },
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
                     matching_tags: {
                         terms: {
                             field: 'tags',
-                            size: 5,
+                            size: 10,
                             include: `.*${ciRegex}.*`,
                         },
                     },
@@ -96,7 +96,29 @@ export async function GET(request: NextRequest) {
             },
         });
 
+        // Query 2b: Tag search — fuzzy match via keywords field, then aggregate tags
+        const tagsFuzzyPromise = opensearchClient.search({
+            index: OPENSEARCH_INDEX,
+            body: {
+                query: {
+                    bool: {
+                        must: [
+                            { match: { keywords: { query, fuzziness: 'AUTO', prefix_length: 1 } } },
+                        ],
+                        filter: [{ term: { status: 'PUBLISHED' } }],
+                    },
+                },
+                size: 0,
+                aggs: {
+                    matching_tags: {
+                        terms: { field: 'tags', size: 10 },
+                    },
+                },
+            },
+        });
+
         // Query 3: Ingredient name search (separate index)
+        // Combines fuzzy (typo tolerance) + wildcard (substring/compound word matching)
         const ingredientsPromise = opensearchClient.search({
             index: OPENSEARCH_INGREDIENTS_INDEX,
             body: {
@@ -106,11 +128,19 @@ export async function GET(request: NextRequest) {
                             { prefix: { 'name.keyword': { value: query, boost: 3 } } },
                             { match: { name: { query, fuzziness: 'AUTO', prefix_length: 1 } } },
                             { match: { keywords: { query, fuzziness: 'AUTO' } } },
+                            {
+                                wildcard: {
+                                    'name.keyword': {
+                                        value: `*${query}*`,
+                                        case_insensitive: true,
+                                    },
+                                },
+                            },
                         ],
                         minimum_should_match: 1,
                     },
                 },
-                size: 5,
+                size: 10,
                 _source: ['name'],
             },
         });
@@ -133,12 +163,14 @@ export async function GET(request: NextRequest) {
             },
         });
 
-        const [recipesResult, tagsResult, ingredientsResult, usersResult] = await Promise.all([
-            recipesPromise,
-            tagsPromise,
-            ingredientsPromise,
-            usersPromise,
-        ]);
+        const [recipesResult, tagsRegexResult, tagsFuzzyResult, ingredientsResult, usersResult] =
+            await Promise.all([
+                recipesPromise,
+                tagsRegexPromise,
+                tagsFuzzyPromise,
+                ingredientsPromise,
+                usersPromise,
+            ]);
 
         // Parse recipe hits
         const hits = (recipesResult.body.hits?.hits ?? []) as Array<{
@@ -158,14 +190,28 @@ export async function GET(request: NextRequest) {
                 description: (doc!.description as string) || '',
             }));
 
-        // Parse tags aggregation
-        const tagsAgg = tagsResult.body.aggregations?.matching_tags as
-            | { buckets?: Array<{ key: string; doc_count: number }> }
-            | undefined;
-        const tags: SuggestItem[] = (tagsAgg?.buckets ?? []).map((b) => ({
-            name: b.key,
-            count: b.doc_count,
-        }));
+        // Parse & merge tags from regex + fuzzy results
+        type TagBucket = { key: string; doc_count: number };
+        const parseTagBuckets = (result: typeof tagsRegexResult) =>
+            (
+                (
+                    result.body.aggregations?.matching_tags as
+                        | { buckets?: TagBucket[] }
+                        | undefined
+                )?.buckets ?? []
+            ).map((b) => [b.key, b.doc_count] as const);
+
+        const tagCountMap = new Map<string, number>();
+        for (const [key, count] of [
+            ...parseTagBuckets(tagsRegexResult),
+            ...parseTagBuckets(tagsFuzzyResult),
+        ]) {
+            tagCountMap.set(key, Math.max(tagCountMap.get(key) ?? 0, count));
+        }
+        const tags: SuggestItem[] = [...tagCountMap.entries()]
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
 
         // Parse ingredient names
         const ingredientNames = (ingredientsResult.body.hits?.hits ?? [])
@@ -198,7 +244,9 @@ export async function GET(request: NextRequest) {
             const countMap = new Map((filteredAgg?.buckets ?? []).map((b) => [b.key, b.doc_count]));
             ingredients = ingredientNames
                 .map((name) => ({ name, count: countMap.get(name) ?? 0 }))
-                .filter((item) => item.count > 0);
+                .filter((item) => item.count > 0)
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 5);
         }
 
         const users: UserHit[] = usersResult.map((p) => ({

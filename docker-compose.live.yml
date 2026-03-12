@@ -125,3 +125,37 @@ services:
             timeout: 3s
             retries: 10
         restart: always
+
+    opensearch-exporter:
+        image: quay.io/prometheuscommunity/elasticsearch-exporter:latest
+        container_name: kitchenpace-opensearch-exporter
+        command:
+            - '--es.uri=http://opensearch:9200'
+            - '--es.all'
+            - '--es.indices'
+            - '--es.shards'
+        depends_on:
+            opensearch:
+                condition: service_healthy
+        restart: unless-stopped
+        networks:
+            - default
+            - monitoring_default
+
+    redis-exporter:
+        image: oliver006/redis_exporter:latest
+        container_name: kitchenpace-redis-exporter
+        environment:
+            REDIS_ADDR: redis://redis:6379
+            REDIS_PASSWORD: ${REDIS_PASSWORD:-kitchenpace_secret}
+        depends_on:
+            redis:
+                condition: service_healthy
+        restart: unless-stopped
+        networks:
+            - default
+            - monitoring_default
+
+networks:
+    monitoring_default:
+        external: true

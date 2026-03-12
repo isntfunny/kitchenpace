@@ -106,11 +106,6 @@ export async function fetchPinnedEntries(userId: string): Promise<{
     }
 }
 
-export async function fetchPinnedIds(userId: string) {
-    const { entries } = await fetchPinnedEntries(userId);
-    return new Set(entries.map((entry) => entry.id));
-}
-
 export async function markHistoryPinned(userId: string, recipeId: string, pinned: boolean) {
     const history = await prisma.userViewHistory.findFirst({
         where: { userId, recipeId },
@@ -134,8 +129,3 @@ export async function markHistoryPinned(userId: string, recipeId: string, pinned
     });
 }
 
-export async function countPinnedHistory(userId: string) {
-    return prisma.userViewHistory.count({
-        where: { userId, pinned: true },
-    });
-}

@@ -3,6 +3,14 @@
 import { useSession } from 'next-auth/react';
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import {
+    addToRecentAction,
+    migrateLocalRecipesAction,
+    pinRecipeAction,
+    refreshRecipeTabsAction,
+    unpinRecipeAction,
+} from '@app/app/actions/recipe-tabs';
+
 export interface RecipeTabItem {
     id: string;
     title: string;
@@ -29,13 +37,7 @@ interface RecipeTabsContextValue {
 }
 
 const STORAGE_KEY = 'kitchenpace_recipe_tabs';
-const _MAX_PINNED = 3;
 const MAX_RECENT = 5;
-const API_BASE = '/api/recipe-tabs';
-const PINNED_API = `${API_BASE}/pinned`;
-const RECENT_API = `${API_BASE}/recent`;
-
-type TabsApiResponse = { pinned: RecipeTabItem[]; recent: RecipeTabItem[] };
 
 type RecipeTabsState = {
     pinned: RecipeTabItem[];
@@ -72,6 +74,15 @@ function withDefaultEmoji(recipe: RecipeTabItem): RecipeTabItem {
     return {
         ...recipe,
         emoji: recipe.emoji ?? 'plating',
+    };
+}
+
+function applyTabsResult(result: { pinned: RecipeTabItem[]; recent: RecipeTabItem[] }): RecipeTabsState {
+    return {
+        pinned: result.pinned
+            .map(withDefaultEmoji)
+            .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
+        recent: result.recent.map(withDefaultEmoji),
     };
 }
 
@@ -120,21 +131,8 @@ export function RecipeTabsProvider({
         if (!isAuthenticated) return;
         setIsLoading(true);
         try {
-            const response = await fetch(API_BASE);
-
-            if (!response.ok) {
-                throw new Error(`Failed to load recipe tabs (${response.status})`);
-            }
-
-            const { pinned: pinnedEntries, recent: recentEntries }: TabsApiResponse =
-                await response.json();
-
-            updateTabs(() => ({
-                pinned: pinnedEntries
-                    .map(withDefaultEmoji)
-                    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
-                recent: recentEntries.map(withDefaultEmoji),
-            }));
+            const result = await refreshRecipeTabsAction();
+            updateTabs(() => applyTabsResult(result));
         } catch (error) {
             console.error('Failed to refresh recipe tabs', error);
         } finally {
@@ -146,21 +144,16 @@ export function RecipeTabsProvider({
         const stored = loadFromStorage();
         if (stored.recent.length === 0) return;
         try {
-            for (const recipe of stored.recent.slice(0, MAX_RECENT)) {
-                try {
-                    await fetch(RECENT_API, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ recipeId: recipe.id }),
-                    });
-                } catch (error) {
-                    console.error('Failed to migrate recent recipe', error);
-                }
-            }
+            const result = await migrateLocalRecipesAction(
+                stored.recent.slice(0, MAX_RECENT).map((r) => r.id),
+            );
+            updateTabs(() => applyTabsResult(result));
+        } catch (error) {
+            console.error('Failed to migrate local recipes', error);
         } finally {
             saveToStorage([]);
         }
-    }, []);
+    }, [updateTabs]);
 
     useEffect(() => {
         const prevAuth = previousAuthRef.current;
@@ -173,12 +166,14 @@ export function RecipeTabsProvider({
                     setIsLoading(true);
                     await migrateLocalData();
                     if (skipInitialRefreshRef.current) {
-                        // SSR already provided fresh data; no need to re-fetch
                         skipInitialRefreshRef.current = false;
                     } else {
                         await refreshData();
                     }
                     setIsLoading(false);
+                } else if (skipInitialRefreshRef.current) {
+                    // Already authenticated on load — trust SSR data
+                    skipInitialRefreshRef.current = false;
                 } else {
                     await refreshData();
                 }
@@ -194,40 +189,44 @@ export function RecipeTabsProvider({
         async (recipe: RecipeTabItem) => {
             if (!isAuthenticated) return;
 
+            // Optimistic update
+            const prevTabs = tabs;
+            updateTabs((prev) => ({
+                ...prev,
+                pinned: [...prev.pinned, withDefaultEmoji(recipe)],
+            }));
+
             try {
-                const response = await fetch(PINNED_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ recipeId: recipe.id }),
-                });
-                if (!response.ok) {
-                    throw new Error(`Failed to pin recipe (${response.status})`);
-                }
+                const result = await pinRecipeAction(recipe.id);
+                updateTabs(() => applyTabsResult(result));
             } catch (error) {
                 console.error('Failed to pin recipe', error);
-            } finally {
-                await refreshData();
+                updateTabs(() => prevTabs);
             }
         },
-        [isAuthenticated, refreshData],
+        [isAuthenticated, tabs, updateTabs],
     );
 
     const unpinRecipe = useCallback(
         async (recipeId: string) => {
             if (!isAuthenticated) return;
 
+            // Optimistic update
+            const prevTabs = tabs;
+            updateTabs((prev) => ({
+                ...prev,
+                pinned: prev.pinned.filter((item) => item.id !== recipeId),
+            }));
+
             try {
-                const response = await fetch(`${PINNED_API}/${recipeId}`, { method: 'DELETE' });
-                if (!response.ok) {
-                    throw new Error(`Failed to unpin recipe (${response.status})`);
-                }
+                const result = await unpinRecipeAction(recipeId);
+                updateTabs(() => applyTabsResult(result));
             } catch (error) {
                 console.error('Failed to unpin recipe', error);
-            } finally {
-                await refreshData();
+                updateTabs(() => prevTabs);
             }
         },
-        [isAuthenticated, refreshData],
+        [isAuthenticated, tabs, updateTabs],
     );
 
     const addToRecent = useCallback(
@@ -245,16 +244,7 @@ export function RecipeTabsProvider({
             if (!isAuthenticated) return;
 
             try {
-                const response = await fetch(RECENT_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ recipeId: recipe.id }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Failed to log recipe view (${response.status})`);
-                }
-                // No refreshData() here — the optimistic update is sufficient for UI
+                await addToRecentAction(recipe.id);
             } catch (error) {
                 console.error('Failed to track recipe view', error);
             }

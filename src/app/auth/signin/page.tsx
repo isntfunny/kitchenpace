@@ -166,6 +166,7 @@ function SignInForm() {
                 <label className={css({ textAlign: 'left', fontWeight: '600', fontSize: 'sm' })}>
                     E-Mail
                     <input
+                        name="email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -178,6 +179,7 @@ function SignInForm() {
                 <label className={css({ textAlign: 'left', fontWeight: '600', fontSize: 'sm' })}>
                     Passwort
                     <input
+                        name="password"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}

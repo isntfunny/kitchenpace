@@ -55,6 +55,8 @@ function createErrorCatcher(page: Page) {
             if (text.includes('script-src') && text.includes('not explicitly set')) return;
             // Ignore failed resource loads from captcha
             if (text.includes('the server respon') && text.includes('challenges')) return;
+            // Ignore network errors (own-origin 4xx already caught by failedRequests check)
+            if (text.includes('Failed to load resource')) return;
             errors.push(text);
         }
     });

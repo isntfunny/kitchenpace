@@ -148,7 +148,6 @@ export function RecipeDetailClient({
         name: string;
         description: string;
         icon: string;
-        points: number;
     } | null>(null);
 
     // Show trophy celebration after tutorial redirect

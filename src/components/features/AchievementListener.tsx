@@ -16,7 +16,6 @@ interface TrophyPayload {
     name: string;
     description: string;
     icon: string;
-    points: number;
     tier?: TrophyTier;
 }
 
@@ -32,7 +31,6 @@ export function AchievementListener() {
                 name: payload.name,
                 description: payload.description,
                 icon: payload.icon,
-                points: payload.points,
                 tier: payload.tier,
             });
         } catch (error) {

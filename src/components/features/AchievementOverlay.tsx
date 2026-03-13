@@ -127,7 +127,6 @@ export interface AchievementOverlayProps {
         name: string;
         description: string;
         icon: string;
-        points: number;
         tier?: TrophyTier;
     };
     onClose: () => void;
@@ -231,18 +230,6 @@ export function AchievementOverlay({ trophy, onClose }: AchievementOverlayProps)
                                     >
                                         {trophy.description}
                                     </p>
-                                    {trophy.points > 0 && (
-                                        <p
-                                            className={css({
-                                                fontSize: 'xs',
-                                                fontWeight: '600',
-                                                color: 'text.secondary',
-                                                mt: '2',
-                                            })}
-                                        >
-                                            +{trophy.points} Punkte
-                                        </p>
-                                    )}
                                 </motion.div>
 
                                 {/* Actions */}

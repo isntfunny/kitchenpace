@@ -18,7 +18,6 @@ export interface EarnedTrophy {
     name: string;
     description: string;
     icon: string;
-    points: number;
     earnedAt: Date;
 }
 
@@ -64,7 +63,7 @@ function TrophyCard({ trophy }: { trophy: EarnedTrophy }) {
                     {trophy.description}
                 </p>
                 <p className={css({ fontSize: 'xs', color: 'text.secondary', mt: '1' })}>
-                    {earnedDate} · +{trophy.points} Punkte
+                    {earnedDate}
                 </p>
             </div>
         </div>

@@ -51,6 +51,8 @@ export interface RecipeTutorialStep {
     autoFocusAction?: 'title';
     accentLabel?: string;
     manualAdvance?: boolean;
+    /** Skip the auto-advance delay and move to the next step immediately */
+    instantAdvance?: boolean;
 }
 
 export interface RecipeTutorialRuntimeFlags {

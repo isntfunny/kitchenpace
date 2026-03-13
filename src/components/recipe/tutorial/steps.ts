@@ -183,6 +183,7 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         targetId: RECIPE_TUTORIAL_TARGETS.flowCanvas,
         eventKey: 'nodeSelected',
         allowTargetInteraction: true,
+        instantAdvance: true,
     },
     {
         id: 'node-edit-overview',

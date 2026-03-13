@@ -97,16 +97,21 @@ export function RecipeCreationTutorial({
 
     useEffect(() => {
         if (!autoAdvancing) return;
-        const timer = setTimeout(() => {
+        const advance = () => {
             const isLast = stepIndex === activeSteps.length - 1;
             if (isLast) {
                 void onComplete();
             } else {
                 setStepIndex((c) => c + 1);
             }
-        }, AUTO_ADVANCE_MS);
+        };
+        if (step.instantAdvance) {
+            advance();
+            return;
+        }
+        const timer = setTimeout(advance, AUTO_ADVANCE_MS);
         return () => clearTimeout(timer);
-    }, [autoAdvancing, stepIndex, activeSteps.length, onComplete]);
+    }, [autoAdvancing, stepIndex, activeSteps.length, onComplete, step.instantAdvance]);
 
     useEffect(() => {
         if (step.autoFocusAction === 'title') {

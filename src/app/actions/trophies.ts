@@ -80,3 +80,67 @@ export async function fetchUserTrophies(userId: string) {
         earnedAt: ut.earnedAt,
     }));
 }
+
+// ---------------------------------------------------------------------------
+// Lightweight badge data: highest tier + count for Avatar trophy badges.
+// ---------------------------------------------------------------------------
+
+const TIER_RANK: Record<string, number> = {
+    NONE: 0,
+    BRONZE: 1,
+    SILVER: 2,
+    GOLD: 3,
+    PLATINUM: 4,
+};
+
+export interface TrophyBadge {
+    tier: import('@prisma/client').TrophyTier;
+    count: number;
+}
+
+export async function fetchTrophyBadge(userId: string): Promise<TrophyBadge | null> {
+    const trophies = await prisma.userTrophy.findMany({
+        where: { userId },
+        include: { trophy: { select: { tier: true } } },
+    });
+
+    if (trophies.length === 0) return null;
+
+    let highest = trophies[0].trophy.tier;
+    for (const ut of trophies) {
+        if ((TIER_RANK[ut.trophy.tier] ?? 0) > (TIER_RANK[highest] ?? 0)) {
+            highest = ut.trophy.tier;
+        }
+    }
+
+    return { tier: highest, count: trophies.length };
+}
+
+/** Batch fetch trophy badges for multiple users at once. */
+export async function fetchTrophyBadges(userIds: string[]): Promise<Map<string, TrophyBadge>> {
+    if (userIds.length === 0) return new Map();
+
+    const trophies = await prisma.userTrophy.findMany({
+        where: { userId: { in: userIds } },
+        include: { trophy: { select: { tier: true } } },
+    });
+
+    const byUser = new Map<string, { tiers: string[]; count: number }>();
+    for (const ut of trophies) {
+        const entry = byUser.get(ut.userId) ?? { tiers: [], count: 0 };
+        entry.tiers.push(ut.trophy.tier);
+        entry.count++;
+        byUser.set(ut.userId, entry);
+    }
+
+    const result = new Map<string, TrophyBadge>();
+    for (const [uid, { tiers, count }] of byUser) {
+        let highest = tiers[0];
+        for (const t of tiers) {
+            if ((TIER_RANK[t] ?? 0) > (TIER_RANK[highest] ?? 0)) highest = t;
+        }
+        result.set(uid, { tier: highest as TrophyBadge['tier'], count });
+    }
+
+    return result;
+}

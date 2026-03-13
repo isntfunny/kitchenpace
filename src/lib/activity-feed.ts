@@ -1,3 +1,4 @@
+import { fetchTrophyBadges } from '@app/app/actions/trophies';
 import { prisma } from '@shared/prisma';
 
 import { ACTIVITY_DECOR, mapLogToFeedItem, type ActivityFeedItem } from './activity-utils';
@@ -26,7 +27,15 @@ export async function hydrateActivityFeedItems(
         include: { profile: true },
     });
 
-    const userMap = new Map(users.map((user) => [user.id, user]));
+    // Fetch trophy badges for all users in one batch
+    const trophyBadges = await fetchTrophyBadges(userIds);
+
+    const userMap = new Map(
+        users.map((user) => {
+            const badge = trophyBadges.get(user.id);
+            return [user.id, { ...user, _trophyTier: badge?.tier ?? null }] as const;
+        }),
+    );
 
     const recipeIds = Array.from(
         new Set(

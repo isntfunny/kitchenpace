@@ -1,8 +1,10 @@
 'use client';
 
 /* eslint-disable import/order */
+import type { TrophyTier } from '@prisma/client';
 import { Star } from 'lucide-react';
 import { motion } from 'motion/react';
+import Link from 'next/link';
 import type { ChefSpotlightData } from '@app/app/actions/community';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
@@ -39,6 +41,8 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
     }
 
     const displayName = chef.name || chef.nickname || 'Chef des Monats';
+    const profileHref = `/user/${chef.slug}`;
+    const linkCss = css({ textDecoration: 'none', color: 'inherit', _hover: { opacity: 0.85 } });
 
     return (
         <div
@@ -81,20 +85,30 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
             </div>
 
             <div className={flex({ gap: '3', align: 'center', mb: '3' })}>
-                <Avatar
-                    imageKey={chef.photoKey}
-                    userId={chef.id}
-                    name={displayName}
-                    size={56}
-                    ring
-                    ringColor="palette.gold"
-                />
+                <Link href={profileHref} className={linkCss}>
+                    <Avatar
+                        imageKey={chef.photoKey}
+                        userId={chef.id}
+                        name={displayName}
+                        size={56}
+                        ring={!chef.trophyTier}
+                        ringColor="palette.gold"
+                        trophyTier={(chef.trophyTier as TrophyTier) ?? null}
+                        trophyCount={chef.trophyTier ? 1 : 0}
+                    />
+                </Link>
                 <div>
-                    <Heading as="h4" size="sm">
-                        {displayName}
-                    </Heading>
+                    <Link href={profileHref} className={linkCss}>
+                        <Heading as="h4" size="sm">
+                            {displayName}
+                        </Heading>
+                    </Link>
                     <Text size="sm" color="muted">
-                        {chef.followerCount} Follower · {chef.recipeCount} Rezepte
+                        <Link href={profileHref} className={linkCss}>
+                            {chef.followerCount} Follower
+                        </Link>
+                        {' · '}
+                        {chef.recipeCount} Rezepte
                     </Text>
                 </div>
             </div>
@@ -123,10 +137,11 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                             })}
                         >
                             <SmartImage
-                                src={recipe.image ?? undefined}
-                                alt={recipe.title}
-                                fill
+                                imageKey={recipe.imageKey}
                                 recipeId={recipe.id}
+                                alt={recipe.title}
+                                aspect="1:1"
+                                fill
                                 className={css({ objectFit: 'cover' })}
                             />
                         </div>

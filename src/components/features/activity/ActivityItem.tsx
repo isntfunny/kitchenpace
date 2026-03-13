@@ -1,3 +1,4 @@
+import type { TrophyTier } from '@prisma/client';
 import {
     Activity as ActivityIcon,
     Bookmark,
@@ -16,6 +17,7 @@ import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import type { ActivityFeedItem, ActivityIconName } from '@app/app/actions/community';
+import { Avatar } from '@app/components/atoms/Avatar';
 import { Text } from '@app/components/atoms/Typography';
 import { css } from 'styled-system/css';
 
@@ -168,19 +170,30 @@ export function ActivityItem({ activity }: { activity: ActivityFeedItem }) {
                 transition: 'background 150ms ease',
             })}
         >
-            <span
-                className={css({
-                    display: 'grid',
-                    placeItems: 'center',
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: 'full',
-                    flexShrink: 0,
-                })}
-                style={{ background: activity.iconBg }}
-            >
-                <IconComponent size={18} color="white" />
-            </span>
+            {activity.userPhotoKey ? (
+                <Avatar
+                    imageKey={activity.userPhotoKey}
+                    userId={activity.userId}
+                    name={activity.userName}
+                    size={40}
+                    trophyTier={(activity.userTrophyTier as TrophyTier) ?? null}
+                    trophyCount={activity.userTrophyTier ? 1 : 0}
+                />
+            ) : (
+                <span
+                    className={css({
+                        display: 'grid',
+                        placeItems: 'center',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: 'full',
+                        flexShrink: 0,
+                    })}
+                    style={{ background: activity.iconBg }}
+                >
+                    <IconComponent size={18} color="white" />
+                </span>
+            )}
             <div className={css({ flex: 1 })}>
                 <Text
                     size="sm"

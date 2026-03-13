@@ -19,6 +19,8 @@ export interface ActivityFeedItem {
     userName: string;
     userId?: string;
     userSlug?: string;
+    userPhotoKey?: string | null;
+    userTrophyTier?: string | null;
     recipeTitle?: string;
     recipeId?: string;
     recipeSlug?: string;
@@ -84,7 +86,14 @@ export function formatTimeAgo(
 export interface UserWithProfile {
     id: string;
     name: string | null;
-    profile?: { nickname: string; slug: string; showInActivity?: boolean } | null;
+    profile?: {
+        nickname: string;
+        slug: string;
+        photoKey?: string | null;
+        showInActivity?: boolean;
+    } | null;
+    /** Highest trophy tier for avatar badge (injected during hydration) */
+    _trophyTier?: string | null;
 }
 
 /** Shared mapper: converts a single ActivityLog row into an ActivityFeedItem */
@@ -136,6 +145,8 @@ export function mapLogToFeedItem(
         userName: user?.name || user?.profile?.nickname || 'Küchenfreund',
         userId: user?.id,
         userSlug: user?.profile?.slug ?? user?.id,
+        userPhotoKey: user?.profile?.photoKey ?? null,
+        userTrophyTier: user?._trophyTier ?? null,
         recipeTitle: recipe?.title,
         recipeId: recipe?.id,
         recipeSlug: recipe?.slug,

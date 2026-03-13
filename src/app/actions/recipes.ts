@@ -9,6 +9,8 @@ import {
 } from '@app/lib/recipe-card';
 import { prisma } from '@shared/prisma';
 
+import { fetchTrophyBadge } from './trophies';
+
 // Re-export for backward compatibility
 export { toRecipeCardData, type RecipeCardData, type RecipeWithCategory };
 
@@ -137,6 +139,7 @@ export interface RecipeDetailData {
         bio: string | null;
         recipeCount: number;
         followerCount: number;
+        trophyTier?: string | null;
     } | null;
     favoriteCount: number;
     ratingCount: number;
@@ -215,10 +218,11 @@ export async function fetchRecipeBySlug(
           ])
         : null;
 
-    const [favoriteCount, viewerData, stepImages] = await Promise.all([
+    const [favoriteCount, viewerData, stepImages, authorTrophyBadge] = await Promise.all([
         prisma.favorite.count({ where: { recipeId: recipe.id } }),
         viewerPromise,
         prisma.recipeStepImage.findMany({ where: { recipeId: recipe.id } }),
+        recipe.authorId ? fetchTrophyBadge(recipe.authorId) : null,
     ]);
 
     const [favorite, rating, follow, cookHistory] = viewerData ?? [];
@@ -276,6 +280,7 @@ export async function fetchRecipeBySlug(
                   bio: recipe.author.profile?.bio || null,
                   recipeCount: recipe.author.profile?.recipeCount ?? 0,
                   followerCount: recipe.author.profile?.followerCount ?? 0,
+                  trophyTier: authorTrophyBadge?.tier ?? null,
               }
             : null,
         favoriteCount,

@@ -77,6 +77,9 @@ export function Avatar({
     const badgePx = Math.max(16, Math.round(px * 0.3));
     const badgeIconPx = Math.round(badgePx * 0.6);
 
+    // Trophy-coloured ring: auto-apply when trophyTier is set (unless explicit ring overrides)
+    const trophyRing = !ring && trophyTier != null ? TIER_STYLES[trophyTier] : null;
+
     return (
         <div
             className={cx(
@@ -95,10 +98,21 @@ export function Avatar({
                               _dark: '0 4px 16px rgba(224,123,83,0.3)',
                           },
                       })
-                    : undefined,
+                    : trophyRing
+                      ? css({ border: '3px solid' })
+                      : undefined,
                 className,
             )}
-            style={{ width: px, height: px }}
+            style={{
+                width: px,
+                height: px,
+                ...(trophyRing
+                    ? {
+                          borderColor: trophyRing.fill,
+                          boxShadow: `0 2px 8px ${trophyRing.glow}`,
+                      }
+                    : undefined),
+            }}
         >
             {/* Image or fallback */}
             <div

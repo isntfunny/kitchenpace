@@ -5,7 +5,10 @@ import shuffle from 'lodash/shuffle';
 import { fetchActivityFeed } from '@app/lib/activity-feed';
 import { type ActivityFeedItem } from '@app/lib/activity-utils';
 import { PALETTE } from '@app/lib/palette';
+import type { UserCardData } from '@app/lib/user-card';
 import { prisma } from '@shared/prisma';
+
+import { fetchTrophyBadge } from './trophies';
 
 export type { ActivityFeedItem, ActivityIconName } from '@app/lib/activity-utils';
 
@@ -45,21 +48,13 @@ export interface TrendingTagData {
     color: string;
 }
 
-export interface ChefSpotlightData {
-    id: string;
-    name: string;
+export interface ChefSpotlightData extends UserCardData {
     nickname?: string | null;
-    bio?: string | null;
-    photoKey?: string | null;
-    followerCount: number;
-    recipeCount: number;
     topRecipes: Array<{
         id: string;
         slug: string;
         title: string;
-        rating: number;
-        image: string | null;
-        imageKey?: string | null;
+        imageKey: string | null;
     }>;
 }
 
@@ -124,20 +119,21 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
         });
 
         if (profile && profile.user) {
+            const badge = await fetchTrophyBadge(profile.userId);
             return {
-                id: profile.id,
+                id: profile.userId,
+                slug: profile.slug,
                 name: profile.user.name || profile.nickname,
                 nickname: profile.nickname,
                 bio: profile.bio,
                 photoKey: profile.photoKey ?? null,
+                trophyTier: badge?.tier ?? null,
                 followerCount: profile.followerCount,
                 recipeCount: profile.recipeCount,
                 topRecipes: profile.user.recipes.map((recipe) => ({
                     id: recipe.id,
                     slug: recipe.slug,
                     title: recipe.title,
-                    rating: recipe.rating ?? 0,
-                    image: recipe.imageKey ?? null,
                     imageKey: recipe.imageKey ?? null,
                 })),
             };
@@ -164,12 +160,15 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
         return null;
     }
 
+    const badge = await fetchTrophyBadge(profile.userId);
     return {
-        id: profile.id,
+        id: profile.userId,
+        slug: profile.slug,
         name: profile.user.name || profile.nickname,
         nickname: profile.nickname,
         bio: profile.bio,
         photoKey: profile.photoKey ?? null,
+        trophyTier: badge?.tier ?? null,
         followerCount: profile.followerCount,
         recipeCount: profile.recipeCount,
         topRecipes: profile.user.recipes.map((recipe) => ({

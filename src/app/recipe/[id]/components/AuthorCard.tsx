@@ -1,5 +1,6 @@
 'use client';
 
+import type { TrophyTier } from '@prisma/client';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
 
@@ -15,6 +16,7 @@ interface Author {
     bio: string | null;
     avatar: string | null;
     recipeCount: number;
+    trophyTier?: string | null;
 }
 
 interface AuthorCardProps {
@@ -70,6 +72,8 @@ export function AuthorCard({
                             userId={author.id}
                             name={author.name}
                             size="lg"
+                            trophyTier={(author.trophyTier as TrophyTier) ?? null}
+                            trophyCount={author.trophyTier ? 1 : 0}
                         />
                     </Link>
 

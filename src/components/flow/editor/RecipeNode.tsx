@@ -133,6 +133,7 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
         onDeleteNode,
         nodeOutgoingEdges,
         nodeIncomingEdges,
+        validationIssuesByNode,
     } = useFlowEditor();
     const config = getStepConfig(data.stepType);
     const isDark = useIsDark();
@@ -162,6 +163,12 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
     );
 
     const canDelete = data.stepType !== 'start' && data.stepType !== 'servieren';
+
+    const validationIssues = validationIssuesByNode.get(id) ?? [];
+    const hasValidationError = validationIssues.some((issue) => issue.severity === 'error');
+    const hasValidationNotice = validationIssues.length > 0 && !hasValidationError;
+    const validationIndicatorTitle = validationIssues.map((issue) => issue.message).join(' · ');
+    const topValidationIssue = validationIssues[0] ?? null;
 
     const handleClick = useCallback(() => {
         onSelectNode(id);
@@ -194,6 +201,8 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                     'group',
                     data.stepType === 'start' && startNodeClass,
                     data.stepType === 'servieren' && finishNodeClass,
+                    hasValidationError && nodeErrorClass,
+                    hasValidationNotice && nodeWarningClass,
                 )}
                 style={{
                     backgroundImage: isDark ? config.darkGradient : config.gradient,
@@ -201,6 +210,22 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                 }}
                 onClick={handleClick}
             >
+                {validationIssues.length > 0 && (
+                    <div
+                        className={cx(
+                            validationBadgeClass,
+                            hasValidationError
+                                ? validationBadgeErrorClass
+                                : validationBadgeWarningClass,
+                        )}
+                        title={validationIndicatorTitle || undefined}
+                    >
+                        <span>{validationIssues.length}</span>
+                        <span className={validationBadgeLabelClass}>
+                            {hasValidationError ? 'Blocker' : 'Hinweis'}
+                        </span>
+                    </div>
+                )}
                 {data.stepType === 'start' && <div className={startBadgeClass}>Start</div>}
                 {data.stepType === 'servieren' && <div className={finishBadgeClass}>Finish</div>}
                 {config.canHaveIncomingEdge && (
@@ -229,6 +254,21 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
 
                     {renderedDescription && (
                         <div className={descriptionClass}>{renderedDescription}</div>
+                    )}
+
+                    {topValidationIssue && (
+                        <div
+                            className={cx(
+                                validationIssuePreviewClass,
+                                hasValidationError
+                                    ? validationIssuePreviewErrorClass
+                                    : validationIssuePreviewWarningClass,
+                            )}
+                            title={topValidationIssue.hint ?? topValidationIssue.message}
+                        >
+                            <strong>{topValidationIssue.title}</strong>
+                            <span>{topValidationIssue.message}</span>
+                        </div>
                     )}
 
                     {ingredientChips.length > 0 && (
@@ -324,6 +364,16 @@ const nodeSelectedClass = css({
     },
 });
 
+const nodeErrorClass = css({
+    borderColor: 'error.border',
+    boxShadow: '0 0 0 3px rgba(239,68,68,0.25)',
+});
+
+const nodeWarningClass = css({
+    borderColor: 'warning.border',
+    boxShadow: '0 0 0 3px rgba(245,158,11,0.25)',
+});
+
 const typeBadgeClass = css({
     display: 'inline-flex',
     alignItems: 'center',
@@ -405,6 +455,62 @@ const ingredientChipsClass = css({
     display: 'flex',
     flexWrap: 'wrap',
     gap: '1',
+});
+
+const validationBadgeClass = css({
+    position: 'absolute',
+    top: '10px',
+    left: '10px',
+    minWidth: '20px',
+    minHeight: '20px',
+    paddingInline: '1.5',
+    paddingBlock: '1',
+    borderRadius: 'full',
+    color: 'white',
+    fontSize: '10px',
+    fontWeight: '700',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '1',
+    boxShadow: '0 0 0 2px rgba(0,0,0,0.2)',
+    pointerEvents: 'none',
+});
+
+const validationBadgeErrorClass = css({
+    backgroundColor: 'rgba(239,68,68,0.9)',
+});
+
+const validationBadgeWarningClass = css({
+    backgroundColor: 'rgba(245,158,11,0.92)',
+});
+
+const validationBadgeLabelClass = css({
+    fontSize: '9px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+});
+
+const validationIssuePreviewClass = css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5',
+    mt: '1.5',
+    p: '2',
+    borderRadius: 'md',
+    fontSize: '11px',
+    lineHeight: '1.35',
+});
+
+const validationIssuePreviewErrorClass = css({
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    color: 'rgba(127,29,29,0.96)',
+});
+
+const validationIssuePreviewWarningClass = css({
+    backgroundColor: 'rgba(245,158,11,0.12)',
+    color: 'rgba(120,53,15,0.96)',
 });
 
 const ingredientChipClass = css({

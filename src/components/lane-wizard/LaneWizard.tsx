@@ -35,6 +35,16 @@ const NOOP_FLOW_CTX: FlowEditorContextValue = {
     nodeOutgoingEdges: new Map<string, number>(),
     nodeIncomingEdges: new Map<string, number>(),
     onAddNodeAfter: () => {},
+    validation: {
+        scope: 'editor',
+        isValid: true,
+        errors: [],
+        blockingIssues: [],
+        warningIssues: [],
+        summary: null,
+        counts: { total: 0, blocking: 0, warnings: 0 },
+    },
+    validationIssuesByNode: new Map(),
 };
 
 /* ══════════════════════════════════════════════════════════════

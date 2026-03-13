@@ -708,10 +708,12 @@ export function RecipeForm({
             if (saveStatus === 'PUBLISHED') {
                 const { validateFlow, formatValidationErrors } =
                     await import('@app/lib/validation/flowValidation');
-                const validation = validateFlow(flowNodesRef.current, flowEdgesRef.current);
+                const validation = validateFlow(flowNodesRef.current, flowEdgesRef.current, {
+                    scope: 'publish',
+                });
 
                 if (!validation.isValid) {
-                    setError(formatValidationErrors(validation.errors));
+                    setError(formatValidationErrors(validation));
                     return;
                 }
             }

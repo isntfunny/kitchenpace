@@ -6,6 +6,7 @@ import type {
     AddedIngredient,
     IngredientSearchResult,
 } from '@app/components/recipe/RecipeForm/data';
+import type { FlowValidationError, FlowValidationResult } from '@app/lib/validation/flowValidation';
 
 import type { StepType } from './editorTypes';
 
@@ -25,6 +26,9 @@ export interface FlowEditorContextValue {
     onInsertOnEdge?: (edgeId: string, source: string, target: string, stepType: StepType) => void;
     /** Recipe ID — passed from RecipeForm, used by QRUploadButton in NodeEditPanel */
     recipeId?: string;
+    /** Latest validation result for the current flow */
+    validation: FlowValidationResult;
+    validationIssuesByNode: Map<string, FlowValidationError[]>;
 }
 
 export const FlowEditorContext = createContext<FlowEditorContextValue | null>(null);

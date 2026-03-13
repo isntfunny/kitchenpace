@@ -1,324 +1,627 @@
-// Minimal interfaces to support both FlowNodeInput and FlowNodeSerialized
-interface FlowNode {
+export interface FlowNode {
     id: string;
     type: string;
     label: string;
     description?: string;
 }
 
-interface FlowEdge {
+export interface FlowEdge {
     id: string;
     source: string;
     target: string;
 }
 
+export type FlowValidationScope = 'editor' | 'publish';
+export type FlowValidationSeverity = 'error' | 'warning';
+
+export type FlowValidationErrorType =
+    | 'MISSING_START'
+    | 'MULTIPLE_STARTS'
+    | 'MISSING_FINISH'
+    | 'MULTIPLE_FINISHES'
+    | 'INVALID_START_CONNECTION'
+    | 'INVALID_FINISH_CONNECTION'
+    | 'ORPHANED_NODE'
+    | 'INSUFFICIENT_EDGES'
+    | 'DISCONNECTED_FROM_START'
+    | 'NO_PATH_TO_FINISH'
+    | 'MISSING_DESCRIPTION'
+    | 'CYCLE_DETECTED';
+
 export interface FlowValidationError {
-    type:
-        | 'ORPHANED_NODE'
-        | 'INSUFFICIENT_EDGES'
-        | 'NO_PATH_TO_FINISH'
-        | 'MISSING_DESCRIPTION'
-        | 'CYCLE_DETECTED';
-    nodeId: string;
-    nodeLabel: string;
+    id: string;
+    type: FlowValidationErrorType;
+    severity: FlowValidationSeverity;
+    blocking: boolean;
+    nodeId?: string;
+    nodeLabel?: string;
+    relatedNodeIds: string[];
+    relatedNodeLabels: string[];
+    title: string;
     message: string;
+    hint?: string;
 }
 
 export interface FlowValidationResult {
+    scope: FlowValidationScope;
     isValid: boolean;
     errors: FlowValidationError[];
-}
-
-/**
- * Validates the flow graph before publishing
- */
-export function validateFlow(nodes: FlowNode[], edges: FlowEdge[]): FlowValidationResult {
-    const errors: FlowValidationError[] = [];
-
-    // Rule 1: All nodes must be connected (no orphaned nodes)
-    const orphanedErrors = validateNoOrphanedNodes(nodes, edges);
-    errors.push(...orphanedErrors);
-
-    // Rule 2: Intermediate nodes need at least 2 edges
-    const edgeCountErrors = validateEdgeCounts(nodes, edges);
-    errors.push(...edgeCountErrors);
-
-    // Rule 3: All nodes must have a path to the servieren (finish) node
-    const pathToFinishErrors = validatePathsToFinish(nodes, edges);
-    errors.push(...pathToFinishErrors);
-
-    // Rule 4: All nodes must have a description
-    const descriptionErrors = validateDescriptions(nodes);
-    errors.push(...descriptionErrors);
-
-    // Rule 5: No cycles allowed
-    const cycleErrors = validateNoCycles(nodes, edges);
-    errors.push(...cycleErrors);
-
-    return {
-        isValid: errors.length === 0,
-        errors,
+    blockingIssues: FlowValidationError[];
+    warningIssues: FlowValidationError[];
+    summary: string | null;
+    counts: {
+        total: number;
+        blocking: number;
+        warnings: number;
     };
 }
 
-function validateNoOrphanedNodes(nodes: FlowNode[], edges: FlowEdge[]): FlowValidationError[] {
-    const errors: FlowValidationError[] = [];
-    const connectedNodeIds = new Set<string>();
-
-    for (const edge of edges) {
-        connectedNodeIds.add(edge.source);
-        connectedNodeIds.add(edge.target);
-    }
-
-    for (const node of nodes) {
-        if (!connectedNodeIds.has(node.id)) {
-            errors.push({
-                type: 'ORPHANED_NODE',
-                nodeId: node.id,
-                nodeLabel: node.label || 'Unbenannt',
-                message: `Der Schritt "${node.label || 'Unbenannt'}" ist nicht verbunden. Bitte verbinde alle Schritte im Flow.`,
-            });
-        }
-    }
-
-    return errors;
+interface FlowValidationContext {
+    scope: FlowValidationScope;
+    nodes: FlowNode[];
+    edges: FlowEdge[];
+    nodesById: Map<string, FlowNode>;
+    outgoing: Map<string, string[]>;
+    incoming: Map<string, string[]>;
+    startNodes: FlowNode[];
+    finishNodes: FlowNode[];
+    normalNodes: FlowNode[];
+    orphanedNodeIds: Set<string>;
 }
 
-function validateEdgeCounts(nodes: FlowNode[], edges: FlowEdge[]): FlowValidationError[] {
-    const errors: FlowValidationError[] = [];
-    const edgeCountByNode = new Map<string, number>();
-
-    // Count edges per node
-    for (const edge of edges) {
-        edgeCountByNode.set(edge.source, (edgeCountByNode.get(edge.source) || 0) + 1);
-        edgeCountByNode.set(edge.target, (edgeCountByNode.get(edge.target) || 0) + 1);
-    }
-
-    for (const node of nodes) {
-        // Skip start and servieren nodes
-        if (node.type === 'start' || node.type === 'servieren') continue;
-
-        const edgeCount = edgeCountByNode.get(node.id) || 0;
-        if (edgeCount < 2) {
-            errors.push({
-                type: 'INSUFFICIENT_EDGES',
-                nodeId: node.id,
-                nodeLabel: node.label || 'Unbenannt',
-                message: `Der Schritt "${node.label || 'Unbenannt'}" hat nur ${edgeCount} Verbindung(en). Alle Schritte (außer Start und Servieren) brauchen mindestens 2 Verbindungen.`,
-            });
-        }
-    }
-
-    return errors;
+interface FlowValidationOptions {
+    scope?: FlowValidationScope;
 }
 
-function validatePathsToFinish(nodes: FlowNode[], edges: FlowEdge[]): FlowValidationError[] {
-    const errors: FlowValidationError[] = [];
-
-    // Find servieren node
-    const servierenNode = nodes.find((n) => n.type === 'servieren');
-    if (!servierenNode) return errors; // No servieren node, other validations will catch this
-
-    // Build adjacency list (source -> targets)
-    const outgoingEdges = new Map<string, string[]>();
-    for (const edge of edges) {
-        const targets = outgoingEdges.get(edge.source) || [];
-        targets.push(edge.target);
-        outgoingEdges.set(edge.source, targets);
-    }
-
-    // Check if each node (except servieren) can reach servieren
-    for (const node of nodes) {
-        if (node.type === 'servieren') continue;
-
-        if (!canReachTarget(node.id, servierenNode.id, outgoingEdges, new Set())) {
-            errors.push({
-                type: 'NO_PATH_TO_FINISH',
-                nodeId: node.id,
-                nodeLabel: node.label || 'Unbenannt',
-                message: `Der Schritt "${node.label || 'Unbenannt'}" hat keinen Weg zum Servieren-Schritt. Alle Pfade müssen zum Ende führen.`,
-            });
-        }
-    }
-
-    return errors;
+interface FlowValidationRule {
+    run: (ctx: FlowValidationContext) => FlowValidationError[];
 }
 
-function canReachTarget(
-    startId: string,
-    targetId: string,
-    outgoingEdges: Map<string, string[]>,
-    visited: Set<string>,
-): boolean {
-    if (startId === targetId) return true;
-    if (visited.has(startId)) return false;
+type IssueDraft = {
+    type: FlowValidationErrorType;
+    severity: FlowValidationSeverity;
+    title: string;
+    message: string;
+    hint?: string;
+    nodeId?: string;
+    relatedNodeIds?: string[];
+};
 
-    visited.add(startId);
+const VALIDATION_RULES: FlowValidationRule[] = [
+    { run: validateTerminalNodes },
+    { run: validateTerminalConnections },
+    { run: validateOrphanedNodes },
+    { run: validateEdgeRequirements },
+    { run: validateReachabilityFromStart },
+    { run: validateReachabilityToFinish },
+    { run: validateDescriptions },
+    { run: validateCycles },
+];
 
-    const targets = outgoingEdges.get(startId) || [];
-    for (const nextId of targets) {
-        if (canReachTarget(nextId, targetId, outgoingEdges, visited)) {
-            return true;
-        }
-    }
+export function validateFlow(
+    nodes: FlowNode[],
+    edges: FlowEdge[],
+    options: FlowValidationOptions = {},
+): FlowValidationResult {
+    const scope = options.scope ?? 'editor';
+    const ctx = buildContext(nodes, edges, scope);
+    const issues = dedupeIssues(
+        VALIDATION_RULES.flatMap((rule) => rule.run(ctx)).sort(compareIssues),
+        ctx.nodesById,
+    );
+    const blockingIssues = issues.filter((issue) => issue.blocking);
+    const warningIssues = issues.filter((issue) => !issue.blocking);
 
-    return false;
-}
-
-function validateDescriptions(nodes: FlowNode[]): FlowValidationError[] {
-    const errors: FlowValidationError[] = [];
-
-    for (const node of nodes) {
-        // Skip start and servieren nodes - they don't need descriptions
-        if (node.type === 'start' || node.type === 'servieren') continue;
-
-        const description = node.description?.trim() || '';
-        if (description.length === 0) {
-            errors.push({
-                type: 'MISSING_DESCRIPTION',
-                nodeId: node.id,
-                nodeLabel: node.label || 'Unbenannt',
-                message: `Der Schritt "${node.label || 'Unbenannt'}" hat keine Beschreibung. Bitte füge eine Beschreibung hinzu.`,
-            });
-        }
-    }
-
-    return errors;
-}
-
-function validateNoCycles(nodes: FlowNode[], edges: FlowEdge[]): FlowValidationError[] {
-    const errors: FlowValidationError[] = [];
-
-    // Build adjacency list
-    const outgoingEdges = new Map<string, string[]>();
-    for (const edge of edges) {
-        const targets = outgoingEdges.get(edge.source) || [];
-        targets.push(edge.target);
-        outgoingEdges.set(edge.source, targets);
-    }
-
-    // Check for cycles using DFS
-    const WHITE = 0; // Unvisited
-    const GRAY = 1; // Currently visiting (in recursion stack)
-    const BLACK = 2; // Finished
-
-    const colors = new Map<string, number>();
-    for (const node of nodes) {
-        colors.set(node.id, WHITE);
-    }
-
-    function dfs(nodeId: string, path: string[]): boolean {
-        colors.set(nodeId, GRAY);
-        path.push(nodeId);
-
-        const targets = outgoingEdges.get(nodeId) || [];
-        for (const targetId of targets) {
-            if (colors.get(targetId) === GRAY) {
-                // Cycle detected!
-                const cycleStart = path.indexOf(targetId);
-                const cycleNodes = path.slice(cycleStart);
-                const cycleNodeLabels = cycleNodes.map((id) => {
-                    const n = nodes.find((n) => n.id === id);
-                    return n?.label || 'Unbenannt';
-                });
-                return true;
-            }
-            if (colors.get(targetId) === WHITE) {
-                if (dfs(targetId, [...path])) {
-                    return true;
-                }
-            }
-        }
-
-        colors.set(nodeId, BLACK);
-        return false;
-    }
-
-    for (const node of nodes) {
-        if (colors.get(node.id) === WHITE) {
-            const path: string[] = [];
-            if (dfs(node.id, path)) {
-                // Find the cycle nodes
-                const cycleNodes: FlowNode[] = [];
-                for (const [id, color] of colors.entries()) {
-                    if (color === GRAY) {
-                        const n = nodes.find((n) => n.id === id);
-                        if (n) cycleNodes.push(n);
-                    }
-                }
-
-                // Report the first node in the cycle
-                if (cycleNodes.length > 0) {
-                    errors.push({
-                        type: 'CYCLE_DETECTED',
-                        nodeId: cycleNodes[0].id,
-                        nodeLabel: cycleNodes[0].label || 'Unbenannt',
-                        message: `Zyklus erkannt! Der Schritt "${cycleNodes[0].label || 'Unbenannt'}" ist Teil eines Kreises. Rezepte dürfen keine Zyklen enthalten.`,
-                    });
-                }
-                break;
-            }
-        }
-    }
-
-    return errors;
-}
-
-/**
- * Formats validation errors into a single user-friendly message
- */
-export function formatValidationErrors(errors: FlowValidationError[]): string {
-    if (errors.length === 0) return '';
-
-    if (errors.length === 1) {
-        return errors[0].message;
-    }
-
-    // Group by error type for multiple errors
-    const grouped = errors.reduce(
-        (acc, err) => {
-            acc[err.type] = acc[err.type] || [];
-            acc[err.type].push(err);
-            return acc;
+    return {
+        scope,
+        isValid: blockingIssues.length === 0,
+        errors: issues,
+        blockingIssues,
+        warningIssues,
+        summary:
+            issues.length > 0 ? buildSummary(blockingIssues.length, warningIssues.length) : null,
+        counts: {
+            total: issues.length,
+            blocking: blockingIssues.length,
+            warnings: warningIssues.length,
         },
-        {} as Record<string, FlowValidationError[]>,
+    };
+}
+
+export function getValidationIssuesByNode(
+    validation: FlowValidationResult,
+): Map<string, FlowValidationError[]> {
+    const issuesByNode = new Map<string, FlowValidationError[]>();
+
+    for (const issue of validation.errors) {
+        for (const nodeId of issue.relatedNodeIds) {
+            if (!nodeId) continue;
+            const existing = issuesByNode.get(nodeId) ?? [];
+            existing.push(issue);
+            existing.sort(compareIssues);
+            issuesByNode.set(nodeId, existing);
+        }
+    }
+
+    return issuesByNode;
+}
+
+export function formatValidationErrors(
+    input: FlowValidationResult | FlowValidationError[],
+): string {
+    const issues = Array.isArray(input) ? input : input.errors;
+    const blockingIssues = issues.filter((issue) => issue.blocking);
+    const warningIssues = issues.filter((issue) => !issue.blocking);
+
+    if (issues.length === 0) return '';
+
+    const lines: string[] = [];
+
+    if (blockingIssues.length > 0) {
+        lines.push(`Der Flow ist noch nicht veroeffentlichbar (${blockingIssues.length} Blocker).`);
+        lines.push(...blockingIssues.slice(0, 6).map((issue) => `- ${issue.message}`));
+        if (blockingIssues.length > 6) {
+            lines.push(`- +${blockingIssues.length - 6} weitere Blocker`);
+        }
+    }
+
+    if (warningIssues.length > 0) {
+        if (lines.length > 0) lines.push('');
+        lines.push(`Hinweise (${warningIssues.length}):`);
+        lines.push(...warningIssues.slice(0, 3).map((issue) => `- ${issue.message}`));
+        if (warningIssues.length > 3) {
+            lines.push(`- +${warningIssues.length - 3} weitere Hinweise`);
+        }
+    }
+
+    return lines.join('\n');
+}
+
+function buildContext(
+    nodes: FlowNode[],
+    edges: FlowEdge[],
+    scope: FlowValidationScope,
+): FlowValidationContext {
+    const nodesById = new Map<string, FlowNode>();
+    const outgoing = new Map<string, string[]>();
+    const incoming = new Map<string, string[]>();
+
+    for (const node of nodes) {
+        nodesById.set(node.id, node);
+        outgoing.set(node.id, []);
+        incoming.set(node.id, []);
+    }
+
+    for (const edge of edges) {
+        if (!nodesById.has(edge.source) || !nodesById.has(edge.target)) continue;
+        outgoing.get(edge.source)?.push(edge.target);
+        incoming.get(edge.target)?.push(edge.source);
+    }
+
+    const startNodes = nodes.filter((node) => node.type === 'start');
+    const finishNodes = nodes.filter((node) => node.type === 'servieren');
+    const normalNodes = nodes.filter((node) => node.type !== 'start' && node.type !== 'servieren');
+    const orphanedNodeIds = new Set(
+        normalNodes
+            .filter(
+                (node) =>
+                    (incoming.get(node.id)?.length ?? 0) === 0 &&
+                    (outgoing.get(node.id)?.length ?? 0) === 0,
+            )
+            .map((node) => node.id),
     );
 
-    const messages: string[] = [];
+    return {
+        scope,
+        nodes,
+        edges,
+        nodesById,
+        outgoing,
+        incoming,
+        startNodes,
+        finishNodes,
+        normalNodes,
+        orphanedNodeIds,
+    };
+}
 
-    if (grouped['ORPHANED_NODE']?.length > 0) {
-        const count = grouped['ORPHANED_NODE'].length;
-        messages.push(
-            `${count} Schritt(e) sind nicht verbunden: ${grouped['ORPHANED_NODE'].map((e) => `"${e.nodeLabel}"`).join(', ')}`,
-        );
+function validateTerminalNodes(ctx: FlowValidationContext): FlowValidationError[] {
+    const issues: IssueDraft[] = [];
+
+    if (ctx.startNodes.length === 0) {
+        issues.push({
+            type: 'MISSING_START',
+            severity: 'error',
+            title: 'Start fehlt',
+            message: 'Dem Flow fehlt ein Start-Schritt.',
+            hint: 'Lege einen eindeutigen Start-Schritt an.',
+        });
     }
 
-    if (grouped['INSUFFICIENT_EDGES']?.length > 0) {
-        const count = grouped['INSUFFICIENT_EDGES'].length;
-        messages.push(
-            `${count} Schritt(e) haben zu wenig Verbindungen: ${grouped['INSUFFICIENT_EDGES'].map((e) => `"${e.nodeLabel}"`).join(', ')}`,
-        );
+    if (ctx.startNodes.length > 1) {
+        issues.push({
+            type: 'MULTIPLE_STARTS',
+            severity: 'error',
+            title: 'Zu viele Start-Schritte',
+            message: `Der Flow hat ${ctx.startNodes.length} Start-Schritte. Es darf nur einen geben.`,
+            hint: 'Behalte genau einen Start-Schritt und wandle die anderen in normale Schritte um.',
+            relatedNodeIds: ctx.startNodes.map((node) => node.id),
+        });
     }
 
-    if (grouped['NO_PATH_TO_FINISH']?.length > 0) {
-        const count = grouped['NO_PATH_TO_FINISH'].length;
-        messages.push(
-            `${count} Schritt(e) führen nicht zum Ende: ${grouped['NO_PATH_TO_FINISH'].map((e) => `"${e.nodeLabel}"`).join(', ')}`,
-        );
+    if (ctx.finishNodes.length === 0) {
+        issues.push({
+            type: 'MISSING_FINISH',
+            severity: 'error',
+            title: 'Servieren fehlt',
+            message: 'Dem Flow fehlt ein Servieren-Schritt als Ende.',
+            hint: 'Lege einen eindeutigen Servieren-Schritt an.',
+        });
     }
 
-    if (grouped['MISSING_DESCRIPTION']?.length > 0) {
-        const count = grouped['MISSING_DESCRIPTION'].length;
-        messages.push(
-            `${count} Schritt(e) haben keine Beschreibung: ${grouped['MISSING_DESCRIPTION'].map((e) => `"${e.nodeLabel}"`).join(', ')}`,
-        );
+    if (ctx.finishNodes.length > 1) {
+        issues.push({
+            type: 'MULTIPLE_FINISHES',
+            severity: 'error',
+            title: 'Zu viele Enden',
+            message: `Der Flow hat ${ctx.finishNodes.length} Servieren-Schritte. Es darf nur einen geben.`,
+            hint: 'Fuehre alle Pfade in einen gemeinsamen Servieren-Schritt zusammen.',
+            relatedNodeIds: ctx.finishNodes.map((node) => node.id),
+        });
     }
 
-    if (grouped['CYCLE_DETECTED']?.length > 0) {
-        messages.push(
-            `Zyklus erkannt! Der Flow enthält einen Kreis, der bei "${grouped['CYCLE_DETECTED'][0].nodeLabel}" beginnt.`,
-        );
+    return finalizeIssues(issues, ctx.nodesById, ctx.scope);
+}
+
+function validateTerminalConnections(ctx: FlowValidationContext): FlowValidationError[] {
+    const issues: IssueDraft[] = [];
+
+    for (const node of ctx.startNodes) {
+        const incoming = ctx.incoming.get(node.id)?.length ?? 0;
+        const outgoing = ctx.outgoing.get(node.id)?.length ?? 0;
+
+        if (incoming > 0) {
+            issues.push({
+                type: 'INVALID_START_CONNECTION',
+                severity: 'error',
+                title: 'Start falsch verbunden',
+                nodeId: node.id,
+                message: 'Der Start-Schritt darf keine eingehenden Verbindungen haben.',
+                hint: 'Entferne alle Kanten, die in den Start hineinfuehren.',
+            });
+        }
+
+        if (outgoing === 0) {
+            issues.push({
+                type: 'INVALID_START_CONNECTION',
+                severity: 'error',
+                nodeId: node.id,
+                title: 'Start endet sofort',
+                message:
+                    'Der Start-Schritt braucht mindestens eine Verbindung zum ersten Arbeitsschritt.',
+                hint: 'Verbinde den Start mit dem naechsten Schritt.',
+            });
+        }
     }
 
-    return messages.join('\n');
+    for (const node of ctx.finishNodes) {
+        const incoming = ctx.incoming.get(node.id)?.length ?? 0;
+        const outgoing = ctx.outgoing.get(node.id)?.length ?? 0;
+
+        if (incoming === 0) {
+            issues.push({
+                type: 'INVALID_FINISH_CONNECTION',
+                severity: 'error',
+                nodeId: node.id,
+                title: 'Servieren ist unerreichbar',
+                message: 'Der Servieren-Schritt braucht mindestens eine eingehende Verbindung.',
+                hint: 'Verbinde den letzten Schritt mit dem Servieren-Knoten.',
+            });
+        }
+
+        if (outgoing > 0) {
+            issues.push({
+                type: 'INVALID_FINISH_CONNECTION',
+                severity: 'error',
+                nodeId: node.id,
+                title: 'Servieren fuehrt weiter',
+                message: 'Vom Servieren-Schritt duerfen keine weiteren Kanten ausgehen.',
+                hint: 'Entferne ausgehende Kanten vom Servieren-Knoten.',
+            });
+        }
+    }
+
+    return finalizeIssues(issues, ctx.nodesById, ctx.scope);
+}
+
+function validateOrphanedNodes(ctx: FlowValidationContext): FlowValidationError[] {
+    const issues = ctx.normalNodes
+        .filter((node) => ctx.orphanedNodeIds.has(node.id))
+        .map((node) => ({
+            type: 'ORPHANED_NODE' as const,
+            severity: 'error' as const,
+            nodeId: node.id,
+            title: 'Schritt ist isoliert',
+            message: `Der Schritt "${getNodeLabel(node)}" ist mit keinem anderen Schritt verbunden.`,
+            hint: 'Verbinde den Schritt mit einer eingehenden und einer ausgehenden Kante.',
+        }));
+
+    return finalizeIssues(issues, ctx.nodesById, ctx.scope);
+}
+
+function validateEdgeRequirements(ctx: FlowValidationContext): FlowValidationError[] {
+    const issues = ctx.normalNodes
+        .filter((node) => !ctx.orphanedNodeIds.has(node.id))
+        .flatMap((node) => {
+            const incoming = ctx.incoming.get(node.id)?.length ?? 0;
+            const outgoing = ctx.outgoing.get(node.id)?.length ?? 0;
+
+            if (incoming > 0 && outgoing > 0) return [];
+
+            return [
+                {
+                    type: 'INSUFFICIENT_EDGES' as const,
+                    severity: 'error' as const,
+                    nodeId: node.id,
+                    title: 'Schrittkette ist unvollstaendig',
+                    message:
+                        incoming === 0
+                            ? `Der Schritt "${getNodeLabel(node)}" hat keinen Vorgaenger.`
+                            : `Der Schritt "${getNodeLabel(node)}" hat keinen Nachfolger.`,
+                    hint:
+                        incoming === 0
+                            ? 'Verbinde einen vorherigen Schritt mit diesem Knoten.'
+                            : 'Fuehre den Schritt weiter oder verbinde ihn mit Servieren.',
+                },
+            ];
+        });
+
+    return finalizeIssues(issues, ctx.nodesById, ctx.scope);
+}
+
+function validateReachabilityFromStart(ctx: FlowValidationContext): FlowValidationError[] {
+    const startNode = ctx.startNodes[0];
+    if (!startNode) return [];
+
+    const reachable = traverseForward(startNode.id, ctx.outgoing);
+    const issues = ctx.normalNodes
+        .filter((node) => !ctx.orphanedNodeIds.has(node.id))
+        .filter((node) => (ctx.incoming.get(node.id)?.length ?? 0) > 0)
+        .filter((node) => !reachable.has(node.id))
+        .map((node) => ({
+            type: 'DISCONNECTED_FROM_START' as const,
+            severity: 'error' as const,
+            nodeId: node.id,
+            title: 'Nicht vom Start erreichbar',
+            message: `Der Schritt "${getNodeLabel(node)}" ist nicht ueber den Start erreichbar.`,
+            hint: 'Verbinde ihn in die Hauptkette oder einen erreichbaren Parallelzweig.',
+        }));
+
+    return finalizeIssues(issues, ctx.nodesById, ctx.scope);
+}
+
+function validateReachabilityToFinish(ctx: FlowValidationContext): FlowValidationError[] {
+    const finishNode = ctx.finishNodes[0];
+    if (!finishNode) return [];
+
+    const reachable = traverseBackward(finishNode.id, ctx.incoming);
+    const issues = ctx.normalNodes
+        .filter((node) => !ctx.orphanedNodeIds.has(node.id))
+        .filter((node) => (ctx.outgoing.get(node.id)?.length ?? 0) > 0)
+        .filter((node) => !reachable.has(node.id))
+        .map((node) => ({
+            type: 'NO_PATH_TO_FINISH' as const,
+            severity: 'error' as const,
+            nodeId: node.id,
+            title: 'Kein Weg zum Ende',
+            message: `Der Schritt "${getNodeLabel(node)}" fuehrt nicht zum Servieren-Schritt.`,
+            hint: 'Leite den Pfad weiter bis zum Servieren-Knoten.',
+        }));
+
+    return finalizeIssues(issues, ctx.nodesById, ctx.scope);
+}
+
+function validateDescriptions(ctx: FlowValidationContext): FlowValidationError[] {
+    const severity: FlowValidationSeverity = ctx.scope === 'publish' ? 'error' : 'warning';
+    const issues = ctx.normalNodes
+        .filter((node) => (node.description ?? '').trim().length === 0)
+        .map((node) => ({
+            type: 'MISSING_DESCRIPTION' as const,
+            severity,
+            nodeId: node.id,
+            title: 'Beschreibung fehlt',
+            message: `Der Schritt "${getNodeLabel(node)}" hat noch keine Beschreibung.`,
+            hint: 'Beschreibe kurz, was hier passieren soll.',
+        }));
+
+    return finalizeIssues(issues, ctx.nodesById, ctx.scope);
+}
+
+function validateCycles(ctx: FlowValidationContext): FlowValidationError[] {
+    const cycles = findCycles(ctx.nodes, ctx.outgoing);
+    const drafts: IssueDraft[] = [];
+
+    for (const cycle of cycles) {
+        for (const nodeId of cycle) {
+            drafts.push({
+                type: 'CYCLE_DETECTED',
+                severity: 'error',
+                nodeId,
+                relatedNodeIds: cycle,
+                title: 'Zyklus erkannt',
+                message: `Der Schritt "${getNodeLabel(ctx.nodesById.get(nodeId))}" ist Teil eines Kreises.`,
+                hint: 'Entferne oder verschiebe mindestens eine Verbindung in diesem Kreis.',
+            });
+        }
+    }
+
+    return finalizeIssues(drafts, ctx.nodesById, ctx.scope);
+}
+
+function finalizeIssues(
+    drafts: IssueDraft[],
+    nodesById: Map<string, FlowNode>,
+    scope: FlowValidationScope,
+): FlowValidationError[] {
+    return drafts.map((draft) => createIssue(draft, nodesById, scope));
+}
+
+function createIssue(
+    draft: IssueDraft,
+    nodesById: Map<string, FlowNode>,
+    _scope: FlowValidationScope,
+): FlowValidationError {
+    const relatedNodeIds = uniqueStrings([
+        ...(draft.relatedNodeIds ?? []),
+        ...(draft.nodeId ? [draft.nodeId] : []),
+    ]);
+    const relatedNodeLabels = relatedNodeIds
+        .map((nodeId) => getNodeLabel(nodesById.get(nodeId)))
+        .filter(Boolean);
+    const nodeLabel = draft.nodeId ? getNodeLabel(nodesById.get(draft.nodeId)) : undefined;
+
+    return {
+        id: `${draft.type}:${relatedNodeIds.join(',') || draft.message}`,
+        type: draft.type,
+        severity: draft.severity,
+        blocking: draft.severity === 'error',
+        nodeId: draft.nodeId,
+        nodeLabel,
+        relatedNodeIds,
+        relatedNodeLabels,
+        title: draft.title,
+        message: draft.message,
+        hint: draft.hint,
+    };
+}
+
+function dedupeIssues(
+    issues: FlowValidationError[],
+    nodesById: Map<string, FlowNode>,
+): FlowValidationError[] {
+    const seen = new Set<string>();
+    const deduped: FlowValidationError[] = [];
+
+    for (const issue of issues) {
+        const fingerprint = `${issue.type}:${uniqueStrings(issue.relatedNodeIds).join(',')}`;
+        if (seen.has(fingerprint)) continue;
+        seen.add(fingerprint);
+        deduped.push({
+            ...issue,
+            relatedNodeLabels: issue.relatedNodeIds
+                .map((nodeId) => getNodeLabel(nodesById.get(nodeId)))
+                .filter(Boolean),
+        });
+    }
+
+    return deduped;
+}
+
+function compareIssues(
+    a: FlowValidationError | IssueDraft,
+    b: FlowValidationError | IssueDraft,
+): number {
+    const severityRank = (severity: FlowValidationSeverity) => (severity === 'error' ? 0 : 1);
+    return severityRank(a.severity) - severityRank(b.severity);
+}
+
+function buildSummary(blockingCount: number, warningCount: number): string {
+    if (blockingCount > 0 && warningCount > 0) {
+        return `${blockingCount} Blocker und ${warningCount} Hinweise im Rezept-Flow.`;
+    }
+    if (blockingCount > 0) {
+        return `${blockingCount} Blocker im Rezept-Flow. Diese Punkte verhindern die Veroeffentlichung.`;
+    }
+    return `${warningCount} Hinweise im Rezept-Flow.`;
+}
+
+function traverseForward(startId: string, outgoing: Map<string, string[]>): Set<string> {
+    const visited = new Set<string>();
+    const stack = [startId];
+
+    while (stack.length > 0) {
+        const current = stack.pop();
+        if (!current || visited.has(current)) continue;
+        visited.add(current);
+        for (const next of outgoing.get(current) ?? []) {
+            stack.push(next);
+        }
+    }
+
+    return visited;
+}
+
+function traverseBackward(targetId: string, incoming: Map<string, string[]>): Set<string> {
+    const visited = new Set<string>();
+    const stack = [targetId];
+
+    while (stack.length > 0) {
+        const current = stack.pop();
+        if (!current || visited.has(current)) continue;
+        visited.add(current);
+        for (const previous of incoming.get(current) ?? []) {
+            stack.push(previous);
+        }
+    }
+
+    return visited;
+}
+
+function findCycles(nodes: FlowNode[], outgoing: Map<string, string[]>): string[][] {
+    const visited = new Set<string>();
+    const inPath = new Set<string>();
+    const path: string[] = [];
+    const cycleSignatures = new Set<string>();
+    const cycles: string[][] = [];
+
+    const visit = (nodeId: string) => {
+        visited.add(nodeId);
+        inPath.add(nodeId);
+        path.push(nodeId);
+
+        for (const next of outgoing.get(nodeId) ?? []) {
+            if (!visited.has(next)) {
+                visit(next);
+                continue;
+            }
+
+            if (!inPath.has(next)) continue;
+
+            const cycleStart = path.indexOf(next);
+            if (cycleStart === -1) continue;
+            const cycle = normalizeCycle(path.slice(cycleStart));
+            const signature = cycle.join('>');
+            if (!cycleSignatures.has(signature)) {
+                cycleSignatures.add(signature);
+                cycles.push(cycle);
+            }
+        }
+
+        path.pop();
+        inPath.delete(nodeId);
+    };
+
+    for (const node of nodes) {
+        if (!visited.has(node.id)) {
+            visit(node.id);
+        }
+    }
+
+    return cycles;
+}
+
+function normalizeCycle(cycle: string[]): string[] {
+    if (cycle.length <= 1) return cycle;
+
+    const smallestNodeId = [...cycle].sort()[0];
+    const startIndex = cycle.indexOf(smallestNodeId);
+    return [...cycle.slice(startIndex), ...cycle.slice(0, startIndex)];
+}
+
+function getNodeLabel(node?: FlowNode): string {
+    return node?.label?.trim() || 'Unbenannt';
+}
+
+function uniqueStrings(values: string[]): string[] {
+    return Array.from(new Set(values.filter(Boolean)));
 }

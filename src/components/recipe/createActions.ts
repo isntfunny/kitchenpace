@@ -6,6 +6,7 @@ import { moderateContent, persistModerationResult } from '@app/lib/moderation/mo
 import { moveObject } from '@app/lib/s3';
 import { approvedKey } from '@app/lib/s3/keys';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
+import { formatValidationErrors, validateFlow } from '@app/lib/validation/flowValidation';
 import { prisma } from '@shared/prisma';
 import { addSyncRecipeJob, addGenerateRecipeOgJob } from '@worker/queues';
 
@@ -54,6 +55,44 @@ function extractRecipeText(data: {
         }
     }
     return parts.filter(Boolean).join('\n');
+}
+
+function assertPublishableFlow(data: {
+    status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+    flowNodes?: FlowNodeInput[];
+    flowEdges?: FlowEdgeInput[];
+}) {
+    if (data.status !== 'PUBLISHED') return;
+
+    const flowNodes = data.flowNodes ?? [];
+    const flowEdges = data.flowEdges ?? [];
+
+    if (flowNodes.length === 0 && flowEdges.length === 0) {
+        throw new Error(
+            'Bitte erstelle zuerst einen Rezept-Flow mit mindestens einem Schritt, bevor du veröffentlichst.',
+        );
+    }
+
+    const validation = validateFlow(flowNodes, flowEdges, { scope: 'publish' });
+    if (!validation.isValid) {
+        throw new Error(formatValidationErrors(validation));
+    }
+}
+
+function assertStoredRecipeCanBePublished(recipe: {
+    title: string;
+    flowNodes: unknown;
+    flowEdges: unknown;
+}) {
+    const validation = validateFlow(
+        (recipe.flowNodes as FlowNodeInput[] | null) ?? [],
+        (recipe.flowEdges as FlowEdgeInput[] | null) ?? [],
+        { scope: 'publish' },
+    );
+
+    if (!validation.isValid) {
+        throw new Error(`${recipe.title}: ${formatValidationErrors(validation)}`);
+    }
 }
 
 export interface RecipeIngredientInput {
@@ -152,6 +191,8 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
     if (!existing) {
         throw new Error('Rezept nicht gefunden oder keine Berechtigung');
     }
+
+    assertPublishableFlow(data);
 
     // Content moderation — check text before saving
     const recipeText = extractRecipeText(data);
@@ -332,6 +373,8 @@ export interface CreateRecipeInput {
 }
 
 export async function createRecipe(data: CreateRecipeInput, authorId: string) {
+    assertPublishableFlow(data);
+
     const slug = await generateUniqueSlug(data.title, async (s) => {
         const existing = await prisma.recipe.findUnique({ where: { slug: s } });
         return !!existing;
@@ -503,7 +546,7 @@ export async function updateRecipeStatus(
     try {
         const recipe = await prisma.recipe.findUnique({
             where: { id: recipeId },
-            select: { authorId: true, title: true },
+            select: { authorId: true, title: true, flowNodes: true, flowEdges: true },
         });
 
         if (!recipe) {
@@ -515,6 +558,10 @@ export async function updateRecipeStatus(
         }
 
         const isPublished = status === 'PUBLISHED';
+
+        if (isPublished) {
+            assertStoredRecipeCanBePublished(recipe);
+        }
 
         await prisma.recipe.update({
             where: { id: recipeId },
@@ -553,6 +600,33 @@ export async function bulkUpdateRecipeStatus(
 ): Promise<{ success: boolean; updatedCount: number; error?: string }> {
     try {
         const isPublished = status === 'PUBLISHED';
+
+        if (isPublished) {
+            const recipesToPublish = await prisma.recipe.findMany({
+                where: {
+                    id: { in: recipeIds },
+                    authorId,
+                },
+                select: { id: true, title: true, flowNodes: true, flowEdges: true },
+            });
+
+            const invalidTitles: string[] = [];
+            for (const recipe of recipesToPublish) {
+                try {
+                    assertStoredRecipeCanBePublished(recipe);
+                } catch {
+                    invalidTitles.push(recipe.title);
+                }
+            }
+
+            if (invalidTitles.length > 0) {
+                return {
+                    success: false,
+                    updatedCount: 0,
+                    error: `Diese Rezepte koennen noch nicht veroeffentlicht werden: ${invalidTitles.slice(0, 3).join(', ')}${invalidTitles.length > 3 ? ' ...' : ''}`,
+                };
+            }
+        }
 
         const result = await prisma.recipe.updateMany({
             where: {

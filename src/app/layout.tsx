@@ -7,11 +7,13 @@ import { Playfair_Display, Inter } from 'next/font/google';
 import { fetchPinnedEntries } from '@app/app/api/recipe-tabs/helpers';
 import { ChatwootWidgetComponent } from '@app/components/ChatwootWidget';
 import { AuthProvider } from '@app/components/providers/AuthProvider';
+import { FeatureFlagsProvider } from '@app/components/providers/FeatureFlagsProvider';
 import { PageProgress } from '@app/components/providers/PageProgress';
 import { ProfileProvider } from '@app/components/providers/ProfileProvider';
 import { RecipeTabsProvider } from '@app/components/providers/RecipeTabsProvider';
 import { ThemeProvider } from '@app/components/providers/ThemeProvider';
 import { getServerAuthSession } from '@app/lib/auth';
+import { getServerFeatureFlags } from '@app/lib/flags/server';
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 
@@ -139,6 +141,7 @@ export default async function RootLayout({
     children: React.ReactNode;
 }>) {
     const session = await getServerAuthSession('openpanel-root-layout');
+    const featureFlags = await getServerFeatureFlags(session);
 
     let profile: { photoKey: string | null; nickname: string | null } | null = null;
     let pinnedRecipes: Array<{
@@ -302,15 +305,17 @@ export default async function RootLayout({
                 <PageProgress />
                 <ThemeProvider>
                     <AuthProvider session={session}>
-                        <ProfileProvider profile={profile}>
-                            <RecipeTabsProvider
-                                initialPinned={pinnedRecipes}
-                                initialRecent={recentRecipes}
-                                serverDataFetched={!!session?.user?.id}
-                            >
-                                {children}
-                            </RecipeTabsProvider>
-                        </ProfileProvider>
+                        <FeatureFlagsProvider initialState={featureFlags}>
+                                <ProfileProvider profile={profile}>
+                                    <RecipeTabsProvider
+                                        initialPinned={pinnedRecipes}
+                                        initialRecent={recentRecipes}
+                                        serverDataFetched={!!session?.user?.id}
+                                    >
+                                        {children}
+                                    </RecipeTabsProvider>
+                                </ProfileProvider>
+                        </FeatureFlagsProvider>
                     </AuthProvider>
                 </ThemeProvider>
             </body>

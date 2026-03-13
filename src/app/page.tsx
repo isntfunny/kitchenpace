@@ -4,6 +4,7 @@ import { Header } from '@app/components/features/Header';
 import { CategoryBarSection } from '@app/components/home/CategoryBarSection';
 import { ChefSpotlightSection } from '@app/components/home/ChefSpotlightSection';
 import { DailyHighlightSection } from '@app/components/home/DailyHighlightSection';
+import { HelloWorldBanner } from '@app/components/home/HelloWorldBanner';
 import { LiveActivitySection } from '@app/components/home/LiveActivitySection';
 import { NewestRecipesSection } from '@app/components/home/NewestRecipesSection';
 import { QuickTipsSection } from '@app/components/home/QuickTipsSection';
@@ -46,6 +47,10 @@ export default function Home() {
                 })}
             >
                 <HeroSpotlight />
+
+                <div className={css({ mt: '4' })}>
+                    <HelloWorldBanner />
+                </div>
 
                 <div className={css({ mt: '4' })}>
                     <Suspense fallback={<SectionSkeleton height="48px" />}>

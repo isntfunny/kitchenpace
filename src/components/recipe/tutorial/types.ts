@@ -50,6 +50,7 @@ export interface RecipeTutorialStep {
     allowTargetInteraction?: boolean;
     autoFocusAction?: 'title';
     accentLabel?: string;
+    manualAdvance?: boolean;
 }
 
 export interface RecipeTutorialRuntimeFlags {

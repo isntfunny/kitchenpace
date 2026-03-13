@@ -133,6 +133,9 @@ export function TutorialOverlay({
         const mutationObserver =
             target?.parentElement && new MutationObserver(() => updateTarget());
         mutationObserver?.observe(target!.parentElement!, { childList: true });
+        // Also observe the target itself for subtree changes (e.g. mention dropdown inside target)
+        const subtreeObserver = target && new MutationObserver(() => updateTarget());
+        subtreeObserver?.observe(target!, { childList: true, subtree: true });
 
         window.addEventListener('resize', updateTarget);
         window.addEventListener('scroll', updateTarget, true);
@@ -142,6 +145,7 @@ export function TutorialOverlay({
             cleanupTarget?.();
             cleanupAccent?.();
             mutationObserver?.disconnect();
+            subtreeObserver?.disconnect();
             window.removeEventListener('resize', updateTarget);
             window.removeEventListener('scroll', updateTarget, true);
         };

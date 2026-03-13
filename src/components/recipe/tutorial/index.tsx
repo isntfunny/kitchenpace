@@ -92,8 +92,8 @@ export function RecipeCreationTutorial({
         [activeSteps, runtime, state, step],
     );
 
-    // Auto-advance after the user fulfils a non-info step
-    const autoAdvancing = canContinue && step.kind !== 'info';
+    // Auto-advance after the user fulfils a non-info step (unless manualAdvance is set)
+    const autoAdvancing = canContinue && step.kind !== 'info' && !step.manualAdvance;
 
     useEffect(() => {
         if (!autoAdvancing) return;

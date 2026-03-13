@@ -94,6 +94,16 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         allowTargetInteraction: true,
     },
     {
+        id: 'tags',
+        kind: 'info',
+        title: 'Tags vergeben',
+        description:
+            'Tags funktionieren wie Hashtags — sie helfen anderen, dein Rezept über Themen wie „schnell", „vegetarisch" oder „Party" zu finden. Wähle passende Tags aus, um die Sichtbarkeit zu erhöhen.',
+        primaryLabel: 'Verstanden',
+        targetId: RECIPE_TUTORIAL_TARGETS.tags,
+        allowTargetInteraction: true,
+    },
+    {
         id: 'draft-save',
         kind: 'info',
         title: 'Manuell speichern',
@@ -189,11 +199,12 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         kind: 'event',
         title: 'Zutat in der Beschreibung erwähnen',
         description:
-            'Tippe eine Beschreibung wie „Die @Zwiebeln würfeln." — sobald du @ eingibst, erscheint eine Auswahl deiner Zutaten. Wähle eine aus, um sie zu verknüpfen.',
+            'Tippe eine Beschreibung wie „Die @Zwiebeln würfeln." — sobald du @ eingibst, erscheint eine Auswahl deiner Zutaten. Wähle einen Vorschlag mit Enter oder Klick aus, um ihn zu verknüpfen.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.nodeDescription,
         eventKey: 'descriptionMentionInserted',
         allowTargetInteraction: true,
+        manualAdvance: true,
     },
     {
         id: 'ingredient-list-auto-added',

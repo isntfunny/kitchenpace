@@ -13,6 +13,7 @@ export const RECIPE_TUTORIAL_TARGETS = {
     ingredientUnit: 'ingredient-unit',
     ingredientComment: 'ingredient-comment',
     ingredientOptional: 'ingredient-optional',
+    tags: 'tags',
     draftSave: 'draft-save',
     autosaveBar: 'autosave-bar',
     flowCanvas: 'flow-canvas',

@@ -45,7 +45,13 @@ export async function createIngredient(data: {
 
 export async function updateIngredient(
     id: string,
-    data: { name?: string; category?: ShoppingCategory; units?: string[] },
+    data: {
+        name?: string;
+        pluralName?: string | null;
+        category?: ShoppingCategory;
+        units?: string[];
+        aliases?: string[];
+    },
 ) {
     if (!id?.trim()) {
         throw new Error('Zutat-ID ist erforderlich');
@@ -61,12 +67,20 @@ export async function updateIngredient(
         updateData.slug = generateSlug(data.name);
     }
 
+    if (data.pluralName !== undefined) {
+        updateData.pluralName = data.pluralName?.trim() || null;
+    }
+
     if (data.category !== undefined) {
         updateData.category = data.category;
     }
 
     if (data.units !== undefined) {
         updateData.units = data.units;
+    }
+
+    if (data.aliases !== undefined) {
+        updateData.aliases = data.aliases.map((a) => a.toLowerCase().trim()).filter(Boolean);
     }
 
     try {
@@ -111,6 +125,11 @@ export async function mergeIngredients(sourceId: string, targetId: string) {
     }
 
     try {
+        const [source, target] = await Promise.all([
+            prisma.ingredient.findUniqueOrThrow({ where: { id: sourceId } }),
+            prisma.ingredient.findUniqueOrThrow({ where: { id: targetId } }),
+        ]);
+
         const sourceRecipeIngredients = await prisma.recipeIngredient.findMany({
             where: { ingredientId: sourceId },
         });
@@ -137,6 +156,20 @@ export async function mergeIngredients(sourceId: string, targetId: string) {
                 });
             }
         }
+
+        // Transfer source name + aliases to target aliases
+        const mergedAliases = Array.from(
+            new Set([
+                ...(target.aliases ?? []),
+                source.name.toLowerCase(),
+                ...(source.aliases ?? []),
+            ]),
+        ).filter((a) => a !== target.name.toLowerCase());
+
+        await prisma.ingredient.update({
+            where: { id: targetId },
+            data: { aliases: mergedAliases },
+        });
 
         await prisma.ingredient.delete({
             where: { id: sourceId },

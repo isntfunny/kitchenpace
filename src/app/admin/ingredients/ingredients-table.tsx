@@ -22,8 +22,10 @@ type Ingredient = {
     id: string;
     name: string;
     slug: string;
+    pluralName: string | null;
     category: ShoppingCategory;
     units: string[];
+    aliases: string[];
     needsReview?: boolean;
     recipeCount: number;
 };
@@ -42,9 +44,12 @@ const CATEGORY_LABELS: Record<ShoppingCategory, string> = {
 
 function EditableRow({ ingredient, onCancel }: { ingredient: Ingredient; onCancel: () => void }) {
     const [name, setName] = useState(ingredient.name);
+    const [pluralName, setPluralName] = useState(ingredient.pluralName ?? '');
     const [category, setCategory] = useState<ShoppingCategory>(ingredient.category);
     const [units, setUnits] = useState<string[]>(ingredient.units);
+    const [aliases, setAliases] = useState<string[]>(ingredient.aliases);
     const [newUnit, setNewUnit] = useState('');
+    const [newAlias, setNewAlias] = useState('');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -60,11 +65,29 @@ function EditableRow({ ingredient, onCancel }: { ingredient: Ingredient; onCance
         setUnits(units.filter((u) => u !== unitToRemove));
     };
 
+    const handleAddAlias = () => {
+        const trimmed = newAlias.trim().toLowerCase();
+        if (trimmed && !aliases.includes(trimmed)) {
+            setAliases([...aliases, trimmed]);
+            setNewAlias('');
+        }
+    };
+
+    const handleRemoveAlias = (aliasToRemove: string) => {
+        setAliases(aliases.filter((a) => a !== aliasToRemove));
+    };
+
     const handleSave = async () => {
         setError('');
         setSaving(true);
         try {
-            await updateIngredient(ingredient.id, { name, category, units });
+            await updateIngredient(ingredient.id, {
+                name,
+                pluralName: pluralName.trim() || null,
+                category,
+                units,
+                aliases,
+            });
             onCancel();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
@@ -266,6 +289,138 @@ function EditableRow({ ingredient, onCancel }: { ingredient: Ingredient; onCance
                     </div>
                 </td>
             </tr>
+            <tr
+                className={css({
+                    background: 'surface',
+                    borderBottomWidth: '1px',
+                    borderColor: 'border.muted',
+                })}
+            >
+                <td className={css({ padding: '2', paddingLeft: '4' })}>
+                    <label className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
+                        Plural
+                    </label>
+                    <input
+                        type="text"
+                        value={pluralName}
+                        onChange={(e) => setPluralName(e.target.value)}
+                        placeholder="z.B. Zwiebeln"
+                        className={css({
+                            width: '100%',
+                            paddingX: '2',
+                            paddingY: '1',
+                            borderRadius: 'md',
+                            borderWidth: '1px',
+                            borderColor: 'border.muted',
+                            background: 'surface.elevated',
+                            fontSize: 'sm',
+                            color: 'foreground',
+                            outline: 'none',
+                        })}
+                    />
+                </td>
+                <td colSpan={3} className={css({ padding: '2' })}>
+                    <label className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
+                        Aliase (Synonyme)
+                    </label>
+                    <div
+                        className={css({
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '1',
+                            marginBottom: '1',
+                        })}
+                    >
+                        {aliases.map((alias) => (
+                            <span
+                                key={alias}
+                                className={css({
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5',
+                                    paddingX: '1.5',
+                                    paddingY: '0.5',
+                                    borderRadius: 'full',
+                                    fontSize: 'xs',
+                                    background: {
+                                        base: 'orange.50',
+                                        _dark: 'rgba(251,146,60,0.1)',
+                                    },
+                                    borderWidth: '1px',
+                                    borderColor: {
+                                        base: 'orange.200',
+                                        _dark: 'rgba(251,146,60,0.3)',
+                                    },
+                                    color: { base: 'orange.700', _dark: 'orange.300' },
+                                })}
+                            >
+                                {alias}
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveAlias(alias)}
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: '3',
+                                        height: '3',
+                                        borderRadius: 'full',
+                                        border: 'none',
+                                        background: 'transparent',
+                                        cursor: 'pointer',
+                                        color: { base: 'orange.400', _dark: 'orange.300' },
+                                        _hover: { color: 'red.500' },
+                                    })}
+                                >
+                                    <X size={10} />
+                                </button>
+                            </span>
+                        ))}
+                    </div>
+                    <div className={css({ display: 'flex', gap: '1' })}>
+                        <input
+                            type="text"
+                            value={newAlias}
+                            onChange={(e) => setNewAlias(e.target.value)}
+                            onKeyDown={(e) =>
+                                e.key === 'Enter' && (e.preventDefault(), handleAddAlias())
+                            }
+                            placeholder="+ Alias (z.B. Semmel)"
+                            className={css({
+                                flex: '1',
+                                paddingX: '2',
+                                paddingY: '0.5',
+                                borderRadius: 'md',
+                                borderWidth: '1px',
+                                borderColor: 'border.muted',
+                                background: 'surface.elevated',
+                                fontSize: 'xs',
+                                color: 'foreground',
+                                outline: 'none',
+                                minWidth: '120px',
+                            })}
+                        />
+                        <button
+                            type="button"
+                            onClick={handleAddAlias}
+                            className={css({
+                                paddingX: '2',
+                                paddingY: '0.5',
+                                borderRadius: 'md',
+                                borderWidth: '1px',
+                                borderColor: 'border.muted',
+                                background: 'surface.elevated',
+                                fontSize: 'xs',
+                                cursor: 'pointer',
+                                color: 'foreground',
+                            })}
+                        >
+                            +
+                        </button>
+                    </div>
+                </td>
+                <td />
+            </tr>
             {error && (
                 <tr>
                     <td colSpan={5} className={css({ padding: '2', paddingLeft: '4' })}>
@@ -301,7 +456,32 @@ const columns: ColumnDef<Ingredient>[] = [
             </button>
         ),
         cell: ({ row }) => (
-            <span className={css({ fontWeight: 'medium' })}>{row.original.name}</span>
+            <div>
+                <span className={css({ fontWeight: 'medium' })}>{row.original.name}</span>
+                {row.original.pluralName && (
+                    <span
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                            marginLeft: '1',
+                        })}
+                    >
+                        / {row.original.pluralName}
+                    </span>
+                )}
+                {row.original.aliases.length > 0 && (
+                    <span
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'orange.500',
+                            marginLeft: '1',
+                        })}
+                        title={row.original.aliases.join(', ')}
+                    >
+                        +{row.original.aliases.length}
+                    </span>
+                )}
+            </div>
         ),
     },
     {

@@ -2,6 +2,7 @@
 
 import { Hand } from 'lucide-react';
 
+import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 import { Avatar } from '../atoms/Avatar';

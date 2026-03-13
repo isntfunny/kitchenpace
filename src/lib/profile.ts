@@ -10,6 +10,7 @@ type ProfileFields = Partial<Pick<Profile, 'nickname' | 'teaser' | 'photoKey'>> 
     favoritesPublic?: boolean;
     cookedPublic?: boolean;
     showInActivity?: boolean;
+    trophiesPublic?: boolean;
     notifyOnAnonymous?: boolean;
     notifyOnNewFollower?: boolean;
     notifyOnRecipeLike?: boolean;

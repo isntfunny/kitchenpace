@@ -28,8 +28,8 @@ function isStepComplete(
                 return state.categoryCount > 0;
             case 'ingredientAdded':
                 return state.ingredientCount > 0;
-            case 'autosaveVisible':
-                return Boolean(state.autoSaveLabel);
+            case 'ingredientAmountFilled':
+                return state.hasIngredientAmount;
             case 'flowNodeCreated':
                 return state.flow.nodeCount > 2;
             case 'flowBranchCreated':
@@ -43,8 +43,6 @@ function isStepComplete(
         switch (step.eventKey) {
             case 'servingsCustomOpened':
                 return runtime.servingsCustomOpened;
-            case 'ingredientAmountFocused':
-                return runtime.ingredientAmountFocused;
             case 'ingredientCommentClicked':
                 return runtime.ingredientCommentClicked;
             case 'flowAddButtonClicked':
@@ -72,7 +70,6 @@ export function RecipeCreationTutorial({
     const [stepIndex, setStepIndex] = useState(0);
     const [runtime, setRuntime] = useState<RecipeTutorialRuntimeFlags>({
         servingsCustomOpened: false,
-        ingredientAmountFocused: false,
         ingredientCommentClicked: false,
         flowAddButtonClicked: false,
     });
@@ -82,6 +79,20 @@ export function RecipeCreationTutorial({
         () => (step ? isStepComplete(step.id, activeSteps, state, runtime) : false),
         [activeSteps, runtime, state, step],
     );
+
+    // Auto-advance 1s after the user fulfils a non-info step
+    useEffect(() => {
+        if (!canContinue || step.kind === 'info') return;
+        const timer = setTimeout(() => {
+            const isLast = stepIndex === activeSteps.length - 1;
+            if (isLast) {
+                void onComplete();
+            } else {
+                setStepIndex((c) => c + 1);
+            }
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [canContinue, step.kind, stepIndex, activeSteps.length, onComplete]);
 
     useEffect(() => {
         if (step.autoFocusAction === 'title') {
@@ -104,10 +115,6 @@ export function RecipeCreationTutorial({
         register(RECIPE_TUTORIAL_EVENTS.servingsCustomOpened, (prev) => ({
             ...prev,
             servingsCustomOpened: true,
-        }));
-        register(RECIPE_TUTORIAL_EVENTS.ingredientAmountFocused, (prev) => ({
-            ...prev,
-            ingredientAmountFocused: true,
         }));
         register(RECIPE_TUTORIAL_EVENTS.ingredientCommentClicked, (prev) => ({
             ...prev,

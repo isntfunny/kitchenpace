@@ -88,7 +88,7 @@ export function IngredientManager({
     return (
         <div>
             {/* Servings */}
-            <div className={css({ mb: '4' })}>
+            <div className={css({ mb: '4' })} data-tutorial="servings-bar">
                 <label className={labelSmClass}>Portionen</label>
                 <SegmentedBar
                     items={SERVING_LABELS}

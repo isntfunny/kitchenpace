@@ -216,6 +216,13 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                     backgroundColor: isDark ? config.darkColor : config.color,
                 }}
                 onClick={handleClick}
+                data-tutorial={
+                    data.stepType === 'start'
+                        ? 'flow-start-node'
+                        : data.stepType === 'servieren'
+                          ? 'flow-end-node'
+                          : undefined
+                }
             >
                 {validationIssues.length > 0 && (
                     <div

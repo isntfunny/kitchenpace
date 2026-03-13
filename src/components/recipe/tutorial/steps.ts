@@ -7,15 +7,15 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         kind: 'info',
         title: 'Willkommen im Rezept-Ersteller',
         description:
-            'Wir zeigen dir jetzt einmal die wichtigsten Pflichtfelder, das automatische Speichern und den Ablauf-Editor. Danach landest du direkt in deinem Entwurf und kannst frei weiterbauen.',
+            'In wenigen Schritten zeigen wir dir, wie du ein Rezept anlegst — von Titel und Zutaten bis zum Kochablauf. Los geht\u2019s!',
         primaryLabel: 'Tutorial starten',
     },
     {
         id: 'title',
         kind: 'title-match',
-        title: 'Titel ist Pflicht',
+        title: 'Gib deinem Rezept einen Namen',
         description:
-            'Jedes Rezept braucht zuerst einen Titel. Tippe fuer diesen Schritt exakt Flammkuchen ein.',
+            'Der Titel ist ein Pflichtfeld — ohne ihn kann dein Rezept nicht gespeichert werden. Tippe jetzt einmal Flammkuchen ein.',
         primaryLabel: 'Weiter',
         expectedValue: 'Flammkuchen',
         targetId: RECIPE_TUTORIAL_TARGETS.title,
@@ -26,9 +26,9 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
     {
         id: 'category',
         kind: 'state',
-        title: 'Kategorie waehlen',
+        title: 'Kategorie zuordnen',
         description:
-            'Waehle jetzt mindestens eine Kategorie aus. So wird dein Rezept spaeter richtig einsortiert und schneller gefunden.',
+            'Damit andere dein Rezept finden, braucht es mindestens eine Kategorie. Wähle jetzt eine aus.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.category,
         stateKey: 'categorySelected',
@@ -38,20 +38,20 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
     {
         id: 'servings-custom',
         kind: 'event',
-        title: 'Eigene Werte eingeben',
+        title: 'Portionen anpassen',
         description:
-            'Diese Segmentleiste bietet schnelle Standardwerte. Mit dem letzten Button oeffnest du ein freies Eingabefeld fuer eigene Zahlen. Klicke ihn jetzt einmal bei den Portionen an.',
+            'Über die Schnellauswahl legst du gängige Portionsgrößen fest. Mit dem letzten Button kannst du auch einen eigenen Wert eintragen — klick ihn jetzt einmal an.',
         primaryLabel: 'Weiter',
-        targetId: RECIPE_TUTORIAL_TARGETS.servingsCustomTrigger,
+        targetId: RECIPE_TUTORIAL_TARGETS.servingsBar,
         eventKey: 'servingsCustomOpened',
         allowTargetInteraction: true,
     },
     {
         id: 'ingredient-add',
         kind: 'state',
-        title: 'Zutaten hinzufuegen',
+        title: 'Zutaten hinzufügen',
         description:
-            'Hier suchst du Zutaten und fuegst sie dem Rezept hinzu. Fuege jetzt mindestens eine Zutat hinzu.',
+            'Jedes Rezept braucht mindestens eine Zutat. Suche über das Feld nach einer Zutat und füge sie hinzu.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.ingredientSearch,
         stateKey: 'ingredientAdded',
@@ -60,24 +60,13 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
     },
     {
         id: 'ingredient-amount',
-        kind: 'event',
-        title: 'Menge und Einheit',
+        kind: 'state',
+        title: 'Menge und Einheit angeben',
         description:
-            'In jeder Zutatenzeile pflegst du spaeter Menge und Einheit. Klicke jetzt einmal in das Mengenfeld deiner Zutat.',
+            'Hier trägst du ein, wie viel von einer Zutat benötigt wird. Die Menge passt sich später automatisch an die Portionszahl an. Trage jetzt eine Menge ein.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.ingredientAmount,
-        eventKey: 'ingredientAmountFocused',
-        allowTargetInteraction: true,
-    },
-    {
-        id: 'ingredient-comment',
-        kind: 'event',
-        title: 'Kommentare und Hinweise',
-        description:
-            'Mit dem Sprechblasen-Button kannst du Hinweise wie fein gehackt, frisch oder optional vorbereiten hinterlegen. Klicke ihn jetzt einmal an - tippen musst du noch nichts.',
-        primaryLabel: 'Weiter',
-        targetId: RECIPE_TUTORIAL_TARGETS.ingredientComment,
-        eventKey: 'ingredientCommentClicked',
+        stateKey: 'ingredientAmountFilled',
         allowTargetInteraction: true,
     },
     {
@@ -85,48 +74,76 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         kind: 'info',
         title: 'Optional markieren',
         description:
-            'Mit Opt markierst du Zutaten als optional. Das ist praktisch fuer Toppings, Deko oder moegliche Varianten.',
+            'Mit diesem Button kennzeichnest du Zutaten, die nicht zwingend nötig sind — zum Beispiel eine Garnitur oder ein Topping.',
         primaryLabel: 'Verstanden',
         targetId: RECIPE_TUTORIAL_TARGETS.ingredientOptional,
         allowTargetInteraction: false,
     },
     {
+        id: 'ingredient-comment',
+        kind: 'event',
+        title: 'Zutat kommentieren',
+        description:
+            'Über die Sprechblase kannst du Hinweise wie „fein gewürfelt" oder „zimmerwarm" ergänzen. Klick sie jetzt einmal an.',
+        primaryLabel: 'Weiter',
+        targetId: RECIPE_TUTORIAL_TARGETS.ingredientComment,
+        eventKey: 'ingredientCommentClicked',
+        allowTargetInteraction: true,
+    },
+    {
         id: 'draft-save',
         kind: 'info',
-        title: 'Als Entwurf speichern',
+        title: 'Manuell speichern',
         description:
-            'Hier kannst du dein Rezept jederzeit manuell als Entwurf speichern. Im Tutorial klicken wir das bewusst nicht, damit du im gefuehrten Ablauf bleibst.',
+            'Über diesen Button speicherst du dein Rezept jederzeit als Entwurf. Im Tutorial überspringen wir das — dein Fortschritt geht nicht verloren.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.draftSave,
         allowTargetInteraction: false,
     },
     {
         id: 'autosave',
-        kind: 'state',
-        title: 'Auto-Save ist aktiv',
+        kind: 'info',
+        title: 'Auto-Save übernimmt',
         description:
-            'Sobald die wichtigsten Angaben stehen, wird dein Entwurf automatisch gespeichert. Diese Leiste zeigt dir jederzeit den aktuellen Speicherstatus.',
+            'Nach dem Tutorial speichert sich dein Entwurf automatisch, sobald du Änderungen machst. Du musst dich um nichts kümmern.',
         primaryLabel: 'Weiter in den Ablauf',
-        targetId: RECIPE_TUTORIAL_TARGETS.autosaveBar,
-        stateKey: 'autosaveVisible',
-        allowTargetInteraction: false,
     },
     {
         id: 'flow-intro',
         kind: 'info',
-        title: 'Jetzt kommt der Ablauf-Editor',
+        title: 'Der Ablauf-Editor',
         description:
-            'Hier baust du deinen Kochablauf als Diagramm auf. Start und Ende sind schon vorbereitet - dazwischen legst du die eigentlichen Schritte an.',
+            'Hier beschreibst du den Kochablauf als visuelles Diagramm. Jeder Schritt wird zu einem Baustein — schauen wir uns das genauer an.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.flowCanvas,
         allowTargetInteraction: false,
     },
     {
+        id: 'flow-start-node',
+        kind: 'info',
+        title: 'Der Startknoten',
+        description:
+            'Hier beginnt jeder Kochablauf. Von diesem Knoten aus führen die Verbindungen zu deinen einzelnen Arbeitsschritten.',
+        primaryLabel: 'Weiter',
+        targetId: RECIPE_TUTORIAL_TARGETS.flowStartNode,
+        allowTargetInteraction: false,
+    },
+    {
+        id: 'flow-end-node',
+        kind: 'info',
+        title: 'Das Ziel: Servieren',
+        description:
+            'Jeder Pfad in deinem Ablauf muss hier enden. Sobald alle Schritte zum Servieren führen, ist dein Ablauf vollständig.',
+        primaryLabel: 'Weiter',
+        targetId: RECIPE_TUTORIAL_TARGETS.flowEndNode,
+        allowTargetInteraction: false,
+    },
+    {
         id: 'flow-add-button',
         kind: 'event',
-        title: 'Schritt-Menue oeffnen',
+        title: 'Neuen Schritt hinzufügen',
         description:
-            'Mit dem Plus-Button auf einer Verbindung fuegst du neue Schritte in den Ablauf ein. Klicke ihn jetzt an.',
+            'Über den Plus-Button auf einer Verbindungslinie fügst du neue Arbeitsschritte ein. Klick ihn jetzt einmal an.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.flowAddButton,
         eventKey: 'flowAddButtonClicked',
@@ -135,9 +152,9 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
     {
         id: 'flow-palette',
         kind: 'state',
-        title: 'Schritt auswaehlen',
+        title: 'Schrittart wählen',
         description:
-            'Hier siehst du die verfuegbaren Schrittarten als Uebersicht. Waehle jetzt einen Schritt aus und fuege ihn in deinen Ablauf ein.',
+            'Hier siehst du die verschiedenen Schrittarten — zum Beispiel Schneiden, Kochen oder Backen. Wähle jetzt einen aus und füge ihn hinzu.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.flowPalette,
         stateKey: 'flowNodeCreated',
@@ -146,22 +163,30 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
     {
         id: 'flow-branch',
         kind: 'state',
-        title: 'Parallelen Zweig anlegen',
+        title: 'Parallele Schritte anlegen',
         description:
-            'Mit diesem Branch-Button legst du einen parallelen Zweig an, wenn etwas gleichzeitig passiert. Erzeuge jetzt wirklich einen Branch.',
+            'Manche Dinge laufen gleichzeitig — etwa Soße kochen und Nudeln abgießen. Mit dem Branch-Button an einem Knoten erzeugst du parallele Zweige. Probier es aus.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.flowBranchButton,
         stateKey: 'flowBranchCreated',
         allowTargetInteraction: true,
     },
     {
-        id: 'flow-rules',
+        id: 'flow-connect',
         kind: 'info',
-        title: 'Start, Ende und gueltige Pfade',
+        title: 'Verbindungen ziehen',
         description:
-            'Jeder Ablauf beginnt am Start und endet beim Servieren. Wichtig ist: Jeder Zweig braucht am Ende wieder einen gueltigen Weg bis zum Ende, damit dein Rezept logisch und veroeffentlichbar bleibt.',
-        primaryLabel: 'Zu meinem Entwurf',
+            'Ziehe eine Verbindung vom rechten Punkt eines Knotens zum linken Punkt eines anderen. So legst du die Reihenfolge fest — und vergiss nicht, jeden Zweig zum Servieren zu verbinden.',
+        primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.flowCanvas,
         allowTargetInteraction: false,
+    },
+    {
+        id: 'done',
+        kind: 'info',
+        title: 'Geschafft — viel Spaß beim Kochen!',
+        description:
+            'Du kennst jetzt alle wichtigen Funktionen. Bearbeite deinen Entwurf weiter, füge Bilder hinzu und veröffentliche ihn, wenn du zufrieden bist.',
+        primaryLabel: 'Tutorial beenden',
     },
 ];

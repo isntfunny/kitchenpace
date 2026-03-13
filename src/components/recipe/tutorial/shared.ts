@@ -5,6 +5,7 @@ export const RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY =
 export const RECIPE_TUTORIAL_TARGETS = {
     title: 'title',
     category: 'category',
+    servingsBar: 'servings-bar',
     servingsCustomTrigger: 'servings-custom-trigger',
     ingredientSearch: 'ingredient-search',
     ingredientAmount: 'ingredient-amount',
@@ -13,6 +14,8 @@ export const RECIPE_TUTORIAL_TARGETS = {
     draftSave: 'draft-save',
     autosaveBar: 'autosave-bar',
     flowCanvas: 'flow-canvas',
+    flowStartNode: 'flow-start-node',
+    flowEndNode: 'flow-end-node',
     flowAddButton: 'flow-add-button',
     flowPalette: 'flow-palette',
     flowBranchButton: 'flow-branch-button',

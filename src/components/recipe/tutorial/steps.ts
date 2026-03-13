@@ -165,13 +165,24 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
     },
     {
         id: 'node-edit-panel',
-        kind: 'info',
+        kind: 'event',
         title: 'Schritt bearbeiten',
         description:
             'Klick jetzt auf deinen neu erstellten Schritt — es öffnet sich ein Panel, in dem du Typ, Titel, Dauer und Beschreibung anpassen kannst.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.flowCanvas,
+        eventKey: 'nodeSelected',
         allowTargetInteraction: true,
+    },
+    {
+        id: 'node-edit-overview',
+        kind: 'info',
+        title: 'Das Bearbeitungs-Panel',
+        description:
+            'Hier kannst du Typ, Titel, Dauer und Beschreibung deines Schritts anpassen. Schauen wir uns die Beschreibung genauer an.',
+        primaryLabel: 'Weiter',
+        targetId: RECIPE_TUTORIAL_TARGETS.nodeEditPanel,
+        allowTargetInteraction: false,
     },
     {
         id: 'node-description',
@@ -206,24 +217,36 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
     },
     {
         id: 'flow-branch',
-        kind: 'state',
+        kind: 'event',
         title: 'Parallele Schritte anlegen',
         description:
-            'Manche Dinge laufen gleichzeitig — etwa Soße kochen und Nudeln abgießen. Mit dem Branch-Button an einem Knoten erzeugst du parallele Zweige. Probier es aus.',
+            'Manche Dinge laufen gleichzeitig — etwa Soße kochen und Nudeln abgießen. Mit dem Branch-Button an einem Knoten erzeugst du parallele Zweige. Klick ihn jetzt an.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.flowBranchButton,
+        eventKey: 'branchButtonClicked',
+        allowTargetInteraction: true,
+    },
+    {
+        id: 'flow-branch-palette',
+        kind: 'state',
+        title: 'Schrittart für den Zweig wählen',
+        description:
+            'Wähle eine Schrittart für den parallelen Zweig aus — genau wie beim ersten Schritt.',
+        primaryLabel: 'Weiter',
+        targetId: RECIPE_TUTORIAL_TARGETS.flowPalette,
         stateKey: 'flowBranchCreated',
         allowTargetInteraction: true,
     },
     {
         id: 'flow-connect',
-        kind: 'info',
+        kind: 'event',
         title: 'Verbindungen ziehen',
         description:
             'Ziehe eine Verbindung vom rechten Punkt eines Knotens zum linken Punkt eines anderen. So legst du die Reihenfolge fest — und vergiss nicht, jeden Zweig zum Servieren zu verbinden.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.flowCanvas,
-        allowTargetInteraction: false,
+        eventKey: 'edgeConnected',
+        allowTargetInteraction: true,
     },
     {
         id: 'done',

@@ -19,6 +19,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type RefCallback } f
 import '@xyflow/react/dist/style.css';
 
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
+import {
+    dispatchRecipeTutorialEvent,
+    RECIPE_TUTORIAL_EVENTS,
+} from '@app/components/recipe/tutorial/shared';
 import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
 import { PALETTE } from '@app/lib/palette';
 import { getValidationIssuesByNode, validateFlow } from '@app/lib/validation/flowValidation';
@@ -405,6 +409,7 @@ function FlowEditorInner({
                 currentEdges,
             );
             autoLayoutAndFit(currentNodes, nextEdges);
+            dispatchRecipeTutorialEvent(RECIPE_TUTORIAL_EVENTS.edgeConnected);
         },
         [autoLayoutAndFit],
     );

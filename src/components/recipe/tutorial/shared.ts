@@ -31,6 +31,9 @@ export const RECIPE_TUTORIAL_EVENTS = {
     ingredientAmountFocused: 'recipe-tutorial:ingredient-amount-focused',
     ingredientCommentClicked: 'recipe-tutorial:ingredient-comment-clicked',
     flowAddButtonClicked: 'recipe-tutorial:flow-add-button-clicked',
+    nodeSelected: 'recipe-tutorial:node-selected',
+    branchButtonClicked: 'recipe-tutorial:branch-button-clicked',
+    edgeConnected: 'recipe-tutorial:edge-connected',
     descriptionMentionInserted: 'recipe-tutorial:description-mention-inserted',
 } as const;
 

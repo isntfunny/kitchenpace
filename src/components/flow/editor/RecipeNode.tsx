@@ -5,6 +5,10 @@ import { Clock, GitBranch, X } from 'lucide-react';
 import { memo, useMemo, useCallback, useState, useRef, useEffect } from 'react';
 
 import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
+import {
+    dispatchRecipeTutorialEvent,
+    RECIPE_TUTORIAL_EVENTS,
+} from '@app/components/recipe/tutorial/shared';
 import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
@@ -101,7 +105,11 @@ function ForkButton({
                 data-tutorial={tutorialTarget ? 'flow-branch-button' : undefined}
                 onClick={(e) => {
                     e.stopPropagation();
-                    setOpen((v) => !v);
+                    setOpen((v) => {
+                        if (!v)
+                            dispatchRecipeTutorialEvent(RECIPE_TUTORIAL_EVENTS.branchButtonClicked);
+                        return !v;
+                    });
                 }}
                 title="Parallelen Schritt hinzufügen"
             >
@@ -179,6 +187,7 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
 
     const handleClick = useCallback(() => {
         onSelectNode(id);
+        dispatchRecipeTutorialEvent(RECIPE_TUTORIAL_EVENTS.nodeSelected);
     }, [id, onSelectNode]);
 
     const handleDeleteClick = useCallback(
@@ -243,7 +252,14 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                 {data.stepType === 'start' && <div className={startBadgeClass}>Start</div>}
                 {data.stepType === 'servieren' && <div className={finishBadgeClass}>Finish</div>}
                 {config.canHaveIncomingEdge && (
-                    <Handle type="target" position={Position.Left} style={handleStyle} />
+                    <Handle
+                        type="target"
+                        position={Position.Left}
+                        style={handleStyle}
+                        {...(data.stepType === 'servieren'
+                            ? { 'data-tutorial-servieren-handle': '' }
+                            : {})}
+                    />
                 )}
 
                 <div className={css({ p: '2.5' })}>
@@ -331,7 +347,12 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                 )}
 
                 {config.canHaveOutgoingEdge && (
-                    <Handle type="source" position={Position.Right} style={handleStyle} />
+                    <Handle
+                        type="source"
+                        position={Position.Right}
+                        style={handleStyle}
+                        data-tutorial-unconnected={outgoingCount === 0 ? '' : undefined}
+                    />
                 )}
                 {showFork && <ForkButton nodeId={id} tutorialTarget={canDelete} />}
             </div>

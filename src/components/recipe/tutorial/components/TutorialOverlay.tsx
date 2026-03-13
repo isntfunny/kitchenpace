@@ -31,7 +31,7 @@ function getAccentElement(step: RecipeTutorialStep): HTMLElement | null {
     return document.querySelector<HTMLElement>(`[data-tutorial="${step.accentTargetId}"]`);
 }
 
-export const AUTO_ADVANCE_MS = 2000;
+export const AUTO_ADVANCE_MS = 800;
 
 export function TutorialOverlay({
     step,
@@ -305,6 +305,8 @@ export function TutorialOverlay({
                 @keyframes tutorial-countdown { from { stroke-dashoffset: ${2 * Math.PI * 6}; } to { stroke-dashoffset: 0; } }
                 :has(> [data-tutorial="flow-branch-button"]) { opacity: 1 !important; pointer-events: auto !important; }
                 ${step.accentTargetId ? `[data-tutorial="${step.accentTargetId}"] { animation: tutorial-accent-blink 1.2s ease-in-out infinite; outline-offset: 8px; border-radius: 8px; position: relative; z-index: 103; }` : ''}
+                @keyframes tutorial-handle-pulse { 0%,100% { box-shadow: 0 0 0 6px rgba(224,123,83,0.7), 0 0 20px 8px rgba(224,123,83,0.4); } 50% { box-shadow: 0 0 0 12px rgba(224,123,83,0.9), 0 0 32px 14px rgba(224,123,83,0.5); } }
+                ${step.id === 'flow-connect' ? `[data-tutorial-unconnected], [data-tutorial-servieren-handle] { animation: tutorial-handle-pulse 0.8s ease-in-out infinite; border-radius: 50%; }` : ''}
             `}</style>
         </>
     );

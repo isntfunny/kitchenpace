@@ -47,6 +47,12 @@ function isStepComplete(
                 return runtime.ingredientCommentClicked;
             case 'flowAddButtonClicked':
                 return runtime.flowAddButtonClicked;
+            case 'nodeSelected':
+                return runtime.nodeSelected;
+            case 'branchButtonClicked':
+                return runtime.branchButtonClicked;
+            case 'edgeConnected':
+                return runtime.edgeConnected;
             case 'descriptionMentionInserted':
                 return runtime.descriptionMentionInserted;
             default:
@@ -74,6 +80,9 @@ export function RecipeCreationTutorial({
         servingsCustomOpened: false,
         ingredientCommentClicked: false,
         flowAddButtonClicked: false,
+        nodeSelected: false,
+        branchButtonClicked: false,
+        edgeConnected: false,
         descriptionMentionInserted: false,
     });
 
@@ -128,6 +137,18 @@ export function RecipeCreationTutorial({
         register(RECIPE_TUTORIAL_EVENTS.flowAddButtonClicked, (prev) => ({
             ...prev,
             flowAddButtonClicked: true,
+        }));
+        register(RECIPE_TUTORIAL_EVENTS.nodeSelected, (prev) => ({
+            ...prev,
+            nodeSelected: true,
+        }));
+        register(RECIPE_TUTORIAL_EVENTS.branchButtonClicked, (prev) => ({
+            ...prev,
+            branchButtonClicked: true,
+        }));
+        register(RECIPE_TUTORIAL_EVENTS.edgeConnected, (prev) => ({
+            ...prev,
+            edgeConnected: true,
         }));
         register(RECIPE_TUTORIAL_EVENTS.descriptionMentionInserted, (prev) => ({
             ...prev,

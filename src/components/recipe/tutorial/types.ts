@@ -42,6 +42,9 @@ export interface RecipeTutorialStep {
         | 'servingsCustomOpened'
         | 'ingredientCommentClicked'
         | 'flowAddButtonClicked'
+        | 'nodeSelected'
+        | 'branchButtonClicked'
+        | 'edgeConnected'
         | 'descriptionMentionInserted';
     accentTargetId?: RecipeTutorialTargetId;
     allowTargetInteraction?: boolean;
@@ -53,5 +56,8 @@ export interface RecipeTutorialRuntimeFlags {
     servingsCustomOpened: boolean;
     ingredientCommentClicked: boolean;
     flowAddButtonClicked: boolean;
+    nodeSelected: boolean;
+    branchButtonClicked: boolean;
+    edgeConnected: boolean;
     descriptionMentionInserted: boolean;
 }

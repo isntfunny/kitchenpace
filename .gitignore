@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+## Generated data
+src/data/licenses.json
+
 ## Panda
 styled-system
 styled-system-studio

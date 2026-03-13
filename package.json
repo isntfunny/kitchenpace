@@ -17,7 +17,7 @@
     },
     "scripts": {
         "panda": "panda codegen --config ./panda.config.ts",
-        "predev": "npm run panda",
+        "predev": "npm run panda && npm run licenses:generate",
         "licenses:generate": "license-checker --production --json --out src/data/licenses.json",
         "prebuild": "npm run panda && npx prisma generate && npm run licenses:generate",
         "postinstall": "npm run panda",

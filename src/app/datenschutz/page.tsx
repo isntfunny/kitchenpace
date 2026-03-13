@@ -1125,6 +1125,15 @@ export default function DatenschutzPage() {
                         Impressum
                     </Link>
                     <Link
+                        href="/opensource"
+                        className={css({
+                            _hover: { color: 'palette.orange' },
+                            transition: 'color 0.15s',
+                        })}
+                    >
+                        Open-Source-Lizenzen
+                    </Link>
+                    <Link
                         href="/"
                         className={css({
                             _hover: { color: 'palette.orange' },

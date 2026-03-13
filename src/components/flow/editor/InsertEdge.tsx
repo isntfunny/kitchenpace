@@ -35,7 +35,7 @@ function InsertEdgeComponent({
     const { onInsertOnEdge } = useFlowEditor();
     const { deleteElements } = useReactFlow();
     const dark = useIsDark();
-    const [isHovered, setIsHovered] = useState(false);
+    const [, setIsHovered] = useState(false);
     const [popoverOpen, setPopoverOpen] = useState(false);
 
     const [edgePath, labelX, labelY] = getSmoothStepPath({

@@ -12,6 +12,7 @@ import { PageProgress } from '@app/components/providers/PageProgress';
 import { ProfileProvider } from '@app/components/providers/ProfileProvider';
 import { RecipeTabsProvider } from '@app/components/providers/RecipeTabsProvider';
 import { ThemeProvider } from '@app/components/providers/ThemeProvider';
+import { ToastProvider } from '@app/components/providers/ToastProvider';
 import { getServerAuthSession } from '@app/lib/auth';
 import { getServerFeatureFlags } from '@app/lib/flags/server';
 import { APP_URL } from '@app/lib/url';
@@ -305,7 +306,8 @@ export default async function RootLayout({
                 <PageProgress />
                 <ThemeProvider>
                     <AuthProvider session={session}>
-                        <FeatureFlagsProvider initialState={featureFlags}>
+                        <ToastProvider>
+                            <FeatureFlagsProvider initialState={featureFlags}>
                                 <ProfileProvider profile={profile}>
                                     <RecipeTabsProvider
                                         initialPinned={pinnedRecipes}
@@ -315,7 +317,8 @@ export default async function RootLayout({
                                         {children}
                                     </RecipeTabsProvider>
                                 </ProfileProvider>
-                        </FeatureFlagsProvider>
+                            </FeatureFlagsProvider>
+                        </ToastProvider>
                     </AuthProvider>
                 </ThemeProvider>
             </body>

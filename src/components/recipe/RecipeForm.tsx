@@ -1,12 +1,9 @@
 'use client';
 
-import { autoPlacement, autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
-import { OnboardingProvider, useOnboarding } from '@onboardjs/react';
-import type { OnboardingStep, StepComponentProps } from '@onboardjs/react';
 import { useOpenPanel } from '@openpanel/nextjs';
-import { Lock, Monitor, PanelLeftClose, PanelLeftOpen, Sparkles } from 'lucide-react';
+import { Lock, Monitor, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import type { EditRecipeData } from '@app/app/actions/recipes';
@@ -23,6 +20,13 @@ const FlowEditor = dynamic(
     () => import('@app/components/flow/FlowEditor').then((m) => m.FlowEditor),
     { ssr: false },
 );
+
+const RecipeCreationTutorial = dynamic(
+    () => import('./tutorial').then((m) => m.RecipeCreationTutorial),
+    { ssr: false },
+);
+
+const RECIPE_CREATION_TUTORIAL_KEY = 'kitchenpace:recipe-create-tutorial:v1';
 
 import { searchIngredients, searchTags } from '../recipe/actions';
 import {
@@ -49,229 +53,6 @@ const formStackClass = stack({ gap: '6' });
 const normalizeTag = (value: string) => value.trim().toLowerCase();
 type TagOption = Tag & { count: number };
 type TagWithCount = TagOption & { selected: boolean };
-
-interface RecipeWelcomePayload {
-    title: string;
-    description: string;
-    primaryLabel: string;
-    secondaryLabel: string;
-}
-
-function RecipeWelcomeStep({ payload }: StepComponentProps<RecipeWelcomePayload>) {
-    const { next, skip, loading } = useOnboarding();
-    const isBusy = loading.isAnyLoading;
-
-    return (
-        <div className={css({ textAlign: 'center' })}>
-            {/* Icon */}
-            <div
-                className={css({
-                    width: '72px',
-                    height: '72px',
-                    borderRadius: 'full',
-                    background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 6',
-                    boxShadow: '0 8px 30px rgba(224, 123, 83, 0.4)',
-                })}
-            >
-                <Sparkles className={css({ width: '36px', height: '36px', color: 'white' })} />
-            </div>
-
-            <h2
-                className={css({
-                    fontSize: { base: '2xl', md: '3xl' },
-                    fontWeight: '700',
-                    marginBottom: '3',
-                    color: 'text.primary',
-                })}
-            >
-                {payload.title}
-            </h2>
-            <p
-                className={css({
-                    fontSize: 'md',
-                    color: 'text.muted',
-                    marginBottom: '6',
-                    lineHeight: '1.7',
-                    maxWidth: '400px',
-                    marginX: 'auto',
-                })}
-            >
-                {payload.description}
-            </p>
-
-            <div
-                className={css({
-                    display: 'flex',
-                    gap: '3',
-                    flexWrap: 'wrap',
-                    justifyContent: 'center',
-                })}
-            >
-                <button
-                    type="button"
-                    className={css({
-                        backgroundColor: 'palette.orange',
-                        color: 'white',
-                        fontWeight: '600',
-                        borderRadius: 'xl',
-                        px: '6',
-                        py: '3.5',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                        fontSize: 'md',
-                        boxShadow: '0 4px 15px rgba(224, 123, 83, 0.4)',
-                        _hover: {
-                            filter: 'brightness(1.05)',
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 6px 20px rgba(224, 123, 83, 0.5)',
-                        },
-                        _disabled: { filter: 'brightness(0.9)', cursor: 'not-allowed' },
-                    })}
-                    onClick={() => void next()}
-                    disabled={isBusy}
-                >
-                    {payload.primaryLabel}
-                </button>
-                <button
-                    type="button"
-                    className={css({
-                        background: 'transparent',
-                        border: '1px solid',
-                        borderColor: 'border.subtle',
-                        color: 'text.muted',
-                        fontWeight: '500',
-                        borderRadius: 'xl',
-                        px: '6',
-                        py: '3.5',
-                        cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                        fontSize: 'md',
-                        _hover: { borderColor: 'palette.orange', color: 'text.primary' },
-                    })}
-                    onClick={() => void skip()}
-                >
-                    {payload.secondaryLabel}
-                </button>
-            </div>
-        </div>
-    );
-}
-
-interface RecipeTitlePayload {
-    fieldLabel: string;
-    description: string;
-    expectedValue: string;
-    primaryLabel: string;
-    secondaryLabel: string;
-}
-
-interface RecipeTitleStepProps extends StepComponentProps<RecipeTitlePayload> {
-    titleValue: string;
-    onFocusTitleField: () => void;
-}
-
-function RecipeTitleStep({ payload, titleValue, onFocusTitleField }: RecipeTitleStepProps) {
-    const { next, skip, loading } = useOnboarding();
-    const isBusy = loading.isAnyLoading;
-    const normalizedTitle = titleValue.trim().toLowerCase();
-    const normalizedExpected = payload.expectedValue.trim().toLowerCase();
-    const isMatch = normalizedTitle === normalizedExpected;
-
-    useEffect(() => {
-        onFocusTitleField();
-    }, [onFocusTitleField]);
-
-    const callNext = () => {
-        if (!isMatch || isBusy) return;
-        void next();
-    };
-
-    const descriptionMessage = isMatch
-        ? 'Perfekt! Du hast den Titel so geschrieben, wie wir ihn brauchen.'
-        : 'Schreibe exakt das Stichwort, damit wir dich an die richtige Stelle führen.';
-
-    return (
-        <div className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
-            <h2
-                className={css({
-                    fontSize: { base: '2xl', md: '3xl' },
-                    fontWeight: '700',
-                    marginBottom: '2',
-                    color: 'text.primary',
-                })}
-            >
-                {payload.fieldLabel}
-            </h2>
-            <p
-                className={css({
-                    fontSize: 'md',
-                    color: 'text.muted',
-                    lineHeight: '1.6',
-                })}
-            >
-                {payload.description}
-            </p>
-            <p
-                className={css({
-                    fontSize: 'sm',
-                    color: 'text.secondary',
-                })}
-            >
-                Erwartete Eingabe: <strong>{payload.expectedValue}</strong>
-            </p>
-            <p
-                className={css({
-                    fontSize: 'sm',
-                    color: isMatch ? 'palette.emerald' : 'text.primary',
-                    fontWeight: isMatch ? '600' : '500',
-                })}
-            >
-                {descriptionMessage}
-            </p>
-            <div className={css({ display: 'flex', gap: '3', flexWrap: 'wrap' })}>
-                <button
-                    type="button"
-                    className={css({
-                        borderRadius: 'xl',
-                        px: '5',
-                        py: '3',
-                        fontWeight: '600',
-                        backgroundColor: isMatch ? 'palette.orange' : 'rgba(224,123,83,0.4)',
-                        color: isMatch ? 'canvas' : 'canvas',
-                        border: 'none',
-                        cursor: isMatch ? 'pointer' : 'not-allowed',
-                        transition: 'transform 150ms ease',
-                        _hover: isMatch ? { transform: 'translateY(-1px)' } : undefined,
-                    })}
-                    onClick={callNext}
-                    disabled={!isMatch || isBusy}
-                >
-                    {payload.primaryLabel}
-                </button>
-                <button
-                    type="button"
-                    className={css({
-                        borderRadius: 'xl',
-                        px: '5',
-                        py: '3',
-                        fontWeight: '500',
-                        background: 'transparent',
-                        border: '1px solid rgba(255,255,255,0.3)',
-                        color: 'text.muted',
-                    })}
-                    onClick={() => void skip()}
-                >
-                    {payload.secondaryLabel}
-                </button>
-            </div>
-        </div>
-    );
-}
 
 type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -848,13 +629,6 @@ export function RecipeForm({
         </div>
     );
 
-    const TitleStepComponent = useCallback(
-        (props: StepComponentProps<RecipeTitlePayload>) => (
-            <RecipeTitleStep {...props} titleValue={title} onFocusTitleField={focusTitleField} />
-        ),
-        [title, focusTitleField],
-    );
-
     /* ── sidebar / accordion layout ── */
 
     const sidebarLayoutForm = (
@@ -1231,347 +1005,43 @@ export function RecipeForm({
     );
 
     const layoutForm = layout === 'sidebar' ? sidebarLayoutForm : stackLayoutForm;
-    const componentRegistry = useMemo(
-        () => ({
-            'recipe-welcome': RecipeWelcomeStep,
-            'recipe-title': TitleStepComponent,
-        }),
-        [TitleStepComponent],
-    );
+    const tutorialEligible = !isEditMode;
 
-    const onboardingSteps = useMemo<OnboardingStep[]>(
-        () => [
-            {
-                id: 'recipe-create-welcome',
-                type: 'CUSTOM_COMPONENT',
-                payload: {
-                    componentKey: 'recipe-welcome',
-                    title: 'Willkommen im Rezept-Ersteller',
-                    description: 'Hier passiert die Magie beim Planen deiner nächsten Kreation.',
-                    primaryLabel: 'Alles klar',
-                    secondaryLabel: 'Später ansehen',
-                },
-            },
-            {
-                id: 'recipe-title-challenge',
-                type: 'CUSTOM_COMPONENT',
-                payload: {
-                    componentKey: 'recipe-title',
-                    fieldLabel: 'Titel',
-                    description:
-                        'Schreibe „Flammkuchen" in das Titelfeld, damit wir dich sicher durch den Workflow führen.',
-                    expectedValue: 'Flammkuchen',
-                    primaryLabel: 'Weiter',
-                    secondaryLabel: 'Später machen',
-                },
-            },
-        ],
-        [],
-    );
+    const [showTutorial, setShowTutorial] = useState(false);
 
-    return (
-        <OnboardingProvider steps={onboardingSteps} componentRegistry={componentRegistry}>
-            {layoutForm}
-            <RecipeOnboardingOverlay titleInputRef={titleInputRef} />
-        </OnboardingProvider>
-    );
-}
+    useEffect(() => {
+        if (!tutorialEligible) return;
 
-interface RecipeOnboardingOverlayProps {
-    titleInputRef: React.RefObject<HTMLInputElement | null>;
-}
-
-interface OnboardingArrowProps {
-    placement: string;
-}
-
-function OnboardingArrow({ placement }: OnboardingArrowProps) {
-    // Get position styles based on placement
-    const getPositionStyles = () => {
-        switch (placement) {
-            case 'right-start':
-            case 'right':
-            case 'right-end':
-                return { left: '-8px', top: '20px' };
-            case 'left-start':
-            case 'left':
-            case 'left-end':
-                return { right: '-8px', top: '20px' };
-            case 'bottom-start':
-            case 'bottom':
-            case 'bottom-end':
-                return { top: '-8px', left: '20px' };
-            case 'top-start':
-            case 'top':
-            case 'top-end':
-                return { bottom: '-8px', left: '20px' };
-            default:
-                return { left: '-8px', top: '20px' };
+        try {
+            const hasCompleted =
+                window.localStorage.getItem(RECIPE_CREATION_TUTORIAL_KEY) === 'done';
+            setShowTutorial(!hasCompleted);
+        } catch {
+            setShowTutorial(true);
         }
-    };
+    }, [tutorialEligible]);
 
-    const getRotation = () => {
-        switch (placement) {
-            case 'right-start':
-            case 'right':
-            case 'right-end':
-                return 'rotate(45deg)';
-            case 'left-start':
-            case 'left':
-            case 'left-end':
-                return 'rotate(-135deg)';
-            case 'bottom-start':
-            case 'bottom':
-            case 'bottom-end':
-                return 'rotate(-45deg)';
-            case 'top-start':
-            case 'top':
-            case 'top-end':
-                return 'rotate(135deg)';
-            default:
-                return 'rotate(45deg)';
-        }
-    };
-
-    return (
-        <div
-            style={{
-                position: 'absolute',
-                width: '16px',
-                height: '16px',
-                backgroundColor: '#fff',
-                transform: getRotation(),
-                border: '1px solid rgba(224, 123, 83, 0.3)',
-                ...getPositionStyles(),
-            }}
-        />
-    );
-}
-
-function RecipeOnboardingOverlay({ titleInputRef }: RecipeOnboardingOverlayProps) {
-    const { currentStep, renderStep } = useOnboarding();
-    const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
-    const isWelcomeStep = currentStep?.id === 'recipe-create-welcome';
-    const isTitleStep = currentStep?.id === 'recipe-title-challenge';
-
-    // Floating UI for smart placement
-    const { refs, floatingStyles, placement } = useFloating({
-        strategy: 'fixed',
-        placement: 'right-start',
-        middleware: [
-            offset(16),
-            flip({ fallbackPlacements: ['left-start', 'bottom-start', 'top-start'] }),
-            shift({ padding: 16 }),
-            autoPlacement({
-                allowedPlacements: ['right-start', 'left-start', 'bottom-start', 'top-start'],
-            }),
-        ],
-        whileElementsMounted: autoUpdate,
-    });
-
-    // Destructure refs to avoid React warning about accessing refs during render
-    const { setFloating, setReference } = refs;
-
-    // Set up reference element when step changes
-    // Using useLayoutEffect to measure DOM and set position synchronously before paint
-    // This prevents visual flicker and ensures accurate positioning
-    /* eslint-disable react-hooks/set-state-in-effect */
-    useLayoutEffect(() => {
-        if (!currentStep) {
-            setTargetRect(null);
-            return;
+    const handleTutorialComplete = useCallback(() => {
+        try {
+            window.localStorage.setItem(RECIPE_CREATION_TUTORIAL_KEY, 'done');
+        } catch {
+            // ignore localStorage failures and still hide tutorial
         }
 
-        if (isTitleStep && titleInputRef.current) {
-            const rect = titleInputRef.current.getBoundingClientRect();
-            setTargetRect(rect);
-            setReference(titleInputRef.current);
-        } else {
-            setTargetRect(null);
-            setReference(null);
-        }
-    }, [currentStep, isTitleStep, titleInputRef, setReference]);
-    /* eslint-enable react-hooks/set-state-in-effect */
+        setShowTutorial(false);
+    }, []);
 
-    if (!currentStep) return null;
-
-    // Welcome step - centered modal with backdrop
-    if (isWelcomeStep) {
-        return (
-            <>
-                {/* Dark backdrop */}
-                <div
-                    className={css({
-                        position: 'fixed',
-                        inset: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                        zIndex: 100,
-                        animation: 'fadeIn 200ms ease',
-                    })}
-                />
-                {/* Centered modal */}
-                <div
-                    className={css({
-                        position: 'fixed',
-                        inset: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 101,
-                        p: '4',
-                    })}
-                >
-                    <div
-                        className={css({
-                            backgroundColor: 'surface',
-                            borderRadius: '2xl',
-                            p: { base: '6', md: '8' },
-                            maxWidth: '480px',
-                            width: '100%',
-                            boxShadow: '0 25px 80px rgba(0,0,0,0.5)',
-                            color: 'text',
-                            animation: 'slideUp 300ms ease',
-                        })}
-                    >
-                        {renderStep()}
-                    </div>
-                </div>
-            </>
-        );
-    }
-
-    // Tutorial step with spotlight
     return (
         <>
-            {/* Dark backdrop with spotlight cutout */}
-            <div
-                className={css({
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 100,
-                    pointerEvents: 'none',
-                })}
-            >
-                {/* Top area */}
-                <div
-                    className={css({
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                        height: targetRect ? `${targetRect.top}px` : 0,
-                    })}
+            {layoutForm}
+            {tutorialEligible && showTutorial ? (
+                <RecipeCreationTutorial
+                    targets={{ title: titleInputRef }}
+                    state={{ titleValue: title }}
+                    onFocusTitleField={focusTitleField}
+                    onComplete={handleTutorialComplete}
                 />
-                {/* Left area */}
-                {targetRect && (
-                    <div
-                        className={css({
-                            position: 'absolute',
-                            top: `${targetRect.top}px`,
-                            left: 0,
-                            width: `${targetRect.left}px`,
-                            height: `${targetRect.height}px`,
-                            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                        })}
-                    />
-                )}
-                {/* Right area */}
-                {targetRect && (
-                    <div
-                        className={css({
-                            position: 'absolute',
-                            top: `${targetRect.top}px`,
-                            right: 0,
-                            width: `calc(100% - ${targetRect.right}px)`,
-                            height: `${targetRect.height}px`,
-                            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                        })}
-                    />
-                )}
-                {/* Bottom area */}
-                <div
-                    className={css({
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                        height: targetRect ? `calc(100% - ${targetRect.bottom}px)` : '100%',
-                    })}
-                />
-            </div>
-
-            {/* Highlight border around target */}
-            {targetRect && (
-                <div
-                    className={css({
-                        position: 'fixed',
-                        left: `${targetRect.left - 4}px`,
-                        top: `${targetRect.top - 4}px`,
-                        width: `${targetRect.width + 8}px`,
-                        height: `${targetRect.height + 8}px`,
-                        border: '3px solid',
-                        borderColor: 'palette.orange',
-                        borderRadius: 'lg',
-                        zIndex: 101,
-                        pointerEvents: 'none',
-                        boxShadow:
-                            '0 0 0 4px rgba(224, 123, 83, 0.3), 0 0 20px rgba(224, 123, 83, 0.5)',
-                        animation: 'pulse 2s ease-in-out infinite',
-                    })}
-                />
-            )}
-
-            {/* Tutorial panel positioned near target */}
-            <div
-                ref={setFloating}
-                className={css({
-                    position: 'fixed',
-                    zIndex: 102,
-                    pointerEvents: 'auto',
-                    maxWidth: '360px',
-                })}
-                style={floatingStyles}
-            >
-                <div
-                    className={css({
-                        backgroundColor: 'surface',
-                        borderRadius: 'xl',
-                        p: '5',
-                        boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
-                        color: 'text',
-                        border: '1px solid',
-                        borderColor: 'rgba(224, 123, 83, 0.3)',
-                    })}
-                >
-                    {/* Arrow pointing to target */}
-                    {targetRect && placement && <OnboardingArrow placement={placement} />}
-                    {renderStep()}
-                </div>
-            </div>
-
-            {/* Keyframe animations */}
-            <style>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideUp {
-                    from { 
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to { 
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                @keyframes pulse {
-                    0%, 100% { box-shadow: 0 0 0 4px rgba(224, 123, 83, 0.3), 0 0 20px rgba(224, 123, 83, 0.5); }
-                    50% { box-shadow: 0 0 0 8px rgba(224, 123, 83, 0.2), 0 0 30px rgba(224, 123, 83, 0.7); }
-                }
-            `}</style>
+            ) : null}
         </>
     );
 }

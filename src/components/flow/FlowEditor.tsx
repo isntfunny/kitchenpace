@@ -221,6 +221,31 @@ function FlowEditorInner({
 
     const [rightWidth, setRightWidth] = useState(RIGHT_W_DEFAULT);
 
+    // Sync @mention ingredients from initial nodes into the recipe ingredient list.
+    // Handles cases where step descriptions were pre-filled (AI import, etc.) with
+    // @[Name](id) mentions referencing ingredients not yet in the recipe sidebar.
+    useEffect(() => {
+        if (!onAddIngredientToRecipe) return;
+        const MENTION_RE = /@\[([^\]|]+)(?:\|[^\]]*)?\]\(([^)]+)\)/g;
+        const recipeIds = new Set(availableIngredients.map((i) => i.id));
+        const toAdd = new Map<string, string>(); // id → name
+        for (const node of initialN) {
+            const description = (node.data as RecipeNodeData).description ?? '';
+            MENTION_RE.lastIndex = 0;
+            let match: RegExpExecArray | null;
+            while ((match = MENTION_RE.exec(description)) !== null) {
+                const [, name, id] = match;
+                if (!recipeIds.has(id) && !toAdd.has(id)) {
+                    toAdd.set(id, name);
+                }
+            }
+        }
+        for (const [id, name] of toAdd) {
+            onAddIngredientToRecipe({ id, name, category: null, units: [] });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Restore from localStorage after mount (avoids SSR/client hydration mismatch)
     useEffect(() => {
         const rw = Number(localStorage.getItem(LS_RIGHT_W)) || RIGHT_W_DEFAULT;

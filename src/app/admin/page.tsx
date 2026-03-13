@@ -8,6 +8,7 @@ import {
     Settings,
     Sparkles,
     LayoutList,
+    Bell,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -19,6 +20,12 @@ import { STATUS_ORDER, getQueueLabel } from '@worker/queues/job-run-ui';
 import { css } from 'styled-system/css';
 
 const ADMIN_ACTIONS = [
+    {
+        label: 'Nachrichten-Test',
+        description: 'SYSTEM-Nachrichten und Toasts an Benutzer senden.',
+        href: '/admin/notifications',
+        icon: Bell,
+    },
     {
         label: 'Moderations-Queue',
         description: 'Gemeldete Inhalte prüfen, freigeben oder ablehnen.',

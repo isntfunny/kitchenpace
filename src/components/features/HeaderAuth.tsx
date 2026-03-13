@@ -4,7 +4,7 @@ import { Key, LogOut } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { handleSignIn, handleSignOut } from '@app/components/auth/actions';
 import { InboxDropdown } from '@app/components/notifications/InboxDropdown';
@@ -18,10 +18,14 @@ import { css } from 'styled-system/css';
 import { SmartImage } from '../atoms/SmartImage';
 
 import { MenuSection, PERSONAL_LINKS } from './HeaderMenuPanel';
+import { ToastViewport } from './ToastViewport';
 
 export function HeaderAuth() {
     const { data: session, status } = useSession();
     const { profile } = useProfile();
+    const [notificationButtonEl, setNotificationButtonEl] = useState<HTMLButtonElement | null>(
+        null,
+    );
     const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
     const isAuthLoading = status === 'loading';
     const {
@@ -109,10 +113,12 @@ export function HeaderAuth() {
 
         return (
             <div className={css({ position: 'relative' })}>
+                <ToastViewport anchorElement={notificationButtonEl} />
                 {/* Notification popover — always mounted so marking-as-read doesn't unmount it */}
                 <InboxDropdown
                     trigger={
                         <button
+                            ref={setNotificationButtonEl}
                             type="button"
                             aria-label="Benachrichtigungen öffnen"
                             className={css({

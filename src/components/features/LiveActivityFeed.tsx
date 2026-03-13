@@ -10,6 +10,23 @@ import { buildStreamCursor } from '../notifications/useStreamCursor';
 
 import { ActivityList, ActivitySidebar } from './ActivitySidebar';
 
+function logActivityStream(
+    scope: 'global' | 'user',
+    message: string,
+    details?: Record<string, unknown>,
+) {
+    if (process.env.NODE_ENV !== 'development') {
+        return;
+    }
+
+    if (details) {
+        console.debug(`[SSE activity:${scope}] ${message}`, details);
+        return;
+    }
+
+    console.debug(`[SSE activity:${scope}] ${message}`);
+}
+
 function useLiveActivity(
     initialActivities: ActivityFeedItem[],
     scope: 'global' | 'user',
@@ -30,8 +47,12 @@ function useLiveActivity(
         }
 
         const eventSource = new EventSource(`/api/activity/stream?${params.toString()}`);
+        logActivityStream(scope, 'connecting', {
+            url: `/api/activity/stream?${params.toString()}`,
+        });
         const handleCreated = (event: MessageEvent<string>) => {
             const payload = JSON.parse(event.data) as ActivityFeedItem;
+            logActivityStream(scope, 'created', { id: payload.id });
             setActivities((current) => {
                 if (current.some((item) => item.id === payload.id)) {
                     return current;
@@ -41,10 +62,29 @@ function useLiveActivity(
             });
         };
 
+        const handleOpen = () => {
+            logActivityStream(scope, 'open', { readyState: eventSource.readyState });
+        };
+
+        const handleReady = () => {
+            logActivityStream(scope, 'ready');
+        };
+
+        const handleError = () => {
+            logActivityStream(scope, 'error', { readyState: eventSource.readyState });
+        };
+
         eventSource.addEventListener('activity.created', handleCreated);
+        eventSource.addEventListener('open', handleOpen);
+        eventSource.addEventListener('ready', handleReady);
+        eventSource.addEventListener('error', handleError);
 
         return () => {
             eventSource.removeEventListener('activity.created', handleCreated);
+            eventSource.removeEventListener('open', handleOpen);
+            eventSource.removeEventListener('ready', handleReady);
+            eventSource.removeEventListener('error', handleError);
+            logActivityStream(scope, 'closing');
             eventSource.close();
         };
     }, [initialActivities, limit, scope]);

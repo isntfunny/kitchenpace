@@ -8,14 +8,28 @@ type StreamState = {
     eventSource: EventSource | null;
     refCount: number;
     handlers: Map<string, Set<EventHandler>>;
+    url: string | null;
 };
 
 // Survive Next.js hot-module replacement in development via globalThis.
 const g = globalThis as typeof globalThis & { __notifStream?: StreamState };
 
+function logStream(message: string, details?: Record<string, unknown>) {
+    if (process.env.NODE_ENV !== 'development') {
+        return;
+    }
+
+    if (details) {
+        console.debug(`[SSE notifications] ${message}`, details);
+        return;
+    }
+
+    console.debug(`[SSE notifications] ${message}`);
+}
+
 function getState(): StreamState {
     if (!g.__notifStream) {
-        g.__notifStream = { eventSource: null, refCount: 0, handlers: new Map() };
+        g.__notifStream = { eventSource: null, refCount: 0, handlers: new Map(), url: null };
     }
     return g.__notifStream;
 }
@@ -33,9 +47,29 @@ export function connectStream(url: string) {
     const state = getState();
     state.refCount++;
 
+    if (state.eventSource && state.url && state.url !== url) {
+        logStream('switching stream url', { from: state.url, to: url });
+        state.eventSource.close();
+        state.eventSource = null;
+        state.url = null;
+    }
+
     if (!state.eventSource) {
-        state.eventSource = new EventSource(url);
-        attachHandlers(state.eventSource);
+        logStream('connecting', { url, refCount: state.refCount });
+        const eventSource = new EventSource(url);
+        eventSource.addEventListener('open', () => {
+            logStream('open', { url, readyState: eventSource.readyState });
+        });
+        eventSource.addEventListener('error', () => {
+            logStream('error', { url, readyState: eventSource.readyState });
+        });
+        eventSource.addEventListener('ready', () => {
+            logStream('ready');
+        });
+
+        state.eventSource = eventSource;
+        state.url = url;
+        attachHandlers(eventSource);
     }
 }
 
@@ -44,8 +78,10 @@ export function disconnectStream() {
     state.refCount = Math.max(0, state.refCount - 1);
 
     if (state.refCount === 0 && state.eventSource) {
+        logStream('closing', { url: state.url });
         state.eventSource.close();
         state.eventSource = null;
+        state.url = null;
     }
 }
 

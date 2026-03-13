@@ -8,6 +8,8 @@ export type StreamCursor = {
     id: string;
 };
 
+const STREAM_CURSOR_SEPARATOR = '|';
+
 export function parseStreamCursor(
     createdAtValue: string | null,
     idValue: string | null,
@@ -25,6 +27,37 @@ export function parseStreamCursor(
         createdAt,
         id: idValue,
     };
+}
+
+export function parseStreamCursorValue(value: string | null): StreamCursor | null {
+    if (!value) {
+        return null;
+    }
+
+    const separatorIndex = value.indexOf(STREAM_CURSOR_SEPARATOR);
+    if (separatorIndex === -1) {
+        return null;
+    }
+
+    return parseStreamCursor(
+        value.slice(0, separatorIndex),
+        value.slice(separatorIndex + STREAM_CURSOR_SEPARATOR.length),
+    );
+}
+
+export function resolveRequestStreamCursor(request: Request): StreamCursor | null {
+    const { searchParams } = new URL(request.url);
+
+    return (
+        parseStreamCursor(searchParams.get('after'), searchParams.get('afterId')) ??
+        parseStreamCursorValue(request.headers.get('last-event-id'))
+    );
+}
+
+export function formatStreamCursor(createdAtValue: Date | string, id: string): string {
+    const createdAt =
+        createdAtValue instanceof Date ? createdAtValue.toISOString() : createdAtValue;
+    return `${createdAt}${STREAM_CURSOR_SEPARATOR}${id}`;
 }
 
 export function isEntityAfterCursor(entity: CursorEntity, cursor: StreamCursor | null) {

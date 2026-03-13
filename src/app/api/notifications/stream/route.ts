@@ -1,11 +1,14 @@
 import { Role } from '@prisma/client';
 
-import { fetchAdminInboxItems } from '@app/lib/admin-inbox';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
 import { serializeNotification } from '@app/lib/events/views';
 import { subscribeToRealtimeChannels, type RealtimeChannel } from '@app/lib/realtime/broker';
-import { isEntityAfterCursor, parseStreamCursor } from '@app/lib/realtime/cursor';
+import {
+    formatStreamCursor,
+    isEntityAfterCursor,
+    resolveRequestStreamCursor,
+} from '@app/lib/realtime/cursor';
 import { prisma } from '@shared/prisma';
 
 export const runtime = 'nodejs';
@@ -23,8 +26,7 @@ export async function GET(request: Request) {
     const userId = session.user.id;
     const role = (session.user as { role?: string }).role;
     const isAdminOrMod = role === Role.ADMIN || role === Role.MODERATOR;
-    const { searchParams } = new URL(request.url);
-    const cursor = parseStreamCursor(searchParams.get('after'), searchParams.get('afterId'));
+    const cursor = resolveRequestStreamCursor(request);
     const encoder = new TextEncoder();
 
     const channels: RealtimeChannel[] = [`notifications:user:${userId}`];
@@ -34,11 +36,27 @@ export async function GET(request: Request) {
 
     const stream = new ReadableStream({
         async start(controller) {
-            const send = (event: string, payload: unknown) => {
-                controller.enqueue(
-                    encoder.encode(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`),
-                );
+            const sendComment = (comment: string) => {
+                controller.enqueue(encoder.encode(`: ${comment}\n\n`));
             };
+
+            const send = (
+                event: string,
+                payload: unknown,
+                eventCursor?: { createdAt: Date | string; id: string },
+            ) => {
+                const lines: string[] = [];
+                if (eventCursor) {
+                    lines.push(`id: ${formatStreamCursor(eventCursor.createdAt, eventCursor.id)}`);
+                }
+
+                lines.push(`event: ${event}`);
+                lines.push(`data: ${JSON.stringify(payload)}`);
+                controller.enqueue(encoder.encode(`${lines.join('\n')}\n\n`));
+            };
+
+            controller.enqueue(encoder.encode('retry: 3000\n\n'));
+            sendComment('connected');
 
             const catchUpNotifications = await prisma.notification.findMany({
                 where: {
@@ -60,14 +78,7 @@ export async function GET(request: Request) {
             });
 
             for (const notification of catchUpNotifications) {
-                send('notification.created', serializeNotification(notification));
-            }
-
-            if (isAdminOrMod) {
-                const adminItems = await fetchAdminInboxItems(50);
-                for (const item of adminItems) {
-                    send('admin-inbox.created', item);
-                }
+                send('notification.created', serializeNotification(notification), notification);
             }
 
             send('ready', { ok: true });
@@ -77,22 +88,26 @@ export async function GET(request: Request) {
                     return;
                 }
 
-                send(event.type, event.payload);
+                send(event.type, event.payload, event);
             });
 
             const heartbeat = setInterval(() => {
-                controller.enqueue(encoder.encode(': keepalive\n\n'));
+                sendComment('keepalive');
             }, 25_000);
 
-            request.signal.addEventListener('abort', async () => {
-                clearInterval(heartbeat);
-                await unsubscribe();
-                try {
-                    controller.close();
-                } catch {
-                    /* already closed by runtime */
-                }
-            });
+            request.signal.addEventListener(
+                'abort',
+                async () => {
+                    clearInterval(heartbeat);
+                    await unsubscribe();
+                    try {
+                        controller.close();
+                    } catch {
+                        /* already closed by runtime */
+                    }
+                },
+                { once: true },
+            );
         },
     });
 
@@ -101,6 +116,7 @@ export async function GET(request: Request) {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache, no-transform',
             Connection: 'keep-alive',
+            'X-Accel-Buffering': 'no',
         },
     });
 }

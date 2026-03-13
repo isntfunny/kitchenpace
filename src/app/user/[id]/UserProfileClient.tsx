@@ -22,10 +22,11 @@ import { useRouter } from 'next/navigation';
 import { ReactNode, useState, useTransition } from 'react';
 
 import { toggleFollowAction } from '@app/app/actions/social';
-import { SmartImage } from '@app/components/atoms/SmartImage';
+import { Avatar } from '@app/components/atoms/Avatar';
 import { SparkleEffect } from '@app/components/atoms/SparkleEffect';
 import { RecipeCard as SharedRecipeCard } from '@app/components/features/RecipeCard';
 import { ReportButton } from '@app/components/features/ReportButton';
+import { TrophySection, type EarnedTrophy } from '@app/components/features/TrophySection';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
@@ -206,6 +207,7 @@ export interface UserProfileData {
     favorites?: UserProfileRecipe[];
     cooked?: UserProfileRecipe[];
     activities: UserProfileActivity[];
+    trophies?: EarnedTrophy[];
     currentPage?: number;
     totalPages?: number;
 }
@@ -360,46 +362,18 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                         })}
                     >
                         {/* Avatar */}
-                        <div
+                        <Avatar
+                            src={user.avatar}
+                            name={user.name}
+                            size={AVATAR_SIZE}
+                            rounded="3xl"
+                            trophyTier={user.trophies?.[0]?.tier ?? null}
+                            trophyCount={user.trophies?.length ?? 0}
                             className={css({
-                                position: 'relative',
-                                flexShrink: 0,
-                                width: `${AVATAR_SIZE}px`,
-                                height: `${AVATAR_SIZE}px`,
-                                borderRadius: '3xl',
-                                overflow: 'hidden',
                                 boxShadow:
                                     '0 0 0 4px rgba(255,255,255,0.4), 0 8px 32px rgba(0,0,0,0.25)',
                             })}
-                        >
-                            {user.avatar ? (
-                                <SmartImage
-                                    src={user.avatar}
-                                    alt={user.name}
-                                    aspect="1:1"
-                                    fill
-                                    className={css({ objectFit: 'cover', display: 'block' })}
-                                />
-                            ) : (
-                                <div
-                                    className={css({
-                                        width: '100%',
-                                        height: '100%',
-                                        bg: 'rgba(255,255,255,0.2)',
-                                        backdropFilter: 'blur(8px)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '4xl',
-                                        fontWeight: '700',
-                                        color: 'white',
-                                        fontFamily: 'heading',
-                                    })}
-                                >
-                                    {user.name.slice(0, 2).toUpperCase()}
-                                </div>
-                            )}
-                        </div>
+                        />
 
                         {/* Profile Info */}
                         <div
@@ -873,7 +847,10 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                     </div>
 
                     {/* Activity Sidebar */}
-                    <div>
+                    <div className={css({ display: 'flex', flexDir: 'column', gap: '8' })}>
+                        {user.trophies && user.trophies.length > 0 && (
+                            <TrophySection trophies={user.trophies} />
+                        )}
                         <h2
                             className={css({
                                 fontSize: 'lg',

@@ -3,8 +3,8 @@
 import { Check } from 'lucide-react';
 import Link from 'next/link';
 
+import { Avatar } from '@app/components/atoms/Avatar';
 import { Button } from '@app/components/atoms/Button';
-import { SmartImage } from '@app/components/atoms/SmartImage';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -61,28 +61,16 @@ export function AuthorCard({
                         direction: { base: 'column', sm: 'row' },
                     })}
                 >
-                    <Link href={`/user/${author.slug}`}>
-                        <div
-                            className={css({
-                                position: 'relative',
-                                width: '80px',
-                                height: '80px',
-                                borderRadius: 'full',
-                                overflow: 'hidden',
-                                cursor: 'pointer',
-                                _hover: { opacity: 0.9 },
-                            })}
-                        >
-                            <SmartImage
-                                imageKey={author.avatar}
-                                userId={author.id}
-                                alt={author.name ?? 'Autor'}
-                                aspect="1:1"
-                                fill
-                                sizes="80px"
-                                className={css({ objectFit: 'cover' })}
-                            />
-                        </div>
+                    <Link
+                        href={`/user/${author.slug}`}
+                        className={css({ _hover: { opacity: 0.9 } })}
+                    >
+                        <Avatar
+                            imageKey={author.avatar}
+                            userId={author.id}
+                            name={author.name}
+                            size="lg"
+                        />
                     </Link>
 
                     <div className={css({ flex: 1 })}>

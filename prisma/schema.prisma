@@ -18,6 +18,14 @@ enum Role {
   BANNED
 }
 
+enum TrophyTier {
+  NONE
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
 enum Difficulty {
   EASY
   MEDIUM
@@ -190,6 +198,8 @@ model User {
   moderationLogs ModerationLog[] @relation("ModerationLogActor")
   reports        Report[] @relation("ReportSubmitter")
   tutorialCompletions UserTutorialCompletion[]
+  earnedTrophies      UserTrophy[]
+  trophyPoints        Int       @default(0)
 }
 
 model UserTutorialCompletion {
@@ -221,6 +231,7 @@ model Profile {
   followsPublic   Boolean  @default(true)
   favoritesPublic Boolean  @default(true)
   cookedPublic    Boolean  @default(true)
+  trophiesPublic  Boolean  @default(true)
   showInActivity  Boolean  @default(true)
   notifyOnAnonymous Boolean  @default(false)
   notifyOnNewFollower Boolean  @default(true)
@@ -840,4 +851,37 @@ model JobRun {
   @@index([queueName, createdAt])
   @@index([status, createdAt])
   @@index([jobId])
+}
+
+// ============================================
+// TROPHIES / ACHIEVEMENTS
+// ============================================
+
+model Trophy {
+  id           String       @id // slug: "finished-tutorial" or "recipe-creator:bronze"
+  groupSlug    String
+  tier         TrophyTier   @default(NONE)
+  category     String       // "ONBOARDING", "COOKING", "SOCIAL"
+  name         String
+  description  String
+  icon         String       // Lucide icon name
+  points       Int          @default(0)
+  sortOrder    Int          @default(0)
+  userTrophies UserTrophy[]
+  createdAt    DateTime     @default(now())
+
+  @@unique([groupSlug, tier])
+}
+
+model UserTrophy {
+  id       String   @id @default(cuid())
+  userId   String
+  trophyId String
+  earnedAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trophy Trophy @relation(fields: [trophyId], references: [id])
+
+  @@unique([userId, trophyId])
+  @@index([userId])
 }

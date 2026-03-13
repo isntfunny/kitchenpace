@@ -1,6 +1,6 @@
 'use client';
 
-import { SmartImage } from '@app/components/atoms/SmartImage';
+import { Avatar } from '@app/components/atoms/Avatar';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -45,25 +45,11 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                                 borderRadius: 'xl',
                             })}
                         >
-                            <div
-                                className={css({
-                                    position: 'relative',
-                                    width: '48px',
-                                    height: '48px',
-                                    borderRadius: 'full',
-                                    overflow: 'hidden',
-                                    flexShrink: 0,
-                                })}
-                            >
-                                <SmartImage
-                                    src={activity.user.avatar ?? '/kitchenpace_icon.png'}
-                                    alt={activity.user.name ?? 'Benutzer'}
-                                    aspect="1:1"
-                                    fill
-                                    sizes="48px"
-                                    className={css({ objectFit: 'cover' })}
-                                />
-                            </div>
+                            <Avatar
+                                src={activity.user.avatar}
+                                name={activity.user.name}
+                                size="md"
+                            />
                             <div className={css({ flex: 1 })}>
                                 <p
                                     className={css({

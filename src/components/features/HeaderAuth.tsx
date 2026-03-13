@@ -15,7 +15,7 @@ import { useProfile } from '@app/components/providers/ProfileProvider';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
-import { SmartImage } from '../atoms/SmartImage';
+import { Avatar } from '../atoms/Avatar';
 
 import { MenuSection, PERSONAL_LINKS } from './HeaderMenuPanel';
 import { ToastViewport } from './ToastViewport';
@@ -79,36 +79,8 @@ export function HeaderAuth() {
     }
 
     if (isAuthenticated) {
-        const avatarImage = profile?.photoKey ? (
-            <SmartImage
-                imageKey={profile.photoKey}
-                alt={profile.nickname || 'Profil'}
-                aspect="1:1"
-                sizes="36px"
-                className={css({
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                })}
-            />
-        ) : (
-            <div
-                className={css({
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: 'sm',
-                    fontWeight: '600',
-                })}
-            >
-                {(profile?.nickname || 'U').charAt(0).toUpperCase()}
-            </div>
+        const avatarImage = (
+            <Avatar imageKey={profile?.photoKey} name={profile?.nickname} size={36} />
         );
 
         return (

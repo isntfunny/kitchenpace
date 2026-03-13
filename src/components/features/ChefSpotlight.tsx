@@ -8,6 +8,7 @@ import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 /* eslint-enable import/order */
 
+import { Avatar } from '../atoms/Avatar';
 import { SmartImage } from '../atoms/SmartImage';
 import { Heading, Text } from '../atoms/Typography';
 
@@ -80,26 +81,14 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
             </div>
 
             <div className={flex({ gap: '3', align: 'center', mb: '3' })}>
-                <div
-                    className={css({
-                        position: 'relative',
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: 'full',
-                        overflow: 'hidden',
-                        border: '2px solid',
-                        borderColor: 'palette.gold',
-                    })}
-                >
-                    <SmartImage
-                        imageKey={chef.photoKey}
-                        userId={chef.id}
-                        alt={displayName}
-                        aspect="1:1"
-                        fill
-                        className={css({ objectFit: 'cover' })}
-                    />
-                </div>
+                <Avatar
+                    imageKey={chef.photoKey}
+                    userId={chef.id}
+                    name={displayName}
+                    size={56}
+                    ring
+                    ringColor="palette.gold"
+                />
                 <div>
                     <Heading as="h4" size="sm">
                         {displayName}

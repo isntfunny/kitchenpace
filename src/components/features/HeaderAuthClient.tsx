@@ -8,7 +8,7 @@ import { handleSignIn, handleSignOut } from '@app/components/auth/actions';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
-import { SmartImage } from '../atoms/SmartImage';
+import { Avatar } from '../atoms/Avatar';
 
 interface HeaderAuthClientProps {
     isAuthenticated: boolean;
@@ -40,35 +40,7 @@ export function HeaderAuthClient({ isAuthenticated, profile }: HeaderAuthClientP
                             },
                         })}
                     >
-                        {profile?.photoKey ? (
-                            <SmartImage
-                                imageKey={profile.photoKey}
-                                alt={profile.nickname || 'Profil'}
-                                width={32}
-                                height={32}
-                                className={css({
-                                    borderRadius: '50%',
-                                    objectFit: 'cover',
-                                })}
-                            />
-                        ) : (
-                            <div
-                                className={css({
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '50%',
-                                    background: `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    fontSize: 'sm',
-                                    fontWeight: '600',
-                                })}
-                            >
-                                {(profile?.nickname || 'U').charAt(0).toUpperCase()}
-                            </div>
-                        )}
+                        <Avatar imageKey={profile?.photoKey} name={profile?.nickname} size="sm" />
                     </button>
                 </DropdownMenu.Trigger>
 

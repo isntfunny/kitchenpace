@@ -1,6 +1,7 @@
 import type { ActivityType } from '@prisma/client';
 import { Metadata } from 'next';
 
+import { fetchUserTrophies } from '@app/app/actions/trophies';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
 import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
@@ -132,6 +133,7 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
     const showFollowerCount = profile?.followsPublic !== false;
     const showFavorites = profile?.favoritesPublic !== false;
     const showCooked = profile?.cookedPublic !== false;
+    const showTrophies = profile?.trophiesPublic !== false;
 
     // Build set of activity types to hide based on privacy settings
     const hiddenActivityTypes = new Set<string>();
@@ -177,7 +179,7 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
         },
     };
 
-    const [favoriteRecipes, cookedRecipes] = await Promise.all([
+    const [favoriteRecipes, cookedRecipes, trophies] = await Promise.all([
         showFavorites
             ? prisma.favorite.findMany({
                   where: { userId: user.id, recipe: { publishedAt: { not: null } } },
@@ -195,6 +197,7 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
                   select: { recipe: { select: recipeSelect } },
               })
             : Promise.resolve([]),
+        showTrophies ? fetchUserTrophies(user.id) : Promise.resolve([]),
     ]);
 
     // Format time ago on server side
@@ -223,6 +226,7 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
         showFollowerCount,
         showFavorites,
         showCooked,
+        trophies,
         currentPage: page,
         totalPages: Math.ceil(user._count.recipes / PAGE_SIZE),
         recipes: user.recipes.map((recipe) => ({

@@ -13,6 +13,7 @@ type SettingKey =
     | 'followsPublic'
     | 'favoritesPublic'
     | 'cookedPublic'
+    | 'trophiesPublic'
     | 'showInActivity';
 
 const SETTING_COPY: Record<
@@ -52,6 +53,13 @@ const SETTING_COPY: Record<
         description: 'Bestimme, ob andere sehen dürfen, welche Rezepte du bereits zubereitet hast.',
         labelOn: 'Zubereitet sichtbar',
         labelOff: 'Zubereitet verborgen',
+    },
+    trophiesPublic: {
+        title: 'Trophäen öffentlich',
+        description:
+            'Lege fest, ob deine freigeschalteten Trophäen auf deinem öffentlichen Profil angezeigt werden.',
+        labelOn: 'Trophäen sichtbar',
+        labelOff: 'Trophäen verborgen',
     },
 };
 

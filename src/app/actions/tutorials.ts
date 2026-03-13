@@ -4,6 +4,8 @@ import { RECIPE_CREATION_TUTORIAL_KEY } from '@app/components/recipe/tutorial/sh
 import { getServerAuthSession } from '@app/lib/auth';
 import { prisma } from '@shared/prisma';
 
+import { awardTrophy } from './trophies';
+
 export async function completeRecipeCreationTutorial() {
     const session = await getServerAuthSession('completeRecipeCreationTutorial');
     if (!session?.user?.id) {
@@ -25,4 +27,6 @@ export async function completeRecipeCreationTutorial() {
             completedAt: new Date(),
         },
     });
+
+    await awardTrophy('finished-tutorial');
 }

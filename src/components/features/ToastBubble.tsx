@@ -15,30 +15,26 @@ const ICONS: Record<ToastType, typeof CheckCircle2> = {
     error: AlertCircle,
 };
 
-const ACCENTS: Record<ToastType, { border: string; glow: string; icon: string; badge: string }> = {
+const ACCENTS: Record<ToastType, { border: string; icon: string; badge: string }> = {
     success: {
-        border: 'rgba(0,184,148,0.28)',
-        glow: 'rgba(0,184,148,0.14)',
-        icon: '#00b894',
-        badge: 'rgba(0,184,148,0.12)',
+        border: 'rgba(34,197,94,0.25)',
+        icon: '#22c55e',
+        badge: 'rgba(34,197,94,0.10)',
     },
     info: {
-        border: 'rgba(9,132,227,0.28)',
-        glow: 'rgba(9,132,227,0.14)',
-        icon: '#0984e3',
-        badge: 'rgba(9,132,227,0.12)',
+        border: 'rgba(108,92,231,0.25)',
+        icon: '#6c5ce7',
+        badge: 'rgba(108,92,231,0.10)',
     },
     warning: {
-        border: 'rgba(248,181,0,0.3)',
-        glow: 'rgba(248,181,0,0.14)',
+        border: 'rgba(248,181,0,0.25)',
         icon: '#f8b500',
-        badge: 'rgba(248,181,0,0.12)',
+        badge: 'rgba(248,181,0,0.10)',
     },
     error: {
-        border: 'rgba(224,83,83,0.28)',
-        glow: 'rgba(224,83,83,0.14)',
-        icon: '#e05353',
-        badge: 'rgba(224,83,83,0.12)',
+        border: 'rgba(239,68,68,0.25)',
+        icon: '#ef4444',
+        badge: 'rgba(239,68,68,0.10)',
     },
 };
 
@@ -89,38 +85,36 @@ export function ToastBubble({ toast, showTail = false, onDismiss }: ToastBubbleP
             dragElastic={0.18}
             dragConstraints={{ left: 0, right: 0 }}
             onDragEnd={handleDragEnd}
-            initial={{ opacity: 0, x: 10, y: -20, scale: 0.78 }}
+            initial={{ opacity: 0, y: -6, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 140, scale: 0.94 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 26 }}
             tabIndex={0}
             onKeyDown={handleKeyDown}
             role={toast.type === 'error' ? 'alert' : 'status'}
             className={css({
                 position: 'relative',
                 width: '100%',
-                borderRadius: '22px',
+                borderRadius: '2xl',
                 border: '1px solid',
-                background: {
-                    base: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,249,243,0.96))',
-                    _dark: 'linear-gradient(180deg, rgba(35,32,29,0.98), rgba(28,26,24,0.96))',
-                },
-                backdropFilter: 'blur(20px)',
+                borderColor: 'border',
+                background: 'surface.elevated',
+                backdropFilter: 'blur(16px)',
                 boxShadow: {
-                    base: `0 24px 50px -28px ${accent.glow}, 0 18px 32px rgba(0,0,0,0.12)`,
-                    _dark: `0 24px 50px -28px ${accent.glow}, 0 18px 32px rgba(0,0,0,0.42)`,
+                    base: '0 4px 24px rgba(0,0,0,0.08)',
+                    _dark: '0 4px 24px rgba(0,0,0,0.3)',
                 },
                 overflow: 'hidden',
                 outline: 'none',
                 transformOrigin: 'top right',
                 _focusVisible: {
                     boxShadow: {
-                        base: `0 0 0 3px ${accent.border}, 0 24px 50px -28px ${accent.glow}`,
-                        _dark: `0 0 0 3px ${accent.border}, 0 24px 50px -28px ${accent.glow}`,
+                        base: `0 0 0 3px ${accent.border}`,
+                        _dark: `0 0 0 3px ${accent.border}`,
                     },
                 },
             })}
-            style={{ borderColor: accent.border, touchAction: 'pan-y' }}
+            style={{ touchAction: 'pan-y' }}
         >
             {showTail && (
                 <div
@@ -134,13 +128,11 @@ export function ToastBubble({ toast, showTail = false, onDismiss }: ToastBubbleP
                         rotate: '45deg',
                         borderTop: '1px solid',
                         borderLeft: '1px solid',
+                        borderColor: 'border',
+                        background: 'surface.elevated',
                         zIndex: 0,
                     })}
-                    style={{
-                        background:
-                            'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,249,243,0.96))',
-                        borderColor: accent.border,
-                    }}
+                    style={{ borderColor: accent.border }}
                 />
             )}
             <div
@@ -168,9 +160,9 @@ export function ToastBubble({ toast, showTail = false, onDismiss }: ToastBubbleP
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: '38px',
-                        height: '38px',
-                        borderRadius: '14px',
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: 'xl',
                         flexShrink: 0,
                     })}
                     style={{ background: accent.badge, color: accent.icon }}
@@ -237,8 +229,7 @@ export function ToastBubble({ toast, showTail = false, onDismiss }: ToastBubbleP
                                         fontWeight: '700',
                                         textDecoration: 'none',
                                         color: 'white',
-                                        background:
-                                            'linear-gradient(135deg, rgba(224,123,83,1), rgba(248,181,0,1))',
+                                        background: 'primary',
                                     })}
                                 >
                                     {toast.action.label}

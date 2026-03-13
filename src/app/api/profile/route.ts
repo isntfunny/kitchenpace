@@ -102,6 +102,7 @@ export async function PUT(request: NextRequest) {
     const followsPublic = sanitizeBoolean(payload.followsPublic);
     const favoritesPublic = sanitizeBoolean(payload.favoritesPublic);
     const cookedPublic = sanitizeBoolean(payload.cookedPublic);
+    const trophiesPublic = sanitizeBoolean(payload.trophiesPublic);
     const showInActivity = sanitizeBoolean(payload.showInActivity);
     const notifyOnAnonymous = sanitizeBoolean(payload.notifyOnAnonymous);
     const notifyOnNewFollower = sanitizeBoolean(payload.notifyOnNewFollower);
@@ -140,6 +141,10 @@ export async function PUT(request: NextRequest) {
 
     if (cookedPublic !== undefined) {
         profileUpdates.cookedPublic = cookedPublic;
+    }
+
+    if (trophiesPublic !== undefined) {
+        profileUpdates.trophiesPublic = trophiesPublic;
     }
 
     if (showInActivity !== undefined) {

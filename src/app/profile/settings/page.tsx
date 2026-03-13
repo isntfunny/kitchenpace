@@ -113,6 +113,7 @@ const ManageProfilePage = async () => {
                             followsPublic: privacyReadyProfile.followsPublic,
                             favoritesPublic: privacyReadyProfile.favoritesPublic,
                             cookedPublic: privacyReadyProfile.cookedPublic,
+                            trophiesPublic: privacyReadyProfile.trophiesPublic,
                         }}
                     />
 

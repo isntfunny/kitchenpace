@@ -8,7 +8,7 @@ import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
-import { SmartImage } from '../atoms/SmartImage';
+import { Avatar } from '../atoms/Avatar';
 
 interface DashboardStatCard {
     id: string;
@@ -86,49 +86,13 @@ export function UserDashboard({
                             alignItems: { base: 'flex-start', md: 'center' },
                         })}
                     >
-                        <div>
-                            {userPhoto ? (
-                                <SmartImage
-                                    src={userPhoto}
-                                    alt={userName}
-                                    width={120}
-                                    height={120}
-                                    className={css({
-                                        borderRadius: 'full',
-                                        objectFit: 'cover',
-                                        border: {
-                                            base: '4px solid #fff7f1',
-                                            _dark: '4px solid #2d333b',
-                                        },
-                                        boxShadow: 'shadow.medium',
-                                    })}
-                                />
-                            ) : (
-                                <div
-                                    className={css({
-                                        width: '120px',
-                                        height: '120px',
-                                        borderRadius: 'full',
-                                        background: {
-                                            base: 'linear-gradient(135deg, #ffe5d1, #ffc89e)',
-                                            _dark: 'linear-gradient(135deg, #5a3d2d, #7a5038)',
-                                        },
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '3xl',
-                                        fontWeight: '700',
-                                        border: {
-                                            base: '4px solid #fff7f1',
-                                            _dark: '4px solid #2d333b',
-                                        },
-                                        boxShadow: 'shadow.medium',
-                                    })}
-                                >
-                                    {userName.slice(0, 2).toUpperCase()}
-                                </div>
-                            )}
-                        </div>
+                        <Avatar
+                            src={userPhoto}
+                            name={userName}
+                            size={120}
+                            ring
+                            className={css({ boxShadow: 'shadow.medium' })}
+                        />
 
                         <div className={css({ flex: 1 })}>
                             <p

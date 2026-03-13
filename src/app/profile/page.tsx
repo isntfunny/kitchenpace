@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { fetchUserActivityFeedItems } from '@app/app/actions/community';
+import { fetchUserTrophies } from '@app/app/actions/trophies';
 import {
     fetchUserCookHistory,
     fetchUserDraftRecipes,
@@ -17,16 +18,17 @@ import {
     type TopRecipeEntry,
     type ViewHistoryEntry,
 } from '@app/app/actions/user';
+import { Avatar } from '@app/components/atoms/Avatar';
 import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { LiveUserActivityList } from '@app/components/features/LiveActivityFeed';
 import { QuickLinksCard } from '@app/components/features/QuickLinksCard';
+import { TrophySection } from '@app/components/features/TrophySection';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { FadeInSection } from '@app/components/motion/FadeInSection';
 import { formatTimeAgo } from '@app/lib/activity-utils';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
-import { PALETTE } from '@app/lib/palette';
 import { getOrCreateProfile } from '@app/lib/profile';
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
@@ -344,16 +346,25 @@ export default async function ProfilePage() {
         redirect('/auth/signin');
     }
 
-    const [stats, draftRecipes, topRecipes, cookHistory, lastFavorites, viewHistory, activityFeed] =
-        await Promise.all([
-            fetchUserStats(session.user.id),
-            fetchUserDraftRecipes(session.user.id),
-            fetchUserTopRecipes(session.user.id),
-            fetchUserCookHistory(session.user.id),
-            fetchUserLastFavorites(session.user.id),
-            fetchUserViewHistory(session.user.id),
-            fetchUserActivityFeedItems(session.user.id),
-        ]);
+    const [
+        stats,
+        draftRecipes,
+        topRecipes,
+        cookHistory,
+        lastFavorites,
+        viewHistory,
+        activityFeed,
+        trophies,
+    ] = await Promise.all([
+        fetchUserStats(session.user.id),
+        fetchUserDraftRecipes(session.user.id),
+        fetchUserTopRecipes(session.user.id),
+        fetchUserCookHistory(session.user.id),
+        fetchUserLastFavorites(session.user.id),
+        fetchUserViewHistory(session.user.id),
+        fetchUserActivityFeedItems(session.user.id),
+        fetchUserTrophies(session.user.id),
+    ]);
 
     const cookItems = cookHistory.map((e: CookHistoryEntry) => ({
         id: e.id,
@@ -409,48 +420,15 @@ export default async function ProfilePage() {
                             })}
                         >
                             {/* Avatar */}
-                            <div className={css({ flexShrink: 0 })}>
-                                {profile.photoKey ? (
-                                    <SmartImage
-                                        imageKey={profile.photoKey}
-                                        alt={profile.nickname ?? 'Profilfoto'}
-                                        aspect="1:1"
-                                        sizes="96px"
-                                        className={css({
-                                            width: '96px',
-                                            height: '96px',
-                                            borderRadius: 'full',
-                                            objectFit: 'cover',
-                                            border: '3px solid',
-                                            borderColor: 'primary',
-                                            boxShadow: {
-                                                base: '0 4px 16px rgba(224,123,83,0.25)',
-                                                _dark: '0 4px 16px rgba(224,123,83,0.3)',
-                                            },
-                                        })}
-                                    />
-                                ) : (
-                                    <div
-                                        className={css({
-                                            w: '24',
-                                            h: '24',
-                                            borderRadius: 'full',
-                                            background: `linear-gradient(135deg, ${PALETTE.orange} 0%, #c4623d 100%)`,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            border: '3px solid',
-                                            borderColor: 'primary',
-                                            boxShadow: {
-                                                base: '0 4px 16px rgba(224,123,83,0.25)',
-                                                _dark: '0 4px 16px rgba(224,123,83,0.3)',
-                                            },
-                                        })}
-                                    >
-                                        <ChefHat size={40} color="white" />
-                                    </div>
-                                )}
-                            </div>
+                            <Avatar
+                                imageKey={profile.photoKey}
+                                name={profile.nickname}
+                                size="xl"
+                                ring
+                                fallbackType="icon"
+                                trophyTier={trophies.length > 0 ? trophies[0].tier : null}
+                                trophyCount={trophies.length}
+                            />
 
                             {/* Info */}
                             <div
@@ -588,6 +566,7 @@ export default async function ProfilePage() {
                 >
                     {/* ── Left: data sections ── */}
                     <div className={css({ display: 'flex', flexDir: 'column', gap: '8' })}>
+                        <TrophySection trophies={trophies} isOwnProfile />
                         <DraftSection drafts={draftRecipes} />
                         <TopRecipesSection recipes={topRecipes} />
                         <HistorySection

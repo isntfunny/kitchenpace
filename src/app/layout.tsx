@@ -6,6 +6,7 @@ import { Playfair_Display, Inter } from 'next/font/google';
 
 import { fetchPinnedEntries } from '@app/app/api/recipe-tabs/helpers';
 import { ChatwootWidgetComponent } from '@app/components/ChatwootWidget';
+import { AchievementListener } from '@app/components/features/AchievementListener';
 import { AuthProvider } from '@app/components/providers/AuthProvider';
 import { FeatureFlagsProvider } from '@app/components/providers/FeatureFlagsProvider';
 import { PageProgress } from '@app/components/providers/PageProgress';
@@ -307,6 +308,7 @@ export default async function RootLayout({
                 <ThemeProvider>
                     <AuthProvider session={session}>
                         <ToastProvider>
+                            <AchievementListener />
                             <FeatureFlagsProvider initialState={featureFlags}>
                                 <ProfileProvider profile={profile}>
                                     <RecipeTabsProvider

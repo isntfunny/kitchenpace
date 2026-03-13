@@ -4,6 +4,7 @@ import { BookOpen, Carrot, Search, Tag, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { Avatar } from '@app/components/atoms/Avatar';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
@@ -324,30 +325,12 @@ function UserSection({
                             _hover: { bg: 'accent.soft', borderColor: 'border' },
                         })}
                     >
-                        <div
-                            className={css({
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: 'full',
-                                overflow: 'hidden',
-                                flexShrink: 0,
-                                bg: 'surface.muted',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            })}
-                        >
-                            {user.photoKey ? (
-                                <SmartImage
-                                    imageKey={user.photoKey}
-                                    alt={user.nickname}
-                                    aspect="1:1"
-                                    sizes="36px"
-                                />
-                            ) : (
-                                <User size={16} color="var(--colors-text-muted)" />
-                            )}
-                        </div>
+                        <Avatar
+                            imageKey={user.photoKey}
+                            name={user.nickname}
+                            size={36}
+                            fallbackType="user"
+                        />
                         <div className={css({ minWidth: 0, flex: 1 })}>
                             <div
                                 className={css({

@@ -2,10 +2,9 @@
 
 import { Hand } from 'lucide-react';
 
-import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
-import { SmartImage } from '../atoms/SmartImage';
+import { Avatar } from '../atoms/Avatar';
 
 interface DashboardWelcomeProps {
     userName?: string;
@@ -161,47 +160,7 @@ export function DashboardWelcome({ userName = 'KüchenFan', userPhoto }: Dashboa
                             {userName}
                         </span>
                     </div>
-                    {userPhoto ? (
-                        <SmartImage
-                            src={userPhoto}
-                            alt={userName}
-                            width={64}
-                            height={64}
-                            className={css({
-                                borderRadius: 'full',
-                                objectFit: 'cover',
-                                border: '3px solid',
-                                borderColor: 'surface',
-                                boxShadow: {
-                                    base: '0 4px 12px rgba(0,0,0,0.1)',
-                                    _dark: '0 4px 12px rgba(0,0,0,0.4)',
-                                },
-                            })}
-                        />
-                    ) : (
-                        <div
-                            className={css({
-                                width: '64px',
-                                height: '64px',
-                                borderRadius: 'full',
-                                background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 'xl',
-                                fontWeight: '700',
-                                color: 'white',
-                                border: '3px solid',
-                                borderColor: 'surface',
-                                boxShadow: {
-                                    base: '0 4px 12px rgba(0,0,0,0.1)',
-                                    _dark: '0 4px 12px rgba(0,0,0,0.4)',
-                                },
-                            })}
-                        >
-                            {userName.slice(0, 2).toUpperCase()}
-                        </div>
-                    )}
+                    <Avatar src={userPhoto} name={userName} size={64} ring ringColor="surface" />
                 </div>
             </div>
         </div>

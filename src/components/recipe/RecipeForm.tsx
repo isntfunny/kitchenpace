@@ -136,7 +136,6 @@ export function RecipeForm({
     const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
     const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const titleInputRef = useRef<HTMLInputElement>(null);
-    const [showTutorialCelebration, setShowTutorialCelebration] = useState(false);
     const [tutorialFlowState, setTutorialFlowState] = useState({
         nodeCount: initialData?.flowNodes?.length ?? 2,
         hasBranch: false,
@@ -264,20 +263,6 @@ export function RecipeForm({
         selectedTags,
         ingredients,
     ]);
-
-    useEffect(() => {
-        if (!isEditMode) return;
-
-        try {
-            const shouldCelebrate =
-                window.sessionStorage.getItem(RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY) === 'done';
-            if (!shouldCelebrate) return;
-            window.sessionStorage.removeItem(RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY);
-            setShowTutorialCelebration(true);
-        } catch {
-            // ignore sessionStorage failures
-        }
-    }, [isEditMode]);
 
     // ── ingredient search ────────────────────────────────────
     useEffect(() => {
@@ -906,7 +891,7 @@ export function RecipeForm({
                     <div className={sidebarDividerClass} />
 
                     {/* Tags */}
-                    <div className={sidebarSectionClass}>
+                    <div className={sidebarSectionClass} data-tutorial="tags">
                         <TagSelector
                             sortedTags={sortedTags}
                             selectedTags={selectedTags}
@@ -1012,13 +997,15 @@ export function RecipeForm({
                     onToggle={handleCategoryToggle}
                 />
 
-                <TagSelector
-                    sortedTags={sortedTags}
-                    selectedTags={selectedTags}
-                    tagQuery={tagQuery}
-                    onTagQueryChange={setTagQuery}
-                    onSelectionChange={setSelectedTags}
-                />
+                <div data-tutorial="tags">
+                    <TagSelector
+                        sortedTags={sortedTags}
+                        selectedTags={selectedTags}
+                        tagQuery={tagQuery}
+                        onTagQueryChange={setTagQuery}
+                        onSelectionChange={setSelectedTags}
+                    />
+                </div>
 
                 <IngredientManager
                     servings={servings}
@@ -1098,24 +1085,17 @@ export function RecipeForm({
         tutorialActiveRef.current = false;
 
         try {
-            window.sessionStorage.setItem(RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY, 'done');
+            window.sessionStorage.setItem(
+                RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY,
+                'finished-tutorial',
+            );
         } catch {
             // ignore sessionStorage failures
         }
 
-        if (autoSavedIdRef.current) {
-            window.location.href = `/recipe/${autoSavedIdRef.current}/edit`;
-            return;
-        }
-
-        try {
-            const recipe = await createRecipe(buildPayloadRef.current('DRAFT'), authorId);
-            autoSavedIdRef.current = recipe.id;
-            window.location.href = `/recipe/${recipe.id}/edit`;
-        } catch {
-            // if creating the draft fails, stay on the page so the user can retry manually
-        }
-    }, [authorId]);
+        // Redirect to the showcase recipe instead of creating a junk draft
+        window.location.href = '/recipe/hirschgulasch';
+    }, []);
 
     return (
         <>
@@ -1135,70 +1115,6 @@ export function RecipeForm({
                     onFocusTitleField={focusTitleField}
                     onComplete={handleTutorialComplete}
                 />
-            ) : null}
-            {showTutorialCelebration ? (
-                <div
-                    className={css({
-                        position: 'fixed',
-                        inset: 0,
-                        zIndex: 120,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        p: '4',
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                    })}
-                >
-                    <div
-                        className={css({
-                            width: '100%',
-                            maxWidth: '460px',
-                            borderRadius: '2xl',
-                            backgroundColor: 'surface',
-                            p: { base: '6', md: '8' },
-                            boxShadow: '0 25px 80px rgba(0,0,0,0.45)',
-                        })}
-                    >
-                        <h2
-                            className={css({
-                                fontSize: { base: '2xl', md: '3xl' },
-                                fontWeight: '700',
-                                mb: '3',
-                                color: 'text',
-                            })}
-                        >
-                            Stark - dein erster Entwurf steht.
-                        </h2>
-                        <p
-                            className={css({
-                                fontSize: 'md',
-                                lineHeight: '1.7',
-                                color: 'text.muted',
-                                mb: '5',
-                            })}
-                        >
-                            Du kennst jetzt die wichtigsten Bereiche: Pflichtfelder, Zutaten,
-                            automatisches Speichern und den Ablauf-Editor. Von hier aus kannst du
-                            deinen Entwurf in Ruhe weiter ausbauen.
-                        </p>
-                        <button
-                            type="button"
-                            onClick={() => setShowTutorialCelebration(false)}
-                            className={css({
-                                backgroundColor: 'palette.orange',
-                                color: 'white',
-                                fontWeight: '600',
-                                borderRadius: 'xl',
-                                px: '6',
-                                py: '3.5',
-                                border: 'none',
-                                cursor: 'pointer',
-                            })}
-                        >
-                            Entwurf weiter bearbeiten
-                        </button>
-                    </div>
-                </div>
             ) : null}
         </>
     );

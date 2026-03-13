@@ -9,10 +9,13 @@ import {
     toggleFollowAction,
     markRecipeCookedAction,
 } from '@app/app/actions/social';
+import { AchievementOverlay } from '@app/components/features/AchievementOverlay';
 import { Header } from '@app/components/features/Header';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
+import { RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY } from '@app/components/recipe/tutorial/shared';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
+import { TROPHIES } from '@app/lib/trophies/registry';
 import { css } from 'styled-system/css';
 import { grid, container } from 'styled-system/patterns';
 
@@ -140,6 +143,30 @@ export function RecipeDetailClient({
     const [hasCooked, setHasCooked] = useState(initialViewer?.hasCooked ?? false);
     const [heroIndex, setHeroIndex] = useState(0);
     const [viewerId, setViewerId] = useState(initialViewer?.id ?? null);
+    const [celebrationTrophy, setCelebrationTrophy] = useState<{
+        id: string;
+        name: string;
+        description: string;
+        icon: string;
+        points: number;
+    } | null>(null);
+
+    // Show trophy celebration after tutorial redirect
+    useEffect(() => {
+        try {
+            const trophyId = window.sessionStorage.getItem(
+                RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY,
+            );
+            if (!trophyId) return;
+            window.sessionStorage.removeItem(RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY);
+            const trophy = TROPHIES[trophyId as keyof typeof TROPHIES];
+            if (trophy) {
+                setCelebrationTrophy(trophy);
+            }
+        } catch {
+            // ignore sessionStorage failures
+        }
+    }, []);
 
     useEffect(() => {
         let active = true;
@@ -519,6 +546,13 @@ export function RecipeDetailClient({
                 onSubmit={handleSubmitCook}
                 isPending={isCookPending}
             />
+
+            {celebrationTrophy && (
+                <AchievementOverlay
+                    trophy={celebrationTrophy}
+                    onClose={() => setCelebrationTrophy(null)}
+                />
+            )}
         </div>
     );
 }

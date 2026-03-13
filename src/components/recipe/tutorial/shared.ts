@@ -19,6 +19,9 @@ export const RECIPE_TUTORIAL_TARGETS = {
     flowAddButton: 'flow-add-button',
     flowPalette: 'flow-palette',
     flowBranchButton: 'flow-branch-button',
+    nodeEditPanel: 'node-edit-panel',
+    nodeDescription: 'node-description',
+    sidebarCollapse: 'sidebar-collapse',
 } as const;
 
 export const RECIPE_TUTORIAL_EVENTS = {

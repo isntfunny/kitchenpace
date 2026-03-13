@@ -238,7 +238,7 @@ export function DescriptionEditor({
     const hasMentions = value.includes('@[');
 
     return (
-        <div ref={containerRef} className={containerClass}>
+        <div ref={containerRef} className={containerClass} data-tutorial="node-description">
             {/* Rendered preview — shown when not focused and value has mentions */}
             {!isFocused && hasMentions && (
                 <div

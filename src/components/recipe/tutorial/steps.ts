@@ -161,6 +161,56 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         allowTargetInteraction: true,
     },
     {
+        id: 'node-edit-panel',
+        kind: 'info',
+        title: 'Schritt bearbeiten',
+        description:
+            'Wenn du einen Schritt anklickst, öffnet sich dieses Panel. Hier änderst du Typ, Titel, Dauer und Beschreibung deines Schritts.',
+        primaryLabel: 'Weiter',
+        targetId: RECIPE_TUTORIAL_TARGETS.nodeEditPanel,
+        allowTargetInteraction: false,
+    },
+    {
+        id: 'node-description',
+        kind: 'info',
+        title: 'Beschreibung mit Zutaten',
+        description:
+            'Hier schreibst du die Beschreibung für deinen Schritt. Mit @ verknüpfst du Zutaten aus dem Rezept — die Mengenangabe wird dann direkt im Text angezeigt.',
+        primaryLabel: 'Weiter',
+        targetId: RECIPE_TUTORIAL_TARGETS.nodeDescription,
+        allowTargetInteraction: false,
+    },
+    {
+        id: 'node-ingredient-mention',
+        kind: 'info',
+        title: 'Zutaten verknüpfen',
+        description:
+            'Über die @-Erwähnung kannst du auch Zutaten aus der Datenbank auswählen. Sie werden dann automatisch zur Zutatenliste deines Rezepts hinzugefügt.',
+        primaryLabel: 'Weiter',
+        targetId: RECIPE_TUTORIAL_TARGETS.nodeDescription,
+        allowTargetInteraction: false,
+    },
+    {
+        id: 'ingredient-list-auto-added',
+        kind: 'info',
+        title: 'Automatisch hinzugefügt',
+        description:
+            'Zutaten, die du in Schritten per @ erwähnst, erscheinen automatisch in der Zutatenliste. Du musst sie nicht extra manuell hinzufügen.',
+        primaryLabel: 'Weiter',
+        targetId: RECIPE_TUTORIAL_TARGETS.ingredientSearch,
+        allowTargetInteraction: false,
+    },
+    {
+        id: 'sidebar-collapse',
+        kind: 'info',
+        title: 'Mehr Platz schaffen',
+        description:
+            'Mit diesem Button klappst du die Seitenleiste ein. So hat der Ablauf-Editor mehr Platz und du kannst dein Diagramm übersichtlicher bearbeiten.',
+        primaryLabel: 'Weiter',
+        targetId: RECIPE_TUTORIAL_TARGETS.sidebarCollapse,
+        allowTargetInteraction: false,
+    },
+    {
         id: 'flow-branch',
         kind: 'state',
         title: 'Parallele Schritte anlegen',

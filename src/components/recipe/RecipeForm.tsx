@@ -680,6 +680,7 @@ export function RecipeForm({
                         className={sidebarToggleClass}
                         onClick={() => setSidebarCollapsed(true)}
                         title="Sidebar einklappen"
+                        data-tutorial="sidebar-collapse"
                     >
                         <PanelLeftClose className={css({ width: '16px', height: '16px' })} />
                     </button>

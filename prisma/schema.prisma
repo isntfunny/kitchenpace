@@ -391,17 +391,20 @@ model ImportRun {
 // ============================================
 
 model Ingredient {
-  id        String            @id @default(cuid())
-  name      String
-  slug      String            @unique
-  category  ShoppingCategory?
-  units     String[]
-  recipes   RecipeIngredient[]
+  id         String            @id @default(cuid())
+  name       String
+  slug       String            @unique
+  pluralName String?
+  category   ShoppingCategory?
+  units      String[]
+  aliases    String[]          @default([])
+  recipes    RecipeIngredient[]
   shoppingItems ShoppingItem[]
-  createdAt   DateTime          @default(now())
-  needsReview Boolean           @default(false)
+  createdAt  DateTime          @default(now())
+  needsReview Boolean          @default(false)
 
   @@index([name])
+  @@index([aliases], type: Gin)
 }
 
 model RecipeIngredient {

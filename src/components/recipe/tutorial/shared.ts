@@ -9,6 +9,8 @@ export const RECIPE_TUTORIAL_TARGETS = {
     servingsCustomTrigger: 'servings-custom-trigger',
     ingredientSearch: 'ingredient-search',
     ingredientAmount: 'ingredient-amount',
+    ingredientRow: 'ingredient-row',
+    ingredientUnit: 'ingredient-unit',
     ingredientComment: 'ingredient-comment',
     ingredientOptional: 'ingredient-optional',
     draftSave: 'draft-save',
@@ -29,6 +31,7 @@ export const RECIPE_TUTORIAL_EVENTS = {
     ingredientAmountFocused: 'recipe-tutorial:ingredient-amount-focused',
     ingredientCommentClicked: 'recipe-tutorial:ingredient-comment-clicked',
     flowAddButtonClicked: 'recipe-tutorial:flow-add-button-clicked',
+    descriptionMentionInserted: 'recipe-tutorial:description-mention-inserted',
 } as const;
 
 export type RecipeTutorialTargetId =

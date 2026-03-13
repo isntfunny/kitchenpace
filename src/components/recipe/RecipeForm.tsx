@@ -568,6 +568,7 @@ export function RecipeForm({
 
     // ── auto-save status label ────────────────────────────────
     const autoSaveLabel = (() => {
+        if (tutorialActiveRef.current) return 'Auto-Save ist während des Tutorials pausiert';
         if (isPublished) return 'Automatisches Speichern ist nur für Entwürfe verfügbar';
         if (!title.trim()) return null;
         if (autoSaveStatus === 'saving') return 'Wird gespeichert…';

@@ -38,7 +38,12 @@ export interface RecipeTutorialStep {
         | 'ingredientAmountFilled'
         | 'flowNodeCreated'
         | 'flowBranchCreated';
-    eventKey?: 'servingsCustomOpened' | 'ingredientCommentClicked' | 'flowAddButtonClicked';
+    eventKey?:
+        | 'servingsCustomOpened'
+        | 'ingredientCommentClicked'
+        | 'flowAddButtonClicked'
+        | 'descriptionMentionInserted';
+    accentTargetId?: RecipeTutorialTargetId;
     allowTargetInteraction?: boolean;
     autoFocusAction?: 'title';
     accentLabel?: string;
@@ -48,4 +53,5 @@ export interface RecipeTutorialRuntimeFlags {
     servingsCustomOpened: boolean;
     ingredientCommentClicked: boolean;
     flowAddButtonClicked: boolean;
+    descriptionMentionInserted: boolean;
 }

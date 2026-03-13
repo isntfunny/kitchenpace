@@ -15,6 +15,8 @@ interface TutorialOverlayProps {
     step: RecipeTutorialStep;
     canContinue: boolean;
     onContinue: () => void;
+    /** True while auto-advance countdown is running */
+    autoAdvancing?: boolean;
 }
 
 const TARGET_SPOTLIGHT_PADDING = 14;
@@ -24,7 +26,19 @@ function getTargetElement(step: RecipeTutorialStep): HTMLElement | null {
     return document.querySelector<HTMLElement>(`[data-tutorial="${step.targetId}"]`);
 }
 
-export function TutorialOverlay({ step, canContinue, onContinue }: TutorialOverlayProps) {
+function getAccentElement(step: RecipeTutorialStep): HTMLElement | null {
+    if (!step.accentTargetId) return null;
+    return document.querySelector<HTMLElement>(`[data-tutorial="${step.accentTargetId}"]`);
+}
+
+export const AUTO_ADVANCE_MS = 2000;
+
+export function TutorialOverlay({
+    step,
+    canContinue,
+    onContinue,
+    autoAdvancing = false,
+}: TutorialOverlayProps) {
     const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
     const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
     const [floatingElement, setFloatingElement] = useState<HTMLDivElement | null>(null);
@@ -52,8 +66,28 @@ export function TutorialOverlay({ step, canContinue, onContinue }: TutorialOverl
             return;
         }
 
-        floating.refs.setReference(target);
-        setTargetRect(target.getBoundingClientRect());
+        // Position floating card near accent element if available, otherwise near target
+        const accentEl = getAccentElement(step);
+        floating.refs.setReference(accentEl ?? target);
+
+        // Union the target rect with any data-tutorial-child elements
+        let rect = target.getBoundingClientRect();
+        if (step.targetId) {
+            const children = document.querySelectorAll<HTMLElement>(
+                `[data-tutorial-child="${step.targetId}"]`,
+            );
+            children.forEach((child) => {
+                const cr = child.getBoundingClientRect();
+                if (cr.width === 0 || cr.height === 0) return;
+                const top = Math.min(rect.top, cr.top);
+                const left = Math.min(rect.left, cr.left);
+                const bottom = Math.max(rect.bottom, cr.bottom);
+                const right = Math.max(rect.right, cr.right);
+                rect = new DOMRect(left, top, right - left, bottom - top);
+            });
+        }
+
+        setTargetRect(rect);
         void floating.update();
     }, [floating, step]);
 
@@ -67,34 +101,47 @@ export function TutorialOverlay({ step, canContinue, onContinue }: TutorialOverl
 
     useEffect(() => {
         const target = getTargetElement(step);
-        floating.refs.setReference(target);
+        const accentEl = getAccentElement(step);
+        floating.refs.setReference(accentEl ?? target);
 
         const frame = window.requestAnimationFrame(updateTarget);
-        const cleanup =
+        const onUpdate = () => {
+            updateTarget();
+            void floating.update();
+        };
+        // Monitor the spotlight target for rect changes (e.g. notes expanding)
+        const cleanupTarget =
             target && floatingElement
-                ? autoUpdate(
-                      target,
-                      floatingElement,
-                      () => {
-                          updateTarget();
-                          void floating.update();
-                      },
-                      {
-                          ancestorScroll: true,
-                          ancestorResize: true,
-                          elementResize: true,
-                          layoutShift: true,
-                          animationFrame: true,
-                      },
-                  )
+                ? autoUpdate(target, floatingElement, onUpdate, {
+                      ancestorScroll: true,
+                      ancestorResize: true,
+                      elementResize: true,
+                      layoutShift: true,
+                      animationFrame: true,
+                  })
                 : undefined;
+        // If accent differs from target, also monitor it for floating positioning
+        const cleanupAccent =
+            accentEl && accentEl !== target && floatingElement
+                ? autoUpdate(accentEl, floatingElement, () => void floating.update(), {
+                      elementResize: true,
+                      animationFrame: true,
+                  })
+                : undefined;
+
+        // Observe parent for sibling changes (e.g. absolute dropdown appearing)
+        const mutationObserver =
+            target?.parentElement && new MutationObserver(() => updateTarget());
+        mutationObserver?.observe(target!.parentElement!, { childList: true });
 
         window.addEventListener('resize', updateTarget);
         window.addEventListener('scroll', updateTarget, true);
 
         return () => {
             window.cancelAnimationFrame(frame);
-            cleanup?.();
+            cleanupTarget?.();
+            cleanupAccent?.();
+            mutationObserver?.disconnect();
             window.removeEventListener('resize', updateTarget);
             window.removeEventListener('scroll', updateTarget, true);
         };
@@ -247,13 +294,17 @@ export function TutorialOverlay({ step, canContinue, onContinue }: TutorialOverl
                         helperText={helperText}
                         canContinue={canContinue}
                         onContinue={onContinue}
+                        autoAdvancing={autoAdvancing}
                     />
                 </div>
             </div>
 
             <style>{`
                 @keyframes pulse {0%,100% { box-shadow: 0 0 0 4px rgba(224,123,83,0.3), 0 0 20px rgba(224,123,83,0.5);} 50% { box-shadow: 0 0 0 8px rgba(224,123,83,0.2), 0 0 30px rgba(224,123,83,0.7);} }
+                @keyframes tutorial-accent-blink { 0%,100% { outline: 2px solid rgba(255,255,255,0.4); } 50% { outline: 2.5px solid rgba(255,255,255,0.8); } }
+                @keyframes tutorial-countdown { from { stroke-dashoffset: ${2 * Math.PI * 6}; } to { stroke-dashoffset: 0; } }
                 :has(> [data-tutorial="flow-branch-button"]) { opacity: 1 !important; pointer-events: auto !important; }
+                ${step.accentTargetId ? `[data-tutorial="${step.accentTargetId}"] { animation: tutorial-accent-blink 1.2s ease-in-out infinite; outline-offset: 8px; border-radius: 8px; position: relative; z-index: 103; }` : ''}
             `}</style>
         </>
     );
@@ -265,6 +316,7 @@ interface TutorialCardContentProps {
     canContinue: boolean;
     onContinue: () => void;
     centered?: boolean;
+    autoAdvancing?: boolean;
 }
 
 function TutorialCardContent({
@@ -273,6 +325,7 @@ function TutorialCardContent({
     canContinue,
     onContinue,
     centered = false,
+    autoAdvancing = false,
 }: TutorialCardContentProps) {
     return (
         <div className={css({ textAlign: centered ? 'center' : 'left' })}>
@@ -325,6 +378,9 @@ function TutorialCardContent({
                     cursor: canContinue ? 'pointer' : 'not-allowed',
                     transition: 'all 150ms ease',
                     fontSize: 'sm',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2',
                     _hover: canContinue
                         ? { transform: 'translateY(-1px)', filter: 'brightness(1.04)' }
                         : undefined,
@@ -333,6 +389,39 @@ function TutorialCardContent({
                 disabled={!canContinue}
             >
                 {step.primaryLabel}
+                {autoAdvancing && (
+                    <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        className="tutorial-auto-advance-ring"
+                    >
+                        <circle
+                            cx="8"
+                            cy="8"
+                            r="6"
+                            fill="none"
+                            stroke="rgba(255,255,255,0.3)"
+                            strokeWidth="2"
+                        />
+                        <circle
+                            cx="8"
+                            cy="8"
+                            r="6"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeDasharray={2 * Math.PI * 6}
+                            strokeDashoffset={2 * Math.PI * 6}
+                            style={{
+                                animation: `tutorial-countdown ${AUTO_ADVANCE_MS}ms linear forwards`,
+                                transformOrigin: 'center',
+                                transform: 'rotate(-90deg)',
+                            }}
+                        />
+                    </svg>
+                )}
             </button>
         </div>
     );

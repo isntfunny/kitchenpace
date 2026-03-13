@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { TutorialOverlay } from './components/TutorialOverlay';
+import { AUTO_ADVANCE_MS, TutorialOverlay } from './components/TutorialOverlay';
 import { RECIPE_TUTORIAL_EVENTS } from './shared';
 import { recipeTutorialSteps } from './steps';
 import type { RecipeCreationTutorialProps, RecipeTutorialRuntimeFlags } from './types';
@@ -47,6 +47,8 @@ function isStepComplete(
                 return runtime.ingredientCommentClicked;
             case 'flowAddButtonClicked':
                 return runtime.flowAddButtonClicked;
+            case 'descriptionMentionInserted':
+                return runtime.descriptionMentionInserted;
             default:
                 return false;
         }
@@ -72,6 +74,7 @@ export function RecipeCreationTutorial({
         servingsCustomOpened: false,
         ingredientCommentClicked: false,
         flowAddButtonClicked: false,
+        descriptionMentionInserted: false,
     });
 
     const step = activeSteps[stepIndex];
@@ -80,9 +83,11 @@ export function RecipeCreationTutorial({
         [activeSteps, runtime, state, step],
     );
 
-    // Auto-advance 1s after the user fulfils a non-info step
+    // Auto-advance after the user fulfils a non-info step
+    const autoAdvancing = canContinue && step.kind !== 'info';
+
     useEffect(() => {
-        if (!canContinue || step.kind === 'info') return;
+        if (!autoAdvancing) return;
         const timer = setTimeout(() => {
             const isLast = stepIndex === activeSteps.length - 1;
             if (isLast) {
@@ -90,9 +95,9 @@ export function RecipeCreationTutorial({
             } else {
                 setStepIndex((c) => c + 1);
             }
-        }, 1000);
+        }, AUTO_ADVANCE_MS);
         return () => clearTimeout(timer);
-    }, [canContinue, step.kind, stepIndex, activeSteps.length, onComplete]);
+    }, [autoAdvancing, stepIndex, activeSteps.length, onComplete]);
 
     useEffect(() => {
         if (step.autoFocusAction === 'title') {
@@ -124,6 +129,10 @@ export function RecipeCreationTutorial({
             ...prev,
             flowAddButtonClicked: true,
         }));
+        register(RECIPE_TUTORIAL_EVENTS.descriptionMentionInserted, (prev) => ({
+            ...prev,
+            descriptionMentionInserted: true,
+        }));
 
         return () => {
             handlers.forEach((cleanup) => cleanup());
@@ -147,6 +156,7 @@ export function RecipeCreationTutorial({
             step={step}
             canContinue={canContinue}
             onContinue={() => void handleContinue()}
+            autoAdvancing={autoAdvancing}
         />
     );
 }

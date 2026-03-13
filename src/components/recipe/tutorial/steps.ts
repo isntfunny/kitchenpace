@@ -65,7 +65,8 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         description:
             'Hier trägst du ein, wie viel von einer Zutat benötigt wird. Die Menge passt sich später automatisch an die Portionszahl an. Trage jetzt eine Menge ein.',
         primaryLabel: 'Weiter',
-        targetId: RECIPE_TUTORIAL_TARGETS.ingredientAmount,
+        targetId: RECIPE_TUTORIAL_TARGETS.ingredientRow,
+        accentTargetId: RECIPE_TUTORIAL_TARGETS.ingredientAmount,
         stateKey: 'ingredientAmountFilled',
         allowTargetInteraction: true,
     },
@@ -76,7 +77,8 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         description:
             'Mit diesem Button kennzeichnest du Zutaten, die nicht zwingend nötig sind — zum Beispiel eine Garnitur oder ein Topping.',
         primaryLabel: 'Verstanden',
-        targetId: RECIPE_TUTORIAL_TARGETS.ingredientOptional,
+        targetId: RECIPE_TUTORIAL_TARGETS.ingredientRow,
+        accentTargetId: RECIPE_TUTORIAL_TARGETS.ingredientOptional,
         allowTargetInteraction: false,
     },
     {
@@ -86,7 +88,8 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         description:
             'Über die Sprechblase kannst du Hinweise wie „fein gewürfelt" oder „zimmerwarm" ergänzen. Klick sie jetzt einmal an.',
         primaryLabel: 'Weiter',
-        targetId: RECIPE_TUTORIAL_TARGETS.ingredientComment,
+        targetId: RECIPE_TUTORIAL_TARGETS.ingredientRow,
+        accentTargetId: RECIPE_TUTORIAL_TARGETS.ingredientComment,
         eventKey: 'ingredientCommentClicked',
         allowTargetInteraction: true,
     },
@@ -165,30 +168,21 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         kind: 'info',
         title: 'Schritt bearbeiten',
         description:
-            'Wenn du einen Schritt anklickst, öffnet sich dieses Panel. Hier änderst du Typ, Titel, Dauer und Beschreibung deines Schritts.',
+            'Klick jetzt auf deinen neu erstellten Schritt — es öffnet sich ein Panel, in dem du Typ, Titel, Dauer und Beschreibung anpassen kannst.',
         primaryLabel: 'Weiter',
-        targetId: RECIPE_TUTORIAL_TARGETS.nodeEditPanel,
-        allowTargetInteraction: false,
+        targetId: RECIPE_TUTORIAL_TARGETS.flowCanvas,
+        allowTargetInteraction: true,
     },
     {
         id: 'node-description',
-        kind: 'info',
-        title: 'Beschreibung mit Zutaten',
+        kind: 'event',
+        title: 'Zutat in der Beschreibung erwähnen',
         description:
-            'Hier schreibst du die Beschreibung für deinen Schritt. Mit @ verknüpfst du Zutaten aus dem Rezept — die Mengenangabe wird dann direkt im Text angezeigt.',
+            'Tippe eine Beschreibung wie „Die @Zwiebeln würfeln." — sobald du @ eingibst, erscheint eine Auswahl deiner Zutaten. Wähle eine aus, um sie zu verknüpfen.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.nodeDescription,
-        allowTargetInteraction: false,
-    },
-    {
-        id: 'node-ingredient-mention',
-        kind: 'info',
-        title: 'Zutaten verknüpfen',
-        description:
-            'Über die @-Erwähnung kannst du auch Zutaten aus der Datenbank auswählen. Sie werden dann automatisch zur Zutatenliste deines Rezepts hinzugefügt.',
-        primaryLabel: 'Weiter',
-        targetId: RECIPE_TUTORIAL_TARGETS.nodeDescription,
-        allowTargetInteraction: false,
+        eventKey: 'descriptionMentionInserted',
+        allowTargetInteraction: true,
     },
     {
         id: 'ingredient-list-auto-added',

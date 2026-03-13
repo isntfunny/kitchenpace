@@ -105,6 +105,4 @@ const pillBase = css({
     minWidth: 'calc(25% - 6px)',
 });
 
-const pillSelected = css({
-    fontWeight: '700',
-});
+const pillSelected = css({});

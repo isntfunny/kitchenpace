@@ -189,6 +189,21 @@ model User {
   moderationQueueAsReviewer ModerationQueue[] @relation("ModerationQueueReviewer")
   moderationLogs ModerationLog[] @relation("ModerationLogActor")
   reports        Report[] @relation("ReportSubmitter")
+  tutorialCompletions UserTutorialCompletion[]
+}
+
+model UserTutorialCompletion {
+  id          String   @id @default(cuid())
+  userId      String
+  tutorialKey String
+  completedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tutorialKey])
+  @@index([tutorialKey])
 }
 
 model Profile {

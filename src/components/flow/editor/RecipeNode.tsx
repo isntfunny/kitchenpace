@@ -125,6 +125,7 @@ function ForkButton({
                         transform: 'translateX(-50%)',
                         zIndex: '50',
                     })}
+                    data-tutorial="flow-palette"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <StepTypePicker
@@ -662,7 +663,7 @@ const finishBadgeClass = css({
 
 const handleStyle: React.CSSProperties = {
     background: PALETTE.orange,
-    width: 8,
-    height: 8,
+    width: 12,
+    height: 12,
     border: '2px solid white',
 };

@@ -420,6 +420,7 @@ export function FilterSidebar({
                             emptyMessage="Keine Tags gefunden."
                             ariaLabel="Tags filtern"
                             suggestField="tags"
+                            showHashIcon
                         />
                     </FilterSection>
 

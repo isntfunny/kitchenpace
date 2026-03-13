@@ -1,3 +1,4 @@
+import { Hash } from 'lucide-react';
 import Link from 'next/link';
 
 import type { TrendingTagData } from '@app/app/actions/community';
@@ -79,10 +80,12 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                         key={item.tag}
                         href={buildRecipeFilterHref({ tags: [item.tag] })}
                         className={css({
+                            position: 'relative',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '1.5',
                             px: '3',
+                            pl: '5',
                             py: '1.5',
                             borderRadius: 'full',
                             fontSize: 'sm',
@@ -92,6 +95,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                             color: 'foreground',
                             border: '1px solid',
                             borderColor: 'border',
+                            overflow: 'hidden',
                             cursor: 'pointer',
                             _hover: {
                                 bg: item.color,
@@ -102,6 +106,19 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                             textDecoration: 'none',
                         })}
                     >
+                        <Hash
+                            size={18}
+                            strokeWidth={2.5}
+                            className={css({
+                                position: 'absolute',
+                                left: '5px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                opacity: 0.15,
+                                color: 'currentColor',
+                                pointerEvents: 'none',
+                            })}
+                        />
                         <span>{item.tag}</span>
                         <span
                             className={css({

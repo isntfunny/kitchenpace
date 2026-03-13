@@ -1,5 +1,6 @@
 'use client';
 
+import { Hash } from 'lucide-react';
 import { ToggleGroup } from 'radix-ui';
 
 import { css, cx } from 'styled-system/css';
@@ -47,8 +48,10 @@ const tagChipsWrapperClass = css({
 });
 
 const tagChipBaseClass = css({
+    position: 'relative',
     borderRadius: 'full',
     px: '2.5',
+    pl: '4',
     py: '1',
     border: '1.5px solid',
     borderColor: 'border',
@@ -60,11 +63,22 @@ const tagChipBaseClass = css({
     fontSize: 'xs',
     fontWeight: '500',
     cursor: 'pointer',
+    overflow: 'hidden',
     transition: 'all 150ms ease',
     _hover: {
         borderColor: { base: 'rgba(224,123,83,0.5)', _dark: 'rgba(224,123,83,0.55)' },
         background: 'accent.soft',
     },
+});
+
+const hashIconClass = css({
+    position: 'absolute',
+    left: '3px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    opacity: 0.15,
+    color: 'currentColor',
+    pointerEvents: 'none',
 });
 
 const tagChipSelectedClass = css({
@@ -125,6 +139,7 @@ export function TagSelector({
                             value={tag.id}
                             className={cx(tagChipBaseClass, tag.selected && tagChipSelectedClass)}
                         >
+                            <Hash size={18} strokeWidth={2.5} className={hashIconClass} />
                             <span>{tag.name}</span>
                             <span
                                 className={cx(tagCountClass, tag.selected && tagCountSelectedClass)}

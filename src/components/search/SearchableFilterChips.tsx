@@ -1,5 +1,6 @@
 'use client';
 
+import { Hash } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ToggleGroup } from 'radix-ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -22,9 +23,12 @@ export type SearchableFilterChipsProps = {
     variant?: 'default' | 'exclude';
     /** OpenSearch suggest field: 'tags' | 'ingredients'. Enables server-side typeahead. */
     suggestField?: 'tags' | 'ingredients';
+    /** Show a # hash icon prefix on each chip */
+    showHashIcon?: boolean;
 };
 
 const chipItemClass = css({
+    position: 'relative',
     borderRadius: 'full',
     px: '2.5',
     py: '1',
@@ -38,6 +42,7 @@ const chipItemClass = css({
     gap: '1.5',
     fontWeight: '500',
     cursor: 'pointer',
+    overflow: 'hidden',
     transition: 'border 150ms ease, box-shadow 150ms ease, background 150ms ease',
     '&[data-state="on"]': {
         borderColor: 'primary',
@@ -48,6 +53,16 @@ const chipItemClass = css({
             _dark: '0 8px 16px rgba(224,123,83,0.12)',
         },
     },
+});
+
+const chipHashIconClass = css({
+    position: 'absolute',
+    left: '3px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    opacity: 0.15,
+    color: 'currentColor',
+    pointerEvents: 'none',
 });
 
 const chipItemExcludeClass = cx(
@@ -123,6 +138,7 @@ export function SearchableFilterChips({
     ariaLabel,
     variant = 'default',
     suggestField,
+    showHashIcon,
 }: SearchableFilterChipsProps) {
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState<SuggestResult[]>([]);
@@ -270,7 +286,15 @@ export function SearchableFilterChips({
                                         <ToggleGroup.Item
                                             value={item.name}
                                             className={cx(itemClass, isZeroCount && chipZeroClass)}
+                                            style={showHashIcon ? { paddingLeft: 16 } : undefined}
                                         >
+                                            {showHashIcon && (
+                                                <Hash
+                                                    size={18}
+                                                    strokeWidth={2.5}
+                                                    className={chipHashIconClass}
+                                                />
+                                            )}
                                             <span>{item.name}</span>
                                             <span className={badgeClass}>
                                                 {isLoadingCount ? '-' : item.count}

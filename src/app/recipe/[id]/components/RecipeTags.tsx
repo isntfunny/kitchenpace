@@ -1,5 +1,7 @@
 'use client';
 
+import { Hash } from 'lucide-react';
+
 import { Badge } from '@app/components/atoms/Badge';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
@@ -54,6 +56,10 @@ export function RecipeTags({
                         key={tag}
                         onClick={() => onTagClick(tag)}
                         className={css({
+                            position: 'relative',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            pl: '4.5',
                             fontSize: 'sm',
                             color: 'primary',
                             fontFamily: 'body',
@@ -61,7 +67,20 @@ export function RecipeTags({
                             _hover: { textDecoration: 'underline' },
                         })}
                     >
-                        #{tag}
+                        <Hash
+                            size={16}
+                            strokeWidth={2.5}
+                            className={css({
+                                position: 'absolute',
+                                left: '3px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                opacity: 0.25,
+                                color: 'currentColor',
+                                pointerEvents: 'none',
+                            })}
+                        />
+                        {tag}
                     </button>
                 ))}
             </div>

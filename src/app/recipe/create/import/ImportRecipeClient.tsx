@@ -376,6 +376,7 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
             const addedIngredients: AddedIngredient[] = analyzed.ingredients.map((ing, idx) => ({
                 id: `imported_${idx}`,
                 name: ing.name,
+                pluralName: null,
                 amount: ing.amount,
                 unit: ing.unit,
                 notes: ing.notes || '',

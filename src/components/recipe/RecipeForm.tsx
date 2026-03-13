@@ -104,6 +104,7 @@ export function RecipeForm({
         (initialData?.ingredients ?? []).map((ing) => ({
             id: ing.id,
             name: ing.name,
+            pluralName: ing.pluralName ?? null,
             amount: ing.amount,
             unit: ing.unit,
             notes: ing.notes,
@@ -365,6 +366,7 @@ export function RecipeForm({
             {
                 id: ing.id,
                 name: ing.name,
+                pluralName: ing.pluralName ?? null,
                 amount: '',
                 unit: ing.units[0] || '',
                 notes: '',
@@ -383,6 +385,7 @@ export function RecipeForm({
             {
                 id: created.id,
                 name: created.name,
+                pluralName: created.pluralName ?? null,
                 amount: '',
                 unit: '',
                 notes: '',
@@ -457,6 +460,7 @@ export function RecipeForm({
                         newIngredients.push({
                             id: created.id,
                             name: created.name,
+                            pluralName: created.pluralName ?? null,
                             amount: ing.amount ?? '',
                             unit: ing.unit || 'Stück',
                             notes: ing.notes ?? '',

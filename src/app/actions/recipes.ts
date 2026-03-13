@@ -254,6 +254,7 @@ export async function fetchRecipeBySlug(
         difficulty: difficultyMap[recipe.difficulty] || 'Mittel',
         ingredients: recipe.recipeIngredients.map((ri: any) => ({
             name: ri.ingredient.name,
+            pluralName: ri.ingredient.pluralName ?? null,
             amount: parseFloat(ri.amount) || 0,
             unit: ri.unit,
             notes: ri.notes,
@@ -308,6 +309,7 @@ export async function fetchRecipeBySlug(
 export interface EditRecipeIngredient {
     id: string;
     name: string;
+    pluralName: string | null;
     amount: string;
     unit: string;
     notes: string;
@@ -379,6 +381,7 @@ export async function fetchRecipeForEdit(
         ingredients: recipe.recipeIngredients.map((ri) => ({
             id: ri.ingredientId,
             name: ri.ingredient.name,
+            pluralName: ri.ingredient.pluralName,
             amount: ri.amount,
             unit: ri.unit,
             notes: ri.notes ?? '',

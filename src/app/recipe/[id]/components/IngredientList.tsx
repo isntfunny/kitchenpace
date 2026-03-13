@@ -1,10 +1,12 @@
 'use client';
 
+import { ingredientDisplayName } from '@app/lib/ingredient-display';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
 interface Ingredient {
     name: string;
+    pluralName?: string | null;
     amount: number;
     unit: string;
     notes?: string | null;
@@ -127,7 +129,13 @@ export function IngredientList({
                         })}
                     >
                         <div>
-                            <span className={css({ fontWeight: '500' })}>{ingredient.name}</span>
+                            <span className={css({ fontWeight: '500' })}>
+                                {ingredientDisplayName(
+                                    ingredient.name,
+                                    ingredient.pluralName ?? null,
+                                    String(ingredient.amount),
+                                )}
+                            </span>
                             {ingredient.notes && (
                                 <span
                                     className={css({

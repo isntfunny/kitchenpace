@@ -4,6 +4,7 @@ import { MessageSquare, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { RefObject } from 'react';
 
+import { ingredientDisplayName } from '@app/lib/ingredient-display';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
@@ -311,7 +312,7 @@ function IngredientRow({
                         lineClamp: '2',
                     })}
                 >
-                    {ing.name}
+                    {ingredientDisplayName(ing.name, ing.pluralName, ing.amount)}
                 </span>
 
                 {/* Amount + Unit merged inputs */}

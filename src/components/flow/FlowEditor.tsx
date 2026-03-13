@@ -245,7 +245,7 @@ function FlowEditorInner({
             }
         }
         for (const [id, name] of toAdd) {
-            onAddIngredientToRecipe({ id, name, category: null, units: [] });
+            onAddIngredientToRecipe({ id, name, pluralName: null, category: null, units: [] });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

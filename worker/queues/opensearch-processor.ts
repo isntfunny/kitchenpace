@@ -72,8 +72,10 @@ type IngredientWithDetails = {
     id: string;
     name: string;
     slug: string;
+    pluralName: string | null;
     category: string | null;
     units: string[];
+    aliases: string[];
     createdAt?: Date;
 };
 
@@ -81,6 +83,7 @@ type IngredientDocument = {
     id: string;
     name: string;
     slug: string;
+    pluralName: string | null;
     category?: string;
     units: string[];
     keywords: string[];
@@ -89,7 +92,12 @@ type IngredientDocument = {
 function transformIngredientToDocument(ingredient: IngredientWithDetails): IngredientDocument {
     const keywords = Array.from(
         new Set(
-            [ingredient.name, ingredient.slug, ...(ingredient.units ?? [])]
+            [
+                ingredient.name,
+                ingredient.slug,
+                ...(ingredient.units ?? []),
+                ...(ingredient.aliases ?? []),
+            ]
                 .filter((entry): entry is string => Boolean(entry))
                 .map((value) => value.toLowerCase()),
         ),
@@ -99,6 +107,7 @@ function transformIngredientToDocument(ingredient: IngredientWithDetails): Ingre
         id: ingredient.id,
         name: ingredient.name,
         slug: ingredient.slug,
+        pluralName: ingredient.pluralName,
         category: ingredient.category ?? undefined,
         units: ingredient.units ?? [],
         keywords,
@@ -328,8 +337,10 @@ export async function processSyncIngredients(
                     id: true,
                     name: true,
                     slug: true,
+                    pluralName: true,
                     category: true,
                     units: true,
+                    aliases: true,
                     createdAt: true,
                 },
                 orderBy: { id: 'asc' },

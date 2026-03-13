@@ -39,6 +39,7 @@ const INGREDIENTS_MAPPINGS = {
         id: { type: 'keyword' },
         name: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
         slug: { type: 'keyword' },
+        pluralName: { type: 'keyword' },
         category: { type: 'keyword' },
         units: { type: 'keyword' },
         keywords: { type: 'text' },

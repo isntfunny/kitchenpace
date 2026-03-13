@@ -24,6 +24,7 @@ type TagWithCount = {
 export interface IngredientSearchResult {
     id: string;
     name: string;
+    pluralName: string | null;
     category: string | null;
     units: string[];
 }
@@ -56,6 +57,7 @@ export async function searchIngredients(query: string): Promise<IngredientSearch
                 | {
                       id?: string;
                       name?: string;
+                      pluralName?: string | null;
                       category?: string | null;
                       units?: string[];
                   }
@@ -66,6 +68,7 @@ export async function searchIngredients(query: string): Promise<IngredientSearch
             return {
                 id: source.id,
                 name: source.name,
+                pluralName: source.pluralName ?? null,
                 category: source.category ?? null,
                 units: Array.isArray(source.units) ? source.units : [],
             };

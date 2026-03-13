@@ -521,19 +521,59 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
 }
 
 export async function createIngredient(name: string, category?: string, units: string[] = []) {
-    const slug = slugify(name);
+    const { stemGerman, getWordVariants } = await import('@app/lib/german-stem');
 
-    return prisma.ingredient.upsert({
-        where: { slug },
-        update: {},
-        create: {
-            name,
-            slug,
-            category: toShoppingCategory(category),
-            units: units.length > 0 ? units : [],
-            needsReview: true,
-        },
-    });
+    const trimmed = name.trim();
+
+    // 1. Hunspell stemming → singular base form
+    const singular = await stemGerman(trimmed);
+    const isStemmed = singular.toLowerCase() !== trimmed.toLowerCase();
+
+    // Canonical name: keep original casing style, use singular form
+    const canonicalName = trimmed[0].toUpperCase() + singular.slice(1);
+    const slug = slugify(canonicalName);
+
+    // 2. Try slug match (singular slug)
+    const bySlug = await prisma.ingredient.findUnique({ where: { slug } });
+    if (bySlug) return bySlug;
+
+    // 3. Try alias match (for regional synonyms)
+    const variants = await getWordVariants(trimmed);
+    if (variants.length > 1) {
+        const byAlias = await prisma.ingredient.findFirst({
+            where: { aliases: { hasSome: variants } },
+        });
+        if (byAlias) return byAlias;
+    }
+
+    // 4. Also try the original name's slug (in case it wasn't stemmed to the same slug)
+    const originalSlug = slugify(trimmed);
+    if (originalSlug !== slug) {
+        const byOriginalSlug = await prisma.ingredient.findUnique({
+            where: { slug: originalSlug },
+        });
+        if (byOriginalSlug) return byOriginalSlug;
+    }
+
+    // 5. Create new ingredient with singular as canonical name
+    try {
+        return await prisma.ingredient.create({
+            data: {
+                name: canonicalName,
+                slug,
+                pluralName: isStemmed ? trimmed[0].toUpperCase() + trimmed.slice(1) : null,
+                category: toShoppingCategory(category),
+                units: units.length > 0 ? units : [],
+                needsReview: true,
+            },
+        });
+    } catch (e) {
+        // Race condition: slug already taken → return existing
+        if (e instanceof Error && e.message.includes('Unique constraint')) {
+            return prisma.ingredient.findUniqueOrThrow({ where: { slug } });
+        }
+        throw e;
+    }
 }
 
 export type RecipeStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';

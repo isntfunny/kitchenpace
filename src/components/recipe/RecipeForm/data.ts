@@ -15,6 +15,7 @@ export interface Tag {
 export interface IngredientSearchResult {
     id: string;
     name: string;
+    pluralName: string | null;
     category: string | null;
     units: string[];
 }
@@ -22,6 +23,7 @@ export interface IngredientSearchResult {
 export interface AddedIngredient {
     id: string;
     name: string;
+    pluralName: string | null;
     amount: string;
     unit: string;
     notes: string;

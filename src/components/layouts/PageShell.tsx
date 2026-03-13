@@ -54,6 +54,7 @@ export function PageShell({ children }: PageShellProps) {
                     })}
                 >
                     <span>© {new Date().getFullYear()} KüchenTakt</span>
+                    <span>Rechtliches:</span>
                     <Link
                         href="/impressum"
                         className={css({

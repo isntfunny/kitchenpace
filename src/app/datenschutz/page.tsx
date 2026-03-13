@@ -223,6 +223,31 @@ export default function DatenschutzPage() {
                             kuechentakt.de
                         </Link>
                     </p>
+                    <div
+                        className={css({
+                            mt: '4',
+                            p: '4',
+                            borderRadius: 'md',
+                            border: '1px solid',
+                            borderColor: 'border',
+                            background: 'surface-raised',
+                            fontSize: 'sm',
+                            color: 'text-muted',
+                            lineHeight: '1.7',
+                        })}
+                    >
+                        Die vollständigen Anbieter- und Kontaktdaten finden Sie in unserem{' '}
+                        <Link
+                            href="/impressum"
+                            className={css({
+                                color: 'palette.orange',
+                                textDecoration: 'underline',
+                            })}
+                        >
+                            Impressum
+                        </Link>
+                        .
+                    </div>
                 </div>
 
                 {/* TOC */}

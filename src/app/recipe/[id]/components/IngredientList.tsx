@@ -1,6 +1,5 @@
 'use client';
 
-import { formatScaledAmount } from '@app/lib/format';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -8,6 +7,7 @@ interface Ingredient {
     name: string;
     amount: number;
     unit: string;
+    notes?: string | null;
 }
 
 interface IngredientListProps {
@@ -15,6 +15,8 @@ interface IngredientListProps {
     servings: number;
     originalServings: number;
     onServingsChange: (servings: number) => void;
+    calories?: number | null;
+    formatAmount: (amount: number) => string;
 }
 
 export function IngredientList({
@@ -22,6 +24,8 @@ export function IngredientList({
     servings,
     originalServings,
     onServingsChange,
+    calories,
+    formatAmount,
 }: IngredientListProps) {
     return (
         <div
@@ -122,14 +126,48 @@ export function IngredientList({
                             fontFamily: 'body',
                         })}
                     >
-                        <span className={css({ fontWeight: '500' })}>{ingredient.name}</span>
+                        <div>
+                            <span className={css({ fontWeight: '500' })}>{ingredient.name}</span>
+                            {ingredient.notes && (
+                                <span
+                                    className={css({
+                                        display: 'block',
+                                        fontSize: 'xs',
+                                        color: 'text-muted',
+                                        fontStyle: 'italic',
+                                    })}
+                                >
+                                    {ingredient.notes}
+                                </span>
+                            )}
+                        </div>
                         <span className={css({ color: 'text-muted' })}>
-                            {formatScaledAmount(ingredient.amount, servings, originalServings)}{' '}
-                            {ingredient.unit}
+                            {formatAmount(ingredient.amount)} {ingredient.unit}
                         </span>
                     </li>
                 ))}
             </ul>
+
+            {calories != null && calories > 0 && (
+                <div
+                    className={css({
+                        mt: '3',
+                        pt: '3',
+                        borderTop: '1px solid',
+                        borderColor: 'border',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: 'sm',
+                        color: 'text-muted',
+                    })}
+                >
+                    <span>Kalorien</span>
+                    <span className={css({ fontWeight: '600', color: 'text' })}>
+                        {Math.round(calories * (servings / originalServings))} kcal
+                    </span>
+                </div>
+            )}
         </div>
     );
 }

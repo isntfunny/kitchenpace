@@ -5,4 +5,6 @@ export { HeroImageGallery } from './HeroImageGallery';
 export { IngredientList } from './IngredientList';
 export { RecipeActionButtons } from './RecipeActionButtons';
 export { RecipeMetaStats } from './RecipeMetaStats';
+export { RecipeStatusBanner } from './RecipeStatusBanner';
+export { RecipeSummaryCard } from './RecipeSummaryCard';
 export { RecipeTags } from './RecipeTags';

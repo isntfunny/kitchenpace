@@ -3,83 +3,144 @@
 import { Bookmark, ChefHat, CheckCircle, Printer } from 'lucide-react';
 
 import { Button } from '@app/components/atoms/Button';
+import { SparkleEffect } from '@app/components/atoms/SparkleEffect';
+import { ReportButton } from '@app/components/features/ReportButton';
+import { ShareButton } from '@app/components/features/ShareButton';
 import { css } from 'styled-system/css';
 
 interface RecipeActionButtonsProps {
+    recipeId: string;
+    recipeTitle: string;
+    recipeSlug: string;
+    recipeImageKey?: string | null;
     isFavorite: boolean;
     favoriteCount: number;
     hasCooked: boolean;
     cookCount: number;
     isFavoritePending: boolean;
     isCookPending: boolean;
+    isAuthor: boolean;
     onFavoriteToggle: () => void;
     onCookToggle: () => void;
     onPrint: () => void;
 }
 
-const activeButtonClass = css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '2',
-    px: '4',
-    py: '2',
-    fontSize: 'md',
-    fontWeight: '500',
-    fontFamily: 'body',
-    borderRadius: 'md',
-    cursor: 'pointer',
-    transition: 'all 150ms ease-in-out',
-    border: '2px solid',
-    borderColor: 'brand.primary',
-    color: 'brand.primary',
-    bg: { base: 'rgba(224,123,83,0.08)', _dark: 'rgba(224,123,83,0.15)' },
-    _hover: { bg: { base: 'rgba(224,123,83,0.14)', _dark: 'rgba(224,123,83,0.22)' } },
-    _disabled: { opacity: 0.5, cursor: 'not-allowed' },
-});
-
 export function RecipeActionButtons({
+    recipeId,
+    recipeTitle,
+    recipeSlug,
+    recipeImageKey,
     isFavorite,
     favoriteCount,
     hasCooked,
     cookCount,
     isFavoritePending,
     isCookPending,
+    isAuthor,
     onFavoriteToggle,
     onCookToggle,
     onPrint,
 }: RecipeActionButtonsProps) {
     return (
-        <div className={css({ display: 'flex', gap: '3', flexWrap: 'wrap', alignItems: 'center' })}>
-            {isFavorite ? (
-                <button
-                    type="button"
-                    className={activeButtonClass}
-                    onClick={onFavoriteToggle}
-                    disabled={isFavoritePending}
-                >
-                    <Bookmark size={16} fill="currentColor" />
-                    Favorisiert · {favoriteCount}
-                </button>
-            ) : (
-                <Button
-                    type="button"
-                    variant="primary"
-                    onClick={onFavoriteToggle}
-                    disabled={isFavoritePending}
-                >
-                    <Bookmark size={16} />
-                    Favorisieren · {favoriteCount}
+        <div>
+            <div className={css({ display: 'flex', gap: '2', mb: '2' })}>
+                <div className={css({ flex: '1' })}>
+                    <SparkleEffect>
+                        {(triggerSparkle) => (
+                            <Button
+                                type="button"
+                                variant={isFavorite ? 'secondary' : 'primary'}
+                                onClick={() => {
+                                    if (!isFavorite) triggerSparkle();
+                                    onFavoriteToggle();
+                                }}
+                                disabled={isFavoritePending}
+                                style={{ width: '100%', minWidth: 0 }}
+                            >
+                                <span className={css({ flexShrink: 0 })}>
+                                    {isFavorite ? (
+                                        <Bookmark size={16} fill="currentColor" />
+                                    ) : (
+                                        <Bookmark size={16} />
+                                    )}
+                                </span>
+                                <span
+                                    className={css({
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        minWidth: 0,
+                                    })}
+                                >
+                                    {isFavorite ? 'Favorisiert' : 'Favorisieren'}
+                                </span>
+                                <span
+                                    className={css({
+                                        opacity: 0.7,
+                                        fontSize: 'xs',
+                                        flexShrink: 0,
+                                    })}
+                                >
+                                    · {favoriteCount}
+                                </span>
+                            </Button>
+                        )}
+                    </SparkleEffect>
+                </div>
+                <div className={css({ flex: '1' })}>
+                    <Button
+                        type="button"
+                        variant="primary"
+                        onClick={onCookToggle}
+                        disabled={isCookPending}
+                        style={{ width: '100%', minWidth: 0 }}
+                    >
+                        <span className={css({ flexShrink: 0 })}>
+                            {hasCooked ? <CheckCircle size={16} /> : <ChefHat size={16} />}
+                        </span>
+                        <span
+                            className={css({
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                minWidth: 0,
+                            })}
+                        >
+                            Zubereitet
+                        </span>
+                        <span
+                            className={css({
+                                opacity: 0.7,
+                                fontSize: 'xs',
+                                flexShrink: 0,
+                            })}
+                        >
+                            · {cookCount}
+                        </span>
+                    </Button>
+                </div>
+            </div>
+            <div
+                className={css({
+                    display: 'flex',
+                    gap: '1',
+                    alignItems: 'center',
+                    justifyContent: 'space-evenly',
+                })}
+            >
+                <Button type="button" variant="ghost" onClick={onPrint}>
+                    <Printer size={16} />
+                    Drucken
                 </Button>
-            )}
-            <Button type="button" variant="primary" onClick={onCookToggle} disabled={isCookPending}>
-                {hasCooked ? <CheckCircle size={16} /> : <ChefHat size={16} />}
-                Zubereitet · {cookCount}
-            </Button>
-            <Button type="button" variant="ghost" onClick={onPrint}>
-                <Printer size={16} />
-                Drucken
-            </Button>
+                <ShareButton
+                    title={recipeTitle}
+                    slug={recipeSlug}
+                    imageKey={recipeImageKey ?? undefined}
+                />
+                {!isAuthor && (
+                    <ReportButton contentType="recipe" contentId={recipeId} variant="text" />
+                )}
+            </div>
         </div>
     );
 }

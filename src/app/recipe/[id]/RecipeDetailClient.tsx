@@ -1,12 +1,7 @@
 'use client';
 
-import { Bookmark, Check, CheckCircle, ChefHat, Printer, Star } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
-import Lightbox from 'yet-another-react-lightbox';
-import 'yet-another-react-lightbox/styles.css';
 
 import {
     rateRecipeAction,
@@ -14,22 +9,22 @@ import {
     toggleFollowAction,
     markRecipeCookedAction,
 } from '@app/app/actions/social';
-import { Button } from '@app/components/atoms/Button';
-import { SmartImage } from '@app/components/atoms/SmartImage';
-import { SparkleEffect } from '@app/components/atoms/SparkleEffect';
 import { Header } from '@app/components/features/Header';
-import { categoryColors } from '@app/components/features/RecipeCard';
-import { ReportButton } from '@app/components/features/ReportButton';
-import { ShareButton } from '@app/components/features/ShareButton';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
-import { flex, grid, container } from 'styled-system/patterns';
+import { grid, container } from 'styled-system/patterns';
 
+import { ActivityFeed } from './components/ActivityFeed';
+import { AuthorCard } from './components/AuthorCard';
 import { CookDialog } from './components/CookDialog';
+import { HeroImageGallery } from './components/HeroImageGallery';
+import { IngredientList } from './components/IngredientList';
 import { printRecipe } from './components/PrintRecipe';
-import { RecipeMetaStats } from './components/RecipeMetaStats';
+import { RecipeActionButtons } from './components/RecipeActionButtons';
+import { RecipeStatusBanner } from './components/RecipeStatusBanner';
+import { RecipeSummaryCard } from './components/RecipeSummaryCard';
 import type { Recipe, User, Activity } from './data';
 
 // ── Inline star sparkle ───────────────────────────────────────────────────────
@@ -217,16 +212,6 @@ export function RecipeDetailClient({
         return [primary, ...extras];
     }, [cookImages, recipe.image, recipe.imageKey, recipe.title]);
 
-    // Only show carousel if there are actual images with src
-    const hasImages = heroImages.some((img) => img.src);
-    const visibleImages = hasImages ? heroImages : [];
-    const heroCount = Math.max(1, visibleImages.length);
-    const normalizedHeroIndex = heroCount && hasImages ? heroIndex % heroCount : 0;
-    const heroMeta = visibleImages[normalizedHeroIndex];
-
-    const handleHeroNext = () => setHeroIndex((prev) => (prev + 1) % heroCount);
-    const handleHeroPrev = () => setHeroIndex((prev) => (prev - 1 + heroCount) % heroCount);
-
     // Recipe tabs context for tracking views
     const { addToRecent } = useRecipeTabs();
 
@@ -372,151 +357,13 @@ export function RecipeDetailClient({
     return (
         <div className={css({ minH: '100vh', color: 'text' })}>
             <Header />
-            {isDraft && (
-                <div
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '3',
-                        px: '4',
-                        py: '3',
-                        backgroundColor: {
-                            base: 'rgba(224,123,83,0.15)',
-                            _dark: 'rgba(224,123,83,0.2)',
-                        },
-                        borderBottom: {
-                            base: '2px solid rgba(224,123,83,0.4)',
-                            _dark: '2px solid rgba(224,123,83,0.45)',
-                        },
-                        fontSize: 'sm',
-                        color: 'brand.primary',
-                        fontWeight: '600',
-                    })}
-                >
-                    <span
-                        className={css({
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            px: '2.5',
-                            py: '1',
-                            borderRadius: 'full',
-                            fontSize: 'xs',
-                            fontWeight: '800',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em',
-                            backgroundColor: 'brand.primary',
-                            color: 'white',
-                            flexShrink: '0',
-                        })}
-                    >
-                        Entwurf
-                    </span>
-                    Dieses Rezept ist noch nicht veröffentlicht — nur du kannst es sehen.
-                    <a
-                        href={`/recipe/${recipe.id}/edit`}
-                        className={css({
-                            fontWeight: '700',
-                            textDecoration: 'underline',
-                            textUnderlineOffset: '2px',
-                            flexShrink: '0',
-                            _hover: { opacity: '0.75' },
-                        })}
-                    >
-                        Jetzt bearbeiten →
-                    </a>
-                </div>
-            )}
-            {recipe.viewer?.isAuthor && recipe.moderationStatus === 'PENDING' && (
-                <div
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '3',
-                        px: '4',
-                        py: '2.5',
-                        backgroundColor: {
-                            base: 'rgba(217,173,54,0.1)',
-                            _dark: 'rgba(217,173,54,0.15)',
-                        },
-                        borderBottom: {
-                            base: '1px solid rgba(217,173,54,0.25)',
-                            _dark: '1px solid rgba(217,173,54,0.3)',
-                        },
-                        fontSize: 'sm',
-                        color: { base: '#b8860b', _dark: '#ffc94d' },
-                        fontWeight: '500',
-                    })}
-                >
-                    <span
-                        className={css({
-                            display: 'inline-block',
-                            px: '2',
-                            py: '0.5',
-                            borderRadius: 'full',
-                            fontSize: 'xs',
-                            fontWeight: '700',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.06em',
-                            backgroundColor: { base: '#b8860b', _dark: '#d4a017' },
-                            color: 'white',
-                        })}
-                    >
-                        Wird überprüft
-                    </span>
-                    Dein Rezept wird gerade überprüft und ist noch nicht öffentlich sichtbar. Das
-                    dauert in der Regel weniger als 24 Stunden.
-                </div>
-            )}
-            {recipe.viewer?.isAuthor && recipe.moderationStatus === 'REJECTED' && (
-                <div
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '3',
-                        px: '4',
-                        py: '2.5',
-                        backgroundColor: 'rgba(220,38,38,0.08)',
-                        borderBottom: '1px solid rgba(220,38,38,0.2)',
-                        fontSize: 'sm',
-                        color: 'status.danger',
-                        fontWeight: '500',
-                    })}
-                >
-                    <span
-                        className={css({
-                            display: 'inline-block',
-                            px: '2',
-                            py: '0.5',
-                            borderRadius: 'full',
-                            fontSize: 'xs',
-                            fontWeight: '700',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.06em',
-                            backgroundColor: 'status.danger',
-                            color: 'white',
-                        })}
-                    >
-                        Abgelehnt
-                    </span>
-                    {recipe.moderationNote
-                        ? `Dein Rezept wurde abgelehnt: ${recipe.moderationNote}. Du kannst es überarbeiten und erneut einreichen.`
-                        : 'Dein Rezept wurde abgelehnt. Du kannst es überarbeiten und erneut einreichen.'}
-                    <a
-                        href={`/recipe/${recipe.id}/edit`}
-                        className={css({
-                            fontWeight: '600',
-                            textDecoration: 'underline',
-                            textUnderlineOffset: '2px',
-                            _hover: { opacity: '0.75' },
-                        })}
-                    >
-                        Überarbeiten
-                    </a>
-                </div>
-            )}
+            <RecipeStatusBanner
+                recipeId={recipe.id}
+                isDraft={isDraft}
+                isAuthor={recipe.viewer?.isAuthor ?? false}
+                moderationStatus={recipe.moderationStatus}
+                moderationNote={recipe.moderationNote}
+            />
             <main
                 className={container({
                     maxW: '1400px',
@@ -546,194 +393,18 @@ export function RecipeDetailClient({
                                 gap: '3',
                             })}
                         >
-                            {!hasImages && (
-                                <div
-                                    className={css({
-                                        aspectRatio: '4/3',
-                                        borderRadius: '2xl',
-                                        overflow: 'hidden',
-                                    })}
-                                >
-                                    <SmartImage recipeId={recipe.id} alt={recipe.title} fill />
-                                </div>
-                            )}
-                            {hasImages && (
-                                <>
-                                    <div
-                                        className={css({
-                                            position: 'relative',
-                                            borderRadius: '2xl',
-                                            overflow: 'hidden',
-                                            bg: 'black',
-                                        })}
-                                        data-debug-image-container
-                                    >
-                                        <div
-                                            className={css({
-                                                aspectRatio: '4/3',
-                                                position: 'relative',
-                                                cursor: 'pointer',
-                                            })}
-                                            onClick={() => {
-                                                setLightboxIndex(normalizedHeroIndex);
-                                                setLightboxOpen(true);
-                                            }}
-                                        >
-                                            <SmartImage
-                                                src={heroMeta?.src || recipe.image}
-                                                alt={heroMeta?.title ?? recipe.title}
-                                                fill
-                                            />
-                                        </div>
-                                        {heroCount > 1 && (
-                                            <>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleHeroPrev}
-                                                    aria-label="Vorheriges Bild"
-                                                    className={css({
-                                                        position: 'absolute',
-                                                        top: '50%',
-                                                        transform: 'translateY(-50%)',
-                                                        left: '2',
-                                                        width: '48px',
-                                                        height: '48px',
-                                                        borderRadius: 'full',
-                                                        border: 'none',
-                                                        bg: 'rgba(0,0,0,0.5)',
-                                                        color: 'white',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        fontSize: '24px',
-                                                        transition: 'all 200ms ease',
-                                                        _hover: { bg: 'rgba(0,0,0,0.7)' },
-                                                        _active: {
-                                                            transform:
-                                                                'translateY(-50%) scale(0.95)',
-                                                        },
-                                                    })}
-                                                >
-                                                    ‹
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleHeroNext}
-                                                    aria-label="Nächstes Bild"
-                                                    className={css({
-                                                        position: 'absolute',
-                                                        top: '50%',
-                                                        transform: 'translateY(-50%)',
-                                                        right: '2',
-                                                        width: '48px',
-                                                        height: '48px',
-                                                        borderRadius: 'full',
-                                                        border: 'none',
-                                                        bg: 'rgba(0,0,0,0.5)',
-                                                        color: 'white',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        fontSize: '24px',
-                                                        transition: 'all 200ms ease',
-                                                        _hover: { bg: 'rgba(0,0,0,0.7)' },
-                                                        _active: {
-                                                            transform:
-                                                                'translateY(-50%) scale(0.95)',
-                                                        },
-                                                    })}
-                                                >
-                                                    ›
-                                                </button>
-                                            </>
-                                        )}
-                                        {/* Thumbnail strip overlay */}
-                                        {heroCount > 1 && (
-                                            <div
-                                                className={css({
-                                                    position: 'absolute',
-                                                    bottom: '3',
-                                                    left: '50%',
-                                                    transform: 'translateX(-50%)',
-                                                    display: 'flex',
-                                                    gap: '1.5',
-                                                    p: '1.5',
-                                                    borderRadius: 'xl',
-                                                    bg: 'rgba(0,0,0,0.5)',
-                                                    backdropFilter: 'blur(8px)',
-                                                })}
-                                            >
-                                                {visibleImages.map((img, idx) => {
-                                                    const thumbUrl = img.thumbKey
-                                                        ? `/api/thumbnail?key=${encodeURIComponent(img.thumbKey)}&aspect=1:1&w=320`
-                                                        : img.src;
-                                                    return (
-                                                        <button
-                                                            key={`${idx}-${img.src}`}
-                                                            type="button"
-                                                            onClick={() => setHeroIndex(idx)}
-                                                            className={css({
-                                                                borderRadius: 'md',
-                                                                border: '2px solid',
-                                                                borderColor:
-                                                                    idx === normalizedHeroIndex
-                                                                        ? 'white'
-                                                                        : 'transparent',
-                                                                padding: 0,
-                                                                width: '44px',
-                                                                height: '44px',
-                                                                overflow: 'hidden',
-                                                                cursor: 'pointer',
-                                                                opacity:
-                                                                    idx === normalizedHeroIndex
-                                                                        ? 1
-                                                                        : 0.7,
-                                                                transition: 'all 150ms ease',
-                                                                _hover: { opacity: 1 },
-                                                            })}
-                                                        >
-                                                            <div
-                                                                className={css({
-                                                                    position: 'relative',
-                                                                    width: '100%',
-                                                                    height: '100%',
-                                                                })}
-                                                            >
-                                                                <SmartImage
-                                                                    src={thumbUrl}
-                                                                    alt={img.title}
-                                                                    fill
-                                                                />
-                                                            </div>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                        {/* Image counter + report */}
-                                        {heroMeta?.reportable &&
-                                            heroMeta.reportable.ownerId !== viewerId && (
-                                                <div
-                                                    className={css({
-                                                        position: 'absolute',
-                                                        top: '3',
-                                                        right: '3',
-                                                    })}
-                                                >
-                                                    <ReportButton
-                                                        contentType={
-                                                            heroMeta.reportable.contentType
-                                                        }
-                                                        contentId={heroMeta.reportable.contentId}
-                                                        variant="icon"
-                                                    />
-                                                </div>
-                                            )}
-                                    </div>
-                                </>
-                            )}
+                            <HeroImageGallery
+                                images={heroImages}
+                                currentIndex={heroIndex}
+                                onIndexChange={setHeroIndex}
+                                lightboxIndex={lightboxIndex}
+                                onLightboxIndexChange={setLightboxIndex}
+                                lightboxOpen={lightboxOpen}
+                                onLightboxOpenChange={setLightboxOpen}
+                                recipeId={recipe.id}
+                                recipeTitle={recipe.title}
+                                viewerId={viewerId}
+                            />
                         </div>
 
                         <div
@@ -743,520 +414,54 @@ export function RecipeDetailClient({
                                 justifyContent: 'center',
                             })}
                         >
-                            {/* ── Recipe Info Card ── */}
-                            <div
-                                className={css({
-                                    bg: 'surface',
-                                    borderRadius: '2xl',
-                                    p: '5',
-                                    boxShadow: 'shadow.medium',
-                                    mb: '4',
-                                })}
-                            >
-                                {/* Meta strip */}
-                                <div
-                                    className={css({
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '3',
-                                        flexWrap: 'wrap',
-                                        fontSize: 'sm',
-                                        fontFamily: 'body',
-                                        color: 'text-muted',
-                                        mb: '3',
-                                    })}
-                                >
-                                    <Link
-                                        href={
-                                            recipe.categorySlug
-                                                ? `/category/${recipe.categorySlug}`
-                                                : buildRecipeFilterHref({
-                                                      mealTypes: [recipe.category],
-                                                  })
-                                        }
-                                        className={css({
-                                            textDecoration: 'none',
-                                            _hover: { opacity: 0.85 },
-                                        })}
-                                    >
-                                        <span
-                                            className={css({
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                px: '2.5',
-                                                py: '0.5',
-                                                fontSize: 'xs',
-                                                fontWeight: '600',
-                                                borderRadius: 'full',
-                                                fontFamily: 'body',
-                                                color: 'white',
-                                                transition: 'opacity 150ms',
-                                            })}
-                                            style={{
-                                                backgroundColor:
-                                                    recipe.categoryColor ||
-                                                    categoryColors[recipe.category] ||
-                                                    '#e07b53',
-                                            }}
-                                        >
-                                            {recipe.category}
-                                        </span>
-                                    </Link>
-                                    <span>{recipe.difficulty}</span>
-                                </div>
+                            <RecipeSummaryCard
+                                recipe={recipe}
+                                categoryHref={
+                                    recipe.categorySlug
+                                        ? `/category/${recipe.categorySlug}`
+                                        : buildRecipeFilterHref({ mealTypes: [recipe.category] })
+                                }
+                                isDraft={isDraft}
+                                starValues={starValues}
+                                activeStarValue={activeStarValue}
+                                isRatingPending={isRatingPending}
+                                ratingCount={ratingCount}
+                                averageRating={averageRating}
+                                starBursts={starBursts}
+                                onTagClick={handleTagClick}
+                                onRatingSelect={handleRatingSelect}
+                            />
 
-                                {/* Description */}
-                                <p
-                                    className={css({
-                                        fontFamily: 'body',
-                                        color: 'text',
-                                        lineHeight: 'relaxed',
-                                        fontSize: { base: 'md', md: 'lg' },
-                                        mb: '3',
-                                    })}
-                                >
-                                    {recipe.description}
-                                </p>
-
-                                {/* Tags */}
-                                {recipe.tags.length > 0 && (
-                                    <div
-                                        className={css({
-                                            display: 'flex',
-                                            gap: '2',
-                                            flexWrap: 'wrap',
-                                            mb: '3',
-                                        })}
-                                    >
-                                        {recipe.tags.map((tag) => (
-                                            <button
-                                                key={tag}
-                                                onClick={() => handleTagClick(tag)}
-                                                className={css({
-                                                    fontSize: 'xs',
-                                                    color: 'text-muted',
-                                                    fontFamily: 'body',
-                                                    cursor: 'pointer',
-                                                    px: '2.5',
-                                                    py: '1',
-                                                    borderRadius: 'full',
-                                                    bg: 'light',
-                                                    transition: 'all 150ms ease',
-                                                    _hover: { color: 'primary' },
-                                                })}
-                                            >
-                                                #{tag}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Divider */}
-                                <div className={css({ h: '1px', bg: 'border', mb: '3' })} />
-
-                                {/* Time breakdown */}
-                                <RecipeMetaStats
-                                    prepTime={recipe.prepTime}
-                                    cookTime={recipe.cookTime}
-                                />
-
-                                {/* Divider + Rating + Actions — hidden for drafts */}
-                                {!isDraft && (
-                                    <div className={css({ h: '1px', bg: 'border', mb: '3' })} />
-                                )}
-                                {!isDraft && (
-                                    <div
-                                        className={css({
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '1.5',
-                                            mb: '3',
-                                        })}
-                                    >
-                                        {starValues.map((value) => (
-                                            <div
-                                                key={value}
-                                                style={{
-                                                    position: 'relative',
-                                                    display: 'inline-flex',
-                                                    overflow: 'visible',
-                                                }}
-                                            >
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRatingSelect(value)}
-                                                    disabled={isRatingPending}
-                                                    className={css({
-                                                        padding: 0,
-                                                        border: 'none',
-                                                        background: 'none',
-                                                        cursor: 'pointer',
-                                                        transition: 'transform 150ms ease',
-                                                        _hover: { transform: 'scale(1.2)' },
-                                                        display: 'inline-flex',
-                                                    })}
-                                                >
-                                                    <Star
-                                                        size={22}
-                                                        fill={
-                                                            value <= activeStarValue
-                                                                ? 'var(--colors-palette-gold, #d9ad36)'
-                                                                : 'none'
-                                                        }
-                                                        className={css({
-                                                            color:
-                                                                value <= activeStarValue
-                                                                    ? 'palette.gold'
-                                                                    : 'text-muted',
-                                                            opacity:
-                                                                value <= activeStarValue ? 1 : 0.35,
-                                                        })}
-                                                    />
-                                                </button>
-                                                <div
-                                                    style={{
-                                                        position: 'absolute',
-                                                        inset: 0,
-                                                        pointerEvents: 'none',
-                                                        overflow: 'visible',
-                                                        zIndex: 10,
-                                                    }}
-                                                >
-                                                    <AnimatePresence>
-                                                        {starBursts
-                                                            .filter((b) => b.starIndex === value)
-                                                            .map((burst) =>
-                                                                burst.sparks.map((spark) => (
-                                                                    <motion.div
-                                                                        key={`${burst.id}-${spark.id}`}
-                                                                        style={{
-                                                                            position: 'absolute',
-                                                                            left: spark.x,
-                                                                            top: spark.y,
-                                                                            width: spark.size,
-                                                                            height: spark.size,
-                                                                            borderRadius: '50%',
-                                                                            background: spark.color,
-                                                                            boxShadow: `0 0 ${spark.size * 2}px ${spark.color}`,
-                                                                            translateX: '-50%',
-                                                                            translateY: '-50%',
-                                                                        }}
-                                                                        initial={{
-                                                                            opacity: 1,
-                                                                            x: 0,
-                                                                            y: 0,
-                                                                            scale: 1,
-                                                                        }}
-                                                                        animate={{
-                                                                            x: spark.dx,
-                                                                            y: spark.dy,
-                                                                            opacity: [1, 1, 0],
-                                                                            scale: [1, 1.4, 0],
-                                                                        }}
-                                                                        transition={{
-                                                                            duration:
-                                                                                spark.duration,
-                                                                            delay: spark.delay,
-                                                                            ease: 'easeOut',
-                                                                            opacity: {
-                                                                                times: [0, 0.35, 1],
-                                                                            },
-                                                                            scale: {
-                                                                                times: [0, 0.25, 1],
-                                                                            },
-                                                                        }}
-                                                                    />
-                                                                )),
-                                                            )}
-                                                    </AnimatePresence>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <span
-                                            className={css({
-                                                fontSize: 'sm',
-                                                color: 'text-muted',
-                                                fontFamily: 'body',
-                                                ml: '1',
-                                            })}
-                                        >
-                                            {ratingCount > 0
-                                                ? `${averageRating.toFixed(1)} (${ratingCount})`
-                                                : 'Bewerten'}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* ── Actions ── */}
-                            {!isDraft && (
-                                <div className={css({ display: 'flex', gap: '2', mb: '2' })}>
-                                    <div className={css({ flex: '1' })}>
-                                        <SparkleEffect>
-                                            {(triggerSparkle) => (
-                                                <Button
-                                                    type="button"
-                                                    variant={
-                                                        favoriteState.isFavorite
-                                                            ? 'secondary'
-                                                            : 'primary'
-                                                    }
-                                                    onClick={() => {
-                                                        if (!favoriteState.isFavorite)
-                                                            triggerSparkle();
-                                                        handleFavoriteToggle();
-                                                    }}
-                                                    disabled={isFavoritePending}
-                                                    style={{ width: '100%', minWidth: 0 }}
-                                                >
-                                                    <span className={css({ flexShrink: 0 })}>
-                                                        {favoriteState.isFavorite ? (
-                                                            <Bookmark
-                                                                size={16}
-                                                                fill="currentColor"
-                                                            />
-                                                        ) : (
-                                                            <Bookmark size={16} />
-                                                        )}
-                                                    </span>
-                                                    <span
-                                                        className={css({
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap',
-                                                            minWidth: 0,
-                                                        })}
-                                                    >
-                                                        {favoriteState.isFavorite
-                                                            ? 'Favorisiert'
-                                                            : 'Favorisieren'}
-                                                    </span>
-                                                    <span
-                                                        className={css({
-                                                            opacity: 0.7,
-                                                            fontSize: 'xs',
-                                                            flexShrink: 0,
-                                                        })}
-                                                    >
-                                                        · {favoriteState.count}
-                                                    </span>
-                                                </Button>
-                                            )}
-                                        </SparkleEffect>
-                                    </div>
-                                    <div className={css({ flex: '1' })}>
-                                        <Button
-                                            type="button"
-                                            variant="primary"
-                                            onClick={handleMarkCooked}
-                                            disabled={isCookPending}
-                                            style={{ width: '100%', minWidth: 0 }}
-                                        >
-                                            <span className={css({ flexShrink: 0 })}>
-                                                {hasCooked ? (
-                                                    <CheckCircle size={16} />
-                                                ) : (
-                                                    <ChefHat size={16} />
-                                                )}
-                                            </span>
-                                            <span
-                                                className={css({
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                    minWidth: 0,
-                                                })}
-                                            >
-                                                Zubereitet
-                                            </span>
-                                            <span
-                                                className={css({
-                                                    opacity: 0.7,
-                                                    fontSize: 'xs',
-                                                    flexShrink: 0,
-                                                })}
-                                            >
-                                                · {cookCount}
-                                            </span>
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                            <div
-                                className={css({
-                                    display: 'flex',
-                                    gap: '1',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-evenly',
-                                })}
-                            >
-                                <Button type="button" variant="ghost" onClick={handlePrint}>
-                                    <Printer size={16} />
-                                    Drucken
-                                </Button>
-                                <ShareButton
-                                    title={recipe.title}
-                                    slug={recipe.slug}
-                                    imageKey={recipe.imageKey ?? undefined}
-                                />
-                                {!recipe.viewer?.isAuthor && (
-                                    <ReportButton
-                                        contentType="recipe"
-                                        contentId={recipe.id}
-                                        variant="text"
-                                    />
-                                )}
-                            </div>
+                            <RecipeActionButtons
+                                recipeId={recipe.id}
+                                recipeTitle={recipe.title}
+                                recipeSlug={recipe.slug}
+                                recipeImageKey={recipe.imageKey}
+                                isFavorite={favoriteState.isFavorite}
+                                favoriteCount={favoriteState.count}
+                                hasCooked={hasCooked}
+                                cookCount={cookCount}
+                                isFavoritePending={isFavoritePending}
+                                isCookPending={isCookPending}
+                                isAuthor={recipe.viewer?.isAuthor ?? false}
+                                onFavoriteToggle={handleFavoriteToggle}
+                                onCookToggle={handleMarkCooked}
+                                onPrint={handlePrint}
+                            />
                         </div>
                     </div>
                 </div>
 
                 <div className={grid({ columns: { base: 1, md: 12 }, gap: '5' })}>
                     <div className={css({ md: { gridColumn: 'span 4' } })}>
-                        <div
-                            className={css({
-                                bg: 'surface',
-                                borderRadius: '2xl',
-                                p: '5',
-                                boxShadow: 'shadow.medium',
-                            })}
-                        >
-                            <h2
-                                className={css({
-                                    fontFamily: 'heading',
-                                    fontSize: 'xl',
-                                    fontWeight: '600',
-                                    mb: '3',
-                                })}
-                            >
-                                Zutaten
-                            </h2>
-
-                            <div
-                                className={css({
-                                    mb: '4',
-                                    p: '3',
-                                    bg: 'light',
-                                    borderRadius: 'xl',
-                                })}
-                            >
-                                <label
-                                    className={css({
-                                        display: 'block',
-                                        fontSize: 'sm',
-                                        color: 'text-muted',
-                                        mb: '2',
-                                        fontFamily: 'body',
-                                    })}
-                                >
-                                    Portionen
-                                </label>
-                                <div className={flex({ gap: '2', align: 'center' })}>
-                                    <button
-                                        onClick={() => setServings(Math.max(1, servings - 1))}
-                                        className={css({
-                                            w: '10',
-                                            h: '10',
-                                            borderRadius: 'full',
-                                            bg: 'surface',
-                                            border: '1px solid',
-                                            borderColor: 'border',
-                                            cursor: 'pointer',
-                                            fontSize: 'xl',
-                                            _hover: { bg: 'light' },
-                                        })}
-                                    >
-                                        −
-                                    </button>
-                                    <span
-                                        className={css({
-                                            fontSize: 'xl',
-                                            fontWeight: '600',
-                                            minW: '12',
-                                            textAlign: 'center',
-                                            fontFamily: 'heading',
-                                        })}
-                                    >
-                                        {servings}
-                                    </span>
-                                    <button
-                                        onClick={() => setServings(servings + 1)}
-                                        className={css({
-                                            w: '10',
-                                            h: '10',
-                                            borderRadius: 'full',
-                                            bg: 'surface',
-                                            border: '1px solid',
-                                            borderColor: 'border',
-                                            cursor: 'pointer',
-                                            fontSize: 'xl',
-                                            _hover: { bg: 'light' },
-                                        })}
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-
-                            <ul className={css({ spaceY: '2' })}>
-                                {recipe.ingredients.map((ingredient, index) => (
-                                    <li
-                                        key={index}
-                                        className={flex({
-                                            justify: 'space-between',
-                                            align: 'center',
-                                            p: '2',
-                                            bg: 'light',
-                                            borderRadius: 'lg',
-                                            fontFamily: 'body',
-                                        })}
-                                    >
-                                        <div>
-                                            <span className={css({ fontWeight: '500' })}>
-                                                {ingredient.name}
-                                            </span>
-                                            {ingredient.notes && (
-                                                <span
-                                                    className={css({
-                                                        display: 'block',
-                                                        fontSize: 'xs',
-                                                        color: 'text-muted',
-                                                        fontStyle: 'italic',
-                                                    })}
-                                                >
-                                                    {ingredient.notes}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <span className={css({ color: 'text-muted' })}>
-                                            {formatAmount(ingredient.amount)} {ingredient.unit}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            {recipe.calories != null && recipe.calories > 0 && (
-                                <div
-                                    className={css({
-                                        mt: '3',
-                                        pt: '3',
-                                        borderTop: '1px solid',
-                                        borderColor: 'border',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        fontSize: 'sm',
-                                        color: 'text-muted',
-                                    })}
-                                >
-                                    <span>Kalorien</span>
-                                    <span className={css({ fontWeight: '600', color: 'text' })}>
-                                        {Math.round(recipe.calories * (servings / recipe.servings))}{' '}
-                                        kcal
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+                        <IngredientList
+                            ingredients={recipe.ingredients}
+                            servings={servings}
+                            originalServings={recipe.servings}
+                            onServingsChange={setServings}
+                            calories={recipe.calories}
+                            formatAmount={formatAmount}
+                        />
                     </div>
 
                     <div className={css({ md: { gridColumn: 'span 8' } })}>
@@ -1295,275 +500,18 @@ export function RecipeDetailClient({
                 </div>
 
                 {author && (
-                    <div className={css({ mt: '8' })}>
-                        <h2
-                            className={css({
-                                fontFamily: 'heading',
-                                fontSize: 'xl',
-                                fontWeight: '600',
-                                mb: '4',
-                            })}
-                        >
-                            Über den Autor
-                        </h2>
-                        <div
-                            className={css({
-                                bg: 'surface',
-                                borderRadius: '2xl',
-                                p: '5',
-                                boxShadow: 'shadow.medium',
-                            })}
-                        >
-                            <div
-                                className={flex({
-                                    gap: '6',
-                                    align: 'flex-start',
-                                    direction: { base: 'column', sm: 'row' },
-                                })}
-                            >
-                                <Link href={`/user/${author.slug}`}>
-                                    <div
-                                        className={css({
-                                            position: 'relative',
-                                            width: '80px',
-                                            height: '80px',
-                                            borderRadius: 'full',
-                                            overflow: 'hidden',
-                                            cursor: 'pointer',
-                                            _hover: { opacity: 0.9 },
-                                        })}
-                                    >
-                                        <SmartImage
-                                            imageKey={author.avatar}
-                                            userId={author.id}
-                                            alt={author.name}
-                                            aspect="1:1"
-                                            fill
-                                            sizes="80px"
-                                            className={css({ objectFit: 'cover' })}
-                                        />
-                                    </div>
-                                </Link>
-
-                                <div className={css({ flex: 1 })}>
-                                    <div
-                                        className={flex({
-                                            justify: 'space-between',
-                                            align: 'flex-start',
-                                            wrap: 'wrap',
-                                            gap: '4',
-                                        })}
-                                    >
-                                        <div>
-                                            <Link href={`/user/${author.slug}`}>
-                                                <h3
-                                                    className={css({
-                                                        fontFamily: 'heading',
-                                                        fontSize: 'xl',
-                                                        fontWeight: '600',
-                                                        cursor: 'pointer',
-                                                        _hover: { color: 'primary' },
-                                                    })}
-                                                >
-                                                    {author.name}
-                                                </h3>
-                                            </Link>
-                                            <p
-                                                className={css({
-                                                    fontFamily: 'body',
-                                                    color: 'text-muted',
-                                                    mt: '2',
-                                                    maxW: '600px',
-                                                })}
-                                            >
-                                                {author.bio}
-                                            </p>
-                                        </div>
-
-                                        <Button
-                                            type="button"
-                                            variant={isFollowing ? 'secondary' : 'primary'}
-                                            size="sm"
-                                            onClick={handleFollowToggle}
-                                            disabled={isFollowPending || author?.id === viewerId}
-                                        >
-                                            {isFollowing ? (
-                                                <span
-                                                    className={css({
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        gap: '1',
-                                                    })}
-                                                >
-                                                    <Check size={14} />
-                                                    Folgst du
-                                                </span>
-                                            ) : (
-                                                '+ Folgen'
-                                            )}
-                                        </Button>
-                                    </div>
-
-                                    <div className={flex({ gap: '6', mt: '4' })}>
-                                        <div className={css({ textAlign: 'center' })}>
-                                            <div
-                                                className={css({
-                                                    fontFamily: 'heading',
-                                                    fontWeight: '600',
-                                                    fontSize: 'lg',
-                                                })}
-                                            >
-                                                {author.recipeCount}
-                                            </div>
-                                            <div
-                                                className={css({
-                                                    fontSize: 'sm',
-                                                    color: 'text-muted',
-                                                    fontFamily: 'body',
-                                                })}
-                                            >
-                                                Rezepte
-                                            </div>
-                                        </div>
-                                        <div className={css({ textAlign: 'center' })}>
-                                            <div
-                                                className={css({
-                                                    fontFamily: 'heading',
-                                                    fontWeight: '600',
-                                                    fontSize: 'lg',
-                                                })}
-                                            >
-                                                {authorFollowers.toLocaleString('de-DE')}
-                                            </div>
-                                            <div
-                                                className={css({
-                                                    fontSize: 'sm',
-                                                    color: 'text-muted',
-                                                    fontFamily: 'body',
-                                                })}
-                                            >
-                                                Follower
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <AuthorCard
+                        author={author}
+                        isFollowing={isFollowing}
+                        followerCount={authorFollowers}
+                        isFollowPending={isFollowPending}
+                        isOwnProfile={author.id === viewerId}
+                        onFollowToggle={handleFollowToggle}
+                    />
                 )}
 
-                {recipeActivities.length > 0 && (
-                    <div className={css({ mt: '12' })}>
-                        <h2
-                            className={css({
-                                fontFamily: 'heading',
-                                fontSize: '2xl',
-                                fontWeight: '600',
-                                mb: '6',
-                            })}
-                        >
-                            Aktivitäten
-                        </h2>
-                        <div
-                            className={css({
-                                bg: 'surface',
-                                borderRadius: '2xl',
-                                p: '6',
-                                boxShadow: 'shadow.medium',
-                            })}
-                        >
-                            <div className={css({ spaceY: '4' })}>
-                                {recipeActivities.map((activity) => (
-                                    <div
-                                        key={activity.id}
-                                        className={flex({
-                                            gap: '4',
-                                            align: 'flex-start',
-                                            p: '4',
-                                            bg: 'light',
-                                            borderRadius: 'xl',
-                                        })}
-                                    >
-                                        <div
-                                            className={css({
-                                                position: 'relative',
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: 'full',
-                                                overflow: 'hidden',
-                                                flexShrink: 0,
-                                            })}
-                                        >
-                                            <SmartImage
-                                                src={activity.user.avatar}
-                                                alt={activity.user.name}
-                                                aspect="1:1"
-                                                fill
-                                                sizes="48px"
-                                                className={css({ objectFit: 'cover' })}
-                                            />
-                                        </div>
-                                        <div className={css({ flex: 1 })}>
-                                            <p
-                                                className={css({
-                                                    fontWeight: '600',
-                                                    fontFamily: 'heading',
-                                                })}
-                                            >
-                                                {activity.user.name}
-                                            </p>
-                                            <p
-                                                className={css({
-                                                    color: 'text-muted',
-                                                    fontFamily: 'body',
-                                                })}
-                                            >
-                                                {activity.action}
-                                            </p>
-                                            {activity.content && (
-                                                <p
-                                                    className={css({
-                                                        mt: '2',
-                                                        color: 'text-muted',
-                                                    })}
-                                                >
-                                                    {activity.content}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div
-                                            className={css({
-                                                fontSize: 'sm',
-                                                color: 'text-muted',
-                                                fontFamily: 'body',
-                                            })}
-                                        >
-                                            {activity.timestamp}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <ActivityFeed activities={recipeActivities} />
             </main>
-
-            <Lightbox
-                open={lightboxOpen}
-                close={() => setLightboxOpen(false)}
-                index={lightboxIndex}
-                slides={heroImages.map((img) => ({
-                    src: img.src,
-                    title: img.title,
-                    description: img.subtitle || undefined,
-                }))}
-                styles={{
-                    container: {
-                        backgroundColor: 'rgba(0,0,0,0.95)',
-                    },
-                }}
-                carousel={{ preload: 2 }}
-            />
 
             <CookDialog
                 isOpen={showCookDialog}

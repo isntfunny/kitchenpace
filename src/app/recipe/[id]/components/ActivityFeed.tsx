@@ -4,16 +4,7 @@ import { SmartImage } from '@app/components/atoms/SmartImage';
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
-interface Activity {
-    id: string;
-    user: {
-        name: string | null;
-        avatar: string | null;
-    };
-    action: string;
-    content: string | null;
-    timestamp: string;
-}
+import type { Activity } from '../data';
 
 interface ActivityFeedProps {
     activities: Activity[];

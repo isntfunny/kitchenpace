@@ -1,0 +1,20 @@
+{
+    "$schema": "https://unpkg.com/knip@5/schema-jsonc.json",
+    "entry": ["panda.config.ts", "email-templates/*.mjs", "public/push-sw.js", "k6/**/*.js"],
+    "project": [
+        "src/**/*.{ts,tsx}",
+        "cli/**/*.ts",
+        "worker/**/*.ts",
+        "shared/**/*.ts",
+        "email-templates/**/*.mjs",
+        "*.{ts,mjs,cjs}",
+        "public/**/*.js",
+        "k6/**/*.js",
+    ],
+    "ignoreBinaries": ["eslint", "husky", "k6", "knip", "lint-staged", "prettier"],
+    "ignoreDependencies": ["k6"],
+    "ignoreExportsUsedInFile": {
+        "interface": true,
+        "type": true,
+    },
+}

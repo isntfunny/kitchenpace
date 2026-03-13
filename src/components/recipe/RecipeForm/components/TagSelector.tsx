@@ -2,6 +2,7 @@
 
 import { Hash } from 'lucide-react';
 import { ToggleGroup } from 'radix-ui';
+import { useCallback, useState } from 'react';
 
 import { css, cx } from 'styled-system/css';
 
@@ -18,6 +19,7 @@ interface TagSelectorProps {
     tagQuery: string;
     onTagQueryChange: (value: string) => void;
     onSelectionChange: (next: string[]) => void;
+    onCreateTag?: (name: string) => Promise<{ id: string; name: string } | null>;
 }
 
 const tagSearchInputClass = css({
@@ -102,13 +104,52 @@ const tagCountSelectedClass = css({
     color: 'primary',
 });
 
+const TAG_NAME_REGEX = /^[a-zA-ZäöüÄÖÜß0-9\- ]+$/;
+
 export function TagSelector({
     sortedTags,
     selectedTags,
     tagQuery,
     onTagQueryChange,
     onSelectionChange,
+    onCreateTag,
 }: TagSelectorProps) {
+    const [creating, setCreating] = useState(false);
+
+    const handleKeyDown = useCallback(
+        async (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+
+            const trimmed = tagQuery.trim();
+            if (!trimmed || !onCreateTag) return;
+            if (!TAG_NAME_REGEX.test(trimmed)) return;
+
+            // Check if exact match already in list
+            const existing = sortedTags.find((t) => t.name.toLowerCase() === trimmed.toLowerCase());
+            if (existing) {
+                // Toggle selection if not already selected
+                if (!selectedTags.includes(existing.id)) {
+                    onSelectionChange([...selectedTags, existing.id]);
+                }
+                onTagQueryChange('');
+                return;
+            }
+
+            setCreating(true);
+            try {
+                const tag = await onCreateTag(trimmed);
+                if (tag) {
+                    onSelectionChange([...selectedTags, tag.id]);
+                    onTagQueryChange('');
+                }
+            } finally {
+                setCreating(false);
+            }
+        },
+        [tagQuery, onCreateTag, sortedTags, selectedTags, onSelectionChange, onTagQueryChange],
+    );
+
     return (
         <div>
             <label className={css({ fontWeight: '600', display: 'block', fontSize: 'sm' })}>
@@ -118,12 +159,18 @@ export function TagSelector({
                 type="search"
                 value={tagQuery}
                 onChange={(event) => onTagQueryChange(event.target.value)}
-                placeholder="Tags durchsuchen"
+                onKeyDown={handleKeyDown}
+                placeholder={creating ? 'Wird erstellt...' : 'Tags suchen oder erstellen'}
+                disabled={creating}
                 className={tagSearchInputClass}
             />
-            {sortedTags.length === 0 ? (
+            {sortedTags.length === 0 && !tagQuery.trim() ? (
                 <p className={css({ fontSize: 'xs', color: 'text.muted', mt: '2' })}>
                     Keine Tags gefunden.
+                </p>
+            ) : sortedTags.length === 0 && tagQuery.trim() ? (
+                <p className={css({ fontSize: 'xs', color: 'text.muted', mt: '2' })}>
+                    Kein Treffer — Enter drücken zum Erstellen.
                 </p>
             ) : (
                 <ToggleGroup.Root

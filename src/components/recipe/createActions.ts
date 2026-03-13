@@ -748,3 +748,38 @@ export async function bulkDeleteRecipes(
         return { success: false, deletedCount: 0, error: 'Fehler beim Löschen der Rezepte' };
     }
 }
+
+const TAG_NAME_REGEX = /^[a-zA-ZäöüÄÖÜß0-9\- ]+$/;
+const MAX_TAG_LENGTH = 40;
+
+function tagSlug(name: string): string {
+    return name
+        .toLowerCase()
+        .replace(/ä/g, 'ae')
+        .replace(/ö/g, 'oe')
+        .replace(/ü/g, 'ue')
+        .replace(/ß/g, 'ss')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+}
+
+export async function findOrCreateTag(
+    rawName: string,
+): Promise<{ id: string; name: string } | null> {
+    const name = rawName.trim();
+    if (!name || name.length > MAX_TAG_LENGTH || !TAG_NAME_REGEX.test(name)) {
+        return null;
+    }
+
+    const slug = tagSlug(name);
+    if (!slug) return null;
+
+    const tag = await prisma.tag.upsert({
+        where: { slug },
+        update: {},
+        create: { name, slug },
+        select: { id: true, name: true },
+    });
+
+    return tag;
+}

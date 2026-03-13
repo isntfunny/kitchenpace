@@ -401,13 +401,13 @@ const nodeSelectedClass = css({
 });
 
 const nodeErrorClass = css({
-    borderColor: 'error.border',
-    boxShadow: '0 0 0 3px rgba(239,68,68,0.25)',
+    borderColor: { base: 'rgba(239,68,68,0.6)', _dark: 'rgba(248,113,113,0.5)' },
+    boxShadow: { base: '0 0 0 3px rgba(239,68,68,0.25)', _dark: '0 0 0 3px rgba(248,113,113,0.2)' },
 });
 
 const nodeWarningClass = css({
-    borderColor: 'warning.border',
-    boxShadow: '0 0 0 3px rgba(245,158,11,0.25)',
+    borderColor: { base: 'rgba(245,158,11,0.6)', _dark: 'rgba(251,191,36,0.5)' },
+    boxShadow: { base: '0 0 0 3px rgba(245,158,11,0.25)', _dark: '0 0 0 3px rgba(251,191,36,0.2)' },
 });
 
 const typeBadgeClass = css({
@@ -540,13 +540,13 @@ const validationIssuePreviewClass = css({
 });
 
 const validationIssuePreviewErrorClass = css({
-    backgroundColor: 'rgba(239,68,68,0.12)',
-    color: 'rgba(127,29,29,0.96)',
+    backgroundColor: { base: 'rgba(239,68,68,0.12)', _dark: 'rgba(239,68,68,0.15)' },
+    color: { base: 'rgba(127,29,29,0.96)', _dark: 'rgba(252,165,165,0.95)' },
 });
 
 const validationIssuePreviewWarningClass = css({
-    backgroundColor: 'rgba(245,158,11,0.12)',
-    color: 'rgba(120,53,15,0.96)',
+    backgroundColor: { base: 'rgba(245,158,11,0.12)', _dark: 'rgba(245,158,11,0.15)' },
+    color: { base: 'rgba(120,53,15,0.96)', _dark: 'rgba(253,224,71,0.95)' },
 });
 
 const ingredientChipClass = css({

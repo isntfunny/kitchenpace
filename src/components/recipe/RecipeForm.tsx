@@ -31,6 +31,7 @@ import { searchIngredients, searchTags } from '../recipe/actions';
 import {
     createIngredient,
     createRecipe,
+    findOrCreateTag,
     updateRecipe,
     type FlowNodeInput,
     type FlowEdgeInput,
@@ -477,6 +478,17 @@ export function RecipeForm({
         [categories, initialTagCandidates],
     );
 
+    // Block Enter key from submitting form during tutorial
+    const handleFormKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (
+            e.key === 'Enter' &&
+            tutorialActiveRef.current &&
+            (e.target as HTMLElement).tagName !== 'TEXTAREA'
+        ) {
+            e.preventDefault();
+        }
+    }, []);
+
     // ── submit ────────────────────────────────────────────────
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -657,7 +669,7 @@ export function RecipeForm({
     /* ── sidebar / accordion layout ── */
 
     const sidebarLayoutForm = (
-        <form onSubmit={handleSubmit} className={sidebarFormClass}>
+        <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className={sidebarFormClass}>
             {/* Left: accordion sidebar */}
             <div className={sidebarCollapsed ? sidebarCollapsedClass : sidebarClass}>
                 {!sidebarCollapsed && (
@@ -898,6 +910,7 @@ export function RecipeForm({
                             tagQuery={tagQuery}
                             onTagQueryChange={setTagQuery}
                             onSelectionChange={setSelectedTags}
+                            onCreateTag={findOrCreateTag}
                         />
                     </div>
 
@@ -968,7 +981,7 @@ export function RecipeForm({
     /* ── stack layout (default) ── */
 
     const stackLayoutForm = (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
             <div className={formStackClass}>
                 <GeneralInformationSection
                     title={title}
@@ -1004,6 +1017,7 @@ export function RecipeForm({
                         tagQuery={tagQuery}
                         onTagQueryChange={setTagQuery}
                         onSelectionChange={setSelectedTags}
+                        onCreateTag={findOrCreateTag}
                     />
                 </div>
 

@@ -61,10 +61,11 @@ function formatRelativeTime(date: Date) {
 
 type ToastBubbleProps = {
     toast: Toast;
+    showTail?: boolean;
     onDismiss: () => void;
 };
 
-export function ToastBubble({ toast, onDismiss }: ToastBubbleProps) {
+export function ToastBubble({ toast, showTail = false, onDismiss }: ToastBubbleProps) {
     const Icon = ICONS[toast.type];
     const accent = ACCENTS[toast.type];
 
@@ -88,7 +89,7 @@ export function ToastBubble({ toast, onDismiss }: ToastBubbleProps) {
             dragElastic={0.18}
             dragConstraints={{ left: 0, right: 0 }}
             onDragEnd={handleDragEnd}
-            initial={{ opacity: 0, y: -18, scale: 0.96 }}
+            initial={{ opacity: 0, x: 10, y: -20, scale: 0.78 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, x: 140, scale: 0.94 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
@@ -111,6 +112,7 @@ export function ToastBubble({ toast, onDismiss }: ToastBubbleProps) {
                 },
                 overflow: 'hidden',
                 outline: 'none',
+                transformOrigin: 'top right',
                 _focusVisible: {
                     boxShadow: {
                         base: `0 0 0 3px ${accent.border}, 0 24px 50px -28px ${accent.glow}`,
@@ -120,6 +122,27 @@ export function ToastBubble({ toast, onDismiss }: ToastBubbleProps) {
             })}
             style={{ borderColor: accent.border, touchAction: 'pan-y' }}
         >
+            {showTail && (
+                <div
+                    aria-hidden="true"
+                    className={css({
+                        position: 'absolute',
+                        top: '-8px',
+                        right: '22px',
+                        width: '16px',
+                        height: '16px',
+                        rotate: '45deg',
+                        borderTop: '1px solid',
+                        borderLeft: '1px solid',
+                        zIndex: 0,
+                    })}
+                    style={{
+                        background:
+                            'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,249,243,0.96))',
+                        borderColor: accent.border,
+                    }}
+                />
+            )}
             <div
                 className={css({
                     position: 'absolute',

@@ -2,7 +2,7 @@
 
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import { AnimatePresence } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 
 import { useToastContext } from '@app/components/providers/ToastProvider';
 import { css } from 'styled-system/css';
@@ -19,15 +19,15 @@ export function ToastViewport({ anchorElement }: ToastViewportProps) {
     const { refs, floatingStyles } = useFloating({
         placement: 'bottom-end',
         strategy: 'fixed',
-        middleware: [offset(14), flip(), shift({ padding: 8 })],
+        middleware: [offset({ mainAxis: 18, crossAxis: 10 }), flip(), shift({ padding: 8 })],
         whileElementsMounted: autoUpdate,
     });
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         refs.setReference(anchorElement);
     }, [anchorElement, refs]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         refs.setFloating(floatingElement);
     }, [floatingElement, refs]);
 
@@ -48,10 +48,11 @@ export function ToastViewport({ anchorElement }: ToastViewportProps) {
             })}
         >
             <AnimatePresence initial={false} mode="popLayout">
-                {toasts.map((toast) => (
+                {toasts.map((toast, index) => (
                     <ToastBubble
                         key={toast.id}
                         toast={toast}
+                        showTail={index === 0}
                         onDismiss={() => dismissToast(toast.id)}
                     />
                 ))}

@@ -95,9 +95,6 @@ export function StepTypePicker({
                     );
                 })}
             </div>
-            <button type="button" onClick={onClose} className={cancelClass}>
-                Abbrechen
-            </button>
         </motion.div>
     );
 }
@@ -166,21 +163,5 @@ const itemClass = css({
             base: '0 2px 8px rgba(224,123,83,0.2)',
             _dark: '0 2px 8px rgba(224,123,83,0.3)',
         },
-    },
-});
-
-const cancelClass = css({
-    display: 'block',
-    w: '100%',
-    mt: '2',
-    py: '1.5',
-    borderRadius: 'lg',
-    border: 'none',
-    bg: 'transparent',
-    color: 'text.muted',
-    fontSize: 'xs',
-    cursor: 'pointer',
-    _hover: {
-        bg: { base: 'rgba(0,0,0,0.04)', _dark: 'rgba(255,255,255,0.06)' },
     },
 });

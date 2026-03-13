@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Upload, Trash2, Check } from 'lucide-react';
+import { X, Upload, Trash2, Check, Edit3 } from 'lucide-react';
 import { useRef, useState, useCallback, useEffect } from 'react';
 
 import { UploadArea } from '@app/components/features/UploadArea';
@@ -50,6 +50,7 @@ export function NodeEditPanel({
     const [description, setDescription] = useState(data.description);
     const [duration, setDuration] = useState<number | undefined>(data.duration);
     const [photoKey, setPhotoKey] = useState<string | undefined>(data.photoKey);
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const currentConfig = STEP_CONFIGS[stepType];
@@ -201,15 +202,58 @@ export function NodeEditPanel({
 
                 {/* ── Title ── */}
                 <div className={fieldClass}>
-                    <div className={sectionLabelClass}>Titel</div>
-                    <input
-                        type="text"
-                        className={inputClass}
-                        style={{ border: `1px solid ${PALETTE.orange}40` }}
-                        value={label}
-                        onChange={(e) => setLabel(e.target.value)}
-                        placeholder={`Neuer ${currentConfig.label}-Schritt`}
-                    />
+                    <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                        <div className={sectionLabelClass}>Titel</div>
+                        <button
+                            type="button"
+                            onClick={() => setIsEditingTitle((v) => !v)}
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '1',
+                                fontSize: '10px',
+                                color: 'text.muted',
+                                cursor: 'pointer',
+                                px: '1.5',
+                                py: '0.5',
+                                borderRadius: 'md',
+                                border: '1px solid rgba(224,123,83,0.2)',
+                                background: 'transparent',
+                                _hover: { background: 'rgba(224,123,83,0.08)' },
+                            })}
+                        >
+                            <Edit3 style={{ width: '10px', height: '10px' }} />
+                            {isEditingTitle ? 'Standard' : 'Bearbeiten'}
+                        </button>
+                    </div>
+                    {isEditingTitle ? (
+                        <input
+                            type="text"
+                            className={inputClass}
+                            style={{ border: `1px solid ${PALETTE.orange}40` }}
+                            value={label}
+                            onChange={(e) => setLabel(e.target.value)}
+                            placeholder={`Neuer ${currentConfig.label}-Schritt`}
+                        />
+                    ) : (
+                        <div
+                            className={css({
+                                px: '3',
+                                py: '2',
+                                borderRadius: 'xl',
+                                fontSize: 'sm',
+                                color: 'text.muted',
+                                backgroundColor: {
+                                    base: 'rgba(0,0,0,0.02)',
+                                    _dark: 'rgba(255,255,255,0.04)',
+                                },
+                            })}
+                        >
+                            {label && label.trim() !== currentConfig.label
+                                ? label
+                                : `${currentConfig.label} (Standard)`}
+                        </div>
+                    )}
                 </div>
 
                 {/* ── Duration ── */}

@@ -19,7 +19,7 @@ import {
     useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Download } from 'lucide-react';
+import { Download, Maximize2, Minimize2 } from 'lucide-react';
 import {
     type ComponentType,
     type Dispatch,
@@ -280,6 +280,38 @@ function DesktopViewInner({
     const { getNodes, setViewport } = useReactFlow();
     const hasFitRef = useRef(false);
 
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const toggleFullscreen = useCallback(() => {
+        if (!document.fullscreenElement) {
+            containerRef.current
+                ?.requestFullscreen()
+                .then(() => {
+                    setIsFullscreen(true);
+                })
+                .catch(() => {
+                    // Fullscreen blocked or failed
+                });
+        } else {
+            document
+                .exitFullscreen()
+                .then(() => {
+                    setIsFullscreen(false);
+                })
+                .catch(() => {
+                    // Exit fullscreen failed
+                });
+        }
+    }, []);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
+
     // Allow xyflow to apply dimension measurements (needed for fitView)
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -352,7 +384,12 @@ function DesktopViewInner({
     return (
         <div
             ref={containerRef}
-            style={{ height: 'calc(100vh - 200px)', minHeight: 400, position: 'relative' }}
+            style={{
+                height: isFullscreen ? '100vh' : 'calc(100vh - 200px)',
+                minHeight: 400,
+                position: 'relative',
+                backgroundColor: dark ? '#0d0d0d' : '#ffffff',
+            }}
         >
             <ReactFlow
                 nodes={rfNodes}
@@ -378,14 +415,51 @@ function DesktopViewInner({
                 />
             </ReactFlow>
 
-            {/* PDF export button — bottom right */}
+            {/* Fullscreen button — bottom right */}
+            <button
+                type="button"
+                onClick={toggleFullscreen}
+                title={isFullscreen ? 'Vollbild beenden' : 'Im Vollbild anzeigen'}
+                className={css({
+                    position: 'absolute',
+                    bottom: '3',
+                    right: '3',
+                    zIndex: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.5',
+                    py: '1.5',
+                    px: '3',
+                    borderRadius: 'lg',
+                    border: {
+                        base: '1px solid rgba(224,123,83,0.2)',
+                        _dark: '1px solid rgba(224,123,83,0.15)',
+                    },
+                    bg: 'surface',
+                    color: 'palette.orange',
+                    fontSize: 'xs',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    backdropFilter: 'blur(4px)',
+                    _hover: { bg: 'surface.elevated' },
+                })}
+            >
+                {isFullscreen ? (
+                    <Minimize2 style={{ width: 13, height: 13 }} />
+                ) : (
+                    <Maximize2 style={{ width: 13, height: 13 }} />
+                )}
+                {isFullscreen ? 'Schließen' : 'Vollbild'}
+            </button>
+
+            {/* PDF export button — above fullscreen button */}
             <button
                 type="button"
                 onClick={handleExportPdf}
                 title="Als PDF exportieren"
                 className={css({
                     position: 'absolute',
-                    bottom: '3',
+                    bottom: '14',
                     right: '3',
                     zIndex: 10,
                     display: 'flex',

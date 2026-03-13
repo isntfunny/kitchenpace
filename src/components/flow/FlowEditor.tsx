@@ -14,7 +14,7 @@ import {
     ReactFlowProvider,
     Panel,
 } from '@xyflow/react';
-import { ChevronLeft, Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefCallback } from 'react';
 import '@xyflow/react/dist/style.css';
 
@@ -34,7 +34,6 @@ import type {
 import { FlowEditorContext, type FlowEditorContextValue } from './editor/FlowEditorContext';
 import { InsertEdge } from './editor/InsertEdge';
 import { NodeEditPanel } from './editor/NodeEditPanel';
-import { NodePalette } from './editor/NodePalette';
 import { RecipeNode } from './editor/RecipeNode';
 import { getStepConfig } from './editor/stepConfig';
 import { useFlowAutoLayout } from './editor/useFlowAutoLayout';
@@ -46,13 +45,8 @@ const HORIZONTAL_GAP = 80;
 
 /* ── sidebar resize constants ────────────────────────────── */
 
-const LS_LEFT_W = 'flow-left-width';
 const LS_RIGHT_W = 'flow-right-width';
-const LS_LEFT_VIS = 'flow-left-visible';
-const LEFT_W_DEFAULT = 220;
 const RIGHT_W_DEFAULT = 300;
-const LEFT_W_MIN = 160;
-const LEFT_W_MAX = 400;
 const RIGHT_W_MIN = 240;
 const RIGHT_W_MAX = 500;
 
@@ -224,50 +218,22 @@ function FlowEditorInner({
 
     /* ── sidebar resize / visibility ── */
 
-    const [leftWidth, setLeftWidth] = useState(LEFT_W_DEFAULT);
     const [rightWidth, setRightWidth] = useState(RIGHT_W_DEFAULT);
-    const [leftVisible, setLeftVisible] = useState(true);
 
     // Restore from localStorage after mount (avoids SSR/client hydration mismatch)
     useEffect(() => {
-        const lw = Number(localStorage.getItem(LS_LEFT_W)) || LEFT_W_DEFAULT;
         const rw = Number(localStorage.getItem(LS_RIGHT_W)) || RIGHT_W_DEFAULT;
-        const lv = localStorage.getItem(LS_LEFT_VIS) !== 'false';
-        setLeftWidth(lw);
         setRightWidth(rw);
-        setLeftVisible(lv);
     }, []);
 
     // Persist to localStorage
     useEffect(() => {
-        localStorage.setItem(LS_LEFT_W, String(leftWidth));
-    }, [leftWidth]);
-    useEffect(() => {
         localStorage.setItem(LS_RIGHT_W, String(rightWidth));
     }, [rightWidth]);
-    useEffect(() => {
-        localStorage.setItem(LS_LEFT_VIS, String(leftVisible));
-    }, [leftVisible]);
 
-    // Refs so resize handlers always read the current width without stale closures
-    const leftWidthRef = useRef(leftWidth);
-    leftWidthRef.current = leftWidth;
+    // Ref so resize handler always read the current width without stale closures
     const rightWidthRef = useRef(rightWidth);
     rightWidthRef.current = rightWidth;
-
-    const startLeftResize = useCallback((e: React.MouseEvent) => {
-        e.preventDefault();
-        const startX = e.clientX;
-        const startW = leftWidthRef.current;
-        const onMove = (ev: MouseEvent) =>
-            setLeftWidth(Math.max(LEFT_W_MIN, Math.min(LEFT_W_MAX, startW + ev.clientX - startX)));
-        const onUp = () => {
-            window.removeEventListener('mousemove', onMove);
-            window.removeEventListener('mouseup', onUp);
-        };
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
-    }, []);
 
     const startRightResize = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
@@ -643,6 +609,11 @@ function FlowEditorInner({
     );
 
     const handleSelectNode = useCallback((nodeId: string) => {
+        // Start and Servieren nodes are not editable
+        if (nodeId === 'start' || nodeId === 'servieren') {
+            setSelectedNodeId(null);
+            return;
+        }
         setSelectedNodeId(nodeId);
         requestAnimationFrame(() => {
             rfRef.current.fitView({
@@ -711,27 +682,6 @@ function FlowEditorInner({
         },
         [autoLayoutAndFit],
     );
-
-    /* ── drag & drop from palette ── */
-
-    const handleDrop = useCallback(
-        (event: React.DragEvent) => {
-            event.preventDefault();
-            const stepType = event.dataTransfer.getData('application/step-type') as StepType;
-            if (!stepType) return;
-            const position = rfRef.current.screenToFlowPosition({
-                x: event.clientX,
-                y: event.clientY,
-            });
-            addNewNode(stepType, position);
-        },
-        [addNewNode],
-    );
-
-    const handleDragOver = useCallback((event: React.DragEvent) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'copy';
-    }, []);
 
     /* ── auto-layout ── */
 
@@ -814,43 +764,7 @@ function FlowEditorInner({
     return (
         <FlowEditorContext.Provider value={contextValue}>
             <div className={editorContainerClass}>
-                {/* ── Left palette ── */}
-                {leftVisible ? (
-                    <div
-                        className="group"
-                        style={{ width: leftWidth, flexShrink: 0, position: 'relative' }}
-                    >
-                        <NodePalette onAddNode={addNewNode} />
-                        <div className={leftResizeHandleClass} onMouseDown={startLeftResize}>
-                            <button
-                                type="button"
-                                className={sidebarToggleButtonClass}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setLeftVisible(false);
-                                }}
-                                title="Palette ausblenden"
-                            >
-                                <ChevronLeft style={{ width: 12, height: 12 }} />
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <button
-                        type="button"
-                        className={paletteShowButtonClass}
-                        onClick={() => setLeftVisible(true)}
-                        title="Palette öffnen"
-                    >
-                        <Plus style={{ width: 12, height: 12 }} />
-                    </button>
-                )}
-                <div
-                    ref={canvasRefCallback}
-                    className={canvasContainerClass}
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                >
+                <div ref={canvasRefCallback} className={canvasContainerClass}>
                     <ReactFlow
                         nodes={nodes}
                         edges={edges}
@@ -974,33 +888,6 @@ const editorContainerClass = css({
     minHeight: '400px',
 });
 
-const leftResizeHandleClass = css({
-    position: 'absolute',
-    top: '0',
-    bottom: '0',
-    right: '-6px',
-    width: '12px',
-    cursor: 'col-resize',
-    zIndex: '10',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    '&::before': {
-        content: '""',
-        display: 'block',
-        width: '2px',
-        height: '32px',
-        borderRadius: 'full',
-        backgroundColor: { base: 'rgba(224,123,83,0.0)', _dark: 'rgba(224,123,83,0.0)' },
-        transition: 'background-color 0.15s ease',
-    },
-    _hover: {
-        '&::before': {
-            backgroundColor: { base: 'rgba(224,123,83,0.5)', _dark: 'rgba(224,123,83,0.4)' },
-        },
-    },
-});
-
 const rightResizeHandleClass = css({
     position: 'absolute',
     top: '0',
@@ -1023,43 +910,6 @@ const rightResizeHandleClass = css({
         '&::before': {
             backgroundColor: { base: 'rgba(224,123,83,0.5)', _dark: 'rgba(224,123,83,0.4)' },
         },
-    },
-});
-
-const sidebarToggleButtonClass = css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '18px',
-    height: '18px',
-    borderRadius: 'full',
-    border: { base: '1px solid rgba(224,123,83,0.35)', _dark: '1px solid rgba(224,123,83,0.25)' },
-    backgroundColor: { base: 'white', _dark: '#1a1d21' },
-    color: { base: 'rgba(224,123,83,0.8)', _dark: 'rgba(224,123,83,0.7)' },
-    cursor: 'pointer',
-    opacity: '0',
-    transition: 'opacity 0.15s ease',
-    '.group:hover &': { opacity: '1' },
-});
-
-const paletteShowButtonClass = css({
-    flexShrink: '0',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '1',
-    width: '24px',
-    borderRadius: 'xl',
-    border: { base: '1px solid rgba(224,123,83,0.3)', _dark: '1px solid rgba(224,123,83,0.2)' },
-    backgroundColor: { base: 'surface', _dark: 'surface' },
-    color: { base: 'rgba(224,123,83,0.7)', _dark: 'rgba(224,123,83,0.6)' },
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-    _hover: {
-        backgroundColor: 'accent.soft',
-        color: 'brand.primary',
-        borderColor: { base: 'rgba(224,123,83,0.6)', _dark: 'rgba(224,123,83,0.5)' },
     },
 });
 

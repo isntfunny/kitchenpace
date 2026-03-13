@@ -1,5 +1,7 @@
 'use client';
 
+import { type RefObject } from 'react';
+
 import { FileUpload } from '@app/components/features/FileUpload';
 import { css } from 'styled-system/css';
 
@@ -12,6 +14,7 @@ interface GeneralInformationSectionProps {
     onImageKeyChange?: (value: string) => void;
     showAutoSaveHint?: boolean;
     recipeId?: string;
+    titleInputRef?: RefObject<HTMLInputElement | null>;
 }
 
 export function GeneralInformationSection({
@@ -23,6 +26,7 @@ export function GeneralInformationSection({
     onImageKeyChange = () => {},
     showAutoSaveHint = false,
     recipeId,
+    titleInputRef,
 }: GeneralInformationSectionProps) {
     return (
         <div>
@@ -44,6 +48,7 @@ export function GeneralInformationSection({
                     value={title}
                     onChange={(e) => onTitleChange(e.target.value)}
                     placeholder="z.B. Spaghetti Carbonara"
+                    ref={titleInputRef}
                     className={css({
                         width: '100%',
                         padding: '3',

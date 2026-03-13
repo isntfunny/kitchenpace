@@ -8,7 +8,7 @@ import {
     type EdgeProps,
 } from '@xyflow/react';
 import { Plus, Trash2 } from 'lucide-react';
-import { memo, useCallback, useRef, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
 import { useIsDark } from '@app/lib/darkMode';
@@ -37,7 +37,6 @@ function InsertEdgeComponent({
     const dark = useIsDark();
     const [isHovered, setIsHovered] = useState(false);
     const [popoverOpen, setPopoverOpen] = useState(false);
-    const popoverRef = useRef<HTMLDivElement>(null);
 
     const [edgePath, labelX, labelY] = getSmoothStepPath({
         sourceX,
@@ -61,8 +60,6 @@ function InsertEdgeComponent({
         setPopoverOpen(false);
         setIsHovered(false);
     }, []);
-
-    const showButton = isHovered || popoverOpen;
 
     return (
         <>
@@ -102,22 +99,24 @@ function InsertEdgeComponent({
                         position: 'absolute',
                         transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
                         pointerEvents: 'all',
-                        zIndex: showButton ? 1000 : 0,
-                        opacity: showButton ? 1 : 0,
-                        transition: 'opacity 0.15s ease',
+                        zIndex: 1000,
                     }}
                     className="nodrag nopan"
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => !popoverOpen && setIsHovered(false)}
                 >
-                    <div ref={popoverRef} style={{ position: 'relative' }}>
+                    <div style={{ position: 'relative' }}>
                         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                             {/* "+" circle button */}
                             <button
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setPopoverOpen((v) => !v);
+                                    setPopoverOpen((v) => {
+                                        const newValue = !v;
+                                        if (!newValue) setIsHovered(false);
+                                        return newValue;
+                                    });
                                 }}
                                 style={{
                                     width: '26px',

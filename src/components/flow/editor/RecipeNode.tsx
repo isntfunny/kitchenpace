@@ -2,7 +2,7 @@
 
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Clock, GitBranch, X } from 'lucide-react';
-import { memo, useMemo, useCallback, useState } from 'react';
+import { memo, useMemo, useCallback, useState, useRef, useEffect } from 'react';
 
 import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
 import { useIsDark } from '@app/lib/darkMode';
@@ -68,11 +68,24 @@ function renderDescription(
 function ForkButton({ nodeId }: { nodeId: string }) {
     const { onForkNodeAfter } = useFlowEditor();
     const [open, setOpen] = useState(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!open) return;
+        function handleClickOutside(event: MouseEvent) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [open]);
 
     if (!onForkNodeAfter) return null;
 
     return (
         <div
+            ref={wrapperRef}
             className={forkWrapperClass}
             style={open ? { opacity: 1, pointerEvents: 'auto' } : undefined}
         >
@@ -175,13 +188,21 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
             {showAddBefore && <AddNodeButton nodeId={id} side="target" />}
 
             <div
-                className={cx(nodeCardClass, selected && nodeSelectedClass, 'group')}
+                className={cx(
+                    nodeCardClass,
+                    selected && nodeSelectedClass,
+                    'group',
+                    data.stepType === 'start' && startNodeClass,
+                    data.stepType === 'servieren' && finishNodeClass,
+                )}
                 style={{
                     backgroundImage: isDark ? config.darkGradient : config.gradient,
                     backgroundColor: isDark ? config.darkColor : config.color,
                 }}
                 onClick={handleClick}
             >
+                {data.stepType === 'start' && <div className={startBadgeClass}>Start</div>}
+                {data.stepType === 'servieren' && <div className={finishBadgeClass}>Finish</div>}
                 {config.canHaveIncomingEdge && (
                     <Handle type="target" position={Position.Left} style={handleStyle} />
                 )}
@@ -200,7 +221,11 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                         )}
                     </div>
 
-                    <div className={titleClass}>{data.label || 'Unbenannter Schritt'}</div>
+                    <div className={titleClass}>
+                        {data.label && data.label.trim() !== config.label
+                            ? data.label
+                            : config.label}
+                    </div>
 
                     {renderedDescription && (
                         <div className={descriptionClass}>{renderedDescription}</div>
@@ -436,6 +461,62 @@ const forkButtonClass = css({
         color: 'brand.primary',
         transform: 'scale(1.1)',
     },
+});
+
+/* Start node styling - green glow effect */
+const startNodeClass = css({
+    boxShadow: {
+        base: '0 0 0 3px rgba(39,174,96,0.4), 0 4px 16px rgba(39,174,96,0.3)',
+        _dark: '0 0 0 3px rgba(39,174,96,0.5), 0 4px 16px rgba(39,174,96,0.4)',
+    },
+});
+
+const startBadgeClass = css({
+    position: 'absolute',
+    top: '-8px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    px: '2',
+    py: '0.5',
+    borderRadius: 'full',
+    fontSize: '9px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    backgroundColor: '#27ae60',
+    color: 'white',
+    boxShadow: '0 2px 8px rgba(39,174,96,0.4)',
+});
+
+/* Finish/Servieren node styling - checkered flag pattern border */
+const finishNodeClass = css({
+    border: {
+        base: '3px solid transparent',
+        _dark: '3px solid transparent',
+    },
+    borderImage:
+        'repeating-linear-gradient(45deg, #27ae60 0, #27ae60 10px, white 10px, white 20px, #e74c3c 20px, #e74c3c 30px, white 30px, white 40px) 1',
+    boxShadow: {
+        base: '0 0 0 3px rgba(231,76,60,0.4), 0 4px 16px rgba(231,76,60,0.3)',
+        _dark: '0 0 0 3px rgba(231,76,60,0.5), 0 4px 16px rgba(231,76,60,0.4)',
+    },
+});
+
+const finishBadgeClass = css({
+    position: 'absolute',
+    top: '-8px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    px: '2',
+    py: '0.5',
+    borderRadius: 'full',
+    fontSize: '9px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    backgroundColor: '#e74c3c',
+    color: 'white',
+    boxShadow: '0 2px 8px rgba(231,76,60,0.4)',
 });
 
 const handleStyle: React.CSSProperties = {

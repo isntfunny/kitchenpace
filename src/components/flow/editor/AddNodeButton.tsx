@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
 import { css } from 'styled-system/css';
@@ -18,6 +18,18 @@ interface AddNodeButtonProps {
 function AddNodeButtonComponent({ nodeId, side = 'source' }: AddNodeButtonProps) {
     const { onAddNodeAfter, onAddNodeBefore } = useFlowEditor();
     const [open, setOpen] = useState(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!open) return;
+        function handleClickOutside(event: MouseEvent) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [open]);
 
     const handleSelect = useCallback(
         (stepType: StepType) => {
@@ -31,12 +43,10 @@ function AddNodeButtonComponent({ nodeId, side = 'source' }: AddNodeButtonProps)
         [nodeId, side, onAddNodeAfter, onAddNodeBefore],
     );
 
-    const handleClose = useCallback(() => setOpen(false), []);
-
     const isLeft = side === 'target';
 
     return (
-        <div className={wrapperClass}>
+        <div ref={wrapperRef} className={wrapperClass}>
             <button
                 type="button"
                 className={circleButtonClass}
@@ -70,7 +80,7 @@ function AddNodeButtonComponent({ nodeId, side = 'source' }: AddNodeButtonProps)
                     <StepTypePicker
                         title={isLeft ? 'Was passiert davor?' : 'Was passiert als nächstes?'}
                         onSelect={handleSelect}
-                        onClose={handleClose}
+                        onClose={() => setOpen(false)}
                     />
                 </div>
             )}

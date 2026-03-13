@@ -1,39 +1,55 @@
-import type { RefObject } from 'react';
+import type { RecipeTutorialTargetId } from './shared';
 
-export const RECIPE_CREATION_TUTORIAL_KEY = 'kitchenpace:recipe-create-tutorial';
-
-export const RECIPE_TUTORIAL_TARGETS = {
-    title: 'title',
-} as const;
-
-export type RecipeTutorialTargetId =
-    (typeof RECIPE_TUTORIAL_TARGETS)[keyof typeof RECIPE_TUTORIAL_TARGETS];
-
-export interface RecipeTutorialTargets {
-    title: RefObject<HTMLInputElement | null>;
+export interface RecipeTutorialFlowState {
+    nodeCount: number;
+    hasBranch: boolean;
 }
 
 export interface RecipeTutorialState {
     titleValue: string;
+    categoryCount: number;
+    ingredientCount: number;
+    autoSaveLabel: string | null;
+    savedRecipeId?: string;
+    isDesktop: boolean;
+    flow: RecipeTutorialFlowState;
 }
 
 export interface RecipeCreationTutorialProps {
-    targets: RecipeTutorialTargets;
     state: RecipeTutorialState;
     onFocusTitleField: () => void;
-    onComplete: () => void;
+    onComplete: () => Promise<void> | void;
 }
 
-export interface BaseTutorialPayload {
-    componentKey: string;
+export type RecipeTutorialStepKind = 'info' | 'title-match' | 'state' | 'event';
+
+export interface RecipeTutorialStep {
+    id: string;
+    kind: RecipeTutorialStepKind;
     title: string;
     description: string;
     primaryLabel: string;
     targetId?: RecipeTutorialTargetId;
+    expectedValue?: string;
+    stateKey?:
+        | 'categorySelected'
+        | 'ingredientAdded'
+        | 'autosaveVisible'
+        | 'flowNodeCreated'
+        | 'flowBranchCreated';
+    eventKey?:
+        | 'servingsCustomOpened'
+        | 'ingredientAmountFocused'
+        | 'ingredientCommentClicked'
+        | 'flowAddButtonClicked';
+    allowTargetInteraction?: boolean;
+    autoFocusAction?: 'title';
+    accentLabel?: string;
 }
 
-export type WelcomeTutorialPayload = BaseTutorialPayload;
-
-export interface InputTutorialPayload extends BaseTutorialPayload {
-    expectedValue: string;
+export interface RecipeTutorialRuntimeFlags {
+    servingsCustomOpened: boolean;
+    ingredientAmountFocused: boolean;
+    ingredientCommentClicked: boolean;
+    flowAddButtonClicked: boolean;
 }

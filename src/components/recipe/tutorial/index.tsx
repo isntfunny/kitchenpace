@@ -1,47 +1,145 @@
 'use client';
 
-import { OnboardingProvider } from '@onboardjs/react';
-import type { StepComponentProps } from '@onboardjs/react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { TitleChallengeStep } from './components/TitleChallengeStep';
 import { TutorialOverlay } from './components/TutorialOverlay';
-import { WelcomeStep } from './components/WelcomeStep';
-import { RECIPE_TUTORIAL_COMPONENT_KEYS, recipeTutorialSteps } from './steps';
-import type { InputTutorialPayload, RecipeCreationTutorialProps } from './types';
+import { RECIPE_TUTORIAL_EVENTS } from './shared';
+import { recipeTutorialSteps } from './steps';
+import type { RecipeCreationTutorialProps, RecipeTutorialRuntimeFlags } from './types';
+
+function isStepComplete(
+    stepId: string,
+    steps: typeof recipeTutorialSteps,
+    state: RecipeCreationTutorialProps['state'],
+    runtime: RecipeTutorialRuntimeFlags,
+) {
+    const step = steps.find((item) => item.id === stepId);
+    if (!step) return false;
+
+    if (step.kind === 'info') return true;
+
+    if (step.kind === 'title-match') {
+        return state.titleValue.trim().toLowerCase() === step.expectedValue?.trim().toLowerCase();
+    }
+
+    if (step.kind === 'state') {
+        switch (step.stateKey) {
+            case 'categorySelected':
+                return state.categoryCount > 0;
+            case 'ingredientAdded':
+                return state.ingredientCount > 0;
+            case 'autosaveVisible':
+                return Boolean(state.autoSaveLabel);
+            case 'flowNodeCreated':
+                return state.flow.nodeCount > 2;
+            case 'flowBranchCreated':
+                return state.flow.hasBranch;
+            default:
+                return false;
+        }
+    }
+
+    if (step.kind === 'event') {
+        switch (step.eventKey) {
+            case 'servingsCustomOpened':
+                return runtime.servingsCustomOpened;
+            case 'ingredientAmountFocused':
+                return runtime.ingredientAmountFocused;
+            case 'ingredientCommentClicked':
+                return runtime.ingredientCommentClicked;
+            case 'flowAddButtonClicked':
+                return runtime.flowAddButtonClicked;
+            default:
+                return false;
+        }
+    }
+
+    return false;
+}
 
 export function RecipeCreationTutorial({
-    targets,
     state,
     onFocusTitleField,
     onComplete,
 }: RecipeCreationTutorialProps) {
-    const InputChallengeComponent = useCallback(
-        (props: StepComponentProps<InputTutorialPayload>) => (
-            <TitleChallengeStep
-                {...props}
-                titleValue={state.titleValue}
-                onFocusTitleField={onFocusTitleField}
-            />
-        ),
-        [onFocusTitleField, state.titleValue],
+    const activeSteps = useMemo(
+        () =>
+            state.isDesktop
+                ? recipeTutorialSteps
+                : recipeTutorialSteps.filter((step) => !step.id.startsWith('flow-')),
+        [state.isDesktop],
+    );
+    const [stepIndex, setStepIndex] = useState(0);
+    const [runtime, setRuntime] = useState<RecipeTutorialRuntimeFlags>({
+        servingsCustomOpened: false,
+        ingredientAmountFocused: false,
+        ingredientCommentClicked: false,
+        flowAddButtonClicked: false,
+    });
+
+    const step = activeSteps[stepIndex];
+    const canContinue = useMemo(
+        () => (step ? isStepComplete(step.id, activeSteps, state, runtime) : false),
+        [activeSteps, runtime, state, step],
     );
 
-    const componentRegistry = useMemo(
-        () => ({
-            [RECIPE_TUTORIAL_COMPONENT_KEYS.welcome]: WelcomeStep,
-            [RECIPE_TUTORIAL_COMPONENT_KEYS.inputChallenge]: InputChallengeComponent,
-        }),
-        [InputChallengeComponent],
-    );
+    useEffect(() => {
+        if (step.autoFocusAction === 'title') {
+            onFocusTitleField();
+        }
+    }, [onFocusTitleField, step.autoFocusAction, step.id]);
+
+    useEffect(() => {
+        const handlers: Array<() => void> = [];
+
+        const register = (
+            eventName: string,
+            updater: (prev: RecipeTutorialRuntimeFlags) => RecipeTutorialRuntimeFlags,
+        ) => {
+            const handler = () => setRuntime(updater);
+            window.addEventListener(eventName, handler);
+            handlers.push(() => window.removeEventListener(eventName, handler));
+        };
+
+        register(RECIPE_TUTORIAL_EVENTS.servingsCustomOpened, (prev) => ({
+            ...prev,
+            servingsCustomOpened: true,
+        }));
+        register(RECIPE_TUTORIAL_EVENTS.ingredientAmountFocused, (prev) => ({
+            ...prev,
+            ingredientAmountFocused: true,
+        }));
+        register(RECIPE_TUTORIAL_EVENTS.ingredientCommentClicked, (prev) => ({
+            ...prev,
+            ingredientCommentClicked: true,
+        }));
+        register(RECIPE_TUTORIAL_EVENTS.flowAddButtonClicked, (prev) => ({
+            ...prev,
+            flowAddButtonClicked: true,
+        }));
+
+        return () => {
+            handlers.forEach((cleanup) => cleanup());
+        };
+    }, []);
+
+    const handleContinue = useCallback(async () => {
+        if (!canContinue) return;
+        const isLast = stepIndex === activeSteps.length - 1;
+        if (isLast) {
+            await onComplete();
+            return;
+        }
+        setStepIndex((current) => current + 1);
+    }, [activeSteps.length, canContinue, onComplete, stepIndex]);
+
+    if (!step) return null;
 
     return (
-        <OnboardingProvider
-            steps={recipeTutorialSteps}
-            componentRegistry={componentRegistry}
-            onFlowComplete={onComplete}
-        >
-            <TutorialOverlay targets={targets} />
-        </OnboardingProvider>
+        <TutorialOverlay
+            step={step}
+            canContinue={canContinue}
+            onContinue={() => void handleContinue()}
+        />
     );
 }

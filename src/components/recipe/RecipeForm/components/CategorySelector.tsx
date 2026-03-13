@@ -52,7 +52,10 @@ export function CategorySelector({ categories, selectedIds, onToggle }: Category
                     *
                 </span>
             </label>
-            <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
+            <div
+                className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}
+                data-tutorial="category"
+            >
                 {categories.map((cat) => {
                     const selected = selectedIds.includes(cat.id);
 

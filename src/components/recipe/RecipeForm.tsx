@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import type { EditRecipeData } from '@app/app/actions/recipes';
+import { completeRecipeCreationTutorial } from '@app/app/actions/tutorials';
 import type {
     FlowEdgeSerialized,
     FlowNodeSerialized,
@@ -25,8 +26,6 @@ const RecipeCreationTutorial = dynamic(
     () => import('./tutorial').then((m) => m.RecipeCreationTutorial),
     { ssr: false },
 );
-
-const RECIPE_CREATION_TUTORIAL_KEY = 'kitchenpace:recipe-create-tutorial:v1';
 
 import { searchIngredients, searchTags } from '../recipe/actions';
 import {
@@ -47,6 +46,12 @@ import {
     ErrorBanner,
 } from './RecipeForm/components';
 import { AddedIngredient, Category, IngredientSearchResult, Tag } from './RecipeForm/data';
+import {
+    dispatchRecipeTutorialEvent,
+    RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY,
+    RECIPE_CREATION_TUTORIAL_KEY,
+    RECIPE_TUTORIAL_EVENTS,
+} from './tutorial/shared';
 import type { TagFacet } from './types';
 
 const formStackClass = stack({ gap: '6' });
@@ -63,6 +68,7 @@ interface RecipeFormProps {
     authorId: string;
     initialData?: EditRecipeData;
     layout?: 'stack' | 'sidebar';
+    initialShouldShowTutorial?: boolean;
 }
 
 export function RecipeForm({
@@ -72,6 +78,7 @@ export function RecipeForm({
     authorId,
     initialData,
     layout = 'stack',
+    initialShouldShowTutorial = false,
 }: RecipeFormProps) {
     const op = useOpenPanel();
     const isEditMode = Boolean(initialData);
@@ -126,6 +133,11 @@ export function RecipeForm({
     const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
     const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const titleInputRef = useRef<HTMLInputElement>(null);
+    const [showTutorialCelebration, setShowTutorialCelebration] = useState(false);
+    const [tutorialFlowState, setTutorialFlowState] = useState({
+        nodeCount: initialData?.flowNodes?.length ?? 2,
+        hasBranch: false,
+    });
     const focusTitleField = useCallback(() => {
         if (!titleInputRef.current) return;
         titleInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -249,6 +261,20 @@ export function RecipeForm({
         selectedTags,
         ingredients,
     ]);
+
+    useEffect(() => {
+        if (!isEditMode) return;
+
+        try {
+            const shouldCelebrate =
+                window.sessionStorage.getItem(RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY) === 'done';
+            if (!shouldCelebrate) return;
+            window.sessionStorage.removeItem(RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY);
+            setShowTutorialCelebration(true);
+        } catch {
+            // ignore sessionStorage failures
+        }
+    }, [isEditMode]);
 
     // ── ingredient search ────────────────────────────────────
     useEffect(() => {
@@ -392,6 +418,16 @@ export function RecipeForm({
     const handleFlowChange = useCallback((nodes: FlowNodeInput[], edges: FlowEdgeInput[]) => {
         flowNodesRef.current = nodes;
         flowEdgesRef.current = edges;
+
+        const outgoingCounts = new Map<string, number>();
+        for (const edge of edges) {
+            outgoingCounts.set(edge.source, (outgoingCounts.get(edge.source) ?? 0) + 1);
+        }
+
+        setTutorialFlowState({
+            nodeCount: nodes.length,
+            hasBranch: Array.from(outgoingCounts.values()).some((count) => count > 1),
+        });
     }, []);
 
     const handleAiApply = useCallback(
@@ -707,7 +743,10 @@ export function RecipeForm({
                 >
                     {/* Autosave bar */}
                     {autoSaveLabel && (
-                        <div className={autoSaveBarClass(autoSaveStatus)}>
+                        <div
+                            className={autoSaveBarClass(autoSaveStatus)}
+                            data-tutorial="autosave-bar"
+                        >
                             {autoSaveStatus === 'saving' && <span className={spinnerClass} />}
                             {autoSaveLabel}
                         </div>
@@ -889,6 +928,21 @@ export function RecipeForm({
                             onRemoveIngredient={handleRemoveIngredient}
                             calories={calories}
                             onCaloriesChange={setCalories}
+                            onServingsCustomTriggerClick={() =>
+                                dispatchRecipeTutorialEvent(
+                                    RECIPE_TUTORIAL_EVENTS.servingsCustomOpened,
+                                )
+                            }
+                            onIngredientAmountFocus={() =>
+                                dispatchRecipeTutorialEvent(
+                                    RECIPE_TUTORIAL_EVENTS.ingredientAmountFocused,
+                                )
+                            }
+                            onIngredientCommentClick={() =>
+                                dispatchRecipeTutorialEvent(
+                                    RECIPE_TUTORIAL_EVENTS.ingredientCommentClicked,
+                                )
+                            }
                         />
                     </div>
                 </div>
@@ -974,6 +1028,15 @@ export function RecipeForm({
                     onRemoveIngredient={handleRemoveIngredient}
                     calories={calories}
                     onCaloriesChange={setCalories}
+                    onServingsCustomTriggerClick={() =>
+                        dispatchRecipeTutorialEvent(RECIPE_TUTORIAL_EVENTS.servingsCustomOpened)
+                    }
+                    onIngredientAmountFocus={() =>
+                        dispatchRecipeTutorialEvent(RECIPE_TUTORIAL_EVENTS.ingredientAmountFocused)
+                    }
+                    onIngredientCommentClick={() =>
+                        dispatchRecipeTutorialEvent(RECIPE_TUTORIAL_EVENTS.ingredientCommentClicked)
+                    }
                 />
 
                 <div>
@@ -1007,40 +1070,128 @@ export function RecipeForm({
     const layoutForm = layout === 'sidebar' ? sidebarLayoutForm : stackLayoutForm;
     const tutorialEligible = !isEditMode;
 
-    const [showTutorial, setShowTutorial] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(initialShouldShowTutorial);
 
     useEffect(() => {
-        if (!tutorialEligible) return;
-
-        try {
-            const hasCompleted =
-                window.localStorage.getItem(RECIPE_CREATION_TUTORIAL_KEY) === 'done';
-            setShowTutorial(!hasCompleted);
-        } catch {
-            setShowTutorial(true);
+        if (!tutorialEligible) {
+            setShowTutorial(false);
+            return;
         }
-    }, [tutorialEligible]);
 
-    const handleTutorialComplete = useCallback(() => {
+        setShowTutorial(initialShouldShowTutorial);
+    }, [initialShouldShowTutorial, tutorialEligible]);
+
+    const handleTutorialComplete = useCallback(async () => {
         try {
+            await completeRecipeCreationTutorial();
             window.localStorage.setItem(RECIPE_CREATION_TUTORIAL_KEY, 'done');
         } catch {
             // ignore localStorage failures and still hide tutorial
         }
 
         setShowTutorial(false);
-    }, []);
+
+        try {
+            window.sessionStorage.setItem(RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY, 'done');
+        } catch {
+            // ignore sessionStorage failures
+        }
+
+        if (autoSavedIdRef.current) {
+            window.location.href = `/recipe/${autoSavedIdRef.current}/edit`;
+            return;
+        }
+
+        try {
+            const recipe = await createRecipe(buildPayloadRef.current('DRAFT'), authorId);
+            autoSavedIdRef.current = recipe.id;
+            window.location.href = `/recipe/${recipe.id}/edit`;
+        } catch {
+            // if creating the draft fails, stay on the page so the user can retry manually
+        }
+    }, [authorId]);
 
     return (
         <>
             {layoutForm}
             {tutorialEligible && showTutorial ? (
                 <RecipeCreationTutorial
-                    targets={{ title: titleInputRef }}
-                    state={{ titleValue: title }}
+                    state={{
+                        titleValue: title,
+                        categoryCount: categoryIds.length,
+                        ingredientCount: ingredients.length,
+                        autoSaveLabel,
+                        savedRecipeId,
+                        isDesktop,
+                        flow: tutorialFlowState,
+                    }}
                     onFocusTitleField={focusTitleField}
                     onComplete={handleTutorialComplete}
                 />
+            ) : null}
+            {showTutorialCelebration ? (
+                <div
+                    className={css({
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 120,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        p: '4',
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                    })}
+                >
+                    <div
+                        className={css({
+                            width: '100%',
+                            maxWidth: '460px',
+                            borderRadius: '2xl',
+                            backgroundColor: 'surface',
+                            p: { base: '6', md: '8' },
+                            boxShadow: '0 25px 80px rgba(0,0,0,0.45)',
+                        })}
+                    >
+                        <h2
+                            className={css({
+                                fontSize: { base: '2xl', md: '3xl' },
+                                fontWeight: '700',
+                                mb: '3',
+                                color: 'text',
+                            })}
+                        >
+                            Stark - dein erster Entwurf steht.
+                        </h2>
+                        <p
+                            className={css({
+                                fontSize: 'md',
+                                lineHeight: '1.7',
+                                color: 'text.muted',
+                                mb: '5',
+                            })}
+                        >
+                            Du kennst jetzt die wichtigsten Bereiche: Pflichtfelder, Zutaten,
+                            automatisches Speichern und den Ablauf-Editor. Von hier aus kannst du
+                            deinen Entwurf in Ruhe weiter ausbauen.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setShowTutorialCelebration(false)}
+                            className={css({
+                                backgroundColor: 'palette.orange',
+                                color: 'white',
+                                fontWeight: '600',
+                                borderRadius: 'xl',
+                                px: '6',
+                                py: '3.5',
+                                border: 'none',
+                                cursor: 'pointer',
+                            })}
+                        >
+                            Entwurf weiter bearbeiten
+                        </button>
+                    </div>
+                </div>
             ) : null}
         </>
     );

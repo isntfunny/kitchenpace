@@ -11,6 +11,10 @@ import { Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 
 import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
+import {
+    dispatchRecipeTutorialEvent,
+    RECIPE_TUTORIAL_EVENTS,
+} from '@app/components/recipe/tutorial/shared';
 import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
@@ -112,12 +116,16 @@ function InsertEdgeComponent({
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
+                                    dispatchRecipeTutorialEvent(
+                                        RECIPE_TUTORIAL_EVENTS.flowAddButtonClicked,
+                                    );
                                     setPopoverOpen((v) => {
                                         const newValue = !v;
                                         if (!newValue) setIsHovered(false);
                                         return newValue;
                                     });
                                 }}
+                                data-tutorial="flow-add-button"
                                 style={{
                                     width: '26px',
                                     height: '26px',
@@ -180,6 +188,7 @@ function InsertEdgeComponent({
                                     position: 'absolute',
                                     zIndex: '50',
                                 })}
+                                data-tutorial="flow-palette"
                                 style={{
                                     top: 'calc(100% + 8px)',
                                     left: '50%',

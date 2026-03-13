@@ -65,7 +65,13 @@ function renderDescription(
 }
 
 /** Small (+) button below a node that forks a new parallel branch */
-function ForkButton({ nodeId }: { nodeId: string }) {
+function ForkButton({
+    nodeId,
+    tutorialTarget = false,
+}: {
+    nodeId: string;
+    tutorialTarget?: boolean;
+}) {
     const { onForkNodeAfter } = useFlowEditor();
     const [open, setOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -92,6 +98,7 @@ function ForkButton({ nodeId }: { nodeId: string }) {
             <button
                 type="button"
                 className={forkButtonClass}
+                data-tutorial={tutorialTarget ? 'flow-branch-button' : undefined}
                 onClick={(e) => {
                     e.stopPropagation();
                     setOpen((v) => !v);
@@ -319,7 +326,7 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                 {config.canHaveOutgoingEdge && (
                     <Handle type="source" position={Position.Right} style={handleStyle} />
                 )}
-                {showFork && <ForkButton nodeId={id} />}
+                {showFork && <ForkButton nodeId={id} tutorialTarget={canDelete} />}
             </div>
 
             {showAddAfter && <AddNodeButton nodeId={id} side="source" />}

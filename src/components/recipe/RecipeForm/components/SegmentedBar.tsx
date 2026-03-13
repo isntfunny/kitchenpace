@@ -32,6 +32,8 @@ interface SegmentedBarProps {
     trackingName?: string;
     /** Show a "…" toggle that swaps the bar for a free-form input */
     customInput?: CustomNumberInput | CustomStringInput;
+    customTriggerDataTutorial?: string;
+    onCustomTriggerClick?: () => void;
 }
 
 export function SegmentedBar({
@@ -40,6 +42,8 @@ export function SegmentedBar({
     onSelect,
     trackingName,
     customInput,
+    customTriggerDataTutorial,
+    onCustomTriggerClick,
 }: SegmentedBarProps) {
     const [customMode, setCustomMode] = useState(false);
     const op = useOpenPanel();
@@ -159,8 +163,10 @@ export function SegmentedBar({
                     onClick={() => {
                         if (trackingName)
                             op.track('segmented_bar_tap', { bar: trackingName, value: 'custom' });
+                        onCustomTriggerClick?.();
                         setCustomMode(true);
                     }}
+                    data-tutorial={customTriggerDataTutorial}
                     className={segBtn}
                     style={{ borderLeft: `1px solid ${PALETTE.orange}` }}
                 >

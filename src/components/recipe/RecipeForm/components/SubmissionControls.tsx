@@ -47,6 +47,7 @@ export function SubmissionControls({
                 disabled={saving}
                 onClick={() => onStatusChange('DRAFT')}
                 className={buttonClass('DRAFT')}
+                data-tutorial="draft-save"
             >
                 {saving ? 'Wird gespeichert...' : 'Als Entwurf speichern'}
             </button>

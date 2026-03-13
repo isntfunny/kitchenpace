@@ -804,7 +804,11 @@ function FlowEditorInner({
     return (
         <FlowEditorContext.Provider value={contextValue}>
             <div className={editorContainerClass}>
-                <div ref={canvasRefCallback} className={canvasContainerClass}>
+                <div
+                    ref={canvasRefCallback}
+                    className={canvasContainerClass}
+                    data-tutorial="flow-canvas"
+                >
                     <ReactFlow
                         nodes={nodes}
                         edges={edges}

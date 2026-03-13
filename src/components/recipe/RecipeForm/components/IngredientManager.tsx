@@ -2,6 +2,7 @@
 
 import { MessageSquare, X } from 'lucide-react';
 import { useRef, useState } from 'react';
+import type { RefObject } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
@@ -26,6 +27,10 @@ interface IngredientManagerProps {
     onRemoveIngredient: (index: number) => void;
     calories?: number;
     onCaloriesChange?: (value: number | undefined) => void;
+    ingredientSearchRef?: RefObject<HTMLInputElement | null>;
+    onServingsCustomTriggerClick?: () => void;
+    onIngredientAmountFocus?: () => void;
+    onIngredientCommentClick?: () => void;
 }
 
 export function IngredientManager({
@@ -41,6 +46,10 @@ export function IngredientManager({
     onRemoveIngredient,
     calories,
     onCaloriesChange,
+    ingredientSearchRef,
+    onServingsCustomTriggerClick,
+    onIngredientAmountFocus,
+    onIngredientCommentClick,
 }: IngredientManagerProps) {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -101,6 +110,8 @@ export function IngredientManager({
                         onChange: onServingsChange,
                         placeholder: 'z.B. 3',
                     }}
+                    customTriggerDataTutorial="servings-custom-trigger"
+                    onCustomTriggerClick={onServingsCustomTriggerClick}
                 />
             </div>
 
@@ -115,7 +126,10 @@ export function IngredientManager({
                     <span className={ghostTextClass}>{ghostCompletion}</span>
                 </div>
                 <input
-                    ref={inputRef}
+                    ref={(node) => {
+                        inputRef.current = node;
+                        if (ingredientSearchRef) ingredientSearchRef.current = node;
+                    }}
                     type="text"
                     value={ingredientQuery}
                     onChange={(e) => onIngredientQueryChange(e.target.value)}
@@ -124,6 +138,7 @@ export function IngredientManager({
                     className={inputClass}
                     style={{ background: 'transparent', position: 'relative' }}
                     autoComplete="off"
+                    data-tutorial="ingredient-search"
                 />
 
                 {/* Dropdown: search results + add-new option */}
@@ -183,6 +198,9 @@ export function IngredientManager({
                             isLast={index === ingredients.length - 1}
                             onUpdate={onUpdateIngredient}
                             onRemove={onRemoveIngredient}
+                            onAmountFocus={index === 0 ? onIngredientAmountFocus : undefined}
+                            onCommentClick={index === 0 ? onIngredientCommentClick : undefined}
+                            isTutorialTarget={index === 0}
                         />
                     ))}
                 </div>
@@ -252,12 +270,18 @@ function IngredientRow({
     isLast,
     onUpdate,
     onRemove,
+    onAmountFocus,
+    onCommentClick,
+    isTutorialTarget,
 }: {
     ing: AddedIngredient;
     index: number;
     isLast: boolean;
     onUpdate: (index: number, changes: Partial<AddedIngredient>) => void;
     onRemove: (index: number) => void;
+    onAmountFocus?: () => void;
+    onCommentClick?: () => void;
+    isTutorialTarget?: boolean;
 }) {
     const [showNotes, setShowNotes] = useState(Boolean(ing.notes));
 
@@ -297,8 +321,10 @@ function IngredientRow({
                         type="text"
                         value={ing.amount}
                         onChange={(e) => onUpdate(index, { amount: e.target.value })}
+                        onFocus={onAmountFocus}
                         placeholder="!"
                         className={!ing.amount ? amountInputEmptyClass : amountInputClass}
+                        data-tutorial={isTutorialTarget ? 'ingredient-amount' : undefined}
                     />
                     <div
                         className={css({ width: '1px', height: '60%', flexShrink: 0 })}
@@ -317,6 +343,7 @@ function IngredientRow({
                 <button
                     type="button"
                     onClick={() => onUpdate(index, { isOptional: !ing.isOptional })}
+                    data-tutorial={isTutorialTarget ? 'ingredient-optional' : undefined}
                     className={css({
                         height: '100%',
                         px: '2.5',
@@ -343,7 +370,11 @@ function IngredientRow({
                 {/* Notes toggle */}
                 <button
                     type="button"
-                    onClick={() => setShowNotes(!showNotes)}
+                    onClick={() => {
+                        onCommentClick?.();
+                        setShowNotes(!showNotes);
+                    }}
+                    data-tutorial={isTutorialTarget ? 'ingredient-comment' : undefined}
                     className={css({
                         height: '100%',
                         px: '2',

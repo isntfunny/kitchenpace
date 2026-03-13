@@ -49,6 +49,7 @@ export function GeneralInformationSection({
                     onChange={(e) => onTitleChange(e.target.value)}
                     placeholder="z.B. Spaghetti Carbonara"
                     ref={titleInputRef}
+                    data-tutorial="title"
                     className={css({
                         width: '100%',
                         padding: '3',

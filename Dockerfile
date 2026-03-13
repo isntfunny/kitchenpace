@@ -1,5 +1,5 @@
 # ── Stage 1: Install dependencies ─────────────────────────────────────
-FROM node:24-alpine AS deps
+FROM node:24-slim AS deps
 
 WORKDIR /app
 
@@ -7,10 +7,13 @@ COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 COPY panda.config.ts tsconfig.json postcss.config.cjs ./
 
-RUN npm ci --include=dev
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+        python3 make g++ \
+    && npm ci --include=dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # ── Stage 1b: Production-only dependencies ────────────────────────────
-FROM node:24-alpine AS prod-deps
+FROM node:24-slim AS prod-deps
 
 WORKDIR /app
 
@@ -24,7 +27,7 @@ COPY prisma.config.ts ./
 RUN npm ci --omit=dev --ignore-scripts && npx prisma generate
 
 # ── Stage 2: Build Next.js app ────────────────────────────────────────
-FROM node:24-alpine AS builder
+FROM node:24-slim AS builder
 
 ARG DEBUG=0
 
@@ -63,7 +66,7 @@ COPY cli ./cli
 RUN npm run build
 
 # ── Stage 3: Production runner (Next.js) ──────────────────────────────
-FROM node:24-alpine AS runner
+FROM node:24-slim AS runner
 
 WORKDIR /app
 
@@ -71,9 +74,11 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-RUN apk add --no-cache fontconfig \
-    && addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 nextjs
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+        fontconfig hunspell-de-de \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 1001 nodejs \
+    && useradd --system --uid 1001 --gid nodejs nextjs
 
 # Copy node_modules + prisma (needed for db setup)
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
@@ -105,11 +110,13 @@ ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server.js"]
 
 # ── Stage 4: Worker ───────────────────────────────────────────────────
-FROM node:24-alpine AS worker
+FROM node:24-slim AS worker
 
 WORKDIR /app
 
-RUN apk add --no-cache postgresql17-client
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+        postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 
 # Production node_modules incl. generated Prisma client
 COPY --from=prod-deps /app/node_modules ./node_modules

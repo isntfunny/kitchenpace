@@ -27,7 +27,12 @@ export function StepTypePicker({
     useEffect(() => {
         if (inline) return;
         const handler = (e: MouseEvent) => {
-            if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+            const target = e.target as HTMLElement;
+            // Don't close if the click is inside the picker or the tutorial overlay
+            if (ref.current && !ref.current.contains(target)) {
+                if (target.closest?.('[role="dialog"][aria-modal="true"]')) return;
+                onClose();
+            }
         };
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);

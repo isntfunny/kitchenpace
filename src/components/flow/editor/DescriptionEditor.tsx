@@ -4,6 +4,10 @@ import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode } fro
 
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 import type { IngredientSearchResult } from '@app/components/recipe/RecipeForm/data';
+import {
+    dispatchRecipeTutorialEvent,
+    RECIPE_TUTORIAL_EVENTS,
+} from '@app/components/recipe/tutorial/shared';
 import { css } from 'styled-system/css';
 
 interface DescriptionEditorProps {
@@ -190,6 +194,7 @@ export function DescriptionEditor({
             setIsOpen(false);
             setQuery('');
             setDbResults([]);
+            dispatchRecipeTutorialEvent(RECIPE_TUTORIAL_EVENTS.descriptionMentionInserted);
 
             requestAnimationFrame(() => {
                 if (textareaRef.current) {
@@ -238,7 +243,7 @@ export function DescriptionEditor({
     const hasMentions = value.includes('@[');
 
     return (
-        <div ref={containerRef} className={containerClass}>
+        <div ref={containerRef} className={containerClass} data-tutorial="node-description">
             {/* Rendered preview — shown when not focused and value has mentions */}
             {!isFocused && hasMentions && (
                 <div
@@ -280,7 +285,7 @@ export function DescriptionEditor({
                 placeholder={placeholder}
             />
             {showDropdown && (
-                <div className={dropdownClass}>
+                <div className={dropdownClass} data-tutorial-child="node-description">
                     {dropdownItems.map((item, index) => {
                         const ing = item.ingredient;
                         const isDb = item.source === 'db';

@@ -9,6 +9,7 @@ export interface RecipeTutorialState {
     titleValue: string;
     categoryCount: number;
     ingredientCount: number;
+    hasIngredientAmount: boolean;
     autoSaveLabel: string | null;
     savedRecipeId?: string;
     isDesktop: boolean;
@@ -34,14 +35,18 @@ export interface RecipeTutorialStep {
     stateKey?:
         | 'categorySelected'
         | 'ingredientAdded'
-        | 'autosaveVisible'
+        | 'ingredientAmountFilled'
         | 'flowNodeCreated'
         | 'flowBranchCreated';
     eventKey?:
         | 'servingsCustomOpened'
-        | 'ingredientAmountFocused'
         | 'ingredientCommentClicked'
-        | 'flowAddButtonClicked';
+        | 'flowAddButtonClicked'
+        | 'nodeSelected'
+        | 'branchButtonClicked'
+        | 'edgeConnected'
+        | 'descriptionMentionInserted';
+    accentTargetId?: RecipeTutorialTargetId;
     allowTargetInteraction?: boolean;
     autoFocusAction?: 'title';
     accentLabel?: string;
@@ -49,7 +54,10 @@ export interface RecipeTutorialStep {
 
 export interface RecipeTutorialRuntimeFlags {
     servingsCustomOpened: boolean;
-    ingredientAmountFocused: boolean;
     ingredientCommentClicked: boolean;
     flowAddButtonClicked: boolean;
+    nodeSelected: boolean;
+    branchButtonClicked: boolean;
+    edgeConnected: boolean;
+    descriptionMentionInserted: boolean;
 }

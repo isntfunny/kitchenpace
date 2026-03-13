@@ -126,6 +126,9 @@ export function RecipeForm({
     const flowNodesRef = useRef<FlowNodeInput[]>(initialData?.flowNodes ?? []);
     const flowEdgesRef = useRef<FlowEdgeInput[]>(initialData?.flowEdges ?? []);
 
+    // ── tutorial guard — ref so the auto-save effect can read it without re-firing ──
+    const tutorialActiveRef = useRef(!isEditMode && initialShouldShowTutorial);
+
     // ── auto-save ────────────────────────────────────────────
     const autoSavedIdRef = useRef<string | null>(initialData?.id ?? null);
     const [savedRecipeId, setSavedRecipeId] = useState<string | undefined>(initialData?.id);
@@ -235,7 +238,7 @@ export function RecipeForm({
     const isPublished = saveStatus === 'PUBLISHED';
 
     useEffect(() => {
-        if (isPublished || !title.trim()) {
+        if (tutorialActiveRef.current || isPublished || !title.trim()) {
             setAutoSaveStatus('idle');
             if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
             return;
@@ -565,6 +568,7 @@ export function RecipeForm({
 
     // ── auto-save status label ────────────────────────────────
     const autoSaveLabel = (() => {
+        if (tutorialActiveRef.current) return 'Auto-Save ist während des Tutorials pausiert';
         if (isPublished) return 'Automatisches Speichern ist nur für Entwürfe verfügbar';
         if (!title.trim()) return null;
         if (autoSaveStatus === 'saving') return 'Wird gespeichert…';
@@ -677,6 +681,7 @@ export function RecipeForm({
                         className={sidebarToggleClass}
                         onClick={() => setSidebarCollapsed(true)}
                         title="Sidebar einklappen"
+                        data-tutorial="sidebar-collapse"
                     >
                         <PanelLeftClose className={css({ width: '16px', height: '16px' })} />
                     </button>
@@ -1090,6 +1095,7 @@ export function RecipeForm({
         }
 
         setShowTutorial(false);
+        tutorialActiveRef.current = false;
 
         try {
             window.sessionStorage.setItem(RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY, 'done');
@@ -1120,6 +1126,7 @@ export function RecipeForm({
                         titleValue: title,
                         categoryCount: categoryIds.length,
                         ingredientCount: ingredients.length,
+                        hasIngredientAmount: ingredients.some((i) => i.amount.trim() !== ''),
                         autoSaveLabel,
                         savedRecipeId,
                         isDesktop,

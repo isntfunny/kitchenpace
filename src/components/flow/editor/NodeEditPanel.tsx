@@ -117,7 +117,7 @@ export function NodeEditPanel({
     const isStartOrServieren = data.stepType === 'start' || data.stepType === 'servieren';
 
     return (
-        <div className={panelClass}>
+        <div className={panelClass} data-tutorial="node-edit-panel">
             {/* ── Header ── */}
             <div className={headerClass} style={{ backgroundColor: `${accent}18` }}>
                 <div

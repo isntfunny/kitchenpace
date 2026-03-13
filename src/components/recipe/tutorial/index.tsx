@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { TutorialOverlay } from './components/TutorialOverlay';
+import { AUTO_ADVANCE_MS, TutorialOverlay } from './components/TutorialOverlay';
 import { RECIPE_TUTORIAL_EVENTS } from './shared';
 import { recipeTutorialSteps } from './steps';
 import type { RecipeCreationTutorialProps, RecipeTutorialRuntimeFlags } from './types';
@@ -28,8 +28,8 @@ function isStepComplete(
                 return state.categoryCount > 0;
             case 'ingredientAdded':
                 return state.ingredientCount > 0;
-            case 'autosaveVisible':
-                return Boolean(state.autoSaveLabel);
+            case 'ingredientAmountFilled':
+                return state.hasIngredientAmount;
             case 'flowNodeCreated':
                 return state.flow.nodeCount > 2;
             case 'flowBranchCreated':
@@ -43,12 +43,18 @@ function isStepComplete(
         switch (step.eventKey) {
             case 'servingsCustomOpened':
                 return runtime.servingsCustomOpened;
-            case 'ingredientAmountFocused':
-                return runtime.ingredientAmountFocused;
             case 'ingredientCommentClicked':
                 return runtime.ingredientCommentClicked;
             case 'flowAddButtonClicked':
                 return runtime.flowAddButtonClicked;
+            case 'nodeSelected':
+                return runtime.nodeSelected;
+            case 'branchButtonClicked':
+                return runtime.branchButtonClicked;
+            case 'edgeConnected':
+                return runtime.edgeConnected;
+            case 'descriptionMentionInserted':
+                return runtime.descriptionMentionInserted;
             default:
                 return false;
         }
@@ -72,9 +78,12 @@ export function RecipeCreationTutorial({
     const [stepIndex, setStepIndex] = useState(0);
     const [runtime, setRuntime] = useState<RecipeTutorialRuntimeFlags>({
         servingsCustomOpened: false,
-        ingredientAmountFocused: false,
         ingredientCommentClicked: false,
         flowAddButtonClicked: false,
+        nodeSelected: false,
+        branchButtonClicked: false,
+        edgeConnected: false,
+        descriptionMentionInserted: false,
     });
 
     const step = activeSteps[stepIndex];
@@ -82,6 +91,22 @@ export function RecipeCreationTutorial({
         () => (step ? isStepComplete(step.id, activeSteps, state, runtime) : false),
         [activeSteps, runtime, state, step],
     );
+
+    // Auto-advance after the user fulfils a non-info step
+    const autoAdvancing = canContinue && step.kind !== 'info';
+
+    useEffect(() => {
+        if (!autoAdvancing) return;
+        const timer = setTimeout(() => {
+            const isLast = stepIndex === activeSteps.length - 1;
+            if (isLast) {
+                void onComplete();
+            } else {
+                setStepIndex((c) => c + 1);
+            }
+        }, AUTO_ADVANCE_MS);
+        return () => clearTimeout(timer);
+    }, [autoAdvancing, stepIndex, activeSteps.length, onComplete]);
 
     useEffect(() => {
         if (step.autoFocusAction === 'title') {
@@ -105,10 +130,6 @@ export function RecipeCreationTutorial({
             ...prev,
             servingsCustomOpened: true,
         }));
-        register(RECIPE_TUTORIAL_EVENTS.ingredientAmountFocused, (prev) => ({
-            ...prev,
-            ingredientAmountFocused: true,
-        }));
         register(RECIPE_TUTORIAL_EVENTS.ingredientCommentClicked, (prev) => ({
             ...prev,
             ingredientCommentClicked: true,
@@ -116,6 +137,22 @@ export function RecipeCreationTutorial({
         register(RECIPE_TUTORIAL_EVENTS.flowAddButtonClicked, (prev) => ({
             ...prev,
             flowAddButtonClicked: true,
+        }));
+        register(RECIPE_TUTORIAL_EVENTS.nodeSelected, (prev) => ({
+            ...prev,
+            nodeSelected: true,
+        }));
+        register(RECIPE_TUTORIAL_EVENTS.branchButtonClicked, (prev) => ({
+            ...prev,
+            branchButtonClicked: true,
+        }));
+        register(RECIPE_TUTORIAL_EVENTS.edgeConnected, (prev) => ({
+            ...prev,
+            edgeConnected: true,
+        }));
+        register(RECIPE_TUTORIAL_EVENTS.descriptionMentionInserted, (prev) => ({
+            ...prev,
+            descriptionMentionInserted: true,
         }));
 
         return () => {
@@ -140,6 +177,7 @@ export function RecipeCreationTutorial({
             step={step}
             canContinue={canContinue}
             onContinue={() => void handleContinue()}
+            autoAdvancing={autoAdvancing}
         />
     );
 }

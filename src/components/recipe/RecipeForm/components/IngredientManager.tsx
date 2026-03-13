@@ -88,7 +88,7 @@ export function IngredientManager({
     return (
         <div>
             {/* Servings */}
-            <div className={css({ mb: '4' })}>
+            <div className={css({ mb: '4' })} data-tutorial="servings-bar">
                 <label className={labelSmClass}>Portionen</label>
                 <SegmentedBar
                     items={SERVING_LABELS}
@@ -143,7 +143,11 @@ export function IngredientManager({
 
                 {/* Dropdown: search results + add-new option */}
                 {showDropdown && (searchResults.length > 0 || showAddNew) && (
-                    <div className={dropdownClass} onMouseDown={(e) => e.preventDefault()}>
+                    <div
+                        className={dropdownClass}
+                        data-tutorial-child="ingredient-search"
+                        onMouseDown={(e) => e.preventDefault()}
+                    >
                         {searchResults.map((ing) => (
                             <button
                                 key={ing.id}
@@ -189,6 +193,7 @@ export function IngredientManager({
                 <div
                     className={css({ borderRadius: 'lg', overflow: 'hidden' })}
                     style={{ border: `1px solid ${PALETTE.orange}50` }}
+                    data-tutorial-child="ingredient-search"
                 >
                     {ingredients.map((ing, index) => (
                         <IngredientRow
@@ -289,6 +294,7 @@ function IngredientRow({
         <div
             className={css({ display: 'flex', flexDir: 'column' })}
             style={!isLast ? { borderBottom: `1px solid ${PALETTE.orange}50` } : undefined}
+            data-tutorial={isTutorialTarget ? 'ingredient-row' : undefined}
         >
             {/* Main row */}
             <div className={css({ display: 'flex', alignItems: 'center', minHeight: '44px' })}>
@@ -316,6 +322,7 @@ function IngredientRow({
                         height: '100%',
                     })}
                     style={{ borderLeft: `1px solid ${PALETTE.orange}50` }}
+                    data-tutorial={isTutorialTarget ? 'ingredient-amount' : undefined}
                 >
                     <input
                         type="text"
@@ -324,7 +331,6 @@ function IngredientRow({
                         onFocus={onAmountFocus}
                         placeholder="!"
                         className={!ing.amount ? amountInputEmptyClass : amountInputClass}
-                        data-tutorial={isTutorialTarget ? 'ingredient-amount' : undefined}
                     />
                     <div
                         className={css({ width: '1px', height: '60%', flexShrink: 0 })}
@@ -336,6 +342,7 @@ function IngredientRow({
                         onChange={(e) => onUpdate(index, { unit: e.target.value })}
                         placeholder="–"
                         className={unitInputClass}
+                        data-tutorial={isTutorialTarget ? 'ingredient-unit' : undefined}
                     />
                 </div>
 

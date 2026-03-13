@@ -5,17 +5,25 @@ export const RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY =
 export const RECIPE_TUTORIAL_TARGETS = {
     title: 'title',
     category: 'category',
+    servingsBar: 'servings-bar',
     servingsCustomTrigger: 'servings-custom-trigger',
     ingredientSearch: 'ingredient-search',
     ingredientAmount: 'ingredient-amount',
+    ingredientRow: 'ingredient-row',
+    ingredientUnit: 'ingredient-unit',
     ingredientComment: 'ingredient-comment',
     ingredientOptional: 'ingredient-optional',
     draftSave: 'draft-save',
     autosaveBar: 'autosave-bar',
     flowCanvas: 'flow-canvas',
+    flowStartNode: 'flow-start-node',
+    flowEndNode: 'flow-end-node',
     flowAddButton: 'flow-add-button',
     flowPalette: 'flow-palette',
     flowBranchButton: 'flow-branch-button',
+    nodeEditPanel: 'node-edit-panel',
+    nodeDescription: 'node-description',
+    sidebarCollapse: 'sidebar-collapse',
 } as const;
 
 export const RECIPE_TUTORIAL_EVENTS = {
@@ -23,6 +31,10 @@ export const RECIPE_TUTORIAL_EVENTS = {
     ingredientAmountFocused: 'recipe-tutorial:ingredient-amount-focused',
     ingredientCommentClicked: 'recipe-tutorial:ingredient-comment-clicked',
     flowAddButtonClicked: 'recipe-tutorial:flow-add-button-clicked',
+    nodeSelected: 'recipe-tutorial:node-selected',
+    branchButtonClicked: 'recipe-tutorial:branch-button-clicked',
+    edgeConnected: 'recipe-tutorial:edge-connected',
+    descriptionMentionInserted: 'recipe-tutorial:description-mention-inserted',
 } as const;
 
 export type RecipeTutorialTargetId =

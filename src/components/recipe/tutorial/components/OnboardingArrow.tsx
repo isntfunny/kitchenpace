@@ -51,6 +51,7 @@ export function OnboardingArrow({ placement }: OnboardingArrowProps) {
 
     return (
         <div
+            className="tutorial-onboarding-arrow"
             style={{
                 position: 'absolute',
                 width: '16px',

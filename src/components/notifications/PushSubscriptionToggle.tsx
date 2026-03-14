@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
@@ -46,25 +46,18 @@ export function PushSubscriptionToggle() {
     >('disabled');
     const [endpoint, setEndpoint] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-
-    const supported = useMemo(
-        () =>
-            typeof window !== 'undefined' &&
-            'serviceWorker' in navigator &&
-            'PushManager' in window,
-        [],
-    );
+    const [supported, setSupported] = useState(false);
 
     useEffect(() => {
-        if (!supported) {
+        const isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+
+        if (!isSupported || !VAPID_PUBLIC_KEY) {
+            setSupported(false);
             setStatus('unsupported');
             return;
         }
 
-        if (!VAPID_PUBLIC_KEY) {
-            setStatus('unsupported');
-            return;
-        }
+        setSupported(true);
 
         const checkSubscription = async () => {
             setStatus('loading');
@@ -86,7 +79,7 @@ export function PushSubscriptionToggle() {
         };
 
         checkSubscription();
-    }, [supported]);
+    }, []);
 
     const subscribe = async () => {
         if (!supported || !VAPID_PUBLIC_KEY) return;
@@ -102,6 +95,17 @@ export function PushSubscriptionToggle() {
             }
 
             const registration = await navigator.serviceWorker.register('/push-sw.js');
+            // Wait for the service worker to become active before subscribing
+            if (!registration.active) {
+                const sw = registration.installing || registration.waiting;
+                if (sw) {
+                    await new Promise<void>((resolve) => {
+                        sw.addEventListener('statechange', () => {
+                            if (sw.state === 'activated') resolve();
+                        });
+                    });
+                }
+            }
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),

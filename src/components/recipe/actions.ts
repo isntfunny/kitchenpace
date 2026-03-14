@@ -7,6 +7,7 @@ import {
 } from '@shared/opensearch/client';
 import { prisma } from '@shared/prisma';
 
+import type { IngredientSearchResult } from './RecipeForm/data';
 import type { TagFacet } from './types';
 
 const DEFAULT_TAG_SEARCH_LIMIT = 50;
@@ -20,14 +21,6 @@ type TagWithCount = {
     name: string;
     count: number;
 };
-
-export interface IngredientSearchResult {
-    id: string;
-    name: string;
-    pluralName: string | null;
-    category: string | null;
-    units: string[];
-}
 
 export async function searchIngredients(query: string): Promise<IngredientSearchResult[]> {
     if (!query || query.length < 2) {

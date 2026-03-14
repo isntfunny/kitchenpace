@@ -104,16 +104,13 @@ export interface RecipeIngredientInput {
     isOptional: boolean;
 }
 
-export interface FlowNodeInput {
-    id: string;
+/** Alias for FlowNodeSerialized with a looser `type` (accepts any string, not just StepType). */
+export type FlowNodeInput = Omit<
+    import('../flow/editor/editorTypes').FlowNodeSerialized,
+    'type'
+> & {
     type: string;
-    label: string;
-    description: string;
-    duration?: number;
-    ingredientIds?: string[];
-    photoKey?: string;
-    position?: { x: number; y: number };
-}
+};
 
 /** Strip photoKey from nodes before writing to the flowNodes JSON column.
  *  Photos are stored in RecipeStepImage instead. */
@@ -159,11 +156,8 @@ async function syncStepImages(recipeId: string, nodes: FlowNodeInput[]): Promise
     }
 }
 
-export interface FlowEdgeInput {
-    id: string;
-    source: string;
-    target: string;
-}
+import type { FlowEdgeSerialized } from '../flow/editor/editorTypes';
+export type FlowEdgeInput = FlowEdgeSerialized;
 
 export interface UpdateRecipeInput {
     title: string;

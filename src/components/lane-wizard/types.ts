@@ -64,11 +64,7 @@ export type LaneAction =
 
 /* ── Timer state ─────────────────────────────────────────── */
 
-export interface TimerState {
-    remaining: number; // seconds
-    total: number; // seconds
-    running: boolean;
-}
+export type { TimerState } from '../flow/viewer/viewerTypes';
 
 /* ── Component mode ──────────────────────────────────────── */
 

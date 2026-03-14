@@ -42,7 +42,7 @@ export type RecipeSearchMeta = {
     facets?: RecipeSearchFacets;
 };
 
-export type RecipeSearchResult = {
+export type RecipeSearchState = {
     data: RecipeCardData[];
     meta: RecipeSearchMeta | null;
     loading: boolean;
@@ -63,10 +63,10 @@ export type UseRecipeSearchOptions = {
 export function useRecipeSearch(
     filters: RecipeFilterSearchParams,
     options?: UseRecipeSearchOptions,
-): RecipeSearchResult {
+): RecipeSearchState {
     const { enabled = true, debounceMs = 0, initialData } = options ?? {};
 
-    const [state, setState] = useState<RecipeSearchResult>(() => ({
+    const [state, setState] = useState<RecipeSearchState>(() => ({
         data: initialData?.data ?? [],
         meta: initialData?.meta ?? null,
         loading: enabled && !initialData,

@@ -11,20 +11,9 @@ import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { RecipeCard } from '@app/components/features/RecipeCard';
 import { formatTimeAgo } from '@app/lib/activity-utils';
+import type { FavoriteRecipeCard } from '@app/lib/recipe-card';
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
-
-export interface FavoriteRecipeCard {
-    id: string;
-    slug: string;
-    title: string;
-    category: string;
-    rating: number;
-    time: string;
-    image: string | null;
-    description?: string;
-    savedAt: Date | string;
-}
 
 interface FavoritesClientProps {
     initialFavorites: FavoriteRecipeCard[];

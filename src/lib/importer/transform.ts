@@ -3,6 +3,8 @@
  * No Next.js dependencies — reusable from server actions and CLI.
  */
 
+import type { FlowNodeInput, FlowEdgeInput } from '@app/components/recipe/createActions';
+
 import type { ImportedRecipe } from './openai-recipe-schema';
 import { resolveIngredientMentions } from './resolve-mentions';
 
@@ -34,22 +36,7 @@ export interface AnalyzedIngredient {
     isOptional: boolean;
 }
 
-export interface FlowNodeInput {
-    id: string;
-    type: string;
-    label: string;
-    description: string;
-    duration?: number;
-    ingredientIds?: string[];
-    photoKey?: string;
-    // NOTE: No position — Dagre handles layout
-}
-
-export interface FlowEdgeInput {
-    id: string;
-    source: string;
-    target: string;
-}
+export type { FlowNodeInput, FlowEdgeInput };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Transform

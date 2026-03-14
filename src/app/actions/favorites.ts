@@ -1,19 +1,7 @@
 'use server';
 
+import type { FavoriteRecipeCard } from '@app/lib/recipe-card';
 import { prisma } from '@shared/prisma';
-
-export interface FavoriteRecipeCard {
-    id: string;
-    slug: string;
-    title: string;
-    category: string;
-    rating: number;
-    time: string;
-    image: string | null;
-    imageKey?: string | null;
-    description?: string;
-    savedAt: Date;
-}
 
 export async function fetchUserFavorites(userId: string): Promise<FavoriteRecipeCard[]> {
     const favorites = await prisma.favorite.findMany({
@@ -38,7 +26,6 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteRecipe
             rating: recipe.rating ?? 0,
             time: `${totalTime ?? 0} Min.`,
             image: recipe.imageKey ?? null,
-            imageKey: recipe.imageKey ?? null,
             description: recipe.description ?? '',
             savedAt: fav.createdAt,
         };

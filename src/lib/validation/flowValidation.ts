@@ -1,15 +1,7 @@
-export interface FlowNode {
-    id: string;
-    type: string;
-    label: string;
-    description?: string;
-}
+import type { FlowNodeInput, FlowEdgeInput } from '@app/components/recipe/createActions';
 
-export interface FlowEdge {
-    id: string;
-    source: string;
-    target: string;
-}
+export type FlowNode = FlowNodeInput;
+export type FlowEdge = FlowEdgeInput;
 
 export type FlowValidationScope = 'editor' | 'publish';
 export type FlowValidationSeverity = 'error' | 'warning';

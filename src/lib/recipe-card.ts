@@ -22,6 +22,11 @@ export type RecipeWithCategory = Prisma.RecipeGetPayload<{
     include: { categories: { include: { category: true } } };
 }>;
 
+export type FavoriteRecipeCard = Pick<
+    RecipeCardData,
+    'id' | 'slug' | 'title' | 'category' | 'rating' | 'time' | 'image' | 'description'
+> & { savedAt: Date | string };
+
 export function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
     const totalTime = recipe.totalTime ?? (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
     const cat = recipe.categories[0]?.category;

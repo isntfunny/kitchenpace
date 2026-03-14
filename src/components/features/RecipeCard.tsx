@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
+import type { RecipeCardData } from '@app/lib/recipe-card';
 import { css, cx } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
@@ -28,23 +29,12 @@ export const categoryColors: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Data shape — superset of all card consumers
+// Data shape — accepts RecipeCardData with optional overrides for consumers
+// that don't have all fields (e.g. favorites without rating/time)
 // ---------------------------------------------------------------------------
 
-export interface RecipeCardRecipe {
-    id: string;
-    slug: string;
-    title: string;
-    image: string | null;
-    category: string;
-    categorySlug?: string;
-    categoryColor?: string;
-    rating?: number;
-    time?: string;
-    description?: string;
-    stepCount?: number;
-    difficulty?: string;
-}
+export type RecipeCardRecipe = Partial<RecipeCardData> &
+    Pick<RecipeCardData, 'id' | 'slug' | 'title' | 'image' | 'category'>;
 
 // ---------------------------------------------------------------------------
 // Props

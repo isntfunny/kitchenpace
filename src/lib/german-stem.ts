@@ -1,12 +1,16 @@
 import { readFileSync } from 'fs';
+import { createRequire } from 'module';
 
-import { Nodehun } from 'nodehun';
+// Native addons (.node binaries) require CJS require() — ESM loaders
+// (tsx, Node's --experimental-vm-modules) cannot handle .node files.
+const require = createRequire(import.meta.url);
+const { Nodehun } = require('nodehun') as typeof import('nodehun');
 
 const HUNSPELL_DIR = '/usr/share/hunspell';
 
-let hunspell: Nodehun | null = null;
+let hunspell: InstanceType<typeof Nodehun> | null = null;
 
-function getHunspell(): Nodehun {
+function getHunspell(): InstanceType<typeof Nodehun> {
     if (hunspell) return hunspell;
 
     const aff = readFileSync(`${HUNSPELL_DIR}/de_DE.aff`);

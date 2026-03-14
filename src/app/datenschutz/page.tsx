@@ -1,7 +1,14 @@
+import { Metadata } from 'next';
 import Link from 'next/link';
 
 import { PageShell } from '@app/components/layouts/PageShell';
 import { css } from 'styled-system/css';
+
+export const metadata: Metadata = {
+    title: 'Datenschutzerklärung — KüchenTakt',
+    description:
+        'Datenschutzerklärung von KüchenTakt — Informationen zur Verarbeitung personenbezogener Daten gemäß DSGVO.',
+};
 
 const LAST_UPDATED = 'März 2026';
 
@@ -1100,52 +1107,6 @@ export default function DatenschutzPage() {
                         informiert.
                     </p>
                 </Section>
-
-                {/* Footer Nav */}
-                <div
-                    className={css({
-                        pt: '8',
-                        mt: '8',
-                        borderTop: '1px solid',
-                        borderColor: 'border',
-                        display: 'flex',
-                        gap: '6',
-                        flexWrap: 'wrap',
-                        fontSize: 'xs',
-                        color: 'text-muted',
-                    })}
-                >
-                    <Link
-                        href="/impressum"
-                        className={css({
-                            _hover: { color: 'palette.orange' },
-                            transition: 'color 0.15s',
-                        })}
-                    >
-                        Impressum
-                    </Link>
-                    <Link
-                        href="/opensource"
-                        className={css({
-                            _hover: { color: 'palette.orange' },
-                            transition: 'color 0.15s',
-                        })}
-                    >
-                        Open-Source-Lizenzen
-                    </Link>
-                    <Link
-                        href="/"
-                        className={css({
-                            _hover: { color: 'palette.orange' },
-                            transition: 'color 0.15s',
-                        })}
-                    >
-                        Zurück zur Startseite
-                    </Link>
-                    <span className={css({ ml: 'auto' })}>
-                        © {new Date().getFullYear()} KüchenTakt
-                    </span>
-                </div>
             </div>
         </PageShell>
     );

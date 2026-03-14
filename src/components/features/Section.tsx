@@ -74,7 +74,13 @@ export function Section({
                     )}
                 </div>
                 {action && (
-                    <div className={css({ marginLeft: 'auto', mt: { base: '2', md: '0' } })}>
+                    <div
+                        className={css({
+                            width: { base: '100%', md: 'auto' },
+                            marginLeft: { base: '0', md: 'auto' },
+                            mt: { base: '2', md: '0' },
+                        })}
+                    >
                         {action}
                     </div>
                 )}

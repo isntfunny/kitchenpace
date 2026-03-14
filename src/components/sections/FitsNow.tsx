@@ -55,7 +55,7 @@ export function FitsNow() {
             description="Tagesgefühl trifft Rezept – sofort, schnell, perfekt abgestimmt."
             action={
                 <Select value={selectedTime} onValueChange={handleTimeChange}>
-                    <SelectTrigger>
+                    <SelectTrigger style={{ width: '100%' }}>
                         <SelectValue placeholder="Wähle eine Zeit" />
                     </SelectTrigger>
                     <SelectContent>
@@ -78,7 +78,11 @@ export function FitsNow() {
                 <div
                     className={css({
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gridTemplateColumns: {
+                            base: '1fr',
+                            md: 'repeat(2, 1fr)',
+                            xl: 'repeat(3, 1fr)',
+                        },
                         gap: '6',
                     })}
                 >

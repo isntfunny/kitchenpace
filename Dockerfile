@@ -115,11 +115,12 @@ FROM node:24-slim AS worker
 WORKDIR /app
 
 RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
-        postgresql-client \
+        postgresql-client hunspell-de-de \
     && rm -rf /var/lib/apt/lists/*
 
-# Production node_modules incl. generated Prisma client
-COPY --from=prod-deps /app/node_modules ./node_modules
+# Use deps (not prod-deps): prod-deps runs --ignore-scripts which skips
+# native addon compilation (nodehun requires a build step)
+COPY --from=deps /app/node_modules ./node_modules
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma

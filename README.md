@@ -1,156 +1,348 @@
-# KitchenPace - Vom Chaos zur Klarheit
+# KitchenPace
 
-Stell dir vor, du öffnest ein Rezept und siehst nicht mehr diese endlose, ermüdende Liste von Schritten, die dich durch einen linearen Prozess zwingen. Stattdessen erblickst du eine **lebendige, fließende Visualisierung** deines gesamten Kochprozesses - wie eine Choreographie, wie ein Tanz in der Küche.
+KitchenPace ("KuechenTakt") ist eine Rezept-App, die klassische Schritt-fuer-Schritt-Rezepte in visuelle Kochablaeufe uebersetzt. Statt einer langen Liste sehen Nutzer:innen, was parallel passieren kann, welche Schritte voneinander abhaengen und wo der kritische Pfad liegt.
 
-## Die Vision
+## Warum es das Projekt gibt
 
-Jeder kennt es: Du stehst in der Küche, drei Töpfe brodeln, der Timer piept, du weißt nicht mehr, was als nächstes kommt, und plötzlich brennt die Sauce an, während das Gemüse noch roh ist. **Kochen fühlt sich oft wie kontrolliertes Chaos an**.
+Normale Rezepte erklaeren oft nur die Reihenfolge, aber nicht die Koordination. Genau das wird beim gleichzeitigen Kochen zum Problem.
 
-**KitchenPace** verwandelt dieses Chaos in **kristallklare Struktur**. Es nimmt die Komplexität des gleichzeitigen Kochens und macht sie _sichtbar_, _verständlich_, _beherrschbar_.
+KitchenPace loest das in drei Ebenen:
 
-### Das Chaos beherrschen
+- Rezepte werden als Flow-Diagramm dargestellt statt nur als Textblock.
+- Parallele Arbeitsschritte und Wartezeiten werden sichtbar.
+- Import, Moderation, Suche und Realtime-Funktionen machen aus dem Editor eine komplette Plattform statt nur ein Flow-Spielzeug.
 
-Traditionelle Rezepte sind wie eine To-Do-Liste ohne Prioritäten. Sie geben dir nicht das große Bild. Du stolperst von Schritt zu Schritt und merkst zu spät: "Oh, das hätte ich vor 20 Minuten vorbereiten sollen!"
+## Produkt in einem Satz
 
-**KitchenPace zeigt dir von Anfang an die gesamte Landschaft**:
+Eine visuelle Rezeptplattform mit Flow-Editor, KI-Import, Suche, Moderation, Realtime-Feeds und Hintergrundjobs.
 
-- **Überblick statt Überforderung**: Du siehst _sofort_, was parallel läuft, was aufeinander wartet, wo die Engpässe sind
-- **Mentale Klarheit**: Dein Gehirn muss nicht mehr jonglieren und improvisieren - der Flow ist bereits durchdacht
-- **Kontrolle zurückgewinnen**: Keine Panik mehr, kein "Oh nein, ich hab vergessen...!" - alles hat seinen Platz, seinen Moment
+## Kernfunktionen
 
-### Was macht es so besonders?
-
-Jedes Rezept wird zu einer **visuellen Landkarte deines Kochabenteuers**:
-
-- **Parallele Welten werden sichtbar**: Die Sauce reduziert sich? Perfekt - die Visualisierung zeigt dir _genau_, was du in dieser Zeit parallel erledigen kannst.
-- **Struktur in der Gleichzeitigkeit**: Was früher ein mentales Puzzle war - "Wann muss ich was starten, damit alles gleichzeitig fertig ist?" - wird zur klaren, visuellen Wahrheit.
-- **Der kritische Pfad wird erkennbar**: Wie bei einem Projektplan siehst du: _Das_ ist der zeitkritische Strang. _Hier_ muss ich aufmerksam sein, _dort_ kann ich entspannen.
-- **Intuitive Nodes**: Jede Aktion hat ihr eigenes visuelles Symbol. "Würzen" sieht anders aus als "Köcheln lassen" oder "Scharf anbraten". Dein Gehirn erfasst den Flow sofort.
-- **Der große Moment**: Alle Verzweigungen münden am Ende in diesem einen, magischen Punkt - dem fertigen Gericht.
+- Flow-Editor fuer interaktive Rezeptablaeufe mit `@xyflow/react` und Dagre-Autolayout
+- KI-Import aus Freitext oder URL via OpenAI + Python-Scraper
+- Rezeptsuche mit OpenSearch, Facetten, Zeitfiltern und Zutatenfiltern
+- Content-Moderation fuer Texte und Bilder
+- Realtime-Benachrichtigungen und Aktivitaetsfeed via SSE + Redis
+- Google Cast fuer die mobile Rezeptansicht auf TV/Nest Hub
+- Worker-Prozesse fuer Search-Sync, Trending, Wartung und Backups
 
 ## Tech Stack
 
-| Category     | Technology                                             |
-| ------------ | ------------------------------------------------------ |
-| Framework    | Next.js 16 (App Router)                                |
-| UI           | Radix UI + Panda CSS + Framer Motion                   |
-| Database     | Prisma 7 + PostgreSQL                                  |
-| Flow Editor  | React Flow (@xyflow/react v12) + Dagre                 |
-| Search       | OpenSearch                                             |
-| Queue / Jobs | BullMQ + Redis                                         |
-| AI           | OpenAI (gpt-5.4 recipe import, omni-moderation-latest) |
-| Realtime     | SSE via Redis pub/sub                                  |
-| Storage      | S3 / MinIO                                             |
-| Scraper      | Python FastAPI + Scrapling/Camoufox                    |
-| Auth         | Logto                                                  |
+| Bereich    | Stack                                      |
+| ---------- | ------------------------------------------ |
+| Frontend   | Next.js 16, React 19, TypeScript           |
+| UI         | Panda CSS, Radix UI, Framer Motion         |
+| Flow       | `@xyflow/react`, Dagre                     |
+| Datenbank  | Prisma 7, PostgreSQL                       |
+| Suche      | OpenSearch                                 |
+| Realtime   | SSE, Redis Pub/Sub                         |
+| Jobs       | BullMQ, Redis                              |
+| KI         | OpenAI `gpt-5.4`, `omni-moderation-latest` |
+| Storage    | S3 / MinIO                                 |
+| Scraping   | Python FastAPI + Scrapling/Camoufox        |
+| Auth       | NextAuth                                   |
+| Monitoring | Sentry, Seq, OpenPanel                     |
 
-## Getting Started
+## So ist das Projekt aufgebaut
 
-### Prerequisites
+### 1. App-Layer: Routen und Serverlogik
 
-- Node.js 22+
-- Docker & Docker Compose
+`src/app/` enthaelt die App-Router-Struktur, Seiten, API-Routen und Server Actions.
 
-### Development
+- `src/app/page.tsx` - Startseite
+- `src/app/recipes/` - Suche und Browse-Ansicht
+- `src/app/recipe/` - Anzeigen, Erstellen, Bearbeiten, mobile View
+- `src/app/profile/`, `src/app/user/` - Profilbereiche
+- `src/app/admin/`, `src/app/moderation/` - Admin- und Moderationsoberflaechen
+- `src/app/api/` - Upload, AI, Search, SSE, Thumbnail, Scrape, Push usw.
+- `src/app/actions/` - wiederverwendbare Server Actions fuer Features
 
-```bash
-# Start all services (PostgreSQL, Redis, OpenSearch, MinIO)
-docker compose up -d
+### 2. Komponenten-Layer
 
-# Install dependencies
-npm install --include=dev
+`src/components/` ist sauber nach Verantwortung aufgeteilt.
 
-# Run database migrations
-npx prisma migrate deploy
+#### React Atoms
 
-# Start dev server at http://localhost:3000
-npm run dev
-```
+Die Atoms bilden die kleinsten wiederverwendbaren UI-Bausteine und sind eine gute erste Anlaufstelle fuer UI-Konsistenz.
 
-### Fresh Development Build
+- `src/components/atoms/Avatar.tsx` - Avatar mit Bild, Fallbacks, Trophy-Badge und Ring-Varianten
+- `src/components/atoms/Badge.tsx` - einfache Label-/Status-Badges
+- `src/components/atoms/Button.tsx` - kleine generische Button-Abstraktion fuer einfache CTA-Faelle
+- `src/components/atoms/Skeleton.tsx` - Lade-Platzhalter mit Pulse-Animation
+- `src/components/atoms/SmartImage.tsx` - Thumbnail-/Fallback-Logik fuer Rezept- und Userbilder
+- `src/components/atoms/SparkleEffect.tsx` - dekorativer Partikeleffekt fuer Interaktionen
+- `src/components/atoms/Typography.tsx` - `Heading` und `Text` als typografische Basis
 
-For standalone builds with a clean database:
+#### Provider und "Stores"
 
-```bash
-npm run build:dev-seed
-```
+Es gibt aktuell keinen grossen zentralen Global Store im klassischen Zustand-/Redux-Sinn. Der State ist aufgeteilt in React Context, lokale Hooks, Refs und komponenteninterne Reducer.
 
-Sets `DEBUG=1`, runs a production build, then truncates and reseeds the database.
+- `src/components/providers/AuthProvider.tsx` - kapselt NextAuth und validiert Sessions
+- `src/components/providers/FeatureFlagsProvider.tsx` - stellt Feature Flags bereit und sendet Telemetrie an OpenPanel/Sentry
+- `src/components/providers/ProfileProvider.tsx` - leichtgewichtiger Profil-Context fuer Avatar/Nickname
+- `src/components/providers/RecipeTabsProvider.tsx` - verwaltet gepinnte/kuerzlich betrachtete Rezepte inkl. LocalStorage-Migration
+- `src/components/providers/ThemeProvider.tsx` - Theme-Zustand mit Persistenz in `localStorage`
+- `src/components/providers/ToastProvider.tsx` - clientseitiger Toast-"Store" inkl. SSE-Events
+- `src/components/providers/PageProgress.tsx` - Seitenladebalken
+- `src/components/hooks/useRecipeTabs.ts` - Hook fuer den RecipeTabs-Context
 
-## Docker Compose Services
+#### Wichtige Feature-Komponenten
 
-| Service    | Port  | Purpose                |
-| ---------- | ----- | ---------------------- |
-| postgres   | 64000 | Database               |
-| redis      | 62984 | Cache, queues, pub/sub |
-| opensearch | 9200  | Full-text search       |
-| app        | 3000  | Next.js application    |
-| worker     | —     | BullMQ job processor   |
-| scraper    | 34215 | Python recipe scraper  |
+- `src/components/flow/FlowEditor.tsx` - Herzstueck des Editors; verwaltet Nodes, Edges, Validation, AI-Apply und Layout
+- `src/components/flow/RecipeStepsViewer.tsx` - Rezept-Viewer mit Fortschritt, Timern, LocalStorage/Redis-Persistenz und Cast-Unterstuetzung
+- `src/components/recipe/RecipeForm.tsx` - Formular-Orchestrierung fuer Metadaten, Zutaten, Tags, Autosave und Flow-Editor
+- `src/components/search/RecipeSearchClient.tsx` - zusammengesetzte Suchoberflaeche mit Sidebar, Mobile Sheet, Result Grid und Pagination
+- `src/components/features/Header.tsx` - globale Navigation, Header-Suche, Menue, Theme Toggle, Rezept-Tabs
+- `src/components/notifications/NotificationsPageContent.tsx` - Notification-Ansicht mit Read-State und Push-Toggle
 
-## Key Features
+#### Weitere Komponentenbereiche
+
+- `src/components/features/` - produktnahe UI-Bausteine wie `RecipeCard`, Header, Upload, Sharing, Tabs, Activity UI
+- `src/components/search/` - alle Such-Hooks und Such-UI-Bloecke
+- `src/components/recipe/` - Form, Tabellen, Ingredient-Search, Tutorial-Flow
+- `src/components/flow/editor/` - Editor-spezifische Bausteine wie Node-Panel, AI-Dialog, Step-Config, Auto-Layout
+- `src/components/flow/viewer/` - Desktop-, Mobile- und Textansicht fuer den Rezept-Viewer
+- `src/components/layouts/` - Shells und Seitenlayouts
+- `src/components/notifications/` - Dropdown, List Items, Hooks, Stream-Helfer
+- `src/components/auth/`, `src/components/cast/`, `src/components/home/`, `src/components/sections/`, `src/components/motion/` - thematische Unterbereiche
+
+### 3. Utilities, Helper und Domain-Logik
+
+`src/lib/` ist die eigentliche technische Werkzeugkiste des Projekts. Dort liegt nicht nur "Kleinkram", sondern viel Kernlogik.
+
+#### Kleine, allgemeine Helper
+
+- `src/lib/slug.ts` - Slug-Erzeugung mit deutscher Umlaut-Normalisierung und Unique-Slug-Helper
+- `src/lib/url.ts` - zentrale `APP_URL`
+- `src/lib/format.ts` - Formatierung skalierter Zutatenmengen
+- `src/lib/storageKeys.ts` - Registry fuer alle `localStorage`-Keys
+- `src/lib/ingredient-display.ts` - Singular/Plural-Anzeige fuer Zutatenmengen
+
+#### UI-nahe Mapper und Display-Helper
+
+- `src/lib/recipe-card.ts` - mappt Prisma-Rezepte in UI-taugliche Card-Daten
+- `src/lib/user-card.ts` - gemeinsames UserCard-Interface
+- `src/lib/activity-utils.ts` - Aktivitaets-Mapping, Icon-Konfiguration und Zeitformatierung
+- `src/lib/thumbnail-client.ts` - Thumbnail-URL- und `srcset`-Builder fuer den Client
+- `src/lib/thumbnail.ts` - serverseitige Thumbnail-Aufloesung aus Rezept, User oder Key
+- `src/lib/palette.ts` - zentrale Farbpalette fuer UI und Statusdarstellungen
+
+#### Search- und Filterlogik
+
+- `src/lib/recipeFilters.ts` - parst Query-Parameter, baut Such-URLs und normalisiert Filterzustand
+- `src/lib/recipeSearch.ts` - erzeugt OpenSearch-Queries, Sortierung, Aggregationen und Ergebnis-Mapping
+- `shared/opensearch/client.ts` - OpenSearch-Client und Index-Konfiguration
+
+#### Realtime, Events und Notifications
+
+- `src/lib/realtime/broker.ts` - Publish/Subscribe-Abstraktion
+- `src/lib/realtime/clientStream.ts` - ref-counted EventSource-Management im Client
+- `src/lib/realtime/cursor.ts` - Stream-Cursor-Handling
+- `src/lib/realtime/toastEvents.ts` - Toast-spezifische Stream-Helfer
+- `src/lib/events/fire.ts` - feuert Domain-Events
+- `src/lib/events/persist.ts` - persistiert Notifications und Activity Logs
+- `src/lib/events/views.ts` - Hilfen fuer View-Events
+
+#### AI- und Import-Pipeline
+
+- `src/lib/importer/openai-client.ts` - zentrale OpenAI-Integration
+- `src/lib/importer/openai-recipe-schema.ts` - striktes JSON-Schema fuer Rezeptimporte
+- `src/lib/importer/pipeline.ts` - End-to-End-Import von Scrape -> Analyse -> Persistenz
+- `src/lib/importer/scraper.ts` - Anbindung an den Python-Scraper
+- `src/lib/importer/transform.ts` - Mapping AI-Output -> App-Datenmodell
+- `src/lib/importer/resolve-mentions.ts` - Aufloesung von Ingredient-Referenzen
+- `src/lib/importer/ai-text-analysis.ts` - Client-/Server-Vertrag fuer AI-Analyseergebnisse
+
+#### Moderation, Upload, Media
+
+- `src/lib/moderation/moderationService.ts` - Text-/Bildmoderation ueber OpenAI
+- `src/lib/moderation/thresholds.ts` - Schwellenwerte fuer Review/Reject
+- `src/lib/upload/processUpload.ts` - Upload-Pipeline fuer Dateien
+- `src/lib/image-approval.ts` - Bildfreigabelogik
+- `src/lib/s3.ts`, `src/lib/s3/` - S3-/MinIO-Zugriff und Key-Handling
+
+#### Feature Flags, Tracking und Telemetrie
+
+- `src/lib/flags/config.ts`, `src/lib/flags/definitions.ts` - Flag-Definitionen und Konfiguration
+- `src/lib/flags/server.ts` - serverseitiges Laden der Flags
+- `src/lib/flags/telemetry.ts` - Aufbereitung fuer Monitoring/Analytics
+- `src/lib/tracking.ts`, `src/lib/openpanel.ts` - Tracking-Helfer
+
+#### Weitere fachliche Module
+
+- `src/lib/qrupload/` - QR-basierter Upload-Flow mit JWT und Redis
+- `src/lib/push/send.ts` - Web-Push Versand
+- `src/lib/notifuse/email.ts` - Transaktionale E-Mails ueber Notifuse
+- `src/lib/validation/flowValidation.ts` - fachliche Pruefung fuer Rezept-Graphen
+- `src/lib/recipe-progress/redis.ts` - Persistenz des Viewer-Fortschritts
+- `src/lib/trophies/registry.ts` - visuelle Registry fuer Trophy-Tiers
+- `src/lib/seed.ts`, `src/lib/seed-basics.ts` - Seed-Skripte fuer Demo-/Basisdaten
+
+### 4. Shared- und Backend-Infrastruktur
+
+- `shared/prisma.ts` - Prisma Singleton
+- `shared/logger.ts` - gemeinsamer Logger
+- `worker/` - BullMQ Worker, Scheduler, Queue-Definitionen und Prozessoren
+- `services/scraper/` - externer Python-Scraper fuer Rezeptimporte
+- `email-templates/` - MJML + Push-Skripte fuer Mail-Templates
+- `k6/` - Load-Tests
+- `cli/` - lokales CLI (`npm run cli` bzw. `kitchen`)
+
+## Wichtige Laufzeit-Systeme
 
 ### Flow Editor
 
-Visual recipe editor powered by React Flow. Recipes are modeled as directed graphs with typed step nodes (schneiden, kochen, braten, backen, mixen, warten, wuerzen, anrichten, servieren) and edges representing dependencies. Dagre handles automatic layout.
+Der Editor modelliert Rezepte als Graphen. Nodes repraesentieren Kochschritte wie `schneiden`, `kochen`, `braten` oder `servieren`, Edges repraesentieren Abhaengigkeiten.
 
-### AI Recipe Import
+Wichtige Dateien:
 
-Paste a URL or raw text and let AI (gpt-5.4) convert it into a structured flow diagram. The Python scraper fetches and cleans the source, OpenAI parses it into nodes/edges with strict JSON schema validation, and the result loads directly into the flow editor.
+- `src/components/flow/FlowEditor.tsx`
+- `src/components/flow/editor/editorTypes.ts`
+- `src/components/flow/editor/RecipeNode.tsx`
+- `src/components/flow/editor/NodeEditPanel.tsx`
+- `src/components/flow/editor/useFlowAutoLayout.ts`
+- `src/lib/validation/flowValidation.ts`
 
-### Content Moderation
+### Rezeptformular und Autosave
 
-AI-powered auto-moderation (OpenAI omni-moderation-latest, free & multi-modal) with configurable thresholds. Content scoring below 0.40 is auto-approved, 0.40-0.84 is queued for human review, and 0.85+ is auto-rejected. Includes moderator queue UI, user reporting with auto-escalation, and a ban system.
+`RecipeForm` haelt Metadaten im Komponentenstate und den Flow-Zustand bewusst in Refs, damit Node-Aenderungen nicht die ganze Form neu rendern. Entwuerfe werden automatisch gespeichert, veroeffentlichte Rezepte nicht.
 
-### Real-time Updates
+### Suche
 
-Redis pub/sub powers SSE streams for live notifications, activity feeds, and moderator alerts. Replaces polling with instant delivery.
+Die Suche basiert auf OpenSearch und kombiniert Volltext, Aggregationen und Filter-URLs.
 
-### Google Cast (Chromecast)
+Wichtige Dateien:
 
-Cast any recipe to a TV or Nest Hub. The sender transmits the recipe slug, and the Cast receiver renders a fullscreen mobile-optimized view.
+- `src/components/search/useSearchFilters.ts`
+- `src/components/search/useRecipeSearch.ts`
+- `src/components/search/RecipeSearchClient.tsx`
+- `src/lib/recipeFilters.ts`
+- `src/lib/recipeSearch.ts`
 
-### Search
+### AI-Import
 
-OpenSearch indices for recipes and ingredients with full-text search, faceted filtering (tags, ingredients, difficulty, time ranges, meal slots), and autocomplete suggestions.
+Import-Flow:
 
-### Background Jobs (BullMQ)
+1. URL oder Rohtext erfassen
+2. Python-Scraper bereinigt die Quelle
+3. OpenAI wandelt den Inhalt in ein strukturiertes Rezept um
+4. Transform-Schicht mappt das Ergebnis auf echte App-Daten
+5. Flow wird in den Editor uebernommen
 
-Standalone worker process with three queues: OpenSearch sync (watermark-based incremental), scheduled maintenance (trending calculation, contact sync, cache purge), and database backups (pg_dump to S3 with retention policies).
+### Moderation
 
-## Git & Release Discipline
+Texte und Bilder werden automatisiert moderiert. Bei mittleren Scores landet Inhalt in der Moderationswarteschlange, bei hohen Scores wird er blockiert.
 
-- The `live` branch receives only **squash merges** so its history stays linear and clean.
-- Every merge commit targeting `live` must include a changelog entry describing user-visible impact.
-- The **first line** of the commit message must be a compact summary prefixed with the predominant type (`feat`/`fix`/`chore`).
+### Realtime und Notifications
 
-## Email Templates (MJML)
+Benachrichtigungen und Aktivitaetsfeeds laufen ueber SSE und Redis Pub/Sub. `ToastProvider` und Notification-Hooks konsumieren diese Streams im Client.
 
-Email templates in `lib/email-templates/mjml/` use MJML format with Liquid templating for Notifuse integration.
+### Worker und Hintergrundjobs
 
-### Liquid Variable Reference
+Der Worker ist ein separater Node-Prozess fuer:
 
-#### Contact Variables
+- OpenSearch-Synchronisation
+- Trending-Berechnungen
+- Kontakt-/Benachrichtigungs-Sync
+- Thumbnail-/Wartungsjobs
+- Datenbank-Backups
 
-| Variable                   | Description          |
-| -------------------------- | -------------------- |
-| `{{ contact.first_name }}` | User's first name    |
-| `{{ contact.last_name }}`  | User's last name     |
-| `{{ contact.email }}`      | User's email address |
+## Entwicklungssetup
 
-#### System URLs
+### Voraussetzungen
 
-| Variable                         | Description               |
-| -------------------------------- | ------------------------- |
-| `{{ unsubscribe_url }}`          | Unsubscribe link          |
-| `{{ confirm_subscription_url }}` | Subscription confirmation |
-| `{{ notification_center_url }}`  | Notification preferences  |
+- Node.js 22+
+- Docker + Docker Compose
 
-#### Template Variables (generic.mjml)
+### Installation
 
-| Variable           | Description                            |
-| ------------------ | -------------------------------------- |
-| `{{{ subject }}}`  | Email subject (triple braces for HTML) |
-| `{{{ message }}}`  | Main content (triple braces for HTML)  |
-| `{{ buttonText }}` | Button text (optional)                 |
-| `{{ buttonLink }}` | Button URL (optional)                  |
+```bash
+npm install --include=dev
+cp .env.example .env
+docker compose up -d postgres redis opensearch scraper
+npm run db:generate
+npm run db:push
+npm run dev
+```
+
+Die App laeuft dann unter `http://localhost:3000`.
+
+### Wichtige Ports
+
+| Dienst     | Port    | Zweck              |
+| ---------- | ------- | ------------------ |
+| App        | `3000`  | Next.js Anwendung  |
+| PostgreSQL | `64000` | Datenbank          |
+| Redis      | `62984` | Cache, Queues, SSE |
+| OpenSearch | `9200`  | Suche              |
+| Scraper    | `34215` | Rezept-Scraping    |
+
+## Wichtige Scripts
+
+```bash
+npm run dev             # Next.js Dev Server
+npm run worker          # BullMQ Worker lokal starten
+npm run lint            # ESLint
+npm run lint:fix        # ESLint auto-fix
+npm run format          # Prettier
+npm run db:generate     # Prisma Client generieren
+npm run db:push         # Schema in DB pushen
+npm run db:migrate      # Prisma Migration lokal
+npm run db:seed         # Voller Seed
+npm run db:seed-basics  # Kleiner Basis-Seed
+npm run db:fresh        # DB reset + Seed
+npm run build           # Production Build
+npm run test:e2e        # Playwright Tests
+```
+
+## Wichtige Umgebungsvariablen
+
+Die vollstaendige Liste steht in `.env.example`. Besonders relevant sind:
+
+- `DATABASE_URL`
+- `OPENSEARCH_URL`
+- `REDIS_PASSWORD`
+- `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`
+- `SCRAPLER_URL`
+- `OPENAI_API_KEY`
+- `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY`, `CLOUDFLARE_TURNSTILE_SECRET_KEY`
+- `NEXT_PUBLIC_CAST_APP_ID`
+
+## Deployment und Releases
+
+- Deployments laufen nur von `main`; `live` ist veraltet und kann entfernt oder umbenannt werden.
+- Keine Squash-Merges verwenden, weil sie Branch-Divergenzen und aufgeblasene GitHub-Diffs verursachen.
+- Die CI in `.github/workflows/app-image-live.yml` reagiert auf `v*`-Tags, fuehrt Lint + Prettier-Check aus und startet danach ein Coolify-Redeploy.
+- Die betroffene Coolify-App hat die UUID `icskwwcoscc000ksggckksw4`; die Branch-Konfiguration soll auf `main` zeigen.
+
+### Release-Ablauf
+
+1. Letzten Tag ermitteln: `git tag -l 'v*' --sort=-creatordate | head -1`
+2. Aenderungen seit dem letzten Tag ansehen: `git log <last-tag>..HEAD --oneline`
+3. Changelog vorbereiten und neuen Eintrag in `src/app/changelog/page.tsx` vorne in das `CHANGELOG`-Array setzen
+4. Changelog committen: `git commit -m "docs: changelog for vYYYY-MM-DD"`
+5. Checks ausfuehren: `npm run lint` und `npm run format:check`
+6. Tag erzeugen und pushen: `git tag vYYYY-MM-DD && git push origin main --tags`
+7. CI uebernimmt Lint, Prettier-Check und das Redeploy
+
+Hinweise:
+
+- Follow-up-Releases am selben Tag verwenden `vYYYY-MM-DD.1`, `vYYYY-MM-DD.2` usw.
+- Die Changelog-Seite ist unter `/changelog` erreichbar und nicht in der Hauptnavigation verlinkt.
+
+## Orientierung fuer neue Entwickler:innen
+
+Wenn du neu im Projekt bist, ist diese Reihenfolge sinnvoll:
+
+1. `src/app/` ansehen, um die Produktflaechen zu verstehen
+2. `src/components/recipe/RecipeForm.tsx` und `src/components/flow/FlowEditor.tsx` lesen
+3. `src/lib/recipeFilters.ts` und `src/lib/recipeSearch.ts` fuer die Suche lesen
+4. `src/lib/importer/` fuer AI-Import anschauen
+5. `worker/` fuer Hintergrundprozesse ansehen
+
+## Verwandte Doku
+
+- `email-templates/README.md` - Mail-Template-Workflow
+- `k6/README.md` - Load-Testing
+- `AGENTS.md` - Projektwissen fuer Coding-Agents

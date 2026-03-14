@@ -3,6 +3,7 @@ import type { NextConfig } from 'next';
 const resolveAliasPath = (subpath: string) => new URL(subpath, import.meta.url).pathname;
 
 const nextConfig: NextConfig = {
+    reactCompiler: true,
     output: 'standalone',
     serverExternalPackages: ['bullmq', 'sharp', 'nodehun'],
     productionBrowserSourceMaps: process.env.NEXT_PUBLIC_DEBUG === '1',

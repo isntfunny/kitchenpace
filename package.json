@@ -118,6 +118,7 @@
         "@types/react-dom": "^19.2.3",
         "@typescript-eslint/eslint-plugin": "^8.56.1",
         "@uiw/react-json-view": "^2.0.0-alpha.41",
+        "babel-plugin-react-compiler": "^1.0.0",
         "eslint": "^9",
         "eslint-config-next": "^16.1.6",
         "eslint-plugin-import": "^2.32.0",

@@ -26,6 +26,95 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '14. März 2026',
+        version: 'v2026-03-14',
+        emoji: '🧑‍🍳',
+        title: 'Flow-Editor Polish, Zutaten-Suche & Trophäen',
+        items: [
+            // ── Spotlight ──
+            {
+                text: 'Trophäen-System — Erfolge sammeln, Avatar-Trophäen auswählen und Feier-Animation bei neuen Errungenschaften',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Geführtes Tutorial — Schritt-für-Schritt-Anleitung für die Rezepterstellung mit dynamischen Spotlights und Auto-Advance',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Zutaten-Suche findet jetzt auch Pluralformen und Aliase — „Tomaten" findet „Tomate", „Erdäpfel" findet „Kartoffel"',
+                tag: 'spotlight',
+            },
+
+            // ── Features ──
+            {
+                text: 'Flow-Editor: Schritttyp und Titel sind jetzt einklappbar, (+)-Button dreht sich beim Öffnen',
+                tag: 'feat',
+            },
+            {
+                text: 'Flow-Editor: Layout-Button umgestaltet, Flow-Check-Panel verbessert',
+                tag: 'feat',
+            },
+            {
+                text: 'AI-Button hinter Feature-Flag versteckt (Flipt) — Vorbereitung für KI-gestützte Rezeptkonvertierung',
+                tag: 'feat',
+            },
+            {
+                text: 'Rezept-Fortschritt im Koch-Modus wird gespeichert und beim Wiederöffnen wiederhergestellt',
+                tag: 'feat',
+            },
+            {
+                text: 'Zutaten: Pluralname, Aliase und Admin-UI zur Verwaltung',
+                tag: 'feat',
+            },
+            {
+                text: 'Automatische Singularisierung bei der Zutatenerstellung mittels deutschem Wörterbuch (Nodehun)',
+                tag: 'feat',
+            },
+            {
+                text: 'Impressum und Open-Source-Lizenzseite hinzugefügt',
+                tag: 'feat',
+            },
+            {
+                text: 'SSE-Streams mit Auto-Reconnect und Cursor-Tracking verbessert',
+                tag: 'feat',
+            },
+            {
+                text: 'Feature-Flags laufen jetzt serverseitig über Flipt',
+                tag: 'feat',
+            },
+            {
+                text: 'Tag-Erstellung direkt per Enter-Taste im Tag-Selector',
+                tag: 'feat',
+            },
+
+            // ── Infra ──
+            {
+                text: 'Docker: Alpine → Debian slim, Runner und Worker in ein einzelnes App-Image zusammengelegt',
+                tag: 'feat',
+            },
+
+            // ── Fixes ──
+            {
+                text: 'StepTypePicker-Toggle und Plus-Button-Rotation korrigiert',
+                tag: 'fix',
+            },
+            {
+                text: 'Compound-Wörter werden bei der Suche nicht mehr fälschlich auf ihre Bestandteile reduziert',
+                tag: 'fix',
+            },
+            {
+                text: 'Nodehun-Kompatibilität mit ESM und nativen Addons im Docker-Build behoben',
+                tag: 'fix',
+            },
+
+            // ── Codebase ──
+            {
+                text: 'Codebase aufgeräumt: 39 ungenutzte Dateien gelöscht, 8 Abhängigkeiten entfernt, doppelte Typen konsolidiert',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '12. März 2026',
         version: 'v2026-03-12',
         emoji: '🚀',

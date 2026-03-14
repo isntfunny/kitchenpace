@@ -188,8 +188,4 @@ export function buildRecipeFilterHref(filters: Partial<RecipeFilterSearchParams>
     return params ? `/recipes?${params}` : '/recipes';
 }
 
-export {
-    DEFAULT_LIMIT as RECIPE_FILTER_DEFAULT_LIMIT,
-    DEFAULT_PAGE as RECIPE_FILTER_DEFAULT_PAGE,
-    DEFAULT_SORT as RECIPE_FILTER_DEFAULT_SORT,
-};
+export { DEFAULT_LIMIT as RECIPE_FILTER_DEFAULT_LIMIT };

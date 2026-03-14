@@ -81,15 +81,3 @@ export async function getJobRuns(options?: {
         take: options?.limit ?? 50,
     }) as Promise<JobRun[]>;
 }
-
-export async function getJobRunById(id: string) {
-    return prisma.jobRun.findUnique({
-        where: { id },
-    });
-}
-
-export async function getJobRunByJobId(jobId: string) {
-    return prisma.jobRun.findFirst({
-        where: { jobId },
-    });
-}

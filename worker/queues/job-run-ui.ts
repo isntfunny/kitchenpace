@@ -28,10 +28,6 @@ export const JOB_STATUS_DETAILS: Record<
     },
 };
 
-export function getStatusColor(status: JobStatus) {
-    return JOB_STATUS_DETAILS[status]?.color ?? '#9ca3af';
-}
-
 const QUEUE_LABELS: Record<string, string> = {
     opensearch: 'OpenSearch',
     scheduled: 'Geplant',

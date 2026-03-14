@@ -1,4 +1,4 @@
-export function getActiveFeatureFlags(flags: Record<string, boolean>): string[] {
+function getActiveFeatureFlags(flags: Record<string, boolean>): string[] {
     return Object.entries(flags)
         .filter(([, enabled]) => enabled)
         .map(([flag]) => flag)

@@ -62,16 +62,3 @@ export function useFeatureFlag(flag: FeatureFlagName): boolean {
 
     return context.flags[flag];
 }
-
-export function useFeatureFlagsStatus(): Omit<FeatureFlagsContextValue, 'flags' | 'allFlags'> {
-    const context = useContext(FeatureFlagsContext);
-    if (!context) {
-        throw new Error('useFeatureFlagsStatus must be used within FeatureFlagsProvider');
-    }
-
-    return {
-        ready: context.ready,
-        provider: context.provider,
-        error: context.error,
-    };
-}

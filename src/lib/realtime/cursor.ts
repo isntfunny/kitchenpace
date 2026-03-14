@@ -10,7 +10,7 @@ export type StreamCursor = {
 
 const STREAM_CURSOR_SEPARATOR = '|';
 
-export function parseStreamCursor(
+function parseStreamCursor(
     createdAtValue: string | null,
     idValue: string | null,
 ): StreamCursor | null {
@@ -29,7 +29,7 @@ export function parseStreamCursor(
     };
 }
 
-export function parseStreamCursorValue(value: string | null): StreamCursor | null {
+function parseStreamCursorValue(value: string | null): StreamCursor | null {
     if (!value) {
         return null;
     }

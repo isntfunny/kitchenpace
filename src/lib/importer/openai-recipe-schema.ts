@@ -8,7 +8,7 @@ import { z } from 'zod';
 // ============================================================================
 
 /** Alle Schritttypen des Flow-Editors. 'start' ist Pflicht als erster Knoten. */
-export const STEP_TYPES = [
+const STEP_TYPES = [
     'start',
     'schneiden',
     'kochen',
@@ -21,7 +21,7 @@ export const STEP_TYPES = [
     'servieren',
 ] as const;
 
-export const CATEGORIES = [
+const CATEGORIES = [
     'Hauptgericht',
     'Beilage',
     'Backen',
@@ -32,13 +32,13 @@ export const CATEGORIES = [
     'Salat',
 ] as const;
 
-export const DIFFICULTIES = ['Einfach', 'Mittel', 'Schwer'] as const;
+const DIFFICULTIES = ['Einfach', 'Mittel', 'Schwer'] as const;
 
 // ============================================================================
 // Basis-Schemas
 // ============================================================================
 
-export const IngredientSchema = z.object({
+const IngredientSchema = z.object({
     name: z
         .string()
         .min(1)
@@ -63,7 +63,7 @@ export const IngredientSchema = z.object({
         ),
 });
 
-export const FlowNodeSchema = z.object({
+const FlowNodeSchema = z.object({
     id: z.string().min(1).describe('Eindeutige ID des Knotens (z.B. start, step-1, servieren)'),
     type: z.enum(STEP_TYPES).describe('Typ des Schritts'),
     label: z.string().min(1).max(50).describe('Kurzer Titel des Schritts'),
@@ -79,7 +79,7 @@ export const FlowNodeSchema = z.object({
         .describe('Array von Zutaten-IDs die in diesem Schritt verwendet werden'),
 });
 
-export const FlowEdgeSchema = z.object({
+const FlowEdgeSchema = z.object({
     id: z.string().min(1).describe('Eindeutige ID der Kante'),
     source: z.string().min(1).describe('ID des Quellknotens'),
     target: z.string().min(1).describe('ID des Zielknotens'),
@@ -123,9 +123,6 @@ export const ImportedRecipeSchema = z.object({
 // TypeScript Types (abgeleitet von Zod)
 // ============================================================================
 
-export type ImportedIngredient = z.infer<typeof IngredientSchema>;
-export type ImportedFlowNode = z.infer<typeof FlowNodeSchema>;
-export type ImportedFlowEdge = z.infer<typeof FlowEdgeSchema>;
 export type ImportedRecipe = z.infer<typeof ImportedRecipeSchema>;
 
 // ============================================================================
@@ -294,5 +291,3 @@ export function getOpenAIResponseFormat() {
         },
     } as const;
 }
-
-export type OpenAIResponseFormat = ReturnType<typeof getOpenAIResponseFormat>;

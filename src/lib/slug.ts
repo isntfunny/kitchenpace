@@ -37,8 +37,3 @@ export async function generateUniqueSlug(
 
     return `${base}-${counter}`;
 }
-
-export function generateSlug(title: string, timestamp?: number): string {
-    const base = slugify(title);
-    return timestamp ? `${base}-${timestamp}` : base;
-}

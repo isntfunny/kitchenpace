@@ -25,11 +25,6 @@ export interface CategoryPageData {
     };
 }
 
-export interface CategoryRecipeSection {
-    title: string;
-    recipes: RecipeCardData[];
-}
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_COLOR = PALETTE.orange;

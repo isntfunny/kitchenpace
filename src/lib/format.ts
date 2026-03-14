@@ -10,11 +10,3 @@ export function formatScaledAmount(
     const scaled = amount * (servings / originalServings);
     return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
 }
-
-/**
- * Truncate text to a maximum length, appending an ellipsis if truncated.
- */
-export function truncateText(text: string, maxLength: number): string {
-    if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength) + '\u2026';
-}

@@ -4,13 +4,6 @@ export enum QueueName {
     BACKUP = 'backup',
 }
 
-export enum JobPriority {
-    LOW = 1,
-    NORMAL = 2,
-    HIGH = 3,
-    CRITICAL = 4,
-}
-
 export interface SyncRecipesJob {
     batchSize?: number;
 }
@@ -61,8 +54,6 @@ export type ScheduledJob =
     | { name: 'generate-recipe-og'; data: GenerateRecipeOgJob }
     | { name: 'generate-og-images'; data: GenerateOgImagesJob }
     | { name: 'backfill-ingredient-plurals'; data: BackfillIngredientPluralsJob };
-
-export type AllJob = OpenSearchJob | ScheduledJob;
 
 // Job payload schema for admin form generation
 export type JobPayloadField =

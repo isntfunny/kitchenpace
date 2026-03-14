@@ -14,7 +14,7 @@ import {
 import type { AspectRatio } from '@app/lib/thumbnail-client';
 import { css, cx } from 'styled-system/css';
 
-export const RECIPE_PLACEHOLDER = '/recipe_placeholder.jpg';
+const RECIPE_PLACEHOLDER = '/recipe_placeholder.jpg';
 
 interface SmartImageProps {
     src?: string;

@@ -6,7 +6,6 @@ import * as React from 'react';
 import { css } from 'styled-system/css';
 
 const Select = SelectPrimitive.Root;
-const SelectGroup = SelectPrimitive.Group;
 const SelectValue = SelectPrimitive.Value;
 
 const SelectTrigger = React.forwardRef<
@@ -118,4 +117,4 @@ const SelectItem = React.forwardRef<
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
-export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectItem };
+export { Select, SelectValue, SelectTrigger, SelectContent, SelectItem };

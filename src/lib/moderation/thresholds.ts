@@ -3,7 +3,7 @@
  * OpenAI Moderation API returns category_scores from 0.0 to 1.0
  */
 
-export const MODERATION_THRESHOLDS = {
+const MODERATION_THRESHOLDS = {
     AUTO_REJECT: 0.85, // >= this: content blocked immediately
     HUMAN_REVIEW: 0.4, // >= this but < AUTO_REJECT: goes to mod queue
     AUTO_APPROVE: 0.4, // < this: silently approved

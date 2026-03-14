@@ -6,7 +6,7 @@ const apiUrl = process.env.OPENPANEL_API_URL;
 
 const isConfigured = Boolean(clientId && clientSecret);
 
-export const opServer = isConfigured
+const opServer = isConfigured
     ? new OpenPanel({
           clientId: clientId!,
           clientSecret: clientSecret!,

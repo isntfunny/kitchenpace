@@ -34,14 +34,6 @@ export interface StepConfig {
     canHaveOutgoingEdge: boolean;
 }
 
-export const STEP_CATEGORIES: Record<StepCategory, string> = {
-    vorbereitung: 'Vorbereitung',
-    kochen: 'Kochen',
-    warten: 'Warten',
-    wuerzen: 'Würzen',
-    fertig: 'Fertig',
-};
-
 export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     start: {
         type: 'start',
@@ -216,29 +208,4 @@ export const ADDABLE_STEP_TYPES: StepType[] = [
 
 export function getStepConfig(type: StepType): StepConfig {
     return STEP_CONFIGS[type];
-}
-
-export function getStepLabel(type: StepType): string {
-    return STEP_CONFIGS[type].label;
-}
-
-export function getStepColor(type: StepType): string {
-    return STEP_CONFIGS[type].color;
-}
-
-export function getStepsByCategory(): Record<StepCategory, StepType[]> {
-    const result: Record<StepCategory, StepType[]> = {
-        vorbereitung: [],
-        kochen: [],
-        warten: [],
-        wuerzen: [],
-        fertig: [],
-    };
-
-    for (const type of ADDABLE_STEP_TYPES) {
-        const config = STEP_CONFIGS[type];
-        result[config.category].push(type);
-    }
-
-    return result;
 }

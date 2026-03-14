@@ -16,5 +16,3 @@ export const STORAGE_KEYS = {
     // Recipe tabs (pinned / recent)
     recipeTabs: 'kitchenpace_recipe_tabs',
 } as const;
-
-export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

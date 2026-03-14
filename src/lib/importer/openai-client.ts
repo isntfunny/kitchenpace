@@ -17,7 +17,7 @@ import type { ImportRunMetadata, RecipeParseResult } from './types';
 /**
  * Erstellt einen OpenAI Client mit den Umgebungsvariablen
  */
-export function createOpenAIClient(): OpenAI {
+function createOpenAIClient(): OpenAI {
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {

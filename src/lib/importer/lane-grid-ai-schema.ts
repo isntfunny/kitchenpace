@@ -8,7 +8,7 @@ import { z } from 'zod';
 // Enums — müssen mit editorTypes.ts StepType übereinstimmen
 // ============================================================================
 
-export const STEP_TYPES = [
+const STEP_TYPES = [
     'start',
     'schneiden',
     'kochen',
@@ -21,7 +21,7 @@ export const STEP_TYPES = [
     'servieren',
 ] as const;
 
-export const CATEGORIES = [
+const CATEGORIES = [
     'Hauptgericht',
     'Beilage',
     'Backen',
@@ -32,13 +32,13 @@ export const CATEGORIES = [
     'Salat',
 ] as const;
 
-export const DIFFICULTIES = ['Einfach', 'Mittel', 'Schwer'] as const;
+const DIFFICULTIES = ['Einfach', 'Mittel', 'Schwer'] as const;
 
 // ============================================================================
 // LaneGrid-Schemas
 // ============================================================================
 
-export const LaneStepAISchema = z.object({
+const LaneStepAISchema = z.object({
     id: z
         .string()
         .min(1)
@@ -75,7 +75,7 @@ export const LaneStepAISchema = z.object({
         ),
 });
 
-export const LaneSegmentAISchema = z.object({
+const LaneSegmentAISchema = z.object({
     id: z
         .string()
         .min(1)
@@ -99,7 +99,7 @@ export const LaneSegmentAISchema = z.object({
         ),
 });
 
-export const LaneGridAISchema = z.object({
+const LaneGridAISchema = z.object({
     segments: z
         .array(LaneSegmentAISchema)
         .min(2)
@@ -115,7 +115,7 @@ export const LaneGridAISchema = z.object({
 // Zutaten-Schema (identisch zu openai-recipe-schema.ts)
 // ============================================================================
 
-export const IngredientSchema = z.object({
+const IngredientSchema = z.object({
     id: z
         .string()
         .min(1)
@@ -161,9 +161,6 @@ export const ImportedRecipeWithLaneGridSchema = z.object({
 // TypeScript Types
 // ============================================================================
 
-export type LaneStepAI = z.infer<typeof LaneStepAISchema>;
-export type LaneSegmentAI = z.infer<typeof LaneSegmentAISchema>;
-export type LaneGridAI = z.infer<typeof LaneGridAISchema>;
 export type ImportedRecipeWithLaneGrid = z.infer<typeof ImportedRecipeWithLaneGridSchema>;
 
 // ============================================================================
@@ -296,5 +293,3 @@ export function getOpenAIResponseFormat() {
         },
     } as const;
 }
-
-export type OpenAIResponseFormat = ReturnType<typeof getOpenAIResponseFormat>;

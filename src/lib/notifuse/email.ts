@@ -10,12 +10,9 @@ const NOTIFUSE_NOTIFICATION_ACTIVATION =
 const NOTIFUSE_NOTIFICATION_WELCOME = process.env.NOTIFUSE_NOTIFICATION_WELCOME || 'welcome';
 const NOTIFUSE_NOTIFICATION_PASSWORD_RESET =
     process.env.NOTIFUSE_NOTIFICATION_PASSWORD_RESET || 'password_reset';
-const NOTIFUSE_NOTIFICATION_WEEKLY =
-    process.env.NOTIFUSE_NOTIFICATION_WEEKLY || 'weekly_newsletter';
 const NOTIFUSE_LIST_KITCHENPACE_USERS =
     process.env.NOTIFUSE_LIST_USERS ??
     (process.env.NODE_ENV === 'production' ? 'kitchenpacelive' : 'kitchenpaceusers');
-const NOTIFUSE_LIST_NEWSLETTER = 'newsletter';
 const NOTIFUSE_REQUEST_TIMEOUT_MS = 10_000;
 
 type NotifuseApiResponse<T extends object = Record<string, unknown>> = {
@@ -246,58 +243,4 @@ export async function sendNotifusePasswordResetEmail({
         email,
         data: { variables: { resetLink } },
     });
-}
-
-type RecipeData = {
-    name: string;
-    description: string;
-    image_url: string;
-    url: string;
-    time_minutes: number;
-    difficulty: 'Einfach' | 'Mittel' | 'Schwer';
-    rating?: number;
-};
-
-type SendWeeklyNewsletterParams = {
-    latest_recipes: RecipeData[];
-    top_recipes: RecipeData[];
-    categoryCookingUrl: string;
-    categoryBakingUrl: string;
-    categorySideDishUrl: string;
-};
-
-export async function sendWeeklyNewsletter(
-    params: SendWeeklyNewsletterParams,
-): Promise<NotifuseResponse> {
-    const { workspaceId } = ensureConfig();
-
-    const response = await callNotifuse<{ message_id?: string }>('broadcast.send', {
-        workspace_id: workspaceId,
-        notification: {
-            id: NOTIFUSE_NOTIFICATION_WEEKLY,
-            list_id: NOTIFUSE_LIST_NEWSLETTER,
-            data: {
-                variables: {
-                    latest_recipes: params.latest_recipes,
-                    top_recipes: params.top_recipes,
-                    categoryCookingUrl: params.categoryCookingUrl,
-                    categoryBakingUrl: params.categoryBakingUrl,
-                    categorySideDishUrl: params.categorySideDishUrl,
-                },
-            },
-        },
-    });
-
-    log.info('Weekly newsletter sent', {
-        notificationId: NOTIFUSE_NOTIFICATION_WEEKLY,
-        listId: NOTIFUSE_LIST_NEWSLETTER,
-        messageId: response.message_id,
-        latestCount: params.latest_recipes.length,
-        topCount: params.top_recipes.length,
-    });
-
-    return {
-        message_id: response.message_id ?? '',
-        success: response.success ?? true,
-    };
 }

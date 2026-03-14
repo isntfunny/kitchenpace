@@ -93,7 +93,7 @@ services:
             context: .
             dockerfile: Dockerfile
             target: app
-        entrypoint: []
+        entrypoint: null
         command: ['npm', 'run', 'worker']
         container_name: kitchenpace-worker
         depends_on:

@@ -16,6 +16,7 @@ import { ThemeProvider } from '@app/components/providers/ThemeProvider';
 import { ToastProvider } from '@app/components/providers/ToastProvider';
 import { getServerAuthSession } from '@app/lib/auth';
 import { getServerFeatureFlags } from '@app/lib/flags/server';
+import { getOrCreateProfile } from '@app/lib/profile';
 import { APP_URL } from '@app/lib/url';
 import { TRPCReactProvider } from '@app/trpc/client';
 import { prisma } from '@shared/prisma';
@@ -170,9 +171,7 @@ export default async function RootLayout({
     }> = [];
 
     if (session?.user?.id) {
-        const userProfile = await prisma.profile.findUnique({
-            where: { userId: session.user.id },
-        });
+        const userProfile = await getOrCreateProfile(session.user.id);
         if (userProfile) {
             profile = {
                 photoKey: userProfile.photoKey,

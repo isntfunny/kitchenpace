@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
                     },
                 },
                 size: 10,
-                _source: ['name'],
+                _source: ['name', 'pluralName'],
             },
         });
 
@@ -202,10 +202,24 @@ export async function GET(request: NextRequest) {
                 .slice(0, 5);
         }
 
-        // Parse ingredient names from ingredients index
-        const ingredientNames = (ingredientsResult.body.hits?.hits ?? [])
-            .map((hit: { _source?: { name?: string } }) => hit._source?.name)
-            .filter((name: string | undefined): name is string => Boolean(name));
+        // Parse ingredient names from ingredients index, dedup plural-only entries
+        const ingredientHits = (ingredientsResult.body.hits?.hits ?? []) as Array<{
+            _source?: { name?: string; pluralName?: string | null };
+        }>;
+        const allIngredientDocs = ingredientHits
+            .map((hit) => ({
+                name: hit._source?.name,
+                pluralName: hit._source?.pluralName ?? null,
+            }))
+            .filter((doc): doc is { name: string; pluralName: string | null } => Boolean(doc.name));
+        const ingredientPluralSet = new Set(
+            allIngredientDocs
+                .map((d) => d.pluralName?.toLowerCase())
+                .filter((v): v is string => Boolean(v)),
+        );
+        const ingredientNames = allIngredientDocs
+            .filter((d) => !ingredientPluralSet.has(d.name.toLowerCase()))
+            .map((d) => d.name);
 
         // Get recipe counts for matched ingredients
         let ingredients: SuggestItem[] = [];

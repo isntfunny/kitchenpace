@@ -4,7 +4,6 @@ import { X, Upload, Trash2, Check, Edit3 } from 'lucide-react';
 import { useRef, useState, useCallback, useEffect } from 'react';
 
 import { UploadArea } from '@app/components/features/UploadArea';
-import { searchIngredients } from '@app/components/recipe/actions';
 import { SegmentedBar } from '@app/components/recipe/RecipeForm/components/SegmentedBar';
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 import { PALETTE } from '@app/lib/palette';
@@ -286,7 +285,6 @@ export function NodeEditPanel({
                         value={description}
                         onChange={setDescription}
                         availableIngredients={availableIngredients}
-                        onSearchIngredients={searchIngredients}
                         onAddIngredient={onAddIngredientToRecipe}
                     />
                 </div>

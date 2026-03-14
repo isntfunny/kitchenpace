@@ -51,7 +51,7 @@ export async function searchIngredients(query: string): Promise<IngredientSearch
 
     const hits = response.body.hits?.hits ?? [];
 
-    return hits
+    const results = hits
         .map((hit: { _source?: Record<string, unknown> }) => {
             const source = hit._source as
                 | {
@@ -74,6 +74,13 @@ export async function searchIngredients(query: string): Promise<IngredientSearch
             };
         })
         .filter((result): result is IngredientSearchResult => Boolean(result));
+
+    // Dedup: if a result's name matches another result's pluralName, it is a legacy plural entry.
+    // Keep only the singular form (the one whose name is NOT a pluralName of another).
+    const pluralNameSet = new Set(
+        results.map((r) => r.pluralName?.toLowerCase()).filter((v): v is string => Boolean(v)),
+    );
+    return results.filter((r) => !pluralNameSet.has(r.name.toLowerCase()));
 }
 
 export async function searchTags(

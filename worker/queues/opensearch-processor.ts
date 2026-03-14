@@ -97,6 +97,7 @@ function transformIngredientToDocument(ingredient: IngredientWithDetails): Ingre
                 ingredient.slug,
                 ...(ingredient.units ?? []),
                 ...(ingredient.aliases ?? []),
+                ...(ingredient.pluralName ? [ingredient.pluralName] : []),
             ]
                 .filter((entry): entry is string => Boolean(entry))
                 .map((value) => value.toLowerCase()),

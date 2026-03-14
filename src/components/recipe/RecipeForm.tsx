@@ -27,7 +27,7 @@ const RecipeCreationTutorial = dynamic(
     { ssr: false },
 );
 
-import { searchIngredients, searchTags } from '../recipe/actions';
+import { searchTags } from '../recipe/actions';
 import {
     createIngredient,
     createRecipe,
@@ -36,6 +36,7 @@ import {
     type FlowNodeInput,
     type FlowEdgeInput,
 } from '../recipe/createActions';
+import { useIngredientSearch } from '../recipe/useIngredientSearch';
 
 import {
     GeneralInformationSection,
@@ -120,9 +121,9 @@ export function RecipeForm({
     );
     const [error, setError] = useState<string | null>(null);
 
-    // ── ingredient search state ─────────────────────────────
+    // ── ingredient search ────────────────────────────────────
     const [ingredientQuery, setIngredientQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<IngredientSearchResult[]>([]);
+    const searchResults = useIngredientSearch(ingredientQuery);
 
     // ── flow state (stored in refs — changes don't re-render form) ──
     const flowNodesRef = useRef<FlowNodeInput[]>(initialData?.flowNodes ?? []);
@@ -266,19 +267,6 @@ export function RecipeForm({
         ingredients,
     ]);
 
-    // ── ingredient search ────────────────────────────────────
-    useEffect(() => {
-        if (ingredientQuery.length < 2) {
-            setSearchResults([]);
-            return;
-        }
-        const timer = setTimeout(async () => {
-            const results = await searchIngredients(ingredientQuery);
-            setSearchResults(results);
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [ingredientQuery]);
-
     // ── tag sorting ──────────────────────────────────────────
     const tagFacetCountMap = useMemo(() => {
         const map = new Map<string, number>();
@@ -375,7 +363,6 @@ export function RecipeForm({
             },
         ]);
         setIngredientQuery('');
-        setSearchResults([]);
     };
 
     const handleAddNewIngredient = async (name: string) => {

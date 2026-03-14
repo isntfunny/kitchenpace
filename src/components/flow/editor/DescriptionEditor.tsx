@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode } from 'react';
+import { useState, useCallback, useRef, useMemo, type ReactNode } from 'react';
 
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 import type { IngredientSearchResult } from '@app/components/recipe/RecipeForm/data';
@@ -8,6 +8,7 @@ import {
     dispatchRecipeTutorialEvent,
     RECIPE_TUTORIAL_EVENTS,
 } from '@app/components/recipe/tutorial/shared';
+import { useIngredientSearch } from '@app/components/recipe/useIngredientSearch';
 import { css } from 'styled-system/css';
 
 interface DescriptionEditorProps {
@@ -15,8 +16,6 @@ interface DescriptionEditorProps {
     onChange: (value: string) => void;
     availableIngredients: AddedIngredient[];
     placeholder?: string;
-    /** Search DB for ingredients not already in the recipe */
-    onSearchIngredients?: (query: string) => Promise<IngredientSearchResult[]>;
     /** Called when user selects a DB ingredient — add it to recipe list */
     onAddIngredient?: (ing: IngredientSearchResult) => void;
 }
@@ -94,7 +93,6 @@ export function DescriptionEditor({
     onChange,
     availableIngredients,
     placeholder = 'Beschreibe den Schritt...',
-    onSearchIngredients,
     onAddIngredient,
 }: DescriptionEditorProps) {
     const [isOpen, setIsOpen] = useState(false);
@@ -103,10 +101,9 @@ export function DescriptionEditor({
     const [mentionStart, setMentionStart] = useState(0);
     const [highlightedIndex, setHighlightedIndex] = useState(0);
     const [hoveredDropdownIndex, setHoveredDropdownIndex] = useState<number | null>(null);
-    const [dbResults, setDbResults] = useState<IngredientSearchResult[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const dbSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const dbResults = useIngredientSearch(query);
 
     // Filter recipe ingredients matching the query
     const recipeMatches = useMemo<DropdownIngredient[]>(() => {
@@ -126,24 +123,6 @@ export function DescriptionEditor({
             ...dbFiltered.map((ing) => ({ source: 'db' as const, ingredient: ing })),
         ];
     }, [recipeMatches, dbResults, availableIngredients]);
-
-    // Trigger DB search when query changes
-    useEffect(() => {
-        if (!onSearchIngredients || query.trim().length < 1) {
-            // Clear results immediately when query is empty
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setDbResults([]);
-            return;
-        }
-        if (dbSearchTimerRef.current) clearTimeout(dbSearchTimerRef.current);
-        dbSearchTimerRef.current = setTimeout(async () => {
-            const results = await onSearchIngredients(query.trim());
-            setDbResults(results);
-        }, 300);
-        return () => {
-            if (dbSearchTimerRef.current) clearTimeout(dbSearchTimerRef.current);
-        };
-    }, [query, onSearchIngredients]);
 
     const handleInputChange = useCallback(
         (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -167,7 +146,6 @@ export function DescriptionEditor({
 
             setIsOpen(false);
             setQuery('');
-            setDbResults([]);
         },
         [onChange],
     );
@@ -193,7 +171,6 @@ export function DescriptionEditor({
             onChange(newValue);
             setIsOpen(false);
             setQuery('');
-            setDbResults([]);
             dispatchRecipeTutorialEvent(RECIPE_TUTORIAL_EVENTS.descriptionMentionInserted);
 
             requestAnimationFrame(() => {

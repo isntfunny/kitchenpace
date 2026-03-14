@@ -10,6 +10,7 @@ import { logAuth } from '@app/lib/auth-logger';
 import { getOrCreateProfile } from '@app/lib/profile';
 import { css } from 'styled-system/css';
 
+import { ActiveSessionsCard } from './ActiveSessionsCard';
 import { EmailSettingsCard } from './EmailSettingsCard';
 import { NotificationSettingsCard } from './NotificationSettingsCard';
 import { PrivacySettingsCard } from './PrivacySettingsCard';
@@ -143,6 +144,9 @@ const ManageProfilePage = async () => {
                                 privacyReadyProfile.notifyOnWeeklyPlanReminder,
                         }}
                     />
+
+                    {/* Active Sessions */}
+                    <ActiveSessionsCard />
                 </ProfileSidebarLayout>
             </section>
         </PageShell>

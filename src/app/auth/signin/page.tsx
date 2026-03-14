@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type ReactNode } from 'react';
 
+import { GoogleSignInButton, OAuthDivider } from '@app/components/auth/GoogleSignInButton';
 import {
     authFormStackClass,
     authInputClass,
@@ -12,6 +13,8 @@ import {
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
 import { credentialsSignIn } from '@app/lib/auth/credentials-session';
 import { css } from 'styled-system/css';
+
+const hasGoogle = process.env.NEXT_PUBLIC_GOOGLE_ENABLED === '1';
 
 function SignInForm() {
     const router = useRouter();
@@ -77,6 +80,13 @@ function SignInForm() {
                     Melde dich an, um auf deine Rezepte zuzugreifen.
                 </p>
             </div>
+
+            {hasGoogle && (
+                <>
+                    <GoogleSignInButton callbackUrl={callbackUrl} />
+                    <OAuthDivider />
+                </>
+            )}
 
             <form onSubmit={handleSubmit} className={authFormStackClass}>
                 <label className={css({ textAlign: 'left', fontWeight: '600', fontSize: 'sm' })}>

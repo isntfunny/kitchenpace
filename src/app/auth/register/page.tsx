@@ -5,6 +5,7 @@ import { Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { GoogleSignInButton, OAuthDivider } from '@app/components/auth/GoogleSignInButton';
 import {
     authFormStackClass,
     authInputClass,
@@ -16,6 +17,7 @@ import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 const MAX_NICKNAME_LENGTH = 40;
+const hasGoogle = process.env.NEXT_PUBLIC_GOOGLE_ENABLED === '1';
 
 function RegistrationSuccess({ email }: { email: string }) {
     return (
@@ -326,6 +328,13 @@ export default function RegisterPage() {
                         Kostenlos registrieren — dauert nur wenige Sekunden.
                     </p>
                 </div>
+
+                {hasGoogle && (
+                    <>
+                        <GoogleSignInButton />
+                        <OAuthDivider />
+                    </>
+                )}
 
                 <form onSubmit={handleSubmit} className={authFormStackClass}>
                     <label

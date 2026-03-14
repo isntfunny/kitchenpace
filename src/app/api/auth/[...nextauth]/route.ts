@@ -1,6 +1,7 @@
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import NextAuth, { type LoggerInstance, type NextAuthOptions } from 'next-auth';
 import DiscordProvider from 'next-auth/providers/discord';
+import GoogleProvider from 'next-auth/providers/google';
 
 import { getRequestMetadata } from '@app/lib/auth/device';
 import { SESSION_MAX_AGE } from '@app/lib/auth/session-cookie';
@@ -12,9 +13,18 @@ const safeUserMeta = (user?: { id?: string | null; email?: string | null }) => (
     email: user?.email ?? null,
 });
 
+const hasGoogle = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 const hasDiscord = Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET);
 
 const oauthProviders = [
+    ...(hasGoogle
+        ? [
+              GoogleProvider({
+                  clientId: process.env.GOOGLE_CLIENT_ID!,
+                  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+              }),
+          ]
+        : []),
     ...(hasDiscord
         ? [
               DiscordProvider({

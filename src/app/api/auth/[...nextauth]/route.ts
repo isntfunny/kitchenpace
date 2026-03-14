@@ -4,8 +4,11 @@ import DiscordProvider from 'next-auth/providers/discord';
 import GoogleProvider from 'next-auth/providers/google';
 
 import { getRequestMetadata } from '@app/lib/auth/device';
+import { initializeOAuthUserRegistration } from '@app/lib/auth/oauth-user';
 import { SESSION_MAX_AGE } from '@app/lib/auth/session-cookie';
 import { authDebugEnabled, logAuth } from '@app/lib/auth-logger';
+import { fireEvent } from '@app/lib/events/fire';
+import { getOrCreateProfile } from '@app/lib/profile';
 import { prisma } from '@shared/prisma';
 
 const safeUserMeta = (user?: { id?: string | null; email?: string | null }) => ({
@@ -98,6 +101,23 @@ export const authOptions: NextAuthOptions = {
         },
     },
     events: {
+        async createUser(message) {
+            logAuth('info', 'events.createUser', safeUserMeta(message.user));
+
+            try {
+                await initializeOAuthUserRegistration(message.user, {
+                    prismaClient: prisma,
+                    ensureProfile: getOrCreateProfile,
+                    emitUserRegistered: fireEvent,
+                    log: logAuth,
+                });
+            } catch (error) {
+                logAuth('error', 'events.createUser: failed to initialize OAuth user', {
+                    error: error instanceof Error ? error.message : String(error),
+                    ...safeUserMeta(message.user),
+                });
+            }
+        },
         async signIn(message) {
             logAuth('info', 'events.signIn', safeUserMeta(message.user));
 

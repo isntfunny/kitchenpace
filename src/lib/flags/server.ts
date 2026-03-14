@@ -137,6 +137,8 @@ function mapKnownFlags(
             allFlags[getFeatureFlagName('gestureNavigation')] ?? fallback.gestureNavigation,
         helloWorldBanner:
             allFlags[getFeatureFlagName('helloWorldBanner')] ?? fallback.helloWorldBanner,
+        aiRecipeConversion:
+            allFlags[getFeatureFlagName('aiRecipeConversion')] ?? fallback.aiRecipeConversion,
     };
 }
 

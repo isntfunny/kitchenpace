@@ -58,7 +58,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-            target: runner
+            target: app
             extra_hosts:
                 - 'host.docker.internal:host-gateway'
             args:
@@ -87,7 +87,9 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-            target: worker
+            target: app
+        entrypoint: []
+        command: ['npm', 'run', 'worker']
         container_name: kitchenpace-worker
         extra_hosts:
             - 'host.docker.internal:host-gateway'

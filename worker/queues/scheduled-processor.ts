@@ -401,7 +401,13 @@ export async function processGenerateOgImages(
 
 export async function processBackfillIngredientPlurals(
     job: Job<BackfillIngredientPluralsJob>,
-): Promise<{ success: boolean; processed: number; updated: number; skipped: number }> {
+): Promise<{
+    success: boolean;
+    processed: number;
+    updated: number;
+    skipped: number;
+    wouldUpdate?: string[];
+}> {
     const { batchSize = 100, dryRun = false } = job.data;
     console.log(`[BackfillWorker] Starting backfill-ingredient-plurals (dryRun=${dryRun})`);
 
@@ -411,6 +417,7 @@ export async function processBackfillIngredientPlurals(
     let processed = 0;
     let updated = 0;
     let skipped = 0;
+    const wouldUpdate: string[] = [];
 
     while (true) {
         const ingredients = await prisma.ingredient.findMany({
@@ -428,16 +435,16 @@ export async function processBackfillIngredientPlurals(
         for (const ingredient of ingredients) {
             const stem = await stemGerman(ingredient.name);
 
-            // stem === name means it's already singular (or unknown)
             if (stem.toLowerCase() === ingredient.name.toLowerCase()) {
                 skipped++;
                 continue;
             }
 
-            // stem differs → original name was a plural form
             console.log(`[BackfillWorker] ${ingredient.name} → singular: ${stem}`);
 
-            if (!dryRun) {
+            if (dryRun) {
+                wouldUpdate.push(`${ingredient.name} → ${stem}`);
+            } else {
                 await prisma.ingredient.update({
                     where: { id: ingredient.id },
                     data: { name: stem, pluralName: ingredient.name },
@@ -453,5 +460,5 @@ export async function processBackfillIngredientPlurals(
     console.log(
         `[BackfillWorker] Done — processed: ${processed}, updated: ${updated}, skipped: ${skipped}`,
     );
-    return { success: true, processed, updated, skipped };
+    return { success: true, processed, updated, skipped, ...(dryRun ? { wouldUpdate } : {}) };
 }

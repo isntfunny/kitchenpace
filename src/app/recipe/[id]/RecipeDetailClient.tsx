@@ -12,6 +12,7 @@ import {
 import { AchievementOverlay } from '@app/components/features/AchievementOverlay';
 import { Header } from '@app/components/features/Header';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
+import type { PersistedViewerState } from '@app/components/flow/viewer/viewerPersistence';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
 import { RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY } from '@app/components/recipe/tutorial/shared';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
@@ -109,6 +110,8 @@ type RecipeDetailClientProps = {
     recipeActivities: Activity[];
     cookImages?: CookImageItem[];
     isDraft?: boolean;
+    initialProgress?: PersistedViewerState | null;
+    isAuthenticated?: boolean;
 };
 
 export function RecipeDetailClient({
@@ -117,6 +120,8 @@ export function RecipeDetailClient({
     recipeActivities,
     cookImages = [],
     isDraft = false,
+    initialProgress,
+    isAuthenticated,
 }: RecipeDetailClientProps) {
     // State declarations MUST come first
     const router = useRouter();
@@ -520,6 +525,8 @@ export function RecipeDetailClient({
                                     unit: ing.unit,
                                 }))}
                                 recipeSlug={recipe.slug}
+                                initialProgress={initialProgress}
+                                isAuthenticated={isAuthenticated}
                             />
                         </div>
                     </div>

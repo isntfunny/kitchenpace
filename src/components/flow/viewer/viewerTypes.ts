@@ -12,6 +12,8 @@ export interface TimerState {
     remaining: number; // seconds left
     running: boolean;
     total: number; // total seconds
+    /** ISO timestamp when timer was last started — used for persistence recovery */
+    startedAt?: string;
 }
 
 export interface ViewerState {
@@ -25,7 +27,9 @@ export type ViewerAction =
     | { type: 'timerPause'; nodeId: string }
     | { type: 'timerReset'; nodeId: string }
     | { type: 'timerTick' }
-    | { type: 'init'; timers: Map<string, TimerState> };
+    | { type: 'init'; timers: Map<string, TimerState> }
+    | { type: 'hydrate'; timers: Map<string, TimerState>; completed: Set<string> }
+    | { type: 'resetAll'; timers: Map<string, TimerState> };
 
 export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerState {
     switch (action.type) {
@@ -41,6 +45,7 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
                         remaining: t.total,
                         running: false,
                         total: t.total,
+                        startedAt: undefined,
                     });
                     return { completed: next, timers: nextTimers };
                 }
@@ -50,7 +55,12 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
             // Finish the timer when marking as done
             if (t && (t.running || t.remaining > 0)) {
                 const nextTimers = new Map(state.timers);
-                nextTimers.set(action.nodeId, { ...t, running: false, remaining: 0 });
+                nextTimers.set(action.nodeId, {
+                    ...t,
+                    running: false,
+                    remaining: 0,
+                    startedAt: undefined,
+                });
                 return { completed: next, timers: nextTimers };
             }
             return { ...state, completed: next };
@@ -59,21 +69,26 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
             const t = state.timers.get(action.nodeId);
             if (!t || t.remaining === 0) return state;
             const next = new Map(state.timers);
-            next.set(action.nodeId, { ...t, running: true });
+            next.set(action.nodeId, { ...t, running: true, startedAt: new Date().toISOString() });
             return { ...state, timers: next };
         }
         case 'timerPause': {
             const t = state.timers.get(action.nodeId);
             if (!t) return state;
             const next = new Map(state.timers);
-            next.set(action.nodeId, { ...t, running: false });
+            next.set(action.nodeId, { ...t, running: false, startedAt: undefined });
             return { ...state, timers: next };
         }
         case 'timerReset': {
             const t = state.timers.get(action.nodeId);
             if (!t) return state;
             const next = new Map(state.timers);
-            next.set(action.nodeId, { remaining: t.total, running: false, total: t.total });
+            next.set(action.nodeId, {
+                remaining: t.total,
+                running: false,
+                total: t.total,
+                startedAt: undefined,
+            });
             return { ...state, timers: next };
         }
         case 'timerTick': {
@@ -82,7 +97,7 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
             for (const [id, t] of next) {
                 if (!t.running) continue;
                 if (t.remaining <= 0) {
-                    next.set(id, { ...t, running: false });
+                    next.set(id, { ...t, running: false, startedAt: undefined });
                     changed = true;
                 } else {
                     next.set(id, { ...t, remaining: t.remaining - 1 });
@@ -93,6 +108,10 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
         }
         case 'init':
             return { ...state, timers: action.timers };
+        case 'hydrate':
+            return { completed: action.completed, timers: action.timers };
+        case 'resetAll':
+            return { completed: new Set(), timers: action.timers };
         default:
             return state;
     }

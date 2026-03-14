@@ -5,6 +5,7 @@ import { fetchRecipeCookImages } from '@app/app/actions/cooks';
 import { fetchRecipeBySlug } from '@app/app/actions/recipes';
 import { isAdmin } from '@app/lib/admin/check-admin';
 import { getServerAuthSession } from '@app/lib/auth';
+import { loadRecipeProgress } from '@app/lib/recipe-progress/redis';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { APP_URL } from '@app/lib/url';
 
@@ -109,6 +110,11 @@ export default async function RecipePage({ params }: RecipePageProps) {
     const cookImages = await fetchRecipeCookImages(resolvedParams.id);
     const isDraft = recipe.status !== 'PUBLISHED';
 
+    // Load saved cooking progress from Redis (if authenticated)
+    const initialProgress = viewerId
+        ? await loadRecipeProgress(viewerId, recipe.slug).catch(() => null)
+        : null;
+
     const ogImageUrl = recipe.imageKey
         ? getThumbnailUrl(recipe.imageKey, '16:9', 1280)
         : '/og-image.png';
@@ -122,6 +128,8 @@ export default async function RecipePage({ params }: RecipePageProps) {
                 recipeActivities={[]}
                 cookImages={cookImages}
                 isDraft={isDraft}
+                initialProgress={initialProgress}
+                isAuthenticated={!!viewerId}
             />
         </>
     );

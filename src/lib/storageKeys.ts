@@ -15,4 +15,7 @@ export const STORAGE_KEYS = {
 
     // Recipe tabs (pinned / recent)
     recipeTabs: 'kitchenpace_recipe_tabs',
+
+    // Viewer progress (timer + step completion) — append recipe slug
+    viewerProgress: 'kitchenpace:viewer:',
 } as const;

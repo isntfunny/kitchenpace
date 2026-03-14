@@ -1,8 +1,8 @@
 'use client';
 
-import { List, Smartphone, X } from 'lucide-react';
+import { List, RotateCcw, Smartphone, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { CastButton } from '@app/components/cast/CastButton';
@@ -13,20 +13,41 @@ import { CompletionBanner } from './viewer/CompletionBanner';
 import { MobileView } from './viewer/MobileView';
 import { NodeDetailModal } from './viewer/NodeDetailModal';
 import { SimpleTextView } from './viewer/SimpleTextView';
+import {
+    clearPersistedState,
+    deserializeViewerState,
+    loadPersistedState,
+    persistViewerState,
+    serializeViewerState,
+} from './viewer/viewerPersistence';
+import type { PersistedViewerState } from './viewer/viewerPersistence';
 import { viewerReducer } from './viewer/viewerTypes';
-import type { RecipeStepsViewerProps, TimerState } from './viewer/viewerTypes';
+import type { RecipeStepsViewerProps, TimerState, ViewerAction } from './viewer/viewerTypes';
 import { buildTopology } from './viewer/viewerUtils';
 
 const DesktopView = dynamic(() => import('./viewer/DesktopView').then((m) => m.DesktopView), {
     ssr: false,
 });
 
+/** Actions that represent deliberate user interactions (not the 1s tick). */
+const PERSISTABLE_ACTIONS = new Set<ViewerAction['type']>([
+    'toggle',
+    'timerStart',
+    'timerPause',
+    'timerReset',
+]);
+
 export function RecipeStepsViewer({
     nodes,
     edges,
     ingredients,
     recipeSlug,
-}: RecipeStepsViewerProps) {
+    initialProgress,
+    isAuthenticated,
+}: RecipeStepsViewerProps & {
+    initialProgress?: PersistedViewerState | null;
+    isAuthenticated?: boolean;
+}) {
     const { columnGroups, dagreY, outgoing } = useMemo(
         () => buildTopology(nodes, edges),
         [nodes, edges],
@@ -39,6 +60,14 @@ export function RecipeStepsViewer({
 
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'text'>('desktop');
+
+    // ── Persistence refs ─────────────────────────────────────────────────
+    const hydratedRef = useRef(false);
+    const redisSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const stateRef = useRef(state);
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
 
     // ── Google Cast — send recipe slug to TV ─────────────────────────────
     const { castState, startCast, stopCast, sendMessage } = useCast();
@@ -84,17 +113,42 @@ export function RecipeStepsViewer({
         return () => mq.removeEventListener('change', handler);
     }, []);
 
-    // Initialize timer state from nodes
-    useEffect(() => {
-        const initialTimers = new Map<string, TimerState>();
+    // Build fresh timers from nodes (used as fallback and for resetAll)
+    const buildFreshTimers = useCallback(() => {
+        const timers = new Map<string, TimerState>();
         for (const n of nodes) {
             if (n.duration && n.duration > 0) {
                 const total = n.duration * 60;
-                initialTimers.set(n.id, { remaining: total, running: false, total });
+                timers.set(n.id, { remaining: total, running: false, total });
             }
         }
-        dispatch({ type: 'init', timers: initialTimers });
+        return timers;
     }, [nodes]);
+
+    // Initialize / hydrate timer state — priority: server > local > fresh
+    useEffect(() => {
+        if (hydratedRef.current) return;
+        hydratedRef.current = true;
+
+        // Try server-provided progress first
+        if (initialProgress) {
+            const hydrated = deserializeViewerState(initialProgress);
+            dispatch({ type: 'hydrate', timers: hydrated.timers, completed: hydrated.completed });
+            return;
+        }
+
+        // Try localStorage
+        if (recipeSlug) {
+            const local = loadPersistedState(recipeSlug);
+            if (local) {
+                dispatch({ type: 'hydrate', timers: local.timers, completed: local.completed });
+                return;
+            }
+        }
+
+        // Fallback: fresh timers from nodes
+        dispatch({ type: 'init', timers: buildFreshTimers() });
+    }, [nodes, recipeSlug, initialProgress, buildFreshTimers]);
 
     // Single global tick for all timers
     useEffect(() => {
@@ -104,12 +158,77 @@ export function RecipeStepsViewer({
         return () => clearInterval(interval);
     }, []);
 
+    // Track whether we need to persist (bumped on user actions)
+    const persistSeqRef = useRef(0);
+    const [persistSeq, setPersistSeq] = useState(0);
+
+    const trackedDispatch = useCallback((action: ViewerAction) => {
+        dispatch(action);
+        if (PERSISTABLE_ACTIONS.has(action.type)) {
+            persistSeqRef.current += 1;
+            setPersistSeq(persistSeqRef.current);
+        }
+    }, []);
+
+    // Persist to localStorage + debounced Redis whenever persistSeq changes
+    useEffect(() => {
+        if (persistSeq === 0 || !recipeSlug) return;
+
+        // localStorage — immediate
+        persistViewerState(recipeSlug, state);
+
+        // Redis — debounced 2s, using stateRef to avoid stale closure
+        if (isAuthenticated) {
+            if (redisSyncTimerRef.current) clearTimeout(redisSyncTimerRef.current);
+            redisSyncTimerRef.current = setTimeout(async () => {
+                const { syncRecipeProgress } = await import('@app/app/actions/recipe-progress');
+                const serialized = serializeViewerState(stateRef.current);
+                syncRecipeProgress(recipeSlug, serialized).catch(() => {});
+            }, 2000);
+        }
+    }, [persistSeq, recipeSlug, state, isAuthenticated]);
+
+    // ── Reset progress ───────────────────────────────────────────────────
+    const hasProgress =
+        state.completed.size > 0 ||
+        [...state.timers.values()].some((t) => t.running || t.remaining < t.total);
+
+    const handleReset = useCallback(async () => {
+        if (!window.confirm('Möchtest du den Fortschritt für dieses Rezept zurücksetzen?')) return;
+
+        dispatch({ type: 'resetAll', timers: buildFreshTimers() });
+
+        if (recipeSlug) {
+            clearPersistedState(recipeSlug);
+        }
+
+        if (isAuthenticated && recipeSlug) {
+            const { deleteRecipeProgress } = await import('@app/app/actions/recipe-progress');
+            deleteRecipeProgress(recipeSlug).catch(() => {});
+        }
+    }, [buildFreshTimers, recipeSlug, isAuthenticated]);
+    // ─────────────────────────────────────────────────────────────────────
+
     const nonTrivialNodes = useMemo(
         () => nodes.filter((n) => n.type !== 'start' && n.type !== 'servieren'),
         [nodes],
     );
     const allStepsDone =
         nonTrivialNodes.length > 0 && nonTrivialNodes.every((n) => state.completed.has(n.id));
+
+    // Clear persistence when all steps are done
+    useEffect(() => {
+        if (!allStepsDone || !recipeSlug) return;
+        const timer = setTimeout(() => {
+            clearPersistedState(recipeSlug);
+            if (isAuthenticated) {
+                import('@app/app/actions/recipe-progress').then(({ deleteRecipeProgress }) =>
+                    deleteRecipeProgress(recipeSlug).catch(() => {}),
+                );
+            }
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, [allStepsDone, recipeSlug, isAuthenticated]);
 
     if (nodes.length === 0) {
         return (
@@ -129,7 +248,7 @@ export function RecipeStepsViewer({
     const sharedState = {
         completed: state.completed,
         timers: state.timers,
-        dispatch,
+        dispatch: trackedDispatch,
         onOpenDetail: setSelectedNodeId,
         ingredients,
     };
@@ -277,6 +396,37 @@ export function RecipeStepsViewer({
                             <Smartphone style={{ width: 13, height: 13 }} /> Mobil
                         </button>
                         <CastButton castState={castState} onStart={startCast} onStop={stopCast} />
+                        {hasProgress && (
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                title="Fortschritt zurücksetzen"
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1',
+                                    py: '1',
+                                    px: '2.5',
+                                    borderRadius: 'full',
+                                    border: {
+                                        base: '1px solid rgba(224,123,83,0.25)',
+                                        _dark: '1px solid rgba(224,123,83,0.3)',
+                                    },
+                                    bg: {
+                                        base: 'rgba(255,255,255,0.9)',
+                                        _dark: 'rgba(30,33,38,0.9)',
+                                    },
+                                    color: 'text.muted',
+                                    fontSize: 'xs',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    backdropFilter: 'blur(4px)',
+                                    _hover: { color: 'palette.orange' },
+                                })}
+                            >
+                                <RotateCcw style={{ width: 13, height: 13 }} />
+                            </button>
+                        )}
                     </div>
 
                     <DesktopView {...sharedState} nodes={nodes} edges={edges} outgoing={outgoing} />
@@ -349,7 +499,7 @@ export function RecipeStepsViewer({
                             columnGroups={columnGroups}
                             completed={state.completed}
                             timers={state.timers}
-                            dispatch={dispatch}
+                            dispatch={trackedDispatch}
                             ingredients={ingredients}
                         />
                     </div>,
@@ -414,15 +564,17 @@ export function RecipeStepsViewer({
                         timerState={state.timers.get(selectedNodeId!)}
                         completed={state.completed.has(selectedNodeId!)}
                         onClose={() => setSelectedNodeId(null)}
-                        onToggle={() => dispatch({ type: 'toggle', nodeId: selectedNodeId! })}
+                        onToggle={() =>
+                            trackedDispatch({ type: 'toggle', nodeId: selectedNodeId! })
+                        }
                         onTimerStart={() =>
-                            dispatch({ type: 'timerStart', nodeId: selectedNodeId! })
+                            trackedDispatch({ type: 'timerStart', nodeId: selectedNodeId! })
                         }
                         onTimerPause={() =>
-                            dispatch({ type: 'timerPause', nodeId: selectedNodeId! })
+                            trackedDispatch({ type: 'timerPause', nodeId: selectedNodeId! })
                         }
                         onTimerReset={() =>
-                            dispatch({ type: 'timerReset', nodeId: selectedNodeId! })
+                            trackedDispatch({ type: 'timerReset', nodeId: selectedNodeId! })
                         }
                     />,
                     document.body,

@@ -175,8 +175,6 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
             id: recipe.id,
             slug: recipe.slug,
             title: recipe.title,
-            rating: recipe.rating ?? 0,
-            image: recipe.imageKey ?? null,
             imageKey: recipe.imageKey ?? null,
         })),
     };

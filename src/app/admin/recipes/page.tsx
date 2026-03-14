@@ -40,23 +40,14 @@ async function getRecipes() {
         },
     });
 
-    return recipes.map((recipe) => ({
-        id: recipe.id,
-        title: recipe.title,
-        slug: recipe.slug,
-        status: recipe.status,
-        difficulty: recipe.difficulty,
-        rating: recipe.rating,
-        ratingCount: recipe.ratingCount,
-        viewCount: recipe.viewCount,
-        cookCount: recipe.cookCount,
-        createdAt: recipe.createdAt.toISOString(),
-        publishedAt: recipe.publishedAt?.toISOString() ?? null,
-        authorId: recipe.author.id,
-        authorName: recipe.author.name ?? '—',
-        commentCount: recipe._count.comments,
-        isTrending: recipe.isTrending,
-        nodeCount: recipe.flowNodes ? (recipe.flowNodes as unknown[]).length : 0,
+    return recipes.map(({ author, _count, flowNodes, createdAt, publishedAt, ...rest }) => ({
+        ...rest,
+        createdAt: createdAt.toISOString(),
+        publishedAt: publishedAt?.toISOString() ?? null,
+        authorId: author.id,
+        authorName: author.name ?? '—',
+        commentCount: _count.comments,
+        nodeCount: flowNodes ? (flowNodes as unknown[]).length : 0,
     }));
 }
 

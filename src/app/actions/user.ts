@@ -102,18 +102,9 @@ export async function fetchUserRecipes(userId: string): Promise<UserRecipe[]> {
         orderBy: { updatedAt: 'desc' },
     });
 
-    return recipes.map((recipe) => ({
-        id: recipe.id,
-        title: recipe.title,
-        slug: recipe.slug,
-        imageKey: recipe.imageKey,
-        status: recipe.status,
-        rating: recipe.rating,
-        ratingCount: recipe.ratingCount,
-        cookCount: recipe._count.cookHistory,
-        createdAt: recipe.createdAt,
-        updatedAt: recipe.updatedAt,
-        publishedAt: recipe.publishedAt,
+    return recipes.map(({ _count, ...rest }) => ({
+        ...rest,
+        cookCount: _count.cookHistory,
     }));
 }
 
@@ -149,92 +140,76 @@ export async function fetchUserTopRecipes(userId: string, take = 6): Promise<Top
     return recipes.map((r) => ({ ...r, cookCount: r._count.cookHistory }));
 }
 
-export interface CookHistoryEntry {
-    id: string;
-    cookedAt: Date;
-    recipeId: string;
-    recipeTitle: string;
-    recipeSlug: string;
-    recipeImageKey: string | null;
+const RECIPE_REF_SELECT = {
+    select: { id: true, title: true, slug: true, imageKey: true },
+} as const;
+
+function flattenRecipeRef<
+    T extends {
+        id: string;
+        recipe: { id: string; title: string; slug: string; imageKey: string | null };
+    },
+>(entry: T) {
+    const { recipe, ...rest } = entry;
+    return {
+        ...rest,
+        recipeId: recipe.id,
+        recipeTitle: recipe.title,
+        recipeSlug: recipe.slug,
+        recipeImageKey: recipe.imageKey,
+    };
 }
+
+export type CookHistoryEntry = ReturnType<
+    typeof flattenRecipeRef<{
+        id: string;
+        cookedAt: Date;
+        recipe: { id: string; title: string; slug: string; imageKey: string | null };
+    }>
+>;
 
 export async function fetchUserCookHistory(userId: string, take = 6): Promise<CookHistoryEntry[]> {
     const entries = await prisma.userCookHistory.findMany({
         where: { userId },
-        select: {
-            id: true,
-            cookedAt: true,
-            recipe: { select: { id: true, title: true, slug: true, imageKey: true } },
-        },
+        select: { id: true, cookedAt: true, recipe: RECIPE_REF_SELECT },
         orderBy: { cookedAt: 'desc' },
         take,
     });
-    return entries.map((e) => ({
-        id: e.id,
-        cookedAt: e.cookedAt,
-        recipeId: e.recipe.id,
-        recipeTitle: e.recipe.title,
-        recipeSlug: e.recipe.slug,
-        recipeImageKey: e.recipe.imageKey,
-    }));
+    return entries.map(flattenRecipeRef);
 }
 
-export interface FavoriteEntry {
-    id: string;
-    createdAt: Date;
-    recipeId: string;
-    recipeTitle: string;
-    recipeSlug: string;
-    recipeImageKey: string | null;
-}
+export type FavoriteEntry = ReturnType<
+    typeof flattenRecipeRef<{
+        id: string;
+        createdAt: Date;
+        recipe: { id: string; title: string; slug: string; imageKey: string | null };
+    }>
+>;
 
 export async function fetchUserLastFavorites(userId: string, take = 6): Promise<FavoriteEntry[]> {
     const entries = await prisma.favorite.findMany({
         where: { userId },
-        select: {
-            id: true,
-            createdAt: true,
-            recipe: { select: { id: true, title: true, slug: true, imageKey: true } },
-        },
+        select: { id: true, createdAt: true, recipe: RECIPE_REF_SELECT },
         orderBy: { createdAt: 'desc' },
         take,
     });
-    return entries.map((e) => ({
-        id: e.id,
-        createdAt: e.createdAt,
-        recipeId: e.recipe.id,
-        recipeTitle: e.recipe.title,
-        recipeSlug: e.recipe.slug,
-        recipeImageKey: e.recipe.imageKey,
-    }));
+    return entries.map(flattenRecipeRef);
 }
 
-export interface ViewHistoryEntry {
-    id: string;
-    viewedAt: Date;
-    recipeId: string;
-    recipeTitle: string;
-    recipeSlug: string;
-    recipeImageKey: string | null;
-}
+export type ViewHistoryEntry = ReturnType<
+    typeof flattenRecipeRef<{
+        id: string;
+        viewedAt: Date;
+        recipe: { id: string; title: string; slug: string; imageKey: string | null };
+    }>
+>;
 
 export async function fetchUserViewHistory(userId: string, take = 8): Promise<ViewHistoryEntry[]> {
     const entries = await prisma.userViewHistory.findMany({
         where: { userId },
-        select: {
-            id: true,
-            viewedAt: true,
-            recipe: { select: { id: true, title: true, slug: true, imageKey: true } },
-        },
+        select: { id: true, viewedAt: true, recipe: RECIPE_REF_SELECT },
         orderBy: { viewedAt: 'desc' },
         take,
     });
-    return entries.map((e) => ({
-        id: e.id,
-        viewedAt: e.viewedAt,
-        recipeId: e.recipe.id,
-        recipeTitle: e.recipe.title,
-        recipeSlug: e.recipe.slug,
-        recipeImageKey: e.recipe.imageKey,
-    }));
+    return entries.map(flattenRecipeRef);
 }

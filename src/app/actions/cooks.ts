@@ -90,13 +90,9 @@ export async function fetchUserOwnCookImages(userId: string): Promise<UserCookIm
         },
     });
 
-    return images.map((img) => ({
-        id: img.id,
-        imageKey: img.imageKey ?? null,
-        caption: img.caption,
-        moderationStatus: img.moderationStatus,
-        createdAt: img.createdAt,
-        recipe: img.recipe,
+    return images.map(({ imageKey, ...rest }) => ({
+        ...rest,
+        imageKey: imageKey ?? null,
     }));
 }
 
@@ -114,8 +110,8 @@ export async function deleteUserCookImage(imageId: string): Promise<void> {
 
     // Delete from S3 if key exists
     if (image.imageKey) {
-        const { deleteFile } = await import('@app/lib/s3');
-        await deleteFile(image.imageKey).catch(() => {});
+        const { deleteObject } = await import('@app/lib/s3');
+        await deleteObject(image.imageKey).catch(() => {});
     }
 
     await prisma.cookImage.delete({ where: { id: imageId } });

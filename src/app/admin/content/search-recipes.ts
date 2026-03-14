@@ -24,11 +24,5 @@ export async function searchRecipesForAdmin(query: string) {
         take: 10,
     });
 
-    return recipes.map((recipe) => ({
-        id: recipe.id,
-        title: recipe.title,
-        slug: recipe.slug,
-        imageKey: recipe.imageKey,
-        rating: recipe.rating,
-    }));
+    return recipes;
 }

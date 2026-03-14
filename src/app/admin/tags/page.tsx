@@ -24,11 +24,9 @@ async function getTags() {
         },
     });
 
-    return tags.map((tag) => ({
-        id: tag.id,
-        name: tag.name,
-        slug: tag.slug,
-        recipeCount: tag._count.recipes,
+    return tags.map(({ _count, ...rest }) => ({
+        ...rest,
+        recipeCount: _count.recipes,
     }));
 }
 

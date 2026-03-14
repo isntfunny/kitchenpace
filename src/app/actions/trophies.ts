@@ -68,17 +68,7 @@ export async function fetchUserTrophies(userId: string) {
         orderBy: { earnedAt: 'desc' },
     });
 
-    return earned.map((ut) => ({
-        id: ut.trophy.id,
-        groupSlug: ut.trophy.groupSlug,
-        tier: ut.trophy.tier,
-        category: ut.trophy.category,
-        name: ut.trophy.name,
-        description: ut.trophy.description,
-        icon: ut.trophy.icon,
-        points: ut.trophy.points,
-        earnedAt: ut.earnedAt,
-    }));
+    return earned.map(({ trophy, earnedAt }) => ({ ...trophy, earnedAt }));
 }
 
 // ---------------------------------------------------------------------------

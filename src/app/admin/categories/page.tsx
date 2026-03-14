@@ -24,15 +24,9 @@ async function getCategories() {
         orderBy: { sortOrder: 'asc' },
     });
 
-    return categories.map((cat) => ({
-        id: cat.id,
-        name: cat.name,
-        slug: cat.slug,
-        description: cat.description,
-        color: cat.color,
-        icon: cat.icon,
-        sortOrder: cat.sortOrder,
-        recipeCount: cat._count.recipes,
+    return categories.map(({ _count, ...rest }) => ({
+        ...rest,
+        recipeCount: _count.recipes,
     }));
 }
 

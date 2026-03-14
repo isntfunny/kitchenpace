@@ -27,16 +27,12 @@ async function getIngredients() {
     ]);
 
     return {
-        ingredients: ingredients.map((ing) => ({
-            id: ing.id,
-            name: ing.name,
-            slug: ing.slug,
-            pluralName: ing.pluralName,
-            category: ing.category ?? 'SONSTIGES',
-            units: ing.units ?? [],
-            aliases: ing.aliases ?? [],
-            needsReview: ing.needsReview,
-            recipeCount: ing._count.recipes,
+        ingredients: ingredients.map(({ _count, category, units, aliases, ...rest }) => ({
+            ...rest,
+            category: category ?? 'SONSTIGES',
+            units: units ?? [],
+            aliases: aliases ?? [],
+            recipeCount: _count.recipes,
         })),
         needsReviewCount,
     };

@@ -27,14 +27,12 @@ async function getUsers() {
         },
     });
 
-    return users.map((user) => ({
-        id: user.id,
-        name: user.name ?? '—',
-        email: user.email ?? '—',
-        role: user.role,
-        isActive: user.isActive,
-        createdAt: user.createdAt.toISOString(),
-        recipeCount: user._count.recipes,
+    return users.map(({ _count, createdAt, name, email, ...rest }) => ({
+        ...rest,
+        name: name ?? '—',
+        email: email ?? '—',
+        createdAt: createdAt.toISOString(),
+        recipeCount: _count.recipes,
     }));
 }
 

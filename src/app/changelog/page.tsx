@@ -34,33 +34,22 @@ const CHANGELOG: ChangelogEntry[] = [
         date: '14. März 2026',
         version: 'v2026-03-14',
         emoji: '🧑‍🍳',
-        title: 'Flow-Editor Polish, Zutaten-Suche & Trophäen',
+        title: 'Trophäen, Tutorial & bessere Suche',
         items: [
-            // ── Spotlight ──
             {
                 text: 'Trophäen-System — Erfolge sammeln, Avatar-Trophäen auswählen und Feier-Animation bei neuen Errungenschaften',
                 tag: 'spotlight',
             },
             {
-                text: 'Geführtes Tutorial — Schritt-für-Schritt-Anleitung für die Rezepterstellung mit dynamischen Spotlights und Auto-Advance',
+                text: 'Geführtes Tutorial — Schritt-für-Schritt-Anleitung für die Rezepterstellung mit dynamischen Spotlights',
                 tag: 'spotlight',
             },
             {
                 text: 'Zutaten-Suche findet jetzt auch Pluralformen und Aliase — „Tomaten" findet „Tomate", „Erdäpfel" findet „Kartoffel"',
                 tag: 'spotlight',
             },
-
-            // ── Features ──
             {
                 text: 'Flow-Editor: Schritttyp und Titel sind jetzt einklappbar, (+)-Button dreht sich beim Öffnen',
-                tag: 'feat',
-            },
-            {
-                text: 'Flow-Editor: Layout-Button umgestaltet, Flow-Check-Panel verbessert',
-                tag: 'feat',
-            },
-            {
-                text: 'AI-Button hinter Feature-Flag versteckt (Flipt) — Vorbereitung für KI-gestützte Rezeptkonvertierung',
                 tag: 'feat',
             },
             {
@@ -68,11 +57,7 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'feat',
             },
             {
-                text: 'Zutaten: Pluralname, Aliase und Admin-UI zur Verwaltung',
-                tag: 'feat',
-            },
-            {
-                text: 'Automatische Singularisierung bei der Zutatenerstellung mittels deutschem Wörterbuch (Nodehun)',
+                text: 'Zutaten werden beim Erstellen automatisch in die richtige Einzahlform gebracht',
                 tag: 'feat',
             },
             {
@@ -80,41 +65,11 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'feat',
             },
             {
-                text: 'SSE-Streams mit Auto-Reconnect und Cursor-Tracking verbessert',
+                text: 'Tags können jetzt direkt per Enter-Taste erstellt werden',
                 tag: 'feat',
             },
             {
-                text: 'Feature-Flags laufen jetzt serverseitig über Flipt',
-                tag: 'feat',
-            },
-            {
-                text: 'Tag-Erstellung direkt per Enter-Taste im Tag-Selector',
-                tag: 'feat',
-            },
-
-            // ── Infra ──
-            {
-                text: 'Docker: Alpine → Debian slim, Runner und Worker in ein einzelnes App-Image zusammengelegt',
-                tag: 'feat',
-            },
-
-            // ── Fixes ──
-            {
-                text: 'StepTypePicker-Toggle und Plus-Button-Rotation korrigiert',
-                tag: 'fix',
-            },
-            {
-                text: 'Compound-Wörter werden bei der Suche nicht mehr fälschlich auf ihre Bestandteile reduziert',
-                tag: 'fix',
-            },
-            {
-                text: 'Nodehun-Kompatibilität mit ESM und nativen Addons im Docker-Build behoben',
-                tag: 'fix',
-            },
-
-            // ── Codebase ──
-            {
-                text: 'Codebase aufgeräumt: 39 ungenutzte Dateien gelöscht, 8 Abhängigkeiten entfernt, doppelte Typen konsolidiert',
+                text: 'Zusammengesetzte Wörter werden bei der Suche nicht mehr fälschlich zerlegt',
                 tag: 'fix',
             },
         ],
@@ -123,10 +78,10 @@ const CHANGELOG: ChangelogEntry[] = [
         date: '12. März 2026',
         version: 'v2026-03-12',
         emoji: '🚀',
-        title: 'Rezeptsuche, Server Actions & E2E-Tests',
+        title: 'Rezeptsuche runderneuert',
         items: [
             {
-                text: 'Rezeptsuche komplett überarbeitet — SSR-Initial-Rendering, Sortierung, Grid/Listen-Ansicht und Skeleton-Loading',
+                text: 'Rezeptsuche komplett überarbeitet — Sortierung, Grid- und Listen-Ansicht, schnelleres Laden',
                 tag: 'spotlight',
             },
             {
@@ -134,31 +89,15 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'feat',
             },
             {
-                text: 'Rezept-Tabs (Zuletzt & Angepinnt) nutzen jetzt Server Actions statt API-Routes — schnellere Ladezeit, kein doppeltes Laden mehr',
+                text: 'Zuletzt angesehen & Angepinnt laden jetzt deutlich schneller',
                 tag: 'feat',
             },
             {
-                text: 'Rezepte werden in OpenSearch mit Schritt-Anzahl indexiert',
+                text: 'Support-Chat erkennt eingeloggte Nutzer automatisch',
                 tag: 'feat',
             },
             {
-                text: 'Chatwoot-Support-Widget erkennt eingeloggte Nutzer und zeigt den richtigen Namen',
-                tag: 'feat',
-            },
-            {
-                text: 'Infrastruktur: Redis AOF-Persistenz, Prometheus-Exporter für Redis und OpenSearch',
-                tag: 'feat',
-            },
-            {
-                text: 'Veraltete Background-Jobs werden beim Scheduler-Start automatisch bereinigt',
-                tag: 'feat',
-            },
-            {
-                text: 'Benachrichtigungs-Polling läuft nicht mehr für ausgeloggte Besucher — weniger unnötige 401-Fehler',
-                tag: 'fix',
-            },
-            {
-                text: 'E2E-Tests stabilisiert und als Deployment-Gate in der CI-Pipeline reaktiviert',
+                text: 'Benachrichtigungen werden nicht mehr unnötig geladen wenn du ausgeloggt bist',
                 tag: 'fix',
             },
         ],
@@ -170,19 +109,15 @@ const CHANGELOG: ChangelogEntry[] = [
         title: 'Profilbilder & Performance',
         items: [
             {
-                text: 'Profilbilder in „Chef des Monats" und auf Rezept-Detailseiten werden jetzt korrekt aus dem eigenen Upload-Speicher geladen',
+                text: 'Profilbilder in „Chef des Monats" und auf Rezept-Detailseiten werden jetzt korrekt angezeigt',
                 tag: 'fix',
             },
             {
-                text: 'Startseite lädt Sektionen parallel und streamt sie einzeln — schnellerer erster Seitenaufbau',
+                text: 'Startseite lädt schneller — Inhalte werden parallel geladen und einzeln eingeblendet',
                 tag: 'feat',
             },
             {
-                text: 'E2E-Smoke-Tests laufen jetzt automatisch in der CI-Pipeline als Deployment-Gate',
-                tag: 'feat',
-            },
-            {
-                text: 'Tote Links und robots.txt bereinigt',
+                text: 'Tote Links bereinigt',
                 tag: 'fix',
             },
         ],
@@ -193,9 +128,8 @@ const CHANGELOG: ChangelogEntry[] = [
         emoji: '🎨',
         title: 'Flow-Editor Turbo & erweiterte Suche',
         items: [
-            // ── Spotlight ──
             {
-                text: 'Flow-Editor mit verstellbaren Seitenleisten — Palette und Bearbeitungs-Panel können per Drag vergrößert/verkleinert werden, Größen bleiben gespeichert',
+                text: 'Flow-Editor mit verstellbaren Seitenleisten — Palette und Bearbeitungs-Panel können per Drag vergrößert/verkleinert werden',
                 tag: 'spotlight',
             },
             {
@@ -206,8 +140,6 @@ const CHANGELOG: ChangelogEntry[] = [
                 text: 'Gekochte Rezepte auf dem Profil — neue Datenschutz-Einstellung steuert, ob Besucher sehen können was du gekocht hast',
                 tag: 'spotlight',
             },
-
-            // ── Features ──
             {
                 text: 'Kalorien eintragen — Gesamt-Kalorien beim Rezept hinterlegen, auf der Detail-Seite automatisch auf die gewählte Portionszahl umgerechnet',
                 tag: 'feat',
@@ -216,18 +148,16 @@ const CHANGELOG: ChangelogEntry[] = [
                 text: 'Bild-Upload mit Drag-Drop und QR-Code jetzt einheitlich in Profil, Rezept und Koch-Modus',
                 tag: 'feat',
             },
-
-            // ── Fixes ──
             {
-                text: 'Buttons auf Rezeptkarten neu ausgerichtet — Veröffentlichen-Button full-width, Bearbeiten und Löschen gleichmäßig darunter',
+                text: 'Buttons auf Rezeptkarten übersichtlicher angeordnet',
                 tag: 'fix',
             },
             {
-                text: 'Flow-Editor ruckelte bei komplexen Rezepten — Render-Loop-Bug behoben',
+                text: 'Flow-Editor ruckelte bei komplexen Rezepten — behoben',
                 tag: 'fix',
             },
             {
-                text: 'Favoriten-Icon ist jetzt ein Lesezeichen statt einem Herz — klare Unterscheidung zu "Gekocht"',
+                text: 'Favoriten-Icon ist jetzt ein Lesezeichen statt einem Herz — klare Unterscheidung zu „Gekocht"',
                 tag: 'fix',
             },
         ],
@@ -243,11 +173,11 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'fix',
             },
             {
-                text: 'Favorit-Button blieb nach dem Klick unsichtbar — Styling-Bug behoben',
+                text: 'Favorit-Button blieb nach dem Klick unsichtbar — behoben',
                 tag: 'fix',
             },
             {
-                text: 'Graph-Scroll hat den Seiten-Scroll übernommen — Scroll-Verhalten korrigiert',
+                text: 'Flow-Scroll hat den Seiten-Scroll übernommen — Scroll-Verhalten korrigiert',
                 tag: 'fix',
             },
             {
@@ -259,7 +189,7 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'fix',
             },
             {
-                text: 'Kategorie-Hover: Beschriftungen waren schwer lesbar — Kontrast verbessert',
+                text: 'Kategorie-Beschriftungen waren bei Hover schwer lesbar — Kontrast verbessert',
                 tag: 'fix',
             },
             {
@@ -267,11 +197,11 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'feat',
             },
             {
-                text: 'Ungespeicherte Änderungen in den Einstellungen werden durch Browser-Dialog und visuellen Indikator am Speichern-Button signalisiert',
+                text: 'Ungespeicherte Änderungen in den Einstellungen werden durch einen visuellen Indikator signalisiert',
                 tag: 'feat',
             },
             {
-                text: 'Parallele Schritte im Koch-Flow haben jetzt ein ⚡ Parallel-Badge',
+                text: 'Parallele Schritte im Koch-Modus haben jetzt ein Parallel-Badge',
                 tag: 'feat',
             },
             {
@@ -291,7 +221,7 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'fix',
             },
             {
-                text: 'Welcome-Mail trägt jetzt korrekt den Namen KüchenTakt',
+                text: 'Willkommens-Mail trägt jetzt korrekt den Namen KüchenTakt',
                 tag: 'fix',
             },
         ],
@@ -310,11 +240,11 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'feat',
             },
             {
-                text: 'Flow-Editor passt sich automatisch an Fenstergrößenänderungen an (fitView)',
+                text: 'Flow-Editor passt sich automatisch an Fenstergrößenänderungen an',
                 tag: 'feat',
             },
             {
-                text: 'Bulk-Import Review-Wizard konnte nach ca. 5 Rezepten mit leerem Bildschirm abstürzen',
+                text: 'Bulk-Import konnte nach ca. 5 Rezepten mit leerem Bildschirm abstürzen — behoben',
                 tag: 'fix',
             },
         ],
@@ -322,29 +252,22 @@ const CHANGELOG: ChangelogEntry[] = [
     {
         date: '10. März 2026',
         emoji: '✨',
-        title: 'Quality of Life — alles wird besser!',
+        title: 'Der große Funktions-Schub',
         items: [
-            // ── Spotlight ──
             {
-                text: 'AI Rezept-Import — URL eingeben, Scraper holt den Inhalt, OpenAI analysiert Zutaten & Schritte und baut automatisch den Flow',
+                text: 'KI Rezept-Import — URL eingeben, Zutaten und Schritte werden automatisch erkannt und als Flow aufgebaut',
                 tag: 'spotlight',
             },
             {
-                text: 'Google Chromecast — Rezeptschritte direkt auf den Fernseher casten, mit Timer-Synchronisation und Idle-Timeout',
+                text: 'Google Chromecast — Rezeptschritte direkt auf den Fernseher casten, mit Timer-Synchronisation',
                 tag: 'spotlight',
             },
             {
-                text: 'Echtzeit-Benachrichtigungen — SSE-basierte Push-Updates für Kommentare, Bewertungen, Follower und mehr',
+                text: 'Echtzeit-Benachrichtigungen — sofortige Updates bei Kommentaren, Bewertungen, neuen Followern und mehr',
                 tag: 'spotlight',
             },
             {
-                text: 'Content-Moderation — KI-gestützte Bild- und Textprüfung, Moderations-Queue, Ban-System und Meldungen',
-                tag: 'spotlight',
-            },
-
-            // ── Features ──
-            {
-                text: 'Dark Mode mit durchgängigen semantischen Tokens für alle Komponenten',
+                text: 'Dark Mode für die gesamte App',
                 tag: 'feat',
             },
             {
@@ -352,70 +275,38 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'feat',
             },
             {
-                text: 'Profil-Seiten mit Hero-Banner, Top-Rezepten, Kochhistorie und Slug-basierten URLs',
+                text: 'Profil-Seiten mit Hero-Banner, Top-Rezepten und Kochhistorie',
                 tag: 'feat',
             },
             {
-                text: 'S3-Bildverwaltung mit Aspektverhältnis-Thumbnails, On-Demand-Generierung und 5 Breakpoints',
+                text: 'Bilder werden automatisch in verschiedenen Größen bereitgestellt — schnelleres Laden auf allen Geräten',
                 tag: 'feat',
             },
             {
-                text: 'QR-Code Upload — Fotos direkt vom Handy über QR-Code ins Rezept hochladen',
+                text: 'QR-Code Upload — Fotos direkt vom Handy ins Rezept hochladen',
                 tag: 'feat',
             },
             {
-                text: 'Rezept-Viewer mit Kochmodus, PDF-Export und animierten Flow-Kanten',
+                text: 'Rezept-Viewer mit Kochmodus, PDF-Export und animierten Verbindungslinien',
                 tag: 'feat',
             },
-            { text: 'ShareButton für Rezepte (native Web Share API)', tag: 'feat' },
-            { text: 'Web Push Notifications und Privatsphäre-Einstellungen', tag: 'feat' },
-            { text: 'Angepinnte Rezept-Tabs in der Navigation mit API-Persistenz', tag: 'feat' },
-            { text: 'Onboarding-Flow, modaler Koch-Dialog und Sparkle-Effekte', tag: 'feat' },
+            { text: 'Rezepte teilen per Share-Button', tag: 'feat' },
+            { text: 'Push-Benachrichtigungen und Privatsphäre-Einstellungen', tag: 'feat' },
+            { text: 'Angepinnte Rezepte in der Navigation', tag: 'feat' },
             {
-                text: 'Admin-Bereich: Kategorien-Verwaltung, Zutaten-Moderation, Import-Dashboard',
-                tag: 'feat',
-            },
-            {
-                text: 'SEO-Audit: OG-Images für Kategorien mit dynamischen Lucide-Icons, strukturierte Daten',
+                text: 'Benachrichtigungs-Dropdown mit farbigen Icons und sanften Übergängen',
                 tag: 'feat',
             },
             {
-                text: 'OpenSearch-Integration mit inkrementeller Synchronisation und Einzelrezept-Sync',
-                tag: 'feat',
-            },
-            {
-                text: 'Benachrichtigungs-Dropdown mit farbigen Typ-Icons, Fade-Übergängen und Gradient-Button',
-                tag: 'feat',
-            },
-            {
-                text: 'Zutatenverwaltung neu gebaut mit kompakter Liste und Sticky-Autosave-Leiste',
-                tag: 'feat',
-            },
-            {
-                text: 'Unified 6-Farben-Palette (Orange, Gold, Emerald, Purple, Blue, Pink)',
-                tag: 'feat',
-            },
-
-            // ── Fixes ──
-            {
-                text: 'Benachrichtigungs-Dropdown schließt sich nicht mehr beim Hovern (Popover statt DropdownMenu)',
+                text: 'Benachrichtigungs-Dropdown schließt sich nicht mehr beim Darüberfahren',
                 tag: 'fix',
             },
-            { text: 'Chromecast Race-Condition und Idle-Timeout behoben', tag: 'fix' },
+            { text: 'Chromecast-Verbindungsprobleme behoben', tag: 'fix' },
             {
-                text: 'Dark Mode für Flow-Editor, Admin-Tabellen und alle Feature-Komponenten',
+                text: 'Dark Mode funktioniert jetzt durchgängig in allen Bereichen',
                 tag: 'fix',
             },
-            {
-                text: 'Deployment-Zeit um ~50% reduziert durch optimierten Docker-Build',
-                tag: 'fix',
-            },
-            {
-                text: 'Scraper-Healthcheck, Prisma-Client-Generierung und Registry-Fixes',
-                tag: 'fix',
-            },
-            { text: 'Mobile-Friendliness auf allen öffentlichen Seiten verbessert', tag: 'fix' },
-            { text: 'Rezeptkarten: kein verschachtelter Anchor-Hydration-Fehler mehr', tag: 'fix' },
+            { text: 'Mobile Darstellung auf allen öffentlichen Seiten verbessert', tag: 'fix' },
         ],
     },
 ];

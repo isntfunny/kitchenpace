@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import UAParser from 'ua-parser-js';
 
 export function parseDeviceLabel(userAgent: string | null): string {
@@ -16,6 +15,7 @@ export async function getRequestMetadata(): Promise<{
     deviceLabel: string;
     ipAddress: string | null;
 }> {
+    const { headers } = await import('next/headers');
     const headersList = await headers();
     const userAgent = headersList.get('user-agent');
     const ipAddress =

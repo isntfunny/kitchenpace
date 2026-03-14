@@ -1,6 +1,6 @@
 'use client';
 
-import { Camera, Edit3, Lock, Settings, User } from 'lucide-react';
+import { Bell, Camera, Edit3, Lock, Settings, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -11,6 +11,7 @@ import { css } from 'styled-system/css';
 const links = [
     { href: '/profile/edit', label: 'Profil bearbeiten', IconEl: Edit3 },
     { href: '/profile/settings', label: 'Einstellungen', IconEl: Settings },
+    { href: '/notifications', label: 'Benachrichtigungen', IconEl: Bell },
     { href: '/profile/images', label: 'Meine Zubereitet-Bilder', IconEl: Camera },
     { href: '/auth/password/edit', label: 'Passwort ändern', IconEl: Lock },
 ];

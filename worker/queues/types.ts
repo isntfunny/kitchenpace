@@ -46,6 +46,11 @@ export interface GenerateOgImagesJob {
     batchSize?: number;
 }
 
+export interface BackfillIngredientPluralsJob {
+    batchSize?: number;
+    dryRun?: boolean;
+}
+
 export type ScheduledJob =
     | { name: 'sync-recipes'; data: SyncRecipesJob }
     | { name: 'sync-ingredients'; data: SyncIngredientsJob }
@@ -54,7 +59,8 @@ export type ScheduledJob =
     | { name: 'backup-database-hourly'; data: Record<string, unknown> }
     | { name: 'backup-database-daily'; data: Record<string, unknown> }
     | { name: 'generate-recipe-og'; data: GenerateRecipeOgJob }
-    | { name: 'generate-og-images'; data: GenerateOgImagesJob };
+    | { name: 'generate-og-images'; data: GenerateOgImagesJob }
+    | { name: 'backfill-ingredient-plurals'; data: BackfillIngredientPluralsJob };
 
 export type AllJob = OpenSearchJob | ScheduledJob;
 

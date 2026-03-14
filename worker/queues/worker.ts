@@ -16,6 +16,7 @@ import {
     processCachePurge,
     processGenerateRecipeOg,
     processGenerateOgImages,
+    processBackfillIngredientPlurals,
 } from './scheduled-processor';
 import { QueueName } from './types';
 
@@ -53,6 +54,8 @@ const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
                 return processGenerateRecipeOg(job);
             case 'generate-og-images':
                 return processGenerateOgImages(job);
+            case 'backfill-ingredient-plurals':
+                return processBackfillIngredientPlurals(job);
             default:
                 throw new Error(`Unknown scheduled job: ${job.name}`);
         }

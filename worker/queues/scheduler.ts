@@ -132,6 +132,16 @@ const scheduledJobs: ScheduledJobDefinition[] = [
             },
         },
     },
+    {
+        name: 'backfill-ingredient-plurals',
+        queue: QueueName.SCHEDULED,
+        data: { batchSize: 100, dryRun: false },
+        schema: {
+            batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 1, max: 500 },
+            dryRun: { type: 'boolean', label: 'Dry Run (no DB writes)', default: false },
+        },
+        // No repeat — manual trigger only
+    },
 ];
 
 async function addRepeatableJob(job: ScheduledJobDefinition): Promise<void> {

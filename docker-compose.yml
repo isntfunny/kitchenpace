@@ -68,7 +68,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-            target: runner
+            target: app
             args:
                 DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
                 DEBUG: ${DEBUG:-0}
@@ -92,12 +92,11 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-            target: worker
+            target: app
             args:
                 DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
-                REDIS_HOST: redis
-                REDIS_PORT: 6379
-                REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+        entrypoint: []
+        command: ['npm', 'run', 'worker']
         container_name: kitchenpace-worker
         depends_on:
             postgres:

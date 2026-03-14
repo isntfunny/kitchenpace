@@ -7,75 +7,171 @@ import { createUserNotification } from '@app/lib/events/persist';
 import { publishToast } from '@app/lib/realtime/toastEvents';
 import { prisma } from '@shared/prisma';
 
-export type SendSystemMessageInput = {
-    userId: string;
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export type RecipientMode = 'user' | 'role';
+export type TargetRole = 'ALL' | 'USER' | 'MODERATOR' | 'ADMIN';
+
+export type SendMessageInput = {
+    recipientMode: RecipientMode;
+    userId?: string;
+    targetRole?: TargetRole;
     title: string;
     message: string;
-    sendToast?: boolean;
-    toastType?: 'success' | 'info' | 'warning' | 'error';
+    sendToast: boolean;
+    toastType: 'success' | 'info' | 'warning' | 'error';
 };
 
-export async function sendSystemMessage(input: SendSystemMessageInput) {
+export type SendMessageResult = {
+    success: true;
+    recipientCount: number;
+    recipientLabel: string;
+};
+
+// ---------------------------------------------------------------------------
+// Send message action
+// ---------------------------------------------------------------------------
+
+export async function sendMessage(input: SendMessageInput): Promise<SendMessageResult> {
     await ensureAdminSession('send-system-message');
 
-    if (!input.userId || !input.title.trim()) {
-        throw new Error('Benutzer und Titel sind erforderlich');
+    if (!input.title.trim()) {
+        throw new Error('Titel ist erforderlich');
     }
 
-    const user = await prisma.user.findUnique({
-        where: { id: input.userId },
-        select: { id: true, name: true, email: true },
-    });
+    const title = input.title.trim();
+    const message = input.message.trim() || ' ';
+    const toastType = input.toastType ?? 'info';
 
-    if (!user) {
-        throw new Error('Benutzer nicht gefunden');
-    }
+    // Resolve recipient user IDs
+    let userIds: string[];
+    let recipientLabel: string;
 
-    // Create notification in database
-    await createUserNotification({
-        userId: input.userId,
-        type: 'SYSTEM',
-        title: input.title.trim(),
-        message: input.message.trim() || ' ',
-    });
-
-    // Optionally send a toast notification
-    if (input.sendToast && input.toastType) {
-        await publishToast(input.userId, {
-            type: input.toastType,
-            title: input.title.trim(),
-            message: input.message.trim() || undefined,
-            duration: 8000,
+    if (input.recipientMode === 'user') {
+        if (!input.userId) {
+            throw new Error('Benutzer ist erforderlich');
+        }
+        const user = await prisma.user.findUnique({
+            where: { id: input.userId },
+            select: { id: true, name: true, email: true },
         });
+        if (!user) throw new Error('Benutzer nicht gefunden');
+        userIds = [user.id];
+        recipientLabel = user.name ?? user.email ?? user.id;
+    } else {
+        const where =
+            input.targetRole === 'ALL'
+                ? { role: { not: 'BANNED' as const } }
+                : { role: input.targetRole as 'USER' | 'MODERATOR' | 'ADMIN' };
+
+        const users = await prisma.user.findMany({
+            where,
+            select: { id: true },
+        });
+        userIds = users.map((u) => u.id);
+
+        const ROLE_LABELS: Record<TargetRole, string> = {
+            ALL: 'Alle Benutzer',
+            USER: 'Alle normalen Benutzer',
+            MODERATOR: 'Alle Moderatoren',
+            ADMIN: 'Alle Administratoren',
+        };
+        recipientLabel = ROLE_LABELS[input.targetRole ?? 'ALL'];
     }
+
+    if (userIds.length === 0) {
+        throw new Error('Keine Empfänger gefunden');
+    }
+
+    // Send to all recipients
+    const results = await Promise.allSettled(
+        userIds.map(async (userId) => {
+            await createUserNotification({
+                userId,
+                type: 'SYSTEM',
+                title,
+                message,
+            });
+
+            if (input.sendToast) {
+                await publishToast(userId, {
+                    type: toastType,
+                    title,
+                    message: message.trim() || undefined,
+                    duration: 8000,
+                });
+            }
+        }),
+    );
+
+    const successCount = results.filter((r) => r.status === 'fulfilled').length;
 
     revalidatePath('/admin/notifications');
 
     return {
         success: true,
-        userName: user.name ?? user.email ?? input.userId,
+        recipientCount: successCount,
+        recipientLabel,
     };
 }
 
-export async function getUsersForSelect() {
-    await ensureAdminSession('get-users-for-select');
+// ---------------------------------------------------------------------------
+// Data loaders
+// ---------------------------------------------------------------------------
 
-    const users = await prisma.user.findMany({
+export type RoleStats = {
+    total: number;
+    users: number;
+    moderators: number;
+    admins: number;
+};
+
+export async function getRoleStats(): Promise<RoleStats> {
+    await ensureAdminSession('get-role-stats');
+
+    const [total, users, moderators, admins] = await Promise.all([
+        prisma.user.count({ where: { role: { not: 'BANNED' } } }),
+        prisma.user.count({ where: { role: 'USER' } }),
+        prisma.user.count({ where: { role: 'MODERATOR' } }),
+        prisma.user.count({ where: { role: 'ADMIN' } }),
+    ]);
+
+    return { total, users, moderators, admins };
+}
+
+export type RecentMessage = {
+    id: string;
+    title: string;
+    message: string;
+    createdAt: string;
+    recipientName: string;
+};
+
+export async function getRecentSystemMessages(): Promise<RecentMessage[]> {
+    await ensureAdminSession('get-recent-system-messages');
+
+    const notifications = await prisma.notification.findMany({
+        where: { type: 'SYSTEM' },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
         select: {
             id: true,
-            name: true,
-            email: true,
-            role: true,
+            title: true,
+            message: true,
+            createdAt: true,
+            user: {
+                select: { name: true, email: true },
+            },
         },
-        orderBy: {
-            name: 'asc',
-        },
-        take: 200,
     });
 
-    return users.map((user) => ({
-        id: user.id,
-        label: `${user.name ?? user.email ?? user.id}${user.role === 'ADMIN' ? ' (Admin)' : ''}`,
-        email: user.email,
+    return notifications.map((n) => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        createdAt: n.createdAt.toISOString(),
+        recipientName: n.user.name ?? n.user.email ?? '?',
     }));
 }

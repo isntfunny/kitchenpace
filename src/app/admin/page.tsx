@@ -21,8 +21,8 @@ import { css } from 'styled-system/css';
 
 const ADMIN_ACTIONS = [
     {
-        label: 'Nachrichten-Test',
-        description: 'SYSTEM-Nachrichten und Toasts an Benutzer senden.',
+        label: 'Nachrichten-Zentrale',
+        description: 'System-Nachrichten an Benutzer oder Gruppen senden.',
         href: '/admin/notifications',
         icon: Bell,
     },

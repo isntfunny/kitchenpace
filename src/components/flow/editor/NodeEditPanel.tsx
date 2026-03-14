@@ -1,6 +1,7 @@
 'use client';
 
-import { X, Upload, Trash2, Check, Edit3 } from 'lucide-react';
+import { ChevronDown, X, Upload, Trash2, Check } from 'lucide-react';
+import { Accordion } from 'radix-ui';
 import { useRef, useState, useCallback, useEffect } from 'react';
 
 import { UploadArea } from '@app/components/features/UploadArea';
@@ -49,7 +50,6 @@ export function NodeEditPanel({
     const [description, setDescription] = useState(data.description);
     const [duration, setDuration] = useState<number | undefined>(data.duration);
     const [photoKey, setPhotoKey] = useState<string | undefined>(data.photoKey);
-    const [isEditingTitle, setIsEditingTitle] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const currentConfig = STEP_CONFIGS[stepType];
@@ -139,121 +139,103 @@ export function NodeEditPanel({
             </div>
 
             <div className={contentClass}>
-                {/* ── Type selector ── */}
-                {!isStartOrServieren && (
-                    <div className={fieldClass}>
-                        <div className={sectionLabelClass}>Typ</div>
-                        <div className={typeGridClass}>
-                            {ADDABLE_STEP_TYPES.map((type) => {
-                                const config = STEP_CONFIGS[type];
-                                const TypeIcon = config.icon;
-                                const isSelected = stepType === type;
-                                return (
-                                    <button
-                                        key={type}
-                                        type="button"
-                                        className={typeButtonClass}
-                                        style={
-                                            isSelected
-                                                ? {
-                                                      border: `1px solid ${config.accent}`,
-                                                      backgroundColor: `${config.accent}15`,
-                                                      boxShadow: `0 0 0 1px ${config.accent}40`,
-                                                  }
-                                                : {
-                                                      border: `1px solid ${PALETTE.orange}40`,
-                                                  }
-                                        }
-                                        onClick={() => setStepType(type)}
-                                    >
-                                        <TypeIcon
-                                            style={{
-                                                width: 18,
-                                                height: 18,
-                                                color: isSelected ? config.accent : undefined,
-                                                opacity: isSelected ? 1 : 0.45,
-                                            }}
-                                        />
-                                        <span
-                                            className={typeLabelClass}
-                                            style={
-                                                isSelected
-                                                    ? { color: config.accent, fontWeight: 700 }
-                                                    : undefined
-                                            }
-                                        >
-                                            {config.label}
-                                        </span>
-                                        {isSelected && (
-                                            <div
-                                                className={typeCheckClass}
-                                                style={{ backgroundColor: config.accent }}
+                {/* ── Type & Title (collapsible) ── */}
+                <Accordion.Root type="multiple" className={accordionRootClass}>
+                    {!isStartOrServieren && (
+                        <Accordion.Item value="type" className={accordionItemClass}>
+                            <Accordion.Header>
+                                <Accordion.Trigger className={accordionTriggerClass}>
+                                    <span className={sectionLabelClass}>Typ</span>
+                                    <ChevronDown className={accordionChevronClass} />
+                                </Accordion.Trigger>
+                            </Accordion.Header>
+                            <Accordion.Content className={accordionContentClass}>
+                                <div className={typeGridClass}>
+                                    {ADDABLE_STEP_TYPES.map((type) => {
+                                        const config = STEP_CONFIGS[type];
+                                        const TypeIcon = config.icon;
+                                        const isSelected = stepType === type;
+                                        return (
+                                            <button
+                                                key={type}
+                                                type="button"
+                                                className={typeButtonClass}
+                                                style={
+                                                    isSelected
+                                                        ? {
+                                                              border: `1px solid ${config.accent}`,
+                                                              backgroundColor: `${config.accent}15`,
+                                                              boxShadow: `0 0 0 1px ${config.accent}40`,
+                                                          }
+                                                        : {
+                                                              border: `1px solid ${PALETTE.orange}40`,
+                                                          }
+                                                }
+                                                onClick={() => setStepType(type)}
                                             >
-                                                <Check style={{ width: 7, height: 7 }} />
-                                            </div>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* ── Title ── */}
-                <div className={fieldClass}>
-                    <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-                        <div className={sectionLabelClass}>Titel</div>
-                        <button
-                            type="button"
-                            onClick={() => setIsEditingTitle((v) => !v)}
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '1',
-                                fontSize: '10px',
-                                color: 'text.muted',
-                                cursor: 'pointer',
-                                px: '1.5',
-                                py: '0.5',
-                                borderRadius: 'md',
-                                border: '1px solid rgba(224,123,83,0.2)',
-                                background: 'transparent',
-                                _hover: { background: 'rgba(224,123,83,0.08)' },
-                            })}
-                        >
-                            <Edit3 style={{ width: '10px', height: '10px' }} />
-                            {isEditingTitle ? 'Standard' : 'Bearbeiten'}
-                        </button>
-                    </div>
-                    {isEditingTitle ? (
-                        <input
-                            type="text"
-                            className={inputClass}
-                            style={{ border: `1px solid ${PALETTE.orange}40` }}
-                            value={label}
-                            onChange={(e) => setLabel(e.target.value)}
-                            placeholder={`Neuer ${currentConfig.label}-Schritt`}
-                        />
-                    ) : (
-                        <div
-                            className={css({
-                                px: '3',
-                                py: '2',
-                                borderRadius: 'xl',
-                                fontSize: 'sm',
-                                color: 'text.muted',
-                                backgroundColor: {
-                                    base: 'rgba(0,0,0,0.02)',
-                                    _dark: 'rgba(255,255,255,0.04)',
-                                },
-                            })}
-                        >
-                            {label && label.trim() !== currentConfig.label
-                                ? label
-                                : `${currentConfig.label} (Standard)`}
-                        </div>
+                                                <TypeIcon
+                                                    style={{
+                                                        width: 18,
+                                                        height: 18,
+                                                        color: isSelected
+                                                            ? config.accent
+                                                            : undefined,
+                                                        opacity: isSelected ? 1 : 0.45,
+                                                    }}
+                                                />
+                                                <span
+                                                    className={typeLabelClass}
+                                                    style={
+                                                        isSelected
+                                                            ? {
+                                                                  color: config.accent,
+                                                                  fontWeight: 700,
+                                                              }
+                                                            : undefined
+                                                    }
+                                                >
+                                                    {config.label}
+                                                </span>
+                                                {isSelected && (
+                                                    <div
+                                                        className={typeCheckClass}
+                                                        style={{ backgroundColor: config.accent }}
+                                                    >
+                                                        <Check style={{ width: 7, height: 7 }} />
+                                                    </div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </Accordion.Content>
+                        </Accordion.Item>
                     )}
-                </div>
+
+                    <Accordion.Item value="title" className={accordionItemClass}>
+                        <Accordion.Header>
+                            <Accordion.Trigger className={accordionTriggerClass}>
+                                <span className={sectionLabelClass}>Titel</span>
+                                <span className={accordionTitlePreviewClass}>
+                                    {label && label.trim() !== currentConfig.label
+                                        ? label
+                                        : `${currentConfig.label} (Standard)`}
+                                </span>
+                                <ChevronDown className={accordionChevronClass} />
+                            </Accordion.Trigger>
+                        </Accordion.Header>
+                        <Accordion.Content className={accordionContentClass}>
+                            <input
+                                type="text"
+                                className={inputClass}
+                                style={{ border: `1px solid ${PALETTE.orange}40` }}
+                                value={label}
+                                onChange={(e) => setLabel(e.target.value)}
+                                placeholder={`Neuer ${currentConfig.label}-Schritt`}
+                            />
+                        </Accordion.Content>
+                    </Accordion.Item>
+                </Accordion.Root>
 
                 {/* ── Duration ── */}
                 <div className={fieldClass}>
@@ -670,5 +652,62 @@ const saveButtonClass = css({
     _hover: {
         transform: 'translateY(-1px)',
         filter: 'brightness(1.1)',
+    },
+});
+
+/* Accordion styles for collapsible Type & Title */
+const accordionRootClass = css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0',
+});
+
+const accordionItemClass = css({
+    borderBottom: { base: '1px solid rgba(0,0,0,0.06)', _dark: '1px solid rgba(255,255,255,0.07)' },
+    '&:last-child': { borderBottom: 'none' },
+});
+
+const accordionTriggerClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2',
+    width: '100%',
+    py: '2',
+    cursor: 'pointer',
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'text',
+    '& > svg': {
+        transition: 'transform 0.2s ease',
+    },
+    '&[data-state="open"] > svg': {
+        transform: 'rotate(180deg)',
+    },
+});
+
+const accordionChevronClass = css({
+    width: '14px',
+    height: '14px',
+    color: 'text.muted',
+    flexShrink: '0',
+    marginLeft: 'auto',
+});
+
+const accordionTitlePreviewClass = css({
+    fontSize: 'xs',
+    color: 'text.muted',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    flex: '1',
+    textAlign: 'left',
+});
+
+const accordionContentClass = css({
+    overflow: 'hidden',
+    pb: '2',
+    animation: 'slideDown 0.15s ease-out',
+    '&[data-state="closed"]': {
+        animation: 'slideUpCollapse 0.15s ease-out',
     },
 });

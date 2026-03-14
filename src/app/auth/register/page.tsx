@@ -5,8 +5,11 @@ import { Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { DiscordSignInButton } from '@app/components/auth/DiscordSignInButton';
-import { GoogleSignInButton, OAuthDivider } from '@app/components/auth/GoogleSignInButton';
+import {
+    DiscordSignInButton,
+    GoogleSignInButton,
+    OAuthDivider,
+} from '@app/components/auth/OAuthSignInButton';
 import {
     authFormStackClass,
     authInputClass,

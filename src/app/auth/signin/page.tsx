@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type ReactNode } from 'react';
 
+import { DiscordSignInButton } from '@app/components/auth/DiscordSignInButton';
 import { GoogleSignInButton, OAuthDivider } from '@app/components/auth/GoogleSignInButton';
 import {
     authFormStackClass,
@@ -11,6 +12,7 @@ import {
     getAuthButtonClass,
 } from '@app/components/forms/authStyles';
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { credentialsSignIn } from '@app/lib/auth/credentials-session';
 import { css } from 'styled-system/css';
 
@@ -30,6 +32,7 @@ function SignInForm() {
             : '',
     );
     const [loading, setLoading] = useState(false);
+    const showDiscord = useFeatureFlag('discordSignIn');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,6 +83,7 @@ function SignInForm() {
             </div>
 
             <GoogleSignInButton callbackUrl={callbackUrl} />
+            {showDiscord && <DiscordSignInButton callbackUrl={callbackUrl} />}
             <OAuthDivider />
 
             <form onSubmit={handleSubmit} className={authFormStackClass}>

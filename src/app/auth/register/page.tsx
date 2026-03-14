@@ -5,6 +5,7 @@ import { Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { DiscordSignInButton } from '@app/components/auth/DiscordSignInButton';
 import { GoogleSignInButton, OAuthDivider } from '@app/components/auth/GoogleSignInButton';
 import {
     authFormStackClass,
@@ -12,6 +13,7 @@ import {
     getAuthButtonClass,
 } from '@app/components/forms/authStyles';
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { useUtmParams } from '@app/lib/hooks/useUtmParams';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
@@ -161,6 +163,7 @@ function RegistrationSuccess({ email }: { email: string }) {
 }
 
 export default function RegisterPage() {
+    const showDiscord = useFeatureFlag('discordSignIn');
     const [email, setEmail] = useState('');
     const [nickname, setNickname] = useState('');
     const [nicknameStatus, setNicknameStatus] = useState<{
@@ -329,6 +332,7 @@ export default function RegisterPage() {
                 </div>
 
                 <GoogleSignInButton />
+                {showDiscord && <DiscordSignInButton />}
                 <OAuthDivider />
 
                 <form onSubmit={handleSubmit} className={authFormStackClass}>

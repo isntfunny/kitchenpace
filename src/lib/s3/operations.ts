@@ -142,12 +142,6 @@ export async function uploadFile(
     return { url, key };
 }
 
-/** @deprecated Use `deleteObject()` */
-export const deleteFile = deleteObject;
-
-/** @deprecated Use `getBuffer()` */
-export const getFileBuffer = getBuffer;
-
 /** @deprecated Use key directly — URLs should not be constructed from S3 */
 export async function getFileUrl(key: string): Promise<string> {
     const baseUrl = process.env.S3_ENDPOINT || '';

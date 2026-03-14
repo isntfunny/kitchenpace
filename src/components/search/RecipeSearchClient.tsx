@@ -68,6 +68,24 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
 
     const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+    // Initial load (no data yet): show skeletons
+    // Refetch (have data, loading new): dim current results — no skeleton flash
+    const showSkeletons = loading && data.length === 0;
+    const isRefetching = loading && data.length > 0;
+
+    const gridClass = css({
+        display: 'grid',
+        gridTemplateColumns:
+            viewMode === 'list'
+                ? '1fr'
+                : {
+                      base: '1fr',
+                      xs: 'repeat(2, minmax(0, 1fr))',
+                      xl: 'repeat(3, minmax(0, 1fr))',
+                  },
+        gap: viewMode === 'list' ? '2' : '4',
+    });
+
     return (
         <div
             className={css({
@@ -122,21 +140,15 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                 ) : (
                     <>
                         <div
-                            className={css({
-                                display: 'grid',
-                                gridTemplateColumns:
-                                    viewMode === 'list'
-                                        ? '1fr'
-                                        : {
-                                              base: '1fr',
-                                              xs: 'repeat(2, minmax(0, 1fr))',
-                                              xl: 'repeat(3, minmax(0, 1fr))',
-                                          },
-                                gap: viewMode === 'list' ? '2' : '4',
-                            })}
+                            className={gridClass}
+                            style={{
+                                opacity: isRefetching ? 0.55 : 1,
+                                transition: 'opacity 150ms ease',
+                                pointerEvents: isRefetching ? 'none' : undefined,
+                            }}
                         >
-                            {loading
-                                ? Array.from({ length: data.length || 6 }).map((_, index) => (
+                            {showSkeletons
+                                ? Array.from({ length: 6 }).map((_, index) => (
                                       <RecipeCardSkeleton
                                           key={index}
                                           variant={viewMode === 'list' ? 'list' : 'default'}
@@ -145,11 +157,11 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                 : data.map((recipe: RecipeCardData, index: number) => (
                                       <motion.div
                                           key={recipe.id}
-                                          initial={{ opacity: 0, y: 12 }}
+                                          initial={{ opacity: 0, y: 8 }}
                                           animate={{ opacity: 1, y: 0 }}
                                           transition={{
-                                              duration: 0.3,
-                                              delay: Math.min(index, 5) * 0.05,
+                                              duration: 0.2,
+                                              delay: Math.min(index, 4) * 0.03,
                                           }}
                                       >
                                           <RecipeCard

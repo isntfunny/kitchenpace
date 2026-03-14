@@ -174,6 +174,10 @@ export function RangeControl({
     const [localValue, setLocalValue] = useState<number[] | null>(null);
     const sliderValue = localValue ?? committedValue;
 
+    // Derive display values for tooltips/labels — use drag state when active
+    const displayLower = localValue ? Math.min(...localValue) : lowerValue;
+    const displayUpper = localValue ? Math.max(...localValue) : upperValue;
+
     const handleSliderDrag = (values: number[]) => {
         if (values.length === 0) return;
         setLocalValue(values);
@@ -195,13 +199,13 @@ export function RangeControl({
     const effectiveStep = step ?? interval;
     const stepValue = effectiveStep >= 5 ? 5 : effectiveStep;
 
-    const handleHistogramClick = (value: number) => {
-        const snappedValue = Math.round(value / stepValue) * stepValue;
+    const handleHistogramClick = (bucketKey: number) => {
+        const update: Partial<RecipeFilterSearchParams> = {};
+        (update as Record<string, number>)[minField as string] = bucketKey;
         if (maxField) {
-            applyRange(snappedValue, snappedValue + stepValue * 2);
-        } else {
-            applyRange(snappedValue, sliderMax);
+            (update as Record<string, number>)[maxField as string] = bucketKey + interval;
         }
+        onFiltersChange(update);
     };
 
     return (
@@ -248,7 +252,7 @@ export function RangeControl({
                             </Tooltip.Trigger>
                             <Tooltip.Portal>
                                 <Tooltip.Content className={tooltipContentClass} sideOffset={5}>
-                                    {index === 0 ? format(lowerValue) : format(upperValue)}
+                                    {index === 0 ? format(displayLower) : format(displayUpper)}
                                     <Tooltip.Arrow />
                                 </Tooltip.Content>
                             </Tooltip.Portal>
@@ -264,8 +268,8 @@ export function RangeControl({
                     color: 'foreground.muted',
                 })}
             >
-                <span>{format(lowerValue)}</span>
-                <span>{format(upperValue)}</span>
+                <span>{format(displayLower)}</span>
+                <span>{format(displayUpper)}</span>
             </div>
         </div>
     );

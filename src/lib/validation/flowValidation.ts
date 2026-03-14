@@ -1,3 +1,4 @@
+import { STEP_TYPE_LABELS } from '@app/components/flow/editor/editorTypes';
 import type { FlowNodeInput, FlowEdgeInput } from '@app/components/recipe/createActions';
 
 export type FlowNode = FlowNodeInput;
@@ -611,7 +612,13 @@ function normalizeCycle(cycle: string[]): string[] {
 }
 
 function getNodeLabel(node?: FlowNode): string {
-    return node?.label?.trim() || 'Unbenannt';
+    if (
+        node?.label?.trim() &&
+        node.label.trim() !== (STEP_TYPE_LABELS as Record<string, string>)[node.type]
+    ) {
+        return node.label.trim();
+    }
+    return (STEP_TYPE_LABELS as Record<string, string>)[node?.type ?? ''] ?? 'Unbenannt';
 }
 
 function uniqueStrings(values: string[]): string[] {

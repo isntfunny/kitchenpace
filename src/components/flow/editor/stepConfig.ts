@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-import type { StepType } from './editorTypes';
+import { STEP_TYPE_LABELS, type StepType } from './editorTypes';
 
 export type StepCategory = 'vorbereitung' | 'kochen' | 'warten' | 'wuerzen' | 'fertig';
 
@@ -37,7 +37,7 @@ export interface StepConfig {
 export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     start: {
         type: 'start',
-        label: 'Start',
+        label: STEP_TYPE_LABELS.start,
         description: 'Pflichtschritt. Einmalig. Startet den Flow.',
         icon: PlayCircle,
         color: '#f0f4ff',
@@ -52,7 +52,7 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     },
     schneiden: {
         type: 'schneiden',
-        label: 'Schneiden',
+        label: STEP_TYPE_LABELS.schneiden,
         description: 'Schneiden, Hacken, Würfeln, Reiben, Schälen',
         icon: Scissors,
         color: '#e3f2fd',
@@ -68,7 +68,7 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     },
     kochen: {
         type: 'kochen',
-        label: 'Kochen',
+        label: STEP_TYPE_LABELS.kochen,
         description: 'Kochen, Sieden, Blanchieren, Dämpfen, Frittieren',
         icon: Flame,
         color: '#fff3e0',
@@ -84,7 +84,7 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     },
     braten: {
         type: 'braten',
-        label: 'Braten',
+        label: STEP_TYPE_LABELS.braten,
         description: 'Anbraten, Sautieren, Pfannenrühren, Grillen',
         icon: Beef,
         color: '#fbe9e7',
@@ -100,7 +100,7 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     },
     backen: {
         type: 'backen',
-        label: 'Backen',
+        label: STEP_TYPE_LABELS.backen,
         description: 'Backen, Rösten, Gratinieren, Ofengaren',
         icon: UtensilsCrossed,
         color: '#fce4ec',
@@ -116,7 +116,7 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     },
     mixen: {
         type: 'mixen',
-        label: 'Mixen',
+        label: STEP_TYPE_LABELS.mixen,
         description: 'Mixen, Rühren, Schlagen, Kneten, Pürieren, Vermengen',
         icon: Blend,
         color: '#e8eaf6',
@@ -132,7 +132,7 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     },
     warten: {
         type: 'warten',
-        label: 'Warten',
+        label: STEP_TYPE_LABELS.warten,
         description: 'Ruhen lassen, Marinieren, Abkühlen, Gehen lassen, Einweichen',
         icon: Clock,
         color: '#f3e5f5',
@@ -148,7 +148,7 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     },
     wuerzen: {
         type: 'wuerzen',
-        label: 'Würzen',
+        label: STEP_TYPE_LABELS.wuerzen,
         description: 'Würzen, Abschmecken, Verfeinern',
         icon: Leaf,
         color: '#e8f5e9',
@@ -164,7 +164,7 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     },
     anrichten: {
         type: 'anrichten',
-        label: 'Anrichten',
+        label: STEP_TYPE_LABELS.anrichten,
         description: 'Anrichten, Zusammenfügen, Aufteilen, Portionieren',
         icon: Layers,
         color: '#fff8e1',
@@ -180,7 +180,7 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
     },
     servieren: {
         type: 'servieren',
-        label: 'Servieren',
+        label: STEP_TYPE_LABELS.servieren,
         description: 'Pflichtschritt. Einmalig. Terminiert den Flow.',
         icon: Sparkles,
         color: '#ffebee',

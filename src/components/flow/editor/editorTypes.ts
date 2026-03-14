@@ -12,6 +12,20 @@ export type StepType =
     | 'anrichten'
     | 'servieren';
 
+/** Human-readable labels for each step type — single source of truth */
+export const STEP_TYPE_LABELS: Record<StepType, string> = {
+    start: 'Start',
+    schneiden: 'Schneiden',
+    kochen: 'Kochen',
+    braten: 'Braten',
+    backen: 'Backen',
+    mixen: 'Mixen',
+    warten: 'Warten',
+    wuerzen: 'Würzen',
+    anrichten: 'Anrichten',
+    servieren: 'Servieren',
+};
+
 /** Data stored inside each xyflow node — accessed via node.data */
 export interface RecipeNodeData extends Record<string, unknown> {
     stepType: StepType;

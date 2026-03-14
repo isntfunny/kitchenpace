@@ -1,5 +1,7 @@
+import 'server-only';
+
 import { headers } from 'next/headers';
-import UAParser from 'ua-parser-js';
+import { UAParser } from 'ua-parser-js';
 
 export function parseDeviceLabel(userAgent: string | null): string {
     if (!userAgent) return 'Unbekanntes Gerät';

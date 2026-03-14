@@ -72,6 +72,7 @@ services:
             args:
                 DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
                 DEBUG: ${DEBUG:-0}
+                REACT_PROFILE: 1
         image: kitchenpace:beta
         container_name: kitchenpace-app
         environment:

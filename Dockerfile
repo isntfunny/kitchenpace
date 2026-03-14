@@ -17,9 +17,11 @@ FROM node:24-slim AS builder
 
 ARG DEBUG=0
 ARG DATABASE_URL="postgresql://build:build@localhost:5432/build"
+ARG REACT_PROFILE=0
 
 ENV NEXT_PUBLIC_DEBUG=${DEBUG}
 ENV DATABASE_URL=${DATABASE_URL}
+ENV REACT_PROFILE=${REACT_PROFILE}
 
 WORKDIR /app
 
@@ -39,7 +41,7 @@ COPY public ./public
 COPY email-templates ./email-templates
 COPY cli ./cli
 
-RUN npm run build
+RUN if [ "$REACT_PROFILE" = "1" ]; then npm run build -- --profile; else npm run build; fi
 
 # ── Stage 3: Production app (runner + worker share this image) ─────────
 FROM node:24-slim AS app

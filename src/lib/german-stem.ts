@@ -31,15 +31,17 @@ export async function stemGerman(word: string): Promise<string> {
 
     if (stems.length === 0) return word;
 
-    // Prefer stems that start with uppercase (German nouns are capitalized)
+    // Only accept stems that start with uppercase (German nouns are capitalized).
+    // If Hunspell only finds lowercase stems it has decomposed a compound word
+    // (e.g. Sonnenblumenöl → ['blumen', 'öl']) — in that case leave the word unchanged.
     const nounStems = stems.filter(
         (s) => s[0] === s[0].toUpperCase() && s[0] !== s[0].toLowerCase(),
     );
 
-    const candidates = nounStems.length > 0 ? nounStems : stems;
+    if (nounStems.length === 0) return word;
 
     // Shortest candidate is usually the singular base form
-    return candidates.sort((a, b) => a.length - b.length)[0];
+    return nounStems.sort((a, b) => a.length - b.length)[0];
 }
 
 /**

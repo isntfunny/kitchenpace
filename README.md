@@ -331,6 +331,14 @@ Hinweise:
 - Follow-up-Releases am selben Tag verwenden `vYYYY-MM-DD.1`, `vYYYY-MM-DD.2` usw.
 - Die Changelog-Seite ist unter `/changelog` erreichbar und nicht in der Hauptnavigation verlinkt.
 
+### Changelog-Richtlinien
+
+Der Changelog ist fuer Endnutzer gedacht, nicht fuer Entwickler. Eintraege beschreiben das **sichtbare Ergebnis**, nicht die Implementierung.
+
+**Nicht erwaehnen:** Interne Tools (Flipt, OpenSearch, Redis, Sentry), Infrastruktur (Docker, CI/CD, E2E-Tests), Implementierungsdetails (SSE, Server Actions, Prisma, S3), Sicherheits-Interna (Ban-System, Moderations-Queue, AI-Schwellenwerte), Code-Cleanup.
+
+**Gute Formulierung:** "Startseite laedt schneller" statt "Redis AOF-Persistenz hinzugefuegt". "Zutaten werden automatisch in die Einzahlform gebracht" statt "Singularisierung mittels Nodehun".
+
 ## Orientierung fuer neue Entwickler:innen
 
 Wenn du neu im Projekt bist, ist diese Reihenfolge sinnvoll:

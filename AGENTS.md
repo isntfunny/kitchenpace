@@ -497,10 +497,25 @@ npm run lint:fix     # Auto-fix linting issues
 
 ## Git & Branch Rules
 
-- **live** accepts only squash merges. Keep history linear and avoid merge commits.
-- Every commit merged into **live** must contain the project changelog entry. The first line must be a compact summary of the biggest changes and state whether the branch is predominately a `feat` or `fix` (e.g., `feat: Big-picture automation for scheduled backups`).
-- Ensure changelog entries describe the user-visible impact, not implementation minutiae.
-- These rules should also guide `main` when preparing a release into `live`.
+- **Deploy from `main` only** — `live` branch is deprecated.
+- **Never squash merge** — causes branch divergence and GitHub diff inflation.
+- Release tags follow the format `vYYYY-MM-DD` (same-day follow-ups: `.1`, `.2`, etc.).
+
+### Changelog Rules
+
+The changelog at `src/app/changelog/page.tsx` is **for end users, not developers**.
+
+**Never mention in changelog entries:**
+
+- Internal tools: Flipt, OpenSearch, Redis, Prometheus, Sentry, Chatwoot, Nodehun
+- Infrastructure: Docker, CI/CD, E2E tests, deployment pipelines, background jobs
+- Implementation details: SSE, Server Actions, API Routes, Prisma, ESM, webpack, S3
+- Security internals: Ban system, moderation queue, content moderation thresholds
+- Code cleanup: deleted files, removed dependencies, refactoring
+
+**Always describe the user-visible outcome**, not the implementation.
+Good: "Startseite laedt schneller". Bad: "Redis AOF-Persistenz hinzugefuegt".
+Good: "Zutaten werden automatisch in die Einzahlform gebracht". Bad: "Singularisierung mittels Nodehun".
 
 ## Environment Variables
 

@@ -4,7 +4,7 @@ const resolveAliasPath = (subpath: string) => new URL(subpath, import.meta.url).
 
 const nextConfig: NextConfig = {
     output: 'standalone',
-    serverExternalPackages: ['bullmq', 'sharp'],
+    serverExternalPackages: ['bullmq', 'sharp', 'nodehun'],
     productionBrowserSourceMaps: process.env.NEXT_PUBLIC_DEBUG === '1',
     experimental: {
         serverActions: {

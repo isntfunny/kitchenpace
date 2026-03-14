@@ -35,6 +35,7 @@ type RecipeWithRelations = {
     totalTime: number | null;
     prepTime: number | null;
     cookTime: number | null;
+    calories: number | null;
     rating: number | null;
     cookCount: number | null;
     imageKey: string | null;
@@ -59,6 +60,7 @@ type RecipeDocument = {
     totalTime: number;
     prepTime: number;
     cookTime: number;
+    calories?: number;
     rating: number;
     cookCount: number;
     stepCount: number;
@@ -160,6 +162,7 @@ function transformToDocument(recipe: RecipeWithRelations): RecipeDocument {
         totalTime: recipe.totalTime ?? 0,
         prepTime: recipe.prepTime ?? 0,
         cookTime: recipe.cookTime ?? 0,
+        calories: recipe.calories ?? undefined,
         rating: recipe.rating ?? 0,
         cookCount: recipe.cookCount ?? 0,
         stepCount: Array.isArray(recipe.flowNodes) ? recipe.flowNodes.length : 0,
@@ -252,6 +255,7 @@ export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ sy
                     totalTime: true,
                     prepTime: true,
                     cookTime: true,
+                    calories: true,
                     rating: true,
                     cookCount: true,
                     flowNodes: true,
@@ -413,6 +417,7 @@ export async function processSyncRecipeToOpenSearch(
                 totalTime: true,
                 prepTime: true,
                 cookTime: true,
+                calories: true,
                 rating: true,
                 cookCount: true,
                 flowNodes: true,

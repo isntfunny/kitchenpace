@@ -2,11 +2,10 @@ type MaybeNumber = number | undefined;
 
 export const MULTI_VALUE_KEYS = [
     'tags',
-    'mealTypes',
+    'categories',
     'ingredients',
     'excludeIngredients',
     'difficulty',
-    'timeOfDay',
 ] as const;
 
 export const NUMBER_KEYS = [
@@ -18,6 +17,10 @@ export const NUMBER_KEYS = [
     'maxCookTime',
     'minRating',
     'minCookCount',
+    'minStepCount',
+    'maxStepCount',
+    'minCalories',
+    'maxCalories',
 ] as const;
 
 const DEFAULT_LIMIT = 30;
@@ -30,11 +33,10 @@ export type RecipeSortOption = 'rating' | 'newest' | 'fastest' | 'popular';
 export type RecipeFilterParams = {
     query?: string;
     tags?: string[];
-    mealTypes?: string[];
+    categories?: string[];
     ingredients?: string[];
     excludeIngredients?: string[];
     difficulty?: string[];
-    timeOfDay?: string[];
     minTotalTime?: number;
     maxTotalTime?: number;
     minPrepTime?: number;
@@ -43,6 +45,10 @@ export type RecipeFilterParams = {
     maxCookTime?: number;
     minRating?: number;
     minCookCount?: number;
+    minStepCount?: number;
+    maxStepCount?: number;
+    minCalories?: number;
+    maxCalories?: number;
 };
 
 export type RecipeFilterSearchParams = RecipeFilterParams & {
@@ -52,14 +58,13 @@ export type RecipeFilterSearchParams = RecipeFilterParams & {
     sort?: RecipeSortOption;
 };
 
+const MAX_FILTER_VALUE = 100_000;
+
 const toNumber = (value: string | null): MaybeNumber => {
     if (!value) return undefined;
     const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return undefined;
-    if (value.includes('.') && parsed < 1) {
-        return parsed;
-    }
-    return parsed >= 0 ? parsed : undefined;
+    if (!Number.isFinite(parsed) || parsed < 0 || parsed > MAX_FILTER_VALUE) return undefined;
+    return parsed;
 };
 
 const normalizeArray = (values: string[]): string[] =>
@@ -98,11 +103,10 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
     const result: RecipeFilterSearchParams = {
         query: params.get('query')?.trim() || undefined,
         tags: multi.tags,
-        mealTypes: multi.mealTypes,
+        categories: multi.categories,
         ingredients: multi.ingredients,
         excludeIngredients: multi.excludeIngredients,
         difficulty: multi.difficulty.map((difficulty) => difficulty.toUpperCase()),
-        timeOfDay: multi.timeOfDay,
         minTotalTime: numbers.minTotalTime,
         maxTotalTime: numbers.maxTotalTime,
         minPrepTime: numbers.minPrepTime,
@@ -111,6 +115,10 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
         maxCookTime: numbers.maxCookTime,
         minRating: clamp(numbers.minRating, 0, 5),
         minCookCount: numbers.minCookCount,
+        minStepCount: numbers.minStepCount,
+        maxStepCount: numbers.maxStepCount,
+        minCalories: numbers.minCalories,
+        maxCalories: numbers.maxCalories,
         page: Number.isFinite(pageValue ?? NaN)
             ? Math.max(DEFAULT_PAGE, pageValue ?? DEFAULT_PAGE)
             : DEFAULT_PAGE,
@@ -139,7 +147,7 @@ export function buildRecipeFilterQuery(filters: RecipeFilterSearchParams): URLSe
     }
 
     appendArray(params, 'tags', filters.tags);
-    appendArray(params, 'mealTypes', filters.mealTypes);
+    appendArray(params, 'categories', filters.categories);
     appendArray(params, 'ingredients', filters.ingredients);
     appendArray(params, 'excludeIngredients', filters.excludeIngredients);
     appendArray(
@@ -147,7 +155,6 @@ export function buildRecipeFilterQuery(filters: RecipeFilterSearchParams): URLSe
         'difficulty',
         filters.difficulty?.map((value) => value.toUpperCase()),
     );
-    appendArray(params, 'timeOfDay', filters.timeOfDay);
 
     const setNumber = (key: string, value?: number) => {
         if (value !== undefined) {
@@ -163,6 +170,10 @@ export function buildRecipeFilterQuery(filters: RecipeFilterSearchParams): URLSe
     setNumber('maxCookTime', filters.maxCookTime);
     setNumber('minRating', filters.minRating);
     setNumber('minCookCount', filters.minCookCount);
+    setNumber('minStepCount', filters.minStepCount);
+    setNumber('maxStepCount', filters.maxStepCount);
+    setNumber('minCalories', filters.minCalories);
+    setNumber('maxCalories', filters.maxCalories);
 
     if (filters.filterMode && filters.filterMode !== DEFAULT_FILTER_MODE) {
         params.set('mode', filters.filterMode);

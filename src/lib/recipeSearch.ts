@@ -9,16 +9,6 @@ export type RecipeSearchResult = {
     meta: RecipeSearchMeta;
 };
 
-const TOTAL_TIME_MAX = 180;
-
-const TIME_OF_DAY_RANGES: Record<string, { min?: number; max?: number }> = {
-    morgen: { min: 0, max: 25 },
-    mittag: { min: 20, max: 45 },
-    nachmittag: { min: 25, max: 60 },
-    abend: { min: 30, max: 90 },
-    snack: { min: 0, max: 20 },
-};
-
 const mapDocumentToRecipeCard = (document: Record<string, unknown>): RecipeCardData => {
     const totalTime = Number(document.totalTime ?? 0);
     const rating = Number(document.rating ?? 0);
@@ -72,11 +62,10 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
     const {
         query,
         tags = [],
-        mealTypes = [],
+        categories = [],
         ingredients = [],
         excludeIngredients = [],
         difficulty = [],
-        timeOfDay = [],
         minTotalTime,
         maxTotalTime,
         minPrepTime,
@@ -85,6 +74,10 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
         maxCookTime,
         minRating,
         minCookCount,
+        minStepCount,
+        maxStepCount,
+        minCalories,
+        maxCalories,
         page = 1,
         limit = RECIPE_FILTER_DEFAULT_LIMIT,
         filterMode = 'and',
@@ -113,6 +106,9 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
         bool: { must: [], filter: [], should: [], must_not: [] },
     };
 
+    // status:PUBLISHED must ALWAYS be in filter (never in should/or-mode)
+    boolQuery.bool.filter.push({ term: { status: 'PUBLISHED' } });
+
     const clauses: Record<string, unknown>[] = [];
     const pushClause = (clause: Record<string, unknown>) => clauses.push(clause);
 
@@ -127,9 +123,7 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
         });
     }
 
-    pushClause({ term: { status: 'PUBLISHED' } });
-
-    if (mealTypes.length > 0) pushClause({ terms: { category: mealTypes } });
+    if (categories.length > 0) pushClause({ terms: { categorySlug: categories } });
 
     if (tags.length > 0) {
         pushClause({ bool: { must: tags.map((tag) => ({ term: { tags: tag } })) } });
@@ -158,21 +152,10 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
     addRange('totalTime', minTotalTime, maxTotalTime);
     addRange('prepTime', minPrepTime, maxPrepTime);
     addRange('cookTime', minCookTime, maxCookTime);
+    addRange('stepCount', minStepCount, maxStepCount);
+    addRange('calories', minCalories, maxCalories);
     if (typeof minRating === 'number') addRange('rating', minRating, undefined);
     if (typeof minCookCount === 'number') addRange('cookCount', minCookCount, undefined);
-
-    const timeRanges = timeOfDay
-        .map((slot) => TIME_OF_DAY_RANGES[slot.toLowerCase()])
-        .filter(Boolean)
-        .map((range) => ({
-            range: {
-                totalTime: { gte: range.min ?? 0, lte: range.max ?? TOTAL_TIME_MAX },
-            },
-        }));
-
-    if (timeRanges.length > 0) {
-        pushClause({ bool: { should: timeRanges, minimum_should_match: 1 } });
-    }
 
     if (excludeIngredients.length > 0) {
         boolQuery.bool.must_not.push({ terms: { ingredients: excludeIngredients } });
@@ -183,7 +166,7 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
             boolQuery.bool.should = clauses;
             boolQuery.bool.minimum_should_match = 1;
         } else {
-            boolQuery.bool.filter = clauses;
+            boolQuery.bool.filter.push(...clauses);
         }
     }
 
@@ -213,6 +196,8 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
                 totalTime: { histogram: { field: 'totalTime', interval: 5, min_doc_count: 0 } },
                 prepTime: { histogram: { field: 'prepTime', interval: 5, min_doc_count: 0 } },
                 cookTime: { histogram: { field: 'cookTime', interval: 5, min_doc_count: 0 } },
+                stepCount: { histogram: { field: 'stepCount', interval: 2, min_doc_count: 0 } },
+                calories: { histogram: { field: 'calories', interval: 100, min_doc_count: 0 } },
                 rating: { histogram: { field: 'rating', interval: 1, min_doc_count: 0 } },
                 cookCount: { histogram: { field: 'cookCount', interval: 10, min_doc_count: 0 } },
             },
@@ -253,6 +238,14 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
         cookTime: buildHistogramFacet(
             response.body.aggregations?.cookTime as HistogramAggregation | undefined,
             5,
+        ),
+        stepCount: buildHistogramFacet(
+            response.body.aggregations?.stepCount as HistogramAggregation | undefined,
+            2,
+        ),
+        calories: buildHistogramFacet(
+            response.body.aggregations?.calories as HistogramAggregation | undefined,
+            100,
         ),
         rating: buildHistogramFacet(
             response.body.aggregations?.rating as HistogramAggregation | undefined,

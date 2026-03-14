@@ -234,6 +234,8 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                           : undefined
                 }
             >
+                {data.stepType === 'start' && <div className={startBadgeClass}>Start</div>}
+                {data.stepType === 'servieren' && <div className={finishBadgeClass}>Finish</div>}
                 {validationIssues.length > 0 && (
                     <div
                         className={cx(
@@ -250,8 +252,6 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                         </span>
                     </div>
                 )}
-                {data.stepType === 'start' && <div className={startBadgeClass}>Start</div>}
-                {data.stepType === 'servieren' && <div className={finishBadgeClass}>Finish</div>}
                 {config.canHaveIncomingEdge && (
                     <Handle
                         type="target"
@@ -267,7 +267,9 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                     <div className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
                         <span className={typeBadgeClass}>
                             <Icon className={css({ width: '12px', height: '12px' })} />
-                            {config.label}
+                            {data.label && data.label.trim() !== config.label
+                                ? data.label
+                                : config.label}
                         </span>
                         {data.duration != null && data.duration > 0 && (
                             <span className={durationBadgeClass}>
@@ -277,15 +279,13 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
                         )}
                     </div>
 
-                    <div className={titleClass}>
-                        {data.label && data.label.trim() !== config.label
-                            ? data.label
-                            : config.label}
-                    </div>
-
-                    {renderedDescription && (
+                    {renderedDescription ? (
                         <div className={descriptionClass}>{renderedDescription}</div>
-                    )}
+                    ) : data.stepType === 'start' ? (
+                        <div className={placeholderDescClass}>
+                            Alle Zutaten & Werkzeuge bereitlegen
+                        </div>
+                    ) : null}
 
                     {topValidationIssue && (
                         <div
@@ -422,16 +422,6 @@ const typeBadgeClass = css({
     backgroundColor: { base: 'rgba(255,255,255,0.6)', _dark: 'rgba(255,255,255,0.15)' },
 });
 
-const titleClass = css({
-    fontSize: 'sm',
-    fontWeight: '700',
-    color: 'text',
-    mt: '1.5',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-});
-
 const descriptionClass = css({
     fontSize: 'xs',
     color: 'text.muted',
@@ -440,6 +430,15 @@ const descriptionClass = css({
     maxHeight: '2.8em',
     overflow: 'hidden',
     lineClamp: '2',
+});
+
+const placeholderDescClass = css({
+    fontSize: 'xs',
+    color: 'text.muted',
+    mt: '0.5',
+    lineHeight: '1.4',
+    opacity: '0.55',
+    fontStyle: 'italic',
 });
 
 const durationBadgeClass = css({
@@ -495,22 +494,31 @@ const ingredientChipsClass = css({
 
 const validationBadgeClass = css({
     position: 'absolute',
-    top: '10px',
-    left: '10px',
+    top: '-8px',
+    left: '50%',
+    transform: 'translateX(-50%)',
     minWidth: '20px',
     minHeight: '20px',
     paddingInline: '1.5',
-    paddingBlock: '1',
+    paddingBlock: '0.5',
     borderRadius: 'full',
     color: 'white',
-    fontSize: '10px',
+    fontSize: '9px',
     fontWeight: '700',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '1',
-    boxShadow: '0 0 0 2px rgba(0,0,0,0.2)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
     pointerEvents: 'none',
+    zIndex: '1',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    whiteSpace: 'nowrap',
+    transition: 'opacity 0.15s ease',
+    _groupHover: {
+        opacity: '0',
+    },
 });
 
 const validationBadgeErrorClass = css({
@@ -533,8 +541,9 @@ const validationIssuePreviewClass = css({
     flexDirection: 'column',
     gap: '0.5',
     mt: '1.5',
-    p: '2',
-    borderRadius: 'md',
+    py: '2',
+    px: '2.5',
+    borderRadius: 'lg',
     fontSize: '11px',
     lineHeight: '1.35',
 });
@@ -630,14 +639,8 @@ const startBadgeClass = css({
     boxShadow: '0 2px 8px rgba(39,174,96,0.4)',
 });
 
-/* Finish/Servieren node styling - checkered flag pattern border */
+/* Finish/Servieren node styling - red glow effect (mirrors startNodeClass) */
 const finishNodeClass = css({
-    border: {
-        base: '3px solid transparent',
-        _dark: '3px solid transparent',
-    },
-    borderImage:
-        'repeating-linear-gradient(45deg, #27ae60 0, #27ae60 10px, white 10px, white 20px, #e74c3c 20px, #e74c3c 30px, white 30px, white 40px) 1',
     boxShadow: {
         base: '0 0 0 3px rgba(231,76,60,0.4), 0 4px 16px rgba(231,76,60,0.3)',
         _dark: '0 0 0 3px rgba(231,76,60,0.5), 0 4px 16px rgba(231,76,60,0.4)',

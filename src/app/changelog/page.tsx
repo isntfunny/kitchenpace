@@ -1,9 +1,14 @@
-'use client';
-
-import { motion } from 'motion/react';
+import { Metadata } from 'next';
 
 import { PageShell } from '@app/components/layouts/PageShell';
 import { css } from 'styled-system/css';
+
+import { FadeIn, ScaleIn } from './animations';
+
+export const metadata: Metadata = {
+    title: 'Changelog — KüchenTakt',
+    description: 'Was gibt es Neues bei KüchenTakt?',
+};
 
 type ChangelogItem = {
     text: string;
@@ -419,177 +424,166 @@ export default function ChangelogPage() {
     return (
         <PageShell>
             <div className={css({ maxW: '720px', mx: 'auto', py: { base: '4', md: '8' } })}>
-                <motion.h1
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className={css({
-                        fontFamily: 'heading',
-                        fontSize: { base: '2xl', md: '3xl' },
-                        fontWeight: '700',
-                        mb: '2',
-                    })}
-                >
-                    Changelog
-                </motion.h1>
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                    className={css({ color: 'text-muted', fontSize: 'sm', mb: '8' })}
-                >
-                    Was gibt es Neues bei KüchenTakt?
-                </motion.p>
+                <FadeIn y={-10}>
+                    <h1
+                        className={css({
+                            fontFamily: 'heading',
+                            fontSize: { base: '2xl', md: '3xl' },
+                            fontWeight: '700',
+                            mb: '2',
+                        })}
+                    >
+                        Changelog
+                    </h1>
+                </FadeIn>
+                <FadeIn delay={0.1}>
+                    <p className={css({ color: 'text-muted', fontSize: 'sm', mb: '8' })}>
+                        Was gibt es Neues bei KüchenTakt?
+                    </p>
+                </FadeIn>
 
                 <div className={css({ display: 'flex', flexDirection: 'column', gap: '8' })}>
                     {CHANGELOG.map((entry, entryIndex) => (
-                        <motion.article
+                        <FadeIn
                             key={entry.version ?? entry.date}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5, delay: 0.2 + entryIndex * 0.15 }}
-                            className={css({
-                                position: 'relative',
-                                pl: '6',
-                                borderLeft: '2px solid',
-                                borderColor: 'border',
-                            })}
+                            x={-20}
+                            delay={0.2 + entryIndex * 0.15}
                         >
-                            {/* Timeline dot */}
-                            <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{
-                                    type: 'spring',
-                                    stiffness: 400,
-                                    damping: 15,
-                                    delay: 0.3 + entryIndex * 0.15,
-                                }}
+                            <article
                                 className={css({
-                                    position: 'absolute',
-                                    left: '-7px',
-                                    top: '2px',
-                                    width: '12px',
-                                    height: '12px',
-                                    borderRadius: 'full',
-                                    background: 'linear-gradient(135deg, #e07b53, #f8b500)',
-                                    border: '2px solid',
-                                    borderColor: 'surface',
-                                })}
-                            />
-
-                            <div
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'baseline',
-                                    gap: '2',
-                                    mb: '1',
-                                    flexWrap: 'wrap',
+                                    position: 'relative',
+                                    pl: '6',
+                                    borderLeft: '2px solid',
+                                    borderColor: 'border',
                                 })}
                             >
-                                <span
+                                {/* Timeline dot */}
+                                <ScaleIn
+                                    delay={0.3 + entryIndex * 0.15}
                                     className={css({
-                                        fontSize: 'xs',
-                                        color: 'text-muted',
-                                        fontWeight: '500',
+                                        position: 'absolute',
+                                        left: '-7px',
+                                        top: '2px',
+                                        width: '12px',
+                                        height: '12px',
+                                        borderRadius: 'full',
+                                        background: 'linear-gradient(135deg, #e07b53, #f8b500)',
+                                        border: '2px solid',
+                                        borderColor: 'surface',
+                                    })}
+                                />
+
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'baseline',
+                                        gap: '2',
+                                        mb: '1',
+                                        flexWrap: 'wrap',
                                     })}
                                 >
-                                    {entry.date}
-                                </span>
-                                {entry.version && (
                                     <span
                                         className={css({
-                                            fontSize: '2xs',
-                                            fontWeight: '700',
-                                            color: 'white',
-                                            background: 'linear-gradient(135deg, #e07b53, #f8b500)',
-                                            px: '2',
-                                            py: '0.5',
-                                            borderRadius: 'full',
+                                            fontSize: 'xs',
+                                            color: 'text-muted',
+                                            fontWeight: '500',
                                         })}
                                     >
-                                        v{entry.version}
+                                        {entry.date}
                                     </span>
-                                )}
-                            </div>
-
-                            <h2
-                                className={css({
-                                    fontFamily: 'heading',
-                                    fontSize: 'lg',
-                                    fontWeight: '700',
-                                    mb: '2',
-                                })}
-                            >
-                                {entry.emoji && (
-                                    <span className={css({ mr: '2' })}>{entry.emoji}</span>
-                                )}
-                                {entry.title}
-                            </h2>
-
-                            <ul
-                                className={css({
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '1.5',
-                                    listStyle: 'none',
-                                    p: 0,
-                                    m: 0,
-                                })}
-                            >
-                                {entry.items.map((item, itemIndex) => {
-                                    const tagStyle = item.tag ? TAG_STYLES[item.tag] : null;
-                                    return (
-                                        <motion.li
-                                            key={item.text}
-                                            initial={{ opacity: 0, x: -10 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{
-                                                duration: 0.3,
-                                                delay: 0.4 + entryIndex * 0.15 + itemIndex * 0.04,
-                                            }}
+                                    {entry.version && (
+                                        <span
                                             className={css({
-                                                fontSize: 'sm',
-                                                color: 'text-muted',
-                                                lineHeight: '1.5',
-                                                display: 'flex',
-                                                alignItems: 'baseline',
-                                                gap: '2',
+                                                fontSize: '2xs',
+                                                fontWeight: '700',
+                                                color: 'white',
+                                                background:
+                                                    'linear-gradient(135deg, #e07b53, #f8b500)',
+                                                px: '2',
+                                                py: '0.5',
+                                                borderRadius: 'full',
                                             })}
                                         >
-                                            {tagStyle ? (
-                                                <span
-                                                    className={css({
-                                                        fontSize: '2xs',
-                                                        fontWeight: '700',
-                                                        color: 'white',
-                                                        px: '1.5',
-                                                        py: '0.5',
-                                                        borderRadius: 'full',
-                                                        whiteSpace: 'nowrap',
-                                                        flexShrink: 0,
-                                                    })}
-                                                    style={{ background: tagStyle.bg }}
-                                                >
-                                                    {tagStyle.label}
-                                                </span>
-                                            ) : (
-                                                <span
-                                                    className={css({
-                                                        color: 'palette.orange',
-                                                        fontWeight: '700',
-                                                        flexShrink: 0,
-                                                    })}
-                                                >
-                                                    →
-                                                </span>
-                                            )}
-                                            <span>{item.text}</span>
-                                        </motion.li>
-                                    );
-                                })}
-                            </ul>
-                        </motion.article>
+                                            v{entry.version}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <h2
+                                    className={css({
+                                        fontFamily: 'heading',
+                                        fontSize: 'lg',
+                                        fontWeight: '700',
+                                        mb: '2',
+                                    })}
+                                >
+                                    {entry.emoji && (
+                                        <span className={css({ mr: '2' })}>{entry.emoji}</span>
+                                    )}
+                                    {entry.title}
+                                </h2>
+
+                                <ul
+                                    className={css({
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '1.5',
+                                        listStyle: 'none',
+                                        p: 0,
+                                        m: 0,
+                                    })}
+                                >
+                                    {entry.items.map((item, itemIndex) => {
+                                        const tagStyle = item.tag ? TAG_STYLES[item.tag] : null;
+                                        return (
+                                            <FadeIn
+                                                key={item.text}
+                                                as="li"
+                                                x={-10}
+                                                delay={0.4 + entryIndex * 0.15 + itemIndex * 0.04}
+                                                className={css({
+                                                    fontSize: 'sm',
+                                                    color: 'text-muted',
+                                                    lineHeight: '1.5',
+                                                    display: 'flex',
+                                                    alignItems: 'baseline',
+                                                    gap: '2',
+                                                })}
+                                            >
+                                                {tagStyle ? (
+                                                    <span
+                                                        className={css({
+                                                            fontSize: '2xs',
+                                                            fontWeight: '700',
+                                                            color: 'white',
+                                                            px: '1.5',
+                                                            py: '0.5',
+                                                            borderRadius: 'full',
+                                                            whiteSpace: 'nowrap',
+                                                            flexShrink: 0,
+                                                        })}
+                                                        style={{ background: tagStyle.bg }}
+                                                    >
+                                                        {tagStyle.label}
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className={css({
+                                                            color: 'palette.orange',
+                                                            fontWeight: '700',
+                                                            flexShrink: 0,
+                                                        })}
+                                                    >
+                                                        →
+                                                    </span>
+                                                )}
+                                                <span>{item.text}</span>
+                                            </FadeIn>
+                                        );
+                                    })}
+                                </ul>
+                            </article>
+                        </FadeIn>
                     ))}
                 </div>
             </div>

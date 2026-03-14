@@ -127,7 +127,7 @@ export default async function AdminHomePage() {
     const statusCounts = buildStatusCounts(jobRuns);
     const recentFailures = jobRuns.filter((run) => run.status === 'FAILED').slice(0, 4);
 
-    const greetingName = session.user.name ?? 'Admin';
+    const greetingName = session?.user?.name ?? 'Admin';
 
     return (
         <PageShell>

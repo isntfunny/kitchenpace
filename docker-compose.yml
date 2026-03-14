@@ -72,6 +72,7 @@ services:
             args:
                 DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
                 DEBUG: ${DEBUG:-0}
+        image: kitchenpace:beta
         container_name: kitchenpace-app
         environment:
             - SCRAPLER_URL=http://scraper:8000
@@ -89,10 +90,7 @@ services:
             start_period: 30s
 
     worker:
-        build:
-            context: .
-            dockerfile: Dockerfile
-            target: app
+        image: kitchenpace:beta
         entrypoint: null
         command: ['npm', 'run', 'worker']
         container_name: kitchenpace-worker

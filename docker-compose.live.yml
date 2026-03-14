@@ -63,6 +63,7 @@ services:
                 - 'host.docker.internal:host-gateway'
             args:
                 - DATABASE_URL=${DATABASE_URL}
+        image: kitchenpace:live
         container_name: kitchenpace-app
         env_file:
             - .env
@@ -84,10 +85,7 @@ services:
             start_period: 30s
 
     worker:
-        build:
-            context: .
-            dockerfile: Dockerfile
-            target: app
+        image: kitchenpace:live
         entrypoint: null
         command: ['npm', 'run', 'worker']
         container_name: kitchenpace-worker

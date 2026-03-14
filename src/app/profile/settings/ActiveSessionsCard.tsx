@@ -1,20 +1,17 @@
 'use client';
 
 import { LogOut, Monitor, Smartphone, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
+import {
+    listSessions,
+    revokeAllOtherSessions,
+    revokeSession,
+    type SessionInfo,
+} from '@app/lib/auth/session-actions';
 import { css } from 'styled-system/css';
-
-interface SessionInfo {
-    id: string;
-    deviceLabel: string | null;
-    ipAddress: string | null;
-    createdAt: string;
-    expires: string;
-    isCurrent: boolean;
-}
 
 function maskIp(ip: string | null): string {
     if (!ip) return '';
@@ -23,8 +20,8 @@ function maskIp(ip: string | null): string {
     return parts.length === 4 ? `${parts[0]}.${parts[1]}.*.*` : ip;
 }
 
-function relativeTime(dateStr: string): string {
-    const diff = Date.now() - new Date(dateStr).getTime();
+function relativeTime(date: Date): string {
+    const diff = Date.now() - new Date(date).getTime();
     const minutes = Math.floor(diff / 60000);
     if (minutes < 1) return 'Gerade eben';
     if (minutes < 60) return `Vor ${minutes} Min.`;
@@ -44,18 +41,14 @@ export function ActiveSessionsCard() {
     const [sessions, setSessions] = useState<SessionInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState(false);
-    const [revoking, setRevoking] = useState<string | null>(null);
-    const [revokingAll, setRevokingAll] = useState(false);
+    const [revokingId, setRevokingId] = useState<string | null>(null);
+    const [isPending, startTransition] = useTransition();
 
     const fetchSessions = useCallback(async () => {
         try {
-            const res = await fetch('/api/sessions');
-            if (res.ok) {
-                setSessions(await res.json());
-                setFetchError(false);
-            } else {
-                setFetchError(true);
-            }
+            const data = await listSessions();
+            setSessions(data);
+            setFetchError(false);
         } catch {
             setFetchError(true);
         } finally {
@@ -67,28 +60,24 @@ export function ActiveSessionsCard() {
         fetchSessions();
     }, [fetchSessions]);
 
-    const revokeSession = async (id: string) => {
-        setRevoking(id);
-        try {
-            const res = await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
-            if (res.ok) {
+    const handleRevoke = (id: string) => {
+        setRevokingId(id);
+        startTransition(async () => {
+            const result = await revokeSession(id);
+            if ('success' in result) {
                 setSessions((prev) => prev.filter((s) => s.id !== id));
             }
-        } finally {
-            setRevoking(null);
-        }
+            setRevokingId(null);
+        });
     };
 
-    const revokeAll = async () => {
-        setRevokingAll(true);
-        try {
-            const res = await fetch('/api/sessions', { method: 'DELETE' });
-            if (res.ok) {
+    const handleRevokeAll = () => {
+        startTransition(async () => {
+            const result = await revokeAllOtherSessions();
+            if ('revoked' in result) {
                 setSessions((prev) => prev.filter((s) => s.isCurrent));
             }
-        } finally {
-            setRevokingAll(false);
-        }
+        });
     };
 
     const otherSessions = sessions.filter((s) => !s.isCurrent);
@@ -150,6 +139,7 @@ export function ActiveSessionsCard() {
                 <div className={css({ display: 'flex', flexDir: 'column', gap: '3' })}>
                     {sessions.map((session) => {
                         const DeviceIcon = isMobile(session.deviceLabel) ? Smartphone : Monitor;
+                        const isRevoking = revokingId === session.id;
 
                         return (
                             <div
@@ -193,11 +183,7 @@ export function ActiveSessionsCard() {
                                                 flexWrap: 'wrap',
                                             })}
                                         >
-                                            <Text
-                                                className={css({
-                                                    fontWeight: '600',
-                                                })}
-                                            >
+                                            <Text className={css({ fontWeight: '600' })}>
                                                 {session.deviceLabel ?? 'Unbekanntes Gerät'}
                                             </Text>
                                             {session.isCurrent && (
@@ -230,8 +216,8 @@ export function ActiveSessionsCard() {
                                 {!session.isCurrent && (
                                     <button
                                         type="button"
-                                        onClick={() => revokeSession(session.id)}
-                                        disabled={revoking === session.id}
+                                        onClick={() => handleRevoke(session.id)}
+                                        disabled={isRevoking}
                                         className={css({
                                             display: 'flex',
                                             alignItems: 'center',
@@ -246,22 +232,20 @@ export function ActiveSessionsCard() {
                                             fontSize: 'sm',
                                             fontWeight: '500',
                                             fontFamily: 'body',
-                                            cursor:
-                                                revoking === session.id ? 'not-allowed' : 'pointer',
-                                            opacity: revoking === session.id ? 0.6 : 1,
+                                            cursor: isRevoking ? 'not-allowed' : 'pointer',
+                                            opacity: isRevoking ? 0.6 : 1,
                                             transition: 'all 150ms ease',
                                             flexShrink: 0,
-                                            _hover:
-                                                revoking === session.id
-                                                    ? {}
-                                                    : {
-                                                          bg: 'red.50',
-                                                          borderColor: 'red.400',
-                                                      },
+                                            _hover: isRevoking
+                                                ? {}
+                                                : {
+                                                      bg: 'red.50',
+                                                      borderColor: 'red.400',
+                                                  },
                                         })}
                                     >
                                         <Trash2 size={14} />
-                                        {revoking === session.id ? 'Wird entfernt...' : 'Entfernen'}
+                                        {isRevoking ? 'Wird entfernt...' : 'Entfernen'}
                                     </button>
                                 )}
                             </div>
@@ -275,11 +259,11 @@ export function ActiveSessionsCard() {
                     <Button
                         type="button"
                         variant="secondary"
-                        onClick={revokeAll}
-                        disabled={revokingAll}
+                        onClick={handleRevokeAll}
+                        disabled={isPending}
                     >
                         <LogOut size={18} />
-                        {revokingAll
+                        {isPending
                             ? 'Wird abgemeldet...'
                             : `Alle anderen Sitzungen beenden (${otherSessions.length})`}
                     </Button>

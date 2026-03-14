@@ -1,8 +1,7 @@
-import UAParser from 'ua-parser-js';
-
-export function parseDeviceLabel(userAgent: string | null): string {
+export async function parseDeviceLabel(userAgent: string | null): Promise<string> {
     if (!userAgent) return 'Unbekanntes Gerät';
 
+    const UAParser = (await import('ua-parser-js')).default;
     const parser = new UAParser(userAgent);
     const browser = parser.getBrowser().name ?? 'Unbekannter Browser';
     const os = parser.getOS().name ?? '';
@@ -25,7 +24,7 @@ export async function getRequestMetadata(): Promise<{
 
     return {
         userAgent,
-        deviceLabel: parseDeviceLabel(userAgent),
+        deviceLabel: await parseDeviceLabel(userAgent),
         ipAddress,
     };
 }

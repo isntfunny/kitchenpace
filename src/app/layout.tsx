@@ -17,6 +17,7 @@ import { ToastProvider } from '@app/components/providers/ToastProvider';
 import { getServerAuthSession } from '@app/lib/auth';
 import { getServerFeatureFlags } from '@app/lib/flags/server';
 import { APP_URL } from '@app/lib/url';
+import { TRPCReactProvider } from '@app/trpc/client';
 import { prisma } from '@shared/prisma';
 
 const websiteJsonLd = {
@@ -305,24 +306,26 @@ export default async function RootLayout({
                     </>
                 )}
                 <PageProgress />
-                <ThemeProvider>
-                    <AuthProvider session={session}>
-                        <ToastProvider>
-                            <AchievementListener />
-                            <FeatureFlagsProvider initialState={featureFlags}>
-                                <ProfileProvider profile={profile}>
-                                    <RecipeTabsProvider
-                                        initialPinned={pinnedRecipes}
-                                        initialRecent={recentRecipes}
-                                        serverDataFetched={!!session?.user?.id}
-                                    >
-                                        {children}
-                                    </RecipeTabsProvider>
-                                </ProfileProvider>
-                            </FeatureFlagsProvider>
-                        </ToastProvider>
-                    </AuthProvider>
-                </ThemeProvider>
+                <TRPCReactProvider>
+                    <ThemeProvider>
+                        <AuthProvider session={session}>
+                            <ToastProvider>
+                                <AchievementListener />
+                                <FeatureFlagsProvider initialState={featureFlags}>
+                                    <ProfileProvider profile={profile}>
+                                        <RecipeTabsProvider
+                                            initialPinned={pinnedRecipes}
+                                            initialRecent={recentRecipes}
+                                            serverDataFetched={!!session?.user?.id}
+                                        >
+                                            {children}
+                                        </RecipeTabsProvider>
+                                    </ProfileProvider>
+                                </FeatureFlagsProvider>
+                            </ToastProvider>
+                        </AuthProvider>
+                    </ThemeProvider>
+                </TRPCReactProvider>
             </body>
         </html>
     );

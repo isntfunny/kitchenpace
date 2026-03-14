@@ -1,15 +1,13 @@
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { Metadata } from 'next';
 
-import {
-    fetchFilterTags,
-    fetchFilterIngredients,
-    fetchFilterCategories,
-} from '@app/app/actions/filters';
+import { fetchFilterIngredients, fetchFilterTags } from '@app/app/actions/filters';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { RecipeSearchClient } from '@app/components/search/RecipeSearchClient';
 import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
 import { APP_URL } from '@app/lib/url';
+import { getQueryClient, trpc } from '@app/trpc/server';
 
 type RecipesPageProps = {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -43,21 +41,24 @@ const toURLSearchParams = async (searchParams: RecipesPageProps['searchParams'])
 
 export default async function RecipesPage({ searchParams }: RecipesPageProps) {
     const initialFilters = parseRecipeFilterParams(await toURLSearchParams(searchParams));
+    const queryClient = getQueryClient();
 
     const [tags, ingredients, categories, initialData] = await Promise.all([
         fetchFilterTags(),
         fetchFilterIngredients(),
-        fetchFilterCategories(),
+        queryClient.fetchQuery(trpc.filters.categories.queryOptions()),
         queryRecipes(initialFilters),
     ]);
 
     return (
         <PageShell>
-            <RecipeSearchClient
-                initialFilters={initialFilters}
-                filterOptions={{ tags, ingredients, categories }}
-                initialData={initialData}
-            />
+            <HydrationBoundary state={dehydrate(queryClient)}>
+                <RecipeSearchClient
+                    initialFilters={initialFilters}
+                    filterOptions={{ tags, ingredients, categories }}
+                    initialData={initialData}
+                />
+            </HydrationBoundary>
         </PageShell>
     );
 }

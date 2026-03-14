@@ -93,8 +93,6 @@ services:
             context: .
             dockerfile: Dockerfile
             target: app
-            args:
-                DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@postgres:5432/kitchenpace}
         entrypoint: []
         command: ['npm', 'run', 'worker']
         container_name: kitchenpace-worker

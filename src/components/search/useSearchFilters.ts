@@ -74,11 +74,10 @@ export function useSearchFilters(initialFilters: RecipeFilterSearchParams) {
             ...prev,
             query: undefined,
             tags: [],
-            mealTypes: [],
+            categories: [],
             ingredients: [],
             excludeIngredients: [],
             difficulty: [],
-            timeOfDay: [],
             minTotalTime: undefined,
             maxTotalTime: undefined,
             minPrepTime: undefined,
@@ -87,6 +86,10 @@ export function useSearchFilters(initialFilters: RecipeFilterSearchParams) {
             maxCookTime: undefined,
             minRating: undefined,
             minCookCount: undefined,
+            minStepCount: undefined,
+            maxStepCount: undefined,
+            minCalories: undefined,
+            maxCalories: undefined,
             page: 1,
         }));
     }, []);

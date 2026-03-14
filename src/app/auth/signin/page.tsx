@@ -14,8 +14,6 @@ import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
 import { credentialsSignIn } from '@app/lib/auth/credentials-session';
 import { css } from 'styled-system/css';
 
-const hasGoogle = process.env.NEXT_PUBLIC_GOOGLE_ENABLED === '1';
-
 function SignInForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -81,12 +79,8 @@ function SignInForm() {
                 </p>
             </div>
 
-            {hasGoogle && (
-                <>
-                    <GoogleSignInButton callbackUrl={callbackUrl} />
-                    <OAuthDivider />
-                </>
-            )}
+            <GoogleSignInButton callbackUrl={callbackUrl} />
+            <OAuthDivider />
 
             <form onSubmit={handleSubmit} className={authFormStackClass}>
                 <label className={css({ textAlign: 'left', fontWeight: '600', fontSize: 'sm' })}>

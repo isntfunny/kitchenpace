@@ -69,13 +69,13 @@ export function ActiveFilters({ filters, onRemove }: ActiveFiltersProps) {
         });
     });
 
-    (filters.mealTypes ?? []).forEach((meal) => {
+    (filters.categories ?? []).forEach((cat) => {
         push({
-            id: `meal-${meal}`,
-            label: `Mahlzeit: ${meal}`,
+            id: `category-${cat}`,
+            label: `Kategorie: ${cat}`,
             onRemove: () =>
                 onRemove({
-                    mealTypes: (filters.mealTypes ?? []).filter((entry) => entry !== meal),
+                    categories: (filters.categories ?? []).filter((entry) => entry !== cat),
                 }),
         });
     });
@@ -113,17 +113,6 @@ export function ActiveFilters({ filters, onRemove }: ActiveFiltersProps) {
             onRemove: () =>
                 onRemove({
                     difficulty: (filters.difficulty ?? []).filter((entry) => entry !== difficulty),
-                }),
-        });
-    });
-
-    (filters.timeOfDay ?? []).forEach((slot) => {
-        push({
-            id: `time-${slot}`,
-            label: `Tageszeit: ${slot}`,
-            onRemove: () =>
-                onRemove({
-                    timeOfDay: (filters.timeOfDay ?? []).filter((entry) => entry !== slot),
                 }),
         });
     });
@@ -189,6 +178,38 @@ export function ActiveFilters({ filters, onRemove }: ActiveFiltersProps) {
             id: 'minCookCount',
             label: `Zubereitet ≥ ${filters.minCookCount}x`,
             onRemove: () => onRemove({ minCookCount: undefined }),
+        });
+    }
+
+    if (typeof filters.minStepCount === 'number') {
+        push({
+            id: 'minStepCount',
+            label: `Schritte ≥ ${filters.minStepCount}`,
+            onRemove: () => onRemove({ minStepCount: undefined }),
+        });
+    }
+
+    if (typeof filters.maxStepCount === 'number') {
+        push({
+            id: 'maxStepCount',
+            label: `Schritte ≤ ${filters.maxStepCount}`,
+            onRemove: () => onRemove({ maxStepCount: undefined }),
+        });
+    }
+
+    if (typeof filters.minCalories === 'number') {
+        push({
+            id: 'minCalories',
+            label: `Kalorien ≥ ${filters.minCalories} kcal`,
+            onRemove: () => onRemove({ minCalories: undefined }),
+        });
+    }
+
+    if (typeof filters.maxCalories === 'number') {
+        push({
+            id: 'maxCalories',
+            label: `Kalorien ≤ ${filters.maxCalories} kcal`,
+            onRemove: () => onRemove({ maxCalories: undefined }),
         });
     }
 

@@ -450,7 +450,7 @@ export function RecipeDetailClient({
                                 categoryHref={
                                     recipe.categorySlug
                                         ? `/category/${recipe.categorySlug}`
-                                        : buildRecipeFilterHref({ mealTypes: [recipe.category] })
+                                        : buildRecipeFilterHref({ categories: [recipe.category] })
                                 }
                                 isDraft={isDraft}
                                 starValues={starValues}

@@ -24,22 +24,6 @@ type FilterSidebarProps = {
     loading?: boolean;
 };
 
-const MEAL_TYPE_OPTIONS = [
-    { value: 'Frühstück', label: 'Frühstück' },
-    { value: 'Mittagessen', label: 'Mittagessen' },
-    { value: 'Abendessen', label: 'Abendessen' },
-    { value: 'Snack', label: 'Snack' },
-    { value: 'Dessert', label: 'Dessert' },
-];
-
-const TIME_OF_DAY_OPTIONS = [
-    { value: 'morgen', label: 'Morgen' },
-    { value: 'mittag', label: 'Mittag' },
-    { value: 'nachmittag', label: 'Nachmittag' },
-    { value: 'abend', label: 'Abend' },
-    { value: 'snack', label: 'Snack' },
-];
-
 const DIFFICULTY_OPTIONS = [
     { value: 'EASY', label: 'Einfach' },
     { value: 'MEDIUM', label: 'Mittel' },
@@ -50,13 +34,15 @@ const RANGE_FALLBACKS = {
     totalTime: { min: 0, max: 180, interval: 5 },
     prepTime: { min: 0, max: 90, interval: 5 },
     cookTime: { min: 0, max: 120, interval: 5 },
+    stepCount: { min: 1, max: 20, interval: 2 },
+    calories: { min: 0, max: 2000, interval: 100 },
     rating: { min: 0, max: 5, interval: 0.5 },
     cookCount: { min: 0, max: 200, interval: 10 },
 };
 
 const FILTER_SECTION_IDS = {
     tags: 'tags',
-    mealType: 'meal-type',
+    categories: 'categories',
     ingredients: 'ingredients',
     exclude: 'exclude',
     difficulty: 'difficulty',
@@ -352,32 +338,39 @@ export function FilterSidebar({
 
     const activeSectionCounts = useMemo(() => {
         const hasActiveTags = (filters.tags?.length ?? 0) > 0;
-        const hasActiveMealType = (filters.mealTypes?.length ?? 0) > 0;
+        const hasActiveCategories = (filters.categories?.length ?? 0) > 0;
         const hasActiveIngredients = (filters.ingredients?.length ?? 0) > 0;
         const hasActiveExclude = (filters.excludeIngredients?.length ?? 0) > 0;
         const hasActiveDifficulty = (filters.difficulty?.length ?? 0) > 0;
-        const hasActiveTimeOfDay = (filters.timeOfDay?.length ?? 0) > 0;
         const hasActiveTotalTime =
             typeof filters.minTotalTime === 'number' || typeof filters.maxTotalTime === 'number';
         const hasActivePrepTime =
             typeof filters.minPrepTime === 'number' || typeof filters.maxPrepTime === 'number';
         const hasActiveCookTime =
             typeof filters.minCookTime === 'number' || typeof filters.maxCookTime === 'number';
+        const hasActiveStepCount =
+            typeof filters.minStepCount === 'number' || typeof filters.maxStepCount === 'number';
         const hasActiveRating = typeof filters.minRating === 'number';
         const hasActiveCookCount = typeof filters.minCookCount === 'number';
+        const hasActiveCalories =
+            typeof filters.minCalories === 'number' || typeof filters.maxCalories === 'number';
 
         return {
             tags: hasActiveTags ? 1 : 0,
-            mealType: hasActiveMealType ? (filters.mealTypes?.length ?? 0) : 0,
+            categories: hasActiveCategories ? (filters.categories?.length ?? 0) : 0,
             ingredients: hasActiveIngredients ? (filters.ingredients?.length ?? 0) : 0,
             exclude: hasActiveExclude ? (filters.excludeIngredients?.length ?? 0) : 0,
-            difficulty: hasActiveDifficulty ? (filters.difficulty?.length ?? 0) : 0,
+            difficulty:
+                (hasActiveDifficulty ? (filters.difficulty?.length ?? 0) : 0) +
+                (hasActiveStepCount ? 1 : 0),
             timing:
-                (hasActiveTimeOfDay ? (filters.timeOfDay?.length ?? 0) : 0) +
                 (hasActiveTotalTime ? 1 : 0) +
                 (hasActivePrepTime ? 1 : 0) +
                 (hasActiveCookTime ? 1 : 0),
-            rating: (hasActiveRating ? 1 : 0) + (hasActiveCookCount ? 1 : 0),
+            rating:
+                (hasActiveRating ? 1 : 0) +
+                (hasActiveCookCount ? 1 : 0) +
+                (hasActiveCalories ? 1 : 0),
         };
     }, [filters]);
 
@@ -425,29 +418,28 @@ export function FilterSidebar({
                     </FilterSection>
 
                     <FilterSection
-                        value={FILTER_SECTION_IDS.mealType}
-                        title="Mahlzeit"
-                        description="Abgestimmt auf deinen Rhythmus"
-                        activeCount={activeSectionCounts.mealType}
+                        value={FILTER_SECTION_IDS.categories}
+                        title="Kategorien"
+                        activeCount={activeSectionCounts.categories}
                     >
                         <ToggleGroup.Root
                             type="multiple"
                             className={chipGroupClass}
-                            aria-label="Mahlzeiten filtern"
-                            value={filters.mealTypes ?? []}
+                            aria-label="Kategorien filtern"
+                            value={filters.categories ?? []}
                             onValueChange={(next: string[]) =>
                                 onFiltersChange({
-                                    mealTypes: next,
+                                    categories: next,
                                 } as Partial<RecipeFilterSearchParams>)
                             }
                         >
-                            {MEAL_TYPE_OPTIONS.map((option) => (
+                            {options.categories.map((cat) => (
                                 <ToggleGroup.Item
-                                    key={option.value}
-                                    value={option.value}
+                                    key={cat.slug}
+                                    value={cat.slug}
                                     className={chipItemClass}
                                 >
-                                    {option.label}
+                                    {cat.name}
                                 </ToggleGroup.Item>
                             ))}
                         </ToggleGroup.Root>
@@ -497,7 +489,7 @@ export function FilterSidebar({
 
                     <FilterSection
                         value={FILTER_SECTION_IDS.difficulty}
-                        title="Schwierigkeit"
+                        title="Schwierigkeit & Aufwand"
                         activeCount={activeSectionCounts.difficulty}
                     >
                         <ToggleGroup.Root
@@ -521,35 +513,24 @@ export function FilterSidebar({
                                 </ToggleGroup.Item>
                             ))}
                         </ToggleGroup.Root>
+                        <RangeControl
+                            filters={filters}
+                            onFiltersChange={onFiltersChange}
+                            label="Schritte"
+                            description="Anzahl Zubereitungsschritte"
+                            minField="minStepCount"
+                            maxField="maxStepCount"
+                            fallback={RANGE_FALLBACKS.stepCount}
+                            facet={facets?.stepCount}
+                            formatValue={(value: number) => `${Math.round(value)}`}
+                        />
                     </FilterSection>
 
                     <FilterSection
                         value={FILTER_SECTION_IDS.timing}
-                        title="Tageszeit & Dauer"
-                        description="Zeitfenster schnell auswählen"
+                        title="Dauer"
                         activeCount={activeSectionCounts.timing}
                     >
-                        <ToggleGroup.Root
-                            type="multiple"
-                            className={chipGroupClass}
-                            aria-label="Tageszeit filtern"
-                            value={filters.timeOfDay ?? []}
-                            onValueChange={(next: string[]) =>
-                                onFiltersChange({
-                                    timeOfDay: next,
-                                } as Partial<RecipeFilterSearchParams>)
-                            }
-                        >
-                            {TIME_OF_DAY_OPTIONS.map((option) => (
-                                <ToggleGroup.Item
-                                    key={option.value}
-                                    value={option.value}
-                                    className={chipItemClass}
-                                >
-                                    {option.label}
-                                </ToggleGroup.Item>
-                            ))}
-                        </ToggleGroup.Root>
                         <div className={css({ display: 'grid', gap: '3' })}>
                             <RangeControl
                                 filters={filters}
@@ -628,6 +609,18 @@ export function FilterSidebar({
                                 facet={facets?.cookCount}
                                 unit="x"
                                 formatValue={(value: number) => `${Math.round(value)}x`}
+                            />
+                            <RangeControl
+                                filters={filters}
+                                onFiltersChange={onFiltersChange}
+                                label="Kalorien"
+                                description="Pro Portion (kcal)"
+                                minField="minCalories"
+                                maxField="maxCalories"
+                                fallback={RANGE_FALLBACKS.calories}
+                                facet={facets?.calories}
+                                unit="kcal"
+                                formatValue={(value: number) => `${Math.round(value)} kcal`}
                             />
                         </div>
                     </FilterSection>

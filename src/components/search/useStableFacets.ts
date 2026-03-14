@@ -13,6 +13,10 @@ const buildSliderSignature = (filters: RecipeFilterSearchParams) =>
         filters.maxPrepTime ?? null,
         filters.minCookTime ?? null,
         filters.maxCookTime ?? null,
+        filters.minStepCount ?? null,
+        filters.maxStepCount ?? null,
+        filters.minCalories ?? null,
+        filters.maxCalories ?? null,
         filters.minRating ?? null,
         filters.minCookCount ?? null,
     ]);
@@ -21,11 +25,10 @@ const buildNonSliderSignature = (filters: RecipeFilterSearchParams) =>
     JSON.stringify({
         query: filters.query ?? null,
         tags: filters.tags ?? [],
-        mealTypes: filters.mealTypes ?? [],
+        categories: filters.categories ?? [],
         ingredients: filters.ingredients ?? [],
         excludeIngredients: filters.excludeIngredients ?? [],
         difficulty: filters.difficulty ?? [],
-        timeOfDay: filters.timeOfDay ?? [],
         filterMode: filters.filterMode ?? 'and',
     });
 
@@ -90,6 +93,10 @@ export function useStableFacets(
                 evaluateMaxChange(prev.maxPrepTime, filters.maxPrepTime),
                 evaluateMinChange(prev.minCookTime, filters.minCookTime),
                 evaluateMaxChange(prev.maxCookTime, filters.maxCookTime),
+                evaluateMinChange(prev.minStepCount, filters.minStepCount),
+                evaluateMaxChange(prev.maxStepCount, filters.maxStepCount),
+                evaluateMinChange(prev.minCalories, filters.minCalories),
+                evaluateMaxChange(prev.maxCalories, filters.maxCalories),
                 evaluateMinChange(prev.minRating, filters.minRating),
                 evaluateMinChange(prev.minCookCount, filters.minCookCount),
             ].some((r) => r === 'relax');

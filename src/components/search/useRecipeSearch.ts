@@ -31,6 +31,8 @@ export type RecipeSearchFacets = {
     cookTime?: HistogramFacet;
     totalTime?: HistogramFacet;
     prepTime?: HistogramFacet;
+    stepCount?: HistogramFacet;
+    calories?: HistogramFacet;
     rating?: HistogramFacet;
     cookCount?: HistogramFacet;
 };

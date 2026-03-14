@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
 import { css } from 'styled-system/css';
@@ -18,18 +18,6 @@ interface AddNodeButtonProps {
 function AddNodeButtonComponent({ nodeId, side = 'source' }: AddNodeButtonProps) {
     const { onAddNodeAfter, onAddNodeBefore } = useFlowEditor();
     const [open, setOpen] = useState(false);
-    const wrapperRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (!open) return;
-        function handleClickOutside(event: MouseEvent) {
-            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-                setOpen(false);
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [open]);
 
     const handleSelect = useCallback(
         (stepType: StepType) => {
@@ -46,17 +34,29 @@ function AddNodeButtonComponent({ nodeId, side = 'source' }: AddNodeButtonProps)
     const isLeft = side === 'target';
 
     return (
-        <div ref={wrapperRef} className={wrapperClass}>
+        <div className={wrapperClass}>
             <button
                 type="button"
                 className={circleButtonClass}
+                onMouseDown={(e) => {
+                    // Stop mousedown from reaching StepTypePicker's
+                    // document mousedown outside-listener
+                    e.nativeEvent.stopImmediatePropagation();
+                }}
                 onClick={(e) => {
                     e.stopPropagation();
                     setOpen((v) => !v);
                 }}
                 title={isLeft ? 'Schritt davor einfügen' : 'Schritt hinzufügen'}
             >
-                <Plus className={css({ width: '13px', height: '13px' })} />
+                <Plus
+                    className={css({
+                        width: '13px',
+                        height: '13px',
+                        transition: 'transform 0.2s ease',
+                    })}
+                    style={open ? { transform: 'rotate(45deg)' } : undefined}
+                />
             </button>
 
             {open && (

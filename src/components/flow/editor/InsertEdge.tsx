@@ -114,6 +114,12 @@ function InsertEdgeComponent({
                             {/* "+" circle button */}
                             <button
                                 type="button"
+                                onMouseDown={(e) => {
+                                    // Stop mousedown from reaching StepTypePicker's
+                                    // document mousedown outside-listener, which would
+                                    // close the picker before our click can toggle it.
+                                    e.nativeEvent.stopImmediatePropagation();
+                                }}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     dispatchRecipeTutorialEvent(
@@ -144,7 +150,13 @@ function InsertEdgeComponent({
                                 }}
                             >
                                 <Plus
-                                    style={{ width: '13px', height: '13px', color: PALETTE.orange }}
+                                    style={{
+                                        width: '13px',
+                                        height: '13px',
+                                        color: PALETTE.orange,
+                                        transition: 'transform 0.2s ease',
+                                        transform: popoverOpen ? 'rotate(45deg)' : undefined,
+                                    }}
                                 />
                             </button>
 

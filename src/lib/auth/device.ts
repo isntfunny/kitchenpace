@@ -1,7 +1,9 @@
-export async function parseDeviceLabel(userAgent: string | null): Promise<string> {
+import { headers } from 'next/headers';
+import UAParser from 'ua-parser-js';
+
+export function parseDeviceLabel(userAgent: string | null): string {
     if (!userAgent) return 'Unbekanntes Gerät';
 
-    const UAParser = (await import('ua-parser-js')).default;
     const parser = new UAParser(userAgent);
     const browser = parser.getBrowser().name ?? 'Unbekannter Browser';
     const os = parser.getOS().name ?? '';
@@ -14,7 +16,6 @@ export async function getRequestMetadata(): Promise<{
     deviceLabel: string;
     ipAddress: string | null;
 }> {
-    const { headers } = await import('next/headers');
     const headersList = await headers();
     const userAgent = headersList.get('user-agent');
     const ipAddress =
@@ -24,7 +25,7 @@ export async function getRequestMetadata(): Promise<{
 
     return {
         userAgent,
-        deviceLabel: await parseDeviceLabel(userAgent),
+        deviceLabel: parseDeviceLabel(userAgent),
         ipAddress,
     };
 }

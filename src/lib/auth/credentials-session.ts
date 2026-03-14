@@ -8,7 +8,6 @@ import { cookies } from 'next/headers';
 import { logAuth } from '@app/lib/auth-logger';
 import { prisma } from '@shared/prisma';
 
-import { getRequestMetadata } from './device';
 import { SESSION_COOKIE_NAME, SESSION_MAX_AGE } from './session-cookie';
 
 type SignInResult =
@@ -47,6 +46,7 @@ export async function credentialsSignIn(email: string, password: string): Promis
 
     const sessionToken = randomUUID();
     const expires = new Date(Date.now() + SESSION_MAX_AGE * 1000);
+    const { getRequestMetadata } = await import('./device');
     const metadata = await getRequestMetadata();
 
     await prisma.session.create({

@@ -18,6 +18,7 @@ import { Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefCallback } from 'react';
 import '@xyflow/react/dist/style.css';
 
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 import {
     dispatchRecipeTutorialEvent,
@@ -219,6 +220,7 @@ function FlowEditorInner({
 
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [aiDialogOpen, setAiDialogOpen] = useState(false);
+    const showAiButton = useFeatureFlag('aiRecipeConversion');
     const applyLayout = useFlowAutoLayout();
 
     /* ── sidebar resize / visibility ── */
@@ -844,21 +846,23 @@ function FlowEditorInner({
                             position="top-right"
                             className={css({ display: 'flex', gap: '2', alignItems: 'center' })}
                         >
-                            <button
-                                type="button"
-                                className={aiButtonClass}
-                                title="Kommt bald: KI-gestützte Rezeptkonvertierung"
-                                onClick={() => setAiDialogOpen(true)}
-                            >
-                                <Sparkles
-                                    className={css({
-                                        width: '13px',
-                                        height: '13px',
-                                        flexShrink: '0',
-                                    })}
-                                />
-                                Lass KI die Arbeit übernehmen
-                            </button>
+                            {showAiButton && (
+                                <button
+                                    type="button"
+                                    className={aiButtonClass}
+                                    title="KI-gestützte Rezeptkonvertierung"
+                                    onClick={() => setAiDialogOpen(true)}
+                                >
+                                    <Sparkles
+                                        className={css({
+                                            width: '13px',
+                                            height: '13px',
+                                            flexShrink: '0',
+                                        })}
+                                    />
+                                    Lass KI die Arbeit übernehmen
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 className={layoutButtonClass}
@@ -869,79 +873,83 @@ function FlowEditorInner({
                         </Panel>
                     </ReactFlow>
                     {validation.errors.length > 0 && (
-                        <div className={validationPanelClass} role="status" aria-live="polite">
-                            <div className={validationPanelHeaderClass}>
-                                <div>
-                                    <div className={validationPanelEyebrowClass}>Flow-Check</div>
-                                    <div className={validationPanelSummaryClass}>
-                                        {validation.summary ?? 'Bitte pruefe den Ablauf.'}
+                        <div className={validationPanelWrapperClass}>
+                            <div className={validationPanelClass} role="status" aria-live="polite">
+                                <div className={validationPanelHeaderClass}>
+                                    <div>
+                                        <div className={validationPanelEyebrowClass}>
+                                            Flow-Check
+                                        </div>
+                                        <div className={validationPanelSummaryClass}>
+                                            {validation.summary ?? 'Bitte pruefe den Ablauf.'}
+                                        </div>
+                                    </div>
+                                    <div className={validationPanelCountsClass}>
+                                        {validation.counts.blocking > 0 && (
+                                            <span className={validationCountErrorClass}>
+                                                {validation.counts.blocking} Blocker
+                                            </span>
+                                        )}
+                                        {validation.counts.warnings > 0 && (
+                                            <span className={validationCountWarningClass}>
+                                                {validation.counts.warnings} Hinweise
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
-                                <div className={validationPanelCountsClass}>
-                                    {validation.counts.blocking > 0 && (
-                                        <span className={validationCountErrorClass}>
-                                            {validation.counts.blocking} Blocker
-                                        </span>
-                                    )}
-                                    {validation.counts.warnings > 0 && (
-                                        <span className={validationCountWarningClass}>
-                                            {validation.counts.warnings} Hinweise
-                                        </span>
-                                    )}
-                                </div>
+                                {validation.blockingIssues.length > 0 && (
+                                    <div className={validationSectionClass}>
+                                        <div className={validationSectionTitleClass}>
+                                            Vor dem Veroeffentlichen beheben
+                                        </div>
+                                        {validation.blockingIssues.slice(0, 4).map((issue) => (
+                                            <button
+                                                key={issue.id}
+                                                type="button"
+                                                className={validationItemErrorClass}
+                                                onClick={() =>
+                                                    issue.nodeId && handleSelectNode(issue.nodeId)
+                                                }
+                                                disabled={!issue.nodeId}
+                                                title={issue.hint ?? issue.message}
+                                            >
+                                                <span className={validationItemTitleClass}>
+                                                    {issue.title}
+                                                </span>
+                                                <span className={validationItemTextClass}>
+                                                    {issue.message}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                {validation.warningIssues.length > 0 && (
+                                    <div className={validationSectionClass}>
+                                        <div className={validationSectionTitleClass}>
+                                            Empfohlene Verbesserungen
+                                        </div>
+                                        {validation.warningIssues.slice(0, 3).map((issue) => (
+                                            <button
+                                                key={issue.id}
+                                                type="button"
+                                                className={validationItemWarningClass}
+                                                onClick={() =>
+                                                    issue.nodeId && handleSelectNode(issue.nodeId)
+                                                }
+                                                disabled={!issue.nodeId}
+                                                title={issue.hint ?? issue.message}
+                                            >
+                                                <span className={validationItemTitleClass}>
+                                                    {issue.title}
+                                                </span>
+                                                <span className={validationItemTextClass}>
+                                                    {issue.message}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                            {validation.blockingIssues.length > 0 && (
-                                <div className={validationSectionClass}>
-                                    <div className={validationSectionTitleClass}>
-                                        Vor dem Veroeffentlichen beheben
-                                    </div>
-                                    {validation.blockingIssues.slice(0, 4).map((issue) => (
-                                        <button
-                                            key={issue.id}
-                                            type="button"
-                                            className={validationItemErrorClass}
-                                            onClick={() =>
-                                                issue.nodeId && handleSelectNode(issue.nodeId)
-                                            }
-                                            disabled={!issue.nodeId}
-                                            title={issue.hint ?? issue.message}
-                                        >
-                                            <span className={validationItemTitleClass}>
-                                                {issue.title}
-                                            </span>
-                                            <span className={validationItemTextClass}>
-                                                {issue.message}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                            {validation.warningIssues.length > 0 && (
-                                <div className={validationSectionClass}>
-                                    <div className={validationSectionTitleClass}>
-                                        Empfohlene Verbesserungen
-                                    </div>
-                                    {validation.warningIssues.slice(0, 3).map((issue) => (
-                                        <button
-                                            key={issue.id}
-                                            type="button"
-                                            className={validationItemWarningClass}
-                                            onClick={() =>
-                                                issue.nodeId && handleSelectNode(issue.nodeId)
-                                            }
-                                            disabled={!issue.nodeId}
-                                            title={issue.hint ?? issue.message}
-                                        >
-                                            <span className={validationItemTitleClass}>
-                                                {issue.title}
-                                            </span>
-                                            <span className={validationItemTextClass}>
-                                                {issue.message}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
                         </div>
                     )}
                 </div>
@@ -1058,18 +1066,25 @@ const controlsClass = css({
 });
 
 const layoutButtonClass = css({
-    py: '2',
+    py: '1.5',
     px: '3',
-    backgroundColor: 'surface',
-    border: '1px solid rgba(224,123,83,0.4)',
-    borderRadius: 'md',
-    fontSize: 'sm',
-    color: 'text',
+    borderRadius: 'full',
+    fontSize: 'xs',
+    fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.15s ease',
+    border: '1px solid rgba(224,123,83,0.35)',
+    background: 'rgba(224,123,83,0.06)',
+    color: 'brand.primary',
+    letterSpacing: '0.01em',
+    transition: 'all 0.2s ease',
+    backdropFilter: 'blur(4px)',
     _hover: {
-        backgroundColor: 'accent.soft',
-        borderColor: 'brand.primary',
+        background: 'rgba(224,123,83,0.14)',
+        borderColor: 'rgba(224,123,83,0.55)',
+        boxShadow: {
+            base: '0 2px 12px rgba(224,123,83,0.2)',
+            _dark: '0 2px 12px rgba(224,123,83,0.15)',
+        },
     },
 });
 
@@ -1099,11 +1114,22 @@ const aiButtonClass = css({
     },
 });
 
-const validationPanelClass = css({
+const validationPanelWrapperClass = css({
     position: 'absolute',
-    top: '16px',
-    left: '16px',
-    right: 'auto',
+    top: '0',
+    left: '0',
+    padding: '16px',
+    zIndex: '10',
+    pointerEvents: 'auto',
+    _hover: {
+        '& > div': {
+            opacity: '0',
+            pointerEvents: 'none',
+        },
+    },
+});
+
+const validationPanelClass = css({
     maxWidth: '420px',
     display: 'flex',
     flexDirection: 'column',
@@ -1117,7 +1143,7 @@ const validationPanelClass = css({
     border: '1px solid rgba(224,123,83,0.5)',
     boxShadow: '0 10px 35px rgba(0,0,0,0.12)',
     pointerEvents: 'auto',
-    zIndex: '10',
+    transition: 'opacity 0.2s ease',
 });
 
 const validationPanelHeaderClass = css({
@@ -1151,7 +1177,8 @@ const validationPanelCountsClass = css({
 const validationCountBaseClass = css({
     fontSize: 'xs',
     fontWeight: '600',
-    padding: '0.75 1.5',
+    py: '1',
+    px: '2.5',
     borderRadius: 'full',
 });
 
@@ -1190,7 +1217,8 @@ const validationItemBaseClass = css({
     gap: '0.5',
     width: '100%',
     textAlign: 'left',
-    padding: '2.5',
+    py: '2.5',
+    px: '3',
     borderRadius: 'lg',
     border: '1px solid transparent',
     transition: 'background-color 0.15s ease, border-color 0.15s ease',
@@ -1224,11 +1252,11 @@ const validationItemWarningClass = cx(
 
 const validationItemTitleClass = css({
     fontSize: 'xs',
-    fontWeight: '700',
+    fontWeight: '500',
     backgroundColor: 'rgba(224,123,83,0.18)',
     color: 'text.primary',
     borderRadius: 'full',
-    padding: '0.25 1.25',
+    px: '2.5',
 });
 
 const validationItemTextClass = css({

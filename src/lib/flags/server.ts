@@ -139,6 +139,7 @@ function mapKnownFlags(
             allFlags[getFeatureFlagName('helloWorldBanner')] ?? fallback.helloWorldBanner,
         aiRecipeConversion:
             allFlags[getFeatureFlagName('aiRecipeConversion')] ?? fallback.aiRecipeConversion,
+        discordSignIn: allFlags[getFeatureFlagName('discordSignIn')] ?? fallback.discordSignIn,
     };
 }
 

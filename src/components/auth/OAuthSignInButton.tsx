@@ -4,13 +4,14 @@ import { signIn } from 'next-auth/react';
 import { type ReactNode, useState } from 'react';
 
 import { css } from 'styled-system/css';
+import type { SystemStyleObject } from 'styled-system/types';
 
 interface OAuthButtonStyle {
     color: string;
     background: string;
     border: string;
     borderColor: string;
-    hoverEffect: Record<string, string>;
+    hoverEffect: SystemStyleObject;
 }
 
 const OUTLINED_STYLE: OAuthButtonStyle = {

@@ -2,7 +2,6 @@ import { Settings, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 import { PageShell } from '@app/components/layouts/PageShell';
-import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 
 import { getContentSettings } from './actions';
 import { ContentModerationForm } from './content-moderation-form';
@@ -10,8 +9,6 @@ import { ContentModerationForm } from './content-moderation-form';
 export const dynamic = 'force-dynamic';
 
 export default async function ContentModerationPage() {
-    await ensureAdminSession('admin-content');
-
     const [settings] = await Promise.all([getContentSettings()]);
 
     return (

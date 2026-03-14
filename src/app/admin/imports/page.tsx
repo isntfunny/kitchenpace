@@ -1,7 +1,6 @@
 import sumBy from 'lodash/sumBy';
 
 import { PageShell } from '@app/components/layouts/PageShell';
-import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 import { prisma } from '@shared/prisma';
 import { css } from 'styled-system/css';
 
@@ -44,7 +43,6 @@ async function getImportRuns(): Promise<ImportRunRow[]> {
 }
 
 export default async function ImportsPage() {
-    await ensureAdminSession('admin-imports');
     const runs = await getImportRuns();
 
     const totalCost = sumBy(runs, (r) => r.estimatedCostUsd ?? 0);

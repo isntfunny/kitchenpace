@@ -1,5 +1,4 @@
 import { PageShell } from '@app/components/layouts/PageShell';
-import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 import { getQueueSnapshots } from '@worker/queues/insights';
 import { getJobRuns, type JobRun, type JobStatus } from '@worker/queues/job-run';
 import { getQueueLabel, JOB_STATUS_DETAILS, STATUS_ORDER } from '@worker/queues/job-run-ui';
@@ -14,7 +13,6 @@ import { PastRuns } from './past-runs';
 export const dynamic = 'force-dynamic';
 
 async function getJobRunsData(): Promise<JobRun[]> {
-    await ensureAdminSession('admin-worker-dashboard');
     return getJobRuns({ limit: 50 });
 }
 

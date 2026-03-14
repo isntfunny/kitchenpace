@@ -1,5 +1,4 @@
 import { PageShell } from '@app/components/layouts/PageShell';
-import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 import { prisma } from '@shared/prisma';
 import { css } from 'styled-system/css';
 
@@ -39,7 +38,6 @@ async function getIngredients() {
 }
 
 export default async function IngredientsPage() {
-    await ensureAdminSession('admin-ingredients');
     const { ingredients, needsReviewCount } = await getIngredients();
 
     return (

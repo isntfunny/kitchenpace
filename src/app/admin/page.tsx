@@ -13,7 +13,7 @@ import {
 import Link from 'next/link';
 
 import { PageShell } from '@app/components/layouts/PageShell';
-import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
+import { getServerAuthSession } from '@app/lib/auth';
 import { prisma } from '@shared/prisma';
 import { getJobRuns, type JobRun, type JobStatus } from '@worker/queues/job-run';
 import { STATUS_ORDER, getQueueLabel } from '@worker/queues/job-run-ui';
@@ -122,7 +122,7 @@ async function getDashboardStats() {
 }
 
 export default async function AdminHomePage() {
-    const session = await ensureAdminSession('admin-home');
+    const session = await getServerAuthSession();
     const [jobRuns, stats] = await Promise.all([getJobRuns({ limit: 12 }), getDashboardStats()]);
     const statusCounts = buildStatusCounts(jobRuns);
     const recentFailures = jobRuns.filter((run) => run.status === 'FAILED').slice(0, 4);

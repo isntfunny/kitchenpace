@@ -180,7 +180,7 @@ export async function saveImportedRecipe(
             create: {
                 name: ing.name,
                 slug,
-                units: ing.unit ? [ing.unit] : [],
+                needsReview: true,
             },
         });
         syncedIngredients.push({ ...ing, ingredientId: result.id });

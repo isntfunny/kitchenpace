@@ -88,6 +88,7 @@ type IngredientDocument = {
     pluralName: string | null;
     categories: string[];
     units: string[];
+    aliases: string[];
     keywords: string[];
 };
 
@@ -114,6 +115,7 @@ function transformIngredientToDocument(ingredient: IngredientWithDetails): Ingre
         pluralName: ingredient.pluralName,
         categories: ingredient.categories.map((c) => c.name),
         units: ingredient.ingredientUnits.map((iu) => iu.unit.shortName),
+        aliases: ingredient.aliases ?? [],
         keywords,
     };
 }

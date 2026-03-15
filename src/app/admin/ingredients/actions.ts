@@ -1,6 +1,5 @@
 'use server';
 
-import { ShoppingCategory } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 import { prisma } from '@shared/prisma';
@@ -15,11 +14,7 @@ function generateSlug(name: string): string {
     return slug;
 }
 
-export async function createIngredient(data: {
-    name: string;
-    category?: ShoppingCategory;
-    units?: string[];
-}) {
+export async function createIngredient(data: { name: string }) {
     if (!data.name?.trim()) {
         throw new Error('Name ist erforderlich');
     }
@@ -30,8 +25,6 @@ export async function createIngredient(data: {
             data: {
                 name: data.name.trim(),
                 slug,
-                category: data.category ?? 'SONSTIGES',
-                units: data.units ?? [],
             },
         });
         revalidatePath('/admin/ingredients');
@@ -48,9 +41,18 @@ export async function updateIngredient(
     data: {
         name?: string;
         pluralName?: string | null;
-        category?: ShoppingCategory;
-        units?: string[];
         aliases?: string[];
+        categoryIds?: string[];
+        unitIds?: string[];
+        // Nutrition per 100g
+        caloriesPer100g?: number | null;
+        proteinPer100g?: number | null;
+        fatPer100g?: number | null;
+        carbsPer100g?: number | null;
+        fiberPer100g?: number | null;
+        sugarPer100g?: number | null;
+        sodiumPer100g?: number | null;
+        saturatedFatPer100g?: number | null;
     },
 ) {
     if (!id?.trim()) {
@@ -71,16 +73,32 @@ export async function updateIngredient(
         updateData.pluralName = data.pluralName?.trim() || null;
     }
 
-    if (data.category !== undefined) {
-        updateData.category = data.category;
-    }
-
-    if (data.units !== undefined) {
-        updateData.units = data.units;
-    }
-
     if (data.aliases !== undefined) {
         updateData.aliases = data.aliases.map((a) => a.toLowerCase().trim()).filter(Boolean);
+    }
+
+    if (data.categoryIds !== undefined) {
+        updateData.categories = {
+            set: data.categoryIds.map((cid) => ({ id: cid })),
+        };
+    }
+
+    // Nutrition fields
+    const nutritionFields = [
+        'caloriesPer100g',
+        'proteinPer100g',
+        'fatPer100g',
+        'carbsPer100g',
+        'fiberPer100g',
+        'sugarPer100g',
+        'sodiumPer100g',
+        'saturatedFatPer100g',
+    ] as const;
+
+    for (const field of nutritionFields) {
+        if (data[field] !== undefined) {
+            updateData[field] = data[field];
+        }
     }
 
     try {
@@ -95,6 +113,30 @@ export async function updateIngredient(
         }
         throw error;
     }
+}
+
+export async function updateIngredientUnits(
+    ingredientId: string,
+    units: Array<{ unitId: string; grams?: number | null }>,
+) {
+    if (!ingredientId?.trim()) {
+        throw new Error('Zutat-ID ist erforderlich');
+    }
+
+    await prisma.$transaction([
+        // Remove all existing unit links
+        prisma.ingredientUnit.deleteMany({ where: { ingredientId } }),
+        // Create new ones
+        prisma.ingredientUnit.createMany({
+            data: units.map((u) => ({
+                ingredientId,
+                unitId: u.unitId,
+                grams: u.grams ?? null,
+            })),
+        }),
+    ]);
+
+    revalidatePath('/admin/ingredients');
 }
 
 export async function deleteIngredient(id: string) {
@@ -181,11 +223,70 @@ export async function mergeIngredients(sourceId: string, targetId: string) {
             if (error.message.includes('Record to delete not found')) {
                 throw new Error('Zutat nicht gefunden');
             }
-            // Re-throw validation/business logic errors
             if (error.message.startsWith('Quell-') || error.message.startsWith('Eine Zutat')) {
                 throw error;
             }
         }
         throw new Error('Fehler beim Zusammenführen von Zutaten');
     }
+}
+
+// Category CRUD
+export async function createCategory(data: { name: string; slug?: string }) {
+    if (!data.name?.trim()) throw new Error('Name ist erforderlich');
+    const slug = data.slug || generateSlug(data.name);
+    await prisma.ingredientCategory.create({ data: { name: data.name.trim(), slug } });
+    revalidatePath('/admin/ingredients');
+}
+
+export async function updateCategory(id: string, data: { name?: string; sortOrder?: number }) {
+    const updateData: Record<string, unknown> = {};
+    if (data.name !== undefined) {
+        updateData.name = data.name.trim();
+        updateData.slug = generateSlug(data.name);
+    }
+    if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
+    await prisma.ingredientCategory.update({ where: { id }, data: updateData });
+    revalidatePath('/admin/ingredients');
+}
+
+export async function deleteCategory(id: string) {
+    await prisma.ingredientCategory.delete({ where: { id } });
+    revalidatePath('/admin/ingredients');
+}
+
+// Unit CRUD
+export async function createUnit(data: {
+    shortName: string;
+    longName: string;
+    gramsDefault?: number | null;
+}) {
+    if (!data.shortName?.trim() || !data.longName?.trim()) {
+        throw new Error('Kurz- und Langname sind erforderlich');
+    }
+    await prisma.unit.create({
+        data: {
+            shortName: data.shortName.trim(),
+            longName: data.longName.trim(),
+            gramsDefault: data.gramsDefault ?? null,
+        },
+    });
+    revalidatePath('/admin/ingredients');
+}
+
+export async function updateUnit(
+    id: string,
+    data: { shortName?: string; longName?: string; gramsDefault?: number | null },
+) {
+    const updateData: Record<string, unknown> = {};
+    if (data.shortName !== undefined) updateData.shortName = data.shortName.trim();
+    if (data.longName !== undefined) updateData.longName = data.longName.trim();
+    if (data.gramsDefault !== undefined) updateData.gramsDefault = data.gramsDefault;
+    await prisma.unit.update({ where: { id }, data: updateData });
+    revalidatePath('/admin/ingredients');
+}
+
+export async function deleteUnit(id: string) {
+    await prisma.unit.delete({ where: { id } });
+    revalidatePath('/admin/ingredients');
 }

@@ -7,39 +7,68 @@ import { IngredientsTable } from './ingredients-table';
 
 export const dynamic = 'force-dynamic';
 
-async function getIngredients() {
-    const [ingredients, needsReviewCount] = await Promise.all([
+async function getData() {
+    const [ingredientsRaw, needsReviewCount, categories, units] = await Promise.all([
         prisma.ingredient.findMany({
             select: {
                 id: true,
                 name: true,
                 slug: true,
                 pluralName: true,
-                category: true,
-                units: true,
                 aliases: true,
                 needsReview: true,
+                caloriesPer100g: true,
+                proteinPer100g: true,
+                fatPer100g: true,
+                carbsPer100g: true,
+                fiberPer100g: true,
+                sugarPer100g: true,
+                sodiumPer100g: true,
+                saturatedFatPer100g: true,
+                categories: { select: { id: true, name: true, slug: true } },
+                ingredientUnits: {
+                    select: {
+                        grams: true,
+                        unit: { select: { id: true, shortName: true, longName: true } },
+                    },
+                },
                 _count: { select: { recipes: true } },
             },
             orderBy: [{ needsReview: 'desc' }, { name: 'asc' }],
         }),
         prisma.ingredient.count({ where: { needsReview: true } }),
+        prisma.ingredientCategory.findMany({
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                sortOrder: true,
+                _count: { select: { ingredients: true } },
+            },
+            orderBy: { sortOrder: 'asc' },
+        }),
+        prisma.unit.findMany({
+            select: {
+                id: true,
+                shortName: true,
+                longName: true,
+                gramsDefault: true,
+                _count: { select: { ingredients: true } },
+            },
+            orderBy: { shortName: 'asc' },
+        }),
     ]);
 
-    return {
-        ingredients: ingredients.map(({ _count, category, units, aliases, ...rest }) => ({
-            ...rest,
-            category: category ?? 'SONSTIGES',
-            units: units ?? [],
-            aliases: aliases ?? [],
-            recipeCount: _count.recipes,
-        })),
-        needsReviewCount,
-    };
+    const ingredients = ingredientsRaw.map(({ _count, ...rest }) => ({
+        ...rest,
+        recipeCount: _count.recipes,
+    }));
+
+    return { ingredients, needsReviewCount, categories, units };
 }
 
 export default async function IngredientsPage() {
-    const { ingredients, needsReviewCount } = await getIngredients();
+    const { ingredients, needsReviewCount, categories, units } = await getData();
 
     return (
         <PageShell>
@@ -79,7 +108,7 @@ export default async function IngredientsPage() {
                             color: 'foreground.muted',
                         })}
                     >
-                        Kategorien und Einheiten für Zutaten verwalten.
+                        Zutaten, Kategorien und Einheiten verwalten.
                     </p>
                 </header>
 
@@ -106,12 +135,12 @@ export default async function IngredientsPage() {
                         </span>
                         <p className={css({ fontSize: 'sm', color: 'text' })}>
                             neue Zutat{needsReviewCount !== 1 ? 'en' : ''} von Nutzern erstellt –
-                            bitte Einheit{needsReviewCount !== 1 ? 'en' : ''} prüfen und ergänzen.
+                            bitte Kategorien und Einheiten prüfen.
                         </p>
                     </div>
                 )}
 
-                <IngredientsTable ingredients={ingredients} />
+                <IngredientsTable ingredients={ingredients} categories={categories} units={units} />
             </div>
         </PageShell>
     );

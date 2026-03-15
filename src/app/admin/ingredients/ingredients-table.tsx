@@ -1,69 +1,884 @@
 'use client';
 
-import { ShoppingCategory } from '@prisma/client';
 import {
     type ColumnDef,
     type SortingState,
     getCoreRowModel,
     getFilteredRowModel,
-    getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
     flexRender,
 } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowUpDown, Search, Plus, Trash2, GitMerge, X, Check } from 'lucide-react';
-import { useState } from 'react';
+import { Dialog } from 'radix-ui';
+import { useRef, useState, useMemo, useTransition } from 'react';
 
 import { css } from 'styled-system/css';
 
-import { createIngredient, updateIngredient, deleteIngredient, mergeIngredients } from './actions';
+import {
+    createIngredient,
+    updateIngredient,
+    updateIngredientUnits,
+    deleteIngredient,
+    mergeIngredients,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    createUnit,
+    updateUnit,
+    deleteUnit,
+} from './actions';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 type Ingredient = {
     id: string;
     name: string;
     slug: string;
     pluralName: string | null;
-    category: ShoppingCategory;
-    units: string[];
+    categories: Array<{ id: string; name: string; slug: string }>;
+    ingredientUnits: Array<{
+        grams: number | null;
+        unit: { id: string; shortName: string; longName: string };
+    }>;
     aliases: string[];
-    needsReview?: boolean;
+    needsReview: boolean;
+    caloriesPer100g: number | null;
+    proteinPer100g: number | null;
+    fatPer100g: number | null;
+    carbsPer100g: number | null;
+    fiberPer100g: number | null;
+    sugarPer100g: number | null;
+    sodiumPer100g: number | null;
+    saturatedFatPer100g: number | null;
     recipeCount: number;
 };
 
-const CATEGORY_LABELS: Record<ShoppingCategory, string> = {
-    GEMUESE: 'Gemüse',
-    OBST: 'Obst',
-    FLEISCH: 'Fleisch',
-    FISCH: 'Fisch',
-    MILCHPRODUKTE: 'Milchprodukte',
-    GEWURZE: 'Gewürze',
-    BACKEN: 'Backen',
-    GETRAENKE: 'Getränke',
-    SONSTIGES: 'Sonstiges',
+type IngredientCategory = {
+    id: string;
+    name: string;
+    slug: string;
+    sortOrder: number;
+    _count: { ingredients: number };
 };
 
-function EditableRow({ ingredient, onCancel }: { ingredient: Ingredient; onCancel: () => void }) {
-    const [name, setName] = useState(ingredient.name);
-    const [pluralName, setPluralName] = useState(ingredient.pluralName ?? '');
-    const [category, setCategory] = useState<ShoppingCategory>(ingredient.category);
-    const [units, setUnits] = useState<string[]>(ingredient.units);
-    const [aliases, setAliases] = useState<string[]>(ingredient.aliases);
-    const [newUnit, setNewUnit] = useState('');
-    const [newAlias, setNewAlias] = useState('');
-    const [saving, setSaving] = useState(false);
+type Unit = {
+    id: string;
+    shortName: string;
+    longName: string;
+    gramsDefault: number | null;
+    _count: { ingredients: number };
+};
+
+type TabId = 'ingredients' | 'categories' | 'units';
+
+// ---------------------------------------------------------------------------
+// Shared styles
+// ---------------------------------------------------------------------------
+
+const overlayStyle = css({
+    position: 'fixed',
+    inset: '0',
+    bg: 'surface.overlay',
+    zIndex: '50',
+    animation: 'fadeIn 0.15s ease-out',
+});
+
+const dialogBaseStyle = {
+    position: 'fixed' as const,
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    bg: 'surface',
+    borderRadius: 'xl',
+    width: '90vw',
+    zIndex: '51',
+    boxShadow: 'shadow.large',
+    animation: 'slideUp 0.2s ease-out',
+    display: 'flex',
+    flexDirection: 'column' as const,
+};
+
+const dialogContentStyle = css({
+    ...dialogBaseStyle,
+    maxWidth: '680px',
+    maxHeight: '85vh',
+});
+
+const dialogContentSmallStyle = css({
+    ...dialogBaseStyle,
+    maxWidth: '420px',
+    maxHeight: '85vh',
+});
+
+const inputStyle = css({
+    width: '100%',
+    paddingX: '3',
+    paddingY: '2',
+    borderRadius: 'lg',
+    border: '1px solid',
+    borderColor: 'border',
+    bg: 'surface.elevated',
+    fontSize: 'sm',
+    color: 'foreground',
+    outline: 'none',
+    transition: 'all 0.15s',
+    _focus: {
+        borderColor: 'brand.primary',
+        boxShadow: {
+            base: '0 0 0 3px rgba(224,123,83,0.12)',
+            _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+        },
+    },
+});
+
+const inputSmallStyle = css({
+    width: '100%',
+    paddingX: '2.5',
+    paddingY: '1.5',
+    borderRadius: 'lg',
+    border: '1px solid',
+    borderColor: 'border',
+    bg: 'surface.elevated',
+    fontSize: 'sm',
+    color: 'foreground',
+    outline: 'none',
+    transition: 'all 0.15s',
+    _focus: {
+        borderColor: 'brand.primary',
+        boxShadow: {
+            base: '0 0 0 3px rgba(224,123,83,0.12)',
+            _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+        },
+    },
+});
+
+const btnPrimary = css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '1.5',
+    paddingX: '4',
+    paddingY: '2',
+    borderRadius: 'lg',
+    bg: 'brand.primary',
+    color: 'white',
+    fontSize: 'sm',
+    fontWeight: '600',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+    _hover: { bg: 'button.primary-hover' },
+    _disabled: { opacity: '0.5', cursor: 'not-allowed' },
+});
+
+const btnSecondary = css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '1.5',
+    paddingX: '4',
+    paddingY: '2',
+    borderRadius: 'lg',
+    bg: 'transparent',
+    color: 'foreground',
+    fontSize: 'sm',
+    fontWeight: '500',
+    border: '1px solid',
+    borderColor: 'border',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+    _hover: { bg: 'button.secondary-hover' },
+});
+
+const btnDanger = css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '1.5',
+    paddingX: '3',
+    paddingY: '2',
+    borderRadius: 'lg',
+    bg: 'transparent',
+    color: 'status.danger',
+    fontSize: 'sm',
+    fontWeight: '600',
+    border: '1px solid',
+    borderColor: 'status.danger',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+    _hover: {
+        bg: 'error.bg',
+    },
+    _disabled: { opacity: '0.5', cursor: 'not-allowed' },
+});
+
+const pillStyle = css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '1',
+    paddingX: '2',
+    paddingY: '0.5',
+    borderRadius: 'full',
+    fontSize: 'xs',
+    fontWeight: '500',
+    bg: 'accent.soft',
+    color: 'foreground',
+    whiteSpace: 'nowrap',
+});
+
+const tagStyle = css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '1',
+    paddingX: '2.5',
+    paddingY: '1',
+    borderRadius: 'full',
+    fontSize: 'xs',
+    bg: 'surface.elevated',
+    border: '1px solid',
+    borderColor: 'border',
+    color: 'foreground',
+});
+
+const sectionLabelStyle = css({
+    fontSize: 'xs',
+    fontWeight: '700',
+    color: 'foreground.muted',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    marginBottom: '2.5',
+});
+
+const thStyle = css({
+    padding: '3',
+    paddingX: '4',
+    textAlign: 'left',
+    fontSize: 'xs',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'foreground.muted',
+    bg: 'surface',
+    position: 'sticky',
+    top: '0',
+    zIndex: '1',
+});
+
+const closeButtonStyle = css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '8',
+    height: '8',
+    borderRadius: 'lg',
+    border: 'none',
+    bg: 'transparent',
+    cursor: 'pointer',
+    color: 'foreground.muted',
+    transition: 'all 0.15s',
+    _hover: {
+        bg: 'button.secondary-hover',
+        color: 'foreground',
+    },
+});
+
+const inputStyleObj = {
+    paddingX: '3',
+    paddingY: '2',
+    borderRadius: 'lg',
+    border: '1px solid',
+    borderColor: 'border',
+    bg: 'surface.elevated',
+    fontSize: 'sm',
+    color: 'foreground',
+    outline: 'none',
+} as const;
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
+
+interface IngredientsTableProps {
+    ingredients: Ingredient[];
+    categories: IngredientCategory[];
+    units: Unit[];
+}
+
+// ---------------------------------------------------------------------------
+// Main Component
+// ---------------------------------------------------------------------------
+
+export function IngredientsTable({ ingredients, categories, units }: IngredientsTableProps) {
+    const [activeTab, setActiveTab] = useState<TabId>('ingredients');
+
+    const tabs: Array<{ id: TabId; label: string; count: number }> = [
+        { id: 'ingredients', label: 'Zutaten', count: ingredients.length },
+        { id: 'categories', label: 'Kategorien', count: categories.length },
+        { id: 'units', label: 'Einheiten', count: units.length },
+    ];
+
+    return (
+        <div
+            className={css({
+                borderRadius: '2xl',
+                border: '1px solid',
+                borderColor: 'border',
+                bg: 'surface',
+                overflow: 'hidden',
+                boxShadow: 'shadow.small',
+            })}
+        >
+            {/* Tab bar */}
+            <div
+                className={css({
+                    display: 'flex',
+                    borderBottom: '1px solid',
+                    borderColor: 'border.muted',
+                    paddingX: '2',
+                    bg: 'surface',
+                })}
+            >
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={css({
+                            position: 'relative',
+                            paddingX: '5',
+                            paddingY: '3.5',
+                            fontSize: 'sm',
+                            fontWeight: activeTab === tab.id ? '600' : '500',
+                            bg: 'transparent',
+                            border: 'none',
+                            borderBottom: '2px solid',
+                            borderBottomColor:
+                                activeTab === tab.id ? 'brand.primary' : 'transparent',
+                            color: activeTab === tab.id ? 'foreground' : 'foreground.muted',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            _hover: { color: 'foreground' },
+                        })}
+                    >
+                        {tab.label}
+                        <span
+                            className={css({
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginLeft: '2',
+                                paddingX: '1.5',
+                                paddingY: '0.5',
+                                borderRadius: 'full',
+                                fontSize: '2xs',
+                                fontWeight: '600',
+                                bg: activeTab === tab.id ? 'accent.soft' : 'surface.muted',
+                                color: activeTab === tab.id ? 'brand.primary' : 'foreground.muted',
+                                minWidth: '5',
+                                transition: 'all 0.2s ease',
+                            })}
+                        >
+                            {tab.count}
+                        </span>
+                    </button>
+                ))}
+            </div>
+
+            {/* Tab content */}
+            {activeTab === 'ingredients' && (
+                <IngredientsTab
+                    ingredients={ingredients}
+                    allCategories={categories}
+                    allUnits={units}
+                />
+            )}
+            {activeTab === 'categories' && <CategoriesTab categories={categories} />}
+            {activeTab === 'units' && <UnitsTab units={units} />}
+        </div>
+    );
+}
+
+// ===========================================================================
+// INGREDIENTS TAB
+// ===========================================================================
+
+function IngredientsTab({
+    ingredients,
+    allCategories,
+    allUnits,
+}: {
+    ingredients: Ingredient[];
+    allCategories: IngredientCategory[];
+    allUnits: Unit[];
+}) {
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [globalFilter, setGlobalFilter] = useState('');
+    const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
+    const [showAdd, setShowAdd] = useState(false);
+    const [showMerge, setShowMerge] = useState(false);
+
+    const columns = useMemo<ColumnDef<Ingredient>[]>(
+        () => [
+            {
+                accessorKey: 'name',
+                header: ({ column }) => <SortHeader column={column} label="Name" />,
+                cell: ({ row }) => (
+                    <div>
+                        <span
+                            className={css({
+                                fontWeight: '600',
+                                color: 'foreground',
+                                fontSize: 'sm',
+                            })}
+                        >
+                            {row.original.name}
+                        </span>
+                        {row.original.aliases.length > 0 && (
+                            <p
+                                className={css({
+                                    fontSize: 'xs',
+                                    color: 'foreground.muted',
+                                    marginTop: '0.5',
+                                    lineClamp: '1',
+                                })}
+                            >
+                                {row.original.aliases.join(', ')}
+                            </p>
+                        )}
+                    </div>
+                ),
+                filterFn: (row, _columnId, filterValue: string) => {
+                    const val = filterValue.toLowerCase();
+                    return (
+                        row.original.name.toLowerCase().includes(val) ||
+                        row.original.aliases.some((a) => a.toLowerCase().includes(val))
+                    );
+                },
+            },
+            {
+                accessorKey: 'categories',
+                header: 'Kategorien',
+                cell: ({ row }) => (
+                    <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '1' })}>
+                        {row.original.categories.map((c) => (
+                            <span key={c.id} className={pillStyle}>
+                                {c.name}
+                            </span>
+                        ))}
+                        {row.original.categories.length === 0 && (
+                            <span className={css({ fontSize: 'sm', color: 'foreground.muted' })}>
+                                -
+                            </span>
+                        )}
+                    </div>
+                ),
+                enableSorting: false,
+            },
+            {
+                accessorKey: 'ingredientUnits',
+                header: 'Einheiten',
+                cell: ({ row }) => (
+                    <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '1' })}>
+                        {row.original.ingredientUnits.map((iu) => (
+                            <span key={iu.unit.id} className={pillStyle}>
+                                {iu.unit.shortName}
+                                {iu.grams != null && (
+                                    <span
+                                        className={css({
+                                            fontSize: '2xs',
+                                            color: 'foreground.muted',
+                                            fontWeight: '400',
+                                        })}
+                                    >
+                                        {iu.grams}g
+                                    </span>
+                                )}
+                            </span>
+                        ))}
+                        {row.original.ingredientUnits.length === 0 && (
+                            <span className={css({ fontSize: 'sm', color: 'foreground.muted' })}>
+                                -
+                            </span>
+                        )}
+                    </div>
+                ),
+                enableSorting: false,
+            },
+            {
+                accessorKey: 'caloriesPer100g',
+                header: ({ column }) => <SortHeader column={column} label="kcal/100g" />,
+                cell: ({ row }) => (
+                    <span
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'foreground.muted',
+                            fontVariantNumeric: 'tabular-nums',
+                            display: 'block',
+                            textAlign: 'right',
+                        })}
+                    >
+                        {row.original.caloriesPer100g ?? '-'}
+                    </span>
+                ),
+            },
+            {
+                accessorKey: 'recipeCount',
+                header: ({ column }) => <SortHeader column={column} label="Rezepte" />,
+                cell: ({ row }) => (
+                    <span
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'foreground.muted',
+                            fontVariantNumeric: 'tabular-nums',
+                            display: 'block',
+                            textAlign: 'right',
+                        })}
+                    >
+                        {row.original.recipeCount}
+                    </span>
+                ),
+            },
+        ],
+        [],
+    );
+
+    const table = useReactTable({
+        data: ingredients,
+        columns,
+        state: { sorting, globalFilter },
+        onSortingChange: setSorting,
+        onGlobalFilterChange: setGlobalFilter,
+        globalFilterFn: (row, _columnId, filterValue: string) => {
+            const val = filterValue.toLowerCase();
+            return (
+                row.original.name.toLowerCase().includes(val) ||
+                row.original.aliases.some((a) => a.toLowerCase().includes(val))
+            );
+        },
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+    });
+
+    const { rows } = table.getRowModel();
+    const tableContainerRef = useRef<HTMLDivElement>(null);
+    const rowVirtualizer = useVirtualizer({
+        count: rows.length,
+        getScrollElement: () => tableContainerRef.current,
+        estimateSize: () => 52,
+        overscan: 20,
+    });
+
+    return (
+        <div>
+            {/* Toolbar */}
+            <div
+                className={css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2',
+                    padding: '4',
+                    borderBottom: '1px solid',
+                    borderColor: 'border.muted',
+                })}
+            >
+                <div
+                    className={css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        flex: '1',
+                        gap: '2',
+                        borderRadius: 'lg',
+                        border: '1px solid',
+                        borderColor: 'border',
+                        bg: 'surface.elevated',
+                        paddingX: '3',
+                        paddingY: '2',
+                        transition: 'all 0.15s',
+                        _focusWithin: {
+                            borderColor: 'brand.primary',
+                            boxShadow: {
+                                base: '0 0 0 3px rgba(224,123,83,0.12)',
+                                _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                            },
+                        },
+                    })}
+                >
+                    <Search
+                        size={15}
+                        className={css({ color: 'foreground.muted', flexShrink: '0' })}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Zutat suchen..."
+                        value={globalFilter}
+                        onChange={(e) => setGlobalFilter(e.target.value)}
+                        className={css({
+                            flex: '1',
+                            bg: 'transparent',
+                            border: 'none',
+                            outline: 'none',
+                            fontSize: 'sm',
+                            color: 'foreground',
+                        })}
+                    />
+                    {globalFilter && (
+                        <button
+                            type="button"
+                            onClick={() => setGlobalFilter('')}
+                            className={css({
+                                bg: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'foreground.muted',
+                                display: 'flex',
+                                padding: '0.5',
+                                borderRadius: 'md',
+                                _hover: { color: 'foreground', bg: 'surface.muted' },
+                            })}
+                        >
+                            <X size={14} />
+                        </button>
+                    )}
+                </div>
+                <button
+                    type="button"
+                    onClick={() => setShowMerge(true)}
+                    className={btnSecondary}
+                    title="Zutaten zusammenfuehren"
+                >
+                    <GitMerge size={14} />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setShowAdd(!showAdd)}
+                    className={btnPrimary}
+                    title="Neue Zutat"
+                >
+                    <Plus size={14} />
+                </button>
+            </div>
+
+            {/* Add form */}
+            {showAdd && <AddIngredientForm onClose={() => setShowAdd(false)} />}
+
+            {/* Merge modal */}
+            {showMerge && (
+                <MergeModal ingredients={ingredients} onClose={() => setShowMerge(false)} />
+            )}
+
+            {/* Virtualized table */}
+            <div
+                ref={tableContainerRef}
+                className={css({ overflowY: 'auto', maxHeight: 'calc(100vh - 280px)' })}
+            >
+                <table className={css({ width: '100%', borderCollapse: 'collapse' })}>
+                    <thead>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <tr
+                                key={headerGroup.id}
+                                className={css({
+                                    borderBottom: '1px solid',
+                                    borderColor: 'border.muted',
+                                })}
+                            >
+                                {headerGroup.headers.map((header) => (
+                                    <th key={header.id} className={thStyle}>
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(
+                                                  header.column.columnDef.header,
+                                                  header.getContext(),
+                                              )}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                    </thead>
+                    <tbody>
+                        {rows.length === 0 ? (
+                            <tr>
+                                <td
+                                    colSpan={columns.length}
+                                    className={css({
+                                        padding: '12',
+                                        textAlign: 'center',
+                                        color: 'foreground.muted',
+                                        fontSize: 'sm',
+                                    })}
+                                >
+                                    Keine Zutaten gefunden.
+                                </td>
+                            </tr>
+                        ) : (
+                            <>
+                                {rowVirtualizer.getVirtualItems().length > 0 && (
+                                    <tr
+                                        style={{
+                                            height: rowVirtualizer.getVirtualItems()[0].start,
+                                        }}
+                                    />
+                                )}
+                                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                                    const row = rows[virtualRow.index];
+                                    return (
+                                        <tr
+                                            key={row.id}
+                                            data-index={virtualRow.index}
+                                            ref={rowVirtualizer.measureElement}
+                                            onClick={() => setEditingIngredient(row.original)}
+                                            className={css({
+                                                borderBottom: '1px solid',
+                                                borderColor: 'border.muted',
+                                                cursor: 'pointer',
+                                                transition: 'background 0.1s ease',
+                                                bg: row.original.needsReview
+                                                    ? {
+                                                          base: 'rgba(245,158,11,0.06)',
+                                                          _dark: 'rgba(245,158,11,0.08)',
+                                                      }
+                                                    : virtualRow.index % 2 === 1
+                                                      ? 'surface.muted'
+                                                      : 'transparent',
+                                                borderLeft: row.original.needsReview
+                                                    ? '3px solid'
+                                                    : '3px solid transparent',
+                                                borderLeftColor: row.original.needsReview
+                                                    ? 'status.warning'
+                                                    : 'transparent',
+                                                _hover: {
+                                                    bg: {
+                                                        base: 'rgba(224,123,83,0.06)',
+                                                        _dark: 'rgba(224,123,83,0.08)',
+                                                    },
+                                                },
+                                            })}
+                                        >
+                                            {row.getVisibleCells().map((cell) => (
+                                                <td
+                                                    key={cell.id}
+                                                    className={css({
+                                                        padding: '3',
+                                                        paddingX: '4',
+                                                        verticalAlign: 'middle',
+                                                    })}
+                                                >
+                                                    {flexRender(
+                                                        cell.column.columnDef.cell,
+                                                        cell.getContext(),
+                                                    )}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    );
+                                })}
+                                {rowVirtualizer.getVirtualItems().length > 0 && (
+                                    <tr
+                                        style={{
+                                            height:
+                                                rowVirtualizer.getTotalSize() -
+                                                (rowVirtualizer.getVirtualItems().at(-1)?.end ?? 0),
+                                        }}
+                                    />
+                                )}
+                            </>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Row count */}
+            <div
+                className={css({
+                    padding: '3',
+                    paddingX: '4',
+                    borderTop: '1px solid',
+                    borderColor: 'border.muted',
+                    display: 'flex',
+                    justifyContent: 'center',
+                })}
+            >
+                <span className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
+                    {rows.length} Zutaten
+                </span>
+            </div>
+
+            {/* Edit dialog */}
+            <Dialog.Root
+                open={!!editingIngredient}
+                onOpenChange={(open) => {
+                    if (!open) setEditingIngredient(null);
+                }}
+            >
+                <Dialog.Portal>
+                    <Dialog.Overlay className={overlayStyle} />
+                    <Dialog.Content className={dialogContentStyle}>
+                        {editingIngredient && (
+                            <IngredientEditPanel
+                                ingredient={editingIngredient}
+                                allCategories={allCategories}
+                                allUnits={allUnits}
+                                onClose={() => setEditingIngredient(null)}
+                            />
+                        )}
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog.Root>
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Ingredient edit panel
+// ---------------------------------------------------------------------------
+
+function IngredientEditPanel({
+    ingredient,
+    allCategories,
+    allUnits,
+    onClose,
+}: {
+    ingredient: Ingredient;
+    allCategories: IngredientCategory[];
+    allUnits: Unit[];
+    onClose: () => void;
+}) {
+    const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
 
-    const handleAddUnit = () => {
-        const trimmed = newUnit.trim();
-        if (trimmed && !units.includes(trimmed)) {
-            setUnits([...units, trimmed]);
-            setNewUnit('');
-        }
-    };
+    // Basic fields
+    const [name, setName] = useState(ingredient.name);
+    const [pluralName, setPluralName] = useState(ingredient.pluralName ?? '');
 
-    const handleRemoveUnit = (unitToRemove: string) => {
-        setUnits(units.filter((u) => u !== unitToRemove));
-    };
+    // Aliases
+    const [aliases, setAliases] = useState<string[]>(ingredient.aliases);
+    const [newAlias, setNewAlias] = useState('');
+
+    // Categories
+    const [selectedCatIds, setSelectedCatIds] = useState<Set<string>>(
+        new Set(ingredient.categories.map((c) => c.id)),
+    );
+
+    // Units with gram overrides
+    const [selectedUnits, setSelectedUnits] = useState<Map<string, number | null>>(
+        new Map(ingredient.ingredientUnits.map((iu) => [iu.unit.id, iu.grams])),
+    );
+
+    // Nutrition
+    const [nutrition, setNutrition] = useState({
+        caloriesPer100g: ingredient.caloriesPer100g,
+        proteinPer100g: ingredient.proteinPer100g,
+        fatPer100g: ingredient.fatPer100g,
+        carbsPer100g: ingredient.carbsPer100g,
+        fiberPer100g: ingredient.fiberPer100g,
+        sugarPer100g: ingredient.sugarPer100g,
+        sodiumPer100g: ingredient.sodiumPer100g,
+        saturatedFatPer100g: ingredient.saturatedFatPer100g,
+    });
 
     const handleAddAlias = () => {
         const trimmed = newAlias.trim().toLowerCase();
@@ -73,1252 +888,1819 @@ function EditableRow({ ingredient, onCancel }: { ingredient: Ingredient; onCance
         }
     };
 
-    const handleRemoveAlias = (aliasToRemove: string) => {
-        setAliases(aliases.filter((a) => a !== aliasToRemove));
+    const toggleCategory = (catId: string) => {
+        setSelectedCatIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(catId)) next.delete(catId);
+            else next.add(catId);
+            return next;
+        });
     };
 
-    const handleSave = async () => {
-        setError('');
-        setSaving(true);
-        try {
-            await updateIngredient(ingredient.id, {
-                name,
-                pluralName: pluralName.trim() || null,
-                category,
-                units,
-                aliases,
-            });
-            onCancel();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
-        } finally {
-            setSaving(false);
-        }
+    const toggleUnit = (unitId: string) => {
+        setSelectedUnits((prev) => {
+            const next = new Map(prev);
+            if (next.has(unitId)) next.delete(unitId);
+            else next.set(unitId, null);
+            return next;
+        });
     };
+
+    const setUnitGrams = (unitId: string, grams: number | null) => {
+        setSelectedUnits((prev) => {
+            const next = new Map(prev);
+            next.set(unitId, grams);
+            return next;
+        });
+    };
+
+    const updateNutritionField = (field: keyof typeof nutrition, value: string) => {
+        setNutrition((prev) => ({
+            ...prev,
+            [field]: value === '' ? null : parseFloat(value),
+        }));
+    };
+
+    const handleSave = () => {
+        setError('');
+        startTransition(async () => {
+            try {
+                await updateIngredient(ingredient.id, {
+                    name,
+                    pluralName: pluralName.trim() || null,
+                    aliases,
+                    categoryIds: Array.from(selectedCatIds),
+                    ...nutrition,
+                });
+                await updateIngredientUnits(
+                    ingredient.id,
+                    Array.from(selectedUnits.entries()).map(([unitId, grams]) => ({
+                        unitId,
+                        grams,
+                    })),
+                );
+                onClose();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
+            }
+        });
+    };
+
+    const handleDelete = () => {
+        if (!confirm(`"${ingredient.name}" wirklich loeschen?`)) return;
+        startTransition(async () => {
+            try {
+                await deleteIngredient(ingredient.id);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Fehler beim Loeschen');
+            }
+        });
+    };
+
+    const nutritionFields: Array<{ key: keyof typeof nutrition; label: string }> = [
+        { key: 'caloriesPer100g', label: 'kcal' },
+        { key: 'proteinPer100g', label: 'Protein (g)' },
+        { key: 'fatPer100g', label: 'Fett (g)' },
+        { key: 'carbsPer100g', label: 'Kohlenhydrate (g)' },
+        { key: 'fiberPer100g', label: 'Ballaststoffe (g)' },
+        { key: 'sugarPer100g', label: 'Zucker (g)' },
+        { key: 'sodiumPer100g', label: 'Natrium (mg)' },
+        { key: 'saturatedFatPer100g', label: 'Ges. Fett (g)' },
+    ];
 
     return (
         <>
-            <tr
-                className={css({
-                    background: 'surface',
-                    borderBottomWidth: '1px',
-                    borderColor: error ? 'red.200' : 'border.muted',
-                })}
-            >
-                <td className={css({ padding: '2', paddingLeft: '4' })}>
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className={css({
-                            width: '100%',
-                            paddingX: '2',
-                            paddingY: '1',
-                            borderRadius: 'md',
-                            borderWidth: '1px',
-                            borderColor: error ? 'red.300' : 'border.muted',
-                            background: 'surface.elevated',
-                            fontSize: 'sm',
-                            color: 'foreground',
-                            outline: 'none',
-                        })}
-                    />
-                </td>
-                <td className={css({ padding: '2' })}>
-                    <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value as ShoppingCategory)}
-                        className={css({
-                            paddingX: '2',
-                            paddingY: '1',
-                            borderRadius: 'md',
-                            borderWidth: '1px',
-                            borderColor: 'border.muted',
-                            background: 'surface.elevated',
-                            fontSize: 'sm',
-                            color: 'foreground',
-                            outline: 'none',
-                            cursor: 'pointer',
-                        })}
-                    >
-                        {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                            <option key={value} value={value}>
-                                {label}
-                            </option>
-                        ))}
-                    </select>
-                </td>
-                <td className={css({ padding: '2' })}>
-                    <div
-                        className={css({
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '1',
-                            marginBottom: '1',
-                        })}
-                    >
-                        {units.map((unit) => (
-                            <span
-                                key={unit}
-                                className={css({
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.5',
-                                    paddingX: '1.5',
-                                    paddingY: '0.5',
-                                    borderRadius: 'full',
-                                    fontSize: 'xs',
-                                    background: 'surface.elevated',
-                                    borderWidth: '1px',
-                                    borderColor: 'border.muted',
-                                })}
-                            >
-                                {unit}
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveUnit(unit)}
-                                    className={css({
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        width: '3',
-                                        height: '3',
-                                        borderRadius: 'full',
-                                        border: 'none',
-                                        background: 'transparent',
-                                        cursor: 'pointer',
-                                        color: 'foreground.muted',
-                                        _hover: { color: 'red.500' },
-                                    })}
-                                >
-                                    <X size={10} />
-                                </button>
-                            </span>
-                        ))}
-                    </div>
-                    <div className={css({ display: 'flex', gap: '1' })}>
-                        <input
-                            type="text"
-                            value={newUnit}
-                            onChange={(e) => setNewUnit(e.target.value)}
-                            onKeyDown={(e) =>
-                                e.key === 'Enter' && (e.preventDefault(), handleAddUnit())
-                            }
-                            placeholder="+ Einheit"
-                            className={css({
-                                flex: '1',
-                                paddingX: '2',
-                                paddingY: '0.5',
-                                borderRadius: 'md',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                                background: 'surface.elevated',
-                                fontSize: 'xs',
-                                color: 'foreground',
-                                outline: 'none',
-                                minWidth: '80px',
-                            })}
-                        />
-                        <button
-                            type="button"
-                            onClick={handleAddUnit}
-                            className={css({
-                                paddingX: '2',
-                                paddingY: '0.5',
-                                borderRadius: 'md',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                                background: 'surface.elevated',
-                                fontSize: 'xs',
-                                cursor: 'pointer',
-                                color: 'foreground',
-                            })}
-                        >
-                            +
-                        </button>
-                    </div>
-                </td>
-                <td className={css({ padding: '2', fontSize: 'sm', color: 'foreground.muted' })}>
-                    {ingredient.recipeCount}
-                </td>
-                <td className={css({ padding: '2' })}>
-                    <div className={css({ display: 'flex', gap: '1' })}>
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            title="Speichern"
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '7',
-                                height: '7',
-                                borderRadius: 'md',
-                                border: '1px solid',
-                                borderColor: 'green.500',
-                                background: { base: 'green.50', _dark: 'rgba(34,197,94,0.1)' },
-                                cursor: 'pointer',
-                                color: 'green.600',
-                                transition: 'all 0.2s',
-                                opacity: saving ? 0.7 : 1,
-                            })}
-                        >
-                            <Check size={14} />
-                        </button>
-                        <button
-                            onClick={onCancel}
-                            title="Abbrechen"
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '7',
-                                height: '7',
-                                borderRadius: 'md',
-                                border: '1px solid',
-                                borderColor: 'border.muted',
-                                background: 'surface',
-                                cursor: 'pointer',
-                                color: 'foreground.muted',
-                                transition: 'all 0.2s',
-                                _hover: { background: 'surface.elevated' },
-                            })}
-                        >
-                            <X size={14} />
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr
-                className={css({
-                    background: 'surface',
-                    borderBottomWidth: '1px',
-                    borderColor: 'border.muted',
-                })}
-            >
-                <td className={css({ padding: '2', paddingLeft: '4' })}>
-                    <label className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                        Plural
-                    </label>
-                    <input
-                        type="text"
-                        value={pluralName}
-                        onChange={(e) => setPluralName(e.target.value)}
-                        placeholder="z.B. Zwiebeln"
-                        className={css({
-                            width: '100%',
-                            paddingX: '2',
-                            paddingY: '1',
-                            borderRadius: 'md',
-                            borderWidth: '1px',
-                            borderColor: 'border.muted',
-                            background: 'surface.elevated',
-                            fontSize: 'sm',
-                            color: 'foreground',
-                            outline: 'none',
-                        })}
-                    />
-                </td>
-                <td colSpan={3} className={css({ padding: '2' })}>
-                    <label className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                        Aliase (Synonyme)
-                    </label>
-                    <div
-                        className={css({
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '1',
-                            marginBottom: '1',
-                        })}
-                    >
-                        {aliases.map((alias) => (
-                            <span
-                                key={alias}
-                                className={css({
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.5',
-                                    paddingX: '1.5',
-                                    paddingY: '0.5',
-                                    borderRadius: 'full',
-                                    fontSize: 'xs',
-                                    background: {
-                                        base: 'orange.50',
-                                        _dark: 'rgba(251,146,60,0.1)',
-                                    },
-                                    borderWidth: '1px',
-                                    borderColor: {
-                                        base: 'orange.200',
-                                        _dark: 'rgba(251,146,60,0.3)',
-                                    },
-                                    color: { base: 'orange.700', _dark: 'orange.300' },
-                                })}
-                            >
-                                {alias}
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveAlias(alias)}
-                                    className={css({
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        width: '3',
-                                        height: '3',
-                                        borderRadius: 'full',
-                                        border: 'none',
-                                        background: 'transparent',
-                                        cursor: 'pointer',
-                                        color: { base: 'orange.400', _dark: 'orange.300' },
-                                        _hover: { color: 'red.500' },
-                                    })}
-                                >
-                                    <X size={10} />
-                                </button>
-                            </span>
-                        ))}
-                    </div>
-                    <div className={css({ display: 'flex', gap: '1' })}>
-                        <input
-                            type="text"
-                            value={newAlias}
-                            onChange={(e) => setNewAlias(e.target.value)}
-                            onKeyDown={(e) =>
-                                e.key === 'Enter' && (e.preventDefault(), handleAddAlias())
-                            }
-                            placeholder="+ Alias (z.B. Semmel)"
-                            className={css({
-                                flex: '1',
-                                paddingX: '2',
-                                paddingY: '0.5',
-                                borderRadius: 'md',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                                background: 'surface.elevated',
-                                fontSize: 'xs',
-                                color: 'foreground',
-                                outline: 'none',
-                                minWidth: '120px',
-                            })}
-                        />
-                        <button
-                            type="button"
-                            onClick={handleAddAlias}
-                            className={css({
-                                paddingX: '2',
-                                paddingY: '0.5',
-                                borderRadius: 'md',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                                background: 'surface.elevated',
-                                fontSize: 'xs',
-                                cursor: 'pointer',
-                                color: 'foreground',
-                            })}
-                        >
-                            +
-                        </button>
-                    </div>
-                </td>
-                <td />
-            </tr>
-            {error && (
-                <tr>
-                    <td colSpan={5} className={css({ padding: '2', paddingLeft: '4' })}>
-                        <div className={css({ fontSize: 'xs', color: 'red.600' })}>{error}</div>
-                    </td>
-                </tr>
-            )}
-        </>
-    );
-}
-
-const columns: ColumnDef<Ingredient>[] = [
-    {
-        accessorKey: 'name',
-        header: ({ column }) => (
-            <button
-                className={css({
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1',
-                    fontWeight: 'semibold',
-                    fontSize: 'xs',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.3em',
-                    color: 'foreground.muted',
-                    cursor: 'pointer',
-                    _hover: { color: 'foreground' },
-                })}
-                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
-                Name
-                <ArrowUpDown size={12} />
-            </button>
-        ),
-        cell: ({ row }) => (
-            <div>
-                <span className={css({ fontWeight: 'medium' })}>{row.original.name}</span>
-                {row.original.pluralName && (
-                    <span
-                        className={css({
-                            fontSize: 'xs',
-                            color: 'foreground.muted',
-                            marginLeft: '1',
-                        })}
-                    >
-                        / {row.original.pluralName}
-                    </span>
-                )}
-                {row.original.aliases.length > 0 && (
-                    <span
-                        className={css({
-                            fontSize: 'xs',
-                            color: 'orange.500',
-                            marginLeft: '1',
-                        })}
-                        title={row.original.aliases.join(', ')}
-                    >
-                        +{row.original.aliases.length}
-                    </span>
-                )}
-            </div>
-        ),
-    },
-    {
-        accessorKey: 'category',
-        header: ({ column }) => (
-            <button
-                className={css({
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1',
-                    fontWeight: 'semibold',
-                    fontSize: 'xs',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.3em',
-                    color: 'foreground.muted',
-                    cursor: 'pointer',
-                    _hover: { color: 'foreground' },
-                })}
-                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
-                Kategorie
-                <ArrowUpDown size={12} />
-            </button>
-        ),
-        cell: ({ row }) => (
-            <span className={css({ fontSize: 'sm' })}>
-                {CATEGORY_LABELS[row.original.category]}
-            </span>
-        ),
-    },
-    {
-        accessorKey: 'units',
-        header: () => (
-            <span
-                className={css({
-                    fontWeight: 'semibold',
-                    fontSize: 'xs',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.3em',
-                    color: 'foreground.muted',
-                })}
-            >
-                Einheiten
-            </span>
-        ),
-        cell: ({ row }) => (
-            <div className={css({ display: 'flex', gap: '1', flexWrap: 'wrap' })}>
-                {row.original.units.length > 0 ? (
-                    row.original.units.map((unit) => (
-                        <span
-                            key={unit}
-                            className={css({
-                                paddingX: '2',
-                                paddingY: '0.5',
-                                borderRadius: 'full',
-                                fontSize: 'xs',
-                                background: 'surface.elevated',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                            })}
-                        >
-                            {unit}
-                        </span>
-                    ))
-                ) : (
-                    <span className={css({ fontSize: 'xs', color: 'foreground.muted' })}>—</span>
-                )}
-            </div>
-        ),
-    },
-    {
-        accessorKey: 'recipeCount',
-        header: ({ column }) => (
-            <button
-                className={css({
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1',
-                    fontWeight: 'semibold',
-                    fontSize: 'xs',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.3em',
-                    color: 'foreground.muted',
-                    cursor: 'pointer',
-                    _hover: { color: 'foreground' },
-                })}
-                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
-                Rezepte
-                <ArrowUpDown size={12} />
-            </button>
-        ),
-        cell: ({ row }) => (
-            <span className={css({ fontSize: 'sm' })}>{row.original.recipeCount}</span>
-        ),
-    },
-    {
-        id: 'actions',
-        cell: ({ row }) => {
-            const ingredient = row.original;
-            return (
-                <div className={css({ display: 'flex', gap: '2' })}>
-                    <form
-                        action={async () => {
-                            if (confirm(`"${ingredient.name}" wirklich löschen?`)) {
-                                try {
-                                    await deleteIngredient(ingredient.id);
-                                } catch (err) {
-                                    alert(
-                                        err instanceof Error ? err.message : 'Fehler beim Löschen',
-                                    );
-                                }
-                            }
-                        }}
-                    >
-                        <button
-                            title="Löschen"
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '8',
-                                height: '8',
-                                borderRadius: 'lg',
-                                border: '1px solid',
-                                borderColor: 'border.muted',
-                                background: 'surface',
-                                cursor: 'pointer',
-                                color: 'foreground.muted',
-                                transition: 'all 0.2s',
-                                _hover: {
-                                    background: { base: 'red.50', _dark: 'rgba(239,68,68,0.1)' },
-                                    borderColor: { base: 'red.200', _dark: 'rgba(239,68,68,0.3)' },
-                                    color: 'red.600',
-                                },
-                            })}
-                        >
-                            <Trash2 size={14} />
-                        </button>
-                    </form>
-                </div>
-            );
-        },
-    },
-];
-
-function MergeModal({ ingredients, onClose }: { ingredients: Ingredient[]; onClose: () => void }) {
-    const [sourceId, setSourceId] = useState('');
-    const [targetId, setTargetId] = useState('');
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
-
-    const handleMerge = async () => {
-        setError('');
-        if (!sourceId || !targetId || sourceId === targetId) {
-            setError('Bitte wähle zwei verschiedene Zutaten aus.');
-            return;
-        }
-        setSaving(true);
-        try {
-            await mergeIngredients(sourceId, targetId);
-            onClose();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const sourceIngredient = ingredients.find((i) => i.id === sourceId);
-    const targetIngredient = ingredients.find((i) => i.id === targetId);
-
-    return (
-        <div
-            className={css({
-                position: 'fixed',
-                inset: '0',
-                background: 'surface.overlay',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: '50',
-            })}
-        >
+            {/* Header */}
             <div
                 className={css({
-                    background: 'surface',
-                    borderRadius: '2xl',
-                    borderWidth: '1px',
-                    borderColor: 'border.muted',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                     padding: '6',
-                    width: '100%',
-                    maxWidth: '500px',
-                    margin: '4',
+                    paddingBottom: '4',
+                    borderBottom: '1px solid',
+                    borderColor: 'border.muted',
+                    flexShrink: '0',
                 })}
             >
-                <div
-                    className={css({
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '4',
-                    })}
-                >
-                    <h2 className={css({ fontSize: 'lg', fontWeight: 'semibold' })}>
-                        Zutaten zusammenführen
-                    </h2>
-                    <button
-                        onClick={onClose}
+                <div>
+                    <Dialog.Title
                         className={css({
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '8',
-                            height: '8',
-                            borderRadius: 'lg',
-                            border: 'none',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            color: 'foreground.muted',
-                            _hover: { background: 'surface.elevated' },
+                            fontSize: 'lg',
+                            fontWeight: '700',
+                            fontFamily: 'heading',
+                            color: 'foreground',
                         })}
                     >
+                        Zutat bearbeiten
+                    </Dialog.Title>
+                    <p
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'foreground.muted',
+                            marginTop: '0.5',
+                        })}
+                    >
+                        {ingredient.name}
+                        {ingredient.needsReview && (
+                            <span
+                                className={css({
+                                    marginLeft: '2',
+                                    paddingX: '2',
+                                    paddingY: '0.5',
+                                    borderRadius: 'full',
+                                    fontSize: 'xs',
+                                    fontWeight: '600',
+                                    bg: {
+                                        base: 'rgba(245,158,11,0.12)',
+                                        _dark: 'rgba(245,158,11,0.15)',
+                                    },
+                                    color: 'status.warning',
+                                })}
+                            >
+                                Review
+                            </span>
+                        )}
+                    </p>
+                </div>
+                <Dialog.Close asChild>
+                    <button type="button" className={closeButtonStyle}>
                         <X size={18} />
                     </button>
-                </div>
-                <p
-                    className={css({
-                        fontSize: 'sm',
-                        color: 'foreground.muted',
-                        marginBottom: '4',
-                    })}
-                >
-                    Wähle zwei Zutaten aus. Die erste wird in die zweite zusammengeführt und dann
-                    gelöscht. Alle Rezepte werden automatisch aktualisiert.
-                </p>
+                </Dialog.Close>
+            </div>
+
+            {/* Scrollable content */}
+            <div
+                className={css({
+                    padding: '6',
+                    overflowY: 'auto',
+                    flex: '1',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '5',
+                })}
+            >
                 {error && (
                     <div
                         className={css({
                             padding: '3',
                             borderRadius: 'lg',
-                            background: { base: 'red.50', _dark: 'rgba(239,68,68,0.1)' },
-                            borderWidth: '1px',
-                            borderColor: { base: 'red.200', _dark: 'rgba(239,68,68,0.3)' },
-                            marginBottom: '4',
+                            bg: 'error.bg',
+                            color: 'error.text',
+                            fontSize: 'sm',
+                            fontWeight: '500',
                         })}
                     >
-                        <p className={css({ fontSize: 'sm', color: 'red.600' })}>{error}</p>
+                        {error}
                     </div>
                 )}
-                <div className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
-                    <div>
-                        <label
-                            className={css({
-                                display: 'block',
-                                fontSize: 'xs',
-                                color: 'foreground.muted',
-                                marginBottom: '1',
-                            })}
-                        >
-                            Zutat die gelöscht wird (Quelle)
-                        </label>
-                        <select
-                            value={sourceId}
-                            onChange={(e) => setSourceId(e.target.value)}
-                            className={css({
-                                width: '100%',
-                                paddingX: '3',
-                                paddingY: '2',
-                                borderRadius: 'lg',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                                background: 'surface.elevated',
-                                fontSize: 'sm',
-                                color: 'foreground',
-                                outline: 'none',
-                                cursor: 'pointer',
-                            })}
-                        >
-                            <option value="">Zutat auswählen...</option>
-                            {ingredients
-                                .filter((i) => i.id !== targetId)
-                                .map((ing) => (
-                                    <option key={ing.id} value={ing.id}>
-                                        {ing.name} ({ing.recipeCount} Rezepte)
-                                    </option>
-                                ))}
-                        </select>
-                    </div>
-                    <div className={css({ display: 'flex', justifyContent: 'center' })}>
-                        <GitMerge size={20} className={css({ color: 'foreground.muted' })} />
-                    </div>
-                    <div>
-                        <label
-                            className={css({
-                                display: 'block',
-                                fontSize: 'xs',
-                                color: 'foreground.muted',
-                                marginBottom: '1',
-                            })}
-                        >
-                            Zutat die behalten wird (Ziel)
-                        </label>
-                        <select
-                            value={targetId}
-                            onChange={(e) => setTargetId(e.target.value)}
-                            className={css({
-                                width: '100%',
-                                paddingX: '3',
-                                paddingY: '2',
-                                borderRadius: 'lg',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                                background: 'surface.elevated',
-                                fontSize: 'sm',
-                                color: 'foreground',
-                                outline: 'none',
-                                cursor: 'pointer',
-                            })}
-                        >
-                            <option value="">Zutat auswählen...</option>
-                            {ingredients
-                                .filter((i) => i.id !== sourceId)
-                                .map((ing) => (
-                                    <option key={ing.id} value={ing.id}>
-                                        {ing.name} ({ing.recipeCount} Rezepte)
-                                    </option>
-                                ))}
-                        </select>
-                    </div>
-                    {sourceIngredient && targetIngredient && (
-                        <div
-                            className={css({
-                                padding: '3',
-                                borderRadius: 'lg',
-                                background: 'surface.elevated',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                            })}
-                        >
-                            <p className={css({ fontSize: 'sm', color: 'foreground.muted' })}>
-                                <strong>{sourceIngredient.name}</strong> (
-                                {sourceIngredient.recipeCount} Rezepte) wird mit{' '}
-                                <strong>{targetIngredient.name}</strong> zusammengeführt.
-                            </p>
+
+                {/* Section: Allgemein */}
+                <div>
+                    <p className={sectionLabelStyle}>Allgemein</p>
+                    <div
+                        className={css({
+                            display: 'grid',
+                            gridTemplateColumns: { base: '1fr', md: '1fr 1fr' },
+                            gap: '3',
+                        })}
+                    >
+                        <div>
+                            <label
+                                className={css({
+                                    fontSize: 'xs',
+                                    color: 'foreground.muted',
+                                    display: 'block',
+                                    marginBottom: '1',
+                                    fontWeight: '500',
+                                })}
+                            >
+                                Name
+                            </label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className={inputStyle}
+                            />
                         </div>
-                    )}
-                    <div className={css({ display: 'flex', gap: '2', marginTop: '2' })}>
-                        <button
-                            onClick={onClose}
-                            className={css({
-                                flex: '1',
-                                paddingX: '4',
-                                paddingY: '2',
-                                borderRadius: 'lg',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                                background: 'surface',
-                                fontSize: 'sm',
-                                fontWeight: 'medium',
-                                cursor: 'pointer',
-                                color: 'foreground',
-                            })}
-                        >
-                            Abbrechen
-                        </button>
-                        <button
-                            onClick={handleMerge}
-                            disabled={saving || !sourceId || !targetId}
-                            className={css({
-                                flex: '1',
-                                paddingX: '4',
-                                paddingY: '2',
-                                borderRadius: 'lg',
-                                borderWidth: '1px',
-                                borderColor: 'border',
-                                background: 'primary',
-                                fontSize: 'sm',
-                                fontWeight: 'medium',
-                                cursor: 'pointer',
-                                color: 'white',
-                                opacity: saving || !sourceId || !targetId ? 0.7 : 1,
-                            })}
-                        >
-                            {saving ? 'Zusammenführen...' : 'Zusammenführen'}
+                        <div>
+                            <label
+                                className={css({
+                                    fontSize: 'xs',
+                                    color: 'foreground.muted',
+                                    display: 'block',
+                                    marginBottom: '1',
+                                    fontWeight: '500',
+                                })}
+                            >
+                                Pluralname
+                            </label>
+                            <input
+                                type="text"
+                                value={pluralName}
+                                onChange={(e) => setPluralName(e.target.value)}
+                                className={inputStyle}
+                                placeholder="z.B. Tomaten"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section: Aliase */}
+                <div>
+                    <p className={sectionLabelStyle}>Aliase</p>
+                    <div
+                        className={css({
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '1.5',
+                            marginBottom: '2.5',
+                        })}
+                    >
+                        {aliases.map((alias) => (
+                            <span key={alias} className={tagStyle}>
+                                {alias}
+                                <button
+                                    type="button"
+                                    onClick={() => setAliases(aliases.filter((a) => a !== alias))}
+                                    className={css({
+                                        display: 'flex',
+                                        bg: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        color: 'foreground.muted',
+                                        padding: '0',
+                                        borderRadius: 'full',
+                                        transition: 'color 0.1s',
+                                        _hover: { color: 'status.danger' },
+                                    })}
+                                >
+                                    <X size={12} />
+                                </button>
+                            </span>
+                        ))}
+                        {aliases.length === 0 && (
+                            <span className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
+                                Keine Aliase
+                            </span>
+                        )}
+                    </div>
+                    <div className={css({ display: 'flex', gap: '2', maxWidth: '320px' })}>
+                        <input
+                            type="text"
+                            value={newAlias}
+                            onChange={(e) => setNewAlias(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddAlias();
+                                }
+                            }}
+                            placeholder="Neuer Alias..."
+                            className={inputStyle}
+                        />
+                        <button type="button" onClick={handleAddAlias} className={btnSecondary}>
+                            <Plus size={14} />
                         </button>
                     </div>
                 </div>
+
+                {/* Section: Kategorien */}
+                <div>
+                    <p className={sectionLabelStyle}>Kategorien</p>
+                    <div
+                        className={css({
+                            display: 'grid',
+                            gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+                            gap: '1',
+                        })}
+                    >
+                        {allCategories.map((cat) => (
+                            <label
+                                key={cat.id}
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                    fontSize: 'sm',
+                                    color: 'foreground',
+                                    cursor: 'pointer',
+                                    paddingX: '2',
+                                    paddingY: '1.5',
+                                    borderRadius: 'lg',
+                                    transition: 'background 0.1s',
+                                    _hover: { bg: 'surface.muted' },
+                                })}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={selectedCatIds.has(cat.id)}
+                                    onChange={() => toggleCategory(cat.id)}
+                                    className={css({ accentColor: 'brand.primary' })}
+                                />
+                                {cat.name}
+                            </label>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Section: Einheiten */}
+                <div>
+                    <p className={sectionLabelStyle}>Einheiten</p>
+                    <div className={css({ display: 'flex', flexDirection: 'column', gap: '1' })}>
+                        {allUnits.map((unit) => {
+                            const isChecked = selectedUnits.has(unit.id);
+                            const gramsValue = selectedUnits.get(unit.id);
+                            return (
+                                <div
+                                    key={unit.id}
+                                    className={css({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '3',
+                                        paddingX: '2',
+                                        paddingY: '1.5',
+                                        borderRadius: 'lg',
+                                        transition: 'background 0.1s',
+                                        bg: isChecked ? 'accent.soft' : 'transparent',
+                                        _hover: { bg: isChecked ? 'accent.soft' : 'surface.muted' },
+                                    })}
+                                >
+                                    <label
+                                        className={css({
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '2',
+                                            fontSize: 'sm',
+                                            color: 'foreground',
+                                            cursor: 'pointer',
+                                            minWidth: '160px',
+                                        })}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            onChange={() => toggleUnit(unit.id)}
+                                            className={css({ accentColor: 'brand.primary' })}
+                                        />
+                                        <span
+                                            className={css({
+                                                fontWeight: isChecked ? '600' : '400',
+                                            })}
+                                        >
+                                            {unit.shortName}
+                                        </span>
+                                        <span
+                                            className={css({
+                                                color: 'foreground.muted',
+                                                fontSize: 'xs',
+                                            })}
+                                        >
+                                            ({unit.longName})
+                                        </span>
+                                    </label>
+                                    {isChecked && (
+                                        <input
+                                            type="number"
+                                            value={gramsValue ?? ''}
+                                            onChange={(e) =>
+                                                setUnitGrams(
+                                                    unit.id,
+                                                    e.target.value === ''
+                                                        ? null
+                                                        : parseFloat(e.target.value),
+                                                )
+                                            }
+                                            placeholder={
+                                                unit.gramsDefault != null
+                                                    ? `Standard: ${unit.gramsDefault}g`
+                                                    : 'Gramm'
+                                            }
+                                            className={css({
+                                                width: '150px',
+                                                paddingX: '2.5',
+                                                paddingY: '1.5',
+                                                borderRadius: 'lg',
+                                                border: '1px solid',
+                                                borderColor: 'border',
+                                                bg: 'surface',
+                                                fontSize: 'sm',
+                                                color: 'foreground',
+                                                outline: 'none',
+                                                transition: 'all 0.15s',
+                                                _focus: {
+                                                    borderColor: 'brand.primary',
+                                                    boxShadow: {
+                                                        base: '0 0 0 3px rgba(224,123,83,0.12)',
+                                                        _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                                    },
+                                                },
+                                            })}
+                                        />
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Section: Naehrwerte */}
+                <div>
+                    <p className={sectionLabelStyle}>Naehrwerte pro 100g</p>
+                    <div
+                        className={css({
+                            display: 'grid',
+                            gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+                            gap: '3',
+                        })}
+                    >
+                        {nutritionFields.map((nf) => (
+                            <div key={nf.key}>
+                                <label
+                                    className={css({
+                                        fontSize: 'xs',
+                                        color: 'foreground.muted',
+                                        display: 'block',
+                                        marginBottom: '1',
+                                        fontWeight: '500',
+                                    })}
+                                >
+                                    {nf.label}
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    value={nutrition[nf.key] ?? ''}
+                                    onChange={(e) => updateNutritionField(nf.key, e.target.value)}
+                                    className={inputSmallStyle}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer */}
+            <div
+                className={css({
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '4',
+                    paddingX: '6',
+                    borderTop: '1px solid',
+                    borderColor: 'border.muted',
+                    bg: 'surface',
+                    flexShrink: '0',
+                })}
+            >
+                <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isPending}
+                    className={btnDanger}
+                >
+                    <Trash2 size={14} /> Loeschen
+                </button>
+                <div className={css({ display: 'flex', gap: '2' })}>
+                    <button type="button" onClick={onClose} className={btnSecondary}>
+                        Abbrechen
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={isPending || !name.trim()}
+                        className={btnPrimary}
+                    >
+                        {isPending ? 'Speichern...' : 'Speichern'}
+                    </button>
+                </div>
+            </div>
+        </>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Add ingredient form
+// ---------------------------------------------------------------------------
+
+function AddIngredientForm({ onClose }: { onClose: () => void }) {
+    const [name, setName] = useState('');
+    const [isPending, startTransition] = useTransition();
+    const [error, setError] = useState('');
+
+    const handleSubmit = () => {
+        if (!name.trim()) return;
+        setError('');
+        startTransition(async () => {
+            try {
+                await createIngredient({ name: name.trim() });
+                onClose();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
+            }
+        });
+    };
+
+    return (
+        <div
+            className={css({
+                padding: '4',
+                borderBottom: '1px solid',
+                borderColor: 'border.muted',
+                bg: { base: 'rgba(224,123,83,0.04)', _dark: 'rgba(224,123,83,0.06)' },
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3',
+            })}
+        >
+            <div
+                className={css({
+                    width: '3px',
+                    height: '24px',
+                    borderRadius: 'full',
+                    bg: 'brand.primary',
+                    flexShrink: '0',
+                })}
+            />
+            <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSubmit();
+                    }
+                    if (e.key === 'Escape') onClose();
+                }}
+                placeholder="Neuer Zutatname..."
+                autoFocus
+                className={css({ flex: '1', ...inputStyleObj })}
+            />
+            {error && (
+                <span className={css({ fontSize: 'xs', color: 'error.text', fontWeight: '500' })}>
+                    {error}
+                </span>
+            )}
+            <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isPending || !name.trim()}
+                className={btnPrimary}
+            >
+                <Check size={14} />
+            </button>
+            <button type="button" onClick={onClose} className={btnSecondary}>
+                <X size={14} />
+            </button>
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Merge modal (Radix Dialog)
+// ---------------------------------------------------------------------------
+
+function MergeModal({ ingredients, onClose }: { ingredients: Ingredient[]; onClose: () => void }) {
+    const [sourceId, setSourceId] = useState('');
+    const [targetId, setTargetId] = useState('');
+    const [isPending, startTransition] = useTransition();
+    const [error, setError] = useState('');
+
+    const sorted = useMemo(
+        () => [...ingredients].sort((a, b) => a.name.localeCompare(b.name)),
+        [ingredients],
+    );
+
+    const handleMerge = () => {
+        if (!sourceId || !targetId) return;
+        setError('');
+        startTransition(async () => {
+            try {
+                await mergeIngredients(sourceId, targetId);
+                onClose();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Fehler beim Zusammenfuehren');
+            }
+        });
+    };
+
+    return (
+        <Dialog.Root
+            open
+            onOpenChange={(open) => {
+                if (!open) onClose();
+            }}
+        >
+            <Dialog.Portal>
+                <Dialog.Overlay className={overlayStyle} />
+                <Dialog.Content className={dialogContentSmallStyle}>
+                    <div
+                        className={css({
+                            padding: '6',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4',
+                        })}
+                    >
+                        <div
+                            className={css({
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'flex-start',
+                            })}
+                        >
+                            <div>
+                                <Dialog.Title
+                                    className={css({
+                                        fontSize: 'lg',
+                                        fontWeight: '700',
+                                        fontFamily: 'heading',
+                                        color: 'foreground',
+                                    })}
+                                >
+                                    Zutaten zusammenfuehren
+                                </Dialog.Title>
+                                <p
+                                    className={css({
+                                        fontSize: 'sm',
+                                        color: 'foreground.muted',
+                                        marginTop: '1',
+                                    })}
+                                >
+                                    Die Quellzutat wird in die Zielzutat ueberfuehrt. Alle Rezepte
+                                    werden aktualisiert.
+                                </p>
+                            </div>
+                            <Dialog.Close asChild>
+                                <button type="button" className={closeButtonStyle}>
+                                    <X size={18} />
+                                </button>
+                            </Dialog.Close>
+                        </div>
+
+                        {error && (
+                            <div
+                                className={css({
+                                    padding: '3',
+                                    borderRadius: 'lg',
+                                    bg: 'error.bg',
+                                    color: 'error.text',
+                                    fontSize: 'sm',
+                                    fontWeight: '500',
+                                })}
+                            >
+                                {error}
+                            </div>
+                        )}
+
+                        <div>
+                            <label className={sectionLabelStyle}>Quelle (wird geloescht)</label>
+                            <select
+                                value={sourceId}
+                                onChange={(e) => setSourceId(e.target.value)}
+                                className={inputStyle}
+                            >
+                                <option value="">Zutat waehlen...</option>
+                                {sorted.map((ing) => (
+                                    <option
+                                        key={ing.id}
+                                        value={ing.id}
+                                        disabled={ing.id === targetId}
+                                    >
+                                        {ing.name} ({ing.recipeCount} Rezepte)
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className={sectionLabelStyle}>Ziel (bleibt erhalten)</label>
+                            <select
+                                value={targetId}
+                                onChange={(e) => setTargetId(e.target.value)}
+                                className={inputStyle}
+                            >
+                                <option value="">Zutat waehlen...</option>
+                                {sorted.map((ing) => (
+                                    <option
+                                        key={ing.id}
+                                        value={ing.id}
+                                        disabled={ing.id === sourceId}
+                                    >
+                                        {ing.name} ({ing.recipeCount} Rezepte)
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div
+                            className={css({
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                gap: '2',
+                                paddingTop: '2',
+                            })}
+                        >
+                            <Dialog.Close asChild>
+                                <button type="button" className={btnSecondary}>
+                                    Abbrechen
+                                </button>
+                            </Dialog.Close>
+                            <button
+                                type="button"
+                                onClick={handleMerge}
+                                disabled={
+                                    isPending || !sourceId || !targetId || sourceId === targetId
+                                }
+                                className={btnPrimary}
+                            >
+                                {isPending ? 'Zusammenfuehren...' : 'Zusammenfuehren'}
+                            </button>
+                        </div>
+                    </div>
+                </Dialog.Content>
+            </Dialog.Portal>
+        </Dialog.Root>
+    );
+}
+
+// ===========================================================================
+// CATEGORIES TAB
+// ===========================================================================
+
+function CategoriesTab({ categories }: { categories: IngredientCategory[] }) {
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [globalFilter, setGlobalFilter] = useState('');
+    const [editingCategory, setEditingCategory] = useState<IngredientCategory | null>(null);
+    const [showAdd, setShowAdd] = useState(false);
+
+    const columns = useMemo<ColumnDef<IngredientCategory>[]>(
+        () => [
+            {
+                accessorKey: 'name',
+                header: ({ column }) => <SortHeader column={column} label="Name" />,
+                cell: ({ row }) => (
+                    <span
+                        className={css({
+                            fontWeight: '600',
+                            fontSize: 'sm',
+                            color: 'foreground',
+                        })}
+                    >
+                        {row.original.name}
+                    </span>
+                ),
+            },
+            {
+                accessorKey: 'slug',
+                header: 'Slug',
+                cell: ({ row }) => (
+                    <span
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'foreground.muted',
+                            fontFamily: 'mono',
+                        })}
+                    >
+                        {row.original.slug}
+                    </span>
+                ),
+            },
+            {
+                accessorKey: 'sortOrder',
+                header: ({ column }) => <SortHeader column={column} label="Sortierung" />,
+                cell: ({ row }) => (
+                    <span
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'foreground.muted',
+                            fontVariantNumeric: 'tabular-nums',
+                        })}
+                    >
+                        {row.original.sortOrder}
+                    </span>
+                ),
+            },
+            {
+                id: 'ingredientCount',
+                header: 'Zutaten',
+                accessorFn: (row) => row._count.ingredients,
+                cell: ({ row }) => (
+                    <span
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'foreground.muted',
+                            fontVariantNumeric: 'tabular-nums',
+                        })}
+                    >
+                        {row.original._count.ingredients}
+                    </span>
+                ),
+            },
+            {
+                id: 'actions',
+                header: '',
+                cell: ({ row }) => (
+                    <DeleteButton
+                        onDelete={async () => {
+                            await deleteCategory(row.original.id);
+                        }}
+                        disabled={row.original._count.ingredients > 0}
+                        title={
+                            row.original._count.ingredients > 0
+                                ? 'Kategorie hat noch Zutaten'
+                                : 'Kategorie loeschen'
+                        }
+                    />
+                ),
+                size: 50,
+            },
+        ],
+        [],
+    );
+
+    const table = useReactTable({
+        data: categories,
+        columns,
+        state: { sorting, globalFilter },
+        onSortingChange: setSorting,
+        onGlobalFilterChange: setGlobalFilter,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+    });
+
+    return (
+        <div>
+            <TableToolbar
+                searchPlaceholder="Kategorie suchen..."
+                filter={globalFilter}
+                onFilterChange={setGlobalFilter}
+                onAdd={() => setShowAdd(!showAdd)}
+            />
+
+            {showAdd && <AddCategoryForm onClose={() => setShowAdd(false)} />}
+
+            <SimpleTable
+                table={table}
+                columns={columns}
+                onRowClick={(row) => setEditingCategory(row)}
+                emptyMessage="Keine Kategorien gefunden."
+            />
+
+            {/* Edit dialog */}
+            <Dialog.Root
+                open={!!editingCategory}
+                onOpenChange={(open) => {
+                    if (!open) setEditingCategory(null);
+                }}
+            >
+                <Dialog.Portal>
+                    <Dialog.Overlay className={overlayStyle} />
+                    <Dialog.Content className={dialogContentSmallStyle}>
+                        {editingCategory && (
+                            <CategoryEditPanel
+                                category={editingCategory}
+                                onClose={() => setEditingCategory(null)}
+                            />
+                        )}
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog.Root>
+        </div>
+    );
+}
+
+function CategoryEditPanel({
+    category,
+    onClose,
+}: {
+    category: IngredientCategory;
+    onClose: () => void;
+}) {
+    const [name, setName] = useState(category.name);
+    const [sortOrder, setSortOrder] = useState(category.sortOrder);
+    const [isPending, startTransition] = useTransition();
+    const [error, setError] = useState('');
+
+    const handleSave = () => {
+        setError('');
+        startTransition(async () => {
+            try {
+                await updateCategory(category.id, { name: name.trim(), sortOrder });
+                onClose();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Fehler');
+            }
+        });
+    };
+
+    return (
+        <div className={css({ padding: '6', display: 'flex', flexDirection: 'column', gap: '4' })}>
+            <div
+                className={css({
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                })}
+            >
+                <div>
+                    <Dialog.Title
+                        className={css({
+                            fontSize: 'lg',
+                            fontWeight: '700',
+                            fontFamily: 'heading',
+                            color: 'foreground',
+                        })}
+                    >
+                        Kategorie bearbeiten
+                    </Dialog.Title>
+                    <p
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'foreground.muted',
+                            marginTop: '0.5',
+                        })}
+                    >
+                        {category.name}
+                    </p>
+                </div>
+                <Dialog.Close asChild>
+                    <button type="button" className={closeButtonStyle}>
+                        <X size={18} />
+                    </button>
+                </Dialog.Close>
+            </div>
+
+            <div className={css({ display: 'grid', gridTemplateColumns: '1fr auto', gap: '3' })}>
+                <div>
+                    <label
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                            display: 'block',
+                            marginBottom: '1',
+                            fontWeight: '500',
+                        })}
+                    >
+                        Name
+                    </label>
+                    <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className={inputStyle}
+                    />
+                </div>
+                <div>
+                    <label
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                            display: 'block',
+                            marginBottom: '1',
+                            fontWeight: '500',
+                        })}
+                    >
+                        Sortierung
+                    </label>
+                    <input
+                        type="number"
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 0)}
+                        className={inputStyle}
+                        style={{ width: 100 }}
+                    />
+                </div>
+            </div>
+
+            {error && (
+                <div
+                    className={css({
+                        padding: '3',
+                        borderRadius: 'lg',
+                        bg: 'error.bg',
+                        color: 'error.text',
+                        fontSize: 'sm',
+                        fontWeight: '500',
+                    })}
+                >
+                    {error}
+                </div>
+            )}
+
+            <div
+                className={css({
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '2',
+                    paddingTop: '2',
+                    borderTop: '1px solid',
+                    borderColor: 'border.muted',
+                })}
+            >
+                <button type="button" onClick={onClose} className={btnSecondary}>
+                    Abbrechen
+                </button>
+                <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isPending || !name.trim()}
+                    className={btnPrimary}
+                >
+                    {isPending ? 'Speichern...' : 'Speichern'}
+                </button>
             </div>
         </div>
     );
 }
 
-export function IngredientsTable({ ingredients }: { ingredients: Ingredient[] }) {
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [globalFilter, setGlobalFilter] = useState('');
-    const [isAdding, setIsAdding] = useState(false);
-    const [newName, setNewName] = useState('');
-    const [newCategory, setNewCategory] = useState<ShoppingCategory>('SONSTIGES');
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [isMerging, setIsMerging] = useState(false);
+function AddCategoryForm({ onClose }: { onClose: () => void }) {
+    const [name, setName] = useState('');
+    const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
 
-    // eslint-disable-next-line react-hooks/incompatible-library
-    const table = useReactTable({
-        data: ingredients,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        onSortingChange: setSorting,
-        onGlobalFilterChange: setGlobalFilter,
-        state: { sorting, globalFilter },
-        initialState: { pagination: { pageSize: 20 } },
-    });
-
-    const handleAddIngredient = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = () => {
+        if (!name.trim()) return;
         setError('');
-        if (!newName.trim()) return;
-        try {
-            await createIngredient({ name: newName, category: newCategory });
-            setNewName('');
-            setNewCategory('SONSTIGES');
-            setIsAdding(false);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
-        }
+        startTransition(async () => {
+            try {
+                await createCategory({ name: name.trim() });
+                onClose();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Fehler');
+            }
+        });
     };
 
     return (
-        <>
+        <div
+            className={css({
+                padding: '4',
+                borderBottom: '1px solid',
+                borderColor: 'border.muted',
+                bg: { base: 'rgba(224,123,83,0.04)', _dark: 'rgba(224,123,83,0.06)' },
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3',
+            })}
+        >
             <div
                 className={css({
-                    borderRadius: '2xl',
-                    borderWidth: '1px',
-                    borderColor: 'border.muted',
-                    background: 'surface.elevated',
-                    overflow: 'hidden',
+                    width: '3px',
+                    height: '24px',
+                    borderRadius: 'full',
+                    bg: 'brand.primary',
+                    flexShrink: '0',
+                })}
+            />
+            <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSubmit();
+                    }
+                    if (e.key === 'Escape') onClose();
+                }}
+                placeholder="Neuer Kategoriename..."
+                autoFocus
+                className={css({ flex: '1', ...inputStyleObj })}
+            />
+            {error && (
+                <span className={css({ fontSize: 'xs', color: 'error.text', fontWeight: '500' })}>
+                    {error}
+                </span>
+            )}
+            <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isPending || !name.trim()}
+                className={btnPrimary}
+            >
+                <Check size={14} />
+            </button>
+            <button type="button" onClick={onClose} className={btnSecondary}>
+                <X size={14} />
+            </button>
+        </div>
+    );
+}
+
+// ===========================================================================
+// UNITS TAB
+// ===========================================================================
+
+function UnitsTab({ units }: { units: Unit[] }) {
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [globalFilter, setGlobalFilter] = useState('');
+    const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+    const [showAdd, setShowAdd] = useState(false);
+
+    const columns = useMemo<ColumnDef<Unit>[]>(
+        () => [
+            {
+                accessorKey: 'shortName',
+                header: ({ column }) => <SortHeader column={column} label="Kurzname" />,
+                cell: ({ row }) => (
+                    <span
+                        className={css({
+                            fontWeight: '600',
+                            fontSize: 'sm',
+                            color: 'foreground',
+                        })}
+                    >
+                        {row.original.shortName}
+                    </span>
+                ),
+            },
+            {
+                accessorKey: 'longName',
+                header: 'Langname',
+                cell: ({ row }) => (
+                    <span className={css({ fontSize: 'sm', color: 'foreground' })}>
+                        {row.original.longName}
+                    </span>
+                ),
+            },
+            {
+                accessorKey: 'gramsDefault',
+                header: ({ column }) => <SortHeader column={column} label="Gramm (Standard)" />,
+                cell: ({ row }) => (
+                    <span
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'foreground.muted',
+                            fontVariantNumeric: 'tabular-nums',
+                        })}
+                    >
+                        {row.original.gramsDefault != null ? `${row.original.gramsDefault}g` : '-'}
+                    </span>
+                ),
+            },
+            {
+                id: 'ingredientCount',
+                header: 'Zutaten',
+                accessorFn: (row) => row._count.ingredients,
+                cell: ({ row }) => (
+                    <span
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'foreground.muted',
+                            fontVariantNumeric: 'tabular-nums',
+                        })}
+                    >
+                        {row.original._count.ingredients}
+                    </span>
+                ),
+            },
+            {
+                id: 'actions',
+                header: '',
+                cell: ({ row }) => (
+                    <DeleteButton
+                        onDelete={async () => {
+                            await deleteUnit(row.original.id);
+                        }}
+                        disabled={row.original._count.ingredients > 0}
+                        title={
+                            row.original._count.ingredients > 0
+                                ? 'Einheit wird noch verwendet'
+                                : 'Einheit loeschen'
+                        }
+                    />
+                ),
+                size: 50,
+            },
+        ],
+        [],
+    );
+
+    const table = useReactTable({
+        data: units,
+        columns,
+        state: { sorting, globalFilter },
+        onSortingChange: setSorting,
+        onGlobalFilterChange: setGlobalFilter,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+    });
+
+    return (
+        <div>
+            <TableToolbar
+                searchPlaceholder="Einheit suchen..."
+                filter={globalFilter}
+                onFilterChange={setGlobalFilter}
+                onAdd={() => setShowAdd(!showAdd)}
+            />
+
+            {showAdd && <AddUnitForm onClose={() => setShowAdd(false)} />}
+
+            <SimpleTable
+                table={table}
+                columns={columns}
+                onRowClick={(row) => setEditingUnit(row)}
+                emptyMessage="Keine Einheiten gefunden."
+            />
+
+            {/* Edit dialog */}
+            <Dialog.Root
+                open={!!editingUnit}
+                onOpenChange={(open) => {
+                    if (!open) setEditingUnit(null);
+                }}
+            >
+                <Dialog.Portal>
+                    <Dialog.Overlay className={overlayStyle} />
+                    <Dialog.Content className={dialogContentSmallStyle}>
+                        {editingUnit && (
+                            <UnitEditPanel
+                                unit={editingUnit}
+                                onClose={() => setEditingUnit(null)}
+                            />
+                        )}
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog.Root>
+        </div>
+    );
+}
+
+function UnitEditPanel({ unit, onClose }: { unit: Unit; onClose: () => void }) {
+    const [shortName, setShortName] = useState(unit.shortName);
+    const [longName, setLongName] = useState(unit.longName);
+    const [gramsDefault, setGramsDefault] = useState<string>(
+        unit.gramsDefault != null ? String(unit.gramsDefault) : '',
+    );
+    const [isPending, startTransition] = useTransition();
+    const [error, setError] = useState('');
+
+    const handleSave = () => {
+        setError('');
+        startTransition(async () => {
+            try {
+                await updateUnit(unit.id, {
+                    shortName: shortName.trim(),
+                    longName: longName.trim(),
+                    gramsDefault: gramsDefault === '' ? null : parseFloat(gramsDefault),
+                });
+                onClose();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Fehler');
+            }
+        });
+    };
+
+    return (
+        <div className={css({ padding: '6', display: 'flex', flexDirection: 'column', gap: '4' })}>
+            <div
+                className={css({
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                 })}
             >
-                <div
-                    className={css({
-                        padding: '4',
-                        borderBottomWidth: '1px',
-                        borderColor: 'border.muted',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '4',
-                        flexWrap: 'wrap',
-                    })}
-                >
-                    <div
+                <div>
+                    <Dialog.Title
                         className={css({
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '2',
-                            background: 'surface',
-                            borderRadius: 'lg',
-                            borderWidth: '1px',
-                            borderColor: 'border.muted',
-                            paddingX: '3',
-                            paddingY: '2',
-                            flex: '1',
-                            maxWidth: '400px',
+                            fontSize: 'lg',
+                            fontWeight: '700',
+                            fontFamily: 'heading',
+                            color: 'foreground',
                         })}
                     >
-                        <Search size={16} className={css({ color: 'foreground.muted' })} />
-                        <input
-                            type="text"
-                            placeholder="Zutaten suchen..."
-                            value={globalFilter}
-                            onChange={(e) => setGlobalFilter(e.target.value)}
-                            className={css({
-                                background: 'transparent',
-                                border: 'none',
-                                outline: 'none',
-                                fontSize: 'sm',
-                                color: 'foreground',
-                                width: '100%',
-                                '&::placeholder': { color: 'foreground.muted' },
-                            })}
-                        />
-                    </div>
-                    <div className={css({ display: 'flex', gap: '2' })}>
-                        <button
-                            onClick={() => setIsMerging(true)}
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '2',
-                                paddingX: '3',
-                                paddingY: '2',
-                                borderRadius: 'lg',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                                background: 'surface',
-                                fontSize: 'sm',
-                                fontWeight: 'medium',
-                                cursor: 'pointer',
-                                color: 'foreground',
-                                transition: 'all 0.2s',
-                                _hover: { background: 'surface.elevated' },
-                            })}
-                        >
-                            <GitMerge size={16} />
-                            Zusammenführen
-                        </button>
-                        <button
-                            onClick={() => setIsAdding(!isAdding)}
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '2',
-                                paddingX: '3',
-                                paddingY: '2',
-                                borderRadius: 'lg',
-                                borderWidth: '1px',
-                                borderColor: 'border',
-                                background: 'surface',
-                                fontSize: 'sm',
-                                fontWeight: 'medium',
-                                cursor: 'pointer',
-                                color: 'foreground',
-                                transition: 'all 0.2s',
-                                _hover: { background: 'surface.elevated' },
-                            })}
-                        >
-                            <Plus size={16} />
-                            Hinzufügen
-                        </button>
-                    </div>
+                        Einheit bearbeiten
+                    </Dialog.Title>
+                    <p
+                        className={css({
+                            fontSize: 'sm',
+                            color: 'foreground.muted',
+                            marginTop: '0.5',
+                        })}
+                    >
+                        {unit.shortName} ({unit.longName})
+                    </p>
                 </div>
+                <Dialog.Close asChild>
+                    <button type="button" className={closeButtonStyle}>
+                        <X size={18} />
+                    </button>
+                </Dialog.Close>
+            </div>
 
-                {error && (
-                    <div
+            <div
+                className={css({
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr auto',
+                    gap: '3',
+                })}
+            >
+                <div>
+                    <label
                         className={css({
-                            padding: '3',
-                            borderBottomWidth: '1px',
-                            borderColor: { base: 'red.200', _dark: 'rgba(239,68,68,0.3)' },
-                            background: { base: 'red.50', _dark: 'rgba(239,68,68,0.1)' },
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                            display: 'block',
+                            marginBottom: '1',
+                            fontWeight: '500',
                         })}
                     >
-                        <p className={css({ fontSize: 'sm', color: 'red.600' })}>{error}</p>
-                    </div>
-                )}
-
-                {isAdding && (
-                    <form
-                        onSubmit={handleAddIngredient}
-                        className={css({
-                            padding: '4',
-                            borderBottomWidth: '1px',
-                            borderColor: 'border.muted',
-                            background: 'surface',
-                            display: 'flex',
-                            gap: '3',
-                            alignItems: 'flex-end',
-                            flexWrap: 'wrap',
-                        })}
-                    >
-                        <div
-                            className={css({ display: 'flex', flexDirection: 'column', gap: '1' })}
-                        >
-                            <label className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                                Name
-                            </label>
-                            <input
-                                type="text"
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
-                                placeholder="Zutatenname"
-                                className={css({
-                                    paddingX: '3',
-                                    paddingY: '2',
-                                    borderRadius: 'lg',
-                                    borderWidth: '1px',
-                                    borderColor: 'border.muted',
-                                    background: 'surface.elevated',
-                                    fontSize: 'sm',
-                                    color: 'foreground',
-                                    outline: 'none',
-                                    width: '200px',
-                                })}
-                            />
-                        </div>
-                        <div
-                            className={css({ display: 'flex', flexDirection: 'column', gap: '1' })}
-                        >
-                            <label className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                                Kategorie
-                            </label>
-                            <select
-                                value={newCategory}
-                                onChange={(e) => setNewCategory(e.target.value as ShoppingCategory)}
-                                className={css({
-                                    paddingX: '3',
-                                    paddingY: '2',
-                                    borderRadius: 'lg',
-                                    borderWidth: '1px',
-                                    borderColor: 'border.muted',
-                                    background: 'surface.elevated',
-                                    fontSize: 'sm',
-                                    color: 'foreground',
-                                    outline: 'none',
-                                    cursor: 'pointer',
-                                })}
-                            >
-                                {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                                    <option key={value} value={value}>
-                                        {label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <button
-                            type="submit"
-                            className={css({
-                                paddingX: '4',
-                                paddingY: '2',
-                                borderRadius: 'lg',
-                                borderWidth: '1px',
-                                borderColor: 'border',
-                                background: 'primary',
-                                fontSize: 'sm',
-                                fontWeight: 'medium',
-                                cursor: 'pointer',
-                                color: 'white',
-                            })}
-                        >
-                            Speichern
-                        </button>
-                    </form>
-                )}
-
-                <div className={css({ overflowX: 'auto' })}>
-                    <table className={css({ width: '100%', borderCollapse: 'collapse' })}>
-                        <thead>
-                            {table.getHeaderGroups().map((headerGroup) => (
-                                <tr
-                                    key={headerGroup.id}
-                                    className={css({
-                                        borderBottomWidth: '1px',
-                                        borderColor: 'border.muted',
-                                    })}
-                                >
-                                    {headerGroup.headers.map((header) => (
-                                        <th
-                                            key={header.id}
-                                            className={css({
-                                                padding: '3',
-                                                paddingLeft: '4',
-                                                textAlign: 'left',
-                                            })}
-                                        >
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                      header.column.columnDef.header,
-                                                      header.getContext(),
-                                                  )}
-                                        </th>
-                                    ))}
-                                </tr>
-                            ))}
-                        </thead>
-                        <tbody>
-                            {table.getRowModel().rows.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={columns.length}
-                                        className={css({
-                                            padding: '8',
-                                            textAlign: 'center',
-                                            color: 'foreground.muted',
-                                        })}
-                                    >
-                                        Keine Zutaten gefunden.
-                                    </td>
-                                </tr>
-                            ) : (
-                                table.getRowModel().rows.map((row) =>
-                                    editingId === row.original.id ? (
-                                        <EditableRow
-                                            key={row.id}
-                                            ingredient={row.original}
-                                            onCancel={() => setEditingId(null)}
-                                        />
-                                    ) : (
-                                        <tr
-                                            key={row.id}
-                                            className={css({
-                                                borderBottomWidth: '1px',
-                                                borderColor: 'border.muted',
-                                                transition: 'background 0.2s',
-                                                _hover: { background: 'surface' },
-                                            })}
-                                            style={
-                                                row.original.needsReview
-                                                    ? {
-                                                          borderLeft:
-                                                              '3px solid rgba(224,123,83,0.7)',
-                                                      }
-                                                    : undefined
-                                            }
-                                        >
-                                            {row.getVisibleCells().map((cell) => (
-                                                <td
-                                                    key={cell.id}
-                                                    className={css({
-                                                        padding: '3',
-                                                        paddingLeft: '4',
-                                                    })}
-                                                >
-                                                    {cell.column.id === 'name' ? (
-                                                        <div
-                                                            className={css({
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '2',
-                                                            })}
-                                                        >
-                                                            <span
-                                                                className={css({
-                                                                    fontWeight: 'medium',
-                                                                })}
-                                                            >
-                                                                {cell.getValue() as string}
-                                                            </span>
-                                                            <button
-                                                                onClick={() =>
-                                                                    setEditingId(row.original.id)
-                                                                }
-                                                                title="Bearbeiten"
-                                                                className={css({
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center',
-                                                                    width: '6',
-                                                                    height: '6',
-                                                                    borderRadius: 'md',
-                                                                    border: 'none',
-                                                                    background: 'transparent',
-                                                                    cursor: 'pointer',
-                                                                    color: 'foreground.muted',
-                                                                    opacity: 0.5,
-                                                                    _hover: {
-                                                                        opacity: 1,
-                                                                        color: 'foreground',
-                                                                    },
-                                                                })}
-                                                            >
-                                                                <X
-                                                                    size={12}
-                                                                    style={{
-                                                                        transform: 'rotate(45deg)',
-                                                                    }}
-                                                                />
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        flexRender(
-                                                            cell.column.columnDef.cell,
-                                                            cell.getContext(),
-                                                        )
-                                                    )}
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ),
-                                )
-                            )}
-                        </tbody>
-                    </table>
+                        Kurzname
+                    </label>
+                    <input
+                        type="text"
+                        value={shortName}
+                        onChange={(e) => setShortName(e.target.value)}
+                        className={inputStyle}
+                    />
                 </div>
-
-                <div
-                    className={css({
-                        padding: '4',
-                        borderTopWidth: '1px',
-                        borderColor: 'border.muted',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '4',
-                        flexWrap: 'wrap',
-                    })}
-                >
-                    <div className={css({ display: 'flex', gap: '2' })}>
-                        <button
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                            className={css({
-                                paddingX: '3',
-                                paddingY: '2',
-                                borderRadius: 'lg',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                                background: 'surface',
-                                fontSize: 'sm',
-                                cursor: 'pointer',
-                                opacity: table.getCanPreviousPage() ? 1 : 0.5,
-                                pointerEvents: table.getCanPreviousPage() ? 'auto' : 'none',
-                            })}
-                        >
-                            Zurück
-                        </button>
-                        <button
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                            className={css({
-                                paddingX: '3',
-                                paddingY: '2',
-                                borderRadius: 'lg',
-                                borderWidth: '1px',
-                                borderColor: 'border.muted',
-                                background: 'surface',
-                                fontSize: 'sm',
-                                cursor: 'pointer',
-                                opacity: table.getCanNextPage() ? 1 : 0.5,
-                                pointerEvents: table.getCanNextPage() ? 'auto' : 'none',
-                            })}
-                        >
-                            Weiter
-                        </button>
-                    </div>
-                    <span className={css({ fontSize: 'sm', color: 'foreground.muted' })}>
-                        Seite {table.getState().pagination.pageIndex + 1} von {table.getPageCount()}
-                    </span>
+                <div>
+                    <label
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                            display: 'block',
+                            marginBottom: '1',
+                            fontWeight: '500',
+                        })}
+                    >
+                        Langname
+                    </label>
+                    <input
+                        type="text"
+                        value={longName}
+                        onChange={(e) => setLongName(e.target.value)}
+                        className={inputStyle}
+                    />
+                </div>
+                <div>
+                    <label
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                            display: 'block',
+                            marginBottom: '1',
+                            fontWeight: '500',
+                        })}
+                    >
+                        Gramm
+                    </label>
+                    <input
+                        type="number"
+                        value={gramsDefault}
+                        onChange={(e) => setGramsDefault(e.target.value)}
+                        placeholder="-"
+                        className={inputStyle}
+                        style={{ width: 100 }}
+                    />
                 </div>
             </div>
 
-            {isMerging && (
-                <MergeModal ingredients={ingredients} onClose={() => setIsMerging(false)} />
+            {error && (
+                <div
+                    className={css({
+                        padding: '3',
+                        borderRadius: 'lg',
+                        bg: 'error.bg',
+                        color: 'error.text',
+                        fontSize: 'sm',
+                        fontWeight: '500',
+                    })}
+                >
+                    {error}
+                </div>
             )}
-        </>
+
+            <div
+                className={css({
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '2',
+                    paddingTop: '2',
+                    borderTop: '1px solid',
+                    borderColor: 'border.muted',
+                })}
+            >
+                <button type="button" onClick={onClose} className={btnSecondary}>
+                    Abbrechen
+                </button>
+                <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isPending || !shortName.trim() || !longName.trim()}
+                    className={btnPrimary}
+                >
+                    {isPending ? 'Speichern...' : 'Speichern'}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function AddUnitForm({ onClose }: { onClose: () => void }) {
+    const [shortName, setShortName] = useState('');
+    const [longName, setLongName] = useState('');
+    const [gramsDefault, setGramsDefault] = useState('');
+    const [isPending, startTransition] = useTransition();
+    const [error, setError] = useState('');
+
+    const handleSubmit = () => {
+        if (!shortName.trim() || !longName.trim()) return;
+        setError('');
+        startTransition(async () => {
+            try {
+                await createUnit({
+                    shortName: shortName.trim(),
+                    longName: longName.trim(),
+                    gramsDefault: gramsDefault === '' ? null : parseFloat(gramsDefault),
+                });
+                onClose();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Fehler');
+            }
+        });
+    };
+
+    return (
+        <div
+            className={css({
+                padding: '4',
+                borderBottom: '1px solid',
+                borderColor: 'border.muted',
+                bg: { base: 'rgba(224,123,83,0.04)', _dark: 'rgba(224,123,83,0.06)' },
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: '3',
+            })}
+        >
+            <div
+                className={css({
+                    width: '3px',
+                    alignSelf: 'stretch',
+                    borderRadius: 'full',
+                    bg: 'brand.primary',
+                    flexShrink: '0',
+                })}
+            />
+            <div className={css({ flex: '1' })}>
+                <label
+                    className={css({
+                        fontSize: 'xs',
+                        color: 'foreground.muted',
+                        display: 'block',
+                        marginBottom: '1',
+                        fontWeight: '500',
+                    })}
+                >
+                    Kurzname
+                </label>
+                <input
+                    type="text"
+                    value={shortName}
+                    onChange={(e) => setShortName(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSubmit();
+                        }
+                        if (e.key === 'Escape') onClose();
+                    }}
+                    placeholder="z.B. EL"
+                    autoFocus
+                    className={inputStyle}
+                />
+            </div>
+            <div className={css({ flex: '1' })}>
+                <label
+                    className={css({
+                        fontSize: 'xs',
+                        color: 'foreground.muted',
+                        display: 'block',
+                        marginBottom: '1',
+                        fontWeight: '500',
+                    })}
+                >
+                    Langname
+                </label>
+                <input
+                    type="text"
+                    value={longName}
+                    onChange={(e) => setLongName(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSubmit();
+                        }
+                    }}
+                    placeholder="z.B. Essloeffel"
+                    className={inputStyle}
+                />
+            </div>
+            <div className={css({ width: '140px' })}>
+                <label
+                    className={css({
+                        fontSize: 'xs',
+                        color: 'foreground.muted',
+                        display: 'block',
+                        marginBottom: '1',
+                        fontWeight: '500',
+                    })}
+                >
+                    Gramm
+                </label>
+                <input
+                    type="number"
+                    value={gramsDefault}
+                    onChange={(e) => setGramsDefault(e.target.value)}
+                    placeholder="-"
+                    className={inputStyle}
+                />
+            </div>
+            {error && (
+                <span className={css({ fontSize: 'xs', color: 'error.text', fontWeight: '500' })}>
+                    {error}
+                </span>
+            )}
+            <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isPending || !shortName.trim() || !longName.trim()}
+                className={btnPrimary}
+            >
+                <Check size={14} />
+            </button>
+            <button type="button" onClick={onClose} className={btnSecondary}>
+                <X size={14} />
+            </button>
+        </div>
+    );
+}
+
+// ===========================================================================
+// Shared small components
+// ===========================================================================
+
+/** Reusable sort header button */
+function SortHeader({ column, label }: { column: { toggleSorting: () => void }; label: string }) {
+    return (
+        <button
+            type="button"
+            onClick={() => column.toggleSorting()}
+            className={css({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1',
+                bg: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: 'xs',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'foreground.muted',
+                _hover: { color: 'foreground' },
+                transition: 'color 0.15s',
+            })}
+        >
+            {label} <ArrowUpDown size={12} />
+        </button>
+    );
+}
+
+/** Shared toolbar for search + add */
+function TableToolbar({
+    searchPlaceholder,
+    filter,
+    onFilterChange,
+    onAdd,
+}: {
+    searchPlaceholder: string;
+    filter: string;
+    onFilterChange: (v: string) => void;
+    onAdd: () => void;
+}) {
+    return (
+        <div
+            className={css({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2',
+                padding: '4',
+                borderBottom: '1px solid',
+                borderColor: 'border.muted',
+            })}
+        >
+            <div
+                className={css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    flex: '1',
+                    gap: '2',
+                    borderRadius: 'lg',
+                    border: '1px solid',
+                    borderColor: 'border',
+                    bg: 'surface.elevated',
+                    paddingX: '3',
+                    paddingY: '2',
+                    transition: 'all 0.15s',
+                    _focusWithin: {
+                        borderColor: 'brand.primary',
+                        boxShadow: {
+                            base: '0 0 0 3px rgba(224,123,83,0.12)',
+                            _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                        },
+                    },
+                })}
+            >
+                <Search size={15} className={css({ color: 'foreground.muted', flexShrink: '0' })} />
+                <input
+                    type="text"
+                    placeholder={searchPlaceholder}
+                    value={filter}
+                    onChange={(e) => onFilterChange(e.target.value)}
+                    className={css({
+                        flex: '1',
+                        bg: 'transparent',
+                        border: 'none',
+                        outline: 'none',
+                        fontSize: 'sm',
+                        color: 'foreground',
+                    })}
+                />
+                {filter && (
+                    <button
+                        type="button"
+                        onClick={() => onFilterChange('')}
+                        className={css({
+                            bg: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'foreground.muted',
+                            display: 'flex',
+                            padding: '0.5',
+                            borderRadius: 'md',
+                            _hover: { color: 'foreground', bg: 'surface.muted' },
+                        })}
+                    >
+                        <X size={14} />
+                    </button>
+                )}
+            </div>
+            <button type="button" onClick={onAdd} className={btnPrimary} title="Hinzufuegen">
+                <Plus size={14} />
+            </button>
+        </div>
+    );
+}
+
+/** Reusable simple table for categories/units */
+function SimpleTable<T>({
+    table,
+    columns,
+    onRowClick,
+    emptyMessage,
+}: {
+    table: ReturnType<typeof useReactTable<T>>;
+    columns: ColumnDef<T>[];
+    onRowClick: (row: T) => void;
+    emptyMessage: string;
+}) {
+    return (
+        <div className={css({ overflowX: 'auto' })}>
+            <table className={css({ width: '100%', borderCollapse: 'collapse' })}>
+                <thead>
+                    {table.getHeaderGroups().map((hg) => (
+                        <tr
+                            key={hg.id}
+                            className={css({
+                                borderBottom: '1px solid',
+                                borderColor: 'border.muted',
+                            })}
+                        >
+                            {hg.headers.map((header) => (
+                                <th key={header.id} className={thStyle}>
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(
+                                              header.column.columnDef.header,
+                                              header.getContext(),
+                                          )}
+                                </th>
+                            ))}
+                        </tr>
+                    ))}
+                </thead>
+                <tbody>
+                    {table.getRowModel().rows.map((row, idx) => (
+                        <tr
+                            key={row.id}
+                            onClick={() => onRowClick(row.original)}
+                            className={css({
+                                borderBottom: '1px solid',
+                                borderColor: 'border.muted',
+                                cursor: 'pointer',
+                                transition: 'background 0.1s ease',
+                                bg: idx % 2 === 1 ? 'surface.muted' : 'transparent',
+                                _hover: {
+                                    bg: {
+                                        base: 'rgba(224,123,83,0.06)',
+                                        _dark: 'rgba(224,123,83,0.08)',
+                                    },
+                                },
+                            })}
+                        >
+                            {row.getVisibleCells().map((cell) => (
+                                <td
+                                    key={cell.id}
+                                    className={css({
+                                        padding: '3',
+                                        paddingX: '4',
+                                        verticalAlign: 'middle',
+                                    })}
+                                >
+                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                    {table.getRowModel().rows.length === 0 && (
+                        <tr>
+                            <td
+                                colSpan={columns.length}
+                                className={css({
+                                    padding: '12',
+                                    textAlign: 'center',
+                                    color: 'foreground.muted',
+                                    fontSize: 'sm',
+                                })}
+                            >
+                                {emptyMessage}
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+/** Delete button with confirmation */
+function DeleteButton({
+    onDelete,
+    disabled,
+    title,
+}: {
+    onDelete: () => Promise<void>;
+    disabled?: boolean;
+    title?: string;
+}) {
+    const [isPending, startTransition] = useTransition();
+
+    const handleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (disabled) return;
+        if (!confirm('Wirklich loeschen?')) return;
+        startTransition(async () => {
+            await onDelete();
+        });
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={handleClick}
+            disabled={disabled || isPending}
+            title={title}
+            className={css({
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '8',
+                height: '8',
+                borderRadius: 'lg',
+                border: 'none',
+                bg: 'transparent',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                color: disabled ? 'foreground.muted' : 'foreground.muted',
+                opacity: disabled ? '0.3' : '1',
+                transition: 'all 0.15s',
+                _hover: disabled
+                    ? {}
+                    : {
+                          bg: 'error.bg',
+                          color: 'status.danger',
+                      },
+            })}
+        >
+            <Trash2 size={14} />
+        </button>
     );
 }

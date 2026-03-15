@@ -250,11 +250,21 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         allowTargetInteraction: true,
     },
     {
+        id: 'flow-connect-intro',
+        kind: 'info',
+        title: 'So funktionieren Verbindungen',
+        description:
+            'Jeder Knoten hat kleine Punkte an den Seiten: links einen Eingang (●) und rechts einen Ausgang (●). Du verbindest zwei Knoten, indem du mit der Maus auf einen Ausgang klickst, die Taste gedrückt hältst und zum Eingang eines anderen Knotens ziehst. Es erscheint eine Linie — lass die Maustaste los, sobald du den Zielpunkt erreichst.',
+        primaryLabel: 'Verstanden',
+        targetId: RECIPE_TUTORIAL_TARGETS.flowCanvas,
+        allowTargetInteraction: false,
+    },
+    {
         id: 'flow-connect',
         kind: 'event',
-        title: 'Verbindungen ziehen',
+        title: 'Jetzt bist du dran!',
         description:
-            'Ziehe eine Verbindung vom rechten Punkt eines Knotens zum linken Punkt eines anderen. So legst du die Reihenfolge fest — und vergiss nicht, jeden Zweig zum Servieren zu verbinden.',
+            'Dein neuer Zweig ist noch nicht verbunden. Die orange pulsierenden Punkte zeigen dir, wo eine Verbindung fehlt. Ziehe jetzt von einem pulsierenden Ausgang (●) zu einem pulsierenden Eingang (●), um den Zweig mit dem Servieren-Knoten zu verbinden.',
         primaryLabel: 'Weiter',
         targetId: RECIPE_TUTORIAL_TARGETS.flowCanvas,
         eventKey: 'edgeConnected',

@@ -1,35 +1,34 @@
-'use client';
-
 import { Camera, ChefHat, Pin, Star } from 'lucide-react';
-import { motion } from 'motion/react';
 import { ReactNode } from 'react';
 
-import { PageShell } from '@app/components/layouts/PageShell';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
+
+import { FormPanelAnimation, HeroFloatingIcons, HeroPointCard } from './AuthHeroAnimations';
+import { PageShell } from './PageShell';
 
 const HERO_POINTS = [
     {
         label: 'Eigene Rezepte erstellen',
         description:
             'Erstelle Rezepte als visuelle Flow-Diagramme — mit parallelen Schritten, Timings und eigenen Fotos.',
-        icon: ChefHat,
+        Icon: ChefHat,
     },
     {
         label: 'Rezepte anpinnen & organisieren',
         description:
             'Pinne deine Lieblingsrezepte an und hab sie immer griffbereit — dein persönliches Kochbuch.',
-        icon: Pin,
+        Icon: Pin,
     },
     {
         label: 'Favoriten & Sammlungen',
         description: 'Favorisiere Rezepte anderer Köche und finde sie jederzeit wieder.',
-        icon: Star,
+        Icon: Star,
     },
     {
         label: 'Fotos hochladen',
         description: 'Zeig deine Kreationen! Lade eigene Fotos zu jedem Rezeptschritt hoch.',
-        icon: Camera,
+        Icon: Camera,
     },
 ];
 
@@ -64,7 +63,6 @@ export function AuthPageLayout({
                         maxWidth: '1200px',
                     })}
                 >
-                    {/* Seamless card: overflow:hidden clips both panels with the outer border-radius */}
                     <div
                         className={css({
                             display: 'grid',
@@ -80,8 +78,8 @@ export function AuthPageLayout({
                             minHeight: { base: 'auto', lg: '580px' },
                         })}
                     >
-                        {/* Hero panel — below form on small, left on large */}
-                        <motion.div
+                        {/* Hero panel */}
+                        <div
                             className={css({
                                 display: 'flex',
                                 order: { base: 2, lg: 1 },
@@ -94,37 +92,8 @@ export function AuthPageLayout({
                             style={{
                                 background: `linear-gradient(135deg, color-mix(in srgb, ${PALETTE.orange} 90%, black), ${PALETTE.orange}, color-mix(in srgb, ${PALETTE.orange} 75%, white))`,
                             }}
-                            initial={{ opacity: 0, x: -16 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.45 }}
                         >
-                            {/* Decorative floating icons */}
-                            <motion.div
-                                className={css({
-                                    position: 'absolute',
-                                    top: '-30px',
-                                    right: '-30px',
-                                    opacity: 0.12,
-                                    pointerEvents: 'none',
-                                })}
-                                animate={{ y: [0, -10, 0], rotate: [0, 4, 0] }}
-                                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                            >
-                                <ChefHat size={160} color="#fff6ec" />
-                            </motion.div>
-                            <motion.div
-                                className={css({
-                                    position: 'absolute',
-                                    bottom: '60px',
-                                    left: '-20px',
-                                    opacity: 0.08,
-                                    pointerEvents: 'none',
-                                })}
-                                animate={{ y: [0, 8, 0], rotate: [0, -3, 0] }}
-                                transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-                            >
-                                <Star size={120} color="#fff6ec" />
-                            </motion.div>
+                            <HeroFloatingIcons />
 
                             {/* Content */}
                             <div
@@ -178,25 +147,7 @@ export function AuthPageLayout({
                                     })}
                                 >
                                     {HERO_POINTS.map((point, index) => (
-                                        <motion.div
-                                            key={point.label}
-                                            className={css({
-                                                display: 'flex',
-                                                gap: '3',
-                                                p: '3',
-                                                borderRadius: 'xl',
-                                                background: 'rgba(0,0,0,0.18)',
-                                                backdropFilter: 'blur(12px)',
-                                                border: '1px solid rgba(255,246,236,0.12)',
-                                                alignItems: 'center',
-                                            })}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{
-                                                duration: 0.3,
-                                                delay: 0.2 + index * 0.06,
-                                            }}
-                                        >
+                                        <HeroPointCard key={point.label} index={index}>
                                             <div
                                                 className={css({
                                                     width: '9',
@@ -209,7 +160,7 @@ export function AuthPageLayout({
                                                     flexShrink: 0,
                                                 })}
                                             >
-                                                <point.icon size={18} color="#fff6ec" />
+                                                <point.Icon size={18} color="#fff6ec" />
                                             </div>
                                             <div>
                                                 <p
@@ -233,59 +184,54 @@ export function AuthPageLayout({
                                                     {point.description}
                                                 </p>
                                             </div>
-                                        </motion.div>
+                                        </HeroPointCard>
                                     ))}
                                 </div>
                             </div>
-                        </motion.div>
+                        </div>
 
                         {/* Form panel */}
-                        <motion.div
+                        <div
                             className={css({
                                 background: 'surface.elevated',
-                                display: 'flex',
                                 order: { base: 1, lg: 2 },
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                padding: { base: '6', md: '10' },
                             })}
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4, delay: 0.15 }}
                         >
-                            <div
-                                className={css({
-                                    width: '100%',
-                                    maxWidth: '460px',
-                                    marginX: 'auto',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '4',
-                                })}
-                            >
-                                {children}
-                            </div>
-                            {formFooter && (
+                            <FormPanelAnimation>
                                 <div
                                     className={css({
                                         width: '100%',
                                         maxWidth: '460px',
                                         marginX: 'auto',
-                                        marginTop: '5',
-                                        borderTop: '1px solid',
-                                        borderColor: 'border.muted',
-                                        paddingTop: '4',
-                                        fontSize: 'sm',
-                                        color: 'foreground.muted',
                                         display: 'flex',
                                         flexDirection: 'column',
-                                        gap: '2',
+                                        gap: '4',
                                     })}
                                 >
-                                    {formFooter}
+                                    {children}
                                 </div>
-                            )}
-                        </motion.div>
+                                {formFooter && (
+                                    <div
+                                        className={css({
+                                            width: '100%',
+                                            maxWidth: '460px',
+                                            marginX: 'auto',
+                                            marginTop: '5',
+                                            borderTop: '1px solid',
+                                            borderColor: 'border.muted',
+                                            paddingTop: '4',
+                                            fontSize: 'sm',
+                                            color: 'foreground.muted',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '2',
+                                        })}
+                                    >
+                                        {formFooter}
+                                    </div>
+                                )}
+                            </FormPanelAnimation>
+                        </div>
                     </div>
                 </div>
             </section>

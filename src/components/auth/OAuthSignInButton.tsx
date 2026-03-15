@@ -1,8 +1,9 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
+import { KeyRound } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
+import { authClient, signIn } from '@app/lib/auth-client';
 import { css } from 'styled-system/css';
 import type { SystemStyleObject } from 'styled-system/types';
 
@@ -41,7 +42,7 @@ function brandStyle(bg: string): OAuthButtonStyle {
 }
 
 interface OAuthSignInButtonProps {
-    provider: string;
+    provider: 'google' | 'discord';
     label: string;
     icon: ReactNode;
     callbackUrl?: string;
@@ -59,7 +60,7 @@ export function OAuthSignInButton({
 
     const handleClick = () => {
         setLoading(true);
-        signIn(provider, { callbackUrl });
+        signIn.social({ provider, callbackURL: callbackUrl });
     };
 
     return (
@@ -176,5 +177,67 @@ export function DiscordSignInButton({ callbackUrl }: { callbackUrl?: string }) {
             callbackUrl={callbackUrl}
             style={DISCORD_STYLE}
         />
+    );
+}
+
+export function PasskeySignInButton({ callbackUrl = '/' }: { callbackUrl?: string }) {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleClick = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await authClient.signIn.passkey();
+            if (result?.error) {
+                setError('Passkey-Anmeldung fehlgeschlagen.');
+            } else {
+                window.location.href = callbackUrl;
+            }
+        } catch {
+            setError('Passkey-Anmeldung fehlgeschlagen.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div>
+            <button
+                type="button"
+                onClick={handleClick}
+                disabled={loading}
+                className={css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '2.5',
+                    width: '100%',
+                    padding: '3',
+                    borderRadius: 'xl',
+                    border: '1px solid',
+                    borderColor: 'border',
+                    fontFamily: 'body',
+                    fontSize: 'md',
+                    fontWeight: '600',
+                    color: 'foreground',
+                    background: 'surface',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    opacity: loading ? 0.7 : 1,
+                    transition: 'all 150ms ease',
+                    _hover: loading
+                        ? {}
+                        : {
+                              borderColor: 'border.hover',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                              transform: 'translateY(-1px)',
+                          },
+                })}
+            >
+                <KeyRound size={20} />
+                {loading ? 'Weiterleitung…' : 'Mit Passkey anmelden'}
+            </button>
+            {error && <p className={css({ color: 'red.500', fontSize: 'sm', mt: '1' })}>{error}</p>}
+        </div>
     );
 }

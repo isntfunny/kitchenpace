@@ -54,18 +54,6 @@ enum JobStatus {
   FAILED
 }
 
-enum ShoppingCategory {
-  GEMUESE
-  OBST
-  FLEISCH
-  FISCH
-  MILCHPRODUKTE
-  GEWURZE
-  BACKEN
-  GETRAENKE
-  SONSTIGES
-}
-
 enum NotificationType {
   NEW_FOLLOWER
   RECIPE_LIKE
@@ -288,7 +276,13 @@ model Recipe {
   prepTime                                                                   Int                 @default(0)
   cookTime                                                                   Int                 @default(0)
   totalTime                                                                  Int                 @default(0)
-  calories                                                                   Int?
+  // Nutrition (auto-calculated from ingredients on save)
+  caloriesPerServing                                                         Int?
+  proteinPerServing                                                          Float?
+  fatPerServing                                                              Float?
+  carbsPerServing                                                            Float?
+  fiberPerServing                                                            Float?
+  nutritionCompleteness                                                      Float?
   difficulty                                                                 Difficulty          @default(MEDIUM)
   status                                                                     RecipeStatus        @default(DRAFT)
   publishedAt                                                                DateTime?
@@ -411,20 +405,61 @@ model ImportRun {
 // ============================================
 
 model Ingredient {
-  id            String              @id @default(cuid())
-  name          String
-  slug          String              @unique
-  pluralName    String?
-  category      ShoppingCategory?
-  units         String[]
-  aliases       String[]            @default([])
-  recipes       RecipeIngredient[]
-  shoppingItems ShoppingItem[]
-  createdAt     DateTime            @default(now())
-  needsReview   Boolean             @default(false)
+  id              String              @id @default(cuid())
+  name            String
+  slug            String              @unique
+  pluralName      String?
+  aliases         String[]            @default([])
+  needsReview     Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+
+  // Nutrition per 100g (all optional)
+  caloriesPer100g     Float?
+  proteinPer100g      Float?
+  fatPer100g          Float?
+  carbsPer100g        Float?
+  fiberPer100g        Float?
+  sugarPer100g        Float?
+  sodiumPer100g       Float?  // mg
+  saturatedFatPer100g Float?
+
+  // Relations
+  categories      IngredientCategory[]
+  ingredientUnits IngredientUnit[]
+  recipes         RecipeIngredient[]
+  shoppingItems   ShoppingItem[]
 
   @@index([name])
   @@index([aliases], type: Gin)
+}
+
+model IngredientCategory {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  slug        String       @unique
+  sortOrder   Int          @default(0)
+  ingredients Ingredient[]
+}
+
+model Unit {
+  id           String           @id @default(cuid())
+  shortName    String           @unique
+  longName     String           @unique
+  gramsDefault Float?
+  ingredients  IngredientUnit[]
+}
+
+model IngredientUnit {
+  ingredientId String
+  unitId       String
+  grams        Float?
+
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  unit         Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@id([ingredientId, unitId])
+  @@index([ingredientId])
+  @@index([unitId])
 }
 
 model RecipeIngredient {
@@ -666,7 +701,6 @@ model ShoppingItem {
   name           String           // Display name (fallback)
   amount                                                          String?
   unit                                                            String?
-  category                                                        ShoppingCategory  @default(SONSTIGES)
   checked                                                         Boolean           @default(false)
   position                                                        Int               @default(0)
 

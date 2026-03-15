@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# If Infisical is configured, re-exec with secrets injected
+# If Infisical is configured, load secrets into shell environment
 if [ -n "$INFISICAL_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
   echo "[entrypoint] Loading secrets from Infisical..."
   export __INFISICAL_LOADED=1
@@ -14,10 +14,14 @@ if [ -n "$INFISICAL_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
     echo "[entrypoint] ERROR: Failed to authenticate with Infisical" >&2
     exit 1
   fi
-  exec npx infisical run \
+  npx infisical export \
     --projectId "${INFISICAL_PROJECT_ID}" \
     --env "${INFISICAL_ENV:-prod}" \
-    -- "$0" "$@"
+    --format=dotenv > /tmp/.env.infisical
+  set -a
+  . /tmp/.env.infisical
+  set +a
+  echo "[entrypoint] Loaded $(wc -l < /tmp/.env.infisical) secrets from Infisical"
 fi
 
 # Worker skips database setup

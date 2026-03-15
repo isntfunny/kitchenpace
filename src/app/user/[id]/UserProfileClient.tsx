@@ -779,7 +779,7 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                     </div>
 
                     {/* Activity Sidebar */}
-                    <div className={css({ display: 'flex', flexDir: 'column', gap: '8' })}>
+                    <div className={css({ display: 'flex', flexDir: 'column', gap: '6' })}>
                         {user.trophies && user.trophies.length > 0 && (
                             <TrophySection trophies={user.trophies} />
                         )}
@@ -789,7 +789,6 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                 fontWeight: '700',
                                 color: 'text',
                                 fontFamily: 'heading',
-                                mb: '5',
                             })}
                         >
                             Aktivitäten

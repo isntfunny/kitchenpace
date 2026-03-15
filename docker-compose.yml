@@ -74,8 +74,6 @@ services:
                 REACT_PROFILE: 1
         image: kitchenpace:beta
         container_name: kitchenpace-app
-        environment:
-            - SCRAPLER_URL=http://scraper:8000
         depends_on:
             postgres:
                 condition: service_healthy

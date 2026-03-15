@@ -4,26 +4,11 @@ services:
     redis:
         image: redis:7-alpine
         container_name: kitchenpace-redis
-        environment:
-            REDIS_PASSWORD: ${REDIS_PASSWORD:-kitchenpace_secret}
-        command:
-            [
-                'redis-server',
-                '--requirepass',
-                '${REDIS_PASSWORD:-kitchenpace_secret}',
-                '--appendonly',
-                'yes',
-                '--appendfsync',
-                'everysec',
-            ]
+        command: ['redis-server', '--appendonly', 'yes', '--appendfsync', 'everysec']
         volumes:
             - /data/kitchenpace/redis:/data
         healthcheck:
-            test:
-                [
-                    'CMD-SHELL',
-                    "redis-cli -a '${REDIS_PASSWORD:-kitchenpace_secret}' ping | grep PONG",
-                ]
+            test: ['CMD-SHELL', 'redis-cli ping | grep PONG']
             interval: 10s
             timeout: 3s
             retries: 5
@@ -37,7 +22,6 @@ services:
             plugins.security.disabled: 'true'
             OPENSEARCH_JAVA_OPTS: '-Xms128m -Xmx256m -XX:MaxDirectMemorySize=64m'
             bootstrap.memory_lock: 'true'
-            OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-1snt-Funny1}
         ulimits:
             memlock:
                 soft: -1
@@ -61,12 +45,8 @@ services:
             target: app
             extra_hosts:
                 - 'host.docker.internal:host-gateway'
-            args:
-                - DATABASE_URL=${DATABASE_URL}
         image: kitchenpace:live
         container_name: kitchenpace-app
-        env_file:
-            - .env
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         depends_on:
@@ -106,9 +86,6 @@ services:
         image: registry.isntfunny.de/kitchenpace/scraper:latest
         pull_policy: always
         container_name: kitchenpace-scraper
-        environment:
-            SEQ_URL: ${SEQ_URL:-}
-            SEQ_API_KEY: ${SEQ_API_KEY:-}
         healthcheck:
             test: ['CMD', 'curl', '-f', 'http://127.0.0.1:8000/health']
             interval: 1s
@@ -137,7 +114,6 @@ services:
         container_name: kitchenpace-redis-exporter
         environment:
             REDIS_ADDR: redis://redis:6379
-            REDIS_PASSWORD: ${REDIS_PASSWORD:-kitchenpace_secret}
         depends_on:
             redis:
                 condition: service_healthy

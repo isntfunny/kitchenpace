@@ -63,6 +63,10 @@ export interface Recipe {
     prepTime: number;
     cookTime: number;
     calories?: number | null;
+    proteinPerServing?: number | null;
+    fatPerServing?: number | null;
+    carbsPerServing?: number | null;
+    nutritionCompleteness?: number | null;
     servings: number;
     difficulty: 'Einfach' | 'Mittel' | 'Schwer';
     ingredients: Ingredient[];

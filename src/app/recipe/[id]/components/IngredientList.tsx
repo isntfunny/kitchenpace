@@ -19,6 +19,10 @@ interface IngredientListProps {
     originalServings: number;
     onServingsChange: (servings: number) => void;
     calories?: number | null;
+    proteinPerServing?: number | null;
+    fatPerServing?: number | null;
+    carbsPerServing?: number | null;
+    nutritionCompleteness?: number | null;
     formatAmount: (amount: number) => string;
 }
 
@@ -28,8 +32,15 @@ export function IngredientList({
     originalServings,
     onServingsChange,
     calories,
+    proteinPerServing,
+    fatPerServing,
+    carbsPerServing,
+    nutritionCompleteness,
     formatAmount,
 }: IngredientListProps) {
+    const scale = servings / originalServings;
+    const hasNutrition = calories != null && calories > 0;
+
     return (
         <div
             className={css({
@@ -157,26 +168,111 @@ export function IngredientList({
                 ))}
             </ul>
 
-            {calories != null && calories > 0 && (
+            {hasNutrition && (
                 <div
                     className={css({
-                        mt: '3',
-                        pt: '3',
+                        mt: '4',
+                        pt: '4',
                         borderTop: '1px solid',
                         borderColor: 'border',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        fontSize: 'sm',
-                        color: 'text-muted',
                     })}
                 >
-                    <span>Kalorien</span>
-                    <span className={css({ fontWeight: '600', color: 'text' })}>
-                        {Math.round(calories * (servings / originalServings))} kcal
-                    </span>
+                    <h3
+                        className={css({
+                            fontSize: 'sm',
+                            fontWeight: '600',
+                            mb: '3',
+                            color: 'text',
+                        })}
+                    >
+                        {servings === originalServings
+                            ? 'pro Portion'
+                            : `pro Portion (${servings} Portionen)`}
+                    </h3>
+                    <div
+                        className={css({
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '2',
+                        })}
+                    >
+                        <NutritionItem
+                            label="Kalorien"
+                            value={Math.round(calories! * scale)}
+                            unit="kcal"
+                            highlight
+                        />
+                        {proteinPerServing != null && (
+                            <NutritionItem
+                                label="Protein"
+                                value={Math.round(proteinPerServing * scale * 10) / 10}
+                                unit="g"
+                            />
+                        )}
+                        {carbsPerServing != null && (
+                            <NutritionItem
+                                label="Kohlenhydrate"
+                                value={Math.round(carbsPerServing * scale * 10) / 10}
+                                unit="g"
+                            />
+                        )}
+                        {fatPerServing != null && (
+                            <NutritionItem
+                                label="Fett"
+                                value={Math.round(fatPerServing * scale * 10) / 10}
+                                unit="g"
+                            />
+                        )}
+                    </div>
+                    {nutritionCompleteness != null && nutritionCompleteness < 1 && (
+                        <p
+                            className={css({
+                                fontSize: 'xs',
+                                color: 'text-muted',
+                                mt: '2',
+                                fontStyle: 'italic',
+                            })}
+                        >
+                            Basierend auf {Math.round(nutritionCompleteness * ingredients.length)}{' '}
+                            von {ingredients.length} Zutaten
+                        </p>
+                    )}
                 </div>
             )}
+        </div>
+    );
+}
+
+function NutritionItem({
+    label,
+    value,
+    unit,
+    highlight,
+}: {
+    label: string;
+    value: number;
+    unit: string;
+    highlight?: boolean;
+}) {
+    return (
+        <div
+            className={css({
+                p: '2',
+                bg: 'light',
+                borderRadius: 'lg',
+                textAlign: 'center',
+            })}
+        >
+            <div
+                className={css({
+                    fontSize: highlight ? 'lg' : 'md',
+                    fontWeight: '600',
+                    color: 'text',
+                })}
+            >
+                {value} {unit}
+            </div>
+            <div className={css({ fontSize: 'xs', color: 'text-muted' })}>{label}</div>
         </div>
     );
 }

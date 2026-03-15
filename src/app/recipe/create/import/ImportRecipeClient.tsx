@@ -380,6 +380,9 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                 pluralName: null,
                 amount: ing.amount,
                 unit: ing.unit,
+                availableUnits: [
+                    ...new Set(ing.unit ? [ing.unit, 'g', 'ml', 'Stk'] : ['g', 'ml', 'Stk']),
+                ],
                 notes: ing.notes || '',
                 isOptional: ing.isOptional,
                 isNew: true,

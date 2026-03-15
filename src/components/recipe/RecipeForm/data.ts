@@ -16,8 +16,9 @@ export interface IngredientSearchResult {
     id: string;
     name: string;
     pluralName: string | null;
-    category: string | null;
+    categories: string[];
     units: string[];
+    matchedAlias?: string;
 }
 
 export interface AddedIngredient {
@@ -26,6 +27,7 @@ export interface AddedIngredient {
     pluralName: string | null;
     amount: string;
     unit: string;
+    availableUnits: string[];
     notes: string;
     isOptional: boolean;
     isNew: boolean;

@@ -27,8 +27,6 @@ interface IngredientManagerProps {
     onAddNewIngredient: (name: string) => Promise<void>;
     onUpdateIngredient: (index: number, changes: Partial<AddedIngredient>) => void;
     onRemoveIngredient: (index: number) => void;
-    calories?: number;
-    onCaloriesChange?: (value: number | undefined) => void;
     ingredientSearchRef?: RefObject<HTMLInputElement | null>;
     onServingsCustomTriggerClick?: () => void;
     onIngredientAmountFocus?: () => void;
@@ -46,8 +44,6 @@ export function IngredientManager({
     onAddNewIngredient,
     onUpdateIngredient,
     onRemoveIngredient,
-    calories,
-    onCaloriesChange,
     ingredientSearchRef,
     onServingsCustomTriggerClick,
     onIngredientAmountFocus,
@@ -160,7 +156,20 @@ export function IngredientManager({
                                 }}
                                 className={resultBtnClass}
                             >
-                                <span className={css({ fontWeight: '500' })}>{ing.name}</span>
+                                <span className={css({ fontWeight: '500' })}>
+                                    {ing.name}
+                                    {ing.matchedAlias && (
+                                        <span
+                                            className={css({
+                                                fontWeight: '400',
+                                                color: 'text-muted',
+                                            })}
+                                        >
+                                            {' '}
+                                            ({ing.matchedAlias})
+                                        </span>
+                                    )}
+                                </span>
                                 <span
                                     className={css({
                                         color: 'text-muted',
@@ -168,7 +177,7 @@ export function IngredientManager({
                                         ml: '2',
                                     })}
                                 >
-                                    {ing.category || 'Ohne Kategorie'}
+                                    {ing.categories?.[0] || 'Ohne Kategorie'}
                                 </span>
                             </button>
                         ))}
@@ -212,54 +221,16 @@ export function IngredientManager({
                     ))}
                 </div>
             )}
-            {onCaloriesChange && (
-                <div className={css({ mt: '4' })}>
-                    <span className={labelClass}>Kalorien (optional)</span>
-                    <div
-                        className={css({
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '2',
-                            borderRadius: 'lg',
-                            px: '3',
-                        })}
-                        style={{
-                            border: `1px solid ${PALETTE.orange}`,
-                            height: 36,
-                        }}
-                    >
-                        <input
-                            type="number"
-                            min={0}
-                            value={calories ?? ''}
-                            onChange={(e) => {
-                                const v = e.target.value;
-                                onCaloriesChange(v === '' ? undefined : Number(v));
-                            }}
-                            placeholder="z.B. 450"
-                            className={css({
-                                flex: '1',
-                                fontSize: 'sm',
-                                fontWeight: '600',
-                                outline: 'none',
-                                background: 'transparent',
-                                color: 'text',
-                                height: '100%',
-                            })}
-                        />
-                        <span
-                            className={css({
-                                fontSize: 'xs',
-                                color: 'text.muted',
-                                flexShrink: '0',
-                                whiteSpace: 'nowrap',
-                            })}
-                        >
-                            kcal gesamt
-                        </span>
-                    </div>
-                </div>
-            )}
+            <p
+                className={css({
+                    mt: '3',
+                    fontSize: 'xs',
+                    color: 'text.muted',
+                    fontStyle: 'italic',
+                })}
+            >
+                Nährwerte werden automatisch aus den Zutaten berechnet.
+            </p>
         </div>
     );
 }
@@ -338,14 +309,21 @@ function IngredientRow({
                         className={css({ width: '1px', height: '60%', flexShrink: 0 })}
                         style={{ background: `${PALETTE.orange}50` }}
                     />
-                    <input
-                        type="text"
+                    <select
                         value={ing.unit}
                         onChange={(e) => onUpdate(index, { unit: e.target.value })}
-                        placeholder="–"
                         className={unitInputClass}
                         data-tutorial={isTutorialTarget ? 'ingredient-unit' : undefined}
-                    />
+                    >
+                        {ing.availableUnits.map((u) => (
+                            <option key={u} value={u}>
+                                {u}
+                            </option>
+                        ))}
+                        {!ing.availableUnits.includes(ing.unit) && ing.unit && (
+                            <option value={ing.unit}>{ing.unit}</option>
+                        )}
+                    </select>
                 </div>
 
                 {/* Optional toggle */}

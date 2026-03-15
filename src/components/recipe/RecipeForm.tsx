@@ -94,9 +94,7 @@ export function RecipeForm({
     const [servings, setServings] = useState(initialData?.servings ?? 4);
     const [prepTime, setPrepTime] = useState(initialData?.prepTime ?? 0);
     const [cookTime, setCookTime] = useState(initialData?.cookTime ?? 0);
-    const [calories, setCalories] = useState<number | undefined>(
-        initialData?.calories ?? undefined,
-    );
+    // Calories are auto-calculated on save from ingredient nutrition data
     const [difficulty, setDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>(
         initialData?.difficulty ?? 'MEDIUM',
     );
@@ -110,6 +108,7 @@ export function RecipeForm({
             pluralName: ing.pluralName ?? null,
             amount: ing.amount,
             unit: ing.unit,
+            availableUnits: ing.availableUnits ?? ['g', 'ml', 'Stk'],
             notes: ing.notes,
             isOptional: ing.isOptional,
             isNew: false,
@@ -175,7 +174,6 @@ export function RecipeForm({
             servings,
             prepTime,
             cookTime,
-            calories,
             difficulty,
             categoryIds,
             tagIds: selectedTags,
@@ -198,7 +196,6 @@ export function RecipeForm({
             servings,
             prepTime,
             cookTime,
-            calories,
             difficulty,
             categoryIds,
             selectedTags,
@@ -358,7 +355,8 @@ export function RecipeForm({
                 name: ing.name,
                 pluralName: ing.pluralName ?? null,
                 amount: '',
-                unit: ing.units[0] || '',
+                unit: ing.units[0] || 'g',
+                availableUnits: ing.units.length > 0 ? ing.units : ['g', 'ml', 'Stk'],
                 notes: '',
                 isOptional: false,
                 isNew: false,
@@ -376,7 +374,8 @@ export function RecipeForm({
                 name: created.name,
                 pluralName: created.pluralName ?? null,
                 amount: '',
-                unit: '',
+                unit: 'g',
+                availableUnits: ['g', 'ml', 'Stk'],
                 notes: '',
                 isOptional: false,
                 isNew: true,
@@ -454,7 +453,12 @@ export function RecipeForm({
                             name: created.name,
                             pluralName: created.pluralName ?? null,
                             amount: ing.amount ?? '',
-                            unit: ing.unit || 'Stück',
+                            unit: ing.unit || 'g',
+                            availableUnits: [
+                                ...new Set(
+                                    ing.unit ? [ing.unit, 'g', 'ml', 'Stk'] : ['g', 'ml', 'Stk'],
+                                ),
+                            ],
                             notes: ing.notes ?? '',
                             isOptional: false,
                             isNew: false,
@@ -936,8 +940,6 @@ export function RecipeForm({
                             onAddNewIngredient={handleAddNewIngredient}
                             onUpdateIngredient={updateIngredient}
                             onRemoveIngredient={handleRemoveIngredient}
-                            calories={calories}
-                            onCaloriesChange={setCalories}
                             onServingsCustomTriggerClick={() =>
                                 dispatchRecipeTutorialEvent(
                                     RECIPE_TUTORIAL_EVENTS.servingsCustomOpened,
@@ -1039,8 +1041,6 @@ export function RecipeForm({
                     onAddNewIngredient={handleAddNewIngredient}
                     onUpdateIngredient={updateIngredient}
                     onRemoveIngredient={handleRemoveIngredient}
-                    calories={calories}
-                    onCaloriesChange={setCalories}
                     onServingsCustomTriggerClick={() =>
                         dispatchRecipeTutorialEvent(RECIPE_TUTORIAL_EVENTS.servingsCustomOpened)
                     }

@@ -105,6 +105,10 @@ export interface RecipeDetailData {
     cookTime: number;
     totalTime: number;
     calories?: number | null;
+    proteinPerServing?: number | null;
+    fatPerServing?: number | null;
+    carbsPerServing?: number | null;
+    nutritionCompleteness?: number | null;
     servings: number;
     difficulty: 'Einfach' | 'Mittel' | 'Schwer';
     ingredients: Array<{
@@ -249,7 +253,11 @@ export async function fetchRecipeBySlug(
         prepTime: recipe.prepTime ?? 0,
         cookTime: recipe.cookTime ?? 0,
         totalTime: recipe.totalTime ?? 0,
-        calories: recipe.calories ?? null,
+        calories: recipe.caloriesPerServing ?? null,
+        proteinPerServing: recipe.proteinPerServing ?? null,
+        fatPerServing: recipe.fatPerServing ?? null,
+        carbsPerServing: recipe.carbsPerServing ?? null,
+        nutritionCompleteness: recipe.nutritionCompleteness ?? null,
         servings: recipe.servings ?? 4,
         difficulty: difficultyMap[recipe.difficulty] || 'Mittel',
         ingredients: recipe.recipeIngredients.map((ri: any) => ({
@@ -312,6 +320,7 @@ export interface EditRecipeIngredient {
     pluralName: string | null;
     amount: string;
     unit: string;
+    availableUnits: string[];
     notes: string;
     isOptional: boolean;
 }
@@ -346,7 +355,11 @@ export async function fetchRecipeForEdit(
             include: {
                 categories: true,
                 recipeIngredients: {
-                    include: { ingredient: true },
+                    include: {
+                        ingredient: {
+                            include: { ingredientUnits: { include: { unit: true } } },
+                        },
+                    },
                     orderBy: { position: 'asc' },
                 },
                 tags: true,
@@ -373,17 +386,20 @@ export async function fetchRecipeForEdit(
         servings: recipe.servings,
         prepTime: recipe.prepTime,
         cookTime: recipe.cookTime,
-        calories: recipe.calories ?? undefined,
+        calories: recipe.caloriesPerServing ?? undefined,
         difficulty: recipe.difficulty as 'EASY' | 'MEDIUM' | 'HARD',
         status: (recipe.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT') as 'DRAFT' | 'PUBLISHED',
         categoryIds: recipe.categories.map((c) => c.categoryId),
         tagIds: recipe.tags.map((t) => t.tagId),
-        ingredients: recipe.recipeIngredients.map((ri) => ({
+        ingredients: recipe.recipeIngredients.map((ri: any) => ({
             id: ri.ingredientId,
             name: ri.ingredient.name,
             pluralName: ri.ingredient.pluralName,
             amount: ri.amount,
             unit: ri.unit,
+            availableUnits: ri.ingredient.ingredientUnits?.map((iu: any) => iu.unit.shortName) ?? [
+                'g',
+            ],
             notes: ri.notes ?? '',
             isOptional: ri.isOptional,
         })),

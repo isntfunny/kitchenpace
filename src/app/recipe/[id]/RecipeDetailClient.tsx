@@ -491,6 +491,10 @@ export function RecipeDetailClient({
                             originalServings={recipe.servings}
                             onServingsChange={setServings}
                             calories={recipe.calories}
+                            proteinPerServing={recipe.proteinPerServing}
+                            fatPerServing={recipe.fatPerServing}
+                            carbsPerServing={recipe.carbsPerServing}
+                            nutritionCompleteness={recipe.nutritionCompleteness}
                             formatAmount={formatAmount}
                         />
                     </div>

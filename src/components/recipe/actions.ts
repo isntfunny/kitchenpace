@@ -51,22 +51,33 @@ export async function searchIngredients(query: string): Promise<IngredientSearch
                       id?: string;
                       name?: string;
                       pluralName?: string | null;
-                      category?: string | null;
+                      categories?: string[];
                       units?: string[];
+                      aliases?: string[];
                   }
                 | undefined;
             if (!source?.id || !source.name) {
                 return null;
             }
+
+            // Check if the match came through an alias rather than the name
+            const queryLower = query.toLowerCase();
+            const nameMatches = source.name.toLowerCase().includes(queryLower);
+            const aliases = Array.isArray(source.aliases) ? source.aliases : [];
+            const matchedAlias = !nameMatches
+                ? aliases.find((a) => a.toLowerCase().includes(queryLower))
+                : undefined;
+
             return {
                 id: source.id,
                 name: source.name,
                 pluralName: source.pluralName ?? null,
-                category: source.category ?? null,
+                categories: Array.isArray(source.categories) ? source.categories : [],
                 units: Array.isArray(source.units) ? source.units : [],
+                matchedAlias,
             };
         })
-        .filter((result): result is IngredientSearchResult => Boolean(result));
+        .filter((result): result is NonNullable<typeof result> => Boolean(result));
 
     // Dedup: if a result's name matches another result's pluralName, it is a legacy plural entry.
     // Keep only the singular form (the one whose name is NOT a pluralName of another).

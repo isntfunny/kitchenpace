@@ -3,6 +3,9 @@
 # editor
 .vscode/
 
+# Playwright auth state
+e2e/.auth/
+
 # dependencies
 /node_modules
 /.pnp

@@ -23,10 +23,16 @@ export default defineConfig({
     },
     projects: [
         {
+            name: 'setup',
+            testMatch: /auth\.setup\.ts/,
+        },
+        {
             name: 'chromium',
             use: {
                 ...devices['Desktop Chrome'],
+                storageState: 'e2e/.auth/user.json',
             },
+            dependencies: ['setup'],
         },
     ],
     // Only spin up the local dev server when not pointing at a remote URL

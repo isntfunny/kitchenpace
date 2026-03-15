@@ -901,8 +901,6 @@ async function main() {
             create: {
                 name: ing.name,
                 slug: ing.slug,
-                category: ing.category,
-                units: ing.units,
             },
         });
     }
@@ -4918,37 +4916,31 @@ async function main() {
                             name: 'Spaghetti',
                             amount: '400',
                             unit: 'g',
-                            category: ShoppingCategory.SONSTIGES,
                         },
                         {
                             name: 'Pancetta',
                             amount: '200',
                             unit: 'g',
-                            category: ShoppingCategory.FLEISCH,
                         },
                         {
                             name: 'Eier',
                             amount: '4',
                             unit: 'Stück',
-                            category: ShoppingCategory.MILCHPRODUKTE,
                         },
                         {
                             name: 'Rinderhack',
                             amount: '500',
                             unit: 'g',
-                            category: ShoppingCategory.FLEISCH,
                         },
                         {
                             name: 'Kokosmilch',
                             amount: '400',
                             unit: 'ml',
-                            category: ShoppingCategory.SONSTIGES,
                         },
                         {
                             name: 'Schokolade',
                             amount: '200',
                             unit: 'g',
-                            category: ShoppingCategory.BACKEN,
                         },
                     ],
                 },

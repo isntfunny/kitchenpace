@@ -13,7 +13,7 @@ export function ingredientDisplayName(
     return pluralName;
 }
 
-function parseAmount(amount: string): number | null {
+export function parseAmount(amount: string): number | null {
     const trimmed = amount.trim();
     if (!trimmed) return null;
 

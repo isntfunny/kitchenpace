@@ -244,27 +244,10 @@ const TAGS = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Ingredients
+// Ingredients (legacy list — kept for reference, import now uses BLS data)
 // ─────────────────────────────────────────────────────────────────────────────
 
-type SC =
-    | 'GEMUESE'
-    | 'OBST'
-    | 'FLEISCH'
-    | 'FISCH'
-    | 'MILCHPRODUKTE'
-    | 'GEWURZE'
-    | 'BACKEN'
-    | 'GETRAENKE'
-    | 'SONSTIGES';
-
-interface IngredientDef {
-    name: string;
-    units: string[];
-    category?: SC;
-}
-
-const INGREDIENTS: IngredientDef[] = [
+const _LEGACY_INGREDIENTS = [
     // GEMÜSE
     { name: 'Tomate', units: ['g', 'Stück', 'kg'], category: 'GEMUESE' },
     { name: 'Zwiebel', units: ['Stück', 'g', 'kg'], category: 'GEMUESE' },
@@ -474,6 +457,104 @@ const INGREDIENTS: IngredientDef[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Slash name expansion
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MEAT_PREFIXES = new Set([
+    'schwein',
+    'rind',
+    'kalb',
+    'lamm',
+    'schaf',
+    'hammel',
+    'wild',
+    'ziege',
+    'hirsch',
+    'kaninchen',
+    'hase',
+    'pferd',
+]);
+
+/**
+ * Expand "/" in BLS names as a multiplier.
+ * "Butterkekse/Butterplätzchen (Mürbeteig)" →
+ *   displayName: "Butterkekse (Mürbeteig)"
+ *   aliases:     ["Butterplätzchen (Mürbeteig)"]
+ *
+ * The "/" replaces one word-group; the suffix (parentheses, qualifiers) applies to all alternatives.
+ * Skips splitting when "/" is inside parentheses, after prepositions, or after hyphens.
+ */
+function expandSlashName(name: string): { displayName: string; aliases: string[] } {
+    if (!name.includes('/')) return { displayName: name, aliases: [] };
+
+    // Skip "/" inside parentheses
+    let depth = 0;
+    let hasOuterSlash = false;
+    for (const ch of name) {
+        if (ch === '(') depth++;
+        else if (ch === ')') depth--;
+        else if (ch === '/' && depth === 0) {
+            hasOuterSlash = true;
+            break;
+        }
+    }
+    if (!hasOuterSlash) return { displayName: name, aliases: [] };
+
+    // Skip preposition/hyphen context (e.g., "für Gebäck/Torten", "Fleisch-/Wurst")
+    const slashIdx = name.indexOf('/');
+    const before = name.slice(0, slashIdx);
+    if (/\b(für|mit|und|oder|im|vom|nach|zum)\s+\S*$/.test(before) || before.endsWith('-')) {
+        return { displayName: name, aliases: [] };
+    }
+
+    // Split at "/" outside parentheses
+    const parts: string[] = [];
+    const current: string[] = [];
+    depth = 0;
+    for (const ch of name) {
+        if (ch === '(') depth++;
+        else if (ch === ')') depth--;
+        else if (ch === '/' && depth === 0) {
+            parts.push(current.join('').trim());
+            current.length = 0;
+            continue;
+        }
+        current.push(ch);
+    }
+    parts.push(current.join('').trim());
+    if (parts.length < 2) return { displayName: name, aliases: [] };
+
+    const first = parts[0];
+    const last = parts[parts.length - 1];
+    const middle = parts.slice(1, -1);
+
+    // Prefix: only for meat categories ("Schwein Speck/Rückenspeck")
+    const firstWords = first.split(/\s+/);
+    let prefix = '';
+    let firstAlt = first;
+    if (firstWords.length > 1 && MEAT_PREFIXES.has(firstWords[0].toLowerCase())) {
+        prefix = firstWords[0];
+        firstAlt = firstWords.slice(1).join(' ');
+    }
+
+    // Suffix: everything after the first word-group in the last part
+    const lastMatch = /^(\S+(?:\s+[A-ZÄÖÜ]\S*)*)(.*)/.exec(last);
+    const lastAlt = lastMatch ? lastMatch[1] : last;
+    const suffix = (lastMatch ? lastMatch[2] : '').trim();
+
+    const allAlts = [firstAlt, ...middle, lastAlt];
+
+    const build = (alt: string) => {
+        const r = prefix ? `${prefix} ${alt}` : alt;
+        return suffix ? `${r} ${suffix}`.trim() : r.trim();
+    };
+
+    return {
+        displayName: build(allAlts[0]),
+        aliases: allAlts.slice(1).map(build),
+    };
+}
+
 // Main
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -569,10 +650,17 @@ async function main() {
     }
     console.log(`✅ Tags:        ${tagCount} upserted`);
 
-    // ── Ingredients ───────────────────────────────────────────────────────────
-    let ingCount = 0;
-    for (const ing of INGREDIENTS) {
-        const slug = ing.name
+    // ── Ingredient Categories ──────────────────────────────────────────────────
+    const {
+        INGREDIENT_CATEGORIES,
+        UNITS,
+        BLS_PREFIX_TO_CATEGORIES,
+        DEFAULT_UNITS_PER_CATEGORY,
+        INGREDIENT_UNIT_GRAMS,
+    } = await import('./bls/constants');
+    const categoryMap = new Map<string, string>(); // name → id
+    for (const catName of INGREDIENT_CATEGORIES) {
+        const slug = catName
             .toLowerCase()
             .replace(/ä/g, 'ae')
             .replace(/ö/g, 'oe')
@@ -580,14 +668,130 @@ async function main() {
             .replace(/ß/g, 'ss')
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-|-$/g, '');
-        await prisma.ingredient.upsert({
+        const cat = await prisma.ingredientCategory.upsert({
             where: { slug },
-            update: { units: ing.units },
-            create: { name: ing.name, slug, units: ing.units, category: ing.category ?? null },
+            update: { name: catName },
+            create: { name: catName, slug },
         });
-        ingCount++;
+        categoryMap.set(catName, cat.id);
     }
-    console.log(`✅ Ingredients: ${ingCount} upserted`);
+    console.log(`✅ IngredientCategories: ${categoryMap.size} upserted`);
+
+    // ── Units ────────────────────────────────────────────────────────────────
+    const unitMap = new Map<string, string>(); // shortName → id
+    for (const u of UNITS) {
+        const unit = await prisma.unit.upsert({
+            where: { shortName: u.shortName },
+            update: { longName: u.longName, gramsDefault: u.gramsDefault },
+            create: { shortName: u.shortName, longName: u.longName, gramsDefault: u.gramsDefault },
+        });
+        unitMap.set(u.shortName, unit.id);
+    }
+    console.log(`✅ Units: ${unitMap.size} upserted`);
+
+    // ── Ingredients (BLS 4.0 data) ───────────────────────────────────────────
+    type BlsEntry = {
+        code: string;
+        name: string;
+        kcal: number | null;
+        protein: number | null;
+        fat: number | null;
+        carbs: number | null;
+        fiber: number | null;
+        sugar: number | null;
+        sodium: number | null;
+        saturatedFat: number | null;
+    };
+
+    const { default: blsData } = (await import('./bls/bls-data.json')) as { default: BlsEntry[] };
+
+    let ingCount = 0;
+    for (const entry of blsData) {
+        const slug = entry.name
+            .toLowerCase()
+            .replace(/ä/g, 'ae')
+            .replace(/ö/g, 'oe')
+            .replace(/ü/g, 'ue')
+            .replace(/ß/g, 'ss')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+
+        if (!slug) continue;
+
+        // Expand "/" as multiplier: "Butterkekse/Butterplätzchen (Mürbeteig)"
+        // → name: "Butterkekse (Mürbeteig)", alias: "Butterplätzchen (Mürbeteig)"
+        // The "/" replaces one word-group, the rest (suffix) applies to all alternatives.
+        const { displayName, aliases } = expandSlashName(entry.name);
+
+        // Resolve categories from BLS code prefix
+        const prefix = entry.code[0];
+        const catNames = BLS_PREFIX_TO_CATEGORIES[prefix] ?? [];
+        const catIds = catNames.map((n) => categoryMap.get(n)).filter(Boolean) as string[];
+
+        // Resolve default units per category
+        const unitShortNames = new Set<string>();
+        unitShortNames.add('g'); // always include grams
+        for (const catName of catNames) {
+            for (const u of DEFAULT_UNITS_PER_CATEGORY[catName] ?? []) {
+                unitShortNames.add(u);
+            }
+        }
+
+        const ingredient = await prisma.ingredient.upsert({
+            where: { slug },
+            update: {
+                name: displayName,
+                caloriesPer100g: entry.kcal,
+                proteinPer100g: entry.protein,
+                fatPer100g: entry.fat,
+                carbsPer100g: entry.carbs,
+                fiberPer100g: entry.fiber,
+                sugarPer100g: entry.sugar,
+                sodiumPer100g: entry.sodium,
+                saturatedFatPer100g: entry.saturatedFat,
+                aliases,
+                categories: { set: catIds.map((id) => ({ id })) },
+            },
+            create: {
+                name: displayName,
+                slug,
+                aliases,
+                caloriesPer100g: entry.kcal,
+                proteinPer100g: entry.protein,
+                fatPer100g: entry.fat,
+                carbsPer100g: entry.carbs,
+                fiberPer100g: entry.fiber,
+                sugarPer100g: entry.sugar,
+                sodiumPer100g: entry.sodium,
+                saturatedFatPer100g: entry.saturatedFat,
+                categories: { connect: catIds.map((id) => ({ id })) },
+            },
+        });
+
+        // Link units (upsert via deleteMany + createMany for idempotency)
+        const unitData = [...unitShortNames]
+            .map((sn) => unitMap.get(sn))
+            .filter(Boolean)
+            .map((unitId) => {
+                // Check for curated gram overrides
+                const overrides = INGREDIENT_UNIT_GRAMS[slug];
+                const unitShortName = [...unitMap.entries()].find(([, id]) => id === unitId)?.[0];
+                const grams =
+                    unitShortName && overrides?.[unitShortName] ? overrides[unitShortName] : null;
+                return { ingredientId: ingredient.id, unitId: unitId!, grams };
+            });
+
+        await prisma.ingredientUnit.deleteMany({ where: { ingredientId: ingredient.id } });
+        if (unitData.length > 0) {
+            await prisma.ingredientUnit.createMany({ data: unitData, skipDuplicates: true });
+        }
+
+        ingCount++;
+        if (ingCount % 500 === 0) {
+            console.log(`  ... ${ingCount} ingredients processed`);
+        }
+    }
+    console.log(`✅ Ingredients: ${ingCount} upserted (BLS 4.0)`);
 
     console.log('\n🎉 Basics seeding complete!');
 }

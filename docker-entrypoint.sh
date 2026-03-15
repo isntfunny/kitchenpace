@@ -21,6 +21,8 @@ if [ -n "$INFISICAL_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
   set -a
   . /tmp/.env.infisical
   set +a
+  # Auto-source for docker exec interactive shells
+  echo '. /tmp/.env.infisical 2>/dev/null' > /etc/profile.d/infisical.sh
   echo "[entrypoint] Loaded $(wc -l < /tmp/.env.infisical) secrets from Infisical"
 fi
 

@@ -53,7 +53,7 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
-        fontconfig hunspell-de-de postgresql-client \
+        ca-certificates fontconfig hunspell-de-de postgresql-client \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 1001 nodejs \
     && useradd --system --uid 1001 --gid nodejs nextjs

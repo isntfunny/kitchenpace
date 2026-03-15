@@ -10,10 +10,10 @@ import {
     markRecipeCookedAction,
 } from '@app/app/actions/social';
 import { AchievementOverlay } from '@app/components/features/AchievementOverlay';
-import { Header } from '@app/components/features/Header';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 import type { PersistedViewerState } from '@app/components/flow/viewer/viewerPersistence';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
+import { PageShell } from '@app/components/layouts/PageShell';
 import { RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY } from '@app/components/recipe/tutorial/shared';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { TROPHIES } from '@app/lib/trophies/registry';
@@ -386,8 +386,7 @@ export function RecipeDetailClient({
     };
 
     return (
-        <div className={css({ minH: '100vh', color: 'text' })}>
-            <Header />
+        <PageShell fluid>
             <RecipeStatusBanner
                 recipeId={recipe.id}
                 isDraft={isDraft}
@@ -395,7 +394,7 @@ export function RecipeDetailClient({
                 moderationStatus={recipe.moderationStatus}
                 moderationNote={recipe.moderationNote}
             />
-            <main
+            <div
                 className={container({
                     maxW: '1400px',
                     mx: 'auto',
@@ -544,7 +543,7 @@ export function RecipeDetailClient({
                 )}
 
                 <ActivityFeed activities={recipeActivities} />
-            </main>
+            </div>
 
             <CookDialog
                 isOpen={showCookDialog}
@@ -559,6 +558,6 @@ export function RecipeDetailClient({
                     onClose={() => setCelebrationTrophy(null)}
                 />
             )}
-        </div>
+        </PageShell>
     );
 }

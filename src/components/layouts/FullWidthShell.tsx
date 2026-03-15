@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 import { Header } from '@app/components/features/Header';
+import { Footer } from '@app/components/layouts/Footer';
 import { css } from 'styled-system/css';
 
 type FullWidthShellProps = {
@@ -30,6 +31,9 @@ export function FullWidthShell({ children }: FullWidthShellProps) {
         <div className={shellClass}>
             <Header />
             <main className={mainClass}>{children}</main>
+            <div className={mobileFooterClass}>
+                <Footer />
+            </div>
         </div>
     );
 }
@@ -48,4 +52,8 @@ const mainClass = css({
     height: { base: 'auto', md: 'calc(100vh - 64px)' },
     overflow: { base: 'visible', md: 'hidden' },
     display: { base: 'block', md: 'flex' },
+});
+
+const mobileFooterClass = css({
+    display: { base: 'block', md: 'none' },
 });

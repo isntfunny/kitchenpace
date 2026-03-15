@@ -1,16 +1,18 @@
 'use client';
 
-import Link from 'next/link';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { Header } from '@app/components/features/Header';
+import { Footer } from '@app/components/layouts/Footer';
 import { css } from 'styled-system/css';
 
 type PageShellProps = {
     children: ReactNode;
+    /** When true, the main area has no max-width / padding — the page controls its own layout. */
+    fluid?: boolean;
 };
 
-export function PageShell({ children }: PageShellProps) {
+export function PageShell({ children, fluid }: PageShellProps) {
     return (
         <div
             className={css({
@@ -22,59 +24,22 @@ export function PageShell({ children }: PageShellProps) {
         >
             <Header />
             <main
-                className={css({
-                    flex: '1',
-                    maxWidth: '1400px',
-                    marginX: 'auto',
-                    width: '100%',
-                    paddingX: { base: '4', md: '6' },
-                    paddingY: { base: '4', md: '5' },
-                })}
+                className={
+                    fluid
+                        ? css({ flex: '1' })
+                        : css({
+                              flex: '1',
+                              maxWidth: '1400px',
+                              marginX: 'auto',
+                              width: '100%',
+                              paddingX: { base: '4', md: '6' },
+                              paddingY: { base: '4', md: '5' },
+                          })
+                }
             >
                 {children}
             </main>
-            <footer
-                className={css({
-                    borderTop: '1px solid',
-                    borderColor: 'border',
-                    py: '4',
-                    px: { base: '4', md: '6' },
-                })}
-            >
-                <div
-                    className={css({
-                        maxWidth: '1400px',
-                        marginX: 'auto',
-                        display: 'flex',
-                        gap: '5',
-                        flexWrap: 'wrap',
-                        alignItems: 'center',
-                        fontSize: 'xs',
-                        color: 'text-muted',
-                    })}
-                >
-                    <span>© {new Date().getFullYear()} KüchenTakt</span>
-                    <span>Rechtliches:</span>
-                    <Link
-                        href="/impressum"
-                        className={css({
-                            _hover: { color: 'palette.orange' },
-                            transition: 'color 0.15s',
-                        })}
-                    >
-                        Impressum
-                    </Link>
-                    <Link
-                        href="/datenschutz"
-                        className={css({
-                            _hover: { color: 'palette.orange' },
-                            transition: 'color 0.15s',
-                        })}
-                    >
-                        Datenschutz
-                    </Link>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 }

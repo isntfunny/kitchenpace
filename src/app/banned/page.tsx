@@ -2,6 +2,7 @@ import { ShieldAlert } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
 import { prisma } from '@shared/prisma';
 import { css } from 'styled-system/css';
@@ -33,95 +34,93 @@ export default async function BannedPage() {
     }
 
     return (
-        <div
-            className={css({
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: {
-                    base: 'linear-gradient(180deg, #fff8f4 0%, #fef0e8 40%, #fceadd 100%)',
-                    _dark: 'linear-gradient(180deg, #1a1715 0%, #231e1a 40%, #1c1815 100%)',
-                },
-                px: '4',
-            })}
-        >
+        <PageShell>
             <div
                 className={css({
-                    textAlign: 'center',
-                    maxWidth: '480px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minH: '60vh',
+                    px: '4',
                 })}
             >
-                <ShieldAlert
-                    size={64}
-                    className={css({ color: 'status.danger', mx: 'auto', mb: '4' })}
-                />
-                <h1
+                <div
                     className={css({
-                        fontSize: '2xl',
-                        fontWeight: '800',
-                        fontFamily: 'heading',
-                        mb: '3',
+                        textAlign: 'center',
+                        maxWidth: '480px',
                     })}
                 >
-                    Konto gesperrt
-                </h1>
-
-                {banReason && (
-                    <p
+                    <ShieldAlert
+                        size={64}
+                        className={css({ color: 'status.danger', mx: 'auto', mb: '4' })}
+                    />
+                    <h1
                         className={css({
-                            fontSize: 'md',
-                            color: 'text',
-                            mb: '4',
-                            p: '4',
-                            bg: 'rgba(239,68,68,0.06)',
-                            borderRadius: 'xl',
-                            border: '1px solid rgba(239,68,68,0.2)',
+                            fontSize: '2xl',
+                            fontWeight: '800',
+                            fontFamily: 'heading',
+                            mb: '3',
                         })}
                     >
-                        <strong>Grund:</strong> {banReason}
-                    </p>
-                )}
+                        Konto gesperrt
+                    </h1>
 
-                {banExpiresAt && (
-                    <p className={css({ fontSize: 'sm', color: 'text.muted', mb: '4' })}>
-                        Die Sperre endet am{' '}
-                        <strong>
-                            {new Date(banExpiresAt).toLocaleDateString('de-DE', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
+                    {banReason && (
+                        <p
+                            className={css({
+                                fontSize: 'md',
+                                color: 'text',
+                                mb: '4',
+                                p: '4',
+                                bg: 'rgba(239,68,68,0.06)',
+                                borderRadius: 'xl',
+                                border: '1px solid rgba(239,68,68,0.2)',
                             })}
-                        </strong>
-                        .
-                    </p>
-                )}
+                        >
+                            <strong>Grund:</strong> {banReason}
+                        </p>
+                    )}
 
-                {!banExpiresAt && banReason && (
-                    <p className={css({ fontSize: 'sm', color: 'text.muted', mb: '4' })}>
-                        Diese Sperre ist dauerhaft.
-                    </p>
-                )}
+                    {banExpiresAt && (
+                        <p className={css({ fontSize: 'sm', color: 'text.muted', mb: '4' })}>
+                            Die Sperre endet am{' '}
+                            <strong>
+                                {new Date(banExpiresAt).toLocaleDateString('de-DE', {
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric',
+                                })}
+                            </strong>
+                            .
+                        </p>
+                    )}
 
-                <Link
-                    href="mailto:support@kuechentakt.de"
-                    className={css({
-                        display: 'inline-block',
-                        mt: '4',
-                        px: '6',
-                        py: '3',
-                        borderRadius: 'xl',
-                        fontWeight: '600',
-                        fontSize: 'sm',
-                        color: 'white',
-                        bg: 'status.danger',
-                        textDecoration: 'none',
-                        _hover: { bg: { base: '#b91c1c', _dark: '#dc2626' } },
-                    })}
-                >
-                    Support kontaktieren
-                </Link>
+                    {!banExpiresAt && banReason && (
+                        <p className={css({ fontSize: 'sm', color: 'text.muted', mb: '4' })}>
+                            Diese Sperre ist dauerhaft.
+                        </p>
+                    )}
+
+                    <Link
+                        href="mailto:support@kuechentakt.de"
+                        className={css({
+                            display: 'inline-block',
+                            mt: '4',
+                            px: '6',
+                            py: '3',
+                            borderRadius: 'xl',
+                            fontWeight: '600',
+                            fontSize: 'sm',
+                            color: 'white',
+                            bg: 'status.danger',
+                            textDecoration: 'none',
+                            _hover: { bg: { base: '#b91c1c', _dark: '#dc2626' } },
+                        })}
+                    >
+                        Support kontaktieren
+                    </Link>
+                </div>
             </div>
-        </div>
+        </PageShell>
     );
 }

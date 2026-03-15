@@ -2,9 +2,9 @@
 
 import { Camera, CheckCircle, Clock, Loader2, QrCode, UploadCloud, XCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
+import { PageShell } from '@app/components/layouts/PageShell';
 import { pollQRUploadStatus } from '@app/lib/qrupload/actions';
 import { css } from 'styled-system/css';
 
@@ -162,47 +162,13 @@ export default function QRUploadPage() {
     const timerWarning = secondsLeft < 120;
 
     return (
-        <div
-            className={css({
-                minHeight: '100dvh',
-                display: 'flex',
-                flexDir: 'column',
-                bg: 'bg',
-            })}
-        >
-            {/* Header */}
-            <motion.header
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
+        <PageShell>
+            <div
                 className={css({
-                    px: '5',
-                    py: '4',
-                    borderBottom: '1px solid',
-                    borderColor: 'border',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bg: 'bg.header',
-                })}
-            >
-                <Image
-                    src="/kitchenpace.png"
-                    alt="KüchenTakt"
-                    width={120}
-                    height={47}
-                    style={{ objectFit: 'contain' }}
-                    priority
-                />
-            </motion.header>
-
-            {/* Content */}
-            <main
-                className={css({
-                    flex: '1',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    minH: '60vh',
                     p: '6',
                 })}
             >
@@ -752,25 +718,7 @@ export default function QRUploadPage() {
                         )}
                     </AnimatePresence>
                 </div>
-            </main>
-
-            {/* Footer */}
-            <motion.footer
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.4 }}
-                className={css({
-                    px: '5',
-                    py: '4',
-                    borderTop: '1px solid',
-                    borderColor: 'border',
-                    textAlign: 'center',
-                })}
-            >
-                <p className={css({ fontSize: 'xs', color: 'text.muted', m: 0 })}>
-                    KüchenTakt · Sicherer Upload
-                </p>
-            </motion.footer>
-        </div>
+            </div>
+        </PageShell>
     );
 }

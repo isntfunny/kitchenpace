@@ -41,9 +41,9 @@ export function PasskeySettingsCard() {
             const result = await authClient.passkey.listUserPasskeys();
             if (result?.data) {
                 setPasskeys(
-                    result.data.map((p: { id: string; name: string | null; createdAt: Date }) => ({
+                    result.data.map((p) => ({
                         id: p.id,
-                        name: p.name,
+                        name: p.name ?? null,
                         createdAt: new Date(p.createdAt),
                     })),
                 );

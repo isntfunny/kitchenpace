@@ -174,11 +174,6 @@ export async function processSyncContactsNotifuse(
 
     try {
         const users = await prisma.user.findMany({
-            where: {
-                email: {
-                    not: null,
-                },
-            },
             include: {
                 profile: true,
             },

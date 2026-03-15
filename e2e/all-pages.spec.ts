@@ -22,6 +22,7 @@ const AUTH_PAGES = [
     '/profile',
     '/profile/edit',
     '/profile/settings',
+    '/profile/account',
     '/profile/recipes',
     '/profile/favorites',
     '/profile/images',

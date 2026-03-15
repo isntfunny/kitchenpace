@@ -1,89 +1,71 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { headers } from 'next/headers';
 
-import { getServerAuthSession } from '@app/lib/auth';
-import { prisma } from '@shared/prisma';
+import { auth } from '@app/lib/auth-server';
 
-import { SESSION_COOKIE_NAME } from './session-cookie';
+import { parseDeviceLabel } from './device';
 
 export interface SessionInfo {
     id: string;
+    token: string;
     deviceLabel: string | null;
     ipAddress: string | null;
     createdAt: Date;
-    expires: Date;
+    expiresAt: Date;
     isCurrent: boolean;
 }
 
-async function getCurrentToken(): Promise<string | null> {
-    const cookieStore = await cookies();
-    return cookieStore.get(SESSION_COOKIE_NAME)?.value ?? null;
-}
-
 export async function listSessions(): Promise<SessionInfo[]> {
-    const session = await getServerAuthSession('listSessions');
-    if (!session?.user?.id) return [];
+    const reqHeaders = await headers();
 
-    const currentToken = await getCurrentToken();
+    const currentSession = await auth.api.getSession({ headers: reqHeaders });
+    if (!currentSession?.session) return [];
 
-    const sessions = await prisma.session.findMany({
-        where: {
-            userId: session.user.id,
-            expires: { gt: new Date() },
-        },
-        orderBy: { createdAt: 'desc' },
-        select: {
-            id: true,
-            deviceLabel: true,
-            ipAddress: true,
-            createdAt: true,
-            expires: true,
-            sessionToken: true,
-        },
-    });
+    const currentToken = currentSession.session.token;
 
-    return sessions.map(({ sessionToken, ...s }) => ({
-        ...s,
-        isCurrent: sessionToken === currentToken,
+    const sessions = await auth.api.listSessions({ headers: reqHeaders });
+    if (!sessions || !Array.isArray(sessions)) return [];
+
+    return sessions.map((s) => ({
+        id: s.id,
+        token: s.token,
+        deviceLabel: parseDeviceLabel(s.userAgent ?? null),
+        ipAddress: s.ipAddress ?? null,
+        createdAt: new Date(s.createdAt),
+        expiresAt: new Date(s.expiresAt),
+        isCurrent: s.token === currentToken,
     }));
 }
 
-export async function revokeSession(id: string): Promise<{ success: true } | { error: string }> {
-    const session = await getServerAuthSession('revokeSession');
-    if (!session?.user?.id) return { error: 'Unauthorized' };
+export async function revokeSession(token: string): Promise<{ success: true } | { error: string }> {
+    const reqHeaders = await headers();
 
-    const target = await prisma.session.findUnique({
-        where: { id },
-        select: { userId: true, sessionToken: true },
-    });
+    const currentSession = await auth.api.getSession({ headers: reqHeaders });
+    if (!currentSession?.session) return { error: 'Unauthorized' };
 
-    if (!target || target.userId !== session.user.id) {
-        return { error: 'Not found' };
-    }
-
-    const currentToken = await getCurrentToken();
-    if (target.sessionToken === currentToken) {
+    if (currentSession.session.token === token) {
         return { error: 'Cannot revoke current session' };
     }
 
-    await prisma.session.delete({ where: { id } });
-    return { success: true };
+    try {
+        await auth.api.revokeSession({ headers: reqHeaders, body: { token } });
+        return { success: true };
+    } catch {
+        return { error: 'Failed to revoke session' };
+    }
 }
 
-export async function revokeAllOtherSessions(): Promise<{ revoked: number } | { error: string }> {
-    const session = await getServerAuthSession('revokeAllOtherSessions');
-    if (!session?.user?.id) return { error: 'Unauthorized' };
+export async function revokeAllOtherSessions(): Promise<{ revoked: true } | { error: string }> {
+    const reqHeaders = await headers();
 
-    const currentToken = await getCurrentToken();
-    if (!currentToken) return { error: 'No active session' };
+    const currentSession = await auth.api.getSession({ headers: reqHeaders });
+    if (!currentSession?.session) return { error: 'Unauthorized' };
 
-    const { count } = await prisma.session.deleteMany({
-        where: {
-            userId: session.user.id,
-            sessionToken: { not: currentToken },
-        },
-    });
-
-    return { revoked: count };
+    try {
+        await auth.api.revokeOtherSessions({ headers: reqHeaders });
+        return { revoked: true };
+    } catch {
+        return { error: 'Failed to revoke sessions' };
+    }
 }

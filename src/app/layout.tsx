@@ -307,7 +307,7 @@ export default async function RootLayout({
                 <PageProgress />
                 <TRPCReactProvider>
                     <ThemeProvider>
-                        <AuthProvider session={session}>
+                        <AuthProvider>
                             <ToastProvider>
                                 <AchievementListener />
                                 <FeatureFlagsProvider initialState={featureFlags}>

@@ -1,35 +1,30 @@
 'use client';
 
-import type { Session } from 'next-auth';
-import { signOut, SessionProvider, useSession } from 'next-auth/react';
-import { ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 
-interface AuthProviderProps {
-    children: ReactNode;
-    session?: Session | null;
-}
+import { signOut, useSession } from '@app/lib/auth-client';
 
 function SessionValidator({ children }: { children: ReactNode }) {
-    const { data: session, status } = useSession();
+    const { data, isPending } = useSession();
     const signingOut = useRef(false);
 
     useEffect(() => {
-        if (status === 'authenticated' && !session?.user?.id && !signingOut.current) {
+        if (!isPending && data?.session && !data?.user?.id && !signingOut.current) {
             signingOut.current = true;
             console.warn('[auth] Session has no valid user ID — signing out');
-            signOut({ redirect: false }).then(() => {
-                signingOut.current = false;
+            signOut({
+                fetchOptions: {
+                    onSuccess: () => {
+                        signingOut.current = false;
+                    },
+                },
             });
         }
-    }, [status, session?.user?.id]);
+    }, [isPending, data?.session, data?.user?.id]);
 
     return <>{children}</>;
 }
 
-export function AuthProvider({ children, session }: AuthProviderProps) {
-    return (
-        <SessionProvider session={session}>
-            <SessionValidator>{children}</SessionValidator>
-        </SessionProvider>
-    );
+export function AuthProvider({ children }: { children: ReactNode }) {
+    return <SessionValidator>{children}</SessionValidator>;
 }

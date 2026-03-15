@@ -11,12 +11,7 @@ datasource db {
 // ENUMS
 // ============================================
 
-enum Role {
-  USER
-  MODERATOR
-  ADMIN
-  BANNED
-}
+// Roles are stored as strings: "user", "admin", "moderator", "banned"
 
 enum TrophyTier {
   NONE
@@ -113,49 +108,70 @@ enum ModerationStatus {
 }
 
 // ============================================
-// AUTH MODELS (NextAuth)
+// AUTH MODELS (Better Auth)
 // ============================================
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
+  id                    String     @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  userAgent    String?
-  deviceLabel  String?
-  ipAddress    String?
-  createdAt    DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
-model VerificationToken {
-  identifier String   @id
-  token      String   @unique
-  expires    DateTime
+model Session {
+  id             String    @id @default(cuid())
+  token          String    @unique
+  userId         String
+  expiresAt      DateTime
+  ipAddress      String?
+  userAgent      String?
+  impersonatedBy String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  @@unique([identifier, token])
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Passkey {
+  id           String    @id @default(cuid())
+  name         String?
+  publicKey    String
+  userId       String
+  credentialID String    @unique
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  aaguid       String?
+  createdAt    DateTime  @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ============================================
@@ -163,96 +179,94 @@ model VerificationToken {
 // ============================================
 
 model User {
-  id              String    @id @default(cuid())
-  name            String?
-  email           String?   @unique
-  emailVerified   DateTime?
-  image           String?
-  hashedPassword  String?
-  role            Role      @default(USER)
-  isActive        Boolean   @default(false) // Must be activated via email
-  activationToken String?
-  resetToken      String?
-  resetTokenExpiry DateTime?
-  banReason       String?   // Shown on /banned page (null = not banned)
-  banExpiresAt    DateTime? // null = permanent ban
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                        String                    @id @default(cuid())
+  name                      String?
+  email                     String                    @unique
+  emailVerified             Boolean                   @default(false)
+  image                     String?
+  role                      String                    @default("user")
+  banned                    Boolean                   @default(false)
+  banReason                 String?
+  banExpires                DateTime?
+  createdAt                 DateTime                  @default(now())
+  updatedAt                 DateTime                  @updatedAt
 
-  // Relations
-  accounts        Account[]
-  sessions        Session[]
-  profile        Profile?
-  recipes        Recipe[]
-  comments       Comment[]
-  ratings        UserRating[]
-  favorites      Favorite[]
-  followedBy     Follow[]   @relation("FollowedBy")
-  following      Follow[]   @relation("Following")
-  notifications  Notification[]
-  pushSubscriptions PushSubscription[]
-  mealPlans      MealPlan[]
-  shoppingLists  ShoppingList[]
-  activities     ActivityLog[]
-  viewHistory    UserViewHistory[]
-  cookHistory    UserCookHistory[]
-  pinnedFavorites PinnedFavorite[]
-  cookImages     CookImage[]
-  importRuns     ImportRun[]
-  moderationQueueAsAuthor ModerationQueue[] @relation("ModerationQueueAuthor")
-  moderationQueueAsReviewer ModerationQueue[] @relation("ModerationQueueReviewer")
-  moderationLogs ModerationLog[] @relation("ModerationLogActor")
-  reports        Report[] @relation("ReportSubmitter")
-  tutorialCompletions UserTutorialCompletion[]
-  earnedTrophies      UserTrophy[]
-  trophyPoints        Int       @default(0)
+  //                        Relations
+  accounts                  Account[]
+  sessions                  Session[]
+  passkeys                  Passkey[]
+  profile                   Profile?
+  recipes                   Recipe[]
+  comments                  Comment[]
+  ratings                   UserRating[]
+  favorites                 Favorite[]
+  followedBy                Follow[]                 @relation("FollowedBy")
+  following                 Follow[]                 @relation("Following")
+  notifications             Notification[]
+  pushSubscriptions         PushSubscription[]
+  mealPlans                 MealPlan[]
+  shoppingLists             ShoppingList[]
+  activities                ActivityLog[]
+  viewHistory               UserViewHistory[]
+  cookHistory               UserCookHistory[]
+  pinnedFavorites           PinnedFavorite[]
+  cookImages                CookImage[]
+  importRuns                ImportRun[]
+  moderationQueueAsAuthor   ModerationQueue[]        @relation("ModerationQueueAuthor")
+  moderationQueueAsReviewer ModerationQueue[]        @relation("ModerationQueueReviewer")
+  moderationLogs            ModerationLog[]          @relation("ModerationLogActor")
+  reports                   Report[]                 @relation("ReportSubmitter")
+  tutorialCompletions       UserTutorialCompletion[]
+  earnedTrophies            UserTrophy[]
+  trophyPoints              Int                       @default(0)
 }
 
 model UserTutorialCompletion {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   tutorialKey String
-  completedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  completedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, tutorialKey])
   @@index([tutorialKey])
 }
 
 model Profile {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  nickname       String   @db.VarChar(40)
-  slug           String   @unique @db.VarChar(60)
-  teaser         String?
-  photoKey       String?
-  bio            String?
-  followerCount  Int      @default(0)
-  followingCount Int      @default(0)
-  recipeCount    Int      @default(0)
-  ratingsPublic   Boolean  @default(true)
-  followsPublic   Boolean  @default(true)
-  favoritesPublic Boolean  @default(true)
-  cookedPublic    Boolean  @default(true)
-  trophiesPublic  Boolean  @default(true)
-  showInActivity  Boolean  @default(true)
-  notifyOnAnonymous Boolean  @default(false)
-  notifyOnNewFollower Boolean  @default(true)
-  notifyOnRecipeLike Boolean  @default(true)
-  notifyOnRecipeComment Boolean  @default(true)
-  notifyOnRecipeRating Boolean  @default(true)
-  notifyOnRecipeCooked Boolean  @default(true)
-  notifyOnRecipePublished Boolean  @default(true)
-  notifyOnWeeklyPlanReminder Boolean  @default(true)
-  notifyOnSystemMessages Boolean  @default(true)
-  notifyOnNewsletter      Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                         String    @id @default(cuid())
+  userId                     String    @unique
+  nickname                   String    @db.VarChar(40)
+  slug                       String    @unique @db.VarChar(60)
+  teaser                     String?
+  photoKey                   String?
+  bio                        String?
+  followerCount              Int       @default(0)
+  followingCount             Int       @default(0)
+  recipeCount                Int       @default(0)
+  ratingsPublic              Boolean   @default(true)
+  followsPublic              Boolean   @default(true)
+  favoritesPublic            Boolean   @default(true)
+  cookedPublic               Boolean   @default(true)
+  trophiesPublic             Boolean   @default(true)
+  showTrophyOnAvatar         Boolean   @default(true)
+  showInActivity             Boolean   @default(true)
+  notifyOnAnonymous          Boolean   @default(false)
+  notifyOnNewFollower        Boolean   @default(true)
+  notifyOnRecipeLike         Boolean   @default(true)
+  notifyOnRecipeComment      Boolean   @default(true)
+  notifyOnRecipeRating       Boolean   @default(true)
+  notifyOnRecipeCooked       Boolean   @default(true)
+  notifyOnRecipePublished    Boolean   @default(true)
+  notifyOnWeeklyPlanReminder Boolean   @default(true)
+  notifyOnSystemMessages     Boolean   @default(true)
+  notifyOnNewsletter         Boolean   @default(true)
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([nickname])
 }
@@ -262,60 +276,60 @@ model Profile {
 // ============================================
 
 model Recipe {
-  id           String      @id @default(cuid())
-  title        String
-  slug         String      @unique
-  description  String?
-  imageKey     String?
-  blurhash     String?
-  imageWidth   Int?
-  imageHeight  Int?
-  servings     Int         @default(4)
-  prepTime     Int         @default(0)
-  cookTime     Int         @default(0)
-  totalTime    Int         @default(0)
-  calories     Int?
-  difficulty   Difficulty  @default(MEDIUM)
-  status       RecipeStatus @default(DRAFT)
-  publishedAt  DateTime?
-  rating       Float       @default(0)
-  ratingCount  Int         @default(0)
-  viewCount    Int         @default(0)
-  cookCount    Int         @default(0)
-  isTrending   Boolean     @default(false)
+  id                                                                         String              @id @default(cuid())
+  title                                                                      String
+  slug                                                                       String              @unique
+  description                                                                String?
+  imageKey                                                                   String?
+  blurhash                                                                   String?
+  imageWidth                                                                 Int?
+  imageHeight                                                                Int?
+  servings                                                                   Int                 @default(4)
+  prepTime                                                                   Int                 @default(0)
+  cookTime                                                                   Int                 @default(0)
+  totalTime                                                                  Int                 @default(0)
+  calories                                                                   Int?
+  difficulty                                                                 Difficulty          @default(MEDIUM)
+  status                                                                     RecipeStatus        @default(DRAFT)
+  publishedAt                                                                DateTime?
+  rating                                                                     Float               @default(0)
+  ratingCount                                                                Int                 @default(0)
+  viewCount                                                                  Int                 @default(0)
+  cookCount                                                                  Int                 @default(0)
+  isTrending                                                                 Boolean             @default(false)
 
   // Flow data as JSON
-  flowNodes    Json?
-  flowEdges    Json?
+  flowNodes                                                                  Json?
+  flowEdges                                                                  Json?
 
   // AI-assisted flow generation (prepared for future use)
   rawRecipeText String?  // Classic text recipe, sent to AI to generate flow
 
   // Content moderation
-  moderationStatus  ModerationStatus @default(AUTO_APPROVED)
-  moderationNote    String?
-  aiModerationScore Float?
+  moderationStatus                                                           ModerationStatus    @default(AUTO_APPROVED)
+  moderationNote                                                             String?
+  aiModerationScore                                                          Float?
 
-  authorId     String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  authorId                                                                   String
+  createdAt                                                                  DateTime            @default(now())
+  updatedAt                                                                  DateTime            @updatedAt
 
-  // Relations
-  author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  categories   RecipeCategory[]
-  recipeIngredients RecipeIngredient[]
-  comments     Comment[]
-  ratings      UserRating[]
-  favorites    Favorite[]
-  tags         RecipeTag[]
-  mealPlanRecipes MealPlanRecipe[]
-  shoppingItems ShoppingItem[]
-  userViewHistory UserViewHistory[]
-  cookHistory  UserCookHistory[]
-  pinnedFavorites PinnedFavorite[]
-  cookImages   CookImage[]
-  importRuns   ImportRun[]
-  stepImages   RecipeStepImage[]
+  //                                                                         Relations
+  author                                                                     User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  categories                                                                 RecipeCategory[]
+  recipeIngredients                                                          RecipeIngredient[]
+  comments                                                                   Comment[]
+  ratings                                                                    UserRating[]
+  favorites                                                                  Favorite[]
+  tags                                                                       RecipeTag[]
+  mealPlanRecipes                                                            MealPlanRecipe[]
+  shoppingItems                                                              ShoppingItem[]
+  userViewHistory                                                            UserViewHistory[]
+  cookHistory                                                                UserCookHistory[]
+  pinnedFavorites                                                            PinnedFavorite[]
+  cookImages                                                                 CookImage[]
+  importRuns                                                                 ImportRun[]
+  stepImages                                                                 RecipeStepImage[]
 
   @@index([authorId])
   @@index([difficulty])
@@ -331,12 +345,12 @@ model Recipe {
 // ============================================
 
 model RecipeStepImage {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   recipeId  String
   stepId    String
   photoKey  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
@@ -356,18 +370,18 @@ enum ImportRunStatus {
 }
 
 model ImportRun {
-  id               String          @id @default(cuid())
-  userId           String
+  id                                                                           String           @id @default(cuid())
+  userId                                                                       String
 
-  // Source
+  //                                                                           Source
   sourceUrl        String?         // null = pasted text (AI dialog in editor)
-  sourceType       String          @default("url") // "url" | "text"
+  sourceType                                                                   String           @default("url") // "url" | "text"
   markdownLength   Int?            // scraped content size in chars
 
-  // Result
-  status           ImportRunStatus
+  //                                                                           Result
+  status                                                                       ImportRunStatus
   errorType        String?         // maps to ErrorType enum from importer
-  errorMessage     String?
+  errorMessage                                                                 String?
   recipeId         String?         // linked recipe if successfully saved
 
   // AI usage (matches OpenAI usage object fields)
@@ -376,18 +390,18 @@ model ImportRun {
   cachedInputTokens Int?            // prompt_tokens_details.cached_tokens
   outputTokens      Int?            // completion_tokens
   // Cost: input $2.50/1M, cached $0.25/1M, output $15.00/1M
-  estimatedCostUsd  Float?
+  estimatedCostUsd                                                             Float?
 
   // Raw OpenAI completion object for debugging & auditing
-  rawApiResponse    Json?
+  rawApiResponse                                                               Json?
 
-  createdAt        DateTime        @default(now())
+  createdAt                                                                    DateTime         @default(now())
 
-  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipe           Recipe?         @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  user                                                                         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe                                                                       Recipe?         @relation(fields: [recipeId], references: [id], onDelete: SetNull)
 
   @@index([userId])
-  @@index([userId, createdAt])
+  @@index([userId,                                                             createdAt])
   @@index([status])
   @@index([createdAt])
 }
@@ -397,36 +411,36 @@ model ImportRun {
 // ============================================
 
 model Ingredient {
-  id         String            @id @default(cuid())
-  name       String
-  slug       String            @unique
-  pluralName String?
-  category   ShoppingCategory?
-  units      String[]
-  aliases    String[]          @default([])
-  recipes    RecipeIngredient[]
+  id            String              @id @default(cuid())
+  name          String
+  slug          String              @unique
+  pluralName    String?
+  category      ShoppingCategory?
+  units         String[]
+  aliases       String[]            @default([])
+  recipes       RecipeIngredient[]
   shoppingItems ShoppingItem[]
-  createdAt  DateTime          @default(now())
-  needsReview Boolean          @default(false)
+  createdAt     DateTime            @default(now())
+  needsReview   Boolean             @default(false)
 
   @@index([name])
   @@index([aliases], type: Gin)
 }
 
 model RecipeIngredient {
-  id           String   @id @default(cuid())
-  recipeId     String
-  ingredientId String
+  id                                                                  String      @id @default(cuid())
+  recipeId                                                            String
+  ingredientId                                                        String
   amount       String   // Recipe-specific: "400", "1/2", "2-3"
   unit         String   // Selected unit from ingredient.units
   notes        String?  // "finely chopped", "room temperature", etc.
-  position     Int      @default(0) // For ordering in list
-  isOptional   Boolean  @default(false)
+  position                                                            Int         @default(0) // For ordering in list
+  isOptional                                                          Boolean     @default(false)
 
-  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  recipe                                                              Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient                                                          Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
-  @@unique([recipeId, ingredientId])
+  @@unique([recipeId,                                                 ingredientId])
   @@index([recipeId])
   @@index([ingredientId])
 }
@@ -436,26 +450,26 @@ model RecipeIngredient {
 // ============================================
 
 model Category {
-  id            String   @id @default(cuid())
-  name          String   @unique
-  slug          String   @unique
-  description   String?
-  color         PaletteColor @default(orange)
+  id                                                                            String            @id @default(cuid())
+  name                                                                          String            @unique
+  slug                                                                          String            @unique
+  description                                                                   String?
+  color                                                                         PaletteColor      @default(orange)
   icon          String?  // Lucide icon name (e.g. "utensils", "cake", "salad")
   coverImageKey String?  // S3 key for hero/cover image
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
+  sortOrder                                                                     Int               @default(0)
+  createdAt                                                                     DateTime          @default(now())
 
-  recipes RecipeCategory[]
+  recipes                                                                       RecipeCategory[]
 }
 
 model RecipeCategory {
   recipeId   String
   categoryId String
-  position   Int      @default(0) // For ordering categories
+  position   Int       @default(0) // For ordering categories
 
-  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@id([recipeId, categoryId])
   @@index([recipeId])
@@ -463,38 +477,38 @@ model RecipeCategory {
 }
 
 model Tag {
-  id        String      @id @default(cuid())
-  name      String      @unique
-  slug      String      @unique
+  id        String       @id @default(cuid())
+  name      String       @unique
+  slug      String       @unique
   recipes   RecipeTag[]
-  createdAt DateTime    @default(now())
+  createdAt DateTime     @default(now())
 }
 
 model RecipeTag {
-  recipeId String
-  tagId    String
-  createdAt DateTime @default(now())
+  recipeId  String
+  tagId     String
+  createdAt DateTime  @default(now())
 
-  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([recipeId, tagId])
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  imageKey  String?
-  recipeId  String
-  authorId  String
-  moderationStatus ModerationStatus @default(AUTO_APPROVED)
-  isHidden  Boolean  @default(false)
-  moderationNote String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String            @id @default(cuid())
+  content          String
+  imageKey         String?
+  recipeId         String
+  authorId         String
+  moderationStatus ModerationStatus  @default(AUTO_APPROVED)
+  isHidden         Boolean           @default(false)
+  moderationNote   String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
-  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  recipe           Recipe           @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  author           User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([recipeId])
   @@index([authorId])
@@ -506,29 +520,29 @@ model Comment {
 // ============================================
 
 model UserRating {
-  id        String   @id @default(cuid())
-  recipeId  String
-  userId    String
+  id                        String    @id @default(cuid())
+  recipeId                  String
+  userId                    String
   rating    Int      // 1-5
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
-  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe                    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([recipeId, userId])
+  @@unique([recipeId,       userId])
   @@index([recipeId])
   @@index([userId])
 }
 
 model Favorite {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   recipeId  String
   userId    String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
-  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([recipeId, userId])
   @@index([userId])
@@ -540,10 +554,10 @@ model Favorite {
 // ============================================
 
 model Follow {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   followerId  String
   followingId String
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   follower    User     @relation("FollowedBy", fields: [followerId], references: [id], onDelete: Cascade)
   following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
@@ -558,31 +572,31 @@ model Follow {
 // ============================================
 
 model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  type      NotificationType
-  title     String
-  message   String
+  id                                                                        String            @id @default(cuid())
+  userId                                                                    String
+  type                                                                      NotificationType
+  title                                                                     String
+  message                                                                   String
   data      Json?            // Additional data: { recipeId, userId, etc. }
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
+  read                                                                      Boolean           @default(false)
+  createdAt                                                                 DateTime          @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                                                                      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([userId, read])
+  @@index([userId,                                                          read])
 }
 
 model PushSubscription {
-  id        String   @id @default(cuid())
-  userId    String
-  endpoint  String   @unique
-  keys      Json
+  id                                                String    @id @default(cuid())
+  userId                                            String
+  endpoint                                          String    @unique
+  keys                                              Json
   label     String?  // e.g. device or browser name
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt                                         DateTime  @default(now())
+  updatedAt                                         DateTime  @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                                              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -592,34 +606,34 @@ model PushSubscription {
 // ============================================
 
 model MealPlan {
-  id        String             @id @default(cuid())
-  userId    String
-  name      String?
-  startDate DateTime
-  endDate   DateTime
-  meals     MealPlanRecipe[]
+  id            String            @id @default(cuid())
+  userId        String
+  name          String?
+  startDate     DateTime
+  endDate       DateTime
+  meals         MealPlanRecipe[]
   shoppingLists ShoppingList[]
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, startDate])
 }
 
 model MealPlanRecipe {
-  id          String      @id @default(cuid())
-  mealPlanId  String
-  recipeId    String
-  date        DateTime
-  mealType    MealType
-  servings    Int         @default(4)
-  status      MealStatus  @default(PLANNED)
-  notes       String?
+  id         String      @id @default(cuid())
+  mealPlanId String
+  recipeId   String
+  date       DateTime
+  mealType   MealType
+  servings   Int         @default(4)
+  status     MealStatus  @default(PLANNED)
+  notes      String?
 
-  mealPlan    MealPlan    @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
-  recipe      Recipe      @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  mealPlan   MealPlan   @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@index([mealPlanId])
   @@index([recipeId])
@@ -630,35 +644,35 @@ model MealPlanRecipe {
 // ============================================
 
 model ShoppingList {
-  id          String          @id @default(cuid())
-  userId      String
-  name        String?
-  mealPlanId  String?
-  items       ShoppingItem[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id         String          @id @default(cuid())
+  userId     String
+  name       String?
+  mealPlanId String?
+  items      ShoppingItem[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
 
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  mealPlan    MealPlan?       @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealPlan   MealPlan?      @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
 
   @@index([userId])
 }
 
 model ShoppingItem {
-  id             String           @id @default(cuid())
-  shoppingListId String
+  id                                                              String            @id @default(cuid())
+  shoppingListId                                                  String
   recipeId       String?          // Original recipe (optional)
   ingredientId   String?          // Master ingredient (optional)
   name           String           // Display name (fallback)
-  amount         String?
-  unit           String?
-  category       ShoppingCategory @default(SONSTIGES)
-  checked        Boolean           @default(false)
-  position       Int               @default(0)
+  amount                                                          String?
+  unit                                                            String?
+  category                                                        ShoppingCategory  @default(SONSTIGES)
+  checked                                                         Boolean           @default(false)
+  position                                                        Int               @default(0)
 
-  shoppingList   ShoppingList      @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
-  recipe         Recipe?          @relation(fields: [recipeId], references: [id], onDelete: SetNull)
-  ingredient     Ingredient?      @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+  shoppingList                                                    ShoppingList     @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  recipe                                                          Recipe?          @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  ingredient                                                      Ingredient?      @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
 
   @@index([shoppingListId])
 }
@@ -668,15 +682,15 @@ model ShoppingItem {
 // ============================================
 
 model ActivityLog {
-  id         String       @id @default(cuid())
+  id         String        @id @default(cuid())
   userId     String
   type       ActivityType
   targetId   String?
   targetType String?
   metadata   Json?
-  createdAt  DateTime     @default(now())
+  createdAt  DateTime      @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, createdAt])
@@ -684,14 +698,14 @@ model ActivityLog {
 }
 
 model UserViewHistory {
-  id        String   @id @default(cuid())
-  userId    String
-  recipeId  String
-  viewedAt  DateTime @default(now())
-  pinned    Boolean  @default(false)
+  id       String    @id @default(cuid())
+  userId   String
+  recipeId String
+  viewedAt DateTime  @default(now())
+  pinned   Boolean   @default(false)
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, recipeId])
   @@index([userId])
@@ -701,21 +715,21 @@ model UserViewHistory {
 }
 
 model UserCookHistory {
-  id        String   @id @default(cuid())
-  userId    String
-  recipeId  String
-  cookedAt  DateTime @default(now())
-  servings  Int?
-  notes     String?
+  id                                         String    @id @default(cuid())
+  userId                                     String
+  recipeId                                   String
+  cookedAt                                   DateTime  @default(now())
+  servings                                   Int?
+  notes                                      String?
   imageKey  String?  // S3 key for the image
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user                                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe                                     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([recipeId])
-  @@index([userId, cookedAt])
-  @@index([recipeId, cookedAt])
+  @@index([userId,                           cookedAt])
+  @@index([recipeId,                         cookedAt])
 }
 
 // ============================================
@@ -723,18 +737,18 @@ model UserCookHistory {
 // ============================================
 
 model CookImage {
-  id          String   @id @default(cuid())
-  recipeId    String
-  userId      String
-  imageKey    String
-  blurhash    String?
-  caption     String?
-  moderationStatus ModerationStatus @default(AUTO_APPROVED)
-  isHidden    Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id               String            @id @default(cuid())
+  recipeId         String
+  userId           String
+  imageKey         String
+  blurhash         String?
+  caption          String?
+  moderationStatus ModerationStatus  @default(AUTO_APPROVED)
+  isHidden         Boolean           @default(false)
+  createdAt        DateTime          @default(now())
 
-  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe           Recipe           @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([recipeId])
   @@index([userId])
@@ -747,17 +761,17 @@ model CookImage {
 // ============================================
 
 model PinnedFavorite {
-  id        String   @id @default(cuid())
-  userId    String
-  recipeId  String
+  id                                       String    @id @default(cuid())
+  userId                                   String
+  recipeId                                 String
   position  Int      // 0, 1, or 2 (max 3)
-  createdAt DateTime @default(now())
+  createdAt                                DateTime  @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user                                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe                                   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, position])
-  @@unique([userId, recipeId])
+  @@unique([userId,                        position])
+  @@unique([userId,                        recipeId])
   @@index([userId])
 }
 
@@ -766,11 +780,11 @@ model PinnedFavorite {
 // ============================================
 
 model ModerationQueue {
-  id             String           @id @default(cuid())
+  id                                                                                 String            @id @default(cuid())
   contentType    String           // "recipe" | "comment" | "profile" | "cook_image"
   contentId      String           // FK to the relevant record
   authorId       String           // User who submitted the content
-  author         User             @relation("ModerationQueueAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  author                                                                             User             @relation("ModerationQueueAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
   // AI moderation results
   aiScore        Float            // 0.0–1.0 highest category score
@@ -778,52 +792,52 @@ model ModerationQueue {
   aiRawResponse  Json             // full OpenAI moderation API response
 
   // Human review
-  status         ModerationStatus @default(PENDING)
+  status                                                                             ModerationStatus  @default(PENDING)
   reviewedBy     String?          // moderator/admin userId
-  reviewer       User?            @relation("ModerationQueueReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
-  reviewedAt     DateTime?
+  reviewer                                                                           User?            @relation("ModerationQueueReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  reviewedAt                                                                         DateTime?
   reviewNote     String?          // internal note from reviewer
 
   // Content snapshot (so mod can see what was submitted even if edited)
   contentSnapshot Json            // { title?, description?, imageUrl?, text? }
 
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt                                                                          DateTime          @default(now())
+  updatedAt                                                                          DateTime          @updatedAt
 
-  @@index([contentType, contentId])
-  @@index([status, createdAt])
+  @@index([contentType,                                                              contentId])
+  @@index([status,                                                                   createdAt])
   @@index([authorId])
 }
 
 model ModerationLog {
-  id           String   @id @default(cuid())
+  id                                                                                                             String    @id @default(cuid())
   actorId      String   // who took the action (admin/mod)
-  actor        User     @relation("ModerationLogActor", fields: [actorId], references: [id], onDelete: Cascade)
+  actor                                                                                                          User     @relation("ModerationLogActor", fields: [actorId], references: [id], onDelete: Cascade)
   action       String   // "approve" | "reject" | "ban_user" | "unban_user" | "hide_content" | "restore_content"
   contentType  String?  // "recipe" | "comment" | "user" | etc.
   contentId    String?  // target content ID
   reason       String?  // human-provided reason
   metadata     Json?    // extra context
-  createdAt    DateTime @default(now())
+  createdAt                                                                                                      DateTime  @default(now())
 
   @@index([actorId])
   @@index([contentId])
 }
 
 model Report {
-  id          String   @id @default(cuid())
-  reporterId  String
-  reporter    User     @relation("ReportSubmitter", fields: [reporterId], references: [id], onDelete: Cascade)
+  id                                                                            String    @id @default(cuid())
+  reporterId                                                                    String
+  reporter                                                                      User     @relation("ReportSubmitter", fields: [reporterId], references: [id], onDelete: Cascade)
   contentType String   // "recipe" | "comment" | "user"
-  contentId   String
+  contentId                                                                     String
   reason      String   // "spam" | "nsfw" | "hate" | "misinformation" | "other"
   description String?  // optional free text from reporter
-  resolved    Boolean  @default(false)
-  resolvedBy  String?
-  createdAt   DateTime @default(now())
+  resolved                                                                      Boolean   @default(false)
+  resolvedBy                                                                    String?
+  createdAt                                                                     DateTime  @default(now())
 
   @@unique([reporterId, contentType, contentId])
-  @@index([contentType, contentId])
+  @@index([contentType,                                                         contentId])
   @@index([resolved])
 }
 
@@ -844,21 +858,21 @@ model SiteSettings {
 // ============================================
 
 model JobRun {
-  id            String    @id @default(cuid())
-  queueName     String
-  jobName       String
+  id                                                String     @id @default(cuid())
+  queueName                                         String
+  jobName                                           String
   jobId        String?   // BullMQ job ID
-  status       JobStatus @default(PENDING)
+  status                                            JobStatus  @default(PENDING)
   payload      Json?     // Job input data
   result       Json?     // Job output/result
   errorMessage String?   // Error message if failed
-  attempts     Int       @default(0)
-  startedAt    DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime  @default(now())
+  attempts                                          Int        @default(0)
+  startedAt                                         DateTime?
+  completedAt                                       DateTime?
+  createdAt                                         DateTime   @default(now())
 
-  @@index([queueName, createdAt])
-  @@index([status, createdAt])
+  @@index([queueName,                               createdAt])
+  @@index([status,                                  createdAt])
   @@index([jobId])
 }
 
@@ -867,29 +881,29 @@ model JobRun {
 // ============================================
 
 model Trophy {
-  id           String       @id // slug: "finished-tutorial" or "recipe-creator:bronze"
-  groupSlug    String
-  tier         TrophyTier   @default(NONE)
+  id                                                             String        @id // slug: "finished-tutorial" or "recipe-creator:bronze"
+  groupSlug                                                      String
+  tier                                                           TrophyTier    @default(NONE)
   category     String       // "ONBOARDING", "COOKING", "SOCIAL"
-  name         String
-  description  String
+  name                                                           String
+  description                                                    String
   icon         String       // Lucide icon name
-  points       Int          @default(0)
-  sortOrder    Int          @default(0)
-  userTrophies UserTrophy[]
-  createdAt    DateTime     @default(now())
+  points                                                         Int           @default(0)
+  sortOrder                                                      Int           @default(0)
+  userTrophies                                                   UserTrophy[]
+  createdAt                                                      DateTime      @default(now())
 
-  @@unique([groupSlug, tier])
+  @@unique([groupSlug,                                           tier])
 }
 
 model UserTrophy {
-  id       String   @id @default(cuid())
+  id       String    @id @default(cuid())
   userId   String
   trophyId String
-  earnedAt DateTime @default(now())
+  earnedAt DateTime  @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  trophy Trophy @relation(fields: [trophyId], references: [id])
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trophy   Trophy   @relation(fields: [trophyId], references: [id])
 
   @@unique([userId, trophyId])
   @@index([userId])

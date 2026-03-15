@@ -1,13 +1,16 @@
-import type { Session } from 'next-auth';
-import { getServerSession } from 'next-auth';
+import { headers } from 'next/headers';
 
-import { authOptions } from '@app/app/api/auth/[...nextauth]/route';
 import { authDebugEnabled, logAuth } from '@app/lib/auth-logger';
+import { auth, type Session } from '@app/lib/auth-server';
+
+export type { Session };
 
 const formatContext = (context?: string) => (context ? ` (${context})` : '');
 
 export async function getServerAuthSession(context?: string): Promise<Session | null> {
-    const session = await getServerSession(authOptions);
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
 
     if (authDebugEnabled) {
         logAuth('debug', `getServerAuthSession${formatContext(context)}`, {

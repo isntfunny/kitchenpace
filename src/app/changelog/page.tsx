@@ -31,6 +31,42 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '15. März 2026',
+        version: 'v2026-03-15',
+        emoji: '🔑',
+        title: 'Neue Filter, Google & Discord Login',
+        items: [
+            {
+                text: 'Erweiterte Filter — Rezepte jetzt nach Kategorie, Schrittanzahl und Kalorien filtern',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Anmeldung mit Google und Discord — neben E-Mail jetzt auch mit bestehendem Konto einloggen',
+                tag: 'spotlight',
+            },
+            {
+                text: 'KI-Import erkennt das Hauptbild automatisch und lädt es zum Rezept hoch',
+                tag: 'feat',
+            },
+            {
+                text: 'Neue Konto-Seite — Profil, Passwort und aktive Sitzungen an einem Ort verwalten',
+                tag: 'feat',
+            },
+            {
+                text: 'Aktive Sitzungen einsehen und einzeln abmelden',
+                tag: 'feat',
+            },
+            {
+                text: 'Sanfterer Übergang beim Filtern — kein Aufblitzen mehr',
+                tag: 'fix',
+            },
+            {
+                text: 'Abstände auf der Profilseite korrigiert',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '14. März 2026',
         version: 'v2026-03-14',
         emoji: '🧑‍🍳',

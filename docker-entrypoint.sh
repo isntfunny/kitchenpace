@@ -2,14 +2,14 @@
 set -e
 
 # If Infisical is configured, re-exec with secrets injected
-if [ -n "$INFISICAL_MACHINE_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
+if [ -n "$INFISICAL_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
   echo "[entrypoint] Loading secrets from Infisical..."
   export __INFISICAL_LOADED=1
   export HOME=/tmp
   export INFISICAL_TOKEN=$(npx infisical login \
     --method=universal-auth \
-    --client-id="${INFISICAL_MACHINE_CLIENT_ID}" \
-    --client-secret="${INFISICAL_MACHINE_CLIENT_SECRET}" \
+    --client-id="${INFISICAL_CLIENT_ID}" \
+    --client-secret="${INFISICAL_CLIENT_SECRET}" \
     --domain="${INFISICAL_API_URL:-https://secrets.isntfunny.de/api}" \
     --plain --silent)
   if [ -z "$INFISICAL_TOKEN" ]; then
@@ -17,8 +17,8 @@ if [ -n "$INFISICAL_MACHINE_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; th
     exit 1
   fi
   exec npx infisical run \
-    --projectId "${PROJECT_ID}" \
-    --env "${INFISICAL_SECRET_ENV:-prod}" \
+    --projectId "${INFISICAL_PROJECT_ID}" \
+    --env "${INFISICAL_ENV:-prod}" \
     --domain "${INFISICAL_API_URL:-https://secrets.isntfunny.de/api}" \
     -- "$0" "$@"
 fi

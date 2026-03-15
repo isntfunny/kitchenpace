@@ -2,6 +2,7 @@
 
 import { fireEvent } from '@app/lib/events/fire';
 import { createActivityLog } from '@app/lib/events/persist';
+import { uploadImageFromUrl as uploadImageFromUrlShared } from '@app/lib/importer/upload-image-from-url';
 import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
 import { moveObject } from '@app/lib/s3';
 import { approvedKey } from '@app/lib/s3/keys';
@@ -315,10 +316,18 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
         }),
     );
 
+    // Deduplicate ingredients by ingredientId (AI imports can produce duplicates)
+    const seenIngredientIds = new Set<string>();
+    const uniqueIngredients = syncedIngredients.filter((ing) => {
+        if (seenIngredientIds.has(ing.ingredientId)) return false;
+        seenIngredientIds.add(ing.ingredientId);
+        return true;
+    });
+
     await prisma.recipeIngredient.deleteMany({ where: { recipeId } });
-    if (syncedIngredients.length > 0) {
+    if (uniqueIngredients.length > 0) {
         await prisma.recipeIngredient.createMany({
-            data: syncedIngredients.map((ing, index) => ({
+            data: uniqueIngredients.map((ing, index) => ({
                 recipeId,
                 ingredientId: ing.ingredientId,
                 amount: ing.amount,
@@ -408,6 +417,14 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         }),
     );
 
+    // Deduplicate ingredients by ingredientId (AI imports can produce duplicates)
+    const seenIngredientIds = new Set<string>();
+    const uniqueIngredients = syncedIngredients.filter((ing) => {
+        if (seenIngredientIds.has(ing.ingredientId)) return false;
+        seenIngredientIds.add(ing.ingredientId);
+        return true;
+    });
+
     const recipe = await prisma.recipe.create({
         data: {
             title: data.title,
@@ -428,7 +445,7 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             flowNodes: data.flowNodes ? stripPhotoKeys(data.flowNodes) : undefined,
             flowEdges: (data.flowEdges as unknown as object) ?? undefined,
             recipeIngredients: {
-                create: syncedIngredients.map((ing, index) => ({
+                create: uniqueIngredients.map((ing, index) => ({
                     ingredientId: ing.ingredientId,
                     amount: ing.amount,
                     unit: ing.unit,
@@ -816,4 +833,14 @@ export async function findOrCreateTag(
     });
 
     return tag;
+}
+
+/**
+ * Downloads an external image URL and uploads it to S3.
+ * Server action wrapper so client components can call this.
+ */
+export async function uploadImageFromUrl(
+    imageUrl: string,
+): Promise<{ success: true; key: string } | { success: false; error: string }> {
+    return uploadImageFromUrlShared(imageUrl);
 }

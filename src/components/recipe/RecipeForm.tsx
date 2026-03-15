@@ -33,6 +33,7 @@ import {
     createRecipe,
     findOrCreateTag,
     updateRecipe,
+    uploadImageFromUrl,
     type FlowNodeInput,
     type FlowEdgeInput,
 } from '../recipe/createActions';
@@ -413,14 +414,17 @@ export function RecipeForm({
         async (result: AIAnalysisResult, apply: ApplySelection) => {
             if (apply.title && result.title) setTitle(result.title);
             if (apply.description && result.description) setDescription(result.description);
-            if (apply.prepTime) setPrepTime(result.prepTime);
-            if (apply.cookTime) setCookTime(result.cookTime);
-            if (apply.servings) setServings(result.servings);
-            if (apply.difficulty) setDifficulty(result.difficulty);
+            if (apply.prepTime && result.prepTime) setPrepTime(result.prepTime);
+            if (apply.cookTime && result.cookTime) setCookTime(result.cookTime);
+            if (apply.servings && result.servings) setServings(result.servings);
+            if (apply.difficulty && result.difficulty) setDifficulty(result.difficulty);
 
-            if (apply.category && result.categorySlug) {
-                const matched = categories.find((c) => c.slug === result.categorySlug);
-                if (matched) setCategoryIds([matched.id]);
+            if (apply.category && result.categoryIds?.length) {
+                const matchedIds = result.categoryIds
+                    .map((slug) => categories.find((c) => c.slug === slug))
+                    .filter((c): c is NonNullable<typeof c> => Boolean(c))
+                    .map((c) => c.id);
+                if (matchedIds.length > 0) setCategoryIds(matchedIds);
             }
 
             if (apply.tags && result.tags && result.tags.length > 0) {
@@ -465,8 +469,19 @@ export function RecipeForm({
                     });
                 }
             }
+
+            // Upload AI-extracted recipe image to S3 (fire-and-forget — don't block the dialog)
+            if (result.imageUrl && !imageKey) {
+                uploadImageFromUrl(result.imageUrl)
+                    .then((imgResult) => {
+                        if (imgResult.success) {
+                            setImageKey(imgResult.key);
+                        }
+                    })
+                    .catch((err) => console.error('Failed to upload AI image:', err));
+            }
         },
-        [categories, initialTagCandidates],
+        [categories, initialTagCandidates, imageKey],
     );
 
     // Block Enter key from submitting form during tutorial

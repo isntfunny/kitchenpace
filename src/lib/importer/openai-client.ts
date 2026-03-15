@@ -58,23 +58,24 @@ ANFORDERUNGEN:
 
 1. **UUID**: Generiere eine gültige UUID v4 für das Rezept (Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx)
 2. **Titel**: Extrahiere den vollständigen Rezepttitel (auf Deutsch)
-3. **Beschreibung**: Erstelle eine prägnante Beschreibung (1-3 Sätze, auf Deutsch)
-4. **Kategorien** (PFLICHTFELD): Wähle 1–3 passende Kategorien aus: "Hauptgericht", "Beilage", "Backen", "Dessert", "Frühstück", "Getränk", "Vorspeise", "Salat". Mindestens eine Kategorie ist IMMER Pflicht.
-5. **Tags**: Generiere 3-10 relevante Tags auf Deutsch (z.B. "Italienisch", "Vegetarisch", "Schnell")
-6. **Zeitangaben**:
+3. **Rezeptbild (imageUrl)**: Suche im Markdown nach dem Hauptbild des Rezepts. Prüfe: og:image Meta-Tags, große <img>-Elemente im Rezeptbereich, Markdown-Bilder ![](url). Gib die vollständige URL zurück. Ignoriere Werbebanner, Logos, Icons und Avatare. Null wenn kein passendes Bild gefunden.
+4. **Beschreibung**: Erstelle eine prägnante Beschreibung (1-3 Sätze, auf Deutsch)
+5. **Kategorien** (PFLICHTFELD): Wähle 1–3 passende Kategorien aus: "Hauptgericht", "Beilage", "Backen", "Dessert", "Frühstück", "Getränk", "Vorspeise", "Salat". Mindestens eine Kategorie ist IMMER Pflicht.
+6. **Tags**: Generiere 3-10 relevante Tags auf Deutsch (z.B. "Italienisch", "Vegetarisch", "Schnell")
+7. **Zeitangaben**:
    - prepTime: Vorbereitungszeit in Minuten (Schneiden, Wiegen, etc.)
    - cookTime: Aktive Kochzeit in Minuten
    - servings: Anzahl der Portionen
-7. **Schwierigkeitsgrad**: "Einfach", "Mittel" oder "Schwer" basierend auf Schritten und Techniken
+8. **Schwierigkeitsgrad**: "Einfach", "Mittel" oder "Schwer" basierend auf Schritten und Techniken
 
-8. **Zutaten**: Liste alle Zutaten mit:
+9. **Zutaten**: Liste alle Zutaten mit:
    - name: REINER Zutatename ohne Zubereitungsangaben (RICHTIG: "Tomaten", "Zwiebel", "Knoblauchzehe" — FALSCH: "frisch gehackte Tomaten", "fein gewürfelte Zwiebel", "gepresste Knoblauchzehe"). Der Name soll die Zutat selbst beschreiben, nicht wie sie zubereitet wird. Auf Deutsch.
    - amount: Numerischer Wert (konvertiere Brüche wie "1/2" zu 0.5). Wenn nicht klar, setze null
    - unit: Einheit auf Deutsch (g, ml, EL, TL, Stück, Prise, etc.). Wenn nicht klar, setze null
    - notes: Zubereitungshinweis als kurze Phrase (z.B. "frisch gehackt", "fein gewürfelt", "zimmerwarm", "in Scheiben", "geviertelt"). Nur angeben wenn die Zubereitung relevant ist — sonst null. Auf Deutsch.
    - Zutaten-IDs als einfache Indizes: "ingredient-0", "ingredient-1", etc. (Reihenfolge entspricht der Zutaten-Liste)
 
-9. **Flow-Knoten (flowNodes)**: Konvertiere die Zubereitungsschritte in Flow-Knoten.
+10. **Flow-Knoten (flowNodes)**: Konvertiere die Zubereitungsschritte in Flow-Knoten.
    Der ERSTE Knoten muss IMMER id="start" und type="start" sein.
    Der LETZTE Knoten muss IMMER id="servieren" und type="servieren" sein.
 
@@ -99,7 +100,7 @@ ANFORDERUNGEN:
    - laneId: ID der parallelen Spur für parallele Prozesse (z.B. "vorbereitung", "hauptgang", "beilage")
    - ingredientIds: Array von Zutaten-IDs die in diesem Schritt verwendet werden (z.B. ["ingredient-0", "ingredient-2"])
 
-10. **Flow-Kanten (flowEdges)**: Verbinde die Schritte logisch:
+11. **Flow-Kanten (flowEdges)**: Verbinde die Schritte logisch:
     - id: Eindeutige ID (z.B. "edge-1", "edge-2")
     - source: ID des Quellknotens
     - target: ID des Zielknotens
@@ -119,15 +120,16 @@ Antworte AUSSCHLIESSLICH mit dem geforderten JSON-Format ohne Markdown-Codeblock
 
 ZUSAMMENFASSUNG DER PFLICHTREGELN:
 1. Alle Texte und Zutaten-Namen → DEUTSCH
-2. Erster Knoten: id="start", type="start"
-3. Letzter Knoten: id="servieren", type="servieren"
-4. Jeder Knoten (außer start) hat mind. 1 eingehende Kante
-5. Jeder Knoten (außer servieren) hat mind. 1 ausgehende Kante
-6. Keine Zyklen, keine isolierten Knoten
-7. Zutaten-name = reiner Name ohne Zubereitungsangaben, auf Deutsch
-8. Zutaten-notes = Zubereitungshinweis oder null
-9. ingredientIds pro Knoten = welche Zutaten in diesem Schritt
-10. Parallele Prozesse → unterschiedliche laneIds, beide münden in "servieren"`;
+2. imageUrl = Hauptbild-URL oder null (keine Logos/Icons/Werbung)
+3. Erster Knoten: id="start", type="start"
+4. Letzter Knoten: id="servieren", type="servieren"
+5. Jeder Knoten (außer start) hat mind. 1 eingehende Kante
+6. Jeder Knoten (außer servieren) hat mind. 1 ausgehende Kante
+7. Keine Zyklen, keine isolierten Knoten
+8. Zutaten-name = reiner Name ohne Zubereitungsangaben, auf Deutsch
+9. Zutaten-notes = Zubereitungshinweis oder null
+10. ingredientIds pro Knoten = welche Zutaten in diesem Schritt
+11. Parallele Prozesse → unterschiedliche laneIds, beide münden in "servieren"`;
 
 /**
  * Builds an optional context message with known DB tags and ingredients.

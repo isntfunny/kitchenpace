@@ -97,6 +97,12 @@ export const ImportedRecipeSchema = z.object({
     id: z.string().uuid().describe('UUID des Rezepts'),
     title: z.string().min(1).max(200).describe('Titel des Rezepts'),
     description: z.string().min(10).describe('Beschreibung/Zubereitungshinweis'),
+    imageUrl: z
+        .string()
+        .nullable()
+        .describe(
+            'URL des Hauptbilds des Rezepts (aus <img>, og:image, oder Markdown ![](...)). Null wenn kein Bild gefunden.',
+        ),
     categories: z
         .array(z.enum(CATEGORIES))
         .min(1)
@@ -155,6 +161,11 @@ export function getOpenAIResponseFormat() {
                     description: {
                         type: 'string',
                         description: 'Beschreibung/Zubereitungshinweis',
+                    },
+                    imageUrl: {
+                        type: ['string', 'null'],
+                        description:
+                            'URL des Hauptbilds des Rezepts (aus <img>, og:image, oder Markdown ![](...)). Null wenn kein Bild gefunden.',
                     },
                     categories: {
                         type: 'array',
@@ -276,6 +287,7 @@ export function getOpenAIResponseFormat() {
                     'id',
                     'title',
                     'description',
+                    'imageUrl',
                     'categories',
                     'tags',
                     'prepTime',

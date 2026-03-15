@@ -14,6 +14,7 @@ import {
     parseRecipeMarkdownFallback,
     transformImportedRecipe,
 } from './transform';
+import { uploadImageFromUrl } from './upload-image-from-url';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // analyzeWithAI
@@ -193,6 +194,17 @@ export async function saveImportedRecipe(
         return true;
     });
 
+    // Download and upload external image to S3 (if provided)
+    let imageKey: string | undefined;
+    if (data.imageUrl) {
+        const imgResult = await uploadImageFromUrl(data.imageUrl);
+        if (imgResult.success) {
+            imageKey = imgResult.key;
+        } else {
+            console.warn('[saveImportedRecipe] Image upload failed:', imgResult.error);
+        }
+    }
+
     const slug = await generateUniqueSlug(data.title, async (s) => {
         const existing = await db.recipe.findUnique({ where: { slug: s } });
         return !!existing;
@@ -203,6 +215,7 @@ export async function saveImportedRecipe(
             title: data.title,
             slug,
             description: data.description || '',
+            imageKey: imageKey ?? null,
             servings: data.servings ?? 4,
             prepTime: data.prepTime ?? 0,
             cookTime: data.cookTime ?? 0,

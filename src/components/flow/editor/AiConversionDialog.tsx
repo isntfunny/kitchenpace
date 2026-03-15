@@ -677,7 +677,9 @@ function ReviewPhase({ result, apply, onToggle, colors }: ReviewPhaseProps) {
         {
             field: 'category',
             label: 'Kategorie',
-            value: CATEGORY_LABEL[result.categorySlug] ?? result.categorySlug ?? '—',
+            value: result.categoryIds?.length
+                ? result.categoryIds.map((s) => CATEGORY_LABEL[s] ?? s).join(', ')
+                : '—',
         },
         {
             field: 'tags',
@@ -687,22 +689,24 @@ function ReviewPhase({ result, apply, onToggle, colors }: ReviewPhaseProps) {
         {
             field: 'prepTime',
             label: 'Vorbereitungszeit',
-            value: result.prepTime > 0 ? `${result.prepTime} Min` : '—',
+            value: (result.prepTime ?? 0) > 0 ? `${result.prepTime} Min` : '—',
         },
         {
             field: 'cookTime',
             label: 'Kochzeit',
-            value: result.cookTime > 0 ? `${result.cookTime} Min` : '—',
+            value: (result.cookTime ?? 0) > 0 ? `${result.cookTime} Min` : '—',
         },
         {
             field: 'servings',
             label: 'Portionen',
-            value: String(result.servings),
+            value: result.servings ? String(result.servings) : '—',
         },
         {
             field: 'difficulty',
             label: 'Schwierigkeitsgrad',
-            value: DIFFICULTY_LABEL[result.difficulty] ?? result.difficulty,
+            value: result.difficulty
+                ? (DIFFICULTY_LABEL[result.difficulty] ?? result.difficulty)
+                : '—',
         },
         {
             field: 'ingredients',

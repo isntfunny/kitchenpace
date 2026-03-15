@@ -31,21 +31,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const result = await analyzeWithAI(text, '', userId);
-
-        const data = {
-            title: result.title,
-            description: result.description,
-            categorySlug: result.categoryIds[0] ?? 'hauptgericht',
-            tags: result.tags,
-            servings: result.servings,
-            prepTime: result.prepTime,
-            cookTime: result.cookTime,
-            difficulty: result.difficulty,
-            ingredients: result.ingredients,
-            flowNodes: result.flowNodes,
-            flowEdges: result.flowEdges,
-        };
+        const data = await analyzeWithAI(text, '', userId);
 
         return NextResponse.json({ data });
     } catch (error) {

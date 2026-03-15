@@ -87,6 +87,7 @@ export function transformImportedRecipe(data: ImportedRecipe): AnalyzedRecipe {
     return {
         title: data.title,
         description: data.description,
+        imageUrl: data.imageUrl ?? undefined,
         servings: data.servings,
         prepTime: data.prepTime,
         cookTime: data.cookTime,

@@ -5,28 +5,13 @@
  * into structured flow data for the Recipe Editor.
  */
 
-import type { FlowNodeInput, FlowEdgeInput } from '@app/app/recipe/create/import/actions';
+/**
+ * AIAnalysisResult is the same shape as AnalyzedRecipe from the transform pipeline.
+ * Re-exported here so the FlowEditor / AiConversionDialog can import from one place.
+ */
+import type { AnalyzedRecipe } from './transform';
 
-export interface AIAnalysisResult {
-    title: string;
-    description: string;
-    /** Category slug matching Category.slug in DB (e.g. 'hauptgericht', 'dessert') */
-    categorySlug: string;
-    tags: string[];
-    servings: number;
-    prepTime: number;
-    cookTime: number;
-    difficulty: 'EASY' | 'MEDIUM' | 'HARD';
-    ingredients: Array<{
-        name: string;
-        amount: string;
-        unit: string;
-        notes?: string;
-        isOptional: boolean;
-    }>;
-    flowNodes: FlowNodeInput[];
-    flowEdges: FlowEdgeInput[];
-}
+export type AIAnalysisResult = AnalyzedRecipe;
 
 /** Which metadata fields the user wants to apply from the AI result */
 export interface ApplySelection {

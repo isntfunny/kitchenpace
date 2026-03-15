@@ -4,6 +4,10 @@ import { fireEvent } from '@app/lib/events/fire';
 import { createActivityLog } from '@app/lib/events/persist';
 import { uploadImageFromUrl as uploadImageFromUrlShared } from '@app/lib/importer/upload-image-from-url';
 import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
+import {
+    calculateRecipeNutrition,
+    type IngredientNutritionInput,
+} from '@app/lib/nutrition/calculate';
 import { moveObject } from '@app/lib/s3';
 import { approvedKey } from '@app/lib/s3/keys';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
@@ -11,34 +15,58 @@ import { formatValidationErrors, validateFlow } from '@app/lib/validation/flowVa
 import { prisma } from '@shared/prisma';
 import { addSyncRecipeJob, addGenerateRecipeOgJob } from '@worker/queues';
 
-type ShoppingCategory =
-    | 'GEMUESE'
-    | 'OBST'
-    | 'FLEISCH'
-    | 'FISCH'
-    | 'MILCHPRODUKTE'
-    | 'GEWURZE'
-    | 'BACKEN'
-    | 'GETRAENKE'
-    | 'SONSTIGES';
+/**
+ * Calculate and store per-serving nutrition for a recipe.
+ * Called after ingredients are saved.
+ */
+async function updateRecipeNutrition(recipeId: string, servings: number) {
+    const recipeIngredients = await prisma.recipeIngredient.findMany({
+        where: { recipeId },
+        include: {
+            ingredient: {
+                include: {
+                    ingredientUnits: { include: { unit: true } },
+                },
+            },
+        },
+    });
 
-const SHOPPING_CATEGORIES: ShoppingCategory[] = [
-    'GEMUESE',
-    'OBST',
-    'FLEISCH',
-    'FISCH',
-    'MILCHPRODUKTE',
-    'GEWURZE',
-    'BACKEN',
-    'GETRAENKE',
-    'SONSTIGES',
-];
+    const inputs: IngredientNutritionInput[] = recipeIngredients.map((ri) => {
+        const iu = ri.ingredient.ingredientUnits.find(
+            (iu) => iu.unit.shortName === ri.unit || iu.unit.longName === ri.unit,
+        );
+        return {
+            name: ri.ingredient.name,
+            amount: ri.amount,
+            unitShortName: ri.unit,
+            caloriesPer100g: ri.ingredient.caloriesPer100g,
+            proteinPer100g: ri.ingredient.proteinPer100g,
+            fatPer100g: ri.ingredient.fatPer100g,
+            carbsPer100g: ri.ingredient.carbsPer100g,
+            fiberPer100g: ri.ingredient.fiberPer100g,
+            ingredientUnitGrams: iu?.grams ?? null,
+            unitGramsDefault: iu?.unit.gramsDefault ?? null,
+        };
+    });
 
-function toShoppingCategory(category?: string): ShoppingCategory | null {
-    if (!category) return null;
-    const normalized = category.toUpperCase().replace(/[^A-Z]/g, '');
-    const match = SHOPPING_CATEGORIES.find((c) => c.includes(normalized) || normalized.includes(c));
-    return match ?? 'SONSTIGES';
+    const result = calculateRecipeNutrition(inputs);
+
+    await prisma.recipe.update({
+        where: { id: recipeId },
+        data: {
+            caloriesPerServing:
+                result.calories !== null ? Math.round(result.calories / servings) : null,
+            proteinPerServing:
+                result.protein !== null ? Math.round((result.protein / servings) * 10) / 10 : null,
+            fatPerServing:
+                result.fat !== null ? Math.round((result.fat / servings) * 10) / 10 : null,
+            carbsPerServing:
+                result.carbs !== null ? Math.round((result.carbs / servings) * 10) / 10 : null,
+            fiberPerServing:
+                result.fiber !== null ? Math.round((result.fiber / servings) * 10) / 10 : null,
+            nutritionCompleteness: result.completeness,
+        },
+    });
 }
 
 /**
@@ -167,7 +195,6 @@ export interface UpdateRecipeInput {
     servings: number;
     prepTime: number;
     cookTime: number;
-    calories?: number;
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
     categoryIds: string[];
     tagIds?: string[];
@@ -225,7 +252,6 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
             prepTime: data.prepTime,
             cookTime: data.cookTime,
             totalTime: data.prepTime + data.cookTime,
-            calories: data.calories ?? null,
             difficulty: data.difficulty,
             status: recipeStatus as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED',
             publishedAt: isPublishing ? new Date() : undefined,
@@ -339,6 +365,9 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
         });
     }
 
+    // Auto-calculate nutrition from ingredients
+    await updateRecipeNutrition(recipeId, data.servings);
+
     if (isPublishing) {
         await createActivityLog({
             userId: authorId,
@@ -365,7 +394,6 @@ export interface CreateRecipeInput {
     servings: number;
     prepTime: number;
     cookTime: number;
-    calories?: number;
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
     categoryIds: string[]; // Changed from categoryId to categoryIds array
     tagIds?: string[];
@@ -435,7 +463,6 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             prepTime: data.prepTime,
             cookTime: data.cookTime,
             totalTime: data.prepTime + data.cookTime,
-            calories: data.calories ?? null,
             difficulty: data.difficulty,
             status: recipeStatus,
             publishedAt: isPublished ? new Date() : null,
@@ -482,6 +509,9 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
         text: recipeText,
         imageKey: finalImageKey ?? undefined,
     });
+
+    // Auto-calculate nutrition from ingredients
+    await updateRecipeNutrition(recipe.id, data.servings);
 
     // Queue OG image generation for auto-approved recipes with an image
     if (modResult.decision === 'AUTO_APPROVED' && finalImageKey) {
@@ -531,7 +561,7 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
     return recipe;
 }
 
-export async function createIngredient(name: string, category?: string, units: string[] = []) {
+export async function createIngredient(name: string, _category?: string, _units: string[] = []) {
     const { stemGerman, getWordVariants } = await import('@app/lib/german-stem');
 
     const trimmed = name.trim();
@@ -573,8 +603,6 @@ export async function createIngredient(name: string, category?: string, units: s
                 name: canonicalName,
                 slug,
                 pluralName: isStemmed ? trimmed[0].toUpperCase() + trimmed.slice(1) : null,
-                category: toShoppingCategory(category),
-                units: units.length > 0 ? units : [],
                 needsReview: true,
             },
         });

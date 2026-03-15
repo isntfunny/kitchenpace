@@ -1,5 +1,6 @@
 import AuthErrorClient from '@app/components/auth/AuthErrorClient';
 import { PageShell } from '@app/components/layouts/PageShell';
+
 import { css } from 'styled-system/css';
 
 type AuthErrorPageProps = {

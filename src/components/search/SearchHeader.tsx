@@ -3,6 +3,7 @@ import { LayoutGrid, List, Search, SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@app/components/atoms/Button';
 import { PALETTE } from '@app/lib/palette';
 import type { RecipeFilterSearchParams, RecipeSortOption } from '@app/lib/recipeFilters';
+
 import { css } from 'styled-system/css';
 
 import { ActiveFilters } from './ActiveFilters';

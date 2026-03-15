@@ -9,6 +9,7 @@ import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayout';
+
 import { css } from 'styled-system/css';
 
 export function PasswordEditClient({ userSlug }: { userSlug?: string }) {

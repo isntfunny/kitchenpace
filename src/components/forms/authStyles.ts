@@ -1,4 +1,5 @@
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 export const authFormStackClass = css({

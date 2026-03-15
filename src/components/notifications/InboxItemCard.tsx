@@ -16,6 +16,7 @@ import Link from 'next/link';
 
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { formatTimeAgo } from '@app/lib/activity-utils';
+
 import { css } from 'styled-system/css';
 
 // ─── Notification type → icon + color mapping ─────────────────────────────

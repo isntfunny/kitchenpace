@@ -1,4 +1,5 @@
 import { Skeleton } from '@app/components/atoms/Skeleton';
+
 import { css } from 'styled-system/css';
 
 interface RecipeCardSkeletonProps {

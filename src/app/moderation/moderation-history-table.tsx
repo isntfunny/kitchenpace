@@ -7,6 +7,7 @@ import { Dialog } from 'radix-ui';
 import { useState } from 'react';
 
 import { getThumbnailUrl, extractKeyFromUrl } from '@app/lib/thumbnail-client';
+
 import { css } from 'styled-system/css';
 
 type LogItem = ModerationLog & {

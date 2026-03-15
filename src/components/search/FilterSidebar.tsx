@@ -6,6 +6,7 @@ import { useMemo, type ReactNode } from 'react';
 
 import type { CategoryOption } from '@app/app/actions/filters';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+
 import { css } from 'styled-system/css';
 
 import { RangeControl } from './FilterSidebar/components/RangeControl';

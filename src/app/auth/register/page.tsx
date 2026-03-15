@@ -19,6 +19,7 @@ import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
 import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { useUtmParams } from '@app/lib/hooks/useUtmParams';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 const MAX_NICKNAME_LENGTH = 40;

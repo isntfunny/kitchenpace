@@ -1,5 +1,6 @@
 import { PageShell } from '@app/components/layouts/PageShell';
 import { prisma } from '@shared/prisma';
+
 import { css } from 'styled-system/css';
 
 import { AccountsTable } from './accounts-table';

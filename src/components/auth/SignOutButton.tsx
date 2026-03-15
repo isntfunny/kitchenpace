@@ -1,6 +1,7 @@
 'use client';
 
 import { handleSignOut } from '@app/components/auth/actions';
+
 import { css } from 'styled-system/css';
 
 type Props = {

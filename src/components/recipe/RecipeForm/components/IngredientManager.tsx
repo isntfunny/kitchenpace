@@ -6,6 +6,7 @@ import type { RefObject } from 'react';
 
 import { ingredientDisplayName } from '@app/lib/ingredient-display';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 import { AddedIngredient, IngredientSearchResult } from '../data';

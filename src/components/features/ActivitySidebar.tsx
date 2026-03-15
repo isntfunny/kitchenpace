@@ -1,4 +1,5 @@
 import type { ActivityFeedItem } from '@app/app/actions/community';
+
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';

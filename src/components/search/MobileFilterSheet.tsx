@@ -5,6 +5,7 @@ import type { CategoryOption } from '@app/app/actions/filters';
 import { Button } from '@app/components/atoms/Button';
 import { PALETTE } from '@app/lib/palette';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+
 import { css } from 'styled-system/css';
 
 import { FilterSidebar } from './FilterSidebar';

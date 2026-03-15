@@ -17,6 +17,7 @@ import {
 } from '@app/components/recipe/tutorial/shared';
 import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 import type { StepType } from './editorTypes';

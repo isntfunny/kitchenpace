@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@app/components/atoms/Button';
 import { UploadArea } from '@app/components/features/UploadArea';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
+
 import { css } from 'styled-system/css';
 
 interface CookDialogProps {

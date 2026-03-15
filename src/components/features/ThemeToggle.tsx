@@ -4,6 +4,7 @@ import * as Toggle from '@radix-ui/react-toggle';
 import { Moon, SunMedium } from 'lucide-react';
 
 import { useTheme } from '@app/components/providers/ThemeProvider';
+
 import { css } from 'styled-system/css';
 
 const toggleStyles = css({

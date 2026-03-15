@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 
 import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
+
 import { css } from 'styled-system/css';
 
 import type { StepType } from './editorTypes';

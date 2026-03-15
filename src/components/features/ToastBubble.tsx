@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { KeyboardEvent } from 'react';
 
 import type { Toast, ToastType } from '@app/types/toast';
+
 import { css } from 'styled-system/css';
 
 const ICONS: Record<ToastType, typeof CheckCircle2> = {

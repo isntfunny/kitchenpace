@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
 import type { RecipeCardData } from '@app/lib/recipe-card';
+
 import { css, cx } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 

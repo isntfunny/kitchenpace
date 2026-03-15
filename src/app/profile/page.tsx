@@ -30,6 +30,7 @@ import { FadeInSection } from '@app/components/motion/FadeInSection';
 import { formatTimeAgo } from '@app/lib/activity-utils';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { getOrCreateProfile } from '@app/lib/profile';
+
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 

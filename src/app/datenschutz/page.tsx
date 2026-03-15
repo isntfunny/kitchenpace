@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 
 import { PageShell } from '@app/components/layouts/PageShell';
+
 import { css } from 'styled-system/css';
 
 export const metadata: Metadata = {

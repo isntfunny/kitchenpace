@@ -59,6 +59,13 @@ const eslintConfig = defineConfig([
                 'error',
                 {
                     groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+                    pathGroups: [
+                        { pattern: '@app/**', group: 'internal' },
+                        { pattern: '@shared/**', group: 'internal' },
+                        { pattern: '@worker/**', group: 'internal' },
+                        { pattern: 'styled-system/**', group: 'internal', position: 'after' },
+                    ],
+                    pathGroupsExcludedImportTypes: ['builtin'],
                     'newlines-between': 'always',
                     alphabetize: { order: 'asc', caseInsensitive: true },
                 },

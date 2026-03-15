@@ -8,6 +8,7 @@ import type { RecipeCardData } from '@app/app/actions/recipes';
 import { RecipeCard } from '@app/components/features/RecipeCard';
 import { RecipeCardSkeleton } from '@app/components/features/RecipeCardSkeleton';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+
 import { css } from 'styled-system/css';
 
 import { FilterSidebar } from './FilterSidebar';

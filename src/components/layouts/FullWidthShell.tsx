@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 
 import { Header } from '@app/components/features/Header';
 import { Footer } from '@app/components/layouts/Footer';
+
 import { css } from 'styled-system/css';
 
 type FullWidthShellProps = {

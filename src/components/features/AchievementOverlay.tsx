@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
 import { TIER_STYLES } from '@app/lib/trophies/registry';
+
 import { css } from 'styled-system/css';
 
 // ---------------------------------------------------------------------------

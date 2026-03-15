@@ -19,6 +19,7 @@ import Link from 'next/link';
 import type { ActivityFeedItem, ActivityIconName } from '@app/app/actions/community';
 import { Avatar } from '@app/components/atoms/Avatar';
 import { Text } from '@app/components/atoms/Typography';
+
 import { css } from 'styled-system/css';
 
 const ACTIVITY_ICON_MAP: Record<ActivityIconName, LucideIcon> = {

@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
+
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 

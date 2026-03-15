@@ -2,6 +2,7 @@ import { BarChart3, Bookmark, Clock, Flame, Tag, Users, BookOpen, Heart, Star } 
 import type { LucideIcon } from 'lucide-react';
 
 import type { QuickTipData, QuickTipIconName } from '@app/app/actions/community';
+
 import { css } from 'styled-system/css';
 
 import { Heading, Text } from '../atoms/Typography';

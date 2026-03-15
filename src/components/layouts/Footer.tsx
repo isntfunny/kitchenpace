@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { AnimatedChefHat } from '@app/components/motion/AnimatedChefHat';
+
 import { css } from 'styled-system/css';
 
 export function Footer() {

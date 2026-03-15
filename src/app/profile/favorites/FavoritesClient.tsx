@@ -12,6 +12,7 @@ import { Heading, Text } from '@app/components/atoms/Typography';
 import { RecipeCard } from '@app/components/features/RecipeCard';
 import { formatTimeAgo } from '@app/lib/activity-utils';
 import type { FavoriteRecipeCard } from '@app/lib/recipe-card';
+
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 

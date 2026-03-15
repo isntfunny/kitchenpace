@@ -14,6 +14,7 @@ import { FadeInSection } from '@app/components/motion/FadeInSection';
 import { FitsNow } from '@app/components/sections/FitsNow';
 import { FlowPillars } from '@app/components/sections/FlowPillars';
 import { HeroSpotlight } from '@app/components/sections/HeroSpotlight';
+
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 

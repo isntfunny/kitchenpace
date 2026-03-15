@@ -12,6 +12,7 @@ import {
     extractKeyFromUrl,
 } from '@app/lib/thumbnail-client';
 import type { AspectRatio } from '@app/lib/thumbnail-client';
+
 import { css, cx } from 'styled-system/css';
 
 const RECIPE_PLACEHOLDER = '/recipe_placeholder.jpg';

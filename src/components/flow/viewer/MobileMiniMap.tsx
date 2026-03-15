@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react';
 
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 import type { FlowEdgeSerialized, FlowNodeSerialized, StepType } from '../editor/editorTypes';

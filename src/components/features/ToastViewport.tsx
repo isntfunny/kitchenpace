@@ -5,6 +5,7 @@ import { AnimatePresence } from 'motion/react';
 import { useLayoutEffect, useState, useSyncExternalStore } from 'react';
 
 import { useToastContext } from '@app/components/providers/ToastProvider';
+
 import { css } from 'styled-system/css';
 
 import { ToastBubble } from './ToastBubble';

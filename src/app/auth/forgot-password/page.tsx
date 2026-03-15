@@ -10,6 +10,7 @@ import {
     getAuthButtonClass,
 } from '@app/components/forms/authStyles';
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
+
 import { css } from 'styled-system/css';
 
 export default function ForgotPasswordPage() {

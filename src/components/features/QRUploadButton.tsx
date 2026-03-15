@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 
 import { pollQRUploadStatus } from '@app/lib/qrupload/actions';
+
 import { css } from 'styled-system/css';
 
 interface QRUploadButtonProps {

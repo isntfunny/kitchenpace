@@ -17,6 +17,7 @@ import { PageShell } from '@app/components/layouts/PageShell';
 import { RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY } from '@app/components/recipe/tutorial/shared';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { TROPHIES } from '@app/lib/trophies/registry';
+
 import { css } from 'styled-system/css';
 import { grid, container } from 'styled-system/patterns';
 

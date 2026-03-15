@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
+
 import { css } from 'styled-system/css';
 
 interface ShareButtonProps {

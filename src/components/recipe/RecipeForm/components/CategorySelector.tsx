@@ -6,6 +6,7 @@ import { Utensils } from 'lucide-react';
 import { createElement } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
+
 import { css, cx } from 'styled-system/css';
 
 import { Category } from '../data';

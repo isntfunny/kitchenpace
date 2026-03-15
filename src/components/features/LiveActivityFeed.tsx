@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import type { ActivityFeedItem } from '@app/app/actions/community';
+
 import { css } from 'styled-system/css';
 
 import { Text } from '../atoms/Typography';

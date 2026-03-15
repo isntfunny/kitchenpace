@@ -20,6 +20,7 @@ import type { ActivityFeedItem } from '@app/app/actions/community';
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import { ActivityList } from '@app/components/features/ActivitySidebar';
 import { HorizontalRecipeScroll } from '@app/components/features/HorizontalRecipeScroll';
+
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 

@@ -3,6 +3,7 @@
 import { Inbox } from 'lucide-react';
 
 import { Heading, Text } from '@app/components/atoms/Typography';
+
 import { css } from 'styled-system/css';
 
 import { NotificationItem } from './NotificationItem';

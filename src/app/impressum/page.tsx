@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { PageShell } from '@app/components/layouts/PageShell';
+
 import { css } from 'styled-system/css';
 
 const LAST_UPDATED = 'März 2026';

@@ -5,6 +5,7 @@ import { getQueueLabel, JOB_STATUS_DETAILS, STATUS_ORDER } from '@worker/queues/
 import { getScheduledJobDefinitions } from '@worker/queues/scheduler';
 import { QueueName, type JobPayloadSchema } from '@worker/queues/types';
 import { getWorkerDefinitions } from '@worker/queues/worker';
+
 import { css } from 'styled-system/css';
 
 import { JobTriggerCard } from './job-trigger-card';

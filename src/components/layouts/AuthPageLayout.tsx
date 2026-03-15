@@ -2,6 +2,7 @@ import { Camera, ChefHat, Pin, Star } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 import { FormPanelAnimation, HeroFloatingIcons, HeroPointCard } from './AuthHeroAnimations';

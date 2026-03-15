@@ -1,6 +1,7 @@
 'use client';
 
 import { Avatar } from '@app/components/atoms/Avatar';
+
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 

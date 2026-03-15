@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 
 import { categoryColors } from '@app/components/features/RecipeCard';
+
 import { css } from 'styled-system/css';
 
 import type { Recipe } from '../data';

@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 type AuthErrorClientProps = {

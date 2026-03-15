@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Avatar } from '@app/components/atoms/Avatar';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
+
 import { css } from 'styled-system/css';
 
 import type { MultiSearchRecipe, MultiSearchUser, SuggestItem } from './useMultiSearch';

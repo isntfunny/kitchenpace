@@ -9,6 +9,7 @@ import { HeaderSearch } from '@app/components/search/HeaderSearch';
 import { useSession } from '@app/lib/auth-client';
 import { PALETTE } from '@app/lib/palette';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
+
 import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';

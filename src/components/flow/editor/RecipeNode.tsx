@@ -12,6 +12,7 @@ import {
 import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
+
 import { css, cx } from 'styled-system/css';
 
 import { AddNodeButton } from './AddNodeButton';

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { PageShell } from '@app/components/layouts/PageShell';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 type ActivateClientProps = {

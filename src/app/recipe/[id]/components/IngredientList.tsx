@@ -1,6 +1,7 @@
 'use client';
 
 import { ingredientDisplayName } from '@app/lib/ingredient-display';
+
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 

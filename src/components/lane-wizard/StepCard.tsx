@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
+
 import { css } from 'styled-system/css';
 
 import type { LaneMode, LaneStep, TimerState } from './types';

@@ -5,6 +5,7 @@ import { ChefHat, Trophy, User } from 'lucide-react';
 
 import { PALETTE } from '@app/lib/palette';
 import { TIER_STYLES } from '@app/lib/trophies/registry';
+
 import { css, cx } from 'styled-system/css';
 
 import { SmartImage } from './SmartImage';

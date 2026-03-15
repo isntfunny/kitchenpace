@@ -7,6 +7,7 @@ import { useTransition } from 'react';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { SearchableSelect } from '@app/components/ui/SearchableSelect';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
+
 import { css } from 'styled-system/css';
 
 import { setFeaturedRecipe, setTopUser } from './actions';

@@ -5,6 +5,7 @@ import 'yet-another-react-lightbox/styles.css';
 
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { ReportButton } from '@app/components/features/ReportButton';
+
 import { css } from 'styled-system/css';
 
 type HeroImage = {

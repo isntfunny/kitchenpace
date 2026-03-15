@@ -19,6 +19,7 @@ import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { FileUpload } from '@app/components/features/FileUpload';
 import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayout';
+
 import { css } from 'styled-system/css';
 
 const MAX_NICKNAME_LENGTH = 32;

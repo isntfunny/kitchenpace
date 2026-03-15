@@ -8,6 +8,7 @@ import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
 import { getOrCreateProfile } from '@app/lib/profile';
 import { prisma } from '@shared/prisma';
+
 import { css } from 'styled-system/css';
 
 import { AccountSettingsCard } from '../settings/AccountSettingsCard';

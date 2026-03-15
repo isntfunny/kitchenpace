@@ -32,6 +32,7 @@ import {
 
 import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 import type { FlowEdgeSerialized, FlowNodeSerialized } from '../editor/editorTypes';

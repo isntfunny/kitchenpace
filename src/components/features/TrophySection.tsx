@@ -5,6 +5,7 @@ import { GraduationCap, Trophy } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { TIER_STYLES } from '@app/lib/trophies/registry';
+
 import { css } from 'styled-system/css';
 
 // ---------------------------------------------------------------------------

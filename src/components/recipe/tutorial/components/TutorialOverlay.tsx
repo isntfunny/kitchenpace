@@ -5,6 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 import type { RecipeTutorialStep } from '../types';

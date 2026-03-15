@@ -3,6 +3,7 @@
 import { X } from 'lucide-react';
 
 import { SmartImage } from '@app/components/atoms/SmartImage';
+
 import { css } from 'styled-system/css';
 
 import { UploadArea } from './UploadArea';

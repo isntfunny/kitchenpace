@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 
 import { Heading } from '@app/components/atoms/Typography';
 import SignOutButton from '@app/components/auth/SignOutButton';
+
 import { css } from 'styled-system/css';
 
 const links = [

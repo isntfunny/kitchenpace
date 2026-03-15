@@ -3,6 +3,7 @@
 import { handleSignOut } from '@app/components/auth/actions';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 const SignOutPage = () => {

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import type { JobStatus } from '@worker/queues/job-run';
 import { JOB_STATUS_DETAILS } from '@worker/queues/job-run-ui';
+
 import { css } from 'styled-system/css';
 
 type JobRun = {

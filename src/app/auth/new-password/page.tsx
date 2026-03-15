@@ -12,6 +12,7 @@ import {
 } from '@app/components/forms/authStyles';
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
 import { PageShell } from '@app/components/layouts/PageShell';
+
 import { css } from 'styled-system/css';
 
 function NewPasswordForm() {

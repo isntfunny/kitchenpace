@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
 import { prisma } from '@shared/prisma';
+
 import { css } from 'styled-system/css';
 
 export const metadata: Metadata = {

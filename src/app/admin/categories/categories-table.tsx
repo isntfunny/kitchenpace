@@ -15,6 +15,7 @@ import { Dialog } from 'radix-ui';
 import { useState } from 'react';
 
 import { PALETTE, PALETTE_LABELS, type PaletteColor } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 import { createCategory, updateCategory, deleteCategory, type CategoryFormData } from './actions';

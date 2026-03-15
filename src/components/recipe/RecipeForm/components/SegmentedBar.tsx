@@ -4,6 +4,7 @@ import { useOpenPanel } from '@openpanel/nextjs';
 import { useState } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
+
 import { css, cx } from 'styled-system/css';
 
 const BAR_HEIGHT = 36;

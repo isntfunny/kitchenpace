@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 
 import { fetchRecipesByTime, type RecipeCardData } from '@app/app/actions/recipes';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 import { RecipeCard } from '../features/RecipeCard';

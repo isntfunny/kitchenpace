@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 
 import type { StepType } from '@app/components/flow/editor/editorTypes';
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
+
 import { css } from 'styled-system/css';
 
 import { uid } from './gridReducer';

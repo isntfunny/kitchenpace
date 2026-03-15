@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { QuickLinksCard } from '@app/components/features/QuickLinksCard';
+
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 

@@ -15,6 +15,7 @@ import { useSession } from '@app/lib/auth-client';
 import { connectStream, disconnectStream, onStreamEvent } from '@app/lib/realtime/clientStream';
 import type { PublishedToast, Toast, ToastInput } from '@app/types/toast';
 import { TOAST_STREAM_EVENT } from '@app/types/toast';
+
 import { css } from 'styled-system/css';
 
 const DEFAULT_DURATION = 5000;

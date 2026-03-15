@@ -14,6 +14,7 @@ import type {
 } from '@app/components/flow/editor/editorTypes';
 import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 import { stack } from 'styled-system/patterns';
 

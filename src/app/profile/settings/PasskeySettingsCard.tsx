@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState, useTransition } from 'react';
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { authClient } from '@app/lib/auth-client';
+
 import { css } from 'styled-system/css';
 
 interface PasskeyInfo {

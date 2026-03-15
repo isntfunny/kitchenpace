@@ -3,6 +3,7 @@
 import { type RefObject } from 'react';
 
 import { FileUpload } from '@app/components/features/FileUpload';
+
 import { css } from 'styled-system/css';
 
 interface GeneralInformationSectionProps {

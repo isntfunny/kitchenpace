@@ -2,6 +2,7 @@ import { ChefHat } from 'lucide-react';
 import Link from 'next/link';
 
 import { Header } from '@app/components/features/Header';
+
 import { css } from 'styled-system/css';
 
 export default function NotFound() {

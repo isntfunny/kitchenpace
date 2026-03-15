@@ -1,5 +1,6 @@
 import { ensureModeratorSession } from '@app/lib/admin/ensure-moderator';
 import { prisma } from '@shared/prisma';
+
 import { css } from 'styled-system/css';
 
 import { ModerationHistoryTable } from './moderation-history-table';

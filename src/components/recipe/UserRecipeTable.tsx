@@ -8,6 +8,7 @@ import type { UserRecipe } from '@app/app/actions/user';
 import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { PALETTE } from '@app/lib/palette';
+
 import { css, cx } from 'styled-system/css';
 
 // ---------------------------------------------------------------------------

@@ -10,6 +10,7 @@ import { SmartImage } from '@app/components/atoms/SmartImage';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
 import type { RecipeTabItem } from '@app/components/providers/RecipeTabsProvider';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 const DROPDOWN_WIDTH = 240;

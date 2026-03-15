@@ -13,6 +13,7 @@ import { resolveNotificationHref } from '@app/components/notifications/utils';
 import { useProfile } from '@app/components/providers/ProfileProvider';
 import { useSession } from '@app/lib/auth-client';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 import { Avatar } from '../atoms/Avatar';

@@ -9,6 +9,7 @@ import { SegmentedBar } from '@app/components/recipe/RecipeForm/components/Segme
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
+
 import { css } from 'styled-system/css';
 
 import { DescriptionEditor } from './DescriptionEditor';

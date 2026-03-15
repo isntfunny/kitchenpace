@@ -8,6 +8,7 @@ import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayo
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
 import { getOrCreateProfile } from '@app/lib/profile';
+
 import { css } from 'styled-system/css';
 
 import { EmailSettingsCard } from './EmailSettingsCard';

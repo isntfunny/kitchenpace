@@ -1,6 +1,7 @@
 import { Flame } from 'lucide-react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
+
 import { css } from 'styled-system/css';
 
 import { SmartImage } from '../atoms/SmartImage';

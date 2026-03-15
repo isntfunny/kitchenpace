@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 import { Avatar } from '@app/components/atoms/Avatar';
 import { Button } from '@app/components/atoms/Button';
+
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 

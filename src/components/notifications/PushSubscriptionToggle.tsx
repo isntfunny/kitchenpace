@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;

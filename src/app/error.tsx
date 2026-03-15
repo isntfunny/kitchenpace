@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { Header } from '@app/components/features/Header';
+
 import { css } from 'styled-system/css';
 
 export default function ErrorPage({

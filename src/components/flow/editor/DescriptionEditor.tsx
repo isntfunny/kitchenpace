@@ -9,6 +9,7 @@ import {
     RECIPE_TUTORIAL_EVENTS,
 } from '@app/components/recipe/tutorial/shared';
 import { useIngredientSearch } from '@app/components/recipe/useIngredientSearch';
+
 import { css } from 'styled-system/css';
 
 interface DescriptionEditorProps {

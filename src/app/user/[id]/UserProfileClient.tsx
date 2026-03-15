@@ -15,6 +15,7 @@ import { RecipeCard as SharedRecipeCard } from '@app/components/features/RecipeC
 import { ReportButton } from '@app/components/features/ReportButton';
 import { TrophySection, type EarnedTrophy } from '@app/components/features/TrophySection';
 import { PALETTE } from '@app/lib/palette';
+
 import { css } from 'styled-system/css';
 import { flex, grid } from 'styled-system/patterns';
 

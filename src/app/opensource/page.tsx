@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { PageShell } from '@app/components/layouts/PageShell';
 import licensesRaw from '@app/data/licenses.json';
+
 import { css } from 'styled-system/css';
 
 // ─── Types ─────────────────────────────────────────────────────────────────

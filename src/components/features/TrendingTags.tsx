@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { TrendingTagData } from '@app/app/actions/community';
 import { AnimatedFlame } from '@app/components/motion/AnimatedFlame';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
+
 import { css } from 'styled-system/css';
 
 import { Heading } from '../atoms/Typography';

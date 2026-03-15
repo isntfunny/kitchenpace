@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react';
 import type { StepType } from '@app/components/flow/editor/editorTypes';
 import { ADDABLE_STEP_TYPES, STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
 import { useIsDark } from '@app/lib/darkMode';
+
 import { css } from 'styled-system/css';
 
 interface StepTypePickerProps {

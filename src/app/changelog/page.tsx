@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 
 import { PageShell } from '@app/components/layouts/PageShell';
+
 import { css } from 'styled-system/css';
 
 import { FadeIn, ScaleIn } from './animations';

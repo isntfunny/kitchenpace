@@ -4,6 +4,7 @@ import type { Dispatch } from 'react';
 import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
+
 import { css } from 'styled-system/css';
 
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';

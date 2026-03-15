@@ -7,6 +7,7 @@ import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayo
 import { NotificationsPageContent } from '@app/components/notifications/NotificationsPageContent';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { getOrCreateProfile } from '@app/lib/profile';
+
 import { css } from 'styled-system/css';
 
 export const metadata = {

@@ -4,6 +4,7 @@ import { Slider, Tooltip } from 'radix-ui';
 import { useMemo, useState } from 'react';
 
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+
 import { css } from 'styled-system/css';
 
 import type { HistogramFacet } from '../../useRecipeSearch';

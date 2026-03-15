@@ -1,1 +1,0 @@
-ALTER TABLE "Ingredient" ADD COLUMN "needsReview" BOOLEAN NOT NULL DEFAULT false;

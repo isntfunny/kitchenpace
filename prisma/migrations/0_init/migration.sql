@@ -1,5 +1,8 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN');
+CREATE TYPE "TrophyTier" AS ENUM ('NONE', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM');
 
 -- CreateEnum
 CREATE TYPE "Difficulty" AS ENUM ('EASY', 'MEDIUM', 'HARD');
@@ -23,22 +26,32 @@ CREATE TYPE "ShoppingCategory" AS ENUM ('GEMUESE', 'OBST', 'FLEISCH', 'FISCH', '
 CREATE TYPE "NotificationType" AS ENUM ('NEW_FOLLOWER', 'RECIPE_LIKE', 'RECIPE_COMMENT', 'RECIPE_RATING', 'RECIPE_COOKED', 'RECIPE_PUBLISHED', 'WEEKLY_PLAN_REMINDER', 'SYSTEM');
 
 -- CreateEnum
-CREATE TYPE "ActivityType" AS ENUM ('RECIPE_CREATED', 'RECIPE_COOKED', 'RECIPE_RATED', 'RECIPE_COMMENTED', 'RECIPE_FAVORITED', 'RECIPE_UNFAVORITED', 'USER_FOLLOWED', 'USER_REGISTERED', 'USER_ACTIVATED', 'MEAL_PLAN_CREATED');
+CREATE TYPE "ActivityType" AS ENUM ('RECIPE_CREATED', 'RECIPE_COOKED', 'RECIPE_RATED', 'RECIPE_COMMENTED', 'RECIPE_FAVORITED', 'RECIPE_UNFAVORITED', 'USER_FOLLOWED', 'USER_REGISTERED', 'USER_ACTIVATED', 'MEAL_PLAN_CREATED', 'SHOPPING_LIST_CREATED');
+
+-- CreateEnum
+CREATE TYPE "PaletteColor" AS ENUM ('orange', 'gold', 'emerald', 'purple', 'blue', 'pink');
+
+-- CreateEnum
+CREATE TYPE "ModerationStatus" AS ENUM ('APPROVED', 'PENDING', 'REJECTED', 'AUTO_APPROVED');
+
+-- CreateEnum
+CREATE TYPE "ImportRunStatus" AS ENUM ('SUCCESS', 'FALLBACK', 'FAILED');
 
 -- CreateTable
 CREATE TABLE "Account" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
-    "provider" TEXT NOT NULL,
-    "providerAccountId" TEXT NOT NULL,
-    "refresh_token" TEXT,
-    "access_token" TEXT,
-    "expires_at" INTEGER,
-    "token_type" TEXT,
+    "accountId" TEXT NOT NULL,
+    "providerId" TEXT NOT NULL,
+    "accessToken" TEXT,
+    "refreshToken" TEXT,
+    "accessTokenExpiresAt" TIMESTAMP(3),
+    "refreshTokenExpiresAt" TIMESTAMP(3),
     "scope" TEXT,
-    "id_token" TEXT,
-    "session_state" TEXT,
+    "idToken" TEXT,
+    "password" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Account_pkey" PRIMARY KEY ("id")
 );
@@ -46,49 +59,85 @@ CREATE TABLE "Account" (
 -- CreateTable
 CREATE TABLE "Session" (
     "id" TEXT NOT NULL,
-    "sessionToken" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "expires" TIMESTAMP(3) NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "impersonatedBy" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "VerificationToken" (
+CREATE TABLE "Verification" (
+    "id" TEXT NOT NULL,
     "identifier" TEXT NOT NULL,
-    "token" TEXT NOT NULL,
-    "expires" TIMESTAMP(3) NOT NULL,
+    "value" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "VerificationToken_pkey" PRIMARY KEY ("identifier")
+    CONSTRAINT "Verification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Passkey" (
+    "id" TEXT NOT NULL,
+    "name" TEXT,
+    "publicKey" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "credentialID" TEXT NOT NULL,
+    "counter" INTEGER NOT NULL,
+    "deviceType" TEXT NOT NULL,
+    "backedUp" BOOLEAN NOT NULL,
+    "transports" TEXT,
+    "aaguid" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Passkey_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "name" TEXT,
-    "email" TEXT,
-    "emailVerified" TIMESTAMP(3),
+    "email" TEXT NOT NULL,
+    "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "image" TEXT,
-    "hashedPassword" TEXT,
-    "role" "Role" NOT NULL DEFAULT 'USER',
-    "isActive" BOOLEAN NOT NULL DEFAULT false,
-    "activationToken" TEXT,
-    "resetToken" TEXT,
-    "resetTokenExpiry" TIMESTAMP(3),
+    "role" TEXT NOT NULL DEFAULT 'user',
+    "banned" BOOLEAN NOT NULL DEFAULT false,
+    "banReason" TEXT,
+    "banExpires" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "trophyPoints" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserTutorialCompletion" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "tutorialKey" TEXT NOT NULL,
+    "completedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "UserTutorialCompletion_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Profile" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
     "nickname" VARCHAR(40) NOT NULL,
+    "slug" VARCHAR(60) NOT NULL,
     "teaser" TEXT,
-    "photoUrl" TEXT,
+    "photoKey" TEXT,
     "bio" TEXT,
     "followerCount" INTEGER NOT NULL DEFAULT 0,
     "followingCount" INTEGER NOT NULL DEFAULT 0,
@@ -96,6 +145,9 @@ CREATE TABLE "Profile" (
     "ratingsPublic" BOOLEAN NOT NULL DEFAULT true,
     "followsPublic" BOOLEAN NOT NULL DEFAULT true,
     "favoritesPublic" BOOLEAN NOT NULL DEFAULT true,
+    "cookedPublic" BOOLEAN NOT NULL DEFAULT true,
+    "trophiesPublic" BOOLEAN NOT NULL DEFAULT true,
+    "showTrophyOnAvatar" BOOLEAN NOT NULL DEFAULT true,
     "showInActivity" BOOLEAN NOT NULL DEFAULT true,
     "notifyOnAnonymous" BOOLEAN NOT NULL DEFAULT false,
     "notifyOnNewFollower" BOOLEAN NOT NULL DEFAULT true,
@@ -127,6 +179,7 @@ CREATE TABLE "Recipe" (
     "prepTime" INTEGER NOT NULL DEFAULT 0,
     "cookTime" INTEGER NOT NULL DEFAULT 0,
     "totalTime" INTEGER NOT NULL DEFAULT 0,
+    "calories" INTEGER,
     "difficulty" "Difficulty" NOT NULL DEFAULT 'MEDIUM',
     "status" "RecipeStatus" NOT NULL DEFAULT 'DRAFT',
     "publishedAt" TIMESTAMP(3),
@@ -138,6 +191,9 @@ CREATE TABLE "Recipe" (
     "flowNodes" JSONB,
     "flowEdges" JSONB,
     "rawRecipeText" TEXT,
+    "moderationStatus" "ModerationStatus" NOT NULL DEFAULT 'AUTO_APPROVED',
+    "moderationNote" TEXT,
+    "aiModerationScore" DOUBLE PRECISION,
     "authorId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -146,13 +202,50 @@ CREATE TABLE "Recipe" (
 );
 
 -- CreateTable
+CREATE TABLE "RecipeStepImage" (
+    "id" TEXT NOT NULL,
+    "recipeId" TEXT NOT NULL,
+    "stepId" TEXT NOT NULL,
+    "photoKey" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "RecipeStepImage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ImportRun" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "sourceUrl" TEXT,
+    "sourceType" TEXT NOT NULL DEFAULT 'url',
+    "markdownLength" INTEGER,
+    "status" "ImportRunStatus" NOT NULL,
+    "errorType" TEXT,
+    "errorMessage" TEXT,
+    "recipeId" TEXT,
+    "model" TEXT,
+    "inputTokens" INTEGER,
+    "cachedInputTokens" INTEGER,
+    "outputTokens" INTEGER,
+    "estimatedCostUsd" DOUBLE PRECISION,
+    "rawApiResponse" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ImportRun_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Ingredient" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
+    "pluralName" TEXT,
     "category" "ShoppingCategory",
     "units" TEXT[],
+    "aliases" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "needsReview" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Ingredient_pkey" PRIMARY KEY ("id")
 );
@@ -177,8 +270,10 @@ CREATE TABLE "Category" (
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "description" TEXT,
-    "imageUrl" TEXT,
-    "color" TEXT,
+    "color" "PaletteColor" NOT NULL DEFAULT 'orange',
+    "icon" TEXT,
+    "coverImageKey" TEXT,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
@@ -216,9 +311,12 @@ CREATE TABLE "RecipeTag" (
 CREATE TABLE "Comment" (
     "id" TEXT NOT NULL,
     "content" TEXT NOT NULL,
-    "imageUrl" TEXT,
+    "imageKey" TEXT,
     "recipeId" TEXT NOT NULL,
     "authorId" TEXT NOT NULL,
+    "moderationStatus" "ModerationStatus" NOT NULL DEFAULT 'AUTO_APPROVED',
+    "isHidden" BOOLEAN NOT NULL DEFAULT false,
+    "moderationNote" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -371,7 +469,6 @@ CREATE TABLE "UserCookHistory" (
     "cookedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "servings" INTEGER,
     "notes" TEXT,
-    "imageUrl" TEXT,
     "imageKey" TEXT,
 
     CONSTRAINT "UserCookHistory_pkey" PRIMARY KEY ("id")
@@ -382,10 +479,11 @@ CREATE TABLE "CookImage" (
     "id" TEXT NOT NULL,
     "recipeId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "imageUrl" TEXT NOT NULL,
-    "imageKey" TEXT,
+    "imageKey" TEXT NOT NULL,
     "blurhash" TEXT,
     "caption" TEXT,
+    "moderationStatus" "ModerationStatus" NOT NULL DEFAULT 'AUTO_APPROVED',
+    "isHidden" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "CookImage_pkey" PRIMARY KEY ("id")
@@ -400,6 +498,55 @@ CREATE TABLE "PinnedFavorite" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "PinnedFavorite_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ModerationQueue" (
+    "id" TEXT NOT NULL,
+    "contentType" TEXT NOT NULL,
+    "contentId" TEXT NOT NULL,
+    "authorId" TEXT NOT NULL,
+    "aiScore" DOUBLE PRECISION NOT NULL,
+    "aiFlags" JSONB NOT NULL,
+    "aiRawResponse" JSONB NOT NULL,
+    "status" "ModerationStatus" NOT NULL DEFAULT 'PENDING',
+    "reviewedBy" TEXT,
+    "reviewedAt" TIMESTAMP(3),
+    "reviewNote" TEXT,
+    "contentSnapshot" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ModerationQueue_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ModerationLog" (
+    "id" TEXT NOT NULL,
+    "actorId" TEXT NOT NULL,
+    "action" TEXT NOT NULL,
+    "contentType" TEXT,
+    "contentId" TEXT,
+    "reason" TEXT,
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ModerationLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Report" (
+    "id" TEXT NOT NULL,
+    "reporterId" TEXT NOT NULL,
+    "contentType" TEXT NOT NULL,
+    "contentId" TEXT NOT NULL,
+    "reason" TEXT NOT NULL,
+    "description" TEXT,
+    "resolved" BOOLEAN NOT NULL DEFAULT false,
+    "resolvedBy" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Report_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -431,23 +578,61 @@ CREATE TABLE "JobRun" (
     CONSTRAINT "JobRun_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provider", "providerAccountId");
+-- CreateTable
+CREATE TABLE "Trophy" (
+    "id" TEXT NOT NULL,
+    "groupSlug" TEXT NOT NULL,
+    "tier" "TrophyTier" NOT NULL DEFAULT 'NONE',
+    "category" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "icon" TEXT NOT NULL,
+    "points" INTEGER NOT NULL DEFAULT 0,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Trophy_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserTrophy" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "trophyId" TEXT NOT NULL,
+    "earnedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "UserTrophy_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
+CREATE INDEX "Account_userId_idx" ON "Account"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "VerificationToken_token_key" ON "VerificationToken"("token");
+CREATE UNIQUE INDEX "Session_token_key" ON "Session"("token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");
+CREATE INDEX "Session_userId_idx" ON "Session"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Passkey_credentialID_key" ON "Passkey"("credentialID");
+
+-- CreateIndex
+CREATE INDEX "Passkey_userId_idx" ON "Passkey"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE INDEX "UserTutorialCompletion_tutorialKey_idx" ON "UserTutorialCompletion"("tutorialKey");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserTutorialCompletion_userId_tutorialKey_key" ON "UserTutorialCompletion"("userId", "tutorialKey");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Profile_userId_key" ON "Profile"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Profile_slug_key" ON "Profile"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Profile_nickname_key" ON "Profile"("nickname");
@@ -474,10 +659,37 @@ CREATE INDEX "Recipe_status_idx" ON "Recipe"("status");
 CREATE INDEX "Recipe_isTrending_idx" ON "Recipe"("isTrending");
 
 -- CreateIndex
+CREATE INDEX "Recipe_moderationStatus_idx" ON "Recipe"("moderationStatus");
+
+-- CreateIndex
+CREATE INDEX "RecipeStepImage_recipeId_idx" ON "RecipeStepImage"("recipeId");
+
+-- CreateIndex
+CREATE INDEX "RecipeStepImage_photoKey_idx" ON "RecipeStepImage"("photoKey");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RecipeStepImage_recipeId_stepId_key" ON "RecipeStepImage"("recipeId", "stepId");
+
+-- CreateIndex
+CREATE INDEX "ImportRun_userId_idx" ON "ImportRun"("userId");
+
+-- CreateIndex
+CREATE INDEX "ImportRun_userId_createdAt_idx" ON "ImportRun"("userId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "ImportRun_status_idx" ON "ImportRun"("status");
+
+-- CreateIndex
+CREATE INDEX "ImportRun_createdAt_idx" ON "ImportRun"("createdAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Ingredient_slug_key" ON "Ingredient"("slug");
 
 -- CreateIndex
 CREATE INDEX "Ingredient_name_idx" ON "Ingredient"("name");
+
+-- CreateIndex
+CREATE INDEX "Ingredient_aliases_idx" ON "Ingredient" USING GIN ("aliases");
 
 -- CreateIndex
 CREATE INDEX "RecipeIngredient_recipeId_idx" ON "RecipeIngredient"("recipeId");
@@ -513,6 +725,9 @@ CREATE INDEX "Comment_recipeId_idx" ON "Comment"("recipeId");
 CREATE INDEX "Comment_authorId_idx" ON "Comment"("authorId");
 
 -- CreateIndex
+CREATE INDEX "Comment_moderationStatus_idx" ON "Comment"("moderationStatus");
+
+-- CreateIndex
 CREATE INDEX "UserRating_recipeId_idx" ON "UserRating"("recipeId");
 
 -- CreateIndex
@@ -523,6 +738,9 @@ CREATE UNIQUE INDEX "UserRating_recipeId_userId_key" ON "UserRating"("recipeId",
 
 -- CreateIndex
 CREATE INDEX "Favorite_userId_idx" ON "Favorite"("userId");
+
+-- CreateIndex
+CREATE INDEX "Favorite_recipeId_createdAt_idx" ON "Favorite"("recipeId", "createdAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Favorite_recipeId_userId_key" ON "Favorite"("recipeId", "userId");
@@ -585,6 +803,9 @@ CREATE INDEX "UserViewHistory_recipeId_idx" ON "UserViewHistory"("recipeId");
 CREATE INDEX "UserViewHistory_userId_viewedAt_idx" ON "UserViewHistory"("userId", "viewedAt");
 
 -- CreateIndex
+CREATE INDEX "UserViewHistory_recipeId_viewedAt_idx" ON "UserViewHistory"("recipeId", "viewedAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "UserViewHistory_userId_recipeId_key" ON "UserViewHistory"("userId", "recipeId");
 
 -- CreateIndex
@@ -597,6 +818,9 @@ CREATE INDEX "UserCookHistory_recipeId_idx" ON "UserCookHistory"("recipeId");
 CREATE INDEX "UserCookHistory_userId_cookedAt_idx" ON "UserCookHistory"("userId", "cookedAt");
 
 -- CreateIndex
+CREATE INDEX "UserCookHistory_recipeId_cookedAt_idx" ON "UserCookHistory"("recipeId", "cookedAt");
+
+-- CreateIndex
 CREATE INDEX "CookImage_recipeId_idx" ON "CookImage"("recipeId");
 
 -- CreateIndex
@@ -606,6 +830,9 @@ CREATE INDEX "CookImage_userId_idx" ON "CookImage"("userId");
 CREATE INDEX "CookImage_createdAt_idx" ON "CookImage"("createdAt");
 
 -- CreateIndex
+CREATE INDEX "CookImage_moderationStatus_idx" ON "CookImage"("moderationStatus");
+
+-- CreateIndex
 CREATE INDEX "PinnedFavorite_userId_idx" ON "PinnedFavorite"("userId");
 
 -- CreateIndex
@@ -613,6 +840,30 @@ CREATE UNIQUE INDEX "PinnedFavorite_userId_position_key" ON "PinnedFavorite"("us
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PinnedFavorite_userId_recipeId_key" ON "PinnedFavorite"("userId", "recipeId");
+
+-- CreateIndex
+CREATE INDEX "ModerationQueue_contentType_contentId_idx" ON "ModerationQueue"("contentType", "contentId");
+
+-- CreateIndex
+CREATE INDEX "ModerationQueue_status_createdAt_idx" ON "ModerationQueue"("status", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "ModerationQueue_authorId_idx" ON "ModerationQueue"("authorId");
+
+-- CreateIndex
+CREATE INDEX "ModerationLog_actorId_idx" ON "ModerationLog"("actorId");
+
+-- CreateIndex
+CREATE INDEX "ModerationLog_contentId_idx" ON "ModerationLog"("contentId");
+
+-- CreateIndex
+CREATE INDEX "Report_contentType_contentId_idx" ON "Report"("contentType", "contentId");
+
+-- CreateIndex
+CREATE INDEX "Report_resolved_idx" ON "Report"("resolved");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Report_reporterId_contentType_contentId_key" ON "Report"("reporterId", "contentType", "contentId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SiteSettings_key_key" ON "SiteSettings"("key");
@@ -626,6 +877,15 @@ CREATE INDEX "JobRun_status_createdAt_idx" ON "JobRun"("status", "createdAt");
 -- CreateIndex
 CREATE INDEX "JobRun_jobId_idx" ON "JobRun"("jobId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "Trophy_groupSlug_tier_key" ON "Trophy"("groupSlug", "tier");
+
+-- CreateIndex
+CREATE INDEX "UserTrophy_userId_idx" ON "UserTrophy"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserTrophy_userId_trophyId_key" ON "UserTrophy"("userId", "trophyId");
+
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -633,10 +893,25 @@ ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Passkey" ADD CONSTRAINT "Passkey_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserTutorialCompletion" ADD CONSTRAINT "UserTutorialCompletion_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Profile" ADD CONSTRAINT "Profile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RecipeStepImage" ADD CONSTRAINT "RecipeStepImage_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ImportRun" ADD CONSTRAINT "ImportRun_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ImportRun" ADD CONSTRAINT "ImportRun_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "RecipeIngredient" ADD CONSTRAINT "RecipeIngredient_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -736,3 +1011,22 @@ ALTER TABLE "PinnedFavorite" ADD CONSTRAINT "PinnedFavorite_userId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "PinnedFavorite" ADD CONSTRAINT "PinnedFavorite_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ModerationQueue" ADD CONSTRAINT "ModerationQueue_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ModerationQueue" ADD CONSTRAINT "ModerationQueue_reviewedBy_fkey" FOREIGN KEY ("reviewedBy") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ModerationLog" ADD CONSTRAINT "ModerationLog_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Report" ADD CONSTRAINT "Report_reporterId_fkey" FOREIGN KEY ("reporterId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserTrophy" ADD CONSTRAINT "UserTrophy_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserTrophy" ADD CONSTRAINT "UserTrophy_trophyId_fkey" FOREIGN KEY ("trophyId") REFERENCES "Trophy"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+

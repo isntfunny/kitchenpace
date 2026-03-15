@@ -1,40 +1,48 @@
-import { Camera } from 'lucide-react';
-import type { Metadata } from 'next';
+import { Shield } from 'lucide-react';
 import { redirect } from 'next/navigation';
 
-import { fetchUserOwnCookImages } from '@app/app/actions/cooks';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayout';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
+import { logAuth } from '@app/lib/auth-logger';
 import { getOrCreateProfile } from '@app/lib/profile';
+import { prisma } from '@shared/prisma';
 import { css } from 'styled-system/css';
 
-import { UserCookImagesClient } from './UserCookImagesClient';
+import { AccountSettingsCard } from '../settings/AccountSettingsCard';
+import { ActiveSessionsCard } from '../settings/ActiveSessionsCard';
+import { PasskeySettingsCard } from '../settings/PasskeySettingsCard';
 
-export const metadata: Metadata = {
-    title: 'Meine Zubereitet-Bilder',
-    description: 'Verwalte deine hochgeladenen Fotos von zubereiteten Rezepten.',
-};
-
-export const dynamic = 'force-dynamic';
-
-export default async function MyImagesPage() {
-    const session = await getServerAuthSession('profile/images');
-
+export default async function AccountPage() {
+    const session = await getServerAuthSession('profile/account');
     if (!session?.user?.id) {
-        logMissingSession(session, 'profile/images');
+        logMissingSession(session, 'profile/account');
         redirect('/auth/signin');
     }
 
-    const [images, profile] = await Promise.all([
-        fetchUserOwnCookImages(session.user.id),
+    const [profile, credentialAccount] = await Promise.all([
         getOrCreateProfile(session.user.id),
+        prisma.account.findFirst({
+            where: { userId: session.user.id, providerId: 'credential' },
+            select: { id: true },
+        }),
     ]);
+
+    if (!profile) {
+        logAuth('warn', 'profile/account: profile missing', {
+            userId: session.user.id,
+        });
+        redirect('/auth/signin');
+    }
 
     return (
         <PageShell>
-            <section className={css({ py: { base: '4', md: '6' } })}>
+            <section
+                className={css({
+                    py: { base: '4', md: '6' },
+                })}
+            >
                 {/* Header */}
                 <div className={css({ mb: '6' })}>
                     <div
@@ -57,31 +65,39 @@ export default async function MyImagesPage() {
                                     w: '12',
                                     h: '12',
                                     borderRadius: 'xl',
-                                    bg: 'palette.gold',
+                                    bg: 'secondary',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     color: 'white',
                                 })}
                             >
-                                <Camera size={24} />
+                                <Shield size={24} />
                             </div>
                             <div>
                                 <Heading as="h1" size="xl">
-                                    Meine Zubereitet-Bilder
+                                    Konto & Sicherheit
                                 </Heading>
                                 <Text color="muted">
-                                    {images.length === 0
-                                        ? 'Noch keine Bilder hochgeladen.'
-                                        : `${images.length} Bild${images.length === 1 ? '' : 'er'} hochgeladen`}
+                                    Verwalte deine Zugangsdaten, Passkeys und aktive Sitzungen.
                                 </Text>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <ProfileSidebarLayout userSlug={profile?.slug ?? undefined}>
-                    <UserCookImagesClient images={images} />
+                <ProfileSidebarLayout userSlug={profile.slug}>
+                    {/* Account (Email + Password) */}
+                    <AccountSettingsCard
+                        email={session.user.email ?? ''}
+                        hasPassword={!!credentialAccount}
+                    />
+
+                    {/* Passkeys */}
+                    <PasskeySettingsCard />
+
+                    {/* Active Sessions */}
+                    <ActiveSessionsCard />
                 </ProfileSidebarLayout>
             </section>
         </PageShell>

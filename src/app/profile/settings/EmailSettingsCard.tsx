@@ -121,31 +121,36 @@ export function EmailSettingsCard({ profile }: EmailSettingsCardProps) {
                 boxShadow: 'shadow.medium',
             })}
         >
-            <div
-                className={css({
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '3',
-                    mb: '4',
-                })}
-            >
+            <div className={css({ mb: '5' })}>
                 <div
                     className={css({
-                        w: '10',
-                        h: '10',
-                        borderRadius: 'lg',
-                        bg: 'secondary',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
+                        gap: '3',
+                        mb: '3',
                     })}
                 >
-                    <Mail size={20} />
+                    <div
+                        className={css({
+                            w: '10',
+                            h: '10',
+                            borderRadius: 'lg',
+                            bg: 'palette.purple',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                        })}
+                    >
+                        <Mail size={20} />
+                    </div>
+                    <Heading as="h2" size="lg">
+                        E-Mail-Einstellungen
+                    </Heading>
                 </div>
-                <Heading as="h2" size="lg">
-                    E-Mail-Einstellungen
-                </Heading>
+                <Text color="muted" size="sm">
+                    Wähle, welche Benachrichtigungen du per E-Mail erhalten möchtest.
+                </Text>
             </div>
 
             <div

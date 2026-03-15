@@ -1,5 +1,5 @@
 import type { Profile } from '@prisma/client';
-import { Shield } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { redirect } from 'next/navigation';
 
 import { Heading, Text } from '@app/components/atoms/Typography';
@@ -10,7 +10,6 @@ import { logAuth } from '@app/lib/auth-logger';
 import { getOrCreateProfile } from '@app/lib/profile';
 import { css } from 'styled-system/css';
 
-import { ActiveSessionsCard } from './ActiveSessionsCard';
 import { EmailSettingsCard } from './EmailSettingsCard';
 import { NotificationSettingsCard } from './NotificationSettingsCard';
 import { PrivacySettingsCard } from './PrivacySettingsCard';
@@ -58,11 +57,7 @@ const ManageProfilePage = async () => {
                 })}
             >
                 {/* Header */}
-                <div
-                    className={css({
-                        mb: '6',
-                    })}
-                >
+                <div className={css({ mb: '6' })}>
                     <div
                         className={css({
                             p: { base: '4', md: '6' },
@@ -90,15 +85,14 @@ const ManageProfilePage = async () => {
                                     color: 'white',
                                 })}
                             >
-                                <Shield size={24} />
+                                <Settings size={24} />
                             </div>
                             <div>
                                 <Heading as="h1" size="xl">
-                                    Konto & Sicherheit
+                                    Privatsphäre & Benachrichtigungen
                                 </Heading>
                                 <Text color="muted">
-                                    Verwalte deine Privatsphäre, Benachrichtigungen und
-                                    Kontoeinstellungen.
+                                    Verwalte deine Sichtbarkeit und Benachrichtigungseinstellungen.
                                 </Text>
                             </div>
                         </div>
@@ -128,8 +122,6 @@ const ManageProfilePage = async () => {
                             notifyOnRecipeRating: privacyReadyProfile.notifyOnRecipeRating,
                             notifyOnRecipeCooked: privacyReadyProfile.notifyOnRecipeCooked,
                             notifyOnRecipePublished: privacyReadyProfile.notifyOnRecipePublished,
-                            notifyOnWeeklyPlanReminder:
-                                privacyReadyProfile.notifyOnWeeklyPlanReminder,
                             notifyOnSystemMessages: privacyReadyProfile.notifyOnSystemMessages,
                             notifyOnNewsletter: privacyReadyProfile.notifyOnNewsletter,
                         }}
@@ -144,9 +136,6 @@ const ManageProfilePage = async () => {
                                 privacyReadyProfile.notifyOnWeeklyPlanReminder,
                         }}
                     />
-
-                    {/* Active Sessions */}
-                    <ActiveSessionsCard />
                 </ProfileSidebarLayout>
             </section>
         </PageShell>

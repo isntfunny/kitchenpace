@@ -41,7 +41,7 @@ export function ActiveSessionsCard() {
     const [sessions, setSessions] = useState<SessionInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState(false);
-    const [revokingId, setRevokingId] = useState<string | null>(null);
+    const [revokingToken, setRevokingToken] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
 
     const fetchSessions = useCallback(async () => {
@@ -60,14 +60,14 @@ export function ActiveSessionsCard() {
         fetchSessions();
     }, [fetchSessions]);
 
-    const handleRevoke = (id: string) => {
-        setRevokingId(id);
+    const handleRevoke = (token: string) => {
+        setRevokingToken(token);
         startTransition(async () => {
-            const result = await revokeSession(id);
+            const result = await revokeSession(token);
             if ('success' in result) {
-                setSessions((prev) => prev.filter((s) => s.id !== id));
+                setSessions((prev) => prev.filter((s) => s.token !== token));
             }
-            setRevokingId(null);
+            setRevokingToken(null);
         });
     };
 
@@ -105,7 +105,7 @@ export function ActiveSessionsCard() {
                             w: '10',
                             h: '10',
                             borderRadius: 'lg',
-                            bg: 'secondary',
+                            bg: 'palette.emerald',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -139,7 +139,7 @@ export function ActiveSessionsCard() {
                 <div className={css({ display: 'flex', flexDir: 'column', gap: '3' })}>
                     {sessions.map((session) => {
                         const DeviceIcon = isMobile(session.deviceLabel) ? Smartphone : Monitor;
-                        const isRevoking = revokingId === session.id;
+                        const isRevoking = revokingToken === session.token;
 
                         return (
                             <div
@@ -216,7 +216,7 @@ export function ActiveSessionsCard() {
                                 {!session.isCurrent && (
                                     <button
                                         type="button"
-                                        onClick={() => handleRevoke(session.id)}
+                                        onClick={() => handleRevoke(session.token)}
                                         disabled={isRevoking}
                                         className={css({
                                             display: 'flex',

@@ -17,7 +17,7 @@ type NotificationSettingKey =
     | 'notifyOnRecipeRating'
     | 'notifyOnRecipeCooked'
     | 'notifyOnRecipePublished'
-    | 'notifyOnWeeklyPlanReminder'
+    // | 'notifyOnWeeklyPlanReminder' — feature not yet available
     | 'notifyOnSystemMessages'
     | 'notifyOnNewsletter';
 
@@ -67,12 +67,6 @@ const SETTING_COPY: Record<
         description: 'Erhalte eine Bestätigung, wenn du ein Rezept veröffentlichst.',
         labelOn: 'Veröffentlichungen melden',
         labelOff: 'Stille Bestätigung',
-    },
-    notifyOnWeeklyPlanReminder: {
-        title: 'Wochenplan-Erinnerung',
-        description: 'Erhalte Tipps zu deinem Wochenplan und Erinnerungen bevor es losgeht.',
-        labelOn: 'Planerinnerungen aktiv',
-        labelOff: 'Nur manuell informieren',
     },
     notifyOnSystemMessages: {
         title: 'Systemmeldungen',

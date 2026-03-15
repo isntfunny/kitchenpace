@@ -1,7 +1,17 @@
 'use client';
 
 import debounce from 'lodash/debounce';
-import { ArrowLeft, Camera, Check, Loader2, Mail, Save, User, X } from 'lucide-react';
+import {
+    ArrowLeft,
+    Camera,
+    Check,
+    ExternalLink,
+    Loader2,
+    Save,
+    Trophy,
+    User,
+    X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -30,25 +40,21 @@ interface ProfileData {
     teaser: string | null;
     photoKey: string | null;
     slug: string | null;
+    showTrophyOnAvatar: boolean;
 }
 
 interface ProfileEditClientProps {
     profile: ProfileData;
-    email: string;
 }
 
-export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
+export function ProfileEditClient({ profile }: ProfileEditClientProps) {
     const [photoKey, setPhotoKey] = useState(profile.photoKey || '');
     const [nickname, setNickname] = useState(profile.nickname || '');
     const [teaser, setTeaser] = useState(profile.teaser || '');
+    const [showTrophyOnAvatar, setShowTrophyOnAvatar] = useState(profile.showTrophyOnAvatar);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [nicknameStatus, setNicknameStatus] = useState<NicknameStatus>('idle');
-
-    const [newEmail, setNewEmail] = useState('');
-    const [emailSaving, setEmailSaving] = useState(false);
-    const [emailError, setEmailError] = useState<string | null>(null);
-    const [emailSuccess, setEmailSuccess] = useState(false);
 
     const originalNickname = profile.nickname || '';
 
@@ -97,6 +103,7 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                     nickname: clamp(nickname, MAX_NICKNAME_LENGTH),
                     teaser: clamp(teaser, MAX_TEASER_LENGTH),
                     photoKey: photoKey || null,
+                    showTrophyOnAvatar,
                 }),
             });
 
@@ -111,33 +118,6 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
             setError('Fehler beim Speichern. Bitte versuche es erneut.');
         } finally {
             setSaving(false);
-        }
-    };
-
-    const handleEmailSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setEmailSaving(true);
-        setEmailError(null);
-        setEmailSuccess(false);
-
-        try {
-            const response = await fetch('/api/profile', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: newEmail }),
-            });
-
-            if (response.ok) {
-                setEmailSuccess(true);
-                setNewEmail('');
-            } else {
-                const data = await response.json().catch(() => ({}));
-                setEmailError(data.message ?? 'Fehler beim Speichern der E-Mail.');
-            }
-        } catch {
-            setEmailError('Fehler beim Speichern der E-Mail.');
-        } finally {
-            setEmailSaving(false);
         }
     };
 
@@ -224,28 +204,33 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                             boxShadow: 'shadow.medium',
                         })}
                     >
-                        <div className={css({ mb: '6' })}>
+                        <div className={css({ mb: '5' })}>
                             <div
                                 className={css({
-                                    w: '12',
-                                    h: '12',
-                                    borderRadius: 'xl',
-                                    bg: 'primary',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    mb: '4',
+                                    gap: '3',
+                                    mb: '3',
                                 })}
                             >
-                                <User size={24} />
+                                <div
+                                    className={css({
+                                        w: '10',
+                                        h: '10',
+                                        borderRadius: 'lg',
+                                        bg: 'primary',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                    })}
+                                >
+                                    <User size={20} />
+                                </div>
+                                <Heading as="h1" size="lg">
+                                    Profil bearbeiten
+                                </Heading>
                             </div>
-                            <Heading as="h1" size="xl" className={css({ mb: '2' })}>
-                                Profil bearbeiten
-                            </Heading>
-                            <Text color="muted">
-                                Teile deine Persönlichkeit mit der KüchenTakt Community.
-                            </Text>
                         </div>
 
                         <form
@@ -432,6 +417,74 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                                 </Text>
                             </label>
 
+                            {/* Trophy on Avatar */}
+                            <div
+                                className={css({
+                                    p: '4',
+                                    borderRadius: 'xl',
+                                    border: '1px solid',
+                                    borderColor: 'border',
+                                    bg: 'background',
+                                    display: 'flex',
+                                    flexDir: { base: 'column', sm: 'row' },
+                                    gap: '4',
+                                    alignItems: { base: 'flex-start', sm: 'center' },
+                                    justifyContent: 'space-between',
+                                })}
+                            >
+                                <div className={css({ flex: 1 })}>
+                                    <div
+                                        className={css({
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '2',
+                                            mb: '1',
+                                        })}
+                                    >
+                                        <Trophy size={16} />
+                                        <Text className={css({ fontWeight: '600' })}>
+                                            Trophäe im Profilbild anzeigen
+                                        </Text>
+                                    </div>
+                                    <Text size="sm" color="muted">
+                                        Zeige deine höchste Trophäe als Badge auf deinem Avatar.
+                                    </Text>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTrophyOnAvatar((v) => !v)}
+                                    aria-pressed={showTrophyOnAvatar}
+                                    className={css({
+                                        width: '56px',
+                                        height: '28px',
+                                        borderRadius: 'full',
+                                        border: 'none',
+                                        position: 'relative',
+                                        flexShrink: 0,
+                                        background: showTrophyOnAvatar ? 'primary' : 'border',
+                                        transition: 'background 150ms ease',
+                                        cursor: 'pointer',
+                                    })}
+                                >
+                                    <span
+                                        className={css({
+                                            position: 'absolute',
+                                            top: '3px',
+                                            left: showTrophyOnAvatar ? '30px' : '3px',
+                                            width: '22px',
+                                            height: '22px',
+                                            borderRadius: 'full',
+                                            background: 'surface',
+                                            boxShadow: {
+                                                base: '0 2px 4px rgba(0,0,0,0.2)',
+                                                _dark: '0 2px 4px rgba(0,0,0,0.4)',
+                                            },
+                                            transition: 'left 150ms ease',
+                                        })}
+                                    />
+                                </button>
+                            </div>
+
                             <div className={css({ display: 'flex', gap: '3', mt: '2' })}>
                                 <Button
                                     type="submit"
@@ -447,117 +500,26 @@ export function ProfileEditClient({ profile, email }: ProfileEditClientProps) {
                                     </Button>
                                 </Link>
                             </div>
-                        </form>
-                    </div>
-                </div>
 
-                {/* Email Change Card */}
-                <div>
-                    <div
-                        className={css({
-                            p: { base: '4', md: '6' },
-                            borderRadius: '2xl',
-                            bg: 'surface',
-                            boxShadow: 'shadow.medium',
-                        })}
-                    >
-                        <div className={css({ mb: '5' })}>
-                            <div
-                                className={css({
-                                    w: '12',
-                                    h: '12',
-                                    borderRadius: 'xl',
-                                    bg: 'primary',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    mb: '4',
-                                })}
-                            >
-                                <Mail size={24} />
-                            </div>
-                            <Heading as="h2" size="lg" className={css({ mb: '1' })}>
-                                E-Mail-Adresse ändern
-                            </Heading>
-                            <Text color="muted" size="sm">
-                                Aktuelle Adresse: <strong>{email || '–'}</strong>
-                            </Text>
-                        </div>
-
-                        <form
-                            onSubmit={handleEmailSave}
-                            className={css({ display: 'flex', flexDir: 'column', gap: '4' })}
-                        >
-                            {emailError && (
-                                <div
+                            {profile.slug && (
+                                <Link
+                                    href={`/user/${profile.slug}`}
                                     className={css({
-                                        p: '3',
-                                        bg: 'red.50',
-                                        color: 'red.600',
-                                        borderRadius: 'lg',
-                                        border: '1px solid',
-                                        borderColor: 'red.200',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '2',
+                                        mt: '4',
+                                        fontSize: 'sm',
+                                        color: 'text-muted',
+                                        textDecoration: 'none',
+                                        transition: 'color 150ms ease',
+                                        _hover: { color: 'primary' },
                                     })}
                                 >
-                                    <Text size="sm">{emailError}</Text>
-                                </div>
+                                    <ExternalLink size={14} />
+                                    Öffentliches Profil ansehen
+                                </Link>
                             )}
-                            {emailSuccess && (
-                                <div
-                                    className={css({
-                                        p: '3',
-                                        bg: 'green.50',
-                                        color: 'green.700',
-                                        borderRadius: 'lg',
-                                        border: '1px solid',
-                                        borderColor: 'green.200',
-                                    })}
-                                >
-                                    <Text size="sm">E-Mail-Adresse erfolgreich geändert.</Text>
-                                </div>
-                            )}
-                            <label
-                                className={css({
-                                    display: 'flex',
-                                    flexDir: 'column',
-                                    gap: '2',
-                                })}
-                            >
-                                <span className={css({ fontWeight: '600' })}>
-                                    Neue E-Mail-Adresse
-                                </span>
-                                <input
-                                    type="email"
-                                    value={newEmail}
-                                    onChange={(e) => setNewEmail(e.target.value)}
-                                    placeholder="neue@adresse.de"
-                                    required
-                                    className={css({
-                                        borderRadius: 'xl',
-                                        border: '1px solid',
-                                        borderColor: 'border',
-                                        p: '3',
-                                        fontSize: 'md',
-                                        outline: 'none',
-                                        bg: 'background',
-                                        transition: 'all 150ms ease',
-                                        _focus: {
-                                            borderColor: 'primary',
-                                            boxShadow: {
-                                                base: '0 0 0 3px rgba(224,123,83,0.15)',
-                                                _dark: '0 0 0 3px rgba(224,123,83,0.2)',
-                                            },
-                                        },
-                                    })}
-                                />
-                            </label>
-                            <div>
-                                <Button type="submit" variant="primary" disabled={emailSaving}>
-                                    <Mail size={18} />
-                                    {emailSaving ? 'Speichern...' : 'E-Mail ändern'}
-                                </Button>
-                            </div>
                         </form>
                     </div>
                 </div>

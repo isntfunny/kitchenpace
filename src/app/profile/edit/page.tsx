@@ -26,7 +26,7 @@ export default async function ProfileEditPage() {
 
     return (
         <PageShell>
-            <ProfileEditClient profile={profile} email={session.user.email ?? ''} />
+            <ProfileEditClient profile={profile} />
         </PageShell>
     );
 }

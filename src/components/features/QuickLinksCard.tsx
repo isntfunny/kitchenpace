@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Camera, Edit3, Lock, Settings, User } from 'lucide-react';
+import { Bell, Camera, Edit3, Settings, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -10,21 +10,14 @@ import { css } from 'styled-system/css';
 
 const links = [
     { href: '/profile/edit', label: 'Profil bearbeiten', IconEl: Edit3 },
-    { href: '/profile/settings', label: 'Einstellungen', IconEl: Settings },
+    { href: '/profile/account', label: 'Konto & Sicherheit', IconEl: Shield },
+    { href: '/profile/settings', label: 'Privatsphäre', IconEl: Settings },
     { href: '/notifications', label: 'Benachrichtigungen', IconEl: Bell },
     { href: '/profile/images', label: 'Meine Zubereitet-Bilder', IconEl: Camera },
-    { href: '/auth/password/edit', label: 'Passwort ändern', IconEl: Lock },
 ];
 
-export function QuickLinksCard({ userSlug }: { userSlug?: string }) {
+export function QuickLinksCard({ userSlug: _userSlug }: { userSlug?: string }) {
     const pathname = usePathname();
-
-    const allLinks = [
-        ...links,
-        ...(userSlug
-            ? [{ href: `/user/${userSlug}`, label: 'Öffentliches Profil', IconEl: User }]
-            : []),
-    ];
 
     return (
         <div
@@ -39,7 +32,7 @@ export function QuickLinksCard({ userSlug }: { userSlug?: string }) {
                 Schnellzugriff
             </Heading>
             <div className={css({ display: 'flex', flexDir: 'column', gap: '1' })}>
-                {allLinks.map(({ href, label, IconEl }) => {
+                {links.map(({ href, label, IconEl }) => {
                     const isActive = pathname === href;
                     return (
                         <Link

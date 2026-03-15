@@ -20,15 +20,17 @@ export function Button({ variant = 'primary', size = 'md', children, ...props }:
             },
         }),
         secondary: css.raw({
-            bg: 'secondary',
-            color: 'white',
+            bg: 'transparent',
+            color: 'text',
+            border: '1px solid',
+            borderColor: 'border',
             _dark: {
-                bg: 'rgba(255,255,255,0.12)',
-                color: 'foreground',
-                border: '1px solid rgba(255,255,255,0.18)',
+                borderColor: 'rgba(255,255,255,0.18)',
             },
             _hover: {
-                opacity: 0.9,
+                bg: 'accent.soft',
+                borderColor: 'primary',
+                color: 'primary',
             },
         }),
         ghost: css.raw({

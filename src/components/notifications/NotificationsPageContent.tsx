@@ -1,5 +1,8 @@
 'use client';
 
+import { Inbox } from 'lucide-react';
+
+import { Heading, Text } from '@app/components/atoms/Typography';
 import { css } from 'styled-system/css';
 
 import { NotificationItem } from './NotificationItem';
@@ -33,73 +36,78 @@ export function NotificationsPageContent() {
                 })}
             >
                 {/* Header inside card */}
-                <header
+                <div
                     className={css({
-                        display: 'flex',
-                        flexDirection: { base: 'column', sm: 'row' },
-                        justifyContent: 'space-between',
-                        alignItems: { base: 'flex-start', sm: 'center' },
-                        gap: { base: '3', sm: '4' },
                         px: { base: '4', md: '5' },
                         pt: { base: '4', md: '5' },
-                        pb: '3',
-                        borderBottom: '1px solid',
-                        borderColor: 'border',
+                        pb: '4',
                     })}
                 >
-                    <div>
-                        <p
-                            className={css({
-                                textTransform: 'uppercase',
-                                letterSpacing: 'widest',
-                                color: 'text-muted',
-                                fontSize: 'xs',
-                                marginBottom: '1',
-                            })}
-                        >
-                            Benachrichtigungen
-                        </p>
-                        <h2
-                            className={css({
-                                fontSize: { base: 'lg', sm: 'xl' },
-                                fontWeight: '700',
-                                margin: 0,
-                            })}
-                        >
-                            Deine Aktivitäten
-                        </h2>
-                    </div>
                     <div
                         className={css({
                             display: 'flex',
-                            alignItems: 'center',
+                            flexDir: { base: 'column', sm: 'row' },
+                            justifyContent: 'space-between',
+                            alignItems: { base: 'flex-start', sm: 'center' },
                             gap: '3',
-                            flexWrap: 'wrap',
                         })}
                     >
-                        <span className={css({ fontSize: 'sm', color: 'text-muted' })}>
-                            {unreadCount} ungelesene Nachricht{unreadCount === 1 ? '' : 'en'}
-                        </span>
+                        <div
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3',
+                            })}
+                        >
+                            <div
+                                className={css({
+                                    w: '10',
+                                    h: '10',
+                                    borderRadius: 'lg',
+                                    bg: 'accent',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                })}
+                            >
+                                <Inbox size={20} />
+                            </div>
+                            <div>
+                                <Heading as="h2" size="lg">
+                                    Deine Aktivitäten
+                                </Heading>
+                                <Text color="muted" size="sm">
+                                    {unreadCount} ungelesen
+                                </Text>
+                            </div>
+                        </div>
                         <button
                             onClick={() => markAllAsRead()}
                             className={css({
-                                borderRadius: 'full',
-                                paddingX: '4',
-                                paddingY: '2',
+                                borderRadius: 'lg',
+                                px: '4',
+                                py: '2',
                                 border: '1px solid',
                                 borderColor: 'border',
-                                background: 'surface.elevated',
-                                fontWeight: '600',
+                                background: 'transparent',
+                                fontFamily: 'body',
+                                fontWeight: '500',
                                 fontSize: 'sm',
+                                color: 'text',
                                 cursor: 'pointer',
                                 transition: 'all 150ms ease',
-                                _hover: { borderColor: 'primary', color: 'primary' },
+                                _hover: {
+                                    borderColor: 'primary',
+                                    color: 'primary',
+                                    bg: 'accent.soft',
+                                },
                             })}
                         >
-                            Als gelesen markieren
+                            Alle als gelesen markieren
                         </button>
                     </div>
-                </header>
+                </div>
 
                 {/* Notification items */}
                 <div

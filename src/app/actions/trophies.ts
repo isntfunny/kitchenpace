@@ -89,12 +89,18 @@ export interface TrophyBadge {
 }
 
 export async function fetchTrophyBadge(userId: string): Promise<TrophyBadge | null> {
-    const trophies = await prisma.userTrophy.findMany({
-        where: { userId },
-        include: { trophy: { select: { tier: true } } },
-    });
+    const [profile, trophies] = await Promise.all([
+        prisma.profile.findUnique({
+            where: { userId },
+            select: { showTrophyOnAvatar: true },
+        }),
+        prisma.userTrophy.findMany({
+            where: { userId },
+            include: { trophy: { select: { tier: true } } },
+        }),
+    ]);
 
-    if (trophies.length === 0) return null;
+    if (!profile?.showTrophyOnAvatar || trophies.length === 0) return null;
 
     let highest = trophies[0].trophy.tier;
     for (const ut of trophies) {
@@ -110,13 +116,22 @@ export async function fetchTrophyBadge(userId: string): Promise<TrophyBadge | nu
 export async function fetchTrophyBadges(userIds: string[]): Promise<Map<string, TrophyBadge>> {
     if (userIds.length === 0) return new Map();
 
-    const trophies = await prisma.userTrophy.findMany({
-        where: { userId: { in: userIds } },
-        include: { trophy: { select: { tier: true } } },
-    });
+    const [profiles, trophies] = await Promise.all([
+        prisma.profile.findMany({
+            where: { userId: { in: userIds }, showTrophyOnAvatar: true },
+            select: { userId: true },
+        }),
+        prisma.userTrophy.findMany({
+            where: { userId: { in: userIds } },
+            include: { trophy: { select: { tier: true } } },
+        }),
+    ]);
+
+    const avatarEnabled = new Set(profiles.map((p) => p.userId));
 
     const byUser = new Map<string, { tiers: string[]; count: number }>();
     for (const ut of trophies) {
+        if (!avatarEnabled.has(ut.userId)) continue;
         const entry = byUser.get(ut.userId) ?? { tiers: [], count: 0 };
         entry.tiers.push(ut.trophy.tier);
         entry.count++;

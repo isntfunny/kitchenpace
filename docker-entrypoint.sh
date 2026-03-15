@@ -5,9 +5,11 @@ set -e
 if [ -n "$INFISICAL_UNIVERSAL_AUTH_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
   echo "[entrypoint] Loading secrets from Infisical..."
   export __INFISICAL_LOADED=1
+  export HOME=/tmp
   exec npx infisical run \
     --projectId "${INFISICAL_PROJECT_ID}" \
     --env "${INFISICAL_ENV:-prod}" \
+    --domain "${INFISICAL_API_URL:-https://secrets.isntfunny.de/api}" \
     -- "$0" "$@"
 fi
 

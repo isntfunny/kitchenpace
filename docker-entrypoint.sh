@@ -2,26 +2,24 @@
 set -e
 
 # If Infisical is configured, re-exec with secrets injected
-if [ -n "$INFISICAL_UNIVERSAL_AUTH_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
+if [ -n "$INFISICAL_MACHINE_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
   echo "[entrypoint] Loading secrets from Infisical..."
   export __INFISICAL_LOADED=1
   export HOME=/tmp
-  INFISICAL_DOMAIN="${INFISICAL_API_URL:-https://secrets.isntfunny.de/api}"
-  INFISICAL_TOKEN=$(npx infisical login \
+  export INFISICAL_TOKEN=$(npx infisical login \
     --method=universal-auth \
-    --client-id="${INFISICAL_UNIVERSAL_AUTH_CLIENT_ID}" \
-    --client-secret="${INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET}" \
-    --domain="${INFISICAL_DOMAIN}" \
-    --plain --silent 2>/dev/null)
+    --client-id="${INFISICAL_MACHINE_CLIENT_ID}" \
+    --client-secret="${INFISICAL_MACHINE_CLIENT_SECRET}" \
+    --domain="${INFISICAL_API_URL:-https://secrets.isntfunny.de/api}" \
+    --plain --silent)
   if [ -z "$INFISICAL_TOKEN" ]; then
     echo "[entrypoint] ERROR: Failed to authenticate with Infisical" >&2
     exit 1
   fi
   exec npx infisical run \
-    --projectId "${INFISICAL_PROJECT_ID}" \
-    --env "${INFISICAL_ENV:-prod}" \
-    --domain "${INFISICAL_DOMAIN}" \
-    --token "${INFISICAL_TOKEN}" \
+    --projectId "${PROJECT_ID}" \
+    --env "${INFISICAL_SECRET_ENV:-prod}" \
+    --domain "${INFISICAL_API_URL:-https://secrets.isntfunny.de/api}" \
     -- "$0" "$@"
 fi
 

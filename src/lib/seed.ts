@@ -3,11 +3,9 @@ import 'dotenv/config';
 // This file can be run directly with: npx tsx lib/seed-full.ts
 // Or via prisma: npm run db:seed (which calls prisma/seed.ts)
 
-import bcrypt from 'bcrypt';
+import { hashPassword } from 'better-auth/crypto';
 
 import { prisma } from '@shared/prisma';
-
-const E2E_TEST_PASSWORD = 'TestPassword123!';
 
 const ActivityType = {
     RECIPE_CREATED: 'RECIPE_CREATED',
@@ -1031,7 +1029,6 @@ async function main() {
     const createdUsers = [];
     for (const u of usersData) {
         const isE2EUser = u.email === 'e2e@test.com';
-        const hashedPassword = isE2EUser ? await bcrypt.hash(E2E_TEST_PASSWORD, 10) : null;
 
         const user = await prisma.user.upsert({
             where: { email: u.email },
@@ -1039,8 +1036,7 @@ async function main() {
             create: {
                 email: u.email,
                 name: u.name,
-                hashedPassword: hashedPassword,
-                isActive: isE2EUser ? true : false,
+                emailVerified: isE2EUser,
                 profile: {
                     create: {
                         nickname: u.nickname,
@@ -1058,8 +1054,24 @@ async function main() {
         });
         createdUsers.push(user);
     }
+    // Create credential account for E2E user (password: test1234)
+    const e2eUser = createdUsers.find((u) => u.email === 'e2e@test.com');
+    if (e2eUser) {
+        const e2ePassword = await hashPassword('test1234');
+        await prisma.account.upsert({
+            where: { id: `credential_${e2eUser.id}` },
+            update: { password: e2ePassword },
+            create: {
+                id: `credential_${e2eUser.id}`,
+                userId: e2eUser.id,
+                accountId: e2eUser.id,
+                providerId: 'credential',
+                password: e2ePassword,
+            },
+        });
+    }
     console.log('✅ Created users');
-    console.log(`   E2E test user: e2e@test.com / ${E2E_TEST_PASSWORD}`);
+    console.log('   E2E test user: e2e@test.com / test1234');
 
     // ============================================
     // GET CATEGORIES (not needed anymore - using slug array in recipes)

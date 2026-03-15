@@ -1,5 +1,3 @@
-import { Role } from '@prisma/client';
-
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
 import { serializeNotification } from '@app/lib/events/views';
@@ -25,7 +23,7 @@ export async function GET(request: Request) {
 
     const userId = session.user.id;
     const role = (session.user as { role?: string }).role;
-    const isAdminOrMod = role === Role.ADMIN || role === Role.MODERATOR;
+    const isAdminOrMod = role === 'admin' || role === 'moderator';
     const cursor = resolveRequestStreamCursor(request);
     const encoder = new TextEncoder();
 

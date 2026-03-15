@@ -1,7 +1,6 @@
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 
-import { Role } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 
@@ -109,7 +108,7 @@ async function canAccessKey(key: string): Promise<boolean> {
             select: { role: true },
         });
 
-        return user?.role === Role.ADMIN || user?.role === Role.MODERATOR;
+        return user?.role === 'admin' || user?.role === 'moderator';
     }
 
     return false;

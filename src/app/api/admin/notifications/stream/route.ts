@@ -1,5 +1,3 @@
-import { Role } from '@prisma/client';
-
 import { fetchAdminInboxItems } from '@app/lib/admin-inbox';
 import { getServerAuthSession } from '@app/lib/auth';
 import { subscribeToRealtimeChannel } from '@app/lib/realtime/broker';
@@ -25,7 +23,7 @@ async function requireModerator() {
         select: { role: true },
     });
 
-    if (user?.role !== Role.ADMIN && user?.role !== Role.MODERATOR) {
+    if (user?.role !== 'admin' && user?.role !== 'moderator') {
         return null;
     }
 

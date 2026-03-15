@@ -105,18 +105,18 @@ function buildStatusCounts(runs: JobRun[]) {
 export const dynamic = 'force-dynamic';
 
 async function getDashboardStats() {
-    const [totalUsers, activeUsers, adminUsers, totalRecipes, publishedRecipes, draftRecipes] =
+    const [totalUsers, verifiedUsers, adminUsers, totalRecipes, publishedRecipes, draftRecipes] =
         await Promise.all([
             prisma.user.count(),
-            prisma.user.count({ where: { isActive: true } }),
-            prisma.user.count({ where: { role: 'ADMIN' } }),
+            prisma.user.count({ where: { emailVerified: true } }),
+            prisma.user.count({ where: { role: 'admin' } }),
             prisma.recipe.count(),
             prisma.recipe.count({ where: { status: 'PUBLISHED' } }),
             prisma.recipe.count({ where: { status: 'DRAFT' } }),
         ]);
 
     return {
-        users: { total: totalUsers, active: activeUsers, admins: adminUsers },
+        users: { total: totalUsers, verified: verifiedUsers, admins: adminUsers },
         recipes: { total: totalRecipes, published: publishedRecipes, drafts: draftRecipes },
     };
 }
@@ -275,7 +275,7 @@ export default async function AdminHomePage() {
                             {stats.users.total}
                         </p>
                         <span className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                            {stats.users.active} aktiv
+                            {stats.users.verified} verifiziert
                         </span>
                     </div>
 

@@ -1,6 +1,5 @@
 'use client';
 
-import { Role } from '@prisma/client';
 import {
     type ColumnDef,
     type SortingState,
@@ -11,19 +10,20 @@ import {
     useReactTable,
     flexRender,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Search, Shield, ShieldCheck, Key, Ban, Unlock } from 'lucide-react';
+import { ArrowUpDown, Search, Shield, ShieldCheck, Ban, Unlock } from 'lucide-react';
 import { useState } from 'react';
 
 import { css } from 'styled-system/css';
 
-import { updateUserRole, toggleUserActive, sendPasswordReset, banUser, unbanUser } from './actions';
+import { updateUserRole, banUser, unbanUser } from './actions';
 
 type User = {
     id: string;
     name: string;
     email: string;
-    role: Role;
-    isActive: boolean;
+    role: string;
+    banned: boolean;
+    emailVerified: boolean;
     createdAt: string;
     recipeCount: number;
 };
@@ -89,51 +89,61 @@ const columns: ColumnDef<User>[] = [
         cell: ({ row }) => {
             const user = row.original;
             const role = user.role;
-            const isBanned = role === 'BANNED';
+            const isBanned = user.banned;
 
-            // Cycle: USER → MODERATOR → ADMIN → USER
+            // Cycle: user → moderator → admin → user
             const nextRole =
-                role === 'USER' ? Role.MODERATOR : role === 'MODERATOR' ? Role.ADMIN : Role.USER;
+                role === 'user' ? 'moderator' : role === 'moderator' ? 'admin' : 'user';
 
-            const roleConfig = {
-                ADMIN: {
+            const roleConfig: Record<
+                string,
+                {
+                    bg: { base: string; _dark: string };
+                    color: { base: string; _dark: string };
+                    icon: React.ReactNode;
+                    label: string;
+                }
+            > = {
+                admin: {
                     bg: {
                         base: 'rgba(59, 130, 246, 0.15)',
                         _dark: 'rgba(59, 130, 246, 0.2)',
-                    } as const,
-                    color: { base: '#3b82f6', _dark: '#60a5fa' } as const,
+                    },
+                    color: { base: '#3b82f6', _dark: '#60a5fa' },
                     icon: <Shield size={12} />,
                     label: 'Admin',
                 },
-                MODERATOR: {
+                moderator: {
                     bg: {
                         base: 'rgba(168, 85, 247, 0.15)',
                         _dark: 'rgba(168, 85, 247, 0.2)',
-                    } as const,
-                    color: { base: '#a855f7', _dark: '#c084fc' } as const,
+                    },
+                    color: { base: '#a855f7', _dark: '#c084fc' },
                     icon: <ShieldCheck size={12} />,
                     label: 'Moderator',
                 },
-                USER: {
+                user: {
                     bg: {
                         base: 'rgba(107, 114, 128, 0.15)',
                         _dark: 'rgba(107, 114, 128, 0.2)',
-                    } as const,
-                    color: { base: '#6b7280', _dark: '#9ca3af' } as const,
+                    },
+                    color: { base: '#6b7280', _dark: '#9ca3af' },
                     icon: null,
                     label: 'Benutzer',
                 },
-                BANNED: {
-                    bg: {
-                        base: 'rgba(239, 68, 68, 0.15)',
-                        _dark: 'rgba(239, 68, 68, 0.2)',
-                    } as const,
-                    color: { base: '#ef4444', _dark: '#f87171' } as const,
-                    icon: <Ban size={12} />,
-                    label: 'Gesperrt',
-                },
             };
-            const cfg = roleConfig[role] ?? roleConfig.USER;
+
+            const bannedConfig = {
+                bg: {
+                    base: 'rgba(239, 68, 68, 0.15)',
+                    _dark: 'rgba(239, 68, 68, 0.2)',
+                },
+                color: { base: '#ef4444', _dark: '#f87171' },
+                icon: <Ban size={12} />,
+                label: 'Gesperrt',
+            };
+
+            const cfg = isBanned ? bannedConfig : (roleConfig[role] ?? roleConfig.user);
 
             if (isBanned) {
                 return (
@@ -188,7 +198,7 @@ const columns: ColumnDef<User>[] = [
         },
     },
     {
-        accessorKey: 'isActive',
+        accessorKey: 'emailVerified',
         header: ({ column }) => {
             return (
                 <button
@@ -212,45 +222,35 @@ const columns: ColumnDef<User>[] = [
             );
         },
         cell: ({ row }) => {
-            const user = row.original;
-            const isActive = user.isActive;
+            const verified = row.original.emailVerified;
 
             return (
-                <form
-                    action={async () => {
-                        await toggleUserActive(user.id, !isActive);
-                    }}
+                <span
+                    className={css({
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '1',
+                        paddingX: '2',
+                        paddingY: '1',
+                        borderRadius: 'full',
+                        fontSize: 'xs',
+                        fontWeight: 'medium',
+                        background: verified
+                            ? {
+                                  base: 'rgba(34, 197, 94, 0.15)',
+                                  _dark: 'rgba(34, 197, 94, 0.2)',
+                              }
+                            : {
+                                  base: 'rgba(239, 68, 68, 0.15)',
+                                  _dark: 'rgba(239, 68, 68, 0.2)',
+                              },
+                        color: verified
+                            ? { base: '#22c55e', _dark: '#4ade80' }
+                            : { base: '#ef4444', _dark: '#f87171' },
+                    })}
                 >
-                    <button
-                        className={css({
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '1',
-                            paddingX: '2',
-                            paddingY: '1',
-                            borderRadius: 'full',
-                            fontSize: 'xs',
-                            fontWeight: 'medium',
-                            cursor: 'pointer',
-                            border: 'none',
-                            transition: 'all 0.2s',
-                            background: isActive
-                                ? {
-                                      base: 'rgba(34, 197, 94, 0.15)',
-                                      _dark: 'rgba(34, 197, 94, 0.2)',
-                                  }
-                                : {
-                                      base: 'rgba(239, 68, 68, 0.15)',
-                                      _dark: 'rgba(239, 68, 68, 0.2)',
-                                  },
-                            color: isActive
-                                ? { base: '#22c55e', _dark: '#4ade80' }
-                                : { base: '#ef4444', _dark: '#f87171' },
-                        })}
-                    >
-                        {isActive ? 'Aktiv' : 'Inaktiv'}
-                    </button>
-                </form>
+                    {verified ? 'Verifiziert' : 'Nicht verifiziert'}
+                </span>
             );
         },
     },
@@ -326,36 +326,7 @@ const columns: ColumnDef<User>[] = [
 
             return (
                 <div className={css({ display: 'flex', gap: '2' })}>
-                    <form
-                        action={async () => {
-                            await sendPasswordReset(user.id);
-                        }}
-                    >
-                        <button
-                            title="Passwort zurücksetzen"
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '8',
-                                height: '8',
-                                borderRadius: 'lg',
-                                border: '1px solid',
-                                borderColor: 'border.muted',
-                                background: 'surface',
-                                cursor: 'pointer',
-                                color: 'foreground.muted',
-                                transition: 'all 0.2s',
-                                _hover: {
-                                    background: 'surface.elevated',
-                                    color: 'foreground',
-                                },
-                            })}
-                        >
-                            <Key size={14} />
-                        </button>
-                    </form>
-                    {user.role === 'BANNED' ? (
+                    {user.banned ? (
                         <form
                             action={async () => {
                                 await unbanUser(user.id);

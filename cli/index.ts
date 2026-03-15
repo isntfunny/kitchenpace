@@ -1,13 +1,10 @@
 #!/usr/bin/env node
 import 'dotenv/config';
-import { hash } from 'bcrypt';
 import { Command } from 'commander';
-
-import { generateUniqueSlug } from '@app/lib/slug';
 
 import { registerImportCommand } from './commands/import.js';
 import { generateCompletions } from './lib/complete.js';
-import { db, Role, RecipeStatus } from './lib/db.js';
+import { db, RecipeStatus } from './lib/db.js';
 import { triggerJobNow, getJobDefinitions } from './lib/jobs.js';
 
 const program = new Command();
@@ -18,14 +15,11 @@ program
     .command('acl')
     .description('User access control management')
     .argument('<email>', 'User email address')
-    .option('-r, --role <role>', 'Set or update user role (USER, ADMIN)')
-    .option('-a, --activate', 'Activate user account')
-    .option('-d, --deactivate', 'Deactivate user account')
+    .option('-r, --role <role>', 'Set or update user role (user, admin)')
+    .option('-p, --password <password>', 'Set or update password')
+    .option('-v, --verify', 'Mark email as verified')
+    .option('--unverify', 'Mark email as unverified')
     .option('-i, --info', 'Show user information')
-    .option(
-        '-p, --password <password>',
-        'Set or reset password (required when creating a new account)',
-    )
     .option('-n, --nickname <nickname>', 'Nickname for the profile (auto derived from the email)')
     .action(async (email, options) => {
         await db.$connect();
@@ -42,73 +36,11 @@ program
             }
 
             if (!user) {
-                if (!options.password) {
-                    console.error(
-                        'Error: User not found. Provide --password to create a new account.',
-                    );
-                    process.exit(1);
-                }
-
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    console.error('Error: Invalid email format');
-                    process.exit(1);
-                }
-
-                const roleValue = options.role ? options.role.toUpperCase() : 'USER';
-                if (!['USER', 'ADMIN'].includes(roleValue)) {
-                    console.error(`Error: Invalid role "${options.role}". Use USER or ADMIN`);
-                    process.exit(1);
-                }
-
-                const password = options.password;
-                if (password.length < 8) {
-                    console.error('Error: Password must be at least 8 characters');
-                    process.exit(1);
-                }
-
-                const nickname = await resolveNickname(options.nickname, email);
-                const hashedPassword = await hash(password, 12);
-
-                const newUser = await db.$transaction(async (tx) => {
-                    const created = await tx.user.create({
-                        data: {
-                            email,
-                            hashedPassword,
-                            role: roleValue as Role,
-                            isActive: options.activate || false,
-                        },
-                    });
-
-                    const slug = await generateUniqueSlug(
-                        nickname,
-                        async (s) => !!(await tx.profile.findUnique({ where: { slug: s } })),
-                    );
-                    await tx.profile.create({
-                        data: {
-                            userId: created.id,
-                            nickname,
-                            slug,
-                        },
-                    });
-
-                    return created;
-                });
-
-                console.log(`✓ Account created successfully for ${email}`);
-                console.log(`  ID:       ${newUser.id}`);
-                console.log(`  Role:     ${roleValue}`);
-                console.log(`  Active:   ${options.activate ? 'Yes' : 'No (activation required)'}`);
-                console.log(`  Nickname: ${nickname}`);
-
-                if (!options.activate) {
-                    console.log(
-                        `\nNote: User needs to activate their account via email verification.`,
-                    );
-                    console.log(`Use 'kitchen acl ${email} --activate' to activate manually.`);
-                }
-
-                return;
+                console.error(`Error: User not found: ${email}`);
+                console.error(
+                    'Users must register through the app. Use this command to manage existing accounts.',
+                );
+                process.exit(1);
             }
 
             if (options.info) {
@@ -116,7 +48,7 @@ program
                 console.log(`  ID:         ${user.id}`);
                 console.log(`  Name:       ${user.name || '(none)'}`);
                 console.log(`  Role:       ${user.role}`);
-                console.log(`  Active:     ${user.isActive ? 'Yes' : 'No'}`);
+                console.log(`  Verified:   ${user.emailVerified ? 'Yes' : 'No'}`);
                 console.log(`  Created:    ${user.createdAt.toISOString()}`);
                 if (user.profile) {
                     console.log(`  Nickname:   ${user.profile.nickname}`);
@@ -127,46 +59,55 @@ program
             }
 
             if (options.role) {
-                const roleValue = options.role.toUpperCase();
-                if (!['USER', 'ADMIN'].includes(roleValue)) {
-                    console.error(`Error: Invalid role "${options.role}". Use USER or ADMIN`);
+                const roleValue = options.role.toLowerCase();
+                if (!['user', 'admin'].includes(roleValue)) {
+                    console.error(`Error: Invalid role "${options.role}". Use user or admin`);
                     process.exit(1);
                 }
                 await db.user.update({
                     where: { email },
-                    data: { role: roleValue as Role },
+                    data: { role: roleValue },
                 });
                 console.log(`✓ Updated ${email} role to ${roleValue}`);
             }
 
             if (options.password) {
-                if (options.password.length < 8) {
-                    console.error('Error: Password must be at least 8 characters');
-                    process.exit(1);
-                }
+                const { hashPassword } = await import('better-auth/crypto');
+                const hashedPassword = await hashPassword(options.password);
 
-                const newHash = await hash(options.password, 12);
-                await db.user.update({
-                    where: { email },
-                    data: { hashedPassword: newHash },
+                // Better Auth stores passwords in the Account table
+                await db.account.upsert({
+                    where: {
+                        id: `credential_${user.id}`,
+                    },
+                    update: {
+                        password: hashedPassword,
+                    },
+                    create: {
+                        id: `credential_${user.id}`,
+                        userId: user.id,
+                        accountId: user.id,
+                        providerId: 'credential',
+                        password: hashedPassword,
+                    },
                 });
                 console.log(`✓ Updated password for ${email}`);
             }
 
-            if (options.activate) {
+            if (options.verify) {
                 await db.user.update({
                     where: { email },
-                    data: { isActive: true },
+                    data: { emailVerified: true },
                 });
-                console.log(`✓ Activated user ${email}`);
+                console.log(`✓ Marked ${email} as verified`);
             }
 
-            if (options.deactivate) {
+            if (options.unverify) {
                 await db.user.update({
                     where: { email },
-                    data: { isActive: false },
+                    data: { emailVerified: false },
                 });
-                console.log(`✓ Deactivated user ${email}`);
+                console.log(`✓ Marked ${email} as unverified`);
             }
         } finally {
             await db.$disconnect();
@@ -353,33 +294,6 @@ async function findRecipe(identifier: string) {
         where: { title: { contains: identifier, mode: 'insensitive' } },
     });
     return byTitle;
-}
-
-async function resolveNickname(preferred: string | undefined, email: string) {
-    const sanitize = (value: string) => value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-    const fallback = email.split('@')[0] || 'user';
-    let base = preferred && preferred.length > 0 ? preferred : fallback;
-    base = sanitize(base);
-    if (base.length === 0) {
-        base = `user${Math.floor(Math.random() * 9000 + 1000)}`;
-    }
-    if (base.length > 40) {
-        base = base.slice(0, 40);
-    }
-    if (base.length < 3) {
-        base = base.padEnd(3, 'x');
-    }
-
-    let candidate = base;
-    let suffix = 0;
-    while (await db.profile.findUnique({ where: { nickname: candidate } })) {
-        suffix += 1;
-        const suffixText = suffix.toString();
-        const truncationLength = Math.max(1, 40 - suffixText.length);
-        candidate = `${base.slice(0, truncationLength)}${suffixText}`;
-    }
-
-    return candidate;
 }
 
 program.parse();

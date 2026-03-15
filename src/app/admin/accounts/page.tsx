@@ -13,7 +13,8 @@ async function getUsers() {
             name: true,
             email: true,
             role: true,
-            isActive: true,
+            banned: true,
+            emailVerified: true,
             createdAt: true,
             _count: {
                 select: {
@@ -26,10 +27,11 @@ async function getUsers() {
         },
     });
 
-    return users.map(({ _count, createdAt, name, email, ...rest }) => ({
+    return users.map(({ _count, createdAt, name, email, emailVerified, ...rest }) => ({
         ...rest,
         name: name ?? '—',
         email: email ?? '—',
+        emailVerified: !!emailVerified,
         createdAt: createdAt.toISOString(),
         recipeCount: _count.recipes,
     }));

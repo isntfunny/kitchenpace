@@ -16,21 +16,21 @@ export default async function BannedPage() {
     const session = await getServerAuthSession('banned');
 
     let banReason: string | null = null;
-    let banExpiresAt: Date | null = null;
+    let banExpires: Date | null = null;
 
     if (session?.user?.id) {
         const user = await prisma.user.findUnique({
             where: { id: session.user.id },
-            select: { banReason: true, banExpiresAt: true, role: true },
+            select: { banReason: true, banExpires: true, banned: true },
         });
 
-        if (user?.role !== 'BANNED') {
+        if (!user?.banned) {
             // Not actually banned — redirect home
             return <meta httpEquiv="refresh" content="0;url=/" />;
         }
 
         banReason = user.banReason;
-        banExpiresAt = user.banExpiresAt;
+        banExpires = user.banExpires;
     }
 
     return (
@@ -81,11 +81,11 @@ export default async function BannedPage() {
                         </p>
                     )}
 
-                    {banExpiresAt && (
+                    {banExpires && (
                         <p className={css({ fontSize: 'sm', color: 'text.muted', mb: '4' })}>
                             Die Sperre endet am{' '}
                             <strong>
-                                {new Date(banExpiresAt).toLocaleDateString('de-DE', {
+                                {new Date(banExpires).toLocaleDateString('de-DE', {
                                     day: 'numeric',
                                     month: 'long',
                                     year: 'numeric',
@@ -95,7 +95,7 @@ export default async function BannedPage() {
                         </p>
                     )}
 
-                    {!banExpiresAt && banReason && (
+                    {!banExpires && banReason && (
                         <p className={css({ fontSize: 'sm', color: 'text.muted', mb: '4' })}>
                             Diese Sperre ist dauerhaft.
                         </p>

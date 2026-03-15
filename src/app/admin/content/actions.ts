@@ -111,7 +111,7 @@ export async function getSelectableRecipes() {
 
 export async function getSelectableUsers() {
     return prisma.user.findMany({
-        where: { isActive: true },
+        where: { emailVerified: true },
         select: {
             id: true,
             name: true,

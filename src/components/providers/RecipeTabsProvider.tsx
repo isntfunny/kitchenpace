@@ -1,6 +1,5 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -10,6 +9,7 @@ import {
     refreshRecipeTabsAction,
     unpinRecipeAction,
 } from '@app/app/actions/recipe-tabs';
+import { useSession } from '@app/lib/auth-client';
 
 export interface RecipeTabItem {
     id: string;
@@ -105,8 +105,8 @@ export function RecipeTabsProvider({
     initialRecent,
     serverDataFetched = false,
 }: RecipeTabsProviderProps) {
-    const { data: session, status } = useSession();
-    const isAuthenticated = status === 'authenticated' && !!session?.user?.id;
+    const { data: session, isPending } = useSession();
+    const isAuthenticated = !isPending && !!session?.user?.id;
     const initialTabs =
         initialPinned || initialRecent
             ? { pinned: initialPinned ?? [], recent: initialRecent ?? [] }

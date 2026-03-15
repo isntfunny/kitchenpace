@@ -192,7 +192,7 @@ export async function fetchQuickTips(): Promise<QuickTipData[]> {
         topRatedRecipe,
     ] = await Promise.all([
         prisma.recipe.count({ where: { publishedAt: { not: null } } }),
-        prisma.user.count({ where: { isActive: true } }),
+        prisma.user.count({ where: { emailVerified: true } }),
         prisma.userRating.count(),
         prisma.favorite.count(),
         prisma.userCookHistory.count(),

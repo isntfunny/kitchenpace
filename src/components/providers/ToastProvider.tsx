@@ -1,6 +1,5 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import {
     type ReactNode,
     createContext,
@@ -12,6 +11,7 @@ import {
     useState,
 } from 'react';
 
+import { useSession } from '@app/lib/auth-client';
 import { connectStream, disconnectStream, onStreamEvent } from '@app/lib/realtime/clientStream';
 import type { PublishedToast, Toast, ToastInput } from '@app/types/toast';
 import { TOAST_STREAM_EVENT } from '@app/types/toast';
@@ -59,7 +59,7 @@ function createPublishedToast(input: PublishedToast): Toast {
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-    const { data: session, status } = useSession();
+    const { data: session, isPending } = useSession();
     const [toasts, setToasts] = useState<Toast[]>([]);
     const timeoutIdsRef = useRef<Map<string, number>>(new Map());
     const [announcement, setAnnouncement] = useState('');
@@ -122,7 +122,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     );
 
     useEffect(() => {
-        if (status !== 'authenticated' || !session?.user?.id) {
+        if (isPending || !session?.user?.id) {
             return;
         }
 
@@ -140,7 +140,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             off();
             disconnectStream();
         };
-    }, [pushToast, session?.user?.id, status]);
+    }, [pushToast, session?.user?.id, isPending]);
 
     useEffect(() => {
         const timeoutIds = timeoutIdsRef.current;

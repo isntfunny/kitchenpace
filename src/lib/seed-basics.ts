@@ -14,7 +14,8 @@
  */
 
 import 'dotenv/config';
-import bcrypt from 'bcrypt';
+
+import { hashPassword } from 'better-auth/crypto';
 
 import { prisma } from '../../shared/prisma';
 
@@ -486,28 +487,39 @@ async function main() {
         create: {
             email: 'system@kitchenpace.internal',
             name: 'KüchenTakt',
-            role: 'ADMIN',
-            isActive: true,
+            role: 'admin',
+            emailVerified: true,
             profile: { create: { nickname: 'KüchenTakt', slug: 'kuechentakt' } },
         },
     });
     console.log(`✅ System user: ${systemUser.email}`);
 
     // ── Admin user ────────────────────────────────────────────────────────────
-    const adminHash = await bcrypt.hash('voll1111', 12);
     const adminUser = await prisma.user.upsert({
         where: { email: 'info@isntfunny.de' },
         update: {
-            role: 'ADMIN',
-            isActive: true,
+            role: 'admin',
+            emailVerified: true,
         },
         create: {
             email: 'info@isntfunny.de',
             name: 'Admin',
-            hashedPassword: adminHash,
-            role: 'ADMIN',
-            isActive: true,
+            role: 'admin',
+            emailVerified: true,
             profile: { create: { nickname: 'Admin', slug: 'admin' } },
+        },
+    });
+    // Create credential account for admin (password: voll1111)
+    const adminPassword = await hashPassword('voll1111');
+    await prisma.account.upsert({
+        where: { id: `credential_${adminUser.id}` },
+        update: { password: adminPassword },
+        create: {
+            id: `credential_${adminUser.id}`,
+            userId: adminUser.id,
+            accountId: adminUser.id,
+            providerId: 'credential',
+            password: adminPassword,
         },
     });
     console.log(`✅ Admin user:  ${adminUser.email} (role: ${adminUser.role})`);

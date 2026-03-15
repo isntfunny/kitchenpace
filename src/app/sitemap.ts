@@ -67,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 select: { slug: true, createdAt: true },
             }),
             prisma.profile.findMany({
-                where: { user: { banReason: null } },
+                where: { user: { banned: false } },
                 select: { slug: true, updatedAt: true },
             }),
         ]);

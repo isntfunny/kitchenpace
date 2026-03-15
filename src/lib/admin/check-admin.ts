@@ -1,5 +1,3 @@
-import { Role } from '@prisma/client';
-
 import { prisma } from '@shared/prisma';
 
 /**
@@ -10,5 +8,5 @@ export async function isAdmin(userId: string): Promise<boolean> {
         where: { id: userId },
         select: { role: true },
     });
-    return user?.role === Role.ADMIN;
+    return user?.role === 'admin';
 }

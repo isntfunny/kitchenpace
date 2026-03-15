@@ -3,10 +3,10 @@
 import { ChefHat, Egg, LayoutGrid, Menu, Plus, Shield, ShieldCheck, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
 
 import { HeaderSearch } from '@app/components/search/HeaderSearch';
+import { useSession } from '@app/lib/auth-client';
 import { PALETTE } from '@app/lib/palette';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { css } from 'styled-system/css';
@@ -228,11 +228,11 @@ function HeaderNavigationMenu({
 }
 
 export function Header() {
-    const { status, data: session } = useSession();
-    const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
+    const { data: session, isPending } = useSession();
+    const isAuthenticated = !isPending && Boolean(session?.user?.id);
     const userRole = session?.user?.role;
-    const isAdmin = isAuthenticated && userRole === 'ADMIN';
-    const isModerator = isAuthenticated && userRole === 'MODERATOR';
+    const isAdmin = isAuthenticated && userRole === 'admin';
+    const isModerator = isAuthenticated && userRole === 'moderator';
     const [Icon1, Icon2, Icon3] = HEADER_ICONS;
 
     return (

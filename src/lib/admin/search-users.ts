@@ -10,7 +10,7 @@ export async function searchUsers(query: string) {
 
     const users = await prisma.user.findMany({
         where: {
-            isActive: true,
+            emailVerified: true,
             OR: [
                 { name: { contains: query, mode: 'insensitive' } },
                 { profile: { nickname: { contains: query, mode: 'insensitive' } } },

@@ -1,4 +1,3 @@
-import { Role } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
 import { fetchAdminInboxItems } from '@app/lib/admin-inbox';
@@ -17,7 +16,7 @@ async function requireModerator() {
         select: { role: true },
     });
 
-    if (user?.role !== Role.ADMIN && user?.role !== Role.MODERATOR) {
+    if (user?.role !== 'admin' && user?.role !== 'moderator') {
         return null;
     }
 

@@ -1,9 +1,9 @@
 'use client';
 
 import type { TrophyTier } from '@prisma/client';
-import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { useSession } from '@app/lib/auth-client';
 import { connectStream, disconnectStream, onStreamEvent } from '@app/lib/realtime/clientStream';
 import { TROPHY_STREAM_EVENT } from '@app/lib/trophies/registry';
 
@@ -20,7 +20,7 @@ interface TrophyPayload {
 }
 
 export function AchievementListener() {
-    const { data: session, status } = useSession();
+    const { data: session, isPending } = useSession();
     const [trophy, setTrophy] = useState<AchievementOverlayProps['trophy'] | null>(null);
 
     const handleEvent = useCallback((event: MessageEvent<string>) => {
@@ -39,7 +39,7 @@ export function AchievementListener() {
     }, []);
 
     useEffect(() => {
-        if (status !== 'authenticated' || !session?.user?.id) return;
+        if (isPending || !session?.user?.id) return;
 
         connectStream(STREAM_URL);
         const off = onStreamEvent(TROPHY_STREAM_EVENT, handleEvent);
@@ -48,7 +48,7 @@ export function AchievementListener() {
             off();
             disconnectStream();
         };
-    }, [handleEvent, session?.user?.id, status]);
+    }, [handleEvent, session?.user?.id, isPending]);
 
     if (!trophy) return null;
 

@@ -1,6 +1,6 @@
 'use server';
 
-import { ModerationStatus, Role } from '@prisma/client';
+import { ModerationStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 import { publishAdminInboxRemoved } from '@app/lib/admin-inbox';
@@ -30,7 +30,7 @@ async function requireModerator() {
         select: { role: true },
     });
 
-    if (user?.role !== Role.ADMIN && user?.role !== Role.MODERATOR) {
+    if (user?.role !== 'admin' && user?.role !== 'moderator') {
         throw new Error('Keine Berechtigung');
     }
 

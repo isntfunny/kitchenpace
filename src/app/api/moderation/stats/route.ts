@@ -1,4 +1,3 @@
-import { Role } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
 import { getServerAuthSession } from '@app/lib/auth';
@@ -15,7 +14,7 @@ export async function GET() {
         select: { role: true },
     });
 
-    if (user?.role !== Role.ADMIN && user?.role !== Role.MODERATOR) {
+    if (user?.role !== 'admin' && user?.role !== 'moderator') {
         return NextResponse.json({ total: 0 });
     }
 

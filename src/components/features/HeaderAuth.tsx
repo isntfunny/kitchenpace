@@ -2,7 +2,6 @@
 
 import { Key, LogOut } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useSession } from 'next-auth/react';
 import { DropdownMenu } from 'radix-ui';
 import { useEffect, useState } from 'react';
 
@@ -12,6 +11,7 @@ import { NotificationItem } from '@app/components/notifications/NotificationItem
 import { useNotifications } from '@app/components/notifications/useNotifications';
 import { resolveNotificationHref } from '@app/components/notifications/utils';
 import { useProfile } from '@app/components/providers/ProfileProvider';
+import { useSession } from '@app/lib/auth-client';
 import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
@@ -21,13 +21,13 @@ import { MenuSection, PERSONAL_LINKS } from './HeaderMenuPanel';
 import { ToastViewport } from './ToastViewport';
 
 export function HeaderAuth() {
-    const { data: session, status } = useSession();
+    const { data, isPending } = useSession();
     const { profile } = useProfile();
     const [notificationButtonEl, setNotificationButtonEl] = useState<HTMLButtonElement | null>(
         null,
     );
-    const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
-    const isAuthLoading = status === 'loading';
+    const isAuthenticated = !isPending && Boolean(data?.user?.id);
+    const isAuthLoading = isPending;
     const {
         notifications,
         unreadCount,
@@ -42,10 +42,10 @@ export function HeaderAuth() {
     useEffect(() => {
         if (!authDebugEnabled) return;
         console.debug('[auth][HeaderAuth] session status changed', {
-            status,
-            userId: session?.user?.id ?? null,
+            isPending,
+            userId: data?.user?.id ?? null,
         });
-    }, [status, session?.user?.id, authDebugEnabled]);
+    }, [isPending, data?.user?.id, authDebugEnabled]);
 
     const badgeContent = unreadCount > 9 ? '9+' : unreadCount;
 

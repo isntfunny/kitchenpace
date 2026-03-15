@@ -12,7 +12,7 @@ import { prisma } from '@shared/prisma';
 // ---------------------------------------------------------------------------
 
 export type RecipientMode = 'user' | 'role';
-export type TargetRole = 'ALL' | 'USER' | 'MODERATOR' | 'ADMIN';
+export type TargetRole = 'ALL' | 'user' | 'moderator' | 'admin';
 
 export type SendMessageInput = {
     recipientMode: RecipientMode;
@@ -63,8 +63,8 @@ export async function sendMessage(input: SendMessageInput): Promise<SendMessageR
     } else {
         const where =
             input.targetRole === 'ALL'
-                ? { role: { not: 'BANNED' as const } }
-                : { role: input.targetRole as 'USER' | 'MODERATOR' | 'ADMIN' };
+                ? { banned: false }
+                : { role: input.targetRole as 'user' | 'moderator' | 'admin', banned: false };
 
         const users = await prisma.user.findMany({
             where,
@@ -74,9 +74,9 @@ export async function sendMessage(input: SendMessageInput): Promise<SendMessageR
 
         const ROLE_LABELS: Record<TargetRole, string> = {
             ALL: 'Alle Benutzer',
-            USER: 'Alle normalen Benutzer',
-            MODERATOR: 'Alle Moderatoren',
-            ADMIN: 'Alle Administratoren',
+            user: 'Alle normalen Benutzer',
+            moderator: 'Alle Moderatoren',
+            admin: 'Alle Administratoren',
         };
         recipientLabel = ROLE_LABELS[input.targetRole ?? 'ALL'];
     }
@@ -132,10 +132,10 @@ export async function getRoleStats(): Promise<RoleStats> {
     await ensureAdminSession('get-role-stats');
 
     const [total, users, moderators, admins] = await Promise.all([
-        prisma.user.count({ where: { role: { not: 'BANNED' } } }),
-        prisma.user.count({ where: { role: 'USER' } }),
-        prisma.user.count({ where: { role: 'MODERATOR' } }),
-        prisma.user.count({ where: { role: 'ADMIN' } }),
+        prisma.user.count({ where: { banned: false } }),
+        prisma.user.count({ where: { role: 'user' } }),
+        prisma.user.count({ where: { role: 'moderator' } }),
+        prisma.user.count({ where: { role: 'admin' } }),
     ]);
 
     return { total, users, moderators, admins };

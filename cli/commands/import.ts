@@ -112,8 +112,8 @@ async function resolveUser(email: string): Promise<ResolvedUser> {
         process.exit(1);
     }
 
-    if (!user.isActive) {
-        console.error(chalk.red(`User ${email} is not active`));
+    if (!user.emailVerified) {
+        console.error(chalk.red(`User ${email} is not verified`));
         process.exit(1);
     }
 

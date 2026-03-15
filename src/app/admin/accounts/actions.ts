@@ -1,16 +1,14 @@
 'use server';
 
-import { Role } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 import { createUserNotification } from '@app/lib/events/persist';
 import { prisma } from '@shared/prisma';
 
-export async function updateUserRole(userId: string, role: Role) {
-    // Prevent setting BANNED via role dropdown — use banUser() instead
-    if (role === Role.BANNED) {
-        throw new Error('Gesperrte Konten können nur über die Sperrfunktion verwaltet werden');
+export async function updateUserRole(userId: string, role: string) {
+    if (!['user', 'admin', 'moderator'].includes(role)) {
+        throw new Error('Ungültige Rolle');
     }
     await prisma.user.update({
         where: { id: userId },
@@ -24,22 +22,22 @@ export async function banUser(userId: string, reason: string, expiresAt?: Date) 
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { role: true },
+        select: { role: true, banned: true },
     });
     if (!user) throw new Error('Benutzer nicht gefunden');
-    if (user.role === Role.BANNED) throw new Error('Benutzer ist bereits gesperrt');
+    if (user.banned) throw new Error('Benutzer ist bereits gesperrt');
 
-    // Set role to BANNED, store ban metadata
+    // Set banned flag, store ban metadata
     await prisma.user.update({
         where: { id: userId },
         data: {
-            role: Role.BANNED,
+            banned: true,
             banReason: reason,
-            banExpiresAt: expiresAt ?? null,
+            banExpires: expiresAt ?? null,
         },
     });
 
-    // Log the action with previous role for unban restoration
+    // Log the action
     await prisma.moderationLog.create({
         data: {
             actorId: session.user.id,
@@ -48,7 +46,6 @@ export async function banUser(userId: string, reason: string, expiresAt?: Date) 
             contentId: userId,
             reason,
             metadata: {
-                previousRole: user.role,
                 expiresAt: expiresAt?.toISOString() ?? null,
             },
         },
@@ -73,30 +70,16 @@ export async function unbanUser(userId: string) {
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { role: true },
+        select: { banned: true },
     });
-    if (!user || user.role !== Role.BANNED) throw new Error('Benutzer ist nicht gesperrt');
-
-    // Find previous role from the most recent ban log
-    const banLog = await prisma.moderationLog.findFirst({
-        where: {
-            contentId: userId,
-            action: 'ban_user',
-        },
-        orderBy: { createdAt: 'desc' },
-        select: { metadata: true },
-    });
-
-    const previousRole = (banLog?.metadata as Record<string, string> | null)?.previousRole as
-        | Role
-        | undefined;
+    if (!user || !user.banned) throw new Error('Benutzer ist nicht gesperrt');
 
     await prisma.user.update({
         where: { id: userId },
         data: {
-            role: previousRole ?? Role.USER,
+            banned: false,
             banReason: null,
-            banExpiresAt: null,
+            banExpires: null,
         },
     });
 
@@ -117,30 +100,4 @@ export async function unbanUser(userId: string) {
     });
 
     revalidatePath('/admin/accounts');
-}
-
-export async function toggleUserActive(userId: string, isActive: boolean) {
-    await prisma.user.update({
-        where: { id: userId },
-        data: { isActive },
-    });
-    revalidatePath('/admin/accounts');
-}
-
-export async function sendPasswordReset(userId: string) {
-    const crypto = await import('crypto');
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
-
-    await prisma.user.update({
-        where: { id: userId },
-        data: {
-            resetToken,
-            resetTokenExpiry,
-        },
-    });
-
-    // In a real app, you would send an email here
-    // For now, we just return the token for testing purposes
-    return { token: resetToken };
 }

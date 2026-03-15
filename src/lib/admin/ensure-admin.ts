@@ -1,4 +1,3 @@
-import { Role } from '@prisma/client';
 import { redirect } from 'next/navigation';
 
 import { getServerAuthSession } from '@app/lib/auth';
@@ -16,7 +15,7 @@ export async function ensureAdminSession(context?: string) {
         select: { role: true },
     });
 
-    if (user?.role !== Role.ADMIN) {
+    if (user?.role !== 'admin') {
         redirect('/');
     }
 

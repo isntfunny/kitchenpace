@@ -41,26 +41,26 @@ const ROLE_TARGETS: {
     {
         value: 'ALL',
         label: 'Alle Benutzer',
-        desc: 'Jeder aktive Account',
+        desc: 'Alle nicht gesperrten Konten',
         icon: Users,
         color: '#0984e3',
     },
     {
-        value: 'USER',
+        value: 'user',
         label: 'Benutzer',
         desc: 'Nur normale Benutzer',
         icon: User,
         color: '#636e72',
     },
     {
-        value: 'MODERATOR',
+        value: 'moderator',
         label: 'Moderatoren',
         desc: 'Nur Moderatoren',
         icon: Shield,
         color: '#a855f7',
     },
     {
-        value: 'ADMIN',
+        value: 'admin',
         label: 'Administratoren',
         desc: 'Nur Admins',
         icon: ShieldCheck,
@@ -139,9 +139,9 @@ export function SendMessageForm({ roleStats }: SendMessageFormProps) {
         formData.recipientMode === 'role'
             ? formData.targetRole === 'ALL'
                 ? roleStats.total
-                : formData.targetRole === 'MODERATOR'
+                : formData.targetRole === 'moderator'
                   ? roleStats.moderators
-                  : formData.targetRole === 'ADMIN'
+                  : formData.targetRole === 'admin'
                     ? roleStats.admins
                     : roleStats.users
             : 1;
@@ -278,7 +278,7 @@ export function SendMessageForm({ roleStats }: SendMessageFormProps) {
                             const avatar = item.avatar as string | null | undefined;
                             return {
                                 label: name,
-                                sublabel: role && role !== 'USER' ? role : undefined,
+                                sublabel: role && role !== 'user' ? role : undefined,
                                 avatar: photoKey
                                     ? getThumbnailUrl(photoKey, '1:1', 72)
                                     : (avatar ?? undefined),
@@ -309,9 +309,9 @@ export function SendMessageForm({ roleStats }: SendMessageFormProps) {
                             const count =
                                 role.value === 'ALL'
                                     ? roleStats.total
-                                    : role.value === 'MODERATOR'
+                                    : role.value === 'moderator'
                                       ? roleStats.moderators
-                                      : role.value === 'ADMIN'
+                                      : role.value === 'admin'
                                         ? roleStats.admins
                                         : roleStats.users;
 

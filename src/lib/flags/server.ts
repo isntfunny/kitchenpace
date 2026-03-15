@@ -1,8 +1,8 @@
 import 'server-only';
 
-import type { Role } from '@prisma/client';
 import { unstable_noStore as noStore } from 'next/cache';
-import type { Session } from 'next-auth';
+
+import type { Session } from '@app/lib/auth';
 
 import {
     getFeatureFlagDefaults,
@@ -27,16 +27,14 @@ interface FliptBooleanFlag {
     type: string;
 }
 
-function normalizeRole(role?: Role | null, isAuthenticated = false): string {
+function normalizeRole(role?: string | null, isAuthenticated = false): string {
     switch (role) {
-        case 'ADMIN':
+        case 'admin':
             return 'admin';
-        case 'MODERATOR':
+        case 'moderator':
             return 'mod';
-        case 'USER':
+        case 'user':
             return 'user';
-        case 'BANNED':
-            return 'banned';
         default:
             return isAuthenticated ? 'user' : 'guest';
     }

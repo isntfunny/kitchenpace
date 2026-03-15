@@ -1115,7 +1115,7 @@ export function RecipeForm({
         }
 
         // Redirect to the showcase recipe instead of creating a junk draft
-        window.location.href = '/recipe/hirschgulasch';
+        window.location.href = '/recipe/flammkuchen';
     }, []);
 
     return (

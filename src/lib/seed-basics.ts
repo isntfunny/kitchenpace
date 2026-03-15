@@ -793,6 +793,122 @@ async function main() {
     }
     console.log(`✅ Ingredients: ${ingCount} upserted (BLS 4.0)`);
 
+    // ── Showcase recipe: Flammkuchen (used as tutorial redirect target) ──────
+    const hauptgerichtCat = await prisma.category.findUnique({ where: { slug: 'hauptgericht' } });
+    const flammkuchenFlowNodes = [
+        { id: 'start', type: 'start', label: 'Start', position: { x: 280, y: 0 } },
+        {
+            id: 'make-dough',
+            type: 'recipeStep',
+            data: {
+                stepType: 'knead',
+                label: 'Teig zubereiten',
+                duration: 10,
+                description:
+                    'Mehl, Wasser, Olivenöl und Salz zu einem glatten Teig verkneten. 15 Minuten ruhen lassen.',
+            },
+            position: { x: 280, y: 130 },
+        },
+        {
+            id: 'prep-topping',
+            type: 'recipeStep',
+            data: {
+                stepType: 'cut',
+                label: 'Belag vorbereiten',
+                duration: 10,
+                description:
+                    'Zwiebeln in feine Ringe schneiden. Speck in kleine Streifen schneiden.',
+            },
+            position: { x: 280, y: 310 },
+        },
+        {
+            id: 'roll-dough',
+            type: 'recipeStep',
+            data: {
+                stepType: 'other',
+                label: 'Teig ausrollen',
+                duration: 5,
+                description:
+                    'Teig auf einer bemehlten Fläche dünn ausrollen und auf ein Backblech legen.',
+            },
+            position: { x: 280, y: 490 },
+        },
+        {
+            id: 'spread-cream',
+            type: 'recipeStep',
+            data: {
+                stepType: 'other',
+                label: 'Crème fraîche verteilen',
+                duration: 3,
+                description:
+                    'Crème fraîche gleichmäßig auf dem Teig verstreichen. Mit Salz und Pfeffer würzen.',
+            },
+            position: { x: 280, y: 670 },
+        },
+        {
+            id: 'add-topping',
+            type: 'recipeStep',
+            data: {
+                stepType: 'other',
+                label: 'Belegen',
+                duration: 3,
+                description:
+                    'Zwiebelringe und Speckstreifen gleichmäßig auf der Crème fraîche verteilen.',
+            },
+            position: { x: 280, y: 850 },
+        },
+        {
+            id: 'bake',
+            type: 'recipeStep',
+            data: {
+                stepType: 'bake',
+                label: 'Backen',
+                duration: 15,
+                description:
+                    'Im vorgeheizten Ofen bei 220°C Ober-/Unterhitze ca. 15 Minuten goldbraun backen.',
+            },
+            position: { x: 280, y: 1030 },
+        },
+        { id: 'serve', type: 'serve', label: 'Servieren', position: { x: 280, y: 1210 } },
+    ];
+    const flammkuchenFlowEdges = [
+        { id: 'e1', source: 'start', target: 'make-dough' },
+        { id: 'e2', source: 'make-dough', target: 'prep-topping' },
+        { id: 'e3', source: 'prep-topping', target: 'roll-dough' },
+        { id: 'e4', source: 'roll-dough', target: 'spread-cream' },
+        { id: 'e5', source: 'spread-cream', target: 'add-topping' },
+        { id: 'e6', source: 'add-topping', target: 'bake' },
+        { id: 'e7', source: 'bake', target: 'serve' },
+    ];
+
+    await prisma.recipe.upsert({
+        where: { slug: 'flammkuchen' },
+        update: {},
+        create: {
+            title: 'Flammkuchen',
+            slug: 'flammkuchen',
+            description:
+                'Knuspriger Elsässer Flammkuchen mit Crème fraîche, Zwiebeln und Speck — ein Klassiker, der immer gelingt.',
+            servings: 4,
+            prepTime: 25,
+            cookTime: 15,
+            totalTime: 40,
+            difficulty: 'EASY',
+            status: 'PUBLISHED',
+            publishedAt: new Date(),
+            rating: 4.7,
+            ratingCount: 412,
+            viewCount: 6800,
+            cookCount: 1540,
+            moderationStatus: 'AUTO_APPROVED',
+            authorId: systemUser.id,
+            flowNodes: flammkuchenFlowNodes as any,
+            flowEdges: flammkuchenFlowEdges as any,
+            ...(hauptgerichtCat ? { categories: { connect: [{ id: hauptgerichtCat.id }] } } : {}),
+        },
+    });
+    console.log(`✅ Showcase recipe: Flammkuchen`);
+
     console.log('\n🎉 Basics seeding complete!');
 }
 

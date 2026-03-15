@@ -1,8 +1,10 @@
 import type { ActivityType } from '@prisma/client';
 import { Metadata } from 'next';
 
+import type { ActivityFeedItem } from '@app/app/actions/community';
 import { fetchUserTrophies } from '@app/app/actions/trophies';
 import { PageShell } from '@app/components/layouts/PageShell';
+import { ACTIVITY_DECOR, formatTimeAgo } from '@app/lib/activity-utils';
 import { getServerAuthSession } from '@app/lib/auth';
 import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
@@ -200,19 +202,6 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
         showTrophies ? fetchUserTrophies(user.id) : Promise.resolve([]),
     ]);
 
-    // Format time ago on server side
-    const formatTimeAgo = (date: Date): string => {
-        const diff = Date.now() - new Date(date).getTime();
-        const minutes = Math.floor(diff / 60000);
-
-        if (minutes < 1) return 'Jetzt';
-        if (minutes < 60) return `${minutes} Min.`;
-        const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `${hours} Std.`;
-        const days = Math.floor(hours / 24);
-        return `${days} Tg.`;
-    };
-
     return {
         id: user.id,
         slug: user.profile?.slug ?? user.id,
@@ -265,19 +254,32 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
             prepTime: c.recipe.prepTime,
             cookTime: c.recipe.cookTime,
         })),
-        activities: visibleActivities.map((activity) => {
-            const recipe = activity.targetId ? recipeMap.get(activity.targetId) : null;
-            return {
-                id: activity.id,
-                type: activity.type,
-                timeAgo: formatTimeAgo(activity.createdAt),
-                targetId: activity.targetId,
-                targetType: activity.targetType,
-                recipeTitle: recipe?.title ?? null,
-                recipeSlug: recipe?.slug ?? null,
-                metadata: activity.metadata as Record<string, unknown> | null,
-            };
-        }),
+        activities: visibleActivities
+            .map((activity): ActivityFeedItem | null => {
+                const recipe = activity.targetId ? recipeMap.get(activity.targetId) : null;
+                const decor = ACTIVITY_DECOR[activity.type];
+                if (!decor) return null;
+
+                return {
+                    id: activity.id,
+                    type: activity.type,
+                    icon: decor.icon,
+                    iconBg: decor.bg,
+                    template: decor.template,
+                    userName: user.name ?? user.profile?.nickname ?? 'Unbekannt',
+                    userId: user.id,
+                    userSlug: user.profile?.slug ?? user.id,
+                    userPhotoKey: user.profile?.photoKey ?? null,
+                    userTrophyTier: null,
+                    recipeTitle: recipe?.title,
+                    recipeId: recipe?.id,
+                    recipeSlug: recipe?.slug,
+                    detail: activity.metadata ? JSON.stringify(activity.metadata) : undefined,
+                    timeAgo: formatTimeAgo(activity.createdAt),
+                    createdAt: activity.createdAt.toISOString(),
+                };
+            })
+            .filter((a): a is ActivityFeedItem => a !== null),
     };
 }
 

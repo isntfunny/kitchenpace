@@ -1,29 +1,16 @@
 'use client';
 
-import {
-    Bookmark,
-    Calendar,
-    ChefHat,
-    Check,
-    Clipboard,
-    Edit3,
-    FileText,
-    Flame,
-    Handshake,
-    MessageSquare,
-    ShoppingCart,
-    Star,
-    UserPlus,
-    Utensils,
-} from 'lucide-react';
+import { ChefHat, Check, FileText, Handshake, Star, UserPlus, Utensils } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ReactNode, useState, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 
+import type { ActivityFeedItem } from '@app/app/actions/community';
 import { toggleFollowAction } from '@app/app/actions/social';
 import { Avatar } from '@app/components/atoms/Avatar';
 import { SparkleEffect } from '@app/components/atoms/SparkleEffect';
+import { ActivityItem } from '@app/components/features/activity';
 import { RecipeCard as SharedRecipeCard } from '@app/components/features/RecipeCard';
 import { ReportButton } from '@app/components/features/ReportButton';
 import { TrophySection, type EarnedTrophy } from '@app/components/features/TrophySection';
@@ -181,17 +168,6 @@ export interface UserProfileRecipe {
     cookTime: number;
 }
 
-export interface UserProfileActivity {
-    id: string;
-    type: string;
-    timeAgo: string;
-    targetId: string | null;
-    targetType: string | null;
-    recipeTitle: string | null;
-    recipeSlug: string | null;
-    metadata: Record<string, unknown> | null;
-}
-
 export interface UserProfileData {
     id: string;
     slug: string;
@@ -206,7 +182,7 @@ export interface UserProfileData {
     recipes: UserProfileRecipe[];
     favorites?: UserProfileRecipe[];
     cooked?: UserProfileRecipe[];
-    activities: UserProfileActivity[];
+    activities: ActivityFeedItem[];
     trophies?: EarnedTrophy[];
     currentPage?: number;
     totalPages?: number;
@@ -223,50 +199,6 @@ interface UserProfileClientProps {
 
 // Avatar size constant for consistent sizing
 const AVATAR_SIZE = 180;
-
-// Activity type configurations - supports {recipe} placeholder
-const ACTIVITY_CONFIG: Record<string, { icon: ReactNode; template: string[]; bgCss: string }> = {
-    RECIPE_CREATED: {
-        icon: <Edit3 size={16} />,
-        template: ['hat das Rezept', 'erstellt'],
-        bgCss: css({ bg: { base: '#f3e8ff', _dark: 'rgba(168,85,247,0.15)' } }),
-    },
-    RECIPE_COOKED: {
-        icon: <Flame size={16} />,
-        template: ['hat', 'zubereitet'],
-        bgCss: css({ bg: { base: '#fef3c7', _dark: 'rgba(245,158,11,0.15)' } }),
-    },
-    RECIPE_RATED: {
-        icon: <Star size={16} />,
-        template: ['hat', 'bewertet'],
-        bgCss: css({ bg: { base: '#fef9c3', _dark: 'rgba(234,179,8,0.15)' } }),
-    },
-    RECIPE_COMMENTED: {
-        icon: <MessageSquare size={16} />,
-        template: ['hat', 'kommentiert'],
-        bgCss: css({ bg: { base: '#fce7f3', _dark: 'rgba(236,72,153,0.15)' } }),
-    },
-    RECIPE_FAVORITED: {
-        icon: <Bookmark size={16} />,
-        template: ['hat', 'gespeichert'],
-        bgCss: css({ bg: { base: '#dbeafe', _dark: 'rgba(59,130,246,0.15)' } }),
-    },
-    USER_FOLLOWED: {
-        icon: <Handshake size={16} />,
-        template: ['ist jetzt Follower'],
-        bgCss: css({ bg: { base: '#d1fae5', _dark: 'rgba(52,211,153,0.15)' } }),
-    },
-    SHOPPING_LIST_CREATED: {
-        icon: <ShoppingCart size={16} />,
-        template: ['hat eine Einkaufsliste erstellt'],
-        bgCss: css({ bg: { base: '#fef3c7', _dark: 'rgba(245,158,11,0.15)' } }),
-    },
-    MEAL_PLAN_CREATED: {
-        icon: <Calendar size={16} />,
-        template: ['hat einen Essensplan erstellt'],
-        bgCss: css({ bg: { base: '#e0e7ff', _dark: 'rgba(99,102,241,0.15)' } }),
-    },
-};
 
 export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
     const router = useRouter();
@@ -875,116 +807,16 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                                     overflow: 'hidden',
                                 })}
                             >
-                                <div className={flex({ direction: 'column' })}>
-                                    {activities.map((activity, index) => {
-                                        const config = ACTIVITY_CONFIG[activity.type] ?? {
-                                            icon: <Clipboard size={16} />,
-                                            template: ['war aktiv'],
-                                            bgCss: css({
-                                                bg: {
-                                                    base: '#f3f4f6',
-                                                    _dark: 'rgba(255,255,255,0.06)',
-                                                },
-                                            }),
-                                        };
-
-                                        // Build the activity text
-                                        // If template has 2 parts, recipe goes between them
-                                        // If template has 1 part, it's a standalone action (no recipe)
-                                        const hasRecipe =
-                                            activity.recipeTitle && config.template.length === 2;
-
-                                        return (
-                                            <div
-                                                key={activity.id}
-                                                className={css({
-                                                    p: '4',
-                                                    borderBottom:
-                                                        index < activities.length - 1
-                                                            ? '1px solid'
-                                                            : 'none',
-                                                    borderColor: 'border.muted',
-                                                    _hover: { bg: 'surface.muted' },
-                                                    transition: 'background 0.15s',
-                                                })}
-                                            >
-                                                <div
-                                                    className={flex({
-                                                        align: 'flex-start',
-                                                        gap: '3',
-                                                    })}
-                                                >
-                                                    <div
-                                                        className={`${css({
-                                                            width: '36px',
-                                                            height: '36px',
-                                                            borderRadius: 'lg',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            fontSize: 'lg',
-                                                            flexShrink: 0,
-                                                        })} ${config.bgCss}`}
-                                                    >
-                                                        {config.icon}
-                                                    </div>
-                                                    <div className={css({ flex: 1, minW: 0 })}>
-                                                        <p
-                                                            className={css({
-                                                                fontSize: 'sm',
-                                                                color: 'text',
-                                                                lineHeight: '1.5',
-                                                            })}
-                                                        >
-                                                            <span
-                                                                className={css({
-                                                                    fontWeight: '600',
-                                                                })}
-                                                            >
-                                                                {user.name}
-                                                            </span>{' '}
-                                                            {hasRecipe ? (
-                                                                <>
-                                                                    {config.template[0]}{' '}
-                                                                    <Link
-                                                                        href={`/recipe/${activity.recipeSlug ?? activity.targetId}`}
-                                                                        className={css({
-                                                                            color: 'primary',
-                                                                            fontWeight: '500',
-                                                                            _hover: {
-                                                                                textDecoration:
-                                                                                    'underline',
-                                                                            },
-                                                                        })}
-                                                                    >
-                                                                        {activity.recipeTitle}
-                                                                    </Link>{' '}
-                                                                    {config.template[1]}
-                                                                </>
-                                                            ) : (
-                                                                <span
-                                                                    className={css({
-                                                                        color: 'text-muted',
-                                                                    })}
-                                                                >
-                                                                    {config.template[0]}
-                                                                </span>
-                                                            )}
-                                                        </p>
-                                                        <p
-                                                            className={css({
-                                                                fontSize: 'xs',
-                                                                color: 'text-muted',
-                                                                mt: '1',
-                                                            })}
-                                                        >
-                                                            {activity.timeAgo}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '1',
                                     })}
+                                >
+                                    {activities.map((activity) => (
+                                        <ActivityItem key={activity.id} activity={activity} />
+                                    ))}
                                 </div>
                             </div>
                         ) : (

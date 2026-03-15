@@ -35,7 +35,7 @@ type RecipeWithRelations = {
     totalTime: number | null;
     prepTime: number | null;
     cookTime: number | null;
-    calories: number | null;
+    caloriesPerServing: number | null;
     rating: number | null;
     cookCount: number | null;
     imageKey: string | null;
@@ -75,8 +75,8 @@ type IngredientWithDetails = {
     name: string;
     slug: string;
     pluralName: string | null;
-    category: string | null;
-    units: string[];
+    categories: Array<{ name: string; slug: string }>;
+    ingredientUnits: Array<{ unit: { shortName: string } }>;
     aliases: string[];
     createdAt?: Date;
 };
@@ -86,7 +86,7 @@ type IngredientDocument = {
     name: string;
     slug: string;
     pluralName: string | null;
-    category?: string;
+    categories: string[];
     units: string[];
     keywords: string[];
 };
@@ -97,7 +97,8 @@ function transformIngredientToDocument(ingredient: IngredientWithDetails): Ingre
             [
                 ingredient.name,
                 ingredient.slug,
-                ...(ingredient.units ?? []),
+                ...ingredient.ingredientUnits.map((iu) => iu.unit.shortName),
+                ...ingredient.categories.map((c) => c.name),
                 ...(ingredient.aliases ?? []),
                 ...(ingredient.pluralName ? [ingredient.pluralName] : []),
             ]
@@ -111,8 +112,8 @@ function transformIngredientToDocument(ingredient: IngredientWithDetails): Ingre
         name: ingredient.name,
         slug: ingredient.slug,
         pluralName: ingredient.pluralName,
-        category: ingredient.category ?? undefined,
-        units: ingredient.units ?? [],
+        categories: ingredient.categories.map((c) => c.name),
+        units: ingredient.ingredientUnits.map((iu) => iu.unit.shortName),
         keywords,
     };
 }
@@ -162,7 +163,7 @@ function transformToDocument(recipe: RecipeWithRelations): RecipeDocument {
         totalTime: recipe.totalTime ?? 0,
         prepTime: recipe.prepTime ?? 0,
         cookTime: recipe.cookTime ?? 0,
-        calories: recipe.calories ?? undefined,
+        calories: recipe.caloriesPerServing ?? undefined,
         rating: recipe.rating ?? 0,
         cookCount: recipe.cookCount ?? 0,
         stepCount: Array.isArray(recipe.flowNodes) ? recipe.flowNodes.length : 0,
@@ -188,6 +189,92 @@ function buildBulkOperations(recipes: RecipeWithRelations[]): BulkOperation[] {
         operations.push(transformToDocument(recipe));
     }
     return operations;
+}
+
+/** Scroll through an entire index and collect all document IDs. */
+async function getAllIndexIds(index: string): Promise<Set<string>> {
+    const ids = new Set<string>();
+    const scrollTimeout = '30s';
+
+    const initial = await opensearchClient.search({
+        index,
+        scroll: scrollTimeout,
+        size: 5000,
+        body: { query: { match_all: {} }, _source: false },
+    });
+
+    type ScrollHit = { _id: string };
+    type ScrollBody = {
+        _scroll_id?: string;
+        hits?: { hits?: ScrollHit[] };
+    };
+
+    let body = initial.body as ScrollBody;
+    let scrollId = body._scroll_id;
+
+    for (const hit of body.hits?.hits ?? []) {
+        ids.add(hit._id);
+    }
+
+    while (scrollId) {
+        const next = await opensearchClient.scroll({
+            scroll_id: scrollId,
+            scroll: scrollTimeout,
+        });
+        body = next.body as ScrollBody;
+        scrollId = body._scroll_id;
+
+        const hits = body.hits?.hits ?? [];
+        if (hits.length === 0) break;
+
+        for (const hit of hits) {
+            ids.add(hit._id);
+        }
+    }
+
+    if (scrollId) {
+        try {
+            await opensearchClient.clearScroll({ scroll_id: scrollId });
+        } catch {
+            // best-effort cleanup
+        }
+    }
+
+    return ids;
+}
+
+/** Bulk-delete a set of IDs from an index. */
+async function bulkDeleteIds(index: string, ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+
+    const operations: BulkOperation[] = [];
+    for (const id of ids) {
+        operations.push({ delete: { _index: index, _id: id } });
+    }
+
+    // Delete ops are single-line (no body), so chunk by BULK_DOCS_PER_CHUNK directly
+    for (let i = 0; i < operations.length; i += BULK_DOCS_PER_CHUNK) {
+        const chunk = operations.slice(i, i + BULK_DOCS_PER_CHUNK);
+
+        const response = await opensearchClient.bulk({ body: chunk });
+        const body = response.body as {
+            errors?: boolean;
+            items?: Array<Record<string, { error?: { reason?: string; type?: string } }>>;
+        };
+
+        if (body.errors) {
+            const errors = (body.items ?? [])
+                .map((item) => {
+                    const entry = item.delete;
+                    if (entry?.error?.type === 'not_found') return null;
+                    return entry?.error?.reason ?? entry?.error?.type;
+                })
+                .filter(Boolean);
+            if (errors.length > 0) {
+                throw new Error(`OpenSearch bulk delete failed: ${errors.join('; ')}`);
+            }
+        }
+    }
 }
 
 async function runBulkOperations(operations: BulkOperation[]): Promise<void> {
@@ -255,7 +342,7 @@ export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ sy
                     totalTime: true,
                     prepTime: true,
                     cookTime: true,
-                    calories: true,
+                    caloriesPerServing: true,
                     rating: true,
                     cookCount: true,
                     flowNodes: true,
@@ -295,6 +382,25 @@ export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ sy
         if (latestUpdatedAt) {
             await redis.set(WATERMARK_KEY_RECIPES, latestUpdatedAt.toISOString());
             console.log(`[OpenSearch] Updated watermark to ${latestUpdatedAt.toISOString()}`);
+        }
+
+        // ── Cleanup: remove documents that no longer exist as PUBLISHED in DB ──
+        const indexedIds = await getAllIndexIds(OPENSEARCH_INDEX);
+        if (indexedIds.size > 0) {
+            const dbIds = new Set(
+                (
+                    await prisma.recipe.findMany({
+                        where: { status: 'PUBLISHED' },
+                        select: { id: true },
+                    })
+                ).map((r) => r.id),
+            );
+
+            const staleIds = [...indexedIds].filter((id) => !dbIds.has(id));
+            if (staleIds.length > 0) {
+                await bulkDeleteIds(OPENSEARCH_INDEX, staleIds);
+                console.log(`[OpenSearch] Removed ${staleIds.length} stale recipes from index`);
+            }
         }
 
         console.log(`[OpenSearch] Synced ${totalSynced} recipes to index ${OPENSEARCH_INDEX}`);
@@ -343,8 +449,8 @@ export async function processSyncIngredients(
                     name: true,
                     slug: true,
                     pluralName: true,
-                    category: true,
-                    units: true,
+                    categories: { select: { name: true, slug: true } },
+                    ingredientUnits: { select: { unit: { select: { shortName: true } } } },
                     aliases: true,
                     createdAt: true,
                 },
@@ -378,6 +484,24 @@ export async function processSyncIngredients(
             console.log(
                 `[OpenSearch] Updated ingredients watermark to ${latestCreatedAt.toISOString()}`,
             );
+        }
+
+        // ── Cleanup: remove ingredients that no longer exist in DB ──
+        const indexedIds = await getAllIndexIds(OPENSEARCH_INGREDIENTS_INDEX);
+        if (indexedIds.size > 0) {
+            const dbIds = new Set(
+                (
+                    await prisma.ingredient.findMany({
+                        select: { id: true },
+                    })
+                ).map((i) => i.id),
+            );
+
+            const staleIds = [...indexedIds].filter((id) => !dbIds.has(id));
+            if (staleIds.length > 0) {
+                await bulkDeleteIds(OPENSEARCH_INGREDIENTS_INDEX, staleIds);
+                console.log(`[OpenSearch] Removed ${staleIds.length} stale ingredients from index`);
+            }
         }
 
         console.log(
@@ -417,7 +541,7 @@ export async function processSyncRecipeToOpenSearch(
                 totalTime: true,
                 prepTime: true,
                 cookTime: true,
-                calories: true,
+                caloriesPerServing: true,
                 rating: true,
                 cookCount: true,
                 flowNodes: true,
@@ -587,6 +711,24 @@ export async function processSyncTags(job: Job<SyncTagsJob>): Promise<{ synced: 
         if (latestCreatedAt) {
             await redis.set(WATERMARK_KEY_TAGS, latestCreatedAt.toISOString());
             console.log(`[OpenSearch] Updated tags watermark to ${latestCreatedAt.toISOString()}`);
+        }
+
+        // ── Cleanup: remove tags that no longer exist in DB ──
+        const indexedIds = await getAllIndexIds(OPENSEARCH_TAGS_INDEX);
+        if (indexedIds.size > 0) {
+            const dbIds = new Set(
+                (
+                    await prisma.tag.findMany({
+                        select: { id: true },
+                    })
+                ).map((t) => t.id),
+            );
+
+            const staleIds = [...indexedIds].filter((id) => !dbIds.has(id));
+            if (staleIds.length > 0) {
+                await bulkDeleteIds(OPENSEARCH_TAGS_INDEX, staleIds);
+                console.log(`[OpenSearch] Removed ${staleIds.length} stale tags from index`);
+            }
         }
 
         console.log(`[OpenSearch] Synced ${totalSynced} tags to index ${OPENSEARCH_TAGS_INDEX}`);

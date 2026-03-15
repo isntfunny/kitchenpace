@@ -6,6 +6,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 
+import { createIngredient } from '@app/components/recipe/createActions';
 import { generateUniqueSlug } from '@app/lib/slug';
 
 import { importRecipeFromMarkdown } from './openai-client';
@@ -167,22 +168,10 @@ export async function saveImportedRecipe(
         throw new Error('Das Rezept muss mindestens eine Zutat haben.');
     }
 
-    // Find or create ingredients — sequential to avoid race conditions on slug unique constraint
+    // Find or create ingredients — uses createIngredient() with Hunspell stemming + alias matching
     const syncedIngredients: ((typeof data.ingredients)[number] & { ingredientId: string })[] = [];
     for (const ing of data.ingredients) {
-        const slug = ing.name
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-        const result = await db.ingredient.upsert({
-            where: { slug },
-            update: {},
-            create: {
-                name: ing.name,
-                slug,
-                needsReview: true,
-            },
-        });
+        const result = await createIngredient(ing.name);
         syncedIngredients.push({ ...ing, ingredientId: result.id });
     }
 

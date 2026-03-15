@@ -34,8 +34,12 @@ const CHANGELOG: ChangelogEntry[] = [
         date: '15. März 2026',
         version: 'v2026-03-15',
         emoji: '🔑',
-        title: 'Neue Filter, Google & Discord Login',
+        title: 'Passkeys, neue Filter & Social Login',
         items: [
+            {
+                text: 'Passkey-Anmeldung — mit Fingerabdruck, Gesichtserkennung oder Sicherheitsschlüssel einloggen, ganz ohne Passwort',
+                tag: 'spotlight',
+            },
             {
                 text: 'Erweiterte Filter — Rezepte jetzt nach Kategorie, Schrittanzahl und Kalorien filtern',
                 tag: 'spotlight',
@@ -57,11 +61,11 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'feat',
             },
             {
-                text: 'Sanfterer Übergang beim Filtern — kein Aufblitzen mehr',
+                text: 'Filter-Ergebnisse laden jetzt sanft nach — kein Aufblitzen mehr beim Wechseln',
                 tag: 'fix',
             },
             {
-                text: 'Abstände auf der Profilseite korrigiert',
+                text: 'Profil wird bei erster Google- oder Discord-Anmeldung automatisch angelegt',
                 tag: 'fix',
             },
         ],

@@ -86,7 +86,6 @@ services:
 
     worker:
         image: kitchenpace:live
-        entrypoint: null
         command: ['npm', 'run', 'worker']
         container_name: kitchenpace-worker
         extra_hosts:
@@ -98,13 +97,7 @@ services:
                 condition: service_healthy
         restart: unless-stopped
         environment:
-            DATABASE_URL: ${DATABASE_URL:-postgresql://kitchenpace:kitchenpace_secret@host.docker.internal:5432/live_kitchenpace}
-            REDIS_HOST: redis
-            REDIS_PORT: 6379
-            REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-            OPENSEARCH_URL: http://opensearch:9200
-            OPENSEARCH_INDEX: recipes
-            OPENSEARCH_INGREDIENTS_INDEX: ingredients
+            SKIP_MIGRATIONS: '1'
             BACKUP_DIR: /app/backups
         volumes:
             - /data/kitchenpace/worker-backups:/app/backups

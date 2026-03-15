@@ -112,7 +112,8 @@
         "ua-parser-js": "^2.0.9",
         "winston": "^3.19.0",
         "yet-another-react-lightbox": "^3.29.1",
-        "zod": "^4.3.6"
+        "zod": "^4.3.6",
+        "@infisical/cli": "^0.43.40"
     },
     "devDependencies": {
         "@playwright/test": "^1.58.2",

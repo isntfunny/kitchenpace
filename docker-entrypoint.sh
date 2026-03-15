@@ -1,6 +1,22 @@
 #!/bin/sh
 set -e
 
+# If Infisical is configured, re-exec with secrets injected
+if [ -n "$INFISICAL_UNIVERSAL_AUTH_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
+  echo "[entrypoint] Loading secrets from Infisical..."
+  export __INFISICAL_LOADED=1
+  exec npx infisical run \
+    --projectId "${INFISICAL_PROJECT_ID}" \
+    --env "${INFISICAL_ENV:-prod}" \
+    -- "$0" "$@"
+fi
+
+# Worker skips database setup
+if [ "$SKIP_MIGRATIONS" = "1" ]; then
+  echo "[entrypoint] Skipping migrations (worker mode)"
+  exec "$@"
+fi
+
 if [ -z "$DATABASE_URL" ]; then
   echo "[entrypoint] ERROR: DATABASE_URL is not set" >&2
   exit 1

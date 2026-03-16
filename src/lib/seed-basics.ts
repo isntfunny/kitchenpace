@@ -904,7 +904,9 @@ async function main() {
             authorId: systemUser.id,
             flowNodes: flammkuchenFlowNodes as any,
             flowEdges: flammkuchenFlowEdges as any,
-            ...(hauptgerichtCat ? { categories: { connect: [{ id: hauptgerichtCat.id }] } } : {}),
+            ...(hauptgerichtCat
+                ? { categories: { create: [{ categoryId: hauptgerichtCat.id }] } }
+                : {}),
         },
     });
     console.log(`✅ Showcase recipe: Flammkuchen`);

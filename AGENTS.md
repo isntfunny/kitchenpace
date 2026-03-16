@@ -23,7 +23,7 @@ The app takes the stress out of multi-tasking in the kitchen by showing:
 | **Language**     | TypeScript                                                                        |
 | **User Auth**    | Logto                                                                             |
 | **Search**       | OpenSearch (recipes + ingredients + tags indices)                                 |
-| **Queue / Jobs** | BullMQ + Redis (ioredis)                                                          |
+| **Queue / Jobs** | BullMQ + Redis (ioredis) — migrating to Hatchet (self-hosted)                     |
 | **AI**           | OpenAI (gpt-5.4 for recipe import, omni-moderation-latest for content moderation) |
 | **Realtime**     | SSE via Redis pub/sub                                                             |
 | **Storage**      | S3 / MinIO                                                                        |
@@ -517,16 +517,52 @@ The changelog at `src/app/changelog/page.tsx` is **for end users, not developers
 Good: "Startseite laedt schneller". Bad: "Redis AOF-Persistenz hinzugefuegt".
 Good: "Zutaten werden automatisch in die Einzahlform gebracht". Bad: "Singularisierung mittels Nodehun".
 
-## Environment Variables
+## Secrets Management (Infisical)
+
+All environment variables are managed through **Infisical** — never hardcode secrets in `.env` files checked into git.
+
+### Environments
+
+| Environment | Usage                       |
+| ----------- | --------------------------- |
+| `dev`       | Local development           |
+| `staging`   | Beta / staging server       |
+| `prod`      | Production (Docker default) |
+
+### CLI Commands
+
+```bash
+# Set secrets (always set in all 3 environments)
+npx infisical secrets set KEY=value --env=dev
+npx infisical secrets set KEY=value --env=staging
+npx infisical secrets set KEY=value --env=prod
+
+# List secrets
+npx infisical secrets list --env=dev
+
+# Run command with secrets injected (used in npm scripts)
+infisical run -- next dev
+infisical run -- prisma migrate dev
+```
+
+### Docker Integration
+
+The `docker-entrypoint.sh` authenticates via universal auth (`INFISICAL_CLIENT_ID` + `INFISICAL_CLIENT_SECRET`) and exports secrets as dotenv before starting the app or worker.
+
+### Environment Variables
 
 ```bash
 # Database
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public
 
-# Redis
+# Redis (current, will be removed after Hatchet migration)
 REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_PASSWORD=secret
+
+# Hatchet Background Worker
+HATCHET_CLIENT_TOKEN=<generated from https://tasks.isntfunny.de>
+HATCHET_CLIENT_TLS_STRATEGY=none
 
 # OpenSearch
 OPENSEARCH_URL=http://opensearch:9200

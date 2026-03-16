@@ -21,8 +21,9 @@ const VAPID_SUBJECT = process.env.VAPID_SUBJECT ?? 'mailto:info@kuechentakt.de';
 let webpush: WebPushLib | null = null;
 
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-    import('web-push').then((mod) => {
-        webpush = mod.default ?? (mod as unknown as WebPushLib);
+    // @ts-expect-error — web-push has no type declarations
+    import('web-push').then((mod: { default?: WebPushLib } & WebPushLib) => {
+        webpush = mod.default ?? mod;
         webpush!.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY!, VAPID_PRIVATE_KEY!);
     });
 }

@@ -11,12 +11,27 @@ import {
     useReactTable,
     flexRender,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Search, Archive, Send, Trash2, Flame, GitBranch, Pencil } from 'lucide-react';
-import { useState } from 'react';
+import {
+    ArrowUpDown,
+    Search,
+    Archive,
+    Send,
+    Trash2,
+    Flame,
+    GitBranch,
+    Pencil,
+    UserRoundCog,
+    X,
+    Check,
+} from 'lucide-react';
+import { useCallback, useState } from 'react';
+
+import { SearchableSelect } from '@app/components/ui/SearchableSelect';
+import { searchUsers } from '@app/lib/admin/search-users';
 
 import { css } from 'styled-system/css';
 
-import { publishRecipe, unpublishRecipe, deleteRecipe } from './actions';
+import { publishRecipe, unpublishRecipe, deleteRecipe, reassignRecipeAuthor } from './actions';
 
 type Recipe = {
     id: string;
@@ -359,163 +374,192 @@ const columns: ColumnDef<Recipe>[] = [
     },
     {
         id: 'actions',
-        cell: ({ row }) => {
-            const recipe = row.original;
-            const isPublished = recipe.status === 'PUBLISHED';
-            const isArchived = recipe.status === 'ARCHIVED';
-
-            return (
-                <div className={css({ display: 'flex', gap: '2' })}>
-                    <a
-                        href={`/recipe/${recipe.id}/edit`}
-                        title="Bearbeiten"
-                        className={css({
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '8',
-                            height: '8',
-                            borderRadius: 'lg',
-                            border: '1px solid',
-                            borderColor: 'border.muted',
-                            background: 'surface',
-                            cursor: 'pointer',
-                            color: 'foreground.muted',
-                            transition: 'all 0.2s',
-                            _hover: {
-                                background: 'blue.50',
-                                borderColor: 'blue.200',
-                                color: 'blue.600',
-                            },
-                        })}
-                    >
-                        <Pencil size={14} />
-                    </a>
-                    {!isPublished && !isArchived && (
-                        <form
-                            action={async () => {
-                                try {
-                                    await publishRecipe(recipe.id);
-                                } catch (err) {
-                                    alert(
-                                        err instanceof Error
-                                            ? err.message
-                                            : 'Fehler beim Veröffentlichen',
-                                    );
-                                }
-                            }}
-                        >
-                            <button
-                                title="Veröffentlichen"
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    width: '8',
-                                    height: '8',
-                                    borderRadius: 'lg',
-                                    border: '1px solid',
-                                    borderColor: 'border.muted',
-                                    background: 'surface',
-                                    cursor: 'pointer',
-                                    color: 'foreground.muted',
-                                    transition: 'all 0.2s',
-                                    _hover: {
-                                        background: 'green.50',
-                                        borderColor: 'green.200',
-                                        color: 'green.600',
-                                    },
-                                })}
-                            >
-                                <Send size={14} />
-                            </button>
-                        </form>
-                    )}
-                    {isPublished && (
-                        <form
-                            action={async () => {
-                                try {
-                                    await unpublishRecipe(recipe.id);
-                                } catch (err) {
-                                    alert(
-                                        err instanceof Error
-                                            ? err.message
-                                            : 'Fehler beim Zurückziehen',
-                                    );
-                                }
-                            }}
-                        >
-                            <button
-                                title="Zurückziehen"
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    width: '8',
-                                    height: '8',
-                                    borderRadius: 'lg',
-                                    border: '1px solid',
-                                    borderColor: 'border.muted',
-                                    background: 'surface',
-                                    cursor: 'pointer',
-                                    color: 'foreground.muted',
-                                    transition: 'all 0.2s',
-                                    _hover: {
-                                        background: 'orange.50',
-                                        borderColor: 'orange.200',
-                                        color: 'orange.600',
-                                    },
-                                })}
-                            >
-                                <Archive size={14} />
-                            </button>
-                        </form>
-                    )}
-                    <form
-                        action={async () => {
-                            if (confirm(`"${recipe.title}" archivieren?`)) {
-                                try {
-                                    await deleteRecipe(recipe.id);
-                                } catch (err) {
-                                    alert(
-                                        err instanceof Error
-                                            ? err.message
-                                            : 'Fehler beim Archivieren',
-                                    );
-                                }
-                            }
-                        }}
-                    >
-                        <button
-                            title="Archivieren"
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '8',
-                                height: '8',
-                                borderRadius: 'lg',
-                                border: '1px solid',
-                                borderColor: 'border.muted',
-                                background: 'surface',
-                                cursor: 'pointer',
-                                color: 'foreground.muted',
-                                transition: 'all 0.2s',
-                                _hover: {
-                                    background: 'red.50',
-                                    borderColor: 'red.200',
-                                    color: 'red.600',
-                                },
-                            })}
-                        >
-                            <Trash2 size={14} />
-                        </button>
-                    </form>
-                </div>
-            );
-        },
+        cell: ({ row }) => <RecipeActions recipe={row.original} />,
     },
 ];
+
+const actionBtnClass = (hoverBg: string, hoverBorder: string, hoverColor: string) =>
+    css({
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '8',
+        height: '8',
+        borderRadius: 'lg',
+        border: '1px solid',
+        borderColor: 'border.muted',
+        background: 'surface',
+        cursor: 'pointer',
+        color: 'foreground.muted',
+        transition: 'all 0.2s',
+        _hover: {
+            background: hoverBg,
+            borderColor: hoverBorder,
+            color: hoverColor,
+        },
+    });
+
+function RecipeActions({ recipe }: { recipe: Recipe }) {
+    const [reassigning, setReassigning] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState('');
+    const [selectedUserLabel, setSelectedUserLabel] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    const isPublished = recipe.status === 'PUBLISHED';
+    const isArchived = recipe.status === 'ARCHIVED';
+
+    const handleSearchUsers = useCallback(async (query: string) => {
+        const users = await searchUsers(query);
+        return users.map((u) => ({
+            id: u.id,
+            name: u.name,
+            avatar: u.avatar,
+            recipeCount: u.recipeCount,
+        }));
+    }, []);
+
+    const handleReassign = async () => {
+        if (!selectedUserId) return;
+        setSaving(true);
+        try {
+            await reassignRecipeAuthor(recipe.id, selectedUserId);
+            setReassigning(false);
+            setSelectedUserId('');
+            setSelectedUserLabel('');
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Fehler beim Zuweisen');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (reassigning) {
+        return (
+            <div
+                className={css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2',
+                    minWidth: '280px',
+                })}
+            >
+                <div className={css({ flex: '1' })}>
+                    <SearchableSelect
+                        valueId={selectedUserId}
+                        valueLabel={selectedUserLabel}
+                        onSelect={(id, label) => {
+                            setSelectedUserId(id);
+                            setSelectedUserLabel(label);
+                        }}
+                        searchFn={handleSearchUsers}
+                        placeholder="Benutzer suchen..."
+                        renderOption={(item) => ({
+                            label: item.name ?? 'Unbekannt',
+                            sublabel: `${item.recipeCount ?? 0} Rezepte`,
+                            avatar: item.avatar ?? undefined,
+                        })}
+                        emptyMessage="Kein Benutzer gefunden"
+                    />
+                </div>
+                <button
+                    title="Zuweisen"
+                    disabled={!selectedUserId || saving}
+                    onClick={handleReassign}
+                    className={actionBtnClass('green.50', 'green.200', 'green.600')}
+                    style={{ opacity: !selectedUserId || saving ? 0.4 : 1 }}
+                >
+                    <Check size={14} />
+                </button>
+                <button
+                    title="Abbrechen"
+                    onClick={() => {
+                        setReassigning(false);
+                        setSelectedUserId('');
+                        setSelectedUserLabel('');
+                    }}
+                    className={actionBtnClass('red.50', 'red.200', 'red.600')}
+                >
+                    <X size={14} />
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className={css({ display: 'flex', gap: '2' })}>
+            <a
+                href={`/recipe/${recipe.id}/edit`}
+                title="Bearbeiten"
+                className={actionBtnClass('blue.50', 'blue.200', 'blue.600')}
+            >
+                <Pencil size={14} />
+            </a>
+            <button
+                title="Autor zuweisen"
+                onClick={() => setReassigning(true)}
+                className={actionBtnClass('purple.50', 'purple.200', 'purple.600')}
+            >
+                <UserRoundCog size={14} />
+            </button>
+            {!isPublished && !isArchived && (
+                <form
+                    action={async () => {
+                        try {
+                            await publishRecipe(recipe.id);
+                        } catch (err) {
+                            alert(
+                                err instanceof Error ? err.message : 'Fehler beim Veröffentlichen',
+                            );
+                        }
+                    }}
+                >
+                    <button
+                        title="Veröffentlichen"
+                        className={actionBtnClass('green.50', 'green.200', 'green.600')}
+                    >
+                        <Send size={14} />
+                    </button>
+                </form>
+            )}
+            {isPublished && (
+                <form
+                    action={async () => {
+                        try {
+                            await unpublishRecipe(recipe.id);
+                        } catch (err) {
+                            alert(err instanceof Error ? err.message : 'Fehler beim Zurückziehen');
+                        }
+                    }}
+                >
+                    <button
+                        title="Zurückziehen"
+                        className={actionBtnClass('orange.50', 'orange.200', 'orange.600')}
+                    >
+                        <Archive size={14} />
+                    </button>
+                </form>
+            )}
+            <form
+                action={async () => {
+                    if (confirm(`"${recipe.title}" archivieren?`)) {
+                        try {
+                            await deleteRecipe(recipe.id);
+                        } catch (err) {
+                            alert(err instanceof Error ? err.message : 'Fehler beim Archivieren');
+                        }
+                    }
+                }}
+            >
+                <button
+                    title="Archivieren"
+                    className={actionBtnClass('red.50', 'red.200', 'red.600')}
+                >
+                    <Trash2 size={14} />
+                </button>
+            </form>
+        </div>
+    );
+}
 
 export function RecipesTable({ recipes }: { recipes: Recipe[] }) {
     const [sorting, setSorting] = useState<SortingState>([]);

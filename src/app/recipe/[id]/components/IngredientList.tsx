@@ -1,6 +1,8 @@
 'use client';
 
-import { ingredientDisplayName } from '@app/lib/ingredient-display';
+import { useMemo, useState, type ReactNode } from 'react';
+
+import { ingredientDisplayName, parseAmount } from '@app/lib/ingredient-display';
 
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
@@ -9,8 +11,15 @@ interface Ingredient {
     name: string;
     pluralName?: string | null;
     amount: number;
+    rawAmount?: string;
     unit: string;
     notes?: string | null;
+    caloriesPer100g?: number | null;
+    proteinPer100g?: number | null;
+    fatPer100g?: number | null;
+    carbsPer100g?: number | null;
+    ingredientUnitGrams?: number | null;
+    unitGramsDefault?: number | null;
 }
 
 interface IngredientListProps {
@@ -40,6 +49,94 @@ export function IngredientList({
 }: IngredientListProps) {
     const scale = servings / originalServings;
     const hasNutrition = calories != null && calories > 0;
+    const [isCalculationOpen, setIsCalculationOpen] = useState(false);
+
+    const nutritionBreakdown = useMemo(() => {
+        const rows = ingredients.map((ingredient) => {
+            const parsedAmount = parseAmount(ingredient.rawAmount ?? String(ingredient.amount));
+            const scaledAmount =
+                parsedAmount != null && parsedAmount > 0 ? parsedAmount * scale : null;
+            const gramsPerUnit =
+                ingredient.ingredientUnitGrams ?? ingredient.unitGramsDefault ?? null;
+            const gramsAmount =
+                scaledAmount != null && gramsPerUnit != null ? scaledAmount * gramsPerUnit : null;
+
+            let missingReason: string | null = null;
+            if (scaledAmount === null) {
+                missingReason = 'Menge nicht lesbar';
+            } else if (gramsPerUnit === null) {
+                missingReason = `Keine Gramm-Umrechnung fuer ${ingredient.unit}`;
+            } else if (ingredient.caloriesPer100g == null) {
+                missingReason = 'Keine Naehrwerte hinterlegt';
+            }
+
+            const caloriesTotal =
+                missingReason || gramsAmount == null || ingredient.caloriesPer100g == null
+                    ? null
+                    : roundToOne((ingredient.caloriesPer100g * gramsAmount) / 100);
+            const proteinTotal =
+                missingReason || gramsAmount == null
+                    ? null
+                    : roundToOne(((ingredient.proteinPer100g ?? 0) * gramsAmount) / 100);
+            const carbsTotal =
+                missingReason || gramsAmount == null
+                    ? null
+                    : roundToOne(((ingredient.carbsPer100g ?? 0) * gramsAmount) / 100);
+            const fatTotal =
+                missingReason || gramsAmount == null
+                    ? null
+                    : roundToOne(((ingredient.fatPer100g ?? 0) * gramsAmount) / 100);
+
+            return {
+                ingredient,
+                scaledAmount,
+                gramsPerUnit,
+                gramsAmount,
+                caloriesTotal,
+                proteinTotal,
+                carbsTotal,
+                fatTotal,
+                missingReason,
+            };
+        });
+
+        const calculableRows = rows.filter((row) => row.caloriesTotal != null);
+        const totals = calculableRows.reduce(
+            (acc, row) => ({
+                calories: acc.calories + (row.caloriesTotal ?? 0),
+                protein: acc.protein + (row.proteinTotal ?? 0),
+                carbs: acc.carbs + (row.carbsTotal ?? 0),
+                fat: acc.fat + (row.fatTotal ?? 0),
+            }),
+            { calories: 0, protein: 0, carbs: 0, fat: 0 },
+        );
+
+        return {
+            rows,
+            totals: {
+                calories: roundToOne(totals.calories),
+                protein: roundToOne(totals.protein),
+                carbs: roundToOne(totals.carbs),
+                fat: roundToOne(totals.fat),
+            },
+        };
+    }, [ingredients, scale]);
+
+    const displayedCalories = hasNutrition
+        ? Math.round(nutritionBreakdown.totals.calories / servings || calories)
+        : null;
+    const displayedProtein =
+        proteinPerServing != null
+            ? roundToOne(nutritionBreakdown.totals.protein / servings || proteinPerServing)
+            : null;
+    const displayedCarbs =
+        carbsPerServing != null
+            ? roundToOne(nutritionBreakdown.totals.carbs / servings || carbsPerServing)
+            : null;
+    const displayedFat =
+        fatPerServing != null
+            ? roundToOne(nutritionBreakdown.totals.fat / servings || fatPerServing)
+            : null;
 
     return (
         <div
@@ -187,7 +284,7 @@ export function IngredientList({
                     >
                         {servings === originalServings
                             ? 'pro Portion'
-                            : `pro Portion (${servings} Portionen)`}
+                            : `pro Portion bei ${servings} Portionen`}
                     </h3>
                     <div
                         className={css({
@@ -198,30 +295,18 @@ export function IngredientList({
                     >
                         <NutritionItem
                             label="Kalorien"
-                            value={Math.round(calories! * scale)}
+                            value={displayedCalories ?? Math.round(calories!)}
                             unit="kcal"
                             highlight
                         />
-                        {proteinPerServing != null && (
-                            <NutritionItem
-                                label="Protein"
-                                value={Math.round(proteinPerServing * scale * 10) / 10}
-                                unit="g"
-                            />
+                        {displayedProtein != null && (
+                            <NutritionItem label="Protein" value={displayedProtein} unit="g" />
                         )}
-                        {carbsPerServing != null && (
-                            <NutritionItem
-                                label="Kohlenhydrate"
-                                value={Math.round(carbsPerServing * scale * 10) / 10}
-                                unit="g"
-                            />
+                        {displayedCarbs != null && (
+                            <NutritionItem label="Kohlenhydrate" value={displayedCarbs} unit="g" />
                         )}
-                        {fatPerServing != null && (
-                            <NutritionItem
-                                label="Fett"
-                                value={Math.round(fatPerServing * scale * 10) / 10}
-                                unit="g"
-                            />
+                        {displayedFat != null && (
+                            <NutritionItem label="Fett" value={displayedFat} unit="g" />
                         )}
                     </div>
                     {nutritionCompleteness != null && nutritionCompleteness < 1 && (
@@ -236,6 +321,179 @@ export function IngredientList({
                             Basierend auf {Math.round(nutritionCompleteness * ingredients.length)}{' '}
                             von {ingredients.length} Zutaten
                         </p>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setIsCalculationOpen((open) => !open)}
+                        className={css({
+                            mt: '2',
+                            fontSize: 'xs',
+                            color: 'text-muted',
+                            textDecoration: 'underline',
+                            textUnderlineOffset: '2px',
+                            cursor: 'pointer',
+                            _hover: { color: 'text' },
+                        })}
+                    >
+                        {isCalculationOpen ? 'Berechnung ausblenden' : 'Berechnung anzeigen'}
+                    </button>
+
+                    {isCalculationOpen && (
+                        <div
+                            className={css({
+                                mt: '3',
+                                pt: '3',
+                                borderTop: '1px solid',
+                                borderColor: 'border',
+                            })}
+                        >
+                            <p className={css({ fontSize: 'xs', color: 'text-muted', mb: '2' })}>
+                                So setzen sich die Gesamtwerte aus den Zutaten fuer {servings}{' '}
+                                Portionen zusammen.
+                            </p>
+                            <div className={css({ overflowX: 'auto' })}>
+                                <table
+                                    className={css({
+                                        width: 'full',
+                                        minWidth: '720px',
+                                        borderCollapse: 'collapse',
+                                        fontSize: 'xs',
+                                    })}
+                                >
+                                    <thead>
+                                        <tr
+                                            className={css({
+                                                borderBottom: '1px solid',
+                                                borderColor: 'border',
+                                            })}
+                                        >
+                                            <TableHeader>Zutat</TableHeader>
+                                            <TableHeader>Menge</TableHeader>
+                                            <TableHeader>Gramm</TableHeader>
+                                            <TableHeader>kcal/100g</TableHeader>
+                                            <TableHeader>kcal</TableHeader>
+                                            <TableHeader>Protein</TableHeader>
+                                            <TableHeader>KH</TableHeader>
+                                            <TableHeader>Fett</TableHeader>
+                                            <TableHeader>Hinweis</TableHeader>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {nutritionBreakdown.rows.map((row) => (
+                                            <tr
+                                                key={`${row.ingredient.name}-${row.ingredient.unit}-${row.ingredient.rawAmount ?? row.ingredient.amount}`}
+                                                className={css({
+                                                    borderBottom: '1px solid',
+                                                    borderColor: 'border.subtle',
+                                                })}
+                                            >
+                                                <TableCell>
+                                                    {ingredientDisplayName(
+                                                        row.ingredient.name,
+                                                        row.ingredient.pluralName ?? null,
+                                                        String(
+                                                            row.scaledAmount ??
+                                                                row.ingredient.amount,
+                                                        ),
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {row.scaledAmount != null
+                                                        ? `${formatAmount(row.scaledAmount)} ${row.ingredient.unit}`
+                                                        : '-'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {row.gramsAmount != null
+                                                        ? `${formatAmount(row.gramsAmount)} g`
+                                                        : '-'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {formatNullableNumber(
+                                                        row.ingredient.caloriesPer100g,
+                                                        'kcal',
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {formatNullableNumber(
+                                                        row.caloriesTotal,
+                                                        'kcal',
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {formatNullableNumber(row.proteinTotal, 'g')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {formatNullableNumber(row.carbsTotal, 'g')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {formatNullableNumber(row.fatTotal, 'g')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {row.missingReason ?? 'eingerechnet'}
+                                                </TableCell>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr className={css({ fontWeight: '600', bg: 'light' })}>
+                                            <TableCell>Gesamt</TableCell>
+                                            <TableCell>{servings} Portionen</TableCell>
+                                            <TableCell>-</TableCell>
+                                            <TableCell>-</TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(
+                                                    nutritionBreakdown.totals.calories,
+                                                    'kcal',
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(
+                                                    nutritionBreakdown.totals.protein,
+                                                    'g',
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(
+                                                    nutritionBreakdown.totals.carbs,
+                                                    'g',
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(
+                                                    nutritionBreakdown.totals.fat,
+                                                    'g',
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {nutritionCompleteness != null &&
+                                                nutritionCompleteness < 1
+                                                    ? 'teilweise berechnet'
+                                                    : 'vollstaendig berechnet'}
+                                            </TableCell>
+                                        </tr>
+                                        <tr className={css({ fontWeight: '600' })}>
+                                            <TableCell>Pro Portion</TableCell>
+                                            <TableCell>1 Portion</TableCell>
+                                            <TableCell>-</TableCell>
+                                            <TableCell>-</TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(displayedCalories, 'kcal')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(displayedProtein, 'g')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(displayedCarbs, 'g')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(displayedFat, 'g')}
+                                            </TableCell>
+                                            <TableCell>-</TableCell>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
                     )}
                 </div>
             )}
@@ -275,4 +533,35 @@ function NutritionItem({
             <div className={css({ fontSize: 'xs', color: 'text-muted' })}>{label}</div>
         </div>
     );
+}
+
+function TableHeader({ children }: { children: ReactNode }) {
+    return (
+        <th
+            className={css({
+                textAlign: 'left',
+                py: '2',
+                px: '2',
+                color: 'text-muted',
+                fontWeight: '600',
+                whiteSpace: 'nowrap',
+            })}
+        >
+            {children}
+        </th>
+    );
+}
+
+function TableCell({ children }: { children: ReactNode }) {
+    return <td className={css({ py: '2', px: '2', verticalAlign: 'top' })}>{children}</td>;
+}
+
+function roundToOne(value: number) {
+    return Math.round(value * 10) / 10;
+}
+
+function formatNullableNumber(value: number | null | undefined, unit: string) {
+    if (value == null) return '-';
+    const formatted = Number.isInteger(value) ? String(value) : value.toFixed(1);
+    return `${formatted} ${unit}`;
 }

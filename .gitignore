@@ -41,6 +41,7 @@ yarn-error.log*
 .env.sentry-build-plugin
 .env.staging
 .env.prod
+.env.dev
 
 # vercel
 .vercel

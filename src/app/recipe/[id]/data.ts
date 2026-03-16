@@ -2,8 +2,15 @@ export interface Ingredient {
     name: string;
     pluralName?: string | null;
     amount: number;
+    rawAmount?: string;
     unit: string;
     notes?: string | null;
+    caloriesPer100g?: number | null;
+    proteinPer100g?: number | null;
+    fatPer100g?: number | null;
+    carbsPer100g?: number | null;
+    ingredientUnitGrams?: number | null;
+    unitGramsDefault?: number | null;
 }
 
 export type NodeType = 'prep' | 'cook' | 'wait' | 'season' | 'combine' | 'serve';

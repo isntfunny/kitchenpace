@@ -113,9 +113,17 @@ export interface RecipeDetailData {
     difficulty: 'Einfach' | 'Mittel' | 'Schwer';
     ingredients: Array<{
         name: string;
+        pluralName?: string | null;
         amount: number;
+        rawAmount: string;
         unit: string;
         notes: string | null;
+        caloriesPer100g?: number | null;
+        proteinPer100g?: number | null;
+        fatPer100g?: number | null;
+        carbsPer100g?: number | null;
+        ingredientUnitGrams?: number | null;
+        unitGramsDefault?: number | null;
     }>;
     flow: {
         nodes: Array<{
@@ -179,7 +187,15 @@ export async function fetchRecipeBySlug(
                 include: { profile: true },
             },
             recipeIngredients: {
-                include: { ingredient: true },
+                include: {
+                    ingredient: {
+                        include: {
+                            ingredientUnits: {
+                                include: { unit: true },
+                            },
+                        },
+                    },
+                },
                 orderBy: { position: 'asc' },
             },
             tags: {
@@ -260,13 +276,26 @@ export async function fetchRecipeBySlug(
         nutritionCompleteness: recipe.nutritionCompleteness ?? null,
         servings: recipe.servings ?? 4,
         difficulty: difficultyMap[recipe.difficulty] || 'Mittel',
-        ingredients: recipe.recipeIngredients.map((ri: any) => ({
-            name: ri.ingredient.name,
-            pluralName: ri.ingredient.pluralName ?? null,
-            amount: parseFloat(ri.amount) || 0,
-            unit: ri.unit,
-            notes: ri.notes,
-        })),
+        ingredients: recipe.recipeIngredients.map((ri: any) => {
+            const matchedUnit = ri.ingredient.ingredientUnits?.find(
+                (iu: any) => iu.unit.shortName === ri.unit,
+            );
+
+            return {
+                name: ri.ingredient.name,
+                pluralName: ri.ingredient.pluralName ?? null,
+                amount: parseFloat(ri.amount) || 0,
+                rawAmount: ri.amount,
+                unit: ri.unit,
+                notes: ri.notes,
+                caloriesPer100g: ri.ingredient.caloriesPer100g ?? null,
+                proteinPer100g: ri.ingredient.proteinPer100g ?? null,
+                fatPer100g: ri.ingredient.fatPer100g ?? null,
+                carbsPer100g: ri.ingredient.carbsPer100g ?? null,
+                ingredientUnitGrams: matchedUnit?.grams ?? null,
+                unitGramsDefault: matchedUnit?.unit.gramsDefault ?? null,
+            };
+        }),
         flow: {
             nodes: (() => {
                 const photoKeyByStepId = new Map(stepImages.map((si) => [si.stepId, si.photoKey]));

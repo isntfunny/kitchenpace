@@ -80,7 +80,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/email-templates ./email-templates
 
 # CLI
 COPY --from=builder --chown=nextjs:nodejs /app/cli ./cli
-RUN printf '#!/bin/sh\nexec /app/node_modules/.bin/tsx /app/cli/index.ts "$@"\n' > /usr/local/bin/kitchen \
+RUN printf '#!/bin/sh\n[ -f /tmp/.env.infisical ] && . /tmp/.env.infisical\nexec /app/node_modules/.bin/tsx /app/cli/index.ts "$@"\n' > /usr/local/bin/kitchen \
     && chmod +x /usr/local/bin/kitchen
 
 # Entrypoint script (runner: runs migrations then starts server)

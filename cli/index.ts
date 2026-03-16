@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { Command } from 'commander';
 
 import { registerImportCommand } from './commands/import.js';
+import { registerSeedCommand } from './commands/seed.js';
 import { generateCompletions } from './lib/complete.js';
 import { db, RecipeStatus } from './lib/db.js';
 import { triggerJobNow, getJobDefinitions } from './lib/jobs.js';
@@ -274,6 +275,7 @@ program
     });
 
 registerImportCommand(program);
+registerSeedCommand(program);
 
 program
     .command('completion')

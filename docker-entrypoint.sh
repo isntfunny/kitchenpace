@@ -20,10 +20,9 @@ if [ -n "$INFISICAL_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
     --format=dotenv-export > /tmp/.env.infisical
   . /tmp/.env.infisical
   echo "[entrypoint] Loaded $(wc -l < /tmp/.env.infisical) secrets from Infisical"
-  echo "[entrypoint] Loaded $(wc -l < /tmp/.env.infisical) secrets from Infisical"
 fi
 
-# Worker skips database setup
+# Worker skips database setup (Infisical secrets are already loaded above)
 if [ "$SKIP_MIGRATIONS" = "1" ]; then
   echo "[entrypoint] Skipping migrations (worker mode)"
   exec "$@"

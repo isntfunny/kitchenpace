@@ -21,9 +21,10 @@ const VAPID_SUBJECT = process.env.VAPID_SUBJECT ?? 'mailto:info@kuechentakt.de';
 let webpush: WebPushLib | null = null;
 
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    webpush = require('web-push') as WebPushLib;
-    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+    import('web-push').then((mod) => {
+        webpush = mod.default ?? (mod as unknown as WebPushLib);
+        webpush!.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY!, VAPID_PRIVATE_KEY!);
+    });
 }
 
 export async function sendPushToUser(userId: string, payload: PushPayload): Promise<void> {

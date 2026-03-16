@@ -43,9 +43,9 @@
         "db:generate": "infisical run -- prisma generate",
         "db:push": "prisma db push",
         "db:migrate": "infisical run -- prisma migrate dev",
-        "db:seed": "tsx src/lib/seed.ts",
-        "db:seed-basics": "infisical run -- tsx src/lib/seed-basics.ts",
-        "db:reset": "prisma migrate reset --force && npx prisma db push --accept-data-loss && npm run db:seed-basics",
+        "db:seed": "infisical run -- tsx cli/index.ts seed",
+        "db:seed:dev": "infisical run -- tsx cli/index.ts seed dev --force",
+        "db:reset": "prisma migrate reset --force && npx prisma db push --accept-data-loss && npm run db:seed",
         "db:fresh": "npm run db:generate && prisma migrate reset --force && npx prisma db push --accept-data-loss && npm run db:seed",
         "build:dev-seed": "DEBUG=1 npm run build && npm run db:fresh",
         "worker": "tsx worker/entrypoint.ts",
@@ -55,9 +55,7 @@
         "emails:validate": "node email-templates/validate.mjs"
     },
     "prisma": {
-        "prisma": {
-            "seed": "tsx src/lib/seed.ts"
-        }
+        "seed": "tsx cli/index.ts seed"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1003.0",

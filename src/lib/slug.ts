@@ -30,12 +30,13 @@ export function slugify(text: string): string {
         ñ: 'n',
     };
 
-    const normalized = lowerCase(text)
+    // Apply charMap BEFORE lowerCase — lodash lowerCase strips diacritics (ö→o)
+    const mapped = text
         .split('')
-        .map((char: string) => charMap[char] || char)
+        .map((char: string) => charMap[char] || charMap[char.toLowerCase()] || char)
         .join('');
 
-    return kebabCase(trim(normalized));
+    return kebabCase(trim(lowerCase(mapped)));
 }
 
 export async function generateUniqueSlug(

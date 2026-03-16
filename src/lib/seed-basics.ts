@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * Basics Seeder — no demo recipes, just structural data
  *
@@ -645,20 +646,80 @@ async function main() {
     }
     console.log(`✅ Tags:        ${tagCount} upserted`);
 
-    // ── Ingredient Categories ──────────────────────────────────────────────────
-    const { INGREDIENT_CATEGORIES, UNITS, DEFAULT_UNITS_PER_CATEGORY, INGREDIENT_UNIT_GRAMS } =
+    // ── Ingredient Categories (extracted from Swiss Food DB) ───────────────────
+    const { UNITS, DEFAULT_UNITS_PER_CATEGORY, INGREDIENT_UNIT_GRAMS } =
         await import('./ingredients/constants');
-    const categoryMap = new Map<string, string>(); // name → id
-    for (const catName of INGREDIENT_CATEGORIES) {
-        const slug = slugify(catName);
-        const cat = await prisma.ingredientCategory.upsert({
-            where: { slug },
-            update: { name: catName },
-            create: { name: catName, slug },
-        });
-        categoryMap.set(catName, cat.id);
+
+    interface SwissFood {
+        id: number;
+        name: string;
+        swissName?: string;
+        synonyms: string[];
+        category: string;
+        density: number | null;
+        nutrients: Record<string, number>;
     }
-    console.log(`✅ IngredientCategories: ${categoryMap.size} upserted`);
+
+    const fs = await import('fs');
+    const path = await import('path');
+    const { fileURLToPath } = await import('url');
+    const __dir = path.dirname(fileURLToPath(import.meta.url));
+    const swissFoodsPath = path.join(__dir, 'swiss-food-db', 'data', 'swiss-foods.json');
+    const swissFoods: SwissFood[] = JSON.parse(fs.readFileSync(swissFoodsPath, 'utf-8'));
+
+    // Extract category tree from food data: "Gemüse/Pilze" → parent "Gemüse", child "Pilze"
+    // Some foods have multiple categories separated by ";"
+    const categoryTree = new Map<string, Set<string>>(); // parent → Set<child>
+    for (const food of swissFoods) {
+        for (const part of food.category.split(';')) {
+            const trimmed = part.trim();
+            if (!trimmed) continue;
+            if (trimmed.includes('/')) {
+                const [parent, child] = trimmed.split('/', 2).map((s) => s.trim());
+                if (!categoryTree.has(parent)) categoryTree.set(parent, new Set());
+                categoryTree.get(parent)!.add(child);
+            } else {
+                if (!categoryTree.has(trimmed)) categoryTree.set(trimmed, new Set());
+            }
+        }
+    }
+
+    // Create parent categories, then children
+    const categoryMap = new Map<string, string>(); // "Parent" or "Parent/Child" → id
+    let catSort = 0;
+    for (const [parentName, children] of [...categoryTree.entries()].sort(([a], [b]) =>
+        a.localeCompare(b),
+    )) {
+        const parent = await prisma.ingredientCategory.upsert({
+            where: { slug: slugify(parentName) },
+            update: { name: parentName, parentId: null },
+            create: {
+                name: parentName,
+                slug: slugify(parentName),
+                sortOrder: catSort++,
+                parentId: null,
+            },
+        });
+        categoryMap.set(parentName, parent.id);
+
+        for (const childName of [...children].sort()) {
+            const fullName = `${parentName}/${childName}`;
+            const child = await prisma.ingredientCategory.upsert({
+                where: { slug: slugify(fullName) },
+                update: { name: childName, parentId: parent.id },
+                create: {
+                    name: childName,
+                    slug: slugify(fullName),
+                    sortOrder: catSort++,
+                    parentId: parent.id,
+                },
+            });
+            categoryMap.set(fullName, child.id);
+        }
+    }
+    console.log(
+        `✅ IngredientCategories: ${categoryMap.size} (${categoryTree.size} parents + ${categoryMap.size - categoryTree.size} children)`,
+    );
 
     // ── Units ────────────────────────────────────────────────────────────────
     const unitMap = new Map<string, string>(); // shortName → id
@@ -673,63 +734,11 @@ async function main() {
     console.log(`✅ Units: ${unitMap.size} upserted`);
 
     // ── Ingredients (Swiss Food Composition Database) ─────────────────────────
-    // Swiss Food → our IngredientCategory mapping
-    const SWISS_CATEGORY_MAP: Record<string, string> = {
-        'Alkoholfreie Getränke': 'Getränke',
-        'Alkoholhaltige Getränke': 'Getränke',
-        'Brote, Flocken und Frühstückscerealien': 'Brot',
-        Eier: 'Eier',
-        'Fette und Öle': 'Öle & Fette',
-        Fisch: 'Fisch',
-        'Fleisch und Innereien': 'Fleisch',
-        'Fleisch- und Wurstwaren': 'Wurst & Aufschnitt',
-        Früchte: 'Obst',
-        Gemüse: 'Gemüse',
-        Gerichte: 'Gerichte',
-        'Getreideprodukte, Hülsenfrüchte und Kartoffeln': 'Getreide',
-        'Milch und Milchprodukte': 'Milchprodukte',
-        'Nüsse, Samen und Ölfrüchte': 'Nüsse & Samen',
-        'Pflanzliche Proteinlieferanten und Alternativen zu tierischen Produkten':
-            'Pflanzliche Alternativen',
-        'Salzige Snacks': 'Backwaren',
-        Speziallebensmittel: 'Sonstiges',
-        Süssigkeiten: 'Süßigkeiten',
-        Verschiedenes: 'Gewürze',
-    };
-
-    function mapSwissCategory(swissCategory: string): string {
-        const sub = swissCategory.toLowerCase();
-        if (sub.includes('kräuter')) return 'Gewürze';
-        if (sub.includes('pilze')) return 'Kartoffeln & Pilze';
-        if (sub.includes('kartoffel')) return 'Kartoffeln & Pilze';
-        if (sub.includes('hülsenfrüchte')) return 'Hülsenfrüchte';
-        if (sub.includes('mehle und stärke')) return 'Getreide';
-        if (sub.includes('wild')) return 'Wild & Geflügel';
-        if (sub.includes('geflügel')) return 'Wild & Geflügel';
-        if (sub.includes('salz, gewürze')) return 'Gewürze';
-        if (sub.includes('saucen')) return 'Gewürze';
-        if (sub.includes('rahm')) return 'Milchprodukte';
-        if (sub.includes('mayonnaise')) return 'Öle & Fette';
-        if (sub.includes('öle')) return 'Öle & Fette';
-        if (sub.includes('nüsse')) return 'Nüsse & Samen';
-        const topLevel = swissCategory.split('/')[0].split(';')[0].trim();
-        return SWISS_CATEGORY_MAP[topLevel] || 'Sonstiges';
-    }
-
-    interface SwissFood {
-        id: number;
-        name: string;
-        swissName?: string;
-        synonyms: string[];
-        category: string;
-        density: number | null;
-        nutrients: Record<string, number>;
-    }
-
-    const fs = await import('fs');
-    const path = await import('path');
-    const swissFoodsPath = path.join(__dirname, 'swiss-food-db', 'data', 'swiss-foods.json');
-    const swissFoods: SwissFood[] = JSON.parse(fs.readFileSync(swissFoodsPath, 'utf-8'));
+    // Clear old ingredients to avoid swissFoodId conflicts from renamed entries
+    await prisma.ingredientUnit.deleteMany();
+    await prisma.recipeIngredient.deleteMany();
+    await prisma.$executeRawUnsafe(`DELETE FROM "_IngredientToIngredientCategory"`);
+    await prisma.ingredient.deleteMany();
 
     const slugifyIngredient = (name: string) => slugify(name).slice(0, 80);
 
@@ -741,15 +750,26 @@ async function main() {
         if (!slug || seenSlugs.has(slug)) continue;
         seenSlugs.add(slug);
 
-        const catName = mapSwissCategory(food.category);
-        const catId = categoryMap.get(catName);
-        const catIds = catId ? [catId] : [];
+        // Link to all matching categories (a food can have multiple via ";")
+        const catIds: string[] = [];
+        let topLevelCat = '';
+        for (const part of food.category.split(';')) {
+            const trimmed = part.trim();
+            if (!trimmed) continue;
+            // Try exact match first (e.g. "Gemüse/Pilze"), then parent only (e.g. "Gemüse")
+            const exactId = categoryMap.get(trimmed);
+            if (exactId) catIds.push(exactId);
+            const parentName = trimmed.split('/')[0].trim();
+            const parentId = categoryMap.get(parentName);
+            if (parentId && !catIds.includes(parentId)) catIds.push(parentId);
+            if (!topLevelCat) topLevelCat = parentName;
+        }
         const n = food.nutrients;
 
-        // Resolve default units per category
+        // Resolve default units per top-level category
         const unitShortNames = new Set<string>();
         unitShortNames.add('g');
-        for (const u of DEFAULT_UNITS_PER_CATEGORY[catName] ?? []) {
+        for (const u of DEFAULT_UNITS_PER_CATEGORY[topLevelCat] ?? []) {
             unitShortNames.add(u);
         }
         // Add specific unit overrides
@@ -873,9 +893,8 @@ async function main() {
                 const grams = overrides?.[sn] ?? null;
                 return { ingredientId: ingredient.id, unitId, grams };
             })
-            .filter(Boolean);
+            .filter((d): d is NonNullable<typeof d> => d !== null);
 
-        await prisma.ingredientUnit.deleteMany({ where: { ingredientId: ingredient.id } });
         if (unitData.length > 0) {
             await prisma.ingredientUnit.createMany({ data: unitData, skipDuplicates: true });
         }
@@ -891,9 +910,8 @@ async function main() {
     // Look up existing ingredients by slug (these should already exist from BLS or legacy seed)
     const FLAMMKUCHEN_INGREDIENT_SLUGS = [
         { label: 'Mehl', slug: 'weizenmehl-backmehl-typ-550' },
-        { label: 'Mineralwasser', slug: 'mineralwasser-mit-kohlensaeure' },
         { label: 'Olivenöl', slug: 'olivenoel' },
-        { label: 'Salz', slug: 'speisesalz-jodiert-fluoridiert' },
+        { label: 'Salz', slug: 'jodsalz' },
         { label: 'Crème fraîche', slug: 'creme-fraiche' },
         { label: 'Milch', slug: 'vollmilch-pasteurisiert' },
         { label: 'Speck', slug: 'speck-durchwachsen' },
@@ -901,7 +919,7 @@ async function main() {
         { label: 'Apfel', slug: 'apfel-roh' },
         { label: 'Zitronensaft', slug: 'zitronensaft' },
         { label: 'Zimtzucker', slug: 'zucker-weiss' },
-        { label: 'Mandelblättchen', slug: 'mandeln-ohne-haut' },
+        { label: 'Mandelblättchen', slug: 'mandel' },
     ] as const;
 
     const fkIngMap = new Map<string, { id: string; name: string }>(); // slug → { id, name }
@@ -927,9 +945,8 @@ async function main() {
 
     // Shorthand aliases for readable node definitions
     const mehl = 'weizenmehl-backmehl-typ-550';
-    const wasser = 'mineralwasser-mit-kohlensaeure';
     const oel = 'olivenoel';
-    const salz = 'speisesalz-jodiert-fluoridiert';
+    const salz = 'jodsalz';
     const creme = 'creme-fraiche';
     const milch = 'vollmilch-pasteurisiert';
     const speck = 'speck-durchwachsen';
@@ -937,7 +954,7 @@ async function main() {
     const apfel = 'apfel-roh';
     const zitrone = 'zitronensaft';
     const zimt = 'zucker-weiss';
-    const mandel = 'mandeln-ohne-haut';
+    const mandel = 'mandel';
 
     const ids = (slugs: string[]) => slugs.map(fkId).filter(Boolean) as string[];
 
@@ -956,8 +973,8 @@ async function main() {
             label: 'Teig herstellen',
             duration: 10,
             position: { x: 360, y: 145.25 },
-            description: `${fkMention('Mehl', mehl)}, ${fkMention('Mineralwasser mit Kohlensäure', wasser)}, Öl und ${fkMention('Salz', salz)} zu einem glatten, nicht klebenden Teig verarbeiten. Falls nötig etwas mehr Wasser, Öl oder Mehl ergänzen.`,
-            ingredientIds: ids([mehl, wasser, oel, salz]),
+            description: `${fkMention('Mehl', mehl)}, Mineralwasser mit Kohlensäure, Öl und ${fkMention('Salz', salz)} zu einem glatten, nicht klebenden Teig verarbeiten. Falls nötig etwas mehr Wasser, Öl oder Mehl ergänzen.`,
+            ingredientIds: ids([mehl, oel, salz]),
         },
         {
             id: 'step-2',
@@ -1092,7 +1109,6 @@ async function main() {
     // Flammkuchen recipe ingredients with amounts (only those found in DB)
     const flammkuchenRecipeIngredients = [
         { slug: mehl, amount: '250', unit: 'g' },
-        { slug: wasser, amount: '125', unit: 'ml' },
         { slug: oel, amount: '2', unit: 'EL' },
         { slug: salz, amount: '1', unit: 'TL' },
         { slug: creme, amount: '200', unit: 'g' },

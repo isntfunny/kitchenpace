@@ -473,11 +473,16 @@ model Ingredient {
 }
 
 model IngredientCategory {
-  id          String       @id @default(cuid())
-  name        String       @unique
-  slug        String       @unique
-  sortOrder   Int          @default(0)
+  id          String               @id @default(cuid())
+  name        String
+  slug        String               @unique
+  sortOrder   Int                  @default(0)
+  parentId    String?
+  parent      IngredientCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    IngredientCategory[] @relation("CategoryTree")
   ingredients Ingredient[]
+
+  @@index([parentId])
 }
 
 model Unit {

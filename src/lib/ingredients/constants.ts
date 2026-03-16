@@ -4,32 +4,8 @@
  * BLS and Swiss Food Composition Database imports.
  */
 
-/**
- * All ingredient categories to seed.
- */
-export const INGREDIENT_CATEGORIES = [
-    'Gemüse',
-    'Obst',
-    'Fleisch',
-    'Fisch',
-    'Milchprodukte',
-    'Gewürze',
-    'Getreide',
-    'Backwaren',
-    'Getränke',
-    'Hülsenfrüchte',
-    'Nüsse & Samen',
-    'Kartoffeln & Pilze',
-    'Öle & Fette',
-    'Eier',
-    'Wurst & Aufschnitt',
-    'Brot',
-    'Wild & Geflügel',
-    'Gerichte',
-    'Süßigkeiten',
-    'Sonstiges',
-    'Pflanzliche Alternativen',
-] as const;
+// Categories are extracted dynamically from swiss-foods.json in the seeder.
+// No hardcoded category list needed — the Swiss DB category field drives it.
 
 /**
  * All units to seed (shortName, longName, default grams).
@@ -63,28 +39,27 @@ export const UNITS: Array<{ shortName: string; longName: string; gramsDefault: n
  * Default units per ingredient category.
  * Maps category name → array of unit shortNames to link.
  */
+/** Default units per top-level Swiss category. Used when linking IngredientUnits. */
 export const DEFAULT_UNITS_PER_CATEGORY: Record<string, string[]> = {
     Gemüse: ['g', 'kg', 'Stk'],
-    Obst: ['g', 'kg', 'Stk'],
-    Fleisch: ['g', 'kg'],
+    Früchte: ['g', 'kg', 'Stk'],
+    'Fleisch und Innereien': ['g', 'kg'],
     Fisch: ['g', 'kg', 'Filet'],
-    Milchprodukte: ['g', 'kg', 'ml', 'l', 'EL', 'TL', 'Becher'],
-    Gewürze: ['g', 'TL', 'EL', 'Prise'],
-    Getreide: ['g', 'kg', 'EL', 'TL', 'Tasse'],
-    Backwaren: ['g', 'kg', 'Stk'],
-    Getränke: ['ml', 'l'],
-    Hülsenfrüchte: ['g', 'kg', 'Dose'],
-    'Nüsse & Samen': ['g', 'Handvoll'],
-    'Kartoffeln & Pilze': ['g', 'kg', 'Stk'],
-    'Öle & Fette': ['ml', 'l', 'EL', 'TL'],
+    'Milch und Milchprodukte': ['g', 'kg', 'ml', 'l', 'EL', 'TL', 'Becher'],
     Eier: ['Stk'],
-    'Wurst & Aufschnitt': ['g', 'kg', 'Scheibe'],
-    Brot: ['g', 'Stk', 'Scheibe'],
-    'Wild & Geflügel': ['g', 'kg'],
-    Gerichte: ['g'],
-    Süßigkeiten: ['g', 'Stk'],
-    Sonstiges: ['g', 'EL', 'TL'],
+    'Fette und Öle': ['ml', 'l', 'EL', 'TL'],
+    'Getreideprodukte, Hülsenfrüchte und Kartoffeln': ['g', 'kg', 'EL', 'TL', 'Tasse'],
+    'Brote, Flocken und Frühstückscerealien': ['g', 'Stk', 'Scheibe'],
+    'Nüsse, Samen und Ölfrüchte': ['g', 'Handvoll'],
+    'Fleisch- und Wurstwaren': ['g', 'kg', 'Scheibe'],
+    Verschiedenes: ['g', 'TL', 'EL', 'Prise'],
+    Süssigkeiten: ['g', 'Stk'],
+    'Alkoholfreie Getränke': ['ml', 'l'],
+    'Alkoholhaltige Getränke': ['ml', 'l'],
     'Pflanzliche Alternativen': ['g', 'ml', 'Stk'],
+    'Salzige Snacks': ['g', 'Stk'],
+    Gerichte: ['g'],
+    Speziallebensmittel: ['g'],
 };
 
 /**

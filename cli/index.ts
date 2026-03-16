@@ -274,6 +274,33 @@ program
         await queue.close();
     });
 
+program
+    .command('env')
+    .description('Show environment variables kitchen is running with')
+    .argument('[filter]', 'Filter variables by prefix (case-insensitive)')
+    .action((filter?: string) => {
+        const entries = Object.entries(process.env)
+            .filter(([key]) => !filter || key.toLowerCase().includes(filter.toLowerCase()))
+            .sort(([a], [b]) => a.localeCompare(b));
+
+        if (entries.length === 0) {
+            console.log(
+                filter ? `No variables matching "${filter}"` : 'No environment variables found',
+            );
+            return;
+        }
+
+        const maxKey = Math.min(Math.max(...entries.map(([k]) => k.length)), 40);
+        for (const [key, value] of entries) {
+            const masked =
+                /secret|password|token|key|private/i.test(key) && value
+                    ? value.slice(0, 4) + '••••'
+                    : value;
+            console.log(`  ${key.padEnd(maxKey)}  ${masked}`);
+        }
+        console.log(`\n  ${entries.length} variable${entries.length === 1 ? '' : 's'}`);
+    });
+
 registerImportCommand(program);
 registerSeedCommand(program);
 

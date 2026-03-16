@@ -11,7 +11,7 @@ env:
 
 jobs:
     lint:
-        runs-on: ubuntu-latest
+        runs-on: self-hosted
         steps:
             - uses: actions/checkout@v4
 
@@ -31,7 +31,7 @@ jobs:
                   DATABASE_URL: postgresql://build:build@localhost:5432/build
 
     e2e:
-        runs-on: ubuntu-latest
+        runs-on: self-hosted
         needs: [lint]
         timeout-minutes: 15
         steps:
@@ -62,7 +62,7 @@ jobs:
                   retention-days: 14
 
     deploy:
-        runs-on: ubuntu-latest
+        runs-on: self-hosted
         needs: [lint, e2e]
         steps:
             - name: Trigger Coolify redeploy

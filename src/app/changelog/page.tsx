@@ -32,6 +32,30 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '16. März 2026',
+        version: 'v2026-03-16',
+        emoji: '🥦',
+        title: 'Nährwerte & neue Kategorien',
+        items: [
+            {
+                text: 'Nährwerte — Rezepte zeigen jetzt automatisch berechnete Kalorien und Nährstoffe pro Zutat',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Neue Kategorien — Rezepte werden nach einer verbesserten Lebensmittel-Hierarchie eingeteilt',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Tutorial-Abschluss führt direkt zum Flammkuchen-Showcase-Rezept',
+                tag: 'feat',
+            },
+            {
+                text: 'Fehlermeldung statt leerer Seite, wenn Berechtigungen fehlen',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '15. März 2026',
         version: 'v2026-03-15',
         emoji: '🔑',

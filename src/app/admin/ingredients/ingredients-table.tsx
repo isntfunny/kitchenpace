@@ -46,14 +46,14 @@ type Ingredient = {
     }>;
     aliases: string[];
     needsReview: boolean;
-    caloriesPer100g: number | null;
-    proteinPer100g: number | null;
-    fatPer100g: number | null;
-    carbsPer100g: number | null;
-    fiberPer100g: number | null;
-    sugarPer100g: number | null;
-    sodiumPer100g: number | null;
-    saturatedFatPer100g: number | null;
+    energyKcal: number | null;
+    protein: number | null;
+    fat: number | null;
+    carbs: number | null;
+    fiber: number | null;
+    sugar: number | null;
+    sodium: number | null;
+    saturatedFat: number | null;
     recipeCount: number;
 };
 
@@ -509,7 +509,7 @@ function IngredientsTab({
                 enableSorting: false,
             },
             {
-                accessorKey: 'caloriesPer100g',
+                accessorKey: 'energyKcal',
                 header: ({ column }) => <SortHeader column={column} label="kcal/100g" />,
                 cell: ({ row }) => (
                     <span
@@ -521,7 +521,7 @@ function IngredientsTab({
                             textAlign: 'right',
                         })}
                     >
-                        {row.original.caloriesPer100g ?? '-'}
+                        {row.original.energyKcal ?? '-'}
                     </span>
                 ),
             },
@@ -870,14 +870,14 @@ function IngredientEditPanel({
 
     // Nutrition
     const [nutrition, setNutrition] = useState({
-        caloriesPer100g: ingredient.caloriesPer100g,
-        proteinPer100g: ingredient.proteinPer100g,
-        fatPer100g: ingredient.fatPer100g,
-        carbsPer100g: ingredient.carbsPer100g,
-        fiberPer100g: ingredient.fiberPer100g,
-        sugarPer100g: ingredient.sugarPer100g,
-        sodiumPer100g: ingredient.sodiumPer100g,
-        saturatedFatPer100g: ingredient.saturatedFatPer100g,
+        energyKcal: ingredient.energyKcal,
+        protein: ingredient.protein,
+        fat: ingredient.fat,
+        carbs: ingredient.carbs,
+        fiber: ingredient.fiber,
+        sugar: ingredient.sugar,
+        sodium: ingredient.sodium,
+        saturatedFat: ingredient.saturatedFat,
     });
 
     const handleAddAlias = () => {
@@ -958,14 +958,14 @@ function IngredientEditPanel({
     };
 
     const nutritionFields: Array<{ key: keyof typeof nutrition; label: string }> = [
-        { key: 'caloriesPer100g', label: 'kcal' },
-        { key: 'proteinPer100g', label: 'Protein (g)' },
-        { key: 'fatPer100g', label: 'Fett (g)' },
-        { key: 'carbsPer100g', label: 'Kohlenhydrate (g)' },
-        { key: 'fiberPer100g', label: 'Ballaststoffe (g)' },
-        { key: 'sugarPer100g', label: 'Zucker (g)' },
-        { key: 'sodiumPer100g', label: 'Natrium (mg)' },
-        { key: 'saturatedFatPer100g', label: 'Ges. Fett (g)' },
+        { key: 'energyKcal', label: 'kcal' },
+        { key: 'protein', label: 'Protein (g)' },
+        { key: 'fat', label: 'Fett (g)' },
+        { key: 'carbs', label: 'Kohlenhydrate (g)' },
+        { key: 'fiber', label: 'Ballaststoffe (g)' },
+        { key: 'sugar', label: 'Zucker (g)' },
+        { key: 'sodium', label: 'Natrium (mg)' },
+        { key: 'saturatedFat', label: 'Ges. Fett (g)' },
     ];
 
     return (

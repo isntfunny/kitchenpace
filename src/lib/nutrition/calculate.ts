@@ -4,11 +4,11 @@ export interface IngredientNutritionInput {
     name: string;
     amount: string;
     unitShortName: string;
-    caloriesPer100g: number | null;
-    proteinPer100g: number | null;
-    fatPer100g: number | null;
-    carbsPer100g: number | null;
-    fiberPer100g: number | null;
+    energyKcal: number | null;
+    protein: number | null;
+    fat: number | null;
+    carbs: number | null;
+    fiber: number | null;
     /** Ingredient-specific grams for this unit (from IngredientUnit.grams) */
     ingredientUnitGrams: number | null;
     /** Default grams for this unit (from Unit.gramsDefault) */
@@ -54,18 +54,19 @@ export function calculateRecipeNutrition(ingredients: IngredientNutritionInput[]
 
         const gramsAmount = amount * gramsPerUnit;
 
-        if (ing.caloriesPer100g === null) {
+        // Use strict null check: 0 kcal is valid (e.g. salt)
+        if (ing.energyKcal === null) {
             missingIngredients.push(ing.name);
             continue;
         }
 
         // All checks passed — this ingredient is calculable
         calculable++;
-        totalCalories += (ing.caloriesPer100g * gramsAmount) / 100;
-        totalProtein += ((ing.proteinPer100g ?? 0) * gramsAmount) / 100;
-        totalFat += ((ing.fatPer100g ?? 0) * gramsAmount) / 100;
-        totalCarbs += ((ing.carbsPer100g ?? 0) * gramsAmount) / 100;
-        totalFiber += ((ing.fiberPer100g ?? 0) * gramsAmount) / 100;
+        totalCalories += (ing.energyKcal * gramsAmount) / 100;
+        totalProtein += ((ing.protein ?? 0) * gramsAmount) / 100;
+        totalFat += ((ing.fat ?? 0) * gramsAmount) / 100;
+        totalCarbs += ((ing.carbs ?? 0) * gramsAmount) / 100;
+        totalFiber += ((ing.fiber ?? 0) * gramsAmount) / 100;
     }
 
     const completeness = ingredients.length > 0 ? calculable / ingredients.length : 0;

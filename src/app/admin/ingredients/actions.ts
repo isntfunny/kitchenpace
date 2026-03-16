@@ -45,14 +45,14 @@ export async function updateIngredient(
         categoryIds?: string[];
         unitIds?: string[];
         // Nutrition per 100g
-        caloriesPer100g?: number | null;
-        proteinPer100g?: number | null;
-        fatPer100g?: number | null;
-        carbsPer100g?: number | null;
-        fiberPer100g?: number | null;
-        sugarPer100g?: number | null;
-        sodiumPer100g?: number | null;
-        saturatedFatPer100g?: number | null;
+        energyKcal?: number | null;
+        protein?: number | null;
+        fat?: number | null;
+        carbs?: number | null;
+        fiber?: number | null;
+        sugar?: number | null;
+        sodium?: number | null;
+        saturatedFat?: number | null;
     },
 ) {
     if (!id?.trim()) {
@@ -85,14 +85,14 @@ export async function updateIngredient(
 
     // Nutrition fields
     const nutritionFields = [
-        'caloriesPer100g',
-        'proteinPer100g',
-        'fatPer100g',
-        'carbsPer100g',
-        'fiberPer100g',
-        'sugarPer100g',
-        'sodiumPer100g',
-        'saturatedFatPer100g',
+        'energyKcal',
+        'protein',
+        'fat',
+        'carbs',
+        'fiber',
+        'sugar',
+        'sodium',
+        'saturatedFat',
     ] as const;
 
     for (const field of nutritionFields) {

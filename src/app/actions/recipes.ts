@@ -118,10 +118,10 @@ export interface RecipeDetailData {
         rawAmount: string;
         unit: string;
         notes: string | null;
-        caloriesPer100g?: number | null;
-        proteinPer100g?: number | null;
-        fatPer100g?: number | null;
-        carbsPer100g?: number | null;
+        energyKcal?: number | null;
+        protein?: number | null;
+        fat?: number | null;
+        carbs?: number | null;
         ingredientUnitGrams?: number | null;
         unitGramsDefault?: number | null;
     }>;
@@ -288,10 +288,10 @@ export async function fetchRecipeBySlug(
                 rawAmount: ri.amount,
                 unit: ri.unit,
                 notes: ri.notes,
-                caloriesPer100g: ri.ingredient.caloriesPer100g ?? null,
-                proteinPer100g: ri.ingredient.proteinPer100g ?? null,
-                fatPer100g: ri.ingredient.fatPer100g ?? null,
-                carbsPer100g: ri.ingredient.carbsPer100g ?? null,
+                energyKcal: ri.ingredient.energyKcal ?? null,
+                protein: ri.ingredient.protein ?? null,
+                fat: ri.ingredient.fat ?? null,
+                carbs: ri.ingredient.carbs ?? null,
                 ingredientUnitGrams: matchedUnit?.grams ?? null,
                 unitGramsDefault: matchedUnit?.unit.gramsDefault ?? null,
             };

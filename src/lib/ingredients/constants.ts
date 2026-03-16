@@ -1,25 +1,8 @@
 /**
- * BLS 4.0 code prefix → IngredientCategory mapping.
- * Each BLS food code starts with a letter indicating its group.
+ * Shared ingredient constants: units, category defaults, ingredient-specific gram overrides.
+ * Extracted from the former BLS constants — these are DB-agnostic and apply to both
+ * BLS and Swiss Food Composition Database imports.
  */
-export const BLS_PREFIX_TO_CATEGORIES: Record<string, string[]> = {
-    B: ['Brot'],
-    C: ['Getreide'],
-    D: ['Backwaren'],
-    E: ['Eier'],
-    F: ['Obst'],
-    G: ['Gemüse'],
-    H: ['Hülsenfrüchte', 'Nüsse & Samen'],
-    K: ['Kartoffeln & Pilze'],
-    M: ['Milchprodukte'],
-    N: ['Getränke'],
-    Q: ['Öle & Fette'],
-    R: ['Gewürze'],
-    T: ['Fisch'],
-    U: ['Fleisch'],
-    V: ['Wild & Geflügel'],
-    W: ['Wurst & Aufschnitt'],
-};
 
 /**
  * All ingredient categories to seed.
@@ -42,6 +25,10 @@ export const INGREDIENT_CATEGORIES = [
     'Wurst & Aufschnitt',
     'Brot',
     'Wild & Geflügel',
+    'Gerichte',
+    'Süßigkeiten',
+    'Sonstiges',
+    'Pflanzliche Alternativen',
 ] as const;
 
 /**
@@ -81,75 +68,75 @@ export const DEFAULT_UNITS_PER_CATEGORY: Record<string, string[]> = {
     Obst: ['g', 'kg', 'Stk'],
     Fleisch: ['g', 'kg'],
     Fisch: ['g', 'kg', 'Filet'],
-    Milchprodukte: ['g', 'kg', 'ml', 'l', 'Becher', 'Stk'],
+    Milchprodukte: ['g', 'kg', 'ml', 'l', 'EL', 'TL', 'Becher'],
     Gewürze: ['g', 'TL', 'EL', 'Prise'],
-    Getreide: ['g', 'kg'],
-    Backwaren: ['g', 'kg', 'Stk', 'Scheibe'],
-    Getränke: ['ml', 'l', 'Tasse'],
+    Getreide: ['g', 'kg', 'EL', 'TL', 'Tasse'],
+    Backwaren: ['g', 'kg', 'Stk'],
+    Getränke: ['ml', 'l'],
     Hülsenfrüchte: ['g', 'kg', 'Dose'],
-    'Nüsse & Samen': ['g', 'Handvoll', 'EL'],
+    'Nüsse & Samen': ['g', 'Handvoll'],
     'Kartoffeln & Pilze': ['g', 'kg', 'Stk'],
     'Öle & Fette': ['ml', 'l', 'EL', 'TL'],
-    Eier: ['Stk', 'g'],
-    'Wurst & Aufschnitt': ['g', 'Scheibe', 'Stk'],
+    Eier: ['Stk'],
+    'Wurst & Aufschnitt': ['g', 'kg', 'Scheibe'],
     Brot: ['g', 'Stk', 'Scheibe'],
     'Wild & Geflügel': ['g', 'kg'],
+    Gerichte: ['g'],
+    Süßigkeiten: ['g', 'Stk'],
+    Sonstiges: ['g', 'EL', 'TL'],
+    'Pflanzliche Alternativen': ['g', 'ml', 'Stk'],
 };
 
 /**
  * Curated ingredient-specific unit gram overrides.
- * Maps ingredient slug → { unitShortName: grams }.
+ * Keys must match the slugified Swiss Food DB names.
  */
 export const INGREDIENT_UNIT_GRAMS: Record<string, Record<string, number>> = {
     // Gemüse
-    tomate: { Stk: 80 },
-    speisezwiebel: { Stk: 80 },
-    'gemuesepaprika-rot': { Stk: 160 },
-    'gemuesepaprika-gruen': { Stk: 160 },
-    'gemuesepaprika-gelb': { Stk: 160 },
-    salatgurke: { Stk: 400 },
-    'karotte-moehre': { Stk: 60 },
-    zucchini: { Stk: 200 },
-    aubergine: { Stk: 300 },
-    'kartoffel-geschaelt': { Stk: 80 },
-    'suesskartoffel-batate': { Stk: 200 },
-    knoblauch: { Zehe: 5 },
-    knollensellerie: { Stk: 400 },
-    'lauch-porree': { Stange: 150 },
-    blumenkohl: { Stk: 600 },
-    brokkoli: { Stk: 400 },
-    champignon: { Stk: 15 },
-    avocado: { Stk: 150 },
-    'fruehlingszwiebel-lauchzwiebel': { Stk: 15 },
+    'tomate-roh': { Stk: 80 },
+    'zwiebel-roh': { Stk: 80 },
+    'gurke-roh': { Stk: 400 },
+    'karotte-roh': { Stk: 60 },
+    'zucchini-roh': { Stk: 200 },
+    'aubergine-roh': { Stk: 300 },
+    'kartoffel-geschaelt-roh': { Stk: 80 },
+    'suesskartoffel-roh': { Stk: 200 },
+    'knoblauch-roh': { Zehe: 5 },
+    'lauch-roh': { Stange: 150 },
+    'blumenkohl-roh': { Stk: 600 },
+    'brokkoli-roh': { Stk: 400 },
+    'champignon-roh': { Stk: 15 },
+    'avocado-roh': { Stk: 150 },
 
     // Obst
-    apfel: { Stk: 150 },
-    banane: { Stk: 120 },
-    'orange-apfelsine': { Stk: 170 },
-    zitrone: { Stk: 85 },
-    limette: { Stk: 50 },
+    'apfel-roh': { Stk: 150 },
+    'banane-roh': { Stk: 120 },
+    'orange-roh': { Stk: 170 },
+    'zitrone-roh': { Stk: 85 },
+    'limette-roh': { Stk: 50 },
 
     // Eier
-    'huehnerei-ganz': { Stk: 60 },
+    'huehnerei-ganz-roh': { Stk: 60 },
 
     // Milchprodukte
-    'butter-mild-gesaeuert': { EL: 12 },
-    'schlagsahne-36': { EL: 15 },
+    butter: { EL: 12 },
+    'schlagsahne-pasteurisiert': { EL: 15 },
 
     // Getreide
-    'weizenmehl-type-405': { EL: 8 },
-    'weizenmehl-type-550': { EL: 8 },
-    'zucker-weiss-raffinade': { EL: 12, TL: 4 },
-    bienenhonig: { EL: 21, TL: 7 },
-    'reis-poliert': { Tasse: 200 },
-    'hafer-flocken': { EL: 10 },
+    'weizenmehl-backmehl-typ-550': { EL: 8 },
+    'weizenmehl-weiss-typ-400': { EL: 8 },
+    'zucker-weiss': { EL: 12, TL: 4 },
+    'honig-bluetenhonig': { EL: 21, TL: 7 },
+    haferflocken: { EL: 10 },
 
     // Öle & Fette
     olivenoel: { EL: 13, TL: 4.5 },
     sonnenblumenoel: { EL: 13, TL: 4.5 },
-    'rapsoel-rueboel': { EL: 13, TL: 4.5 },
+    rapsoel: { EL: 13, TL: 4.5 },
 
     // Gewürze
-    'speisesalz-siedesalz-tafelsalz': { TL: 6, Prise: 0.3 },
+    jodsalz: { TL: 6, Prise: 0.3 },
+    speisesalz: { TL: 6, Prise: 0.3 },
+    'speisesalz-jodiert-fluoridiert': { TL: 6, Prise: 0.3 },
     'pfeffer-schwarz-getrocknet': { TL: 3, Prise: 0.2 },
 };

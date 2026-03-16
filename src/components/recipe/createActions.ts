@@ -4,70 +4,13 @@ import { fireEvent } from '@app/lib/events/fire';
 import { createActivityLog } from '@app/lib/events/persist';
 import { uploadImageFromUrl as uploadImageFromUrlShared } from '@app/lib/importer/upload-image-from-url';
 import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
-import {
-    calculateRecipeNutrition,
-    type IngredientNutritionInput,
-} from '@app/lib/nutrition/calculate';
+import { updateRecipeNutrition } from '@app/lib/nutrition/update-recipe-nutrition';
 import { moveObject } from '@app/lib/s3';
 import { approvedKey } from '@app/lib/s3/keys';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
 import { formatValidationErrors, validateFlow } from '@app/lib/validation/flowValidation';
 import { prisma } from '@shared/prisma';
 import { addSyncRecipeJob, addGenerateRecipeOgJob } from '@worker/queues';
-
-/**
- * Calculate and store per-serving nutrition for a recipe.
- * Called after ingredients are saved.
- */
-async function updateRecipeNutrition(recipeId: string, servings: number) {
-    const recipeIngredients = await prisma.recipeIngredient.findMany({
-        where: { recipeId },
-        include: {
-            ingredient: {
-                include: {
-                    ingredientUnits: { include: { unit: true } },
-                },
-            },
-        },
-    });
-
-    const inputs: IngredientNutritionInput[] = recipeIngredients.map((ri) => {
-        const iu = ri.ingredient.ingredientUnits.find(
-            (iu) => iu.unit.shortName === ri.unit || iu.unit.longName === ri.unit,
-        );
-        return {
-            name: ri.ingredient.name,
-            amount: ri.amount,
-            unitShortName: ri.unit,
-            caloriesPer100g: ri.ingredient.caloriesPer100g,
-            proteinPer100g: ri.ingredient.proteinPer100g,
-            fatPer100g: ri.ingredient.fatPer100g,
-            carbsPer100g: ri.ingredient.carbsPer100g,
-            fiberPer100g: ri.ingredient.fiberPer100g,
-            ingredientUnitGrams: iu?.grams ?? null,
-            unitGramsDefault: iu?.unit.gramsDefault ?? null,
-        };
-    });
-
-    const result = calculateRecipeNutrition(inputs);
-
-    await prisma.recipe.update({
-        where: { id: recipeId },
-        data: {
-            caloriesPerServing:
-                result.calories !== null ? Math.round(result.calories / servings) : null,
-            proteinPerServing:
-                result.protein !== null ? Math.round((result.protein / servings) * 10) / 10 : null,
-            fatPerServing:
-                result.fat !== null ? Math.round((result.fat / servings) * 10) / 10 : null,
-            carbsPerServing:
-                result.carbs !== null ? Math.round((result.carbs / servings) * 10) / 10 : null,
-            fiberPerServing:
-                result.fiber !== null ? Math.round((result.fiber / servings) * 10) / 10 : null,
-            nutritionCompleteness: result.completeness,
-        },
-    });
-}
 
 /**
  * Extract all user-generated text from a recipe for content moderation
@@ -204,15 +147,23 @@ export interface UpdateRecipeInput {
     status?: 'DRAFT' | 'PUBLISHED';
 }
 
-export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, authorId: string) {
+export async function updateRecipe(
+    recipeId: string,
+    data: UpdateRecipeInput,
+    authorId: string,
+    isUserAdmin = false,
+) {
     const existing = await prisma.recipe.findFirst({
-        where: { id: recipeId, authorId },
-        select: { id: true, slug: true, title: true, status: true },
+        where: isUserAdmin ? { id: recipeId } : { id: recipeId, authorId },
+        select: { id: true, slug: true, title: true, status: true, authorId: true },
     });
 
     if (!existing) {
         throw new Error('Rezept nicht gefunden oder keine Berechtigung');
     }
+
+    // Use the actual recipe author for activity logs and moderation audit
+    const effectiveAuthorId = existing.authorId;
 
     assertPublishableFlow(data);
 
@@ -285,10 +236,10 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
     }
 
     // Persist moderation result for audit trail
-    await persistModerationResult('recipe', recipe.id, authorId, modResult, {
+    await persistModerationResult('recipe', recipe.id, effectiveAuthorId, modResult, {
         contentType: 'recipe',
         contentId: recipe.id,
-        authorId,
+        authorId: effectiveAuthorId,
         title: data.title,
         description: data.description,
         text: recipeText,
@@ -370,12 +321,12 @@ export async function updateRecipe(recipeId: string, data: UpdateRecipeInput, au
 
     if (isPublishing) {
         await createActivityLog({
-            userId: authorId,
+            userId: effectiveAuthorId,
             type: 'RECIPE_CREATED',
             targetId: recipe.id,
             targetType: 'recipe',
         });
-        await sendNotificationsToFollowers(authorId, recipeId, data.title);
+        await sendNotificationsToFollowers(effectiveAuthorId, recipeId, data.title);
     }
 
     if (recipeStatus === 'PUBLISHED' || existing.status === 'PUBLISHED') {
@@ -621,6 +572,7 @@ export async function updateRecipeStatus(
     recipeId: string,
     status: RecipeStatus,
     authorId: string,
+    isUserAdmin = false,
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const recipe = await prisma.recipe.findUnique({
@@ -632,7 +584,7 @@ export async function updateRecipeStatus(
             return { success: false, error: 'Rezept nicht gefunden' };
         }
 
-        if (recipe.authorId !== authorId) {
+        if (!isUserAdmin && recipe.authorId !== authorId) {
             return { success: false, error: 'Nicht autorisiert' };
         }
 
@@ -676,15 +628,17 @@ export async function bulkUpdateRecipeStatus(
     recipeIds: string[],
     status: RecipeStatus,
     authorId: string,
+    isUserAdmin = false,
 ): Promise<{ success: boolean; updatedCount: number; error?: string }> {
     try {
         const isPublished = status === 'PUBLISHED';
+        const ownerFilter = isUserAdmin ? {} : { authorId };
 
         if (isPublished) {
             const recipesToPublish = await prisma.recipe.findMany({
                 where: {
                     id: { in: recipeIds },
-                    authorId,
+                    ...ownerFilter,
                 },
                 select: { id: true, title: true, flowNodes: true, flowEdges: true },
             });
@@ -710,7 +664,7 @@ export async function bulkUpdateRecipeStatus(
         const result = await prisma.recipe.updateMany({
             where: {
                 id: { in: recipeIds },
-                authorId,
+                ...ownerFilter,
             },
             data: {
                 status,
@@ -720,7 +674,7 @@ export async function bulkUpdateRecipeStatus(
 
         if (isPublished) {
             const publishedRecipes = await prisma.recipe.findMany({
-                where: { id: { in: recipeIds }, authorId },
+                where: { id: { in: recipeIds }, ...ownerFilter },
                 select: { id: true, title: true },
             });
 
@@ -782,17 +736,20 @@ async function sendNotificationsToFollowers(
 export async function bulkDeleteRecipes(
     recipeIds: string[],
     authorId: string,
+    isUserAdmin = false,
 ): Promise<{ success: boolean; deletedCount: number; error?: string }> {
     try {
         if (!Array.isArray(recipeIds) || recipeIds.length === 0) {
             return { success: false, deletedCount: 0, error: 'Keine Rezept-IDs angegeben' };
         }
 
-        // Verify all recipes belong to the user
+        const ownerFilter = isUserAdmin ? {} : { authorId };
+
+        // Verify all recipes belong to the user (or admin can access all)
         const recipes = await prisma.recipe.findMany({
             where: {
                 id: { in: recipeIds },
-                authorId,
+                ...ownerFilter,
             },
             select: { id: true },
         });
@@ -809,7 +766,7 @@ export async function bulkDeleteRecipes(
         const result = await prisma.recipe.deleteMany({
             where: {
                 id: { in: recipeIds },
-                authorId,
+                ...ownerFilter,
             },
         });
 

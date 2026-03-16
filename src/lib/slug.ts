@@ -2,7 +2,7 @@ import _ from 'lodash';
 const { kebabCase, trim, lowerCase } = _;
 
 export function slugify(text: string): string {
-    const germanMap: Record<string, string> = {
+    const charMap: Record<string, string> = {
         ä: 'ae',
         ö: 'oe',
         ü: 'ue',
@@ -10,11 +10,29 @@ export function slugify(text: string): string {
         Ä: 'ae',
         Ö: 'oe',
         Ü: 'ue',
+        é: 'e',
+        è: 'e',
+        ê: 'e',
+        ë: 'e',
+        à: 'a',
+        â: 'a',
+        á: 'a',
+        ù: 'u',
+        û: 'u',
+        ú: 'u',
+        î: 'i',
+        ï: 'i',
+        í: 'i',
+        ô: 'o',
+        ó: 'o',
+        ò: 'o',
+        ç: 'c',
+        ñ: 'n',
     };
 
     const normalized = lowerCase(text)
         .split('')
-        .map((char: string) => germanMap[char] || char)
+        .map((char: string) => charMap[char] || char)
         .join('');
 
     return kebabCase(trim(normalized));

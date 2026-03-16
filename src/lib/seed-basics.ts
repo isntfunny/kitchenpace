@@ -19,6 +19,8 @@ import { hashPassword } from 'better-auth/crypto';
 
 import { prisma } from '../../shared/prisma';
 
+import { slugify } from './slug';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Categories
 // ─────────────────────────────────────────────────────────────────────────────
@@ -484,7 +486,7 @@ const MEAT_PREFIXES = new Set([
  * The "/" replaces one word-group; the suffix (parentheses, qualifiers) applies to all alternatives.
  * Skips splitting when "/" is inside parentheses, after prepositions, or after hyphens.
  */
-function expandSlashName(name: string): { displayName: string; aliases: string[] } {
+function _expandSlashName(name: string): { displayName: string; aliases: string[] } {
     if (!name.includes('/')) return { displayName: name, aliases: [] };
 
     // Skip "/" inside parentheses
@@ -633,14 +635,7 @@ async function main() {
     // ── Tags ──────────────────────────────────────────────────────────────────
     let tagCount = 0;
     for (const tagName of TAGS) {
-        const slug = tagName
-            .toLowerCase()
-            .replace(/ä/g, 'ae')
-            .replace(/ö/g, 'oe')
-            .replace(/ü/g, 'ue')
-            .replace(/ß/g, 'ss')
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '');
+        const slug = slugify(tagName);
         await prisma.tag.upsert({
             where: { name: tagName },
             update: {},
@@ -651,23 +646,11 @@ async function main() {
     console.log(`✅ Tags:        ${tagCount} upserted`);
 
     // ── Ingredient Categories ──────────────────────────────────────────────────
-    const {
-        INGREDIENT_CATEGORIES,
-        UNITS,
-        BLS_PREFIX_TO_CATEGORIES,
-        DEFAULT_UNITS_PER_CATEGORY,
-        INGREDIENT_UNIT_GRAMS,
-    } = await import('./bls/constants');
+    const { INGREDIENT_CATEGORIES, UNITS, DEFAULT_UNITS_PER_CATEGORY, INGREDIENT_UNIT_GRAMS } =
+        await import('./ingredients/constants');
     const categoryMap = new Map<string, string>(); // name → id
     for (const catName of INGREDIENT_CATEGORIES) {
-        const slug = catName
-            .toLowerCase()
-            .replace(/ä/g, 'ae')
-            .replace(/ö/g, 'oe')
-            .replace(/ü/g, 'ue')
-            .replace(/ß/g, 'ss')
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '');
+        const slug = slugify(catName);
         const cat = await prisma.ingredientCategory.upsert({
             where: { slug },
             update: { name: catName },
@@ -689,97 +672,208 @@ async function main() {
     }
     console.log(`✅ Units: ${unitMap.size} upserted`);
 
-    // ── Ingredients (BLS 4.0 data) ───────────────────────────────────────────
-    type BlsEntry = {
-        code: string;
-        name: string;
-        kcal: number | null;
-        protein: number | null;
-        fat: number | null;
-        carbs: number | null;
-        fiber: number | null;
-        sugar: number | null;
-        sodium: number | null;
-        saturatedFat: number | null;
+    // ── Ingredients (Swiss Food Composition Database) ─────────────────────────
+    // Swiss Food → our IngredientCategory mapping
+    const SWISS_CATEGORY_MAP: Record<string, string> = {
+        'Alkoholfreie Getränke': 'Getränke',
+        'Alkoholhaltige Getränke': 'Getränke',
+        'Brote, Flocken und Frühstückscerealien': 'Brot',
+        Eier: 'Eier',
+        'Fette und Öle': 'Öle & Fette',
+        Fisch: 'Fisch',
+        'Fleisch und Innereien': 'Fleisch',
+        'Fleisch- und Wurstwaren': 'Wurst & Aufschnitt',
+        Früchte: 'Obst',
+        Gemüse: 'Gemüse',
+        Gerichte: 'Gerichte',
+        'Getreideprodukte, Hülsenfrüchte und Kartoffeln': 'Getreide',
+        'Milch und Milchprodukte': 'Milchprodukte',
+        'Nüsse, Samen und Ölfrüchte': 'Nüsse & Samen',
+        'Pflanzliche Proteinlieferanten und Alternativen zu tierischen Produkten':
+            'Pflanzliche Alternativen',
+        'Salzige Snacks': 'Backwaren',
+        Speziallebensmittel: 'Sonstiges',
+        Süssigkeiten: 'Süßigkeiten',
+        Verschiedenes: 'Gewürze',
     };
 
-    const { default: blsData } = (await import('./bls/bls-data.json')) as { default: BlsEntry[] };
+    function mapSwissCategory(swissCategory: string): string {
+        const sub = swissCategory.toLowerCase();
+        if (sub.includes('kräuter')) return 'Gewürze';
+        if (sub.includes('pilze')) return 'Kartoffeln & Pilze';
+        if (sub.includes('kartoffel')) return 'Kartoffeln & Pilze';
+        if (sub.includes('hülsenfrüchte')) return 'Hülsenfrüchte';
+        if (sub.includes('mehle und stärke')) return 'Getreide';
+        if (sub.includes('wild')) return 'Wild & Geflügel';
+        if (sub.includes('geflügel')) return 'Wild & Geflügel';
+        if (sub.includes('salz, gewürze')) return 'Gewürze';
+        if (sub.includes('saucen')) return 'Gewürze';
+        if (sub.includes('rahm')) return 'Milchprodukte';
+        if (sub.includes('mayonnaise')) return 'Öle & Fette';
+        if (sub.includes('öle')) return 'Öle & Fette';
+        if (sub.includes('nüsse')) return 'Nüsse & Samen';
+        const topLevel = swissCategory.split('/')[0].split(';')[0].trim();
+        return SWISS_CATEGORY_MAP[topLevel] || 'Sonstiges';
+    }
+
+    interface SwissFood {
+        id: number;
+        name: string;
+        swissName?: string;
+        synonyms: string[];
+        category: string;
+        density: number | null;
+        nutrients: Record<string, number>;
+    }
+
+    const fs = await import('fs');
+    const path = await import('path');
+    const swissFoodsPath = path.join(__dirname, 'swiss-food-db', 'data', 'swiss-foods.json');
+    const swissFoods: SwissFood[] = JSON.parse(fs.readFileSync(swissFoodsPath, 'utf-8'));
+
+    const slugifyIngredient = (name: string) => slugify(name).slice(0, 80);
 
     let ingCount = 0;
-    for (const entry of blsData) {
-        const slug = entry.name
-            .toLowerCase()
-            .replace(/ä/g, 'ae')
-            .replace(/ö/g, 'oe')
-            .replace(/ü/g, 'ue')
-            .replace(/ß/g, 'ss')
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '');
+    const seenSlugs = new Set<string>();
 
-        if (!slug) continue;
+    for (const food of swissFoods) {
+        const slug = slugifyIngredient(food.name);
+        if (!slug || seenSlugs.has(slug)) continue;
+        seenSlugs.add(slug);
 
-        // Expand "/" as multiplier: "Butterkekse/Butterplätzchen (Mürbeteig)"
-        // → name: "Butterkekse (Mürbeteig)", alias: "Butterplätzchen (Mürbeteig)"
-        // The "/" replaces one word-group, the rest (suffix) applies to all alternatives.
-        const { displayName, aliases } = expandSlashName(entry.name);
-
-        // Resolve categories from BLS code prefix
-        const prefix = entry.code[0];
-        const catNames = BLS_PREFIX_TO_CATEGORIES[prefix] ?? [];
-        const catIds = catNames.map((n) => categoryMap.get(n)).filter(Boolean) as string[];
+        const catName = mapSwissCategory(food.category);
+        const catId = categoryMap.get(catName);
+        const catIds = catId ? [catId] : [];
+        const n = food.nutrients;
 
         // Resolve default units per category
         const unitShortNames = new Set<string>();
-        unitShortNames.add('g'); // always include grams
-        for (const catName of catNames) {
-            for (const u of DEFAULT_UNITS_PER_CATEGORY[catName] ?? []) {
-                unitShortNames.add(u);
+        unitShortNames.add('g');
+        for (const u of DEFAULT_UNITS_PER_CATEGORY[catName] ?? []) {
+            unitShortNames.add(u);
+        }
+        // Add specific unit overrides
+        const overrides = INGREDIENT_UNIT_GRAMS[slug];
+        if (overrides) {
+            for (const unitName of Object.keys(overrides)) {
+                unitShortNames.add(unitName);
             }
         }
 
         const ingredient = await prisma.ingredient.upsert({
             where: { slug },
             update: {
-                name: displayName,
-                caloriesPer100g: entry.kcal,
-                proteinPer100g: entry.protein,
-                fatPer100g: entry.fat,
-                carbsPer100g: entry.carbs,
-                fiberPer100g: entry.fiber,
-                sugarPer100g: entry.sugar,
-                sodiumPer100g: entry.sodium,
-                saturatedFatPer100g: entry.saturatedFat,
-                aliases,
+                name: food.name,
+                swissFoodId: food.id,
+                energyKj: n.energyKj ?? null,
+                energyKcal: n.energyKcal ?? null,
+                fat: n.fat ?? null,
+                saturatedFat: n.saturatedFat ?? null,
+                monoUnsaturatedFat: n.monoUnsaturatedFat ?? null,
+                polyUnsaturatedFat: n.polyUnsaturatedFat ?? null,
+                linoleicAcid: n.linoleicAcid ?? null,
+                alphaLinolenicAcid: n.alphaLinolenicAcid ?? null,
+                epa: n.epa ?? null,
+                dha: n.dha ?? null,
+                cholesterol: n.cholesterol ?? null,
+                carbs: n.carbs ?? null,
+                sugar: n.sugar ?? null,
+                starch: n.starch ?? null,
+                fiber: n.fiber ?? null,
+                protein: n.protein ?? null,
+                salt: n.salt ?? null,
+                alcohol: n.alcohol ?? null,
+                water: n.water ?? null,
+                sodium: n.sodium ?? null,
+                vitaminA_RE: n.vitaminA_RE ?? null,
+                vitaminA_RAE: n.vitaminA_RAE ?? null,
+                retinol: n.retinol ?? null,
+                betaCaroteneActivity: n.betaCaroteneActivity ?? null,
+                betaCarotene: n.betaCarotene ?? null,
+                vitaminB1: n.vitaminB1 ?? null,
+                vitaminB2: n.vitaminB2 ?? null,
+                vitaminB6: n.vitaminB6 ?? null,
+                vitaminB12: n.vitaminB12 ?? null,
+                niacin: n.niacin ?? null,
+                folate: n.folate ?? null,
+                pantothenicAcid: n.pantothenicAcid ?? null,
+                vitaminC: n.vitaminC ?? null,
+                vitaminD: n.vitaminD ?? null,
+                vitaminE: n.vitaminE ?? null,
+                potassium: n.potassium ?? null,
+                chloride: n.chloride ?? null,
+                calcium: n.calcium ?? null,
+                magnesium: n.magnesium ?? null,
+                phosphorus: n.phosphorus ?? null,
+                iron: n.iron ?? null,
+                iodine: n.iodine ?? null,
+                zinc: n.zinc ?? null,
+                selenium: n.selenium ?? null,
+                aliases: food.synonyms,
                 categories: { set: catIds.map((id) => ({ id })) },
             },
             create: {
-                name: displayName,
+                name: food.name,
                 slug,
-                aliases,
-                caloriesPer100g: entry.kcal,
-                proteinPer100g: entry.protein,
-                fatPer100g: entry.fat,
-                carbsPer100g: entry.carbs,
-                fiberPer100g: entry.fiber,
-                sugarPer100g: entry.sugar,
-                sodiumPer100g: entry.sodium,
-                saturatedFatPer100g: entry.saturatedFat,
+                swissFoodId: food.id,
+                aliases: food.synonyms,
+                energyKj: n.energyKj ?? null,
+                energyKcal: n.energyKcal ?? null,
+                fat: n.fat ?? null,
+                saturatedFat: n.saturatedFat ?? null,
+                monoUnsaturatedFat: n.monoUnsaturatedFat ?? null,
+                polyUnsaturatedFat: n.polyUnsaturatedFat ?? null,
+                linoleicAcid: n.linoleicAcid ?? null,
+                alphaLinolenicAcid: n.alphaLinolenicAcid ?? null,
+                epa: n.epa ?? null,
+                dha: n.dha ?? null,
+                cholesterol: n.cholesterol ?? null,
+                carbs: n.carbs ?? null,
+                sugar: n.sugar ?? null,
+                starch: n.starch ?? null,
+                fiber: n.fiber ?? null,
+                protein: n.protein ?? null,
+                salt: n.salt ?? null,
+                alcohol: n.alcohol ?? null,
+                water: n.water ?? null,
+                sodium: n.sodium ?? null,
+                vitaminA_RE: n.vitaminA_RE ?? null,
+                vitaminA_RAE: n.vitaminA_RAE ?? null,
+                retinol: n.retinol ?? null,
+                betaCaroteneActivity: n.betaCaroteneActivity ?? null,
+                betaCarotene: n.betaCarotene ?? null,
+                vitaminB1: n.vitaminB1 ?? null,
+                vitaminB2: n.vitaminB2 ?? null,
+                vitaminB6: n.vitaminB6 ?? null,
+                vitaminB12: n.vitaminB12 ?? null,
+                niacin: n.niacin ?? null,
+                folate: n.folate ?? null,
+                pantothenicAcid: n.pantothenicAcid ?? null,
+                vitaminC: n.vitaminC ?? null,
+                vitaminD: n.vitaminD ?? null,
+                vitaminE: n.vitaminE ?? null,
+                potassium: n.potassium ?? null,
+                chloride: n.chloride ?? null,
+                calcium: n.calcium ?? null,
+                magnesium: n.magnesium ?? null,
+                phosphorus: n.phosphorus ?? null,
+                iron: n.iron ?? null,
+                iodine: n.iodine ?? null,
+                zinc: n.zinc ?? null,
+                selenium: n.selenium ?? null,
                 categories: { connect: catIds.map((id) => ({ id })) },
             },
         });
 
         // Link units (upsert via deleteMany + createMany for idempotency)
         const unitData = [...unitShortNames]
-            .map((sn) => unitMap.get(sn))
-            .filter(Boolean)
-            .map((unitId) => {
-                // Check for curated gram overrides
-                const overrides = INGREDIENT_UNIT_GRAMS[slug];
-                const unitShortName = [...unitMap.entries()].find(([, id]) => id === unitId)?.[0];
-                const grams =
-                    unitShortName && overrides?.[unitShortName] ? overrides[unitShortName] : null;
-                return { ingredientId: ingredient.id, unitId: unitId!, grams };
-            });
+            .map((sn) => {
+                const unitId = unitMap.get(sn);
+                if (!unitId) return null;
+                const grams = overrides?.[sn] ?? null;
+                return { ingredientId: ingredient.id, unitId, grams };
+            })
+            .filter(Boolean);
 
         await prisma.ingredientUnit.deleteMany({ where: { ingredientId: ingredient.id } });
         if (unitData.length > 0) {
@@ -791,104 +885,240 @@ async function main() {
             console.log(`  ... ${ingCount} ingredients processed`);
         }
     }
-    console.log(`✅ Ingredients: ${ingCount} upserted (BLS 4.0)`);
+    console.log(`✅ Ingredients: ${ingCount} upserted (Swiss Food DB)`);
 
     // ── Showcase recipe: Flammkuchen (used as tutorial redirect target) ──────
+    // Look up existing ingredients by slug (these should already exist from BLS or legacy seed)
+    const FLAMMKUCHEN_INGREDIENT_SLUGS = [
+        { label: 'Mehl', slug: 'weizenmehl-backmehl-typ-550' },
+        { label: 'Mineralwasser', slug: 'mineralwasser-mit-kohlensaeure' },
+        { label: 'Olivenöl', slug: 'olivenoel' },
+        { label: 'Salz', slug: 'speisesalz-jodiert-fluoridiert' },
+        { label: 'Crème fraîche', slug: 'creme-fraiche' },
+        { label: 'Milch', slug: 'vollmilch-pasteurisiert' },
+        { label: 'Speck', slug: 'speck-durchwachsen' },
+        { label: 'Zwiebel', slug: 'zwiebel-roh' },
+        { label: 'Apfel', slug: 'apfel-roh' },
+        { label: 'Zitronensaft', slug: 'zitronensaft' },
+        { label: 'Zimtzucker', slug: 'zucker-weiss' },
+        { label: 'Mandelblättchen', slug: 'mandeln-ohne-haut' },
+    ] as const;
+
+    const fkIngMap = new Map<string, { id: string; name: string }>(); // slug → { id, name }
+    for (const ing of FLAMMKUCHEN_INGREDIENT_SLUGS) {
+        const found = await prisma.ingredient.findUnique({
+            where: { slug: ing.slug },
+            select: { id: true, name: true },
+        });
+        if (found) {
+            fkIngMap.set(ing.slug, found);
+        } else {
+            console.warn(`  ⚠ Ingredient not found: ${ing.label} (${ing.slug}) — skipping`);
+        }
+    }
+
+    const fkId = (slug: string) => fkIngMap.get(slug)?.id;
+    const fkMention = (label: string, slug: string) => {
+        const id = fkId(slug);
+        return id ? `@[${label}](${id})` : label;
+    };
+
     const hauptgerichtCat = await prisma.category.findUnique({ where: { slug: 'hauptgericht' } });
+
+    // Shorthand aliases for readable node definitions
+    const mehl = 'weizenmehl-backmehl-typ-550';
+    const wasser = 'mineralwasser-mit-kohlensaeure';
+    const oel = 'olivenoel';
+    const salz = 'speisesalz-jodiert-fluoridiert';
+    const creme = 'creme-fraiche';
+    const milch = 'vollmilch-pasteurisiert';
+    const speck = 'speck-durchwachsen';
+    const zwiebel = 'zwiebel-roh';
+    const apfel = 'apfel-roh';
+    const zitrone = 'zitronensaft';
+    const zimt = 'zucker-weiss';
+    const mandel = 'mandeln-ohne-haut';
+
+    const ids = (slugs: string[]) => slugs.map(fkId).filter(Boolean) as string[];
+
     const flammkuchenFlowNodes = [
-        { id: 'start', type: 'start', label: 'Start', position: { x: 280, y: 0 } },
         {
-            id: 'make-dough',
-            type: 'recipeStep',
-            data: {
-                stepType: 'knead',
-                label: 'Teig zubereiten',
-                duration: 10,
-                description:
-                    'Mehl, Wasser, Olivenöl und Salz zu einem glatten Teig verkneten. 15 Minuten ruhen lassen.',
-            },
-            position: { x: 280, y: 130 },
+            id: 'start',
+            type: 'start',
+            label: "Los geht's!",
+            position: { x: 40, y: 145.25 },
+            description: 'Bereite alle Zutaten für Teig und gewünschten Belag vor.',
+            ingredientIds: [],
         },
         {
-            id: 'prep-topping',
-            type: 'recipeStep',
-            data: {
-                stepType: 'cut',
-                label: 'Belag vorbereiten',
-                duration: 10,
-                description:
-                    'Zwiebeln in feine Ringe schneiden. Speck in kleine Streifen schneiden.',
-            },
-            position: { x: 280, y: 310 },
+            id: 'step-1',
+            type: 'mixen',
+            label: 'Teig herstellen',
+            duration: 10,
+            position: { x: 360, y: 145.25 },
+            description: `${fkMention('Mehl', mehl)}, ${fkMention('Mineralwasser mit Kohlensäure', wasser)}, Öl und ${fkMention('Salz', salz)} zu einem glatten, nicht klebenden Teig verarbeiten. Falls nötig etwas mehr Wasser, Öl oder Mehl ergänzen.`,
+            ingredientIds: ids([mehl, wasser, oel, salz]),
         },
         {
-            id: 'roll-dough',
-            type: 'recipeStep',
-            data: {
-                stepType: 'other',
-                label: 'Teig ausrollen',
-                duration: 5,
-                description:
-                    'Teig auf einer bemehlten Fläche dünn ausrollen und auf ein Backblech legen.',
-            },
-            position: { x: 280, y: 490 },
+            id: 'step-2',
+            type: 'warten',
+            label: 'Teig kühlen',
+            duration: 10,
+            position: { x: 680, y: 145.25 },
+            description:
+                'Den Teig zu einer Kugel formen, in Frischhaltefolie wickeln und im Kühlschrank ruhen lassen.',
+            ingredientIds: [],
         },
         {
-            id: 'spread-cream',
-            type: 'recipeStep',
-            data: {
-                stepType: 'other',
-                label: 'Crème fraîche verteilen',
-                duration: 3,
-                description:
-                    'Crème fraîche gleichmäßig auf dem Teig verstreichen. Mit Salz und Pfeffer würzen.',
-            },
-            position: { x: 280, y: 670 },
+            id: 'step-3',
+            type: 'backen',
+            label: 'Ofen vorheizen',
+            duration: 10,
+            position: { x: 1000, y: 54.75 },
+            description: 'Den Backofen auf 220 °C Umluft oder 230 °C Ober-/Unterhitze vorheizen.',
+            ingredientIds: [],
         },
         {
-            id: 'add-topping',
-            type: 'recipeStep',
-            data: {
-                stepType: 'other',
-                label: 'Belegen',
-                duration: 3,
-                description:
-                    'Zwiebelringe und Speckstreifen gleichmäßig auf der Crème fraîche verteilen.',
-            },
-            position: { x: 280, y: 850 },
+            id: 'step-4',
+            type: 'mixen',
+            label: 'Creme verrühren',
+            duration: 3,
+            position: { x: 1000, y: 235.75 },
+            description: `${fkMention('Crème fraîche', creme)} oder Schmand mit ${fkMention('Milch', milch)} oder Sahne glatt verrühren und bis zur Verwendung kühl stellen.`,
+            ingredientIds: ids([creme, milch]),
         },
         {
-            id: 'bake',
-            type: 'recipeStep',
-            data: {
-                stepType: 'bake',
-                label: 'Backen',
-                duration: 15,
-                description:
-                    'Im vorgeheizten Ofen bei 220°C Ober-/Unterhitze ca. 15 Minuten goldbraun backen.',
-            },
-            position: { x: 280, y: 1030 },
+            id: 'step-5',
+            type: 'anrichten',
+            label: 'Teig ausrollen',
+            duration: 7,
+            position: { x: 1320, y: 145.25 },
+            description:
+                'Den gekühlten Teig 3 bis 5 mm dick auf Blechgröße ausrollen und auf ein gefettetes oder mit Backpapier belegtes Blech legen.',
+            ingredientIds: [],
         },
-        { id: 'serve', type: 'serve', label: 'Servieren', position: { x: 280, y: 1210 } },
+        {
+            id: 'step-6',
+            type: 'anrichten',
+            label: 'Creme aufstreichen',
+            duration: 2,
+            position: { x: 1640, y: 145.25 },
+            description: 'Die vorbereitete Creme gleichmäßig auf dem ausgerollten Teig verteilen.',
+            ingredientIds: ids([creme, milch]),
+        },
+        {
+            id: 'step-7',
+            type: 'schneiden',
+            label: 'Herzhaften Belag schneiden',
+            duration: 5,
+            position: { x: 1960, y: 39.5 },
+            description: `Die ${fkMention('Zwiebel', zwiebel)} würfeln oder in Halbringe schneiden. Den ${fkMention('Speck', speck)} in feine, gleich große Würfel schneiden, falls nötig.`,
+            ingredientIds: ids([speck, zwiebel]),
+        },
+        {
+            id: 'step-8',
+            type: 'anrichten',
+            label: 'Herzhaft belegen',
+            duration: 2,
+            position: { x: 2280, y: 39.5 },
+            description: `${fkMention('Speck', speck)} und Zwiebeln gleichmäßig auf der Creme verteilen.`,
+            ingredientIds: ids([speck, zwiebel]),
+        },
+        {
+            id: 'step-9',
+            type: 'schneiden',
+            label: 'Süßen Belag vorbereiten',
+            duration: 6,
+            position: { x: 1960, y: 251 },
+            description: `Die Äpfel schälen und in dünne Scheiben schneiden. Mit etwas ${fkMention('Zitronensaft', zitrone)} beträufeln.`,
+            ingredientIds: ids([apfel, zitrone]),
+        },
+        {
+            id: 'step-10',
+            type: 'anrichten',
+            label: 'Süß belegen',
+            duration: 3,
+            position: { x: 2280, y: 251 },
+            description: `Die Apfelscheiben nebeneinander auf den Teig legen, mit ${fkMention('Mandelblättchen', mandel)} bestreuen und anschließend ${fkMention('Zimtzucker', zimt)} darüber streuen.`,
+            ingredientIds: ids([apfel, zimt, mandel]),
+        },
+        {
+            id: 'step-11',
+            type: 'backen',
+            label: 'Flammkuchen backen',
+            duration: 15,
+            position: { x: 2600, y: 145.25 },
+            description:
+                'Den belegten Flammkuchen im heißen Ofen 10 bis 15 Minuten backen, bis der Rand braun ist.',
+            ingredientIds: [],
+        },
+        {
+            id: 'step-12',
+            type: 'anrichten',
+            label: 'Flammkuchen teilen',
+            duration: 2,
+            position: { x: 2920, y: 145.25 },
+            description: 'Den fertigen Flammkuchen aus dem Ofen nehmen und in Stücke teilen.',
+            ingredientIds: [],
+        },
+        {
+            id: 'servieren',
+            type: 'servieren',
+            label: 'Servieren',
+            position: { x: 3240, y: 145.25 },
+            description:
+                'Den Flammkuchen warm servieren, nach Wunsch mit Federweißem, Weißwein oder Pils.',
+            ingredientIds: [],
+        },
     ];
     const flammkuchenFlowEdges = [
-        { id: 'e1', source: 'start', target: 'make-dough' },
-        { id: 'e2', source: 'make-dough', target: 'prep-topping' },
-        { id: 'e3', source: 'prep-topping', target: 'roll-dough' },
-        { id: 'e4', source: 'roll-dough', target: 'spread-cream' },
-        { id: 'e5', source: 'spread-cream', target: 'add-topping' },
-        { id: 'e6', source: 'add-topping', target: 'bake' },
-        { id: 'e7', source: 'bake', target: 'serve' },
+        { id: 'edge-1', source: 'start', target: 'step-1' },
+        { id: 'edge-2', source: 'step-1', target: 'step-2' },
+        { id: 'edge-3', source: 'step-2', target: 'step-4' },
+        { id: 'edge-4', source: 'step-2', target: 'step-3' },
+        { id: 'edge-5', source: 'step-3', target: 'step-5' },
+        { id: 'edge-6', source: 'step-4', target: 'step-5' },
+        { id: 'edge-7', source: 'step-5', target: 'step-6' },
+        { id: 'edge-8', source: 'step-6', target: 'step-7' },
+        { id: 'edge-9', source: 'step-6', target: 'step-9' },
+        { id: 'edge-10', source: 'step-7', target: 'step-8' },
+        { id: 'edge-11', source: 'step-8', target: 'step-11' },
+        { id: 'edge-12', source: 'step-9', target: 'step-10' },
+        { id: 'edge-13', source: 'step-10', target: 'step-11' },
+        { id: 'edge-14', source: 'step-11', target: 'step-12' },
+        { id: 'edge-15', source: 'step-12', target: 'servieren' },
     ];
 
-    await prisma.recipe.upsert({
+    // Flammkuchen recipe ingredients with amounts (only those found in DB)
+    const flammkuchenRecipeIngredients = [
+        { slug: mehl, amount: '250', unit: 'g' },
+        { slug: wasser, amount: '125', unit: 'ml' },
+        { slug: oel, amount: '2', unit: 'EL' },
+        { slug: salz, amount: '1', unit: 'TL' },
+        { slug: creme, amount: '200', unit: 'g' },
+        { slug: milch, amount: '2', unit: 'EL' },
+        { slug: speck, amount: '150', unit: 'g' },
+        { slug: zwiebel, amount: '2', unit: 'Stk' },
+        { slug: apfel, amount: '2', unit: 'Stk' },
+        { slug: zitrone, amount: '1', unit: 'EL' },
+        { slug: zimt, amount: '2', unit: 'EL' },
+        { slug: mandel, amount: '30', unit: 'g' },
+    ].filter((ing) => fkId(ing.slug)); // only include found ingredients
+
+    const flammkuchen = await prisma.recipe.upsert({
         where: { slug: 'flammkuchen' },
-        update: {},
+        update: {
+            flowNodes: flammkuchenFlowNodes as any,
+            flowEdges: flammkuchenFlowEdges as any,
+            authorId: systemUser.id,
+            description:
+                'Knuspriger Elsässer Flammkuchen mit Crème fraîche, Zwiebeln und Speck — ein Klassiker, der immer gelingt. Wahlweise herzhaft oder süß mit Äpfeln und Zimtzucker.',
+        },
         create: {
             title: 'Flammkuchen',
             slug: 'flammkuchen',
             description:
-                'Knuspriger Elsässer Flammkuchen mit Crème fraîche, Zwiebeln und Speck — ein Klassiker, der immer gelingt.',
+                'Knuspriger Elsässer Flammkuchen mit Crème fraîche, Zwiebeln und Speck — ein Klassiker, der immer gelingt. Wahlweise herzhaft oder süß mit Äpfeln und Zimtzucker.',
             servings: 4,
             prepTime: 25,
             cookTime: 15,
@@ -909,7 +1139,24 @@ async function main() {
                 : {}),
         },
     });
-    console.log(`✅ Showcase recipe: Flammkuchen`);
+
+    // Link ingredients to recipe (only those found in DB)
+    await prisma.recipeIngredient.deleteMany({ where: { recipeId: flammkuchen.id } });
+    if (flammkuchenRecipeIngredients.length > 0) {
+        await prisma.recipeIngredient.createMany({
+            data: flammkuchenRecipeIngredients.map((ing, index) => ({
+                recipeId: flammkuchen.id,
+                ingredientId: fkId(ing.slug)!,
+                amount: ing.amount,
+                unit: ing.unit,
+                isOptional: false,
+                position: index,
+            })),
+        });
+    }
+    console.log(
+        `✅ Showcase recipe: Flammkuchen (14 nodes, ${flammkuchenRecipeIngredients.length} ingredients, ${fkIngMap.size}/${FLAMMKUCHEN_INGREDIENT_SLUGS.length} ingredients found)`,
+    );
 
     console.log('\n🎉 Basics seeding complete!');
 }

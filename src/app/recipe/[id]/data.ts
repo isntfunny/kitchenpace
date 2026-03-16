@@ -5,10 +5,10 @@ export interface Ingredient {
     rawAmount?: string;
     unit: string;
     notes?: string | null;
-    caloriesPer100g?: number | null;
-    proteinPer100g?: number | null;
-    fatPer100g?: number | null;
-    carbsPer100g?: number | null;
+    energyKcal?: number | null;
+    protein?: number | null;
+    fat?: number | null;
+    carbs?: number | null;
     ingredientUnitGrams?: number | null;
     unitGramsDefault?: number | null;
 }

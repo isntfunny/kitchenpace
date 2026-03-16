@@ -413,15 +413,54 @@ model Ingredient {
   needsReview     Boolean             @default(false)
   createdAt       DateTime            @default(now())
 
-  // Nutrition per 100g (all optional)
-  caloriesPer100g     Float?
-  proteinPer100g      Float?
-  fatPer100g          Float?
-  carbsPer100g        Float?
-  fiberPer100g        Float?
-  sugarPer100g        Float?
-  sodiumPer100g       Float?  // mg
-  saturatedFatPer100g Float?
+  // Swiss Food DB reference
+  swissFoodId              Int?    @unique
+
+  // Nutrition per 100g (from Swiss Food Composition Database V 7.0)
+  energyKj                 Float?
+  energyKcal               Float?
+  fat                      Float?
+  saturatedFat             Float?
+  monoUnsaturatedFat       Float?
+  polyUnsaturatedFat       Float?
+  linoleicAcid             Float?
+  alphaLinolenicAcid       Float?
+  epa                      Float?
+  dha                      Float?
+  cholesterol              Float?
+  carbs                    Float?
+  sugar                    Float?
+  starch                   Float?
+  fiber                    Float?
+  protein                  Float?
+  salt                     Float?
+  alcohol                  Float?
+  water                    Float?
+  sodium                   Float?
+  vitaminA_RE              Float?  @map("vitamin_a_re")
+  vitaminA_RAE             Float?  @map("vitamin_a_rae")
+  retinol                  Float?
+  betaCaroteneActivity     Float?  @map("beta_carotene_activity")
+  betaCarotene             Float?  @map("beta_carotene")
+  vitaminB1                Float?  @map("vitamin_b1")
+  vitaminB2                Float?  @map("vitamin_b2")
+  vitaminB6                Float?  @map("vitamin_b6")
+  vitaminB12               Float?  @map("vitamin_b12")
+  niacin                   Float?
+  folate                   Float?
+  pantothenicAcid          Float?  @map("pantothenic_acid")
+  vitaminC                 Float?  @map("vitamin_c")
+  vitaminD                 Float?  @map("vitamin_d")
+  vitaminE                 Float?  @map("vitamin_e")
+  potassium                Float?
+  chloride                 Float?
+  calcium                  Float?
+  magnesium                Float?
+  phosphorus               Float?
+  iron                     Float?
+  iodine                   Float?
+  zinc                     Float?
+  selenium                 Float?
 
   // Relations
   categories      IngredientCategory[]

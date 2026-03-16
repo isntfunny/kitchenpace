@@ -14,10 +14,10 @@ interface Ingredient {
     rawAmount?: string;
     unit: string;
     notes?: string | null;
-    caloriesPer100g?: number | null;
-    proteinPer100g?: number | null;
-    fatPer100g?: number | null;
-    carbsPer100g?: number | null;
+    energyKcal?: number | null;
+    protein?: number | null;
+    fat?: number | null;
+    carbs?: number | null;
     ingredientUnitGrams?: number | null;
     unitGramsDefault?: number | null;
 }
@@ -66,26 +66,26 @@ export function IngredientList({
                 missingReason = 'Menge nicht lesbar';
             } else if (gramsPerUnit === null) {
                 missingReason = `Keine Gramm-Umrechnung fuer ${ingredient.unit}`;
-            } else if (ingredient.caloriesPer100g == null) {
+            } else if (ingredient.energyKcal == null) {
                 missingReason = 'Keine Naehrwerte hinterlegt';
             }
 
             const caloriesTotal =
-                missingReason || gramsAmount == null || ingredient.caloriesPer100g == null
+                missingReason || gramsAmount == null || ingredient.energyKcal == null
                     ? null
-                    : roundToOne((ingredient.caloriesPer100g * gramsAmount) / 100);
+                    : roundToOne((ingredient.energyKcal * gramsAmount) / 100);
             const proteinTotal =
                 missingReason || gramsAmount == null
                     ? null
-                    : roundToOne(((ingredient.proteinPer100g ?? 0) * gramsAmount) / 100);
+                    : roundToOne(((ingredient.protein ?? 0) * gramsAmount) / 100);
             const carbsTotal =
                 missingReason || gramsAmount == null
                     ? null
-                    : roundToOne(((ingredient.carbsPer100g ?? 0) * gramsAmount) / 100);
+                    : roundToOne(((ingredient.carbs ?? 0) * gramsAmount) / 100);
             const fatTotal =
                 missingReason || gramsAmount == null
                     ? null
-                    : roundToOne(((ingredient.fatPer100g ?? 0) * gramsAmount) / 100);
+                    : roundToOne(((ingredient.fat ?? 0) * gramsAmount) / 100);
 
             return {
                 ingredient,
@@ -409,7 +409,7 @@ export function IngredientList({
                                                 </TableCell>
                                                 <TableCell>
                                                     {formatNullableNumber(
-                                                        row.ingredient.caloriesPer100g,
+                                                        row.ingredient.energyKcal,
                                                         'kcal',
                                                     )}
                                                 </TableCell>

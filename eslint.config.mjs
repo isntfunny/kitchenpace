@@ -54,6 +54,9 @@ const eslintConfig = defineConfig([
             // Unused imports
             'unused-imports/no-unused-imports': 'error',
 
+            // File length
+            'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }],
+
             // Import sorting
             'import/order': [
                 'error',

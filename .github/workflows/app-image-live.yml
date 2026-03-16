@@ -8,6 +8,7 @@ on:
 
 env:
     COOLIFY_APP_UUID: icskwwcoscc000ksggckksw4
+    IMAGE: registry.isntfunny.de/kitchenpace
 
 jobs:
     lint:
@@ -77,9 +78,22 @@ jobs:
                   path: playwright-report/
                   retention-days: 14
 
+    build-image:
+        runs-on: self-hosted
+        needs: [lint]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Build and push Docker image
+              run: |
+                  TAG="${GITHUB_REF_NAME:-latest}"
+                  docker build -t "$IMAGE:$TAG" -t "$IMAGE:latest" .
+                  docker push "$IMAGE:$TAG"
+                  docker push "$IMAGE:latest"
+
     deploy:
         runs-on: self-hosted
-        needs: [lint, e2e]
+        needs: [lint, e2e, build-image]
         steps:
             - name: Trigger Coolify redeploy
               run: |

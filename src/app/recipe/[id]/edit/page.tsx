@@ -54,6 +54,7 @@ export default async function EditRecipePage({ params }: EditRecipePageProps) {
                 authorId={recipe.authorId}
                 initialData={recipe}
                 layout="sidebar"
+                isAdmin={userIsAdmin}
             />
         </FullWidthShell>
     );

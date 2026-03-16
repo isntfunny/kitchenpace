@@ -73,6 +73,7 @@ interface RecipeFormProps {
     initialData?: EditRecipeData;
     layout?: 'stack' | 'sidebar';
     initialShouldShowTutorial?: boolean;
+    isAdmin?: boolean;
 }
 
 export function RecipeForm({
@@ -83,6 +84,7 @@ export function RecipeForm({
     initialData,
     layout = 'stack',
     initialShouldShowTutorial = false,
+    isAdmin = false,
 }: RecipeFormProps) {
     const op = useOpenPanel();
     const isEditMode = Boolean(initialData);
@@ -215,7 +217,12 @@ export function RecipeForm({
             const payload = buildPayloadRef.current('DRAFT');
 
             if (autoSavedIdRef.current) {
-                const result = await updateRecipe(autoSavedIdRef.current, payload, authorId);
+                const result = await updateRecipe(
+                    autoSavedIdRef.current,
+                    payload,
+                    authorId,
+                    isAdmin,
+                );
                 if (result.imageKey && result.imageKey !== payload.imageKey) {
                     setImageKey(result.imageKey);
                 }
@@ -231,7 +238,7 @@ export function RecipeForm({
         } catch {
             setAutoSaveStatus('error');
         }
-    }, [title, authorId]);
+    }, [title, authorId, isAdmin]);
 
     const performAutoSaveRef = useRef(performAutoSave);
     performAutoSaveRef.current = performAutoSave;
@@ -560,7 +567,7 @@ export function RecipeForm({
 
             if (isEditMode || autoSavedIdRef.current) {
                 const recipeId = (isEditMode ? initialData!.id : autoSavedIdRef.current)!;
-                const recipe = await updateRecipe(recipeId, payload, authorId);
+                const recipe = await updateRecipe(recipeId, payload, authorId, isAdmin);
                 window.location.href = `/recipe/${recipe.slug}`;
             } else {
                 const recipe = await createRecipe(payload, authorId);

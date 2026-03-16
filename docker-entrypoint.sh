@@ -17,12 +17,9 @@ if [ -n "$INFISICAL_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
   npx infisical export \
     --projectId "${INFISICAL_PROJECT_ID}" \
     --env "${INFISICAL_ENV:-prod}" \
-    --format=dotenv > /tmp/.env.infisical
-  set -a
+    --format=dotenv-export > /tmp/.env.infisical
   . /tmp/.env.infisical
-  set +a
-  # Auto-source hint for docker exec sessions
-  echo '[entrypoint] For docker exec: . /tmp/.env.infisical'
+  echo "[entrypoint] Loaded $(wc -l < /tmp/.env.infisical) secrets from Infisical"
   echo "[entrypoint] Loaded $(wc -l < /tmp/.env.infisical) secrets from Infisical"
 fi
 

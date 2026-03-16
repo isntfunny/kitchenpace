@@ -35,10 +35,6 @@ jobs:
 
             - run: npm run format:check
 
-            - run: npm run build
-              env:
-                  DATABASE_URL: postgresql://build:build@localhost:5432/build
-
     e2e:
         runs-on: self-hosted
         needs: [lint]

@@ -39,13 +39,8 @@ services:
             retries: 5
 
     live-kitchenpace:
-        build:
-            context: .
-            dockerfile: Dockerfile
-            target: app
-            extra_hosts:
-                - 'host.docker.internal:host-gateway'
-        image: kitchenpace:live
+        image: registry.isntfunny.de/kitchenpace:latest
+        pull_policy: always
         container_name: kitchenpace-app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
@@ -65,7 +60,8 @@ services:
             start_period: 30s
 
     worker:
-        image: kitchenpace:live
+        image: registry.isntfunny.de/kitchenpace:latest
+        pull_policy: always
         command: ['npm', 'run', 'worker']
         container_name: kitchenpace-worker
         extra_hosts:

@@ -1,5 +1,5 @@
 import { Check, CheckCircle2, Clock, Pause, Play, RotateCcw } from 'lucide-react';
-import type { CSSProperties } from 'react';
+import { type CSSProperties, useMemo } from 'react';
 
 import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
@@ -44,7 +44,10 @@ export function StepCard({
     const config = getStepConfig(node.type as StepType);
     const Icon = config.icon;
     const hasTimer = !!timerState;
-    const chips = extractIngredientChips(node.description, ingredients);
+    const chips = useMemo(
+        () => extractIngredientChips(node.description, ingredients),
+        [node.description, ingredients],
+    );
     const timerDone = hasTimer && timerState!.remaining === 0;
     const timerRunning = hasTimer && timerState!.running;
     const pct = hasTimer

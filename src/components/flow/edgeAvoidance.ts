@@ -135,66 +135,62 @@ export function computeAvoidingPath(
     const sweepMinY = Math.min(sourceY, targetY);
     const sweepMaxY = Math.max(sourceY, targetY);
 
+    // Single pass: collect obstacles, global Y bounds, and corridor candidates
     const obstacles: NodeRect[] = [];
-    for (const n of allNodes) {
-        if (n.id === sourceId || n.id === targetId) continue;
+    let allMinY = Infinity;
+    let allMaxY = -Infinity;
+    let obsMinY = Infinity;
+    let obsMaxY = -Infinity;
 
+    // Nodes in the horizontal corridor (for corridor-clear checks later)
+    const corridorNodes: Array<{ y: number; bottom: number }> = [];
+
+    for (const n of allNodes) {
         const nRight = n.x + n.width;
         const nBottom = n.y + n.height;
 
-        // Must be horizontally between source and target
+        // Track global Y bounds
+        allMinY = Math.min(allMinY, n.y);
+        allMaxY = Math.max(allMaxY, nBottom);
+
+        if (n.id === sourceId || n.id === targetId) continue;
+
+        // Horizontally between source and target?
         if (nRight < sourceX + 30 || n.x > targetX - 30) continue;
 
-        // Must overlap the vertical sweep of the edge (with padding)
-        if (nBottom < sweepMinY - OBSTACLE_PAD || n.y > sweepMaxY + OBSTACLE_PAD) continue;
+        // Track corridor nodes for later clear-checks
+        corridorNodes.push({ y: n.y, bottom: nBottom });
 
-        // More precise: would the step path's vertical segment at midX cross this node?
-        // Step path vertical segment runs from sourceY to targetY at x = midX.
-        // Node is an obstacle if its x-range contains midX AND its y-range overlaps [sourceY..targetY].
+        // Obstacle: overlaps vertical sweep AND covers midX
+        if (nBottom < sweepMinY - OBSTACLE_PAD || n.y > sweepMaxY + OBSTACLE_PAD) continue;
         const nodeCoversX = n.x - OBSTACLE_PAD < midX && nRight + OBSTACLE_PAD > midX;
         if (!nodeCoversX) continue;
 
         obstacles.push(n);
+        obsMinY = Math.min(obsMinY, n.y);
+        obsMaxY = Math.max(obsMaxY, nBottom);
     }
 
     if (obstacles.length === 0) return null;
 
-    // Compute bounding box of obstacles
-    let obsMinY = Infinity;
-    let obsMaxY = -Infinity;
-    for (const n of obstacles) {
-        obsMinY = Math.min(obsMinY, n.y);
-        obsMaxY = Math.max(obsMaxY, n.y + n.height);
-    }
-
-    // All nodes for spatial context — find free space above and below
-    const allMinY = Math.min(...allNodes.map((n) => n.y));
-    const allMaxY = Math.max(...allNodes.map((n) => n.y + n.height));
-
-    // Prefer routing on the side with more room; if equal, go above
     const roomAbove = obsMinY - allMinY;
     const roomBelow = allMaxY - obsMaxY;
 
-    // Determine which side of the obstacle to route, and check that no other
-    // node occupies that detour corridor
     const candidateAbove = obsMinY - OBSTACLE_PAD;
     const candidateBelow = obsMaxY + OBSTACLE_PAD;
 
-    // Check if the above/below corridors are actually clear
-    const aboveClear = !allNodes.some((n) => {
-        if (n.id === sourceId || n.id === targetId) return false;
-        const nBottom = n.y + n.height;
-        const nRight = n.x + n.width;
-        if (nRight < sourceX + 30 || n.x > targetX - 30) return false;
-        return nBottom > candidateAbove - 10 && n.y < candidateAbove + 10;
-    });
-
-    const belowClear = !allNodes.some((n) => {
-        if (n.id === sourceId || n.id === targetId) return false;
-        const nRight = n.x + n.width;
-        if (nRight < sourceX + 30 || n.x > targetX - 30) return false;
-        return n.y < candidateBelow + 10 && n.y + n.height > candidateBelow - 10;
-    });
+    // Check if above/below corridors are clear (single pass over corridor nodes)
+    let aboveClear = true;
+    let belowClear = true;
+    for (const cn of corridorNodes) {
+        if (aboveClear && cn.bottom > candidateAbove - 10 && cn.y < candidateAbove + 10) {
+            aboveClear = false;
+        }
+        if (belowClear && cn.y < candidateBelow + 10 && cn.bottom > candidateBelow - 10) {
+            belowClear = false;
+        }
+        if (!aboveClear && !belowClear) break;
+    }
 
     let detourY: number;
     if (aboveClear && belowClear) {

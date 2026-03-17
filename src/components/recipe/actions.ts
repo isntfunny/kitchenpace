@@ -103,15 +103,31 @@ export async function searchIngredients(rawInput: string): Promise<IngredientSea
     const searchTerm = parsed.name || trimmed;
 
     // 2. Search OpenSearch
+    //    - phrase_prefix: broad candidate matching (prefix on any token)
+    //    - match on name/pluralName: boosts exact word matches ("Eier" > "Eierschwamm")
     const response = await opensearchClient.search({
         index: OPENSEARCH_INGREDIENTS_INDEX,
         body: {
             size: 10,
             query: {
-                multi_match: {
-                    query: searchTerm,
-                    type: 'phrase_prefix',
-                    fields: ['name^3', 'keywords'],
+                bool: {
+                    should: [
+                        {
+                            multi_match: {
+                                query: searchTerm,
+                                type: 'phrase_prefix',
+                                fields: ['name^3', 'pluralName^3', 'aliases^2', 'keywords'],
+                            },
+                        },
+                        {
+                            multi_match: {
+                                query: searchTerm,
+                                type: 'best_fields',
+                                fields: ['name^10', 'pluralName^10', 'aliases^5'],
+                            },
+                        },
+                    ],
+                    minimum_should_match: 1,
                 },
             },
             sort: [{ _score: { order: 'desc' } }, { 'name.keyword': { order: 'asc' } }],

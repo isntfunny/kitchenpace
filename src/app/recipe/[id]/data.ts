@@ -83,6 +83,7 @@ export interface Recipe {
     favoriteCount?: number;
     ratingCount?: number;
     cookCount?: number;
+    sourceUrl?: string | null;
     moderationStatus?: string;
     moderationNote?: string | null;
     viewer?: {

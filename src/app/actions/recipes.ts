@@ -158,6 +158,7 @@ export interface RecipeDetailData {
     cookCount: number;
     publishedAt?: string | null;
     updatedAt?: string;
+    sourceUrl?: string | null;
     moderationStatus?: string;
     moderationNote?: string | null;
     viewer?: {
@@ -327,6 +328,7 @@ export async function fetchRecipeBySlug(
         imageKey: recipe.imageKey ?? null,
         publishedAt: recipe.publishedAt?.toISOString() ?? null,
         updatedAt: recipe.updatedAt.toISOString(),
+        sourceUrl: recipe.sourceUrl ?? null,
         moderationStatus: recipe.moderationStatus ?? undefined,
         moderationNote: recipe.moderationNote ?? undefined,
         viewer: viewerId

@@ -13,7 +13,7 @@ import httpx
 log = logging.getLogger("scraper")
 
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "large-v3-turbo")
-YTDLP_COOKIES = os.environ.get("YTDLP_COOKIES")
+YTDLP_BROWSER = os.environ.get("YTDLP_BROWSER", "firefox::no_keyring")
 
 _whisper_model = None
 
@@ -29,7 +29,7 @@ def _get_whisper():
 
 
 def _cookies_args() -> list[str]:
-    return ["--cookies", YTDLP_COOKIES] if YTDLP_COOKIES else []
+    return ["--cookies-from-browser", YTDLP_BROWSER]
 
 
 async def _get_metadata(url: str) -> dict:
@@ -38,7 +38,15 @@ async def _get_metadata(url: str) -> dict:
         *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     stdout, stderr = await proc.communicate()
     if proc.returncode != 0:
-        raise RuntimeError(f"yt-dlp failed: {stderr.decode()[:200]}")
+        err = stderr.decode()[:200]
+        if "no firefox profile" in err.lower() or (
+            "could not find" in err.lower() and "firefox" in err.lower()
+        ):
+            raise RuntimeError(
+                "Firefox-Profil nicht gefunden. Bitte zuerst über noVNC "
+                "(Port 5800) in YouTube einloggen."
+            )
+        raise RuntimeError(f"yt-dlp failed: {err}")
     return json.loads(stdout.decode())
 
 

@@ -82,6 +82,10 @@ services:
         image: registry.isntfunny.de/kitchenpace/scraper:latest
         pull_policy: always
         container_name: kitchenpace-scraper
+        volumes:
+            - ./kitchenpace/firefox:/config
+        ports:
+            - '127.0.0.1:5800:5800'
         healthcheck:
             test: ['CMD', 'curl', '-f', 'http://127.0.0.1:8000/health']
             interval: 1s

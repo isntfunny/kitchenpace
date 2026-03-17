@@ -146,17 +146,17 @@ export function IngredientManager({
         inputRef.current?.focus();
     }, [onIngredientQueryChange]);
 
-    /** If ingredient already in list, merge parsed values (fill gaps only) and return true. */
+    /** If ingredient already in list, merge parsed values and return true.
+     *  New non-empty values always win; empty/null values don't overwrite. */
     const tryMergeExisting = useCallback(
         (id: string, name: string, p: ParsedIngredientInput): boolean => {
             const idx = ingredients.findIndex(
                 (i) => i.id === id || i.name.toLowerCase() === name.toLowerCase(),
             );
             if (idx === -1) return false;
-            const existing = ingredients[idx];
             const changes: Partial<AddedIngredient> = {};
-            if (p.amount && !existing.amount) changes.amount = p.amount;
-            if (p.unit && !existing.unit) changes.unit = p.unit;
+            if (p.amount) changes.amount = p.amount;
+            if (p.unit) changes.unit = p.unit;
             if (Object.keys(changes).length > 0) onUpdateIngredient(idx, changes);
             setEditingIndex(idx);
             finishSubmit();
@@ -195,10 +195,9 @@ export function IngredientManager({
                 (i) => i.name.toLowerCase() === name.toLowerCase(),
             );
             if (existingIdx !== -1) {
-                const existing = ingredients[existingIdx];
                 const changes: Partial<AddedIngredient> = {};
-                if (p.amount && !existing.amount) changes.amount = p.amount;
-                if (p.unit && !existing.unit) changes.unit = p.unit;
+                if (p.amount) changes.amount = p.amount;
+                if (p.unit) changes.unit = p.unit;
                 if (Object.keys(changes).length > 0) onUpdateIngredient(existingIdx, changes);
                 setEditingIndex(existingIdx);
                 finishSubmit();

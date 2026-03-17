@@ -16,6 +16,7 @@ import {
     type Node as RFNode,
     type NodeChange,
     type NodeProps,
+    useNodes,
     useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -57,9 +58,9 @@ function CurvedEdge(props: EdgeProps) {
         markerEnd,
         style,
     } = props;
-    const { getNodes } = useReactFlow();
+    const allNodes = useNodes();
 
-    const nodeRects = useMemo(() => nodesToRects(getNodes()), [getNodes]);
+    const nodeRects = useMemo(() => nodesToRects(allNodes), [allNodes]);
     const avoidance = useMemo(
         () => computeAvoidingPath(sourceX, sourceY, targetX, targetY, nodeRects, source, target),
         [sourceX, sourceY, targetX, targetY, nodeRects, source, target],

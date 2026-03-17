@@ -152,8 +152,9 @@ export function renderDescription(
 export function extractMentionedIds(description: string | undefined): Set<string> {
     if (!description) return new Set();
     const ids = new Set<string>();
-    for (const match of description.matchAll(/@\[.*?(?:\|.*?)?\]\((.*?)\)/g)) {
-        ids.add(match[1]);
+    const re = new RegExp(MENTION_REGEX.source, 'g');
+    for (const match of description.matchAll(re)) {
+        ids.add(match[3]); // group 3 = ingredient ID
     }
     return ids;
 }

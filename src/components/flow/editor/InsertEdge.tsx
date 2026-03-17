@@ -4,6 +4,7 @@ import {
     BaseEdge,
     EdgeLabelRenderer,
     getSmoothStepPath,
+    useNodes,
     useReactFlow,
     type EdgeProps,
 } from '@xyflow/react';
@@ -39,13 +40,14 @@ function InsertEdgeComponent({
     selected,
 }: EdgeProps) {
     const { onInsertOnEdge } = useFlowEditor();
-    const { deleteElements, getNodes } = useReactFlow();
+    const { deleteElements } = useReactFlow();
+    const allNodes = useNodes();
     const dark = useIsDark();
     const [, setIsHovered] = useState(false);
     const [popoverOpen, setPopoverOpen] = useState(false);
 
     // Compute node-avoiding path when intermediate nodes would be crossed
-    const nodeRects = useMemo(() => nodesToRects(getNodes()), [getNodes]);
+    const nodeRects = useMemo(() => nodesToRects(allNodes), [allNodes]);
     const avoidance = useMemo(
         () => computeAvoidingPath(sourceX, sourceY, targetX, targetY, nodeRects, source, target),
         [sourceX, sourceY, targetX, targetY, nodeRects, source, target],

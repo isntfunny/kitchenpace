@@ -4,6 +4,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Clock, GitBranch, X } from 'lucide-react';
 import { memo, useMemo, useCallback, useState, useRef, useEffect } from 'react';
 
+import { extractIngredientChips, renderDescription } from '@app/components/flow/viewer/viewerUtils';
 import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
 import {
     dispatchRecipeTutorialEvent,
@@ -19,55 +20,6 @@ import { AddNodeButton } from './AddNodeButton';
 import type { RecipeFlowNode } from './editorTypes';
 import { useFlowEditor } from './FlowEditorContext';
 import { getStepConfig } from './stepConfig';
-
-const MENTION_REGEX = /@\[.*?(?:\|.*?)?\]\((.*?)\)/g;
-const MENTION_FULL_REGEX = /@\[(.*?)(?:\|(.*?))?\]\((.*?)\)/g;
-
-/** Render description with @[Name](id) or @[Name|override](id) as inline highlighted chips */
-function renderDescription(
-    raw: string,
-    availableIngredients: import('@app/components/recipe/RecipeForm/data').AddedIngredient[],
-): React.ReactNode {
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
-    MENTION_FULL_REGEX.lastIndex = 0;
-
-    while ((match = MENTION_FULL_REGEX.exec(raw)) !== null) {
-        if (match.index > lastIndex) {
-            parts.push(raw.slice(lastIndex, match.index));
-        }
-        const [, name, override, id] = match;
-        const ing = availableIngredients.find((i) => i.id === id);
-        const amountStr = override
-            ? ` (${override})`
-            : ing && (ing.amount || ing.unit)
-              ? ` (${[ing.amount, ing.unit].filter(Boolean).join(' ')})`
-              : '';
-        parts.push(
-            <span
-                key={match.index}
-                style={{
-                    display: 'inline',
-                    backgroundColor: 'rgba(224,123,83,0.18)',
-                    color: '#c45e30',
-                    borderRadius: '4px',
-                    padding: '0 3px',
-                    fontWeight: 600,
-                    fontSize: 'inherit',
-                }}
-            >
-                {name}
-                {amountStr}
-            </span>,
-        );
-        lastIndex = match.index + match[0].length;
-    }
-    if (lastIndex < raw.length) {
-        parts.push(raw.slice(lastIndex));
-    }
-    return parts;
-}
 
 /** Small (+) button below a node that forks a new parallel branch */
 function ForkButton({
@@ -155,28 +107,17 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
     const config = getStepConfig(data.stepType);
     const isDark = useIsDark();
 
-    const ingredientChips = useMemo(() => {
-        if (!data.description) return [];
-        const chips: { id: string; label: string }[] = [];
-        const seen = new Set<string>();
-        for (const match of data.description.matchAll(MENTION_REGEX)) {
-            const ingredientId = match[1];
-            if (seen.has(ingredientId)) continue;
-            seen.add(ingredientId);
-            const ingredient = availableIngredients.find((ing) => ing.id === ingredientId);
-            if (ingredient) {
-                chips.push({
-                    id: ingredientId,
-                    label: `${ingredient.amount} ${ingredient.unit} ${ingredient.name}`,
-                });
-            }
-        }
-        return chips;
-    }, [data.description, availableIngredients]);
+    const ingredientChips = useMemo(
+        () => extractIngredientChips(data.description, availableIngredients),
+        [data.description, availableIngredients],
+    );
 
     const renderedDescription = useMemo(
-        () => (data.description ? renderDescription(data.description, availableIngredients) : null),
-        [data.description, availableIngredients],
+        () =>
+            data.description
+                ? renderDescription(data.description, availableIngredients, isDark)
+                : null,
+        [data.description, availableIngredients, isDark],
     );
 
     const canDelete = data.stepType !== 'start' && data.stepType !== 'servieren';

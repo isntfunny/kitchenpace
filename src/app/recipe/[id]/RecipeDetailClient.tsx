@@ -1,5 +1,6 @@
 'use client';
 
+import { ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
@@ -535,6 +536,86 @@ export function RecipeDetailClient({
                         </div>
                     </div>
                 </div>
+
+                {recipe.sourceUrl &&
+                    (() => {
+                        const src = recipe.sourceUrl;
+                        let hostname = '';
+                        try {
+                            hostname = new URL(src).hostname.replace('www.', '');
+                        } catch {
+                            /* */
+                        }
+
+                        // YouTube embed
+                        const ytMatch = src.match(
+                            /(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/,
+                        );
+                        if (ytMatch) {
+                            return (
+                                <div className={css({ mb: '8' })}>
+                                    <h2
+                                        className={css({
+                                            textStyle: 'lg',
+                                            fontWeight: 'bold',
+                                            mb: '3',
+                                        })}
+                                    >
+                                        Video
+                                    </h2>
+                                    <div
+                                        className={css({
+                                            position: 'relative',
+                                            pt: '56.25%',
+                                            borderRadius: 'lg',
+                                            overflow: 'hidden',
+                                        })}
+                                    >
+                                        <iframe
+                                            src={`https://www.youtube-nocookie.com/embed/${ytMatch[1]}`}
+                                            className={css({
+                                                position: 'absolute',
+                                                inset: '0',
+                                                w: 'full',
+                                                h: 'full',
+                                            })}
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                            title="Video"
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        // Other sources — simple link
+                        return (
+                            <div
+                                className={css({
+                                    mb: '8',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2',
+                                    color: 'fg.muted',
+                                    textStyle: 'sm',
+                                })}
+                            >
+                                <ExternalLink size={14} />
+                                <span>Quelle:</span>
+                                <a
+                                    href={src}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={css({
+                                        color: 'fg.default',
+                                        textDecoration: 'underline',
+                                    })}
+                                >
+                                    {hostname || src}
+                                </a>
+                            </div>
+                        );
+                    })()}
 
                 {author && (
                     <AuthorCard

@@ -32,6 +32,62 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '17. März 2026',
+        version: 'v2026-03-17',
+        emoji: '🧑‍🍳',
+        title: 'Smartere Zutateneingabe & Rezept-Import',
+        items: [
+            {
+                text: 'Intelligente Zutateneingabe — tippe z.B. "200g Spaghetti" und Menge, Einheit und Zutat werden automatisch erkannt',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Zutaten per Drag-and-Drop umsortieren',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Zutat ersetzen — klicke auf den Namen einer Zutat und suche einen Ersatz, ohne Menge und Notizen zu verlieren',
+                tag: 'feat',
+            },
+            {
+                text: 'Suchergebnisse zeigen jetzt farbig hervor, warum ein Treffer gefunden wurde',
+                tag: 'feat',
+            },
+            {
+                text: 'Besseres Matching — "Hackfleisch" findet jetzt auch "Hackfleisch, Gehacktes"',
+                tag: 'feat',
+            },
+            {
+                text: 'In der Schritt-Beschreibung kannst du mit @Zutat jetzt auch neue Zutaten anlegen, nicht nur bestehende verknüpfen',
+                tag: 'feat',
+            },
+            {
+                text: 'Rezepte von YouTube und anderen Webseiten importieren — mit automatischer Bilderkennung',
+                tag: 'feat',
+            },
+            {
+                text: 'Originalquelle wird beim Import gespeichert und auf der Rezeptseite angezeigt',
+                tag: 'feat',
+            },
+            {
+                text: 'Verbindungslinien im Kochablauf weichen jetzt automatisch um Schritte herum aus, statt sie zu überdecken',
+                tag: 'feat',
+            },
+            {
+                text: 'Zutaten-Chips unter jedem Schritt im Desktop-Viewer zeigen auf einen Blick, was gebraucht wird',
+                tag: 'feat',
+            },
+            {
+                text: 'Tippfehler bei der Zutatensuche werden jetzt besser erkannt und korrigiert',
+                tag: 'fix',
+            },
+            {
+                text: 'Enter-Taste im Ersetzen-Dialog schliesst nicht mehr versehentlich das Formular',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '16. März 2026',
         version: 'v2026-03-16',
         emoji: '🥦',

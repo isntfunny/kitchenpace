@@ -211,6 +211,7 @@ export async function saveImportedRecipe(
             totalTime: (data.prepTime ?? 0) + (data.cookTime ?? 0),
             difficulty: data.difficulty ?? 'MEDIUM',
             status: 'DRAFT',
+            sourceUrl: data.sourceUrl ?? null,
             authorId,
             flowNodes: data.flowNodes as unknown as object,
             flowEdges: data.flowEdges as unknown as object,

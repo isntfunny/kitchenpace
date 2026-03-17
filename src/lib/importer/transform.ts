@@ -16,6 +16,8 @@ export interface AnalyzedRecipe {
     title: string;
     description: string;
     imageUrl?: string;
+    /** Import source URL (YouTube/TikTok/website) for embeds on recipe page */
+    sourceUrl?: string;
     servings?: number;
     prepTime?: number;
     cookTime?: number;

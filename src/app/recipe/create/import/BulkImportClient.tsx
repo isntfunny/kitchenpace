@@ -267,6 +267,7 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
                 servings: editServings,
                 difficulty: editDifficulty,
                 imageUrl: editImageUrl || undefined,
+                sourceUrl: currentReviewItem.url || undefined,
             };
 
             const result = await saveImportedRecipe(recipeData, authorId);

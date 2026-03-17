@@ -1,7 +1,7 @@
 'use server';
 
 import { fireEvent } from '@app/lib/events/fire';
-import { createActivityLog } from '@app/lib/events/persist';
+import { createActivityLog, createUserNotification } from '@app/lib/events/persist';
 import { uploadImageFromUrl as uploadImageFromUrlShared } from '@app/lib/importer/upload-image-from-url';
 import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
 import { updateRecipeNutrition } from '@app/lib/nutrition/update-recipe-nutrition';
@@ -512,6 +512,24 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
     return recipe;
 }
 
+async function notifyModeratorsNewIngredient(ingredientId: string, ingredientName: string) {
+    const moderators = await prisma.user.findMany({
+        where: { role: { in: ['ADMIN', 'MODERATOR'] } },
+        select: { id: true },
+    });
+    await Promise.allSettled(
+        moderators.map((mod) =>
+            createUserNotification({
+                userId: mod.id,
+                type: 'SYSTEM',
+                title: 'Neue Zutat erstellt',
+                message: `„${ingredientName}" wurde von einem Nutzer erstellt und muss überprüft werden.`,
+                data: { ingredientId },
+            }),
+        ),
+    );
+}
+
 export async function createIngredient(name: string, _category?: string, _units: string[] = []) {
     const { stemGerman, getWordVariants } = await import('@app/lib/german-stem');
 
@@ -547,16 +565,29 @@ export async function createIngredient(name: string, _category?: string, _units:
         if (byOriginalSlug) return byOriginalSlug;
     }
 
-    // 5. Create new ingredient with singular as canonical name
+    // 5. Create new ingredient with singular as canonical name + default units
     try {
-        return await prisma.ingredient.create({
+        const defaultUnits = await prisma.unit.findMany({
+            where: { shortName: { in: ['g', 'ml', 'Stk'] } },
+            select: { id: true },
+        });
+
+        const ingredient = await prisma.ingredient.create({
             data: {
                 name: canonicalName,
                 slug,
                 pluralName: isStemmed ? trimmed[0].toUpperCase() + trimmed.slice(1) : null,
                 needsReview: true,
+                ingredientUnits: {
+                    create: defaultUnits.map((u) => ({ unitId: u.id })),
+                },
             },
         });
+
+        // Notify moderators about the new ingredient
+        notifyModeratorsNewIngredient(ingredient.id, ingredient.name).catch(() => {});
+
+        return ingredient;
     } catch (e) {
         // Race condition: slug already taken → return existing
         if (e instanceof Error && e.message.includes('Unique constraint')) {

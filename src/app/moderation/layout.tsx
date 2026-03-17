@@ -61,6 +61,7 @@ export default async function ModerationLayout({ children }: { children: React.R
                     >
                         <NavTab href="/moderation">Warteschlange</NavTab>
                         <NavTab href="/moderation?tab=reports">Meldungen</NavTab>
+                        <NavTab href="/moderation?tab=ingredients">Zutaten</NavTab>
                         <NavTab href="/moderation?tab=history">Verlauf</NavTab>
                     </nav>
                 </header>

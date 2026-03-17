@@ -3,6 +3,7 @@ import { prisma } from '@shared/prisma';
 
 import { css } from 'styled-system/css';
 
+import { IngredientReviewTable } from './ingredient-review-table';
 import { ModerationHistoryTable } from './moderation-history-table';
 import { ModerationQueueTable } from './moderation-queue-table';
 import { ReportsTable } from './reports-table';
@@ -19,7 +20,7 @@ export default async function ModerationPage({
     const params = await searchParams;
     const tab = params.tab ?? 'queue';
 
-    const [pendingCount, reportCount, todayActionCount, autoApprovedCount] = await Promise.all([
+    const [pendingCount, reportCount, todayActionCount, ingredientReviewCount] = await Promise.all([
         prisma.moderationQueue.count({ where: { status: 'PENDING' } }),
         prisma.report.count({ where: { resolved: false } }),
         prisma.moderationLog.count({
@@ -27,12 +28,7 @@ export default async function ModerationPage({
                 createdAt: { gte: startOfDay() },
             },
         }),
-        prisma.moderationQueue.count({
-            where: {
-                status: 'AUTO_APPROVED',
-                createdAt: { gte: startOfDay() },
-            },
-        }),
+        prisma.ingredient.count({ where: { needsReview: true } }),
     ]);
 
     return (
@@ -55,14 +51,19 @@ export default async function ModerationPage({
                     label="Meldungen"
                     variant={reportCount > 0 ? 'danger' : 'success'}
                 />
+                <StatCard
+                    value={ingredientReviewCount}
+                    label="Zutaten-Review"
+                    variant={ingredientReviewCount > 0 ? 'warning' : 'success'}
+                />
                 <StatCard value={todayActionCount} label="Aktionen heute" variant="neutral" />
-                <StatCard value={autoApprovedCount} label="Auto-Approved heute" variant="neutral" />
             </div>
 
             {/* Tab content */}
             {tab === 'reports' && <ReportsSection />}
+            {tab === 'ingredients' && <IngredientsSection />}
             {tab === 'history' && <HistorySection />}
-            {tab !== 'reports' && tab !== 'history' && <QueueSection />}
+            {tab !== 'reports' && tab !== 'history' && tab !== 'ingredients' && <QueueSection />}
         </>
     );
 }
@@ -172,6 +173,22 @@ function StatCard({
             </span>
         </div>
     );
+}
+
+async function IngredientsSection() {
+    const ingredients = await prisma.ingredient.findMany({
+        where: { needsReview: true },
+        orderBy: { createdAt: 'desc' },
+        include: {
+            ingredientUnits: {
+                include: { unit: { select: { shortName: true } } },
+            },
+            _count: { select: { recipes: true } },
+        },
+        take: 100,
+    });
+
+    return <IngredientReviewTable ingredients={ingredients} />;
 }
 
 function startOfDay(): Date {

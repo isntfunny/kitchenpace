@@ -6,7 +6,7 @@ const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
 });
 
-const adapter = new PrismaPg(pool);
+const adapter = new PrismaPg(pool as any);
 export const db = new PrismaClient({ adapter });
 
 export { RecipeStatus };

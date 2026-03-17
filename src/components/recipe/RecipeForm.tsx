@@ -14,6 +14,7 @@ import type {
 } from '@app/components/flow/editor/editorTypes';
 import { extractMentionedIds } from '@app/components/flow/viewer/viewerUtils';
 import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
+import { escapeRegex } from '@app/lib/ingredients/parseIngredientInput';
 import { PALETTE } from '@app/lib/palette';
 
 import { css } from 'styled-system/css';
@@ -426,7 +427,7 @@ export function RecipeForm({
 
         // 2. Update @mentions in flow node descriptions
         //    @[OldName](oldId) → @[NewName](newId), preserving |override
-        const escapedName = oldIngredient.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedName = escapeRegex(oldIngredient.name);
         const mentionRegex = new RegExp(
             `@\\[${escapedName}(\\|[^\\]]*)?\\]\\(${oldIngredient.id}\\)`,
             'g',

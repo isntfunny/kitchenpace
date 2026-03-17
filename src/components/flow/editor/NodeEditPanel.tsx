@@ -5,6 +5,7 @@ import { Accordion } from 'radix-ui';
 import { useRef, useState, useCallback, useEffect } from 'react';
 
 import { UploadArea } from '@app/components/features/UploadArea';
+import { extractMentionedIds } from '@app/components/flow/viewer/viewerUtils';
 import { SegmentedBar } from '@app/components/recipe/RecipeForm/components/SegmentedBar';
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 import { PALETTE } from '@app/lib/palette';
@@ -30,10 +31,8 @@ interface NodeEditPanelProps {
     canDelete?: boolean;
 }
 
-const MENTION_REGEX = /@\[.*?\]\((.*?)\)/g;
-
 function extractIngredientIds(description: string): string[] {
-    return [...description.matchAll(MENTION_REGEX)].map((m) => m[1]);
+    return [...extractMentionedIds(description)];
 }
 
 export function NodeEditPanel({

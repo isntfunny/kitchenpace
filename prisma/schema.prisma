@@ -299,6 +299,9 @@ model Recipe {
   // AI-assisted flow generation (prepared for future use)
   rawRecipeText String?  // Classic text recipe, sent to AI to generate flow
 
+  // Import source (YouTube/TikTok/website URL for embeds)
+  sourceUrl     String?  @db.VarChar(2048)
+
   // Content moderation
   moderationStatus                                                           ModerationStatus    @default(AUTO_APPROVED)
   moderationNote                                                             String?

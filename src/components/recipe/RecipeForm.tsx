@@ -400,22 +400,44 @@ export function RecipeForm({
 
     const handleReplaceIngredient = (index: number, replacement: IngredientSearchResult) => {
         if (ingredients.some((i, idx) => i.id === replacement.id && idx !== index)) return;
+
+        const oldIngredient = ingredients[index];
+
+        // 1. Replace in ingredient list
         setIngredients((prev) => {
             const next = [...prev];
-            const old = next[index];
             next[index] = {
                 id: replacement.id,
                 name: replacement.name,
                 pluralName: replacement.pluralName ?? null,
-                amount: old.amount,
-                unit: replacement.units.includes(old.unit) ? old.unit : replacement.units[0] || 'g',
+                amount: oldIngredient.amount,
+                unit: replacement.units.includes(oldIngredient.unit)
+                    ? oldIngredient.unit
+                    : replacement.units[0] || 'g',
                 availableUnits:
                     replacement.units.length > 0 ? replacement.units : ['g', 'ml', 'Stk'],
-                notes: old.notes,
-                isOptional: old.isOptional,
+                notes: oldIngredient.notes,
+                isOptional: oldIngredient.isOptional,
                 isNew: false,
             };
             return next;
+        });
+
+        // 2. Update @mentions in flow node descriptions
+        //    @[OldName](oldId) → @[NewName](newId), preserving |override
+        const escapedName = oldIngredient.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const mentionRegex = new RegExp(
+            `@\\[${escapedName}(\\|[^\\]]*)?\\]\\(${oldIngredient.id}\\)`,
+            'g',
+        );
+        flowNodesRef.current = flowNodesRef.current.map((node) => {
+            if (!node.description?.includes(oldIngredient.id)) return node;
+            const newDesc = node.description.replace(
+                mentionRegex,
+                `@[${replacement.name}$1](${replacement.id})`,
+            );
+            const ids = [...newDesc.matchAll(/@\[.*?(?:\|.*?)?\]\((.*?)\)/g)].map((m) => m[1]);
+            return { ...node, description: newDesc, ingredientIds: [...new Set(ids)] };
         });
     };
 

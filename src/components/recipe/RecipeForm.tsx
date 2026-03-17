@@ -394,6 +394,31 @@ export function RecipeForm({
         setIngredients((prev) => prev.filter((_, i) => i !== index));
     };
 
+    const handleReorderIngredients = (newOrder: AddedIngredient[]) => {
+        setIngredients(newOrder);
+    };
+
+    const handleReplaceIngredient = (index: number, replacement: IngredientSearchResult) => {
+        if (ingredients.some((i, idx) => i.id === replacement.id && idx !== index)) return;
+        setIngredients((prev) => {
+            const next = [...prev];
+            const old = next[index];
+            next[index] = {
+                id: replacement.id,
+                name: replacement.name,
+                pluralName: replacement.pluralName ?? null,
+                amount: old.amount,
+                unit: replacement.units.includes(old.unit) ? old.unit : replacement.units[0] || 'g',
+                availableUnits:
+                    replacement.units.length > 0 ? replacement.units : ['g', 'ml', 'Stk'],
+                notes: old.notes,
+                isOptional: old.isOptional,
+                isNew: false,
+            };
+            return next;
+        });
+    };
+
     const updateIngredient = (index: number, changes: Partial<AddedIngredient>) => {
         setIngredients((prev) => {
             const next = [...prev];
@@ -947,6 +972,8 @@ export function RecipeForm({
                             onAddNewIngredient={handleAddNewIngredient}
                             onUpdateIngredient={updateIngredient}
                             onRemoveIngredient={handleRemoveIngredient}
+                            onReorderIngredients={handleReorderIngredients}
+                            onReplaceIngredient={handleReplaceIngredient}
                             onServingsCustomTriggerClick={() =>
                                 dispatchRecipeTutorialEvent(
                                     RECIPE_TUTORIAL_EVENTS.servingsCustomOpened,

@@ -424,6 +424,7 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                 title: title.trim(),
                 description: description.trim(),
                 imageUrl: imageUrl || undefined,
+                sourceUrl: url || undefined,
                 servings,
                 prepTime,
                 cookTime,
@@ -455,6 +456,7 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
         title,
         description,
         imageUrl,
+        url,
         servings,
         prepTime,
         cookTime,
@@ -991,6 +993,7 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                             onRemoveIngredient={(idx) => {
                                 setIngredients((prev) => prev.filter((_, i) => i !== idx));
                             }}
+                            onReorderIngredients={setIngredients}
                         />
                     </div>
 

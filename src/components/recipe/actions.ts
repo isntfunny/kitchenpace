@@ -1,5 +1,6 @@
 'use server';
 
+import { escapeRegex } from '@app/lib/ingredients/parseIngredientInput';
 import {
     opensearchClient,
     OPENSEARCH_INDEX,
@@ -11,10 +12,6 @@ import type { IngredientSearchResult } from './RecipeForm/data';
 import type { TagFacet } from './types';
 
 const DEFAULT_TAG_SEARCH_LIMIT = 50;
-
-function escapeRegex(value: string) {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 type TagWithCount = {
     id: string;
@@ -85,6 +82,14 @@ export async function searchIngredients(query: string): Promise<IngredientSearch
         results.map((r) => r.pluralName?.toLowerCase()).filter((v): v is string => Boolean(v)),
     );
     return results.filter((r) => !pluralNameSet.has(r.name.toLowerCase()));
+}
+
+export async function getUnitNames(): Promise<Array<{ shortName: string; longName: string }>> {
+    const units = await prisma.unit.findMany({
+        select: { shortName: true, longName: true },
+        orderBy: { shortName: 'asc' },
+    });
+    return units;
 }
 
 export async function searchTags(

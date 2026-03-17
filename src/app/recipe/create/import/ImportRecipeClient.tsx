@@ -977,16 +977,6 @@ export function ImportRecipeClient({ categories, tags: _tags, authorId }: Import
                         <IngredientManager
                             servings={servings}
                             onServingsChange={setServings}
-                            ingredientQuery=""
-                            onIngredientQueryChange={() => {}}
-                            search={{
-                                results: [],
-                                parsed: { name: '', amount: '', unit: null },
-                                bestMatch: null,
-                                matchType: 'none',
-                                isLoading: false,
-                                cancelDebounce: () => {},
-                            }}
                             ingredients={ingredients}
                             onAddIngredient={() => {}}
                             onAddNewIngredient={async () => {}}

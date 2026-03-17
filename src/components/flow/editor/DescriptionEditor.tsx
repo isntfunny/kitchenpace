@@ -8,6 +8,7 @@ import {
     dispatchRecipeTutorialEvent,
     RECIPE_TUTORIAL_EVENTS,
 } from '@app/components/recipe/tutorial/shared';
+import { useDropdownNavigation } from '@app/components/recipe/useDropdownNavigation';
 import { useIngredientSearch } from '@app/components/recipe/useIngredientSearch';
 
 import { css } from 'styled-system/css';
@@ -100,7 +101,6 @@ export function DescriptionEditor({
     const [isFocused, setIsFocused] = useState(false);
     const [query, setQuery] = useState('');
     const [mentionStart, setMentionStart] = useState(0);
-    const [highlightedIndex, setHighlightedIndex] = useState(0);
     const [hoveredDropdownIndex, setHoveredDropdownIndex] = useState<number | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -124,32 +124,6 @@ export function DescriptionEditor({
             ...dbFiltered.map((ing) => ({ source: 'db' as const, ingredient: ing })),
         ];
     }, [recipeMatches, dbResults, availableIngredients]);
-
-    const handleInputChange = useCallback(
-        (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            const text = e.target.value;
-            const cursorPos = e.target.selectionStart;
-            onChange(text);
-
-            const textBeforeCursor = text.slice(0, cursorPos);
-            const atIndex = textBeforeCursor.lastIndexOf('@');
-
-            if (atIndex !== -1) {
-                const textAfterAt = textBeforeCursor.slice(atIndex + 1);
-                if (!textAfterAt.includes(']') && !textAfterAt.includes('\n')) {
-                    setQuery(textAfterAt);
-                    setMentionStart(atIndex);
-                    setIsOpen(true);
-                    setHighlightedIndex(0);
-                    return;
-                }
-            }
-
-            setIsOpen(false);
-            setQuery('');
-        },
-        [onChange],
-    );
 
     const insertMention = useCallback(
         (item: DropdownIngredient, amountOverride?: string) => {
@@ -185,37 +159,44 @@ export function DescriptionEditor({
         [value, mentionStart, query, onChange, onAddIngredient],
     );
 
-    const handleKeyDown = useCallback(
-        (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-            if (!isOpen || dropdownItems.length === 0) return;
+    const showDropdown = isOpen && dropdownItems.length > 0;
 
-            switch (e.key) {
-                case 'ArrowDown':
-                    e.preventDefault();
-                    setHighlightedIndex((prev) => Math.min(prev + 1, dropdownItems.length - 1));
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    setHighlightedIndex((prev) => Math.max(prev - 1, 0));
-                    break;
-                case 'Enter':
-                case 'Tab':
-                    e.preventDefault();
-                    if (dropdownItems[highlightedIndex]) {
-                        insertMention(dropdownItems[highlightedIndex]);
-                    }
-                    break;
-                case 'Escape':
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsOpen(false);
-                    break;
+    const { highlightedIndex, setHighlightedIndex, handleKeyDown, resetHighlight } =
+        useDropdownNavigation({
+            itemCount: dropdownItems.length,
+            isOpen: showDropdown,
+            onSelect: (index) => {
+                if (dropdownItems[index]) insertMention(dropdownItems[index]);
+            },
+            onEscape: () => setIsOpen(false),
+        });
+
+    const handleInputChange = useCallback(
+        (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+            const text = e.target.value;
+            const cursorPos = e.target.selectionStart;
+            onChange(text);
+
+            const textBeforeCursor = text.slice(0, cursorPos);
+            const atIndex = textBeforeCursor.lastIndexOf('@');
+
+            if (atIndex !== -1) {
+                const textAfterAt = textBeforeCursor.slice(atIndex + 1);
+                if (!textAfterAt.includes(']') && !textAfterAt.includes('\n')) {
+                    setQuery(textAfterAt);
+                    setMentionStart(atIndex);
+                    setIsOpen(true);
+                    resetHighlight();
+                    return;
+                }
             }
+
+            setIsOpen(false);
+            setQuery('');
         },
-        [isOpen, dropdownItems, highlightedIndex, insertMention],
+        [onChange, resetHighlight],
     );
 
-    const showDropdown = isOpen && dropdownItems.length > 0;
     const recipeCount = recipeMatches.length;
 
     const hasMentions = value.includes('@[');

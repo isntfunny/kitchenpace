@@ -32,14 +32,24 @@ export function IngredientResultItem({
     onClick,
     categoryFallback = '',
     isMatch = false,
+    isHighlighted = false,
+    onMouseEnter,
 }: {
     result: IngredientSearchResult;
     onClick: () => void;
     categoryFallback?: string;
     isMatch?: boolean;
+    isHighlighted?: boolean;
+    onMouseEnter?: () => void;
 }) {
     return (
-        <button type="button" onClick={onClick} className={resultBtnClass}>
+        <button
+            type="button"
+            onClick={onClick}
+            onMouseEnter={onMouseEnter}
+            className={resultBtnClass}
+            style={isHighlighted ? { background: 'rgba(224,123,83,0.1)' } : undefined}
+        >
             <span className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
                 {isMatch && <span className={matchDotClass} />}
                 <span className={css({ fontWeight: '500' })}>

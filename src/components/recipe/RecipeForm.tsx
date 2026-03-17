@@ -40,7 +40,6 @@ import {
     type FlowNodeInput,
     type FlowEdgeInput,
 } from '../recipe/createActions';
-import { useIngredientSearch } from '../recipe/useIngredientSearch';
 
 import {
     GeneralInformationSection,
@@ -125,10 +124,6 @@ export function RecipeForm({
         initialData?.status ?? 'DRAFT',
     );
     const [error, setError] = useState<string | null>(null);
-
-    // ── ingredient search ────────────────────────────────────
-    const [ingredientQuery, setIngredientQuery] = useState('');
-    const ingredientSearch = useIngredientSearch(ingredientQuery);
 
     // ── flow state (stored in refs — changes don't re-render form) ──
     const flowNodesRef = useRef<FlowNodeInput[]>(initialData?.flowNodes ?? []);
@@ -371,7 +366,6 @@ export function RecipeForm({
                 isNew: false,
             },
         ]);
-        setIngredientQuery('');
     };
 
     const handleAddNewIngredient = async (name: string) => {
@@ -991,9 +985,6 @@ export function RecipeForm({
                         <IngredientManager
                             servings={servings}
                             onServingsChange={setServings}
-                            ingredientQuery={ingredientQuery}
-                            onIngredientQueryChange={setIngredientQuery}
-                            search={ingredientSearch}
                             ingredients={ingredients}
                             onAddIngredient={handleAddIngredient}
                             onAddNewIngredient={handleAddNewIngredient}
@@ -1094,9 +1085,6 @@ export function RecipeForm({
                 <IngredientManager
                     servings={servings}
                     onServingsChange={setServings}
-                    ingredientQuery={ingredientQuery}
-                    onIngredientQueryChange={setIngredientQuery}
-                    search={ingredientSearch}
                     ingredients={ingredients}
                     onAddIngredient={handleAddIngredient}
                     onAddNewIngredient={handleAddNewIngredient}

@@ -24,12 +24,13 @@ export function registerSeedCommand(program: Command): void {
         .command('seed [name]')
         .description('Seed database (run all seeders or a specific one)')
         .option('--force', 'Delete managed data and re-create (destructive)')
+        .option('--refresh', 'Update existing records in-place (name, slug, aliases)')
         .option('--dry-run', 'Show what would happen without writing')
         .option('--list', 'List available seeders')
         .action(
             async (
                 name?: string,
-                options?: { force?: boolean; dryRun?: boolean; list?: boolean },
+                options?: { force?: boolean; refresh?: boolean; dryRun?: boolean; list?: boolean },
             ) => {
                 if (options?.list) {
                     console.log('\nAvailable seeders:\n');
@@ -61,6 +62,23 @@ export function registerSeedCommand(program: Command): void {
                             ),
                         );
                     }
+                    if (options?.refresh) {
+                        console.log(
+                            chalk.cyan.bold(
+                                '\n  REFRESH MODE -- updating existing records in-place\n',
+                            ),
+                        );
+                        // Check that all selected seeders support refresh
+                        const unsupported = toRun.filter((s) => !s.refresh);
+                        if (unsupported.length > 0) {
+                            console.error(
+                                chalk.red(
+                                    `No refresh support: ${unsupported.map((s) => s.name).join(', ')}`,
+                                ),
+                            );
+                            process.exit(1);
+                        }
+                    }
                     if (options?.dryRun) {
                         console.log(chalk.yellow.bold('  DRY RUN -- no DB writes\n'));
                     }
@@ -72,9 +90,12 @@ export function registerSeedCommand(program: Command): void {
                             await db.$transaction(
                                 async (tx) => {
                                     for (const seeder of toRun) {
-                                        const result = options?.force
-                                            ? await seeder.reset(tx as unknown as typeof db)
-                                            : await seeder.run(tx as unknown as typeof db);
+                                        const txDb = tx as unknown as typeof db;
+                                        const result = options?.refresh
+                                            ? await seeder.refresh!(txDb)
+                                            : options?.force
+                                              ? await seeder.reset(txDb)
+                                              : await seeder.run(txDb);
                                         results.push({ seeder, result });
                                     }
                                     // Throw to trigger rollback — this is intentional
@@ -91,6 +112,8 @@ export function registerSeedCommand(program: Command): void {
                             const parts: string[] = [];
                             if (result.created > 0)
                                 parts.push(chalk.green(`${result.created} would be created`));
+                            if (result.updated)
+                                parts.push(chalk.cyan(`${result.updated} would be updated`));
                             if (result.skipped > 0)
                                 parts.push(chalk.dim(`${result.skipped} already exist`));
                             if (result.deleted > 0)
@@ -105,13 +128,16 @@ export function registerSeedCommand(program: Command): void {
                         for (const seeder of toRun) {
                             const spinner = ora(`${seeder.name}...`).start();
 
-                            const result = options?.force
-                                ? await seeder.reset(db)
-                                : await seeder.run(db);
+                            const result = options?.refresh
+                                ? await seeder.refresh!(db)
+                                : options?.force
+                                  ? await seeder.reset(db)
+                                  : await seeder.run(db);
 
                             const parts: string[] = [];
                             if (result.created > 0)
                                 parts.push(chalk.green(`${result.created} created`));
+                            if (result.updated) parts.push(chalk.cyan(`${result.updated} updated`));
                             if (result.skipped > 0)
                                 parts.push(chalk.dim(`${result.skipped} existed`));
                             if (result.deleted > 0)

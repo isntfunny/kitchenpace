@@ -356,6 +356,142 @@ export const ingredientsSeeder: Seeder = {
     name: 'ingredients',
     description: 'Swiss Food DB: ingredient categories, units, and ~1000 ingredients',
 
+    async refresh(db: PrismaClient): Promise<SeederResult> {
+        const foods = loadFoods();
+        let updated = 0;
+        let skipped = 0;
+        let deleted = 0;
+
+        // Build lookup: swissFoodId → new data from JSON
+        const foodById = new Map(foods.map((f) => [f.id, f]));
+
+        // Find all DB ingredients that have a swissFoodId
+        const existing = await db.ingredient.findMany({
+            where: { swissFoodId: { not: null } },
+            select: { id: true, name: true, slug: true, aliases: true, swissFoodId: true },
+        });
+
+        // Phase 1: Temporarily rename ALL Swiss-sourced slugs to avoid unique constraint
+        // collisions during the update. Use `__tmp_{id}` as temporary slug.
+        for (const ing of existing) {
+            await db.ingredient.update({
+                where: { id: ing.id },
+                data: { slug: `__tmp_${ing.id}` },
+            });
+        }
+
+        // Phase 2: Group DB records by their NEW target slug to detect collisions
+        const byTargetSlug = new Map<string, typeof existing>();
+        for (const ing of existing) {
+            const food = foodById.get(ing.swissFoodId!);
+            if (!food) continue;
+            const targetSlug = slugifyIng(food.name);
+            const group = byTargetSlug.get(targetSlug) ?? [];
+            group.push(ing);
+            byTargetSlug.set(targetSlug, group);
+        }
+
+        // Phase 3: For each target slug, merge duplicates and update winner
+        for (const [targetSlug, group] of byTargetSlug) {
+            const food = foodById.get(group[0].swissFoodId!)!;
+
+            // Check if a non-Swiss ingredient already holds this slug
+            const occupant = await db.ingredient.findUnique({
+                where: { slug: targetSlug },
+                select: { id: true },
+            });
+
+            // Pick winner: existing occupant > one with matching old slug > first
+            let winnerId: string;
+            if (occupant && !group.some((g) => g.id === occupant.id)) {
+                // External ingredient holds the slug — it becomes the winner, all group members are losers
+                winnerId = occupant.id;
+            } else {
+                winnerId = group.find((g) => g.slug === targetSlug)?.id ?? group[0].id;
+            }
+
+            const losers = group.filter((g) => g.id !== winnerId);
+
+            // Merge losers into winner: re-point recipeIngredient links, then delete
+            for (const loser of losers) {
+                await db.recipeIngredient.updateMany({
+                    where: { ingredientId: loser.id },
+                    data: { ingredientId: winnerId },
+                });
+                await db.ingredientUnit.deleteMany({ where: { ingredientId: loser.id } });
+                await db.$executeRawUnsafe(
+                    `DELETE FROM "_IngredientToIngredientCategory" WHERE "A" = $1`,
+                    loser.id,
+                );
+                await db.ingredient.delete({ where: { id: loser.id } });
+                deleted++;
+            }
+
+            // Update the winner with new name/slug/aliases
+            const winner = group.find((g) => g.id === winnerId);
+            if (winner) {
+                const newAliases = food.synonyms;
+                const nameChanged = winner.name !== food.name;
+                const aliasesChanged =
+                    JSON.stringify(winner.aliases) !== JSON.stringify(newAliases);
+
+                await db.ingredient.update({
+                    where: { id: winnerId },
+                    data: { name: food.name, slug: targetSlug, aliases: newAliases },
+                });
+                if (nameChanged || aliasesChanged) {
+                    updated++;
+                } else {
+                    skipped++;
+                }
+            } else {
+                // Occupant was external — just update its aliases to include the Swiss name
+                skipped++;
+            }
+        }
+
+        // Phase 4: Clean up orphaned ingredients whose swissFoodId is no longer in JSON
+        // (these were "losers" during convert.py dedup — e.g. "Apfel, gekocht" removed
+        // in favor of "Apfel"). Re-link their recipeIngredients to the winner, then delete.
+        const jsonIds = new Set(foods.map((f) => f.id));
+        const orphans = existing.filter((ing) => !jsonIds.has(ing.swissFoodId!));
+
+        for (const orphan of orphans) {
+            // Find the winner by stripping cooking suffix from the orphan's name
+            // and looking up by slug
+            const cleanSlug = slugifyIng(
+                orphan.name.replace(
+                    /,\s+(?:(?:im Ofen |"medium" |im Wasser )?(?:roh|gekocht|gebraten|gedämpft|gedünstet|geschmort|gebacken|gefroren|gefriergetrocknet|frittiert|zubereitet|abgetropft|aufgewärmt|tiefgekühlt|ungebacken|ungebraten|paniert und \w+))(?:\s*\(.*?\))?(?:\s+(?:in|im)\s+.*)?$/,
+                    '',
+                ),
+            );
+
+            const winner = await db.ingredient.findUnique({
+                where: { slug: cleanSlug },
+                select: { id: true },
+            });
+
+            if (winner) {
+                await db.recipeIngredient.updateMany({
+                    where: { ingredientId: orphan.id },
+                    data: { ingredientId: winner.id },
+                });
+            }
+            // If no winner found, recipe links will be cascade-deleted or orphaned —
+            // but this shouldn't happen since convert.py always keeps a base entry
+
+            await db.ingredientUnit.deleteMany({ where: { ingredientId: orphan.id } });
+            await db.$executeRawUnsafe(
+                `DELETE FROM "_IngredientToIngredientCategory" WHERE "A" = $1`,
+                orphan.id,
+            );
+            await db.ingredient.delete({ where: { id: orphan.id } });
+            deleted++;
+        }
+
+        return { created: 0, skipped, deleted, updated };
+    },
+
     async run(db: PrismaClient): Promise<SeederResult> {
         const foods = loadFoods();
 

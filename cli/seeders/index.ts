@@ -4,6 +4,7 @@ export interface SeederResult {
     created: number;
     skipped: number;
     deleted: number;
+    updated?: number;
 }
 
 export interface Seeder {
@@ -13,6 +14,8 @@ export interface Seeder {
     run(db: PrismaClient): Promise<SeederResult>;
     /** Delete all managed data + re-create. Only with --force */
     reset(db: PrismaClient): Promise<SeederResult>;
+    /** Update existing records in-place (name, slug, aliases). Only with --refresh */
+    refresh?(db: PrismaClient): Promise<SeederResult>;
 }
 
 // Import and re-export all seeders in execution order

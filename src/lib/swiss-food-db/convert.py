@@ -235,6 +235,44 @@ def apply_german_name(swiss_name, synonyms, off_lookup):
     return swiss_name, synonyms
 
 
+# ── Cooking-method suffix stripping ────────────────────────────────────────────
+# Remove pure cooking/preparation suffixes (heat application, hydration, etc.)
+# that create duplicate entries like "Apfel, roh" / "Apfel, gekocht".
+# Keeps product-altering states: getrocknet, geräuchert, geschält, geröstet,
+# gesalzen, gezuckert, gedörrt, gepresst — these describe different products.
+COOK_SUFFIX_RE = re.compile(
+    r",\s+"
+    r'(?:im Ofen |"medium" |im Wasser )?'
+    r"(?:"
+    r"roh"
+    r"|gekocht"
+    r"|gebraten"
+    r"|gedämpft"
+    r"|gedünstet"
+    r"|geschmort"
+    r"|gebacken"
+    r"|gefroren"
+    r"|gefriergetrocknet"
+    r"|frittiert"
+    r"|zubereitet"
+    r"|abgetropft"
+    r"|aufgewärmt"
+    r"|tiefgekühlt"
+    r"|ungebacken"
+    r"|ungebraten"
+    r"|paniert und \w+"
+    r")"
+    r"(?:\s*\(.*\))?"        # optional parenthetical e.g. (ohne Zugabe von Salz)
+    r"(?:\s+(?:in|im)\s+.*)?"  # optional trailing e.g. "in HOLL-Rapsöl"
+    r"$"
+)
+
+
+def strip_cooking_suffix(name):
+    """Strip cooking-method suffix from a food name. Returns cleaned name."""
+    return COOK_SUFFIX_RE.sub("", name)
+
+
 def convert():
     print(f"Reading {EXCEL_PATH}...")
     wb = openpyxl.load_workbook(EXCEL_PATH, read_only=True)
@@ -281,15 +319,43 @@ def convert():
         if german_name != swiss_name:
             rename_count += 1
 
+        # Strip cooking-method suffixes (e.g. ", roh", ", gekocht")
+        clean_name = strip_cooking_suffix(german_name)
+        if clean_name != german_name:
+            # Keep original as synonym so it's still searchable
+            if german_name not in updated_synonyms:
+                updated_synonyms = updated_synonyms + [german_name]
+
         foods.append({
             "id": int(swiss_id),
-            "name": german_name,
+            "name": clean_name,
             "swissName": swiss_name if german_name != swiss_name else None,
             "synonyms": updated_synonyms,
             "category": category,
             "density": density,
             "nutrients": nutrients,
         })
+
+    # Deduplicate by name (after cooking-suffix stripping, many names collide)
+    pre_dedup = len(foods)
+    seen = {}
+    deduped = []
+    for food in foods:
+        key = food["name"].lower()
+        if key in seen:
+            # Merge synonyms into first occurrence
+            existing = seen[key]
+            merged = list(dict.fromkeys(existing["synonyms"] + food["synonyms"]))
+            existing["synonyms"] = merged
+            # Merge categories (semicolon-separated, deduplicated)
+            existing_cats = set(c.strip() for c in existing["category"].split(";") if c.strip())
+            new_cats = set(c.strip() for c in food["category"].split(";") if c.strip())
+            existing["category"] = "; ".join(sorted(existing_cats | new_cats))
+        else:
+            seen[key] = food
+            deduped.append(food)
+    foods = deduped
+    stripped_count = pre_dedup - len(foods)
 
     # Sort by name for deterministic output
     foods.sort(key=lambda f: f["name"].lower())
@@ -299,7 +365,8 @@ def convert():
         if food["swissName"] is None:
             del food["swissName"]
 
-    print(f"Parsed {len(foods)} foods ({rename_count} renamed to Bundesdeutsch)")
+    print(f"Parsed {pre_dedup} foods, {stripped_count} duplicates removed after cooking-suffix stripping")
+    print(f"Final: {len(foods)} unique foods ({rename_count} renamed to Bundesdeutsch)")
 
     # Write JSON
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:

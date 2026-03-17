@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import tempfile
-from typing import Optional
+from typing import AsyncGenerator, Optional
 
 log = logging.getLogger("scraper")
 
@@ -25,36 +25,22 @@ def _get_whisper():
     return _whisper_model
 
 
-def _ytdlp_base_cmd(url: str) -> list[str]:
-    cmd = ["yt-dlp"]
-    if YTDLP_COOKIES:
-        cmd.extend(["--cookies", YTDLP_COOKIES])
-    cmd.append(url)
-    return cmd
+def _cookies_args() -> list[str]:
+    return ["--cookies", YTDLP_COOKIES] if YTDLP_COOKIES else []
 
 
 async def _get_metadata(url: str) -> dict:
-    cmd = ["yt-dlp", "-j", "--no-download"]
-    if YTDLP_COOKIES:
-        cmd.extend(["--cookies", YTDLP_COOKIES])
-    cmd.append(url)
-
+    cmd = ["yt-dlp", "-j", "--no-download", *_cookies_args(), url]
     proc = await asyncio.create_subprocess_exec(
         *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     stdout, stderr = await proc.communicate()
-
     if proc.returncode != 0:
         raise RuntimeError(f"yt-dlp failed: {stderr.decode()[:200]}")
     return json.loads(stdout.decode())
 
 
 async def _download_audio(url: str, out_path: str) -> bool:
-    # bestaudio/bestaudio* — fallback to video-with-audio if no separate audio stream
-    cmd = ["yt-dlp", "-f", "bestaudio/bestaudio*", "-o", out_path, "--no-playlist"]
-    if YTDLP_COOKIES:
-        cmd.extend(["--cookies", YTDLP_COOKIES])
-    cmd.append(url)
-
+    cmd = ["yt-dlp", "-f", "bestaudio/bestaudio*", "-o", out_path, "--no-playlist", *_cookies_args(), url]
     proc = await asyncio.create_subprocess_exec(
         *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     await proc.communicate()
@@ -62,34 +48,13 @@ async def _download_audio(url: str, out_path: str) -> bool:
 
 
 def _transcribe(audio_path: str) -> tuple[str, str]:
-    """Returns (transcript, language)."""
     model = _get_whisper()
     segments, info = model.transcribe(audio_path, beam_size=1, vad_filter=True)
     text = " ".join(s.text.strip() for s in segments)
     return text, info.language
 
 
-async def scrape(url: str) -> tuple[str, Optional[str]]:
-    """Extract via yt-dlp metadata + whisper. Returns (markdown, image_url)."""
-    meta = await _get_metadata(url)
-
-    description = meta.get("description", "")
-    thumbnail = meta.get("thumbnail")
-    title = meta.get("title") or meta.get("fulltitle", "")
-    uploader = meta.get("uploader") or meta.get("channel", "")
-
-    # Download audio + transcribe
-    audio_path = tempfile.mktemp(suffix=".m4a")
-    transcript = ""
-    try:
-        if await _download_audio(url, audio_path) and os.path.exists(audio_path):
-            transcript, lang = _transcribe(audio_path)
-            log.info("  whisper: %d chars, lang=%s", len(transcript), lang)
-    finally:
-        if os.path.exists(audio_path):
-            os.unlink(audio_path)
-
-    # Combine
+def _build_markdown(title: str, uploader: str, description: str, transcript: str) -> str:
     parts = []
     if title:
         parts.append(f"# {title}")
@@ -99,5 +64,57 @@ async def scrape(url: str) -> tuple[str, Optional[str]]:
         parts.append(f"\n## Caption\n\n{description}")
     if transcript:
         parts.append(f"\n## Transcript\n\n{transcript}")
+    return "\n".join(parts)
 
-    return "\n".join(parts), thumbnail
+
+# Step tuple: (step_name, message, is_final, markdown | None, image_url | None)
+Step = tuple[str, str, bool, Optional[str], Optional[str]]
+
+
+async def scrape_steps(url: str) -> AsyncGenerator[Step, None]:
+    """Yield progress steps. Last step has is_final=True and carries the result."""
+
+    # 1. Metadata
+    yield ("metadata", "Fetching video metadata...", False, None, None)
+    meta = await _get_metadata(url)
+
+    description = meta.get("description", "")
+    thumbnail = meta.get("thumbnail")
+    title = meta.get("title") or meta.get("fulltitle", "")
+    uploader = meta.get("uploader") or meta.get("channel", "")
+    duration = meta.get("duration_string") or str(meta.get("duration", "?"))
+
+    yield ("metadata", f"Got metadata: \"{title[:60]}\" by {uploader} ({duration}s)", False, None, None)
+
+    # 2. Audio download
+    yield ("download", "Downloading audio...", False, None, None)
+    audio_path = tempfile.mktemp(suffix=".m4a")
+    transcript = ""
+    try:
+        dl_ok = await _download_audio(url, audio_path)
+        if dl_ok and os.path.exists(audio_path):
+            size_kb = os.path.getsize(audio_path) // 1024
+            yield ("download", f"Audio downloaded ({size_kb}KB)", False, None, None)
+
+            # 3. Transcription
+            yield ("transcribe", "Transcribing with whisper...", False, None, None)
+            transcript, lang = _transcribe(audio_path)
+            yield ("transcribe", f"Transcribed: {len(transcript)} chars (lang={lang})", False, None, None)
+        else:
+            yield ("download", "No audio available, skipping transcription", False, None, None)
+    finally:
+        if os.path.exists(audio_path):
+            os.unlink(audio_path)
+
+    # 4. Final
+    md = _build_markdown(title, uploader, description, transcript)
+    yield ("done", f"{len(md)} chars", True, md, thumbnail)
+
+
+async def scrape(url: str) -> tuple[str, Optional[str]]:
+    """Non-streaming wrapper — returns final (markdown, image_url)."""
+    async for step, msg, is_final, md, img in scrape_steps(url):
+        log.info("  ytdlp [%s] %s", step, msg)
+        if is_final:
+            return md or "", img
+    return "", None

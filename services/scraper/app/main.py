@@ -1,4 +1,4 @@
-"""KitchenPace Scraper — FastAPI service dispatching to scrapling or yt-dlp+whisper."""
+"""KitchenPace Scraper — FastAPI service with jsonld / scrapling / yt-dlp+whisper."""
 
 import json
 import logging
@@ -11,13 +11,13 @@ from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional
 
 from app.sites import get_site_name, get_strategy
-from app.strategies import MIN_CONTENT, dispatch_scrapling_loop
-from app.strategies.ytdlp import scrape as scrape_ytdlp
+from app.strategies import dispatch
+from app.strategies.ytdlp import scrape_steps as ytdlp_steps
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("scraper")
 
-app = FastAPI(title="KitchenPace Scraper", version="2.3.0")
+app = FastAPI(title="KitchenPace Scraper", version="2.4.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 
@@ -46,7 +46,7 @@ def _title(md: str) -> Optional[str]:
     return None
 
 
-def _scrapling_opts(req: ScrapeRequest) -> dict:
+def _opts(req: ScrapeRequest) -> dict:
     return dict(mode=req.mode, timeout=req.timeout,
                 wait_for_network_idle=req.wait_for_network_idle,
                 solve_cloudflare=req.solve_cloudflare)
@@ -60,16 +60,11 @@ async def health():
 @app.post("/api/scrape", response_model=ScrapeResponse)
 async def scrape(req: ScrapeRequest):
     url = str(req.url)
-    strategy = get_strategy(url) if not req.css_selector else "scrapling"
-    log.info("SCRAPE %s strategy=%s", url, strategy)
+    log.info("SCRAPE %s", url)
     t0 = time.time()
 
     try:
-        if strategy == "ytdlp":
-            content, image_url = await scrape_ytdlp(url)
-        else:
-            content, image_url = await dispatch_scrapling_loop(
-                url, req.css_selector, **_scrapling_opts(req))
+        content, image_url = await dispatch(url, req.css_selector, **_opts(req))
 
         if not content.strip():
             raise RuntimeError("No content extracted")
@@ -101,12 +96,14 @@ async def scrape_stream(req: ScrapeRequest):
             yield sse("progress", {"step": "detect", "message": f"Site: {site or 'unknown'} ({strategy})"})
 
             if strategy == "ytdlp":
-                yield sse("progress", {"step": "fetch", "message": "yt-dlp + whisper..."})
-                content, image_url = await scrape_ytdlp(url)
+                content, image_url = "", None
+                async for step, msg, is_final, md, img in ytdlp_steps(url):
+                    yield sse("progress", {"step": step, "message": msg})
+                    if is_final:
+                        content, image_url = md or "", img
             else:
-                yield sse("progress", {"step": "fetch", "message": "Scrapling..."})
-                content, image_url = await dispatch_scrapling_loop(
-                    url, req.css_selector, **_scrapling_opts(req))
+                yield sse("progress", {"step": "fetch", "message": "Trying JSON-LD, then scrapling..."})
+                content, image_url = await dispatch(url, req.css_selector, **_opts(req))
 
             if not content.strip():
                 yield sse("error", {"success": False, "error": "No content extracted", "url": url})

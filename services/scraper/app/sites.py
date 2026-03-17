@@ -1,37 +1,28 @@
-"""Domain config — maps domains to scraping strategies and selectors."""
+"""Domain config — maps domains to scraping strategies.
+
+Most recipe sites have schema.org/Recipe JSON-LD which is tried automatically.
+Domain-specific CSS selectors are only needed as fallback when JSON-LD is missing.
+"""
 
 from urllib.parse import urlparse
 
 SITE_CONFIG: dict[str, dict] = {
-    # ── Scrapling (CSS selectors) ────────────────────────────────────
-    "chefkoch.de": {
-        "strategy": "scrapling",
-        "content": ["h1", ".ds-ingredients-table", ".instruction-row"],
-        "image": "img.ds-teaser-link__image[src*='/rezepte/']:not([loading='lazy'])",
-    },
-    "essen-und-trinken.de": {
-        "strategy": "scrapling",
-        "content": ["div[data-testid='recipe-detail']", ".recipe-content", "article"],
-    },
-    "dr-oetker.de": {
-        "strategy": "scrapling",
-        "content": [".recipe-details", ".recipe-content"],
-    },
-    "lecker.de": {
-        "strategy": "scrapling",
-        "content": ["article.recipe", ".recipe-header", ".recipe-ingredients"],
-    },
-    "edeka.de": {
-        "strategy": "scrapling",
-        "content": [".recipe-detail", ".recipe-content"],
-    },
     # ── yt-dlp (video caption + whisper transcript) ──────────────────
     "instagram.com": {"strategy": "ytdlp"},
     "tiktok.com": {"strategy": "ytdlp"},
     "youtube.com": {"strategy": "ytdlp"},
     "youtu.be": {"strategy": "ytdlp"},
+
+    # ── Domain-specific CSS selectors (only if JSON-LD doesn't work) ─
+    # Template:
+    # "example.de": {
+    #     "strategy": "scrapling",
+    #     "content": [".recipe-ingredients", ".recipe-steps"],
+    #     "image": ".recipe-hero img",
+    # },
 }
 
+# Generic fallback selectors when JSON-LD is missing and no domain config exists
 FALLBACK_CONTENT = ["[itemtype*='Recipe']", "article", "main", '[role="main"]']
 
 
@@ -55,11 +46,11 @@ def get_site_name(url: str) -> str | None:
 
 def get_strategy(url: str) -> str:
     match = _match(_domain(url))
-    return SITE_CONFIG[match]["strategy"] if match else "scrapling"
+    return SITE_CONFIG[match].get("strategy", "scrapling") if match else "scrapling"
 
 
 def get_selector(url: str) -> str:
-    """Combined content + image CSS selector for scrapling."""
+    """Combined content + image CSS selector for scrapling fallback."""
     match = _match(_domain(url))
     if not match or "content" not in SITE_CONFIG[match]:
         return ", ".join(FALLBACK_CONTENT)

@@ -238,6 +238,26 @@ program
             return;
         }
 
+        if (!queue) {
+            console.error('Error: Queue name required. Use --list to see available queues.');
+            process.exit(1);
+        }
+
+        const defs = getJobDefinitions();
+        const queueJobs = defs[queue as keyof typeof defs];
+
+        if (!jobName) {
+            if (queueJobs && queueJobs.length > 0) {
+                console.error(`Error: Job name required. Available jobs for "${queue}":`);
+                for (const j of queueJobs) {
+                    console.error(`  - ${j}`);
+                }
+            } else {
+                console.error(`Error: Job name required.`);
+            }
+            process.exit(1);
+        }
+
         let payload = {};
         if (options.data) {
             try {

@@ -3,6 +3,12 @@ set -eu
 export HOME=/config
 mkdir -p /config/log/firefox /config/log
 
+# Symlink XDG firefox profile to where yt-dlp expects it (~/.mozilla/firefox)
+if [ -d /config/xdg/config/mozilla/firefox ] && [ ! -e /config/.mozilla/firefox ]; then
+    mkdir -p /config/.mozilla
+    ln -s /config/xdg/config/mozilla/firefox /config/.mozilla/firefox
+fi
+
 # Start the scraper API in the background (restart on crash)
 cd /app
 CRASHES=0

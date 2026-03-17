@@ -7,7 +7,6 @@ export interface ScrapedContent {
     url: string;
     markdown: string;
     title?: string;
-    description?: string;
     imageUrl?: string;
 }
 
@@ -66,7 +65,6 @@ export async function scrapeRecipe(url: string): Promise<ScrapedContent> {
             url,
             markdown: data.markdown || '',
             title: data.title,
-            description: data.description,
             imageUrl: data.image_url,
         };
     } catch (error) {

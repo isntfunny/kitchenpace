@@ -30,6 +30,7 @@ import {
     useState,
 } from 'react';
 
+import { computeAvoidingPath, nodesToRects } from '@app/components/flow/edgeAvoidance';
 import { useIsDark } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 
@@ -44,9 +45,27 @@ import { timerColor } from './viewerUtils';
 /* ── custom curved edge (higher curvature than default bezier) ── */
 
 function CurvedEdge(props: EdgeProps) {
-    const { sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, markerEnd, style } =
-        props;
-    const [path] = getBezierPath({
+    const {
+        source,
+        target,
+        sourceX,
+        sourceY,
+        sourcePosition,
+        targetX,
+        targetY,
+        targetPosition,
+        markerEnd,
+        style,
+    } = props;
+    const { getNodes } = useReactFlow();
+
+    const nodeRects = useMemo(() => nodesToRects(getNodes()), [getNodes]);
+    const avoidance = useMemo(
+        () => computeAvoidingPath(sourceX, sourceY, targetX, targetY, nodeRects, source, target),
+        [sourceX, sourceY, targetX, targetY, nodeRects, source, target],
+    );
+
+    const [defaultPath] = getBezierPath({
         sourceX,
         sourceY,
         sourcePosition,
@@ -55,7 +74,8 @@ function CurvedEdge(props: EdgeProps) {
         targetPosition,
         curvature: 0.4,
     });
-    return <BaseEdge path={path} markerEnd={markerEnd} style={style} />;
+
+    return <BaseEdge path={avoidance?.path ?? defaultPath} markerEnd={markerEnd} style={style} />;
 }
 
 const VIEWER_EDGE_TYPES = { curved: CurvedEdge } as const;

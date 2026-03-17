@@ -41,8 +41,8 @@ export function useFlowAutoLayout(direction: 'TB' | 'LR' = 'LR') {
             g.setDefaultEdgeLabel(() => ({}));
             g.setGraph({
                 rankdir: direction,
-                nodesep: 60,
-                ranksep: 80,
+                nodesep: 70,
+                ranksep: 100,
                 marginx: 40,
                 marginy: 40,
             });

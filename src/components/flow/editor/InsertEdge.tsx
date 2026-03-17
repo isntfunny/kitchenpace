@@ -8,8 +8,9 @@ import {
     type EdgeProps,
 } from '@xyflow/react';
 import { Plus, Trash2 } from 'lucide-react';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
+import { computeAvoidingPath, nodesToRects } from '@app/components/flow/edgeAvoidance';
 import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
 import {
     dispatchRecipeTutorialEvent,
@@ -38,12 +39,19 @@ function InsertEdgeComponent({
     selected,
 }: EdgeProps) {
     const { onInsertOnEdge } = useFlowEditor();
-    const { deleteElements } = useReactFlow();
+    const { deleteElements, getNodes } = useReactFlow();
     const dark = useIsDark();
     const [, setIsHovered] = useState(false);
     const [popoverOpen, setPopoverOpen] = useState(false);
 
-    const [edgePath, labelX, labelY] = getSmoothStepPath({
+    // Compute node-avoiding path when intermediate nodes would be crossed
+    const nodeRects = useMemo(() => nodesToRects(getNodes()), [getNodes]);
+    const avoidance = useMemo(
+        () => computeAvoidingPath(sourceX, sourceY, targetX, targetY, nodeRects, source, target),
+        [sourceX, sourceY, targetX, targetY, nodeRects, source, target],
+    );
+
+    const [defaultPath, defaultLabelX, defaultLabelY] = getSmoothStepPath({
         sourceX,
         sourceY,
         sourcePosition,
@@ -51,6 +59,10 @@ function InsertEdgeComponent({
         targetY,
         targetPosition,
     });
+
+    const edgePath = avoidance?.path ?? defaultPath;
+    const labelX = avoidance?.labelX ?? defaultLabelX;
+    const labelY = avoidance?.labelY ?? defaultLabelY;
 
     const handleSelect = useCallback(
         (stepType: StepType) => {

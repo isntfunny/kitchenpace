@@ -146,20 +146,64 @@ export function IngredientManager({
         inputRef.current?.focus();
     }, [onIngredientQueryChange]);
 
+    /** If ingredient already in list, merge parsed values (fill gaps only) and return true. */
+    const tryMergeExisting = useCallback(
+        (id: string, name: string, p: ParsedIngredientInput): boolean => {
+            const idx = ingredients.findIndex(
+                (i) => i.id === id || i.name.toLowerCase() === name.toLowerCase(),
+            );
+            if (idx === -1) return false;
+            const existing = ingredients[idx];
+            const changes: Partial<AddedIngredient> = {};
+            if (p.amount && !existing.amount) changes.amount = p.amount;
+            if (p.unit && !existing.unit) changes.unit = p.unit;
+            if (Object.keys(changes).length > 0) onUpdateIngredient(idx, changes);
+            setEditingIndex(idx);
+            finishSubmit();
+            return true;
+        },
+        [ingredients, onUpdateIngredient, finishSubmit],
+    );
+
     const addWithParsed = useCallback(
         (result: IngredientSearchResult, overrideParsed?: ParsedIngredientInput) => {
+            const p = overrideParsed ?? search.parsed;
+            if (tryMergeExisting(result.id, result.name, p)) return;
             const idx = ingredients.length;
             addAndOpen(() => onAddIngredient(result));
             applyPrefill(idx, overrideParsed);
             finishSubmit();
         },
-        [addAndOpen, onAddIngredient, applyPrefill, ingredients.length, finishSubmit],
+        [
+            addAndOpen,
+            onAddIngredient,
+            applyPrefill,
+            ingredients.length,
+            finishSubmit,
+            search.parsed,
+            tryMergeExisting,
+        ],
     );
 
     const addNew = useCallback(
         async (overrideName?: string, overrideParsed?: ParsedIngredientInput) => {
             const name = overrideName ?? (parsed.name || ingredientQuery.trim());
             if (!name) return;
+            const p = overrideParsed ?? search.parsed;
+            // Check by name before creating — ingredient may already be in the list
+            const existingIdx = ingredients.findIndex(
+                (i) => i.name.toLowerCase() === name.toLowerCase(),
+            );
+            if (existingIdx !== -1) {
+                const existing = ingredients[existingIdx];
+                const changes: Partial<AddedIngredient> = {};
+                if (p.amount && !existing.amount) changes.amount = p.amount;
+                if (p.unit && !existing.unit) changes.unit = p.unit;
+                if (Object.keys(changes).length > 0) onUpdateIngredient(existingIdx, changes);
+                setEditingIndex(existingIdx);
+                finishSubmit();
+                return;
+            }
             const idx = ingredients.length;
             await onAddNewIngredient(name);
             applyPrefill(idx, overrideParsed);
@@ -169,8 +213,10 @@ export function IngredientManager({
         [
             parsed.name,
             ingredientQuery,
-            ingredients.length,
+            ingredients,
+            search.parsed,
             onAddNewIngredient,
+            onUpdateIngredient,
             applyPrefill,
             finishSubmit,
         ],

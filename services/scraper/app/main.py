@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional
 
-from app.sites import get_site_name, get_strategy
+from app.sites import get_mode, get_site_name, get_strategy
 from app.strategies import dispatch
 from app.strategies.ytdlp import scrape_steps as ytdlp_steps
 
@@ -97,7 +97,7 @@ async def scrape_stream(req: ScrapeRequest):
 
             if strategy == "ytdlp":
                 content, image_url = "", None
-                async for step, msg, is_final, md, img in ytdlp_steps(url):
+                async for step, msg, is_final, md, img in ytdlp_steps(url, mode=get_mode(url)):
                     yield sse("progress", {"step": step, "message": msg})
                     if is_final:
                         content, image_url = md or "", img

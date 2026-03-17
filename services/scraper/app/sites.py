@@ -7,11 +7,12 @@ Domain-specific CSS selectors are only needed as fallback when JSON-LD is missin
 from urllib.parse import urlparse
 
 SITE_CONFIG: dict[str, dict] = {
-    # ── yt-dlp (video caption + whisper transcript) ──────────────────
+    # ── yt-dlp: whisper transcription ─────────────────────────────────
     "instagram.com": {"strategy": "ytdlp"},
     "tiktok.com": {"strategy": "ytdlp"},
-    "youtube.com": {"strategy": "ytdlp"},
-    "youtu.be": {"strategy": "ytdlp"},
+    # ── yt-dlp: subtitles (no whisper) ─────────────────────────────────
+    "youtube.com": {"strategy": "ytdlp", "mode": "subtitles"},
+    "youtu.be": {"strategy": "ytdlp", "mode": "subtitles"},
 
     # ── Domain-specific CSS selectors (only if JSON-LD doesn't work) ─
     # Template:
@@ -64,3 +65,8 @@ def get_selector(url: str) -> str:
 def has_image_selector(url: str) -> bool:
     match = _match(_domain(url))
     return bool(match and SITE_CONFIG[match].get("image"))
+
+
+def get_mode(url: str) -> str | None:
+    match = _match(_domain(url))
+    return SITE_CONFIG[match].get("mode") if match else None

@@ -1,11 +1,14 @@
-"""yt-dlp + faster-whisper strategy — video metadata + audio transcription."""
+"""yt-dlp strategy — video metadata + whisper transcription or subtitles."""
 
 import asyncio
 import json
 import logging
 import os
+import re
 import tempfile
 from typing import AsyncGenerator, Optional
+
+import httpx
 
 log = logging.getLogger("scraper")
 
@@ -54,6 +57,60 @@ def _transcribe(audio_path: str) -> tuple[str, str]:
     return text, info.language
 
 
+SUBTITLE_LANGS = ["de", "en"]
+
+
+def _pick_subtitle(meta: dict) -> tuple[str, str] | None:
+    """Return (lang, url) for the best subtitle track, or None."""
+    for source in ("subtitles", "automatic_captions"):
+        for lang in SUBTITLE_LANGS:
+            tracks = meta.get(source, {}).get(lang, [])
+            by_ext = {t.get("ext"): t.get("url") for t in tracks if t.get("url")}
+            for fmt in ("json3", "vtt", "srv3"):
+                if fmt in by_ext:
+                    return lang, by_ext[fmt]
+    return None
+
+
+async def _fetch_subtitle_text(url: str) -> str:
+    """Download subtitle file and return plain text."""
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
+    raw = resp.text
+
+    # json3
+    try:
+        data = json.loads(raw)
+        if "events" in data:
+            seen, parts = set(), []
+            for event in data["events"]:
+                for seg in event.get("segs", []):
+                    t = seg.get("utf8", "").strip()
+                    if t and t != "\n" and t not in seen:
+                        seen.add(t)
+                        parts.append(t)
+            return " ".join(parts)
+    except (json.JSONDecodeError, KeyError):
+        pass
+
+    # VTT
+    if raw.strip().startswith("WEBVTT"):
+        seen, lines = set(), []
+        for line in raw.split("\n"):
+            line = line.strip()
+            if not line or line.startswith("WEBVTT") or "-->" in line or re.match(r"^\d+$", line):
+                continue
+            clean = re.sub(r"<[^>]+>", "", line).strip()
+            if clean and clean not in seen:
+                seen.add(clean)
+                lines.append(clean)
+        return " ".join(lines)
+
+    # Fallback: strip tags
+    return re.sub(r"<[^>]+>", "", raw).strip()
+
+
 def _build_markdown(title: str, uploader: str, description: str, transcript: str) -> str:
     parts = []
     if title:
@@ -71,7 +128,7 @@ def _build_markdown(title: str, uploader: str, description: str, transcript: str
 Step = tuple[str, str, bool, Optional[str], Optional[str]]
 
 
-async def scrape_steps(url: str) -> AsyncGenerator[Step, None]:
+async def scrape_steps(url: str, mode: str | None = None) -> AsyncGenerator[Step, None]:
     """Yield progress steps. Last step has is_final=True and carries the result."""
 
     # 1. Metadata
@@ -86,34 +143,48 @@ async def scrape_steps(url: str) -> AsyncGenerator[Step, None]:
 
     yield ("metadata", f"Got metadata: \"{title[:60]}\" by {uploader} ({duration}s)", False, None, None)
 
-    # 2. Audio download
-    yield ("download", "Downloading audio...", False, None, None)
-    audio_path = tempfile.mktemp(suffix=".m4a")
     transcript = ""
-    try:
-        dl_ok = await _download_audio(url, audio_path)
-        if dl_ok and os.path.exists(audio_path):
-            size_kb = os.path.getsize(audio_path) // 1024
-            yield ("download", f"Audio downloaded ({size_kb}KB)", False, None, None)
 
-            # 3. Transcription
-            yield ("transcribe", "Transcribing with whisper...", False, None, None)
-            transcript, lang = _transcribe(audio_path)
-            yield ("transcribe", f"Transcribed: {len(transcript)} chars (lang={lang})", False, None, None)
-        else:
-            yield ("download", "No audio available, skipping transcription", False, None, None)
-    finally:
-        if os.path.exists(audio_path):
-            os.unlink(audio_path)
+    if mode == "subtitles":
+        # ── Subtitle path (YouTube) ──────────────────────────────────
+        yield ("subtitles", "Looking for subtitles...", False, None, None)
+        sub_info = _pick_subtitle(meta)
+        if sub_info is None:
+            raise RuntimeError(
+                "Keine Untertitel verfügbar. Dieses Video hat weder "
+                "manuelle noch automatisch generierte Untertitel."
+            )
+        lang, sub_url = sub_info
+        yield ("subtitles", f"Downloading {lang} subtitles...", False, None, None)
+        transcript = await _fetch_subtitle_text(sub_url)
+        yield ("subtitles", f"Subtitles: {len(transcript)} chars (lang={lang})", False, None, None)
+    else:
+        # ── Whisper path (TikTok, Instagram) ─────────────────────────
+        yield ("download", "Downloading audio...", False, None, None)
+        audio_path = tempfile.mktemp(suffix=".m4a")
+        try:
+            dl_ok = await _download_audio(url, audio_path)
+            if dl_ok and os.path.exists(audio_path):
+                size_kb = os.path.getsize(audio_path) // 1024
+                yield ("download", f"Audio downloaded ({size_kb}KB)", False, None, None)
 
-    # 4. Final
+                yield ("transcribe", "Transcribing with whisper...", False, None, None)
+                transcript, lang = _transcribe(audio_path)
+                yield ("transcribe", f"Transcribed: {len(transcript)} chars (lang={lang})", False, None, None)
+            else:
+                yield ("download", "No audio available, skipping transcription", False, None, None)
+        finally:
+            if os.path.exists(audio_path):
+                os.unlink(audio_path)
+
+    # Final
     md = _build_markdown(title, uploader, description, transcript)
     yield ("done", f"{len(md)} chars", True, md, thumbnail)
 
 
-async def scrape(url: str) -> tuple[str, Optional[str]]:
+async def scrape(url: str, mode: str | None = None) -> tuple[str, Optional[str]]:
     """Non-streaming wrapper — returns final (markdown, image_url)."""
-    async for step, msg, is_final, md, img in scrape_steps(url):
+    async for step, msg, is_final, md, img in scrape_steps(url, mode=mode):
         log.info("  ytdlp [%s] %s", step, msg)
         if is_final:
             return md or "", img

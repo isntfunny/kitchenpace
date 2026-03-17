@@ -8,7 +8,7 @@ Order for non-ytdlp sites:
 import logging
 from typing import Optional
 
-from app.sites import get_selector, get_site_name, get_strategy
+from app.sites import get_mode, get_selector, get_site_name, get_strategy
 
 from .jsonld import scrape as scrape_jsonld
 from .scrapling import scrape as scrape_scrapling
@@ -27,7 +27,7 @@ async def dispatch(url: str, css_selector: Optional[str] = None, **scrapling_opt
     strategy = get_strategy(url) if not css_selector else "scrapling"
 
     if strategy == "ytdlp":
-        return await scrape_ytdlp(url)
+        return await scrape_ytdlp(url, mode=get_mode(url))
 
     # Custom CSS selector skips jsonld
     if css_selector:

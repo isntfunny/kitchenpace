@@ -5,8 +5,11 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 libnss3 libatk1.0-0 libcups2 libdrm2 libdbus-1-3 \
     libxcb1 libxkbcommon0 libx11-6 libgbm1 libasound2 \
     libpango-1.0-0 libpangocairo-1.0-0 libgtk-3-0 \
-    curl ffmpeg \
+    curl ffmpeg unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install deno (required by yt-dlp for YouTube JS extraction)
+RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/tmp/playwright-browsers
 ENV PYTHONUNBUFFERED=1

@@ -35,6 +35,8 @@ interface SegmentedBarProps {
     customInput?: CustomNumberInput | CustomStringInput;
     customTriggerDataTutorial?: string;
     onCustomTriggerClick?: () => void;
+    /** Strip outer border + border-radius (for embedding in a combined container) */
+    noBorder?: boolean;
 }
 
 export function SegmentedBar({
@@ -45,6 +47,7 @@ export function SegmentedBar({
     customInput,
     customTriggerDataTutorial,
     onCustomTriggerClick,
+    noBorder = false,
 }: SegmentedBarProps) {
     const [customMode, setCustomMode] = useState(false);
     const op = useOpenPanel();
@@ -65,7 +68,8 @@ export function SegmentedBar({
                     overflow: 'hidden',
                 })}
                 style={{
-                    border: `1px solid ${PALETTE.orange}`,
+                    border: noBorder ? 'none' : `1px solid ${PALETTE.orange}`,
+                    borderRadius: noBorder ? 0 : undefined,
                     height: BAR_HEIGHT,
                     padding: '0 12px',
                 }}
@@ -129,8 +133,15 @@ export function SegmentedBar({
 
     return (
         <div
-            className={css({ display: 'flex', borderRadius: 'lg', overflow: 'hidden' })}
-            style={{ border: `1px solid ${PALETTE.orange}`, height: BAR_HEIGHT }}
+            className={css({
+                display: 'flex',
+                borderRadius: noBorder ? '0' : 'lg',
+                overflow: 'hidden',
+            })}
+            style={{
+                border: noBorder ? 'none' : `1px solid ${PALETTE.orange}`,
+                height: BAR_HEIGHT,
+            }}
         >
             {items.map((label, i) => {
                 const active = i === activeIndex;

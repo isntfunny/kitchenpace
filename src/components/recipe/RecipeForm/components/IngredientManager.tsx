@@ -1,16 +1,36 @@
 'use client';
 
-import { MessageSquare, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import {
+    closestCenter,
+    DndContext,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from '@dnd-kit/core';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 
-import { ingredientDisplayName } from '@app/lib/ingredient-display';
-import { PALETTE } from '@app/lib/palette';
+import {
+    buildIngredientParser,
+    levenshtein,
+    type ParsedIngredientInput,
+    type UnitEntry,
+} from '@app/lib/ingredients/parseIngredientInput';
 
 import { css } from 'styled-system/css';
 
-import { AddedIngredient, IngredientSearchResult } from '../data';
+import { getUnitNames } from '../../actions';
+import { type AddedIngredient, type IngredientSearchResult } from '../data';
 
+import { IngredientCard } from './IngredientCard';
+import {
+    IngredientAddNewButton,
+    IngredientResultItem,
+    IngredientSearchDropdown,
+} from './IngredientSearchDropdown';
 import { SegmentedBar } from './SegmentedBar';
 
 const SERVING_PRESETS = [1, 2, 4, 6, 8] as const;
@@ -27,10 +47,46 @@ interface IngredientManagerProps {
     onAddNewIngredient: (name: string) => Promise<void>;
     onUpdateIngredient: (index: number, changes: Partial<AddedIngredient>) => void;
     onRemoveIngredient: (index: number) => void;
+    onReorderIngredients?: (newOrder: AddedIngredient[]) => void;
+    onReplaceIngredient?: (index: number, replacement: IngredientSearchResult) => void;
     ingredientSearchRef?: RefObject<HTMLInputElement | null>;
     onServingsCustomTriggerClick?: () => void;
     onIngredientAmountFocus?: () => void;
     onIngredientCommentClick?: () => void;
+}
+
+/** Find a search result matching the parsed name exactly (name or alias). */
+function findExactMatch(
+    results: IngredientSearchResult[],
+    name: string,
+): IngredientSearchResult | null {
+    const lower = name.toLowerCase();
+    return (
+        results.find(
+            (r) => r.name.toLowerCase() === lower || r.matchedAlias?.toLowerCase() === lower,
+        ) ?? null
+    );
+}
+
+/** Find closest fuzzy match using Levenshtein distance. */
+function findFuzzyMatch(
+    results: IngredientSearchResult[],
+    name: string,
+): IngredientSearchResult | null {
+    const lower = name.toLowerCase();
+    const maxDist = lower.length <= 8 ? 2 : 3;
+
+    let best: IngredientSearchResult | null = null;
+    let bestDist = Infinity;
+
+    for (const r of results) {
+        const dist = levenshtein(r.name.toLowerCase(), lower);
+        if (dist <= maxDist && dist < bestDist) {
+            best = r;
+            bestDist = dist;
+        }
+    }
+    return best;
 }
 
 export function IngredientManager({
@@ -44,17 +100,62 @@ export function IngredientManager({
     onAddNewIngredient,
     onUpdateIngredient,
     onRemoveIngredient,
+    onReorderIngredients,
+    onReplaceIngredient,
     ingredientSearchRef,
     onServingsCustomTriggerClick,
     onIngredientAmountFocus,
     onIngredientCommentClick,
 }: IngredientManagerProps) {
     const inputRef = useRef<HTMLInputElement>(null);
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [showNeuBadge, setShowNeuBadge] = useState(false);
+
+    // ── DnD ──
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+    const sortableIds = ingredients.map((_, i) => `ing-${i}`);
+
+    const handleDragEnd = useCallback(
+        (event: DragEndEvent) => {
+            const { active, over } = event;
+            if (!over || active.id === over.id) return;
+            const oldIndex = sortableIds.indexOf(String(active.id));
+            const newIndex = sortableIds.indexOf(String(over.id));
+            if (oldIndex === -1 || newIndex === -1) return;
+            onReorderIngredients?.(arrayMove(ingredients, oldIndex, newIndex));
+            // Update editing index to follow the moved card
+            if (editingIndex === oldIndex) setEditingIndex(newIndex);
+            else if (editingIndex !== null) {
+                if (oldIndex < editingIndex && newIndex >= editingIndex)
+                    setEditingIndex(editingIndex - 1);
+                else if (oldIndex > editingIndex && newIndex <= editingIndex)
+                    setEditingIndex(editingIndex + 1);
+            }
+        },
+        [ingredients, sortableIds, onReorderIngredients, editingIndex],
+    );
+    const pendingPrefillRef = useRef<{ amount: string; unit: string | null } | null>(null);
+
+    // ── Parser: fetch unit names once, build parser ──
+    const [parser, setParser] = useState<((raw: string) => ParsedIngredientInput) | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        getUnitNames().then((units: UnitEntry[]) => {
+            if (!cancelled) {
+                const parse = buildIngredientParser(units);
+                setParser(() => parse);
+            }
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const showDropdown = ingredientQuery.length >= 2;
     const showAddNew = ingredientQuery.length >= 2;
 
-    // Ghost autocomplete: top result whose name starts with the current query
+    // Ghost autocomplete
     const topResult = searchResults[0] ?? null;
     const ghostCompletion =
         topResult && ingredientQuery.length >= 1
@@ -63,31 +164,133 @@ export function IngredientManager({
                 : ''
             : '';
 
-    const acceptGhost = () => {
-        if (!ghostCompletion || !topResult) return;
-        onAddIngredient(topResult);
-        onIngredientQueryChange('');
-    };
+    // ── Add helpers ──
+
+    const addAndOpen = useCallback(
+        (add: () => void) => {
+            add();
+            setEditingIndex(ingredients.length);
+        },
+        [ingredients.length],
+    );
+
+    /** Apply pending prefill after ingredient was added. */
+    const applyPrefill = useCallback(
+        (newIndex: number) => {
+            const prefill = pendingPrefillRef.current;
+            if (!prefill) return;
+            pendingPrefillRef.current = null;
+            const changes: Partial<AddedIngredient> = {};
+            if (prefill.amount) changes.amount = prefill.amount;
+            if (prefill.unit) changes.unit = prefill.unit;
+            if (Object.keys(changes).length > 0) {
+                // Apply in next tick after state update
+                requestAnimationFrame(() => onUpdateIngredient(newIndex, changes));
+            }
+        },
+        [onUpdateIngredient],
+    );
+
+    // Watch for new ingredients to apply prefill
+    const prevCountRef = useRef(ingredients.length);
+    useEffect(() => {
+        if (ingredients.length > prevCountRef.current) {
+            applyPrefill(ingredients.length - 1);
+        }
+        prevCountRef.current = ingredients.length;
+    }, [ingredients.length, applyPrefill]);
+
+    const addWithPrefill = useCallback(
+        (result: IngredientSearchResult, parsed: ParsedIngredientInput) => {
+            if (parsed.amount || parsed.unit) {
+                pendingPrefillRef.current = { amount: parsed.amount, unit: parsed.unit };
+            }
+            addAndOpen(() => onAddIngredient(result));
+            onIngredientQueryChange('');
+            setShowNeuBadge(false);
+            inputRef.current?.focus();
+        },
+        [addAndOpen, onAddIngredient, onIngredientQueryChange],
+    );
+
+    const addNewWithPrefill = useCallback(
+        async (parsed: ParsedIngredientInput) => {
+            if (parsed.amount || parsed.unit) {
+                pendingPrefillRef.current = { amount: parsed.amount, unit: parsed.unit };
+            }
+            await onAddNewIngredient(parsed.name);
+            setEditingIndex(ingredients.length);
+            onIngredientQueryChange('');
+            setShowNeuBadge(false);
+            inputRef.current?.focus();
+        },
+        [ingredients.length, onAddNewIngredient, onIngredientQueryChange],
+    );
+
+    // ── Key handling ──
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ghostCompletion && (e.key === 'Tab' || e.key === 'ArrowRight')) {
+        if (e.key === 'Tab' || e.key === 'ArrowRight') {
+            if (ghostCompletion) {
+                e.preventDefault();
+                addAndOpen(() => onAddIngredient(topResult!));
+                onIngredientQueryChange('');
+                inputRef.current?.focus();
+            }
+            return;
+        }
+
+        if (e.key === 'Enter') {
             e.preventDefault();
-            acceptGhost();
+            const trimmed = ingredientQuery.trim();
+            if (!trimmed) return;
+
+            const parsed = parser ? parser(trimmed) : { name: trimmed, amount: '', unit: null };
+            const searchName = parsed.name;
+
+            // Try exact match
+            const exact = findExactMatch(searchResults, searchName);
+            if (exact) {
+                addWithPrefill(exact, parsed);
+                return;
+            }
+
+            // Try fuzzy match
+            const fuzzy = findFuzzyMatch(searchResults, searchName);
+            if (fuzzy) {
+                addWithPrefill(fuzzy, parsed);
+                return;
+            }
+
+            // No match: if NEU badge is already showing, create new
+            if (showNeuBadge) {
+                void addNewWithPrefill(parsed);
+                return;
+            }
+
+            // First Enter with no match → show NEU badge
+            setShowNeuBadge(true);
         }
     };
 
+    // Hide NEU badge when query changes
+    const handleQueryChange = (value: string) => {
+        onIngredientQueryChange(value);
+        if (showNeuBadge) setShowNeuBadge(false);
+    };
+
     const handleAddNew = async () => {
-        const name = ingredientQuery.trim();
-        if (!name) return;
-        await onAddNewIngredient(name);
-        onIngredientQueryChange('');
+        const trimmed = ingredientQuery.trim();
+        if (!trimmed) return;
+        const parsed = parser ? parser(trimmed) : { name: trimmed, amount: '', unit: null };
+        await addNewWithPrefill(parsed);
     };
 
     return (
         <div>
             {/* Servings */}
             <div className={css({ mb: '4' })} data-tutorial="servings-bar">
-                <label className={labelSmClass}>Portionen</label>
+                <label className={labelClass}>Portionen</label>
                 <SegmentedBar
                     items={SERVING_LABELS}
                     activeIndex={SERVING_PRESETS.indexOf(
@@ -115,8 +318,8 @@ export function IngredientManager({
 
             {/* Ingredient search */}
             <label className={labelClass}>Zutaten *</label>
-            <div className={css({ position: 'relative', mb: '4' })}>
-                {/* Ghost text overlay — sits behind the input, same padding/font */}
+            <div className={css({ position: 'relative', mb: '3' })}>
+                {/* Ghost text overlay */}
                 <div className={ghostOverlayClass} aria-hidden>
                     <span style={{ visibility: 'hidden', whiteSpace: 'pre' }}>
                         {ingredientQuery}
@@ -130,97 +333,78 @@ export function IngredientManager({
                     }}
                     type="text"
                     value={ingredientQuery}
-                    onChange={(e) => onIngredientQueryChange(e.target.value)}
+                    onChange={(e) => handleQueryChange(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Zutat suchen oder hinzufügen..."
+                    placeholder="200g Spaghetti, 3 Eier, Apfel..."
                     className={inputClass}
                     style={{ background: 'transparent', position: 'relative' }}
                     autoComplete="off"
                     data-tutorial="ingredient-search"
                 />
 
+                {/* NEU badge — shown when no match, next Enter creates */}
+                {showNeuBadge && <div className={neuBadgeClass}>NEU</div>}
+
                 {/* Dropdown: search results + add-new option */}
                 {showDropdown && (searchResults.length > 0 || showAddNew) && (
-                    <div
-                        className={dropdownClass}
-                        data-tutorial-child="ingredient-search"
-                        onMouseDown={(e) => e.preventDefault()}
-                    >
+                    <IngredientSearchDropdown data-tutorial-child="ingredient-search">
                         {searchResults.map((ing) => (
-                            <button
+                            <IngredientResultItem
                                 key={ing.id}
-                                type="button"
+                                result={ing}
+                                categoryFallback="Ohne Kategorie"
                                 onClick={() => {
-                                    onAddIngredient(ing);
+                                    addAndOpen(() => onAddIngredient(ing));
                                     onIngredientQueryChange('');
+                                    inputRef.current?.focus();
                                 }}
-                                className={resultBtnClass}
-                            >
-                                <span className={css({ fontWeight: '500' })}>
-                                    {ing.name}
-                                    {ing.matchedAlias && (
-                                        <span
-                                            className={css({
-                                                fontWeight: '400',
-                                                color: 'text-muted',
-                                            })}
-                                        >
-                                            {' '}
-                                            ({ing.matchedAlias})
-                                        </span>
-                                    )}
-                                </span>
-                                <span
-                                    className={css({
-                                        color: 'text-muted',
-                                        fontSize: 'sm',
-                                        ml: '2',
-                                    })}
-                                >
-                                    {ing.categories?.[0] || 'Ohne Kategorie'}
-                                </span>
-                            </button>
+                            />
                         ))}
                         {showAddNew && (
-                            <button type="button" onClick={handleAddNew} className={addNewBtnClass}>
-                                <span
-                                    className={css({
-                                        color: PALETTE.orange,
-                                        fontWeight: '700',
-                                        mr: '1',
-                                    })}
-                                >
-                                    +
-                                </span>
-                                <span>&ldquo;{ingredientQuery.trim()}&rdquo; hinzufügen</span>
-                            </button>
+                            <IngredientAddNewButton
+                                name={ingredientQuery.trim()}
+                                onClick={handleAddNew}
+                            />
                         )}
-                    </div>
+                    </IngredientSearchDropdown>
                 )}
             </div>
 
-            {/* Added ingredients list */}
+            {/* Ingredient cards */}
             {ingredients.length > 0 && (
-                <div
-                    className={css({ borderRadius: 'lg', overflow: 'hidden' })}
-                    style={{ border: `1px solid ${PALETTE.orange}50` }}
-                    data-tutorial-child="ingredient-search"
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    modifiers={[restrictToVerticalAxis]}
+                    onDragEnd={handleDragEnd}
                 >
-                    {ingredients.map((ing, index) => (
-                        <IngredientRow
-                            key={`${ing.id}-${index}`}
-                            ing={ing}
-                            index={index}
-                            isLast={index === ingredients.length - 1}
-                            onUpdate={onUpdateIngredient}
-                            onRemove={onRemoveIngredient}
-                            onAmountFocus={index === 0 ? onIngredientAmountFocus : undefined}
-                            onCommentClick={index === 0 ? onIngredientCommentClick : undefined}
-                            isTutorialTarget={index === 0}
-                        />
-                    ))}
-                </div>
+                    <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+                        <div className={cardListClass} data-tutorial-child="ingredient-search">
+                            {ingredients.map((ing, index) => (
+                                <IngredientCard
+                                    key={`${ing.id}-${index}`}
+                                    sortableId={sortableIds[index]}
+                                    ing={ing}
+                                    index={index}
+                                    editing={editingIndex === index}
+                                    onEditingChange={(open) => setEditingIndex(open ? index : null)}
+                                    onUpdate={onUpdateIngredient}
+                                    onRemove={onRemoveIngredient}
+                                    onReplace={onReplaceIngredient}
+                                    onAmountFocus={
+                                        index === 0 ? onIngredientAmountFocus : undefined
+                                    }
+                                    onCommentClick={
+                                        index === 0 ? onIngredientCommentClick : undefined
+                                    }
+                                    isTutorialTarget={index === 0}
+                                />
+                            ))}
+                        </div>
+                    </SortableContext>
+                </DndContext>
             )}
+
             <p
                 className={css({
                     mt: '3',
@@ -235,6 +419,8 @@ export function IngredientManager({
     );
 }
 
+/* ── Styles ─────────────────────────────────────────────── */
+
 const labelClass = css({
     fontWeight: '600',
     display: 'block',
@@ -242,224 +428,11 @@ const labelClass = css({
     fontSize: 'sm',
 });
 
-function IngredientRow({
-    ing,
-    index,
-    isLast,
-    onUpdate,
-    onRemove,
-    onAmountFocus,
-    onCommentClick,
-    isTutorialTarget,
-}: {
-    ing: AddedIngredient;
-    index: number;
-    isLast: boolean;
-    onUpdate: (index: number, changes: Partial<AddedIngredient>) => void;
-    onRemove: (index: number) => void;
-    onAmountFocus?: () => void;
-    onCommentClick?: () => void;
-    isTutorialTarget?: boolean;
-}) {
-    const [showNotes, setShowNotes] = useState(Boolean(ing.notes));
-
-    return (
-        <div
-            className={css({ display: 'flex', flexDir: 'column' })}
-            style={!isLast ? { borderBottom: `1px solid ${PALETTE.orange}50` } : undefined}
-            data-tutorial={isTutorialTarget ? 'ingredient-row' : undefined}
-        >
-            {/* Main row */}
-            <div className={css({ display: 'flex', alignItems: 'center', minHeight: '44px' })}>
-                {/* Name */}
-                <span
-                    className={css({
-                        flex: '1',
-                        fontWeight: '600',
-                        fontSize: 'sm',
-                        px: '3',
-                        py: '1',
-                        color: 'text',
-                        minWidth: '0',
-                        lineClamp: '2',
-                    })}
-                >
-                    {ingredientDisplayName(ing.name, ing.pluralName, ing.amount)}
-                </span>
-
-                {/* Amount + Unit merged inputs */}
-                <div
-                    className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        height: '100%',
-                    })}
-                    style={{ borderLeft: `1px solid ${PALETTE.orange}50` }}
-                    data-tutorial={isTutorialTarget ? 'ingredient-amount' : undefined}
-                >
-                    <input
-                        type="text"
-                        value={ing.amount}
-                        onChange={(e) => onUpdate(index, { amount: e.target.value })}
-                        onFocus={onAmountFocus}
-                        placeholder="!"
-                        className={!ing.amount ? amountInputEmptyClass : amountInputClass}
-                    />
-                    <div
-                        className={css({ width: '1px', height: '60%', flexShrink: 0 })}
-                        style={{ background: `${PALETTE.orange}50` }}
-                    />
-                    <select
-                        value={ing.unit}
-                        onChange={(e) => onUpdate(index, { unit: e.target.value })}
-                        className={unitInputClass}
-                        data-tutorial={isTutorialTarget ? 'ingredient-unit' : undefined}
-                    >
-                        {ing.availableUnits.map((u) => (
-                            <option key={u} value={u}>
-                                {u}
-                            </option>
-                        ))}
-                        {!ing.availableUnits.includes(ing.unit) && ing.unit && (
-                            <option value={ing.unit}>{ing.unit}</option>
-                        )}
-                    </select>
-                </div>
-
-                {/* Optional toggle */}
-                <button
-                    type="button"
-                    onClick={() => onUpdate(index, { isOptional: !ing.isOptional })}
-                    data-tutorial={isTutorialTarget ? 'ingredient-optional' : undefined}
-                    className={css({
-                        height: '100%',
-                        px: '2.5',
-                        fontSize: 'xs',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 120ms ease',
-                        bg: 'transparent',
-                        border: 'none',
-                    })}
-                    style={{
-                        borderLeft: `1px solid ${PALETTE.orange}50`,
-                        color: ing.isOptional ? PALETTE.orange : '#aaa',
-                    }}
-                    title={
-                        ing.isOptional
-                            ? 'Optional (klicken zum Ändern)'
-                            : 'Pflicht (klicken für optional)'
-                    }
-                >
-                    Opt
-                </button>
-
-                {/* Notes toggle */}
-                <button
-                    type="button"
-                    onClick={() => {
-                        onCommentClick?.();
-                        setShowNotes(!showNotes);
-                    }}
-                    data-tutorial={isTutorialTarget ? 'ingredient-comment' : undefined}
-                    className={css({
-                        height: '100%',
-                        px: '2',
-                        cursor: 'pointer',
-                        bg: 'transparent',
-                        border: 'none',
-                        transition: 'all 120ms ease',
-                    })}
-                    style={{
-                        borderLeft: `1px solid ${PALETTE.orange}50`,
-                        color: ing.notes ? PALETTE.orange : '#aaa',
-                    }}
-                    title="Hinweis hinzufügen"
-                >
-                    <MessageSquare size={14} />
-                </button>
-
-                {/* Remove */}
-                <button
-                    type="button"
-                    onClick={() => onRemove(index)}
-                    className={css({
-                        height: '100%',
-                        px: '2.5',
-                        cursor: 'pointer',
-                        bg: 'transparent',
-                        border: 'none',
-                        color: 'foreground.muted',
-                        transition: 'color 120ms ease',
-                        _hover: { color: 'red.500' },
-                    })}
-                    style={{ borderLeft: `1px solid ${PALETTE.orange}50` }}
-                >
-                    <X size={15} />
-                </button>
-            </div>
-
-            {/* Notes row (collapsible) */}
-            {showNotes && (
-                <input
-                    type="text"
-                    value={ing.notes}
-                    onChange={(e) => onUpdate(index, { notes: e.target.value })}
-                    placeholder="Hinweis (z.B. frisch gehackt, fein gewürfelt)"
-                    autoFocus={!ing.notes}
-                    className={css({
-                        width: '100%',
-                        padding: '1.5',
-                        paddingX: '3',
-                        fontSize: 'xs',
-                        color: 'text-muted',
-                        bg: 'transparent',
-                        outline: 'none',
-                        _placeholder: { color: 'foreground.muted' },
-                    })}
-                    style={{ borderTop: `1px solid ${PALETTE.orange}50` }}
-                />
-            )}
-        </div>
-    );
-}
-
-const amountInputBase = {
-    width: '56px',
-    height: '100%',
-    fontSize: 'md',
-    textAlign: 'center' as const,
-    outline: 'none',
-    bg: 'transparent',
-    fontWeight: '600',
-};
-
-const amountInputClass = css({
-    ...amountInputBase,
-    color: 'text',
-    _placeholder: { color: 'gray.300' },
+const cardListClass = css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2',
 });
-
-const amountInputEmptyClass = css({
-    ...amountInputBase,
-    color: 'text',
-    bg: { base: 'rgba(224,70,70,0.06)', _dark: 'rgba(224,70,70,0.1)' },
-    _placeholder: { color: '#d44', fontWeight: '700', fontSize: 'lg' },
-});
-
-const unitInputClass = css({
-    width: '48px',
-    height: '100%',
-    fontSize: 'sm',
-    textAlign: 'center',
-    outline: 'none',
-    bg: 'transparent',
-    color: 'text.muted',
-    fontWeight: '600',
-    _placeholder: { color: 'gray.300' },
-});
-
-const labelSmClass = css({ fontWeight: '600', display: 'block', mb: '2', fontSize: 'sm' });
 
 const ghostOverlayClass = css({
     position: 'absolute',
@@ -498,45 +471,21 @@ const inputClass = css({
     },
 });
 
-const dropdownClass = css({
+const neuBadgeClass = css({
     position: 'absolute',
-    top: '100%',
-    left: '0',
-    right: '0',
-    bg: { base: 'white', _dark: 'surface' },
-    borderRadius: 'xl',
-    boxShadow: { base: 'lg', _dark: '0 10px 25px rgba(0,0,0,0.4)' },
-    zIndex: '10',
-    maxH: '200px',
-    overflowY: 'auto',
-    border: { base: 'none', _dark: '1px solid rgba(224,123,83,0.15)' },
-});
-
-const resultBtnClass = css({
-    width: '100%',
-    padding: '3',
-    textAlign: 'left',
-    bg: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    color: 'text',
-    _hover: { bg: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' } },
-});
-
-const addNewBtnClass = css({
-    width: '100%',
-    padding: '3',
-    textAlign: 'left',
-    bg: 'transparent',
-    border: 'none',
-    borderTop: {
-        base: '1px dashed rgba(224,123,83,0.25)',
-        _dark: '1px dashed rgba(224,123,83,0.2)',
-    },
-    cursor: 'pointer',
-    color: 'text.muted',
-    fontSize: 'sm',
-    display: 'flex',
-    alignItems: 'center',
-    _hover: { bg: { base: 'rgba(224,123,83,0.06)', _dark: 'rgba(224,123,83,0.1)' }, color: 'text' },
+    right: '12px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    fontSize: '9px',
+    fontWeight: '700',
+    px: '2',
+    py: '0.5',
+    borderRadius: 'md',
+    color: 'white',
+    bg: 'palette.orange',
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+    lineHeight: '1',
+    pointerEvents: 'none',
+    zIndex: '5',
 });

@@ -1,30 +1,60 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useMemo, useRef, useState, useEffect, useTransition } from 'react';
 
-import { searchIngredients } from './actions';
-import type { IngredientSearchResult } from './RecipeForm/data';
+import { searchIngredients, type IngredientSearchResponse } from './actions';
+
+const EMPTY: IngredientSearchResponse = {
+    results: [],
+    parsed: { name: '', amount: '', unit: null },
+    bestMatch: null,
+    matchType: 'none',
+};
+
+export type IngredientSearchState = IngredientSearchResponse & {
+    isLoading: boolean;
+    /** Cancel pending debounce timer (e.g. before firing an immediate search on Enter). */
+    cancelDebounce: () => void;
+};
 
 /**
  * Debounced ingredient search hook (300ms).
- * Returns empty array immediately when query is shorter than 2 chars.
+ * Returns search results, parsed input, best match, loading state, and cancel function.
  */
-export function useIngredientSearch(query: string): IngredientSearchResult[] {
-    const [results, setResults] = useState<IngredientSearchResult[]>([]);
+export function useIngredientSearch(query: string): IngredientSearchState {
+    const [response, setResponse] = useState<IngredientSearchResponse>(EMPTY);
+    const [isPending, startTransition] = useTransition();
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const trimmed = useMemo(() => query.trim(), [query]);
+    const tooShort = trimmed.length < 2;
 
     useEffect(() => {
-        const trimmed = query.trim();
-        if (trimmed.length < 2) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setResults([]);
-            return;
-        }
-        const timer = setTimeout(async () => {
-            const r = await searchIngredients(trimmed);
-            setResults(r);
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [query]);
+        if (tooShort) return;
 
-    return results;
+        timerRef.current = setTimeout(() => {
+            startTransition(async () => {
+                const r = await searchIngredients(trimmed);
+                setResponse(r);
+            });
+        }, 150);
+
+        return () => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+                timerRef.current = null;
+            }
+        };
+    }, [trimmed, tooShort]);
+
+    const cancelDebounce = useCallback(() => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+    }, []);
+
+    if (tooShort) return { ...EMPTY, isLoading: false, cancelDebounce };
+
+    return { ...response, isLoading: isPending, cancelDebounce };
 }

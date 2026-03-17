@@ -9,6 +9,7 @@ import { moveObject } from '@app/lib/s3';
 import { approvedKey } from '@app/lib/s3/keys';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
 import { formatValidationErrors, validateFlow } from '@app/lib/validation/flowValidation';
+import { createLogger } from '@shared/logger';
 import { prisma } from '@shared/prisma';
 import { addSyncRecipeJob, addGenerateRecipeOgJob } from '@worker/queues';
 
@@ -530,6 +531,8 @@ async function notifyModeratorsNewIngredient(ingredientId: string, ingredientNam
     );
 }
 
+const ingLog = createLogger('ingredient');
+
 export async function createIngredient(name: string, _category?: string, _units: string[] = []) {
     const { stemGerman, getWordVariants } = await import('@app/lib/german-stem');
 
@@ -543,9 +546,14 @@ export async function createIngredient(name: string, _category?: string, _units:
     const canonicalName = trimmed[0].toUpperCase() + singular.slice(1);
     const slug = slugify(canonicalName);
 
+    ingLog.debug('lookup', { input: trimmed, singular, slug, stemmed: isStemmed });
+
     // 2. Try slug match (singular slug)
     const bySlug = await prisma.ingredient.findUnique({ where: { slug } });
-    if (bySlug) return bySlug;
+    if (bySlug) {
+        ingLog.debug('found by slug', { input: trimmed, match: bySlug.name, id: bySlug.id });
+        return bySlug;
+    }
 
     // 3. Try alias match (for regional synonyms)
     const variants = await getWordVariants(trimmed);
@@ -553,7 +561,15 @@ export async function createIngredient(name: string, _category?: string, _units:
         const byAlias = await prisma.ingredient.findFirst({
             where: { aliases: { hasSome: variants } },
         });
-        if (byAlias) return byAlias;
+        if (byAlias) {
+            ingLog.debug('found by alias', {
+                input: trimmed,
+                variants,
+                match: byAlias.name,
+                id: byAlias.id,
+            });
+            return byAlias;
+        }
     }
 
     // 4. Also try the original name's slug (in case it wasn't stemmed to the same slug)
@@ -562,10 +578,24 @@ export async function createIngredient(name: string, _category?: string, _units:
         const byOriginalSlug = await prisma.ingredient.findUnique({
             where: { slug: originalSlug },
         });
-        if (byOriginalSlug) return byOriginalSlug;
+        if (byOriginalSlug) {
+            ingLog.debug('found by original slug', {
+                input: trimmed,
+                originalSlug,
+                match: byOriginalSlug.name,
+                id: byOriginalSlug.id,
+            });
+            return byOriginalSlug;
+        }
     }
 
     // 5. Create new ingredient with singular as canonical name + default units
+    ingLog.info('creating new ingredient', {
+        input: trimmed,
+        canonicalName,
+        slug,
+        stemmed: isStemmed,
+    });
     try {
         const defaultUnits = await prisma.unit.findMany({
             where: { shortName: { in: ['g', 'ml', 'Stk'] } },
@@ -584,6 +614,8 @@ export async function createIngredient(name: string, _category?: string, _units:
             },
         });
 
+        ingLog.info('created', { id: ingredient.id, name: ingredient.name, slug });
+
         // Notify moderators about the new ingredient
         notifyModeratorsNewIngredient(ingredient.id, ingredient.name).catch(() => {});
 
@@ -591,6 +623,7 @@ export async function createIngredient(name: string, _category?: string, _units:
     } catch (e) {
         // Race condition: slug already taken → return existing
         if (e instanceof Error && e.message.includes('Unique constraint')) {
+            ingLog.debug('race condition, returning existing', { slug });
             return prisma.ingredient.findUniqueOrThrow({ where: { slug } });
         }
         throw e;

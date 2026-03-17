@@ -104,7 +104,7 @@ export function DescriptionEditor({
     const [hoveredDropdownIndex, setHoveredDropdownIndex] = useState<number | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const dbResults = useIngredientSearch(query);
+    const { results: dbResults } = useIngredientSearch(query);
 
     // Filter recipe ingredients matching the query
     const recipeMatches = useMemo<DropdownIngredient[]>(() => {

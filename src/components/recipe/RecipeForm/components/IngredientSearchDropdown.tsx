@@ -31,21 +31,26 @@ export function IngredientResultItem({
     result,
     onClick,
     categoryFallback = '',
+    isMatch = false,
 }: {
     result: IngredientSearchResult;
     onClick: () => void;
     categoryFallback?: string;
+    isMatch?: boolean;
 }) {
     return (
         <button type="button" onClick={onClick} className={resultBtnClass}>
-            <span className={css({ fontWeight: '500' })}>
-                {result.name}
-                {result.matchedAlias && (
-                    <span className={css({ fontWeight: '400', color: 'text.muted' })}>
-                        {' '}
-                        ({result.matchedAlias})
-                    </span>
-                )}
+            <span className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
+                {isMatch && <span className={matchDotClass} />}
+                <span className={css({ fontWeight: '500' })}>
+                    {result.name}
+                    {result.matchedAlias && (
+                        <span className={css({ fontWeight: '400', color: 'text.muted' })}>
+                            {' '}
+                            ({result.matchedAlias})
+                        </span>
+                    )}
+                </span>
             </span>
             <span className={css({ color: 'text.muted', fontSize: 'xs', ml: '2' })}>
                 {result.categories?.[0] || categoryFallback}
@@ -94,6 +99,14 @@ const resultBtnClass = css({
     alignItems: 'center',
     justifyContent: 'space-between',
     _hover: { bg: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' } },
+});
+
+const matchDotClass = css({
+    width: '6px',
+    height: '6px',
+    borderRadius: 'full',
+    bg: 'palette.orange',
+    flexShrink: '0',
 });
 
 const addNewBtnClass = css({

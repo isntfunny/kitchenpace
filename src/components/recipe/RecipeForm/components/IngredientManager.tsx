@@ -10,19 +10,15 @@ import {
 } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 
-import {
-    buildIngredientParser,
-    levenshtein,
-    type ParsedIngredientInput,
-    type UnitEntry,
-} from '@app/lib/ingredients/parseIngredientInput';
+import { searchIngredients, type IngredientSearchResponse } from '@app/components/recipe/actions';
+import type { ParsedIngredientInput } from '@app/lib/ingredients/parseIngredientInput';
 
 import { css } from 'styled-system/css';
 
-import { getUnitNames } from '../../actions';
 import { type AddedIngredient, type IngredientSearchResult } from '../data';
 
 import { IngredientCard } from './IngredientCard';
@@ -41,7 +37,7 @@ interface IngredientManagerProps {
     onServingsChange: (value: number) => void;
     ingredientQuery: string;
     onIngredientQueryChange: (value: string) => void;
-    searchResults: IngredientSearchResult[];
+    search: IngredientSearchResponse & { isLoading: boolean; cancelDebounce: () => void };
     ingredients: AddedIngredient[];
     onAddIngredient: (ingredient: IngredientSearchResult) => void;
     onAddNewIngredient: (name: string) => Promise<void>;
@@ -55,46 +51,12 @@ interface IngredientManagerProps {
     onIngredientCommentClick?: () => void;
 }
 
-/** Find a search result matching the parsed name exactly (name or alias). */
-function findExactMatch(
-    results: IngredientSearchResult[],
-    name: string,
-): IngredientSearchResult | null {
-    const lower = name.toLowerCase();
-    return (
-        results.find(
-            (r) => r.name.toLowerCase() === lower || r.matchedAlias?.toLowerCase() === lower,
-        ) ?? null
-    );
-}
-
-/** Find closest fuzzy match using Levenshtein distance. */
-function findFuzzyMatch(
-    results: IngredientSearchResult[],
-    name: string,
-): IngredientSearchResult | null {
-    const lower = name.toLowerCase();
-    const maxDist = lower.length <= 8 ? 2 : 3;
-
-    let best: IngredientSearchResult | null = null;
-    let bestDist = Infinity;
-
-    for (const r of results) {
-        const dist = levenshtein(r.name.toLowerCase(), lower);
-        if (dist <= maxDist && dist < bestDist) {
-            best = r;
-            bestDist = dist;
-        }
-    }
-    return best;
-}
-
 export function IngredientManager({
     servings,
     onServingsChange,
     ingredientQuery,
     onIngredientQueryChange,
-    searchResults,
+    search,
     ingredients,
     onAddIngredient,
     onAddNewIngredient,
@@ -110,6 +72,16 @@ export function IngredientManager({
     const inputRef = useRef<HTMLInputElement>(null);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [showNeuBadge, setShowNeuBadge] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const {
+        results: searchResults,
+        parsed,
+        bestMatch,
+        matchType,
+        isLoading,
+        cancelDebounce,
+    } = search;
 
     // ── DnD ──
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -123,7 +95,6 @@ export function IngredientManager({
             const newIndex = sortableIds.indexOf(String(over.id));
             if (oldIndex === -1 || newIndex === -1) return;
             onReorderIngredients?.(arrayMove(ingredients, oldIndex, newIndex));
-            // Update editing index to follow the moved card
             if (editingIndex === oldIndex) setEditingIndex(newIndex);
             else if (editingIndex !== null) {
                 if (oldIndex < editingIndex && newIndex >= editingIndex)
@@ -134,28 +105,11 @@ export function IngredientManager({
         },
         [ingredients, sortableIds, onReorderIngredients, editingIndex],
     );
-    const pendingPrefillRef = useRef<{ amount: string; unit: string | null } | null>(null);
 
-    // ── Parser: fetch unit names once, build parser ──
-    const [parser, setParser] = useState<((raw: string) => ParsedIngredientInput) | null>(null);
-
-    useEffect(() => {
-        let cancelled = false;
-        getUnitNames().then((units: UnitEntry[]) => {
-            if (!cancelled) {
-                const parse = buildIngredientParser(units);
-                setParser(() => parse);
-            }
-        });
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+    // ── Helpers ──
 
     const showDropdown = ingredientQuery.length >= 2;
-    const showAddNew = ingredientQuery.length >= 2;
 
-    // Ghost autocomplete
     const topResult = searchResults[0] ?? null;
     const ghostCompletion =
         topResult && ingredientQuery.length >= 1
@@ -163,8 +117,6 @@ export function IngredientManager({
                 ? topResult.name.slice(ingredientQuery.length)
                 : ''
             : '';
-
-    // ── Add helpers ──
 
     const addAndOpen = useCallback(
         (add: () => void) => {
@@ -174,57 +126,54 @@ export function IngredientManager({
         [ingredients.length],
     );
 
-    /** Apply pending prefill after ingredient was added. */
+    /** Apply amount/unit prefill to the newly added card. */
     const applyPrefill = useCallback(
-        (newIndex: number) => {
-            const prefill = pendingPrefillRef.current;
-            if (!prefill) return;
-            pendingPrefillRef.current = null;
+        (idx: number, overrideParsed?: ParsedIngredientInput) => {
+            const { amount, unit } = overrideParsed ?? search.parsed;
+            if (!amount && !unit) return;
             const changes: Partial<AddedIngredient> = {};
-            if (prefill.amount) changes.amount = prefill.amount;
-            if (prefill.unit) changes.unit = prefill.unit;
-            if (Object.keys(changes).length > 0) {
-                // Apply in next tick after state update
-                requestAnimationFrame(() => onUpdateIngredient(newIndex, changes));
-            }
+            if (amount) changes.amount = amount;
+            if (unit) changes.unit = unit;
+            requestAnimationFrame(() => onUpdateIngredient(idx, changes));
         },
-        [onUpdateIngredient],
+        [search.parsed, onUpdateIngredient],
     );
 
-    // Watch for new ingredients to apply prefill
-    const prevCountRef = useRef(ingredients.length);
-    useEffect(() => {
-        if (ingredients.length > prevCountRef.current) {
-            applyPrefill(ingredients.length - 1);
-        }
-        prevCountRef.current = ingredients.length;
-    }, [ingredients.length, applyPrefill]);
+    const finishSubmit = useCallback(() => {
+        setIsSubmitting(false);
+        onIngredientQueryChange('');
+        setShowNeuBadge(false);
+        inputRef.current?.focus();
+    }, [onIngredientQueryChange]);
 
-    const addWithPrefill = useCallback(
-        (result: IngredientSearchResult, parsed: ParsedIngredientInput) => {
-            if (parsed.amount || parsed.unit) {
-                pendingPrefillRef.current = { amount: parsed.amount, unit: parsed.unit };
-            }
+    const addWithParsed = useCallback(
+        (result: IngredientSearchResult, overrideParsed?: ParsedIngredientInput) => {
+            const idx = ingredients.length;
             addAndOpen(() => onAddIngredient(result));
-            onIngredientQueryChange('');
-            setShowNeuBadge(false);
-            inputRef.current?.focus();
+            applyPrefill(idx, overrideParsed);
+            finishSubmit();
         },
-        [addAndOpen, onAddIngredient, onIngredientQueryChange],
+        [addAndOpen, onAddIngredient, applyPrefill, ingredients.length, finishSubmit],
     );
 
-    const addNewWithPrefill = useCallback(
-        async (parsed: ParsedIngredientInput) => {
-            if (parsed.amount || parsed.unit) {
-                pendingPrefillRef.current = { amount: parsed.amount, unit: parsed.unit };
-            }
-            await onAddNewIngredient(parsed.name);
-            setEditingIndex(ingredients.length);
-            onIngredientQueryChange('');
-            setShowNeuBadge(false);
-            inputRef.current?.focus();
+    const addNew = useCallback(
+        async (overrideName?: string, overrideParsed?: ParsedIngredientInput) => {
+            const name = overrideName ?? (parsed.name || ingredientQuery.trim());
+            if (!name) return;
+            const idx = ingredients.length;
+            await onAddNewIngredient(name);
+            applyPrefill(idx, overrideParsed);
+            setEditingIndex(idx);
+            finishSubmit();
         },
-        [ingredients.length, onAddNewIngredient, onIngredientQueryChange],
+        [
+            parsed.name,
+            ingredientQuery,
+            ingredients.length,
+            onAddNewIngredient,
+            applyPrefill,
+            finishSubmit,
+        ],
     );
 
     // ── Key handling ──
@@ -233,58 +182,48 @@ export function IngredientManager({
         if (e.key === 'Tab' || e.key === 'ArrowRight') {
             if (ghostCompletion) {
                 e.preventDefault();
-                addAndOpen(() => onAddIngredient(topResult!));
-                onIngredientQueryChange('');
-                inputRef.current?.focus();
+                addWithParsed(topResult!);
             }
             return;
         }
 
         if (e.key === 'Enter') {
             e.preventDefault();
-            const trimmed = ingredientQuery.trim();
-            if (!trimmed) return;
+            if (!ingredientQuery.trim() || isSubmitting) return;
 
-            const parsed = parser ? parser(trimmed) : { name: trimmed, amount: '', unit: null };
-            const searchName = parsed.name;
-
-            // Try exact match
-            const exact = findExactMatch(searchResults, searchName);
-            if (exact) {
-                addWithPrefill(exact, parsed);
+            // Already have a match from debounced search → use immediately
+            if (bestMatch) {
+                addWithParsed(bestMatch);
                 return;
             }
 
-            // Try fuzzy match
-            const fuzzy = findFuzzyMatch(searchResults, searchName);
-            if (fuzzy) {
-                addWithPrefill(fuzzy, parsed);
-                return;
-            }
-
-            // No match: if NEU badge is already showing, create new
+            // NEU badge already showing → create new ingredient
             if (showNeuBadge) {
-                void addNewWithPrefill(parsed);
+                setIsSubmitting(true);
+                void addNew();
                 return;
             }
 
-            // First Enter with no match → show NEU badge
-            setShowNeuBadge(true);
+            // No results yet (search still loading or debounce pending) → fire immediately
+            setIsSubmitting(true);
+            cancelDebounce();
+            void searchIngredients(ingredientQuery.trim()).then((fresh) => {
+                if (fresh.bestMatch) {
+                    addWithParsed(fresh.bestMatch, fresh.parsed);
+                } else {
+                    // No match → create new ingredient directly
+                    void addNew(fresh.parsed.name || undefined, fresh.parsed);
+                }
+            });
         }
     };
 
-    // Hide NEU badge when query changes
     const handleQueryChange = (value: string) => {
         onIngredientQueryChange(value);
         if (showNeuBadge) setShowNeuBadge(false);
     };
 
-    const handleAddNew = async () => {
-        const trimmed = ingredientQuery.trim();
-        if (!trimmed) return;
-        const parsed = parser ? parser(trimmed) : { name: trimmed, amount: '', unit: null };
-        await addNewWithPrefill(parsed);
-    };
+    const busy = isSubmitting || isLoading;
 
     return (
         <div>
@@ -335,6 +274,7 @@ export function IngredientManager({
                     value={ingredientQuery}
                     onChange={(e) => handleQueryChange(e.target.value)}
                     onKeyDown={handleKeyDown}
+                    disabled={isSubmitting}
                     placeholder="200g Spaghetti, 3 Eier, Apfel..."
                     className={inputClass}
                     style={{ background: 'transparent', position: 'relative' }}
@@ -342,32 +282,43 @@ export function IngredientManager({
                     data-tutorial="ingredient-search"
                 />
 
-                {/* NEU badge — shown when no match, next Enter creates */}
-                {showNeuBadge && <div className={neuBadgeClass}>NEU</div>}
-
-                {/* Dropdown: search results + add-new option */}
-                {showDropdown && (searchResults.length > 0 || showAddNew) && (
-                    <IngredientSearchDropdown data-tutorial-child="ingredient-search">
-                        {searchResults.map((ing) => (
-                            <IngredientResultItem
-                                key={ing.id}
-                                result={ing}
-                                categoryFallback="Ohne Kategorie"
-                                onClick={() => {
-                                    addAndOpen(() => onAddIngredient(ing));
-                                    onIngredientQueryChange('');
-                                    inputRef.current?.focus();
-                                }}
-                            />
-                        ))}
-                        {showAddNew && (
-                            <IngredientAddNewButton
-                                name={ingredientQuery.trim()}
-                                onClick={handleAddNew}
-                            />
-                        )}
-                    </IngredientSearchDropdown>
+                {/* Right-side badge: loading spinner / match dot / NEU badge */}
+                {ingredientQuery.length >= 2 && (
+                    <div className={badgeSlotClass}>
+                        {busy ? (
+                            <Loader2 size={14} className={spinnerClass} />
+                        ) : showNeuBadge ? (
+                            <span className={neuBadgeClass}>NEU</span>
+                        ) : bestMatch ? (
+                            <span className={matchDotClass} title={`Match: ${bestMatch.name}`} />
+                        ) : null}
+                    </div>
                 )}
+
+                {/* Dropdown */}
+                {showDropdown &&
+                    !busy &&
+                    (searchResults.length > 0 || ingredientQuery.length >= 2) && (
+                        <IngredientSearchDropdown data-tutorial-child="ingredient-search">
+                            {searchResults.map((ing) => (
+                                <IngredientResultItem
+                                    key={ing.id}
+                                    result={ing}
+                                    categoryFallback="Ohne Kategorie"
+                                    isMatch={ing.id === bestMatch?.id}
+                                    onClick={() => {
+                                        addWithParsed(ing);
+                                    }}
+                                />
+                            ))}
+                            {matchType === 'none' && (
+                                <IngredientAddNewButton
+                                    name={parsed.name || ingredientQuery.trim()}
+                                    onClick={() => void addNew()}
+                                />
+                            )}
+                        </IngredientSearchDropdown>
+                    )}
             </div>
 
             {/* Ingredient cards */}
@@ -469,13 +420,23 @@ const inputClass = css({
             _dark: '0 0 0 3px rgba(224,123,83,0.2)',
         },
     },
+    _disabled: {
+        opacity: '0.6',
+        cursor: 'wait',
+    },
 });
 
-const neuBadgeClass = css({
+const badgeSlotClass = css({
     position: 'absolute',
     right: '12px',
     top: '50%',
     transform: 'translateY(-50%)',
+    zIndex: '5',
+    display: 'flex',
+    alignItems: 'center',
+});
+
+const neuBadgeClass = css({
     fontSize: '9px',
     fontWeight: '700',
     px: '2',
@@ -487,5 +448,17 @@ const neuBadgeClass = css({
     letterSpacing: '0.04em',
     lineHeight: '1',
     pointerEvents: 'none',
-    zIndex: '5',
+});
+
+const matchDotClass = css({
+    width: '8px',
+    height: '8px',
+    borderRadius: 'full',
+    bg: 'palette.orange',
+    pointerEvents: 'none',
+});
+
+const spinnerClass = css({
+    color: 'text.muted',
+    animation: 'spin 1s linear infinite',
 });

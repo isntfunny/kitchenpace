@@ -22,7 +22,7 @@ export function IngredientReplacePopover({
 }: IngredientReplacePopoverProps) {
     const [query, setQuery] = useState(currentName);
     const inputRef = useRef<HTMLInputElement>(null);
-    const results = useIngredientSearch(query);
+    const { results } = useIngredientSearch(query);
 
     useEffect(() => {
         inputRef.current?.select();

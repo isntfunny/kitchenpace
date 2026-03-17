@@ -126,7 +126,7 @@ export function RecipeForm({
 
     // ── ingredient search ────────────────────────────────────
     const [ingredientQuery, setIngredientQuery] = useState('');
-    const searchResults = useIngredientSearch(ingredientQuery);
+    const ingredientSearch = useIngredientSearch(ingredientQuery);
 
     // ── flow state (stored in refs — changes don't re-render form) ──
     const flowNodesRef = useRef<FlowNodeInput[]>(initialData?.flowNodes ?? []);
@@ -966,7 +966,7 @@ export function RecipeForm({
                             onServingsChange={setServings}
                             ingredientQuery={ingredientQuery}
                             onIngredientQueryChange={setIngredientQuery}
-                            searchResults={searchResults}
+                            search={ingredientSearch}
                             ingredients={ingredients}
                             onAddIngredient={handleAddIngredient}
                             onAddNewIngredient={handleAddNewIngredient}
@@ -1069,7 +1069,7 @@ export function RecipeForm({
                     onServingsChange={setServings}
                     ingredientQuery={ingredientQuery}
                     onIngredientQueryChange={setIngredientQuery}
-                    searchResults={searchResults}
+                    search={ingredientSearch}
                     ingredients={ingredients}
                     onAddIngredient={handleAddIngredient}
                     onAddNewIngredient={handleAddNewIngredient}

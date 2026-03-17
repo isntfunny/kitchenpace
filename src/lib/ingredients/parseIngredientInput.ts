@@ -4,8 +4,6 @@
  * "200g Spaghetti", "Spaghetti 200g", "3 Eier", or "Apfel".
  */
 
-export { distance as levenshtein } from 'fastest-levenshtein';
-
 export interface ParsedIngredientInput {
     /** Ingredient name with amount/unit stripped */
     name: string;

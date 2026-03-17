@@ -1,6 +1,13 @@
 'use server';
 
-import { escapeRegex } from '@app/lib/ingredients/parseIngredientInput';
+import { distance as levenshtein } from 'fastest-levenshtein';
+
+import {
+    buildIngredientParser,
+    escapeRegex,
+    type ParsedIngredientInput,
+} from '@app/lib/ingredients/parseIngredientInput';
+import { createLogger } from '@shared/logger';
 import {
     opensearchClient,
     OPENSEARCH_INDEX,
@@ -11,6 +18,7 @@ import { prisma } from '@shared/prisma';
 import type { IngredientSearchResult } from './RecipeForm/data';
 import type { TagFacet } from './types';
 
+const ingLog = createLogger('ingredient-search');
 const DEFAULT_TAG_SEARCH_LIMIT = 50;
 
 type TagWithCount = {
@@ -19,18 +27,89 @@ type TagWithCount = {
     count: number;
 };
 
-export async function searchIngredients(query: string): Promise<IngredientSearchResult[]> {
-    if (!query || query.length < 2) {
-        return [];
-    }
+// ── Server-side parser (cached, rebuilt when units change) ──
 
+let _parserPromise: Promise<(raw: string) => ParsedIngredientInput> | null = null;
+let _parserBuiltAt = 0;
+const PARSER_TTL = 60_000; // rebuild every 60s
+
+async function getParser() {
+    if (_parserPromise && Date.now() - _parserBuiltAt < PARSER_TTL) return _parserPromise;
+    _parserBuiltAt = Date.now();
+    _parserPromise = prisma.unit
+        .findMany({
+            select: { shortName: true, longName: true },
+            orderBy: { shortName: 'asc' },
+        })
+        .then((units) => buildIngredientParser(units));
+    return _parserPromise;
+}
+
+// ── Matching helpers ──
+
+function findExactMatch(
+    results: IngredientSearchResult[],
+    name: string,
+): IngredientSearchResult | null {
+    const lower = name.toLowerCase();
+    return (
+        results.find(
+            (r) => r.name.toLowerCase() === lower || r.matchedAlias?.toLowerCase() === lower,
+        ) ?? null
+    );
+}
+
+function findFuzzyMatch(
+    results: IngredientSearchResult[],
+    name: string,
+): IngredientSearchResult | null {
+    const lower = name.toLowerCase();
+    const maxDist = lower.length <= 8 ? 2 : 3;
+    let best: IngredientSearchResult | null = null;
+    let bestDist = Infinity;
+    for (const r of results) {
+        const dist = levenshtein(r.name.toLowerCase(), lower);
+        if (dist <= maxDist && dist < bestDist) {
+            best = r;
+            bestDist = dist;
+        }
+    }
+    return best;
+}
+
+// ── Main search action ──
+
+export interface IngredientSearchResponse {
+    results: IngredientSearchResult[];
+    parsed: ParsedIngredientInput;
+    /** Best match (exact or fuzzy) — null means "NEU" */
+    bestMatch: IngredientSearchResult | null;
+    matchType: 'exact' | 'fuzzy' | 'none';
+}
+
+export async function searchIngredients(rawInput: string): Promise<IngredientSearchResponse> {
+    const empty: IngredientSearchResponse = {
+        results: [],
+        parsed: { name: '', amount: '', unit: null },
+        bestMatch: null,
+        matchType: 'none',
+    };
+    const trimmed = rawInput?.trim();
+    if (!trimmed || trimmed.length < 2) return empty;
+
+    // 1. Parse raw input server-side
+    const parse = await getParser();
+    const parsed = parse(trimmed);
+    const searchTerm = parsed.name || trimmed;
+
+    // 2. Search OpenSearch
     const response = await opensearchClient.search({
         index: OPENSEARCH_INGREDIENTS_INDEX,
         body: {
             size: 10,
             query: {
                 multi_match: {
-                    query,
+                    query: searchTerm,
                     type: 'phrase_prefix',
                     fields: ['name^3', 'keywords'],
                 },
@@ -53,12 +132,9 @@ export async function searchIngredients(query: string): Promise<IngredientSearch
                       aliases?: string[];
                   }
                 | undefined;
-            if (!source?.id || !source.name) {
-                return null;
-            }
+            if (!source?.id || !source.name) return null;
 
-            // Check if the match came through an alias rather than the name
-            const queryLower = query.toLowerCase();
+            const queryLower = searchTerm.toLowerCase();
             const nameMatches = source.name.toLowerCase().includes(queryLower);
             const aliases = Array.isArray(source.aliases) ? source.aliases : [];
             const matchedAlias = !nameMatches
@@ -76,20 +152,28 @@ export async function searchIngredients(query: string): Promise<IngredientSearch
         })
         .filter((result): result is NonNullable<typeof result> => Boolean(result));
 
-    // Dedup: if a result's name matches another result's pluralName, it is a legacy plural entry.
-    // Keep only the singular form (the one whose name is NOT a pluralName of another).
+    // Dedup plural forms
     const pluralNameSet = new Set(
         results.map((r) => r.pluralName?.toLowerCase()).filter((v): v is string => Boolean(v)),
     );
-    return results.filter((r) => !pluralNameSet.has(r.name.toLowerCase()));
-}
+    const filtered = results.filter((r) => !pluralNameSet.has(r.name.toLowerCase()));
 
-export async function getUnitNames(): Promise<Array<{ shortName: string; longName: string }>> {
-    const units = await prisma.unit.findMany({
-        select: { shortName: true, longName: true },
-        orderBy: { shortName: 'asc' },
+    // 3. Find best match
+    const exact = findExactMatch(filtered, searchTerm);
+    const fuzzy = !exact ? findFuzzyMatch(filtered, searchTerm) : null;
+    const bestMatch = exact ?? fuzzy;
+    const matchType = exact ? 'exact' : fuzzy ? 'fuzzy' : 'none';
+
+    ingLog.debug('search', {
+        rawInput: trimmed,
+        parsed: { name: parsed.name, amount: parsed.amount, unit: parsed.unit },
+        searchTerm,
+        hits: filtered.length,
+        matchType,
+        bestMatch: bestMatch?.name ?? null,
     });
-    return units;
+
+    return { results: filtered, parsed, bestMatch, matchType };
 }
 
 export async function searchTags(

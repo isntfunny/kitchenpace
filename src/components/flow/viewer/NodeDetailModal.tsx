@@ -11,9 +11,7 @@ import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
 
 import type { RecipeStepsViewerProps, TimerState } from './viewerTypes';
-import { formatTime, renderDescription } from './viewerUtils';
-
-const MODAL_MENTION_RE = /@\[.*?(?:\|.*?)?\]\((.*?)\)/g;
+import { extractMentionedIds, formatTime, renderDescription } from './viewerUtils';
 
 export function NodeDetailModal({
     node,
@@ -42,10 +40,9 @@ export function NodeDetailModal({
     const isSpecial = node.type === 'start' || node.type === 'servieren';
 
     const stepIngredients = useMemo(() => {
-        if (!node.description || !ingredients) return [];
-        const ids = new Set<string>();
-        for (const m of node.description.matchAll(MODAL_MENTION_RE)) ids.add(m[1]);
-        return ingredients.filter((i) => ids.has(i.id));
+        if (!ingredients) return [];
+        const ids = extractMentionedIds(node.description);
+        return ids.size > 0 ? ingredients.filter((i) => ids.has(i.id)) : [];
     }, [node.description, ingredients]);
 
     const hasTimer = !!timerState;

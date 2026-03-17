@@ -148,6 +148,34 @@ export function renderDescription(
     return parts;
 }
 
+/** Extract unique ingredient IDs from a description's @mentions. */
+export function extractMentionedIds(description: string | undefined): Set<string> {
+    if (!description) return new Set();
+    const ids = new Set<string>();
+    for (const match of description.matchAll(/@\[.*?(?:\|.*?)?\]\((.*?)\)/g)) {
+        ids.add(match[1]);
+    }
+    return ids;
+}
+
+/** Extract unique ingredient chips from a node description's @mentions. */
+export function extractIngredientChips(
+    description: string | undefined,
+    ingredients: { id: string; name: string; amount?: string; unit?: string }[] | undefined,
+): { id: string; label: string }[] {
+    if (!ingredients) return [];
+    const ids = extractMentionedIds(description);
+    if (ids.size === 0) return [];
+    return [...ids]
+        .map((id) => {
+            const ing = ingredients.find((i) => i.id === id);
+            return ing
+                ? { id, label: [ing.amount, ing.unit, ing.name].filter(Boolean).join(' ') }
+                : null;
+        })
+        .filter((c): c is NonNullable<typeof c> => Boolean(c));
+}
+
 /** Interpolate between orange (#e07b53) and green (#00b894) based on 0-100 pct */
 export function timerColor(pct: number): string {
     const r = Math.round(224 - 224 * (pct / 100));

@@ -9,7 +9,7 @@ import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
 
 import type { RecipeStepsViewerProps, TimerState } from './viewerTypes';
-import { formatTime, renderDescription } from './viewerUtils';
+import { extractIngredientChips, formatTime, renderDescription } from './viewerUtils';
 
 export function StepCard({
     node,
@@ -44,6 +44,7 @@ export function StepCard({
     const config = getStepConfig(node.type as StepType);
     const Icon = config.icon;
     const hasTimer = !!timerState;
+    const chips = extractIngredientChips(node.description, ingredients);
     const timerDone = hasTimer && timerState!.remaining === 0;
     const timerRunning = hasTimer && timerState!.running;
     const pct = hasTimer
@@ -233,6 +234,51 @@ export function StepCard({
                                 if (wrapper) wrapper.style.display = 'none';
                             }}
                         />
+                    </div>
+                )}
+
+                {/* Ingredient chips */}
+                {chips.length > 0 && !compact && (
+                    <div
+                        style={{
+                            borderTop: `1px solid ${c.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                            paddingTop: 6,
+                            marginBottom: 6,
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: 9,
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                color: c.textMuted,
+                                marginBottom: 3,
+                            }}
+                        >
+                            Zutaten
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                            {chips.map((chip) => (
+                                <span
+                                    key={chip.id}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        padding: '1px 6px',
+                                        backgroundColor: c.dark
+                                            ? 'rgba(224,123,83,0.17)'
+                                            : 'rgba(224,123,83,0.12)',
+                                        borderRadius: 99,
+                                        fontSize: 9,
+                                        fontWeight: 600,
+                                        color: PALETTE.orange,
+                                    }}
+                                >
+                                    {chip.label}
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 )}
 

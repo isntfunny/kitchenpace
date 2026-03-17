@@ -111,6 +111,8 @@ export function IngredientSearchInput({
         items,
         itemToString: (item) => item?.name ?? '',
         inputValue: query,
+        // Keep selectedItem null so the same item can be re-selected (e.g. replace popover)
+        selectedItem: null,
         isOpen: showDropdown && !busy && items.length > 0,
         defaultHighlightedIndex: 0,
         onInputValueChange: ({ inputValue, type }) => {
@@ -129,13 +131,16 @@ export function IngredientSearchInput({
 
             switch (type) {
                 case useCombobox.stateChangeTypes.InputKeyDownEnter:
-                    if (state.highlightedIndex < 0 || items.length === 0) {
-                        return { ...changes, selectedItem: null, inputValue: state.inputValue };
-                    }
-                    return changes;
+                    // Never let Downshift handle Enter — our custom handleKeyDown does
+                    // server-side resolution every time (bestMatch or immediate search)
+                    return { ...changes, selectedItem: null, inputValue: state.inputValue };
+
+                case useCombobox.stateChangeTypes.ItemClick:
+                    // Keep inputValue — our onClick handler + finishSubmit handle clearing
+                    return { ...changes, inputValue: state.inputValue };
 
                 case useCombobox.stateChangeTypes.InputKeyDownEscape:
-                    // Always preserve input value on Escape — closing the dropdown shouldn't wipe the query
+                    // Preserve input value on Escape — closing the dropdown shouldn't wipe the query
                     return { ...changes, inputValue: state.inputValue };
 
                 default:
@@ -154,25 +159,11 @@ export function IngredientSearchInput({
         }
 
         if (e.key === 'Enter') {
-            // If Downshift handled the selection (highlighted item exists), let it through
-            if (highlightedIndex >= 0 && items.length > 0) return;
-
             e.preventDefault();
             if (!query.trim() || isSubmitting || disabled) return;
 
-            // bestMatch from search → select directly
-            if (bestMatch) {
-                handleSelect(bestMatch);
-                return;
-            }
-
-            // NEU badge showing → create new (showNeuBadge already implies onCreateNew)
-            if (showNeuBadge) {
-                void handleCreateNew();
-                return;
-            }
-
-            // Search still pending → fire immediate search
+            // Always resolve via server — fire immediate search regardless of UI state.
+            // This ensures consistent behavior whether results have loaded or not.
             setIsSubmitting(true);
             cancelDebounce();
             void searchIngredients(query.trim()).then((fresh) => {

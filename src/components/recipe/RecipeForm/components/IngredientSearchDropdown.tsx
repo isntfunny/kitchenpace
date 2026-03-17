@@ -53,7 +53,11 @@ export function IngredientResultItem({
             <span className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
                 {isMatch && <span className={matchDotClass} />}
                 <span className={css({ fontWeight: '500' })}>
-                    {result.name}
+                    {result.highlightedName ? (
+                        <span dangerouslySetInnerHTML={{ __html: result.highlightedName }} />
+                    ) : (
+                        result.name
+                    )}
                     {result.matchedAlias && (
                         <span className={css({ fontWeight: '400', color: 'text.muted' })}>
                             {' '}
@@ -62,9 +66,7 @@ export function IngredientResultItem({
                     )}
                 </span>
             </span>
-            <span className={css({ color: 'text.muted', fontSize: 'xs', ml: '2' })}>
-                {result.categories?.[0] || categoryFallback}
-            </span>
+            <span className={categoryClass}>{result.categories?.[0] || categoryFallback}</span>
         </button>
     );
 }
@@ -108,7 +110,24 @@ const resultBtnClass = css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    '& mark': {
+        bg: 'transparent',
+        color: 'palette.orange',
+        fontWeight: '700',
+    },
     _hover: { bg: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' } },
+});
+
+const categoryClass = css({
+    color: 'text.muted',
+    fontSize: 'xs',
+    ml: '2',
+    maxWidth: '120px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    textAlign: 'right',
+    flexShrink: '0',
 });
 
 const matchDotClass = css({

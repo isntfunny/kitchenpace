@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useRef, useMemo, type ReactNode } from 'react';
 
+import { searchIngredients } from '@app/components/recipe/actions';
+import { createIngredient } from '@app/components/recipe/createActions';
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 import type { IngredientSearchResult } from '@app/components/recipe/RecipeForm/data';
 import {
@@ -125,17 +127,9 @@ export function DescriptionEditor({
         ];
     }, [recipeMatches, dbResults, availableIngredients]);
 
-    const insertMention = useCallback(
-        (item: DropdownIngredient, amountOverride?: string) => {
-            const ing = item.ingredient;
-            const name = ing.name;
-            const id = ing.id;
-
-            // If DB ingredient, add it to recipe first
-            if (item.source === 'db' && onAddIngredient) {
-                onAddIngredient(item.ingredient as IngredientSearchResult);
-            }
-
+    /** Insert a @mention at the current mentionStart position. */
+    const doInsertMention = useCallback(
+        (id: string, name: string, amountOverride?: string) => {
             const before = value.slice(0, mentionStart);
             const after = value.slice(mentionStart + query.length + 1); // +1 for the @
             const mention = amountOverride
@@ -156,20 +150,83 @@ export function DescriptionEditor({
                 }
             });
         },
-        [value, mentionStart, query, onChange, onAddIngredient],
+        [value, mentionStart, query, onChange],
+    );
+
+    const insertMention = useCallback(
+        (item: DropdownIngredient, amountOverride?: string) => {
+            // If DB ingredient, add it to recipe first
+            if (item.source === 'db' && onAddIngredient) {
+                onAddIngredient(item.ingredient as IngredientSearchResult);
+            }
+            doInsertMention(item.ingredient.id, item.ingredient.name, amountOverride);
+        },
+        [doInsertMention, onAddIngredient],
+    );
+
+    /** Server-side resolve: search → bestMatch or create new → insert mention. */
+    const resolveAndInsert = useCallback(
+        async (mentionQuery: string) => {
+            const fresh = await searchIngredients(mentionQuery);
+            if (fresh.bestMatch) {
+                // Add to recipe if not already there
+                if (onAddIngredient) onAddIngredient(fresh.bestMatch);
+                doInsertMention(fresh.bestMatch.id, fresh.bestMatch.name);
+            } else {
+                // Create new ingredient
+                const created = await createIngredient(mentionQuery);
+                if (onAddIngredient) {
+                    onAddIngredient({
+                        id: created.id,
+                        name: created.name,
+                        pluralName: null,
+                        categories: [],
+                        units: [],
+                    });
+                }
+                doInsertMention(created.id, created.name);
+            }
+        },
+        [doInsertMention, onAddIngredient],
     );
 
     const showDropdown = isOpen && dropdownItems.length > 0;
 
-    const { highlightedIndex, setHighlightedIndex, handleKeyDown, resetHighlight } =
-        useDropdownNavigation({
-            itemCount: dropdownItems.length,
-            isOpen: showDropdown,
-            onSelect: (index) => {
-                if (dropdownItems[index]) insertMention(dropdownItems[index]);
-            },
-            onEscape: () => setIsOpen(false),
-        });
+    const {
+        highlightedIndex,
+        setHighlightedIndex,
+        handleKeyDown: navKeyDown,
+        resetHighlight,
+    } = useDropdownNavigation({
+        itemCount: dropdownItems.length,
+        isOpen: showDropdown,
+        onSelect: (index) => {
+            if (dropdownItems[index]) insertMention(dropdownItems[index]);
+        },
+        onEscape: () => setIsOpen(false),
+    });
+
+    /** Wrap navKeyDown: when @mention is open but dropdown has no items (or nav didn't handle),
+     *  Enter resolves via server — same as IngredientSearchInput. */
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent) => {
+            // Let dropdown nav handle arrow keys, escape, and Enter when items exist
+            if (showDropdown) {
+                navKeyDown(e);
+                return;
+            }
+
+            // @mention open but no dropdown items — handle Enter ourselves
+            if (isOpen && query.trim() && e.key === 'Enter') {
+                e.preventDefault();
+                void resolveAndInsert(query.trim());
+                return;
+            }
+
+            // Not in @mention mode — let default textarea behavior through
+        },
+        [showDropdown, navKeyDown, isOpen, query, resolveAndInsert],
+    );
 
     const handleInputChange = useCallback(
         (e: React.ChangeEvent<HTMLTextAreaElement>) => {

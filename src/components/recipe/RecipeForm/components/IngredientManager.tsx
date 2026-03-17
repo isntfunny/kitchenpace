@@ -105,8 +105,12 @@ export function IngredientManager({
     /** If ingredient already in list, merge parsed values and return true. */
     const tryMergeExisting = useCallback(
         (id: string, name: string, p: ParsedIngredientInput): boolean => {
+            const nameLower = name.toLowerCase();
             const idx = ingredients.findIndex(
-                (i) => i.id === id || i.name.toLowerCase() === name.toLowerCase(),
+                (i) =>
+                    i.id === id ||
+                    i.name.toLowerCase() === nameLower ||
+                    i.pluralName?.toLowerCase() === nameLower,
             );
             if (idx === -1) return false;
             const changes: Partial<AddedIngredient> = {};
@@ -131,9 +135,11 @@ export function IngredientManager({
 
     const handleCreateNew = useCallback(
         async (name: string, parsed: ParsedIngredientInput) => {
-            // Check by name before creating
+            // Check by name or pluralName before creating
+            const nameLower = name.toLowerCase();
             const existingIdx = ingredients.findIndex(
-                (i) => i.name.toLowerCase() === name.toLowerCase(),
+                (i) =>
+                    i.name.toLowerCase() === nameLower || i.pluralName?.toLowerCase() === nameLower,
             );
             if (existingIdx !== -1) {
                 const changes: Partial<AddedIngredient> = {};

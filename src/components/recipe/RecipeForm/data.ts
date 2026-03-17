@@ -19,6 +19,8 @@ export interface IngredientSearchResult {
     categories: string[];
     units: string[];
     matchedAlias?: string;
+    /** Highlighted name snippet from OpenSearch (contains <mark> tags) */
+    highlightedName?: string;
 }
 
 export interface AddedIngredient {

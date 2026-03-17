@@ -12,6 +12,7 @@ import type {
     FlowEdgeSerialized,
     FlowNodeSerialized,
 } from '@app/components/flow/editor/editorTypes';
+import { extractMentionedIds } from '@app/components/flow/viewer/viewerUtils';
 import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
 import { PALETTE } from '@app/lib/palette';
 
@@ -436,8 +437,11 @@ export function RecipeForm({
                 mentionRegex,
                 `@[${replacement.name}$1](${replacement.id})`,
             );
-            const ids = [...newDesc.matchAll(/@\[.*?(?:\|.*?)?\]\((.*?)\)/g)].map((m) => m[1]);
-            return { ...node, description: newDesc, ingredientIds: [...new Set(ids)] };
+            return {
+                ...node,
+                description: newDesc,
+                ingredientIds: [...extractMentionedIds(newDesc)],
+            };
         });
     };
 

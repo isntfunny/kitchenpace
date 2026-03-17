@@ -56,5 +56,11 @@ export function useIngredientSearch(query: string): IngredientSearchState {
 
     if (tooShort) return { ...EMPTY, isLoading: false, cancelDebounce };
 
-    return { ...response, isLoading: isPending, cancelDebounce };
+    // If response is from a previous query, treat as loading with empty results
+    const isStale =
+        response.parsed.name !== '' &&
+        !trimmed.toLowerCase().includes(response.parsed.name.toLowerCase());
+    const current = isStale ? EMPTY : response;
+
+    return { ...current, isLoading: isPending || isStale, cancelDebounce };
 }

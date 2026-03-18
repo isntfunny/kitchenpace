@@ -6,6 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 COPY panda.config.ts tsconfig.json postcss.config.cjs ./
+COPY src/lib/themes/palette.ts ./src/lib/themes/palette.ts
 
 RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
         python3 make g++ \

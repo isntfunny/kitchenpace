@@ -1,11 +1,10 @@
 import { Flame } from 'lucide-react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
+import { SmartImage } from '@app/components/atoms/SmartImage';
+import { Heading, Text } from '@app/components/atoms/Typography';
 
 import { css } from 'styled-system/css';
-
-import { SmartImage } from '../atoms/SmartImage';
-import { Heading, Text } from '../atoms/Typography';
 
 interface DailyHighlightProps {
     recipe: RecipeCardData | null;

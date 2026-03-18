@@ -3,13 +3,12 @@
 import { Inbox } from 'lucide-react';
 
 import { Heading, Text } from '@app/components/atoms/Typography';
+import { NotificationItem } from '@app/components/notifications/NotificationItem';
+import { PushSubscriptionToggle } from '@app/components/notifications/PushSubscriptionToggle';
+import { useNotifications } from '@app/components/notifications/useNotifications';
+import { resolveNotificationHref } from '@app/components/notifications/utils';
 
 import { css } from 'styled-system/css';
-
-import { NotificationItem } from './NotificationItem';
-import { PushSubscriptionToggle } from './PushSubscriptionToggle';
-import { useNotifications } from './useNotifications';
-import { resolveNotificationHref } from './utils';
 
 export function NotificationsPageContent() {
     const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications({

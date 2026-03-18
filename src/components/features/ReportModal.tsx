@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Dialog } from 'radix-ui';
 import { useState, useTransition } from 'react';
 
-import { submitReport } from '@app/app/actions/reports';
-
 import { css } from 'styled-system/css';
+
+import { submitReport } from './reportActions';
 
 const REASONS = [
     { value: 'spam', label: 'Spam' },

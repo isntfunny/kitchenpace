@@ -1,10 +1,9 @@
 'use server';
 
+import { awardTrophy } from '@app/app/actions/trophies';
 import { RECIPE_CREATION_TUTORIAL_KEY } from '@app/components/recipe/tutorial/shared';
 import { getServerAuthSession } from '@app/lib/auth';
 import { prisma } from '@shared/prisma';
-
-import { awardTrophy } from './trophies';
 
 export async function completeRecipeCreationTutorial() {
     const session = await getServerAuthSession('completeRecipeCreationTutorial');

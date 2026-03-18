@@ -4,11 +4,12 @@ import { redirect } from 'next/navigation';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayout';
-import { NotificationsPageContent } from '@app/components/notifications/NotificationsPageContent';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { getOrCreateProfile } from '@app/lib/profile';
 
 import { css } from 'styled-system/css';
+
+import { NotificationsPageContent } from './NotificationsPageContent';
 
 export const metadata = {
     title: 'Benachrichtigungen | KüchenTakt',

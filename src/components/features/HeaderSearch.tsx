@@ -6,12 +6,15 @@ import { useState } from 'react';
 
 import { Avatar } from '@app/components/atoms/Avatar';
 import { SmartImage } from '@app/components/atoms/SmartImage';
+import type {
+    MultiSearchRecipe,
+    MultiSearchUser,
+    SuggestItem,
+} from '@app/lib/hooks/useMultiSearch';
+import { useMultiSearch } from '@app/lib/hooks/useMultiSearch';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 
 import { css } from 'styled-system/css';
-
-import type { MultiSearchRecipe, MultiSearchUser, SuggestItem } from './useMultiSearch';
-import { useMultiSearch } from './useMultiSearch';
 
 export function HeaderSearch() {
     const router = useRouter();

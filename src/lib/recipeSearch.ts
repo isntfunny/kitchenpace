@@ -1,7 +1,7 @@
 import type { RecipeCardData } from '@app/app/actions/recipes';
-import type { RecipeSearchFacets, RecipeSearchMeta } from '@app/components/search/useRecipeSearch';
 import { RECIPE_FILTER_DEFAULT_LIMIT } from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import type { RecipeSearchFacets, RecipeSearchMeta } from '@app/lib/recipeSearchTypes';
 import { opensearchClient, OPENSEARCH_INDEX } from '@shared/opensearch/client';
 
 export type RecipeSearchResult = {

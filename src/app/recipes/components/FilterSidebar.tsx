@@ -4,10 +4,11 @@ import { Star, ChevronDown } from 'lucide-react';
 import { Accordion, ToggleGroup, Tooltip } from 'radix-ui';
 import { useMemo, type ReactNode } from 'react';
 
-import type { CategoryOption } from '@app/app/actions/filters';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 
 import { css } from 'styled-system/css';
+
+import type { CategoryOption } from '../actions';
 
 import { RangeControl } from './FilterSidebar/components/RangeControl';
 import { SearchableFilterChips, type FilterChipItem } from './SearchableFilterChips';

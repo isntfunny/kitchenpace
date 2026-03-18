@@ -1,13 +1,14 @@
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { Metadata } from 'next';
 
-import { fetchFilterIngredients, fetchFilterTags } from '@app/app/actions/filters';
 import { PageShell } from '@app/components/layouts/PageShell';
-import { RecipeSearchClient } from '@app/components/search/RecipeSearchClient';
 import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
 import { APP_URL } from '@app/lib/url';
 import { getQueryClient, trpc } from '@app/trpc/server';
+
+import { fetchFilterIngredients, fetchFilterTags } from './actions';
+import { RecipeSearchClient } from './components/RecipeSearchClient';
 
 type RecipesPageProps = {
     searchParams: Promise<Record<string, string | string[] | undefined>>;

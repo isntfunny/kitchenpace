@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-import { fetchUserFavorites } from '@app/app/actions/favorites';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
 
+import { fetchUserFavorites } from './actions';
 import { FavoritesClient } from './FavoritesClient';
 
 export const revalidate = 0;

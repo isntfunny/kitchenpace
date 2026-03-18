@@ -9,15 +9,12 @@ import {
     OAuthDivider,
     PasskeySignInButton,
 } from '@app/components/auth/OAuthSignInButton';
-import {
-    authFormStackClass,
-    authInputClass,
-    getAuthButtonClass,
-} from '@app/components/forms/authStyles';
 import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { signIn } from '@app/lib/auth-client';
 
 import { css } from 'styled-system/css';
+
+import { authFormStackClass, authInputClass, getAuthButtonClass } from '../authStyles';
 
 export function SignInForm() {
     const router = useRouter();

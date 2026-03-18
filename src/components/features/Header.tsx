@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
 
 import { useTheme } from '@app/components/providers/ThemeProvider';
-import { HeaderSearch } from '@app/components/search/HeaderSearch';
 import { useSession } from '@app/lib/auth-client';
 import { PALETTE } from '@app/lib/palette';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
@@ -18,6 +17,7 @@ import { SmartImage } from '../atoms/SmartImage';
 
 import { HeaderAuth } from './HeaderAuth';
 import { MenuSection, type NavLinkItem as MenuNavLinkItem } from './HeaderMenuPanel';
+import { HeaderSearch } from './HeaderSearch';
 import { RecipeTabs } from './RecipeTabs';
 import { ThemeToggle } from './ThemeToggle';
 

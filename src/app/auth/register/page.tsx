@@ -10,17 +10,14 @@ import {
     GoogleSignInButton,
     OAuthDivider,
 } from '@app/components/auth/OAuthSignInButton';
-import {
-    authFormStackClass,
-    authInputClass,
-    getAuthButtonClass,
-} from '@app/components/forms/authStyles';
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
 import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { useUtmParams } from '@app/lib/hooks/useUtmParams';
 import { PALETTE } from '@app/lib/palette';
 
 import { css } from 'styled-system/css';
+
+import { authFormStackClass, authInputClass, getAuthButtonClass } from '../authStyles';
 
 const MAX_NICKNAME_LENGTH = 40;
 

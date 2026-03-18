@@ -4,14 +4,11 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 
-import {
-    authFormStackClass,
-    authInputClass,
-    getAuthButtonClass,
-} from '@app/components/forms/authStyles';
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
 
 import { css } from 'styled-system/css';
+
+import { authFormStackClass, authInputClass, getAuthButtonClass } from '../authStyles';
 
 export default function ResendActivationPage() {
     const [email, setEmail] = useState('');

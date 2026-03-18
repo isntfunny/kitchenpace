@@ -1,12 +1,13 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 
-import type { CategoryOption } from '@app/app/actions/filters';
 import { Button } from '@app/components/atoms/Button';
 import { PALETTE } from '@app/lib/palette';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 
 import { css } from 'styled-system/css';
+
+import type { CategoryOption } from '../actions';
 
 import { FilterSidebar } from './FilterSidebar';
 import type { RecipeSearchFacets } from './useRecipeSearch';

@@ -5,13 +5,18 @@ import { motion } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 
 import { fetchRecipesByTime, type RecipeCardData } from '@app/app/actions/recipes';
+import { RecipeCard } from '@app/components/features/RecipeCard';
+import { Section } from '@app/components/features/Section';
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+} from '@app/components/features/Select';
 import { PALETTE } from '@app/lib/palette';
 
 import { css } from 'styled-system/css';
-
-import { RecipeCard } from '../features/RecipeCard';
-import { Section } from '../features/Section';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../features/Select';
 
 const timeOptions = [
     { value: 'frueh', label: 'Frühstück' },

@@ -5,44 +5,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 import { buildRecipeFilterQuery } from '@app/lib/recipeFilters';
+import type { RecipeSearchMeta } from '@app/lib/recipeSearchTypes';
 
-type HistogramBucket = {
-    key: number;
-    count: number;
-};
-
-export type HistogramFacet = {
-    interval: number;
-    min: number;
-    max: number;
-    buckets: HistogramBucket[];
-};
-
-export type TermFacet = Array<{
-    key: string;
-    count: number;
-}>;
-
-export type RecipeSearchFacets = {
-    tags: TermFacet;
-    ingredients: TermFacet;
-    difficulties: TermFacet;
-    categories: TermFacet;
-    cookTime?: HistogramFacet;
-    totalTime?: HistogramFacet;
-    prepTime?: HistogramFacet;
-    stepCount?: HistogramFacet;
-    calories?: HistogramFacet;
-    rating?: HistogramFacet;
-    cookCount?: HistogramFacet;
-};
-
-export type RecipeSearchMeta = {
-    total: number;
-    page: number;
-    limit: number;
-    facets?: RecipeSearchFacets;
-};
+export type {
+    HistogramBucket,
+    HistogramFacet,
+    TermFacet,
+    RecipeSearchFacets,
+    RecipeSearchMeta,
+} from '@app/lib/recipeSearchTypes';
 
 export type RecipeSearchState = {
     data: RecipeCardData[];

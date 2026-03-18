@@ -12,7 +12,6 @@ import { Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 
 import { computeAvoidingPath, nodesToRects } from '@app/components/flow/edgeAvoidance';
-import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
 import {
     dispatchRecipeTutorialEvent,
     RECIPE_TUTORIAL_EVENTS,
@@ -24,6 +23,7 @@ import { css } from 'styled-system/css';
 
 import type { StepType } from './editorTypes';
 import { useFlowEditor } from './FlowEditorContext';
+import { StepTypePicker } from './lane-wizard/StepTypePicker';
 
 function InsertEdgeComponent({
     id,

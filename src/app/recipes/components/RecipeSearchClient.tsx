@@ -3,13 +3,14 @@
 import { motion } from 'motion/react';
 import { type FC, useState } from 'react';
 
-import type { CategoryOption } from '@app/app/actions/filters';
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import { RecipeCard } from '@app/components/features/RecipeCard';
 import { RecipeCardSkeleton } from '@app/components/features/RecipeCardSkeleton';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 
 import { css } from 'styled-system/css';
+
+import type { CategoryOption } from '../actions';
 
 import { FilterSidebar } from './FilterSidebar';
 import { MobileFilterSheet } from './MobileFilterSheet';

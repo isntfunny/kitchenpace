@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 
-import { LaneWizard } from '@app/components/lane-wizard';
-import type { LaneGrid, LaneMode } from '@app/components/lane-wizard';
+import { LaneWizard } from '@app/components/flow/editor/lane-wizard';
+import type { LaneGrid, LaneMode } from '@app/components/flow/editor/lane-wizard';
 
 import { css } from 'styled-system/css';
 

@@ -7,7 +7,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import type { EditRecipeData } from '@app/app/actions/recipes';
-import { completeRecipeCreationTutorial } from '@app/app/actions/tutorials';
 import type {
     FlowEdgeSerialized,
     FlowNodeSerialized,
@@ -51,6 +50,7 @@ import {
     ErrorBanner,
 } from './RecipeForm/components';
 import { AddedIngredient, Category, IngredientSearchResult, Tag } from './RecipeForm/data';
+import { completeRecipeCreationTutorial } from './tutorial/actions';
 import {
     dispatchRecipeTutorialEvent,
     RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY,

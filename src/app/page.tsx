@@ -1,22 +1,23 @@
 import { Suspense } from 'react';
 
-import { CategoryBarSection } from '@app/components/home/CategoryBarSection';
-import { ChefSpotlightSection } from '@app/components/home/ChefSpotlightSection';
-import { DailyHighlightSection } from '@app/components/home/DailyHighlightSection';
-import { HelloWorldBanner } from '@app/components/home/HelloWorldBanner';
-import { LiveActivitySection } from '@app/components/home/LiveActivitySection';
-import { NewestRecipesSection } from '@app/components/home/NewestRecipesSection';
-import { QuickTipsSection } from '@app/components/home/QuickTipsSection';
-import { TopRatedSection } from '@app/components/home/TopRatedSection';
-import { TrendingTagsSection } from '@app/components/home/TrendingTagsSection';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { FadeInSection } from '@app/components/motion/FadeInSection';
-import { FitsNow } from '@app/components/sections/FitsNow';
-import { FlowPillars } from '@app/components/sections/FlowPillars';
-import { HeroSpotlight } from '@app/components/sections/HeroSpotlight';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
+
+import { CategoryBarSection } from './components/CategoryBarSection';
+import { ChefSpotlightSection } from './components/ChefSpotlightSection';
+import { DailyHighlightSection } from './components/DailyHighlightSection';
+import { FitsNow } from './components/FitsNow';
+import { FlowPillars } from './components/FlowPillars';
+import { HelloWorldBanner } from './components/HelloWorldBanner';
+import { HeroSpotlight } from './components/HeroSpotlight';
+import { LiveActivitySection } from './components/LiveActivitySection';
+import { NewestRecipesSection } from './components/NewestRecipesSection';
+import { QuickTipsSection } from './components/QuickTipsSection';
+import { TopRatedSection } from './components/TopRatedSection';
+import { TrendingTagsSection } from './components/TrendingTagsSection';
 
 export const revalidate = 60;
 

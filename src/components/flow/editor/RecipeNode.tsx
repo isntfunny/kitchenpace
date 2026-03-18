@@ -5,7 +5,6 @@ import { Clock, GitBranch, X } from 'lucide-react';
 import { memo, useMemo, useCallback, useState, useRef, useEffect } from 'react';
 
 import { extractIngredientChips, renderDescription } from '@app/components/flow/viewer/viewerUtils';
-import { StepTypePicker } from '@app/components/lane-wizard/StepTypePicker';
 import {
     dispatchRecipeTutorialEvent,
     RECIPE_TUTORIAL_EVENTS,
@@ -19,6 +18,7 @@ import { css, cx } from 'styled-system/css';
 import { AddNodeButton } from './AddNodeButton';
 import type { RecipeFlowNode } from './editorTypes';
 import { useFlowEditor } from './FlowEditorContext';
+import { StepTypePicker } from './lane-wizard/StepTypePicker';
 import { getStepConfig } from './stepConfig';
 
 /** Small (+) button below a node that forks a new parallel branch */

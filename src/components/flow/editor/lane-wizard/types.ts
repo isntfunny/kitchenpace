@@ -64,7 +64,7 @@ export type LaneAction =
 
 /* ── Timer state ─────────────────────────────────────────── */
 
-export type { TimerState } from '../flow/viewer/viewerTypes';
+export type { TimerState } from '../../viewer/viewerTypes';
 
 /* ── Component mode ──────────────────────────────────────── */
 

@@ -5,12 +5,11 @@ import { motion } from 'motion/react';
 import * as React from 'react';
 import type { ReactNode } from 'react';
 
+import { Heading, Text } from '@app/components/atoms/Typography';
 import { PALETTE } from '@app/lib/palette';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
-
-import { Heading, Text } from '../atoms/Typography';
 
 const pillars: { title: string; description: string; icon: ReactNode; color: string }[] = [
     {

@@ -1,7 +1,8 @@
-import AuthErrorClient from '@app/components/auth/AuthErrorClient';
 import { PageShell } from '@app/components/layouts/PageShell';
 
 import { css } from 'styled-system/css';
+
+import AuthErrorClient from './AuthErrorClient';
 
 type AuthErrorPageProps = {
     searchParams: Promise<{ error?: string }>;

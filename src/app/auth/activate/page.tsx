@@ -1,4 +1,4 @@
-import ActivateClient from '@app/components/auth/ActivateClient';
+import ActivateClient from './ActivateClient';
 
 type ActivatePageProps = {
     searchParams: Promise<{ token?: string }>;

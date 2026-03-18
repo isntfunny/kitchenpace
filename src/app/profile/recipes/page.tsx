@@ -3,11 +3,12 @@ import { redirect } from 'next/navigation';
 
 import { fetchUserRecipes } from '@app/app/actions/user';
 import { PageShell } from '@app/components/layouts/PageShell';
-import { UserRecipeTable } from '@app/components/recipe/UserRecipeTable';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { getOrCreateProfile } from '@app/lib/profile';
 
 import { css } from 'styled-system/css';
+
+import { UserRecipeTable } from './UserRecipeTable';
 
 export const metadata: Metadata = {
     title: 'Meine Rezepte',

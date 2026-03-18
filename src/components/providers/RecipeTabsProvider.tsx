@@ -2,14 +2,15 @@
 
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useSession } from '@app/lib/auth-client';
+
 import {
     addToRecentAction,
     migrateLocalRecipesAction,
     pinRecipeAction,
     refreshRecipeTabsAction,
     unpinRecipeAction,
-} from '@app/app/actions/recipe-tabs';
-import { useSession } from '@app/lib/auth-client';
+} from './recipeTabsActions';
 
 export interface RecipeTabItem {
     id: string;

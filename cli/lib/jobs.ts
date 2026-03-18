@@ -22,7 +22,13 @@ export function listJobs(queue: string): string[] {
 
 export function getJobDefinitions(): Record<string, string[]> {
     return {
-        opensearch: ['sync-recipes', 'sync-recipe', 'sync-ingredients', 'sync-tags'],
+        opensearch: [
+            'sync-recipes',
+            'sync-recipe',
+            'sync-ingredients',
+            'sync-tags',
+            'backfill-embeddings',
+        ],
         scheduled: [
             'trending-recipes',
             'sync-contacts-notifuse',

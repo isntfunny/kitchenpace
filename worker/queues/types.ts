@@ -20,11 +20,16 @@ export interface SyncTagsJob {
     batchSize?: number;
 }
 
+export interface BackfillEmbeddingsJob {
+    batchSize?: number;
+}
+
 export type OpenSearchJob =
     | { name: 'sync-recipes'; data: SyncRecipesJob }
     | { name: 'sync-recipe'; data: SyncRecipeToOpenSearchJob }
     | { name: 'sync-ingredients'; data: SyncIngredientsJob }
-    | { name: 'sync-tags'; data: SyncTagsJob };
+    | { name: 'sync-tags'; data: SyncTagsJob }
+    | { name: 'backfill-embeddings'; data: BackfillEmbeddingsJob };
 
 export interface BackupJob {
     type: 'hourly' | 'daily';

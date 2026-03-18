@@ -327,6 +327,7 @@ model Recipe {
   cookImages                                                                 CookImage[]
   importRuns                                                                 ImportRun[]
   stepImages                                                                 RecipeStepImage[]
+  embedding                                                                  RecipeEmbedding?
 
   @@index([authorId])
   @@index([difficulty])
@@ -335,6 +336,15 @@ model Recipe {
   @@index([status])
   @@index([isTrending])
   @@index([moderationStatus])
+}
+
+model RecipeEmbedding {
+  recipeId  String   @id
+  embedding Float[]
+  model     String   @db.VarChar(60)
+  createdAt DateTime @default(now())
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
 
 // ============================================

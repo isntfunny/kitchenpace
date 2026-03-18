@@ -31,6 +31,7 @@ import { printRecipe } from './components/PrintRecipe';
 import { RecipeActionButtons } from './components/RecipeActionButtons';
 import { RecipeStatusBanner } from './components/RecipeStatusBanner';
 import { RecipeSummaryCard } from './components/RecipeSummaryCard';
+import { SimilarRecipes } from './components/SimilarRecipes';
 import type { Recipe, User, Activity } from './data';
 
 // ── Inline star sparkle ───────────────────────────────────────────────────────
@@ -629,6 +630,8 @@ export function RecipeDetailClient({
                 )}
 
                 <ActivityFeed activities={recipeActivities} />
+
+                <SimilarRecipes recipeId={recipe.id} />
             </div>
 
             <CookDialog

@@ -1,15 +1,24 @@
 import { Job } from 'bullmq';
 
 import {
+    buildRecipeEmbeddingText,
+    EMBEDDING_MODEL,
+    generateEmbedding,
+    generateEmbeddings,
+    type RecipeEmbeddingInput,
+} from '@app/lib/embeddings/embedding-service';
+import {
     opensearchClient,
     OPENSEARCH_INDEX,
     OPENSEARCH_INGREDIENTS_INDEX,
     OPENSEARCH_TAGS_INDEX,
+    OPENSEARCH_EMBEDDINGS_INDEX,
 } from '@shared/opensearch/client';
 
 import { getRedis } from './connection';
 import { prisma } from './prisma';
 import {
+    BackfillEmbeddingsJob,
     SyncIngredientsJob,
     SyncRecipesJob,
     SyncRecipeToOpenSearchJob,
@@ -558,37 +567,19 @@ export async function processSyncRecipeToOpenSearch(
 
         if (!recipe) {
             console.log(`[OpenSearch] Recipe not found in DB, removing from index: ${recipeId}`);
-            try {
-                await opensearchClient.delete({
-                    index: OPENSEARCH_INDEX,
-                    id: recipeId,
-                    refresh: 'wait_for',
-                });
-            } catch (deleteError: unknown) {
-                const statusCode = (deleteError as { meta?: { statusCode?: number } })?.meta
-                    ?.statusCode;
-                if (statusCode !== 404) throw deleteError;
-            }
+            await Promise.all([
+                safeDelete(OPENSEARCH_INDEX, recipeId),
+                safeDelete(OPENSEARCH_EMBEDDINGS_INDEX, recipeId),
+            ]);
             return { success: true, action: 'deleted' };
         }
 
         if (recipe.status !== 'PUBLISHED' || !recipe.publishedAt) {
             console.log(`[OpenSearch] Removing unpublished recipe from index: ${recipeId}`);
-            try {
-                await opensearchClient.delete({
-                    index: OPENSEARCH_INDEX,
-                    id: recipe.id,
-                    refresh: 'wait_for',
-                });
-            } catch (deleteError: unknown) {
-                const statusCode = (deleteError as { meta?: { statusCode?: number } })?.meta
-                    ?.statusCode;
-                if (statusCode === 404) {
-                    console.log(`[OpenSearch] Recipe not in index (already absent): ${recipeId}`);
-                } else {
-                    throw deleteError;
-                }
-            }
+            await Promise.all([
+                safeDelete(OPENSEARCH_INDEX, recipeId),
+                safeDelete(OPENSEARCH_EMBEDDINGS_INDEX, recipeId),
+            ]);
             return { success: true, action: 'deleted' };
         }
 
@@ -600,6 +591,18 @@ export async function processSyncRecipeToOpenSearch(
             body: doc,
             refresh: 'wait_for',
         });
+
+        // Generate and index embedding (best-effort — don't fail the sync)
+        try {
+            await indexRecipeEmbedding(recipe);
+        } catch (embeddingError) {
+            console.warn(`[OpenSearch] Embedding generation failed for ${recipeId}`, {
+                error:
+                    embeddingError instanceof Error
+                        ? embeddingError.message
+                        : String(embeddingError),
+            });
+        }
 
         console.log(`[OpenSearch] Indexed recipe: ${recipeId}`, { title: recipe.title });
 
@@ -742,4 +745,149 @@ export async function processSyncTags(job: Job<SyncTagsJob>): Promise<{ synced: 
         });
         throw error;
     }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+
+/** Delete a document from an index, ignoring 404 errors. */
+async function safeDelete(index: string, id: string): Promise<void> {
+    try {
+        await opensearchClient.delete({ index, id, refresh: 'wait_for' });
+    } catch (err: unknown) {
+        const statusCode = (err as { meta?: { statusCode?: number } })?.meta?.statusCode;
+        if (statusCode !== 404) throw err;
+    }
+}
+
+// ── Embedding helpers ────────────────────────────────────────────────
+
+function recipeToEmbeddingInput(
+    recipe: Pick<
+        RecipeWithRelations,
+        'title' | 'description' | 'recipeIngredients' | 'tags' | 'categories' | 'difficulty'
+    >,
+): RecipeEmbeddingInput {
+    return {
+        title: recipe.title,
+        description: recipe.description ?? '',
+        ingredients: recipe.recipeIngredients
+            .map((ri) => ri.ingredient?.name)
+            .filter((n): n is string => Boolean(n)),
+        tags: recipe.tags.map((t) => t.tag?.name).filter((n): n is string => Boolean(n)),
+        category: recipe.categories[0]?.category?.name ?? undefined,
+        difficulty: recipe.difficulty,
+    };
+}
+
+/** Generate and index embedding for a single recipe. */
+async function indexRecipeEmbedding(recipe: RecipeWithRelations): Promise<void> {
+    const input = recipeToEmbeddingInput(recipe);
+    const text = buildRecipeEmbeddingText(input);
+    const embedding = await generateEmbedding(text);
+
+    await Promise.all([
+        opensearchClient.index({
+            index: OPENSEARCH_EMBEDDINGS_INDEX,
+            id: recipe.id,
+            body: { id: recipe.id, embedding },
+        }),
+        prisma.recipeEmbedding.upsert({
+            where: { recipeId: recipe.id },
+            create: { recipeId: recipe.id, embedding, model: EMBEDDING_MODEL },
+            update: { embedding, model: EMBEDDING_MODEL },
+        }),
+    ]);
+}
+
+// ── Bulk embedding backfill ──────────────────────────────────────────
+
+export async function processBackfillEmbeddings(
+    job: Job<BackfillEmbeddingsJob>,
+): Promise<{ embedded: number; skipped: number }> {
+    const batchSize = job.data.batchSize ?? 50;
+    console.log(`[OpenSearch] Processing backfill-embeddings job ${job.id}`, { batchSize });
+
+    let totalEmbedded = 0;
+    let totalSkipped = 0;
+    let cursor: string | undefined;
+
+    // Use PostgreSQL as source of truth for which recipes already have embeddings
+    const existingRows = await prisma.recipeEmbedding.findMany({
+        where: { model: EMBEDDING_MODEL },
+        select: { recipeId: true },
+    });
+    const existingIds = new Set(existingRows.map((r) => r.recipeId));
+
+    while (true) {
+        const recipes = await prisma.recipe.findMany({
+            where: {
+                status: 'PUBLISHED',
+                ...(cursor ? { id: { gt: cursor } } : {}),
+            },
+            select: {
+                id: true,
+                title: true,
+                description: true,
+                difficulty: true,
+                categories: { include: { category: true } },
+                tags: { include: { tag: true } },
+                recipeIngredients: { include: { ingredient: true } },
+            },
+            orderBy: { id: 'asc' },
+            take: batchSize,
+        });
+
+        if (recipes.length === 0) break;
+
+        // Filter out recipes that already have embeddings for the current model
+        const needsEmbedding = recipes.filter((r) => !existingIds.has(r.id));
+        totalSkipped += recipes.length - needsEmbedding.length;
+
+        if (needsEmbedding.length > 0) {
+            const texts = needsEmbedding.map((r) =>
+                buildRecipeEmbeddingText(recipeToEmbeddingInput(r)),
+            );
+            const embeddings = await generateEmbeddings(texts);
+
+            // Bulk index into OpenSearch
+            const operations: BulkOperation[] = [];
+            for (let i = 0; i < needsEmbedding.length; i++) {
+                operations.push({
+                    index: { _index: OPENSEARCH_EMBEDDINGS_INDEX, _id: needsEmbedding[i].id },
+                });
+                operations.push({ id: needsEmbedding[i].id, embedding: embeddings[i] });
+            }
+            await runBulkOperations(operations);
+
+            // Persist to PostgreSQL
+            await prisma.$transaction(
+                needsEmbedding.map((r, i) =>
+                    prisma.recipeEmbedding.upsert({
+                        where: { recipeId: r.id },
+                        create: {
+                            recipeId: r.id,
+                            embedding: embeddings[i],
+                            model: EMBEDDING_MODEL,
+                        },
+                        update: { embedding: embeddings[i], model: EMBEDDING_MODEL },
+                    }),
+                ),
+            );
+
+            totalEmbedded += needsEmbedding.length;
+        }
+
+        cursor = recipes[recipes.length - 1].id;
+
+        console.log(
+            `[OpenSearch] Backfill batch: ${needsEmbedding.length} embedded, ${recipes.length - needsEmbedding.length} skipped (total: ${totalEmbedded})`,
+        );
+
+        if (recipes.length < batchSize) break;
+    }
+
+    console.log(
+        `[OpenSearch] Backfill complete: ${totalEmbedded} embedded, ${totalSkipped} skipped`,
+    );
+    return { embedded: totalEmbedded, skipped: totalSkipped };
 }

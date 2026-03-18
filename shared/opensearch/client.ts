@@ -4,11 +4,13 @@ const nodeUrl = process.env.OPENSEARCH_URL ?? 'http://localhost:9200';
 const recipesIndex = process.env.OPENSEARCH_INDEX ?? 'recipes';
 const ingredientsIndex = process.env.OPENSEARCH_INGREDIENTS_INDEX ?? 'ingredients';
 const tagsIndex = process.env.OPENSEARCH_TAGS_INDEX ?? 'tags';
+const embeddingsIndex = process.env.OPENSEARCH_EMBEDDINGS_INDEX ?? 'recipe-embeddings';
 
 export const opensearchClient = new Client({ node: nodeUrl });
 export const OPENSEARCH_INDEX = recipesIndex;
 export const OPENSEARCH_INGREDIENTS_INDEX = ingredientsIndex;
 export const OPENSEARCH_TAGS_INDEX = tagsIndex;
+export const OPENSEARCH_EMBEDDINGS_INDEX = embeddingsIndex;
 
 const RECIPES_MAPPINGS = {
     properties: {
@@ -56,11 +58,30 @@ const TAGS_MAPPINGS = {
     },
 };
 
+/** Shared constant — must match the OpenAI text-embedding-3-large output size. */
+export const EMBEDDING_DIMENSIONS = 3072;
+
+const EMBEDDINGS_MAPPINGS = {
+    properties: {
+        id: { type: 'keyword' },
+        embedding: {
+            type: 'knn_vector',
+            dimension: EMBEDDING_DIMENSIONS,
+            method: {
+                name: 'hnsw',
+                space_type: 'cosinesimil',
+                engine: 'lucene',
+            },
+        },
+    },
+};
+
 /**
  * Ensure OpenSearch indices exist with correct mappings.
  * Safe to call repeatedly — skips creation if the index already exists.
  */
 export async function ensureIndices(): Promise<void> {
+    // Standard indices (no special settings)
     for (const [index, mappings] of [
         [OPENSEARCH_INDEX, RECIPES_MAPPINGS],
         [OPENSEARCH_INGREDIENTS_INDEX, INGREDIENTS_MAPPINGS],
@@ -73,6 +94,25 @@ export async function ensureIndices(): Promise<void> {
                 body: { mappings } as Record<string, unknown>,
             });
             console.log(`[OpenSearch] Created index "${index}" with explicit mappings`);
+        }
+    }
+
+    // Embeddings index — requires k-NN plugin enabled at index level
+    {
+        const { body: exists } = await opensearchClient.indices.exists({
+            index: OPENSEARCH_EMBEDDINGS_INDEX,
+        });
+        if (!exists) {
+            await opensearchClient.indices.create({
+                index: OPENSEARCH_EMBEDDINGS_INDEX,
+                body: {
+                    settings: { 'index.knn': true },
+                    mappings: EMBEDDINGS_MAPPINGS,
+                } as Record<string, unknown>,
+            });
+            console.log(
+                `[OpenSearch] Created k-NN index "${OPENSEARCH_EMBEDDINGS_INDEX}" with explicit mappings`,
+            );
         }
     }
 }

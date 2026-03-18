@@ -21,6 +21,7 @@ const DEFAULT_JOB_OPTIONS: QueueOptions['defaultJobOptions'] = {
 let opensearchQueue: Queue | null = null;
 let scheduledQueue: Queue | null = null;
 let backupQueue: Queue | null = null;
+let twitchQueue: Queue | null = null;
 
 export function getOpenSearchQueue(): Queue {
     if (!opensearchQueue) {
@@ -58,6 +59,16 @@ export function getBackupQueue(): Queue {
     return backupQueue;
 }
 
+export function getTwitchQueue(): Queue {
+    if (!twitchQueue) {
+        twitchQueue = new Queue(QueueName.TWITCH, {
+            defaultJobOptions: DEFAULT_JOB_OPTIONS,
+            connection: getRedis() as unknown as import('bullmq').ConnectionOptions,
+        });
+    }
+    return twitchQueue;
+}
+
 export async function closeAllQueues(): Promise<void> {
     if (opensearchQueue) {
         await opensearchQueue.close();
@@ -70,5 +81,9 @@ export async function closeAllQueues(): Promise<void> {
     if (backupQueue) {
         await backupQueue.close();
         backupQueue = null;
+    }
+    if (twitchQueue) {
+        await twitchQueue.close();
+        twitchQueue = null;
     }
 }

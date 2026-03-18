@@ -4,7 +4,8 @@ export type RealtimeChannel =
     | `notifications:user:${string}`
     | 'admin-notifications'
     | 'activity:global'
-    | `activity:user:${string}`;
+    | `activity:user:${string}`
+    | 'twitch:live';
 
 export type RealtimeEvent<TPayload = unknown> = {
     id: string;

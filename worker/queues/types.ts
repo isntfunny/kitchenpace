@@ -2,6 +2,7 @@ export enum QueueName {
     OPENSEARCH = 'opensearch',
     SCHEDULED = 'scheduled',
     BACKUP = 'backup',
+    TWITCH = 'twitch',
 }
 
 export interface SyncRecipesJob {
@@ -59,6 +60,38 @@ export type ScheduledJob =
     | { name: 'generate-recipe-og'; data: GenerateRecipeOgJob }
     | { name: 'generate-og-images'; data: GenerateOgImagesJob }
     | { name: 'backfill-ingredient-plurals'; data: BackfillIngredientPluralsJob };
+
+// ── Twitch jobs ──────────────────────────────────────────────────────
+
+export interface TwitchRegisterEventSubJob {
+    userId: string;
+    twitchId: string;
+}
+
+export interface TwitchUnregisterEventSubJob {
+    userId: string;
+    eventSubOnlineId?: string;
+    eventSubOfflineId?: string;
+}
+
+export interface TwitchStreamOnlineJob {
+    userId: string;
+    twitchStreamId: string;
+    startedAt: string;
+}
+
+export interface TwitchStreamOfflineJob {
+    userId: string;
+}
+
+export type TwitchHealthCheckJob = Record<string, unknown>;
+
+export type TwitchJob =
+    | { name: 'twitch-register-eventsub'; data: TwitchRegisterEventSubJob }
+    | { name: 'twitch-unregister-eventsub'; data: TwitchUnregisterEventSubJob }
+    | { name: 'twitch-stream-online'; data: TwitchStreamOnlineJob }
+    | { name: 'twitch-stream-offline'; data: TwitchStreamOfflineJob }
+    | { name: 'twitch-health-check'; data: TwitchHealthCheckJob };
 
 // Job payload schema for admin form generation
 export type JobPayloadField =

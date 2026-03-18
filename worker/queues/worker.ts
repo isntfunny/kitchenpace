@@ -19,6 +19,13 @@ import {
     processGenerateOgImages,
     processBackfillIngredientPlurals,
 } from './scheduled-processor';
+import {
+    processRegisterEventSub,
+    processUnregisterEventSub,
+    processStreamOnline,
+    processStreamOffline,
+    processHealthCheck,
+} from './twitch-processor';
 import { QueueName } from './types';
 
 // Job processors per queue — each queue has exactly one Worker instance.
@@ -69,6 +76,22 @@ const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
                 return processDatabaseBackup(job);
             default:
                 throw new Error(`Unknown backup job: ${job.name}`);
+        }
+    },
+    [QueueName.TWITCH]: async (job) => {
+        switch (job.name) {
+            case 'twitch-register-eventsub':
+                return processRegisterEventSub(job);
+            case 'twitch-unregister-eventsub':
+                return processUnregisterEventSub(job);
+            case 'twitch-stream-online':
+                return processStreamOnline(job);
+            case 'twitch-stream-offline':
+                return processStreamOffline(job);
+            case 'twitch-health-check':
+                return processHealthCheck(job);
+            default:
+                throw new Error(`Unknown twitch job: ${job.name}`);
         }
     },
 };

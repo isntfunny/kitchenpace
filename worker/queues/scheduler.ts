@@ -1,4 +1,4 @@
-import { getOpenSearchQueue, getScheduledQueue, getBackupQueue } from './queue';
+import { getOpenSearchQueue, getScheduledQueue, getBackupQueue, getTwitchQueue } from './queue';
 import { QueueName, type JobPayloadSchema } from './types';
 
 export interface ScheduledJobDefinition {
@@ -142,6 +142,17 @@ const scheduledJobs: ScheduledJobDefinition[] = [
         },
         // No repeat — manual trigger only
     },
+    {
+        name: 'twitch-health-check',
+        queue: QueueName.TWITCH,
+        data: {},
+        options: {
+            repeat: {
+                pattern: '0 */6 * * *',
+                tz: 'Europe/Berlin',
+            },
+        },
+    },
 ];
 
 async function addRepeatableJob(job: ScheduledJobDefinition): Promise<void> {
@@ -175,6 +186,8 @@ function getQueueForName(queueName: QueueName) {
             return getScheduledQueue();
         case QueueName.BACKUP:
             return getBackupQueue();
+        case QueueName.TWITCH:
+            return getTwitchQueue();
         default:
             throw new Error(`Unknown queue: ${queueName}`);
     }

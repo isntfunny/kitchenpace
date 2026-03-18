@@ -113,6 +113,7 @@ export async function PUT(request: NextRequest) {
     const notifyOnRecipePublished = sanitizeBoolean(payload.notifyOnRecipePublished);
     const notifyOnWeeklyPlanReminder = sanitizeBoolean(payload.notifyOnWeeklyPlanReminder);
     const notifyOnSystemMessages = sanitizeBoolean(payload.notifyOnSystemMessages);
+    const notifyOnStreamStarted = sanitizeBoolean(payload.notifyOnStreamStarted);
     const notifyOnNewsletter = sanitizeBoolean(payload.notifyOnNewsletter);
 
     const profileUpdates: Parameters<typeof upsertProfile>[0]['data'] = {};
@@ -177,6 +178,9 @@ export async function PUT(request: NextRequest) {
     }
     if (notifyOnSystemMessages !== undefined) {
         profileUpdates.notifyOnSystemMessages = notifyOnSystemMessages;
+    }
+    if (notifyOnStreamStarted !== undefined) {
+        profileUpdates.notifyOnStreamStarted = notifyOnStreamStarted;
     }
     if (notifyOnNewsletter !== undefined) {
         profileUpdates.notifyOnNewsletter = notifyOnNewsletter;

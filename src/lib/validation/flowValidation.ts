@@ -1,5 +1,5 @@
 import { STEP_TYPE_LABELS } from '@app/components/flow/editor/editorTypes';
-import type { FlowNodeInput, FlowEdgeInput } from '@app/components/recipe/createActions';
+import type { FlowNodeInput, FlowEdgeInput } from '@app/components/recipe/recipeFormTypes';
 
 export type FlowNode = FlowNodeInput;
 export type FlowEdge = FlowEdgeInput;

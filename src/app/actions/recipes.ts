@@ -1,6 +1,6 @@
 'use server';
 
-import type { FlowEdgeInput, FlowNodeInput } from '@app/components/recipe/createActions';
+import type { FlowEdgeInput, FlowNodeInput } from '@app/components/recipe/recipeFormTypes';
 import { PALETTE } from '@app/lib/palette';
 import {
     toRecipeCardData,

@@ -3,7 +3,7 @@
  * No Next.js dependencies — reusable from server actions and CLI.
  */
 
-import type { FlowNodeInput, FlowEdgeInput } from '@app/components/recipe/createActions';
+import type { FlowNodeInput, FlowEdgeInput } from '@app/components/recipe/recipeFormTypes';
 
 import type { ImportedRecipe } from './openai-recipe-schema';
 import { resolveIngredientMentions } from './resolve-mentions';

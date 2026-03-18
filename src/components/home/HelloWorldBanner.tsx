@@ -33,7 +33,7 @@ export function HelloWorldBanner() {
 const bannerShellClass = css({
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: '2xl',
+    borderRadius: 'surface',
     border: '1px solid',
     borderColor: 'rgba(249,115,22,0.22)',
     background:
@@ -62,8 +62,8 @@ const bannerContentClass = css({
     display: 'flex',
     flexDirection: 'column',
     gap: '2',
-    px: { base: '4', md: '5' },
-    py: { base: '4', md: '5' },
+    px: { base: 'card', md: 'card.md' },
+    py: { base: 'card', md: 'card.md' },
 });
 
 const bannerEyebrowClass = css({

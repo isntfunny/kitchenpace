@@ -43,7 +43,7 @@ export function InboxDropdown({
                         width: '360px',
                         maxWidth: '92vw',
                         maxHeight: '70vh',
-                        borderRadius: '2xl',
+                        borderRadius: 'surface',
                         border: '1px solid',
                         borderColor: 'border',
                         background: 'surface.elevated',

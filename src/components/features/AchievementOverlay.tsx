@@ -309,7 +309,7 @@ const backdropClass = css({
 const cardOuterClass = css({
     position: 'relative',
     p: '1px',
-    borderRadius: '3xl',
+    borderRadius: 'surface',
 });
 
 const cardInnerClass = css({

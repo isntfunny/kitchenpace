@@ -28,8 +28,8 @@ export function Section({
     return (
         <section
             className={css({
-                p: '4',
-                borderRadius: '2xl',
+                p: 'card',
+                borderRadius: 'surface',
                 bg: 'surface',
                 boxShadow: 'shadow.medium',
             })}

@@ -15,8 +15,8 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
     return (
         <section
             className={css({
-                p: '4',
-                borderRadius: '2xl',
+                p: 'card',
+                borderRadius: 'surface',
                 bg: 'surface',
                 boxShadow: 'shadow.medium',
             })}
@@ -25,7 +25,7 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                 <a href={`/recipe/${recipe.slug}`} className={css({ textDecoration: 'none' })}>
                     <div
                         className={css({
-                            borderRadius: '2xl',
+                            borderRadius: 'surface',
                             overflow: 'hidden',
                             cursor: 'pointer',
                             transition: 'transform 200ms ease',
@@ -36,7 +36,7 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                             className={css({
                                 position: 'relative',
                                 aspectRatio: '16/9',
-                                borderRadius: '2xl',
+                                borderRadius: 'surface',
                                 overflow: 'hidden',
                             })}
                         >
@@ -86,7 +86,7 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
             ) : (
                 <div
                     className={css({
-                        borderRadius: '2xl',
+                        borderRadius: 'surface',
                         overflow: 'hidden',
                     })}
                 >
@@ -94,7 +94,7 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                         className={css({
                             position: 'relative',
                             aspectRatio: '16/9',
-                            borderRadius: '2xl',
+                            borderRadius: 'surface',
                             overflow: 'hidden',
                         })}
                     >

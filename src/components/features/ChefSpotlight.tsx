@@ -23,8 +23,8 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
         return (
             <div
                 className={css({
-                    p: '5',
-                    borderRadius: '2xl',
+                    p: 'card.md',
+                    borderRadius: 'surface',
                     bg: 'surface',
                     boxShadow: 'shadow.medium',
                 })}
@@ -47,8 +47,8 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
     return (
         <div
             className={css({
-                p: '5',
-                borderRadius: '2xl',
+                p: 'card.md',
+                borderRadius: 'surface',
                 bg: 'surface',
                 boxShadow: 'shadow.medium',
             })}

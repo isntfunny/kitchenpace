@@ -47,7 +47,7 @@ export function SearchHeader({
         <>
             <div
                 className={css({
-                    borderRadius: '2xl',
+                    borderRadius: 'surface',
                     p: { base: '4', md: '5' },
                     display: 'flex',
                     flexDirection: 'column',

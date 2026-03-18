@@ -18,8 +18,8 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
         return (
             <div
                 className={css({
-                    p: '4',
-                    borderRadius: '2xl',
+                    p: 'card',
+                    borderRadius: 'surface',
                     bg: 'surface',
                     boxShadow: 'shadow.medium',
                 })}
@@ -48,8 +48,8 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
     return (
         <div
             className={css({
-                p: '4',
-                borderRadius: '2xl',
+                p: 'card',
+                borderRadius: 'surface',
                 bg: 'surface',
                 boxShadow: 'shadow.medium',
             })}

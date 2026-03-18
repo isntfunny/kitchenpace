@@ -4,22 +4,26 @@ import { ChefHat, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import React from 'react';
 
+import { useIsRetro } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
 export function HeroSpotlight({ children }: { children?: React.ReactNode }) {
+    const retro = useIsRetro();
     return (
         <section
             className={css({
                 position: 'relative',
                 overflow: 'hidden',
-                borderRadius: '2xl',
+                borderRadius: 'surface',
                 mb: '4',
             })}
             style={{
-                background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.orange}dd, #d4694a)`,
+                background: retro
+                    ? PALETTE.orange
+                    : `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.orange}dd, #d4694a)`,
             }}
         >
             {/* Decorative floating icons */}
@@ -66,7 +70,7 @@ export function HeroSpotlight({ children }: { children?: React.ReactNode }) {
                         className={css({
                             width: '44px',
                             height: '44px',
-                            borderRadius: 'xl',
+                            borderRadius: 'surface.sm',
                             bg: 'rgba(255,255,255,0.2)',
                             display: 'flex',
                             alignItems: 'center',

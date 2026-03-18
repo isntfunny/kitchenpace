@@ -1,15 +1,39 @@
 import { Check, CheckCircle2, Clock, Pause, Play, RotateCcw } from 'lucide-react';
 import { type CSSProperties, useMemo } from 'react';
 
-import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
+
+import { css, cx } from 'styled-system/css';
 
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
 
 import type { RecipeStepsViewerProps, TimerState } from './viewerTypes';
 import { extractIngredientChips, formatTime, renderDescription } from './viewerUtils';
+
+const cardBase = css({
+    borderRadius: '16px',
+    overflow: 'hidden',
+    border: 'none',
+    transition: 'all 0.2s ease',
+    flexShrink: 0,
+    cursor: 'pointer',
+    position: 'relative',
+    boxShadow: 'shadow.small',
+});
+
+const cardActive = css({
+    boxShadow: '0 4px 20px rgba(224,123,83,0.18)',
+    _dark: { boxShadow: '0 4px 20px rgba(224,123,83,0.25)' },
+});
+
+const toggleDefault = css({
+    border: '1.5px solid',
+    borderColor: 'border.medium',
+    bg: 'badge.bg',
+    color: 'text.subtle',
+});
 
 export function StepCard({
     node,
@@ -40,7 +64,6 @@ export function StepCard({
     compact?: boolean;
     fullWidth?: boolean;
 }) {
-    const c = useDarkColors();
     const config = getStepConfig(node.type as StepType);
     const Icon = config.icon;
     const hasTimer = !!timerState;
@@ -60,28 +83,16 @@ export function StepCard({
         <div
             data-node-id={node.id}
             onClick={onOpenDetail}
+            className={cx(cardBase, active && !completed ? cardActive : undefined)}
             style={{
                 width: fullWidth ? '100%' : compact ? 200 : 220,
-                borderRadius: 16,
-                overflow: 'hidden',
-                border: 'none',
-                boxShadow:
-                    active && !completed
-                        ? c.dark
-                            ? '0 4px 20px rgba(224,123,83,0.25)'
-                            : '0 4px 20px rgba(224,123,83,0.18)'
-                        : c.shadowSm,
-                transition: 'all 0.2s ease',
                 backgroundImage: config.gradient,
                 backgroundColor: config.color,
-                flexShrink: 0,
-                cursor: 'pointer',
-                position: 'relative',
             }}
         >
             {/* Timer progress bar at top */}
             {hasTimer && (
-                <div style={{ height: 3, backgroundColor: c.progressTrack }}>
+                <div className={css({ height: '3px', bg: 'bg.progress' })}>
                     <div
                         style={{
                             height: '100%',
@@ -109,17 +120,17 @@ export function StepCard({
                     }}
                 >
                     <span
-                        style={{
+                        className={css({
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: 4,
-                            backgroundColor: c.badgeBg,
-                            borderRadius: 999,
+                            gap: '4px',
+                            bg: 'badge.bg',
+                            borderRadius: '999px',
                             padding: '2px 8px',
-                            fontSize: 10,
+                            fontSize: '10px',
                             fontWeight: 700,
-                            color: c.badgeText,
-                        }}
+                            color: 'badge.text',
+                        })}
                     >
                         <Icon style={{ width: 11, height: 11 }} />
                         {config.label}
@@ -144,15 +155,19 @@ export function StepCard({
                     )}
                     {hasTimer && (
                         <span
-                            style={{
+                            className={css({
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: 3,
-                                fontSize: 10,
-                                color: timerRunning ? PALETTE.orange : c.textSubtle,
+                                gap: '3px',
+                                fontSize: '10px',
                                 marginLeft: 'auto',
-                                fontWeight: timerRunning ? 700 : 400,
                                 transition: 'color 0.2s ease',
+                                color: 'text.subtle',
+                            })}
+                            style={{
+                                ...(timerRunning
+                                    ? { color: PALETTE.orange, fontWeight: 700 }
+                                    : { fontWeight: 400 }),
                             }}
                         >
                             <Clock style={{ width: 10, height: 10 }} />
@@ -182,13 +197,13 @@ export function StepCard({
 
                 {/* Title */}
                 <div
-                    style={{
-                        fontSize: compact ? 13 : 14,
+                    className={css({
                         fontWeight: 700,
-                        color: c.textDark,
-                        marginBottom: 4,
+                        color: 'text.heading',
+                        marginBottom: '4px',
                         lineHeight: 1.3,
-                    }}
+                    })}
+                    style={{ fontSize: compact ? 13 : 14 }}
                 >
                     {node.label}
                 </div>
@@ -196,20 +211,22 @@ export function StepCard({
                 {/* Description */}
                 {node.description && !compact && (
                     <div
+                        className={css({
+                            fontSize: '12px',
+                            color: 'text.body',
+                            lineHeight: 1.5,
+                            marginBottom: '8px',
+                            overflow: 'hidden',
+                            display: '-webkit-box',
+                        })}
                         style={
                             {
-                                fontSize: 12,
-                                color: c.textBody,
-                                lineHeight: 1.5,
-                                marginBottom: 8,
-                                overflow: 'hidden',
-                                display: '-webkit-box',
                                 WebkitLineClamp: 3,
                                 WebkitBoxOrient: 'vertical',
                             } as CSSProperties
                         }
                     >
-                        {renderDescription(node.description, ingredients, c.dark)}
+                        {renderDescription(node.description, ingredients)}
                     </div>
                 )}
 
@@ -243,21 +260,25 @@ export function StepCard({
                 {/* Ingredient chips */}
                 {chips.length > 0 && !compact && (
                     <div
-                        style={{
-                            borderTop: `1px solid ${c.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                            paddingTop: 6,
-                            marginBottom: 6,
-                        }}
+                        className={css({
+                            borderTop: '1px solid',
+                            borderColor: {
+                                base: 'rgba(0,0,0,0.06)',
+                                _dark: 'rgba(255,255,255,0.08)',
+                            },
+                            paddingTop: '6px',
+                            marginBottom: '6px',
+                        })}
                     >
                         <div
-                            style={{
-                                fontSize: 9,
+                            className={css({
+                                fontSize: '9px',
                                 fontWeight: 600,
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em',
-                                color: c.textMuted,
-                                marginBottom: 3,
-                            }}
+                                color: 'text.muted',
+                                marginBottom: '3px',
+                            })}
                         >
                             Zutaten
                         </div>
@@ -265,18 +286,19 @@ export function StepCard({
                             {chips.map((chip) => (
                                 <span
                                     key={chip.id}
-                                    style={{
+                                    className={css({
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         padding: '1px 6px',
-                                        backgroundColor: c.dark
-                                            ? 'rgba(224,123,83,0.17)'
-                                            : 'rgba(224,123,83,0.12)',
-                                        borderRadius: 99,
-                                        fontSize: 9,
+                                        bg: {
+                                            base: 'rgba(224,123,83,0.12)',
+                                            _dark: 'rgba(224,123,83,0.17)',
+                                        },
+                                        borderRadius: '99px',
+                                        fontSize: '9px',
                                         fontWeight: 600,
-                                        color: PALETTE.orange,
-                                    }}
+                                        color: 'palette.orange',
+                                    })}
                                 >
                                     {chip.label}
                                 </span>
@@ -341,18 +363,19 @@ export function StepCard({
                                             onTimerReset();
                                         }}
                                         title="Zurücksetzen"
-                                        style={{
+                                        className={css({
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            width: 26,
-                                            height: 26,
+                                            width: '26px',
+                                            height: '26px',
                                             borderRadius: '50%',
-                                            backgroundColor: c.mutedBgLight,
-                                            border: `1.5px solid ${c.borderInput}`,
+                                            bg: 'surface.mutedLight',
+                                            border: '1.5px solid',
+                                            borderColor: 'border.input',
                                             cursor: 'pointer',
-                                            color: c.textSubtle,
-                                        }}
+                                            color: 'text.subtle',
+                                        })}
                                     >
                                         <RotateCcw style={{ width: 10, height: 10 }} />
                                     </button>
@@ -366,33 +389,36 @@ export function StepCard({
                                 e.stopPropagation();
                                 onToggle();
                             }}
+                            className={cx(
+                                css({
+                                    marginLeft: 'auto',
+                                    flexShrink: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '4px 10px',
+                                    borderRadius: '999px',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                }),
+                                !completed && !timerDone ? toggleDefault : undefined,
+                            )}
                             style={{
-                                marginLeft: 'auto',
-                                flexShrink: 0,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 4,
-                                padding: '4px 10px',
-                                borderRadius: 999,
-                                fontSize: 11,
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                border: completed
-                                    ? '1.5px solid rgba(0,184,148,0.3)'
+                                ...(completed
+                                    ? {
+                                          border: '1.5px solid rgba(0,184,148,0.3)',
+                                          backgroundColor: 'rgba(0,184,148,0.1)',
+                                          color: PALETTE.emerald,
+                                      }
                                     : timerDone
-                                      ? `1.5px solid ${PALETTE.emerald}`
-                                      : `1.5px solid ${c.borderMedium}`,
-                                backgroundColor: completed
-                                    ? 'rgba(0,184,148,0.1)'
-                                    : timerDone
-                                      ? PALETTE.emerald
-                                      : c.badgeBg,
-                                color: completed
-                                    ? PALETTE.emerald
-                                    : timerDone
-                                      ? 'white'
-                                      : c.textSubtle,
-                                transition: 'all 0.2s ease',
+                                      ? {
+                                            border: `1.5px solid ${PALETTE.emerald}`,
+                                            backgroundColor: PALETTE.emerald,
+                                            color: 'white',
+                                        }
+                                      : {}),
                             }}
                         >
                             {completed ? (

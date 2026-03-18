@@ -33,8 +33,8 @@ export function PageShell({ children, fluid }: PageShellProps) {
                               maxWidth: '1400px',
                               marginX: 'auto',
                               width: '100%',
-                              paddingX: { base: '4', md: '6' },
-                              paddingY: { base: '4', md: '5' },
+                              paddingX: { base: 'page.x', md: 'page.x.md' },
+                              paddingY: { base: 'page.y', md: 'page.y.md' },
                           })
                 }
             >

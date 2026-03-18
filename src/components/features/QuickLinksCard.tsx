@@ -24,7 +24,7 @@ export function QuickLinksCard({ userSlug: _userSlug }: { userSlug?: string }) {
         <div
             className={css({
                 p: { base: '4', md: '5' },
-                borderRadius: '2xl',
+                borderRadius: 'surface',
                 bg: 'surface',
                 boxShadow: 'shadow.medium',
             })}

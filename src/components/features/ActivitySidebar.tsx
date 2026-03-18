@@ -27,8 +27,8 @@ export function ActivitySidebar({
     return (
         <aside
             className={css({
-                p: '5',
-                borderRadius: '2xl',
+                p: 'card.md',
+                borderRadius: 'surface',
                 bg: 'surface',
                 boxShadow: 'shadow.medium',
                 height: 'fit-content',

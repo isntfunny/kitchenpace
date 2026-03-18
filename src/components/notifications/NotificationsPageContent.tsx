@@ -31,7 +31,7 @@ export function NotificationsPageContent() {
             <div
                 className={css({
                     bg: 'surface',
-                    borderRadius: '2xl',
+                    borderRadius: 'surface',
                     boxShadow: 'shadow.medium',
                     overflow: 'hidden',
                 })}

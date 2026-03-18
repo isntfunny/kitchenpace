@@ -5,10 +5,12 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
 
+import { useTheme } from '@app/components/providers/ThemeProvider';
 import { HeaderSearch } from '@app/components/search/HeaderSearch';
 import { useSession } from '@app/lib/auth-client';
 import { PALETTE } from '@app/lib/palette';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
+import { getThemeConfig } from '@app/lib/themes/registry';
 
 import { css } from 'styled-system/css';
 
@@ -164,8 +166,8 @@ function HeaderNavigationMenu({
                         className={css({
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '4',
-                            padding: '4',
+                            gap: 'modal',
+                            padding: 'modal',
                         })}
                     >
                         <div
@@ -175,14 +177,14 @@ function HeaderNavigationMenu({
                                     base: '1fr',
                                     md: 'repeat(2, minmax(0, 1fr))',
                                 },
-                                gap: '4',
+                                gap: 'modal',
                             })}
                         >
                             <div
                                 className={css({
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    gap: '4',
+                                    gap: 'modal',
                                 })}
                             >
                                 <MenuSection items={availableGeneralLinks} />
@@ -235,6 +237,8 @@ export function Header() {
     const isAdmin = isAuthenticated && userRole === 'admin';
     const isModerator = isAuthenticated && userRole === 'moderator';
     const [Icon1, Icon2, Icon3] = HEADER_ICONS;
+    const { theme } = useTheme();
+    const logoSrc = getThemeConfig(theme).logo;
 
     return (
         <header
@@ -313,8 +317,8 @@ export function Header() {
                     maxWidth: '1400px',
                     marginX: 'auto',
                     width: '100%',
-                    px: { base: '4', md: '6' },
-                    pt: '3',
+                    px: { base: 'page.x', md: 'page.x.md' },
+                    pt: 'card.compact',
                     pb: '0',
                 })}
             >
@@ -336,7 +340,7 @@ export function Header() {
                         })}
                     >
                         <SmartImage
-                            src="/kitchenpace.png"
+                            src={logoSrc}
                             alt="KüchenTakt Logo"
                             width={100}
                             height={39}
@@ -374,7 +378,7 @@ export function Header() {
                                     gap: '1.5',
                                     px: '3.5',
                                     py: '2',
-                                    borderRadius: 'full',
+                                    borderRadius: 'control',
                                     fontSize: 'sm',
                                     fontWeight: '600',
                                     fontFamily: 'body',
@@ -412,7 +416,7 @@ export function Header() {
                         })}
                     >
                         <SmartImage
-                            src="/kitchenpace.png"
+                            src={logoSrc}
                             alt="KüchenTakt Logo"
                             width={100}
                             height={39}

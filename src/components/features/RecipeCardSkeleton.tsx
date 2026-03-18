@@ -59,7 +59,9 @@ export function RecipeCardSkeleton({ variant = 'default' }: RecipeCardSkeletonPr
             })}
         >
             <Skeleton className={css({ width: '100%', aspectRatio: '16/10' })} />
-            <div className={css({ p: '4', display: 'flex', flexDirection: 'column', gap: '2.5' })}>
+            <div
+                className={css({ p: 'card', display: 'flex', flexDirection: 'column', gap: '2.5' })}
+            >
                 <Skeleton className={css({ height: '14px', width: '35%', borderRadius: 'full' })} />
                 <Skeleton className={css({ height: '18px', width: '85%', borderRadius: 'full' })} />
                 <Skeleton className={css({ height: '14px', width: '65%', borderRadius: 'full' })} />

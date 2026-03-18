@@ -8,8 +8,8 @@ export function Footer() {
     return (
         <footer
             className={css({
-                py: '5',
-                mt: '5',
+                py: 'page.y.md',
+                mt: 'page.y.md',
                 textAlign: 'center',
                 fontFamily: 'body',
                 fontSize: 'sm',

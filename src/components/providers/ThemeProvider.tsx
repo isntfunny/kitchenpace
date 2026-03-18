@@ -1,5 +1,6 @@
 'use client';
 
+import { MotionConfig } from 'motion/react';
 import {
     ReactNode,
     createContext,
@@ -10,7 +11,10 @@ import {
     useState,
 } from 'react';
 
-type Theme = 'light' | 'dark';
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
+import { VALID_THEME_IDS, getThemeConfig, type ThemeId } from '@app/lib/themes/registry';
+
+export type Theme = ThemeId;
 
 const THEME_STORAGE_KEY = 'kitchenpace-theme';
 
@@ -27,22 +31,34 @@ interface ThemeProviderProps {
     children: ReactNode;
 }
 
+/** Returns the ID of a flag-forced special theme, or undefined. */
+function useForcedTheme(): ThemeId | undefined {
+    const retroFlag = useFeatureFlag('retroTheme');
+    return retroFlag ? 'retro' : undefined;
+}
+
 export function ThemeProvider({ children }: ThemeProviderProps) {
+    const forcedTheme = useForcedTheme();
+
     const computeInitialTheme = () => {
         if (typeof window === 'undefined') {
             return 'light' as Theme;
         }
 
-        const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-        if (storedTheme) {
-            return storedTheme;
+        const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+        if (storedTheme && VALID_THEME_IDS.has(storedTheme)) {
+            return storedTheme as Theme;
         }
 
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     };
 
-    const [theme, setThemeState] = useState<Theme>(computeInitialTheme);
+    const [userTheme, setUserTheme] = useState<Theme>(computeInitialTheme);
     const [ready, setReady] = useState(false);
+
+    // Feature flag overrides user preference
+    const theme: Theme = forcedTheme ?? userTheme;
+    const config = getThemeConfig(theme);
 
     useEffect(() => {
         const readyTimeout = window.setTimeout(() => setReady(true), 0);
@@ -51,7 +67,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         const handleChange = (event: MediaQueryListEvent) => {
             const hasOverride = Boolean(window.localStorage.getItem(THEME_STORAGE_KEY));
             if (!hasOverride) {
-                setThemeState(event.matches ? 'dark' : 'light');
+                setUserTheme(event.matches ? 'dark' : 'light');
             }
         };
 
@@ -73,17 +89,16 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     useEffect(() => {
         if (!ready) return;
-        document.documentElement.dataset.theme = theme;
         document.documentElement.setAttribute('data-theme', theme);
         window.localStorage.setItem(THEME_STORAGE_KEY, theme);
     }, [ready, theme]);
 
     const setTheme = useCallback((value: Theme) => {
-        setThemeState(value);
+        setUserTheme(value);
     }, []);
 
     const toggleTheme = useCallback(() => {
-        setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
+        setUserTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
     }, []);
 
     const value = useMemo<ThemeContextValue>(
@@ -96,7 +111,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         [ready, setTheme, theme, toggleTheme],
     );
 
-    return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+    return (
+        <ThemeContext.Provider value={value}>
+            <MotionConfig reducedMotion={config.disableMotion ? 'always' : 'user'}>
+                {children}
+            </MotionConfig>
+        </ThemeContext.Provider>
+    );
 }
 
 export function useTheme() {

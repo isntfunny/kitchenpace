@@ -28,8 +28,8 @@ export function QuickTips({ tips }: QuickTipsProps) {
         return (
             <div
                 className={css({
-                    p: '4',
-                    borderRadius: '2xl',
+                    p: 'card',
+                    borderRadius: 'surface',
                     bg: 'surface',
                     boxShadow: 'shadow.medium',
                 })}
@@ -58,8 +58,8 @@ export function QuickTips({ tips }: QuickTipsProps) {
     return (
         <div
             className={css({
-                p: '4',
-                borderRadius: '2xl',
+                p: 'card',
+                borderRadius: 'surface',
                 bg: 'surface',
                 boxShadow: 'shadow.medium',
             })}

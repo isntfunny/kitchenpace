@@ -1,4 +1,5 @@
 @layer reset, base, tokens, recipes, utilities;
+@import './retro-overrides.css';
 
 @keyframes overlayShow {
     from {
@@ -56,9 +57,10 @@
  */
 
 /* ── Global scrollbar styling ─────────────────────────────────────────── */
+/* Excluded from retro theme — retro-overrides.css provides Win98-style scrollbars */
 
 /* Firefox */
-* {
+:root:not([data-theme='retro']) * {
     scrollbar-width: thin;
     scrollbar-color: rgba(224, 123, 83, 0.35) transparent;
 }
@@ -68,12 +70,12 @@
 }
 
 /* WebKit (Chrome, Safari, Edge) */
-::-webkit-scrollbar {
+:root:not([data-theme='retro']) ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
-::-webkit-scrollbar-track {
+:root:not([data-theme='retro']) ::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.04);
     border-radius: 3px;
 }
@@ -82,12 +84,12 @@
     background: rgba(255, 255, 255, 0.04);
 }
 
-::-webkit-scrollbar-thumb {
+:root:not([data-theme='retro']) ::-webkit-scrollbar-thumb {
     background: rgba(224, 123, 83, 0.35);
     border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+:root:not([data-theme='retro']) ::-webkit-scrollbar-thumb:hover {
     background: rgba(224, 123, 83, 0.55);
 }
 
@@ -99,7 +101,7 @@
     background: rgba(224, 123, 83, 0.75);
 }
 
-::-webkit-scrollbar-corner {
+:root:not([data-theme='retro']) ::-webkit-scrollbar-corner {
     background: transparent;
 }
 

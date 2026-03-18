@@ -3,6 +3,7 @@ export const FEATURE_FLAGS = {
     helloWorldBanner: 'hello-world-banner',
     aiRecipeConversion: 'ai-recipe-conversion',
     discordSignIn: 'discord-sign-in',
+    retroTheme: 'retro-theme',
 } as const;
 
 export type FeatureFlagName = keyof typeof FEATURE_FLAGS;
@@ -14,4 +15,5 @@ export const DEFAULT_FEATURE_FLAG_VALUES: FeatureFlagValues = {
     helloWorldBanner: false,
     aiRecipeConversion: false,
     discordSignIn: false,
+    retroTheme: false,
 };

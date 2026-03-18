@@ -40,8 +40,8 @@ export function CategoryBar({ categories }: CategoryBarProps) {
     return (
         <div
             className={css({
-                p: '4',
-                borderRadius: '2xl',
+                p: 'card',
+                borderRadius: 'surface',
                 bg: 'surface',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
             })}

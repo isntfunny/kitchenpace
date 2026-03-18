@@ -24,7 +24,7 @@ function SectionSkeleton({ height = '200px' }: { height?: string }) {
     return (
         <div
             className={css({
-                borderRadius: '2xl',
+                borderRadius: 'surface',
                 bg: 'surface',
                 animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             })}
@@ -38,34 +38,34 @@ export default function Home() {
         <PageShell>
             <HeroSpotlight />
 
-            <div className={css({ mt: '4' })}>
+            <div className={css({ mt: 'section' })}>
                 <HelloWorldBanner />
             </div>
 
-            <div className={css({ mt: '4' })}>
+            <div className={css({ mt: 'section' })}>
                 <Suspense fallback={<SectionSkeleton height="48px" />}>
                     <CategoryBarSection />
                 </Suspense>
             </div>
 
-            <div className={css({ marginTop: '4' })}>
-                <div className={grid({ columns: { base: 1, lg: 12 }, gap: '4' })}>
+            <div className={css({ marginTop: 'section' })}>
+                <div className={grid({ columns: { base: 1, lg: 12 }, gap: 'grid' })}>
                     <div className={css({ lg: { gridColumn: 'span 8' } })}>
                         <Suspense fallback={<SectionSkeleton height="320px" />}>
                             <DailyHighlightSection />
                         </Suspense>
 
-                        <div className={css({ marginTop: '4' })}>
+                        <div className={css({ marginTop: 'section' })}>
                             <Suspense fallback={<SectionSkeleton height="240px" />}>
                                 <NewestRecipesSection />
                             </Suspense>
                         </div>
 
-                        <div className={css({ marginTop: '4' })}>
+                        <div className={css({ marginTop: 'section' })}>
                             <FitsNow />
                         </div>
 
-                        <div className={css({ marginTop: '4' })}>
+                        <div className={css({ marginTop: 'section' })}>
                             <Suspense fallback={<SectionSkeleton height="240px" />}>
                                 <TopRatedSection />
                             </Suspense>
@@ -77,19 +77,19 @@ export default function Home() {
                             <TrendingTagsSection />
                         </Suspense>
 
-                        <div className={css({ marginTop: '4' })}>
+                        <div className={css({ marginTop: 'section' })}>
                             <Suspense fallback={<SectionSkeleton height="280px" />}>
                                 <ChefSpotlightSection />
                             </Suspense>
                         </div>
 
-                        <div className={css({ marginTop: '4' })}>
+                        <div className={css({ marginTop: 'section' })}>
                             <Suspense fallback={<SectionSkeleton height="200px" />}>
                                 <QuickTipsSection />
                             </Suspense>
                         </div>
 
-                        <div className={css({ marginTop: '4' })}>
+                        <div className={css({ marginTop: 'section' })}>
                             <Suspense fallback={<SectionSkeleton height="300px" />}>
                                 <LiveActivitySection />
                             </Suspense>
@@ -98,7 +98,7 @@ export default function Home() {
                 </div>
             </div>
 
-            <div className={css({ mt: '4' })}>
+            <div className={css({ mt: 'section' })}>
                 <FlowPillars />
             </div>
         </PageShell>

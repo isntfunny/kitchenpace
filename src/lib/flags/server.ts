@@ -138,6 +138,7 @@ function mapKnownFlags(
         aiRecipeConversion:
             allFlags[getFeatureFlagName('aiRecipeConversion')] ?? fallback.aiRecipeConversion,
         discordSignIn: allFlags[getFeatureFlagName('discordSignIn')] ?? fallback.discordSignIn,
+        retroTheme: allFlags[getFeatureFlagName('retroTheme')] ?? fallback.retroTheme,
     };
 }
 

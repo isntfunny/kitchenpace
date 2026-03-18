@@ -3,15 +3,33 @@
 import { CheckCircle2, Clock, Pause, Play, RotateCcw, X } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
+
+import { css, cx } from 'styled-system/css';
 
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
 
 import type { RecipeStepsViewerProps, TimerState } from './viewerTypes';
 import { extractMentionedIds, formatTime, renderDescription } from './viewerUtils';
+
+const closeButtonBase = css({
+    position: 'absolute',
+    top: '12px',
+    right: '12px',
+    zIndex: 10,
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    border: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+});
+const closeButtonPhoto = css({ bg: 'bg.closePhoto', color: 'white' });
+const closeButtonDefault = css({ bg: 'bg.close', color: 'text.mid' });
 
 export function NodeDetailModal({
     node,
@@ -34,7 +52,6 @@ export function NodeDetailModal({
     onTimerPause: () => void;
     onTimerReset: () => void;
 }) {
-    const c = useDarkColors();
     const config = getStepConfig(node.type as StepType);
     const Icon = config.icon;
     const isSpecial = node.type === 'start' || node.type === 'servieren';
@@ -54,52 +71,40 @@ export function NodeDetailModal({
 
     return (
         <div
-            style={{
+            className={css({
                 position: 'fixed',
                 inset: 0,
-                backgroundColor: c.overlay,
+                bg: 'surface.overlay',
                 zIndex: 1000,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 16,
+                padding: '16px',
                 backdropFilter: 'blur(2px)',
-            }}
+            })}
             onClick={onClose}
         >
             <div
-                style={{
-                    backgroundColor: c.surface,
-                    borderRadius: 20,
-                    maxWidth: 480,
+                className={css({
+                    bg: 'surface',
+                    borderRadius: '20px',
+                    maxWidth: '480px',
                     width: '100%',
                     maxHeight: '88vh',
                     overflowY: 'auto',
-                    boxShadow: c.shadow,
+                    boxShadow: 'shadow.dialog',
                     position: 'relative',
-                }}
+                })}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Close */}
                 <button
                     type="button"
                     onClick={onClose}
-                    style={{
-                        position: 'absolute',
-                        top: 12,
-                        right: 12,
-                        zIndex: 10,
-                        width: 32,
-                        height: 32,
-                        borderRadius: '50%',
-                        border: 'none',
-                        backgroundColor: node.photoKey ? c.closeBgPhoto : c.closeBg,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        color: node.photoKey ? 'white' : c.textMid,
-                    }}
+                    className={cx(
+                        closeButtonBase,
+                        node.photoKey ? closeButtonPhoto : closeButtonDefault,
+                    )}
                 >
                     <X style={{ width: 16, height: 16 }} />
                 </button>
@@ -124,7 +129,7 @@ export function NodeDetailModal({
 
                 {/* Timer progress bar */}
                 {hasTimer && (
-                    <div style={{ height: 4, backgroundColor: c.progressTrack }}>
+                    <div className={css({ height: '4px', bg: 'bg.progress' })}>
                         <div
                             style={{
                                 height: '100%',
@@ -153,6 +158,7 @@ export function NodeDetailModal({
                         }}
                     >
                         <span
+                            className={css({ color: 'badge.text' })}
                             style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -163,7 +169,6 @@ export function NodeDetailModal({
                                 padding: '4px 10px',
                                 fontSize: 11,
                                 fontWeight: 700,
-                                color: c.badgeText,
                             }}
                         >
                             <Icon style={{ width: 12, height: 12 }} />
@@ -176,10 +181,13 @@ export function NodeDetailModal({
                                     alignItems: 'center',
                                     gap: 4,
                                     fontSize: 12,
-                                    color: timerRunning ? PALETTE.orange : c.textSubtle,
+                                    color: timerRunning ? PALETTE.orange : undefined,
                                     fontWeight: timerRunning ? 700 : 400,
                                     marginLeft: 'auto',
                                 }}
+                                className={
+                                    !timerRunning ? css({ color: 'text.subtle' }) : undefined
+                                }
                             >
                                 <Clock style={{ width: 13, height: 13 }} />
                                 {timerRunning || pct > 0
@@ -191,10 +199,10 @@ export function NodeDetailModal({
 
                     {/* Title */}
                     <h3
+                        className={css({ color: 'text.heading' })}
                         style={{
                             fontSize: 22,
                             fontWeight: 800,
-                            color: c.textDark,
                             marginBottom: 12,
                             lineHeight: 1.2,
                         }}
@@ -205,14 +213,14 @@ export function NodeDetailModal({
                     {/* Description */}
                     {node.description && (
                         <p
+                            className={css({ color: 'text.mid' })}
                             style={{
                                 fontSize: 14,
-                                color: c.textMid,
                                 lineHeight: 1.65,
                                 marginBottom: 16,
                             }}
                         >
-                            {renderDescription(node.description, ingredients, c.dark)}
+                            {renderDescription(node.description, ingredients)}
                         </p>
                     )}
 
@@ -228,12 +236,12 @@ export function NodeDetailModal({
                             }}
                         >
                             <div
+                                className={css({ color: 'text.label' })}
                                 style={{
                                     fontSize: 10,
                                     fontWeight: 700,
                                     textTransform: 'uppercase' as const,
                                     letterSpacing: '0.06em',
-                                    color: c.textLabel,
                                     marginBottom: 8,
                                 }}
                             >
@@ -249,12 +257,12 @@ export function NodeDetailModal({
                                 {stepIngredients.map((ing) => (
                                     <div
                                         key={ing.id}
+                                        className={css({ color: 'text.ingredient' })}
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: 8,
                                             fontSize: 13,
-                                            color: c.textIngredient,
                                         }}
                                     >
                                         <span
@@ -269,7 +277,8 @@ export function NodeDetailModal({
                                         <span style={{ fontWeight: 600 }}>{ing.name}</span>
                                         {(ing.amount || ing.unit) && (
                                             <span
-                                                style={{ color: c.textSubtle, marginLeft: 'auto' }}
+                                                className={css({ color: 'text.subtle' })}
+                                                style={{ marginLeft: 'auto' }}
                                             >
                                                 {[ing.amount, ing.unit].filter(Boolean).join(' ')}
                                             </span>
@@ -325,12 +334,16 @@ export function NodeDetailModal({
                                 <button
                                     type="button"
                                     onClick={onTimerReset}
+                                    className={css({
+                                        borderColor: 'border.input',
+                                        bg: 'surface.mutedLight',
+                                        color: 'text.subtle',
+                                    })}
                                     style={{
                                         padding: '10px',
                                         borderRadius: 12,
-                                        border: `1.5px solid ${c.borderInput}`,
-                                        backgroundColor: c.mutedBgLight,
-                                        color: c.textSubtle,
+                                        borderWidth: '1.5px',
+                                        borderStyle: 'solid',
                                         cursor: 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',

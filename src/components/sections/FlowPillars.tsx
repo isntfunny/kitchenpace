@@ -41,7 +41,7 @@ export function FlowPillars() {
         <section
             className={css({
                 padding: { base: '4', md: '5' },
-                borderRadius: '2xl',
+                borderRadius: 'surface',
                 boxShadow: 'shadow.medium',
                 bg: 'surface',
             })}
@@ -57,7 +57,7 @@ export function FlowPillars() {
                     <motion.div
                         key={pillar.title}
                         className={css({
-                            padding: '4',
+                            padding: 'card',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '2',

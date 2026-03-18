@@ -1,7 +1,6 @@
 import { Check, Clock, Pause, Play, RotateCcw } from 'lucide-react';
 import type { Dispatch } from 'react';
 
-import { useDarkColors } from '@app/lib/darkMode';
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 
@@ -26,7 +25,6 @@ export function SimpleTextView({
     dispatch: Dispatch<ViewerAction>;
     ingredients?: RecipeStepsViewerProps['ingredients'];
 }) {
-    const c = useDarkColors();
     const steps = columnGroups.flat().filter((n) => n.type !== 'start');
 
     return (
@@ -68,11 +66,12 @@ export function SimpleTextView({
                                     p: '3',
                                     borderRadius: 'lg',
                                     transition: 'all 0.2s ease',
+                                    '&[data-done]': {
+                                        bg: 'surface.successLight',
+                                        opacity: 0.7,
+                                    },
                                 })}
-                                style={{
-                                    backgroundColor: isDone ? c.successBgLight : 'transparent',
-                                    opacity: isDone ? 0.7 : 1,
-                                }}
+                                {...(isDone ? { 'data-done': '' } : {})}
                             >
                                 {/* Clickable step icon — toggles done */}
                                 <button
@@ -158,11 +157,7 @@ export function SimpleTextView({
                                                 m: 0,
                                             })}
                                         >
-                                            {renderDescription(
-                                                node.description,
-                                                ingredients,
-                                                c.dark,
-                                            )}
+                                            {renderDescription(node.description, ingredients)}
                                         </p>
                                     )}
 

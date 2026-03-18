@@ -1,6 +1,16 @@
 import type { ReactNode } from 'react';
 
+import { css } from 'styled-system/css';
+
 import type { FlowEdgeSerialized, FlowNodeSerialized } from '../editor/editorTypes';
+
+const mentionCss = css({
+    bg: 'mention.bg',
+    color: 'mention.text',
+    borderRadius: '4px',
+    px: '0.75',
+    fontWeight: 600,
+});
 
 /* ── dagre setup (same instance used by FlowEditor) ──────── */
 
@@ -111,7 +121,6 @@ const MENTION_REGEX = /@\[(.*?)(?:\|(.*?))?\]\((.*?)\)/g;
 export function renderDescription(
     text: string,
     ingredients: { id: string; name: string; amount?: string; unit?: string }[] | undefined,
-    dark?: boolean,
 ): ReactNode[] {
     const parts: ReactNode[] = [];
     let lastIndex = 0;
@@ -128,16 +137,7 @@ export function renderDescription(
               ? ` (${[ing.amount, ing.unit].filter(Boolean).join(' ')})`
               : '';
         parts.push(
-            <span
-                key={match.index}
-                style={{
-                    backgroundColor: dark ? 'rgba(224,123,83,0.2)' : 'rgba(224,123,83,0.15)',
-                    color: dark ? '#f09070' : '#c45e30',
-                    borderRadius: 4,
-                    padding: '0 3px',
-                    fontWeight: 600,
-                }}
-            >
+            <span key={match.index} className={mentionCss}>
                 {name}
                 {amountStr}
             </span>,

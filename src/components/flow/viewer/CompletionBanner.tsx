@@ -1,30 +1,43 @@
 import { Sparkles } from 'lucide-react';
 
-import { useDarkColors } from '@app/lib/darkMode';
-import { PALETTE } from '@app/lib/palette';
+import { css } from 'styled-system/css';
 
 export function CompletionBanner() {
-    const c = useDarkColors();
     return (
         <div
-            style={{
-                margin: '0 24px 24px',
-                padding: '20px 24px',
-                backgroundColor: c.completionBg,
-                border: `1px solid ${c.completionBorder}`,
-                borderRadius: 16,
+            className={css({
+                mx: '6',
+                mb: '6',
+                py: '5',
+                px: '6',
+                bg: 'completion.bg',
+                border: '1px solid',
+                borderColor: 'completion.border',
+                borderRadius: '16px',
                 textAlign: 'center',
-            }}
+            })}
         >
-            <div style={{ fontSize: 32, marginBottom: 6 }}>
+            <div className={css({ fontSize: '2xl', mb: '1.5' })}>
                 <Sparkles
-                    style={{ width: 32, height: 32, color: PALETTE.emerald, display: 'inline' }}
+                    className={css({
+                        width: '32px',
+                        height: '32px',
+                        color: 'palette.emerald',
+                        display: 'inline',
+                    })}
                 />
             </div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: PALETTE.emerald, marginBottom: 4 }}>
+            <div
+                className={css({
+                    fontSize: 'xl',
+                    fontWeight: 800,
+                    color: 'palette.emerald',
+                    mb: '1',
+                })}
+            >
                 Fertig zubereitet!
             </div>
-            <div style={{ fontSize: 14, color: c.completionText }}>Guten Appetit!</div>
+            <div className={css({ fontSize: 'sm', color: 'completion.text' })}>Guten Appetit!</div>
         </div>
     );
 }

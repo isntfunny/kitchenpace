@@ -113,7 +113,7 @@ export function LiveUserActivityList({
         return (
             <div
                 className={css({
-                    p: '5',
+                    p: 'card.md',
                     textAlign: 'center',
                     border: '1px dashed',
                     borderColor: 'border',

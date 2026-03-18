@@ -113,11 +113,8 @@ function RecipeNodeComponent({ id, data, selected }: NodeProps<RecipeFlowNode>) 
     );
 
     const renderedDescription = useMemo(
-        () =>
-            data.description
-                ? renderDescription(data.description, availableIngredients, isDark)
-                : null,
-        [data.description, availableIngredients, isDark],
+        () => (data.description ? renderDescription(data.description, availableIngredients) : null),
+        [data.description, availableIngredients],
     );
 
     const canDelete = data.stepType !== 'start' && data.stepType !== 'servieren';

@@ -306,11 +306,11 @@ export default async function RootLayout({
                 )}
                 <PageProgress />
                 <TRPCReactProvider>
-                    <ThemeProvider>
-                        <AuthProvider>
-                            <ToastProvider>
-                                <AchievementListener />
-                                <FeatureFlagsProvider initialState={featureFlags}>
+                    <FeatureFlagsProvider initialState={featureFlags}>
+                        <ThemeProvider>
+                            <AuthProvider>
+                                <ToastProvider>
+                                    <AchievementListener />
                                     <ProfileProvider profile={profile}>
                                         <RecipeTabsProvider
                                             initialPinned={pinnedRecipes}
@@ -320,10 +320,10 @@ export default async function RootLayout({
                                             {children}
                                         </RecipeTabsProvider>
                                     </ProfileProvider>
-                                </FeatureFlagsProvider>
-                            </ToastProvider>
-                        </AuthProvider>
-                    </ThemeProvider>
+                                </ToastProvider>
+                            </AuthProvider>
+                        </ThemeProvider>
+                    </FeatureFlagsProvider>
                 </TRPCReactProvider>
             </body>
         </html>

@@ -189,7 +189,7 @@ export function HeaderAuth() {
                             className={css({
                                 minWidth: '240px',
                                 background: 'surface.elevated',
-                                borderRadius: '2xl',
+                                borderRadius: 'surface',
                                 border: '1px solid',
                                 borderColor: 'border',
                                 padding: '3',

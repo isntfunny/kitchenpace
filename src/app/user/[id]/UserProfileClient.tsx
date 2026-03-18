@@ -12,6 +12,7 @@ import { css } from 'styled-system/css';
 import { ProfileActivitySidebar } from './components/ProfileActivitySidebar';
 import { ProfileHeader } from './components/ProfileHeader';
 import { ProfileRecipeGrid } from './components/ProfileRecipeGrid';
+import { ProfileTwitchSection } from './components/ProfileTwitchSection';
 
 // ── Shared Types ────────────────────────────────────────────────────────
 
@@ -45,6 +46,12 @@ export interface UserProfileData {
     trophies?: EarnedTrophy[];
     currentPage?: number;
     totalPages?: number;
+    twitchUsername?: string | null;
+    twitchStream?: {
+        isLive: boolean;
+        title: string | null;
+        nextRecipe: { title: string; slug: string } | null;
+    } | null;
 }
 
 interface UserProfileClientProps {
@@ -104,6 +111,26 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                 isSelf={viewer?.isSelf ?? false}
                 onFollowToggle={handleFollowToggle}
             />
+
+            {/* Twitch Section */}
+            {user.twitchUsername && user.twitchStream && (
+                <div
+                    className={css({
+                        px: { base: '4', md: '6' },
+                        pt: '4',
+                        maxW: '1600px',
+                        mx: 'auto',
+                    })}
+                >
+                    <ProfileTwitchSection
+                        twitchUsername={user.twitchUsername}
+                        isLive={user.twitchStream.isLive}
+                        streamTitle={user.twitchStream.title}
+                        nextRecipeTitle={user.twitchStream.nextRecipe?.title}
+                        nextRecipeSlug={user.twitchStream.nextRecipe?.slug}
+                    />
+                </div>
+            )}
 
             {/* Main Content */}
             <main

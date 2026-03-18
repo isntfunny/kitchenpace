@@ -11,6 +11,7 @@ import {
     markRecipeCookedAction,
 } from '@app/app/actions/social';
 import { AchievementOverlay } from '@app/components/features/AchievementOverlay';
+import { LiveCookingBanner } from '@app/components/features/twitch/LiveCookingBanner';
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 import type { PersistedViewerState } from '@app/components/flow/viewer/viewerPersistence';
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
@@ -107,6 +108,12 @@ type HeroImage = {
     };
 };
 
+type LiveCookData = {
+    channel: string;
+    userName: string;
+    userSlug: string;
+};
+
 type RecipeDetailClientProps = {
     recipe: Recipe;
     author: User | null;
@@ -115,6 +122,7 @@ type RecipeDetailClientProps = {
     isDraft?: boolean;
     initialProgress?: PersistedViewerState | null;
     isAuthenticated?: boolean;
+    liveCook?: LiveCookData | null;
 };
 
 export function RecipeDetailClient({
@@ -125,6 +133,7 @@ export function RecipeDetailClient({
     isDraft = false,
     initialProgress,
     isAuthenticated,
+    liveCook,
 }: RecipeDetailClientProps) {
     // State declarations MUST come first
     const router = useRouter();
@@ -617,6 +626,16 @@ export function RecipeDetailClient({
                             </div>
                         );
                     })()}
+
+                {liveCook && (
+                    <div className={css({ mt: '8' })}>
+                        <LiveCookingBanner
+                            channel={liveCook.channel}
+                            userName={liveCook.userName}
+                            userSlug={liveCook.userSlug}
+                        />
+                    </div>
+                )}
 
                 {author && (
                     <AuthorCard

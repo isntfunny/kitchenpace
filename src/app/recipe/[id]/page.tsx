@@ -8,6 +8,7 @@ import { getServerAuthSession } from '@app/lib/auth';
 import { loadRecipeProgress } from '@app/lib/recipe-progress/redis';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { APP_URL } from '@app/lib/url';
+import { prisma } from '@shared/prisma';
 
 import { RecipeDetailClient } from './RecipeDetailClient';
 import { RecipeJsonLd } from './RecipeJsonLd';
@@ -110,6 +111,18 @@ export default async function RecipePage({ params }: RecipePageProps) {
     const cookImages = await fetchRecipeCookImages(resolvedParams.id);
     const isDraft = recipe.status !== 'PUBLISHED';
 
+    // Query for anyone live-cooking this recipe
+    const liveCook = await prisma.twitchStream.findFirst({
+        where: { nextRecipeId: recipe.id, isLive: true },
+        select: {
+            user: {
+                select: {
+                    profile: { select: { twitchUsername: true, nickname: true, slug: true } },
+                },
+            },
+        },
+    });
+
     // Load saved cooking progress from Redis (if authenticated)
     const initialProgress = viewerId
         ? await loadRecipeProgress(viewerId, recipe.slug).catch(() => null)
@@ -130,6 +143,17 @@ export default async function RecipePage({ params }: RecipePageProps) {
                 isDraft={isDraft}
                 initialProgress={initialProgress}
                 isAuthenticated={!!viewerId}
+                liveCook={
+                    liveCook?.user?.profile?.twitchUsername
+                        ? {
+                              channel: liveCook.user.profile.twitchUsername,
+                              userName:
+                                  liveCook.user.profile.nickname ??
+                                  liveCook.user.profile.twitchUsername,
+                              userSlug: liveCook.user.profile.slug ?? '',
+                          }
+                        : null
+                }
             />
         </>
     );

@@ -13,6 +13,7 @@ import { css } from 'styled-system/css';
 
 import { AccountSettingsCard } from '../settings/AccountSettingsCard';
 import { ActiveSessionsCard } from '../settings/ActiveSessionsCard';
+import { LinkedAccountsCard } from '../settings/LinkedAccountsCard';
 import { PasskeySettingsCard } from '../settings/PasskeySettingsCard';
 
 export default async function AccountPage() {
@@ -22,11 +23,18 @@ export default async function AccountPage() {
         redirect('/auth/signin');
     }
 
-    const [profile, credentialAccount] = await Promise.all([
+    const [profile, credentialAccount, socialAccounts] = await Promise.all([
         getOrCreateProfile(session.user.id),
         prisma.account.findFirst({
             where: { userId: session.user.id, providerId: 'credential' },
             select: { id: true },
+        }),
+        prisma.account.findMany({
+            where: {
+                userId: session.user.id,
+                providerId: { in: ['google', 'discord', 'twitch'] },
+            },
+            select: { id: true, providerId: true, accountId: true },
         }),
     ]);
 
@@ -91,6 +99,12 @@ export default async function AccountPage() {
                     {/* Account (Email + Password) */}
                     <AccountSettingsCard
                         email={session.user.email ?? ''}
+                        hasPassword={!!credentialAccount}
+                    />
+
+                    {/* Linked Social Accounts */}
+                    <LinkedAccountsCard
+                        accounts={socialAccounts}
                         hasPassword={!!credentialAccount}
                     />
 

@@ -19,6 +19,7 @@ type ProfileFields = Partial<Pick<Profile, 'nickname' | 'teaser' | 'photoKey'>> 
     notifyOnRecipeCooked?: boolean;
     notifyOnRecipePublished?: boolean;
     notifyOnWeeklyPlanReminder?: boolean;
+    notifyOnStreamStarted?: boolean;
     notifyOnSystemMessages?: boolean;
     notifyOnNewsletter?: boolean;
 };
@@ -100,7 +101,9 @@ export const upsertProfile = async (params: { userId: string; data: ProfileField
             notifyOnRecipeCooked: definedData.notifyOnRecipeCooked,
             notifyOnRecipePublished: definedData.notifyOnRecipePublished,
             notifyOnWeeklyPlanReminder: definedData.notifyOnWeeklyPlanReminder,
+            notifyOnStreamStarted: definedData.notifyOnStreamStarted,
             notifyOnSystemMessages: definedData.notifyOnSystemMessages,
+            notifyOnNewsletter: definedData.notifyOnNewsletter,
         },
         update: {
             nickname,
@@ -120,7 +123,9 @@ export const upsertProfile = async (params: { userId: string; data: ProfileField
             notifyOnRecipeCooked: definedData.notifyOnRecipeCooked,
             notifyOnRecipePublished: definedData.notifyOnRecipePublished,
             notifyOnWeeklyPlanReminder: definedData.notifyOnWeeklyPlanReminder,
+            notifyOnStreamStarted: definedData.notifyOnStreamStarted,
             notifyOnSystemMessages: definedData.notifyOnSystemMessages,
+            notifyOnNewsletter: definedData.notifyOnNewsletter,
         },
     });
 };

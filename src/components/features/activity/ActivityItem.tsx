@@ -10,6 +10,7 @@ import {
     MessageSquare,
     ShoppingCart,
     Star,
+    Tv,
     UserCheck,
     UserPlus,
 } from 'lucide-react';
@@ -33,6 +34,7 @@ const ACTIVITY_ICON_MAP: Record<ActivityIconName, LucideIcon> = {
     calendar: Calendar,
     'user-plus': UserPlus,
     'user-check': UserCheck,
+    tv: Tv,
 };
 
 const linkCss = css({ color: 'primary', fontWeight: '600', textDecoration: 'none' });

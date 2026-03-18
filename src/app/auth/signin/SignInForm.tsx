@@ -8,6 +8,7 @@ import {
     GoogleSignInButton,
     OAuthDivider,
     PasskeySignInButton,
+    TwitchSignInButton,
 } from '@app/components/auth/OAuthSignInButton';
 import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { signIn } from '@app/lib/auth-client';
@@ -33,6 +34,7 @@ export function SignInForm() {
     );
     const [loading, setLoading] = useState(false);
     const showDiscord = useFeatureFlag('discordSignIn');
+    const showTwitch = useFeatureFlag('twitchSignIn');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -88,6 +90,7 @@ export function SignInForm() {
 
             <GoogleSignInButton callbackUrl={callbackUrl} />
             {showDiscord && <DiscordSignInButton callbackUrl={callbackUrl} />}
+            {showTwitch && <TwitchSignInButton callbackUrl={callbackUrl} />}
             <PasskeySignInButton callbackUrl={callbackUrl} />
             <OAuthDivider />
 

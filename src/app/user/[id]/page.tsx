@@ -83,6 +83,14 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
         where: { profile: { slug } },
         include: {
             profile: true,
+            twitchStream: {
+                select: {
+                    isLive: true,
+                    title: true,
+                    nextRecipeId: true,
+                    nextRecipe: { select: { title: true, slug: true } },
+                },
+            },
             _count: {
                 select: {
                     recipes: {
@@ -217,6 +225,14 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
         showFavorites,
         showCooked,
         trophies,
+        twitchUsername: user.profile?.twitchUsername ?? null,
+        twitchStream: user.twitchStream
+            ? {
+                  isLive: user.twitchStream.isLive,
+                  title: user.twitchStream.title,
+                  nextRecipe: user.twitchStream.nextRecipe,
+              }
+            : null,
         currentPage: page,
         totalPages: Math.ceil(user._count.recipes / PAGE_SIZE),
         recipes: user.recipes.map((recipe) => ({

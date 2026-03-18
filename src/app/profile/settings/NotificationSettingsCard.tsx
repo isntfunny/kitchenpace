@@ -19,6 +19,7 @@ type NotificationSettingKey =
     | 'notifyOnRecipeCooked'
     | 'notifyOnRecipePublished'
     // | 'notifyOnWeeklyPlanReminder' — feature not yet available
+    | 'notifyOnStreamStarted'
     | 'notifyOnSystemMessages'
     | 'notifyOnNewsletter';
 
@@ -68,6 +69,13 @@ const SETTING_COPY: Record<
         description: 'Erhalte eine Bestätigung, wenn du ein Rezept veröffentlichst.',
         labelOn: 'Veröffentlichungen melden',
         labelOff: 'Stille Bestätigung',
+    },
+    notifyOnStreamStarted: {
+        title: 'Live-Streams',
+        description:
+            'Erhalte eine Benachrichtigung, wenn jemand, dem du folgst, einen Live-Stream startet.',
+        labelOn: 'Live-Benachrichtigungen aktiv',
+        labelOff: 'Keine Stream-Meldungen',
     },
     notifyOnSystemMessages: {
         title: 'Systemmeldungen',

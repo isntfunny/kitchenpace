@@ -9,6 +9,7 @@ import {
     DiscordSignInButton,
     GoogleSignInButton,
     OAuthDivider,
+    TwitchSignInButton,
 } from '@app/components/auth/OAuthSignInButton';
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
 import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
@@ -165,6 +166,7 @@ function RegistrationSuccess({ email }: { email: string }) {
 
 export default function RegisterPage() {
     const showDiscord = useFeatureFlag('discordSignIn');
+    const showTwitch = useFeatureFlag('twitchSignIn');
     const [email, setEmail] = useState('');
     const [nickname, setNickname] = useState('');
     const [nicknameStatus, setNicknameStatus] = useState<{
@@ -334,6 +336,7 @@ export default function RegisterPage() {
 
                 <GoogleSignInButton />
                 {showDiscord && <DiscordSignInButton />}
+                {showTwitch && <TwitchSignInButton />}
                 <OAuthDivider />
 
                 <form onSubmit={handleSubmit} className={authFormStackClass}>

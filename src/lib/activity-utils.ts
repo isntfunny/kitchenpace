@@ -8,7 +8,8 @@ export type ActivityIconName =
     | 'shopping-cart'
     | 'calendar'
     | 'user-plus'
-    | 'user-check';
+    | 'user-check'
+    | 'tv';
 
 export interface ActivityFeedItem {
     id: string;
@@ -33,6 +34,7 @@ export interface ActivityFeedItem {
 }
 
 import { PALETTE } from './palette';
+import { SOCIAL } from './themes/palette';
 
 /** Template placeholders: {recipe} = linked recipe title, {target} = linked target user */
 export const ACTIVITY_DECOR: Record<
@@ -59,6 +61,11 @@ export const ACTIVITY_DECOR: Record<
         icon: 'calendar',
         bg: PALETTE.purple,
         template: 'hat einen Essensplan erstellt',
+    },
+    STREAM_STARTED: {
+        icon: 'tv',
+        bg: SOCIAL.twitch,
+        template: 'kocht {recipe} gerade live auf Twitch',
     },
 };
 

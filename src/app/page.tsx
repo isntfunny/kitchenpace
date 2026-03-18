@@ -8,6 +8,7 @@ import { grid } from 'styled-system/patterns';
 
 import { CategoryBarSection } from './components/CategoryBarSection';
 import { ChefSpotlightSection } from './components/ChefSpotlightSection';
+import { CurrentlyLiveSection } from './components/CurrentlyLiveSection';
 import { DailyHighlightSection } from './components/DailyHighlightSection';
 import { FitsNow } from './components/FitsNow';
 import { FlowPillars } from './components/FlowPillars';
@@ -87,6 +88,12 @@ export default function Home() {
                         <div className={css({ marginTop: 'section' })}>
                             <Suspense fallback={<SectionSkeleton height="200px" />}>
                                 <QuickTipsSection />
+                            </Suspense>
+                        </div>
+
+                        <div className={css({ marginTop: 'section' })}>
+                            <Suspense fallback={<SectionSkeleton height="300px" />}>
+                                <CurrentlyLiveSection />
                             </Suspense>
                         </div>
 

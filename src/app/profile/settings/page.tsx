@@ -28,6 +28,7 @@ type PrivacyReadyProfile = Profile & {
     notifyOnRecipeCooked: boolean;
     notifyOnRecipePublished: boolean;
     notifyOnWeeklyPlanReminder: boolean;
+    notifyOnStreamStarted: boolean;
     notifyOnSystemMessages: boolean;
     notifyOnNewsletter: boolean;
 };
@@ -123,6 +124,7 @@ const ManageProfilePage = async () => {
                             notifyOnRecipeRating: privacyReadyProfile.notifyOnRecipeRating,
                             notifyOnRecipeCooked: privacyReadyProfile.notifyOnRecipeCooked,
                             notifyOnRecipePublished: privacyReadyProfile.notifyOnRecipePublished,
+                            notifyOnStreamStarted: privacyReadyProfile.notifyOnStreamStarted,
                             notifyOnSystemMessages: privacyReadyProfile.notifyOnSystemMessages,
                             notifyOnNewsletter: privacyReadyProfile.notifyOnNewsletter,
                         }}

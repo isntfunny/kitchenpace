@@ -14,7 +14,10 @@ import { getServerAuthSession } from '@app/lib/auth';
  */
 export async function POST(request: NextRequest) {
     const session = await getServerAuthSession('api/ai/analyze-recipe');
-    const userId = session?.user?.id ?? undefined;
+    if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
 
     try {
         const body = await request.json();

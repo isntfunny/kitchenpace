@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getServerAuthSession } from '@app/lib/auth';
+
 const SCRAPLER_BASE_URL = process.env.SCRAPLER_URL || 'http://localhost:64001';
 
 /**
@@ -9,6 +11,11 @@ const SCRAPLER_BASE_URL = process.env.SCRAPLER_URL || 'http://localhost:64001';
  * Uses Server-Sent Events (SSE) for real-time progress updates.
  */
 export async function POST(request: NextRequest) {
+    const session = await getServerAuthSession('api/scrape/stream');
+    if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const body = await request.json();
         const { url, mode = 'stealthy-fetch', timeout = 60, wait_for_network_idle = true } = body;

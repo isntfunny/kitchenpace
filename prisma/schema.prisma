@@ -77,6 +77,7 @@ enum ActivityType {
   USER_ACTIVATED
   MEAL_PLAN_CREATED
   SHOPPING_LIST_CREATED
+  STREAM_STARTED
 }
 
 enum PaletteColor {
@@ -207,6 +208,7 @@ model User {
   tutorialCompletions       UserTutorialCompletion[]
   earnedTrophies            UserTrophy[]
   trophyPoints              Int                       @default(0)
+  twitchStream              TwitchStream?
 }
 
 model UserTutorialCompletion {
@@ -251,6 +253,13 @@ model Profile {
   notifyOnWeeklyPlanReminder Boolean   @default(true)
   notifyOnSystemMessages     Boolean   @default(true)
   notifyOnNewsletter         Boolean   @default(true)
+  notifyOnStreamStarted      Boolean   @default(true)
+
+  // Twitch integration
+  twitchId                   String?   @unique
+  twitchUsername              String?   @db.VarChar(60)
+  twitchConnectedAt          DateTime?
+
   createdAt                  DateTime  @default(now())
   updatedAt                  DateTime  @updatedAt
 
@@ -328,6 +337,7 @@ model Recipe {
   importRuns                                                                 ImportRun[]
   stepImages                                                                 RecipeStepImage[]
   embedding                                                                  RecipeEmbedding?
+  twitchStreams                                                               TwitchStream[]
 
   @@index([authorId])
   @@index([difficulty])
@@ -345,6 +355,38 @@ model RecipeEmbedding {
   createdAt DateTime @default(now())
 
   recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+model TwitchStream {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  isLive            Boolean   @default(false)
+
+  // "Next recipe" selection
+  nextRecipeId      String?
+  plannedAt         DateTime?
+  plannedTimezone   String?   @db.VarChar(60)
+
+  // Live state (from EventSub)
+  twitchStreamId    String?
+  startedAt         DateTime?
+  endedAt           DateTime?
+  title             String?
+  viewerCount       Int?
+
+  // EventSub tracking
+  eventSubOnlineId  String?   @unique
+  eventSubOfflineId String?   @unique
+  eventSubSecret    String?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nextRecipe        Recipe?   @relation(fields: [nextRecipeId], references: [id], onDelete: SetNull)
+
+  @@index([isLive])
+  @@index([nextRecipeId])
 }
 
 // ============================================

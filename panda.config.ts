@@ -1,6 +1,14 @@
 import { defineConfig } from '@pandacss/dev';
 
-import { BODY_BG, BRAND, PALETTE_COLORS, RETRO, SHADOWS, STATUS } from './src/lib/themes/palette';
+import {
+    BODY_BG,
+    BRAND,
+    PALETTE_COLORS,
+    RETRO,
+    SHADOWS,
+    SOCIAL,
+    STATUS,
+} from './src/lib/themes/palette';
 
 export const themeTokens = {
     colors: {
@@ -35,6 +43,12 @@ export const themeTokens = {
             error: { value: STATUS.error },
             danger: { value: STATUS.danger },
             warning: { value: STATUS.warning },
+        },
+        social: {
+            twitch: { value: SOCIAL.twitch },
+            'twitch-dark': { value: SOCIAL.twitchDark },
+            discord: { value: SOCIAL.discord },
+            google: { value: SOCIAL.google },
         },
     },
     fonts: {
@@ -114,6 +128,10 @@ export default defineConfig({
                     '15%': { opacity: '0.8' },
                     '85%': { opacity: '0.8' },
                     '100%': { transform: 'translateY(36px)', opacity: '0' },
+                },
+                livePulse: {
+                    '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+                    '50%': { opacity: '0.5', transform: 'scale(0.85)' },
                 },
             },
 

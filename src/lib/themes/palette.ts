@@ -39,6 +39,14 @@ export const PALETTE_COLORS = {
     purpleDark: '#9b8ff5',
 } as const;
 
+// ── Social brand colors ─────────────────────────────────────────
+export const SOCIAL = {
+    twitch: '#9146FF',
+    twitchDark: '#a970ff',
+    discord: '#5865F2',
+    google: '#4285F4',
+} as const;
+
 // ── Status colors ────────────────────────────────────────────────
 export const STATUS = {
     success: '#22c55e',

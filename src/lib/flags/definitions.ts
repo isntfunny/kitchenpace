@@ -4,6 +4,7 @@ export const FEATURE_FLAGS = {
     aiRecipeConversion: 'ai-recipe-conversion',
     discordSignIn: 'discord-sign-in',
     retroTheme: 'retro-theme',
+    twitchSignIn: 'twitch-sign-in',
 } as const;
 
 export type FeatureFlagName = keyof typeof FEATURE_FLAGS;
@@ -16,4 +17,5 @@ export const DEFAULT_FEATURE_FLAG_VALUES: FeatureFlagValues = {
     aiRecipeConversion: false,
     discordSignIn: false,
     retroTheme: false,
+    twitchSignIn: false,
 };

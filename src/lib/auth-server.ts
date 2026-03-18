@@ -34,6 +34,14 @@ export const auth = betterAuth({
                   },
               }
             : {}),
+        ...(process.env.TWITCH_CLIENT_ID && process.env.TWITCH_CLIENT_SECRET
+            ? {
+                  twitch: {
+                      clientId: process.env.TWITCH_CLIENT_ID,
+                      clientSecret: process.env.TWITCH_CLIENT_SECRET,
+                  },
+              }
+            : {}),
     },
     session: {
         expiresIn: 60 * 60 * 24 * 7, // 7 days

@@ -5,6 +5,7 @@ import { getRedis } from './connection';
 import { createJobRun, updateJobRun } from './job-run';
 import {
     processBackfillEmbeddings,
+    processReindex,
     processSyncIngredients,
     processSyncRecipes,
     processSyncRecipeToOpenSearch,
@@ -44,6 +45,8 @@ const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
                 return processSyncRecipeToOpenSearch(job);
             case 'backfill-embeddings':
                 return processBackfillEmbeddings(job);
+            case 'reindex':
+                return processReindex(job);
             default:
                 throw new Error(`Unknown opensearch job: ${job.name}`);
         }

@@ -25,12 +25,17 @@ export interface BackfillEmbeddingsJob {
     batchSize?: number;
 }
 
+export interface ReindexJob {
+    dropAndRecreate?: boolean;
+}
+
 export type OpenSearchJob =
     | { name: 'sync-recipes'; data: SyncRecipesJob }
     | { name: 'sync-recipe'; data: SyncRecipeToOpenSearchJob }
     | { name: 'sync-ingredients'; data: SyncIngredientsJob }
     | { name: 'sync-tags'; data: SyncTagsJob }
-    | { name: 'backfill-embeddings'; data: BackfillEmbeddingsJob };
+    | { name: 'backfill-embeddings'; data: BackfillEmbeddingsJob }
+    | { name: 'reindex'; data: ReindexJob };
 
 export interface BackupJob {
     type: 'hourly' | 'daily';

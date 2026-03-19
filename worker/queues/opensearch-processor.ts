@@ -8,6 +8,7 @@ import {
     type RecipeEmbeddingInput,
 } from '@app/lib/embeddings/embedding-service';
 import {
+    ensureIndices,
     opensearchClient,
     OPENSEARCH_INDEX,
     OPENSEARCH_INGREDIENTS_INDEX,
@@ -19,15 +20,16 @@ import { getRedis } from './connection';
 import { prisma } from './prisma';
 import {
     BackfillEmbeddingsJob,
+    QueueName,
     SyncIngredientsJob,
     SyncRecipesJob,
     SyncRecipeToOpenSearchJob,
     SyncTagsJob,
 } from './types';
 
-const WATERMARK_KEY_RECIPES = 'opensearch:watermark:recipes';
-const WATERMARK_KEY_INGREDIENTS = 'opensearch:watermark:ingredients';
-const WATERMARK_KEY_TAGS = 'opensearch:watermark:tags';
+export const WATERMARK_KEY_RECIPES = 'opensearch:watermark:recipes';
+export const WATERMARK_KEY_INGREDIENTS = 'opensearch:watermark:ingredients';
+export const WATERMARK_KEY_TAGS = 'opensearch:watermark:tags';
 
 /** Max documents per bulk request (each document = 2 bulk entries: action + body) */
 const BULK_DOCS_PER_CHUNK = 1000;
@@ -890,4 +892,49 @@ export async function processBackfillEmbeddings(
         `[OpenSearch] Backfill complete: ${totalEmbedded} embedded, ${totalSkipped} skipped`,
     );
     return { embedded: totalEmbedded, skipped: totalSkipped };
+}
+
+// ── Reindex ──────────────────────────────────────────────────────────────
+
+export interface ReindexJob {
+    dropAndRecreate?: boolean;
+}
+
+const STANDARD_INDICES = [OPENSEARCH_INDEX, OPENSEARCH_INGREDIENTS_INDEX, OPENSEARCH_TAGS_INDEX];
+
+export async function processReindex(job: Job<ReindexJob>): Promise<{ status: string }> {
+    const { dropAndRecreate = false } = job.data;
+    const redis = getRedis();
+
+    console.log(`[OpenSearch] Reindex started (dropAndRecreate=${dropAndRecreate})`);
+
+    if (dropAndRecreate) {
+        for (const index of STANDARD_INDICES) {
+            const { body: exists } = await opensearchClient.indices.exists({ index });
+            if (exists) {
+                await opensearchClient.indices.delete({ index });
+                console.log(`[OpenSearch] Dropped index "${index}"`);
+            }
+        }
+    }
+
+    // Create missing indices or update mappings on existing ones
+    await ensureIndices();
+
+    // Clear watermarks → next sync jobs do a full sync
+    await redis.del(WATERMARK_KEY_RECIPES);
+    await redis.del(WATERMARK_KEY_INGREDIENTS);
+    await redis.del(WATERMARK_KEY_TAGS);
+    console.log('[OpenSearch] Watermarks cleared');
+
+    // Dispatch sync jobs on the same queue
+    const { Queue } = await import('bullmq');
+    const queue = new Queue(QueueName.OPENSEARCH, { connection: getRedis() as any });
+    await queue.add('sync-recipes', { batchSize: 150 });
+    await queue.add('sync-ingredients', { batchSize: 500 });
+    await queue.add('sync-tags', { batchSize: 500 });
+    await queue.close();
+    console.log('[OpenSearch] Queued sync-recipes, sync-ingredients, sync-tags');
+
+    return { status: dropAndRecreate ? 'dropped-and-recreated' : 'mappings-updated' };
 }

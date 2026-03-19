@@ -247,23 +247,32 @@ export function NextStreamCard({ plannedStreams: initialStreams }: NextStreamCar
     const [selectedRecipe, setSelectedRecipe] = useState<SelectedRecipe | null>(null);
     const [plannedAt, setPlannedAt] = useState('');
     const [isPending, startTransition] = useTransition();
-    const [status, setStatus] = useState<'idle' | 'saved' | 'updated' | 'deleted'>('idle');
+    const [status, setStatus] = useState<'idle' | 'saved' | 'updated' | 'deleted' | 'error'>(
+        'idle',
+    );
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const handleAdd = () => {
         if (!selectedRecipe) return;
         setStatus('idle');
+        setErrorMessage(null);
         startTransition(async () => {
-            const id = await planStream(
+            const result = await planStream(
                 selectedRecipe.id,
                 plannedAt ? new Date(plannedAt).toISOString() : undefined,
                 userTimezone,
             );
+            if ('error' in result) {
+                setStatus('error');
+                setErrorMessage(result.error);
+                return;
+            }
             setStreams((prev) => [
                 ...prev,
                 {
-                    id,
+                    id: result.id,
                     plannedAt: plannedAt ? new Date(plannedAt).toISOString() : null,
                     recipe: selectedRecipe,
                 },
@@ -455,6 +464,11 @@ export function NextStreamCard({ plannedStreams: initialStreams }: NextStreamCar
             {status === 'deleted' && (
                 <Text size="sm" color="muted" className={css({ mt: '3' })}>
                     Stream entfernt.
+                </Text>
+            )}
+            {status === 'error' && errorMessage && (
+                <Text size="sm" className={css({ color: 'status.error', mt: '3' })}>
+                    {errorMessage}
                 </Text>
             )}
         </div>

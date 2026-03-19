@@ -28,6 +28,7 @@ export function getJobDefinitions(): Record<string, string[]> {
             'sync-ingredients',
             'sync-tags',
             'backfill-embeddings',
+            'reindex',
         ],
         scheduled: [
             'trending-recipes',

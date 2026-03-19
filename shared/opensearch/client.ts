@@ -163,7 +163,9 @@ const EMBEDDINGS_MAPPINGS = {
 
 /**
  * Ensure OpenSearch indices exist with correct mappings.
- * Safe to call repeatedly — skips creation if the index already exists.
+ * Creates missing indices and updates mappings on existing ones
+ * (put_mapping only adds new fields, never modifies existing ones).
+ * Safe to call repeatedly.
  */
 export async function ensureIndices(): Promise<void> {
     // Standard indices (no special settings)
@@ -179,6 +181,28 @@ export async function ensureIndices(): Promise<void> {
                 body: { mappings } as Record<string, unknown>,
             });
             console.log(`[OpenSearch] Created index "${index}" with explicit mappings`);
+        } else {
+            // Only add fields that don't exist yet — putMapping can't change existing fields
+            const { body: current } = await opensearchClient.indices.getMapping({ index });
+            const existingProps = Object.keys(
+                (current[index]?.mappings?.properties as Record<string, unknown>) ?? {},
+            );
+            const desiredProps = (mappings as { properties: Record<string, unknown> }).properties;
+            const newProps: Record<string, unknown> = {};
+            for (const [field, def] of Object.entries(desiredProps)) {
+                if (!existingProps.includes(field)) {
+                    newProps[field] = def;
+                }
+            }
+            if (Object.keys(newProps).length > 0) {
+                await opensearchClient.indices.putMapping({
+                    index,
+                    body: { properties: newProps } as Record<string, unknown>,
+                });
+                console.log(
+                    `[OpenSearch] Added new fields to "${index}": ${Object.keys(newProps).join(', ')}`,
+                );
+            }
         }
     }
 

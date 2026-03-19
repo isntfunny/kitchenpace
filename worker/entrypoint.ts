@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import { ensureIndices } from '@shared/opensearch/client';
 
 import { getRedis, disconnectRedis } from './queues/connection';
 import { closeAllQueues } from './queues/queue';
@@ -52,9 +51,6 @@ async function main(): Promise<void> {
     const redis = getRedis();
     await redis.connect();
     console.log('[Main] Redis connected');
-
-    await ensureIndices();
-    console.log('[Main] OpenSearch indices ensured');
 
     await startScheduler();
     console.log('[Main] Scheduler started');

@@ -10,16 +10,26 @@ import {
 } from '@app/lib/twitch/schedule';
 import { prisma } from '@shared/prisma';
 
-export async function planStream(recipeId: string, plannedAt?: string, timezone?: string) {
+export async function planStream(
+    recipeId: string,
+    plannedAt?: string,
+    timezone?: string,
+): Promise<{ id: string } | { error: string }> {
     const session = await getServerAuthSession('actions/twitch');
     if (!session?.user?.id) throw new Error('Unauthorized');
 
     const userId = session.user.id;
 
-    const recipe = await prisma.recipe.findFirstOrThrow({
+    const recipe = await prisma.recipe.findFirst({
         where: { id: recipeId, status: 'PUBLISHED' },
         select: { title: true },
     });
+
+    if (!recipe) {
+        return {
+            error: 'Dieses Rezept ist nicht veröffentlicht und kann nicht für einen Stream geplant werden.',
+        };
+    }
 
     const segmentInput = plannedAt
         ? {
@@ -52,7 +62,7 @@ export async function planStream(recipeId: string, plannedAt?: string, timezone?
     });
 
     revalidatePath('/profile/edit');
-    return planned.id;
+    return { id: planned.id };
 }
 
 export async function updatePlannedStream(

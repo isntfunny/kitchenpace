@@ -1,9 +1,9 @@
 'use client';
 
-import { Calendar, Plus, Trash2, Tv } from 'lucide-react';
+import { Calendar, Check, Pencil, Plus, Trash2, Tv, X } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
-import { deletePlannedStream, planStream } from '@app/app/actions/twitch';
+import { deletePlannedStream, planStream, updatePlannedStream } from '@app/app/actions/twitch';
 import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { Heading, Text } from '@app/components/atoms/Typography';
@@ -42,9 +42,204 @@ const inputStyles = css({
     },
 });
 
+const iconButtonBase = {
+    flexShrink: 0,
+    p: '1.5',
+    borderRadius: 'md',
+    color: 'foreground.muted',
+    cursor: 'pointer',
+    background: 'transparent',
+    border: 'none',
+    transition: 'all 150ms ease',
+    _disabled: { opacity: 0.5, cursor: 'not-allowed' },
+} as const;
+
+// ── Inline row for a single planned stream ─────────────────────────────
+
+function StreamRow({
+    stream,
+    userTimezone,
+    isPending,
+    onSaveDate,
+    onDelete,
+}: {
+    stream: PlannedStreamItem;
+    userTimezone: string;
+    isPending: boolean;
+    onSaveDate: (id: string, newPlannedAt: string | null) => void;
+    onDelete: (id: string) => void;
+}) {
+    const [editing, setEditing] = useState(false);
+    const [editValue, setEditValue] = useState(
+        stream.plannedAt ? new Date(stream.plannedAt).toISOString().slice(0, 16) : '',
+    );
+
+    const handleSave = () => {
+        onSaveDate(stream.id, editValue ? new Date(editValue).toISOString() : null);
+        setEditing(false);
+    };
+
+    const handleCancel = () => {
+        setEditValue(stream.plannedAt ? new Date(stream.plannedAt).toISOString().slice(0, 16) : '');
+        setEditing(false);
+    };
+
+    return (
+        <div
+            className={css({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3',
+                p: '3',
+                borderRadius: 'xl',
+                border: '1px solid',
+                borderColor: editing ? 'social.twitch' : 'border',
+                bg: 'background',
+                transition: 'border-color 150ms ease',
+            })}
+        >
+            {/* Recipe thumbnail */}
+            <div
+                className={css({
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: 'lg',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    bg: 'surface.muted',
+                })}
+            >
+                <SmartImage
+                    imageKey={stream.recipe.imageKey}
+                    alt={stream.recipe.title}
+                    aspect="1:1"
+                    sizes="44px"
+                />
+            </div>
+
+            {/* Info */}
+            <div className={css({ flex: 1, minWidth: 0 })}>
+                <div
+                    className={css({
+                        fontSize: 'sm',
+                        fontWeight: '600',
+                        color: 'text',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                    })}
+                >
+                    {stream.recipe.title}
+                </div>
+
+                {editing ? (
+                    <div
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '2',
+                            mt: '1.5',
+                        })}
+                    >
+                        <input
+                            type="datetime-local"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className={css({
+                                flex: 1,
+                                height: '36px',
+                                px: '2.5',
+                                borderRadius: 'lg',
+                                border: '1px solid',
+                                borderColor: 'border',
+                                bg: 'background',
+                                fontSize: 'xs',
+                                fontFamily: 'body',
+                                color: 'text',
+                                outline: 'none',
+                                _focus: {
+                                    borderColor: 'social.twitch',
+                                    boxShadow: '0 0 0 2px rgba(145,70,255,0.15)',
+                                },
+                            })}
+                        />
+                        <button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={isPending}
+                            className={css({
+                                ...iconButtonBase,
+                                _hover: { color: 'status.success', bg: 'surface.muted' },
+                            })}
+                        >
+                            <Check size={14} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleCancel}
+                            className={css({
+                                ...iconButtonBase,
+                                _hover: { color: 'text', bg: 'surface.muted' },
+                            })}
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                ) : (
+                    <div
+                        className={css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1',
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                        })}
+                    >
+                        <Calendar size={11} />
+                        <span>
+                            {stream.plannedAt
+                                ? formatPlannedTime(stream.plannedAt, userTimezone)
+                                : 'Kein Datum'}
+                        </span>
+                    </div>
+                )}
+            </div>
+
+            {/* Actions */}
+            {!editing && (
+                <div className={css({ display: 'flex', gap: '1', flexShrink: 0 })}>
+                    <button
+                        type="button"
+                        onClick={() => setEditing(true)}
+                        disabled={isPending}
+                        className={css({
+                            ...iconButtonBase,
+                            _hover: { color: 'social.twitch', bg: 'surface.muted' },
+                        })}
+                    >
+                        <Pencil size={14} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onDelete(stream.id)}
+                        disabled={isPending}
+                        className={css({
+                            ...iconButtonBase,
+                            _hover: { color: 'status.error', bg: 'surface.muted' },
+                        })}
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Main card ──────────────────────────────────────────────────────────
+
 export function NextStreamCard({ plannedStreams: initialStreams }: NextStreamCardProps) {
     const [streams, setStreams] = useState(initialStreams);
-    // Only show future or unscheduled streams; past ones are kept as history in DB
     const visibleStreams = streams.filter(
         (s) => !s.plannedAt || new Date(s.plannedAt) > new Date(),
     );
@@ -52,7 +247,7 @@ export function NextStreamCard({ plannedStreams: initialStreams }: NextStreamCar
     const [selectedRecipe, setSelectedRecipe] = useState<SelectedRecipe | null>(null);
     const [plannedAt, setPlannedAt] = useState('');
     const [isPending, startTransition] = useTransition();
-    const [status, setStatus] = useState<'idle' | 'saved' | 'deleted'>('idle');
+    const [status, setStatus] = useState<'idle' | 'saved' | 'updated' | 'deleted'>('idle');
 
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -77,6 +272,24 @@ export function NextStreamCard({ plannedStreams: initialStreams }: NextStreamCar
             setPlannedAt('');
             setShowForm(false);
             setStatus('saved');
+        });
+    };
+
+    const handleSaveDate = (streamId: string, newPlannedAt: string | null) => {
+        const stream = streams.find((s) => s.id === streamId);
+        if (!stream) return;
+        setStatus('idle');
+        startTransition(async () => {
+            await updatePlannedStream(
+                streamId,
+                stream.recipe.id,
+                newPlannedAt ?? undefined,
+                userTimezone,
+            );
+            setStreams((prev) =>
+                prev.map((s) => (s.id === streamId ? { ...s, plannedAt: newPlannedAt } : s)),
+            );
+            setStatus('updated');
         });
     };
 
@@ -124,79 +337,18 @@ export function NextStreamCard({ plannedStreams: initialStreams }: NextStreamCar
                 </Text>
             </div>
 
-            {/* Existing planned streams */}
+            {/* Stream list */}
             {visibleStreams.length > 0 && (
                 <div className={css({ display: 'flex', flexDir: 'column', gap: '2', mb: '4' })}>
                     {visibleStreams.map((stream) => (
-                        <div
+                        <StreamRow
                             key={stream.id}
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '3',
-                                p: '3',
-                                borderRadius: 'xl',
-                                border: '1px solid',
-                                borderColor: 'border',
-                                bg: 'background',
-                            })}
-                        >
-                            <div
-                                className={css({
-                                    width: '44px',
-                                    height: '44px',
-                                    borderRadius: 'lg',
-                                    overflow: 'hidden',
-                                    flexShrink: 0,
-                                    bg: 'surface.muted',
-                                })}
-                            >
-                                <SmartImage
-                                    imageKey={stream.recipe.imageKey}
-                                    alt={stream.recipe.title}
-                                    aspect="1:1"
-                                    sizes="44px"
-                                />
-                            </div>
-                            <div className={css({ flex: 1, minWidth: 0 })}>
-                                <div
-                                    className={css({
-                                        fontSize: 'sm',
-                                        fontWeight: '600',
-                                        color: 'text',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                    })}
-                                >
-                                    {stream.recipe.title}
-                                </div>
-                                <div className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                                    {stream.plannedAt
-                                        ? formatPlannedTime(stream.plannedAt, userTimezone)
-                                        : 'Kein Datum festgelegt'}
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => handleDelete(stream.id)}
-                                disabled={isPending}
-                                className={css({
-                                    flexShrink: 0,
-                                    p: '2',
-                                    borderRadius: 'md',
-                                    color: 'foreground.muted',
-                                    cursor: 'pointer',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    transition: 'all 150ms ease',
-                                    _hover: { color: 'status.error', bg: 'surface.muted' },
-                                    _disabled: { opacity: 0.5, cursor: 'not-allowed' },
-                                })}
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
+                            stream={stream}
+                            userTimezone={userTimezone}
+                            isPending={isPending}
+                            onSaveDate={handleSaveDate}
+                            onDelete={handleDelete}
+                        />
                     ))}
                 </div>
             )}
@@ -293,6 +445,11 @@ export function NextStreamCard({ plannedStreams: initialStreams }: NextStreamCar
             {status === 'saved' && (
                 <Text size="sm" className={css({ color: 'status.success', mt: '3' })}>
                     Stream geplant!
+                </Text>
+            )}
+            {status === 'updated' && (
+                <Text size="sm" className={css({ color: 'status.success', mt: '3' })}>
+                    Datum aktualisiert.
                 </Text>
             )}
             {status === 'deleted' && (

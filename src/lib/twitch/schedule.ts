@@ -6,7 +6,7 @@ import { prisma } from '@shared/prisma';
 
 // ── Food & Drink category ────────────────────────────────────────────────────
 // Twitch category ID for "Food & Drink" — stable, well-known value.
-const FOOD_CATEGORY_ID = '509669';
+const FOOD_CATEGORY_ID = '509667';
 
 // ── User API client ──────────────────────────────────────────────────────────
 // Creates a twurple ApiClient authenticated as the user (not the app).

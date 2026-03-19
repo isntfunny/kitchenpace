@@ -16,6 +16,9 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - name: Log in to Docker registry
+              run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login registry.isntfunny.de -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+
             - name: Build and push Docker image
               run: |
                   TAG="${GITHUB_REF_NAME:-latest}"

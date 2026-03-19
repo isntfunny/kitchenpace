@@ -21,7 +21,6 @@ export function getFeatureFlagDefaults(): FeatureFlagValues {
         ...DEFAULT_FEATURE_FLAG_VALUES,
         gestureNavigation: isEnabled(process.env.FEATURE_GESTURE_NAVIGATION),
         helloWorldBanner: isEnabled(process.env.FEATURE_HELLO_WORLD_BANNER),
-        simulateTwitchLive: isEnabled(process.env.FEATURE_SIMULATE_TWITCH_LIVE),
     };
 }
 

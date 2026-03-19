@@ -1,5 +1,4 @@
 import { formatPlannedTime } from '@app/lib/date';
-import { getFeatureFlagDefaults } from '@app/lib/flags/config';
 import { prisma } from '@shared/prisma';
 
 import { CurrentlyLiveSectionClient } from './CurrentlyLiveSectionClient';
@@ -79,26 +78,6 @@ export async function CurrentlyLiveSection() {
             recipeTitle: s.nextRecipe?.title ?? null,
             recipeSlug: s.nextRecipe?.slug ?? null,
         }));
-
-    // Feature flag: inject a fake live stream for testing
-    if (getFeatureFlagDefaults().simulateTwitchLive && liveStreams.length === 0) {
-        liveStreams.push({
-            id: 'simulated',
-            title: 'Live kochen: Flammkuchen',
-            viewerCount: 42,
-            channel: 'twitchfarming',
-            userName: 'KitchenPace Demo',
-            userSlug: '',
-            photoKey: null,
-            recipeTitle: 'Flammkuchen',
-            recipeSlug: 'flammkuchen',
-            recipeImageKey: null,
-        });
-    }
-
-    if (liveStreams.length === 0 && upcomingStreams.length === 0) {
-        return null;
-    }
 
     return (
         <CurrentlyLiveSectionClient liveStreams={liveStreams} upcomingStreams={upcomingStreams} />

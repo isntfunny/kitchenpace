@@ -7,6 +7,7 @@ import { Avatar } from '@app/components/atoms/Avatar';
 import { Heading } from '@app/components/atoms/Typography';
 import { LiveBadge } from '@app/components/features/twitch/LiveBadge';
 import { TwitchEmbed } from '@app/components/features/twitch/TwitchEmbed';
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 
 import { css } from 'styled-system/css';
 
@@ -102,10 +103,28 @@ interface CurrentlyLiveSectionClientProps {
     upcomingStreams: UpcomingStreamItem[];
 }
 
+const SIMULATED_STREAM: LiveStreamItem = {
+    id: 'simulated',
+    title: 'Live kochen: Flammkuchen',
+    viewerCount: 42,
+    channel: 'twitchfarming',
+    userName: 'KitchenPace Demo',
+    userSlug: '',
+    photoKey: null,
+    recipeTitle: 'Flammkuchen',
+    recipeSlug: 'flammkuchen',
+    recipeImageKey: null,
+};
+
 export function CurrentlyLiveSectionClient({
-    liveStreams,
+    liveStreams: liveStreamsProp,
     upcomingStreams,
 }: CurrentlyLiveSectionClientProps) {
+    const simulateLive = useFeatureFlag('simulateTwitchLive');
+
+    const liveStreams =
+        simulateLive && liveStreamsProp.length === 0 ? [SIMULATED_STREAM] : liveStreamsProp;
+
     if (liveStreams.length === 0 && upcomingStreams.length === 0) {
         return null;
     }

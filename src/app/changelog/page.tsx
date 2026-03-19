@@ -32,6 +32,46 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '19. März 2026',
+        version: 'v2026-03-19',
+        emoji: '🎬',
+        title: 'Twitch-Live, ähnliche Rezepte & neues Theme',
+        items: [
+            {
+                text: 'Twitch-Integration — verbinde deinen Twitch-Account und zeige Live-Streams und geplante Koch-Sessions auf deinem Profil',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Ähnliche Rezepte — unter jedem Rezept erscheinen jetzt passende Vorschläge, die wirklich zum Gericht passen',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Live-Banner auf der Startseite, wenn jemand gerade auf Twitch kocht',
+                tag: 'feat',
+            },
+            {
+                text: 'Twitch-Chat direkt neben dem Stream eingeblendet',
+                tag: 'feat',
+            },
+            {
+                text: 'Geplante Streams können mit Rezepten verknüpft und inline bearbeitet werden',
+                tag: 'feat',
+            },
+            {
+                text: 'Lila Live-Ring am Avatar, wenn ein Koch gerade streamt',
+                tag: 'feat',
+            },
+            {
+                text: 'Neues Retro-Theme als alternative Farbwelt',
+                tag: 'feat',
+            },
+            {
+                text: 'Rezeptsuche findet jetzt auch Treffer mitten im Wort, nicht nur am Anfang',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '17. März 2026',
         version: 'v2026-03-17',
         emoji: '🧑‍🍳',

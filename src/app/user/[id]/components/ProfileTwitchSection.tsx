@@ -1,10 +1,11 @@
 'use client';
 
-import { Tv } from 'lucide-react';
+import { Calendar, Tv } from 'lucide-react';
 import Link from 'next/link';
 
 import { LiveBadge } from '@app/components/features/twitch/LiveBadge';
 import { TwitchEmbed } from '@app/components/features/twitch/TwitchEmbed';
+import { formatPlannedTime } from '@app/lib/date';
 
 import { css } from 'styled-system/css';
 
@@ -14,6 +15,8 @@ interface ProfileTwitchSectionProps {
     streamTitle?: string | null;
     nextRecipeTitle?: string | null;
     nextRecipeSlug?: string | null;
+    plannedAt?: string | null;
+    plannedTimezone?: string | null;
 }
 
 export function ProfileTwitchSection({
@@ -22,6 +25,8 @@ export function ProfileTwitchSection({
     streamTitle,
     nextRecipeTitle,
     nextRecipeSlug,
+    plannedAt,
+    plannedTimezone,
 }: ProfileTwitchSectionProps) {
     if (isLive) {
         return (
@@ -54,12 +59,14 @@ export function ProfileTwitchSection({
     }
 
     if (nextRecipeTitle && nextRecipeSlug) {
+        const isFuture = plannedAt && new Date(plannedAt) > new Date();
+
         return (
             <section
                 className={css({
                     borderRadius: 'surface.sm',
                     border: '1px solid',
-                    borderColor: 'border',
+                    borderColor: 'social.twitch',
                     bg: 'surface.card',
                     p: 'card',
                     display: 'flex',
@@ -77,7 +84,7 @@ export function ProfileTwitchSection({
                             mb: '0.5',
                         })}
                     >
-                        Als n&auml;chstes live
+                        Als nächstes live
                     </p>
                     <Link
                         href={`/recipe/${nextRecipeSlug}`}
@@ -91,6 +98,21 @@ export function ProfileTwitchSection({
                     >
                         {nextRecipeTitle}
                     </Link>
+                    {isFuture && (
+                        <p
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '1.5',
+                                fontSize: 'xs',
+                                color: 'text.muted',
+                                mt: '1',
+                            })}
+                        >
+                            <Calendar size={12} />
+                            {formatPlannedTime(plannedAt, plannedTimezone)}
+                        </p>
+                    )}
                 </div>
             </section>
         );

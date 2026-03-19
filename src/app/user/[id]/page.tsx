@@ -88,6 +88,8 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
                     isLive: true,
                     title: true,
                     nextRecipeId: true,
+                    plannedAt: true,
+                    plannedTimezone: true,
                     nextRecipe: { select: { title: true, slug: true } },
                 },
             },
@@ -230,6 +232,8 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
             ? {
                   isLive: user.twitchStream.isLive,
                   title: user.twitchStream.title,
+                  plannedAt: user.twitchStream.plannedAt?.toISOString() ?? null,
+                  plannedTimezone: user.twitchStream.plannedTimezone ?? null,
                   nextRecipe: user.twitchStream.nextRecipe,
               }
             : null,

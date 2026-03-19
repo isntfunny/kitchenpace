@@ -6,7 +6,6 @@ import { motion } from 'motion/react';
 import { Avatar } from '@app/components/atoms/Avatar';
 import { SparkleEffect } from '@app/components/atoms/SparkleEffect';
 import { ReportButton } from '@app/components/features/ReportButton';
-import { LiveBadge } from '@app/components/features/twitch/LiveBadge';
 import { PALETTE } from '@app/lib/palette';
 import { SOCIAL } from '@app/lib/themes/palette';
 
@@ -101,33 +100,20 @@ export function ProfileHeader({
                     })}
                 >
                     {/* Avatar */}
-                    <div className={css({ position: 'relative', flexShrink: 0 })}>
-                        <Avatar
-                            src={user.avatar}
-                            name={user.name}
-                            size={AVATAR_SIZE}
-                            rounded="3xl"
-                            trophyTier={user.trophies?.[0]?.tier ?? null}
-                            trophyCount={user.trophies?.length ?? 0}
-                            className={css({
-                                boxShadow: isLive
-                                    ? `0 0 0 4px ${SOCIAL.twitch}, 0 0 24px rgba(145,70,255,0.4), 0 8px 32px rgba(0,0,0,0.25)`
-                                    : '0 0 0 4px rgba(255,255,255,0.4), 0 8px 32px rgba(0,0,0,0.25)',
-                            })}
-                        />
-                        {isLive && (
-                            <div
-                                className={css({
-                                    position: 'absolute',
-                                    bottom: '-4px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                })}
-                            >
-                                <LiveBadge size="md" />
-                            </div>
-                        )}
-                    </div>
+                    <Avatar
+                        src={user.avatar}
+                        name={user.name}
+                        size={AVATAR_SIZE}
+                        rounded="3xl"
+                        trophyTier={user.trophies?.[0]?.tier ?? null}
+                        trophyCount={user.trophies?.length ?? 0}
+                        isLive={isLive}
+                        className={css({
+                            boxShadow: isLive
+                                ? undefined // Avatar handles live glow internally
+                                : '0 0 0 4px rgba(255,255,255,0.4), 0 8px 32px rgba(0,0,0,0.25)',
+                        })}
+                    />
 
                     {/* Profile Info */}
                     <div

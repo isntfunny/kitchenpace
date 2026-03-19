@@ -3,7 +3,9 @@
 import type { TrophyTier } from '@prisma/client';
 import { ChefHat, Trophy, User } from 'lucide-react';
 
+import { LiveBadge } from '@app/components/features/twitch/LiveBadge';
 import { PALETTE } from '@app/lib/palette';
+import { SOCIAL } from '@app/lib/themes/palette';
 import { TIER_STYLES } from '@app/lib/trophies/registry';
 
 import { css, cx } from 'styled-system/css';
@@ -49,6 +51,8 @@ interface AvatarProps {
     className?: string;
     /** Fallback type when no image */
     fallbackType?: 'initial' | 'icon' | 'user';
+    /** Show live state: purple ring + LiveBadge (overrides trophy badge) */
+    isLive?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,18 +72,19 @@ export function Avatar({
     rounded = 'full',
     className,
     fallbackType = 'initial',
+    isLive = false,
 }: AvatarProps) {
     const px = typeof size === 'number' ? size : SIZE_MAP[size];
     const hasImage = Boolean(imageKey || src);
     const initial = (name || 'U').charAt(0).toUpperCase();
 
     // Badge sizing scales with avatar
-    const showBadge = trophyTier != null && trophyCount != null && trophyCount > 0;
+    const showTrophyBadge = !isLive && trophyTier != null && trophyCount != null && trophyCount > 0;
     const badgePx = Math.max(16, Math.round(px * 0.3));
     const badgeIconPx = Math.round(badgePx * 0.6);
 
-    // Trophy-coloured ring: auto-apply when trophyTier is set (unless explicit ring overrides)
-    const trophyRing = !ring && trophyTier != null ? TIER_STYLES[trophyTier] : null;
+    // Ring priority: isLive > explicit ring > trophy ring
+    const trophyRing = !ring && !isLive && trophyTier != null ? TIER_STYLES[trophyTier] : null;
 
     return (
         <div
@@ -90,29 +95,36 @@ export function Avatar({
                     borderRadius: rounded,
                     overflow: 'visible',
                 }),
-                ring
-                    ? css({
-                          border: '3px solid',
-                          borderColor: ringColor,
-                          boxShadow: {
-                              base: '0 4px 16px rgba(224,123,83,0.25)',
-                              _dark: '0 4px 16px rgba(224,123,83,0.3)',
-                          },
-                      })
-                    : trophyRing
-                      ? css({ border: '3px solid' })
-                      : undefined,
+                isLive
+                    ? css({ border: '3px solid' })
+                    : ring
+                      ? css({
+                            border: '3px solid',
+                            borderColor: ringColor,
+                            boxShadow: {
+                                base: '0 4px 16px rgba(224,123,83,0.25)',
+                                _dark: '0 4px 16px rgba(224,123,83,0.3)',
+                            },
+                        })
+                      : trophyRing
+                        ? css({ border: '3px solid' })
+                        : undefined,
                 className,
             )}
             style={{
                 width: px,
                 height: px,
-                ...(trophyRing
+                ...(isLive
                     ? {
-                          borderColor: trophyRing.fill,
-                          boxShadow: `0 2px 8px ${trophyRing.glow}`,
+                          borderColor: SOCIAL.twitch,
+                          boxShadow: `0 0 0 2px ${SOCIAL.twitch}, 0 0 16px rgba(145,70,255,0.35)`,
                       }
-                    : undefined),
+                    : trophyRing
+                      ? {
+                            borderColor: trophyRing.fill,
+                            boxShadow: `0 2px 8px ${trophyRing.glow}`,
+                        }
+                      : undefined),
             }}
         >
             {/* Image or fallback */}
@@ -184,8 +196,22 @@ export function Avatar({
                 )}
             </div>
 
+            {/* Live badge (overrides trophy) */}
+            {isLive && (
+                <div
+                    className={css({
+                        position: 'absolute',
+                        bottom: '-4px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                    })}
+                >
+                    <LiveBadge size={px >= 80 ? 'md' : 'sm'} />
+                </div>
+            )}
+
             {/* Trophy badge */}
-            {showBadge && (
+            {showTrophyBadge && (
                 <div
                     className={css({
                         position: 'absolute',

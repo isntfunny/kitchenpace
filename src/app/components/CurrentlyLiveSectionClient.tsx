@@ -4,7 +4,7 @@ import { Eye, Calendar } from 'lucide-react';
 import Link from 'next/link';
 
 import { Avatar } from '@app/components/atoms/Avatar';
-import { Heading } from '@app/components/atoms/Typography';
+import { Heading, Text } from '@app/components/atoms/Typography';
 import { LiveBadge } from '@app/components/features/twitch/LiveBadge';
 import { TwitchEmbed } from '@app/components/features/twitch/TwitchEmbed';
 import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
@@ -135,46 +135,34 @@ export function CurrentlyLiveSectionClient({
     return (
         <section
             className={css({
-                bg: 'surface',
+                p: 'card.md',
                 borderRadius: 'surface',
+                bg: 'surface',
                 boxShadow: 'shadow.medium',
-                overflow: 'hidden',
             })}
         >
-            {/* Section header */}
-            <div
-                className={css({
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '3',
-                    px: 'card',
-                    py: '3',
-                    borderBottom: '1px solid',
-                    borderColor: 'border.muted',
-                })}
-            >
-                <Heading as="h3" size="md">
-                    {hasLive ? 'Gerade Live' : 'Demnächst Live'}
-                </Heading>
-                {hasLive && <LiveBadge size="sm" />}
+            {/* Section header — matches ActivitySidebar pattern */}
+            <div className={css({ mb: '4' })}>
+                <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                    <Heading as="h3" size="md" className={css({ color: 'primary' })}>
+                        {hasLive ? 'Gerade Live' : 'Demnächst Live'}
+                    </Heading>
+                    {hasLive && <LiveBadge size="sm" />}
+                </div>
+                <Text size="sm" color="muted" className={css({ fontSize: '0.75rem' })}>
+                    {hasLive ? 'Schau live beim Kochen zu' : 'Bald wird live gekocht'}
+                </Text>
             </div>
 
             {hasLive && primaryStream && (
                 <>
                     {/* Embed of first live stream */}
-                    <div className={css({ px: 'card', pt: '3' })}>
+                    <div className={css({ mb: '3' })}>
                         <TwitchEmbed channel={primaryStream.channel} />
                     </div>
 
                     {/* List of all live streams */}
-                    <div
-                        className={css({
-                            display: 'flex',
-                            flexDirection: 'column',
-                            px: 'card',
-                            py: '3',
-                        })}
-                    >
+                    <div className={css({ display: 'flex', flexDirection: 'column' })}>
                         {liveStreams.map((stream) => (
                             <StreamRow
                                 key={stream.id}
@@ -209,15 +197,7 @@ export function CurrentlyLiveSectionClient({
             )}
 
             {!hasLive && upcomingStreams.length > 0 && (
-                <div
-                    className={css({
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0',
-                        px: 'card',
-                        py: '3',
-                    })}
-                >
+                <div className={css({ display: 'flex', flexDirection: 'column' })}>
                     {upcomingStreams.map((stream) => (
                         <StreamRow
                             key={stream.id}

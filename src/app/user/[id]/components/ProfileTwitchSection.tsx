@@ -4,6 +4,7 @@ import { Calendar, Tv } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 
+import { TwitchChat } from '@app/components/features/twitch/TwitchChat';
 import { TwitchEmbed } from '@app/components/features/twitch/TwitchEmbed';
 import { formatPlannedTime } from '@app/lib/date';
 import { SOCIAL } from '@app/lib/themes/palette';
@@ -29,7 +30,7 @@ export function ProfileTwitchSection({
     plannedAt,
     plannedTimezone,
 }: ProfileTwitchSectionProps) {
-    // ── Live: show Twitch embed ──────────────────────────────────────────
+    // ── Live: show Twitch embed + chat sidebar ─────────────────────────
     if (isLive) {
         return (
             <section className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
@@ -53,7 +54,35 @@ export function ProfileTwitchSection({
                         </span>
                     </div>
                 )}
-                <TwitchEmbed channel={twitchUsername} />
+                <div
+                    className={css({
+                        display: 'flex',
+                        flexDir: { base: 'column', lg: 'row' },
+                        gap: 0,
+                        borderRadius: '2xl',
+                        overflow: 'hidden',
+                        border: '1px solid',
+                        borderColor: 'border',
+                    })}
+                >
+                    {/* Stream player */}
+                    <div className={css({ flex: 1, minWidth: 0 })}>
+                        <TwitchEmbed channel={twitchUsername} rounded={false} />
+                    </div>
+                    {/* Chat sidebar — hidden on mobile */}
+                    <div
+                        className={css({
+                            display: { base: 'none', lg: 'block' },
+                            width: '340px',
+                            flexShrink: 0,
+                            bg: '#18181b',
+                            borderLeft: '1px solid',
+                            borderColor: 'border',
+                        })}
+                    >
+                        <TwitchChat channel={twitchUsername} />
+                    </div>
+                </div>
             </section>
         );
     }

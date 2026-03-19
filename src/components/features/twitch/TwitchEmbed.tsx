@@ -1,20 +1,17 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
-
 import { css } from 'styled-system/css';
 
-const getHostname = () => window.location.hostname;
-const getServerHostname = () => null as string | null;
-const subscribe = () => () => {};
+import { useHostname } from './useHostname';
 
 interface TwitchEmbedProps {
     channel: string;
     autoplay?: boolean;
+    rounded?: boolean;
 }
 
-export function TwitchEmbed({ channel, autoplay = true }: TwitchEmbedProps) {
-    const hostname = useSyncExternalStore(subscribe, getHostname, getServerHostname);
+export function TwitchEmbed({ channel, autoplay = true, rounded = true }: TwitchEmbedProps) {
+    const hostname = useHostname();
 
     if (!hostname) return null;
 
@@ -27,7 +24,7 @@ export function TwitchEmbed({ channel, autoplay = true }: TwitchEmbedProps) {
                 paddingBottom: '56.25%',
                 height: 0,
                 overflow: 'hidden',
-                borderRadius: 'surface.sm',
+                borderRadius: rounded ? 'surface.sm' : '0',
                 bg: 'surface.muted',
             })}
         >

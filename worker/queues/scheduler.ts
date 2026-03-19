@@ -143,6 +143,15 @@ const scheduledJobs: ScheduledJobDefinition[] = [
         // No repeat — manual trigger only
     },
     {
+        name: 'backfill-embeddings',
+        queue: QueueName.OPENSEARCH,
+        data: { batchSize: 50 },
+        schema: {
+            batchSize: { type: 'number', label: 'Batch Size', default: 50, min: 1, max: 500 },
+        },
+        // No repeat — manual trigger only
+    },
+    {
         name: 'twitch-health-check',
         queue: QueueName.TWITCH,
         data: {},

@@ -152,7 +152,7 @@ export default async function WorkerDashboardPage() {
         },
     }));
 
-    const scheduledJobs = scheduledDefinitions.map((job) => ({
+    const allScheduledJobs = scheduledDefinitions.map((job) => ({
         id: `scheduled-${job.name}`,
         jobName: job.name,
         queue: job.queue,
@@ -163,6 +163,9 @@ export default async function WorkerDashboardPage() {
             repeatPattern: job.options?.repeat?.pattern,
         },
     }));
+
+    const cronJobs = allScheduledJobs.filter((j) => j.meta.repeatPattern);
+    const manualJobs = allScheduledJobs.filter((j) => !j.meta.repeatPattern);
 
     return (
         <PageShell>
@@ -378,7 +381,10 @@ export default async function WorkerDashboardPage() {
                             })}
                         >
                             <JobAccordionSection title="⚡ Worker" jobs={workerJobs} />
-                            <JobAccordionSection title="📅 Scheduled" jobs={scheduledJobs} />
+                            <JobAccordionSection title="📅 Scheduled" jobs={cronJobs} />
+                            {manualJobs.length > 0 && (
+                                <JobAccordionSection title="🔧 Einmalig" jobs={manualJobs} />
+                            )}
                         </div>
                     </aside>
 

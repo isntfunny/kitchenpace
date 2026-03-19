@@ -13,6 +13,59 @@ export const OPENSEARCH_TAGS_INDEX = tagsIndex;
 export const OPENSEARCH_EMBEDDINGS_INDEX = embeddingsIndex;
 
 /**
+ * Build OpenSearch query for tag/ingredient suggest indices.
+ * Combines prefix, fuzzy, and wildcard for typo tolerance + substring matching.
+ */
+export function buildSuggestQuery(query: string): Record<string, unknown> {
+    return {
+        bool: {
+            should: [
+                { prefix: { 'name.keyword': { value: query, boost: 3 } } },
+                { match: { name: { query, fuzziness: 'AUTO', prefix_length: 1 } } },
+                { match: { keywords: { query, fuzziness: 'AUTO' } } },
+                {
+                    wildcard: {
+                        'name.keyword': {
+                            value: `*${query}*`,
+                            case_insensitive: true,
+                        },
+                    },
+                },
+            ],
+            minimum_should_match: 1,
+        },
+    };
+}
+
+/**
+ * Get recipe counts for matched names from a keyword field on the recipes index.
+ */
+export async function getRecipeCounts(
+    names: string[],
+    field: 'tags' | 'ingredients',
+): Promise<Map<string, number>> {
+    if (names.length === 0) return new Map();
+
+    const { body } = await opensearchClient.search({
+        index: OPENSEARCH_INDEX,
+        body: {
+            query: { term: { status: 'PUBLISHED' } },
+            size: 0,
+            aggs: {
+                filtered: {
+                    terms: { field, include: names, size: names.length },
+                },
+            },
+        },
+    });
+
+    const agg = body.aggregations?.filtered as
+        | { buckets?: Array<{ key: string; doc_count: number }> }
+        | undefined;
+    return new Map((agg?.buckets ?? []).map((b) => [b.key, b.doc_count]));
+}
+
+/**
  * Build OpenSearch query clauses for recipe text search.
  * Combines fuzzy full-text, prefix, and substring matching.
  * Returns an array of `should` clauses — wrap in a bool query with minimum_should_match: 1.

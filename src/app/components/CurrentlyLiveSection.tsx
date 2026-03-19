@@ -12,6 +12,11 @@ async function fetchLiveStreams() {
             viewerCount: true,
             user: {
                 select: {
+                    plannedStreams: {
+                        orderBy: { createdAt: 'desc' },
+                        take: 1,
+                        select: { recipe: { select: { title: true, slug: true, imageKey: true } } },
+                    },
                     profile: {
                         select: {
                             twitchUsername: true,
@@ -22,7 +27,6 @@ async function fetchLiveStreams() {
                     },
                 },
             },
-            nextRecipe: { select: { id: true, title: true, slug: true, imageKey: true } },
         },
         take: 5,
     });
@@ -31,19 +35,19 @@ async function fetchLiveStreams() {
 async function fetchUpcomingStreams() {
     const now = new Date();
     const twoWeeksFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-    return prisma.twitchStream.findMany({
-        where: { plannedAt: { gt: now, lt: twoWeeksFromNow }, isLive: false },
+    return prisma.plannedStream.findMany({
+        where: { plannedAt: { gt: now, lt: twoWeeksFromNow } },
         orderBy: { plannedAt: 'asc' },
         select: {
             id: true,
             plannedAt: true,
             plannedTimezone: true,
+            recipe: { select: { title: true, slug: true } },
             user: {
                 select: {
                     profile: { select: { nickname: true, slug: true, photoKey: true } },
                 },
             },
-            nextRecipe: { select: { title: true, slug: true } },
         },
         take: 5,
     });
@@ -54,18 +58,21 @@ export async function CurrentlyLiveSection() {
 
     const liveStreams = liveRaw
         .filter((s) => s.user.profile?.twitchUsername)
-        .map((s) => ({
-            id: s.id,
-            title: s.title,
-            viewerCount: s.viewerCount,
-            channel: s.user.profile!.twitchUsername!,
-            userName: s.user.profile!.nickname ?? s.user.profile!.twitchUsername!,
-            userSlug: s.user.profile!.slug ?? '',
-            photoKey: s.user.profile!.photoKey ?? null,
-            recipeTitle: s.nextRecipe?.title ?? null,
-            recipeSlug: s.nextRecipe?.slug ?? null,
-            recipeImageKey: s.nextRecipe?.imageKey ?? null,
-        }));
+        .map((s) => {
+            const latestPlanned = s.user.plannedStreams[0];
+            return {
+                id: s.id,
+                title: s.title,
+                viewerCount: s.viewerCount,
+                channel: s.user.profile!.twitchUsername!,
+                userName: s.user.profile!.nickname ?? s.user.profile!.twitchUsername!,
+                userSlug: s.user.profile!.slug ?? '',
+                photoKey: s.user.profile!.photoKey ?? null,
+                recipeTitle: latestPlanned?.recipe.title ?? null,
+                recipeSlug: latestPlanned?.recipe.slug ?? null,
+                recipeImageKey: latestPlanned?.recipe.imageKey ?? null,
+            };
+        });
 
     const upcomingStreams = upcomingRaw
         .filter((s) => s.plannedAt && s.user.profile)
@@ -75,8 +82,8 @@ export async function CurrentlyLiveSection() {
             userName: s.user.profile!.nickname ?? 'Küchenfreund',
             userSlug: s.user.profile!.slug ?? '',
             photoKey: s.user.profile!.photoKey ?? null,
-            recipeTitle: s.nextRecipe?.title ?? null,
-            recipeSlug: s.nextRecipe?.slug ?? null,
+            recipeTitle: s.recipe.title,
+            recipeSlug: s.recipe.slug,
         }));
 
     return (

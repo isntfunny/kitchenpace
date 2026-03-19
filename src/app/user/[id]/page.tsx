@@ -87,10 +87,16 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
                 select: {
                     isLive: true,
                     title: true,
-                    nextRecipeId: true,
+                },
+            },
+            plannedStreams: {
+                where: { plannedAt: { gt: new Date() } },
+                orderBy: { plannedAt: 'asc' },
+                take: 1,
+                select: {
                     plannedAt: true,
                     plannedTimezone: true,
-                    nextRecipe: { select: { title: true, slug: true } },
+                    recipe: { select: { title: true, slug: true } },
                 },
             },
             _count: {
@@ -232,9 +238,13 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
             ? {
                   isLive: user.twitchStream.isLive,
                   title: user.twitchStream.title,
-                  plannedAt: user.twitchStream.plannedAt?.toISOString() ?? null,
-                  plannedTimezone: user.twitchStream.plannedTimezone ?? null,
-                  nextRecipe: user.twitchStream.nextRecipe,
+              }
+            : null,
+        nextPlannedStream: user.plannedStreams[0]
+            ? {
+                  plannedAt: user.plannedStreams[0].plannedAt?.toISOString() ?? null,
+                  plannedTimezone: user.plannedStreams[0].plannedTimezone ?? null,
+                  recipe: user.plannedStreams[0].recipe,
               }
             : null,
         currentPage: page,

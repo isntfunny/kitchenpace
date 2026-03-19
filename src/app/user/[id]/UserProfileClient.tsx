@@ -51,9 +51,11 @@ export interface UserProfileData {
     twitchStream?: {
         isLive: boolean;
         title: string | null;
+    } | null;
+    nextPlannedStream?: {
         plannedAt: string | null;
         plannedTimezone: string | null;
-        nextRecipe: { title: string; slug: string } | null;
+        recipe: { title: string; slug: string };
     } | null;
 }
 
@@ -139,10 +141,10 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                         twitchUsername={effectiveTwitchUsername!}
                         isLive={effectiveIsLive}
                         streamTitle={user.twitchStream?.title}
-                        nextRecipeTitle={user.twitchStream?.nextRecipe?.title}
-                        nextRecipeSlug={user.twitchStream?.nextRecipe?.slug}
-                        plannedAt={user.twitchStream?.plannedAt}
-                        plannedTimezone={user.twitchStream?.plannedTimezone}
+                        nextRecipeTitle={user.nextPlannedStream?.recipe.title}
+                        nextRecipeSlug={user.nextPlannedStream?.recipe.slug}
+                        plannedAt={user.nextPlannedStream?.plannedAt}
+                        plannedTimezone={user.nextPlannedStream?.plannedTimezone}
                     />
                 </div>
             )}

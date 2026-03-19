@@ -112,8 +112,11 @@ export default async function RecipePage({ params }: RecipePageProps) {
     const isDraft = recipe.status !== 'PUBLISHED';
 
     // Query for anyone live-cooking this recipe
-    const liveCook = await prisma.twitchStream.findFirst({
-        where: { nextRecipeId: recipe.id, isLive: true },
+    const livePlanned = await prisma.plannedStream.findFirst({
+        where: {
+            recipeId: recipe.id,
+            user: { twitchStream: { isLive: true } },
+        },
         select: {
             user: {
                 select: {
@@ -122,6 +125,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
             },
         },
     });
+    const liveCook = livePlanned;
 
     // Load saved cooking progress from Redis (if authenticated)
     const initialProgress = viewerId

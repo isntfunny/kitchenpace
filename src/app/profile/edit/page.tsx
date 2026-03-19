@@ -18,17 +18,19 @@ export default async function ProfileEditPage() {
         redirect('/auth/signin');
     }
 
-    const [profile, twitchAccount, twitchStream] = await Promise.all([
+    const [profile, twitchAccount, plannedStreams] = await Promise.all([
         getOrCreateProfile(session.user.id),
         prisma.account.findFirst({
             where: { userId: session.user.id, providerId: TWITCH_PROVIDER_ID },
             select: { accountId: true },
         }),
-        prisma.twitchStream.findUnique({
+        prisma.plannedStream.findMany({
             where: { userId: session.user.id },
+            orderBy: { plannedAt: 'asc' },
             select: {
+                id: true,
                 plannedAt: true,
-                nextRecipe: {
+                recipe: {
                     select: {
                         id: true,
                         slug: true,
@@ -52,26 +54,23 @@ export default async function ProfileEditPage() {
         redirect('/auth/signin');
     }
 
-    const currentRecipe = twitchStream?.nextRecipe
-        ? {
-              id: twitchStream.nextRecipe.id,
-              slug: twitchStream.nextRecipe.slug,
-              title: twitchStream.nextRecipe.title,
-              category: twitchStream.nextRecipe.categories[0]?.category.name ?? 'Hauptgericht',
-              totalTime: twitchStream.nextRecipe.totalTime,
-              imageKey: twitchStream.nextRecipe.imageKey,
-          }
-        : null;
+    const streams = plannedStreams.map((ps) => ({
+        id: ps.id,
+        plannedAt: ps.plannedAt?.toISOString() ?? null,
+        recipe: {
+            id: ps.recipe.id,
+            slug: ps.recipe.slug,
+            title: ps.recipe.title,
+            category: ps.recipe.categories[0]?.category.name ?? 'Hauptgericht',
+            totalTime: ps.recipe.totalTime,
+            imageKey: ps.recipe.imageKey,
+        },
+    }));
 
     return (
         <PageShell>
             <ProfileEditClient profile={profile} />
-            {twitchAccount && (
-                <NextStreamCard
-                    currentRecipe={currentRecipe}
-                    currentPlannedAt={twitchStream?.plannedAt?.toISOString() ?? null}
-                />
-            )}
+            {twitchAccount && <NextStreamCard plannedStreams={streams} />}
         </PageShell>
     );
 }

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
                   body: {
                       query: {
                           bool: {
-                              must: [
+                              should: [
                                   {
                                       multi_match: {
                                           query,
@@ -74,7 +74,22 @@ export async function GET(request: NextRequest) {
                                           prefix_length: 1,
                                       },
                                   },
+                                  {
+                                      match_phrase_prefix: {
+                                          title: { query, boost: 5 },
+                                      },
+                                  },
+                                  {
+                                      wildcard: {
+                                          'title.keyword': {
+                                              value: `*${query}*`,
+                                              case_insensitive: true,
+                                              boost: 2,
+                                          },
+                                      },
+                                  },
                               ],
+                              minimum_should_match: 1,
                               filter: [{ term: { status: 'PUBLISHED' } }],
                           },
                       },

@@ -6,22 +6,19 @@ import { useState, useTransition } from 'react';
 import { clearNextStream, updateNextStream } from '@app/app/actions/twitch';
 import { Button } from '@app/components/atoms/Button';
 import { Heading, Text } from '@app/components/atoms/Typography';
+import type { SelectedRecipe } from '@app/components/features/RecipeSearchPicker';
+import { RecipeSearchPicker } from '@app/components/features/RecipeSearchPicker';
 import { formatPlannedTime } from '@app/lib/date';
 
 import { css } from 'styled-system/css';
 
 interface NextStreamCardProps {
-    recipes: Array<{ id: string; title: string }>;
-    currentRecipeId: string | null;
+    currentRecipe: SelectedRecipe | null;
     currentPlannedAt: string | null;
 }
 
-export function NextStreamCard({
-    recipes,
-    currentRecipeId,
-    currentPlannedAt,
-}: NextStreamCardProps) {
-    const [recipeId, setRecipeId] = useState(currentRecipeId ?? '');
+export function NextStreamCard({ currentRecipe, currentPlannedAt }: NextStreamCardProps) {
+    const [selectedRecipe, setSelectedRecipe] = useState<SelectedRecipe | null>(currentRecipe);
     const [plannedAt, setPlannedAt] = useState(currentPlannedAt?.slice(0, 16) ?? '');
     const [isPending, startTransition] = useTransition();
     const [status, setStatus] = useState<'idle' | 'saved' | 'cleared'>('idle');
@@ -29,11 +26,11 @@ export function NextStreamCard({
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const handleSave = () => {
-        if (!recipeId) return;
+        if (!selectedRecipe) return;
         setStatus('idle');
         startTransition(async () => {
             await updateNextStream(
-                recipeId,
+                selectedRecipe.id,
                 plannedAt ? new Date(plannedAt).toISOString() : undefined,
                 userTimezone,
             );
@@ -45,28 +42,11 @@ export function NextStreamCard({
         setStatus('idle');
         startTransition(async () => {
             await clearNextStream();
-            setRecipeId('');
+            setSelectedRecipe(null);
             setPlannedAt('');
             setStatus('cleared');
         });
     };
-
-    const selectStyles = css({
-        width: '100%',
-        borderRadius: 'xl',
-        border: '1px solid',
-        borderColor: 'border',
-        p: '3',
-        fontSize: 'md',
-        outline: 'none',
-        bg: 'background',
-        color: 'text',
-        transition: 'all 150ms ease',
-        _focus: {
-            borderColor: 'social.twitch',
-            boxShadow: '0 0 0 3px rgba(145,70,255,0.15)',
-        },
-    });
 
     return (
         <div
@@ -75,9 +55,6 @@ export function NextStreamCard({
                 borderRadius: '2xl',
                 bg: 'surface',
                 boxShadow: 'shadow.medium',
-                mt: '6',
-                maxW: '720px',
-                mx: 'auto',
             })}
         >
             <div className={css({ mb: '4' })}>
@@ -106,7 +83,7 @@ export function NextStreamCard({
             </div>
 
             <div className={css({ display: 'flex', flexDir: 'column', gap: '4' })}>
-                {/* Recipe selector */}
+                {/* Recipe search picker */}
                 <div>
                     <label
                         className={css({
@@ -119,21 +96,17 @@ export function NextStreamCard({
                     >
                         Rezept
                     </label>
-                    <select
-                        value={recipeId}
-                        onChange={(e) => {
-                            setRecipeId(e.target.value);
+                    <RecipeSearchPicker
+                        selected={selectedRecipe}
+                        onSelect={(recipe) => {
+                            setSelectedRecipe(recipe);
                             setStatus('idle');
                         }}
-                        className={selectStyles}
-                    >
-                        <option value="">Rezept auswählen...</option>
-                        {recipes.map((r) => (
-                            <option key={r.id} value={r.id}>
-                                {r.title}
-                            </option>
-                        ))}
-                    </select>
+                        onClear={() => {
+                            setSelectedRecipe(null);
+                            setStatus('idle');
+                        }}
+                    />
                 </div>
 
                 {/* Optional date/time picker */}
@@ -159,7 +132,24 @@ export function NextStreamCard({
                             setPlannedAt(e.target.value);
                             setStatus('idle');
                         }}
-                        className={selectStyles}
+                        className={css({
+                            width: '100%',
+                            height: '44px',
+                            px: '3',
+                            borderRadius: 'xl',
+                            border: '1px solid',
+                            borderColor: 'border',
+                            bg: 'background',
+                            fontSize: 'sm',
+                            fontFamily: 'body',
+                            color: 'text',
+                            outline: 'none',
+                            transition: 'all 150ms ease',
+                            _focus: {
+                                borderColor: 'social.twitch',
+                                boxShadow: '0 0 0 3px rgba(145,70,255,0.15)',
+                            },
+                        })}
                     />
                     {plannedAt && (
                         <Text size="sm" color="muted" className={css({ mt: '1' })}>
@@ -173,13 +163,13 @@ export function NextStreamCard({
                     <Button
                         variant="primary"
                         onClick={handleSave}
-                        disabled={isPending || !recipeId}
+                        disabled={isPending || !selectedRecipe}
                     >
                         <Tv size={16} />
-                        {isPending ? 'Speichern...' : 'Stream planen'}
+                        {isPending ? 'Speichern…' : 'Stream planen'}
                     </Button>
 
-                    {currentRecipeId && (
+                    {currentRecipe && (
                         <Button variant="ghost" onClick={handleClear} disabled={isPending}>
                             <X size={16} />
                             Zurücksetzen

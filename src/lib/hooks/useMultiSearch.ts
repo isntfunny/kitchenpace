@@ -34,10 +34,12 @@ export type MultiSearchResult = {
 type Options = {
     enabled?: boolean;
     debounceMs?: number;
+    /** Comma-separated types to fetch: "recipes,tags,ingredients,users". Omit for all. */
+    types?: string;
 };
 
 export function useMultiSearch(query: string, options?: Options): MultiSearchResult {
-    const { enabled = true, debounceMs = 200 } = options ?? {};
+    const { enabled = true, debounceMs = 200, types } = options ?? {};
     const [debouncedQuery, setDebouncedQuery] = useState(query);
     const [state, setState] = useState<MultiSearchResult>({
         recipes: [],
@@ -70,10 +72,11 @@ export function useMultiSearch(query: string, options?: Options): MultiSearchRes
         async function fetchResults() {
             setState((current) => ({ ...current, loading: true }));
             try {
-                const response = await fetch(
-                    `/api/search/multi?q=${encodeURIComponent(debouncedQuery)}`,
-                    { signal: controller.signal },
-                );
+                const params = new URLSearchParams({ q: debouncedQuery });
+                if (types) params.set('types', types);
+                const response = await fetch(`/api/search/multi?${params}`, {
+                    signal: controller.signal,
+                });
                 if (!response.ok) throw new Error('Search failed');
 
                 const data: {
@@ -98,7 +101,7 @@ export function useMultiSearch(query: string, options?: Options): MultiSearchRes
 
         fetchResults();
         return () => controller.abort();
-    }, [debouncedQuery, enabled]);
+    }, [debouncedQuery, enabled, types]);
 
     return state;
 }

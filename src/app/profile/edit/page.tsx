@@ -18,7 +18,7 @@ export default async function ProfileEditPage() {
         redirect('/auth/signin');
     }
 
-    const [profile, twitchAccount, twitchStream, userRecipes] = await Promise.all([
+    const [profile, twitchAccount, twitchStream] = await Promise.all([
         getOrCreateProfile(session.user.id),
         prisma.account.findFirst({
             where: { userId: session.user.id, providerId: TWITCH_PROVIDER_ID },
@@ -27,16 +27,21 @@ export default async function ProfileEditPage() {
         prisma.twitchStream.findUnique({
             where: { userId: session.user.id },
             select: {
-                nextRecipeId: true,
                 plannedAt: true,
-                plannedTimezone: true,
-                nextRecipe: { select: { id: true, title: true } },
+                nextRecipe: {
+                    select: {
+                        id: true,
+                        slug: true,
+                        title: true,
+                        totalTime: true,
+                        imageKey: true,
+                        categories: {
+                            select: { category: { select: { name: true } } },
+                            take: 1,
+                        },
+                    },
+                },
             },
-        }),
-        prisma.recipe.findMany({
-            where: { authorId: session.user.id, status: 'PUBLISHED' },
-            select: { id: true, title: true },
-            orderBy: { title: 'asc' },
         }),
     ]);
 
@@ -47,13 +52,23 @@ export default async function ProfileEditPage() {
         redirect('/auth/signin');
     }
 
+    const currentRecipe = twitchStream?.nextRecipe
+        ? {
+              id: twitchStream.nextRecipe.id,
+              slug: twitchStream.nextRecipe.slug,
+              title: twitchStream.nextRecipe.title,
+              category: twitchStream.nextRecipe.categories[0]?.category.name ?? 'Hauptgericht',
+              totalTime: twitchStream.nextRecipe.totalTime,
+              imageKey: twitchStream.nextRecipe.imageKey,
+          }
+        : null;
+
     return (
         <PageShell>
             <ProfileEditClient profile={profile} />
             {twitchAccount && (
                 <NextStreamCard
-                    recipes={userRecipes}
-                    currentRecipeId={twitchStream?.nextRecipeId ?? null}
+                    currentRecipe={currentRecipe}
                     currentPlannedAt={twitchStream?.plannedAt?.toISOString() ?? null}
                 />
             )}

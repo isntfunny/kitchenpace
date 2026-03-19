@@ -52,6 +52,9 @@ function createErrorCatcher(page: Page) {
             if (text.includes('challenges.cloudflare') || text.includes('font-size:0')) return;
             // Ignore CSP reports from third-party iframes
             if (text.includes('script-src') && text.includes('not explicitly set')) return;
+            // Ignore Twitch player errors (offline channel = expected 404 in embed)
+            if (text.includes('MasterPlaylist') || text.includes('Player stopping playback'))
+                return;
             // Ignore failed resource loads from captcha
             if (text.includes('the server respon') && text.includes('challenges')) return;
             // Ignore network errors (own-origin 4xx already caught by failedRequests check)

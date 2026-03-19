@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
+    buildRecipeTextQuery,
     opensearchClient,
     OPENSEARCH_INDEX,
     OPENSEARCH_INGREDIENTS_INDEX,
@@ -60,35 +61,7 @@ export async function GET(request: NextRequest) {
                   body: {
                       query: {
                           bool: {
-                              should: [
-                                  {
-                                      multi_match: {
-                                          query,
-                                          fields: [
-                                              'title^3',
-                                              'description',
-                                              'keywords',
-                                              'ingredients^2',
-                                          ],
-                                          fuzziness: 'AUTO',
-                                          prefix_length: 1,
-                                      },
-                                  },
-                                  {
-                                      match_phrase_prefix: {
-                                          title: { query, boost: 5 },
-                                      },
-                                  },
-                                  {
-                                      wildcard: {
-                                          'title.keyword': {
-                                              value: `*${query}*`,
-                                              case_insensitive: true,
-                                              boost: 2,
-                                          },
-                                      },
-                                  },
-                              ],
+                              should: buildRecipeTextQuery(query),
                               minimum_should_match: 1,
                               filter: [{ term: { status: 'PUBLISHED' } }],
                           },

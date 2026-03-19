@@ -2,7 +2,11 @@ import type { RecipeCardData } from '@app/app/actions/recipes';
 import { RECIPE_FILTER_DEFAULT_LIMIT } from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 import type { RecipeSearchFacets, RecipeSearchMeta } from '@app/lib/recipeSearchTypes';
-import { opensearchClient, OPENSEARCH_INDEX } from '@shared/opensearch/client';
+import {
+    buildRecipeTextQuery,
+    opensearchClient,
+    OPENSEARCH_INDEX,
+} from '@shared/opensearch/client';
 
 export type RecipeSearchResult = {
     data: RecipeCardData[];
@@ -114,11 +118,9 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
 
     if (query) {
         boolQuery.bool.must.push({
-            multi_match: {
-                query,
-                fields: ['title^3', 'description', 'keywords', 'ingredients^2'],
-                fuzziness: 'AUTO',
-                prefix_length: 1,
+            bool: {
+                should: buildRecipeTextQuery(query),
+                minimum_should_match: 1,
             },
         });
     }

@@ -12,6 +12,38 @@ export const OPENSEARCH_INGREDIENTS_INDEX = ingredientsIndex;
 export const OPENSEARCH_TAGS_INDEX = tagsIndex;
 export const OPENSEARCH_EMBEDDINGS_INDEX = embeddingsIndex;
 
+/**
+ * Build OpenSearch query clauses for recipe text search.
+ * Combines fuzzy full-text, prefix, and substring matching.
+ * Returns an array of `should` clauses — wrap in a bool query with minimum_should_match: 1.
+ */
+export function buildRecipeTextQuery(query: string): Record<string, unknown>[] {
+    return [
+        {
+            multi_match: {
+                query,
+                fields: ['title^3', 'description', 'keywords', 'ingredients^2'],
+                fuzziness: 'AUTO',
+                prefix_length: 1,
+            },
+        },
+        {
+            match_phrase_prefix: {
+                title: { query, boost: 5 },
+            },
+        },
+        {
+            wildcard: {
+                'title.keyword': {
+                    value: `*${query}*`,
+                    case_insensitive: true,
+                    boost: 2,
+                },
+            },
+        },
+    ];
+}
+
 const RECIPES_MAPPINGS = {
     properties: {
         id: { type: 'keyword' },

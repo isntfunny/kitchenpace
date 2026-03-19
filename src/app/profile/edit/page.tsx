@@ -4,6 +4,7 @@ import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
 import { getOrCreateProfile } from '@app/lib/profile';
+import { TWITCH_PROVIDER_ID } from '@app/lib/twitch/api';
 import { prisma } from '@shared/prisma';
 
 import { NextStreamCard } from './NextStreamCard';
@@ -17,8 +18,12 @@ export default async function ProfileEditPage() {
         redirect('/auth/signin');
     }
 
-    const [profile, twitchStream, userRecipes] = await Promise.all([
+    const [profile, twitchAccount, twitchStream, userRecipes] = await Promise.all([
         getOrCreateProfile(session.user.id),
+        prisma.account.findFirst({
+            where: { userId: session.user.id, providerId: TWITCH_PROVIDER_ID },
+            select: { accountId: true },
+        }),
         prisma.twitchStream.findUnique({
             where: { userId: session.user.id },
             select: {
@@ -45,7 +50,7 @@ export default async function ProfileEditPage() {
     return (
         <PageShell>
             <ProfileEditClient profile={profile} />
-            {profile.twitchId && (
+            {twitchAccount && (
                 <NextStreamCard
                     recipes={userRecipes}
                     currentRecipeId={twitchStream?.nextRecipeId ?? null}

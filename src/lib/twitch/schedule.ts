@@ -1,6 +1,7 @@
 import { ApiClient } from '@twurple/api';
 import { RefreshingAuthProvider } from '@twurple/auth';
 
+import { TWITCH_PROVIDER_ID } from '@app/lib/twitch/api';
 import { prisma } from '@shared/prisma';
 
 // ── Food & Drink category ────────────────────────────────────────────────────
@@ -16,7 +17,7 @@ async function getUserApiClient(
     userId: string,
 ): Promise<{ client: ApiClient; twitchUserId: string } | null> {
     const account = await prisma.account.findFirst({
-        where: { userId, providerId: 'twitch' },
+        where: { userId, providerId: TWITCH_PROVIDER_ID },
         select: {
             accessToken: true,
             refreshToken: true,
@@ -49,7 +50,7 @@ async function getUserApiClient(
     // Persist refreshed tokens back to the DB
     authProvider.onRefresh(async (_userId, tokenData) => {
         await prisma.account.updateMany({
-            where: { userId, providerId: 'twitch' },
+            where: { userId, providerId: TWITCH_PROVIDER_ID },
             data: {
                 accessToken: tokenData.accessToken,
                 refreshToken: tokenData.refreshToken ?? undefined,

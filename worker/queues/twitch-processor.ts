@@ -4,6 +4,7 @@ import { Job } from 'bullmq';
 
 import { publishRealtimeEvent } from '@app/lib/realtime/broker';
 import {
+    TWITCH_PROVIDER_ID,
     createStreamEventSubs,
     deleteEventSubSubscription,
     getTwitchStream,
@@ -122,12 +123,12 @@ export async function processStreamOnline(
     try {
         // Fetch current stream info from Twitch API before the DB write
         // so we can do a single atomic update (avoids race with offline events)
-        const profile = await prisma.profile.findFirst({
-            where: { userId },
-            select: { twitchId: true },
+        const twitchAccount = await prisma.account.findFirst({
+            where: { userId, providerId: TWITCH_PROVIDER_ID },
+            select: { accountId: true },
         });
 
-        const streamInfo = profile?.twitchId ? await getTwitchStream(profile.twitchId) : null;
+        const streamInfo = twitchAccount ? await getTwitchStream(twitchAccount.accountId) : null;
 
         // Single atomic update with all stream data
         const twitchStream = await prisma.twitchStream.update({

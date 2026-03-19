@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getRealtimeRedis } from '@app/lib/realtime/redis';
-import { verifyWebhookSignature } from '@app/lib/twitch/api';
+import { TWITCH_PROVIDER_ID, verifyWebhookSignature } from '@app/lib/twitch/api';
 import { prisma } from '@shared/prisma';
 import { addTwitchStreamOfflineJob, addTwitchStreamOnlineJob } from '@worker/queues/index';
 
@@ -63,7 +63,13 @@ export async function POST(request: NextRequest) {
 
         // Only confirm handshake for broadcasters we actually registered
         const knownStream = await prisma.twitchStream.findFirst({
-            where: { user: { profile: { twitchId: broadcasterId } } },
+            where: {
+                user: {
+                    accounts: {
+                        some: { providerId: TWITCH_PROVIDER_ID, accountId: broadcasterId },
+                    },
+                },
+            },
             select: { id: true },
         });
         if (!knownStream) {
@@ -95,9 +101,16 @@ export async function POST(request: NextRequest) {
 
     const broadcasterUserId = body.subscription.condition.broadcaster_user_id;
 
-    // Look up the TwitchStream record by matching the broadcaster's Twitch ID on Profile
+    // Look up the TwitchStream record by matching the broadcaster's Twitch account
     const twitchStream = await prisma.twitchStream.findFirst({
-        where: { user: { profile: { twitchId: broadcasterUserId } } },
+        where: {
+            user: {
+                accounts: {
+                    some: { providerId: TWITCH_PROVIDER_ID, accountId: broadcasterUserId },
+                },
+            },
+        },
+        select: { userId: true, eventSubSecret: true },
     });
 
     if (!twitchStream || !twitchStream.eventSubSecret) {

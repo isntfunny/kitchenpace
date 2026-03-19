@@ -118,6 +118,7 @@ model Account {
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([providerId, accountId])
 }
 
 model Session {
@@ -255,8 +256,7 @@ model Profile {
   notifyOnNewsletter         Boolean   @default(true)
   notifyOnStreamStarted      Boolean   @default(true)
 
-  // Twitch integration
-  twitchId                   String?   @unique
+  // Twitch integration (twitchId lives in account.accountId where providerId='twitch')
   twitchUsername              String?   @db.VarChar(60)
   twitchConnectedAt          DateTime?
 

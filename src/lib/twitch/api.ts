@@ -3,6 +3,9 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { ApiClient } from '@twurple/api';
 import { AppTokenAuthProvider } from '@twurple/auth';
 
+/** Better Auth provider ID for Twitch accounts */
+export const TWITCH_PROVIDER_ID = 'twitch';
+
 // ── Singleton client ────────────────────────────────────────────────────────
 
 let apiClient: ApiClient | null = null;

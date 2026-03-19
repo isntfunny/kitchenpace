@@ -75,19 +75,13 @@ export function LinkedAccountsCard({
     const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Refresh accounts after potential OAuth redirect
+    // Refresh accounts on mount (picks up changes from OAuth redirect)
     useEffect(() => {
-        async function refresh() {
-            const result = await authClient.listAccounts();
+        authClient.listAccounts().then((result) => {
             if (!result.error && result.data) {
                 setAccounts(result.data);
             }
-        }
-        // Check if we just returned from an OAuth flow
-        if (window.location.hash === '#linked') {
-            refresh();
-            window.history.replaceState(null, '', window.location.pathname);
-        }
+        });
     }, []);
 
     const linkedIds = new Set(accounts.map((a) => a.providerId));
@@ -99,7 +93,7 @@ export function LinkedAccountsCard({
         try {
             await authClient.linkSocial({
                 provider: providerId as 'google' | 'discord' | 'twitch',
-                callbackURL: window.location.pathname + '#linked',
+                callbackURL: window.location.pathname,
             });
         } catch {
             setError(`Verbindung mit ${providerId} fehlgeschlagen.`);

@@ -7,7 +7,7 @@ on:
     workflow_dispatch:
 
 env:
-    COOLIFY_APP_UUID: icskwwcoscc000ksggckksw4
+    COOLIFY_APP_UUID: z3vcihuvscm7lxdxh4ssg63j
     IMAGE: registry.isntfunny.de/kitchenpace
 
 jobs:

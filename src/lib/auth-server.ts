@@ -5,13 +5,18 @@ import { admin } from 'better-auth/plugins';
 
 import { prisma } from '@shared/prisma';
 
+const baseURL = process.env.BETTER_AUTH_URL ?? process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
+
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
         provider: 'postgresql',
     }),
     secret: process.env.BETTER_AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXTAUTH_URL,
-    trustedOrigins: process.env.AUTH_TRUSTED_ORIGINS?.split(',').filter(Boolean) ?? [],
+    baseURL,
+    trustedOrigins: [
+        baseURL,
+        ...(process.env.AUTH_TRUSTED_ORIGINS?.split(',').filter(Boolean) ?? []),
+    ],
     emailAndPassword: {
         enabled: true,
         minPasswordLength: 8,
@@ -39,6 +44,7 @@ export const auth = betterAuth({
                   twitch: {
                       clientId: process.env.TWITCH_CLIENT_ID,
                       clientSecret: process.env.TWITCH_CLIENT_SECRET,
+                      scope: ['channel:manage:schedule'],
                   },
               }
             : {}),

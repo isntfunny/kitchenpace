@@ -366,6 +366,7 @@ model TwitchStream {
   nextRecipeId      String?
   plannedAt         DateTime?
   plannedTimezone   String?   @db.VarChar(60)
+  twitchSegmentId   String?   @db.VarChar(120)
 
   // Live state (from EventSub)
   twitchStreamId    String?

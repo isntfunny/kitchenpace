@@ -314,7 +314,7 @@ Die vollstaendige Liste steht in `.env.example`. Besonders relevant sind:
 - Deployments laufen nur von `main`; `live` ist veraltet und kann entfernt oder umbenannt werden.
 - Keine Squash-Merges verwenden, weil sie Branch-Divergenzen und aufgeblasene GitHub-Diffs verursachen.
 - Die CI in `.github/workflows/app-image-live.yml` reagiert auf `v*`-Tags, fuehrt Lint + Prettier-Check aus und startet danach ein Coolify-Redeploy.
-- Die betroffene Coolify-App hat die UUID `icskwwcoscc000ksggckksw4`; die Branch-Konfiguration soll auf `main` zeigen.
+- Die betroffene Coolify-App hat die UUID `z3vcihuvscm7lxdxh4ssg63j` auf tecfriends.de; die Branch-Konfiguration soll auf `main` zeigen.
 
 ### Release-Ablauf
 

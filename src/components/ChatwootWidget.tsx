@@ -28,7 +28,7 @@ export function ChatwootWidgetComponent({ user }: ChatwootWidgetProps) {
             {`
                 window.chatwootSettings = {"position":"right","type":"standard","launcherTitle":"Chatten Sie mit uns"};
                 (function(d,t){
-                    var BASE_URL="https://support.isntfunny.de";
+                    var BASE_URL="https://support.tecfriends.de";
                     var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
                     g.src=BASE_URL+"/packs/js/sdk.js";
                     g.defer=true;g.async=true;

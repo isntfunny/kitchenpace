@@ -6,7 +6,9 @@ import { motion } from 'motion/react';
 import { Avatar } from '@app/components/atoms/Avatar';
 import { SparkleEffect } from '@app/components/atoms/SparkleEffect';
 import { ReportButton } from '@app/components/features/ReportButton';
+import { LiveBadge } from '@app/components/features/twitch/LiveBadge';
 import { PALETTE } from '@app/lib/palette';
+import { SOCIAL } from '@app/lib/themes/palette';
 
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
@@ -21,6 +23,7 @@ interface ProfileHeaderProps {
     isPending: boolean;
     showFollowButton: boolean;
     isSelf: boolean;
+    isLive?: boolean;
     onFollowToggle: () => void;
 }
 
@@ -34,8 +37,13 @@ export function ProfileHeader({
     isPending,
     showFollowButton,
     isSelf,
+    isLive = false,
     onFollowToggle,
 }: ProfileHeaderProps) {
+    const gradient = isLive
+        ? `linear-gradient(135deg, ${SOCIAL.twitch}, ${SOCIAL.twitch}cc, #6b2fa0)`
+        : `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.orange}cc, #c4623d)`;
+
     return (
         <div
             className={css({
@@ -44,9 +52,7 @@ export function ProfileHeader({
                 borderRadius: '2xl',
                 mb: '6',
             })}
-            style={{
-                background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.orange}cc, #c4623d)`,
-            }}
+            style={{ background: gradient }}
         >
             {/* Decorative floating icons */}
             <motion.div
@@ -95,18 +101,33 @@ export function ProfileHeader({
                     })}
                 >
                     {/* Avatar */}
-                    <Avatar
-                        src={user.avatar}
-                        name={user.name}
-                        size={AVATAR_SIZE}
-                        rounded="3xl"
-                        trophyTier={user.trophies?.[0]?.tier ?? null}
-                        trophyCount={user.trophies?.length ?? 0}
-                        className={css({
-                            boxShadow:
-                                '0 0 0 4px rgba(255,255,255,0.4), 0 8px 32px rgba(0,0,0,0.25)',
-                        })}
-                    />
+                    <div className={css({ position: 'relative', flexShrink: 0 })}>
+                        <Avatar
+                            src={user.avatar}
+                            name={user.name}
+                            size={AVATAR_SIZE}
+                            rounded="3xl"
+                            trophyTier={user.trophies?.[0]?.tier ?? null}
+                            trophyCount={user.trophies?.length ?? 0}
+                            className={css({
+                                boxShadow: isLive
+                                    ? `0 0 0 4px ${SOCIAL.twitch}, 0 0 24px rgba(145,70,255,0.4), 0 8px 32px rgba(0,0,0,0.25)`
+                                    : '0 0 0 4px rgba(255,255,255,0.4), 0 8px 32px rgba(0,0,0,0.25)',
+                            })}
+                        />
+                        {isLive && (
+                            <div
+                                className={css({
+                                    position: 'absolute',
+                                    bottom: '-4px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                })}
+                            >
+                                <LiveBadge size="md" />
+                            </div>
+                        )}
+                    </div>
 
                     {/* Profile Info */}
                     <div
@@ -125,7 +146,7 @@ export function ProfileHeader({
                                 mb: '2',
                             })}
                         >
-                            Koch-Profil
+                            {isLive ? 'Gerade Live auf Twitch' : 'Koch-Profil'}
                         </p>
                         <h1
                             className={css({

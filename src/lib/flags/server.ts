@@ -140,6 +140,8 @@ function mapKnownFlags(
         discordSignIn: allFlags[getFeatureFlagName('discordSignIn')] ?? fallback.discordSignIn,
         retroTheme: allFlags[getFeatureFlagName('retroTheme')] ?? fallback.retroTheme,
         twitchSignIn: allFlags[getFeatureFlagName('twitchSignIn')] ?? fallback.twitchSignIn,
+        simulateTwitchLive:
+            allFlags[getFeatureFlagName('simulateTwitchLive')] ?? fallback.simulateTwitchLive,
     };
 }
 

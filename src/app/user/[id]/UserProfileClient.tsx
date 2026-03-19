@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react';
 import type { ActivityFeedItem } from '@app/app/actions/community';
 import { toggleFollowAction } from '@app/app/actions/social';
 import type { EarnedTrophy } from '@app/components/features/TrophySection';
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 
 import { css } from 'styled-system/css';
 
@@ -67,8 +68,11 @@ interface UserProfileClientProps {
 
 // ── Main Component ──────────────────────────────────────────────────────
 
+const SIMULATE_TWITCH_CHANNEL = 'twitchfarming';
+
 export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
     const router = useRouter();
+    const simulateLive = useFeatureFlag('simulateTwitchLive');
     const { recipes, activities } = user;
     const [followerTotal, setFollowerTotal] = useState(user.followerCount);
     const [isFollowing, setIsFollowing] = useState(viewer?.isFollowing ?? false);
@@ -100,6 +104,12 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
         });
     };
 
+    const effectiveIsLive = simulateLive || (user.twitchStream?.isLive ?? false);
+    const effectiveTwitchUsername = simulateLive
+        ? (user.twitchUsername ?? SIMULATE_TWITCH_CHANNEL)
+        : user.twitchUsername;
+    const showTwitchSection = effectiveTwitchUsername && (user.twitchStream || simulateLive);
+
     return (
         <div id="user-profile-page">
             {/* Hero Banner */}
@@ -111,11 +121,12 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                 isPending={isPending}
                 showFollowButton={showFollowButton}
                 isSelf={viewer?.isSelf ?? false}
+                isLive={effectiveIsLive}
                 onFollowToggle={handleFollowToggle}
             />
 
             {/* Twitch Section */}
-            {user.twitchUsername && user.twitchStream && (
+            {showTwitchSection && (
                 <div
                     className={css({
                         px: { base: '4', md: '6' },
@@ -125,13 +136,13 @@ export function UserProfileClient({ user, viewer }: UserProfileClientProps) {
                     })}
                 >
                     <ProfileTwitchSection
-                        twitchUsername={user.twitchUsername}
-                        isLive={user.twitchStream.isLive}
-                        streamTitle={user.twitchStream.title}
-                        nextRecipeTitle={user.twitchStream.nextRecipe?.title}
-                        nextRecipeSlug={user.twitchStream.nextRecipe?.slug}
-                        plannedAt={user.twitchStream.plannedAt}
-                        plannedTimezone={user.twitchStream.plannedTimezone}
+                        twitchUsername={effectiveTwitchUsername!}
+                        isLive={effectiveIsLive}
+                        streamTitle={user.twitchStream?.title}
+                        nextRecipeTitle={user.twitchStream?.nextRecipe?.title}
+                        nextRecipeSlug={user.twitchStream?.nextRecipe?.slug}
+                        plannedAt={user.twitchStream?.plannedAt}
+                        plannedTimezone={user.twitchStream?.plannedTimezone}
                     />
                 </div>
             )}

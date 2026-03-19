@@ -5,6 +5,7 @@ export const FEATURE_FLAGS = {
     discordSignIn: 'discord-sign-in',
     retroTheme: 'retro-theme',
     twitchSignIn: 'twitch-sign-in',
+    simulateTwitchLive: 'simulate-twitch-live',
 } as const;
 
 export type FeatureFlagName = keyof typeof FEATURE_FLAGS;
@@ -18,4 +19,5 @@ export const DEFAULT_FEATURE_FLAG_VALUES: FeatureFlagValues = {
     discordSignIn: false,
     retroTheme: false,
     twitchSignIn: false,
+    simulateTwitchLive: false,
 };

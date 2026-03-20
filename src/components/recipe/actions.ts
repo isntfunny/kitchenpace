@@ -1,18 +1,13 @@
 'use server';
 
-import { distance as levenshtein } from 'fastest-levenshtein';
-
 import {
     buildIngredientParser,
     escapeRegex,
     type ParsedIngredientInput,
 } from '@app/lib/ingredients/parseIngredientInput';
+import { searchIngredientsByName } from '@app/lib/ingredients/search';
 import { createLogger } from '@shared/logger';
-import {
-    opensearchClient,
-    OPENSEARCH_INDEX,
-    OPENSEARCH_INGREDIENTS_INDEX,
-} from '@shared/opensearch/client';
+import { opensearchClient, OPENSEARCH_INDEX } from '@shared/opensearch/client';
 import { prisma } from '@shared/prisma';
 
 import type { IngredientSearchResult } from './RecipeForm/data';
@@ -45,51 +40,6 @@ async function getParser() {
     return _parserPromise;
 }
 
-// ── Matching helpers ──
-
-/** Get candidate names for matching: full name + name before first comma.
- *  e.g. "Hackfleisch, Gehacktes" → ["hackfleisch, gehacktes", "hackfleisch"] */
-function matchCandidates(name: string): string[] {
-    const lower = name.toLowerCase();
-    const commaIdx = lower.indexOf(',');
-    return commaIdx > 0 ? [lower, lower.slice(0, commaIdx).trim()] : [lower];
-}
-
-function findExactMatch(
-    results: IngredientSearchResult[],
-    name: string,
-): IngredientSearchResult | null {
-    const lower = name.toLowerCase();
-    return (
-        results.find(
-            (r) =>
-                matchCandidates(r.name).includes(lower) || r.matchedAlias?.toLowerCase() === lower,
-        ) ?? null
-    );
-}
-
-function findFuzzyMatch(
-    results: IngredientSearchResult[],
-    name: string,
-): IngredientSearchResult | null {
-    const lower = name.toLowerCase();
-    const maxDist = lower.length <= 8 ? 2 : 3;
-    let best: IngredientSearchResult | null = null;
-    let bestDist = Infinity;
-    for (const r of results) {
-        // Check full name and name before comma
-        const candidates = matchCandidates(r.name);
-        for (const candidate of candidates) {
-            const dist = levenshtein(candidate, lower);
-            if (dist <= maxDist && dist < bestDist) {
-                best = r;
-                bestDist = dist;
-            }
-        }
-    }
-    return best;
-}
-
 // ── Main search action ──
 
 export interface IngredientSearchResponse {
@@ -110,114 +60,24 @@ export async function searchIngredients(rawInput: string): Promise<IngredientSea
     const trimmed = rawInput?.trim();
     if (!trimmed || trimmed.length < 2) return empty;
 
-    // 1. Parse raw input server-side
+    // 1. Parse raw input server-side (extracts amount/unit from "200g Mehl")
     const parse = await getParser();
     const parsed = parse(trimmed);
     const searchTerm = parsed.name || trimmed;
 
-    // 2. Search OpenSearch
-    //    - phrase_prefix: broad candidate matching (prefix on any token)
-    //    - match on name/pluralName: boosts exact word matches ("Eier" > "Eierschwamm")
-    const response = await opensearchClient.search({
-        index: OPENSEARCH_INGREDIENTS_INDEX,
-        body: {
-            size: 10,
-            query: {
-                bool: {
-                    should: [
-                        {
-                            multi_match: {
-                                query: searchTerm,
-                                type: 'phrase_prefix',
-                                fields: ['name^3', 'pluralName^3', 'aliases^2', 'keywords'],
-                            },
-                        },
-                        {
-                            multi_match: {
-                                query: searchTerm,
-                                type: 'best_fields',
-                                fields: ['name^10', 'pluralName^10', 'aliases^5'],
-                            },
-                        },
-                    ],
-                    minimum_should_match: 1,
-                },
-            },
-            sort: [{ _score: { order: 'desc' } }, { 'name.keyword': { order: 'asc' } }],
-            highlight: {
-                fields: { name: {}, pluralName: {}, aliases: {} },
-                pre_tags: ['<mark>'],
-                post_tags: ['</mark>'],
-            },
-        },
-    });
-
-    const hits = response.body.hits?.hits ?? [];
-
-    const results = hits
-        .map((hit: { _source?: Record<string, unknown>; highlight?: Record<string, string[]> }) => {
-            const source = hit._source as
-                | {
-                      id?: string;
-                      name?: string;
-                      pluralName?: string | null;
-                      categories?: string[];
-                      units?: string[];
-                      aliases?: string[];
-                  }
-                | undefined;
-            if (!source?.id || !source.name) return null;
-
-            const queryLower = searchTerm.toLowerCase();
-            const nameMatches = source.name.toLowerCase().includes(queryLower);
-            const aliases = Array.isArray(source.aliases) ? source.aliases : [];
-            const matchedAlias = !nameMatches
-                ? aliases.find((a) => a.toLowerCase().includes(queryLower))
-                : undefined;
-
-            // Extract highlight — prefer name highlight, fall back to alias
-            const hl = hit.highlight;
-            const highlightedName = hl?.name?.[0] ?? undefined;
-
-            return {
-                id: source.id,
-                name: source.name,
-                pluralName: source.pluralName ?? null,
-                categories: Array.isArray(source.categories) ? source.categories : [],
-                units: Array.isArray(source.units) ? source.units : [],
-                matchedAlias,
-                highlightedName,
-            };
-        })
-        .filter((result): result is NonNullable<typeof result> => Boolean(result));
-
-    // Dedup plural forms: if both "Ei" (pluralName="Eier") and "Eier" appear,
-    // drop the one whose name is another result's pluralName — i.e. keep the standalone
-    // "Eier" and drop "Ei" (the singular form that just happened to match via pluralName).
-    const resultNames = new Set(results.map((r) => r.name.toLowerCase()));
-    const filtered = results.filter((r) => {
-        // Drop this result if its pluralName is already a standalone result name
-        // (e.g. drop "Ei" when "Eier" exists as its own ingredient in results)
-        if (r.pluralName && resultNames.has(r.pluralName.toLowerCase())) return false;
-        return true;
-    });
-
-    // 3. Find best match
-    const exact = findExactMatch(filtered, searchTerm);
-    const fuzzy = !exact ? findFuzzyMatch(filtered, searchTerm) : null;
-    const bestMatch = exact ?? fuzzy;
-    const matchType = exact ? 'exact' : fuzzy ? 'fuzzy' : 'none';
+    // 2. Shared OpenSearch search + matching
+    const { hits, bestMatch, matchType } = await searchIngredientsByName(searchTerm);
 
     ingLog.debug('search', {
         rawInput: trimmed,
         parsed: { name: parsed.name, amount: parsed.amount, unit: parsed.unit },
         searchTerm,
-        hits: filtered.length,
+        hits: hits.length,
         matchType,
         bestMatch: bestMatch?.name ?? null,
     });
 
-    return { results: filtered, parsed, bestMatch, matchType };
+    return { results: hits, parsed, bestMatch, matchType };
 }
 
 export async function searchTags(

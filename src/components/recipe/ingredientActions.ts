@@ -38,61 +38,22 @@ export interface IngredientMatch {
 }
 
 /**
- * Lookup-only: checks if an ingredient name matches an existing DB entry.
+ * Lookup-only: checks if an ingredient name matches an existing DB entry
+ * via OpenSearch (same fuzzy/wildcard search as the ingredient manager).
  * Does NOT create anything. Safe to call at preview/display time.
  */
 export async function matchIngredient(name: string): Promise<IngredientMatch> {
-    const { stemGerman, getWordVariants } = await import('@app/lib/german-stem');
+    const { searchIngredientsByName } = await import('@app/lib/ingredients/search');
 
-    const trimmed = name.trim();
-    const singular = await stemGerman(trimmed);
-    const canonicalName = trimmed[0].toUpperCase() + singular.slice(1);
-    const slug = slugify(canonicalName);
+    const { bestMatch, matchType } = await searchIngredientsByName(name.trim());
 
-    // 1. Slug match (singular form)
-    const bySlug = await prisma.ingredient.findUnique({
-        where: { slug },
-        select: { id: true, name: true },
-    });
-    if (bySlug) {
-        const isExact = bySlug.name.toLowerCase() === trimmed.toLowerCase();
-        return {
-            status: isExact ? 'exact' : 'stem',
-            matchedName: bySlug.name,
-            matchedId: bySlug.id,
-        };
-    }
+    if (!bestMatch) return { status: 'new' };
 
-    // 2. Alias match
-    const variants = await getWordVariants(trimmed);
-    if (variants.length > 1) {
-        const byAlias = await prisma.ingredient.findFirst({
-            where: { aliases: { hasSome: variants } },
-            select: { id: true, name: true },
-        });
-        if (byAlias) {
-            return { status: 'stem', matchedName: byAlias.name, matchedId: byAlias.id };
-        }
-    }
-
-    // 3. Original slug match
-    const originalSlug = slugify(trimmed);
-    if (originalSlug !== slug) {
-        const byOriginalSlug = await prisma.ingredient.findUnique({
-            where: { slug: originalSlug },
-            select: { id: true, name: true },
-        });
-        if (byOriginalSlug) {
-            const isExact = byOriginalSlug.name.toLowerCase() === trimmed.toLowerCase();
-            return {
-                status: isExact ? 'exact' : 'stem',
-                matchedName: byOriginalSlug.name,
-                matchedId: byOriginalSlug.id,
-            };
-        }
-    }
-
-    return { status: 'new' };
+    return {
+        status: matchType === 'exact' ? 'exact' : 'stem',
+        matchedName: bestMatch.name,
+        matchedId: bestMatch.id,
+    };
 }
 
 /**

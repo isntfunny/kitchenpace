@@ -32,6 +32,30 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '20. März 2026',
+        version: 'v2026-03-20',
+        emoji: '🥦',
+        title: 'Nährwerte, bessere Einheiten & Import-Vorschau',
+        items: [
+            {
+                text: 'Nährwert-Anreicherung — Rezepte erhalten automatisch Kalorien, Eiweiß, Fett und Kohlenhydrate basierend auf ihren Zutaten',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Einheitliche Mengeneinheiten — alle Rezepte verwenden jetzt standardisierte Einheiten wie g, ml, Stück usw.',
+                tag: 'feat',
+            },
+            {
+                text: 'Beim Import von Rezepten siehst du vorab, welche Zutaten erkannt wurden und welche noch zugeordnet werden müssen',
+                tag: 'feat',
+            },
+            {
+                text: 'Ähnliche Rezepte werden jetzt zuverlässiger geladen',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '19. März 2026',
         version: 'v2026-03-19',
         emoji: '🎬',

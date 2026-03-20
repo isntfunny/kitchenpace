@@ -33,6 +33,22 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 const CHANGELOG: ChangelogEntry[] = [
     {
         date: '20. März 2026',
+        version: 'v2026-03-20.1',
+        emoji: '🎯',
+        title: 'Persönliche Empfehlungen & Import-Korrekturen',
+        items: [
+            {
+                text: 'Geschmacksprofil — KüchenTakt lernt aus deinen Rezepten und schlägt dir passende Gerichte vor',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Importierte Rezepte werden jetzt zuverlässig in die richtige Kategorie einsortiert',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
+        date: '20. März 2026',
         version: 'v2026-03-20',
         emoji: '🥦',
         title: 'Nährwerte, bessere Einheiten & Import-Vorschau',

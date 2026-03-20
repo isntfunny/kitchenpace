@@ -1,6 +1,8 @@
 'use server';
 
 import type { FlowEdgeInput, FlowNodeInput } from '@app/components/recipe/recipeFormTypes';
+import { getServerAuthSession } from '@app/lib/auth';
+import { cosineSimilarity } from '@app/lib/embeddings/embedding-service';
 import { PALETTE } from '@app/lib/palette';
 import {
     toRecipeCardData,
@@ -8,6 +10,7 @@ import {
     type RecipeWithCategory,
 } from '@app/lib/recipe-card';
 import {
+    EMBEDDING_DIMENSIONS,
     opensearchClient,
     OPENSEARCH_EMBEDDINGS_INDEX,
     OPENSEARCH_INDEX,
@@ -389,10 +392,19 @@ const SIMILAR_OVER_REQUEST = 3;
 export async function fetchSimilarRecipes(recipeId: string, limit = 8): Promise<RecipeCardData[]> {
     const cap = Math.min(limit, 20);
 
+    // Get current user for personalized reranking (optional — anonymous users get pure similarity)
+    let userId: string | undefined;
+    try {
+        const session = await getServerAuthSession();
+        userId = session?.user?.id;
+    } catch {
+        // Not logged in — proceed without personalization
+    }
+
     try {
         let results: RecipeCardData[] | null = null;
         try {
-            results = await similarByEmbedding(recipeId, cap);
+            results = await similarByEmbedding(recipeId, cap, userId);
         } catch (err) {
             console.warn('[Similar] k-NN failed, falling back to text similarity', {
                 recipeId,
@@ -417,6 +429,7 @@ type OsHitsResponse = { hits?: { hits?: OsHit[] } };
 async function similarByEmbedding(
     recipeId: string,
     limit: number,
+    userId?: string,
 ): Promise<RecipeCardData[] | null> {
     let embedding: number[];
     try {
@@ -436,14 +449,58 @@ async function similarByEmbedding(
         body: { size: k, query: { knn: { embedding: { vector: embedding, k } } } },
     });
 
-    const hits = ((response.body as OsHitsResponse).hits?.hits ?? [])
+    let hits = ((response.body as OsHitsResponse).hits?.hits ?? [])
         .filter((h) => h._id !== recipeId && h._score >= SIMILAR_MIN_SCORE)
         .slice(0, limit * SIMILAR_OVER_REQUEST);
 
     if (hits.length === 0) return [];
 
+    // Light taste-based reranking: recipe similarity dominates (85%), taste nudges order (15%)
+    if (userId && hits.length > 1) {
+        hits = await rerankByTaste(hits, userId);
+    }
+
     const details = await fetchSimilarDetails(hits.map((h) => ({ id: h._id, score: h._score })));
     return details.slice(0, limit);
+}
+
+const TASTE_RECIPE_BLEND = 0.7;
+const TASTE_USER_BLEND = 0.3;
+
+async function rerankByTaste(hits: OsHit[], userId: string): Promise<OsHit[]> {
+    try {
+        const profile = await prisma.profile.findUnique({
+            where: { userId },
+            select: { tasteEmbedding: true },
+        });
+
+        const tasteVec = profile?.tasteEmbedding as number[] | undefined;
+        if (!tasteVec || tasteVec.length !== EMBEDDING_DIMENSIONS) return hits;
+
+        // Fetch candidate recipe embeddings from PostgreSQL
+        const candidateEmbeddings = await prisma.recipeEmbedding.findMany({
+            where: { recipeId: { in: hits.map((h) => h._id) } },
+            select: { recipeId: true, embedding: true },
+        });
+        const embMap = new Map(
+            candidateEmbeddings.map((e) => [e.recipeId, e.embedding as number[]]),
+        );
+
+        const reranked = hits.map((h) => {
+            const candEmb = embMap.get(h._id);
+            const tasteSim = candEmb ? cosineSimilarity(tasteVec, candEmb) : 0;
+            return { ...h, _score: TASTE_RECIPE_BLEND * h._score + TASTE_USER_BLEND * tasteSim };
+        });
+
+        reranked.sort((a, b) => b._score - a._score);
+        return reranked;
+    } catch (err) {
+        console.warn('[Similar] Taste reranking failed, using pure similarity', {
+            userId,
+            error: err instanceof Error ? err.message : String(err),
+        });
+        return hits;
+    }
 }
 
 async function similarByText(recipeId: string, limit: number): Promise<RecipeCardData[]> {

@@ -59,6 +59,10 @@ export interface EnrichIngredientNutritionJob {
     ingredientId: string;
 }
 
+export interface ComputeTasteProfilesJob {
+    batchSize?: number;
+}
+
 export type ScheduledJob =
     | { name: 'sync-recipes'; data: SyncRecipesJob }
     | { name: 'sync-ingredients'; data: SyncIngredientsJob }
@@ -69,7 +73,8 @@ export type ScheduledJob =
     | { name: 'generate-recipe-og'; data: GenerateRecipeOgJob }
     | { name: 'generate-og-images'; data: GenerateOgImagesJob }
     | { name: 'backfill-ingredient-plurals'; data: BackfillIngredientPluralsJob }
-    | { name: 'enrich-ingredient-nutrition'; data: EnrichIngredientNutritionJob };
+    | { name: 'enrich-ingredient-nutrition'; data: EnrichIngredientNutritionJob }
+    | { name: 'compute-taste-profiles'; data: ComputeTasteProfilesJob };
 
 // ── Twitch jobs ──────────────────────────────────────────────────────
 

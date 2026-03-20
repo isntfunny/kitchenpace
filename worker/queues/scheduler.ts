@@ -165,6 +165,20 @@ const scheduledJobs: ScheduledJobDefinition[] = [
         // No repeat — manual trigger only
     },
     {
+        name: 'compute-taste-profiles',
+        queue: QueueName.SCHEDULED,
+        data: { batchSize: 100 },
+        schema: {
+            batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 10, max: 500 },
+        },
+        options: {
+            repeat: {
+                pattern: '0 3 * * *', // 3:00 AM daily
+                tz: 'Europe/Berlin',
+            },
+        },
+    },
+    {
         name: 'twitch-health-check',
         queue: QueueName.TWITCH,
         data: {},

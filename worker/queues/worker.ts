@@ -21,6 +21,7 @@ import {
     processGenerateOgImages,
     processBackfillIngredientPlurals,
 } from './scheduled-processor';
+import { processComputeTasteProfiles } from './taste-processor';
 import {
     processRegisterEventSub,
     processUnregisterEventSub,
@@ -72,6 +73,8 @@ const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
                 return processBackfillIngredientPlurals(job);
             case 'enrich-ingredient-nutrition':
                 return processEnrichIngredientNutrition(job);
+            case 'compute-taste-profiles':
+                return processComputeTasteProfiles(job);
             default:
                 throw new Error(`Unknown scheduled job: ${job.name}`);
         }

@@ -1,7 +1,11 @@
+import { similarity } from 'ml-distance';
 import OpenAI from 'openai';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 export const EMBEDDING_MODEL = 'text-embedding-3-large';
+
+// ── Vector math ─────────────────────────────────────────────────────────────
+export const cosineSimilarity: (a: number[], b: number[]) => number = similarity.cosine;
 const MAX_BATCH_SIZE = 100; // OpenAI embeddings API limit per request
 
 // ── Singleton client ────────────────────────────────────────────────────────

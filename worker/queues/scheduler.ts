@@ -143,6 +143,19 @@ const scheduledJobs: ScheduledJobDefinition[] = [
         // No repeat — manual trigger only
     },
     {
+        name: 'enrich-ingredient-nutrition',
+        queue: QueueName.SCHEDULED,
+        data: { ingredientId: '' },
+        schema: {
+            ingredientId: {
+                type: 'string',
+                label: 'Ingredient ID',
+                placeholder: 'cuid of the ingredient',
+            },
+        },
+        // No repeat — dispatched when a new ingredient is created
+    },
+    {
         name: 'backfill-embeddings',
         queue: QueueName.OPENSEARCH,
         data: { batchSize: 50 },

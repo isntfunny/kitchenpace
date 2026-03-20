@@ -3,6 +3,7 @@ import { Job, Worker, WorkerOptions } from 'bullmq';
 import { processDatabaseBackup } from './backup-processor';
 import { getRedis } from './connection';
 import { createJobRun, updateJobRun } from './job-run';
+import { processEnrichIngredientNutrition } from './nutrition-processor';
 import {
     processBackfillEmbeddings,
     processReindex,
@@ -69,6 +70,8 @@ const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
                 return processGenerateOgImages(job);
             case 'backfill-ingredient-plurals':
                 return processBackfillIngredientPlurals(job);
+            case 'enrich-ingredient-nutrition':
+                return processEnrichIngredientNutrition(job);
             default:
                 throw new Error(`Unknown scheduled job: ${job.name}`);
         }

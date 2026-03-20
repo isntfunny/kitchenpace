@@ -72,6 +72,11 @@ export async function analyzeWithAI(
     sourceUrl = '',
     userId?: string,
 ): Promise<AnalyzedRecipe> {
+    const withSource = <T extends object>(data: T): T & { sourceUrl?: string } => ({
+        ...data,
+        sourceUrl: sourceUrl || undefined,
+    });
+
     if (!markdown.trim()) {
         throw new Error('Kein Inhalt zum Analysieren vorhanden.');
     }
@@ -87,7 +92,7 @@ export async function analyzeWithAI(
                 errorMessage: 'No API key configured (OPENAI_API_KEY)',
             });
         }
-        return parseRecipeMarkdownFallback(markdown);
+        return withSource(parseRecipeMarkdownFallback(markdown));
     }
 
     // Fetch context data in parallel — gives the AI existing tags & ingredient names
@@ -122,7 +127,7 @@ export async function analyzeWithAI(
             });
         }
         // Soft fallback on validation errors so the user can still edit
-        return parseRecipeMarkdownFallback(markdown);
+        return withSource(parseRecipeMarkdownFallback(markdown));
     }
 
     // Log the successful AI run (fire-and-forget — don't block the response)
@@ -142,7 +147,7 @@ export async function analyzeWithAI(
         }).catch((err) => console.error('ImportRun log failed:', err));
     }
 
-    return transformImportedRecipe(result.data);
+    return withSource(transformImportedRecipe(result.data));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

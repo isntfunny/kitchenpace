@@ -68,3 +68,4 @@ __pycache__
 
 /.playwright-mcp
 /playwright-report
+tools.yaml

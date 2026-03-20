@@ -1,3 +1,5 @@
+import { disconnectRedis } from '../../worker/queues/connection.js';
+import { closeAllQueues } from '../../worker/queues/queue.js';
 import { triggerJobNow as triggerJob } from '../../worker/queues/scheduler.js';
 import { QueueName } from '../../worker/queues/types.js';
 
@@ -9,6 +11,8 @@ export async function triggerJobNow(queue: string, jobName: string, data: Record
         process.exit(1);
     }
     await triggerJob(queue as QueueName, jobName, data);
+    await closeAllQueues();
+    await disconnectRedis();
 }
 
 export function listQueues(): string[] {
@@ -37,6 +41,7 @@ export function getJobDefinitions(): Record<string, string[]> {
             'backup-database-daily',
             'purge-thumbnail-cache',
             'generate-og-images',
+            'enrich-ingredient-nutrition',
         ],
         backup: ['database-backup'],
     };

@@ -11,7 +11,7 @@
 
 import { readFileSync } from 'fs';
 
-import { checkbox, confirm } from '@inquirer/prompts';
+import { confirm, search, select } from '@inquirer/prompts';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora from 'ora';
@@ -88,7 +88,7 @@ export function registerImportCommand(program: Command): void {
                     const publish = options.publish ?? false;
                     if (allUrls.length === 1) {
                         // Single import — full interactive flow
-                        await importSingle(user, allUrls[0], publish);
+                        await importOne(user, allUrls[0], publish);
                     } else {
                         // Batch import
                         await importBatch(user, allUrls, publish);
@@ -136,42 +136,122 @@ async function resolveUser(email: string): Promise<ResolvedUser> {
 // Single import (interactive)
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function importSingle(user: ResolvedUser, url: string, publish: boolean): Promise<void> {
+/**
+ * Unified ingredient review: single select loop to toggle (on/off), replace (DB search), or confirm.
+ * Returns the final ingredient list, or null if all deselected.
+ */
+async function reviewIngredients(
+    ingredients: AnalyzedIngredient[],
+): Promise<AnalyzedIngredient[] | null> {
+    const matches = await matchIngredientsWithSpinner(ingredients);
+
+    const ings = [...ingredients];
+    const mats = [...matches];
+    const enabled = new Set(ings.map((_, i) => i));
+
+    while (true) {
+        const count = enabled.size;
+        const choices = ings.map((ing, idx) => {
+            const on = enabled.has(idx);
+            const prefix = on ? chalk.green('✓') : chalk.red('✗');
+            const label = on
+                ? formatIngredientWithMatch(ing, mats[idx])
+                : chalk.strikethrough(chalk.dim(formatIngredientWithMatch(ing, mats[idx])));
+            return { name: `${prefix} ${label}`, value: idx };
+        });
+        choices.push({
+            name: chalk.bold.green(`\n  ⏎ Fertig (${count}/${ings.length} ausgewählt)`),
+            value: -1,
+        });
+
+        const picked = await select<number>({
+            message: 'Zutaten — auswählen zum Umschalten/Ersetzen',
+            choices,
+            loop: false,
+            pageSize: 22,
+        });
+
+        if (picked === -1) break;
+
+        // Sub-action for the picked ingredient
+        const ing = ings[picked];
+        const isOn = enabled.has(picked);
+        const action = await select<'toggle' | 'replace' | 'back'>({
+            message: `${ing.amount ? ing.amount + ' ' : ''}${ing.unit && ing.unit !== 'Stück' ? ing.unit + ' ' : ''}${ing.name}`,
+            choices: [
+                {
+                    name: isOn ? chalk.red('✗ Abwählen') : chalk.green('✓ Auswählen'),
+                    value: 'toggle' as const,
+                },
+                { name: '🔍 Ersetzen (DB-Suche)', value: 'replace' as const },
+                { name: chalk.dim('↩ Zurück'), value: 'back' as const },
+            ],
+        });
+
+        if (action === 'toggle') {
+            if (isOn) enabled.delete(picked);
+            else enabled.add(picked);
+        } else if (action === 'replace') {
+            const result = await searchIngredientPrompt(
+                ing.name,
+                ings.map((i) => i.name),
+            );
+            if (result) {
+                const oldName = ing.name;
+                ings[picked] = { ...ing, name: result.name };
+                mats[picked] = { status: 'exact', matchedName: result.name, matchedId: result.id };
+                console.log(
+                    chalk.green(
+                        `  ✓ ${oldName} → ${result.name} (${ing.amount || ''} ${ing.unit || ''} beibehalten)`,
+                    ),
+                );
+            }
+        }
+    }
+
+    if (enabled.size === 0) return null;
+
+    return [...enabled].sort((a, b) => a - b).map((idx) => ings[idx]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Core single-URL import — used by both single and batch paths
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ImportResult {
+    url: string;
+    status: 'ok' | 'skipped' | 'error';
+    title?: string;
+    slug?: string;
+    error?: string;
+}
+
+async function importOne(user: ResolvedUser, url: string, publish: boolean): Promise<ImportResult> {
+    // Duplicate check
+    const dupe = await isAlreadyImported(url);
+    if (dupe) {
+        console.log(
+            chalk.yellow(`Bereits importiert: "${dupe.title}" (${dupe.slug}) — übersprungen.`),
+        );
+        return { url, status: 'skipped', title: dupe.title, slug: dupe.slug };
+    }
+
+    // Scrape + AI
     const analyzed = await scrapeAndAnalyze(user, url);
-    if (!analyzed) return;
+    if (!analyzed) {
+        return { url, status: 'error', error: 'Scrape/AI failed' };
+    }
 
     printRecipeSummary(analyzed);
 
-    // Match ingredients against DB before showing the list
-    const matches = await matchIngredientsWithSpinner(analyzed.ingredients);
-
-    // Interactive ingredient review
-    console.log(chalk.yellow('Review ingredients — deselect with SPACE, confirm with ENTER:'));
-    console.log();
-
-    const selected = await checkbox<number>({
-        message: 'Zutaten',
-        loop: false,
-        pageSize: 20,
-        choices: analyzed.ingredients.map((ing, idx) => ({
-            name: formatIngredientWithMatch(ing, matches[idx]),
-            value: idx,
-            checked: true,
-        })),
-    });
-
-    if (selected.length === 0) {
-        console.log(chalk.red('\nKeine Zutaten ausgewählt — Import abgebrochen.'));
-        return;
+    // Interactive ingredient review + correction
+    const selectedIngredients = await reviewIngredients(analyzed.ingredients);
+    if (!selectedIngredients) {
+        console.log(chalk.red('Keine Zutaten ausgewählt — übersprungen.'));
+        return { url, status: 'skipped', title: analyzed.title };
     }
 
-    const selectedIngredients = selected.map((idx) => analyzed.ingredients[idx]);
-    console.log(
-        chalk.green(
-            `\n${selectedIngredients.length}/${analyzed.ingredients.length} Zutaten ausgewählt`,
-        ),
-    );
-
+    // Confirm save
     const statusLabel = publish ? 'PUBLISHED' : 'DRAFT';
     const proceed = await confirm({
         message: `Rezept "${analyzed.title}" als ${statusLabel} speichern?`,
@@ -179,105 +259,39 @@ async function importSingle(user: ResolvedUser, url: string, publish: boolean): 
     });
 
     if (!proceed) {
-        console.log(chalk.yellow('Import abgebrochen.'));
-        return;
+        return { url, status: 'skipped', title: analyzed.title };
     }
 
-    await saveRecipe(user, { ...analyzed, ingredients: selectedIngredients }, publish);
+    const saved = await saveRecipe(
+        user,
+        { ...analyzed, ingredients: selectedIngredients },
+        publish,
+    );
+    if (saved) {
+        return { url, status: 'ok', title: analyzed.title, slug: saved.slug };
+    }
+    return { url, status: 'error', title: analyzed.title, error: 'Save failed' };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Batch import
+// Single + Batch wrappers
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function importBatch(user: ResolvedUser, urls: string[], publish: boolean): Promise<void> {
     console.log(chalk.bold(`\nBatch import: ${urls.length} URLs\n`));
 
-    const statusLabel = publish ? 'PUBLISHED' : 'DRAFT';
-    const results: {
-        url: string;
-        status: 'ok' | 'skipped' | 'error';
-        title?: string;
-        slug?: string;
-        error?: string;
-    }[] = [];
+    const results: ImportResult[] = [];
 
     for (let i = 0; i < urls.length; i++) {
-        const url = urls[i];
-        console.log(chalk.bold(`\n[${i + 1}/${urls.length}] ${url}`));
+        console.log(chalk.bold(`\n[${i + 1}/${urls.length}] ${urls[i]}`));
         console.log(chalk.dim('─'.repeat(60)));
 
-        const analyzed = await scrapeAndAnalyze(user, url);
-        if (!analyzed) {
-            results.push({ url, status: 'error', error: 'Scrape/AI failed' });
-            continue;
-        }
-
-        printRecipeSummary(analyzed);
-
-        // Match ingredients against DB before showing the list
-        const matches = await matchIngredientsWithSpinner(analyzed.ingredients);
-
-        // Interactive ingredient review per recipe
-        console.log(chalk.yellow('Review ingredients — deselect with SPACE, confirm with ENTER:'));
-        console.log();
-
-        let selected: number[];
         try {
-            selected = await checkbox<number>({
-                message: 'Zutaten',
-                loop: false,
-                pageSize: 20,
-                choices: analyzed.ingredients.map((ing, idx) => ({
-                    name: formatIngredientWithMatch(ing, matches[idx]),
-                    value: idx,
-                    checked: true,
-                })),
-            });
+            results.push(await importOne(user, urls[i], publish));
         } catch {
-            // User pressed Ctrl+C during checkbox — abort remaining
+            // Ctrl+C during interactive prompts
             console.log(chalk.yellow('\nBatch aborted by user.'));
             break;
-        }
-
-        if (selected.length === 0) {
-            console.log(chalk.red('Keine Zutaten ausgewählt — übersprungen.'));
-            results.push({ url, status: 'skipped', title: analyzed.title });
-            continue;
-        }
-
-        const selectedIngredients = selected.map((idx) => analyzed.ingredients[idx]);
-        console.log(
-            chalk.green(
-                `${selectedIngredients.length}/${analyzed.ingredients.length} Zutaten ausgewählt`,
-            ),
-        );
-
-        let proceed: boolean;
-        try {
-            proceed = await confirm({
-                message: `Rezept "${analyzed.title}" als ${statusLabel} speichern?`,
-                default: true,
-            });
-        } catch {
-            console.log(chalk.yellow('\nBatch aborted by user.'));
-            break;
-        }
-
-        if (!proceed) {
-            results.push({ url, status: 'skipped', title: analyzed.title });
-            continue;
-        }
-
-        const saved = await saveRecipe(
-            user,
-            { ...analyzed, ingredients: selectedIngredients },
-            publish,
-        );
-        if (saved) {
-            results.push({ url, status: 'ok', title: analyzed.title, slug: saved.slug });
-        } else {
-            results.push({ url, status: 'error', title: analyzed.title, error: 'Save failed' });
         }
     }
 
@@ -291,27 +305,40 @@ async function importBatch(user: ResolvedUser, urls: string[], publish: boolean)
 
     if (ok.length > 0) {
         console.log(chalk.green.bold(`  ${ok.length} imported:`));
-        for (const r of ok) {
-            console.log(chalk.green(`    ${r.title} → ${r.slug}`));
-        }
+        for (const r of ok) console.log(chalk.green(`    ${r.title} → ${r.slug}`));
     }
     if (skipped.length > 0) {
         console.log(chalk.yellow(`  ${skipped.length} skipped:`));
-        for (const r of skipped) {
-            console.log(chalk.yellow(`    ${r.title ?? r.url}`));
-        }
+        for (const r of skipped) console.log(chalk.yellow(`    ${r.title ?? r.url}`));
     }
     if (errors.length > 0) {
         console.log(chalk.red(`  ${errors.length} failed:`));
-        for (const r of errors) {
-            console.log(chalk.red(`    ${r.url} — ${r.error}`));
-        }
+        for (const r of errors) console.log(chalk.red(`    ${r.url} — ${r.error}`));
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared helpers
 // ─────────────────────────────────────────────────────────────────────────────
+
+async function isAlreadyImported(url: string): Promise<{ title: string; slug: string } | null> {
+    const [byRecipe, byImportRun] = await Promise.all([
+        db.recipe.findFirst({
+            where: { sourceUrl: url },
+            select: { title: true, slug: true },
+        }),
+        db.importRun.findFirst({
+            where: { sourceUrl: url, status: 'SUCCESS' },
+            orderBy: { createdAt: 'desc' },
+            select: { recipeId: true, recipe: { select: { title: true, slug: true } } },
+        }),
+    ]);
+    if (byRecipe) return byRecipe;
+    if (byImportRun?.recipe) return byImportRun.recipe;
+    // ImportRun exists but recipe was deleted or recipeId is null — still skip
+    if (byImportRun) return { title: '(previously imported)', slug: '(deleted)' };
+    return null;
+}
 
 async function scrapeAndAnalyze(user: ResolvedUser, url: string): Promise<AnalyzedRecipe | null> {
     // Scrape
@@ -407,6 +434,70 @@ async function saveRecipe(
         console.error(chalk.red(err instanceof Error ? err.message : String(err)));
         return null;
     }
+}
+
+async function searchIngredientsInDb(
+    query: string,
+): Promise<{ id: string; name: string; slug: string }[]> {
+    if (!query || query.length < 2) return [];
+    return db.ingredient.findMany({
+        where: {
+            OR: [
+                { name: { contains: query, mode: 'insensitive' } },
+                { pluralName: { contains: query, mode: 'insensitive' } },
+                { aliases: { hasSome: [query.toLowerCase()] } },
+            ],
+        },
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: 'asc' },
+        take: 15,
+    });
+}
+
+async function searchIngredientPrompt(
+    currentName: string,
+    allIngredientNames: string[],
+): Promise<{ id: string; name: string } | null> {
+    return search<{ id: string; name: string } | null>({
+        message: `Suche Zutat (ersetzt "${currentName}")`,
+        source: async (term) => {
+            if (!term || term.length < 2) {
+                // Show recipe's own ingredients as quick-pick before typing
+                const localResults = await Promise.all(
+                    allIngredientNames
+                        .filter((n) => n !== currentName)
+                        .map(async (n) => {
+                            const results = await searchIngredientsInDb(n);
+                            const match = results.find(
+                                (r) => r.name.toLowerCase() === n.toLowerCase(),
+                            );
+                            return { name: chalk.dim(n), value: { id: match?.id ?? '', name: n } };
+                        }),
+                );
+                const local = localResults;
+                return [
+                    ...local,
+                    {
+                        name: chalk.dim('— Tippe 2+ Zeichen für DB-Suche —'),
+                        value: null,
+                        disabled: true,
+                    },
+                    { name: chalk.yellow('↩ Abbrechen'), value: null },
+                ];
+            }
+            const results = await searchIngredientsInDb(term);
+            if (results.length === 0) {
+                return [
+                    { name: chalk.dim('Keine Treffer'), value: null, disabled: true },
+                    { name: chalk.yellow('↩ Abbrechen'), value: null },
+                ];
+            }
+            return [
+                ...results.map((r) => ({ name: r.name, value: { id: r.id, name: r.name } })),
+                { name: chalk.yellow('↩ Abbrechen'), value: null },
+            ];
+        },
+    });
 }
 
 function formatIngredientWithMatch(ing: AnalyzedIngredient, match: IngredientMatch): string {

@@ -52,3 +52,21 @@ export async function addTwitchStreamOfflineJob(userId: string): Promise<void> {
     const queue = getTwitchQueue();
     await queue.add('twitch-stream-offline', { userId });
 }
+
+/**
+ * Enqueue nutrition enrichment for a single ingredient.
+ * Call this when a new ingredient is created.
+ */
+export async function addEnrichIngredientNutritionJob(ingredientId: string): Promise<void> {
+    const queue = getScheduledQueue();
+    await queue.add(
+        'enrich-ingredient-nutrition',
+        { ingredientId },
+        {
+            priority: 5,
+            jobId: `enrich-nutrition-${ingredientId}`,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 30_000 },
+        },
+    );
+}

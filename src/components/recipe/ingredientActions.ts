@@ -243,6 +243,13 @@ export async function createIngredient(name: string, _category?: string, _units:
         // Notify moderators about the new ingredient
         notifyModeratorsNewIngredient(ingredient.id, ingredient.name).catch(() => {});
 
+        // Enqueue nutrition enrichment via AI
+        import('@worker/queues')
+            .then(({ addEnrichIngredientNutritionJob }) =>
+                addEnrichIngredientNutritionJob(ingredient.id),
+            )
+            .catch((err) => ingLog.error('Failed to enqueue nutrition job', { err }));
+
         return ingredient;
     } catch (e) {
         // Race condition: slug already taken → return existing

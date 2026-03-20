@@ -21,12 +21,20 @@ export async function createIngredient(data: { name: string }) {
 
     try {
         const slug = generateSlug(data.name);
-        await prisma.ingredient.create({
+        const ingredient = await prisma.ingredient.create({
             data: {
                 name: data.name.trim(),
                 slug,
             },
         });
+
+        // Enqueue nutrition enrichment via AI
+        import('@worker/queues')
+            .then(({ addEnrichIngredientNutritionJob }) =>
+                addEnrichIngredientNutritionJob(ingredient.id),
+            )
+            .catch((err) => console.error('Failed to enqueue nutrition job:', err));
+
         revalidatePath('/admin/ingredients');
     } catch (error) {
         if (error instanceof Error && error.message.includes('Unique constraint failed')) {

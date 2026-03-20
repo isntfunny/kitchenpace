@@ -39,34 +39,40 @@ A BullMQ repeatable job (`s3-cleanup`) that scans the bucket weekly, identifies 
 
 The job runs 3 sequential phases. Each phase is independent — a failure in one does not prevent the others from running. All errors are collected in an `errors` array.
 
+**Note on S3 listing:** The existing `listByPrefix()` helper does not paginate and only returns key strings (no `LastModified`). The cleanup job must use `ListObjectsV2Command` directly with a `ContinuationToken` pagination loop (as `processCachePurge` already does) and collect both `Key` and `LastModified` from each object.
+
 #### Phase 1: Scan `uploads/`
 
-1. `listByPrefix('uploads/')` — get all keys with `LastModified` timestamps
-2. Filter to keys older than 30 days
+1. Paginated `ListObjectsV2` on `uploads/` prefix — collect all `{ key, lastModified, size }` tuples
+2. Filter to keys where `lastModified` is older than 30 days
 3. Batch-query all DB tables with image fields: check if key exists in any of them
 4. Keys not found in any table = orphan
 5. Batch-delete orphans via `DeleteObjects` API
 6. Collect deleted keys and freed bytes
+7. **Build hash set:** Run `keyHash(key)` on ALL listed keys (regardless of age filter) and add to `knownHashes` set
 
 #### Phase 2: Scan `approved/`
 
-1. `listByPrefix('approved/')` — get all keys with `LastModified` timestamps
-2. Filter to keys older than 7 days
+1. Paginated `ListObjectsV2` on `approved/` prefix — collect all `{ key, lastModified, size }` tuples
+2. Filter to keys where `lastModified` is older than 7 days
 3. Same DB lookup as Phase 1
 4. Keys not found = orphan
 5. Batch-delete, collect results
+6. **Extend hash set:** Run `keyHash(key)` on ALL listed keys (regardless of age filter) and add to `knownHashes` set
 
-**Side effect of Phase 1 + 2:** Build a `Set<string>` of all valid key hashes by running `keyHash(key)` on every surviving (non-orphan) key. This set is passed to Phase 3.
+**Important:** The `knownHashes` set must include hashes of ALL keys found in `uploads/` and `approved/`, not just the age-filtered subset. A 2-day-old `approved/` key that is perfectly valid would otherwise have its thumbnails incorrectly deleted in Phase 3.
 
 #### Phase 3: Scan `thumbs/`
 
-1. `listByPrefix('thumbs/')` — get all thumb keys with `LastModified`
-2. Filter to keys older than 7 days
+1. Paginated `ListObjectsV2` on `thumbs/` prefix — collect all `{ key, lastModified, size }` tuples
+2. Filter to keys where `lastModified` is older than 7 days
 3. Exclude `thumbs/og-category/` (static category images, not derived from user uploads)
 4. Extract the hash segment from each thumb key (`thumbs/{hash}/...`)
-5. Check if hash exists in the known-hashes set from Phase 1+2
+5. Check if hash exists in the `knownHashes` set from Phase 1+2
 6. Hash not found = orphan thumbnail
 7. Batch-delete, collect results
+
+**Note:** There is an existing `purge-thumbnail-cache` hourly job that deletes all thumbs older than 3 days regardless of orphan status. Phase 3 serves a different purpose: it catches orphan thumbs that are younger than 3 days but whose originals are already gone, and provides a second safety net. The two jobs are complementary — the existing job handles cache freshness, Phase 3 handles orphan cleanup.
 
 ### DB Tables with Image Fields
 
@@ -81,7 +87,6 @@ The orphan check queries these tables/fields:
 | `CookImage`       | `imageKey`      |
 | `UserCookHistory` | `imageKey`      |
 | `Category`        | `coverImageKey` |
-| `ModerationQueue` | `contentRef`    |
 
 A key is orphaned only if it appears in **none** of these fields.
 
@@ -122,12 +127,14 @@ Visible in admin dashboard at `/admin/worker/runs`.
 
 ## Files to Create/Modify
 
-| File                                     | Action | Purpose                                                       |
-| ---------------------------------------- | ------ | ------------------------------------------------------------- |
-| `worker/queues/processors/s3-cleanup.ts` | Create | Job processor with 3-phase logic                              |
-| `worker/queues/index.ts`                 | Modify | Register `s3-cleanup` as repeatable job                       |
-| `src/lib/s3/operations.ts`               | Modify | Add `deleteObjects()` (batch delete) if not present           |
-| `src/lib/s3/cleanup.ts`                  | Create | Core cleanup logic: `findOrphanKeys()`, `buildKnownHashSet()` |
+| File                                     | Action | Purpose                                                          |
+| ---------------------------------------- | ------ | ---------------------------------------------------------------- |
+| `worker/queues/processors/s3-cleanup.ts` | Create | Job processor with 3-phase logic                                 |
+| `worker/queues/scheduler.ts`             | Modify | Add `s3-cleanup` entry to `scheduledJobs` array                  |
+| `worker/queues/worker.ts`                | Modify | Add `case 's3-cleanup'` to `QueueName.SCHEDULED` switch          |
+| `worker/queues/types.ts`                 | Modify | Add `S3CleanupJob` interface and union variant                   |
+| `src/lib/s3/operations.ts`               | Modify | Add `deleteObjects()` (batch delete) and `listObjectsWithMeta()` |
+| `src/lib/s3/cleanup.ts`                  | Create | Core cleanup logic: `findOrphanKeys()`, `buildKnownHashSet()`    |
 
 ## Not in Scope
 

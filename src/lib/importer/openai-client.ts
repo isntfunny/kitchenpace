@@ -135,8 +135,9 @@ ZUSAMMENFASSUNG DER PFLICHTREGELN:
  * Builds an optional context message with known DB tags and ingredients.
  * Sent as a separate user message so the static system prompt stays cacheable.
  *
- * Both lists are sorted alphabetically so the message is stable across requests
- * — this maximises OpenAI prompt-caching hits (the prefix stays identical).
+ * Lists are ordered by createdAt (from the DB query) so new entries append
+ * at the end — this maximises OpenAI prompt-caching hits since the prefix
+ * stays identical across requests.
  * Each entry sits on its own line for clearer tokenisation.
  *
  * Returns null when there is no context to inject.
@@ -145,16 +146,14 @@ function buildContextMessage(context?: ImportRecipeOptions['context']): string |
     const parts: string[] = [];
 
     if (context?.availableTags?.length) {
-        const sorted = [...context.availableTags].sort((a, b) => a.localeCompare(b, 'de'));
         parts.push(
-            `VORHANDENE TAGS IN DER DATENBANK (bevorzuge diese, neue Tags sind aber erlaubt):\n${sorted.join('\n')}`,
+            `VORHANDENE TAGS IN DER DATENBANK (bevorzuge diese, neue Tags sind aber erlaubt):\n${context.availableTags.join('\n')}`,
         );
     }
 
     if (context?.topIngredients?.length) {
-        const sorted = [...context.topIngredients].sort((a, b) => a.localeCompare(b, 'de'));
         parts.push(
-            `BEKANNTE ZUTATEN (verwende exakt diese Schreibweise wenn zutreffend):\n${sorted.join('\n')}`,
+            `BEKANNTE ZUTATEN (verwende exakt diese Schreibweise wenn zutreffend):\n${context.topIngredients.join('\n')}`,
         );
     }
 

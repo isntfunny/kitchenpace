@@ -37,9 +37,10 @@ interface ImportRunData {
  * Fetches tags and ingredients from DB, sorted alphabetically for stable prompt caching.
  */
 export async function fetchImportContext(db: PrismaClient) {
+    // Sorted by createdAt so new entries append at the end — maximises prompt cache hits.
     const [allTags, allIngredients] = await Promise.all([
-        db.tag.findMany({ select: { name: true }, orderBy: { name: 'asc' } }),
-        db.ingredient.findMany({ select: { name: true }, orderBy: { name: 'asc' } }),
+        db.tag.findMany({ select: { name: true }, orderBy: { createdAt: 'asc' } }),
+        db.ingredient.findMany({ select: { name: true }, orderBy: { createdAt: 'asc' } }),
     ]);
     return {
         availableTags: allTags.map((t) => t.name),

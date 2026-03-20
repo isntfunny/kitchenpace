@@ -193,6 +193,7 @@ function ImportDetailDialog({
                         },
                     })}
                 >
+                    <Dialog.Title className={css({ srOnly: true })}>Import Details</Dialog.Title>
                     {/* Header */}
                     <div
                         className={css({

@@ -95,6 +95,7 @@ export function registerImportCommand(program: Command): void {
                     }
                 } finally {
                     await db.$disconnect();
+                    process.exit(0);
                 }
             },
         );

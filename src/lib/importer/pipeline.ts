@@ -33,7 +33,21 @@ interface ImportRunData {
     rawApiResponse?: unknown;
 }
 
-async function logImportRun(db: PrismaClient, data: ImportRunData): Promise<void> {
+/**
+ * Fetches tags and ingredients from DB, sorted alphabetically for stable prompt caching.
+ */
+export async function fetchImportContext(db: PrismaClient) {
+    const [allTags, allIngredients] = await Promise.all([
+        db.tag.findMany({ select: { name: true }, orderBy: { name: 'asc' } }),
+        db.ingredient.findMany({ select: { name: true }, orderBy: { name: 'asc' } }),
+    ]);
+    return {
+        availableTags: allTags.map((t) => t.name),
+        topIngredients: allIngredients.map((i) => i.name),
+    };
+}
+
+export async function logImportRun(db: PrismaClient, data: ImportRunData): Promise<void> {
     const userId =
         data.userId ??
         (
@@ -99,23 +113,12 @@ export async function analyzeWithAI(
         throw error;
     }
 
-    // Fetch context data in parallel — gives the AI existing tags & ingredient names
-    const [allTags, topIngredients] = await Promise.all([
-        db.tag.findMany({ select: { name: true }, orderBy: { name: 'asc' } }),
-        db.ingredient.findMany({
-            select: { name: true },
-            orderBy: { recipes: { _count: 'desc' } },
-            take: 100,
-        }),
-    ]);
+    const context = await fetchImportContext(db);
 
     const result = await importRecipeFromMarkdown(markdown, sourceUrl, {
         model: 'gpt-5.4',
         temperature: 0.1,
-        context: {
-            availableTags: allTags.map((t) => t.name),
-            topIngredients: topIngredients.map((i) => i.name),
-        },
+        context,
     });
 
     if (!result.success) {
@@ -131,9 +134,8 @@ export async function analyzeWithAI(
         throw new Error(`KI-Analyse fehlgeschlagen: ${result.error.message}`);
     }
 
-    // Log the successful AI run (fire-and-forget — don't block the response)
     const { metadata } = result;
-    logImportRun(db, {
+    await logImportRun(db, {
         userId,
         sourceUrl,
         markdownLength: markdown.length,

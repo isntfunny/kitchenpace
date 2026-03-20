@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 
 import { getServerAuthSession } from '@app/lib/auth';
 import { streamRecipeFromMarkdown } from '@app/lib/importer/openai-client';
+import { fetchImportContext, logImportRun } from '@app/lib/importer/pipeline';
 import { transformImportedRecipe } from '@app/lib/importer/transform';
 import { prisma } from '@shared/prisma';
 
@@ -10,7 +11,7 @@ export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
     const session = await getServerAuthSession('api/ai/import-stream');
-    const userId = session?.user?.id ?? null;
+    const userId = session?.user?.id ?? undefined;
 
     let body: { markdown?: string; sourceUrl?: string };
     try {
@@ -37,15 +38,7 @@ export async function POST(request: NextRequest) {
             };
 
             try {
-                // Fetch DB context — gives the AI existing tags & ingredient names
-                const [allTags, topIngredients] = await Promise.all([
-                    prisma.tag.findMany({ select: { name: true }, orderBy: { name: 'asc' } }),
-                    prisma.ingredient.findMany({
-                        select: { name: true },
-                        orderBy: { recipes: { _count: 'desc' } },
-                        take: 100,
-                    }),
-                ]);
+                const context = await fetchImportContext(prisma);
 
                 send({ type: 'start', model: 'gpt-5.4' });
 
@@ -55,30 +48,21 @@ export async function POST(request: NextRequest) {
                     {
                         model: 'gpt-5.4',
                         temperature: 0.1,
-                        context: {
-                            availableTags: allTags.map((t) => t.name),
-                            topIngredients: topIngredients.map((i) => i.name),
-                        },
+                        context,
                     },
                     (text) => send({ type: 'delta', text }),
                 );
 
                 if (!result.success) {
-                    if (userId) {
-                        prisma.importRun
-                            .create({
-                                data: {
-                                    userId,
-                                    sourceUrl: sourceUrl || null,
-                                    sourceType: sourceUrl ? 'url' : 'text',
-                                    markdownLength: markdown.length,
-                                    status: 'FAILED',
-                                    errorType: result.error.type,
-                                    errorMessage: result.error.message,
-                                },
-                            })
-                            .catch((err: unknown) => console.error('ImportRun log failed:', err));
-                    }
+                    logImportRun(prisma, {
+                        userId,
+                        sourceUrl,
+                        markdownLength: markdown.length,
+                        status: 'FAILED',
+                        errorType: result.error.type,
+                        errorMessage: result.error.message,
+                    }).catch((err) => console.error('ImportRun log failed:', err));
+
                     send({
                         type: 'error',
                         message: result.error.message,
@@ -97,25 +81,18 @@ export async function POST(request: NextRequest) {
                     estimatedCostUsd: metadata.estimatedCostUsd,
                 });
 
-                if (userId) {
-                    prisma.importRun
-                        .create({
-                            data: {
-                                userId,
-                                sourceUrl: sourceUrl || null,
-                                sourceType: sourceUrl ? 'url' : 'text',
-                                markdownLength: markdown.length,
-                                status: 'SUCCESS',
-                                model: metadata.model,
-                                inputTokens: metadata.inputTokens,
-                                cachedInputTokens: metadata.cachedInputTokens,
-                                outputTokens: metadata.outputTokens,
-                                estimatedCostUsd: metadata.estimatedCostUsd,
-                                rawApiResponse: metadata.rawApiResponse as object,
-                            },
-                        })
-                        .catch((err: unknown) => console.error('ImportRun log failed:', err));
-                }
+                logImportRun(prisma, {
+                    userId,
+                    sourceUrl,
+                    markdownLength: markdown.length,
+                    status: 'SUCCESS',
+                    model: metadata.model,
+                    inputTokens: metadata.inputTokens,
+                    cachedInputTokens: metadata.cachedInputTokens,
+                    outputTokens: metadata.outputTokens,
+                    estimatedCostUsd: metadata.estimatedCostUsd,
+                    rawApiResponse: metadata.rawApiResponse,
+                }).catch((err) => console.error('ImportRun log failed:', err));
 
                 send({ type: 'done', data: transformImportedRecipe(result.data) });
             } catch (err) {

@@ -490,15 +490,17 @@ async function seedFlammkuchen(
         },
     });
 
-    // Link ingredients to recipe
+    // Link ingredients to recipe — resolve unit shortNames to IDs
     await db.recipeIngredient.deleteMany({ where: { recipeId: flammkuchen.id } });
     if (flammkuchenRecipeIngredients.length > 0) {
+        const allUnits = await db.unit.findMany({ select: { id: true, shortName: true } });
+        const unitMap = new Map(allUnits.map((u) => [u.shortName, u.id]));
         await db.recipeIngredient.createMany({
             data: flammkuchenRecipeIngredients.map((ing, index) => ({
                 recipeId: flammkuchen.id,
                 ingredientId: fkId(ing.slug)!,
                 amount: ing.amount,
-                unit: ing.unit,
+                unitId: unitMap.get(ing.unit) ?? unitMap.get('Stk')!,
                 isOptional: false,
                 position: index,
             })),

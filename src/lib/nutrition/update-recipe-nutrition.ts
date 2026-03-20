@@ -11,6 +11,7 @@ export async function updateRecipeNutrition(recipeId: string, servings: number):
     const recipeIngredients = await prisma.recipeIngredient.findMany({
         where: { recipeId },
         include: {
+            unit: true,
             ingredient: {
                 include: {
                     ingredientUnits: { include: { unit: true } },
@@ -20,20 +21,18 @@ export async function updateRecipeNutrition(recipeId: string, servings: number):
     });
 
     const inputs: IngredientNutritionInput[] = recipeIngredients.map((ri) => {
-        const iu = ri.ingredient.ingredientUnits.find(
-            (iu) => iu.unit.shortName === ri.unit || iu.unit.longName === ri.unit,
-        );
+        const iu = ri.ingredient.ingredientUnits.find((iu) => iu.unitId === ri.unitId);
         return {
             name: ri.ingredient.name,
             amount: ri.amount,
-            unitShortName: ri.unit,
+            unitShortName: ri.unit.shortName,
             energyKcal: ri.ingredient.energyKcal,
             protein: ri.ingredient.protein,
             fat: ri.ingredient.fat,
             carbs: ri.ingredient.carbs,
             fiber: ri.ingredient.fiber,
             ingredientUnitGrams: iu?.grams ?? null,
-            unitGramsDefault: iu?.unit.gramsDefault ?? null,
+            unitGramsDefault: ri.unit.gramsDefault ?? null,
         };
     });
 

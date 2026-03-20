@@ -3599,6 +3599,10 @@ async function main() {
         ],
     };
 
+    const allUnits = await prisma.unit.findMany({ select: { id: true, shortName: true } });
+    const unitMap = new Map(allUnits.map((u) => [u.shortName, u.id]));
+    const defaultUnitId = unitMap.get('Stk')!;
+
     for (const [recipeId, ingredients] of Object.entries(recipeIngredientsMap)) {
         for (const ing of ingredients) {
             const ingredient = await prisma.ingredient.findUnique({
@@ -3617,7 +3621,7 @@ async function main() {
                         recipeId,
                         ingredientId: ingredient.id,
                         amount: ing.amount,
-                        unit: ing.unit,
+                        unitId: unitMap.get(ing.unit) ?? defaultUnitId,
                         notes: ing.notes,
                         position: ing.position,
                         isOptional: false,

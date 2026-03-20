@@ -194,6 +194,7 @@ export async function fetchRecipeBySlug(
             },
             recipeIngredients: {
                 include: {
+                    unit: true,
                     ingredient: {
                         include: {
                             ingredientUnits: {
@@ -284,7 +285,7 @@ export async function fetchRecipeBySlug(
         difficulty: difficultyMap[recipe.difficulty] || 'Mittel',
         ingredients: recipe.recipeIngredients.map((ri: any) => {
             const matchedUnit = ri.ingredient.ingredientUnits?.find(
-                (iu: any) => iu.unit.shortName === ri.unit,
+                (iu: any) => iu.unitId === ri.unitId,
             );
 
             return {
@@ -292,14 +293,14 @@ export async function fetchRecipeBySlug(
                 pluralName: ri.ingredient.pluralName ?? null,
                 amount: parseFloat(ri.amount) || 0,
                 rawAmount: ri.amount,
-                unit: ri.unit,
+                unit: ri.unit.shortName,
                 notes: ri.notes,
                 energyKcal: ri.ingredient.energyKcal ?? null,
                 protein: ri.ingredient.protein ?? null,
                 fat: ri.ingredient.fat ?? null,
                 carbs: ri.ingredient.carbs ?? null,
                 ingredientUnitGrams: matchedUnit?.grams ?? null,
-                unitGramsDefault: matchedUnit?.unit.gramsDefault ?? null,
+                unitGramsDefault: ri.unit.gramsDefault ?? null,
             };
         }),
         flow: {
@@ -540,6 +541,7 @@ export async function fetchRecipeForEdit(
                 categories: true,
                 recipeIngredients: {
                     include: {
+                        unit: true,
                         ingredient: {
                             include: { ingredientUnits: { include: { unit: true } } },
                         },
@@ -580,7 +582,7 @@ export async function fetchRecipeForEdit(
             name: ri.ingredient.name,
             pluralName: ri.ingredient.pluralName,
             amount: ri.amount,
-            unit: ri.unit,
+            unit: ri.unit.shortName,
             availableUnits: ri.ingredient.ingredientUnits?.map((iu: any) => iu.unit.shortName) ?? [
                 'g',
             ],

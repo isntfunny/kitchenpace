@@ -553,11 +553,12 @@ model IngredientCategory {
 }
 
 model Unit {
-  id           String           @id @default(cuid())
-  shortName    String           @unique
-  longName     String           @unique
-  gramsDefault Float?
-  ingredients  IngredientUnit[]
+  id                String             @id @default(cuid())
+  shortName         String             @unique
+  longName          String             @unique
+  gramsDefault      Float?
+  ingredients       IngredientUnit[]
+  recipeIngredients RecipeIngredient[]
 }
 
 model IngredientUnit {
@@ -574,21 +575,23 @@ model IngredientUnit {
 }
 
 model RecipeIngredient {
-  id                                                                  String      @id @default(cuid())
-  recipeId                                                            String
-  ingredientId                                                        String
-  amount       String   // Recipe-specific: "400", "1/2", "2-3"
-  unit         String   // Selected unit from ingredient.units
-  notes        String?  // "finely chopped", "room temperature", etc.
-  position                                                            Int         @default(0) // For ordering in list
-  isOptional                                                          Boolean     @default(false)
+  id           String     @id @default(cuid())
+  recipeId     String
+  ingredientId String
+  unitId       String
+  amount       String     // Recipe-specific: "400", "1/2", "2-3"
+  notes        String?    // "finely chopped", "room temperature", etc.
+  position     Int        @default(0)
+  isOptional   Boolean    @default(false)
 
-  recipe                                                              Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  ingredient                                                          Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  unit       Unit       @relation(fields: [unitId], references: [id])
 
-  @@unique([recipeId,                                                 ingredientId])
+  @@unique([recipeId, ingredientId])
   @@index([recipeId])
   @@index([ingredientId])
+  @@index([unitId])
 }
 
 // ============================================

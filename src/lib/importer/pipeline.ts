@@ -6,7 +6,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 
-import { createIngredient } from '@app/components/recipe/createActions';
+import { createIngredient, findOrCreateUnit } from '@app/components/recipe/ingredientActions';
 import { generateUniqueSlug } from '@app/lib/slug';
 
 import { importRecipeFromMarkdown } from './openai-client';
@@ -169,11 +169,17 @@ export async function saveImportedRecipe(
         throw new Error('Das Rezept muss mindestens eine Zutat haben.');
     }
 
-    // Find or create ingredients — uses createIngredient() with Hunspell stemming + alias matching
-    const syncedIngredients: ((typeof data.ingredients)[number] & { ingredientId: string })[] = [];
+    // Find or create ingredients + resolve units
+    const syncedIngredients: ((typeof data.ingredients)[number] & {
+        ingredientId: string;
+        unitId: string;
+    })[] = [];
     for (const ing of data.ingredients) {
-        const result = await createIngredient(ing.name);
-        syncedIngredients.push({ ...ing, ingredientId: result.id });
+        const [ingredient, unitId] = await Promise.all([
+            createIngredient(ing.name),
+            findOrCreateUnit(ing.unit),
+        ]);
+        syncedIngredients.push({ ...ing, ingredientId: ingredient.id, unitId });
     }
 
     // Deduplicate by ingredientId — AI can generate the same ingredient multiple times
@@ -220,8 +226,8 @@ export async function saveImportedRecipe(
             recipeIngredients: {
                 create: uniqueIngredients.map((ing, index) => ({
                     ingredientId: ing.ingredientId,
+                    unitId: ing.unitId,
                     amount: ing.amount,
-                    unit: ing.unit,
                     notes: ing.notes ?? null,
                     isOptional: ing.isOptional,
                     position: index,

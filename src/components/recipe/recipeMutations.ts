@@ -7,7 +7,7 @@ import { generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 import { addSyncRecipeJob, addGenerateRecipeOgJob } from '@worker/queues';
 
-import { createIngredient } from './ingredientActions';
+import { createIngredient, findOrCreateUnit } from './ingredientActions';
 import {
     assertPublishableFlow,
     extractRecipeText,
@@ -22,19 +22,32 @@ import type {
     UpdateRecipeInput,
 } from './recipeFormTypes';
 
-/** Verify and sync ingredients — ensure all referenced ingredient IDs exist. */
+/** Verify and sync ingredients — ensure all referenced ingredient/unit IDs exist. */
 async function syncIngredients(ingredients: RecipeIngredientInput[]) {
     const synced = await Promise.all(
         ingredients.map(async (ing) => {
+            // Resolve ingredient
+            let ingredientId = ing.ingredientId;
             const existing = await prisma.ingredient.findUnique({
-                where: { id: ing.ingredientId },
+                where: { id: ingredientId },
             });
-            if (existing) return ing;
-            if (ing.ingredientName) {
-                const created = await createIngredient(ing.ingredientName, undefined, [ing.unit]);
-                return { ...ing, ingredientId: created.id };
+            if (!existing) {
+                if (ing.ingredientName) {
+                    const created = await createIngredient(ing.ingredientName, undefined, [
+                        ing.unit,
+                    ]);
+                    ingredientId = created.id;
+                } else {
+                    throw new Error(
+                        `Zutat mit ID ${ingredientId} existiert nicht in der Datenbank.`,
+                    );
+                }
             }
-            throw new Error(`Zutat mit ID ${ing.ingredientId} existiert nicht in der Datenbank.`);
+
+            // Resolve unit string → unitId
+            const unitId = await findOrCreateUnit(ing.unit);
+
+            return { ...ing, ingredientId, unitId };
         }),
     );
 
@@ -165,8 +178,8 @@ export async function updateRecipe(
             data: uniqueIngredients.map((ing, index) => ({
                 recipeId,
                 ingredientId: ing.ingredientId,
+                unitId: ing.unitId,
                 amount: ing.amount,
-                unit: ing.unit,
                 notes: ing.notes || null,
                 isOptional: ing.isOptional,
                 position: index,
@@ -240,8 +253,8 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             recipeIngredients: {
                 create: uniqueIngredients.map((ing, index) => ({
                     ingredientId: ing.ingredientId,
+                    unitId: ing.unitId,
                     amount: ing.amount,
-                    unit: ing.unit,
                     notes: ing.notes || null,
                     isOptional: ing.isOptional,
                     position: index,

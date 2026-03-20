@@ -18,7 +18,7 @@ interface BulkImportClientProps {
     authorId: string;
 }
 
-export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImportClientProps) {
+export function BulkImportClient({ tags: _tags, authorId }: BulkImportClientProps) {
     const {
         step,
         urlText,
@@ -45,7 +45,7 @@ export function BulkImportClient({ categories, tags: _tags, authorId }: BulkImpo
         handleSkip,
         handleSkipAll,
         resetImport,
-    } = useBulkImport({ categories, authorId });
+    } = useBulkImport({ authorId });
 
     // ── Render: URL Input ────────────────────────────────────────────────────
 

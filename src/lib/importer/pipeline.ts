@@ -34,30 +34,19 @@ interface ImportRunData {
 }
 
 async function logImportRun(db: PrismaClient, data: ImportRunData): Promise<void> {
-    let userId = data.userId;
-
-    // Falls keine userId, versuche System-User zu finden
-    if (!userId) {
-        const systemUser = await db.user.findFirst({
-            where: { role: 'ADMIN' },
-            orderBy: { createdAt: 'asc' },
-            select: { id: true },
-        });
-        if (systemUser) {
-            userId = systemUser.id;
-        } else {
-            // Fallback: erste User nehmen die es gibt
-            const anyUser = await db.user.findFirst({
+    const userId =
+        data.userId ??
+        (
+            await db.user.findFirst({
+                where: { role: 'ADMIN' },
                 orderBy: { createdAt: 'asc' },
                 select: { id: true },
-            });
-            if (anyUser) {
-                userId = anyUser.id;
-            } else {
-                console.warn('[logImportRun] Kein User gefunden, ImportRun wird nicht geloggt');
-                return;
-            }
-        }
+            })
+        )?.id;
+
+    if (!userId) {
+        console.warn('[logImportRun] Kein User gefunden, ImportRun wird nicht geloggt');
+        return;
     }
 
     await db.importRun.create({
@@ -257,14 +246,18 @@ export async function saveImportedRecipe(
 
     if (data.categoryIds?.length) {
         const categories = await db.category.findMany({
-            where: { id: { in: data.categoryIds } },
-            select: { id: true },
+            where: { slug: { in: data.categoryIds } },
+            select: { id: true, slug: true },
         });
-        const validEntries = categories.map((c, index) => ({
-            recipeId: recipe.id,
-            categoryId: c.id,
-            position: index,
-        }));
+        const slugToId = new Map(categories.map((c) => [c.slug, c.id]));
+        const validEntries = data.categoryIds
+            .map((slug, index) => ({ id: slugToId.get(slug), index }))
+            .filter((e): e is { id: string; index: number } => e.id != null)
+            .map(({ id, index }) => ({
+                recipeId: recipe.id,
+                categoryId: id,
+                position: index,
+            }));
         if (validEntries.length) {
             await db.recipeCategory.createMany({ data: validEntries });
         }

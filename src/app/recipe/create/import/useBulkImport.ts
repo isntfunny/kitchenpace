@@ -1,8 +1,6 @@
 import { useOpenPanel } from '@openpanel/nextjs';
 import { useState, useCallback, useRef } from 'react';
 
-import type { Category } from '@app/components/recipe/RecipeForm/data';
-
 import {
     scrapeRecipe,
     analyzeWithAI,
@@ -13,11 +11,10 @@ import {
 import type { BulkItem, BulkStep } from './bulk-import-types';
 
 interface UseBulkImportOptions {
-    categories: Category[];
     authorId: string;
 }
 
-export function useBulkImport({ categories, authorId }: UseBulkImportOptions) {
+export function useBulkImport({ authorId }: UseBulkImportOptions) {
     const op = useOpenPanel();
 
     // ── State ────────────────────────────────────────────────────────────────
@@ -129,13 +126,8 @@ export function useBulkImport({ categories, authorId }: UseBulkImportOptions) {
                     authorId,
                 );
 
-                const resolvedCategoryIds = (analyzed.categoryIds ?? [])
-                    .map((slug) => categories.find((c) => c.slug === slug)?.id)
-                    .filter((id): id is string => id != null);
-
                 const recipe: AnalyzedRecipe = {
                     ...analyzed,
-                    categoryIds: resolvedCategoryIds,
                     imageUrl: scraped.imageUrl || analyzed.imageUrl,
                 };
 
@@ -184,7 +176,7 @@ export function useBulkImport({ categories, authorId }: UseBulkImportOptions) {
             success: successCount,
             failed: results.filter((p) => p.status === 'error').length,
         });
-    }, [validUrls, categories, op, loadEditFields]);
+    }, [validUrls, op, loadEditFields]);
 
     // ── Review actions ───────────────────────────────────────────────────────
 

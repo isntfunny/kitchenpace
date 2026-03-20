@@ -10,6 +10,16 @@ import {
 } from './actions';
 import type { BulkItem, BulkStep } from './bulk-import-types';
 
+// ── Shared predicates ─────────────────────────────────────────────────────────
+
+const isAwaitingAnalysis = (item: BulkItem) =>
+    item.status === 'scraped' && Boolean(item.scrapedMarkdown);
+
+const isReviewable = (item: BulkItem) =>
+    item.status === 'done' && item.recipe && !item.savedId && !item.skipped;
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
+
 interface UseBulkImportOptions {
     authorId: string;
 }
@@ -52,12 +62,13 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
     const validUrls = parseUrls(urlText);
 
     /** Items that have a recipe ready for review (done + not yet saved/skipped) */
-    const reviewableItems = items.filter(
-        (item) => item.status === 'done' && item.recipe && !item.savedId && !item.skipped,
-    );
+    const reviewableItems = items.filter(isReviewable);
 
     // Always review the first remaining item
     const currentReviewItem = reviewableItems[0] ?? null;
+
+    // Derived: true when an item is currently being analyzed by AI
+    const analyzing = items.some((item) => item.status === 'analyzing');
 
     // Load edit fields when review item changes
     const loadEditFields = useCallback((recipe: AnalyzedRecipe, imageUrl?: string) => {
@@ -67,7 +78,71 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
         setEditImageUrl(imageUrl ?? recipe.imageUrl ?? '');
     }, []);
 
-    // ── Start bulk processing (parallel, up to 10 at once) ──────────────────
+    // ── Analyze next scraped item ─────────────────────────────────────────────
+
+    /**
+     * Find the next scraped (not yet analyzed) item, run AI analysis on it,
+     * and present it for review. Uses a loop instead of recursion to avoid
+     * stack growth when consecutive items fail.
+     *
+     * This is called:
+     * 1. After all scraping finishes (for the first recipe)
+     * 2. After each save/skip (for subsequent recipes)
+     *
+     * Sequential analysis ensures each recipe's AI context includes
+     * ingredients created by previously saved recipes.
+     */
+    const analyzeNextItem = useCallback(
+        async (currentItems: BulkItem[]) => {
+            const updatedItems = [...currentItems];
+
+            // Loop through scraped items until one succeeds or none remain
+
+            while (true) {
+                const nextIdx = updatedItems.findIndex(isAwaitingAnalysis);
+
+                if (nextIdx === -1) {
+                    // No more scraped items — check if we're done
+                    if (!updatedItems.some(isReviewable)) {
+                        setStep('done');
+                    }
+                    return;
+                }
+
+                // Update status to analyzing
+                updatedItems[nextIdx] = { ...updatedItems[nextIdx], status: 'analyzing' };
+                setItems([...updatedItems]);
+
+                try {
+                    const item = updatedItems[nextIdx];
+                    const analyzed = await analyzeWithAI(item.scrapedMarkdown!, item.url, authorId);
+
+                    const recipe: AnalyzedRecipe = {
+                        ...analyzed,
+                        imageUrl: item.scrapedImageUrl || analyzed.imageUrl,
+                    };
+
+                    updatedItems[nextIdx] = { ...updatedItems[nextIdx], status: 'done', recipe };
+                    setItems([...updatedItems]);
+                    loadEditFields(recipe, recipe.imageUrl);
+                    return; // Success — present for review
+                } catch (err) {
+                    updatedItems[nextIdx] = {
+                        ...updatedItems[nextIdx],
+                        status: 'error',
+                        error: err instanceof Error ? err.message : 'KI-Analyse fehlgeschlagen',
+                    };
+                    setItems([...updatedItems]);
+                    // Loop continues to try the next scraped item
+                }
+            }
+        },
+        [authorId, loadEditFields],
+    );
+
+    // ── Start bulk processing ─────────────────────────────────────────────────
+    // Phase 1: Parallel scraping only (up to 10 concurrent)
+    // Phase 2: Sequential AI analysis triggered per-recipe during review
 
     const startBulkImport = useCallback(async () => {
         if (validUrls.length === 0) {
@@ -100,7 +175,7 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
             return;
         }
 
-        // Mutable results array — each worker updates its own index
+        // ── Phase 1: Parallel scraping ──────────────────────────────────────
         const results: BulkItem[] = [...initialItems];
 
         const updateItem = (index: number, patch: Partial<BulkItem>) => {
@@ -108,8 +183,7 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
             setItems([...results]);
         };
 
-        // Process a single URL
-        const processOne = async (index: number) => {
+        const scrapeOne = async (index: number) => {
             if (abortRef.current) return;
 
             updateItem(index, { status: 'scraping' });
@@ -117,32 +191,22 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
             try {
                 const scraped = await scrapeRecipe(results[index].url);
 
-                if (abortRef.current) return;
-                updateItem(index, { status: 'analyzing' });
-
-                const analyzed = await analyzeWithAI(
-                    scraped.markdown,
-                    results[index].url,
-                    authorId,
-                );
-
-                const recipe: AnalyzedRecipe = {
-                    ...analyzed,
-                    imageUrl: scraped.imageUrl || analyzed.imageUrl,
-                };
-
-                updateItem(index, { status: 'done', recipe });
+                updateItem(index, {
+                    status: 'scraped',
+                    scrapedMarkdown: scraped.markdown,
+                    scrapedImageUrl: scraped.imageUrl || undefined,
+                });
             } catch (err) {
                 updateItem(index, {
                     status: 'error',
-                    error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                    error: err instanceof Error ? err.message : 'Scraping fehlgeschlagen',
                 });
             }
         };
 
-        // Parallel queue: up to 10 concurrent workers
+        // Parallel queue: up to 10 concurrent workers (scraping only)
         const CONCURRENCY = 10;
-        const queue = [...initialItems.keys()]; // [0, 1, 2, ...]
+        const queue = [...initialItems.keys()];
         let cursor = 0;
 
         const worker = async () => {
@@ -150,7 +214,7 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
                 if (abortRef.current) break;
                 const idx = cursor++;
                 if (idx < queue.length) {
-                    await processOne(idx);
+                    await scrapeOne(idx);
                 }
             }
         };
@@ -159,37 +223,45 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
             Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => worker()),
         );
 
-        // Move to review if we have any successes
-        const successCount = results.filter((p) => p.status === 'done').length;
-        if (successCount > 0) {
-            const firstReviewable = results.find((p) => p.status === 'done' && p.recipe);
-            if (firstReviewable?.recipe) {
-                loadEditFields(firstReviewable.recipe, firstReviewable.recipe.imageUrl);
-            }
+        // ── Phase 2: Start sequential analysis with the first scraped item ──
+        const scrapedCount = results.filter(isAwaitingAnalysis).length;
+        if (scrapedCount > 0) {
             setStep('review');
+            // Analyze the first scraped recipe
+            await analyzeNextItem(results);
         } else {
-            setError('Keines der Rezepte konnte verarbeitet werden.');
+            setError('Keines der Rezepte konnte geladen werden.');
             setStep('urls');
         }
 
-        op.track('bulk_import_processing_done', {
-            success: successCount,
+        op.track('bulk_import_scraping_done', {
+            scraped: scrapedCount,
             failed: results.filter((p) => p.status === 'error').length,
         });
-    }, [validUrls, op, loadEditFields]);
+    }, [validUrls, op, analyzeNextItem]);
 
     // ── Review actions ───────────────────────────────────────────────────────
 
-    const advanceReview = useCallback(() => {
-        if (reviewableItems.length <= 1) {
-            setStep('done');
-        } else {
-            const nextItem = reviewableItems[1];
-            if (nextItem?.recipe) {
-                loadEditFields(nextItem.recipe, nextItem.recipe.imageUrl);
+    /**
+     * After saving/skipping, decide what to do next based on the updated items.
+     * Accepts the updated items array directly to avoid stale state from batching.
+     */
+    const advanceWithItems = useCallback(
+        async (updatedItems: BulkItem[]) => {
+            const nextReviewable = updatedItems.find(isReviewable);
+
+            if (nextReviewable?.recipe) {
+                // There's already an analyzed item ready — show it
+                loadEditFields(nextReviewable.recipe, nextReviewable.recipe.imageUrl);
+            } else if (updatedItems.some(isAwaitingAnalysis)) {
+                // Analyze the next scraped recipe
+                await analyzeNextItem(updatedItems);
+            } else {
+                setStep('done');
             }
-        }
-    }, [reviewableItems, loadEditFields]);
+        },
+        [analyzeNextItem, loadEditFields],
+    );
 
     const handleSaveAndNext = useCallback(async () => {
         if (!currentReviewItem?.recipe) return;
@@ -197,6 +269,8 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
         setSaving(true);
         setError(null);
 
+        const saveUrl = currentReviewItem.url;
+        let updatedItems: BulkItem[];
         try {
             const recipeData: AnalyzedRecipe = {
                 ...currentReviewItem.recipe,
@@ -209,22 +283,27 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
 
             const result = await saveImportedRecipe(recipeData, authorId);
 
-            // Update item with saved info
-            setItems((prev) =>
-                prev.map((item) =>
-                    item.url === currentReviewItem.url
+            // Use functional updater to avoid stale closure over `items`
+            let captured: BulkItem[] = [];
+            setItems((prev) => {
+                captured = prev.map((item) =>
+                    item.url === saveUrl
                         ? { ...item, savedId: result.id, savedSlug: result.slug }
                         : item,
-                ),
-            );
+                );
+                return captured;
+            });
+            updatedItems = captured;
 
             op.track('bulk_import_recipe_saved', { recipe_id: result.id });
-            advanceReview();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Fehler beim Speichern.');
-        } finally {
             setSaving(false);
+            return;
         }
+
+        setSaving(false);
+        await advanceWithItems(updatedItems);
     }, [
         currentReviewItem,
         editTitle,
@@ -233,25 +312,31 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
         editImageUrl,
         authorId,
         op,
-        advanceReview,
+        advanceWithItems,
     ]);
 
-    const handleSkip = useCallback(() => {
+    const handleSkip = useCallback(async () => {
         if (!currentReviewItem) return;
 
-        setItems((prev) =>
-            prev.map((item) =>
-                item.url === currentReviewItem.url ? { ...item, skipped: true } : item,
-            ),
-        );
+        const skipUrl = currentReviewItem.url;
+        let updatedItems: BulkItem[] = [];
+        setItems((prev) => {
+            updatedItems = prev.map((item) =>
+                item.url === skipUrl ? { ...item, skipped: true } : item,
+            );
+            return updatedItems;
+        });
 
-        advanceReview();
-    }, [currentReviewItem, advanceReview]);
+        await advanceWithItems(updatedItems);
+    }, [currentReviewItem, advanceWithItems]);
 
     const handleSkipAll = useCallback(() => {
         setItems((prev) =>
             prev.map((item) =>
-                item.status === 'done' && !item.savedId ? { ...item, skipped: true } : item,
+                // Skip all scraped (not yet analyzed) and done (analyzed but not saved)
+                item.status === 'scraped' || (item.status === 'done' && !item.savedId)
+                    ? { ...item, skipped: true }
+                    : item,
             ),
         );
         setStep('done');
@@ -280,6 +365,7 @@ export function useBulkImport({ authorId }: UseBulkImportOptions) {
         items,
         error,
         saving,
+        analyzing,
         validUrls,
         reviewableItems,
         currentReviewItem,

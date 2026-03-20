@@ -144,7 +144,7 @@ export const urlItemClass = (status: UrlStatus) =>
         p: '3',
         borderRadius: 'lg',
         backgroundColor:
-            status === 'done'
+            status === 'done' || status === 'scraped'
                 ? { base: 'rgba(34,197,94,0.05)', _dark: 'rgba(34,197,94,0.08)' }
                 : status === 'error'
                   ? { base: 'rgba(239,68,68,0.05)', _dark: 'rgba(239,68,68,0.08)' }
@@ -153,7 +153,7 @@ export const urlItemClass = (status: UrlStatus) =>
                     : { base: 'rgba(0,0,0,0.02)', _dark: 'rgba(255,255,255,0.03)' },
         border: '1px solid',
         borderColor:
-            status === 'done'
+            status === 'done' || status === 'scraped'
                 ? { base: 'rgba(34,197,94,0.15)', _dark: 'rgba(34,197,94,0.2)' }
                 : status === 'error'
                   ? { base: 'rgba(239,68,68,0.15)', _dark: 'rgba(239,68,68,0.2)' }

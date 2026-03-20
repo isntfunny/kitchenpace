@@ -1,6 +1,10 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
+
 import type { Category, Tag } from '@app/components/recipe/RecipeForm/data';
+
+import { css } from 'styled-system/css';
 
 import { BulkDoneSummary } from './BulkDoneSummary';
 import { BulkProgressTable } from './BulkProgressTable';
@@ -26,6 +30,7 @@ export function BulkImportClient({ tags: _tags, authorId }: BulkImportClientProp
         items,
         error,
         saving,
+        analyzing,
         validUrls,
         currentReviewItem,
         savedItems,
@@ -90,6 +95,33 @@ export function BulkImportClient({ tags: _tags, authorId }: BulkImportClientProp
                 onSkip={handleSkip}
                 onSkipAll={handleSkipAll}
             />
+        );
+    }
+
+    // ── Render: Analyzing next recipe ────────────────────────────────────────
+
+    if (step === 'review' && analyzing && !currentReviewItem?.recipe) {
+        return (
+            <div
+                className={css({
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4',
+                    py: '16',
+                    color: 'text.dimmed',
+                })}
+            >
+                <Loader2
+                    size={32}
+                    className={css({
+                        color: 'palette.purple',
+                        animation: 'spin 1s linear infinite',
+                    })}
+                />
+                <p className={css({ fontSize: 'sm' })}>KI analysiert das nächste Rezept...</p>
+            </div>
         );
     }
 

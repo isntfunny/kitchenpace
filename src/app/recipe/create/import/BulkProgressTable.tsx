@@ -30,9 +30,15 @@ interface BulkProgressTableProps {
 }
 
 export function BulkProgressTable({ items, abortRef }: BulkProgressTableProps) {
-    const doneCount = items.filter((i) => i.status === 'done' || i.status === 'error').length;
+    const doneCount = items.filter(
+        (i) =>
+            i.status === 'scraped' ||
+            i.status === 'analyzing' ||
+            i.status === 'done' ||
+            i.status === 'error',
+    ).length;
     const progress = Math.round((doneCount / items.length) * 100);
-    const currentItem = items.find((i) => i.status === 'scraping' || i.status === 'analyzing');
+    const currentItem = items.find((i) => i.status === 'scraping');
 
     return (
         <div className={processingContainerClass}>
@@ -49,9 +55,7 @@ export function BulkProgressTable({ items, abortRef }: BulkProgressTableProps) {
                     </h2>
                     {currentItem && (
                         <p className={processingSubtitleClass}>
-                            {currentItem.status === 'scraping'
-                                ? 'Lade Seite...'
-                                : 'KI analysiert...'}{' '}
+                            Lade Seite...{' '}
                             <span className={css({ color: 'text.dimmed', fontSize: 'xs' })}>
                                 {new URL(currentItem.url).hostname}
                             </span>
@@ -94,6 +98,12 @@ export function BulkProgressTable({ items, abortRef }: BulkProgressTableProps) {
                                     />
                                 </motion.div>
                             )}
+                            {item.status === 'scraped' && (
+                                <CheckCircle2
+                                    size={16}
+                                    className={css({ color: 'status.success' })}
+                                />
+                            )}
                             {item.status === 'analyzing' && (
                                 <motion.div
                                     animate={{ scale: [1, 1.2, 1] }}
@@ -129,6 +139,9 @@ export function BulkProgressTable({ items, abortRef }: BulkProgressTableProps) {
                             </span>
                             {item.status === 'done' && item.recipe && (
                                 <span className={urlItemTitleClass}>{item.recipe.title}</span>
+                            )}
+                            {item.status === 'scraped' && (
+                                <span className={urlItemStatusClass}>Bereit zur Analyse</span>
                             )}
                             {item.status === 'error' && item.error && (
                                 <span className={urlItemErrorClass}>{item.error}</span>

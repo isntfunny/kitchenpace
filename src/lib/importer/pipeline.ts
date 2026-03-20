@@ -10,11 +10,7 @@ import { createIngredient, findOrCreateUnit } from '@app/components/recipe/ingre
 import { generateUniqueSlug } from '@app/lib/slug';
 
 import { importRecipeFromMarkdown } from './openai-client';
-import {
-    type AnalyzedRecipe,
-    parseRecipeMarkdownFallback,
-    transformImportedRecipe,
-} from './transform';
+import { type AnalyzedRecipe, transformImportedRecipe } from './transform';
 import { uploadImageFromUrl } from './upload-image-from-url';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,10 +18,10 @@ import { uploadImageFromUrl } from './upload-image-from-url';
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ImportRunData {
-    userId: string;
+    userId?: string;
     sourceUrl?: string;
     markdownLength?: number;
-    status: 'SUCCESS' | 'FALLBACK' | 'FAILED';
+    status: 'SUCCESS' | 'FAILED';
     errorType?: string;
     errorMessage?: string;
     recipeId?: string;
@@ -38,9 +34,35 @@ interface ImportRunData {
 }
 
 async function logImportRun(db: PrismaClient, data: ImportRunData): Promise<void> {
+    let userId = data.userId;
+
+    // Falls keine userId, versuche System-User zu finden
+    if (!userId) {
+        const systemUser = await db.user.findFirst({
+            where: { role: 'ADMIN' },
+            orderBy: { createdAt: 'asc' },
+            select: { id: true },
+        });
+        if (systemUser) {
+            userId = systemUser.id;
+        } else {
+            // Fallback: erste User nehmen die es gibt
+            const anyUser = await db.user.findFirst({
+                orderBy: { createdAt: 'asc' },
+                select: { id: true },
+            });
+            if (anyUser) {
+                userId = anyUser.id;
+            } else {
+                console.warn('[logImportRun] Kein User gefunden, ImportRun wird nicht geloggt');
+                return;
+            }
+        }
+    }
+
     await db.importRun.create({
         data: {
-            userId: data.userId,
+            userId,
             sourceUrl: data.sourceUrl || null,
             sourceType: data.sourceUrl ? 'url' : 'text',
             markdownLength: data.markdownLength ?? null,
@@ -64,7 +86,7 @@ async function logImportRun(db: PrismaClient, data: ImportRunData): Promise<void
  * @param db      - PrismaClient instance
  * @param markdown - Scraped markdown content
  * @param sourceUrl - Origin URL (empty string for pasted text)
- * @param userId  - When provided an ImportRun audit record is created
+ * @param userId  - Optional user ID. If not provided, logs to system/admin user
  */
 export async function analyzeWithAI(
     db: PrismaClient,
@@ -72,27 +94,20 @@ export async function analyzeWithAI(
     sourceUrl = '',
     userId?: string,
 ): Promise<AnalyzedRecipe> {
-    const withSource = <T extends object>(data: T): T & { sourceUrl?: string } => ({
-        ...data,
-        sourceUrl: sourceUrl || undefined,
-    });
-
     if (!markdown.trim()) {
         throw new Error('Kein Inhalt zum Analysieren vorhanden.');
     }
 
     if (!process.env.OPENAI_API_KEY) {
-        console.warn('OPENAI_API_KEY not set — using fallback parser');
-        if (userId) {
-            await logImportRun(db, {
-                userId,
-                sourceUrl,
-                markdownLength: markdown.length,
-                status: 'FALLBACK',
-                errorMessage: 'No API key configured (OPENAI_API_KEY)',
-            });
-        }
-        return withSource(parseRecipeMarkdownFallback(markdown));
+        const error = new Error('OpenAI API Key nicht konfiguriert. Import nicht möglich.');
+        await logImportRun(db, {
+            userId,
+            sourceUrl,
+            markdownLength: markdown.length,
+            status: 'FAILED',
+            errorMessage: error.message,
+        });
+        throw error;
     }
 
     // Fetch context data in parallel — gives the AI existing tags & ingredient names
@@ -116,38 +131,37 @@ export async function analyzeWithAI(
 
     if (!result.success) {
         console.error('AI analysis failed:', result.error);
-        if (userId) {
-            await logImportRun(db, {
-                userId,
-                sourceUrl,
-                markdownLength: markdown.length,
-                status: 'FAILED',
-                errorType: result.error.type,
-                errorMessage: result.error.message,
-            });
-        }
-        // Soft fallback on validation errors so the user can still edit
-        return withSource(parseRecipeMarkdownFallback(markdown));
-    }
-
-    // Log the successful AI run (fire-and-forget — don't block the response)
-    if (userId) {
-        const { metadata } = result;
-        logImportRun(db, {
+        await logImportRun(db, {
             userId,
             sourceUrl,
             markdownLength: markdown.length,
-            status: 'SUCCESS',
-            model: metadata.model,
-            inputTokens: metadata.inputTokens,
-            cachedInputTokens: metadata.cachedInputTokens,
-            outputTokens: metadata.outputTokens,
-            estimatedCostUsd: metadata.estimatedCostUsd,
-            rawApiResponse: metadata.rawApiResponse,
-        }).catch((err) => console.error('ImportRun log failed:', err));
+            status: 'FAILED',
+            errorType: result.error.type,
+            errorMessage: result.error.message,
+        });
+        throw new Error(`KI-Analyse fehlgeschlagen: ${result.error.message}`);
     }
 
-    return withSource(transformImportedRecipe(result.data));
+    // Log the successful AI run (fire-and-forget — don't block the response)
+    const { metadata } = result;
+    logImportRun(db, {
+        userId,
+        sourceUrl,
+        markdownLength: markdown.length,
+        status: 'SUCCESS',
+        model: metadata.model,
+        inputTokens: metadata.inputTokens,
+        cachedInputTokens: metadata.cachedInputTokens,
+        outputTokens: metadata.outputTokens,
+        estimatedCostUsd: metadata.estimatedCostUsd,
+        rawApiResponse: metadata.rawApiResponse,
+    }).catch((err) => console.error('ImportRun log failed:', err));
+
+    const recipe = transformImportedRecipe(result.data);
+    return {
+        ...recipe,
+        sourceUrl: sourceUrl || undefined,
+    };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -243,18 +257,14 @@ export async function saveImportedRecipe(
 
     if (data.categoryIds?.length) {
         const categories = await db.category.findMany({
-            where: { slug: { in: data.categoryIds } },
-            select: { id: true, slug: true },
+            where: { id: { in: data.categoryIds } },
+            select: { id: true },
         });
-        const slugToId = Object.fromEntries(categories.map((c) => [c.slug, c.id]));
-        const validEntries = data.categoryIds
-            .map((slug, index) => ({ slug, index }))
-            .filter(({ slug }) => slugToId[slug])
-            .map(({ slug, index }) => ({
-                recipeId: recipe.id,
-                categoryId: slugToId[slug],
-                position: index,
-            }));
+        const validEntries = categories.map((c, index) => ({
+            recipeId: recipe.id,
+            categoryId: c.id,
+            position: index,
+        }));
         if (validEntries.length) {
             await db.recipeCategory.createMany({ data: validEntries });
         }

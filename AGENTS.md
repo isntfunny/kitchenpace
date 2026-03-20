@@ -217,8 +217,6 @@ Converts unstructured recipe text or scraped URLs into structured flow diagrams.
 3. `transformImportedRecipe()` maps AI IDs to real IDs, resolves `@mentions`
 4. Logs `ImportRun` record (model, tokens, cost, status)
 
-**Fallback:** On AI failure, uses `parseRecipeMarkdownFallback()` so user can still edit manually.
-
 ### 2. Content Moderation (omni-moderation-latest)
 
 Free, multi-modal moderation API for text and images. See Content Moderation section below.

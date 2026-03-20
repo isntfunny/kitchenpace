@@ -123,7 +123,11 @@ export function useBulkImport({ categories, authorId }: UseBulkImportOptions) {
                 if (abortRef.current) return;
                 updateItem(index, { status: 'analyzing' });
 
-                const analyzed = await analyzeWithAI(scraped.markdown, results[index].url);
+                const analyzed = await analyzeWithAI(
+                    scraped.markdown,
+                    results[index].url,
+                    authorId,
+                );
 
                 const resolvedCategoryIds = (analyzed.categoryIds ?? [])
                     .map((slug) => categories.find((c) => c.slug === slug)?.id)

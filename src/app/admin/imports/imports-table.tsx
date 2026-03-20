@@ -22,7 +22,7 @@ import { css } from 'styled-system/css';
 export interface ImportRunRow {
     id: string;
     createdAt: string;
-    status: 'SUCCESS' | 'FALLBACK' | 'FAILED';
+    status: 'SUCCESS' | 'FAILED';
     sourceType: string;
     sourceUrl: string | null;
     markdownLength: number | null;
@@ -55,17 +55,6 @@ function StatusBadge({ status }: { status: ImportRunRow['status'] }) {
             background: 'green-100',
             color: 'green-800',
         }),
-        FALLBACK: css({
-            display: 'inline-flex',
-            alignItems: 'center',
-            px: '0.75rem',
-            py: '0.5rem',
-            borderRadius: 'sm',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            background: 'amber-100',
-            color: 'amber-800',
-        }),
         FAILED: css({
             display: 'inline-flex',
             alignItems: 'center',
@@ -80,7 +69,6 @@ function StatusBadge({ status }: { status: ImportRunRow['status'] }) {
     };
     const labels: Record<string, string> = {
         SUCCESS: 'Erfolg',
-        FALLBACK: 'Fallback',
         FAILED: 'Fehler',
     };
     return <span className={styles[status]}>{labels[status]}</span>;
@@ -677,9 +665,7 @@ const columns = buildColumns();
 export function ImportsTable({ runs }: { runs: ImportRunRow[] }) {
     const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
     const [globalFilter, setGlobalFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'ALL' | 'SUCCESS' | 'FALLBACK' | 'FAILED'>(
-        'ALL',
-    );
+    const [statusFilter, setStatusFilter] = useState<'ALL' | 'SUCCESS' | 'FAILED'>('ALL');
     const [selectedRun, setSelectedRun] = useState<ImportRunRow | null>(null);
 
     const filtered = statusFilter === 'ALL' ? runs : runs.filter((r) => r.status === statusFilter);
@@ -780,7 +766,6 @@ export function ImportsTable({ runs }: { runs: ImportRunRow[] }) {
                     >
                         <option value="ALL">Alle Status</option>
                         <option value="SUCCESS">Erfolg</option>
-                        <option value="FALLBACK">Fallback</option>
                         <option value="FAILED">Fehler</option>
                     </select>
                 </div>

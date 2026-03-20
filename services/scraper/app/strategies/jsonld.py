@@ -134,8 +134,8 @@ def _get_image(r: dict) -> Optional[str]:
     return None
 
 
-async def scrape(url: str, mode: str = "stealthy-fetch", timeout: int = 30, **_) -> Optional[tuple[str, Optional[str]]]:
-    """Try to extract Recipe from JSON-LD. Returns (markdown, image_url) or None if no Recipe found."""
+async def _fetch_html(url: str, mode: str, timeout: int) -> Optional[str]:
+    """Fetch page HTML using scrapling CLI. Returns HTML or None on failure."""
     out = tempfile.mktemp(suffix=".html")
     try:
         cmd = ["scrapling", "extract", mode, url, out,
@@ -145,11 +145,29 @@ async def scrape(url: str, mode: str = "stealthy-fetch", timeout: int = 30, **_)
         _, stderr = await proc.communicate()
 
         if proc.returncode != 0:
-            log.info("  jsonld: fetch failed: %s", stderr.decode()[:100])
+            log.info("  jsonld: fetch failed (%s): %s", mode, stderr.decode()[:100])
             return None
 
         with open(out, "r", encoding="utf-8") as f:
-            html = f.read()
+            return f.read()
+    finally:
+        if os.path.exists(out):
+            os.unlink(out)
+
+
+async def scrape(url: str, mode: str = "stealthy-fetch", timeout: int = 30, **_) -> Optional[tuple[str, Optional[str]]]:
+    """Try to extract Recipe from JSON-LD. Returns (markdown, image_url) or None if no Recipe found.
+
+    Tries simple GET first (fast, no browser needed), then falls back to the
+    requested mode (stealthy-fetch) if GET didn't yield a Recipe.
+    """
+    # Try simple GET first — most recipe sites serve JSON-LD without JS
+    modes = ["get"] if mode == "get" else ["get", mode]
+
+    for fetch_mode in modes:
+        html = await _fetch_html(url, fetch_mode, timeout)
+        if not html:
+            continue
 
         # Detect error pages early
         title_m = _TITLE_RE.search(html)
@@ -159,14 +177,12 @@ async def scrape(url: str, mode: str = "stealthy-fetch", timeout: int = 30, **_)
                 raise RuntimeError(f"Seite nicht gefunden: {title_m.group(1).strip()}")
 
         recipe = _find_recipe(html)
-        if not recipe:
-            log.info("  jsonld: no Recipe schema found")
-            return None
+        if recipe:
+            md = _recipe_to_markdown(recipe)
+            img = _get_image(recipe)
+            log.info("  jsonld: found Recipe '%s' (%d chars, via %s)", recipe.get("name", "?")[:50], len(md), fetch_mode)
+            return md, img
 
-        md = _recipe_to_markdown(recipe)
-        img = _get_image(recipe)
-        log.info("  jsonld: found Recipe '%s' (%d chars)", recipe.get("name", "?")[:50], len(md))
-        return md, img
-    finally:
-        if os.path.exists(out):
-            os.unlink(out)
+        log.info("  jsonld: no Recipe schema found (via %s)", fetch_mode)
+
+    return None

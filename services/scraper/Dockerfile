@@ -31,8 +31,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
 
-# Browsers for scrapling
-RUN playwright install chromium
+# Browsers for scrapling (patchright, not playwright — scrapling uses patchright)
+RUN patchright install chromium
 
 # Pre-download whisper model so first request isn't slow
 ARG WHISPER_MODEL=large-v3-turbo

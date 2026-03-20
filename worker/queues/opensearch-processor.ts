@@ -805,20 +805,20 @@ async function indexRecipeEmbedding(recipe: RecipeWithRelations): Promise<void> 
 
 export async function processBackfillEmbeddings(
     job: Job<BackfillEmbeddingsJob>,
-): Promise<{ embedded: number; skipped: number }> {
+): Promise<{ embedded: number; restored: number; generated: number }> {
     const batchSize = job.data.batchSize ?? 50;
     console.log(`[OpenSearch] Processing backfill-embeddings job ${job.id}`, { batchSize });
 
-    let totalEmbedded = 0;
-    let totalSkipped = 0;
+    let totalRestored = 0;
+    let totalGenerated = 0;
     let cursor: string | undefined;
 
-    // Use PostgreSQL as source of truth for which recipes already have embeddings
+    // Load existing embeddings from PostgreSQL (source of truth)
     const existingRows = await prisma.recipeEmbedding.findMany({
         where: { model: EMBEDDING_MODEL },
-        select: { recipeId: true },
+        select: { recipeId: true, embedding: true },
     });
-    const existingIds = new Set(existingRows.map((r) => r.recipeId));
+    const existingMap = new Map(existingRows.map((r) => [r.recipeId, r.embedding as number[]]));
 
     while (true) {
         const recipes = await prisma.recipe.findMany({
@@ -841,10 +841,24 @@ export async function processBackfillEmbeddings(
 
         if (recipes.length === 0) break;
 
-        // Filter out recipes that already have embeddings for the current model
-        const needsEmbedding = recipes.filter((r) => !existingIds.has(r.id));
-        totalSkipped += recipes.length - needsEmbedding.length;
+        // Split: recipes with cached embeddings vs. ones that need OpenAI
+        const hasEmbedding = recipes.filter((r) => existingMap.has(r.id));
+        const needsEmbedding = recipes.filter((r) => !existingMap.has(r.id));
 
+        // Restore cached embeddings from PostgreSQL → OpenSearch (no API call)
+        if (hasEmbedding.length > 0) {
+            const operations: BulkOperation[] = [];
+            for (const r of hasEmbedding) {
+                operations.push({
+                    index: { _index: OPENSEARCH_EMBEDDINGS_INDEX, _id: r.id },
+                });
+                operations.push({ id: r.id, embedding: existingMap.get(r.id)! });
+            }
+            await runBulkOperations(operations);
+            totalRestored += hasEmbedding.length;
+        }
+
+        // Generate new embeddings via OpenAI for recipes without cache
         if (needsEmbedding.length > 0) {
             const texts = needsEmbedding.map((r) =>
                 buildRecipeEmbeddingText(recipeToEmbeddingInput(r)),
@@ -876,22 +890,26 @@ export async function processBackfillEmbeddings(
                 ),
             );
 
-            totalEmbedded += needsEmbedding.length;
+            totalGenerated += needsEmbedding.length;
         }
 
         cursor = recipes[recipes.length - 1].id;
 
         console.log(
-            `[OpenSearch] Backfill batch: ${needsEmbedding.length} embedded, ${recipes.length - needsEmbedding.length} skipped (total: ${totalEmbedded})`,
+            `[OpenSearch] Backfill batch: ${hasEmbedding.length} restored from cache, ${needsEmbedding.length} generated (total: ${totalRestored + totalGenerated})`,
         );
 
         if (recipes.length < batchSize) break;
     }
 
     console.log(
-        `[OpenSearch] Backfill complete: ${totalEmbedded} embedded, ${totalSkipped} skipped`,
+        `[OpenSearch] Backfill complete: ${totalRestored} restored from PostgreSQL, ${totalGenerated} generated via OpenAI`,
     );
-    return { embedded: totalEmbedded, skipped: totalSkipped };
+    return {
+        embedded: totalRestored + totalGenerated,
+        restored: totalRestored,
+        generated: totalGenerated,
+    };
 }
 
 // ── Reindex ──────────────────────────────────────────────────────────────
@@ -900,7 +918,12 @@ export interface ReindexJob {
     dropAndRecreate?: boolean;
 }
 
-const STANDARD_INDICES = [OPENSEARCH_INDEX, OPENSEARCH_INGREDIENTS_INDEX, OPENSEARCH_TAGS_INDEX];
+const STANDARD_INDICES = [
+    OPENSEARCH_INDEX,
+    OPENSEARCH_INGREDIENTS_INDEX,
+    OPENSEARCH_TAGS_INDEX,
+    OPENSEARCH_EMBEDDINGS_INDEX,
+];
 
 export async function processReindex(job: Job<ReindexJob>): Promise<{ status: string }> {
     const { dropAndRecreate = false } = job.data;
@@ -933,8 +956,11 @@ export async function processReindex(job: Job<ReindexJob>): Promise<{ status: st
     await queue.add('sync-recipes', { batchSize: 150 });
     await queue.add('sync-ingredients', { batchSize: 500 });
     await queue.add('sync-tags', { batchSize: 500 });
+    await queue.add('backfill-embeddings', { batchSize: 50 });
     await queue.close();
-    console.log('[OpenSearch] Queued sync-recipes, sync-ingredients, sync-tags');
+    console.log(
+        '[OpenSearch] Queued sync-recipes, sync-ingredients, sync-tags, backfill-embeddings',
+    );
 
     return { status: dropAndRecreate ? 'dropped-and-recreated' : 'mappings-updated' };
 }

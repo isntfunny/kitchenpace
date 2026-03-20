@@ -7,6 +7,11 @@ import {
     type RecipeCardData,
     type RecipeWithCategory,
 } from '@app/lib/recipe-card';
+import {
+    opensearchClient,
+    OPENSEARCH_EMBEDDINGS_INDEX,
+    OPENSEARCH_INDEX,
+} from '@shared/opensearch/client';
 import { prisma } from '@shared/prisma';
 
 import { fetchTrophyBadge } from './trophies';
@@ -373,6 +378,154 @@ export interface EditRecipeData {
     flowNodes: FlowNodeInput[];
     flowEdges: FlowEdgeInput[];
     authorId: string;
+}
+
+// ── Similar recipes (OpenSearch k-NN + "more like this" fallback) ────────────
+
+const SIMILAR_MIN_SCORE = 0.7;
+const SIMILAR_OVER_REQUEST = 3;
+
+export async function fetchSimilarRecipes(recipeId: string, limit = 8): Promise<RecipeCardData[]> {
+    const cap = Math.min(limit, 20);
+
+    try {
+        let results: RecipeCardData[] | null = null;
+        try {
+            results = await similarByEmbedding(recipeId, cap);
+        } catch (err) {
+            console.warn('[Similar] k-NN failed, falling back to text similarity', {
+                recipeId,
+                error: err instanceof Error ? err.message : String(err),
+            });
+        }
+
+        if (results) return results;
+        return await similarByText(recipeId, cap);
+    } catch (err) {
+        console.error('[Similar] Request failed', {
+            recipeId,
+            error: err instanceof Error ? err.message : String(err),
+        });
+        return [];
+    }
+}
+
+type OsHit = { _id: string; _score: number };
+type OsHitsResponse = { hits?: { hits?: OsHit[] } };
+
+async function similarByEmbedding(
+    recipeId: string,
+    limit: number,
+): Promise<RecipeCardData[] | null> {
+    let embedding: number[];
+    try {
+        const doc = await opensearchClient.get({
+            index: OPENSEARCH_EMBEDDINGS_INDEX,
+            id: recipeId,
+            _source: ['embedding'],
+        });
+        embedding = (doc.body._source as { embedding: number[] }).embedding;
+    } catch {
+        return null;
+    }
+
+    const k = Math.min(limit * SIMILAR_OVER_REQUEST + 1, 100);
+    const response = await opensearchClient.search({
+        index: OPENSEARCH_EMBEDDINGS_INDEX,
+        body: { size: k, query: { knn: { embedding: { vector: embedding, k } } } },
+    });
+
+    const hits = ((response.body as OsHitsResponse).hits?.hits ?? [])
+        .filter((h) => h._id !== recipeId && h._score >= SIMILAR_MIN_SCORE)
+        .slice(0, limit * SIMILAR_OVER_REQUEST);
+
+    if (hits.length === 0) return [];
+
+    const details = await fetchSimilarDetails(hits.map((h) => ({ id: h._id, score: h._score })));
+    return details.slice(0, limit);
+}
+
+async function similarByText(recipeId: string, limit: number): Promise<RecipeCardData[]> {
+    const response = await opensearchClient.search({
+        index: OPENSEARCH_INDEX,
+        body: {
+            size: limit,
+            query: {
+                bool: {
+                    must: [
+                        {
+                            more_like_this: {
+                                fields: ['title', 'description', 'ingredients', 'tags', 'keywords'],
+                                like: [{ _index: OPENSEARCH_INDEX, _id: recipeId }],
+                                min_term_freq: 1,
+                                max_query_terms: 15,
+                                min_doc_freq: 1,
+                            },
+                        },
+                    ],
+                    filter: [{ term: { status: 'PUBLISHED' } }],
+                    must_not: [{ ids: { values: [recipeId] } }],
+                },
+            },
+        },
+    });
+
+    const hits = (response.body as OsHitsResponse).hits?.hits ?? [];
+    if (hits.length === 0) return [];
+    return fetchSimilarDetails(hits.map((h) => ({ id: h._id, score: h._score })));
+}
+
+type SimilarRecipeDoc = {
+    id: string;
+    slug: string;
+    title: string;
+    category?: string;
+    rating?: number;
+    totalTime?: number;
+    imageKey?: string;
+    description?: string;
+    difficulty?: string;
+    status?: string;
+};
+
+async function fetchSimilarDetails(
+    items: Array<{ id: string; score: number }>,
+): Promise<RecipeCardData[]> {
+    if (items.length === 0) return [];
+
+    const response = await opensearchClient.mget({
+        index: OPENSEARCH_INDEX,
+        body: { ids: items.map((i) => i.id) },
+    });
+
+    type MgetDoc = { _id: string; found: boolean; _source?: SimilarRecipeDoc };
+    const docs = (response.body.docs ?? []) as MgetDoc[];
+    const scoreMap = new Map(items.map((i) => [i.id, i.score]));
+
+    const difficultyLabel = (d?: string) =>
+        d === 'EASY' ? 'Einfach' : d === 'HARD' ? 'Schwer' : d === 'MEDIUM' ? 'Mittel' : undefined;
+
+    return docs
+        .filter((d) => d.found && d._source?.status === 'PUBLISHED')
+        .map((d) => {
+            const src = d._source!;
+            const totalTime = Number(src.totalTime ?? 0);
+            return {
+                id: src.id,
+                slug: src.slug,
+                title: src.title,
+                category: src.category ?? 'Hauptgericht',
+                rating: Number(src.rating ?? 0),
+                time: totalTime > 0 ? `${totalTime} Min.` : '—',
+                image: src.imageKey
+                    ? `/api/thumbnail?type=recipe&id=${encodeURIComponent(src.id)}`
+                    : null,
+                imageKey: src.imageKey ?? null,
+                description: src.description ?? '',
+                difficulty: difficultyLabel(src.difficulty),
+            };
+        })
+        .sort((a, b) => (scoreMap.get(b.id) ?? 0) - (scoreMap.get(a.id) ?? 0));
 }
 
 export async function fetchRecipeForEdit(

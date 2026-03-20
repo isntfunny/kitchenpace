@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { fetchSimilarRecipes } from '@app/app/actions/recipes';
 import { HorizontalRecipeScroll } from '@app/components/features/HorizontalRecipeScroll';
 import type { RecipeCardData } from '@app/lib/recipe-card';
 
@@ -11,18 +12,6 @@ interface SimilarRecipesProps {
     recipeId: string;
 }
 
-interface SimilarRecipeDto {
-    id: string;
-    slug: string;
-    title: string;
-    category: string;
-    rating: number;
-    time: string;
-    imageKey: string | null;
-    description: string;
-    difficulty?: string;
-}
-
 export function SimilarRecipes({ recipeId }: SimilarRecipesProps) {
     const [recipes, setRecipes] = useState<RecipeCardData[]>([]);
     const [loading, setLoading] = useState(true);
@@ -30,38 +19,17 @@ export function SimilarRecipes({ recipeId }: SimilarRecipesProps) {
     useEffect(() => {
         let cancelled = false;
 
-        async function load() {
-            try {
-                const res = await fetch(`/api/recipe/${recipeId}/similar?limit=8`);
-                if (!res.ok || cancelled) return;
-                const json = (await res.json()) as { data: SimilarRecipeDto[] };
-
-                if (!cancelled && json.data.length > 0) {
-                    setRecipes(
-                        json.data.map((r) => ({
-                            id: r.id,
-                            slug: r.slug,
-                            title: r.title,
-                            category: r.category,
-                            rating: r.rating,
-                            time: r.time,
-                            image: r.imageKey
-                                ? `/api/thumbnail?type=recipe&id=${encodeURIComponent(r.id)}`
-                                : null,
-                            imageKey: r.imageKey,
-                            description: r.description,
-                            difficulty: r.difficulty,
-                        })),
-                    );
-                }
-            } catch {
+        fetchSimilarRecipes(recipeId, 8)
+            .then((data) => {
+                if (!cancelled && data.length > 0) setRecipes(data);
+            })
+            .catch(() => {
                 // Silently fail — similar recipes are optional
-            } finally {
+            })
+            .finally(() => {
                 if (!cancelled) setLoading(false);
-            }
-        }
+            });
 
-        load();
         return () => {
             cancelled = true;
         };

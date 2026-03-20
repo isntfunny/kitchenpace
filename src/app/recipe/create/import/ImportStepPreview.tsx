@@ -4,6 +4,7 @@ import { ArrowRight, Brain, ChefHat, Edit3, ImageOff, Network, X, Zap } from 'lu
 import { motion } from 'motion/react';
 
 import { ErrorBanner } from '@app/components/recipe/RecipeForm/components/ErrorBanner';
+import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 
 import type { AnalyzedRecipe } from './actions';
 import { SuccessBanner } from './components/SuccessBanner';
@@ -13,7 +14,10 @@ import {
     imagePreviewHeaderClass,
     imagePreviewImgClass,
     imageRemoveButtonClass,
+    ingredientMatchArrowClass,
+    ingredientNewBadgeClass,
     ingredientTagClass,
+    ingredientTagNewClass,
     ingredientsListClass,
     ingredientsPreviewClass,
     ingredientsPreviewTitleClass,
@@ -35,6 +39,7 @@ import { containerClass, primaryButtonClass } from './importStyles';
 
 interface ImportStepPreviewProps {
     analyzedRecipe: AnalyzedRecipe;
+    ingredients?: AddedIngredient[];
     imageUrl: string;
     onImageUrlChange: (url: string) => void;
     error: string | null;
@@ -44,6 +49,7 @@ interface ImportStepPreviewProps {
 
 export function ImportStepPreview({
     analyzedRecipe,
+    ingredients,
     imageUrl,
     onImageUrlChange,
     error,
@@ -147,18 +153,30 @@ export function ImportStepPreview({
             >
                 <h3 className={ingredientsPreviewTitleClass}>Erkannte Zutaten</h3>
                 <div className={ingredientsListClass}>
-                    {analyzedRecipe.ingredients.slice(0, 8).map((ing, idx) => (
-                        <motion.span
-                            key={idx}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.9 + idx * 0.05 }}
-                            className={ingredientTagClass}
-                        >
-                            {ing.amount && `${ing.amount} `}
-                            {ing.name}
-                        </motion.span>
-                    ))}
+                    {(ingredients ?? analyzedRecipe.ingredients).slice(0, 8).map((ing, idx) => {
+                        const added = ingredients?.[idx];
+                        const isNew = added?.matchStatus === 'new';
+                        const isStem = added?.matchStatus === 'stem';
+                        return (
+                            <motion.span
+                                key={idx}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.9 + idx * 0.05 }}
+                                className={isNew ? ingredientTagNewClass : ingredientTagClass}
+                            >
+                                {ing.amount && `${ing.amount} `}
+                                {ing.name}
+                                {isStem && added?.matchedName && (
+                                    <>
+                                        <span className={ingredientMatchArrowClass}>→</span>
+                                        {added.matchedName}
+                                    </>
+                                )}
+                                {isNew && <span className={ingredientNewBadgeClass}>NEU</span>}
+                            </motion.span>
+                        );
+                    })}
                     {analyzedRecipe.ingredients.length > 8 && (
                         <motion.span
                             initial={{ opacity: 0 }}

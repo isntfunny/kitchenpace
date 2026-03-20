@@ -1,6 +1,7 @@
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
 
 import {
+    matchImportedIngredients,
     scrapeRecipe,
     type ScrapedContent,
     type AnalyzedRecipe,
@@ -280,7 +281,11 @@ export async function runImportPipeline(
         setDifficulty(analyzed.difficulty || 'MEDIUM');
         setCategoryIds(analyzed.categoryIds || []);
 
-        // Transform ingredients to AddedIngredient format
+        // Match ingredients against DB (lookup only, no creation)
+        addStreamEvent({ type: 'progress', message: 'Zutaten werden abgeglichen...' });
+        const matches = await matchImportedIngredients(analyzed.ingredients.map((i) => i.name));
+
+        // Transform ingredients to AddedIngredient format with match info
         const addedIngredients: AddedIngredient[] = analyzed.ingredients.map((ing, idx) => ({
             id: `imported_${idx}`,
             name: ing.name,
@@ -292,7 +297,9 @@ export async function runImportPipeline(
             ],
             notes: ing.notes || '',
             isOptional: ing.isOptional,
-            isNew: true,
+            isNew: matches[idx]?.status === 'new',
+            matchStatus: matches[idx]?.status,
+            matchedName: matches[idx]?.matchedName,
         }));
         setIngredients(addedIngredients);
 

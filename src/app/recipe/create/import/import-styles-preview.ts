@@ -115,6 +115,36 @@ export const ingredientTagClass = css({
     borderColor: { base: 'rgba(224,123,83,0.15)', _dark: 'rgba(224,123,83,0.2)' },
 });
 
+export const ingredientTagNewClass = css({
+    display: 'inline-flex',
+    px: '2',
+    py: '1',
+    backgroundColor: { base: 'rgba(234,179,8,0.1)', _dark: 'rgba(234,179,8,0.15)' },
+    borderRadius: 'md',
+    fontSize: 'xs',
+    fontWeight: '500',
+    color: 'text',
+    border: '1px solid',
+    borderColor: { base: 'rgba(234,179,8,0.3)', _dark: 'rgba(234,179,8,0.4)' },
+});
+
+export const ingredientMatchArrowClass = css({
+    color: { base: 'rgba(0,0,0,0.35)', _dark: 'rgba(255,255,255,0.35)' },
+    mx: '0.5',
+    fontSize: '2xs',
+});
+
+export const ingredientNewBadgeClass = css({
+    ml: '1',
+    px: '1',
+    py: '0',
+    borderRadius: 'xs',
+    fontSize: '2xs',
+    fontWeight: '700',
+    color: { base: 'rgba(161,98,7,1)', _dark: 'rgba(250,204,21,1)' },
+    backgroundColor: { base: 'rgba(234,179,8,0.15)', _dark: 'rgba(234,179,8,0.2)' },
+});
+
 export const moreTagClass = css({
     display: 'inline-flex',
     px: '2',

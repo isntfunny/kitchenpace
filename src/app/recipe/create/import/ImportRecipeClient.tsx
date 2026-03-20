@@ -90,6 +90,7 @@ export function ImportRecipeClient({ categories, tags, authorId }: ImportRecipeC
         return (
             <ImportStepPreview
                 analyzedRecipe={analyzedRecipe}
+                ingredients={ingredients}
                 imageUrl={imageUrl}
                 onImageUrlChange={setImageUrl}
                 error={error}

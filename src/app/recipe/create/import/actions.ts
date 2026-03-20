@@ -8,6 +8,10 @@
  */
 
 import {
+    type IngredientMatch,
+    matchIngredients as matchIngredientsShared,
+} from '@app/components/recipe/ingredientActions';
+import {
     analyzeWithAI as analyzeWithAIShared,
     saveImportedRecipe as saveImportedRecipeShared,
 } from '@app/lib/importer/pipeline';
@@ -16,11 +20,20 @@ import type { AnalyzedRecipe } from '@app/lib/importer/transform';
 import { prisma } from '@shared/prisma';
 
 // Re-export types that the UI layer needs
+export type { IngredientMatch } from '@app/components/recipe/ingredientActions';
 export type { ScrapedContent } from '@app/lib/importer/scraper';
 export type { AnalyzedRecipe, FlowEdgeInput, FlowNodeInput } from '@app/lib/importer/transform';
 
 // Re-export scrapeRecipe and checkScraplerHealth as server actions
 export { checkScraplerHealth, scrapeRecipe };
+
+/**
+ * Match ingredient names against the DB without creating anything.
+ * Returns match status (exact/stem/new) for each name.
+ */
+export async function matchImportedIngredients(names: string[]): Promise<IngredientMatch[]> {
+    return matchIngredientsShared(names);
+}
 
 /**
  * Sendet gescrapptes Markdown an OpenAI und transformiert das Ergebnis.

@@ -160,6 +160,7 @@ export async function saveImportedRecipe(
     db: PrismaClient,
     data: AnalyzedRecipe,
     authorId: string,
+    options?: { publish?: boolean },
 ): Promise<{ id: string; slug: string }> {
     if (!data.title?.trim()) {
         throw new Error('Bitte gib einen Rezepttitel ein.');
@@ -210,7 +211,8 @@ export async function saveImportedRecipe(
             cookTime: data.cookTime ?? 0,
             totalTime: (data.prepTime ?? 0) + (data.cookTime ?? 0),
             difficulty: data.difficulty ?? 'MEDIUM',
-            status: 'DRAFT',
+            status: options?.publish ? 'PUBLISHED' : 'DRAFT',
+            publishedAt: options?.publish ? new Date() : null,
             sourceUrl: data.sourceUrl ?? null,
             authorId,
             flowNodes: data.flowNodes as unknown as object,

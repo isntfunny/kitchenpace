@@ -16,6 +16,7 @@ import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora from 'ora';
 
+import { type IngredientMatch, matchIngredients } from '@app/components/recipe/ingredientActions';
 import { analyzeWithAI, saveImportedRecipe } from '@app/lib/importer/pipeline';
 import { checkScraplerHealth, scrapeRecipe } from '@app/lib/importer/scraper';
 import type { AnalyzedIngredient, AnalyzedRecipe } from '@app/lib/importer/transform';
@@ -29,66 +30,74 @@ export function registerImportCommand(program: Command): void {
         .argument('<email>', 'Author email address')
         .argument('[urls...]', 'Recipe URL(s) to scrape and import')
         .option('-f, --from-file <file>', 'Import URLs from a text file (one URL per line)')
-        .action(async (email: string, urls: string[], options: { fromFile?: string }) => {
-            // Collect all URLs from arguments + file
-            const allUrls = [...urls];
+        .option('-p, --publish', 'Publish recipe immediately after saving')
+        .action(
+            async (
+                email: string,
+                urls: string[],
+                options: { fromFile?: string; publish?: boolean },
+            ) => {
+                // Collect all URLs from arguments + file
+                const allUrls = [...urls];
 
-            if (options.fromFile) {
+                if (options.fromFile) {
+                    try {
+                        const content = readFileSync(options.fromFile, 'utf-8');
+                        const fileUrls = content
+                            .split('\n')
+                            .map((line) => line.trim())
+                            .filter((line) => line.length > 0 && !line.startsWith('#'));
+                        allUrls.push(...fileUrls);
+                    } catch (err) {
+                        console.error(
+                            chalk.red(
+                                `Cannot read file: ${options.fromFile} — ${err instanceof Error ? err.message : String(err)}`,
+                            ),
+                        );
+                        process.exit(1);
+                    }
+                }
+
+                if (allUrls.length === 0) {
+                    console.error(
+                        chalk.red('No URLs provided. Pass URLs as arguments or use -f <file>.'),
+                    );
+                    process.exit(1);
+                }
+
+                await db.$connect();
+
                 try {
-                    const content = readFileSync(options.fromFile, 'utf-8');
-                    const fileUrls = content
-                        .split('\n')
-                        .map((line) => line.trim())
-                        .filter((line) => line.length > 0 && !line.startsWith('#'));
-                    allUrls.push(...fileUrls);
-                } catch (err) {
-                    console.error(
-                        chalk.red(
-                            `Cannot read file: ${options.fromFile} — ${err instanceof Error ? err.message : String(err)}`,
-                        ),
-                    );
-                    process.exit(1);
+                    // Resolve user once
+                    const user = await resolveUser(email);
+
+                    // Health check once
+                    const healthSpinner = ora('Checking scraper service...').start();
+                    const healthy = await checkScraplerHealth();
+                    if (!healthy) {
+                        healthSpinner.fail('Scrapling service is not reachable');
+                        console.error(
+                            chalk.yellow(
+                                'Make sure the scraper is running (SCRAPLER_URL env or docker-compose)',
+                            ),
+                        );
+                        process.exit(1);
+                    }
+                    healthSpinner.succeed('Scraper service is up');
+
+                    const publish = options.publish ?? false;
+                    if (allUrls.length === 1) {
+                        // Single import — full interactive flow
+                        await importSingle(user, allUrls[0], publish);
+                    } else {
+                        // Batch import
+                        await importBatch(user, allUrls, publish);
+                    }
+                } finally {
+                    await db.$disconnect();
                 }
-            }
-
-            if (allUrls.length === 0) {
-                console.error(
-                    chalk.red('No URLs provided. Pass URLs as arguments or use -f <file>.'),
-                );
-                process.exit(1);
-            }
-
-            await db.$connect();
-
-            try {
-                // Resolve user once
-                const user = await resolveUser(email);
-
-                // Health check once
-                const healthSpinner = ora('Checking scraper service...').start();
-                const healthy = await checkScraplerHealth();
-                if (!healthy) {
-                    healthSpinner.fail('Scrapling service is not reachable');
-                    console.error(
-                        chalk.yellow(
-                            'Make sure the scraper is running (SCRAPLER_URL env or docker-compose)',
-                        ),
-                    );
-                    process.exit(1);
-                }
-                healthSpinner.succeed('Scraper service is up');
-
-                if (allUrls.length === 1) {
-                    // Single import — full interactive flow
-                    await importSingle(user, allUrls[0]);
-                } else {
-                    // Batch import
-                    await importBatch(user, allUrls);
-                }
-            } finally {
-                await db.$disconnect();
-            }
-        });
+            },
+        );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -127,11 +136,14 @@ async function resolveUser(email: string): Promise<ResolvedUser> {
 // Single import (interactive)
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function importSingle(user: ResolvedUser, url: string): Promise<void> {
+async function importSingle(user: ResolvedUser, url: string, publish: boolean): Promise<void> {
     const analyzed = await scrapeAndAnalyze(user, url);
     if (!analyzed) return;
 
     printRecipeSummary(analyzed);
+
+    // Match ingredients against DB before showing the list
+    const matches = await matchIngredientsWithSpinner(analyzed.ingredients);
 
     // Interactive ingredient review
     console.log(chalk.yellow('Review ingredients — deselect with SPACE, confirm with ENTER:'));
@@ -142,7 +154,7 @@ async function importSingle(user: ResolvedUser, url: string): Promise<void> {
         loop: false,
         pageSize: 20,
         choices: analyzed.ingredients.map((ing, idx) => ({
-            name: formatIngredient(ing),
+            name: formatIngredientWithMatch(ing, matches[idx]),
             value: idx,
             checked: true,
         })),
@@ -160,8 +172,9 @@ async function importSingle(user: ResolvedUser, url: string): Promise<void> {
         ),
     );
 
+    const statusLabel = publish ? 'PUBLISHED' : 'DRAFT';
     const proceed = await confirm({
-        message: `Rezept "${analyzed.title}" als DRAFT speichern?`,
+        message: `Rezept "${analyzed.title}" als ${statusLabel} speichern?`,
         default: true,
     });
 
@@ -170,16 +183,17 @@ async function importSingle(user: ResolvedUser, url: string): Promise<void> {
         return;
     }
 
-    await saveRecipe(user, { ...analyzed, ingredients: selectedIngredients });
+    await saveRecipe(user, { ...analyzed, ingredients: selectedIngredients }, publish);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Batch import
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function importBatch(user: ResolvedUser, urls: string[]): Promise<void> {
+async function importBatch(user: ResolvedUser, urls: string[], publish: boolean): Promise<void> {
     console.log(chalk.bold(`\nBatch import: ${urls.length} URLs\n`));
 
+    const statusLabel = publish ? 'PUBLISHED' : 'DRAFT';
     const results: {
         url: string;
         status: 'ok' | 'skipped' | 'error';
@@ -201,6 +215,9 @@ async function importBatch(user: ResolvedUser, urls: string[]): Promise<void> {
 
         printRecipeSummary(analyzed);
 
+        // Match ingredients against DB before showing the list
+        const matches = await matchIngredientsWithSpinner(analyzed.ingredients);
+
         // Interactive ingredient review per recipe
         console.log(chalk.yellow('Review ingredients — deselect with SPACE, confirm with ENTER:'));
         console.log();
@@ -212,7 +229,7 @@ async function importBatch(user: ResolvedUser, urls: string[]): Promise<void> {
                 loop: false,
                 pageSize: 20,
                 choices: analyzed.ingredients.map((ing, idx) => ({
-                    name: formatIngredient(ing),
+                    name: formatIngredientWithMatch(ing, matches[idx]),
                     value: idx,
                     checked: true,
                 })),
@@ -239,7 +256,7 @@ async function importBatch(user: ResolvedUser, urls: string[]): Promise<void> {
         let proceed: boolean;
         try {
             proceed = await confirm({
-                message: `Rezept "${analyzed.title}" als DRAFT speichern?`,
+                message: `Rezept "${analyzed.title}" als ${statusLabel} speichern?`,
                 default: true,
             });
         } catch {
@@ -252,7 +269,11 @@ async function importBatch(user: ResolvedUser, urls: string[]): Promise<void> {
             continue;
         }
 
-        const saved = await saveRecipe(user, { ...analyzed, ingredients: selectedIngredients });
+        const saved = await saveRecipe(
+            user,
+            { ...analyzed, ingredients: selectedIngredients },
+            publish,
+        );
         if (saved) {
             results.push({ url, status: 'ok', title: analyzed.title, slug: saved.slug });
         } else {
@@ -350,18 +371,36 @@ function printRecipeSummary(analyzed: AnalyzedRecipe): void {
     console.log();
 }
 
+async function matchIngredientsWithSpinner(
+    ingredients: AnalyzedIngredient[],
+): Promise<IngredientMatch[]> {
+    const spinner = ora('Matching ingredients against database...').start();
+    const matches = await matchIngredients(ingredients.map((i) => i.name));
+    const newCount = matches.filter((m) => m.status === 'new').length;
+    const matchedCount = matches.filter((m) => m.status === 'stem').length;
+    const parts = [`${ingredients.length - newCount} bekannt`];
+    if (matchedCount > 0) parts.push(`${matchedCount} ähnlich`);
+    if (newCount > 0) parts.push(`${newCount} neu`);
+    spinner.succeed(`Zutaten abgeglichen: ${parts.join(', ')}`);
+    return matches;
+}
+
 async function saveRecipe(
     user: ResolvedUser,
     data: AnalyzedRecipe,
+    publish: boolean,
 ): Promise<{ id: string; slug: string } | null> {
-    const saveSpinner = ora('Saving recipe as DRAFT...').start();
+    const statusLabel = publish ? 'PUBLISHED' : 'DRAFT';
+    const saveSpinner = ora(`Saving recipe as ${statusLabel}...`).start();
     try {
-        const result = await saveImportedRecipe(db, data, user.id);
+        const result = await saveImportedRecipe(db, data, user.id, { publish });
         saveSpinner.succeed('Recipe saved');
-        console.log(chalk.green.bold(`  Recipe created as DRAFT`));
+        console.log(chalk.green.bold(`  Recipe created as ${statusLabel}`));
         console.log(`  ID:   ${result.id}`);
         console.log(`  Slug: ${result.slug}`);
-        console.log(chalk.dim(`  Use 'kitchen recipe ${result.slug} --publish' to publish`));
+        if (!publish) {
+            console.log(chalk.dim(`  Use 'kitchen import ... --publish' to publish directly`));
+        }
         return result;
     } catch (err) {
         saveSpinner.fail('Save failed');
@@ -370,11 +409,18 @@ async function saveRecipe(
     }
 }
 
-function formatIngredient(ing: AnalyzedIngredient): string {
+function formatIngredientWithMatch(ing: AnalyzedIngredient, match: IngredientMatch): string {
     const parts: string[] = [];
     if (ing.amount) parts.push(chalk.bold(ing.amount));
     if (ing.unit && ing.unit !== 'Stück') parts.push(ing.unit);
     parts.push(ing.name);
     if (ing.notes) parts.push(chalk.dim(`(${ing.notes})`));
+
+    if (match.status === 'stem' && match.matchedName) {
+        parts.push(chalk.cyan(`→ ${match.matchedName}`));
+    } else if (match.status === 'new') {
+        parts.push(chalk.yellow('(NEU)'));
+    }
+
     return parts.join(' ');
 }

@@ -33,4 +33,8 @@ export interface AddedIngredient {
     notes: string;
     isOptional: boolean;
     isNew: boolean;
+    /** Set during import: 'exact' = name matched as-is, 'stem' = matched via stemming, 'new' = will be created */
+    matchStatus?: 'exact' | 'stem' | 'new';
+    /** The DB ingredient name when matchStatus is 'stem' (different from scraped name) */
+    matchedName?: string;
 }

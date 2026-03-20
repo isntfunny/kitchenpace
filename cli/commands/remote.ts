@@ -81,7 +81,7 @@ export function registerRemoteCommand(program: Command) {
             const remoteCmd = command.map((a) => (a.includes(' ') ? `"${a}"` : a)).join(' ');
             const proc = spawn(
                 'ssh',
-                ['-t', host, `docker exec ${container} kitchen ${remoteCmd}`],
+                ['-t', host, `docker exec -it ${container} kitchen ${remoteCmd}`],
                 { stdio: 'inherit' },
             );
             proc.on('exit', (code) => process.exit(code ?? 0));

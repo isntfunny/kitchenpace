@@ -230,10 +230,11 @@ async function importOne(user: ResolvedUser, url: string, publish: boolean): Pro
     // Duplicate check
     const dupe = await isAlreadyImported(url);
     if (dupe) {
-        console.log(
-            chalk.yellow(`Bereits importiert: "${dupe.title}" (${dupe.slug}) — übersprungen.`),
-        );
-        return { url, status: 'skipped', title: dupe.title, slug: dupe.slug };
+        console.log(chalk.yellow(`Bereits importiert: "${dupe.title}" (${dupe.slug})`));
+        const reimport = await confirm({ message: 'Trotzdem importieren?', default: false });
+        if (!reimport) {
+            return { url, status: 'skipped', title: dupe.title, slug: dupe.slug };
+        }
     }
 
     // Scrape + AI
@@ -335,7 +336,6 @@ async function isAlreadyImported(url: string): Promise<{ title: string; slug: st
     ]);
     if (byRecipe) return byRecipe;
     if (byImportRun?.recipe) return byImportRun.recipe;
-    // ImportRun exists but recipe was deleted or recipeId is null — still skip
     if (byImportRun) return { title: '(previously imported)', slug: '(deleted)' };
     return null;
 }

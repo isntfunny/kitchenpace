@@ -10,7 +10,7 @@ import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
 
 import type { RecipeStepsViewerProps, TimerState } from './viewerTypes';
-import { extractIngredientChips, formatTime, renderDescription } from './viewerUtils';
+import { extractMentionedIds, formatTime, renderDescription } from './viewerUtils';
 
 const cardBase = css({
     borderRadius: '16px',
@@ -67,10 +67,11 @@ export function StepCard({
     const config = getStepConfig(node.type as StepType);
     const Icon = config.icon;
     const hasTimer = !!timerState;
-    const chips = useMemo(
-        () => extractIngredientChips(node.description, ingredients),
-        [node.description, ingredients],
-    );
+    const stepIngredients = useMemo(() => {
+        if (!ingredients) return [];
+        const ids = extractMentionedIds(node.description);
+        return ids.size > 0 ? ingredients.filter((i) => ids.has(i.id)) : [];
+    }, [node.description, ingredients]);
     const timerDone = hasTimer && timerState!.remaining === 0;
     const timerRunning = hasTimer && timerState!.running;
     const pct = hasTimer
@@ -257,8 +258,8 @@ export function StepCard({
                     </div>
                 )}
 
-                {/* Ingredient chips */}
-                {chips.length > 0 && !compact && (
+                {/* Ingredient list */}
+                {stepIngredients.length > 0 && !compact && (
                     <div
                         className={css({
                             borderTop: '1px solid',
@@ -277,31 +278,58 @@ export function StepCard({
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em',
                                 color: 'text.muted',
-                                marginBottom: '3px',
+                                marginBottom: '4px',
                             })}
                         >
                             Zutaten
                         </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                            {chips.map((chip) => (
-                                <span
-                                    key={chip.id}
-                                    className={css({
-                                        display: 'inline-flex',
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            {stepIngredients.map((ing) => (
+                                <div
+                                    key={ing.id}
+                                    style={{
+                                        display: 'flex',
                                         alignItems: 'center',
-                                        padding: '1px 6px',
-                                        bg: {
-                                            base: 'rgba(224,123,83,0.12)',
-                                            _dark: 'rgba(224,123,83,0.17)',
-                                        },
-                                        borderRadius: '99px',
-                                        fontSize: '9px',
-                                        fontWeight: 600,
-                                        color: 'palette.orange',
-                                    })}
+                                        gap: 5,
+                                        fontSize: 10,
+                                    }}
                                 >
-                                    {chip.label}
-                                </span>
+                                    <span
+                                        style={{
+                                            width: 4,
+                                            height: 4,
+                                            borderRadius: '50%',
+                                            backgroundColor: PALETTE.orange,
+                                            flexShrink: 0,
+                                            opacity: 0.6,
+                                        }}
+                                    />
+                                    <span
+                                        className={css({
+                                            fontWeight: 600,
+                                            color: 'text',
+                                            flex: 1,
+                                            minWidth: 0,
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        })}
+                                    >
+                                        {ing.name}
+                                    </span>
+                                    {(ing.amount || ing.unit) && (
+                                        <span
+                                            className={css({
+                                                color: 'text.subtle',
+                                                flexShrink: 0,
+                                                fontWeight: 500,
+                                                fontSize: '9px',
+                                            })}
+                                        >
+                                            {[ing.amount, ing.unit].filter(Boolean).join(' ')}
+                                        </span>
+                                    )}
+                                </div>
                             ))}
                         </div>
                     </div>

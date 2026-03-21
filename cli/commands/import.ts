@@ -7,6 +7,10 @@
  *
  * Scrapes each URL, analyzes with AI, shows interactive ingredient review
  * (scroll with arrows, toggle with space, confirm with enter), saves as DRAFT.
+ *
+ * Flags:
+ *   --auto        Skip all interactive prompts, accept AI ingredients as-is
+ *   --publish     Publish recipe immediately after saving
  */
 
 import { readFileSync } from 'fs';
@@ -31,11 +35,12 @@ export function registerImportCommand(program: Command): void {
         .argument('[urls...]', 'Recipe URL(s) to scrape and import')
         .option('-f, --from-file <file>', 'Import URLs from a text file (one URL per line)')
         .option('-p, --publish', 'Publish recipe immediately after saving')
+        .option('--auto', 'Skip interactive prompts, accept all AI results as-is')
         .action(
             async (
                 email: string,
                 urls: string[],
-                options: { fromFile?: string; publish?: boolean },
+                options: { fromFile?: string; publish?: boolean; auto?: boolean },
             ) => {
                 // Collect all URLs from arguments + file
                 const allUrls = [...urls];
@@ -86,12 +91,16 @@ export function registerImportCommand(program: Command): void {
                     healthSpinner.succeed('Scraper service is up');
 
                     const publish = options.publish ?? false;
+                    const auto = options.auto ?? false;
+                    if (auto) {
+                        console.log(chalk.cyan.bold('Auto mode: skipping all interactive prompts'));
+                    }
                     if (allUrls.length === 1) {
                         // Single import — full interactive flow
-                        await importOne(user, allUrls[0], publish);
+                        await importOne(user, allUrls[0], publish, auto);
                     } else {
                         // Batch import
-                        await importBatch(user, allUrls, publish);
+                        await importBatch(user, allUrls, publish, auto);
                     }
                 } finally {
                     await db.$disconnect();
@@ -227,11 +236,20 @@ interface ImportResult {
     error?: string;
 }
 
-async function importOne(user: ResolvedUser, url: string, publish: boolean): Promise<ImportResult> {
+async function importOne(
+    user: ResolvedUser,
+    url: string,
+    publish: boolean,
+    auto = false,
+): Promise<ImportResult> {
     // Duplicate check
     const dupe = await isAlreadyImported(url);
     if (dupe) {
         console.log(chalk.yellow(`Bereits importiert: "${dupe.title}" (${dupe.slug})`));
+        if (auto) {
+            console.log(chalk.yellow('  → Auto: übersprungen (Duplikat)'));
+            return { url, status: 'skipped', title: dupe.title, slug: dupe.slug };
+        }
         const reimport = await confirm({ message: 'Trotzdem importieren?', default: false });
         if (!reimport) {
             return { url, status: 'skipped', title: dupe.title, slug: dupe.slug };
@@ -246,29 +264,36 @@ async function importOne(user: ResolvedUser, url: string, publish: boolean): Pro
 
     printRecipeSummary(analyzed);
 
-    // Interactive ingredient review + correction
-    const selectedIngredients = await reviewIngredients(analyzed.ingredients);
-    if (!selectedIngredients) {
-        console.log(chalk.red('Keine Zutaten ausgewählt — übersprungen.'));
-        return { url, status: 'skipped', title: analyzed.title };
+    let finalIngredients: AnalyzedIngredient[];
+
+    if (auto) {
+        // Auto mode: accept all AI ingredients, just show match stats
+        await matchIngredientsWithSpinner(analyzed.ingredients);
+        finalIngredients = analyzed.ingredients;
+    } else {
+        // Interactive ingredient review + correction
+        const selectedIngredients = await reviewIngredients(analyzed.ingredients);
+        if (!selectedIngredients) {
+            console.log(chalk.red('Keine Zutaten ausgewählt — übersprungen.'));
+            return { url, status: 'skipped', title: analyzed.title };
+        }
+        finalIngredients = selectedIngredients;
     }
 
-    // Confirm save
-    const statusLabel = publish ? 'PUBLISHED' : 'DRAFT';
-    const proceed = await confirm({
-        message: `Rezept "${analyzed.title}" als ${statusLabel} speichern?`,
-        default: true,
-    });
+    if (!auto) {
+        // Confirm save
+        const statusLabel = publish ? 'PUBLISHED' : 'DRAFT';
+        const proceed = await confirm({
+            message: `Rezept "${analyzed.title}" als ${statusLabel} speichern?`,
+            default: true,
+        });
 
-    if (!proceed) {
-        return { url, status: 'skipped', title: analyzed.title };
+        if (!proceed) {
+            return { url, status: 'skipped', title: analyzed.title };
+        }
     }
 
-    const saved = await saveRecipe(
-        user,
-        { ...analyzed, ingredients: selectedIngredients },
-        publish,
-    );
+    const saved = await saveRecipe(user, { ...analyzed, ingredients: finalIngredients }, publish);
     if (saved) {
         return { url, status: 'ok', title: analyzed.title, slug: saved.slug };
     }
@@ -279,7 +304,12 @@ async function importOne(user: ResolvedUser, url: string, publish: boolean): Pro
 // Single + Batch wrappers
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function importBatch(user: ResolvedUser, urls: string[], publish: boolean): Promise<void> {
+async function importBatch(
+    user: ResolvedUser,
+    urls: string[],
+    publish: boolean,
+    auto = false,
+): Promise<void> {
     console.log(chalk.bold(`\nBatch import: ${urls.length} URLs\n`));
 
     const results: ImportResult[] = [];
@@ -289,7 +319,7 @@ async function importBatch(user: ResolvedUser, urls: string[], publish: boolean)
         console.log(chalk.dim('─'.repeat(60)));
 
         try {
-            results.push(await importOne(user, urls[i], publish));
+            results.push(await importOne(user, urls[i], publish, auto));
         } catch {
             // Ctrl+C during interactive prompts
             console.log(chalk.yellow('\nBatch aborted by user.'));

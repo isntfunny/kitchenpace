@@ -1,6 +1,6 @@
 'use client';
 
-import { List, RotateCcw, Smartphone, X } from 'lucide-react';
+import { GitBranch, List, RotateCcw, Smartphone, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -45,14 +45,31 @@ export function RecipeStepsViewer({
     recipeSlug,
     initialProgress,
     isAuthenticated,
+    embedded,
 }: RecipeStepsViewerProps & {
     initialProgress?: PersistedViewerState | null;
     isAuthenticated?: boolean;
+    /** When true: fullscreen height, no view-mode buttons (used by /mobile route) */
+    embedded?: boolean;
 }) {
     const { columnGroups, dagreY, outgoing } = useMemo(
         () => buildTopology(nodes, edges),
         [nodes, edges],
     );
+
+    // A flow is "linear" when no node has more than one outgoing or incoming edge
+    const isLinear = useMemo(() => {
+        const outCount = new Map<string, number>();
+        const inCount = new Map<string, number>();
+        for (const e of edges) {
+            outCount.set(e.source, (outCount.get(e.source) ?? 0) + 1);
+            inCount.set(e.target, (inCount.get(e.target) ?? 0) + 1);
+        }
+        return (
+            [...outCount.values()].every((c) => c <= 1) &&
+            [...inCount.values()].every((c) => c <= 1)
+        );
+    }, [edges]);
 
     const [state, dispatch] = useReducer(viewerReducer, {
         completed: new Set<string>(),
@@ -60,7 +77,7 @@ export function RecipeStepsViewer({
     });
 
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'text'>('desktop');
+    const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'text' | 'flow'>('desktop');
 
     // ── Persistence refs ─────────────────────────────────────────────────
     const hydratedRef = useRef(false);
@@ -94,7 +111,7 @@ export function RecipeStepsViewer({
 
     // Lock body scroll when overlay is open
     useEffect(() => {
-        if (viewMode === 'mobile' || viewMode === 'text') {
+        if (viewMode === 'mobile' || viewMode === 'text' || viewMode === 'flow') {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = '';
@@ -151,13 +168,15 @@ export function RecipeStepsViewer({
         dispatch({ type: 'init', timers: buildFreshTimers() });
     }, [nodes, recipeSlug, initialProgress, buildFreshTimers]);
 
-    // Single global tick for all timers
+    // Single global tick — only when at least one timer is running
+    const hasRunningTimer = [...state.timers.values()].some((t) => t.running);
     useEffect(() => {
+        if (!hasRunningTimer) return;
         const interval = setInterval(() => {
             dispatch({ type: 'timerTick' });
         }, 1000);
         return () => clearInterval(interval);
-    }, []);
+    }, [hasRunningTimer]);
 
     // Track whether we need to persist (bumped on user actions)
     const persistSeqRef = useRef(0);
@@ -259,8 +278,8 @@ export function RecipeStepsViewer({
 
     return (
         <>
-            {/* On mobile: show action buttons instead of desktop flow */}
-            {isMobileDevice ? (
+            {/* On mobile: show action buttons instead of desktop flow (unless embedded) */}
+            {isMobileDevice && !embedded ? (
                 <div
                     className={css({
                         display: 'flex',
@@ -334,43 +353,77 @@ export function RecipeStepsViewer({
                         position: 'relative',
                     })}
                 >
-                    {/* View mode toggle buttons — top right */}
+                    {/* View mode toggle buttons — top right (hidden in embedded mode) */}
                     <div
                         style={{
                             position: 'absolute',
                             top: 12,
                             right: 12,
                             zIndex: 10,
-                            display: 'flex',
+                            display: embedded ? 'none' : 'flex',
                             gap: 6,
                             alignItems: 'center',
                         }}
                     >
-                        <button
-                            type="button"
-                            onClick={() => setViewMode('text')}
-                            title="Textansicht"
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '1',
-                                py: '1',
-                                px: '2.5',
-                                borderRadius: 'full',
-                                border: {
-                                    base: '1px solid rgba(224,123,83,0.25)',
-                                    _dark: '1px solid rgba(224,123,83,0.3)',
-                                },
-                                bg: { base: 'rgba(255,255,255,0.9)', _dark: 'rgba(30,33,38,0.9)' },
-                                color: 'palette.orange',
-                                fontSize: 'xs',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                backdropFilter: 'blur(4px)',
-                            })}
-                        >
-                            <List style={{ width: 13, height: 13 }} /> Text
-                        </button>
+                        {isLinear ? (
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('flow')}
+                                title="Flow-Ansicht"
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1',
+                                    py: '1',
+                                    px: '2.5',
+                                    borderRadius: 'full',
+                                    border: {
+                                        base: '1px solid rgba(224,123,83,0.25)',
+                                        _dark: '1px solid rgba(224,123,83,0.3)',
+                                    },
+                                    bg: {
+                                        base: 'rgba(255,255,255,0.9)',
+                                        _dark: 'rgba(30,33,38,0.9)',
+                                    },
+                                    color: 'palette.orange',
+                                    fontSize: 'xs',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    backdropFilter: 'blur(4px)',
+                                })}
+                            >
+                                <GitBranch style={{ width: 13, height: 13 }} /> Flow
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('text')}
+                                title="Textansicht"
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1',
+                                    py: '1',
+                                    px: '2.5',
+                                    borderRadius: 'full',
+                                    border: {
+                                        base: '1px solid rgba(224,123,83,0.25)',
+                                        _dark: '1px solid rgba(224,123,83,0.3)',
+                                    },
+                                    bg: {
+                                        base: 'rgba(255,255,255,0.9)',
+                                        _dark: 'rgba(30,33,38,0.9)',
+                                    },
+                                    color: 'palette.orange',
+                                    fontSize: 'xs',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    backdropFilter: 'blur(4px)',
+                                })}
+                            >
+                                <List style={{ width: 13, height: 13 }} /> Text
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={() => setViewMode('mobile')}
@@ -430,14 +483,32 @@ export function RecipeStepsViewer({
                         )}
                     </div>
 
-                    <DesktopView {...sharedState} nodes={nodes} edges={edges} outgoing={outgoing} />
+                    {isLinear ? (
+                        <SimpleTextView
+                            columnGroups={columnGroups}
+                            completed={state.completed}
+                            timers={state.timers}
+                            dispatch={trackedDispatch}
+                            ingredients={ingredients}
+                        />
+                    ) : (
+                        <DesktopView
+                            {...sharedState}
+                            nodes={nodes}
+                            edges={edges}
+                            outgoing={outgoing}
+                            embedded={embedded}
+                        />
+                    )}
 
                     {allStepsDone && <CompletionBanner />}
                 </div>
             )}
 
             {/* Portaled overlays — escape any parent transform/stacking context */}
+            {/* Text overlay — non-linear desktop or mobile (linear desktop shows text inline) */}
             {viewMode === 'text' &&
+                (isMobileDevice || !isLinear) &&
                 createPortal(
                     <div
                         className={css({
@@ -502,6 +573,56 @@ export function RecipeStepsViewer({
                             timers={state.timers}
                             dispatch={trackedDispatch}
                             ingredients={ingredients}
+                        />
+                    </div>,
+                    document.body,
+                )}
+
+            {/* Flow overlay — for linear flows clicking "Flow" button */}
+            {viewMode === 'flow' &&
+                createPortal(
+                    <div
+                        className={css({
+                            position: 'fixed',
+                            inset: 0,
+                            zIndex: 300,
+                            bg: 'background',
+                        })}
+                    >
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: 12,
+                                right: 16,
+                                zIndex: 10,
+                            }}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('desktop')}
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: 'full',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(224,123,83,0.2)',
+                                    bg: 'surface',
+                                    color: 'text.muted',
+                                    cursor: 'pointer',
+                                })}
+                            >
+                                <X style={{ width: 16, height: 16 }} />
+                            </button>
+                        </div>
+                        <DesktopView
+                            {...sharedState}
+                            nodes={nodes}
+                            edges={edges}
+                            outgoing={outgoing}
+                            embedded={embedded}
                         />
                     </div>,
                     document.body,

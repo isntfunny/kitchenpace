@@ -1,3 +1,4 @@
+import dagre from 'dagre';
 import type { ReactNode } from 'react';
 
 import { css } from 'styled-system/css';
@@ -11,27 +12,6 @@ const mentionCss = css({
     px: '0.75',
     fontWeight: 600,
 });
-
-/* ── dagre setup (same instance used by FlowEditor) ──────── */
-
-interface DagreGraph {
-    setDefaultEdgeLabel(fn: () => Record<string, unknown>): void;
-    setGraph(opts: {
-        rankdir?: string;
-        nodesep?: number;
-        ranksep?: number;
-        marginx?: number;
-        marginy?: number;
-    }): void;
-    setNode(id: string, opts: { width: number; height: number }): void;
-    setEdge(source: string, target: string): void;
-    node(id: string): { x: number; y: number };
-}
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const dagre = require('dagre') as {
-    graphlib: { Graph: new () => DagreGraph };
-    layout: (g: DagreGraph) => void;
-};
 
 /* ── topology builder (dagre-powered) ───────────────────── */
 

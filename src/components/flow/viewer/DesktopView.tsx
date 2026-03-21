@@ -207,6 +207,8 @@ interface DesktopViewProps {
     dispatch: Dispatch<ViewerAction>;
     onOpenDetail: (nodeId: string) => void;
     ingredients?: RecipeStepsViewerProps['ingredients'];
+    /** Embedded mode: full viewport height, no overlay buttons */
+    embedded?: boolean;
 }
 
 function DesktopViewInner({
@@ -218,6 +220,7 @@ function DesktopViewInner({
     dispatch,
     onOpenDetail,
     ingredients,
+    embedded,
 }: DesktopViewProps) {
     // Defer dark mode until after mount to avoid SSR/client hydration mismatch
     // (ThemeProvider reads localStorage on client → different initial value than server's 'light')
@@ -289,18 +292,46 @@ function DesktopViewInner({
         [edges, nodes, completed, timers, dark],
     );
 
+    const makeNodeDataForViewer = useCallback(
+        (node: FlowNodeSerialized): ViewerNodeData => ({
+            ...makeNodeData(node),
+            // Single click on card → zoom (not open modal); double-click opens modal
+            onOpenDetail: () => {
+                /* handled by onNodeClick at ReactFlow level */
+            },
+        }),
+        [makeNodeData],
+    );
+
     const [rfNodes, setRfNodes] = useState<RFNode[]>(() =>
         nodes.map((n) => ({
             id: n.id,
             type: n.type,
             position: n.position ?? { x: 0, y: 0 },
-            data: makeNodeData(n),
+            data: makeNodeDataForViewer(n),
         })),
     );
     const [rfEdges, setRfEdges] = useState(() => buildRfEdges());
     const containerRef = useRef<HTMLDivElement>(null);
-    const { getNodes, setViewport } = useReactFlow();
+    const { getNodes, setViewport, fitView } = useReactFlow();
     const hasFitRef = useRef(false);
+
+    // Single click → zoom to node
+    const handleNodeClick = useCallback(
+        (_: React.MouseEvent, rfNode: RFNode) => {
+            fitView({ nodes: [{ id: rfNode.id }], padding: 0.8, duration: 300 });
+        },
+        [fitView],
+    );
+
+    // Double-click → open detail modal
+    const handleNodeDoubleClick = useCallback(
+        (_: React.MouseEvent, rfNode: RFNode) => {
+            console.log('[DV] double-click on', rfNode.id);
+            onOpenDetail(rfNode.id);
+        },
+        [onOpenDetail],
+    );
 
     const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -339,11 +370,14 @@ function DesktopViewInner({
         (changes: NodeChange[]) => {
             setRfNodes((nds) => applyNodeChanges(changes, nds));
 
-            // After xyflow measures node dimensions, fit all nodes into view
-            if (!hasFitRef.current) {
-                const measured = getNodes();
-                if (measured.length > 0 && measured[0].measured?.width) {
-                    hasFitRef.current = true;
+            // Fit after first dimension measurements arrive
+            if (
+                !hasFitRef.current &&
+                changes.some((c) => c.type === 'dimensions' && 'dimensions' in c && c.dimensions)
+            ) {
+                hasFitRef.current = true;
+                // Wait one frame so React has flushed the state update
+                requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         const allNodes = getNodes();
                         if (allNodes.length === 0 || !containerRef.current) return;
@@ -361,36 +395,45 @@ function DesktopViewInner({
                             maxY = Math.max(maxY, n.position.y + h);
                         }
 
-                        const contentW = maxX - minX;
                         const contentH = maxY - minY;
-                        const containerWidth = containerRef.current.clientWidth;
                         const containerHeight = containerRef.current.clientHeight;
-                        const padding = 32;
+                        const padding = 120;
 
-                        const zoomX = (containerWidth - padding * 2) / contentW;
                         const zoomY = (containerHeight - padding * 2) / contentH;
-                        const zoom = Math.min(zoomX, zoomY, 2.0);
+                        const zoom = Math.min(zoomY, 2.0);
 
-                        const viewportX = containerWidth / 2 - ((minX + maxX) / 2) * zoom;
+                        const viewportX = padding - minX * zoom;
                         const viewportY = containerHeight / 2 - ((minY + maxY) / 2) * zoom;
 
                         setViewport({ x: viewportX, y: viewportY, zoom }, { duration: 300 });
                     });
-                }
+                });
             }
         },
         [getNodes, setViewport],
     );
 
     // Sync node data when completion/timer state changes (preserve xyflow's measured sizes)
+    // Only create new data objects for nodes whose state actually changed.
+    const prevTimersRef = useRef(timers);
+    const prevCompletedRef = useRef(completed);
     useEffect(() => {
+        const prevTimers = prevTimersRef.current;
+        const prevCompleted = prevCompletedRef.current;
+        prevTimersRef.current = timers;
+        prevCompletedRef.current = completed;
+
         setRfNodes((nds) =>
             nds.map((n) => {
+                const timerChanged = timers.get(n.id) !== prevTimers.get(n.id);
+                const completedChanged = completed.has(n.id) !== prevCompleted.has(n.id);
+                if (!timerChanged && !completedChanged) return n; // same reference = no re-render
+
                 const orig = nodes.find((o) => o.id === n.id);
-                return orig ? { ...n, data: makeNodeData(orig) } : n;
+                return orig ? { ...n, data: makeNodeDataForViewer(orig) } : n;
             }),
         );
-    }, [completed, timers, makeNodeData, nodes]);
+    }, [completed, timers, makeNodeDataForViewer, nodes]);
 
     // Sync edge styles when state changes
     useEffect(() => {
@@ -407,8 +450,8 @@ function DesktopViewInner({
         <div
             ref={containerRef}
             style={{
-                height: isFullscreen ? '100vh' : 'calc(100vh - 200px)',
-                minHeight: 400,
+                height: isFullscreen || embedded ? '100vh' : 'calc(100vh - 200px)',
+                minHeight: embedded ? undefined : 400,
                 position: 'relative',
                 backgroundColor: dark ? '#0d0d0d' : '#ffffff',
             }}
@@ -419,9 +462,11 @@ function DesktopViewInner({
                 nodeTypes={VIEWER_NODE_TYPES}
                 edgeTypes={VIEWER_EDGE_TYPES}
                 onNodesChange={onNodesChange}
+                onNodeClick={handleNodeClick}
+                onNodeDoubleClick={handleNodeDoubleClick}
                 nodesDraggable={false}
                 nodesConnectable={false}
-                elementsSelectable={false}
+                elementsSelectable
                 panOnDrag
                 zoomOnScroll={false}
                 zoomOnPinch
@@ -437,74 +482,78 @@ function DesktopViewInner({
                 />
             </ReactFlow>
 
-            {/* Fullscreen button — bottom right */}
-            <button
-                type="button"
-                onClick={toggleFullscreen}
-                title={isFullscreen ? 'Vollbild beenden' : 'Im Vollbild anzeigen'}
-                className={css({
-                    position: 'absolute',
-                    bottom: '3',
-                    right: '3',
-                    zIndex: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1.5',
-                    py: '1.5',
-                    px: '3',
-                    borderRadius: 'lg',
-                    border: {
-                        base: '1px solid rgba(224,123,83,0.2)',
-                        _dark: '1px solid rgba(224,123,83,0.15)',
-                    },
-                    bg: 'surface',
-                    color: 'palette.orange',
-                    fontSize: 'xs',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    backdropFilter: 'blur(4px)',
-                    _hover: { bg: 'surface.elevated' },
-                })}
-            >
-                {isFullscreen ? (
-                    <Minimize2 style={{ width: 13, height: 13 }} />
-                ) : (
-                    <Maximize2 style={{ width: 13, height: 13 }} />
-                )}
-                {isFullscreen ? 'Schließen' : 'Vollbild'}
-            </button>
+            {/* Fullscreen + PDF buttons — hidden in embedded mode */}
+            {!embedded && (
+                <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    title={isFullscreen ? 'Vollbild beenden' : 'Im Vollbild anzeigen'}
+                    className={css({
+                        position: 'absolute',
+                        bottom: '3',
+                        right: '3',
+                        zIndex: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1.5',
+                        py: '1.5',
+                        px: '3',
+                        borderRadius: 'lg',
+                        border: {
+                            base: '1px solid rgba(224,123,83,0.2)',
+                            _dark: '1px solid rgba(224,123,83,0.15)',
+                        },
+                        bg: 'surface',
+                        color: 'palette.orange',
+                        fontSize: 'xs',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        backdropFilter: 'blur(4px)',
+                        _hover: { bg: 'surface.elevated' },
+                    })}
+                >
+                    {isFullscreen ? (
+                        <Minimize2 style={{ width: 13, height: 13 }} />
+                    ) : (
+                        <Maximize2 style={{ width: 13, height: 13 }} />
+                    )}
+                    {isFullscreen ? 'Schließen' : 'Vollbild'}
+                </button>
+            )}
 
             {/* PDF export button — above fullscreen button */}
-            <button
-                type="button"
-                onClick={handleExportPdf}
-                title="Als PDF exportieren"
-                className={css({
-                    position: 'absolute',
-                    bottom: '14',
-                    right: '3',
-                    zIndex: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1.5',
-                    py: '1.5',
-                    px: '3',
-                    borderRadius: 'lg',
-                    border: {
-                        base: '1px solid rgba(224,123,83,0.2)',
-                        _dark: '1px solid rgba(224,123,83,0.15)',
-                    },
-                    bg: 'surface',
-                    color: 'palette.orange',
-                    fontSize: 'xs',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    backdropFilter: 'blur(4px)',
-                    _hover: { bg: 'surface.elevated' },
-                })}
-            >
-                <Download style={{ width: 13, height: 13 }} /> PDF
-            </button>
+            {!embedded && (
+                <button
+                    type="button"
+                    onClick={handleExportPdf}
+                    title="Als PDF exportieren"
+                    className={css({
+                        position: 'absolute',
+                        bottom: '14',
+                        right: '3',
+                        zIndex: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1.5',
+                        py: '1.5',
+                        px: '3',
+                        borderRadius: 'lg',
+                        border: {
+                            base: '1px solid rgba(224,123,83,0.2)',
+                            _dark: '1px solid rgba(224,123,83,0.15)',
+                        },
+                        bg: 'surface',
+                        color: 'palette.orange',
+                        fontSize: 'xs',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        backdropFilter: 'blur(4px)',
+                        _hover: { bg: 'surface.elevated' },
+                    })}
+                >
+                    <Download style={{ width: 13, height: 13 }} /> PDF
+                </button>
+            )}
         </div>
     );
 }

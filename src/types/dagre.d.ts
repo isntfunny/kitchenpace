@@ -1,6 +1,10 @@
 declare module 'dagre' {
     interface GraphOptions {
         rankdir?: string;
+        nodesep?: number;
+        ranksep?: number;
+        marginx?: number;
+        marginy?: number;
     }
 
     interface NodeOptions {
@@ -21,13 +25,10 @@ declare module 'dagre' {
         node(id: string): NodePosition;
     }
 
-    function graphlib(): { Graph: new () => Graph };
-
     const dagre: {
         graphlib: { Graph: new () => Graph };
         layout: (g: Graph) => void;
     };
 
     export default dagre;
-    export { graphlib, Graph };
 }

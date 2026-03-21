@@ -101,7 +101,7 @@ services:
         pull_policy: always
         container_name: kitchenpace-scraper
         volumes:
-            - ./kitchenpace/firefox:/config
+            - ~/kitchenpace/firefox:/config
         ports:
             - '34215:8000'
             - '5810:5800'

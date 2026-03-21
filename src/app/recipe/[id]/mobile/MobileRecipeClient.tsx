@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import { RecipeStepsViewer } from '@app/components/flow/RecipeStepsViewer';
 
 import { css } from 'styled-system/css';
@@ -11,6 +13,15 @@ type MobileRecipeClientProps = {
 };
 
 export function MobileRecipeClient({ recipe }: MobileRecipeClientProps) {
+    // Hide Chatwoot widget on embedded mobile view
+    useEffect(() => {
+        const style = document.createElement('style');
+        style.textContent =
+            '.woot-widget-bubble, .woot-widget-holder { display: none !important; }';
+        document.head.appendChild(style);
+        return () => style.remove();
+    }, []);
+
     return (
         <div
             className={css({
@@ -28,6 +39,7 @@ export function MobileRecipeClient({ recipe }: MobileRecipeClientProps) {
                     amount: ing.amount?.toString(),
                     unit: ing.unit,
                 }))}
+                embedded
             />
         </div>
     );

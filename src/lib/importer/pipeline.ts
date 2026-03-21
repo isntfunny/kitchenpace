@@ -7,6 +7,7 @@
 import type { PrismaClient } from '@prisma/client';
 
 import { createIngredient, findOrCreateUnit } from '@app/components/recipe/ingredientActions';
+import { computeFlowLayout } from '@app/lib/flow-layout';
 import { generateUniqueSlug } from '@app/lib/slug';
 
 import { importRecipeFromMarkdown } from './openai-client';
@@ -157,6 +158,25 @@ export async function analyzeWithAI(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Flow layout helper
+// ─────────────────────────────────────────────────────────────────────────────
+
+function applyFlowPositions<T extends { id: string }>(
+    nodes: T[],
+    edges: { source: string; target: string }[],
+): (T & { position: { x: number; y: number } })[] {
+    if (nodes.length === 0) return [];
+    const positions = computeFlowLayout(
+        nodes.map((n) => ({ id: n.id })),
+        edges,
+    );
+    return nodes.map((node) => ({
+        ...node,
+        position: positions.get(node.id) ?? { x: 0, y: 0 },
+    }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // saveImportedRecipe
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -232,7 +252,7 @@ export async function saveImportedRecipe(
             publishedAt: options?.publish ? new Date() : null,
             sourceUrl: data.sourceUrl ?? null,
             authorId,
-            flowNodes: data.flowNodes as unknown as object,
+            flowNodes: applyFlowPositions(data.flowNodes, data.flowEdges) as unknown as object,
             flowEdges: data.flowEdges as unknown as object,
             recipeIngredients: {
                 create: uniqueIngredients.map((ing, index) => ({

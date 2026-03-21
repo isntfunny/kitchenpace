@@ -10,44 +10,42 @@ interface SubmissionControlsProps {
     onStatusChange: (status: 'DRAFT' | 'PUBLISHED') => void;
 }
 
+const baseButtonClass = css({
+    flex: '1',
+    textAlign: 'center',
+    borderRadius: 'full',
+    px: '6',
+    py: '3',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 150ms ease',
+    _hover: { transform: 'translateY(-1px)' },
+    _disabled: { opacity: 0.7, cursor: 'not-allowed', _hover: { transform: 'none' } },
+});
+
 export function SubmissionControls({
     saving,
     saveStatus,
     onStatusChange,
 }: SubmissionControlsProps) {
-    const buttonClass = (status: 'DRAFT' | 'PUBLISHED') =>
-        css({
-            alignSelf: 'flex-start',
-            borderRadius: 'full',
-            px: '6',
-            py: '3',
-            background:
-                saveStatus === status
-                    ? status === 'DRAFT'
-                        ? `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`
-                        : `linear-gradient(135deg, ${PALETTE.emerald} 0%, ${PALETTE.blue} 100%)`
-                    : 'surface',
-            color:
-                saveStatus === status
-                    ? 'white'
-                    : status === 'DRAFT'
-                      ? PALETTE.orange
-                      : PALETTE.emerald,
-            fontWeight: '600',
-            border: `2px solid ${status === 'DRAFT' ? PALETTE.orange : PALETTE.emerald}`,
-            cursor: saving ? 'not-allowed' : 'pointer',
-            opacity: saving ? 0.7 : 1,
-            transition: 'all 150ms ease',
-            _hover: { transform: saving ? 'none' : 'translateY(-1px)' },
-        });
+    const isActive = (status: 'DRAFT' | 'PUBLISHED') => saveStatus === status;
+    const accentColor = (status: 'DRAFT' | 'PUBLISHED') =>
+        status === 'DRAFT' ? PALETTE.orange : PALETTE.emerald;
+
+    const buttonStyle = (status: 'DRAFT' | 'PUBLISHED'): React.CSSProperties => ({
+        backgroundColor: isActive(status) ? accentColor(status) : 'transparent',
+        color: isActive(status) ? 'white' : accentColor(status),
+        border: `2px solid ${accentColor(status)}`,
+    });
 
     return (
-        <div className={css({ display: 'flex', gap: '3', flexWrap: 'wrap' })}>
+        <div className={css({ display: 'flex', gap: '3' })}>
             <button
                 type="submit"
                 disabled={saving}
                 onClick={() => onStatusChange('DRAFT')}
-                className={buttonClass('DRAFT')}
+                className={baseButtonClass}
+                style={buttonStyle('DRAFT')}
                 data-tutorial="draft-save"
             >
                 {saving ? 'Wird gespeichert...' : 'Als Entwurf speichern'}
@@ -56,7 +54,8 @@ export function SubmissionControls({
                 type="submit"
                 disabled={saving}
                 onClick={() => onStatusChange('PUBLISHED')}
-                className={buttonClass('PUBLISHED')}
+                className={baseButtonClass}
+                style={buttonStyle('PUBLISHED')}
             >
                 {saving ? 'Wird gespeichert...' : 'Veröffentlichen'}
             </button>

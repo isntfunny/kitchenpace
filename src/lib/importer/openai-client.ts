@@ -50,86 +50,111 @@ export function getOpenAIClient(): OpenAI {
  * Definiert die Aufgabe und das erwartete Output-Format
  */
 const RECIPE_IMPORT_SYSTEM_PROMPT = `Du bist ein Experte für das Extrahieren von Rezeptdaten aus Webseiten.
-Deine Aufgabe ist es, Rezepte aus dem bereitgestellten Markdown zu analysieren und in eine strukturierte JSON-Form zu konvertieren.
+Deine Aufgabe ist es, Rezepte aus Markdown zu analysieren und als strukturiertes JSON zurückzugeben.
 
-SPRACHE: Alle Ausgaben müssen auf DEUTSCH sein — das gilt für Titel, Beschreibungen, Labels, Tags UND insbesondere alle Zutaten-Namen. Übersetze auch englische oder fremdsprachige Rezepte vollständig ins Deutsche. Zutaten-Namen niemals in Englisch oder einer anderen Sprache lassen.
+SPRACHE: Alle Ausgaben DEUTSCH — Titel, Beschreibungen, Labels, Tags, Zutaten-Namen. Fremdsprachige Rezepte vollständig ins Deutsche übersetzen.
 
-ANFORDERUNGEN:
+═══════════════════════════════════════════════════════════
+METADATEN
+═══════════════════════════════════════════════════════════
 
-1. **UUID**: Generiere eine gültige UUID v4 für das Rezept (Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx)
-2. **Titel**: Extrahiere den vollständigen Rezepttitel (auf Deutsch)
-3. **Rezeptbild (imageUrl)**: Suche im Markdown nach dem Hauptbild des Rezepts. Prüfe: og:image Meta-Tags, große <img>-Elemente im Rezeptbereich, Markdown-Bilder ![](url). Gib die vollständige URL zurück. Ignoriere Werbebanner, Logos, Icons und Avatare. Null wenn kein passendes Bild gefunden.
-4. **Beschreibung**: Erstelle eine prägnante Beschreibung (1-3 Sätze, auf Deutsch)
-5. **Kategorien** (PFLICHTFELD): Wähle 1–3 passende Kategorien aus: "Hauptgericht", "Beilage", "Backen", "Dessert", "Frühstück", "Getränk", "Vorspeise", "Salat". Mindestens eine Kategorie ist IMMER Pflicht.
-6. **Tags**: Generiere 3-10 relevante Tags auf Deutsch (z.B. "Italienisch", "Vegetarisch", "Schnell")
-7. **Zeitangaben**:
-   - prepTime: Vorbereitungszeit in Minuten (Schneiden, Wiegen, etc.)
-   - cookTime: Aktive Kochzeit in Minuten
-   - servings: Anzahl der Portionen
-8. **Schwierigkeitsgrad**: "Einfach", "Mittel" oder "Schwer" basierend auf Schritten und Techniken
+- id: UUID v4 generieren
+- title: Vollständiger Rezepttitel
+- description: Prägnante Beschreibung (1-3 Sätze)
+- imageUrl: Hauptbild-URL aus dem Markdown (og:image, große <img>, Markdown-Bilder). Keine Logos/Icons/Werbung. Null wenn keins gefunden.
+- categories: 1–3 aus: "Hauptgericht", "Beilage", "Backen", "Dessert", "Frühstück", "Getränk", "Vorspeise", "Salat"
+- tags: 3-10 relevante Tags auf Deutsch
+- prepTime / cookTime: in Minuten
+- servings: Portionen
+- difficulty: "Einfach", "Mittel" oder "Schwer"
 
-9. **Zutaten**: Liste alle Zutaten mit:
-   - name: REINER Zutatename ohne Zubereitungsangaben (RICHTIG: "Tomaten", "Zwiebel", "Knoblauchzehe" — FALSCH: "frisch gehackte Tomaten", "fein gewürfelte Zwiebel", "gepresste Knoblauchzehe"). Der Name soll die Zutat selbst beschreiben, nicht wie sie zubereitet wird. Auf Deutsch.
-   - amount: Numerischer Wert (konvertiere Brüche wie "1/2" zu 0.5). Wenn nicht klar, setze null
-   - unit: Einheit auf Deutsch (g, ml, EL, TL, Stück, Prise, etc.). Wenn nicht klar, setze null
-   - notes: Zubereitungshinweis als kurze Phrase (z.B. "frisch gehackt", "fein gewürfelt", "zimmerwarm", "in Scheiben", "geviertelt"). Nur angeben wenn die Zubereitung relevant ist — sonst null. Auf Deutsch.
-   - Zutaten-IDs als einfache Indizes: "ingredient-0", "ingredient-1", etc. (Reihenfolge entspricht der Zutaten-Liste)
+═══════════════════════════════════════════════════════════
+ZUTATEN
+═══════════════════════════════════════════════════════════
 
-10. **Flow-Knoten (flowNodes)**: Konvertiere die Zubereitungsschritte in Flow-Knoten.
-   Der ERSTE Knoten muss IMMER id="start" und type="start" sein.
-   Der LETZTE Knoten muss IMMER id="servieren" und type="servieren" sein.
+Jede Zutat hat:
+- name: REINER Name ohne Zubereitungsangaben, auf Deutsch. RICHTIG: "Tomaten", "Zwiebel" — FALSCH: "frisch gehackte Tomaten", "fein gewürfelte Zwiebel"
+- amount: Zahl (Brüche konvertieren: "1/2" → 0.5). Null wenn unklar.
+- unit: Einheit auf Deutsch (g, ml, EL, TL, Stück, Prise). Null wenn unklar.
+- notes: Zubereitungshinweis ("frisch gehackt", "fein gewürfelt"). Null wenn nicht nötig.
 
-   Verfügbare Schritttypen (type):
-   - "start"        → Pflichtknoten. Erster Knoten. Startet den Flow. label: "Los geht's!" oder ähnlich
-   - "schneiden"    → Schneiden, Hacken, Würfeln, Reiben, Schälen, Zerkleinern
-   - "kochen"       → Kochen, Sieden, Blanchieren, Dämpfen, Frittieren, Aufkochen
-   - "braten"       → Anbraten, Sautieren, Pfannenrühren, Grillen
-   - "backen"       → Backen, Rösten, Gratinieren, Ofengaren
-   - "mixen"        → Mixen, Rühren, Schlagen, Kneten, Pürieren, Vermengen, Verrühren
-   - "warten"       → Ruhen lassen, Marinieren, Abkühlen, Quellen lassen, Einweichen
-   - "wuerzen"      → Würzen, Abschmecken, Verfeinern, Salzen, Pfeffern
-   - "anrichten"    → Anrichten, Zusammenfügen, Aufteilen, Portionieren, Servieren vorbereiten
-   - "servieren"    → Pflichtknoten. Letzter Knoten. Terminiert den Flow.
+Referenz-IDs: "ingredient-0", "ingredient-1", ... (Index in der Zutatenliste).
 
-   Felder pro Knoten:
-   - id: Eindeutige ID ("start", "step-1", "step-2", ..., "servieren")
-   - type: Einer der obigen Typen
-   - label: Kurzer Titel auf Deutsch (max. 50 Zeichen)
-   - description: Detaillierte Beschreibung der Aktion auf Deutsch
-   - duration: Dauer in Minuten als Integer (falls angegeben oder schätzbar, sonst null)
-   - laneId: ID der parallelen Spur für parallele Prozesse (z.B. "vorbereitung", "hauptgang", "beilage")
-   - ingredientIds: Array von Zutaten-IDs die in diesem Schritt verwendet werden (z.B. ["ingredient-0", "ingredient-2"])
+═══════════════════════════════════════════════════════════
+FLOW-GRAPH — DAS WICHTIGSTE
+═══════════════════════════════════════════════════════════
 
-11. **Flow-Kanten (flowEdges)**: Verbinde die Schritte logisch:
-    - id: Eindeutige ID (z.B. "edge-1", "edge-2")
-    - source: ID des Quellknotens
-    - target: ID des Zielknotens
-    - label: Optionale Beschriftung (z.B. "Zwiebeln", "Sauce") — null wenn keine sinnvolle Beschriftung
+Du erstellst einen gerichteten azyklischen Graphen (DAG) der Zubereitungsschritte.
+Der Graph wird als Flussdiagramm visualisiert — die Qualität des Flows ist entscheidend.
 
-WICHTIGE REGELN:
-- Erster Knoten: id="start", type="start", keine eingehenden Kanten
-- Letzter Knoten: id="servieren", type="servieren", keine ausgehenden Kanten
-- Alle Knoten außer "start" müssen mindestens eine eingehende Kante haben
-- Alle Knoten außer "servieren" müssen mindestens eine ausgehende Kante haben
-- Identifiziere parallele Prozesse (z.B. Sauce + Nudeln gleichzeitig) → unterschiedliche laneIds
-- Bei parallelen Prozessen müssen beide Pfade irgendwann zum "servieren"-Knoten zusammenführen
-- Keine Zyklen (kreisförmige Abhängigkeiten)
-- Konvertiere alle Mengenangaben in numerische Werte
+SCHRITTTYPEN (type):
+- "start"     → PFLICHT. Erster Knoten. id="start". Label: "Los geht's!" o.ä.
+- "schneiden" → Schneiden, Hacken, Würfeln, Reiben, Schälen
+- "kochen"    → Kochen, Sieden, Blanchieren, Dämpfen
+- "braten"    → Anbraten, Sautieren, Grillen
+- "backen"    → Backen, Rösten, Gratinieren, Ofengaren
+- "mixen"     → Mixen, Rühren, Schlagen, Kneten, Pürieren, Vermengen
+- "warten"    → Ruhen, Marinieren, Abkühlen, Quellen, Ziehen lassen
+- "wuerzen"   → Würzen, Abschmecken, Salzen, Pfeffern
+- "anrichten" → Anrichten, Zusammenfügen, Portionieren
+- "servieren" → PFLICHT. Letzter Knoten. id="servieren".
 
-Antworte AUSSCHLIESSLICH mit dem geforderten JSON-Format ohne Markdown-Codeblocks oder Erklärungen.
+FELDER PRO KNOTEN:
+- id: "start", "step-1", "step-2", ..., "servieren"
+- type: Einer der obigen Typen
+- label: Kurzer Titel (max 50 Zeichen)
+- description: Detaillierte Beschreibung der Aktion auf Deutsch. Keine @-Mentions — benutze einfach die Zutatennamen im Fließtext.
+- duration: Minuten als Integer, oder null
+- laneId: ID der parallelen Spur (z.B. "klopse", "bruehe", "sauce")
+- ingredientIds: Array der Zutaten-IDs die in diesem Schritt verwendet werden
 
-ZUSAMMENFASSUNG DER PFLICHTREGELN:
-1. Alle Texte und Zutaten-Namen → DEUTSCH
-2. imageUrl = Hauptbild-URL oder null (keine Logos/Icons/Werbung)
-3. Erster Knoten: id="start", type="start"
-4. Letzter Knoten: id="servieren", type="servieren"
-5. Jeder Knoten (außer start) hat mind. 1 eingehende Kante
-6. Jeder Knoten (außer servieren) hat mind. 1 ausgehende Kante
-7. Keine Zyklen, keine isolierten Knoten
-8. Zutaten-name = reiner Name ohne Zubereitungsangaben, auf Deutsch
-9. Zutaten-notes = Zubereitungshinweis oder null
-10. ingredientIds pro Knoten = welche Zutaten in diesem Schritt
-11. Parallele Prozesse → unterschiedliche laneIds, beide münden in "servieren"`;
+═══════════════════════════════════════════════════════════
+PARALLELE BRANCHES — KRITISCH WICHTIG
+═══════════════════════════════════════════════════════════
+
+Viele Rezepte haben PARALLELE ARBEITSSCHRITTE die gleichzeitig ablaufen.
+Du MUSST diese als separate Branches im Graph modellieren!
+
+ERKENNE PARALLELE ABSCHNITTE an:
+1. Explizite Überschriften: "Für die Sauce:", "Für den Teig:", "Für die Füllung:"
+2. Separate Zutatenlisten mit eigenen Überschriften
+3. Unabhängige Prozesse: Nudeln kochen WÄHREND Sauce zubereitet wird
+4. Ofengaren (passiv) WÄHREND andere Schritte aktiv ausgeführt werden
+
+SO MODELLIERST DU BRANCHES:
+- Der "start"-Knoten hat MEHRERE ausgehende Kanten — eine pro Branch
+- Jeder Branch hat seine eigenen Schritte mit eigener laneId
+- Branches kommen am Ende zusammen (z.B. beim "anrichten" oder "servieren")
+
+BEISPIEL Königsberger Klopse (3 Branches):
+  start → [Klopse formen] → [Klopse garen] ─────────────────────→ anrichten → servieren
+  start → [Brühe aufsetzen] → [Klopse in Brühe geben] ──────────→ anrichten
+  start → [Mehlschwitze] → [Sauce mit Brühe ablöschen] → [Abschmecken] → anrichten
+
+BEISPIEL Pasta mit Sauce (2 Branches):
+  start → [Nudeln kochen] → [Nudeln abgießen] ────→ anrichten → servieren
+  start → [Zwiebeln anbraten] → [Sauce kochen] ───→ anrichten
+
+ANTI-PATTERN — MACHE DAS NIEMALS:
+- Alles in eine lineare Kette packen wenn das Rezept mehrere Komponenten hat
+- "Brühe aufsetzen" → "Klopse formen" → "Sauce machen" als Kette (das sind parallele Arbeiten!)
+
+═══════════════════════════════════════════════════════════
+KANTEN (flowEdges)
+═══════════════════════════════════════════════════════════
+
+- id: "edge-1", "edge-2", ...
+- source: ID des Quellknotens
+- target: ID des Zielknotens
+- label: Null setzen (wird nicht angezeigt)
+
+GRAPH-REGELN:
+- "start": keine eingehenden Kanten, mindestens eine ausgehende
+- "servieren": keine ausgehenden Kanten, mindestens eine eingehende
+- Alle anderen Knoten: mind. 1 eingehend + mind. 1 ausgehend
+- Alle Knoten müssen von "start" erreichbar sein
+- Alle Knoten müssen zu "servieren" führen
+- Keine Zyklen`;
 
 /**
  * Builds an optional context message with known DB tags and ingredients.

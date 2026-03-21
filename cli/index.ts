@@ -322,6 +322,90 @@ program
         console.log(`\n  ${entries.length} variable${entries.length === 1 ? '' : 's'}`);
     });
 
+program
+    .command('relayout')
+    .description('Recompute flow layout positions for imported recipes')
+    .option('--all', 'Process ALL recipes, not just imported ones')
+    .option('--dry-run', 'Show which recipes would be updated without saving')
+    .action(async (options: { all?: boolean; dryRun?: boolean }) => {
+        const { computeFlowLayout } = await import('@app/lib/flow-layout');
+        const chalk = (await import('chalk')).default;
+        const ora = (await import('ora')).default;
+
+        await db.$connect();
+        try {
+            const spinner = ora('Finding recipes...').start();
+
+            const where = options.all
+                ? { flowNodes: { not: { equals: null as unknown as undefined } } }
+                : { sourceUrl: { not: null } };
+
+            const recipes = await db.recipe.findMany({
+                where,
+                select: {
+                    id: true,
+                    title: true,
+                    slug: true,
+                    flowNodes: true,
+                    flowEdges: true,
+                },
+            });
+
+            spinner.succeed(`Found ${recipes.length} recipes`);
+
+            let updated = 0;
+            let skipped = 0;
+
+            for (const recipe of recipes) {
+                const nodes = recipe.flowNodes as
+                    | { id: string; position?: { x: number; y: number } }[]
+                    | null;
+                const edges = recipe.flowEdges as { source: string; target: string }[] | null;
+
+                if (!nodes?.length || !edges?.length) {
+                    skipped++;
+                    continue;
+                }
+
+                const positions = computeFlowLayout(
+                    nodes.map((n) => ({ id: n.id })),
+                    edges,
+                );
+
+                const layoutNodes = nodes.map((node) => ({
+                    ...node,
+                    position: positions.get(node.id) ?? node.position ?? { x: 0, y: 0 },
+                }));
+
+                if (options.dryRun) {
+                    console.log(chalk.dim(`  [dry-run] ${recipe.title} (${recipe.slug})`));
+                } else {
+                    await db.recipe.update({
+                        where: { id: recipe.id },
+                        data: { flowNodes: layoutNodes as unknown as object },
+                    });
+                }
+
+                updated++;
+                if (updated % 20 === 0) {
+                    console.log(chalk.dim(`  ... ${updated}/${recipes.length} processed`));
+                }
+            }
+
+            console.log();
+            console.log(
+                chalk.green.bold(
+                    `  ${updated} recipes ${options.dryRun ? 'would be ' : ''}updated`,
+                ),
+            );
+            if (skipped > 0) {
+                console.log(chalk.yellow(`  ${skipped} skipped (no flow data)`));
+            }
+        } finally {
+            await db.$disconnect();
+        }
+    });
+
 registerImportCommand(program);
 registerSeedCommand(program);
 registerRemoteCommand(program);

@@ -256,6 +256,7 @@ async function importOne(
             console.log(chalk.yellow('  → Auto: übersprungen (Duplikat)'));
             return { url, status: 'skipped', title: dupe.title, slug: dupe.slug };
         }
+        const { confirm } = await getPrompts();
         const reimport = await confirm({ message: 'Trotzdem importieren?', default: false });
         if (!reimport) {
             return { url, status: 'skipped', title: dupe.title, slug: dupe.slug };
@@ -288,6 +289,7 @@ async function importOne(
 
     if (!auto) {
         // Confirm save
+        const { confirm } = await getPrompts();
         const statusLabel = publish ? 'PUBLISHED' : 'DRAFT';
         const proceed = await confirm({
             message: `Rezept "${analyzed.title}" als ${statusLabel} speichern?`,
@@ -500,6 +502,7 @@ async function searchIngredientPrompt(
     currentName: string,
     allIngredientNames: string[],
 ): Promise<{ id: string; name: string } | null> {
+    const { search } = await getPrompts();
     return search<{ id: string; name: string } | null>({
         message: `Suche Zutat (ersetzt "${currentName}")`,
         source: async (term) => {

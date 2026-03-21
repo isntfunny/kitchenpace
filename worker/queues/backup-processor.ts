@@ -5,7 +5,6 @@ import { promisify } from 'util';
 
 import { S3Client, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
-import { Job } from 'bullmq';
 
 import { BackupJob } from './types';
 
@@ -34,13 +33,14 @@ const BACKUP_PREFIX = 'backups/database/';
 const LOCAL_BACKUP_DIR = process.env.BACKUP_DIR || '/app/backups';
 
 /**
- * Führt ein Datenbank-Backup durch und speichert es in MinIO/S3
+ * Runs a database backup: pg_dump → S3 upload → retention cleanup.
+ * Called by the BACKUP queue worker (manual CLI trigger) and
+ * the SCHEDULED queue worker (hourly/daily cron).
  */
-export async function processDatabaseBackup(job: Job<BackupJob>): Promise<BackupResult> {
+export async function runDatabaseBackup(type: BackupJob['type']): Promise<BackupResult> {
     const startTime = Date.now();
-    const { type } = job.data;
 
-    console.log(`[BackupWorker] Starting ${type} backup job ${job.id}`);
+    console.log(`[Backup] Starting ${type} backup`);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `kitchenpace_${type}_${timestamp}.dump`;
@@ -51,12 +51,12 @@ export async function processDatabaseBackup(job: Job<BackupJob>): Promise<Backup
         await fs.mkdir(LOCAL_BACKUP_DIR, { recursive: true });
 
         // 2. pg_dump ausführen
-        console.log(`[BackupWorker] Creating database dump: ${filename}`);
+        console.log(`[Backup] Creating database dump: ${filename}`);
         await createDatabaseDump(localPath);
 
         // 3. Dateigröße prüfen
         const stats = await fs.stat(localPath);
-        console.log(`[BackupWorker] Dump created: ${formatBytes(stats.size)}`);
+        console.log(`[Backup] Dump created: ${formatBytes(stats.size)}`);
 
         // 4. Zu MinIO uploaden
         await uploadToMinIO(localPath, filename, type);
@@ -73,7 +73,7 @@ export async function processDatabaseBackup(job: Job<BackupJob>): Promise<Backup
         await fs.unlink(localPath);
 
         const duration = Date.now() - startTime;
-        console.log(`[BackupWorker] Backup completed in ${duration}ms`, {
+        console.log(`[Backup] Completed in ${duration}ms`, {
             filename,
             size: stats.size,
             destination: 'minio',
@@ -108,7 +108,7 @@ async function createDatabaseDump(outputPath: string): Promise<void> {
     // pg_dump mit custom format (komprimiert, schneller)
     const { stderr } = await execFileAsync('pg_dump', ['-Fc', '--file', outputPath, dbUrl]);
     if (stderr && !stderr.includes('NOTICE')) {
-        console.warn(`[BackupWorker] pg_dump stderr: ${stderr}`);
+        console.warn(`[Backup] pg_dump stderr: ${stderr}`);
     }
 }
 
@@ -119,7 +119,7 @@ async function uploadToMinIO(localPath: string, filename: string, type: string):
     const key = `${BACKUP_PREFIX}${type}/${filename}`;
     const fileStream = createReadStream(localPath);
 
-    console.log(`[BackupWorker] Uploading to MinIO: ${key}`);
+    console.log(`[Backup] Uploading to MinIO: ${key}`);
 
     const upload = new Upload({
         client: s3Client,
@@ -140,11 +140,11 @@ async function uploadToMinIO(localPath: string, filename: string, type: string):
             progress.loaded && progress.total
                 ? Math.round((progress.loaded / progress.total) * 100)
                 : 0;
-        console.log(`[BackupWorker] Upload progress: ${percent}%`);
+        console.log(`[Backup] Upload progress: ${percent}%`);
     });
 
     await upload.done();
-    console.log(`[BackupWorker] Upload completed: ${key}`);
+    console.log(`[Backup] Upload completed: ${key}`);
 }
 
 /**
@@ -163,7 +163,7 @@ async function cleanupLocalBackups(): Promise<void> {
 
         if (now - stats.mtime.getTime() > maxAge) {
             await fs.unlink(filePath);
-            console.log(`[BackupWorker] Deleted old local backup: ${file}`);
+            console.log(`[Backup] Deleted old local backup: ${file}`);
         }
     }
 }
@@ -199,7 +199,7 @@ async function cleanupCloudBackups(type: string): Promise<void> {
                 Key: key,
             }),
         );
-        console.log(`[BackupWorker] Deleted old cloud backup: ${key}`);
+        console.log(`[Backup] Deleted old cloud backup: ${key}`);
     }
 }
 

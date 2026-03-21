@@ -4,14 +4,15 @@ import { Job } from 'bullmq';
 import { syncContactToNotifuse } from '@app/lib/notifuse/email';
 import { s3Client, BUCKET, generateOgImage, ogThumbKey, exists } from '@app/lib/s3';
 
+import { redisConfig } from './connection';
 import { prisma } from './prisma';
 import { getBackupQueue } from './queue';
 import type {
     GenerateRecipeOgJob,
     GenerateOgImagesJob,
     BackfillIngredientPluralsJob,
+    BackupJob,
 } from './types';
-import { BackupJob } from './types';
 
 console.log('[DEBUG] scheduled-processor.ts module loaded');
 
@@ -227,21 +228,29 @@ export async function processBackupDatabase(
     job: Job<Record<string, unknown>>,
     type: BackupJob['type'],
 ): Promise<{ success: boolean; jobId?: string }> {
-    console.log(`[BackupScheduler] Starting ${type} backup job ${job.id}`);
+    console.log(`[BackupScheduler] Dispatching ${type} backup (job ${job.id})`);
 
-    // Dispatch to backup queue
     const priority = type === 'hourly' ? 1 : 2;
     const backupJob = await getBackupQueue().add('database-backup', { type }, { priority });
     console.log(`[BackupScheduler] ${type} backup queued: ${backupJob.id}`);
 
-    // Wait for completion — propagate errors so the scheduled job fails visibly
+    // Wait for the backup job to finish so errors propagate back to the
+    // scheduled job — otherwise the admin UI shows "completed" even when
+    // the actual backup failed. Uses a dedicated Redis connection because
+    // QueueEvents subscribes (puts the connection in subscriber mode).
     const { QueueEvents } = await import('bullmq');
     const queueEvents = new QueueEvents(getBackupQueue().name, {
-        connection: getBackupQueue().opts.connection,
+        connection: {
+            host: redisConfig.host,
+            port: redisConfig.port,
+            password: redisConfig.password,
+            maxRetriesPerRequest: null,
+        },
     });
 
     try {
-        await backupJob.waitUntilFinished(queueEvents, 120_000);
+        const timeoutMs = type === 'daily' ? 300_000 : 120_000;
+        await backupJob.waitUntilFinished(queueEvents, timeoutMs);
         console.log(`[BackupScheduler] ${type} backup completed: ${backupJob.id}`);
         return { success: true, jobId: backupJob.id };
     } finally {

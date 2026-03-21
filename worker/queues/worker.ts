@@ -1,6 +1,6 @@
 import { Job, Worker, WorkerOptions } from 'bullmq';
 
-import { processDatabaseBackup } from './backup-processor';
+import { runDatabaseBackup } from './backup-processor';
 import { getRedis } from './connection';
 import { createJobRun, updateJobRun } from './job-run';
 import { processEnrichIngredientNutrition } from './nutrition-processor';
@@ -82,7 +82,7 @@ const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
     [QueueName.BACKUP]: async (job) => {
         switch (job.name) {
             case 'database-backup':
-                return processDatabaseBackup(job);
+                return runDatabaseBackup(job.data.type);
             default:
                 throw new Error(`Unknown backup job: ${job.name}`);
         }

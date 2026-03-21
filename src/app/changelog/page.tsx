@@ -32,6 +32,34 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '21. März 2026',
+        version: 'v2026-03-21',
+        emoji: '🍳',
+        title: 'Smarteres Flow-Layout & Massen-Import',
+        items: [
+            {
+                text: 'Rezept-Flows werden jetzt deutlich schöner angeordnet — parallele Branches starten am gleichen Punkt, und die Anordnung minimiert unnötig lange Verbindungslinien',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Die KI erkennt jetzt parallele Zubereitungsschritte viel besser (z.B. Klopse formen, Brühe aufsetzen und Sauce anrühren gleichzeitig)',
+                tag: 'feat',
+            },
+            {
+                text: 'Rezepte können jetzt in großen Mengen importiert werden — viele neue Rezepte kommen bald',
+                tag: 'feat',
+            },
+            {
+                text: 'Die mobile Rezeptansicht nutzt jetzt den vollen Bildschirm',
+                tag: 'feat',
+            },
+            {
+                text: 'Die Speichern-Buttons im Rezeptformular sind wieder sichtbar',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '20. März 2026',
         version: 'v2026-03-20.1',
         emoji: '🎯',

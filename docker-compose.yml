@@ -65,7 +65,7 @@ services:
             target: app
             args:
                 REACT_PROFILE: 1
-        image: kitchenpace:beta
+        image: registry.isntfunny.de/kitchenpace:beta
         container_name: kitchenpace-app
         depends_on:
             postgres:
@@ -81,7 +81,7 @@ services:
             start_period: 30s
 
     worker:
-        image: kitchenpace:beta
+        image: registry.isntfunny.de/kitchenpace:beta
         command: ['npm', 'run', 'worker']
         container_name: kitchenpace-worker
         depends_on:

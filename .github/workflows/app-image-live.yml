@@ -11,18 +11,17 @@ env:
     IMAGE: registry.isntfunny.de/kitchenpace
 
 jobs:
-    build-image:
+    promote-image:
         runs-on: self-hosted
         steps:
-            - uses: actions/checkout@v4
-
             - name: Log in to Docker registry
               run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login registry.isntfunny.de -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
-            - name: Build and push Docker image
+            - name: Promote beta image to latest
               run: |
                   TAG="${GITHUB_REF_NAME:-latest}"
-                  docker build -t "$IMAGE:$TAG" -t "$IMAGE:latest" .
+                  docker tag "$IMAGE:beta" "$IMAGE:$TAG"
+                  docker tag "$IMAGE:beta" "$IMAGE:latest"
                   docker push "$IMAGE:$TAG"
                   docker push "$IMAGE:latest"
 
@@ -66,7 +65,7 @@ jobs:
 
     deploy:
         runs-on: self-hosted
-        needs: [e2e, build-image]
+        needs: [e2e, promote-image]
         steps:
             - name: Trigger Coolify redeploy
               run: |

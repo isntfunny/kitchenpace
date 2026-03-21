@@ -101,8 +101,15 @@ export function registerImportCommand(program: Command): void {
                         console.log(chalk.cyan.bold('Auto mode: skipping all interactive prompts'));
                     }
                     if (allUrls.length === 1) {
-                        // Single import — full interactive flow
-                        await importOne(user, allUrls[0], publish, auto);
+                        try {
+                            await importOne(user, allUrls[0], publish, auto);
+                        } catch (err) {
+                            console.error(
+                                chalk.red(
+                                    `\nFehler: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`,
+                                ),
+                            );
+                        }
                     } else {
                         // Batch import
                         await importBatch(user, allUrls, publish, auto);

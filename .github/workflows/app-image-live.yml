@@ -20,6 +20,7 @@ jobs:
             - name: Promote beta image to latest
               run: |
                   TAG="${GITHUB_REF_NAME:-latest}"
+                  docker pull "$IMAGE:beta"
                   docker tag "$IMAGE:beta" "$IMAGE:$TAG"
                   docker tag "$IMAGE:beta" "$IMAGE:latest"
                   docker push "$IMAGE:$TAG"

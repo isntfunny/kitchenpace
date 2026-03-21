@@ -15,10 +15,15 @@
 
 import { readFileSync } from 'fs';
 
-import { confirm, search, select } from '@inquirer/prompts';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora from 'ora';
+
+// Lazy-load inquirer prompts — avoids TTY init crash in non-interactive (--auto) mode
+async function getPrompts() {
+    const { confirm, search, select } = await import('@inquirer/prompts');
+    return { confirm, search, select };
+}
 
 import { type IngredientMatch, matchIngredients } from '@app/components/recipe/ingredientActions';
 import { analyzeWithAI, saveImportedRecipe } from '@app/lib/importer/pipeline';
@@ -174,6 +179,7 @@ async function reviewIngredients(
             value: -1,
         });
 
+        const { select } = await getPrompts();
         const picked = await select<number>({
             message: 'Zutaten — auswählen zum Umschalten/Ersetzen',
             choices,
@@ -320,10 +326,15 @@ async function importBatch(
 
         try {
             results.push(await importOne(user, urls[i], publish, auto));
-        } catch {
-            // Ctrl+C during interactive prompts
-            console.log(chalk.yellow('\nBatch aborted by user.'));
-            break;
+        } catch (err) {
+            if (err instanceof Error && err.message.includes('ExitPromptError')) {
+                console.log(chalk.yellow('\nBatch aborted by user.'));
+                break;
+            }
+            console.error(
+                chalk.red(`\nFehler: ${err instanceof Error ? err.message : String(err)}`),
+            );
+            results.push({ url: urls[i], status: 'error', error: String(err) });
         }
     }
 

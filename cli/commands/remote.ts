@@ -79,11 +79,11 @@ export function registerRemoteCommand(program: Command) {
             }
 
             const remoteCmd = command.map((a) => (a.includes(' ') ? `"${a}"` : a)).join(' ');
-            const proc = spawn(
-                'ssh',
-                ['-t', host, `docker exec -it ${container} kitchen ${remoteCmd}`],
-                { stdio: 'inherit' },
-            );
+            const isInteractive = process.stdin.isTTY && !command.includes('--auto');
+            const sshArgs = isInteractive
+                ? ['-t', host, `docker exec -it ${container} kitchen ${remoteCmd}`]
+                : [host, `docker exec ${container} kitchen ${remoteCmd}`];
+            const proc = spawn('ssh', sshArgs, { stdio: 'inherit' });
             proc.on('exit', (code) => process.exit(code ?? 0));
         });
 }

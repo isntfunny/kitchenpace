@@ -229,17 +229,23 @@ export async function processBackupDatabase(
 ): Promise<{ success: boolean; jobId?: string }> {
     console.log(`[BackupScheduler] Starting ${type} backup job ${job.id}`);
 
-    try {
-        const priority = type === 'hourly' ? 1 : 2;
-        const addedJob = await getBackupQueue().add('database-backup', { type }, { priority });
+    // Dispatch to backup queue
+    const priority = type === 'hourly' ? 1 : 2;
+    const backupJob = await getBackupQueue().add('database-backup', { type }, { priority });
+    console.log(`[BackupScheduler] ${type} backup queued: ${backupJob.id}`);
 
-        console.log(`[BackupScheduler] ${type} backup queued: ${addedJob.id}`);
-        return { success: true, jobId: addedJob.id };
-    } catch (error) {
-        console.error(`[BackupScheduler] ${type} backup job ${job.id} failed`, {
-            error: error instanceof Error ? error.message : String(error),
-        });
-        throw error;
+    // Wait for completion — propagate errors so the scheduled job fails visibly
+    const { QueueEvents } = await import('bullmq');
+    const queueEvents = new QueueEvents(getBackupQueue().name, {
+        connection: getBackupQueue().opts.connection,
+    });
+
+    try {
+        await backupJob.waitUntilFinished(queueEvents, 120_000);
+        console.log(`[BackupScheduler] ${type} backup completed: ${backupJob.id}`);
+        return { success: true, jobId: backupJob.id };
+    } finally {
+        await queueEvents.close();
     }
 }
 

@@ -54,7 +54,11 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
-        ca-certificates fontconfig hunspell-de-de postgresql-client \
+        ca-certificates curl fontconfig hunspell-de-de gnupg \
+    && echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg \
+    && apt-get update -qq && apt-get install -y -qq --no-install-recommends postgresql-client-17 \
+    && apt-get purge -y --auto-remove gnupg curl \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 1001 nodejs \
     && useradd --system --uid 1001 --gid nodejs nextjs

@@ -121,7 +121,7 @@ export function MobileView({
         handleTouchStart,
         handleTouchEnd,
         setPosition,
-    } = useMobileNavigation(columnGroups, edges);
+    } = useMobileNavigation(columnGroups, edges, completed);
 
     const gestureNavigationEnabled = useFeatureFlag('gestureNavigation');
     const {

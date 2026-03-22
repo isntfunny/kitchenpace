@@ -26,8 +26,45 @@ import { viewerReducer } from './viewer/viewerTypes';
 import type { RecipeStepsViewerProps, TimerState, ViewerAction } from './viewer/viewerTypes';
 import { buildTopology } from './viewer/viewerUtils';
 
+const FlowSkeleton = () => (
+    <div
+        className={css({
+            height: 'calc(100vh - 200px)',
+            minHeight: '400px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bg: { base: '#ffffff', _dark: '#0d0d0d' },
+            position: 'relative',
+            overflow: 'hidden',
+        })}
+    >
+        <div
+            className={css({
+                display: 'flex',
+                gap: '6',
+                alignItems: 'center',
+                animation: 'pulse 1.5s ease-in-out infinite',
+            })}
+        >
+            {[1, 2, 3, 4].map((i) => (
+                <div
+                    key={i}
+                    className={css({
+                        width: '180px',
+                        height: '120px',
+                        borderRadius: 'lg',
+                        bg: { base: 'rgba(0,0,0,0.06)', _dark: 'rgba(255,255,255,0.06)' },
+                    })}
+                />
+            ))}
+        </div>
+    </div>
+);
+
 const DesktopView = dynamic(() => import('./viewer/DesktopView').then((m) => m.DesktopView), {
     ssr: false,
+    loading: FlowSkeleton,
 });
 
 /** Actions that represent deliberate user interactions (not the 1s tick). */

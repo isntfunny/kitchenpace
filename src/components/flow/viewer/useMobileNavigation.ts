@@ -7,6 +7,7 @@ import type { FlowEdgeSerialized, FlowNodeSerialized } from '../editor/editorTyp
 export function useMobileNavigation(
     columnGroups: FlowNodeSerialized[][],
     edges: FlowEdgeSerialized[],
+    completed?: Set<string>,
 ) {
     const [position, setPosition] = useState({ col: 0, row: 0 });
     const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -159,23 +160,61 @@ export function useMobileNavigation(
         if (sourcePos) setPosition(sourcePos);
     }, [currentNode, incomingMap, nodePos]);
 
+    // Walk forward from a node along edges to find the first non-completed node.
+    // Returns the position of that node, or the start node if all are completed.
+    const findFirstIncomplete = useCallback(
+        (startId: string): { col: number; row: number } | null => {
+            const startPos = nodePos.get(startId);
+            if (!startPos) return null;
+            if (!completed || !completed.has(startId)) return startPos;
+
+            let cur = startId;
+            const visited = new Set<string>();
+            while (cur) {
+                if (visited.has(cur)) break;
+                visited.add(cur);
+                if (!completed.has(cur)) {
+                    const pos = nodePos.get(cur);
+                    return pos ?? startPos;
+                }
+                const children = outgoingMap.get(cur) ?? [];
+                if (children.length === 0) break;
+                // Follow first child (stay on the same branch)
+                cur = children[0];
+            }
+            // All completed — just go to the start
+            return startPos;
+        },
+        [completed, nodePos, outgoingMap],
+    );
+
     const goLaneUp = useCallback(() => {
         if (hasLaneAbove) {
-            setPosition((p) => ({ ...p, row: p.row - 1 }));
+            const targetNode = currentGroup[row - 1];
+            const pos = findFirstIncomplete(targetNode.id);
+            if (pos) setPosition(pos);
+            else setPosition((p) => ({ ...p, row: p.row - 1 }));
         } else if (parallelBranches.length > 0) {
             const target = parallelBranches[0];
-            setPosition({ col: target.col, row: target.row });
+            const pos = findFirstIncomplete(target.node.id);
+            if (pos) setPosition(pos);
+            else setPosition({ col: target.col, row: target.row });
         }
-    }, [hasLaneAbove, parallelBranches]);
+    }, [hasLaneAbove, parallelBranches, currentGroup, row, findFirstIncomplete]);
 
     const goLaneDown = useCallback(() => {
         if (hasLaneBelow) {
-            setPosition((p) => ({ ...p, row: p.row + 1 }));
+            const targetNode = currentGroup[row + 1];
+            const pos = findFirstIncomplete(targetNode.id);
+            if (pos) setPosition(pos);
+            else setPosition((p) => ({ ...p, row: p.row + 1 }));
         } else if (parallelBranches.length > 0) {
             const target = parallelBranches[parallelBranches.length - 1];
-            setPosition({ col: target.col, row: target.row });
+            const pos = findFirstIncomplete(target.node.id);
+            if (pos) setPosition(pos);
+            else setPosition({ col: target.col, row: target.row });
         }
-    }, [hasLaneBelow, parallelBranches]);
+    }, [hasLaneBelow, parallelBranches, currentGroup, row, findFirstIncomplete]);
 
     // Keyboard navigation
     useEffect(() => {

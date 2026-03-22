@@ -23,7 +23,7 @@ RUN install -d -m 0755 /etc/apt/keyrings \
 # Install deno (required by yt-dlp for YouTube JS extraction)
 RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
 
-ENV PLAYWRIGHT_BROWSERS_PATH=/tmp/playwright-browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app

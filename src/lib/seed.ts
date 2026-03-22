@@ -7,6 +7,8 @@ import { hashPassword } from 'better-auth/crypto';
 
 import { prisma } from '@shared/prisma';
 
+import { FOOD_PERIOD_SEEDS, TIME_SEASON_SEEDS } from './fits-now/seed-data';
+
 const ActivityType = {
     RECIPE_CREATED: 'RECIPE_CREATED',
     RECIPE_COOKED: 'RECIPE_COOKED',
@@ -137,12 +139,99 @@ async function main() {
         { name: 'Eis', slug: 'eis' },
         { name: 'Suppe', slug: 'suppe' },
         { name: 'Eintopf', slug: 'eintopf' },
+        // Fits-now filter set tags
+        { name: 'Frühstück', slug: 'fruehstueck' },
+        { name: 'Müsli', slug: 'muesli' },
+        { name: 'Brötchen', slug: 'broetchen' },
+        { name: 'Aufstrich', slug: 'aufstrich' },
+        { name: 'Porridge', slug: 'porridge' },
+        { name: 'Smoothie', slug: 'smoothie' },
+        { name: 'Brunch', slug: 'brunch' },
+        { name: 'Eierspeise', slug: 'eierspeise' },
+        { name: 'Pancake', slug: 'pancake' },
+        { name: 'Waffel', slug: 'waffel' },
+        { name: 'Mittagessen', slug: 'mittagessen' },
+        { name: 'Alltagsküche', slug: 'alltagskueche' },
+        { name: 'Deftig', slug: 'deftig' },
+        { name: 'Braten', slug: 'braten' },
+        { name: 'Auflauf', slug: 'auflauf' },
+        { name: 'Leicht', slug: 'leicht' },
+        { name: 'Grillen', slug: 'grillen' },
+        { name: 'Kalt', slug: 'kalt' },
+        { name: 'Erfrischend', slug: 'erfrischend' },
+        { name: 'Salat', slug: 'salat' },
+        { name: 'Pilze', slug: 'pilze' },
+        { name: 'Herbstlich', slug: 'herbstlich' },
+        { name: 'Frisch', slug: 'frisch' },
+        { name: 'Kräuter', slug: 'kraeuter' },
+        { name: 'Kuchen', slug: 'kuchen' },
+        { name: 'Torte', slug: 'torte' },
+        { name: 'Gebäck', slug: 'gebaeck' },
+        { name: 'Muffin', slug: 'muffin' },
+        { name: 'Obstkuchen', slug: 'obstkuchen' },
+        { name: 'Apfelkuchen', slug: 'apfelkuchen' },
+        { name: 'Rhabarber', slug: 'rhabarber' },
+        { name: 'Fruchtig', slug: 'fruchtig' },
+        { name: 'Abendessen', slug: 'abendessen' },
+        { name: 'Überbacken', slug: 'ueberbacken' },
+        { name: 'Schmoren', slug: 'schmoren' },
+        { name: 'Snack', slug: 'snack' },
+        { name: 'Fingerfood', slug: 'fingerfood' },
+        { name: 'Häppchen', slug: 'haeppchen' },
+        { name: 'Dip', slug: 'dip' },
+        { name: 'Warm', slug: 'warm' },
+        { name: 'Gemütlich', slug: 'gemuetlich' },
+        { name: 'Quiche', slug: 'quiche' },
+        { name: 'Bowl', slug: 'bowl' },
+        { name: 'Obst', slug: 'obst' },
+        { name: 'Pfannkuchen', slug: 'pfannkuchen' },
+        { name: 'Joghurt', slug: 'joghurt' },
+        { name: 'Kaffee', slug: 'kaffee' },
+        { name: 'Kürbis', slug: 'kuerbis' },
+        { name: 'Spargel', slug: 'spargel' },
+        { name: 'Hollandaise', slug: 'hollandaise' },
+        { name: 'Spargelsuppe', slug: 'spargelsuppe' },
+        { name: 'Erdbeere', slug: 'erdbeere' },
+        { name: 'Erdbeeren', slug: 'erdbeeren' },
+        { name: 'Erdbeerkuchen', slug: 'erdbeerkuchen' },
+        { name: 'Erdbeertorte', slug: 'erdbeertorte' },
+        { name: 'Kürbissuppe', slug: 'kuerbissuppe' },
+        { name: 'Hokkaido', slug: 'hokkaido' },
+        { name: 'Butternut', slug: 'butternut' },
+        { name: 'Advent', slug: 'advent' },
+        { name: 'Plätzchen', slug: 'plaetzchen' },
+        { name: 'Lebkuchen', slug: 'lebkuchen' },
+        { name: 'Stollen', slug: 'stollen' },
+        { name: 'Glühwein', slug: 'gluehwein' },
+        { name: 'Zimtsterne', slug: 'zimtsterne' },
+        { name: 'Vanillekipferl', slug: 'vanillekipferl' },
+        { name: 'Weihnachtsbraten', slug: 'weihnachtsbraten' },
+        { name: 'Gans', slug: 'gans' },
+        { name: 'Rotkohl', slug: 'rotkohl' },
+        { name: 'Knödel', slug: 'knoedel' },
+        { name: 'Kekse', slug: 'kekse' },
+        { name: 'Weihnachtsbäckerei', slug: 'weihnachtsbaeckerei' },
+        { name: 'Hefezopf', slug: 'hefezopf' },
+        { name: 'Osterlamm', slug: 'osterlamm' },
+        { name: 'Osterbrunch', slug: 'osterbrunch' },
+        { name: 'Silvester', slug: 'silvester' },
+        { name: 'Fondue', slug: 'fondue' },
+        { name: 'Raclette', slug: 'raclette' },
+        { name: 'Marinade', slug: 'marinade' },
+        { name: 'BBQ', slug: 'bbq' },
+        { name: 'Grillbeilage', slug: 'grillbeilage' },
     ];
 
     for (const tag of tagsData) {
         await prisma.tag.upsert({ where: { name: tag.name }, update: {}, create: tag });
     }
     console.log('✅ Created tags');
+
+    // ============================================
+    // FITS-NOW FILTER SETS
+    // ============================================
+    await seedFitsNowFilterSets();
+    console.log('✅ Created fits-now filter sets');
 
     // ============================================
     // INGREDIENTS
@@ -613,7 +702,7 @@ async function main() {
         },
         {
             name: 'Gewürzgurke',
-            slug: 'gewichtergurke',
+            slug: 'gewuerzgurke',
             category: ShoppingCategory.GEMUESE,
             units: ['Stück'],
         },
@@ -631,7 +720,7 @@ async function main() {
         },
         {
             name: 'Möhren',
-            slug: 'möhren',
+            slug: 'moehren',
             category: ShoppingCategory.GEMUESE,
             units: ['Stück'],
         },
@@ -4979,6 +5068,127 @@ async function main() {
     console.log('✅ Created view history');
 
     console.log('🎉 Comprehensive seed completed!');
+}
+
+async function seedFitsNowFilterSets() {
+    // Build lookup maps
+    const allTags = await prisma.tag.findMany({ select: { id: true, name: true } });
+    const tagMap = new Map(allTags.map((t) => [t.name, t.id]));
+
+    const allCats = await prisma.category.findMany({ select: { id: true, slug: true } });
+    const catMap = new Map(allCats.map((c) => [c.slug, c.id]));
+
+    // Helper: resolve tag names → IDs (skip missing with warning)
+    function resolveTagIds(names: string[]): string[] {
+        return names
+            .map((name) => {
+                const id = tagMap.get(name);
+                if (!id) console.warn(`  ⚠ Tag not found: "${name}"`);
+                return id;
+            })
+            .filter((id): id is string => !!id);
+    }
+
+    function resolveCatIds(slugs: string[]): string[] {
+        return slugs
+            .map((slug) => {
+                const id = catMap.get(slug);
+                if (!id) console.warn(`  ⚠ Category not found: "${slug}"`);
+                return id;
+            })
+            .filter((id): id is string => !!id);
+    }
+
+    // Seed TIME_SEASON filter sets
+    for (const seed of TIME_SEASON_SEEDS) {
+        const tagIds = resolveTagIds(seed.tagNames);
+        const categoryIds = resolveCatIds(seed.categorySlugs);
+
+        await prisma.filterSet.upsert({
+            where: {
+                type_timeSlot_season: {
+                    type: 'TIME_SEASON',
+                    timeSlot: seed.timeSlot,
+                    season: seed.season,
+                },
+            },
+            update: {
+                displayLabel: seed.displayLabel,
+                maxTotalTime: seed.maxTotalTime,
+                tags: {
+                    deleteMany: {},
+                    create: tagIds.map((tagId) => ({ tagId })),
+                },
+                categories: {
+                    deleteMany: {},
+                    create: categoryIds.map((categoryId) => ({ categoryId })),
+                },
+            },
+            create: {
+                type: 'TIME_SEASON',
+                timeSlot: seed.timeSlot,
+                season: seed.season,
+                displayLabel: seed.displayLabel,
+                maxTotalTime: seed.maxTotalTime,
+                tags: { create: tagIds.map((tagId) => ({ tagId })) },
+                categories: { create: categoryIds.map((categoryId) => ({ categoryId })) },
+            },
+        });
+    }
+
+    // Seed FOOD_PERIOD filter sets
+    for (const seed of FOOD_PERIOD_SEEDS) {
+        const tagIds = resolveTagIds(seed.tagNames);
+        const categoryIds = resolveCatIds(seed.categorySlugs);
+
+        await prisma.filterSet.upsert({
+            where: { slug: seed.slug },
+            update: {
+                label: seed.label,
+                description: seed.description,
+                override: seed.override,
+                resolveType: seed.resolveType,
+                startMonth: seed.startMonth,
+                startDay: seed.startDay,
+                endMonth: seed.endMonth,
+                endDay: seed.endDay,
+                startOffsetDays: seed.startOffsetDays,
+                endOffsetDays: seed.endOffsetDays,
+                leadDays: seed.leadDays ?? 0,
+                trailDays: seed.trailDays ?? 0,
+                maxTotalTime: seed.maxTotalTime,
+                sortOrder: seed.sortOrder ?? 0,
+                tags: {
+                    deleteMany: {},
+                    create: tagIds.map((tagId) => ({ tagId })),
+                },
+                categories: {
+                    deleteMany: {},
+                    create: categoryIds.map((categoryId) => ({ categoryId })),
+                },
+            },
+            create: {
+                type: 'FOOD_PERIOD',
+                slug: seed.slug,
+                label: seed.label,
+                description: seed.description,
+                override: seed.override,
+                resolveType: seed.resolveType,
+                startMonth: seed.startMonth,
+                startDay: seed.startDay,
+                endMonth: seed.endMonth,
+                endDay: seed.endDay,
+                startOffsetDays: seed.startOffsetDays,
+                endOffsetDays: seed.endOffsetDays,
+                leadDays: seed.leadDays ?? 0,
+                trailDays: seed.trailDays ?? 0,
+                maxTotalTime: seed.maxTotalTime,
+                sortOrder: seed.sortOrder ?? 0,
+                tags: { create: tagIds.map((tagId) => ({ tagId })) },
+                categories: { create: categoryIds.map((categoryId) => ({ categoryId })) },
+            },
+        });
+    }
 }
 
 main()

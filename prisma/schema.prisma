@@ -89,6 +89,17 @@ enum PaletteColor {
   pink
 }
 
+enum FilterSetType {
+  TIME_SEASON
+  FOOD_PERIOD
+}
+
+enum DateResolveType {
+  FIXED
+  RELATIVE_EASTER
+  RELATIVE_ADVENT
+}
+
 enum ModerationStatus {
   APPROVED
   PENDING
@@ -538,6 +549,7 @@ model Ingredient {
   ingredientUnits IngredientUnit[]
   recipes         RecipeIngredient[]
   shoppingItems   ShoppingItem[]
+  filterSets      FilterSetIngredient[]
 
   @@index([name])
   @@index([aliases], type: Gin)
@@ -614,6 +626,7 @@ model Category {
   createdAt                                                                     DateTime          @default(now())
 
   recipes                                                                       RecipeCategory[]
+  filterSets                                                                    FilterSetCategory[]
 }
 
 model RecipeCategory {
@@ -630,11 +643,12 @@ model RecipeCategory {
 }
 
 model Tag {
-  id        String       @id @default(cuid())
-  name      String       @unique
-  slug      String       @unique
-  recipes   RecipeTag[]
-  createdAt DateTime     @default(now())
+  id         String           @id @default(cuid())
+  name       String           @unique
+  slug       String           @unique
+  recipes    RecipeTag[]
+  filterSets FilterSetTag[]
+  createdAt  DateTime         @default(now())
 }
 
 model RecipeTag {
@@ -1059,4 +1073,75 @@ model UserTrophy {
 
   @@unique([userId, trophyId])
   @@index([userId])
+}
+
+// ── Fits-Now Filter Sets ────────────────────────────────────────────────────
+
+model FilterSet {
+  id              String           @id @default(cuid())
+  type            FilterSetType
+
+  // TIME_SEASON fields (null for FOOD_PERIOD)
+  timeSlot        String?          @db.VarChar(20)
+  season          String?          @db.VarChar(20)
+
+  // FOOD_PERIOD fields (null for TIME_SEASON)
+  slug            String?          @unique @db.VarChar(60)
+  label           String?          @db.VarChar(120)
+  description     String?
+  override        Boolean          @default(false)
+  resolveType     DateResolveType?
+  startMonth      Int?
+  startDay        Int?
+  endMonth        Int?
+  endDay          Int?
+  startOffsetDays Int?
+  endOffsetDays   Int?
+  leadDays        Int              @default(0)
+  trailDays       Int              @default(0)
+
+  // Shared
+  maxTotalTime    Int?
+  displayLabel    String?          @db.VarChar(200)
+  sortOrder       Int              @default(0)
+
+  tags            FilterSetTag[]
+  categories      FilterSetCategory[]
+  ingredients     FilterSetIngredient[]
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([type, timeSlot, season])
+  @@index([type])
+}
+
+model FilterSetTag {
+  filterSetId String
+  tagId       String
+  filterSet   FilterSet @relation(fields: [filterSetId], references: [id], onDelete: Cascade)
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([filterSetId, tagId])
+  @@index([tagId])
+}
+
+model FilterSetCategory {
+  filterSetId String
+  categoryId  String
+  filterSet   FilterSet @relation(fields: [filterSetId], references: [id], onDelete: Cascade)
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([filterSetId, categoryId])
+  @@index([categoryId])
+}
+
+model FilterSetIngredient {
+  filterSetId  String
+  ingredientId String
+  filterSet    FilterSet  @relation(fields: [filterSetId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@id([filterSetId, ingredientId])
+  @@index([ingredientId])
 }

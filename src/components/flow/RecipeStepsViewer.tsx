@@ -250,6 +250,17 @@ export function RecipeStepsViewer({
         return () => clearTimeout(timer);
     }, [allStepsDone, recipeSlug, isAuthenticated]);
 
+    const sharedState = useMemo(
+        () => ({
+            completed: state.completed,
+            timers: state.timers,
+            dispatch: trackedDispatch,
+            onOpenDetail: setSelectedNodeId,
+            ingredients,
+        }),
+        [state.completed, state.timers, trackedDispatch, ingredients],
+    );
+
     if (nodes.length === 0) {
         return (
             <div
@@ -264,14 +275,6 @@ export function RecipeStepsViewer({
             </div>
         );
     }
-
-    const sharedState = {
-        completed: state.completed,
-        timers: state.timers,
-        dispatch: trackedDispatch,
-        onOpenDetail: setSelectedNodeId,
-        ingredients,
-    };
 
     const mobileProps = { ...sharedState, columnGroups, edges, dagreY };
     const selectedNode = selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) : null;

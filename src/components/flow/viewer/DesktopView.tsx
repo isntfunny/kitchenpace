@@ -222,12 +222,7 @@ function DesktopViewInner({
     ingredients,
     embedded,
 }: DesktopViewProps) {
-    // Defer dark mode until after mount to avoid SSR/client hydration mismatch
-    // (ThemeProvider reads localStorage on client → different initial value than server's 'light')
-    const darkRaw = useIsDark();
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
-    const dark = mounted ? darkRaw : false;
+    const dark = useIsDark();
 
     // Compute which nodes are in a parallel group (share a fork parent)
     const parallelNodeIds = useMemo(() => {
@@ -405,7 +400,7 @@ function DesktopViewInner({
                         const viewportX = padding - minX * zoom;
                         const viewportY = containerHeight / 2 - ((minY + maxY) / 2) * zoom;
 
-                        setViewport({ x: viewportX, y: viewportY, zoom }, { duration: 300 });
+                        setViewport({ x: viewportX, y: viewportY, zoom });
                     });
                 });
             }

@@ -27,7 +27,8 @@ SITE_CONFIG: dict[str, dict] = {
     "sallys-blog.de": {
         "strategy": "scrapling",
         "content": [
-            "shop-studio-recipes-recipe-detail-tabs-description",
+            ".shop-studio-recipes-recipe-detail-tabs-description",
+            ".ingr-desktop",
         ],
     },
 }

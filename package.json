@@ -98,6 +98,7 @@
         "dotenv": "^17.3.1",
         "downshift": "^9.3.2",
         "fastest-levenshtein": "^1.0.16",
+        "feiertagejs": "^1.5.0",
         "ioredis": "^5.10.0",
         "jose": "^6.2.0",
         "jspdf": "^4.2.0",

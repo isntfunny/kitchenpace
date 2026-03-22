@@ -28,7 +28,6 @@ SITE_CONFIG: dict[str, dict] = {
         "strategy": "scrapling",
         "content": [
             ".shop-studio-recipes-recipe-detail-tabs-description",
-            ".ingr-desktop",
         ],
     },
 }

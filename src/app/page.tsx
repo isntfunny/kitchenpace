@@ -64,7 +64,9 @@ export default function Home() {
                         </div>
 
                         <div className={css({ marginTop: 'section' })}>
-                            <FitsNow />
+                            <Suspense fallback={<SectionSkeleton height="240px" />}>
+                                <FitsNow />
+                            </Suspense>
                         </div>
 
                         <div className={css({ marginTop: 'section' })}>

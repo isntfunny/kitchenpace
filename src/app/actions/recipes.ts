@@ -82,6 +82,30 @@ const timeFilters: Record<string, { lte: number }> = {
     fingerfood: { lte: 25 },
 };
 
+// ── "Passt zu jetzt" — context-aware recipes ────────────────────────────────
+
+export async function fetchFitsNowRecipes(
+    timeSlotOverride?: string,
+    take = 6,
+): Promise<{ recipes: RecipeCardData[]; context: FitsNowContext }> {
+    const { detectContext, queryFitsNowRecipes } = await import('@app/lib/fits-now');
+    const context = detectContext();
+
+    // If user overrides the time slot, adjust the context
+    if (timeSlotOverride && timeSlotOverride !== context.timeSlot) {
+        const validSlots = ['fruehstueck', 'brunch', 'mittag', 'nachmittag', 'abend', 'spaet'];
+        if (validSlots.includes(timeSlotOverride)) {
+            context.timeSlot = timeSlotOverride as typeof context.timeSlot;
+        }
+    }
+
+    const recipes = await queryFitsNowRecipes(context, take);
+    return { recipes, context };
+}
+
+export type { FitsNowContext } from '@app/lib/fits-now';
+
+/** @deprecated Use fetchFitsNowRecipes instead */
 export async function fetchRecipesByTime(mealTime: string, take = 6): Promise<RecipeCardData[]> {
     const filter = timeFilters[mealTime] || { lte: 30 };
 

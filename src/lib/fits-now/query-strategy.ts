@@ -2,25 +2,27 @@ import { toRecipeCardData, type RecipeCardData } from '@app/lib/recipe-card';
 import { opensearchClient, OPENSEARCH_INDEX } from '@shared/opensearch/client';
 import { prisma } from '@shared/prisma';
 
-import { type FitsNowContext, FOOD_PERIODS } from './context';
+import { type FitsNowContext, type ResolvedPeriod } from './context';
 import { getTimeSeasonCriteria, type FilterCriteria } from './mappings';
 
 // ── Build Merged Criteria ────────────────────────────────────────────────────
 
-export function buildCriteria(context: FitsNowContext): FilterCriteria {
-    const base = getTimeSeasonCriteria(context.timeSlot, context.season);
+export async function buildCriteria(
+    context: FitsNowContext,
+    activePeriods: ResolvedPeriod[],
+): Promise<FilterCriteria> {
+    const base = await getTimeSeasonCriteria(context.timeSlot, context.season);
 
-    // Collect tags & categories from active periods
-    const activePeriods = FOOD_PERIODS.filter((p) => context.periods.includes(p.id));
-    const periodTags = activePeriods.flatMap((p) => p.tagKeywords);
-    const periodCategories = activePeriods.flatMap((p) => p.categorySlugs ?? []);
+    const periodTags = activePeriods.flatMap((p) => p.criteria.tagKeywords);
+    const periodCategories = activePeriods.flatMap((p) => p.criteria.categorySlugs);
+    const periodIngredients = activePeriods.flatMap((p) => p.criteria.ingredientKeywords);
 
     if (context.isHolidayOverride) {
         // Period tags are primary, time-of-day is soft boost
         return {
             categorySlugs: [...new Set([...periodCategories, ...base.categorySlugs])],
             tagKeywords: [...new Set([...periodTags, ...base.tagKeywords])],
-            ingredientKeywords: base.ingredientKeywords,
+            ingredientKeywords: [...new Set([...periodIngredients, ...base.ingredientKeywords])],
             maxTotalTime: undefined, // No time limit during holiday periods
         };
     }
@@ -29,7 +31,7 @@ export function buildCriteria(context: FitsNowContext): FilterCriteria {
     return {
         categorySlugs: [...new Set([...base.categorySlugs, ...periodCategories])],
         tagKeywords: [...new Set([...base.tagKeywords, ...periodTags])],
-        ingredientKeywords: base.ingredientKeywords,
+        ingredientKeywords: [...new Set([...base.ingredientKeywords, ...periodIngredients])],
         maxTotalTime: base.maxTotalTime,
     };
 }
@@ -144,9 +146,10 @@ async function fetchByIds(ids: string[], take: number): Promise<RecipeCardData[]
 
 export async function queryFitsNowRecipes(
     context: FitsNowContext,
+    activePeriods: ResolvedPeriod[],
     take: number,
 ): Promise<RecipeCardData[]> {
-    const criteria = buildCriteria(context);
+    const criteria = await buildCriteria(context, activePeriods);
 
     // Try OpenSearch first
     const osIds = await searchOpenSearch(criteria, take);

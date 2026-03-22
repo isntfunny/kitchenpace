@@ -43,8 +43,9 @@ export async function analyzeWithAI(
     markdown: string,
     sourceUrl = '',
     userId?: string,
+    scrapedImageUrl?: string,
 ): Promise<AnalyzedRecipe> {
-    return analyzeWithAIShared(prisma, markdown, sourceUrl, userId);
+    return analyzeWithAIShared(prisma, markdown, sourceUrl, userId, scrapedImageUrl);
 }
 
 /**

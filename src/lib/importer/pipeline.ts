@@ -98,6 +98,7 @@ export async function analyzeWithAI(
     markdown: string,
     sourceUrl = '',
     userId?: string,
+    scrapedImageUrl?: string,
 ): Promise<AnalyzedRecipe> {
     if (!markdown.trim()) {
         throw new Error('Kein Inhalt zum Analysieren vorhanden.');
@@ -154,6 +155,7 @@ export async function analyzeWithAI(
     return {
         ...recipe,
         sourceUrl: sourceUrl || undefined,
+        imageUrl: recipe.imageUrl || scrapedImageUrl || undefined,
     };
 }
 

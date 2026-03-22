@@ -410,7 +410,7 @@ async function scrapeAndAnalyze(user: ResolvedUser, url: string): Promise<Analyz
     const aiSpinner = ora('Analyzing recipe with AI...').start();
     let analyzed;
     try {
-        analyzed = await analyzeWithAI(db, scraped.markdown, url, user.id);
+        analyzed = await analyzeWithAI(db, scraped.markdown, url, user.id, scraped.imageUrl);
     } catch (err) {
         aiSpinner.fail('AI analysis failed');
         console.error(chalk.red(err instanceof Error ? err.message : String(err)));

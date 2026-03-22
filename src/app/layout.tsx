@@ -10,6 +10,7 @@ import { AchievementListener } from '@app/components/features/AchievementListene
 import { AuthProvider } from '@app/components/providers/AuthProvider';
 import { FeatureFlagsProvider } from '@app/components/providers/FeatureFlagsProvider';
 import { PageProgress } from '@app/components/providers/PageProgress';
+import { PeriodAttribute } from '@app/components/providers/PeriodAttribute';
 import { ProfileProvider } from '@app/components/providers/ProfileProvider';
 import { RecipeTabsProvider } from '@app/components/providers/RecipeTabsProvider';
 import { ThemeProvider } from '@app/components/providers/ThemeProvider';
@@ -282,6 +283,7 @@ export default async function RootLayout({
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: Required to prevent theme flash
                     dangerouslySetInnerHTML={{ __html: themeInitScript }}
                 />
+                <PeriodAttribute />
             </head>
             <body className={`${playfair.variable} ${inter.variable}`} suppressHydrationWarning>
                 <script

@@ -8,7 +8,7 @@ import type { PrismaClient } from '@prisma/client';
 
 import { createIngredient, findOrCreateUnit } from '@app/components/recipe/ingredientActions';
 import { computeFlowLayout } from '@app/lib/flow-layout';
-import { generateUniqueSlug } from '@app/lib/slug';
+import { slugify, generateUniqueSlug } from '@app/lib/slug';
 
 import { importRecipeFromMarkdown } from './openai-client';
 import { type AnalyzedRecipe, transformImportedRecipe } from './transform';
@@ -293,10 +293,7 @@ export async function saveImportedRecipe(
         const uniqueTagNames = [...new Set(data.tags)];
         const tags: { id: string }[] = [];
         for (const name of uniqueTagNames) {
-            const tagSlug = name
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/^-+|-+$/g, '');
+            const tagSlug = slugify(name);
             const existing = await db.tag.findFirst({
                 where: { OR: [{ slug: tagSlug }, { name: { equals: name, mode: 'insensitive' } }] },
             });

@@ -66,6 +66,11 @@ export default defineConfig({
         extend: {
             dark: '[data-theme="dark"] &',
             retro: '[data-theme="retro"] &',
+            // Food-cultural period conditions (set via data-period on <html>)
+            // Multiple periods can be active simultaneously — each is a separate attribute value check
+            osterzeit: '[data-period~="osterzeit"] &',
+            weihnachtszeit: '[data-period~="weihnachtszeit"] &',
+            adventszeit: '[data-period~="adventszeit"] &',
         },
     },
 
@@ -282,6 +287,25 @@ export default defineConfig({
                     },
                     'palette.purple': {
                         value: { base: PALETTE_COLORS.purple, _dark: PALETTE_COLORS.purpleDark },
+                    },
+                    // ── Period-aware accent (POC: Easter pastels) ──
+                    // Components can use `period.accent` to get a seasonal tint.
+                    // Defaults to palette.orange; overridden when a food period is active.
+                    'period.accent': {
+                        value: {
+                            base: PALETTE_COLORS.orange,
+                            _dark: PALETTE_COLORS.orangeDark,
+                            _osterzeit: '#8fbc8f',
+                            _weihnachtszeit: '#c0392b',
+                        },
+                    },
+                    'period.accent.soft': {
+                        value: {
+                            base: 'rgba(224,123,83,0.08)',
+                            _dark: 'rgba(224,123,83,0.15)',
+                            _osterzeit: 'rgba(143,188,143,0.12)',
+                            _weihnachtszeit: 'rgba(192,57,43,0.10)',
+                        },
                     },
                     'status.success': {
                         value: { base: STATUS.success, _dark: STATUS.successDark },

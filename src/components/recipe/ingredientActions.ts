@@ -226,14 +226,7 @@ const TAG_NAME_REGEX = /^[a-zA-ZäöüÄÖÜß0-9\- ]+$/;
 const MAX_TAG_LENGTH = 40;
 
 function tagSlug(name: string): string {
-    return name
-        .toLowerCase()
-        .replace(/ä/g, 'ae')
-        .replace(/ö/g, 'oe')
-        .replace(/ü/g, 'ue')
-        .replace(/ß/g, 'ss')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
+    return slugify(name);
 }
 
 export async function findOrCreateTag(

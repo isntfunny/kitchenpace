@@ -90,7 +90,7 @@ export async function fetchFitsNowRecipes(
     take = 6,
 ): Promise<{ recipes: RecipeCardData[]; context: FitsNowContext }> {
     const { detectContext, queryFitsNowRecipes } = await import('@app/lib/fits-now');
-    const context = detectContext();
+    const { context, activePeriods } = await detectContext();
 
     // If user overrides the time slot, adjust the context
     if (timeSlotOverride && timeSlotOverride !== context.timeSlot) {
@@ -100,7 +100,7 @@ export async function fetchFitsNowRecipes(
         }
     }
 
-    const recipes = await queryFitsNowRecipes(context, take);
+    const recipes = await queryFitsNowRecipes(context, activePeriods, take);
     return { recipes, context };
 }
 

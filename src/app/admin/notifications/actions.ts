@@ -133,9 +133,9 @@ export async function getRoleStats(): Promise<RoleStats> {
 
     const [total, users, moderators, admins] = await Promise.all([
         prisma.user.count({ where: { banned: false } }),
-        prisma.user.count({ where: { role: 'user' } }),
-        prisma.user.count({ where: { role: 'moderator' } }),
-        prisma.user.count({ where: { role: 'admin' } }),
+        prisma.user.count({ where: { role: 'user', banned: false } }),
+        prisma.user.count({ where: { role: 'moderator', banned: false } }),
+        prisma.user.count({ where: { role: 'admin', banned: false } }),
     ]);
 
     return { total, users, moderators, admins };

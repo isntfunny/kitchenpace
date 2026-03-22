@@ -2,14 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { slugify } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
 function generateSlug(name: string): string {
-    const slug = name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-
+    const slug = slugify(name);
     if (!slug) throw new Error('Name muss mindestens ein Zeichen enthalten');
     return slug;
 }

@@ -1,6 +1,9 @@
 import { Metadata } from 'next';
 
+import { FullWidthShell } from '@app/components/layouts/FullWidthShell';
 import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
+
+import { AdminSidebar, adminContentClass } from './admin-sidebar';
 
 export const metadata: Metadata = {
     title: 'Administration',
@@ -13,5 +16,10 @@ export const metadata: Metadata = {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
     await ensureAdminSession('admin-layout');
 
-    return children;
+    return (
+        <FullWidthShell>
+            <AdminSidebar />
+            <div className={adminContentClass}>{children}</div>
+        </FullWidthShell>
+    );
 }

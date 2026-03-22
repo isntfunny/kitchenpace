@@ -114,6 +114,11 @@ export async function processEnrichIngredientNutrition(
     job: Job<EnrichIngredientNutritionJob>,
 ): Promise<{ success: boolean; ingredientId: string; fieldsUpdated: number; source?: string }> {
     const { ingredientId } = job.data;
+
+    if (!ingredientId) {
+        throw new Error('[NutritionWorker] ingredientId is empty — cannot enrich nutrition');
+    }
+
     console.log(`[NutritionWorker] Enriching nutrition for ingredient ${ingredientId}`);
 
     const ingredient = await prisma.ingredient.findUnique({

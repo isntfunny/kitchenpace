@@ -3,6 +3,7 @@
 import type { FlowEdgeInput, FlowNodeInput } from '@app/components/recipe/recipeFormTypes';
 import { getServerAuthSession } from '@app/lib/auth';
 import { cosineSimilarity } from '@app/lib/embeddings/embedding-service';
+import type { FitsNowContext } from '@app/lib/fits-now';
 import { PALETTE } from '@app/lib/palette';
 import {
     toRecipeCardData,

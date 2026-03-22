@@ -39,8 +39,8 @@ const buildRecipeMetadata = (
     const description = recipe.description || fallbackDescription;
 
     const bannerUrl = recipe.imageKey
-        ? getThumbnailUrl(recipe.imageKey, '16:9', 1280)
-        : '/og-image.png';
+        ? `${APP_URL}${getThumbnailUrl(recipe.imageKey, '16:9', 1280)}`
+        : `${APP_URL}/og-image.png`;
 
     const recipeUrl = `${APP_URL}/recipe/${recipe.slug}`;
 

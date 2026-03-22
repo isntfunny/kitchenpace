@@ -21,6 +21,15 @@ SITE_CONFIG: dict[str, dict] = {
     #     "content": [".recipe-ingredients", ".recipe-steps"],
     #     "image": ".recipe-hero img",
     # },
+
+    # Sally's Blog: JSON-LD has numeric ingredient IDs instead of text,
+    # so we must use scrapling with CSS selectors to get real content.
+    "sallys-blog.de": {
+        "strategy": "scrapling",
+        "content": [
+            "shop-studio-recipes-recipe-detail-tabs-description",
+        ],
+    },
 }
 
 # Generic fallback selectors when JSON-LD is missing and no domain config exists

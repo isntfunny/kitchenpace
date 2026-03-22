@@ -29,9 +29,14 @@ async def dispatch(url: str, css_selector: Optional[str] = None, **scrapling_opt
     if strategy == "ytdlp":
         return await scrape_ytdlp(url, mode=get_mode(url))
 
-    # Custom CSS selector skips jsonld
+    # Custom CSS selector or explicit scrapling strategy skips jsonld
     if css_selector:
         return await _scrapling_loop(url, [css_selector, None], **scrapling_opts)
+
+    if strategy == "scrapling" and get_site_name(url):
+        log.info("  site=%s, forced scrapling (skip jsonld)", get_site_name(url))
+        selectors = [get_selector(url), None]
+        return await _scrapling_loop(url, selectors, **scrapling_opts)
 
     # Try JSON-LD first (universal, structured, reliable)
     site = get_site_name(url) or "unknown"

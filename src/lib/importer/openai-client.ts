@@ -63,7 +63,25 @@ METADATEN
 - description: Prägnante Beschreibung (1-3 Sätze)
 - imageUrl: Hauptbild-URL aus dem Markdown (og:image, große <img>, Markdown-Bilder). Keine Logos/Icons/Werbung. Null wenn keins gefunden.
 - categories: 1–3 aus: "Hauptgericht", "Beilage", "Backen", "Dessert", "Frühstück", "Getränk", "Vorspeise", "Salat"
-- tags: 3-10 relevante Tags auf Deutsch
+- tags: 8-20 relevante Tags auf Deutsch. Sei SEHR großzügig — erfinde frei neue Tags!
+  Tags helfen beim Filtern, Entdecken und saisonalen Einsortieren. Du DARFST und SOLLST neue Tags erfinden die zum Rezept passen. Decke ALLE zutreffenden Dimensionen ab:
+
+  ★★★ HÖCHSTE PRIORITÄT — bei JEDEM Rezept mindestens 2-3 davon vergeben: ★★★
+  • Jahreszeit: "Frühling", "Sommer", "Herbst", "Winter" — wähle nach typischer Passung. Suppen/Eintöpfe→Herbst/Winter, Salate/Grill→Sommer, leichte Gerichte→Frühling, etc. MEHRERE Jahreszeiten wenn passend!
+  • Saisonale Events & Feiertage: "Weihnachten", "Ostern", "Silvester", "Valentinstag", "Muttertag", "Vatertag", "Erntedank", "Fasching/Karneval", "Nikolaus", "Advent", "Grillsaison", "Oktoberfest", "Sommerfest", "Gartenparty", "Osterbrunch", ... — vergib wenn das Rezept typisch dafür wäre oder gut dazu passt
+  • Stimmung & Gefühl: "gemütlich", "sommerlich leicht", "wärmend", "erfrischend", "festlich", "rustikal", "elegant", "schnell & unkompliziert", "zum Verwöhnen", "Seelenwärmer", "Sonntagsglück", ...
+  • Tageszeit: "Mittagessen", "Abendessen", "Frühstück", "Brunch", "Snack", "Nachtisch", "Nachmittagskaffee"
+  • Anlass: "Party", "Familienessen", "Kindergeburtstag", "Feierabendküche", "Sonntagsessen", "Für Gäste", "Picknick", "Meal Prep", "Büro-Lunch", "Date Night", "Brunch mit Freunden", "Grillabend", "Wochenend-Kochen", ...
+
+  Weitere Tags:
+  • Küchenart: "Italienisch", "Asiatisch", "Deutsch", "Mexikanisch", "Mediterran", "Orientalisch", ...
+  • Ernährung: "Vegetarisch", "Vegan", "Low Carb", "Glutenfrei", "Proteinreich", "Kalorienarm", ...
+  • Zubereitungsart: "Ofengericht", "Eintopf", "Auflauf", "Suppe", "Salat", "Fingerfood", "Pfannengericht", "One Pot", ...
+  • Charakter: "Klassiker", "Comfort Food", "Schnell", "Einfach", "Aufwendig", "Für Einsteiger", ...
+
+  ✘ VERBOTEN — NIEMALS als Tag verwenden:
+  • Einzelne Zutaten: "Tomate", "Kartoffeln", "Lachs", "Schokolade", etc. — dafür gibt es den Zutatenfilter
+  • "mit [Zutat]": "mit Hackfleisch", "mit Hühnchen", "mit Fisch", etc. — wird über Zutatenkategorien berechnet
 - prepTime / cookTime: in Minuten
 - servings: Portionen
 - difficulty: "Einfach", "Mittel" oder "Schwer"
@@ -200,10 +218,10 @@ ${markdown}
 Bitte analysiere den Inhalt und gib die strukturierten Rezeptdaten zurück.`;
 }
 
-// Pricing (USD per 1M tokens) — gpt-5.4
-const PRICE_INPUT = 2.5 / 1_000_000;
-const PRICE_CACHED = 0.25 / 1_000_000;
-const PRICE_OUTPUT = 15.0 / 1_000_000;
+// Pricing (USD per 1M tokens) — gpt-5.4-mini
+const PRICE_INPUT = 0.75 / 1_000_000;
+const PRICE_CACHED = 0.075 / 1_000_000;
+const PRICE_OUTPUT = 4.5 / 1_000_000;
 
 function computeCost(
     inputTokens: number | null,
@@ -221,7 +239,7 @@ function computeCost(
 // ============================================================================
 
 export interface ImportRecipeOptions {
-    /** OpenAI Model (Default: gpt-5.4) */
+    /** OpenAI Model (Default: gpt-5.4-mini) */
     model?: string;
     /** Temperatur für die Generierung (0-1, Default: 0.1) */
     temperature?: number;
@@ -249,7 +267,7 @@ export async function importRecipeFromMarkdown(
     sourceUrl: string,
     options: ImportRecipeOptions = {},
 ): Promise<RecipeParseResult> {
-    const { model = 'gpt-5.4', temperature = 0.1, context } = options;
+    const { model = 'gpt-5.4-mini', temperature = 0.1, context } = options;
 
     try {
         const openai = getOpenAIClient();
@@ -399,7 +417,7 @@ export async function streamRecipeFromMarkdown(
     options: ImportRecipeOptions = {},
     onDelta: (text: string) => void,
 ): Promise<RecipeParseResult> {
-    const { model = 'gpt-5.4', temperature = 0.1, context } = options;
+    const { model = 'gpt-5.4-mini', temperature = 0.1, context } = options;
 
     try {
         const openai = getOpenAIClient();

@@ -108,7 +108,7 @@ export async function generateLaneGrid(text: string): Promise<LaneGridAIResponse
         ];
 
         const completion = await openai.chat.completions.create({
-            model: 'gpt-5.4',
+            model: 'gpt-5.4-mini',
             messages,
             temperature: 0.1,
             response_format: getLaneGridResponseFormat(),

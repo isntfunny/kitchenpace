@@ -40,13 +40,13 @@ export async function POST(request: NextRequest) {
             try {
                 const context = await fetchImportContext(prisma);
 
-                send({ type: 'start', model: 'gpt-5.4' });
+                send({ type: 'start', model: 'gpt-5.4-mini' });
 
                 const result = await streamRecipeFromMarkdown(
                     markdown,
                     sourceUrl,
                     {
-                        model: 'gpt-5.4',
+                        model: 'gpt-5.4-mini',
                         temperature: 0.1,
                         context,
                     },

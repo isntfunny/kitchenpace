@@ -135,7 +135,7 @@ export async function runImportPipeline(
         addStreamEvent({
             type: 'progress',
             message: 'POST /api/ai/import-stream',
-            detail: 'model=gpt-5.4  stream=true  response_format=json_schema',
+            detail: 'model=gpt-5.4-mini  stream=true  response_format=json_schema',
         });
 
         const streamResponse = await fetch('/api/ai/import-stream', {

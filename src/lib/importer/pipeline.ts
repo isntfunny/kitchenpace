@@ -119,7 +119,7 @@ export async function analyzeWithAI(
     const context = await fetchImportContext(db);
 
     const result = await importRecipeFromMarkdown(markdown, sourceUrl, {
-        model: 'gpt-5.4',
+        model: 'gpt-5.4-mini',
         temperature: 0.1,
         context,
     });

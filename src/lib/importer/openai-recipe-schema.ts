@@ -110,9 +110,9 @@ export const ImportedRecipeSchema = z.object({
         .describe('Kategorien des Rezepts (mindestens 1, maximal 3)'),
     tags: z
         .array(z.string().min(1))
-        .min(1)
-        .max(10)
-        .describe('Tags für das Rezept (mindestens 1, maximal 10)'),
+        .min(5)
+        .max(25)
+        .describe('Tags für das Rezept (mindestens 8, maximal 25)'),
     prepTime: z.number().int().positive().describe('Vorbereitungszeit in Minuten'),
     cookTime: z.number().int().nonnegative().describe('Kochzeit in Minuten'),
     servings: z.number().int().positive().describe('Anzahl der Portionen'),

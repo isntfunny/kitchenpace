@@ -2,6 +2,7 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { Metadata } from 'next';
 
 import { PageShell } from '@app/components/layouts/PageShell';
+import { getServerAuthSession } from '@app/lib/auth';
 import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
 import { APP_URL } from '@app/lib/url';
@@ -44,11 +45,13 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
     const initialFilters = parseRecipeFilterParams(await toURLSearchParams(searchParams));
     const queryClient = getQueryClient();
 
+    const session = await getServerAuthSession('recipes-page');
+
     const [tags, ingredients, categories, initialData] = await Promise.all([
         fetchFilterTags(),
         fetchFilterIngredients(),
         queryClient.fetchQuery(trpc.filters.categories.queryOptions()),
-        queryRecipes(initialFilters),
+        queryRecipes(initialFilters, session?.user?.id),
     ]);
 
     return (

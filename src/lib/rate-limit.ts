@@ -4,7 +4,7 @@ import { getRealtimeRedis } from './realtime/redis';
 // Configuration
 // ---------------------------------------------------------------------------
 
-type RateLimitBucket = 'auth' | 'upload' | 'ai' | 'scrape' | 'search';
+type RateLimitBucket = 'auth' | 'upload' | 'ai' | 'scrape' | 'search' | 'semantic';
 
 interface RateLimitRule {
     /** Max requests allowed in the window */
@@ -19,6 +19,7 @@ const RULES: Record<RateLimitBucket, RateLimitRule> = {
     ai: { limit: 5, window: 60 }, // 5 AI calls / min
     scrape: { limit: 10, window: 60 }, // 10 scrape calls / min
     search: { limit: 60, window: 60 }, // 60 searches / min
+    semantic: { limit: 10, window: 60 }, // 10 embedding calls / min
 };
 
 // ---------------------------------------------------------------------------

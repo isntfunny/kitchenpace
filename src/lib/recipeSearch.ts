@@ -2,6 +2,7 @@ import type { RecipeCardData } from '@app/app/actions/recipes';
 import { RECIPE_FILTER_DEFAULT_LIMIT } from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 import type { RecipeSearchFacets, RecipeSearchMeta } from '@app/lib/recipeSearchTypes';
+import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
 import {
     buildRecipeTextQuery,
     opensearchClient,
@@ -62,7 +63,12 @@ const buildHistogramFacet = (agg: HistogramAggregation | undefined, interval: nu
     return { buckets: sorted, min, max, interval };
 };
 
-export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<RecipeSearchResult> {
+const SEMANTIC_MIN_WORD_COUNT = 4;
+
+export async function queryRecipes(
+    filters: RecipeFilterSearchParams,
+    userId?: string | null,
+): Promise<RecipeSearchResult> {
     const {
         query,
         tags = [],
@@ -259,11 +265,46 @@ export async function queryRecipes(filters: RecipeFilterSearchParams): Promise<R
         ),
     };
 
+    let data = hits
+        .map((hit) => hit._source)
+        .filter(Boolean)
+        .map((source) => mapDocumentToRecipeCard(source ?? {}));
+
+    // Semantic search: prepend embedding-based hits on first page for 4+ word queries
+    const wordCount = query ? query.split(/\s+/).length : 0;
+    if (query && wordCount >= SEMANTIC_MIN_WORD_COUNT && userId && page === 1) {
+        try {
+            const existingIds = new Set(data.map((r) => r.id));
+            const { recipes: semanticHits } = await semanticRecipeSearch(
+                query,
+                existingIds,
+                userId,
+            );
+
+            if (semanticHits.length > 0) {
+                const semanticCards = semanticHits.map((hit) => ({
+                    id: hit.id,
+                    slug: hit.slug,
+                    title: hit.title,
+                    category: hit.category,
+                    rating: hit.rating,
+                    time: hit.totalTime > 0 ? `${hit.totalTime} Min.` : '—',
+                    image: hit.imageKey,
+                    imageKey: hit.imageKey,
+                    description: hit.description,
+                    stepCount: undefined,
+                    difficulty: undefined,
+                }));
+
+                data = [...semanticCards, ...data];
+            }
+        } catch {
+            // Semantic search is best-effort
+        }
+    }
+
     return {
-        data: hits
-            .map((hit) => hit._source)
-            .filter(Boolean)
-            .map((source) => mapDocumentToRecipeCard(source ?? {})),
+        data,
         meta: { total, page, limit, facets },
     };
 }

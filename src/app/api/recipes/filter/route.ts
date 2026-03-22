@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getServerAuthSession } from '@app/lib/auth';
 import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
 import { createLogger } from '@shared/logger';
@@ -10,8 +11,9 @@ export async function GET(request: NextRequest) {
     log.debug('Filter request received', { url: request.url });
 
     try {
+        const session = await getServerAuthSession('api/recipes/filter');
         const filters = parseRecipeFilterParams(new URL(request.url).searchParams);
-        const result = await queryRecipes(filters);
+        const result = await queryRecipes(filters, session?.user?.id);
         return NextResponse.json(result);
     } catch (error) {
         log.error('Filter request failed', {

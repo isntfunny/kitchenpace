@@ -122,24 +122,26 @@ export async function GET(request: NextRequest) {
         ]);
 
         // Parse recipe hits
-        let recipes: RecipeHit[] = [];
+        const recipes: RecipeHit[] = [];
         if (recipesResult) {
             const hits = (recipesResult.body.hits?.hits ?? []) as Array<{
                 _source?: Record<string, unknown>;
             }>;
-            recipes = hits
-                .map((hit) => hit._source)
-                .filter(Boolean)
-                .map((doc) => ({
-                    id: doc!.id as string,
-                    slug: doc!.slug as string,
-                    title: (doc!.title as string) || 'Unbekanntes Rezept',
-                    category: (doc!.category as string) || 'Hauptgericht',
-                    totalTime: Number(doc!.totalTime ?? 0),
-                    rating: Number(doc!.rating ?? 0),
-                    imageKey: (doc!.imageKey as string) ?? null,
-                    description: (doc!.description as string) || '',
-                }));
+            recipes.push(
+                ...hits
+                    .map((hit) => hit._source)
+                    .filter(Boolean)
+                    .map((doc) => ({
+                        id: doc!.id as string,
+                        slug: doc!.slug as string,
+                        title: (doc!.title as string) || 'Unbekanntes Rezept',
+                        category: (doc!.category as string) || 'Hauptgericht',
+                        totalTime: Number(doc!.totalTime ?? 0),
+                        rating: Number(doc!.rating ?? 0),
+                        imageKey: (doc!.imageKey as string) ?? null,
+                        description: (doc!.description as string) || '',
+                    })),
+            );
         }
 
         // Parse tag names from tags index

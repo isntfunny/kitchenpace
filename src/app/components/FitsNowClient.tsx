@@ -18,9 +18,9 @@ import {
     SelectContent,
     SelectItem,
 } from '@app/components/features/Select';
-import { PALETTE } from '@app/lib/palette';
 
 import { css } from 'styled-system/css';
+import { token } from 'styled-system/tokens';
 
 const timeOptions = [
     { value: 'fruehstueck', label: 'Frühstück' },
@@ -52,7 +52,7 @@ export function FitsNowClient({ initialRecipes, initialContext }: FitsNowClientP
     return (
         <Section
             title="Passt zu jetzt"
-            titleIcon={<Target size={20} color={PALETTE.orange} />}
+            titleIcon={<Target size={20} color={token('colors.period.accent')} />}
             description={context.description}
             action={
                 <div className={css({ display: 'flex', alignItems: 'center', gap: '3' })}>
@@ -60,12 +60,13 @@ export function FitsNowClient({ initialRecipes, initialContext }: FitsNowClientP
                         <span
                             className={css({
                                 fontSize: 'xs',
-                                color: 'text-muted',
-                                bg: 'surface-raised',
+                                color: 'period.accent',
+                                bg: 'period.accent.soft',
                                 px: '2',
                                 py: '0.5',
                                 borderRadius: 'md',
                                 whiteSpace: 'nowrap',
+                                fontWeight: '600',
                             })}
                         >
                             {context.label}

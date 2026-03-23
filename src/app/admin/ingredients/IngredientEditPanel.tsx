@@ -1,7 +1,6 @@
 'use client';
 
 import { Plus, Trash2, X } from 'lucide-react';
-import { Dialog } from 'radix-ui';
 import { useState, useTransition } from 'react';
 
 import { css } from 'styled-system/css';
@@ -10,6 +9,7 @@ import { deleteIngredient, updateIngredient, updateIngredientUnits } from './act
 import {
     type Ingredient,
     type IngredientCategory,
+    type NutritionValues,
     type Unit,
     btnDanger,
     btnPrimary,
@@ -19,18 +19,20 @@ import {
     sectionLabelStyle,
     tagStyle,
 } from './ingredient-types';
-import { NutritionSection, UnitsSection } from './IngredientEditSections';
+import { NutritionCalculator, NutritionSection, UnitsSection } from './IngredientEditSections';
 
 export function IngredientEditPanel({
     ingredient,
     allCategories,
     allUnits,
     onClose,
+    mode = 'inline',
 }: {
     ingredient: Ingredient;
     allCategories: IngredientCategory[];
     allUnits: Unit[];
     onClose: () => void;
+    mode?: 'inline' | 'dialog';
 }) {
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
@@ -44,7 +46,7 @@ export function IngredientEditPanel({
     const [selectedUnits, setSelectedUnits] = useState<Map<string, number | null>>(
         new Map(ingredient.ingredientUnits.map((iu) => [iu.unit.id, iu.grams])),
     );
-    const [nutrition, setNutrition] = useState({
+    const [nutrition, setNutrition] = useState<NutritionValues>({
         energyKcal: ingredient.energyKcal,
         protein: ingredient.protein,
         fat: ingredient.fat,
@@ -89,8 +91,12 @@ export function IngredientEditPanel({
         });
     };
 
-    const updateNutritionField = (field: keyof typeof nutrition, value: string) => {
-        setNutrition((prev) => ({ ...prev, [field]: value === '' ? null : parseFloat(value) }));
+    const updateNutritionField = (field: keyof NutritionValues, value: string) => {
+        const parsed = parseFloat(value);
+        setNutrition((prev) => ({
+            ...prev,
+            [field]: value === '' || Number.isNaN(parsed) ? null : parsed,
+        }));
     };
 
     const handleSave = () => {
@@ -109,7 +115,7 @@ export function IngredientEditPanel({
                     grams,
                 }));
                 await updateIngredientUnits(ingredient.id, unitEntries);
-                onClose();
+                if (mode === 'dialog') onClose();
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
             }
@@ -121,6 +127,7 @@ export function IngredientEditPanel({
         startTransition(async () => {
             try {
                 await deleteIngredient(ingredient.id);
+                onClose();
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Fehler beim Loeschen');
             }
@@ -135,15 +142,15 @@ export function IngredientEditPanel({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',
-                    padding: '6',
-                    paddingBottom: '4',
+                    padding: mode === 'dialog' ? '6' : '0',
+                    paddingBottom: mode === 'dialog' ? '4' : '4',
                     borderBottom: '1px solid',
                     borderColor: 'border.muted',
                     flexShrink: '0',
                 })}
             >
                 <div>
-                    <Dialog.Title
+                    <h2
                         className={css({
                             fontSize: 'lg',
                             fontWeight: '700',
@@ -152,7 +159,7 @@ export function IngredientEditPanel({
                         })}
                     >
                         Zutat bearbeiten
-                    </Dialog.Title>
+                    </h2>
                     <p
                         className={css({
                             fontSize: 'sm',
@@ -182,17 +189,18 @@ export function IngredientEditPanel({
                         )}
                     </p>
                 </div>
-                <Dialog.Close asChild>
-                    <button type="button" className={closeButtonStyle}>
+                {mode === 'dialog' && (
+                    <button type="button" onClick={onClose} className={closeButtonStyle}>
                         <X size={18} />
                     </button>
-                </Dialog.Close>
+                )}
             </div>
 
             {/* Scrollable content */}
             <div
                 className={css({
-                    padding: '6',
+                    padding: mode === 'dialog' ? '6' : '0',
+                    paddingTop: '4',
                     overflowY: 'auto',
                     flex: '1',
                     display: 'flex',
@@ -371,10 +379,18 @@ export function IngredientEditPanel({
                     selectedUnits={selectedUnits}
                     onToggleUnit={toggleUnit}
                     onSetGrams={setUnitGrams}
+                    nutrition={nutrition}
                 />
 
                 {/* Section: Naehrwerte */}
                 <NutritionSection nutrition={nutrition} onFieldChange={updateNutritionField} />
+
+                {/* Section: Naehrwert-Rechner */}
+                <NutritionCalculator
+                    selectedUnits={selectedUnits}
+                    allUnits={allUnits}
+                    nutrition={nutrition}
+                />
             </div>
 
             {/* Footer */}
@@ -383,8 +399,9 @@ export function IngredientEditPanel({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    padding: '4',
-                    paddingX: '6',
+                    paddingTop: '4',
+                    paddingX: mode === 'dialog' ? '6' : '0',
+                    paddingBottom: mode === 'dialog' ? '4' : '0',
                     borderTop: '1px solid',
                     borderColor: 'border.muted',
                     bg: 'surface',
@@ -400,9 +417,11 @@ export function IngredientEditPanel({
                     <Trash2 size={14} /> Loeschen
                 </button>
                 <div className={css({ display: 'flex', gap: '2' })}>
-                    <button type="button" onClick={onClose} className={btnSecondary}>
-                        Abbrechen
-                    </button>
+                    {mode === 'dialog' && (
+                        <button type="button" onClick={onClose} className={btnSecondary}>
+                            Abbrechen
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={handleSave}

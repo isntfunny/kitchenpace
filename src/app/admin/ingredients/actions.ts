@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
+import { ensureModeratorSession } from '@app/lib/admin/ensure-moderator';
 import { slugify } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
@@ -12,6 +14,7 @@ function generateSlug(name: string): string {
 }
 
 export async function createIngredient(data: { name: string }) {
+    await ensureModeratorSession('create-ingredient');
     if (!data.name?.trim()) {
         throw new Error('Name ist erforderlich');
     }
@@ -60,6 +63,7 @@ export async function updateIngredient(
         saturatedFat?: number | null;
     },
 ) {
+    await ensureModeratorSession('update-ingredient');
     if (!id?.trim()) {
         throw new Error('Zutat-ID ist erforderlich');
     }
@@ -124,6 +128,7 @@ export async function updateIngredientUnits(
     ingredientId: string,
     units: Array<{ unitId: string; grams?: number | null }>,
 ) {
+    await ensureModeratorSession('update-ingredient-units');
     if (!ingredientId?.trim()) {
         throw new Error('Zutat-ID ist erforderlich');
     }
@@ -145,6 +150,7 @@ export async function updateIngredientUnits(
 }
 
 export async function deleteIngredient(id: string) {
+    await ensureAdminSession('delete-ingredient');
     if (!id?.trim()) {
         throw new Error('Zutat-ID ist erforderlich');
     }
@@ -163,6 +169,7 @@ export async function deleteIngredient(id: string) {
 }
 
 export async function mergeIngredients(sourceId: string, targetId: string) {
+    await ensureAdminSession('merge-ingredients');
     if (!sourceId?.trim() || !targetId?.trim()) {
         throw new Error('Quell- und Ziel-IDs sind erforderlich');
     }
@@ -238,6 +245,7 @@ export async function mergeIngredients(sourceId: string, targetId: string) {
 
 // Category CRUD
 export async function createCategory(data: { name: string; slug?: string }) {
+    await ensureModeratorSession('create-category');
     if (!data.name?.trim()) throw new Error('Name ist erforderlich');
     const slug = data.slug || generateSlug(data.name);
     await prisma.ingredientCategory.create({ data: { name: data.name.trim(), slug } });
@@ -245,6 +253,7 @@ export async function createCategory(data: { name: string; slug?: string }) {
 }
 
 export async function updateCategory(id: string, data: { name?: string; sortOrder?: number }) {
+    await ensureModeratorSession('update-category');
     const updateData: Record<string, unknown> = {};
     if (data.name !== undefined) {
         updateData.name = data.name.trim();
@@ -256,6 +265,7 @@ export async function updateCategory(id: string, data: { name?: string; sortOrde
 }
 
 export async function deleteCategory(id: string) {
+    await ensureAdminSession('delete-category');
     await prisma.ingredientCategory.delete({ where: { id } });
     revalidatePath('/admin/ingredients');
 }
@@ -266,6 +276,7 @@ export async function createUnit(data: {
     longName: string;
     gramsDefault?: number | null;
 }) {
+    await ensureModeratorSession('create-unit');
     if (!data.shortName?.trim() || !data.longName?.trim()) {
         throw new Error('Kurz- und Langname sind erforderlich');
     }
@@ -277,21 +288,26 @@ export async function createUnit(data: {
         },
     });
     revalidatePath('/admin/ingredients');
+    revalidatePath('/admin/units');
 }
 
 export async function updateUnit(
     id: string,
     data: { shortName?: string; longName?: string; gramsDefault?: number | null },
 ) {
+    await ensureModeratorSession('update-unit');
     const updateData: Record<string, unknown> = {};
     if (data.shortName !== undefined) updateData.shortName = data.shortName.trim();
     if (data.longName !== undefined) updateData.longName = data.longName.trim();
     if (data.gramsDefault !== undefined) updateData.gramsDefault = data.gramsDefault;
     await prisma.unit.update({ where: { id }, data: updateData });
     revalidatePath('/admin/ingredients');
+    revalidatePath('/admin/units');
 }
 
 export async function deleteUnit(id: string) {
+    await ensureAdminSession('delete-unit');
     await prisma.unit.delete({ where: { id } });
     revalidatePath('/admin/ingredients');
+    revalidatePath('/admin/units');
 }

@@ -19,9 +19,6 @@ import {
     sectionLabelStyle,
 } from './ingredient-types';
 
-// Re-export IngredientEditPanel so existing imports continue to work
-export { IngredientEditPanel } from './IngredientEditPanel';
-
 // ---------------------------------------------------------------------------
 // AddIngredientForm
 // ---------------------------------------------------------------------------

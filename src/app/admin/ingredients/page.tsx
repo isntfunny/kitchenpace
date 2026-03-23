@@ -1,7 +1,9 @@
+import { ensureModeratorSession } from '@app/lib/admin/ensure-moderator';
 import { prisma } from '@shared/prisma';
 
 import { css } from 'styled-system/css';
 
+import { CategoriesSection } from './CategoriesTab';
 import { IngredientsTable } from './ingredients-table';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +69,7 @@ async function getData() {
 }
 
 export default async function IngredientsPage() {
+    await ensureModeratorSession('admin-ingredients');
     const { ingredients, needsReviewCount, categories, units } = await getData();
 
     return (
@@ -139,6 +142,8 @@ export default async function IngredientsPage() {
             )}
 
             <IngredientsTable ingredients={ingredients} categories={categories} units={units} />
+
+            <CategoriesSection categories={categories} />
         </div>
     );
 }

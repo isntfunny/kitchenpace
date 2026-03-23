@@ -8,7 +8,7 @@ import {
     getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { Check, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { useMemo, useState, useTransition } from 'react';
 
@@ -28,10 +28,71 @@ import {
 } from './ingredient-types';
 
 // ---------------------------------------------------------------------------
-// CategoriesTab
+// CategoriesSection (collapsible card)
 // ---------------------------------------------------------------------------
 
-export function CategoriesTab({ categories }: { categories: IngredientCategory[] }) {
+export function CategoriesSection({ categories }: { categories: IngredientCategory[] }) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div
+            className={css({
+                borderRadius: '2xl',
+                border: '1px solid',
+                borderColor: 'border.muted',
+                bg: 'surface',
+                overflow: 'hidden',
+            })}
+        >
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className={css({
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '4',
+                    bg: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'foreground',
+                    _hover: { bg: 'surface.muted' },
+                })}
+            >
+                <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                    <span className={css({ fontSize: 'sm', fontWeight: '600' })}>
+                        Zutatenkategorien
+                    </span>
+                    <span
+                        className={css({
+                            fontSize: 'xs',
+                            paddingX: '2',
+                            paddingY: '0.5',
+                            borderRadius: 'full',
+                            bg: 'accent.soft',
+                            color: 'foreground.muted',
+                            fontWeight: '600',
+                        })}
+                    >
+                        {categories.length}
+                    </span>
+                </div>
+                {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            {isOpen && <CategoriesTabInner categories={categories} />}
+        </div>
+    );
+}
+
+// Re-export under old name for backwards compat
+export { CategoriesSection as CategoriesTab };
+
+// ---------------------------------------------------------------------------
+// Inner table content
+// ---------------------------------------------------------------------------
+
+function CategoriesTabInner({ categories }: { categories: IngredientCategory[] }) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [editingCategory, setEditingCategory] = useState<IngredientCategory | null>(null);

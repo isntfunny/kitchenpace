@@ -48,6 +48,42 @@ export type Unit = {
 };
 
 // ---------------------------------------------------------------------------
+// Nutrition
+// ---------------------------------------------------------------------------
+
+export type NutritionValues = {
+    energyKcal: number | null;
+    protein: number | null;
+    fat: number | null;
+    carbs: number | null;
+    fiber: number | null;
+    sugar: number | null;
+    sodium: number | null;
+    saturatedFat: number | null;
+};
+
+export type CalculatedNutrition = {
+    energyKcal: number | null;
+    protein: number | null;
+    fat: number | null;
+    carbs: number | null;
+};
+
+export function calculateUnitNutrition(
+    nutrition: NutritionValues,
+    grams: number,
+): CalculatedNutrition {
+    const f = grams / 100;
+    const r = (v: number | null) => (v != null ? Math.round(v * f * 10) / 10 : null);
+    return {
+        energyKcal: r(nutrition.energyKcal),
+        protein: r(nutrition.protein),
+        fat: r(nutrition.fat),
+        carbs: r(nutrition.carbs),
+    };
+}
+
+// ---------------------------------------------------------------------------
 // Shared styles
 // ---------------------------------------------------------------------------
 

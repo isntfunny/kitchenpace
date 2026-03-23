@@ -32,6 +32,38 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '23. März 2026',
+        version: 'v2026-03-23',
+        emoji: '🕐',
+        title: '„Passt jetzt" & bessere Suche',
+        items: [
+            {
+                text: 'Neuer „Passt jetzt"-Bereich auf der Startseite — KüchenTakt schlägt dir automatisch Rezepte vor, die zur Tageszeit, Jahreszeit oder aktuellen Feiertagen passen',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Die Suche zeigt Ergebnisse jetzt sofort an, während im Hintergrund weitere geladen werden — kein Warten mehr auf die vollständige Liste',
+                tag: 'feat',
+            },
+            {
+                text: 'Bessere Schritt-für-Schritt-Navigation auf dem Handy — einfacher zwischen Zubereitungsschritten wechseln',
+                tag: 'feat',
+            },
+            {
+                text: 'KI-generierte Tags sind jetzt treffsicherer dank neuerem Sprachmodell',
+                tag: 'feat',
+            },
+            {
+                text: 'Geteilte Rezept-Links zeigen jetzt das Rezeptbild in der Vorschau',
+                tag: 'fix',
+            },
+            {
+                text: 'Import von Rezepten verschiedener Webseiten funktioniert jetzt zuverlässiger',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '21. März 2026',
         version: 'v2026-03-21',
         emoji: '🍳',

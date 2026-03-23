@@ -1,3 +1,4 @@
+import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 import { prisma } from '@shared/prisma';
 
 import { css } from 'styled-system/css';
@@ -52,6 +53,7 @@ async function getRecipes() {
 }
 
 export default async function RecipesPage() {
+    await ensureAdminSession('admin-recipes');
     const recipes = await getRecipes();
 
     return (

@@ -139,7 +139,7 @@ export async function processEnrichIngredientNutrition(
     const openai = getOpenAIClient();
 
     const response = await openai.responses.create({
-        model: 'gpt-5.4',
+        model: 'gpt-5.4-mini',
         tools: [{ type: 'web_search_preview' }],
         instructions: SYSTEM_PROMPT,
         input: `Bestimme die Nährwerte pro 100g für: "${ingredient.name}"`,

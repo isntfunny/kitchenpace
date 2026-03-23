@@ -1,5 +1,7 @@
 import { Star } from 'lucide-react';
 
+import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
+
 import { css } from 'styled-system/css';
 
 import { getContentSettings } from './actions';
@@ -8,6 +10,7 @@ import { ContentModerationForm } from './content-moderation-form';
 export const dynamic = 'force-dynamic';
 
 export default async function ContentModerationPage() {
+    await ensureAdminSession('admin-content');
     const settings = await getContentSettings();
 
     return (

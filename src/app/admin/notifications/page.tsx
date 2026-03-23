@@ -1,5 +1,7 @@
 import { Clock, Megaphone, MessageSquare } from 'lucide-react';
 
+import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
+
 import { css } from 'styled-system/css';
 
 import { getRecentSystemMessages, getRoleStats } from './actions';
@@ -19,6 +21,7 @@ function timeAgo(iso: string): string {
 }
 
 export default async function AdminNotificationsPage() {
+    await ensureAdminSession('admin-notifications');
     const [roleStats, recentMessages] = await Promise.all([
         getRoleStats(),
         getRecentSystemMessages(),

@@ -1,3 +1,4 @@
+import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 import { getQueueSnapshots } from '@worker/queues/insights';
 import { getJobRuns, type JobRun, type JobStatus } from '@worker/queues/job-run';
 import { getQueueLabel, JOB_STATUS_DETAILS, STATUS_ORDER } from '@worker/queues/job-run-ui';
@@ -113,6 +114,7 @@ function JobAccordionSection({ title, jobs }: { title: string; jobs: JobCatalogI
 }
 
 export default async function WorkerDashboardPage() {
+    await ensureAdminSession('admin-worker');
     const [jobRuns, queueSnapshots] = await Promise.all([getJobRunsData(), getQueueSnapshots()]);
     const totalJobs = jobRuns.length;
 

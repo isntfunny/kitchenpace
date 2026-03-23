@@ -38,7 +38,7 @@ export function CategoriesSection({ categories }: { categories: IngredientCatego
         <div
             className={css({
                 borderRadius: '2xl',
-                border: '1px solid',
+                borderWidth: '1px',
                 borderColor: 'border.muted',
                 bg: 'surface',
                 overflow: 'hidden',

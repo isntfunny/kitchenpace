@@ -134,6 +134,8 @@ export function IngredientEditPanel({
         });
     };
 
+    const px = mode === 'dialog' ? '5' : '0';
+
     return (
         <>
             {/* Header */}
@@ -141,53 +143,45 @@ export function IngredientEditPanel({
                 className={css({
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    padding: mode === 'dialog' ? '6' : '0',
-                    paddingBottom: mode === 'dialog' ? '4' : '4',
-                    borderBottom: '1px solid',
+                    alignItems: 'center',
+                    paddingX: px,
+                    paddingTop: mode === 'dialog' ? '5' : '0',
+                    paddingBottom: '3',
+                    borderBottomWidth: '1px',
                     borderColor: 'border.muted',
                     flexShrink: '0',
                 })}
             >
-                <div>
+                <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
                     <h2
                         className={css({
-                            fontSize: 'lg',
-                            fontWeight: '700',
-                            fontFamily: 'heading',
+                            fontSize: 'md',
+                            fontWeight: '600',
                             color: 'foreground',
                         })}
                     >
-                        Zutat bearbeiten
-                    </h2>
-                    <p
-                        className={css({
-                            fontSize: 'sm',
-                            color: 'foreground.muted',
-                            marginTop: '0.5',
-                        })}
-                    >
                         {ingredient.name}
-                        {ingredient.needsReview && (
-                            <span
-                                className={css({
-                                    marginLeft: '2',
-                                    paddingX: '2',
-                                    paddingY: '0.5',
-                                    borderRadius: 'full',
-                                    fontSize: 'xs',
-                                    fontWeight: '600',
-                                    bg: {
-                                        base: 'rgba(245,158,11,0.12)',
-                                        _dark: 'rgba(245,158,11,0.15)',
-                                    },
-                                    color: 'status.warning',
-                                })}
-                            >
-                                Review
-                            </span>
-                        )}
-                    </p>
+                    </h2>
+                    {ingredient.needsReview && (
+                        <span
+                            className={css({
+                                paddingX: '1.5',
+                                paddingY: '0.5',
+                                borderRadius: 'full',
+                                fontSize: '2xs',
+                                fontWeight: '600',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                bg: {
+                                    base: 'rgba(245,158,11,0.10)',
+                                    _dark: 'rgba(245,158,11,0.15)',
+                                },
+                                color: 'status.warning',
+                            })}
+                        >
+                            Review
+                        </span>
+                    )}
                 </div>
                 {mode === 'dialog' && (
                     <button type="button" onClick={onClose} className={closeButtonStyle}>
@@ -199,7 +193,7 @@ export function IngredientEditPanel({
             {/* Scrollable content */}
             <div
                 className={css({
-                    padding: mode === 'dialog' ? '6' : '0',
+                    paddingX: px,
                     paddingTop: '4',
                     overflowY: 'auto',
                     flex: '1',
@@ -234,17 +228,7 @@ export function IngredientEditPanel({
                         })}
                     >
                         <div>
-                            <label
-                                className={css({
-                                    fontSize: 'xs',
-                                    color: 'foreground.muted',
-                                    display: 'block',
-                                    marginBottom: '1',
-                                    fontWeight: '500',
-                                })}
-                            >
-                                Name
-                            </label>
+                            <label className={fieldLabelStyle}>Name</label>
                             <input
                                 type="text"
                                 value={name}
@@ -253,17 +237,7 @@ export function IngredientEditPanel({
                             />
                         </div>
                         <div>
-                            <label
-                                className={css({
-                                    fontSize: 'xs',
-                                    color: 'foreground.muted',
-                                    display: 'block',
-                                    marginBottom: '1',
-                                    fontWeight: '500',
-                                })}
-                            >
-                                Pluralname
-                            </label>
+                            <label className={fieldLabelStyle}>Pluralname</label>
                             <input
                                 type="text"
                                 value={pluralName}
@@ -341,7 +315,7 @@ export function IngredientEditPanel({
                         className={css({
                             display: 'grid',
                             gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-                            gap: '1',
+                            gap: '0',
                         })}
                     >
                         {allCategories.map((cat) => (
@@ -355,7 +329,7 @@ export function IngredientEditPanel({
                                     color: 'foreground',
                                     cursor: 'pointer',
                                     paddingX: '2',
-                                    paddingY: '1.5',
+                                    paddingY: '1',
                                     borderRadius: 'lg',
                                     transition: 'background 0.1s',
                                     _hover: { bg: 'surface.muted' },
@@ -399,12 +373,11 @@ export function IngredientEditPanel({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    paddingTop: '4',
-                    paddingX: mode === 'dialog' ? '6' : '0',
+                    paddingTop: '3',
+                    paddingX: px,
                     paddingBottom: mode === 'dialog' ? '4' : '0',
-                    borderTop: '1px solid',
+                    borderTopWidth: '1px',
                     borderColor: 'border.muted',
-                    bg: 'surface',
                     flexShrink: '0',
                 })}
             >
@@ -435,3 +408,11 @@ export function IngredientEditPanel({
         </>
     );
 }
+
+const fieldLabelStyle = css({
+    fontSize: 'xs',
+    color: 'foreground.muted',
+    display: 'block',
+    marginBottom: '1',
+    fontWeight: '500',
+});

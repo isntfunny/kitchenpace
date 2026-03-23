@@ -108,67 +108,91 @@ export function UnitsSection({
     return (
         <div>
             <p className={sectionLabelStyle}>Einheiten</p>
-            <div className={css({ display: 'flex', flexDirection: 'column', gap: '1' })}>
+            <div
+                className={css({
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        base: 'repeat(2, 1fr)',
+                        md: 'repeat(3, 1fr)',
+                        lg: 'repeat(4, 1fr)',
+                    },
+                    gap: '0',
+                })}
+            >
                 {allUnits.map((unit) => {
                     const isChecked = selectedUnits.has(unit.id);
-                    const gramsValue = selectedUnits.get(unit.id);
-                    const effectiveGrams = gramsValue ?? unit.gramsDefault;
-                    const calc =
-                        isChecked && effectiveGrams != null && nutrition
-                            ? calculateUnitNutrition(nutrition, effectiveGrams)
-                            : null;
 
                     return (
-                        <div key={unit.id}>
-                            <div
-                                className={css({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '3',
-                                    paddingX: '2',
-                                    paddingY: '1.5',
-                                    borderRadius: 'lg',
-                                    transition: 'background 0.1s',
-                                    bg: isChecked ? 'accent.soft' : 'transparent',
-                                    _hover: {
-                                        bg: isChecked ? 'accent.soft' : 'surface.muted',
-                                    },
-                                })}
-                            >
-                                <label
+                        <label
+                            key={unit.id}
+                            className={css({
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '1.5',
+                                fontSize: 'sm',
+                                color: 'foreground',
+                                cursor: 'pointer',
+                                paddingX: '2',
+                                paddingY: '1',
+                                borderRadius: 'lg',
+                                transition: 'background 0.1s',
+                                bg: isChecked ? 'accent.soft' : 'transparent',
+                                _hover: { bg: isChecked ? 'accent.soft' : 'surface.muted' },
+                            })}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => onToggleUnit(unit.id)}
+                                className={css({ accentColor: 'brand.primary' })}
+                            />
+                            <span className={css({ fontWeight: isChecked ? '600' : '400' })}>
+                                {unit.shortName}
+                            </span>
+                        </label>
+                    );
+                })}
+            </div>
+
+            {/* Gram overrides for checked units */}
+            {allUnits.some((u) => selectedUnits.has(u.id)) && (
+                <div
+                    className={css({
+                        marginTop: '3',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1.5',
+                    })}
+                >
+                    {allUnits
+                        .filter((u) => selectedUnits.has(u.id))
+                        .map((unit) => {
+                            const gramsValue = selectedUnits.get(unit.id);
+                            const effectiveGrams = gramsValue ?? unit.gramsDefault;
+                            const calc =
+                                effectiveGrams != null && nutrition
+                                    ? calculateUnitNutrition(nutrition, effectiveGrams)
+                                    : null;
+
+                            return (
+                                <div
+                                    key={unit.id}
                                     className={css({
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '2',
                                         fontSize: 'sm',
-                                        color: 'foreground',
-                                        cursor: 'pointer',
-                                        minWidth: '160px',
                                     })}
                                 >
-                                    <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={() => onToggleUnit(unit.id)}
-                                        className={css({ accentColor: 'brand.primary' })}
-                                    />
                                     <span
                                         className={css({
-                                            fontWeight: isChecked ? '600' : '400',
+                                            fontWeight: '500',
+                                            color: 'foreground',
+                                            minWidth: '40px',
                                         })}
                                     >
                                         {unit.shortName}
                                     </span>
-                                    <span
-                                        className={css({
-                                            color: 'foreground.muted',
-                                            fontSize: 'xs',
-                                        })}
-                                    >
-                                        ({unit.longName})
-                                    </span>
-                                </label>
-                                {isChecked && (
                                     <input
                                         type="number"
                                         value={gramsValue ?? ''}
@@ -182,16 +206,16 @@ export function UnitsSection({
                                         }
                                         placeholder={
                                             unit.gramsDefault != null
-                                                ? `Standard: ${unit.gramsDefault}g`
-                                                : 'Gramm'
+                                                ? `${unit.gramsDefault}g`
+                                                : 'g'
                                         }
                                         className={css({
-                                            width: '150px',
-                                            paddingX: '2.5',
-                                            paddingY: '1.5',
+                                            width: '80px',
+                                            paddingX: '2',
+                                            paddingY: '1',
                                             borderRadius: 'lg',
-                                            border: '1px solid',
-                                            borderColor: 'border',
+                                            borderWidth: '1px',
+                                            borderColor: 'border.muted',
                                             bg: 'surface',
                                             fontSize: 'sm',
                                             color: 'foreground',
@@ -200,24 +224,18 @@ export function UnitsSection({
                                             _focus: {
                                                 borderColor: 'brand.primary',
                                                 boxShadow: {
-                                                    base: '0 0 0 3px rgba(224,123,83,0.12)',
-                                                    _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                                    base: '0 0 0 2px rgba(224,123,83,0.10)',
+                                                    _dark: '0 0 0 2px rgba(224,123,83,0.15)',
                                                 },
                                             },
                                         })}
                                     />
-                                )}
-                            </div>
-                            {/* Inline nutrition calculation */}
-                            {calc && (
-                                <div className={css({ paddingLeft: '8', paddingBottom: '1' })}>
-                                    <InlineCalc calc={calc} />
+                                    {calc && <InlineCalc calc={calc} />}
                                 </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+                            );
+                        })}
+                </div>
+            )}
         </div>
     );
 }
@@ -286,7 +304,7 @@ export function NutritionCalculator({
                         key={unit.id}
                         className={css({
                             borderRadius: 'xl',
-                            border: '1px solid',
+                            borderWidth: '1px',
                             borderColor: 'border.muted',
                             bg: 'surface.elevated',
                             padding: '3',

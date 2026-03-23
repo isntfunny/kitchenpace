@@ -1,9 +1,8 @@
 'use client';
 
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Filter, GitMerge, Plus, Search, X } from 'lucide-react';
-import { Dialog } from 'radix-ui';
-import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
+import { ArrowLeft, GitMerge, Plus, Search, X } from 'lucide-react';
+import { memo, useRef, useState, useMemo, useCallback, useEffect, startTransition } from 'react';
 
 import { css } from 'styled-system/css';
 
@@ -13,12 +12,76 @@ import {
     type Unit,
     btnPrimary,
     btnSecondary,
-    overlayStyle,
-    dialogContentStyle,
 } from './ingredient-types';
 import { IngredientCard } from './IngredientCard';
 import { IngredientEditPanel } from './IngredientEditPanel';
 import { AddIngredientForm, MergeModal } from './IngredientModals';
+
+const ITEM_HEIGHT = 28;
+const estimateSize = () => ITEM_HEIGHT;
+
+// ---------------------------------------------------------------------------
+// Virtualized list — isolated so scroll only re-renders this component
+// ---------------------------------------------------------------------------
+
+const VirtualList = memo(function VirtualList({
+    items,
+    selectedId,
+    onSelect,
+}: {
+    items: Ingredient[];
+    selectedId: string | null;
+    onSelect: (id: string) => void;
+}) {
+    const listRef = useRef<HTMLDivElement>(null);
+    const virtualizer = useVirtualizer({
+        count: items.length,
+        getScrollElement: () => listRef.current,
+        estimateSize,
+        overscan: 15,
+    });
+
+    return (
+        <div
+            ref={listRef}
+            className={css({
+                flex: '1',
+                overflowY: 'auto',
+                contain: 'strict',
+            })}
+        >
+            <div
+                style={{
+                    height: virtualizer.getTotalSize(),
+                    position: 'relative',
+                }}
+            >
+                {virtualizer.getVirtualItems().map((vi) => {
+                    const ingredient = items[vi.index];
+                    return (
+                        <div
+                            key={ingredient.id}
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: vi.size,
+                                transform: `translateY(${vi.start}px)`,
+                            }}
+                        >
+                            <IngredientCard
+                                ingredient={ingredient}
+                                isSelected={selectedId === ingredient.id}
+                                onSelect={onSelect}
+                            />
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+});
 
 // ---------------------------------------------------------------------------
 // Props
@@ -73,9 +136,13 @@ export function IngredientsDashboard({
         [ingredients, selectedId],
     );
 
+    const prevIngredientsRef = useRef(ingredients);
     useEffect(() => {
-        if (selectedId && !ingredients.find((i) => i.id === selectedId)) {
-            setSelectedId(null);
+        if (prevIngredientsRef.current !== ingredients) {
+            prevIngredientsRef.current = ingredients;
+            if (selectedId && !ingredients.find((i) => i.id === selectedId)) {
+                startTransition(() => setSelectedId(null));
+            }
         }
     }, [ingredients, selectedId]);
 
@@ -83,61 +150,54 @@ export function IngredientsDashboard({
         setSelectedId((prev) => (prev === id ? null : id));
     }, []);
 
-    const listRef = useRef<HTMLDivElement>(null);
-    const virtualizer = useVirtualizer({
-        count: filtered.length,
-        getScrollElement: () => listRef.current,
-        estimateSize: () => 52,
-        overscan: 20,
-    });
-
     const needsReviewCount = useMemo(
         () => ingredients.filter((i) => i.needsReview).length,
         [ingredients],
     );
 
+    const showMobileDetail = selectedIngredient !== null;
+
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
-            {/* Toolbar */}
+            {/* Toolbar — hidden on mobile when detail is open */}
             <div
                 className={css({
-                    display: 'flex',
+                    display: showMobileDetail ? { base: 'none', md: 'flex' } : 'flex',
                     alignItems: 'center',
                     gap: '2',
                     flexWrap: 'wrap',
                 })}
             >
-                {/* Search */}
                 <div
                     className={css({
                         display: 'flex',
                         alignItems: 'center',
                         flex: '1',
-                        minWidth: '200px',
+                        minWidth: '180px',
                         gap: '2',
                         borderRadius: 'lg',
-                        border: '1px solid',
-                        borderColor: 'border',
-                        bg: 'surface.elevated',
-                        paddingX: '3',
-                        paddingY: '2',
+                        borderWidth: '1px',
+                        borderColor: 'border.muted',
+                        bg: 'surface',
+                        paddingX: '2.5',
+                        paddingY: '1.5',
                         transition: 'all 0.15s',
                         _focusWithin: {
                             borderColor: 'brand.primary',
                             boxShadow: {
-                                base: '0 0 0 3px rgba(224,123,83,0.12)',
-                                _dark: '0 0 0 3px rgba(224,123,83,0.2)',
+                                base: '0 0 0 2px rgba(224,123,83,0.10)',
+                                _dark: '0 0 0 2px rgba(224,123,83,0.15)',
                             },
                         },
                     })}
                 >
                     <Search
-                        size={15}
+                        size={14}
                         className={css({ color: 'foreground.muted', flexShrink: '0' })}
                     />
                     <input
                         type="text"
-                        placeholder="Zutat suchen..."
+                        placeholder="Suchen..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className={css({
@@ -164,39 +224,34 @@ export function IngredientsDashboard({
                                 _hover: { color: 'foreground', bg: 'surface.muted' },
                             })}
                         >
-                            <X size={14} />
+                            <X size={13} />
                         </button>
                     )}
                 </div>
 
-                {/* Category filter */}
-                <div className={css({ display: 'flex', alignItems: 'center', gap: '1' })}>
-                    <Filter size={14} className={css({ color: 'foreground.muted' })} />
-                    <select
-                        value={filterCategoryId ?? ''}
-                        onChange={(e) => setFilterCategoryId(e.target.value || null)}
-                        className={css({
-                            paddingX: '2',
-                            paddingY: '1.5',
-                            borderRadius: 'lg',
-                            border: '1px solid',
-                            borderColor: 'border',
-                            bg: 'surface.elevated',
-                            fontSize: 'sm',
-                            color: 'foreground',
-                            cursor: 'pointer',
-                        })}
-                    >
-                        <option value="">Alle Kategorien</option>
-                        {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                                {cat.name} ({cat._count.ingredients})
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                <select
+                    value={filterCategoryId ?? ''}
+                    onChange={(e) => setFilterCategoryId(e.target.value || null)}
+                    className={css({
+                        paddingX: '2',
+                        paddingY: '1.5',
+                        borderRadius: 'lg',
+                        borderWidth: '1px',
+                        borderColor: 'border.muted',
+                        bg: 'surface',
+                        fontSize: 'sm',
+                        color: 'foreground',
+                        cursor: 'pointer',
+                    })}
+                >
+                    <option value="">Alle Kategorien</option>
+                    {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                            {cat.name} ({cat._count.ingredients})
+                        </option>
+                    ))}
+                </select>
 
-                {/* Needs review toggle */}
                 {needsReviewCount > 0 && (
                     <button
                         type="button"
@@ -205,16 +260,16 @@ export function IngredientsDashboard({
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '1.5',
-                            paddingX: '3',
+                            paddingX: '2.5',
                             paddingY: '1.5',
                             borderRadius: 'lg',
-                            fontSize: 'sm',
-                            fontWeight: '500',
-                            border: '1px solid',
+                            fontSize: 'xs',
+                            fontWeight: '600',
+                            borderWidth: '1px',
                             cursor: 'pointer',
                             transition: 'all 0.15s',
-                            bg: showNeedsReview ? 'rgba(245,158,11,0.12)' : 'surface.elevated',
-                            borderColor: showNeedsReview ? 'status.warning' : 'border',
+                            bg: showNeedsReview ? 'rgba(245,158,11,0.10)' : 'surface',
+                            borderColor: showNeedsReview ? 'status.warning' : 'border.muted',
                             color: showNeedsReview ? 'status.warning' : 'foreground.muted',
                         })}
                     >
@@ -222,7 +277,6 @@ export function IngredientsDashboard({
                     </button>
                 )}
 
-                {/* Action buttons */}
                 <button
                     type="button"
                     onClick={() => setShowMerge(true)}
@@ -241,45 +295,40 @@ export function IngredientsDashboard({
                 </button>
             </div>
 
-            {/* Add form */}
             {showAdd && <AddIngredientForm onClose={() => setShowAdd(false)} />}
-
-            {/* Merge modal */}
             {showMerge && (
                 <MergeModal ingredients={ingredients} onClose={() => setShowMerge(false)} />
             )}
 
-            {/* Master / Detail — use viewport-pinned height so both panels scroll independently */}
+            {/* Master / Detail */}
             <div
                 className={css({
-                    display: 'grid',
-                    gridTemplateColumns: { base: '1fr', md: '340px 1fr' },
-                    gap: '0',
-                    height: 'calc(100vh - 260px)',
-                    minHeight: '400px',
-                    borderRadius: '2xl',
-                    border: '1px solid',
+                    display: { base: 'block', md: 'grid' },
+                    gridTemplateColumns: { md: '300px 1fr' },
+                    height: { md: 'calc(100vh - 200px)' },
+                    minHeight: { md: '400px' },
+                    borderRadius: 'xl',
+                    borderWidth: '1px',
                     borderColor: 'border.muted',
                     bg: 'surface',
                     overflow: 'hidden',
                 })}
             >
-                {/* Left: Ingredient list */}
+                {/* Left: list */}
                 <div
                     className={css({
-                        display: 'flex',
+                        display: showMobileDetail ? { base: 'none', md: 'flex' } : 'flex',
                         flexDirection: 'column',
-                        borderRight: { md: '1px solid' },
+                        borderRightWidth: { md: '1px' },
                         borderColor: 'border.muted',
                         overflow: 'hidden',
                     })}
                 >
-                    {/* List header */}
                     <div
                         className={css({
-                            padding: '2.5',
                             paddingX: '3',
-                            borderBottom: '1px solid',
+                            paddingY: '1.5',
+                            borderBottomWidth: '1px',
                             borderColor: 'border.muted',
                             fontSize: 'xs',
                             color: 'foreground.muted',
@@ -290,77 +339,65 @@ export function IngredientsDashboard({
                         })}
                     >
                         <span>{filtered.length} Zutaten</span>
-                        <span>Rez. · kcal</span>
+                        <span>Rez.</span>
                     </div>
 
-                    {/* Virtualized list */}
-                    <div
-                        ref={listRef}
-                        className={css({
-                            flex: '1',
-                            overflowY: 'auto',
-                        })}
-                    >
-                        <div
-                            style={{
-                                height: virtualizer.getTotalSize(),
-                                width: '100%',
-                                position: 'relative',
-                            }}
-                        >
-                            {virtualizer.getVirtualItems().map((virtualItem) => {
-                                const ingredient = filtered[virtualItem.index];
-                                return (
-                                    <div
-                                        key={ingredient.id}
-                                        style={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            width: '100%',
-                                            height: virtualItem.size,
-                                            transform: `translateY(${virtualItem.start}px)`,
-                                        }}
-                                    >
-                                        <IngredientCard
-                                            ingredient={ingredient}
-                                            isSelected={selectedId === ingredient.id}
-                                            onClick={() => handleSelect(ingredient.id)}
-                                        />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <VirtualList items={filtered} selectedId={selectedId} onSelect={handleSelect} />
                 </div>
 
-                {/* Right: Detail panel (desktop) */}
+                {/* Right: detail */}
                 <div
                     className={css({
-                        display: { base: 'none', md: 'flex' },
+                        display: showMobileDetail
+                            ? { base: 'flex', md: 'flex' }
+                            : { base: 'none', md: 'flex' },
                         flexDirection: 'column',
                         overflow: 'hidden',
                     })}
                 >
                     {selectedIngredient ? (
-                        <div
-                            className={css({
-                                flex: '1',
-                                overflowY: 'auto',
-                                padding: '5',
-                                display: 'flex',
-                                flexDirection: 'column',
-                            })}
-                        >
-                            <IngredientEditPanel
-                                key={selectedIngredient.id}
-                                ingredient={selectedIngredient}
-                                allCategories={categories}
-                                allUnits={units}
-                                onClose={() => setSelectedId(null)}
-                                mode="inline"
-                            />
-                        </div>
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedId(null)}
+                                className={css({
+                                    display: { base: 'flex', md: 'none' },
+                                    alignItems: 'center',
+                                    gap: '1.5',
+                                    paddingX: '3',
+                                    paddingY: '2',
+                                    borderBottomWidth: '1px',
+                                    borderColor: 'border.muted',
+                                    fontSize: 'sm',
+                                    fontWeight: '500',
+                                    color: 'foreground.muted',
+                                    bg: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    flexShrink: '0',
+                                    _hover: { color: 'foreground' },
+                                })}
+                            >
+                                <ArrowLeft size={14} />
+                                Zurueck zur Liste
+                            </button>
+                            <div
+                                className={css({
+                                    flex: '1',
+                                    overflowY: 'auto',
+                                    padding: { base: '4', md: '5' },
+                                })}
+                            >
+                                <IngredientEditPanel
+                                    key={selectedIngredient.id}
+                                    ingredient={selectedIngredient}
+                                    allCategories={categories}
+                                    allUnits={units}
+                                    onClose={() => setSelectedId(null)}
+                                    mode="inline"
+                                />
+                            </div>
+                        </>
                     ) : (
                         <div
                             className={css({
@@ -371,48 +408,12 @@ export function IngredientsDashboard({
                             })}
                         >
                             <p className={css({ color: 'foreground.muted', fontSize: 'sm' })}>
-                                Wähle eine Zutat aus der Liste, um sie zu bearbeiten.
+                                Zutat aus der Liste auswaehlen
                             </p>
                         </div>
                     )}
                 </div>
             </div>
-
-            {/* Mobile: Detail dialog */}
-            <Dialog.Root
-                open={!!selectedIngredient}
-                onOpenChange={(open) => {
-                    if (!open) setSelectedId(null);
-                }}
-            >
-                <Dialog.Portal>
-                    <Dialog.Overlay
-                        className={css({
-                            display: { base: 'block', md: 'none' },
-                        })}
-                    >
-                        <div className={overlayStyle} />
-                    </Dialog.Overlay>
-                    <Dialog.Content
-                        className={css({
-                            display: { base: 'flex', md: 'none' },
-                        })}
-                    >
-                        <div className={dialogContentStyle}>
-                            {selectedIngredient && (
-                                <IngredientEditPanel
-                                    key={selectedIngredient.id}
-                                    ingredient={selectedIngredient}
-                                    allCategories={categories}
-                                    allUnits={units}
-                                    onClose={() => setSelectedId(null)}
-                                    mode="dialog"
-                                />
-                            )}
-                        </div>
-                    </Dialog.Content>
-                </Dialog.Portal>
-            </Dialog.Root>
         </div>
     );
 }

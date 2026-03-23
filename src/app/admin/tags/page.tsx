@@ -37,45 +37,6 @@ export default async function TagsPage() {
 
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '6' })}>
-            <header
-                className={css({
-                    borderRadius: '2xl',
-                    borderWidth: '1px',
-                    borderColor: 'border.muted',
-                    background: 'surface',
-                    padding: { base: '4', md: '5' },
-                })}
-            >
-                <p
-                    className={css({
-                        fontSize: 'xs',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.4em',
-                        color: 'foreground.muted',
-                    })}
-                >
-                    Admin · Tags
-                </p>
-                <h1
-                    className={css({
-                        fontSize: '3xl',
-                        fontWeight: 'semibold',
-                        color: 'foreground',
-                        marginTop: '1',
-                    })}
-                >
-                    Tag-Verwaltung
-                </h1>
-                <p
-                    className={css({
-                        marginTop: '2',
-                        color: 'foreground.muted',
-                    })}
-                >
-                    Schlagwörter für Rezepte verwalten.
-                </p>
-            </header>
-
             <TagsTable tags={tags} />
         </div>
     );

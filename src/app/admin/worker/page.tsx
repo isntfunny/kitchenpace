@@ -170,87 +170,44 @@ export default async function WorkerDashboardPage() {
 
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '6' })}>
-            <header
+            <div
                 className={css({
-                    borderRadius: '2xl',
+                    borderRadius: 'xl',
                     borderWidth: '1px',
                     borderColor: 'border.muted',
-                    background: 'surface',
-                    padding: { base: '4', md: '5' },
+                    paddingX: '5',
+                    paddingY: '3',
+                    background: 'surface.elevated',
                     display: 'flex',
-                    flexDirection: { base: 'column', md: 'row' },
-                    gap: '3',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    alignSelf: 'flex-end',
+                    gap: '1',
                 })}
             >
-                <div>
-                    <p
-                        className={css({
-                            fontSize: 'xs',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.4em',
-                            color: 'foreground.muted',
-                        })}
-                    >
-                        Admin · Worker
-                    </p>
-                    <h1
-                        className={css({
-                            fontSize: '3xl',
-                            fontWeight: 'semibold',
-                            color: 'foreground',
-                        })}
-                    >
-                        Worker Dashboard
-                    </h1>
-                    <p
-                        className={css({
-                            marginTop: '1',
-                            fontSize: 'sm',
-                            color: 'foreground.muted',
-                        })}
-                    >
-                        Aktuelle Jobläufe, Engpässe und Ausfälle im Blick behalten.
-                    </p>
-                </div>
-                <div
+                <span
                     className={css({
-                        marginLeft: { md: 'auto' },
-                        borderRadius: 'xl',
-                        borderWidth: '1px',
-                        borderColor: 'border.muted',
-                        paddingX: '5',
-                        paddingY: '3',
-                        background: 'surface.elevated',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-end',
-                        gap: '1',
+                        fontSize: '0.65rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.4em',
+                        color: 'foreground.muted',
                     })}
                 >
-                    <span
-                        className={css({
-                            fontSize: '0.65rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.4em',
-                            color: 'foreground.muted',
-                        })}
-                    >
-                        Erfolgsquote
-                    </span>
-                    <strong
-                        className={css({
-                            fontSize: '2.5rem',
-                            fontWeight: 'semibold',
-                            color: 'foreground',
-                        })}
-                    >
-                        {completedRate}%
-                    </strong>
-                    <span className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                        von {totalJobs} letzten Jobs
-                    </span>
-                </div>
-            </header>
+                    Erfolgsquote
+                </span>
+                <strong
+                    className={css({
+                        fontSize: '2.5rem',
+                        fontWeight: 'semibold',
+                        color: 'foreground',
+                    })}
+                >
+                    {completedRate}%
+                </strong>
+                <span className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
+                    von {totalJobs} letzten Jobs
+                </span>
+            </div>
 
             <section
                 className={css({

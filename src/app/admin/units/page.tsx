@@ -1,5 +1,3 @@
-import { Scale } from 'lucide-react';
-
 import { ensureModeratorSession } from '@app/lib/admin/ensure-moderator';
 import { prisma } from '@shared/prisma';
 
@@ -62,68 +60,6 @@ export default async function UnitsPage() {
 
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '6' })}>
-            <header
-                className={css({
-                    borderRadius: '2xl',
-                    borderWidth: '1px',
-                    borderColor: 'border.muted',
-                    background: 'surface',
-                    padding: { base: '4', md: '6' },
-                    display: 'flex',
-                    flexDirection: { base: 'column', md: 'row' },
-                    alignItems: { md: 'flex-start' },
-                    gap: '4',
-                })}
-            >
-                <div
-                    className={css({
-                        padding: '2.5',
-                        borderRadius: 'lg',
-                        background: 'surface.elevated',
-                        borderWidth: '1px',
-                        borderColor: 'border',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                    })}
-                >
-                    <Scale size={22} />
-                </div>
-                <div>
-                    <p
-                        className={css({
-                            fontSize: 'xs',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5em',
-                            color: 'foreground.muted',
-                            marginBottom: '1',
-                        })}
-                    >
-                        Admin &middot; Einheiten
-                    </p>
-                    <h1
-                        className={css({
-                            fontSize: { base: '2xl', md: '3xl' },
-                            fontWeight: 'semibold',
-                            color: 'foreground',
-                        })}
-                    >
-                        Einheitenverwaltung
-                    </h1>
-                    <p
-                        className={css({
-                            marginTop: '2',
-                            color: 'foreground.muted',
-                            maxWidth: '3xl',
-                        })}
-                    >
-                        Masseinheiten verwalten, Standard-Grammwerte festlegen und sehen welche
-                        Zutaten sie verwenden.
-                    </p>
-                </div>
-            </header>
-
             <UnitsDashboard units={units} />
         </div>
     );

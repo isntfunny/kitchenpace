@@ -53,40 +53,6 @@ export default async function ImportsPage() {
 
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '6' })}>
-            <header
-                className={css({
-                    borderRadius: '2xl',
-                    borderWidth: '1px',
-                    borderColor: 'border.muted',
-                    background: 'surface',
-                    padding: { base: '4', md: '5' },
-                })}
-            >
-                <p
-                    className={css({
-                        fontSize: 'xs',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.4em',
-                        color: 'foreground.muted',
-                    })}
-                >
-                    Admin · KI-Import
-                </p>
-                <h1
-                    className={css({
-                        fontSize: '3xl',
-                        fontWeight: 'semibold',
-                        color: 'foreground',
-                        marginTop: '1',
-                    })}
-                >
-                    Import-Verlauf
-                </h1>
-                <p className={css({ marginTop: '2', color: 'foreground.muted' })}>
-                    Alle KI-Importläufe mit Kosten, Tokens und verknüpften Rezepten.
-                </p>
-            </header>
-
             <div
                 className={css({
                     display: 'grid',

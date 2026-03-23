@@ -182,8 +182,11 @@ const dividerStyle = css({
 /*  Route matching                                                     */
 /* ------------------------------------------------------------------ */
 
+/** Routes whose children are separate sidebar entries — match exactly. */
+const EXACT_MATCH_ROUTES = new Set(['/admin', '/admin/moderation']);
+
 function isActive(pathname: string, href: string): boolean {
-    if (href === '/admin') return pathname === '/admin';
+    if (EXACT_MATCH_ROUTES.has(href)) return pathname === href;
     return pathname.startsWith(href);
 }
 
@@ -212,6 +215,8 @@ export function AdminSidebar({ role }: { role: AdminRole }) {
                 borderColor: 'border.muted',
                 overflowY: 'auto',
                 padding: '4',
+                position: 'relative',
+                zIndex: 25,
             })}
         >
             {visibleSections.map((section, i) => (

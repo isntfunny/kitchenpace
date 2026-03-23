@@ -6,6 +6,8 @@ import {
     Bell,
     BookOpen,
     Carrot,
+    Clock,
+    Flag,
     LayoutDashboard,
     LayoutList,
     Scale,
@@ -62,14 +64,37 @@ const NAV_SECTIONS: NavSection[] = [
         ],
     },
     {
-        title: 'Inhalte',
+        title: 'Moderation',
         links: [
             {
                 href: '/admin/moderation',
                 icon: ShieldAlert,
-                label: 'Moderation',
+                label: 'Warteschlange',
                 minRole: 'moderator',
             },
+            {
+                href: '/admin/moderation/reports',
+                icon: Flag,
+                label: 'Meldungen',
+                minRole: 'moderator',
+            },
+            {
+                href: '/admin/moderation/ingredients',
+                icon: Carrot,
+                label: 'Zutaten-Review',
+                minRole: 'moderator',
+            },
+            {
+                href: '/admin/moderation/history',
+                icon: Clock,
+                label: 'Verlauf',
+                minRole: 'moderator',
+            },
+        ],
+    },
+    {
+        title: 'Inhalte',
+        links: [
             { href: '/admin/recipes', icon: BookOpen, label: 'Rezepte', minRole: 'admin' },
             { href: '/admin/ingredients', icon: Carrot, label: 'Zutaten', minRole: 'moderator' },
             { href: '/admin/units', icon: Scale, label: 'Einheiten', minRole: 'moderator' },

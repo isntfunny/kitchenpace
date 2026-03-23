@@ -176,7 +176,7 @@ export async function serializeReportItem(
         title: 'Neue Meldung',
         message: `${actor?.name ?? 'Ein Nutzer'} hat einen Inhalt gemeldet`,
         createdAt: report.createdAt.toISOString(),
-        href: '/admin/moderation?tab=reports',
+        href: '/admin/moderation/reports',
         data: {
             actor,
             recipe,

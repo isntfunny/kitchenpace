@@ -1,8 +1,20 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import { css } from 'styled-system/css';
 
+const tabs = [
+    { href: '/admin/moderation', label: 'Warteschlange' },
+    { href: '/admin/moderation/reports', label: 'Meldungen' },
+    { href: '/admin/moderation/ingredients', label: 'Zutaten' },
+    { href: '/admin/moderation/history', label: 'Verlauf' },
+];
+
 export default function ModerationLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '6' })}>
             <header
@@ -53,35 +65,36 @@ export default function ModerationLayout({ children }: { children: React.ReactNo
                         pt: '3',
                     })}
                 >
-                    <NavTab href="/admin/moderation">Warteschlange</NavTab>
-                    <NavTab href="/admin/moderation?tab=reports">Meldungen</NavTab>
-                    <NavTab href="/admin/moderation?tab=ingredients">Zutaten</NavTab>
-                    <NavTab href="/admin/moderation?tab=history">Verlauf</NavTab>
+                    {tabs.map((tab) => {
+                        const active =
+                            tab.href === '/admin/moderation'
+                                ? pathname === '/admin/moderation'
+                                : pathname.startsWith(tab.href);
+                        return (
+                            <Link
+                                key={tab.href}
+                                href={tab.href}
+                                className={css({
+                                    px: '3',
+                                    py: '1.5',
+                                    borderRadius: 'lg',
+                                    fontSize: 'sm',
+                                    fontWeight: '600',
+                                    color: active ? 'foreground' : 'foreground.muted',
+                                    bg: active ? 'accent.soft' : 'transparent',
+                                    textDecoration: 'none',
+                                    transition: 'all 150ms ease',
+                                    _hover: { bg: 'accent.soft', color: 'foreground' },
+                                })}
+                            >
+                                {tab.label}
+                            </Link>
+                        );
+                    })}
                 </nav>
             </header>
 
             {children}
         </div>
-    );
-}
-
-function NavTab({ href, children }: { href: string; children: React.ReactNode }) {
-    return (
-        <Link
-            href={href}
-            className={css({
-                px: '3',
-                py: '1.5',
-                borderRadius: 'lg',
-                fontSize: 'sm',
-                fontWeight: '600',
-                color: 'foreground.muted',
-                textDecoration: 'none',
-                transition: 'all 150ms ease',
-                _hover: { bg: 'accent.soft', color: 'foreground' },
-            })}
-        >
-            {children}
-        </Link>
     );
 }

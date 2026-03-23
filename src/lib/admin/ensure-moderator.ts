@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getServerAuthSession } from '@app/lib/auth';
 import { prisma } from '@shared/prisma';
 
-export async function ensureModeratorSession(context?: string) {
+export async function ensureModeratorSessionWithRole(context?: string) {
     const session = await getServerAuthSession(context);
 
     if (!session?.user?.id) {
@@ -15,9 +15,14 @@ export async function ensureModeratorSession(context?: string) {
         select: { role: true },
     });
 
-    if (user?.role !== 'admin' && user?.role !== 'moderator') {
+    if (!user || (user.role !== 'admin' && user.role !== 'moderator')) {
         redirect('/');
     }
 
+    return { session, role: user.role as 'admin' | 'moderator' };
+}
+
+export async function ensureModeratorSession(context?: string) {
+    const { session } = await ensureModeratorSessionWithRole(context);
     return session;
 }

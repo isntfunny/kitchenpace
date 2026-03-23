@@ -13,7 +13,7 @@ export async function approveIngredient(ingredientId: string) {
         data: { needsReview: false },
     });
 
-    revalidatePath('/moderation');
+    revalidatePath('/admin/moderation');
 }
 
 export async function deleteIngredient(ingredientId: string) {
@@ -26,5 +26,5 @@ export async function deleteIngredient(ingredientId: string) {
         prisma.ingredient.delete({ where: { id: ingredientId } }),
     ]);
 
-    revalidatePath('/moderation');
+    revalidatePath('/admin/moderation');
 }

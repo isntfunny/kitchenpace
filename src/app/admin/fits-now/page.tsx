@@ -1,5 +1,6 @@
 import { Target } from 'lucide-react';
 
+import { ensureModeratorSession } from '@app/lib/admin/ensure-moderator';
 import { getFoodPeriodFilterSets, getTimeSeasonFilterSets } from '@app/lib/fits-now/db-queries';
 import { prisma } from '@shared/prisma';
 
@@ -24,6 +25,7 @@ async function loadData() {
 }
 
 export default async function FitsNowPage() {
+    await ensureModeratorSession('fits-now');
     const { timeSeason, foodPeriod, allCategories } = await loadData();
 
     return (

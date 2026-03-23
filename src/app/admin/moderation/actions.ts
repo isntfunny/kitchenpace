@@ -161,7 +161,7 @@ export async function approveContent(queueId: string, reviewNote?: string) {
 
     await publishAdminInboxRemoved(`moderation_queue:${queueItem.id}`);
 
-    revalidatePath('/moderation');
+    revalidatePath('/admin/moderation');
 }
 
 export async function rejectContent(queueId: string, reviewNote: string) {
@@ -253,7 +253,7 @@ export async function rejectContent(queueId: string, reviewNote: string) {
 
     await publishAdminInboxRemoved(`moderation_queue:${queueItem.id}`);
 
-    revalidatePath('/moderation');
+    revalidatePath('/admin/moderation');
 }
 
 export async function resolveReport(reportId: string) {
@@ -278,7 +278,7 @@ export async function resolveReport(reportId: string) {
         },
     });
 
-    revalidatePath('/moderation');
+    revalidatePath('/admin/moderation');
 }
 
 export async function getModerationStats() {

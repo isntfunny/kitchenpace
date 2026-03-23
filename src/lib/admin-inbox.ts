@@ -130,7 +130,7 @@ export async function serializeModerationQueueItem(
         title: 'Moderation wartet',
         message: `${actor?.name ?? 'Ein Nutzer'} hat einen neuen Moderationsfall ausgelöst`,
         createdAt: queueItem.createdAt.toISOString(),
-        href: '/moderation',
+        href: '/admin/moderation',
         data: {
             actor,
             recipe,
@@ -176,7 +176,7 @@ export async function serializeReportItem(
         title: 'Neue Meldung',
         message: `${actor?.name ?? 'Ein Nutzer'} hat einen Inhalt gemeldet`,
         createdAt: report.createdAt.toISOString(),
-        href: '/moderation?tab=reports',
+        href: '/admin/moderation?tab=reports',
         data: {
             actor,
             recipe,

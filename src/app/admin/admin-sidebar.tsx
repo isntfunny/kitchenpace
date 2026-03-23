@@ -8,6 +8,7 @@ import {
     Carrot,
     LayoutDashboard,
     LayoutList,
+    Scale,
     ShieldAlert,
     Sparkles,
     Star,
@@ -20,6 +21,77 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { css, cx } from 'styled-system/css';
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+
+type AdminRole = 'admin' | 'moderator';
+
+interface NavLink {
+    href: string;
+    icon: LucideIcon;
+    label: string;
+    minRole: AdminRole;
+}
+
+interface NavSection {
+    title: string;
+    links: NavLink[];
+}
+
+/* ------------------------------------------------------------------ */
+/*  Navigation config                                                  */
+/* ------------------------------------------------------------------ */
+
+const NAV_SECTIONS: NavSection[] = [
+    {
+        title: 'Uebersicht',
+        links: [{ href: '/admin', icon: LayoutDashboard, label: 'Dashboard', minRole: 'admin' }],
+    },
+    {
+        title: 'Startseite',
+        links: [
+            { href: '/admin/content', icon: Star, label: 'Spotlight', minRole: 'admin' },
+            {
+                href: '/admin/fits-now',
+                icon: Target,
+                label: 'Passt zu jetzt',
+                minRole: 'moderator',
+            },
+        ],
+    },
+    {
+        title: 'Inhalte',
+        links: [
+            {
+                href: '/admin/moderation',
+                icon: ShieldAlert,
+                label: 'Moderation',
+                minRole: 'moderator',
+            },
+            { href: '/admin/recipes', icon: BookOpen, label: 'Rezepte', minRole: 'admin' },
+            { href: '/admin/ingredients', icon: Carrot, label: 'Zutaten', minRole: 'moderator' },
+            { href: '/admin/units', icon: Scale, label: 'Einheiten', minRole: 'moderator' },
+            { href: '/admin/tags', icon: Tag, label: 'Tags', minRole: 'admin' },
+            { href: '/admin/categories', icon: LayoutList, label: 'Kategorien', minRole: 'admin' },
+        ],
+    },
+    {
+        title: 'System',
+        links: [
+            { href: '/admin/accounts', icon: Users, label: 'Accounts', minRole: 'admin' },
+            { href: '/admin/notifications', icon: Bell, label: 'Nachrichten', minRole: 'admin' },
+            { href: '/admin/worker', icon: Activity, label: 'Worker', minRole: 'admin' },
+            { href: '/admin/imports', icon: Sparkles, label: 'KI-Imports', minRole: 'admin' },
+        ],
+    },
+];
+
+function canAccess(minRole: AdminRole, userRole: AdminRole): boolean {
+    if (userRole === 'admin') return true;
+    return minRole === 'moderator';
+}
 
 /* ------------------------------------------------------------------ */
 /*  NavItem                                                            */
@@ -82,7 +154,7 @@ const dividerStyle = css({
 });
 
 /* ------------------------------------------------------------------ */
-/*  Route configuration                                                */
+/*  Route matching                                                     */
 /* ------------------------------------------------------------------ */
 
 function isActive(pathname: string, href: string): boolean {
@@ -94,8 +166,13 @@ function isActive(pathname: string, href: string): boolean {
 /*  AdminSidebar                                                       */
 /* ------------------------------------------------------------------ */
 
-export function AdminSidebar() {
+export function AdminSidebar({ role }: { role: AdminRole }) {
     const pathname = usePathname();
+
+    const visibleSections = NAV_SECTIONS.map((section) => ({
+        ...section,
+        links: section.links.filter((link) => canAccess(link.minRole, role)),
+    })).filter((section) => section.links.length > 0);
 
     return (
         <nav
@@ -112,92 +189,28 @@ export function AdminSidebar() {
                 padding: '4',
             })}
         >
-            {/* -- Uebersicht -- */}
-            <p className={cx(sectionHeaderStyle, css({ paddingTop: '0' }))}>Uebersicht</p>
-            <NavItem
-                href="/admin"
-                icon={LayoutDashboard}
-                label="Dashboard"
-                active={isActive(pathname, '/admin')}
-            />
-
-            {/* -- Startseite -- */}
-            <div className={dividerStyle} />
-            <p className={sectionHeaderStyle}>Startseite</p>
-            <NavItem
-                href="/admin/content"
-                icon={Star}
-                label="Spotlight"
-                active={isActive(pathname, '/admin/content')}
-            />
-            <NavItem
-                href="/mods/fits-now"
-                icon={Target}
-                label="Passt zu jetzt"
-                active={isActive(pathname, '/mods/fits-now')}
-            />
-
-            {/* -- Inhalte -- */}
-            <div className={dividerStyle} />
-            <p className={sectionHeaderStyle}>Inhalte</p>
-            <NavItem
-                href="/moderation"
-                icon={ShieldAlert}
-                label="Moderation"
-                active={isActive(pathname, '/moderation')}
-            />
-            <NavItem
-                href="/admin/recipes"
-                icon={BookOpen}
-                label="Rezepte"
-                active={isActive(pathname, '/admin/recipes')}
-            />
-            <NavItem
-                href="/admin/ingredients"
-                icon={Carrot}
-                label="Zutaten"
-                active={isActive(pathname, '/admin/ingredients')}
-            />
-            <NavItem
-                href="/admin/tags"
-                icon={Tag}
-                label="Tags"
-                active={isActive(pathname, '/admin/tags')}
-            />
-            <NavItem
-                href="/admin/categories"
-                icon={LayoutList}
-                label="Kategorien"
-                active={isActive(pathname, '/admin/categories')}
-            />
-
-            {/* -- System -- */}
-            <div className={dividerStyle} />
-            <p className={sectionHeaderStyle}>System</p>
-            <NavItem
-                href="/admin/accounts"
-                icon={Users}
-                label="Accounts"
-                active={isActive(pathname, '/admin/accounts')}
-            />
-            <NavItem
-                href="/admin/notifications"
-                icon={Bell}
-                label="Nachrichten"
-                active={isActive(pathname, '/admin/notifications')}
-            />
-            <NavItem
-                href="/admin/worker"
-                icon={Activity}
-                label="Worker"
-                active={isActive(pathname, '/admin/worker')}
-            />
-            <NavItem
-                href="/admin/imports"
-                icon={Sparkles}
-                label="KI-Imports"
-                active={isActive(pathname, '/admin/imports')}
-            />
+            {visibleSections.map((section, i) => (
+                <div key={section.title}>
+                    {i > 0 && <div className={dividerStyle} />}
+                    <p
+                        className={cx(
+                            sectionHeaderStyle,
+                            i === 0 ? css({ paddingTop: '0' }) : undefined,
+                        )}
+                    >
+                        {section.title}
+                    </p>
+                    {section.links.map((link) => (
+                        <NavItem
+                            key={link.href}
+                            href={link.href}
+                            icon={link.icon}
+                            label={link.label}
+                            active={isActive(pathname, link.href)}
+                        />
+                    ))}
+                </div>
+            ))}
 
             {/* -- Bottom link -- */}
             <div className={css({ marginTop: 'auto' })} />

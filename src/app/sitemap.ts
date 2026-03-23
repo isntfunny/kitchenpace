@@ -9,7 +9,6 @@ import { prisma } from '@shared/prisma';
 /** Routes excluded from sitemap (must match robots.ts disallow list) */
 const EXCLUDED_PREFIXES = [
     '/api',
-    '/moderation',
     '/admin',
     '/profile',
     '/recipe/create',

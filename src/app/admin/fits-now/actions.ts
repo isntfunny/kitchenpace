@@ -119,14 +119,14 @@ export async function upsertTimeSeasonFilterSet(data: UpsertTimeSeasonData) {
         });
     }
 
-    revalidatePath('/mods/fits-now');
+    revalidatePath('/admin/fits-now');
     return record;
 }
 
 export async function deleteTimeSeasonFilterSet(id: string) {
     await ensureModeratorSession();
     await prisma.filterSet.delete({ where: { id } });
-    revalidatePath('/mods/fits-now');
+    revalidatePath('/admin/fits-now');
 }
 
 // ---------------------------------------------------------------------------
@@ -164,7 +164,7 @@ export async function createFoodPeriod(data: FoodPeriodData) {
         },
     });
 
-    revalidatePath('/mods/fits-now');
+    revalidatePath('/admin/fits-now');
     return record;
 }
 
@@ -196,14 +196,14 @@ export async function updateFoodPeriod(id: string, data: FoodPeriodData) {
 
     await replaceJoinRows(id, tagIds, categoryIds, ingredientIds);
 
-    revalidatePath('/mods/fits-now');
+    revalidatePath('/admin/fits-now');
     return record;
 }
 
 export async function deleteFoodPeriod(id: string) {
     await ensureModeratorSession();
     await prisma.filterSet.delete({ where: { id } });
-    revalidatePath('/mods/fits-now');
+    revalidatePath('/admin/fits-now');
 }
 
 // ---------------------------------------------------------------------------

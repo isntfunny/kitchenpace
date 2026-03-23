@@ -3,6 +3,17 @@ import type { NextConfig } from 'next';
 const resolveAliasPath = (subpath: string) => new URL(subpath, import.meta.url).pathname;
 
 const nextConfig: NextConfig = {
+    async redirects() {
+        return [
+            { source: '/moderation', destination: '/admin/moderation', permanent: true },
+            {
+                source: '/moderation/:path*',
+                destination: '/admin/moderation/:path*',
+                permanent: true,
+            },
+            { source: '/mods/:path*', destination: '/admin/:path*', permanent: true },
+        ];
+    },
     reactCompiler: true,
     output: 'standalone',
     serverExternalPackages: ['bullmq', 'sharp', 'nodehun'],

@@ -74,7 +74,7 @@ const ADMIN_LINK: GeneralNavLinkItem = {
 const MOD_LINK: GeneralNavLinkItem = {
     label: 'Moderation',
     description: 'Inhalte prüfen & moderieren',
-    href: '/moderation',
+    href: '/admin/moderation',
     icon: Shield,
 };
 

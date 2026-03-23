@@ -36,7 +36,7 @@ const CATEGORY_PAGES = ['/category/hauptgericht'];
 
 const USER_PAGES = ['/user/alex-chen'];
 
-const ADMIN_PAGES = ['/admin', '/admin/worker', '/moderation'];
+const ADMIN_PAGES = ['/admin', '/admin/worker', '/admin/moderation', '/admin/units'];
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -15,8 +15,7 @@ export default async function ModerationPage({
 }: {
     searchParams: Promise<{ tab?: string }>;
 }) {
-    await ensureModeratorSession('moderation-page');
-
+    await ensureModeratorSession('moderation');
     const params = await searchParams;
     const tab = params.tab ?? 'queue';
 

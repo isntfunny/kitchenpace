@@ -12,8 +12,9 @@ import {
     Target,
 } from 'lucide-react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
+import { ensureModeratorSessionWithRole } from '@app/lib/admin/ensure-moderator';
 import { prisma } from '@shared/prisma';
 import { getJobRuns, type JobRun, type JobStatus } from '@worker/queues/job-run';
 import { STATUS_ORDER, getQueueLabel } from '@worker/queues/job-run-ui';
@@ -30,7 +31,7 @@ const ADMIN_ACTIONS = [
     {
         label: 'Moderations-Queue',
         description: 'Gemeldete Inhalte prüfen, freigeben oder ablehnen.',
-        href: '/moderation',
+        href: '/admin/moderation',
         icon: ShieldAlert,
     },
     {
@@ -42,7 +43,7 @@ const ADMIN_ACTIONS = [
     {
         label: 'Passt zu jetzt',
         description: 'Filter Sets und kulinarische Perioden verwalten.',
-        href: '/mods/fits-now',
+        href: '/admin/fits-now',
         icon: Target,
     },
     {
@@ -129,7 +130,8 @@ async function getDashboardStats() {
 }
 
 export default async function AdminHomePage() {
-    const session = await ensureAdminSession('admin-home');
+    const { session, role } = await ensureModeratorSessionWithRole('admin-home');
+    if (role !== 'admin') redirect('/admin/moderation');
     const [jobRuns, stats] = await Promise.all([getJobRuns({ limit: 12 }), getDashboardStats()]);
     const statusCounts = buildStatusCounts(jobRuns);
     const recentFailures = jobRuns.filter((run) => run.status === 'FAILED').slice(0, 4);

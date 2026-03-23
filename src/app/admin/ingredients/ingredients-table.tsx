@@ -13,6 +13,8 @@ import {
     type Unit,
     btnPrimary,
     btnSecondary,
+    overlayStyle,
+    dialogContentStyle,
 } from './ingredient-types';
 import { IngredientCard } from './IngredientCard';
 import { IngredientEditPanel } from './IngredientEditPanel';
@@ -47,7 +49,6 @@ export function IngredientsDashboard({
     const [showAdd, setShowAdd] = useState(false);
     const [showMerge, setShowMerge] = useState(false);
 
-    // Filter ingredients
     const filtered = useMemo(() => {
         let list = ingredients;
         if (searchQuery) {
@@ -72,7 +73,6 @@ export function IngredientsDashboard({
         [ingredients, selectedId],
     );
 
-    // Clear selection if ingredient was deleted/merged
     useEffect(() => {
         if (selectedId && !ingredients.find((i) => i.id === selectedId)) {
             setSelectedId(null);
@@ -83,13 +83,12 @@ export function IngredientsDashboard({
         setSelectedId((prev) => (prev === id ? null : id));
     }, []);
 
-    // Virtualization for the list
     const listRef = useRef<HTMLDivElement>(null);
     const virtualizer = useVirtualizer({
         count: filtered.length,
         getScrollElement: () => listRef.current,
-        estimateSize: () => 110,
-        overscan: 10,
+        estimateSize: () => 52,
+        overscan: 20,
     });
 
     const needsReviewCount = useMemo(
@@ -98,7 +97,7 @@ export function IngredientsDashboard({
     );
 
     return (
-        <div className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
+        <div className={css({ display: 'flex', flexDirection: 'column', gap: '3' })}>
             {/* Toolbar */}
             <div
                 className={css({
@@ -250,45 +249,56 @@ export function IngredientsDashboard({
                 <MergeModal ingredients={ingredients} onClose={() => setShowMerge(false)} />
             )}
 
-            {/* Master / Detail */}
+            {/* Master / Detail — use viewport-pinned height so both panels scroll independently */}
             <div
                 className={css({
                     display: 'grid',
-                    gridTemplateColumns: { base: '1fr', md: '360px 1fr' },
-                    gap: '4',
-                    minHeight: '600px',
+                    gridTemplateColumns: { base: '1fr', md: '340px 1fr' },
+                    gap: '0',
+                    height: 'calc(100vh - 260px)',
+                    minHeight: '400px',
+                    borderRadius: '2xl',
+                    border: '1px solid',
+                    borderColor: 'border.muted',
+                    bg: 'surface',
+                    overflow: 'hidden',
                 })}
             >
                 {/* Left: Ingredient list */}
                 <div
                     className={css({
-                        borderRadius: '2xl',
-                        border: '1px solid',
-                        borderColor: 'border.muted',
-                        bg: 'surface',
-                        overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
+                        borderRight: { md: '1px solid' },
+                        borderColor: 'border.muted',
+                        overflow: 'hidden',
                     })}
                 >
+                    {/* List header */}
                     <div
                         className={css({
-                            padding: '3',
+                            padding: '2.5',
+                            paddingX: '3',
                             borderBottom: '1px solid',
                             borderColor: 'border.muted',
                             fontSize: 'xs',
                             color: 'foreground.muted',
-                            textAlign: 'center',
+                            fontWeight: '500',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            flexShrink: '0',
                         })}
                     >
-                        {filtered.length} Zutaten
+                        <span>{filtered.length} Zutaten</span>
+                        <span>Rez. · kcal</span>
                     </div>
+
+                    {/* Virtualized list */}
                     <div
                         ref={listRef}
                         className={css({
                             flex: '1',
                             overflowY: 'auto',
-                            padding: '2',
                         })}
                     >
                         <div
@@ -311,7 +321,6 @@ export function IngredientsDashboard({
                                             height: virtualItem.size,
                                             transform: `translateY(${virtualItem.start}px)`,
                                         }}
-                                        className={css({ padding: '1' })}
                                     >
                                         <IngredientCard
                                             ingredient={ingredient}
@@ -330,23 +339,28 @@ export function IngredientsDashboard({
                     className={css({
                         display: { base: 'none', md: 'flex' },
                         flexDirection: 'column',
-                        borderRadius: '2xl',
-                        border: '1px solid',
-                        borderColor: 'border.muted',
-                        bg: 'surface',
-                        padding: '5',
-                        overflowY: 'auto',
+                        overflow: 'hidden',
                     })}
                 >
                     {selectedIngredient ? (
-                        <IngredientEditPanel
-                            key={selectedIngredient.id}
-                            ingredient={selectedIngredient}
-                            allCategories={categories}
-                            allUnits={units}
-                            onClose={() => setSelectedId(null)}
-                            mode="inline"
-                        />
+                        <div
+                            className={css({
+                                flex: '1',
+                                overflowY: 'auto',
+                                padding: '5',
+                                display: 'flex',
+                                flexDirection: 'column',
+                            })}
+                        >
+                            <IngredientEditPanel
+                                key={selectedIngredient.id}
+                                ingredient={selectedIngredient}
+                                allCategories={categories}
+                                allUnits={units}
+                                onClose={() => setSelectedId(null)}
+                                mode="inline"
+                            />
+                        </div>
                     ) : (
                         <div
                             className={css({
@@ -375,41 +389,27 @@ export function IngredientsDashboard({
                     <Dialog.Overlay
                         className={css({
                             display: { base: 'block', md: 'none' },
-                            position: 'fixed',
-                            inset: '0',
-                            bg: 'surface.overlay',
-                            zIndex: '50',
-                            animation: 'fadeIn 0.15s ease-out',
                         })}
-                    />
+                    >
+                        <div className={overlayStyle} />
+                    </Dialog.Overlay>
                     <Dialog.Content
                         className={css({
                             display: { base: 'flex', md: 'none' },
-                            position: 'fixed',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            bg: 'surface',
-                            borderRadius: 'xl',
-                            width: '90vw',
-                            maxWidth: '680px',
-                            maxHeight: '85vh',
-                            zIndex: '51',
-                            boxShadow: 'shadow.large',
-                            animation: 'slideUp 0.2s ease-out',
-                            flexDirection: 'column',
                         })}
                     >
-                        {selectedIngredient && (
-                            <IngredientEditPanel
-                                key={selectedIngredient.id}
-                                ingredient={selectedIngredient}
-                                allCategories={categories}
-                                allUnits={units}
-                                onClose={() => setSelectedId(null)}
-                                mode="dialog"
-                            />
-                        )}
+                        <div className={dialogContentStyle}>
+                            {selectedIngredient && (
+                                <IngredientEditPanel
+                                    key={selectedIngredient.id}
+                                    ingredient={selectedIngredient}
+                                    allCategories={categories}
+                                    allUnits={units}
+                                    onClose={() => setSelectedId(null)}
+                                    mode="dialog"
+                                />
+                            )}
+                        </div>
                     </Dialog.Content>
                 </Dialog.Portal>
             </Dialog.Root>

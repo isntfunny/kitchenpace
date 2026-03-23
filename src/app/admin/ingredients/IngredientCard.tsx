@@ -5,39 +5,32 @@ import { memo } from 'react';
 
 import { css, cx } from 'styled-system/css';
 
-import { type Ingredient, pillStyle } from './ingredient-types';
+import { type Ingredient } from './ingredient-types';
 
-const cardBase = css({
+const rowBase = css({
     display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5',
-    padding: '3',
-    borderRadius: 'lg',
-    border: '1px solid',
-    borderColor: 'border.muted',
+    alignItems: 'center',
+    gap: '3',
+    width: '100%',
+    paddingX: '3',
+    paddingY: '2.5',
+    bg: 'transparent',
+    border: 'none',
+    borderLeft: '3px solid transparent',
     cursor: 'pointer',
-    transition: 'all 0.15s',
-    bg: 'surface',
+    transition: 'all 0.1s',
+    textAlign: 'left',
     _hover: { bg: 'surface.elevated' },
 });
 
-const cardSelected = css({
-    borderColor: 'brand.primary',
-    bg: 'surface.elevated',
-    boxShadow: {
-        base: '0 0 0 1px rgba(224,123,83,0.3)',
-        _dark: '0 0 0 1px rgba(224,123,83,0.4)',
-    },
+const rowSelected = css({
+    bg: 'accent.soft',
+    borderLeftColor: 'brand.primary',
+    _hover: { bg: 'accent.soft' },
 });
 
-const cardNeedsReview = css({
-    borderLeftWidth: '3px',
+const rowNeedsReview = css({
     borderLeftColor: 'status.warning',
-});
-
-const metaStyle = css({
-    fontSize: 'xs',
-    color: 'foreground.muted',
 });
 
 export const IngredientCard = memo(function IngredientCard({
@@ -54,74 +47,59 @@ export const IngredientCard = memo(function IngredientCard({
             type="button"
             onClick={onClick}
             className={cx(
-                cardBase,
-                isSelected && cardSelected,
-                ingredient.needsReview && !isSelected && cardNeedsReview,
+                rowBase,
+                isSelected && rowSelected,
+                ingredient.needsReview && !isSelected && rowNeedsReview,
             )}
         >
-            {/* Name + review badge */}
-            <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-                <span
-                    className={css({
-                        fontSize: 'sm',
-                        fontWeight: '600',
-                        color: 'foreground',
-                        textAlign: 'left',
-                        lineClamp: '1',
-                    })}
-                >
-                    {ingredient.name}
-                </span>
-                {ingredient.needsReview && (
-                    <AlertCircle
-                        size={14}
-                        className={css({ color: 'status.warning', flexShrink: '0' })}
-                    />
+            {/* Left: Name + meta */}
+            <div className={css({ flex: '1', minWidth: 0 })}>
+                <div className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
+                    <span
+                        className={css({
+                            fontSize: 'sm',
+                            fontWeight: isSelected ? '600' : '500',
+                            color: 'foreground',
+                            truncate: true,
+                        })}
+                    >
+                        {ingredient.name}
+                    </span>
+                    {ingredient.needsReview && (
+                        <AlertCircle
+                            size={12}
+                            className={css({ color: 'status.warning', flexShrink: '0' })}
+                        />
+                    )}
+                </div>
+                {ingredient.aliases.length > 0 && (
+                    <span
+                        className={css({
+                            fontSize: 'xs',
+                            color: 'foreground.muted',
+                            truncate: true,
+                            display: 'block',
+                        })}
+                    >
+                        {ingredient.aliases.slice(0, 2).join(', ')}
+                    </span>
                 )}
             </div>
 
-            {/* Aliases */}
-            {ingredient.aliases.length > 0 && (
-                <p
-                    className={css({
-                        fontSize: 'xs',
-                        color: 'foreground.muted',
-                        lineClamp: '1',
-                        textAlign: 'left',
-                    })}
-                >
-                    {ingredient.aliases.slice(0, 3).join(', ')}
-                    {ingredient.aliases.length > 3 && ` +${ingredient.aliases.length - 3}`}
-                </p>
-            )}
-
-            {/* Category pills */}
-            {ingredient.categories.length > 0 && (
-                <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '1' })}>
-                    {ingredient.categories.slice(0, 2).map((cat) => (
-                        <span
-                            key={cat.id}
-                            className={cx(
-                                pillStyle,
-                                css({ fontSize: '2xs', paddingX: '1.5', paddingY: '0' }),
-                            )}
-                        >
-                            {cat.name}
-                        </span>
-                    ))}
-                    {ingredient.categories.length > 2 && (
-                        <span className={metaStyle}>+{ingredient.categories.length - 2}</span>
-                    )}
-                </div>
-            )}
-
-            {/* Stats row */}
-            <div className={css({ display: 'flex', gap: '3', marginTop: '0.5' })}>
-                <span className={metaStyle}>{ingredient.recipeCount} Rez.</span>
-                <span className={metaStyle}>{ingredient.ingredientUnits.length} Einh.</span>
-                <span className={metaStyle}>
-                    {ingredient.energyKcal != null ? `${ingredient.energyKcal} kcal` : '–'}
-                </span>
+            {/* Right: Stats */}
+            <div
+                className={css({
+                    display: 'flex',
+                    gap: '2',
+                    flexShrink: '0',
+                    fontSize: 'xs',
+                    color: 'foreground.muted',
+                    fontVariantNumeric: 'tabular-nums',
+                })}
+            >
+                <span>{ingredient.recipeCount}</span>
+                <span className={css({ color: 'border' })}>·</span>
+                <span>{ingredient.energyKcal != null ? `${ingredient.energyKcal}` : '–'}</span>
             </div>
         </button>
     );

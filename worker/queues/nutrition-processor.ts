@@ -44,7 +44,9 @@ const OPTIONAL_FIELDS = [
 
 const ALL_FIELDS = [...CORE_FIELDS, ...OPTIONAL_FIELDS] as const;
 
-function getNutritionResponseFormat() {
+// ── Response schema ─────────────────────────────────────────────────────
+
+function getEnrichResponseFormat(unitShortNames: string[], categorySlugs: string[]) {
     const coreProperties: Record<string, object> = {};
     for (const field of CORE_FIELDS) {
         coreProperties[field] = {
@@ -64,7 +66,7 @@ function getNutritionResponseFormat() {
 
     return {
         type: 'json_schema' as const,
-        name: 'ingredient_nutrition',
+        name: 'ingredient_enrichment',
         strict: true,
         schema: {
             type: 'object',
@@ -76,16 +78,60 @@ function getNutritionResponseFormat() {
                     description:
                         'Brief citation of the data source (e.g. "USDA FoodData Central", "Swiss Food Composition Database")',
                 },
+                relevantUnits: {
+                    type: 'array',
+                    description:
+                        'Units that make sense for this ingredient. Include ALL units that a cook might reasonably use. For each unit, provide the approximate weight in grams (e.g. 1 Stück Ei ≈ 60g, 1 EL Mehl ≈ 10g). Set grams to null only if a gram conversion truly makes no sense for that unit.',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            shortName: {
+                                type: 'string',
+                                enum: unitShortNames,
+                                description: 'The unit shortName from the provided list',
+                            },
+                            grams: {
+                                type: 'number',
+                                nullable: true,
+                                description:
+                                    'Approximate weight in grams for 1 of this unit (e.g. 1 Stück Kartoffel ≈ 150g, 1 TL Salz ≈ 5g). null if not applicable.',
+                            },
+                        },
+                        required: ['shortName', 'grams'],
+                        additionalProperties: false,
+                    },
+                },
+                categories: {
+                    type: 'array',
+                    description:
+                        'Category slugs that apply to this ingredient. Choose ALL matching categories from the provided list. Most ingredients have 1-3 categories.',
+                    items: {
+                        type: 'string',
+                        enum: categorySlugs,
+                    },
+                },
             },
-            required: [...ALL_FIELDS, 'source'],
+            required: [...ALL_FIELDS, 'source', 'relevantUnits', 'categories'],
             additionalProperties: false,
         },
     };
 }
 
-const SYSTEM_PROMPT = `Du bist ein Ernährungswissenschaftler. Deine Aufgabe ist es, die Nährwerte pro 100g essbarem Anteil für eine gegebene Zutat zu bestimmen.
+// ── System prompt ───────────────────────────────────────────────────────
 
-REGELN:
+function buildSystemPrompt(
+    units: Array<{ shortName: string; longName: string }>,
+    categories: Array<{ slug: string; name: string }>,
+): string {
+    const unitList = units.map((u) => `  - ${u.shortName} (${u.longName})`).join('\n');
+    const categoryList = categories.map((c) => `  - ${c.slug} → ${c.name}`).join('\n');
+
+    return `Du bist ein Ernährungswissenschaftler und Lebensmittelexperte. Deine Aufgabe ist es, eine Zutat vollständig zu charakterisieren:
+1. Nährwerte pro 100g essbarem Anteil
+2. Relevante Einheiten mit ungefährem Gewicht pro Stück/Einheit
+3. Passende Kategorien
+
+NÄHRWERT-REGELN:
 - Alle Werte beziehen sich auf 100g des essbaren Anteils (roh, unverarbeitet sofern nicht anders angegeben).
 - Nutze die Web-Suche um aktuelle, verlässliche Nährwertdatenbanken zu konsultieren (USDA, BLS, Swiss Food Composition Database, etc.).
 - Die Kernwerte (energyKcal, protein, fat, carbs, fiber, sugar, salt) MÜSSEN immer gesetzt werden.
@@ -98,7 +144,29 @@ REGELN:
   - Mineralien (Kalium, Calcium, Magnesium, Phosphor, Eisen, Zink, Chlorid, Natrium): mg
   - Cholesterin: mg
   - Alle Makronährstoffe (Fett, Protein, Kohlenhydrate, Ballaststoffe, Zucker, Salz, Stärke, Alkohol, Wasser): g
-  - Fettsäuren (gesättigt, einfach/mehrfach ungesättigt, Linolsäure, Alpha-Linolensäure): g`;
+  - Fettsäuren (gesättigt, einfach/mehrfach ungesättigt, Linolsäure, Alpha-Linolensäure): g
+
+EINHEITEN-REGELN:
+- Wähle ALLE Einheiten aus der Liste, die ein Koch realistisch für diese Zutat verwenden würde.
+- g (Gramm) und kg sollten fast immer dabei sein.
+- Stk (Stück) ist relevant wenn die Zutat natürlich in zählbaren Einheiten vorkommt (Eier, Zwiebeln, Äpfel, Knoblauchzehen etc.).
+- EL (Esslöffel) und TL (Teelöffel) sind relevant für Gewürze, Öle, Saucen, Pasten, Pulver etc.
+- ml und L sind relevant für Flüssigkeiten.
+- Für JEDE gewählte Einheit: gib das ungefähre Gewicht in Gramm an (z.B. 1 Stück mittelgroße Kartoffel ≈ 150g, 1 EL Olivenöl ≈ 13g, 1 TL Salz ≈ 5g).
+- Sei großzügig — lieber eine Einheit zu viel als zu wenig.
+
+VERFÜGBARE EINHEITEN:
+${unitList}
+
+KATEGORIE-REGELN:
+- Wähle ALLE passenden Kategorien aus der Liste. Die meisten Zutaten haben 1-3 Kategorien.
+- Eine Zutat kann mehreren Kategorien angehören (z.B. "Tomate" → Gemüse; "Olivenöl" → Öle & Fette).
+
+VERFÜGBARE KATEGORIEN:
+${categoryList}`;
+}
+
+// ── OpenAI client ───────────────────────────────────────────────────────
 
 let _openai: OpenAI | null = null;
 
@@ -110,44 +178,9 @@ function getOpenAIClient(): OpenAI {
     return _openai;
 }
 
-export async function processEnrichIngredientNutrition(
-    job: Job<EnrichIngredientNutritionJob>,
-): Promise<{ success: boolean; ingredientId: string; fieldsUpdated: number; source?: string }> {
-    const { ingredientId } = job.data;
+// ── Helpers ─────────────────────────────────────────────────────────────
 
-    if (!ingredientId) {
-        throw new Error('[NutritionWorker] ingredientId is empty — cannot enrich nutrition');
-    }
-
-    console.log(`[NutritionWorker] Enriching nutrition for ingredient ${ingredientId}`);
-
-    const ingredient = await prisma.ingredient.findUnique({
-        where: { id: ingredientId },
-        select: { id: true, name: true, energyKcal: true },
-    });
-
-    if (!ingredient) {
-        console.log(`[NutritionWorker] Ingredient ${ingredientId} not found — skipping`);
-        return { success: false, ingredientId, fieldsUpdated: 0 };
-    }
-
-    if (ingredient.energyKcal != null) {
-        console.log(`[NutritionWorker] ${ingredient.name} already has nutrition data — skipping`);
-        return { success: true, ingredientId, fieldsUpdated: 0 };
-    }
-
-    const openai = getOpenAIClient();
-
-    const response = await openai.responses.create({
-        model: 'gpt-5.4-mini',
-        tools: [{ type: 'web_search_preview' }],
-        instructions: SYSTEM_PROMPT,
-        input: `Bestimme die Nährwerte pro 100g für: "${ingredient.name}"`,
-        text: {
-            format: getNutritionResponseFormat(),
-        },
-    });
-
+function extractTextFromResponse(response: OpenAI.Responses.Response): string {
     const textOutput = response.output.find(
         (o): o is Extract<(typeof response.output)[number], { type: 'message' }> =>
             o.type === 'message',
@@ -164,31 +197,165 @@ export async function processEnrichIngredientNutrition(
         throw new Error('No output_text content in response');
     }
 
-    const parsed = JSON.parse(content.text) as Record<string, unknown>;
+    return content.text;
+}
 
-    // Build update payload — only include non-null values
-    const updateData: Record<string, number> = {};
-    for (const field of ALL_FIELDS) {
-        const value = parsed[field];
-        if (typeof value === 'number' && !Number.isNaN(value)) {
-            updateData[field] = value;
-        }
+// ── Main processor ──────────────────────────────────────────────────────
+
+export async function processEnrichIngredientNutrition(
+    job: Job<EnrichIngredientNutritionJob>,
+): Promise<{ success: boolean; ingredientId: string; fieldsUpdated: number; source?: string }> {
+    const { ingredientId } = job.data;
+
+    if (!ingredientId) {
+        throw new Error('[EnrichWorker] ingredientId is empty — cannot enrich');
     }
 
-    const fieldsUpdated = Object.keys(updateData).length;
-    if (fieldsUpdated === 0) {
-        console.log(`[NutritionWorker] No nutrition data returned for "${ingredient.name}"`);
+    console.log(`[EnrichWorker] Enriching ingredient ${ingredientId}`);
+
+    // Fetch ingredient with existing enrichment state
+    const ingredient = await prisma.ingredient.findUnique({
+        where: { id: ingredientId },
+        select: {
+            id: true,
+            name: true,
+            energyKcal: true,
+            ingredientUnits: { select: { unitId: true } },
+            categories: { select: { id: true } },
+        },
+    });
+
+    if (!ingredient) {
+        console.log(`[EnrichWorker] Ingredient ${ingredientId} not found — skipping`);
         return { success: false, ingredientId, fieldsUpdated: 0 };
     }
 
-    await prisma.ingredient.update({
-        where: { id: ingredientId },
-        data: updateData,
+    const hasNutrition = ingredient.energyKcal != null;
+    const hasUnits = ingredient.ingredientUnits.length > 0;
+    const hasCategories = ingredient.categories.length > 0;
+
+    if (hasNutrition && hasUnits && hasCategories) {
+        console.log(`[EnrichWorker] ${ingredient.name} already fully enriched — skipping`);
+        return { success: true, ingredientId, fieldsUpdated: 0 };
+    }
+
+    // Load available units and categories for the AI prompt
+    const [allUnits, allCategories] = await Promise.all([
+        prisma.unit.findMany({ select: { id: true, shortName: true, longName: true } }),
+        prisma.ingredientCategory.findMany({
+            select: { id: true, slug: true, name: true },
+        }),
+    ]);
+
+    const unitShortNames = allUnits.map((u) => u.shortName);
+    const categorySlugs = allCategories.map((c) => c.slug);
+
+    // Build lookup maps
+    const unitByShortName = new Map(allUnits.map((u) => [u.shortName, u.id]));
+    const categoryBySlug = new Map(allCategories.map((c) => [c.slug, c.id]));
+
+    const openai = getOpenAIClient();
+
+    const systemPrompt = buildSystemPrompt(allUnits, allCategories);
+
+    const response = await openai.responses.create({
+        model: 'gpt-5.4-mini',
+        tools: [{ type: 'web_search_preview' }],
+        instructions: systemPrompt,
+        input: `Bestimme Nährwerte, relevante Einheiten und Kategorien für: "${ingredient.name}"`,
+        text: {
+            format: getEnrichResponseFormat(unitShortNames, categorySlugs),
+        },
     });
+
+    const parsed = JSON.parse(extractTextFromResponse(response)) as Record<string, unknown>;
+
+    let fieldsUpdated = 0;
+
+    // ── 1. Nutrition ────────────────────────────────────────────────────
+    if (!hasNutrition) {
+        const nutritionData: Record<string, number> = {};
+        for (const field of ALL_FIELDS) {
+            const value = parsed[field];
+            if (typeof value === 'number' && !Number.isNaN(value)) {
+                nutritionData[field] = value;
+            }
+        }
+
+        if (Object.keys(nutritionData).length > 0) {
+            await prisma.ingredient.update({
+                where: { id: ingredientId },
+                data: nutritionData,
+            });
+            fieldsUpdated += Object.keys(nutritionData).length;
+        }
+    }
+
+    // ── 2. Relevant units with gram weights ─────────────────────────────
+    if (!hasUnits) {
+        const relevantUnits = parsed.relevantUnits;
+        if (Array.isArray(relevantUnits) && relevantUnits.length > 0) {
+            const unitRecords: Array<{
+                ingredientId: string;
+                unitId: string;
+                grams: number | null;
+            }> = [];
+
+            for (const entry of relevantUnits) {
+                if (typeof entry !== 'object' || entry === null) continue;
+                const { shortName, grams } = entry as { shortName: string; grams: number | null };
+                const unitId = unitByShortName.get(shortName);
+                if (!unitId) continue;
+
+                unitRecords.push({
+                    ingredientId,
+                    unitId,
+                    grams: typeof grams === 'number' && !Number.isNaN(grams) ? grams : null,
+                });
+            }
+
+            if (unitRecords.length > 0) {
+                await prisma.ingredientUnit.createMany({
+                    data: unitRecords,
+                    skipDuplicates: true,
+                });
+                fieldsUpdated += unitRecords.length;
+                console.log(
+                    `[EnrichWorker] Linked ${unitRecords.length} units for "${ingredient.name}"`,
+                );
+            }
+        }
+    }
+
+    // ── 3. Categories ───────────────────────────────────────────────────
+    if (!hasCategories) {
+        const categories = parsed.categories;
+        if (Array.isArray(categories) && categories.length > 0) {
+            const categoryIds = categories
+                .filter((slug): slug is string => typeof slug === 'string')
+                .map((slug) => categoryBySlug.get(slug))
+                .filter((id): id is string => id != null);
+
+            if (categoryIds.length > 0) {
+                await prisma.ingredient.update({
+                    where: { id: ingredientId },
+                    data: {
+                        categories: {
+                            connect: categoryIds.map((id) => ({ id })),
+                        },
+                    },
+                });
+                fieldsUpdated += categoryIds.length;
+                console.log(
+                    `[EnrichWorker] Linked ${categoryIds.length} categories for "${ingredient.name}"`,
+                );
+            }
+        }
+    }
 
     const source = typeof parsed.source === 'string' ? parsed.source : undefined;
     console.log(
-        `[NutritionWorker] Updated ${fieldsUpdated} fields for "${ingredient.name}" (source: ${source ?? 'unknown'})`,
+        `[EnrichWorker] Enriched "${ingredient.name}" — ${fieldsUpdated} fields/links updated (source: ${source ?? 'unknown'})`,
     );
 
     return { success: true, ingredientId, fieldsUpdated, source };

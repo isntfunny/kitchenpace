@@ -46,7 +46,16 @@ const ALL_FIELDS = [...CORE_FIELDS, ...OPTIONAL_FIELDS] as const;
 
 // ── Response schema ─────────────────────────────────────────────────────
 
-function getEnrichResponseFormat(unitShortNames: string[], categorySlugs: string[]) {
+function getEnrichResponseFormat(
+    units: Array<{ shortName: string; longName: string }>,
+    categories: Array<{ slug: string; name: string }>,
+) {
+    const unitShortNames = units.map((u) => u.shortName);
+    const categorySlugs = categories.map((c) => c.slug);
+
+    // Build human-readable mapping so the AI sees full names alongside short codes
+    const unitMapping = units.map((u) => `${u.shortName} = ${u.longName}`).join(', ');
+    const categoryMapping = categories.map((c) => `${c.slug} = ${c.name}`).join(', ');
     const coreProperties: Record<string, object> = {};
     for (const field of CORE_FIELDS) {
         coreProperties[field] = {
@@ -88,7 +97,7 @@ function getEnrichResponseFormat(unitShortNames: string[], categorySlugs: string
                             shortName: {
                                 type: 'string',
                                 enum: unitShortNames,
-                                description: 'The unit shortName from the provided list',
+                                description: `Unit short code. Mapping: ${unitMapping}`,
                             },
                             grams: {
                                 type: 'number',
@@ -108,6 +117,7 @@ function getEnrichResponseFormat(unitShortNames: string[], categorySlugs: string
                     items: {
                         type: 'string',
                         enum: categorySlugs,
+                        description: `Category slug. Mapping: ${categoryMapping}`,
                     },
                 },
             },
@@ -247,9 +257,6 @@ export async function processEnrichIngredientNutrition(
         }),
     ]);
 
-    const unitShortNames = allUnits.map((u) => u.shortName);
-    const categorySlugs = allCategories.map((c) => c.slug);
-
     // Build lookup maps
     const unitByShortName = new Map(allUnits.map((u) => [u.shortName, u.id]));
     const categoryBySlug = new Map(allCategories.map((c) => [c.slug, c.id]));
@@ -264,7 +271,7 @@ export async function processEnrichIngredientNutrition(
         instructions: systemPrompt,
         input: `Bestimme Nährwerte, relevante Einheiten und Kategorien für: "${ingredient.name}"`,
         text: {
-            format: getEnrichResponseFormat(unitShortNames, categorySlugs),
+            format: getEnrichResponseFormat(allUnits, allCategories),
         },
     });
 

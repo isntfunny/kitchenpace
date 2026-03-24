@@ -21,6 +21,7 @@ type SearchHeaderProps = {
     onViewModeChange: (mode: 'grid' | 'list') => void;
     onFiltersChange: (next: Partial<RecipeFilterSearchParams>) => void;
     onReset: () => void;
+    isLoggedIn?: boolean;
 };
 
 export function SearchHeader({
@@ -36,9 +37,10 @@ export function SearchHeader({
     onViewModeChange,
     onFiltersChange,
     onReset,
+    isLoggedIn,
 }: SearchHeaderProps) {
     const resultStatusText = loading
-        ? 'Rezepte laden\u2026'
+        ? 'Rezepte laden…'
         : totalResults > 0
           ? `${totalResults} Rezepte gefunden`
           : 'Keine Rezepte mit den aktuellen Einstellungen gefunden.';
@@ -83,9 +85,7 @@ export function SearchHeader({
                             </h1>
                         </div>
                         <p className={css({ fontSize: 'xs', color: 'text-muted' })}>
-                            {activeFilterCount > 0
-                                ? `${activeFilterCount} Filter aktiv \u00b7 `
-                                : ''}
+                            {activeFilterCount > 0 ? `${activeFilterCount} Filter aktiv · ` : ''}
                             {resultStatusText}
                         </p>
                     </div>
@@ -99,7 +99,7 @@ export function SearchHeader({
                     >
                         {activeFilterCount > 0 && (
                             <Button variant="ghost" size="sm" onClick={onReset}>
-                                Zur\u00fccksetzen
+                                Zurücksetzen
                             </Button>
                         )}
                     </div>
@@ -122,7 +122,7 @@ export function SearchHeader({
                         type="search"
                         value={queryInput}
                         onChange={(event) => onQueryChange(event.target.value)}
-                        placeholder="Rezepte, Zutaten oder Te\u2026"
+                        placeholder="Rezepte, Zutaten oder Te…"
                         aria-label="Rezepte durchsuchen"
                         className={css({
                             width: '100%',
@@ -202,6 +202,7 @@ export function SearchHeader({
                         <option value="newest">Neueste</option>
                         <option value="fastest">Schnellste</option>
                         <option value="popular">Beliebteste</option>
+                        {isLoggedIn && <option value="taste">Passt zu dir ✨</option>}
                     </select>
 
                     <div className={css({ display: 'flex', gap: '1' })}>

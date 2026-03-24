@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
+import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import { PALETTE } from '@app/lib/palette';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 
@@ -28,6 +29,8 @@ type MobileFilterSheetProps = {
     loading: boolean;
     onFiltersChange: (next: Partial<RecipeFilterSearchParams>) => void;
     onReset: () => void;
+    filterSets?: FilterSetWithRelations[];
+    onFilterSetToggle?: (filterSet: FilterSetWithRelations) => void;
 };
 
 export function MobileFilterSheet({
@@ -40,6 +43,8 @@ export function MobileFilterSheet({
     loading,
     onFiltersChange,
     onReset,
+    filterSets,
+    onFilterSetToggle,
 }: MobileFilterSheetProps) {
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -85,8 +90,9 @@ export function MobileFilterSheet({
                                     _dark: '0 24px 60px rgba(0,0,0,0.5)',
                                 },
                                 maxHeight: '92vh',
-                                overflowY: 'auto',
                                 overflow: 'hidden',
+                                display: 'flex',
+                                flexDirection: 'column',
                             })}
                             onClick={(event) => event.stopPropagation()}
                             initial={{ y: '100%', opacity: 0 }}
@@ -102,6 +108,7 @@ export function MobileFilterSheet({
                                     px: '4',
                                     py: '3.5',
                                     borderTopRadius: '2xl',
+                                    flexShrink: 0,
                                 })}
                                 style={{
                                     background: `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`,
@@ -133,16 +140,26 @@ export function MobileFilterSheet({
                                         _hover: { background: 'rgba(255,255,255,0.35)' },
                                     })}
                                 >
-                                    Schlie\u00dfen
+                                    Schließen
                                 </button>
                             </div>
-                            <div className={css({ px: '1', py: '2' })}>
+                            <div
+                                className={css({
+                                    px: '3',
+                                    py: '2',
+                                    overflowY: 'auto',
+                                    flex: 1,
+                                })}
+                            >
                                 <FilterSidebar
                                     filters={filters}
                                     options={options}
                                     facets={facets}
                                     onFiltersChange={onFiltersChange}
                                     loading={loading}
+                                    filterSets={filterSets}
+                                    onFilterSetToggle={onFilterSetToggle}
+                                    embedded
                                 />
                             </div>
                         </motion.div>
@@ -169,17 +186,21 @@ export function MobileFilterSheet({
                     className={css({
                         flex: 1,
                         borderRadius: 'lg',
-                        background: 'primary',
-                        color: 'light',
+                        background:
+                            'linear-gradient(135deg, token(colors.primary), token(colors.accent))',
+                        color: 'white',
                         fontWeight: '600',
                         padding: '3',
                         fontSize: 'sm',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                        transition: 'opacity 150ms ease',
+                        _hover: { opacity: '0.9' },
                     })}
                 >
-                    Filter \u00f6ffnen
+                    Filter öffnen
                 </button>
                 <Button variant="ghost" size="sm" onClick={onReset}>
-                    Zur\u00fccksetzen
+                    Zurücksetzen
                 </Button>
             </div>
         </>

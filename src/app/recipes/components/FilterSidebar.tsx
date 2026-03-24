@@ -4,6 +4,7 @@ import { Star, ChevronDown } from 'lucide-react';
 import { Accordion, ToggleGroup, Tooltip } from 'radix-ui';
 import { useMemo, type ReactNode } from 'react';
 
+import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 
 import { css } from 'styled-system/css';
@@ -24,6 +25,10 @@ type FilterSidebarProps = {
     facets?: RecipeSearchFacets;
     onFiltersChange: (next: Partial<RecipeFilterSearchParams>) => void;
     loading?: boolean;
+    filterSets?: FilterSetWithRelations[];
+    onFilterSetToggle?: (filterSet: FilterSetWithRelations) => void;
+    /** Strip container chrome (border, shadow, scroll) when embedded inside another panel */
+    embedded?: boolean;
 };
 
 const DIFFICULTY_OPTIONS = [
@@ -175,6 +180,40 @@ const chipItemClass = css({
     },
 });
 
+const filterSetChipRowClass = css({
+    display: 'flex',
+    gap: '2',
+    overflowX: 'auto',
+    pb: '2',
+    scrollbarWidth: 'none',
+    '&::-webkit-scrollbar': { display: 'none' },
+});
+
+const filterSetChipBaseClass = css({
+    borderRadius: 'full',
+    px: '3',
+    py: '1.5',
+    fontSize: 'xs',
+    fontWeight: '600',
+    border: '1px solid',
+    cursor: 'pointer',
+    transition: 'all 150ms ease',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+});
+
+const filterSetChipActiveClass = css({
+    borderColor: 'accent',
+    background: 'accent',
+    color: 'white',
+});
+
+const filterSetChipInactiveClass = css({
+    borderColor: 'border.muted',
+    background: 'surface',
+    color: 'foreground',
+});
+
 const FilterSection = ({
     value,
     title,
@@ -220,6 +259,9 @@ export function FilterSidebar({
     facets,
     onFiltersChange,
     loading,
+    filterSets,
+    onFilterSetToggle,
+    embedded,
 }: FilterSidebarProps) {
     const ingredients = options.ingredients;
     const tags = options.tags;
@@ -379,21 +421,56 @@ export function FilterSidebar({
     return (
         <Tooltip.Provider delayDuration={300}>
             <div
-                className={css({
-                    padding: '4',
-                    borderRadius: '2xl',
-                    border: '1px solid',
-                    borderColor: 'border.muted',
-                    background: 'surface',
-                    boxShadow: {
-                        base: '0 8px 32px rgba(0,0,0,0.08)',
-                        _dark: '0 8px 32px rgba(0,0,0,0.3)',
-                    },
-                    width: 'full',
-                    maxHeight: 'calc(100vh - 2rem)',
-                    overflowY: 'auto',
-                })}
+                className={css(
+                    embedded
+                        ? { width: 'full' }
+                        : {
+                              padding: '4',
+                              borderRadius: '2xl',
+                              border: '1px solid',
+                              borderColor: 'border.muted',
+                              background: 'surface',
+                              boxShadow: {
+                                  base: '0 8px 32px rgba(0,0,0,0.08)',
+                                  _dark: '0 8px 32px rgba(0,0,0,0.3)',
+                              },
+                              width: 'full',
+                              maxHeight: 'calc(100vh - 2rem)',
+                              overflowY: 'auto',
+                          },
+                )}
             >
+                {filterSets && filterSets.length > 0 && onFilterSetToggle && (
+                    <div className={css({ mb: '3' })}>
+                        <p
+                            className={css({
+                                fontSize: 'xs',
+                                textTransform: 'uppercase',
+                                letterSpacing: 'widest',
+                                color: 'primary',
+                                fontWeight: '600',
+                                mb: '2',
+                            })}
+                        >
+                            Schnell-Filter
+                        </p>
+                        <div className={filterSetChipRowClass}>
+                            {filterSets.map((fs) => {
+                                const isActive = filters.filterSetId === fs.id;
+                                return (
+                                    <button
+                                        key={fs.id}
+                                        type="button"
+                                        onClick={() => onFilterSetToggle(fs)}
+                                        className={`${filterSetChipBaseClass} ${isActive ? filterSetChipActiveClass : filterSetChipInactiveClass}`}
+                                    >
+                                        {fs.displayLabel ?? fs.label ?? fs.slug ?? 'Filter'}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
                 <Accordion.Root
                     type="multiple"
                     defaultValue={[FILTER_SECTION_IDS.tags]}

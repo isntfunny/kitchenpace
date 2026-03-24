@@ -3,6 +3,12 @@ import { Metadata } from 'next';
 
 import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
+import {
+    getTimeSeasonFilterSets,
+    getFoodPeriodFilterSets,
+    type FilterSetWithRelations,
+} from '@app/lib/fits-now/db-queries';
+import { toFilterCriteria } from '@app/lib/fits-now/mappings';
 import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
 import { APP_URL } from '@app/lib/url';
@@ -41,18 +47,45 @@ const toURLSearchParams = async (searchParams: RecipesPageProps['searchParams'])
     return search;
 };
 
+function mergeFilterSetIntoFilters(
+    filters: ReturnType<typeof parseRecipeFilterParams>,
+    filterSets: FilterSetWithRelations[],
+) {
+    if (!filters.filterSetId) return;
+
+    const match = filterSets.find((fs) => fs.id === filters.filterSetId);
+    if (!match) return;
+
+    const criteria = toFilterCriteria(match);
+    filters.tags = [...new Set([...(filters.tags ?? []), ...criteria.tagKeywords])];
+    filters.categories = [...new Set([...(filters.categories ?? []), ...criteria.categorySlugs])];
+    filters.ingredients = [
+        ...new Set([...(filters.ingredients ?? []), ...criteria.ingredientKeywords]),
+    ];
+}
+
 export default async function RecipesPage({ searchParams }: RecipesPageProps) {
     const initialFilters = parseRecipeFilterParams(await toURLSearchParams(searchParams));
     const queryClient = getQueryClient();
 
     const session = await getServerAuthSession('recipes-page');
 
-    const [tags, ingredients, categories, initialData] = await Promise.all([
+    const [tags, ingredients, categories, timeSeasonSets, foodPeriodSets] = await Promise.all([
         fetchFilterTags(),
         fetchFilterIngredients(),
         queryClient.fetchQuery(trpc.filters.categories.queryOptions()),
-        queryRecipes(initialFilters, session?.user?.id),
+        getTimeSeasonFilterSets(),
+        getFoodPeriodFilterSets(),
     ]);
+
+    const filterSets = [...timeSeasonSets, ...foodPeriodSets].sort(
+        (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+    );
+
+    // Merge FilterSet criteria into initial filters for correct SSR
+    mergeFilterSetIntoFilters(initialFilters, filterSets);
+
+    const initialData = await queryRecipes(initialFilters, session?.user?.id);
 
     return (
         <PageShell>
@@ -61,6 +94,8 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
                     initialFilters={initialFilters}
                     filterOptions={{ tags, ingredients, categories }}
                     initialData={initialData}
+                    filterSets={filterSets}
+                    isLoggedIn={!!session?.user}
                 />
             </HydrationBoundary>
         </PageShell>

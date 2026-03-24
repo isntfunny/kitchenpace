@@ -1,11 +1,13 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { type FC, useState } from 'react';
+import { type FC, useEffect, useRef, useState } from 'react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import { RecipeCard } from '@app/components/features/RecipeCard';
 import { RecipeCardSkeleton } from '@app/components/features/RecipeCardSkeleton';
+import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 
 import { css } from 'styled-system/css';
@@ -16,8 +18,6 @@ import { FilterSidebar } from './FilterSidebar';
 import { MobileFilterSheet } from './MobileFilterSheet';
 import { SearchEmptyState } from './SearchEmptyState';
 import { SearchHeader } from './SearchHeader';
-import { SearchPagination } from './SearchPagination';
-import { usePagination } from './usePagination';
 import type { InitialSearchData } from './useRecipeSearch';
 import { useRecipeSearch } from './useRecipeSearch';
 import { useSearchFilters } from './useSearchFilters';
@@ -33,16 +33,19 @@ type RecipeSearchClientProps = {
     initialFilters: RecipeFilterSearchParams;
     filterOptions: FilterOptions;
     initialData?: InitialSearchData;
+    filterSets?: FilterSetWithRelations[];
+    isLoggedIn?: boolean;
 };
 
 export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     initialFilters,
     filterOptions,
     initialData,
+    filterSets,
+    isLoggedIn,
 }) => {
     const {
         filters,
-        setFilters,
         queryInput,
         setQueryInput,
         viewMode,
@@ -50,25 +53,39 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         updateFilters,
         resetFilters,
         handleSortChange,
+        handleFilterSetToggle,
         activeFilterCount,
-    } = useSearchFilters(initialFilters);
+    } = useSearchFilters(initialFilters, filterSets);
 
-    const { data, meta, loading, error } = useRecipeSearch(filters, { initialData });
+    const { data, meta, loading, loadingMore, hasMore, fetchNextPage, error } = useRecipeSearch(
+        filters,
+        { initialData },
+    );
     const stableFacets = useStableFacets(meta?.facets, filters);
 
-    const {
-        currentPage,
-        totalResults,
-        totalPages,
-        startItem,
-        endItem,
-        canGoPrev,
-        canGoNext,
-        pageNumbers,
-        handlePageChange,
-    } = usePagination(filters, meta, setFilters);
+    const totalResults = meta?.total ?? 0;
 
     const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+    // Infinite scroll sentinel
+    const sentinelRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+                    fetchNextPage();
+                }
+            },
+            { rootMargin: '200px' },
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasMore, loadingMore, loading, fetchNextPage]);
 
     // Initial load (no data yet): show skeletons
     // Refetch (have data, loading new): dim current results — no skeleton flash
@@ -113,6 +130,8 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                     facets={stableFacets}
                     onFiltersChange={updateFilters}
                     loading={loading}
+                    filterSets={filterSets}
+                    onFilterSetToggle={handleFilterSetToggle}
                 />
             </aside>
 
@@ -133,6 +152,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                     onViewModeChange={setViewMode}
                     onFiltersChange={updateFilters}
                     onReset={resetFilters}
+                    isLoggedIn={isLoggedIn}
                 />
 
                 {error ? (
@@ -175,17 +195,25 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                                   ))}
                         </div>
 
-                        <SearchPagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            totalResults={totalResults}
-                            startItem={startItem}
-                            endItem={endItem}
-                            canGoPrev={canGoPrev}
-                            canGoNext={canGoNext}
-                            pageNumbers={pageNumbers}
-                            onPageChange={handlePageChange}
-                        />
+                        {/* Infinite scroll sentinel + loading indicator */}
+                        <div ref={sentinelRef} className={css({ minHeight: '1px' })} />
+                        {loadingMore && (
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    py: '4',
+                                })}
+                            >
+                                <Loader2
+                                    size={24}
+                                    className={css({
+                                        animation: 'spin 1s linear infinite',
+                                        color: 'text-muted',
+                                    })}
+                                />
+                            </div>
+                        )}
                     </>
                 )}
             </section>
@@ -200,6 +228,8 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                 loading={loading}
                 onFiltersChange={updateFilters}
                 onReset={resetFilters}
+                filterSets={filterSets}
+                onFilterSetToggle={handleFilterSetToggle}
             />
         </div>
     );

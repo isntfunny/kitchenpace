@@ -2,13 +2,26 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useLocalStorage } from '@app/hooks/useLocalStorage';
+import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import { buildRecipeFilterQuery, MULTI_VALUE_KEYS, NUMBER_KEYS } from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams, RecipeSortOption } from '@app/lib/recipeFilters';
 import { STORAGE_KEYS } from '@app/lib/storageKeys';
 
 type FiltersWithSort = RecipeFilterSearchParams & { sort: RecipeSortOption };
 
-export function useSearchFilters(initialFilters: RecipeFilterSearchParams) {
+/** Extract filter criteria from a FilterSet (client-safe, no server imports). */
+function extractFilterSetCriteria(fs: FilterSetWithRelations) {
+    return {
+        tagKeywords: fs.tags.map((t) => t.tag.name),
+        categorySlugs: fs.categories.map((c) => c.category.slug),
+        ingredientKeywords: fs.ingredients.map((i) => i.ingredient.name),
+    };
+}
+
+export function useSearchFilters(
+    initialFilters: RecipeFilterSearchParams,
+    filterSets?: FilterSetWithRelations[],
+) {
     const pathname = usePathname();
     const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>(
         STORAGE_KEYS.searchViewMode,
@@ -66,7 +79,7 @@ export function useSearchFilters(initialFilters: RecipeFilterSearchParams) {
     }, [filters, pathname]);
 
     const updateFilters = useCallback((next: Partial<RecipeFilterSearchParams>) => {
-        setFilters((prev) => ({ ...prev, ...next, page: 1 }));
+        setFilters((prev) => ({ ...prev, ...next }));
     }, []);
 
     const resetFilters = useCallback(() => {
@@ -90,7 +103,7 @@ export function useSearchFilters(initialFilters: RecipeFilterSearchParams) {
             maxStepCount: undefined,
             minCalories: undefined,
             maxCalories: undefined,
-            page: 1,
+            filterSetId: undefined,
         }));
     }, []);
 
@@ -100,6 +113,59 @@ export function useSearchFilters(initialFilters: RecipeFilterSearchParams) {
             updateFilters({ sort });
         },
         [setSavedSort, updateFilters],
+    );
+
+    const handleFilterSetToggle = useCallback(
+        (filterSet: FilterSetWithRelations) => {
+            setFilters((prev) => {
+                const isActive = prev.filterSetId === filterSet.id;
+
+                if (isActive) {
+                    // Deactivate: remove this FilterSet's items from filters
+                    const criteria = extractFilterSetCriteria(filterSet);
+                    const tagSet = new Set(criteria.tagKeywords);
+                    const catSet = new Set(criteria.categorySlugs);
+                    const ingSet = new Set(criteria.ingredientKeywords);
+
+                    return {
+                        ...prev,
+                        filterSetId: undefined,
+                        tags: (prev.tags ?? []).filter((t) => !tagSet.has(t)),
+                        categories: (prev.categories ?? []).filter((c) => !catSet.has(c)),
+                        ingredients: (prev.ingredients ?? []).filter((i) => !ingSet.has(i)),
+                    };
+                }
+
+                // Switching: remove previous FilterSet's items first, then add new ones
+                let baseTags = prev.tags ?? [];
+                let baseCategories = prev.categories ?? [];
+                let baseIngredients = prev.ingredients ?? [];
+
+                if (prev.filterSetId && filterSets) {
+                    const prevSet = filterSets.find((fs) => fs.id === prev.filterSetId);
+                    if (prevSet) {
+                        const prevCriteria = extractFilterSetCriteria(prevSet);
+                        const prevTags = new Set(prevCriteria.tagKeywords);
+                        const prevCats = new Set(prevCriteria.categorySlugs);
+                        const prevIngs = new Set(prevCriteria.ingredientKeywords);
+                        baseTags = baseTags.filter((t) => !prevTags.has(t));
+                        baseCategories = baseCategories.filter((c) => !prevCats.has(c));
+                        baseIngredients = baseIngredients.filter((i) => !prevIngs.has(i));
+                    }
+                }
+
+                // Activate: merge new FilterSet's items
+                const criteria = extractFilterSetCriteria(filterSet);
+                return {
+                    ...prev,
+                    filterSetId: filterSet.id,
+                    tags: [...new Set([...baseTags, ...criteria.tagKeywords])],
+                    categories: [...new Set([...baseCategories, ...criteria.categorySlugs])],
+                    ingredients: [...new Set([...baseIngredients, ...criteria.ingredientKeywords])],
+                };
+            });
+        },
+        [filterSets],
     );
 
     const activeFilterCount = useMemo(() => {
@@ -124,6 +190,7 @@ export function useSearchFilters(initialFilters: RecipeFilterSearchParams) {
         updateFilters,
         resetFilters,
         handleSortChange,
+        handleFilterSetToggle,
         activeFilterCount,
     };
 }

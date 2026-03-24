@@ -1,16 +1,6 @@
 'use client';
 
-import {
-    Check,
-    CheckCircle2,
-    ChevronDown,
-    ChevronLeft,
-    ChevronRight,
-    ChevronUp,
-    Pause,
-    Play,
-    RotateCcw,
-} from 'lucide-react';
+import { Check, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { type Dispatch } from 'react';
 
 import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
@@ -20,11 +10,14 @@ import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import type { FlowEdgeSerialized, FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
 
+import { BottomNavigation } from './BottomNavigation';
+import { HandGesturePanel } from './HandGesturePanel';
 import { MobileMiniMap } from './MobileMiniMap';
+import { TimerDisplay } from './TimerDisplay';
 import { useHandLandmarkerTest } from './useHandLandmarkerTest';
 import { useMobileNavigation } from './useMobileNavigation';
 import type { RecipeStepsViewerProps, TimerState, ViewerAction } from './viewerTypes';
-import { formatTime, renderDescription } from './viewerUtils';
+import { renderDescription } from './viewerUtils';
 
 function BranchHint({
     direction,
@@ -76,7 +69,7 @@ function BranchHint({
                 }}
             >
                 <Icon style={{ width: 12, height: 12 }} />
-                {node.label.length > 20 ? node.label.slice(0, 20) + '\u2026' : node.label}
+                {node.label.length > 20 ? node.label.slice(0, 20) + '…' : node.label}
             </span>
             {!isUp && <ChevronDown style={{ width: 16, height: 16, opacity: 0.6 }} />}
         </button>
@@ -124,15 +117,7 @@ export function MobileView({
     } = useMobileNavigation(columnGroups, edges, completed);
 
     const gestureNavigationEnabled = useFeatureFlag('gestureNavigation');
-    const {
-        videoRef: handVideoRef,
-        status: handStatus,
-        error: handError,
-        handsDetected,
-        lastGesture,
-        startTest,
-        stopTest,
-    } = useHandLandmarkerTest(
+    const handState = useHandLandmarkerTest(
         gestureNavigationEnabled
             ? {
                   onSwipeLeft: () => {
@@ -145,32 +130,6 @@ export function MobileView({
             : undefined,
     );
 
-    const handStatusMessage = (() => {
-        if (lastGesture === 'swipeLeft') return '⬅️ Swipe erkannt: Weiter';
-        if (lastGesture === 'swipeRight') return '➡️ Swipe erkannt: Zurück';
-        switch (handStatus) {
-            case 'loading':
-                return 'Handlandmarker wird bereitgestellt…';
-            case 'running':
-                return handsDetected
-                    ? '✋ Hand erkannt – wische zum Navigieren'
-                    : 'Kamera läuft. Wische mit der Hand nach links/rechts.';
-            case 'success':
-                return '✋ Hand erkannt.';
-            case 'error':
-                return handError ?? 'Fehler beim Zugriff auf die Kamera.';
-            default:
-                return 'Frontkamera aktivieren, um Handgesten zu testen.';
-        }
-    })();
-
-    const handStatusColor =
-        handStatus === 'error'
-            ? '#ff8b8b'
-            : lastGesture !== 'none'
-              ? PALETTE.emerald
-              : 'rgba(255,255,255,0.7)';
-
     if (!currentNode) return null;
 
     const config = getStepConfig(currentNode.type as StepType);
@@ -178,12 +137,6 @@ export function MobileView({
     const isSpecial = currentNode.type === 'start' || currentNode.type === 'servieren';
     const isDone = completed.has(currentNode.id);
     const timerState = timers.get(currentNode.id);
-    const hasTimer = !!timerState;
-    const timerRunning = hasTimer && timerState!.running;
-    const timerDone = hasTimer && timerState!.remaining === 0;
-    const pct = hasTimer
-        ? ((timerState!.total - timerState!.remaining) / timerState!.total) * 100
-        : 0;
 
     return (
         <div
@@ -221,7 +174,7 @@ export function MobileView({
                     position: 'relative',
                 }}
             >
-                {/* Branch hint: lane above (same column or parallel branch) */}
+                {/* Branch hint: lane above */}
                 {canBranchUp && (
                     <BranchHint
                         direction="up"
@@ -230,7 +183,7 @@ export function MobileView({
                     />
                 )}
 
-                {/* Branch hint: lane below (same column or parallel branch) */}
+                {/* Branch hint: lane below */}
                 {canBranchDown && (
                     <BranchHint
                         direction="down"
@@ -333,7 +286,7 @@ export function MobileView({
                     )}
                 </div>
 
-                {/* Title — large, centered */}
+                {/* Title */}
                 <h2
                     style={{
                         fontSize: 'clamp(28px, 7vw, 44px)',
@@ -349,7 +302,7 @@ export function MobileView({
                     {currentNode.label}
                 </h2>
 
-                {/* Description — medium, centered */}
+                {/* Description */}
                 {currentNode.description && (
                     <p
                         style={{
@@ -394,289 +347,18 @@ export function MobileView({
                 )}
 
                 {/* Timer display */}
-                {hasTimer && (
-                    <div style={{ marginBottom: 20, textAlign: 'center' }}>
-                        <div
-                            style={{
-                                fontSize: 'clamp(36px, 10vw, 56px)',
-                                fontWeight: 800,
-                                fontVariantNumeric: 'tabular-nums',
-                                color: timerDone
-                                    ? PALETTE.emerald
-                                    : timerRunning
-                                      ? '#f39c12'
-                                      : 'rgba(255,255,255,0.6)',
-                                letterSpacing: '0.02em',
-                                lineHeight: 1,
-                                marginBottom: 12,
-                            }}
-                        >
-                            {formatTime(timerState!.remaining)}
-                        </div>
-                        {/* Timer progress bar */}
-                        <div
-                            style={{
-                                width: 200,
-                                height: 4,
-                                borderRadius: 2,
-                                backgroundColor: 'rgba(255,255,255,0.15)',
-                                margin: '0 auto 12px',
-                                overflow: 'hidden',
-                            }}
-                        >
-                            <div
-                                style={{
-                                    height: '100%',
-                                    width: `${pct}%`,
-                                    backgroundColor: timerDone ? PALETTE.emerald : PALETTE.orange,
-                                    borderRadius: 2,
-                                    transition: 'width 1s linear',
-                                }}
-                            />
-                        </div>
-                        {/* Timer buttons */}
-                        {!isDone && !isSpecial && (
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (timerRunning) {
-                                            dispatch({
-                                                type: 'timerPause',
-                                                nodeId: currentNode.id,
-                                            });
-                                        } else {
-                                            dispatch({
-                                                type: 'timerStart',
-                                                nodeId: currentNode.id,
-                                            });
-                                        }
-                                    }}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 6,
-                                        padding: '10px 20px',
-                                        borderRadius: 999,
-                                        border: '1.5px solid rgba(255,255,255,0.25)',
-                                        backgroundColor: timerRunning
-                                            ? 'rgba(231,76,60,0.2)'
-                                            : 'rgba(255,255,255,0.12)',
-                                        color: 'white',
-                                        fontSize: 14,
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                    }}
-                                >
-                                    {timerRunning ? (
-                                        <>
-                                            <Pause style={{ width: 14, height: 14 }} /> Pause
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Play style={{ width: 14, height: 14 }} /> Start
-                                        </>
-                                    )}
-                                </button>
-                                {pct > 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (window.confirm('Timer wirklich zurücksetzen?')) {
-                                                dispatch({
-                                                    type: 'timerReset',
-                                                    nodeId: currentNode.id,
-                                                });
-                                            }
-                                        }}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            width: 48,
-                                            height: 48,
-                                            borderRadius: '50%',
-                                            border: '1.5px solid rgba(255,255,255,0.2)',
-                                            backgroundColor: 'rgba(255,255,255,0.08)',
-                                            color: 'rgba(255,255,255,0.7)',
-                                            cursor: 'pointer',
-                                        }}
-                                    >
-                                        <RotateCcw style={{ width: 14, height: 14 }} />
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                {timerState && (
+                    <TimerDisplay
+                        timerState={timerState}
+                        nodeId={currentNode.id}
+                        isDone={isDone}
+                        isSpecial={isSpecial}
+                        dispatch={dispatch}
+                    />
                 )}
 
-                {/* Hand-gesture panel — only when feature flag is on */}
-                {gestureNavigationEnabled && (
-                    <div
-                        style={{
-                            width: '100%',
-                            maxWidth: 360,
-                            borderRadius: 20,
-                            padding: '14px 18px',
-                            marginBottom: 20,
-                            backgroundColor: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: 12,
-                            }}
-                        >
-                            <span
-                                style={{
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    letterSpacing: '0.1em',
-                                    textTransform: 'uppercase',
-                                    color: 'rgba(255,255,255,0.7)',
-                                }}
-                            >
-                                Handsteuerung
-                            </span>
-                            <span
-                                style={{
-                                    fontSize: 11,
-                                    color: 'rgba(255,255,255,0.45)',
-                                    fontWeight: 600,
-                                }}
-                            >
-                                Frontkamera
-                            </span>
-                        </div>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            <button
-                                type="button"
-                                onClick={startTest}
-                                disabled={handStatus === 'loading' || handStatus === 'running'}
-                                style={{
-                                    flex: 1,
-                                    minWidth: 160,
-                                    padding: '12px 16px',
-                                    borderRadius: 12,
-                                    border: 'none',
-                                    backgroundColor:
-                                        handStatus === 'running' || handStatus === 'loading'
-                                            ? 'rgba(255,255,255,0.2)'
-                                            : PALETTE.orange,
-                                    color:
-                                        handStatus === 'running' || handStatus === 'loading'
-                                            ? 'rgba(255,255,255,0.7)'
-                                            : 'white',
-                                    fontWeight: 700,
-                                    cursor:
-                                        handStatus === 'running' || handStatus === 'loading'
-                                            ? 'default'
-                                            : 'pointer',
-                                }}
-                            >
-                                {handStatus === 'running'
-                                    ? 'Test läuft…'
-                                    : handStatus === 'loading'
-                                      ? 'Vorbereiten…'
-                                      : 'Handkamera aktivieren'}
-                            </button>
-                            {handStatus !== 'idle' && (
-                                <button
-                                    type="button"
-                                    onClick={stopTest}
-                                    style={{
-                                        padding: '12px 16px',
-                                        borderRadius: 12,
-                                        border: '1px solid rgba(255,255,255,0.4)',
-                                        backgroundColor: 'transparent',
-                                        color: 'rgba(255,255,255,0.8)',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                    }}
-                                >
-                                    Stoppen
-                                </button>
-                            )}
-                        </div>
-
-                        <div
-                            style={{
-                                marginTop: 12,
-                                minHeight: 18,
-                                fontSize: 13,
-                                color: handStatusColor,
-                                fontWeight: 600,
-                            }}
-                        >
-                            {handStatusMessage}
-                        </div>
-
-                        {handStatus === 'running' && (
-                            <div
-                                style={{
-                                    marginTop: 10,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 16,
-                                    opacity: 0.6,
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 4,
-                                        fontSize: 11,
-                                        color: 'rgba(255,255,255,0.5)',
-                                    }}
-                                >
-                                    <ChevronLeft style={{ width: 14, height: 14 }} />
-                                    <span>Zurück</span>
-                                </div>
-                                <div
-                                    style={{
-                                        width: 40,
-                                        height: 2,
-                                        backgroundColor: 'rgba(255,255,255,0.2)',
-                                        borderRadius: 1,
-                                    }}
-                                />
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 4,
-                                        fontSize: 11,
-                                        color: 'rgba(255,255,255,0.5)',
-                                    }}
-                                >
-                                    <span>Weiter</span>
-                                    <ChevronRight style={{ width: 14, height: 14 }} />
-                                </div>
-                            </div>
-                        )}
-
-                        <video
-                            ref={handVideoRef}
-                            autoPlay
-                            playsInline
-                            muted
-                            style={{
-                                marginTop: 12,
-                                width: '100%',
-                                height: 170,
-                                borderRadius: 14,
-                                objectFit: 'cover',
-                                display: handStatus === 'idle' ? 'none' : 'block',
-                            }}
-                        />
-                    </div>
-                )}
+                {/* Hand-gesture panel */}
+                {gestureNavigationEnabled && <HandGesturePanel {...handState} />}
 
                 {/* Done button */}
                 {!isSpecial && (
@@ -704,7 +386,7 @@ export function MobileView({
                             <>
                                 <CheckCircle2 style={{ width: 18, height: 18 }} /> Erledigt
                             </>
-                        ) : timerDone ? (
+                        ) : timerState?.remaining === 0 ? (
                             <>
                                 <Check style={{ width: 18, height: 18 }} /> Timer fertig — Erledigt?
                             </>
@@ -715,69 +397,15 @@ export function MobileView({
                 )}
             </div>
 
-            {/* Bottom navigation — horizontal steps only */}
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '16px 24px 20px',
-                    flexShrink: 0,
-                }}
-            >
-                <button
-                    type="button"
-                    onClick={goLeft}
-                    disabled={!canGoLeft}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        padding: '13px 20px',
-                        minHeight: 48,
-                        borderRadius: 14,
-                        border: 'none',
-                        backgroundColor: canGoLeft ? 'rgba(255,255,255,0.12)' : 'transparent',
-                        color: canGoLeft ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: canGoLeft ? 'pointer' : 'default',
-                    }}
-                >
-                    <ChevronLeft style={{ width: 18, height: 18 }} />
-                    Zurück
-                </button>
-
-                {/* Step counter */}
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>
-                        Schritt {col + 1} / {columnGroups.length}
-                    </div>
-                </div>
-
-                <button
-                    type="button"
-                    onClick={goRight}
-                    disabled={!canGoRight}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        padding: '13px 20px',
-                        minHeight: 48,
-                        borderRadius: 14,
-                        border: 'none',
-                        backgroundColor: canGoRight ? 'rgba(255,255,255,0.12)' : 'transparent',
-                        color: canGoRight ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: canGoRight ? 'pointer' : 'default',
-                    }}
-                >
-                    Weiter
-                    <ChevronRight style={{ width: 18, height: 18 }} />
-                </button>
-            </div>
+            {/* Bottom navigation */}
+            <BottomNavigation
+                col={col}
+                totalColumns={columnGroups.length}
+                canGoLeft={canGoLeft}
+                canGoRight={canGoRight}
+                goLeft={goLeft}
+                goRight={goRight}
+            />
         </div>
     );
 }

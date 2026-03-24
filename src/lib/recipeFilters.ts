@@ -28,7 +28,7 @@ const DEFAULT_PAGE = 1;
 const DEFAULT_FILTER_MODE: RecipeFilterSearchParams['filterMode'] = 'and';
 const DEFAULT_SORT: RecipeSortOption = 'rating';
 
-export type RecipeSortOption = 'rating' | 'newest' | 'fastest' | 'popular';
+export type RecipeSortOption = 'rating' | 'newest' | 'fastest' | 'popular' | 'taste';
 
 export type RecipeFilterParams = {
     query?: string;
@@ -56,6 +56,7 @@ export type RecipeFilterSearchParams = RecipeFilterParams & {
     limit?: number;
     filterMode?: 'and' | 'or';
     sort?: RecipeSortOption;
+    filterSetId?: string;
 };
 
 const MAX_FILTER_VALUE = 100_000;
@@ -95,7 +96,7 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
     const limitValue = toNumber(params.get('limit'));
     const modeParam = params.get('mode');
     const sortParam = params.get('sort');
-    const validSorts: RecipeSortOption[] = ['rating', 'newest', 'fastest', 'popular'];
+    const validSorts: RecipeSortOption[] = ['rating', 'newest', 'fastest', 'popular', 'taste'];
     const sort = validSorts.includes(sortParam as RecipeSortOption)
         ? (sortParam as RecipeSortOption)
         : DEFAULT_SORT;
@@ -127,6 +128,7 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
             : DEFAULT_LIMIT,
         filterMode: modeParam === 'or' || modeParam === 'OR' ? 'or' : DEFAULT_FILTER_MODE,
         sort,
+        filterSetId: params.get('filterSetId') || undefined,
     };
 
     return result;
@@ -189,6 +191,10 @@ export function buildRecipeFilterQuery(filters: RecipeFilterSearchParams): URLSe
 
     if (filters.limit && filters.limit !== DEFAULT_LIMIT) {
         params.set('limit', String(filters.limit));
+    }
+
+    if (filters.filterSetId) {
+        params.set('filterSetId', filters.filterSetId);
     }
 
     return params;

@@ -1,13 +1,18 @@
 import type { RecipeCardData } from '@app/app/actions/recipes';
+import { cosineSimilarity } from '@app/lib/embeddings/embedding-service';
 import { RECIPE_FILTER_DEFAULT_LIMIT } from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 import type { RecipeSearchFacets, RecipeSearchMeta } from '@app/lib/recipeSearchTypes';
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
+import { createLogger } from '@shared/logger';
 import {
     buildRecipeTextQuery,
     opensearchClient,
     OPENSEARCH_INDEX,
 } from '@shared/opensearch/client';
+import { prisma } from '@shared/prisma';
+
+const log = createLogger('recipeSearch');
 
 export type RecipeSearchResult = {
     data: RecipeCardData[];
@@ -64,6 +69,7 @@ const buildHistogramFacet = (agg: HistogramAggregation | undefined, interval: nu
 };
 
 const SEMANTIC_MIN_WORD_COUNT = 4;
+const TASTE_POOL_SIZE = 200;
 
 export async function queryRecipes(
     filters: RecipeFilterSearchParams,
@@ -94,12 +100,15 @@ export async function queryRecipes(
         sort = 'rating',
     } = filters;
 
-    const osSort: Record<string, unknown>[] = {
+    const isTasteSort = sort === 'taste' && !!userId;
+
+    const sortMap: Record<string, Record<string, unknown>[]> = {
         rating: [{ rating: 'desc' }, { publishedAt: 'desc' }],
         newest: [{ publishedAt: 'desc' }],
         fastest: [{ totalTime: 'asc' }, { rating: 'desc' }],
         popular: [{ cookCount: 'desc' }, { rating: 'desc' }],
-    }[sort] ?? [{ rating: 'desc' }, { publishedAt: 'desc' }];
+    };
+    const osSort = sortMap[isTasteSort ? 'popular' : sort] ?? sortMap.rating;
 
     type BoolClause = Record<string, unknown>;
     type BoolQuery = {
@@ -188,13 +197,17 @@ export async function queryRecipes(
     const sanitizedQuery = hasClauses ? boolQuery : { match_all: {} };
     const from = Math.max(0, page - 1) * limit;
 
+    // Taste sort: fetch a larger pool (200) from offset 0 for server-side re-ranking
+    const osFrom = isTasteSort ? 0 : from;
+    const osSize = isTasteSort ? TASTE_POOL_SIZE : limit;
+
     const response = await opensearchClient.search({
         index: OPENSEARCH_INDEX,
         body: {
             query: sanitizedQuery,
             sort: osSort,
-            from,
-            size: limit,
+            from: osFrom,
+            size: osSize,
             track_total_hits: true,
             aggs: {
                 tags: { terms: { field: 'tags', size: 60 } },
@@ -270,6 +283,42 @@ export async function queryRecipes(
         .filter(Boolean)
         .map((source) => mapDocumentToRecipeCard(source ?? {}));
 
+    // Taste sort: re-rank by cosine similarity against user's taste profile
+    let tasteTotal = total;
+    if (isTasteSort && data.length > 0) {
+        try {
+            const profile = await prisma.profile.findFirst({
+                where: { userId: userId! },
+                select: { tasteEmbedding: true },
+            });
+
+            if (profile?.tasteEmbedding && profile.tasteEmbedding.length > 0) {
+                const recipeIds = data.map((r) => r.id);
+                const embeddings = await prisma.recipeEmbedding.findMany({
+                    where: { recipeId: { in: recipeIds } },
+                    select: { recipeId: true, embedding: true },
+                });
+
+                const embeddingMap = new Map(embeddings.map((e) => [e.recipeId, e.embedding]));
+                const taste = profile.tasteEmbedding;
+
+                const scored = data.map((recipe) => {
+                    const emb = embeddingMap.get(recipe.id);
+                    const score = emb ? cosineSimilarity(taste, emb) : -1;
+                    return { recipe, score };
+                });
+
+                scored.sort((a, b) => b.score - a.score);
+                tasteTotal = Math.min(TASTE_POOL_SIZE, total);
+                data = scored.slice(from, from + limit).map((s) => s.recipe);
+            }
+        } catch (err) {
+            log.warn('Taste re-ranking failed, falling back to popular sort', {
+                error: err instanceof Error ? err.message : String(err),
+            });
+        }
+    }
+
     // Semantic search: prepend embedding-based hits on first page for 4+ word queries
     const wordCount = query ? query.split(/\s+/).length : 0;
     if (query && wordCount >= SEMANTIC_MIN_WORD_COUNT && userId && page === 1) {
@@ -305,6 +354,6 @@ export async function queryRecipes(
 
     return {
         data,
-        meta: { total, page, limit, facets },
+        meta: { total: isTasteSort ? tasteTotal : total, page, limit, facets },
     };
 }

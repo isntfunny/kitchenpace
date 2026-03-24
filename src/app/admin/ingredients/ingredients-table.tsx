@@ -17,7 +17,7 @@ import { IngredientCard } from './IngredientCard';
 import { IngredientEditPanel } from './IngredientEditPanel';
 import { AddIngredientForm, MergeModal } from './IngredientModals';
 
-const ITEM_HEIGHT = 28;
+const ITEM_HEIGHT = 48;
 const estimateSize = () => ITEM_HEIGHT;
 
 // ---------------------------------------------------------------------------
@@ -296,9 +296,7 @@ export function IngredientsDashboard({
             </div>
 
             {showAdd && <AddIngredientForm onClose={() => setShowAdd(false)} />}
-            {showMerge && (
-                <MergeModal ingredients={ingredients} onClose={() => setShowMerge(false)} />
-            )}
+            {showMerge && <MergeModal onClose={() => setShowMerge(false)} />}
 
             {/* Master / Detail */}
             <div

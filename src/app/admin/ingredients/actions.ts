@@ -179,54 +179,56 @@ export async function mergeIngredients(sourceId: string, targetId: string) {
     }
 
     try {
-        const [source, target] = await Promise.all([
-            prisma.ingredient.findUniqueOrThrow({ where: { id: sourceId } }),
-            prisma.ingredient.findUniqueOrThrow({ where: { id: targetId } }),
-        ]);
+        await prisma.$transaction(async (tx) => {
+            const [source, target] = await Promise.all([
+                tx.ingredient.findUniqueOrThrow({ where: { id: sourceId } }),
+                tx.ingredient.findUniqueOrThrow({ where: { id: targetId } }),
+            ]);
 
-        const sourceRecipeIngredients = await prisma.recipeIngredient.findMany({
-            where: { ingredientId: sourceId },
-        });
-
-        for (const sourceRi of sourceRecipeIngredients) {
-            const existingTargetRi = await prisma.recipeIngredient.findFirst({
-                where: {
-                    recipeId: sourceRi.recipeId,
-                    ingredientId: targetId,
-                },
+            const sourceRecipeIngredients = await tx.recipeIngredient.findMany({
+                where: { ingredientId: sourceId },
             });
 
-            if (existingTargetRi) {
-                const combinedAmount = `${existingTargetRi.amount} + ${sourceRi.amount}`;
-                await prisma.recipeIngredient.update({
-                    where: { id: existingTargetRi.id },
-                    data: { amount: combinedAmount },
+            for (const sourceRi of sourceRecipeIngredients) {
+                const existingTargetRi = await tx.recipeIngredient.findFirst({
+                    where: {
+                        recipeId: sourceRi.recipeId,
+                        ingredientId: targetId,
+                    },
                 });
-                await prisma.recipeIngredient.delete({ where: { id: sourceRi.id } });
-            } else {
-                await prisma.recipeIngredient.update({
-                    where: { id: sourceRi.id },
-                    data: { ingredientId: targetId },
-                });
+
+                if (existingTargetRi) {
+                    const combinedAmount = `${existingTargetRi.amount} + ${sourceRi.amount}`;
+                    await tx.recipeIngredient.update({
+                        where: { id: existingTargetRi.id },
+                        data: { amount: combinedAmount },
+                    });
+                    await tx.recipeIngredient.delete({ where: { id: sourceRi.id } });
+                } else {
+                    await tx.recipeIngredient.update({
+                        where: { id: sourceRi.id },
+                        data: { ingredientId: targetId },
+                    });
+                }
             }
-        }
 
-        // Transfer source name + aliases to target aliases
-        const mergedAliases = Array.from(
-            new Set([
-                ...(target.aliases ?? []),
-                source.name.toLowerCase(),
-                ...(source.aliases ?? []),
-            ]),
-        ).filter((a) => a !== target.name.toLowerCase());
+            // Transfer source name + aliases to target aliases
+            const mergedAliases = Array.from(
+                new Set([
+                    ...(target.aliases ?? []),
+                    source.name.toLowerCase(),
+                    ...(source.aliases ?? []),
+                ]),
+            ).filter((a) => a !== target.name.toLowerCase());
 
-        await prisma.ingredient.update({
-            where: { id: targetId },
-            data: { aliases: mergedAliases },
-        });
+            await tx.ingredient.update({
+                where: { id: targetId },
+                data: { aliases: mergedAliases },
+            });
 
-        await prisma.ingredient.delete({
-            where: { id: sourceId },
+            await tx.ingredient.delete({
+                where: { id: sourceId },
+            });
         });
 
         revalidatePath('/admin/ingredients');
@@ -310,4 +312,38 @@ export async function deleteUnit(id: string) {
     await prisma.unit.delete({ where: { id } });
     revalidatePath('/admin/ingredients');
     revalidatePath('/admin/units');
+}
+
+// ── Ingredient search (for merge combobox) ─────────────────────────────────
+
+export interface IngredientSearchResult {
+    id: string;
+    name: string;
+    recipeCount: number;
+}
+
+export async function searchIngredientsForMerge(query: string): Promise<IngredientSearchResult[]> {
+    await ensureModeratorSession('search-ingredients');
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) return [];
+
+    const { searchIngredientsByName } = await import('@app/lib/ingredients/search');
+    const { hits } = await searchIngredientsByName(trimmed, 20);
+
+    // Enrich with recipe counts from DB
+    const ids = hits.map((h) => h.id);
+    if (ids.length === 0) return [];
+
+    const counts = await prisma.recipeIngredient.groupBy({
+        by: ['ingredientId'],
+        where: { ingredientId: { in: ids } },
+        _count: { id: true },
+    });
+    const countMap = new Map(counts.map((c) => [c.ingredientId, c._count.id]));
+
+    return hits.map((h) => ({
+        id: h.id,
+        name: h.name,
+        recipeCount: countMap.get(h.id) ?? 0,
+    }));
 }

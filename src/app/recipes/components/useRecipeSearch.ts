@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef } from 'react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
@@ -15,103 +16,90 @@ export type {
     RecipeSearchMeta,
 } from '@app/lib/recipeSearchTypes';
 
-export type RecipeSearchState = {
-    data: RecipeCardData[];
-    meta: RecipeSearchMeta | null;
-    loading: boolean;
-    error?: string;
-};
-
-export type InitialSearchData = {
+type SearchPage = {
     data: RecipeCardData[];
     meta: RecipeSearchMeta;
 };
 
-export type UseRecipeSearchOptions = {
-    enabled?: boolean;
-    debounceMs?: number;
-    initialData?: InitialSearchData;
+export type InitialSearchData = SearchPage;
+
+export type RecipeSearchState = {
+    data: RecipeCardData[];
+    meta: RecipeSearchMeta | null;
+    loading: boolean;
+    loadingMore: boolean;
+    hasMore: boolean;
+    fetchNextPage: () => void;
+    error?: string;
 };
+
+/**
+ * Build a stable query key from filters, excluding `page` (managed by react-query).
+ */
+function filterFingerprint(filters: RecipeFilterSearchParams): string {
+    return buildRecipeFilterQuery({ ...filters, page: 1 }).toString();
+}
+
+async function fetchPage(
+    filters: RecipeFilterSearchParams,
+    page: number,
+    signal?: AbortSignal,
+): Promise<SearchPage> {
+    const params = buildRecipeFilterQuery({ ...filters, page });
+    const query = params.toString();
+    const url = query ? `/api/recipes/filter?${query}` : '/api/recipes/filter';
+    const response = await fetch(url, { signal });
+
+    if (!response.ok) {
+        throw new Error('Fehler beim Laden der Rezepte');
+    }
+
+    return response.json();
+}
 
 export function useRecipeSearch(
     filters: RecipeFilterSearchParams,
-    options?: UseRecipeSearchOptions,
+    options?: { initialData?: InitialSearchData },
 ): RecipeSearchState {
-    const { enabled = true, debounceMs = 0, initialData } = options ?? {};
+    const { initialData } = options ?? {};
+    const fp = useMemo(() => filterFingerprint(filters), [filters]);
 
-    const [state, setState] = useState<RecipeSearchState>(() => ({
-        data: initialData?.data ?? [],
-        meta: initialData?.meta ?? null,
-        loading: enabled && !initialData,
-        error: undefined,
-    }));
-
-    const [debouncedFilters, setDebouncedFilters] = useState(filters);
-
-    // Skip the very first fetch when initialData was provided for these exact filters
-    const skipNextFetchRef = useRef(!!initialData);
-
+    // Keep a ref to the latest filters so queryFn never captures a stale closure
+    const filtersRef = useRef(filters);
     useEffect(() => {
-        if (!enabled) {
-            setDebouncedFilters(filters);
-            return;
-        }
+        filtersRef.current = filters;
+    });
 
-        if (debounceMs > 0) {
-            const timer = setTimeout(() => setDebouncedFilters(filters), debounceMs);
-            return () => clearTimeout(timer);
-        }
+    const {
+        data: infiniteData,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isPending,
+        error,
+    } = useInfiniteQuery<SearchPage>({
+        queryKey: ['recipes', fp],
+        queryFn: ({ pageParam, signal }) =>
+            fetchPage(filtersRef.current, pageParam as number, signal),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage, allPages) => {
+            const loaded = allPages.reduce((sum, p) => sum + p.data.length, 0);
+            return loaded < lastPage.meta.total ? allPages.length + 1 : undefined;
+        },
+        initialData: initialData ? { pages: [initialData], pageParams: [1] } : undefined,
+    });
 
-        setDebouncedFilters(filters);
-    }, [filters, enabled, debounceMs]);
+    const data = useMemo(() => infiniteData?.pages.flatMap((p) => p.data) ?? [], [infiniteData]);
 
-    const queryKey = useMemo(
-        () => buildRecipeFilterQuery(debouncedFilters).toString(),
-        [debouncedFilters],
-    );
+    const meta = infiniteData?.pages.at(-1)?.meta ?? null;
 
-    useEffect(() => {
-        if (!enabled) {
-            setState((current) => ({ ...current, data: [], meta: null, loading: false }));
-            return;
-        }
-
-        // Skip the initial fetch when server already provided this data
-        if (skipNextFetchRef.current) {
-            skipNextFetchRef.current = false;
-            return;
-        }
-
-        const controller = new AbortController();
-
-        async function fetchRecipes() {
-            setState((current) => ({ ...current, loading: true, error: undefined }));
-            try {
-                const query = queryKey ? `?${queryKey}` : '';
-                const response = await fetch(`/api/recipes/filter${query}`, {
-                    signal: controller.signal,
-                });
-                if (!response.ok) {
-                    throw new Error('Fehler beim Laden der Rezepte');
-                }
-
-                const payload: { data: RecipeCardData[]; meta: RecipeSearchMeta } =
-                    await response.json();
-                setState({ data: payload.data, meta: payload.meta, loading: false });
-            } catch (error) {
-                if ((error as Error).name === 'AbortError') return;
-                setState((current) => ({
-                    ...current,
-                    loading: false,
-                    error: (error as Error).message || 'Fehler beim Laden der Rezepte',
-                }));
-            }
-        }
-
-        fetchRecipes();
-
-        return () => controller.abort();
-    }, [queryKey, enabled]);
-
-    return state;
+    return {
+        data,
+        meta,
+        loading: isPending && !initialData,
+        loadingMore: isFetchingNextPage,
+        hasMore: !!hasNextPage,
+        fetchNextPage,
+        error: error?.message,
+    };
 }

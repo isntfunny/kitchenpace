@@ -71,7 +71,7 @@ export function SearchEmptyState({ hasFilters, onReset }: SearchEmptyStateProps)
                         _hover: { opacity: '0.85' },
                     })}
                 >
-                    Filter zur\u00fccksetzen
+                    Filter zurücksetzen
                 </button>
             )}
         </div>

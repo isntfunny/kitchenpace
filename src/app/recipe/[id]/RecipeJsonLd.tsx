@@ -1,4 +1,5 @@
 import type { RecipeDetailData } from '@app/app/actions/recipes';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { APP_URL } from '@app/lib/url';
 
 function minutesToIso8601Duration(minutes: number | undefined): string | undefined {
@@ -12,9 +13,10 @@ function minutesToIso8601Duration(minutes: number | undefined): string | undefin
 type Props = {
     recipe: RecipeDetailData;
     ogImageUrl: string;
+    imageKey?: string | null;
 };
 
-export function RecipeJsonLd({ recipe, ogImageUrl }: Props) {
+export function RecipeJsonLd({ recipe, ogImageUrl, imageKey }: Props) {
     const recipeUrl = `${APP_URL}/recipe/${recipe.slug}`;
     const categoryName = recipe.category ?? 'Hauptgericht';
     const categorySlug = recipe.categorySlug;
@@ -54,12 +56,21 @@ export function RecipeJsonLd({ recipe, ogImageUrl }: Props) {
         ],
     };
 
+    // Google recommends multiple aspect ratios for rich results
+    const images = imageKey
+        ? [
+              `${APP_URL}${getThumbnailUrl(imageKey, '16:9', 1280)}`,
+              `${APP_URL}${getThumbnailUrl(imageKey, '4:3', 1280)}`,
+              `${APP_URL}${getThumbnailUrl(imageKey, '1:1', 1280)}`,
+          ]
+        : [ogImageUrl];
+
     const recipeSchema: Record<string, unknown> = {
         '@type': 'Recipe',
         '@id': `${recipeUrl}#recipe`,
         name: recipe.title,
         description: recipe.description || undefined,
-        image: ogImageUrl,
+        image: images,
         url: recipeUrl,
         inLanguage: 'de-DE',
         author: recipe.author
@@ -115,6 +126,23 @@ export function RecipeJsonLd({ recipe, ogImageUrl }: Props) {
                       ratingCount: recipe.ratingCount,
                       bestRating: '5',
                       worstRating: '1',
+                  },
+              }
+            : {}),
+        ...(recipe.calories && recipe.calories > 0
+            ? {
+                  nutrition: {
+                      '@type': 'NutritionInformation',
+                      calories: `${recipe.calories} calories`,
+                      ...(recipe.proteinPerServing && recipe.proteinPerServing > 0
+                          ? { proteinContent: `${recipe.proteinPerServing} g` }
+                          : {}),
+                      ...(recipe.fatPerServing && recipe.fatPerServing > 0
+                          ? { fatContent: `${recipe.fatPerServing} g` }
+                          : {}),
+                      ...(recipe.carbsPerServing && recipe.carbsPerServing > 0
+                          ? { carbohydrateContent: `${recipe.carbsPerServing} g` }
+                          : {}),
                   },
               }
             : {}),

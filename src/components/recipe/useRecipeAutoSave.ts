@@ -212,7 +212,7 @@ export function useRecipeAutoSave(deps: AutoSaveDeps): AutoSaveResult {
         if (tutorialPaused) return 'Auto-Save ist während des Tutorials pausiert';
         if (isPublished) return 'Automatisches Speichern ist nur für Entwürfe verfügbar';
         if (!title.trim()) return null;
-        if (autoSaveStatus === 'saving') return 'Wird gespeichert\u2026';
+        if (autoSaveStatus === 'saving') return 'Wird gespeichert…';
         if (autoSaveStatus === 'error') return 'Fehler beim Speichern';
         if (autoSaveStatus === 'saved' && autoSavedAt) {
             return `Entwurf gespeichert ${autoSavedAt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;

@@ -138,7 +138,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
 
     return (
         <>
-            <RecipeJsonLd recipe={recipe} ogImageUrl={ogImageUrl} />
+            <RecipeJsonLd recipe={recipe} ogImageUrl={ogImageUrl} imageKey={recipe.imageKey} />
             <RecipeDetailClient
                 recipe={recipe as any}
                 author={recipe.author as any}

@@ -112,7 +112,7 @@ export function TimeSeasonGrid({ filterSets, allCategories }: TimeSeasonGridProp
                                 >
                                     <span className={hasData ? dotActiveStyle : dotInactiveStyle} />
                                     <span className={cellCountStyle}>
-                                        {hasData ? criteriaCount(fs) : '\u2014'}
+                                        {hasData ? criteriaCount(fs) : '—'}
                                     </span>
                                 </button>
                             );

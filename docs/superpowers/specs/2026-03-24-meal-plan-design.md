@@ -302,15 +302,29 @@ Read-only. Kein Login erforderlich. Topbar zeigt "Plan von [Nutzername]" ohne Ed
 
 ## 9. KI-Inspirations-Strip
 
-Gelber Strip unterhalb der Topbar. Serverseitig generiert, einmal pro Woche gecached (Redis).
+Gelber Strip unterhalb der Topbar. Zeigt **Themen-Chips** (keine konkreten Rezepte) — ein Klick öffnet die Rezept-Suche vorausgefüllt mit dem gewählten Thema.
 
-**Logik:**
+### Chip-Format
 
-1. Nutzer-Favoriten der letzten 30 Tage
-2. Saisonale Rezepte (aktueller Monat)
-3. Exclude: bereits in dieser Woche geplante Rezepte
-4. Mix: 3 aus Favoriten-ähnlich, 2 saisonal → max. 5 Chips
-5. Fallback wenn keine Favoriten: nur saisonal/trending
+```
+✨ Inspiration dieser Woche:  [🌿 Frühlings-Salate]  [🐟 Fisch & Meeresfrüchte]  [⚡ Unter 20 Min]   Mehr →
+```
+
+Jeder Chip ist ein **Such-Theme** (Tag, Kategorie oder Kombination). Klick → öffnet die Rezept-Suchsidebar mit dem entsprechenden Filter vorausgefüllt.
+
+### Generierungslogik (serverseitig, einmal pro Woche pro Nutzer gecached in Redis)
+
+**Quellen:**
+
+1. **Saisonal (2 Chips):** Aktive `FilterSet`-Einträge mit `type = TIME_SEASON` und passender `season` (Frühling = März–Mai, Sommer = Juni–Aug, Herbst = Sep–Nov, Winter = Dez–Feb) → deren Tags/Kategorien als Chip-Labels
+2. **Geschmacks-ähnlich (3 Chips):** Cosine-Similarity zwischen `Profile.tasteEmbedding` des Nutzers und Cluster-Zentren der `RecipeEmbedding`-Vektoren → Top-3 Themen-Cluster als Chips (dominante Kategorie/Tag des Clusters)
+3. **Fallback (kein `tasteEmbedding` vorhanden):** Meistgefavoritete Tags der Plattform in der aktuellen Woche
+
+**Exclude:** Themen bei denen alle zugehörigen Rezepte bereits in dieser Woche geplant sind.
+
+### "Mehr →"
+
+Öffnet die Rezept-Suche ohne Vorfilter — zeigt alle Rezepte.
 
 ---
 

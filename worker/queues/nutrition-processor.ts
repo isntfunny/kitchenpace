@@ -361,5 +361,50 @@ export async function processEnrichIngredientNutrition(
         `[EnrichWorker] Enriched "${ingredient.name}" — ${fieldsUpdated} fields/links updated (source: ${source ?? 'unknown'})`,
     );
 
+    // ── Auto-approve if sanity checks pass ────────────────────────────
+    const refreshed = await prisma.ingredient.findUnique({
+        where: { id: ingredientId },
+        select: {
+            needsReview: true,
+            energyKcal: true,
+            protein: true,
+            fat: true,
+            carbs: true,
+            ingredientUnits: { select: { unitId: true } },
+            categories: { select: { id: true } },
+            _count: { select: { recipes: true } },
+        },
+    });
+
+    if (refreshed?.needsReview) {
+        const kcal = refreshed.energyKcal;
+        const unitCount = refreshed.ingredientUnits.length;
+        const recipeCount = refreshed._count.recipes;
+        const categoryCount = refreshed.categories.length;
+        const macroSum = (refreshed.protein ?? 0) + (refreshed.fat ?? 0) + (refreshed.carbs ?? 0);
+
+        const reasons: string[] = [];
+        if (kcal == null) reasons.push('keine kcal');
+        else if (kcal < 0 || kcal > 900) reasons.push(`kcal unplausibel (${kcal})`);
+        if (unitCount < 1 || unitCount > 5) reasons.push(`units: ${unitCount}`);
+        if (recipeCount < 1) reasons.push('kein Rezept');
+        if (categoryCount < 1) reasons.push('keine Kategorie');
+        if (macroSum > 105) reasons.push(`Makros zu hoch (${Math.round(macroSum)}g/100g)`);
+
+        if (reasons.length === 0) {
+            await prisma.ingredient.update({
+                where: { id: ingredientId },
+                data: { needsReview: false },
+            });
+            console.log(
+                `[EnrichWorker] Auto-approved "${ingredient.name}" (${recipeCount} recipes, ${unitCount} units, ${categoryCount} categories)`,
+            );
+        } else {
+            console.log(
+                `[EnrichWorker] "${ingredient.name}" still needs review: ${reasons.join(', ')}`,
+            );
+        }
+    }
+
     return { success: true, ingredientId, fieldsUpdated, source };
 }

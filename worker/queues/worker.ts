@@ -20,6 +20,7 @@ import {
     processGenerateRecipeOg,
     processGenerateOgImages,
     processBackfillIngredientPlurals,
+    processBackfillIngredientEnrichment,
 } from './scheduled-processor';
 import { processComputeTasteProfiles } from './taste-processor';
 import {
@@ -73,6 +74,8 @@ const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
                 return processBackfillIngredientPlurals(job);
             case 'enrich-ingredient-nutrition':
                 return processEnrichIngredientNutrition(job);
+            case 'backfill-ingredient-enrichment':
+                return processBackfillIngredientEnrichment(job);
             case 'compute-taste-profiles':
                 return processComputeTasteProfiles(job);
             default:

@@ -6,11 +6,12 @@ import { s3Client, BUCKET, generateOgImage, ogThumbKey, exists } from '@app/lib/
 
 import { redisConfig } from './connection';
 import { prisma } from './prisma';
-import { getBackupQueue } from './queue';
+import { getBackupQueue, getScheduledQueue } from './queue';
 import type {
     GenerateRecipeOgJob,
     GenerateOgImagesJob,
     BackfillIngredientPluralsJob,
+    BackfillIngredientEnrichmentJob,
     BackupJob,
 } from './types';
 
@@ -471,4 +472,58 @@ export async function processBackfillIngredientPlurals(
         `[BackfillWorker] Done — processed: ${processed}, updated: ${updated}, skipped: ${skipped}`,
     );
     return { success: true, processed, updated, skipped, ...(dryRun ? { wouldUpdate } : {}) };
+}
+
+// ── Backfill: enqueue enrichment for all unenriched ingredients ──────
+
+export async function processBackfillIngredientEnrichment(
+    job: Job<BackfillIngredientEnrichmentJob>,
+): Promise<{ enqueued: number; total: number }> {
+    const batchSize = job.data.batchSize ?? 100;
+    const dryRun = job.data.dryRun ?? false;
+    const includeNeedsReview = job.data.includeNeedsReview ?? false;
+
+    console.log(
+        `[EnrichBackfill] Starting backfill (batchSize=${batchSize}, dryRun=${dryRun}, includeNeedsReview=${includeNeedsReview})`,
+    );
+
+    const unenriched = await prisma.ingredient.findMany({
+        where: {
+            OR: [
+                { energyKcal: null },
+                { ingredientUnits: { none: {} } },
+                { categories: { none: {} } },
+                ...(includeNeedsReview ? [{ needsReview: true }] : []),
+            ],
+        },
+        select: { id: true, name: true },
+        take: batchSize,
+        orderBy: { createdAt: 'asc' },
+    });
+
+    console.log(`[EnrichBackfill] Found ${unenriched.length} unenriched ingredients`);
+
+    if (dryRun) {
+        for (const ing of unenriched) {
+            console.log(`[EnrichBackfill] [DRY RUN] Would enqueue: ${ing.name}`);
+        }
+        return { enqueued: 0, total: unenriched.length };
+    }
+
+    const queue = getScheduledQueue();
+    await queue.addBulk(
+        unenriched.map((ing) => ({
+            name: 'enrich-ingredient-nutrition',
+            data: { ingredientId: ing.id },
+            opts: {
+                priority: 5,
+                jobId: `enrich-nutrition-${ing.id}`,
+                attempts: 3,
+                backoff: { type: 'exponential' as const, delay: 30_000 },
+            },
+        })),
+    );
+
+    console.log(`[EnrichBackfill] Done — enqueued: ${unenriched.length}`);
+    return { enqueued: unenriched.length, total: unenriched.length };
 }

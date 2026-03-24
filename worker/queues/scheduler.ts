@@ -156,6 +156,21 @@ const scheduledJobs: ScheduledJobDefinition[] = [
         // No repeat — dispatched when a new ingredient is created
     },
     {
+        name: 'backfill-ingredient-enrichment',
+        queue: QueueName.SCHEDULED,
+        data: { batchSize: 100, dryRun: false, includeNeedsReview: false },
+        schema: {
+            batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 1, max: 500 },
+            dryRun: { type: 'boolean', label: 'Dry Run (no DB writes)', default: false },
+            includeNeedsReview: {
+                type: 'boolean',
+                label: 'Include needsReview (re-enrich even if data exists)',
+                default: false,
+            },
+        },
+        // No repeat — manual trigger only
+    },
+    {
         name: 'backfill-embeddings',
         queue: QueueName.OPENSEARCH,
         data: { batchSize: 50 },

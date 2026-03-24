@@ -59,6 +59,12 @@ export interface EnrichIngredientNutritionJob {
     ingredientId: string;
 }
 
+export interface BackfillIngredientEnrichmentJob {
+    batchSize?: number;
+    dryRun?: boolean;
+    includeNeedsReview?: boolean;
+}
+
 export interface ComputeTasteProfilesJob {
     batchSize?: number;
 }
@@ -74,6 +80,7 @@ export type ScheduledJob =
     | { name: 'generate-og-images'; data: GenerateOgImagesJob }
     | { name: 'backfill-ingredient-plurals'; data: BackfillIngredientPluralsJob }
     | { name: 'enrich-ingredient-nutrition'; data: EnrichIngredientNutritionJob }
+    | { name: 'backfill-ingredient-enrichment'; data: BackfillIngredientEnrichmentJob }
     | { name: 'compute-taste-profiles'; data: ComputeTasteProfilesJob };
 
 // ── Twitch jobs ──────────────────────────────────────────────────────

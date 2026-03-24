@@ -42,6 +42,8 @@ export function getJobDefinitions(): Record<string, string[]> {
             'purge-thumbnail-cache',
             'generate-og-images',
             'enrich-ingredient-nutrition',
+            'backfill-ingredient-enrichment',
+            'backfill-ingredient-plurals',
         ],
         backup: ['database-backup'],
     };

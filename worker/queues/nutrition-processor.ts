@@ -50,12 +50,6 @@ function getEnrichResponseFormat(
     units: Array<{ shortName: string; longName: string }>,
     categories: Array<{ slug: string; name: string }>,
 ) {
-    const unitShortNames = units.map((u) => u.shortName);
-    const categorySlugs = categories.map((c) => c.slug);
-
-    // Build human-readable mapping so the AI sees full names alongside short codes
-    const unitMapping = units.map((u) => `${u.shortName} = ${u.longName}`).join(', ');
-    const categoryMapping = categories.map((c) => `${c.slug} = ${c.name}`).join(', ');
     const coreProperties: Record<string, object> = {};
     for (const field of CORE_FIELDS) {
         coreProperties[field] = {
@@ -96,8 +90,7 @@ function getEnrichResponseFormat(
                         properties: {
                             shortName: {
                                 type: 'string',
-                                enum: unitShortNames,
-                                description: `Unit short code. Mapping: ${unitMapping}`,
+                                enum: units.map((u) => u.shortName),
                             },
                             grams: {
                                 type: 'number',
@@ -116,8 +109,7 @@ function getEnrichResponseFormat(
                         'Category slugs that apply to this ingredient. Choose ALL matching categories from the provided list. Most ingredients have 1-3 categories.',
                     items: {
                         type: 'string',
-                        enum: categorySlugs,
-                        description: `Category slug. Mapping: ${categoryMapping}`,
+                        enum: categories.map((c) => c.slug),
                     },
                 },
             },

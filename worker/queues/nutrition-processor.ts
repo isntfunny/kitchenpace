@@ -210,7 +210,15 @@ function extractTextFromResponse(response: OpenAI.Responses.Response): string {
 
 export async function processEnrichIngredientNutrition(
     job: Job<EnrichIngredientNutritionJob>,
-): Promise<{ success: boolean; ingredientId: string; fieldsUpdated: number; source?: string }> {
+): Promise<{
+    success: boolean;
+    ingredientId: string;
+    name: string;
+    fieldsUpdated: number;
+    source?: string;
+    units: Array<{ shortName: string; grams: number | null }>;
+    autoApproved: boolean;
+}> {
     const { ingredientId } = job.data;
 
     if (!ingredientId) {
@@ -233,7 +241,14 @@ export async function processEnrichIngredientNutrition(
 
     if (!ingredient) {
         console.log(`[EnrichWorker] Ingredient ${ingredientId} not found — skipping`);
-        return { success: false, ingredientId, fieldsUpdated: 0 };
+        return {
+            success: false,
+            ingredientId,
+            name: '',
+            fieldsUpdated: 0,
+            units: [],
+            autoApproved: false,
+        };
     }
 
     const hasNutrition = ingredient.energyKcal != null;
@@ -242,7 +257,14 @@ export async function processEnrichIngredientNutrition(
 
     if (hasNutrition && hasUnits && hasCategories) {
         console.log(`[EnrichWorker] ${ingredient.name} already fully enriched — skipping`);
-        return { success: true, ingredientId, fieldsUpdated: 0 };
+        return {
+            success: true,
+            ingredientId,
+            name: ingredient.name,
+            fieldsUpdated: 0,
+            units: [],
+            autoApproved: false,
+        };
     }
 
     // Load available units and categories for the AI prompt
@@ -274,6 +296,8 @@ export async function processEnrichIngredientNutrition(
     const parsed = JSON.parse(extractTextFromResponse(response)) as Record<string, unknown>;
 
     let fieldsUpdated = 0;
+    const assignedUnits: Array<{ shortName: string; grams: number | null }> = [];
+    let autoApproved = false;
 
     // ── 1. Nutrition ────────────────────────────────────────────────────
     if (!hasNutrition) {
@@ -310,11 +334,9 @@ export async function processEnrichIngredientNutrition(
                 const unitId = unitByShortName.get(shortName);
                 if (!unitId) continue;
 
-                unitRecords.push({
-                    ingredientId,
-                    unitId,
-                    grams: typeof grams === 'number' && !Number.isNaN(grams) ? grams : null,
-                });
+                const gramsValue = typeof grams === 'number' && !Number.isNaN(grams) ? grams : null;
+                unitRecords.push({ ingredientId, unitId, grams: gramsValue });
+                assignedUnits.push({ shortName, grams: gramsValue });
             }
 
             if (unitRecords.length > 0) {
@@ -396,6 +418,7 @@ export async function processEnrichIngredientNutrition(
                 where: { id: ingredientId },
                 data: { needsReview: false },
             });
+            autoApproved = true;
             console.log(
                 `[EnrichWorker] Auto-approved "${ingredient.name}" (${recipeCount} recipes, ${unitCount} units, ${categoryCount} categories)`,
             );
@@ -406,5 +429,13 @@ export async function processEnrichIngredientNutrition(
         }
     }
 
-    return { success: true, ingredientId, fieldsUpdated, source };
+    return {
+        success: true,
+        ingredientId,
+        name: ingredient.name,
+        fieldsUpdated,
+        source,
+        units: assignedUnits,
+        autoApproved,
+    };
 }

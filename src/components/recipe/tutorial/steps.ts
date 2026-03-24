@@ -7,7 +7,7 @@ export const recipeTutorialSteps: RecipeTutorialStep[] = [
         kind: 'info',
         title: 'Willkommen im Rezept-Ersteller',
         description:
-            'In wenigen Schritten zeigen wir dir, wie du ein Rezept anlegst — von Titel und Zutaten bis zum Kochablauf. Los geht\u2019s!',
+            "In wenigen Schritten zeigen wir dir, wie du ein Rezept anlegst — von Titel und Zutaten bis zum Kochablauf. Los geht's!",
         primaryLabel: 'Tutorial starten',
     },
     {

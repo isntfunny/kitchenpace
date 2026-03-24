@@ -10,6 +10,7 @@ import {
     Flag,
     LayoutDashboard,
     LayoutList,
+    Menu,
     Scale,
     ShieldAlert,
     Sparkles,
@@ -17,10 +18,13 @@ import {
     Tag,
     Target,
     Users,
+    X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 import { css, cx } from 'styled-system/css';
 
@@ -122,10 +126,11 @@ function canAccess(minRole: AdminRole, userRole: AdminRole): boolean {
 /*  NavItem                                                            */
 /* ------------------------------------------------------------------ */
 
-function NavItem({ href, icon: Icon, label, active }: NavItemProps) {
+function NavItem({ href, icon: Icon, label, active, onClick }: NavItemProps) {
     return (
         <Link
             href={href}
+            onClick={onClick}
             className={css({
                 display: 'flex',
                 alignItems: 'center',
@@ -156,6 +161,7 @@ interface NavItemProps {
     icon: LucideIcon;
     label: string;
     active: boolean;
+    onClick?: () => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -191,34 +197,20 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 /* ------------------------------------------------------------------ */
-/*  AdminSidebar                                                       */
+/*  Sidebar nav content (shared between desktop + mobile drawer)       */
 /* ------------------------------------------------------------------ */
 
-export function AdminSidebar({ role }: { role: AdminRole }) {
-    const pathname = usePathname();
-
-    const visibleSections = NAV_SECTIONS.map((section) => ({
-        ...section,
-        links: section.links.filter((link) => canAccess(link.minRole, role)),
-    })).filter((section) => section.links.length > 0);
-
+function SidebarContent({
+    visibleSections,
+    pathname,
+    onNavigate,
+}: {
+    visibleSections: NavSection[];
+    pathname: string;
+    onNavigate?: () => void;
+}) {
     return (
-        <nav
-            className={css({
-                display: { base: 'none', md: 'flex' },
-                flexDirection: 'column',
-                width: '240px',
-                minWidth: '240px',
-                height: '100%',
-                background: 'surface',
-                borderRightWidth: '1px',
-                borderColor: 'border.muted',
-                overflowY: 'auto',
-                padding: '4',
-                position: 'relative',
-                zIndex: 25,
-            })}
-        >
+        <>
             {visibleSections.map((section, i) => (
                 <div key={section.title}>
                     {i > 0 && <div className={dividerStyle} />}
@@ -237,6 +229,7 @@ export function AdminSidebar({ role }: { role: AdminRole }) {
                             icon={link.icon}
                             label={link.label}
                             active={isActive(pathname, link.href)}
+                            onClick={onNavigate}
                         />
                     ))}
                 </div>
@@ -246,9 +239,173 @@ export function AdminSidebar({ role }: { role: AdminRole }) {
             <div className={css({ marginTop: 'auto' })} />
             <div className={dividerStyle} />
             <div className={css({ paddingTop: '2' })}>
-                <NavItem href="/" icon={ArrowLeft} label="Zurueck zur Seite" active={false} />
+                <NavItem
+                    href="/"
+                    icon={ArrowLeft}
+                    label="Zurueck zur Seite"
+                    active={false}
+                    onClick={onNavigate}
+                />
             </div>
-        </nav>
+        </>
+    );
+}
+
+/* ------------------------------------------------------------------ */
+/*  AdminSidebar                                                       */
+/* ------------------------------------------------------------------ */
+
+export function AdminSidebar({ role }: { role: AdminRole }) {
+    const pathname = usePathname();
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    // Close drawer on route change — the onNavigate callback handles this
+    // when the user clicks a link, so no effect needed here.
+
+    // Lock body scroll when drawer is open
+    useEffect(() => {
+        if (!mobileOpen) return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = prev;
+        };
+    }, [mobileOpen]);
+
+    const visibleSections = NAV_SECTIONS.map((section) => ({
+        ...section,
+        links: section.links.filter((link) => canAccess(link.minRole, role)),
+    })).filter((section) => section.links.length > 0);
+
+    return (
+        <>
+            {/* ── Desktop sidebar ── */}
+            <nav
+                className={css({
+                    display: { base: 'none', md: 'flex' },
+                    flexDirection: 'column',
+                    width: '240px',
+                    minWidth: '240px',
+                    height: '100%',
+                    background: 'surface',
+                    borderRightWidth: '1px',
+                    borderColor: 'border.muted',
+                    overflowY: 'auto',
+                    padding: '4',
+                    position: 'relative',
+                    zIndex: 25,
+                })}
+            >
+                <SidebarContent visibleSections={visibleSections} pathname={pathname} />
+            </nav>
+
+            {/* ── Mobile hamburger button ── */}
+            <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                aria-label="Navigation oeffnen"
+                className={css({
+                    display: { base: 'flex', md: 'none' },
+                    position: 'fixed',
+                    bottom: '4',
+                    left: '4',
+                    zIndex: 50,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: 'full',
+                    background: 'primary',
+                    color: 'white',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                    transition: 'transform 150ms ease',
+                    _hover: { transform: 'scale(1.05)' },
+                })}
+            >
+                <Menu size={22} />
+            </button>
+
+            {/* ── Mobile drawer ── */}
+            <AnimatePresence>
+                {mobileOpen && (
+                    <motion.div
+                        className={css({
+                            display: { base: 'flex', md: 'none' },
+                            position: 'fixed',
+                            inset: 0,
+                            zIndex: 60,
+                        })}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={() => setMobileOpen(false)}
+                    >
+                        {/* Backdrop */}
+                        <div
+                            className={css({
+                                position: 'absolute',
+                                inset: 0,
+                                background: 'rgba(0,0,0,0.5)',
+                            })}
+                        />
+
+                        {/* Drawer panel */}
+                        <motion.nav
+                            className={css({
+                                position: 'relative',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                width: '280px',
+                                maxWidth: '80vw',
+                                height: '100%',
+                                background: 'surface',
+                                overflowY: 'auto',
+                                padding: '4',
+                                boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+                            })}
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Close button */}
+                            <button
+                                type="button"
+                                onClick={() => setMobileOpen(false)}
+                                aria-label="Navigation schliessen"
+                                className={css({
+                                    alignSelf: 'flex-end',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: 'full',
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: 'foreground.muted',
+                                    cursor: 'pointer',
+                                    mb: '2',
+                                    _hover: { color: 'foreground', background: 'accent.soft' },
+                                })}
+                            >
+                                <X size={18} />
+                            </button>
+
+                            <SidebarContent
+                                visibleSections={visibleSections}
+                                pathname={pathname}
+                                onNavigate={() => setMobileOpen(false)}
+                            />
+                        </motion.nav>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </>
     );
 }
 

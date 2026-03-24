@@ -3,6 +3,7 @@
 **Datum:** 2026-03-24
 **Status:** Bereit zur Implementierung
 **Scope:** Wochenplan-UI, Settings, Rezept-Suche, Smart Web Push
+**Voraussetzung:** `2026-03-24-filterpage-taste-filtersets.md` muss zuerst umgesetzt sein
 **Folge-Ticket:** Einkaufsliste (Shopping List UI) — separates Ticket
 
 ---

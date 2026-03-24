@@ -54,13 +54,27 @@ export async function POST(request: NextRequest) {
                 );
 
                 if (!result.success) {
+                    // Include validation details in errorMessage for import history
+                    let errorMessage = result.error.message;
+                    if (result.error.details) {
+                        const details = Array.isArray(result.error.details)
+                            ? result.error.details
+                                  .map(
+                                      (d: { path?: string; message?: string }) =>
+                                          `${d.path}: ${d.message}`,
+                                  )
+                                  .join('; ')
+                            : JSON.stringify(result.error.details);
+                        errorMessage += ` — ${details}`;
+                    }
+
                     logImportRun(prisma, {
                         userId,
                         sourceUrl,
                         markdownLength: markdown.length,
                         status: 'FAILED',
                         errorType: result.error.type,
-                        errorMessage: result.error.message,
+                        errorMessage,
                     }).catch((err) => console.error('ImportRun log failed:', err));
 
                     send({

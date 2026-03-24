@@ -126,15 +126,24 @@ export async function analyzeWithAI(
 
     if (!result.success) {
         console.error('AI analysis failed:', result.error);
+        let errorMessage = result.error.message;
+        if (result.error.details) {
+            const details = Array.isArray(result.error.details)
+                ? result.error.details
+                      .map((d: { path?: string; message?: string }) => `${d.path}: ${d.message}`)
+                      .join('; ')
+                : JSON.stringify(result.error.details);
+            errorMessage += ` — ${details}`;
+        }
         await logImportRun(db, {
             userId,
             sourceUrl,
             markdownLength: markdown.length,
             status: 'FAILED',
             errorType: result.error.type,
-            errorMessage: result.error.message,
+            errorMessage,
         });
-        throw new Error(`KI-Analyse fehlgeschlagen: ${result.error.message}`);
+        throw new Error(`KI-Analyse fehlgeschlagen: ${errorMessage}`);
     }
 
     const { metadata } = result;

@@ -100,7 +100,7 @@ export function StepCard({
                             width: `${pct}%`,
                             background: timerDone
                                 ? PALETTE.emerald
-                                : `linear-gradient(90deg, ${PALETTE.orange}, #f39c12)`,
+                                : `linear-gradient(90deg, ${PALETTE.orange}, ${PALETTE.amber})`,
                             transition: 'width 1s linear',
                             borderRadius: '0 2px 2px 0',
                             boxShadow:

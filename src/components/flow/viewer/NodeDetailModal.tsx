@@ -203,7 +203,7 @@ export function NodeDetailModal({
                                 width: `${pct}%`,
                                 background: timerDone
                                     ? PALETTE.emerald
-                                    : `linear-gradient(90deg, ${PALETTE.orange}, #f39c12)`,
+                                    : `linear-gradient(90deg, ${PALETTE.orange}, ${PALETTE.amber})`,
                                 transition: 'width 1s linear',
                                 boxShadow:
                                     timerRunning && pct > 0

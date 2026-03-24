@@ -13,9 +13,11 @@ export const PALETTE = {
     purple: '#6c5ce7',
     blue: '#0984e3',
     pink: '#fd79a8',
+    amber: '#f39c12',
 } as const;
 
-export type PaletteColor = keyof typeof PALETTE;
+/** Category-assignable colors (must match Prisma PaletteColor enum) */
+export type PaletteColor = 'orange' | 'gold' | 'emerald' | 'purple' | 'blue' | 'pink';
 
 /** German labels for admin UI dropdown */
 export const PALETTE_LABELS: Record<PaletteColor, string> = {

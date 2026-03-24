@@ -232,7 +232,7 @@ export function SimpleTextView({
                                                           ? 'rgba(0,184,148,0.08)'
                                                           : 'rgba(224,123,83,0.06)',
                                                     color: timerRunning
-                                                        ? '#f39c12'
+                                                        ? PALETTE.amber
                                                         : timerDone
                                                           ? PALETTE.emerald
                                                           : PALETTE.orange,

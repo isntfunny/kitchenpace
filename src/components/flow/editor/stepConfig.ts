@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
+import { PALETTE } from '@app/lib/palette';
+
 import { STEP_TYPE_LABELS, type StepType } from './editorTypes';
 
 export type StepCategory = 'vorbereitung' | 'kochen' | 'warten' | 'wuerzen' | 'fertig';
@@ -157,7 +159,7 @@ export const STEP_CONFIGS: Record<StepType, StepConfig> = {
         darkGradient:
             'linear-gradient(135deg, rgba(243,156,18,0.22) 0%, rgba(243,156,18,0.13) 100%)',
         flatBg: 'rgba(243,156,18,0.14)',
-        accent: '#f39c12',
+        accent: PALETTE.amber,
         category: 'wuerzen',
         canHaveIncomingEdge: true,
         canHaveOutgoingEdge: true,

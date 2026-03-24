@@ -33,10 +33,12 @@ export const PALETTE_COLORS = {
     gold: '#f8b500',
     emerald: '#00b894',
     purple: '#6c5ce7',
+    amber: '#f39c12',
     orangeDark: '#f09070',
     goldDark: '#ffc94d',
     emeraldDark: '#2ed8a3',
     purpleDark: '#9b8ff5',
+    amberDark: '#f5b041',
 } as const;
 
 // ── Social brand colors ─────────────────────────────────────────

@@ -4,6 +4,7 @@ import { Check, Pause, Pencil, Play, RotateCcw, Timer, Trash2 } from 'lucide-rea
 import { motion } from 'motion/react';
 
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
+import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 
 import { css } from 'styled-system/css';
@@ -79,7 +80,7 @@ export function StepCard({
     const timerRunning = timer?.running ?? false;
     const timerDone = timer ? timer.remaining === 0 : false;
 
-    const accentColor = isDone ? '#00b894' : timerRunning ? '#f39c12' : accent;
+    const accentColor = isDone ? '#00b894' : timerRunning ? PALETTE.amber : accent;
 
     /* Flat background — solid tint per step type, overridden by done/timer */
     let bg: string;
@@ -102,7 +103,7 @@ export function StepCard({
             style={{
                 background: bg,
                 borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.07)',
-                borderLeft: isCriticalPath ? '3px solid #f39c12' : undefined,
+                borderLeft: isCriticalPath ? `3px solid ${PALETTE.amber}` : undefined,
                 flexGrow: isLast ? 1 : 0,
             }}
         >
@@ -153,7 +154,11 @@ export function StepCard({
                         <span
                             className={timerDisplayClass}
                             style={{
-                                color: timerDone ? '#00b894' : timerRunning ? '#f39c12' : '#999',
+                                color: timerDone
+                                    ? '#00b894'
+                                    : timerRunning
+                                      ? PALETTE.amber
+                                      : '#999',
                             }}
                         >
                             {formatTimer(timer.remaining)}

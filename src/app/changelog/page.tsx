@@ -32,6 +32,34 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '24. März 2026',
+        version: 'v2026-03-24',
+        emoji: '✨',
+        title: 'Schnell-Filter, personalisierte Sortierung & Endlos-Scrollen',
+        items: [
+            {
+                text: 'Neue Schnell-Filter in der Seitenleiste — vorgefertigte Themen wie „Grillsaison" oder „Vegetarisch" mit einem Klick aktivieren',
+                tag: 'spotlight',
+            },
+            {
+                text: '„Passt zu dir"-Sortierung — Rezepte werden nach deinem persönlichen Geschmacksprofil sortiert, basierend auf deinen bisherigen Bewertungen und Favoriten',
+                tag: 'feat',
+            },
+            {
+                text: 'Endlos-Scrollen auf der Rezeptseite — einfach weiter scrollen statt Seitenzahlen klicken',
+                tag: 'feat',
+            },
+            {
+                text: 'Zutaten zeigen jetzt Nährwertinformationen wie Kalorien, Protein, Fett und Kohlenhydrate',
+                tag: 'feat',
+            },
+            {
+                text: 'Admin-Bereich ist jetzt auch auf dem Handy bedienbar — Navigation öffnet sich als Seitenleiste',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '23. März 2026',
         version: 'v2026-03-23',
         emoji: '🕐',

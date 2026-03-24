@@ -65,8 +65,7 @@ export async function matchIngredients(names: string[]): Promise<IngredientMatch
 
 /**
  * Find a Unit by shortName or longName (case-insensitive).
- * Creates the unit if it doesn't exist (shortName = longName = capitalized input).
- * Returns the unit ID.
+ * Falls back to 'Stk' if no match is found — never creates new units.
  */
 export async function findOrCreateUnit(unitName: string): Promise<string> {
     const trimmed = unitName.trim();
@@ -89,30 +88,15 @@ export async function findOrCreateUnit(unitName: string): Promise<string> {
     });
     if (existing) return existing.id;
 
-    // Create new unit
-    const capitalized = trimmed[0].toUpperCase() + trimmed.slice(1);
-    ingLog.info('creating new unit', { input: trimmed, capitalized });
-    try {
-        const unit = await prisma.unit.create({
-            data: { shortName: capitalized, longName: capitalized },
-        });
-        return unit.id;
-    } catch (e) {
-        // Race condition: already created
-        if (e instanceof Error && e.message.includes('Unique constraint')) {
-            const found = await prisma.unit.findFirst({
-                where: { OR: [{ shortName: capitalized }, { longName: capitalized }] },
-                select: { id: true },
-            });
-            return found!.id;
-        }
-        throw e;
-    }
+    // No match — fall back to Stk instead of creating a new unit
+    ingLog.warn('unknown unit, falling back to Stk', { input: trimmed });
+    const fallback = await prisma.unit.findUnique({ where: { shortName: 'Stk' } });
+    return fallback!.id;
 }
 
 /**
  * Resolve a unit shortName/longName to a Unit ID.
- * Batch version — resolves all names, creating missing units.
+ * Batch version — resolves all names, never creates new units.
  */
 export async function resolveUnitIds(unitNames: string[]): Promise<string[]> {
     return Promise.all(unitNames.map((n) => findOrCreateUnit(n)));

@@ -54,7 +54,7 @@ function getEnrichResponseFormat(
     for (const field of CORE_FIELDS) {
         coreProperties[field] = {
             type: 'number',
-            description: `${field} per 100g of edible portion`,
+            description: `${field} pro 100g essbarem Anteil`,
         };
     }
 
@@ -63,7 +63,7 @@ function getEnrichResponseFormat(
         optionalProperties[field] = {
             type: 'number',
             nullable: true,
-            description: `${field} per 100g — set ONLY if you are absolutely certain about this value, otherwise null`,
+            description: `${field} pro 100g — NUR setzen wenn du dir absolut sicher bist, sonst null`,
         };
     }
 
@@ -79,12 +79,14 @@ function getEnrichResponseFormat(
                 source: {
                     type: 'string',
                     description:
-                        'Brief citation of the data source (e.g. "USDA FoodData Central", "Swiss Food Composition Database")',
+                        'Kurze Quellenangabe (z.B. "USDA FoodData Central", "Schweizer Nährwertdatenbank")',
                 },
                 relevantUnits: {
                     type: 'array',
                     description:
-                        'Units that make sense for this ingredient. Include ALL units that a cook might reasonably use. For each unit, provide the approximate weight in grams (e.g. 1 Stück Ei ≈ 60g, 1 EL Mehl ≈ 10g). Set grams to null only if a gram conversion truly makes no sense for that unit.',
+                        'Einheiten die für diese Zutat sinnvoll sind. g (Gramm) MUSS immer enthalten sein. Wähle bis zu 4 weitere Einheiten die ein Koch tatsächlich verwenden würde. Qualität vor Quantität.',
+                    minItems: 1,
+                    maxItems: 5,
                     items: {
                         type: 'object',
                         properties: {
@@ -96,7 +98,7 @@ function getEnrichResponseFormat(
                                 type: 'number',
                                 nullable: true,
                                 description:
-                                    'Approximate weight in grams for 1 of this unit (e.g. 1 Stück Kartoffel ≈ 150g, 1 TL Salz ≈ 5g). null if not applicable.',
+                                    'Ungefähres Gewicht in Gramm für 1 dieser Einheit (z.B. 1 Stück Kartoffel ≈ 150g, 1 TL Salz ≈ 5g). null falls nicht anwendbar.',
                             },
                         },
                         required: ['shortName', 'grams'],
@@ -106,7 +108,7 @@ function getEnrichResponseFormat(
                 categories: {
                     type: 'array',
                     description:
-                        'Category slugs that apply to this ingredient. Choose ALL matching categories from the provided list. Most ingredients have 1-3 categories.',
+                        'Kategorie-Slugs die auf diese Zutat zutreffen. Wähle ALLE passenden Kategorien aus der Liste. Die meisten Zutaten haben 1-3 Kategorien.',
                     items: {
                         type: 'string',
                         enum: categories.map((c) => c.slug),
@@ -149,13 +151,15 @@ NÄHRWERT-REGELN:
   - Fettsäuren (gesättigt, einfach/mehrfach ungesättigt, Linolsäure, Alpha-Linolensäure): g
 
 EINHEITEN-REGELN:
-- Wähle ALLE Einheiten aus der Liste, die ein Koch realistisch für diese Zutat verwenden würde.
-- g (Gramm) und kg sollten fast immer dabei sein.
-- Stk (Stück) ist relevant wenn die Zutat natürlich in zählbaren Einheiten vorkommt (Eier, Zwiebeln, Äpfel, Knoblauchzehen etc.).
-- EL (Esslöffel) und TL (Teelöffel) sind relevant für Gewürze, Öle, Saucen, Pasten, Pulver etc.
-- ml und L sind relevant für Flüssigkeiten.
-- Für JEDE gewählte Einheit: gib das ungefähre Gewicht in Gramm an (z.B. 1 Stück mittelgroße Kartoffel ≈ 150g, 1 EL Olivenöl ≈ 13g, 1 TL Salz ≈ 5g).
-- Sei großzügig — lieber eine Einheit zu viel als zu wenig.
+- Wähle die BIS ZU 4 WICHTIGSTEN Einheiten aus der Liste, die ein Koch am häufigsten für diese Zutat verwenden würde.
+- g (Gramm) zählt NICHT zum Limit — g ist immer dabei.
+- WICHTIG: Große Einheiten (kg, L) NUR wenn sie zur Zutat passen! kg ist sinnvoll für Mehl, Kartoffeln, Fleisch — NICHT für Gewürze, Kräuter, Saucen. L ist sinnvoll für Milch, Wasser, Brühe — NICHT für Honig, Senf, Pasten. Frage dich: "Würde ein Koch diese Zutat in dieser Einheit kaufen/abmessen?"
+- Stk (Stück) NUR wenn die Zutat natürlich in zählbaren Einheiten vorkommt (Eier, Zwiebeln, Äpfel, Knoblauchzehen etc.).
+- EL (Esslöffel) und TL (Teelöffel) sind relevant für Gewürze, Öle, Saucen, Pasten, Pulver, Honig, Sirup etc.
+- ml ist relevant für Flüssigkeiten, die in kleinen Mengen verwendet werden (Essig, Sojasauce, Extrakte).
+- Für JEDE gewählte Einheit: gib das ungefähre Gewicht in Gramm an (z.B. 1 Stück mittelgroße Kartoffel ≈ 150g, 1 EL Olivenöl ≈ 13g, 1 TL Salz ≈ 5g, 1 ml Wasser ≈ 1g).
+- Qualität vor Quantität — nur Einheiten die ein Koch für DIESE SPEZIFISCHE Zutat tatsächlich benutzen würde.
+- BEISPIELE: Agavendicksaft → EL, TL (nicht kg, nicht L). Mehl → kg, EL (nicht ml). Milch → ml, L (nicht kg). Salz → TL, Prise (nicht kg, nicht L).
 
 VERFÜGBARE EINHEITEN:
 ${unitList}
@@ -258,7 +262,7 @@ export async function processEnrichIngredientNutrition(
     const systemPrompt = buildSystemPrompt(allUnits, allCategories);
 
     const response = await openai.responses.create({
-        model: 'gpt-5.4-mini',
+        model: 'gpt-5.4',
         tools: [{ type: 'web_search_preview' }],
         instructions: systemPrompt,
         input: `Bestimme Nährwerte, relevante Einheiten und Kategorien für: "${ingredient.name}"`,

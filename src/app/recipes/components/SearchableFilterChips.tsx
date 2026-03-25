@@ -190,7 +190,7 @@ export function SearchableFilterChips({
 
     const filteredItems = useMemo(() => {
         const trimmed = query.trim();
-        let filtered = items;
+        let filtered: FilterChipItem[];
 
         if (trimmed) {
             const normalizedQuery = trimmed.toLowerCase();
@@ -209,6 +209,9 @@ export function SearchableFilterChips({
                     }));
                 filtered = [...filtered, ...newSuggestions];
             }
+        } else {
+            // Shallow copy to avoid mutating the memoized `items` array
+            filtered = [...items];
         }
 
         return filtered.sort((a, b) => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
@@ -27,6 +27,8 @@ export type RecipeSearchState = {
     data: RecipeCardData[];
     meta: RecipeSearchMeta | null;
     loading: boolean;
+    /** True when a background refetch is in progress (cache-hit scenario). */
+    refreshing: boolean;
     loadingMore: boolean;
     hasMore: boolean;
     fetchNextPage: () => void;
@@ -64,17 +66,12 @@ export function useRecipeSearch(
     const { initialData } = options ?? {};
     const fp = useMemo(() => filterFingerprint(filters), [filters]);
 
-    // Only seed initialData for the very first query key (SSR match).
-    // Once filters change, react-query must fetch fresh data.
+    // Capture SSR data once on mount. React Query only consumes initialData when
+    // the cache is empty for a given key, and refetches in the background (staleTime=0).
     const [initialFp] = useState(fp);
-    const ssrData =
-        initialData && fp === initialFp ? { pages: [initialData], pageParams: [1] } : undefined;
-
-    // Keep a ref to the latest filters so queryFn never captures a stale closure
-    const filtersRef = useRef(filters);
-    useEffect(() => {
-        filtersRef.current = filters;
-    });
+    const [ssrSnapshot] = useState(() =>
+        initialData ? { pages: [initialData], pageParams: [1] } : undefined,
+    );
 
     const {
         data: infiniteData,
@@ -82,17 +79,19 @@ export function useRecipeSearch(
         hasNextPage,
         isFetchingNextPage,
         isPending,
+        isFetching,
         error,
     } = useInfiniteQuery<SearchPage>({
         queryKey: ['recipes', fp],
-        queryFn: ({ pageParam, signal }) =>
-            fetchPage(filtersRef.current, pageParam as number, signal),
+        // Pass filters directly via closure over `fp` — NOT via a ref that might
+        // be stale when React Query fires the queryFn before passive effects run.
+        queryFn: ({ pageParam, signal }) => fetchPage(filters, pageParam as number, signal),
         initialPageParam: 1,
         getNextPageParam: (lastPage, allPages) => {
             const loaded = allPages.reduce((sum, p) => sum + p.data.length, 0);
             return loaded < lastPage.meta.total ? allPages.length + 1 : undefined;
         },
-        initialData: ssrData,
+        initialData: fp === initialFp ? ssrSnapshot : undefined,
     });
 
     const data = useMemo(() => infiniteData?.pages.flatMap((p) => p.data) ?? [], [infiniteData]);
@@ -103,6 +102,7 @@ export function useRecipeSearch(
         data,
         meta,
         loading: isPending,
+        refreshing: isFetching && !isPending && !isFetchingNextPage,
         loadingMore: isFetchingNextPage,
         hasMore: !!hasNextPage,
         fetchNextPage,

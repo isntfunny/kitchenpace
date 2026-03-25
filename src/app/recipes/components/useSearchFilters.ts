@@ -76,10 +76,13 @@ export function useSearchFilters(
         // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-debounce when user types, not when filters/updateFilters change
     }, [queryInput]);
 
-    // URL sync — pushState for discrete filter actions, replaceState for typing
+    // URL sync — pushState for discrete filter actions, replaceState for typing/popstate
     const isFirstRender = useRef(true);
     const queryOnlyChangeRef = useRef(false);
-    const prevUrlFilters = useRef(filters);
+    /** Set to true when filters were restored via browser back/forward — the URL
+     *  is already correct, so the sync effect must use replaceState (not pushState)
+     *  to avoid duplicating the history entry. */
+    const fromPopStateRef = useRef(false);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -89,15 +92,14 @@ export function useSearchFilters(
         if (isFirstRender.current) {
             isFirstRender.current = false;
             window.history.replaceState(null, '', next);
-        } else if (queryOnlyChangeRef.current) {
-            // Debounced search typing — replace to avoid flooding history
+        } else if (queryOnlyChangeRef.current || fromPopStateRef.current) {
             window.history.replaceState(null, '', next);
         } else {
             window.history.pushState(null, '', next);
         }
 
         queryOnlyChangeRef.current = false;
-        prevUrlFilters.current = filters;
+        fromPopStateRef.current = false;
     }, [filters, pathname]);
 
     // Listen for browser back/forward to restore filter state from URL
@@ -106,6 +108,7 @@ export function useSearchFilters(
 
     useEffect(() => {
         const onPopState = () => {
+            fromPopStateRef.current = true;
             const params = new URLSearchParams(window.location.search);
             const parsed = parseRecipeFilterParams(params);
             setFilters({ ...parsed, sort: parsed.sort ?? savedSortRef.current });

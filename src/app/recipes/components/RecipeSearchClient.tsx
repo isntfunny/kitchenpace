@@ -99,10 +99,8 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         activeFilterCount,
     } = useSearchFilters(initialFilters, filterSets);
 
-    const { data, meta, loading, loadingMore, hasMore, fetchNextPage, error } = useRecipeSearch(
-        filters,
-        { initialData },
-    );
+    const { data, meta, loading, refreshing, loadingMore, hasMore, fetchNextPage, error } =
+        useRecipeSearch(filters, { initialData });
     const stableFacets = useStableFacets(meta?.facets, filters);
 
     const totalResults = meta?.total ?? 0;
@@ -198,7 +196,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                     options={filterOptions}
                     facets={stableFacets}
                     onFiltersChange={updateFilters}
-                    loading={loading}
+                    loading={loading || refreshing}
                     filterSets={filterSets}
                     onFilterSetToggle={handleFilterSetToggle}
                 />
@@ -310,7 +308,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                 filters={filters}
                 options={filterOptions}
                 facets={stableFacets}
-                loading={loading}
+                loading={loading || refreshing}
                 onFiltersChange={updateFilters}
                 onReset={resetFilters}
                 filterSets={filterSets}

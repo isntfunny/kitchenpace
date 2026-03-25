@@ -29,14 +29,6 @@ export interface ReindexJob {
     dropAndRecreate?: boolean;
 }
 
-export type OpenSearchJob =
-    | { name: 'sync-recipes'; data: SyncRecipesJob }
-    | { name: 'sync-recipe'; data: SyncRecipeToOpenSearchJob }
-    | { name: 'sync-ingredients'; data: SyncIngredientsJob }
-    | { name: 'sync-tags'; data: SyncTagsJob }
-    | { name: 'backfill-embeddings'; data: BackfillEmbeddingsJob }
-    | { name: 'reindex'; data: ReindexJob };
-
 export interface BackupJob {
     type: 'hourly' | 'daily';
 }
@@ -69,20 +61,6 @@ export interface ComputeTasteProfilesJob {
     batchSize?: number;
 }
 
-export type ScheduledJob =
-    | { name: 'sync-recipes'; data: SyncRecipesJob }
-    | { name: 'sync-ingredients'; data: SyncIngredientsJob }
-    | { name: 'sync-tags'; data: SyncTagsJob }
-    | { name: 'trending-recipes'; data: Record<string, unknown> }
-    | { name: 'backup-database-hourly'; data: Record<string, unknown> }
-    | { name: 'backup-database-daily'; data: Record<string, unknown> }
-    | { name: 'generate-recipe-og'; data: GenerateRecipeOgJob }
-    | { name: 'generate-og-images'; data: GenerateOgImagesJob }
-    | { name: 'backfill-ingredient-plurals'; data: BackfillIngredientPluralsJob }
-    | { name: 'enrich-ingredient-nutrition'; data: EnrichIngredientNutritionJob }
-    | { name: 'backfill-ingredient-enrichment'; data: BackfillIngredientEnrichmentJob }
-    | { name: 'compute-taste-profiles'; data: ComputeTasteProfilesJob };
-
 // ── Twitch jobs ──────────────────────────────────────────────────────
 
 export interface TwitchRegisterEventSubJob {
@@ -107,13 +85,6 @@ export interface TwitchStreamOfflineJob {
 }
 
 export type TwitchHealthCheckJob = Record<string, unknown>;
-
-export type TwitchJob =
-    | { name: 'twitch-register-eventsub'; data: TwitchRegisterEventSubJob }
-    | { name: 'twitch-unregister-eventsub'; data: TwitchUnregisterEventSubJob }
-    | { name: 'twitch-stream-online'; data: TwitchStreamOnlineJob }
-    | { name: 'twitch-stream-offline'; data: TwitchStreamOfflineJob }
-    | { name: 'twitch-health-check'; data: TwitchHealthCheckJob };
 
 // Job payload schema for admin form generation
 export type JobPayloadField =

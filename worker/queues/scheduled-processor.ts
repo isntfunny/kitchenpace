@@ -474,6 +474,97 @@ export async function processBackfillIngredientPlurals(
     return { success: true, processed, updated, skipped, ...(dryRun ? { wouldUpdate } : {}) };
 }
 
+// ── Recalculate all denormalized stats ───────────────────────────────
+
+export async function processRecalculateStats(job: Job<Record<string, unknown>>): Promise<{
+    success: boolean;
+    profilesUpdated: number;
+    recipesUpdated: number;
+    usersUpdated: number;
+}> {
+    console.log(`[StatsWorker] Starting recalculate-stats job ${job.id}`);
+
+    try {
+        // 1. Profile stats: followerCount, followingCount, recipeCount
+        const profileResult = await prisma.$executeRaw`
+            UPDATE "Profile" p SET
+                "followerCount" = s."followerCount",
+                "followingCount" = s."followingCount",
+                "recipeCount" = s."recipeCount"
+            FROM (
+                SELECT
+                    p2."userId",
+                    (SELECT COUNT(*)::int FROM "Follow" WHERE "followingId" = p2."userId") AS "followerCount",
+                    (SELECT COUNT(*)::int FROM "Follow" WHERE "followerId" = p2."userId") AS "followingCount",
+                    (SELECT COUNT(*)::int FROM "Recipe" WHERE "authorId" = p2."userId" AND "status" = 'PUBLISHED') AS "recipeCount"
+                FROM "Profile" p2
+            ) s
+            WHERE p."userId" = s."userId"
+              AND (p."followerCount", p."followingCount", p."recipeCount")
+                  IS DISTINCT FROM (s."followerCount", s."followingCount", s."recipeCount")
+        `;
+        console.log(`[StatsWorker] Profile stats updated: ${profileResult} rows`);
+
+        // 2. Recipe stats: rating, ratingCount, cookCount, viewCount
+        const recipeResult = await prisma.$executeRaw`
+            UPDATE "Recipe" rec SET
+                "rating" = ROUND(s."avgRating"::numeric, 2)::float,
+                "ratingCount" = s."ratingCount",
+                "cookCount" = s."cookCount",
+                "viewCount" = s."viewCount"
+            FROM (
+                SELECT
+                    r."id",
+                    COALESCE((SELECT AVG("rating") FROM "UserRating" WHERE "recipeId" = r."id"), 0) AS "avgRating",
+                    (SELECT COUNT(*)::int FROM "UserRating" WHERE "recipeId" = r."id") AS "ratingCount",
+                    (SELECT COUNT(*)::int FROM "UserCookHistory" WHERE "recipeId" = r."id") AS "cookCount",
+                    (SELECT COUNT(*)::int FROM "UserViewHistory" WHERE "recipeId" = r."id") AS "viewCount"
+                FROM "Recipe" r
+            ) s
+            WHERE rec."id" = s."id"
+              AND (rec."rating", rec."ratingCount", rec."cookCount", rec."viewCount")
+                  IS DISTINCT FROM (ROUND(s."avgRating"::numeric, 2)::float, s."ratingCount", s."cookCount", s."viewCount")
+        `;
+        console.log(`[StatsWorker] Recipe stats updated: ${recipeResult} rows`);
+
+        // 3. User trophyPoints: sum of earned trophy points
+        const userResult = await prisma.$executeRaw`
+            UPDATE "User" u SET
+                "trophyPoints" = COALESCE(s.total, 0)
+            FROM (
+                SELECT
+                    u2."id",
+                    (
+                        SELECT COALESCE(SUM(t."points"), 0)::int
+                        FROM "UserTrophy" ut
+                        JOIN "Trophy" t ON t."id" = ut."trophyId"
+                        WHERE ut."userId" = u2."id"
+                    ) AS total
+                FROM "User" u2
+            ) s
+            WHERE u."id" = s."id"
+              AND u."trophyPoints" IS DISTINCT FROM COALESCE(s.total, 0)
+        `;
+        console.log(`[StatsWorker] User trophyPoints updated: ${userResult} rows`);
+
+        const result = {
+            success: true,
+            profilesUpdated: profileResult,
+            recipesUpdated: recipeResult,
+            usersUpdated: userResult,
+        };
+
+        console.log(`[StatsWorker] Recalculate-stats completed`, result);
+        return result;
+    } catch (error) {
+        console.error(`[StatsWorker] recalculate-stats job ${job.id} failed`, {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        });
+        throw error;
+    }
+}
+
 // ── Backfill: enqueue enrichment for all unenriched ingredients ──────
 
 export async function processBackfillIngredientEnrichment(

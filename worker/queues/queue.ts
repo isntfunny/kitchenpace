@@ -69,6 +69,21 @@ export function getTwitchQueue(): Queue {
     return twitchQueue;
 }
 
+export function getQueueForName(queueName: QueueName): Queue {
+    switch (queueName) {
+        case QueueName.OPENSEARCH:
+            return getOpenSearchQueue();
+        case QueueName.SCHEDULED:
+            return getScheduledQueue();
+        case QueueName.BACKUP:
+            return getBackupQueue();
+        case QueueName.TWITCH:
+            return getTwitchQueue();
+        default:
+            throw new Error(`Unknown queue: ${queueName}`);
+    }
+}
+
 export async function closeAllQueues(): Promise<void> {
     if (opensearchQueue) {
         await opensearchQueue.close();

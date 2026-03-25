@@ -1,7 +1,8 @@
-import { getOpenSearchQueue, getScheduledQueue, getTwitchQueue } from './queue';
+import { getQueueForName } from './queue';
+import { JOB_REGISTRY } from './registry';
 
 export async function addSyncRecipeJob(recipeId: string): Promise<void> {
-    const queue = getOpenSearchQueue();
+    const queue = getQueueForName(JOB_REGISTRY['sync-recipe'].queue);
     await queue.add('sync-recipe', { recipeId });
 }
 
@@ -10,7 +11,7 @@ export async function addSyncRecipeJob(recipeId: string): Promise<void> {
  * Call this when a recipe image is approved (auto or manual).
  */
 export async function addGenerateRecipeOgJob(recipeId: string, imageKey: string): Promise<void> {
-    const queue = getScheduledQueue();
+    const queue = getQueueForName(JOB_REGISTRY['generate-recipe-og'].queue);
     await queue.add('generate-recipe-og', { recipeId, imageKey }, { priority: 2 });
 }
 
@@ -22,7 +23,7 @@ export async function addTwitchRegisterEventSubJob(
     userId: string,
     twitchId: string,
 ): Promise<void> {
-    const queue = getTwitchQueue();
+    const queue = getQueueForName(JOB_REGISTRY['twitch-register-eventsub'].queue);
     await queue.add('twitch-register-eventsub', { userId, twitchId });
 }
 
@@ -35,7 +36,7 @@ export async function addTwitchUnregisterEventSubJob(
     eventSubOnlineId?: string,
     eventSubOfflineId?: string,
 ): Promise<void> {
-    const queue = getTwitchQueue();
+    const queue = getQueueForName(JOB_REGISTRY['twitch-unregister-eventsub'].queue);
     await queue.add('twitch-unregister-eventsub', { userId, eventSubOnlineId, eventSubOfflineId });
 }
 
@@ -44,12 +45,12 @@ export async function addTwitchStreamOnlineJob(
     twitchStreamId: string,
     startedAt: string,
 ): Promise<void> {
-    const queue = getTwitchQueue();
+    const queue = getQueueForName(JOB_REGISTRY['twitch-stream-online'].queue);
     await queue.add('twitch-stream-online', { userId, twitchStreamId, startedAt });
 }
 
 export async function addTwitchStreamOfflineJob(userId: string): Promise<void> {
-    const queue = getTwitchQueue();
+    const queue = getQueueForName(JOB_REGISTRY['twitch-stream-offline'].queue);
     await queue.add('twitch-stream-offline', { userId });
 }
 
@@ -58,7 +59,7 @@ export async function addTwitchStreamOfflineJob(userId: string): Promise<void> {
  * Call this when a new ingredient is created.
  */
 export async function addEnrichIngredientNutritionJob(ingredientId: string): Promise<void> {
-    const queue = getScheduledQueue();
+    const queue = getQueueForName(JOB_REGISTRY['enrich-ingredient-nutrition'].queue);
     await queue.add(
         'enrich-ingredient-nutrition',
         { ingredientId },

@@ -1,4 +1,5 @@
-import { getOpenSearchQueue, getScheduledQueue, getBackupQueue, getTwitchQueue } from './queue';
+import { getQueueForName } from './queue';
+import { JOB_REGISTRY } from './registry';
 import { QueueName, type JobPayloadSchema } from './types';
 
 export interface ScheduledJobDefinition {
@@ -15,196 +16,27 @@ export interface ScheduledJobDefinition {
     };
 }
 
-const scheduledJobs: ScheduledJobDefinition[] = [
-    {
-        name: 'sync-recipes',
-        queue: QueueName.OPENSEARCH,
-        data: { batchSize: 150 },
-        schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 150, min: 1, max: 1000 },
-        },
-        options: {
-            repeat: {
-                pattern: '*/15 * * * *',
-            },
-        },
-    },
-    {
-        name: 'sync-ingredients',
-        queue: QueueName.OPENSEARCH,
-        data: { batchSize: 500 },
-        schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 500, min: 1, max: 2000 },
-        },
-        options: {
-            repeat: {
-                pattern: '0 */1 * * *',
-                tz: 'Europe/Berlin',
-            },
-        },
-    },
-    {
-        name: 'sync-tags',
-        queue: QueueName.OPENSEARCH,
-        data: { batchSize: 500 },
-        schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 500, min: 1, max: 2000 },
-        },
-        options: {
-            repeat: {
-                pattern: '0 */1 * * *',
-                tz: 'Europe/Berlin',
-            },
-        },
-    },
-    {
-        name: 'trending-recipes',
-        queue: QueueName.SCHEDULED,
-        data: {},
-        options: {
-            repeat: {
-                pattern: '0 6 * * *',
-                tz: 'Europe/Berlin',
-            },
-        },
-    },
-    {
-        name: 'sync-contacts-notifuse',
-        queue: QueueName.SCHEDULED,
-        data: { batchSize: 100 },
-        schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 1, max: 500 },
-        },
-        options: {
-            repeat: {
-                pattern: '0 */6 * * *',
-                tz: 'Europe/Berlin',
-            },
-        },
-    },
-    {
-        name: 'backup-database-hourly',
-        queue: QueueName.SCHEDULED,
-        data: {},
-        options: {
-            repeat: {
-                pattern: '0 * * * *',
-                tz: 'Europe/Berlin',
-            },
-        },
-    },
-    {
-        name: 'backup-database-daily',
-        queue: QueueName.SCHEDULED,
-        data: {},
-        options: {
-            repeat: {
-                pattern: '0 2 * * *',
-                tz: 'Europe/Berlin',
-            },
-        },
-    },
-    {
-        name: 'generate-og-images',
-        queue: QueueName.SCHEDULED,
-        data: { batchSize: 50 },
-        schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 50, min: 1, max: 200 },
-        },
-        options: {
-            repeat: {
-                pattern: '0 */2 * * *', // every 2 hours
-                tz: 'Europe/Berlin',
-            },
-        },
-    },
-    {
-        name: 'purge-thumbnail-cache',
-        queue: QueueName.SCHEDULED,
-        data: { maxAgeDays: 3 },
-        schema: {
-            maxAgeDays: { type: 'number', label: 'Max Age (days)', default: 3, min: 1, max: 30 },
-        },
-        options: {
-            repeat: {
-                pattern: '0 * * * *',
-                tz: 'Europe/Berlin',
-            },
-        },
-    },
-    {
-        name: 'backfill-ingredient-plurals',
-        queue: QueueName.SCHEDULED,
-        data: { batchSize: 100, dryRun: false },
-        schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 1, max: 500 },
-            dryRun: { type: 'boolean', label: 'Dry Run (no DB writes)', default: false },
-        },
-        // No repeat — manual trigger only
-    },
-    {
-        name: 'enrich-ingredient-nutrition',
-        queue: QueueName.SCHEDULED,
-        data: { ingredientId: '' },
-        schema: {
-            ingredientId: {
-                type: 'string',
-                label: 'Ingredient ID',
-                placeholder: 'cuid of the ingredient',
-            },
-        },
-        // No repeat — dispatched when a new ingredient is created
-    },
-    {
-        name: 'backfill-ingredient-enrichment',
-        queue: QueueName.SCHEDULED,
-        data: { batchSize: 100, dryRun: false, includeNeedsReview: false },
-        schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 1, max: 500 },
-            dryRun: { type: 'boolean', label: 'Dry Run (no DB writes)', default: false },
-            includeNeedsReview: {
-                type: 'boolean',
-                label: 'Include needsReview (re-enrich even if data exists)',
-                default: false,
-            },
-        },
-        // No repeat — manual trigger only
-    },
-    {
-        name: 'backfill-embeddings',
-        queue: QueueName.OPENSEARCH,
-        data: { batchSize: 50 },
-        schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 50, min: 1, max: 500 },
-        },
-        // No repeat — manual trigger only
-    },
-    {
-        name: 'compute-taste-profiles',
-        queue: QueueName.SCHEDULED,
-        data: { batchSize: 100 },
-        schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 10, max: 500 },
-        },
-        options: {
-            repeat: {
-                pattern: '0 3 * * *', // 3:00 AM daily
-                tz: 'Europe/Berlin',
-            },
-        },
-    },
-    {
-        name: 'twitch-health-check',
-        queue: QueueName.TWITCH,
-        data: {},
-        options: {
-            repeat: {
-                pattern: '0 */6 * * *',
-                tz: 'Europe/Berlin',
-            },
-        },
-    },
-];
+// ── Derive job definitions from the central registry ────────────────
+
+export function getScheduledJobDefinitions(): ScheduledJobDefinition[] {
+    return Object.entries(JOB_REGISTRY).map(([name, def]) => {
+        const d = def as {
+            queue: QueueName;
+            defaultData: unknown;
+            schema?: JobPayloadSchema;
+            repeat?: { pattern: string; tz?: string };
+        };
+        return {
+            name,
+            queue: d.queue,
+            data: d.defaultData as Record<string, unknown>,
+            schema: d.schema,
+            options: d.repeat ? { repeat: d.repeat } : undefined,
+        };
+    });
+}
+
+// ── Scheduler internals ─────────────────────────────────────────────
 
 async function addRepeatableJob(job: ScheduledJobDefinition): Promise<void> {
     const queue = getQueueForName(job.queue);
@@ -229,28 +61,15 @@ async function addRepeatableJob(job: ScheduledJobDefinition): Promise<void> {
     }
 }
 
-function getQueueForName(queueName: QueueName) {
-    switch (queueName) {
-        case QueueName.OPENSEARCH:
-            return getOpenSearchQueue();
-        case QueueName.SCHEDULED:
-            return getScheduledQueue();
-        case QueueName.BACKUP:
-            return getBackupQueue();
-        case QueueName.TWITCH:
-            return getTwitchQueue();
-        default:
-            throw new Error(`Unknown queue: ${queueName}`);
-    }
-}
-
 /**
- * Remove repeatable jobs from a queue that are no longer defined in scheduledJobs.
+ * Remove repeatable jobs from a queue that are no longer defined in the registry.
  * This prevents stale/renamed jobs from firing indefinitely in Redis.
  */
 async function pruneStaleRepeatables(): Promise<void> {
+    const allJobs = getScheduledJobDefinitions();
     const expectedByQueue = new Map<QueueName, Set<string>>();
-    for (const job of scheduledJobs) {
+
+    for (const job of allJobs) {
         if (!expectedByQueue.has(job.queue)) {
             expectedByQueue.set(job.queue, new Set());
         }
@@ -277,11 +96,12 @@ export async function startScheduler(): Promise<void> {
 
     await pruneStaleRepeatables();
 
-    for (const job of scheduledJobs) {
+    const allJobs = getScheduledJobDefinitions();
+    for (const job of allJobs) {
         await addRepeatableJob(job);
     }
 
-    console.log(`[Scheduler] Scheduler started with ${scheduledJobs.length} jobs`);
+    console.log(`[Scheduler] Scheduler started with ${allJobs.length} jobs`);
 }
 
 export function stopScheduler(): void {
@@ -293,11 +113,10 @@ export async function triggerJobNow(
     jobName: string,
     data: Record<string, unknown>,
 ): Promise<void> {
+    if (!(jobName in JOB_REGISTRY)) {
+        throw new Error(`Unknown job: ${jobName}`);
+    }
     const queue = getQueueForName(name);
     await queue.add(jobName, data);
     console.log(`[Scheduler] Triggered job: ${jobName}`);
-}
-
-export function getScheduledJobDefinitions(): ScheduledJobDefinition[] {
-    return scheduledJobs;
 }

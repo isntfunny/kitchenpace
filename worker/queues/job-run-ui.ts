@@ -32,6 +32,7 @@ const QUEUE_LABELS: Record<string, string> = {
     opensearch: 'OpenSearch',
     scheduled: 'Geplant',
     backup: 'Backup',
+    twitch: 'Twitch',
 };
 
 export function getQueueLabel(queue: string) {

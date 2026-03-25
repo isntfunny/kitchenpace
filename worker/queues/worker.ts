@@ -1,112 +1,34 @@
 import { Job, Worker, WorkerOptions } from 'bullmq';
 
-import { runDatabaseBackup } from './backup-processor';
 import { getRedis } from './connection';
 import { createJobRun, updateJobRun } from './job-run';
-import { processEnrichIngredientNutrition } from './nutrition-processor';
-import {
-    processBackfillEmbeddings,
-    processReindex,
-    processSyncIngredients,
-    processSyncRecipes,
-    processSyncRecipeToOpenSearch,
-    processSyncTags,
-} from './opensearch-processor';
-import {
-    processTrendingRecipes,
-    processSyncContactsNotifuse,
-    processBackupDatabase,
-    processCachePurge,
-    processGenerateRecipeOg,
-    processGenerateOgImages,
-    processBackfillIngredientPlurals,
-    processBackfillIngredientEnrichment,
-} from './scheduled-processor';
-import { processComputeTasteProfiles } from './taste-processor';
-import {
-    processRegisterEventSub,
-    processUnregisterEventSub,
-    processStreamOnline,
-    processStreamOffline,
-    processHealthCheck,
-} from './twitch-processor';
+import { JOB_REGISTRY } from './registry';
 import { QueueName } from './types';
 
-// Job processors per queue — each queue has exactly one Worker instance.
-// Jobs are dispatched by name to avoid multiple Workers competing on the same queue
-// with the wrong processor.
-const queueProcessors: Record<QueueName, (job: Job) => Promise<unknown>> = {
-    [QueueName.OPENSEARCH]: async (job) => {
-        switch (job.name) {
-            case 'sync-recipes':
-                return processSyncRecipes(job);
-            case 'sync-ingredients':
-                return processSyncIngredients(job);
-            case 'sync-tags':
-                return processSyncTags(job);
-            case 'sync-recipe':
-                return processSyncRecipeToOpenSearch(job);
-            case 'backfill-embeddings':
-                return processBackfillEmbeddings(job);
-            case 'reindex':
-                return processReindex(job);
-            default:
-                throw new Error(`Unknown opensearch job: ${job.name}`);
-        }
-    },
-    [QueueName.SCHEDULED]: async (job) => {
-        switch (job.name) {
-            case 'trending-recipes':
-                return processTrendingRecipes(job);
-            case 'sync-contacts-notifuse':
-                return processSyncContactsNotifuse(job);
-            case 'backup-database-hourly':
-                return processBackupDatabase(job, 'hourly');
-            case 'backup-database-daily':
-                return processBackupDatabase(job, 'daily');
-            case 'purge-thumbnail-cache':
-                return processCachePurge(job);
-            case 'generate-recipe-og':
-                return processGenerateRecipeOg(job);
-            case 'generate-og-images':
-                return processGenerateOgImages(job);
-            case 'backfill-ingredient-plurals':
-                return processBackfillIngredientPlurals(job);
-            case 'enrich-ingredient-nutrition':
-                return processEnrichIngredientNutrition(job);
-            case 'backfill-ingredient-enrichment':
-                return processBackfillIngredientEnrichment(job);
-            case 'compute-taste-profiles':
-                return processComputeTasteProfiles(job);
-            default:
-                throw new Error(`Unknown scheduled job: ${job.name}`);
-        }
-    },
-    [QueueName.BACKUP]: async (job) => {
-        switch (job.name) {
-            case 'database-backup':
-                return runDatabaseBackup(job.data.type);
-            default:
-                throw new Error(`Unknown backup job: ${job.name}`);
-        }
-    },
-    [QueueName.TWITCH]: async (job) => {
-        switch (job.name) {
-            case 'twitch-register-eventsub':
-                return processRegisterEventSub(job);
-            case 'twitch-unregister-eventsub':
-                return processUnregisterEventSub(job);
-            case 'twitch-stream-online':
-                return processStreamOnline(job);
-            case 'twitch-stream-offline':
-                return processStreamOffline(job);
-            case 'twitch-health-check':
-                return processHealthCheck(job);
-            default:
-                throw new Error(`Unknown twitch job: ${job.name}`);
-        }
-    },
-};
+// ── Registry-driven dispatch ────────────────────────────────────────
+// Build a dispatch map from the central registry at module load.
+// Each queue gets a Map<jobName, processor> derived automatically.
+
+const dispatchByQueue = new Map<QueueName, Map<string, (job: Job) => Promise<unknown>>>();
+
+for (const [name, def] of Object.entries(JOB_REGISTRY)) {
+    if (!dispatchByQueue.has(def.queue)) {
+        dispatchByQueue.set(def.queue, new Map());
+    }
+    dispatchByQueue.get(def.queue)!.set(name, def.processor);
+}
+
+function createQueueProcessor(queue: QueueName): (job: Job) => Promise<unknown> {
+    const jobs = dispatchByQueue.get(queue);
+    if (!jobs) throw new Error(`No jobs registered for queue: ${queue}`);
+    return async (job: Job) => {
+        const processor = jobs.get(job.name);
+        if (!processor) throw new Error(`Unknown ${queue} job: ${job.name}`);
+        return processor(job);
+    };
+}
+
+// ── Worker configuration ────────────────────────────────────────────
 
 const queueOptions: Partial<Record<QueueName, Omit<WorkerOptions, 'connection'>>> = {
     [QueueName.BACKUP]: {
@@ -124,6 +46,12 @@ const DEFAULT_WORKER_OPTIONS: Omit<WorkerOptions, 'connection'> = {
 
 const workers: Worker[] = [];
 
+// ── All queues that have at least one job in the registry ───────────
+
+const activeQueues = [...dispatchByQueue.keys()];
+
+// ── Public API ──────────────────────────────────────────────────────
+
 export interface WorkerDefinitionSummary {
     name: string;
     queue: QueueName;
@@ -132,7 +60,7 @@ export interface WorkerDefinitionSummary {
 }
 
 export function getWorkerDefinitions(): WorkerDefinitionSummary[] {
-    return (Object.keys(queueProcessors) as QueueName[]).map((queue) => {
+    return activeQueues.map((queue) => {
         const opts = queueOptions[queue];
         return {
             name: queue,
@@ -146,10 +74,9 @@ export function getWorkerDefinitions(): WorkerDefinitionSummary[] {
 export function startWorkers(): void {
     console.log('[Worker] Starting BullMQ workers...');
 
-    for (const [queueName, processor] of Object.entries(queueProcessors) as [
-        QueueName,
-        (job: Job) => Promise<unknown>,
-    ][]) {
+    for (const queueName of activeQueues) {
+        const processor = createQueueProcessor(queueName);
+
         const worker = new Worker(
             queueName,
             async (job) => {

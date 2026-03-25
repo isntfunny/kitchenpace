@@ -3,7 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useLocalStorage } from '@app/hooks/useLocalStorage';
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
-import { buildRecipeFilterQuery, MULTI_VALUE_KEYS, NUMBER_KEYS } from '@app/lib/recipeFilters';
+import {
+    buildRecipeFilterQuery,
+    MULTI_VALUE_KEYS,
+    NUMBER_KEYS,
+    parseRecipeFilterParams,
+} from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams, RecipeSortOption } from '@app/lib/recipeFilters';
 import { STORAGE_KEYS } from '@app/lib/storageKeys';
 
@@ -58,25 +63,58 @@ export function useSearchFilters(
         setQueryInput(filters.query ?? '');
     }, [filters.query]);
 
-    // Debounced query → filters sync
+    // Debounced query → filters sync (replaceState, not pushState)
     useEffect(() => {
         const timer = setTimeout(() => {
             const sanitized = queryInput.trim();
             const nextQuery = sanitized.length > 0 ? queryInput : undefined;
             if (nextQuery === filters.query) return;
+            queryOnlyChangeRef.current = true;
             updateFilters({ query: nextQuery });
         }, 400);
         return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-debounce when user types, not when filters/updateFilters change
     }, [queryInput]);
 
-    // URL sync
+    // URL sync — pushState for discrete filter actions, replaceState for typing
+    const isFirstRender = useRef(true);
+    const queryOnlyChangeRef = useRef(false);
+    const prevUrlFilters = useRef(filters);
+
     useEffect(() => {
         if (typeof window === 'undefined') return;
         const params = buildRecipeFilterQuery(filters).toString();
         const next = params ? `${pathname}?${params}` : pathname;
-        window.history.replaceState(null, '', next);
+
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            window.history.replaceState(null, '', next);
+        } else if (queryOnlyChangeRef.current) {
+            // Debounced search typing — replace to avoid flooding history
+            window.history.replaceState(null, '', next);
+        } else {
+            window.history.pushState(null, '', next);
+        }
+
+        queryOnlyChangeRef.current = false;
+        prevUrlFilters.current = filters;
     }, [filters, pathname]);
+
+    // Listen for browser back/forward to restore filter state from URL
+    const savedSortRef = useRef(savedSort);
+    savedSortRef.current = savedSort;
+
+    useEffect(() => {
+        const onPopState = () => {
+            const params = new URLSearchParams(window.location.search);
+            const parsed = parseRecipeFilterParams(params);
+            setFilters({ ...parsed, sort: parsed.sort ?? savedSortRef.current });
+            setQueryInput(parsed.query ?? '');
+        };
+
+        window.addEventListener('popstate', onPopState);
+        return () => window.removeEventListener('popstate', onPopState);
+    }, []);
 
     const updateFilters = useCallback((next: Partial<RecipeFilterSearchParams>) => {
         setFilters((prev) => ({ ...prev, ...next }));

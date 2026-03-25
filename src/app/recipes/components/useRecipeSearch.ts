@@ -1,7 +1,7 @@
 'use client';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
@@ -64,6 +64,12 @@ export function useRecipeSearch(
     const { initialData } = options ?? {};
     const fp = useMemo(() => filterFingerprint(filters), [filters]);
 
+    // Only seed initialData for the very first query key (SSR match).
+    // Once filters change, react-query must fetch fresh data.
+    const [initialFp] = useState(fp);
+    const ssrData =
+        initialData && fp === initialFp ? { pages: [initialData], pageParams: [1] } : undefined;
+
     // Keep a ref to the latest filters so queryFn never captures a stale closure
     const filtersRef = useRef(filters);
     useEffect(() => {
@@ -86,7 +92,7 @@ export function useRecipeSearch(
             const loaded = allPages.reduce((sum, p) => sum + p.data.length, 0);
             return loaded < lastPage.meta.total ? allPages.length + 1 : undefined;
         },
-        initialData: initialData ? { pages: [initialData], pageParams: [1] } : undefined,
+        initialData: ssrData,
     });
 
     const data = useMemo(() => infiniteData?.pages.flatMap((p) => p.data) ?? [], [infiniteData]);
@@ -96,7 +102,7 @@ export function useRecipeSearch(
     return {
         data,
         meta,
-        loading: isPending && !initialData,
+        loading: isPending,
         loadingMore: isFetchingNextPage,
         hasMore: !!hasNextPage,
         fetchNextPage,

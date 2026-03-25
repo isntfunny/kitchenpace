@@ -3,12 +3,10 @@ import { cache } from 'react';
 
 import { inRange, resolveDisplayWindow } from './date-resolver';
 import { type FilterSetWithRelations, getFoodPeriodFilterSets } from './db-queries';
+import { SEASON_LABELS, TIME_SLOT_LABELS, type Season, type TimeSlot } from './labels';
 import { toFilterCriteria, type FilterCriteria } from './mappings';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export type TimeSlot = 'fruehstueck' | 'brunch' | 'mittag' | 'nachmittag' | 'abend' | 'spaet';
-export type Season = 'fruehling' | 'sommer' | 'herbst' | 'winter';
+export type { Season, TimeSlot } from './labels';
 
 export interface FitsNowContext {
     timeSlot: TimeSlot;
@@ -84,22 +82,6 @@ export async function detectActivePeriods(now: Date): Promise<ResolvedPeriod[]> 
 }
 
 // ── Labels ───────────────────────────────────────────────────────────────────
-
-const TIME_SLOT_LABELS: Record<TimeSlot, string> = {
-    fruehstueck: 'Fruehstueck',
-    brunch: 'Brunch',
-    mittag: 'Mittagessen',
-    nachmittag: 'Kaffee & Kuchen',
-    abend: 'Abendessen',
-    spaet: 'Spaeter Snack',
-};
-
-const SEASON_LABELS: Record<Season, string> = {
-    fruehling: 'Fruehling',
-    sommer: 'Sommer',
-    herbst: 'Herbst',
-    winter: 'Winter',
-};
 
 // ── Main Detection Function (per-request dedup via React cache) ─────────────
 

@@ -13,22 +13,25 @@
 
 ## Page Structure (top to bottom)
 
-### Full-Width Elements
+### Pre-Shell Element (full viewport width)
 
-#### 1. Hero Banner (EXISTING — no changes)
+#### 1. Seasonal Teaser Bar (CONDITIONAL)
 
-- Category name, icon, description, recipe count pill
-- Animated gradient background with category color
-
-#### 2. Seasonal Teaser Bar (CONDITIONAL)
-
+- **Position:** Rendered **above** the `PageShell` component — full viewport width, not constrained by the 1400px max-width. Content inside is centered with matching padding.
 - **Visible only when** `detectContext().activePeriods.length > 0`
 - **Period selection:** When multiple FOOD_PERIOD FilterSets are active simultaneously, pick the first by `sortOrder ASC` (override periods take priority by convention)
 - **Layout:** Horizontal bar — left: emoji + period name (`filterSet.label`) + subtitle; center: 3-4 compact recipe cards from that period filtered to current category; right: "Alle →" link
-- **Data source:** `detectContext()` returns `{ activePeriods: ResolvedPeriod[] }`. Pick first period, then fetch recipes matching that FilterSet's tags/categories intersected with current category
+- **Data source:** `detectContext()` returns `{ activePeriods: ResolvedPeriod[] }`. Pick first period, then fetch recipes matching that FilterSet's tags/categories intersected with current category. **All recipes must be filtered by current category** — never show cross-category results.
 - **Prop type:** `period: FilterSetWithRelations` (from `src/lib/fits-now/db-queries.ts`), not a custom type
 - **Link target:** `/recipes?category={slug}` with the FilterSet's tags/categories pre-applied as query params (same format as `handleFilterSetToggle` uses — tags and categories as comma-separated values)
 - **Mobile:** Stacks vertically — title above, cards as horizontal scroll below
+
+### Elements inside PageShell
+
+#### 2. Hero Banner (EXISTING — no changes)
+
+- Category name, icon, description, recipe count pill
+- Animated gradient background with category color
 
 ### Main + Sidebar Grid (Desktop: `1fr 220px`, gap 16px)
 
@@ -40,7 +43,7 @@ On mobile (< 1024px): Sidebar hidden entirely. Main goes full-width.
 
 - **Layout:** 3-column grid of large cards with gradient background (category color)
 - **Card content:** Recipe image as background, cook count badge (top-left), title + rating + time (bottom)
-- **Data:** Top 3 recipes by `cookCount DESC` in this category
+- **Data:** Top 3 recipes by `cookCount DESC` **where category matches current category slug**
 - **Mobile:** 3 columns stay, cards get shorter
 
 #### 4. Neueste Rezepte (compact horizontal scroll)
@@ -65,10 +68,10 @@ On mobile (< 1024px): Sidebar hidden entirely. Main goes full-width.
     - Left: Recipe image or dice emoji placeholder (90x70px)
     - Center: "Zufaelliger Fund" label, recipe title (large), rating + time + difficulty, description snippet (1-line italic)
     - Right: "Neues 🎲" button
-- **Data:** `RandomRecipeSpotlight` is a **client component**. No SSR fetch — the initial recipe is loaded via client-side fetch on mount from `/api/category/{slug}/random`. This avoids ISR caching making the "random" recipe identical for all visitors within the revalidation window.
-- **"Neues" button:** Same client-side fetch, replaces card content with transition animation. Button shows a spinning dice while loading, reverts to previous card on error.
+- **Data:** `RandomRecipeSpotlight` is a **client component**. No SSR fetch — the initial recipe is loaded on mount via a **server action** `getRandomCategoryRecipe(categorySlug)`. This avoids ISR caching making the "random" recipe identical for all visitors within the revalidation window.
+- **"Neues" button:** Calls the same server action, replaces card content with transition animation. Button shows a spinning dice while loading, reverts to previous card on error.
 - **Loading state:** Skeleton card (matching the layout dimensions) shown on initial mount until first fetch completes
-- **API URL construction:** Use relative URL `/api/category/${categorySlug}/random` (no absolute domain)
+- **No API route needed** — server actions handle the client-to-server communication directly
 - **Mobile:** Stacks — image on top, text below, button full-width
 
 #### 7. Community-Puls (Activity Feed)
@@ -103,7 +106,7 @@ All sidebar modules are **hidden on mobile** (< 1024px). The sidebar is informat
 - **Fields:**
     - Ø Zubereitungszeit → `prisma.recipe.aggregate({ _avg: { totalTime } })`
     - Ø Kalorien → `prisma.recipe.aggregate({ _avg: { calories } })` (only if > 50% of recipes have calories)
-    - Top-Zutat → **requires `prisma.$queryRaw`** (see Raw SQL section below)
+    - Top-Zutat → from OpenSearch `ingredients` terms aggregation (first bucket) filtered by `categorySlug`
     - Schnellstes → `prisma.recipe.findFirst({ orderBy: { totalTime: 'asc' } })` — separate entity lookup, not an aggregate
     - Beliebtestes → `prisma.recipe.findFirst({ orderBy: { viewCount: 'desc' } })` — separate entity lookup
 - **Data:** Split into two logical parts: (1) pure aggregates via `prisma.aggregate()`, (2) entity lookups via `findFirst()`. All cached ISR 60s.
@@ -121,7 +124,7 @@ All sidebar modules are **hidden on mobile** (< 1024px). The sidebar is informat
 - **Two chip styles:**
     - Tags: Pink background, prefixed with `#` (e.g., `#Kuchen (28)`)
     - Ingredients: Orange background, prefixed with emoji if available (e.g., `🍫 Schokolade (47)`)
-- **Data:** Top 10 tags + top 10 ingredients by recipe count in this category. **Requires `prisma.$queryRaw`** — GROUP BY across recipe-tag/recipe-ingredient joins not expressible in Prisma ORM (see Raw SQL section below)
+- **Data:** Top 10 tags + top 10 ingredients by recipe count in this category. **Use OpenSearch** `terms` aggregations on the `tags` and `ingredients` fields, filtered by `categorySlug` — this is already the pattern used by `queryRecipes()` in `src/lib/recipeSearch.ts` and returns `{ key: string, count: number }[]` directly
 - **Click action:** Navigate to `/recipes?category={slug}&tags={tag}` or `&ingredients={ingredient}` (verify param names match `useSearchFilters` — currently `tags` and `ingredients` as comma-separated)
 - **Sorting:** By count descending
 
@@ -129,16 +132,16 @@ All sidebar modules are **hidden on mobile** (< 1024px). The sidebar is informat
 
 All data is fetched **server-side** in the category page's RSC, using `Promise.allSettled` for parallel fetching (existing pattern). New queries to add:
 
-| Query                                          | Returns                                        | Cache    |
-| ---------------------------------------------- | ---------------------------------------------- | -------- |
-| `fetchCategoryMostCooked(slug, 3)`             | Top 3 by cookCount                             | ISR 60s  |
-| ~~`fetchCategoryRandom`~~                      | Removed from SSR — client-only via API route   | N/A      |
-| `fetchCategoryActivity(slug, 3)`               | Last 3 activity entries                        | ISR 60s  |
-| `fetchActiveSeasonalRecipes(slug)`             | Recipes matching active FOOD_PERIOD + category | ISR 300s |
-| `fetchCategoryDifficultyStats(slug)`           | Count per difficulty                           | ISR 60s  |
-| `fetchCategoryAggregateStats(slug)`            | AVG time, AVG calories, top ingredient, etc.   | ISR 60s  |
-| `fetchCategoryTopByViews(slug, 5)`             | Top 5 by viewCount                             | ISR 60s  |
-| `fetchCategoryTopTagsAndIngredients(slug, 10)` | Top tags + ingredients by count (**raw SQL**)  | ISR 60s  |
+| Query                                          | Returns                                          | Cache    |
+| ---------------------------------------------- | ------------------------------------------------ | -------- |
+| `fetchCategoryMostCooked(slug, 3)`             | Top 3 by cookCount                               | ISR 60s  |
+| ~~`fetchCategoryRandom`~~                      | Removed from SSR — client-only via server action | N/A      |
+| `fetchCategoryActivity(slug, 3)`               | Last 3 activity entries                          | ISR 60s  |
+| `fetchActiveSeasonalRecipes(slug)`             | Recipes matching active FOOD_PERIOD + category   | ISR 300s |
+| `fetchCategoryDifficultyStats(slug)`           | Count per difficulty                             | ISR 60s  |
+| `fetchCategoryAggregateStats(slug)`            | AVG time, AVG calories, top ingredient, etc.     | ISR 60s  |
+| `fetchCategoryTopByViews(slug, 5)`             | Top 5 by viewCount                               | ISR 60s  |
+| `fetchCategoryTopTagsAndIngredients(slug, 10)` | Top tags + ingredients by count (**OpenSearch**) | ISR 60s  |
 
 Existing queries remain:
 
@@ -150,16 +153,16 @@ Removed queries (no longer needed):
 - `fetchCategoryPopular` — replaced by Featured Trio (mostCooked) + Top 5 sidebar (viewCount)
 - `fetchCategoryQuickRecipes` — removed section, quick recipes discoverable via difficulty filter
 
-### Client-Side API
+### Server Actions (in `src/app/actions/category.ts`)
 
-One new API route for the random recipe refresh button:
+New server action for the random recipe client component:
 
+```typescript
+'use server';
+export async function getRandomCategoryRecipe(categorySlug: string): Promise<RecipeCardData | null>;
 ```
-GET /api/category/[slug]/random
-Response: { recipe: RecipeCardData }
-```
 
-Returns 1 random published recipe from the category. Called on "Neues 🎲" button click.
+Uses Prisma `findMany` with `take: 1` and a random offset (or `$queryRaw` with `ORDER BY random() LIMIT 1`). Returns a single random published recipe from the specified category. Called by `RandomRecipeSpotlight` on mount and on "Neues 🎲" button click.
 
 ## Component Architecture
 
@@ -168,7 +171,7 @@ Returns 1 random published recipe from the category. Called on "Neues 🎲" butt
 | Component               | Location                                                            | Props                                                                                 |
 | ----------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `FeaturedTrio`          | `src/app/category/[slug]/components/FeaturedTrio.tsx`               | `recipes: RecipeCardData[]`, `categoryColor: string`                                  |
-| `RandomRecipeSpotlight` | `src/app/category/[slug]/components/RandomRecipeSpotlight.tsx`      | `categorySlug: string` (client component, fetches own data on mount)                  |
+| `RandomRecipeSpotlight` | `src/app/category/[slug]/components/RandomRecipeSpotlight.tsx`      | `categorySlug: string` (client component, calls server action on mount)               |
 | `CommunityPulse`        | `src/app/category/[slug]/components/CommunityPulse.tsx`             | `activities: ActivityFeedItem[]`                                                      |
 | `SeasonalTeaserBar`     | `src/app/category/[slug]/components/SeasonalTeaserBar.tsx`          | `period: FilterSetWithRelations`, `recipes: RecipeCardData[]`, `categorySlug: string` |
 | `CategorySidebar`       | `src/app/category/[slug]/components/CategorySidebar.tsx`            | All sidebar data as props                                                             |
@@ -179,11 +182,12 @@ Returns 1 random published recipe from the category. Called on "Neues 🎲" butt
 
 ### Modified Components/Files
 
-| File                                          | Change                                            |
-| --------------------------------------------- | ------------------------------------------------- |
-| `src/app/category/[slug]/page.tsx`            | Add new data fetches, pass to CategoryLanding     |
-| `src/app/category/[slug]/CategoryLanding.tsx` | Replace current layout with new section structure |
-| `src/app/actions/category.ts`                 | Add new query functions                           |
+| File                                          | Change                                                                                       |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `src/app/category/[slug]/page.tsx`            | Add new data fetches, render SeasonalTeaserBar above PageShell, pass rest to CategoryLanding |
+| `src/app/category/[slug]/CategoryLanding.tsx` | Replace current layout with new section structure                                            |
+| `src/app/actions/category.ts`                 | Add new query functions + `getRandomCategoryRecipe` server action                            |
+| `src/lib/recipeSearch.ts`                     | Add `fetchCategoryFacets()` helper for category-scoped OpenSearch aggregations               |
 
 ### Reused Components
 
@@ -230,41 +234,34 @@ Update `toRecipeCardData()` mapper to populate these fields from Prisma results.
 
 Add `cardVariant?: 'compact' | 'default'` prop (default: `'compact'`). Pass through to `RecipeCard` `variant` prop. This allows the "Bestbewertet" section to use larger default cards.
 
-## Raw SQL Queries
+## OpenSearch Aggregation Queries
 
-Two queries require `prisma.$queryRaw` because Prisma ORM cannot express GROUP BY across relations:
+Tag and ingredient counts use **OpenSearch** instead of raw SQL. The existing `queryRecipes()` in `src/lib/recipeSearch.ts` already returns `terms` aggregations for `tags` and `ingredients` fields. We create a lightweight wrapper:
 
-### Top Tags by Category
+### `fetchCategoryTagsAndIngredients(categorySlug, limit)`
 
-```sql
-SELECT t.name, COUNT(*) as count
-FROM "RecipeTag" rt
-JOIN "Tag" t ON t.id = rt."tagId"
-JOIN "Recipe" r ON r.id = rt."recipeId"
-JOIN "Category" c ON c.id = r."categoryId"
-WHERE c.slug = $1 AND r.status = 'PUBLISHED'
-GROUP BY t.name
-ORDER BY count DESC
-LIMIT $2
-```
+Calls OpenSearch with:
 
-### Top Ingredients by Category
+- **Filter:** `{ term: { categorySlug } }` + `{ term: { status: 'PUBLISHED' } }`
+- **Aggregations:** `tags: { terms: { field: 'tags', size: limit } }` and `ingredients: { terms: { field: 'ingredients', size: limit } }`
+- **Size: 0** — we don't need hits, only aggregation buckets
+- Returns `{ tags: TermFacet, ingredients: TermFacet }` (existing `TermFacet` type: `Array<{ key: string, count: number }>`)
 
-```sql
-SELECT i.name, COUNT(*) as count
-FROM "RecipeIngredient" ri
-JOIN "Ingredient" i ON i.id = ri."ingredientId"
-JOIN "Recipe" r ON r.id = ri."recipeId"
-JOIN "Category" c ON c.id = r."categoryId"
-WHERE c.slug = $1 AND r.status = 'PUBLISHED'
-GROUP BY i.name
-ORDER BY count DESC
-LIMIT $2
-```
+This also provides the "Top-Zutat" for the Stats sidebar (first entry of `ingredients` aggregation).
 
-### Most Frequent Ingredient (for Stats sidebar)
+### Difficulty counts
 
-Same as "Top Ingredients" query with `LIMIT 1`. Can reuse the ingredients query result if both are fetched together.
+Can also use OpenSearch: same category filter with `difficulties: { terms: { field: 'difficulty', size: 5 } }`. Alternatively Prisma `groupBy` works fine here since it's a direct field on Recipe.
+
+## Data Integrity: Category Filtering
+
+**Critical rule:** Every query on this page MUST filter by the current category. Never show cross-category data. Specifically:
+
+- All Prisma queries include `WHERE categoryId = ...` or `WHERE category: { slug }` — use the category ID from the initial `fetchCategoryBySlug()` result
+- All OpenSearch queries include `{ term: { categorySlug } }` in the filter clause
+- The Activity Feed must join through recipe to verify category membership
+- The Seasonal Teaser must intersect the FOOD_PERIOD's tags/categories with the current category — if a period has no matching recipes in this category, hide the teaser
+- The Random Recipe server action must filter by category slug
 
 ## Known Couplings
 

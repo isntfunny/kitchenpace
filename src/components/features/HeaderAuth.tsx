@@ -19,6 +19,7 @@ import { css } from 'styled-system/css';
 import { Avatar } from '../atoms/Avatar';
 
 import { MenuSection, PERSONAL_LINKS } from './HeaderMenuPanel';
+import { MobileUserDrawer } from './MobileUserDrawer';
 import { ToastViewport } from './ToastViewport';
 
 export function HeaderAuth() {
@@ -151,111 +152,116 @@ export function HeaderAuth() {
                     ))}
                 </InboxDropdown>
 
-                {/* Profile menu — separate DropdownMenu, no nesting conflict */}
-                <DropdownMenu.Root>
-                    <DropdownMenu.Trigger asChild>
-                        <button
-                            className={css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '44px',
-                                height: '44px',
-                                padding: '0',
-                                borderRadius: 'full',
-                                border: '1px solid',
-                                borderColor: 'border',
-                                background: 'surface.elevated',
-                                cursor: 'pointer',
-                                transition: 'all 150ms ease',
-                                _hover: {
-                                    background: 'transparent',
-                                    borderColor: 'primary',
-                                },
-                                _focusVisible: {
-                                    boxShadow: {
-                                        base: '0 0 0 3px rgba(224,123,83,0.35)',
-                                        _dark: '0 0 0 3px rgba(224,123,83,0.4)',
-                                    },
-                                },
-                            })}
-                        >
-                            {avatarImage}
-                        </button>
-                    </DropdownMenu.Trigger>
+                {/* Profile menu — mobile drawer */}
+                <MobileUserDrawer />
 
-                    <DropdownMenu.Portal>
-                        <DropdownMenu.Content
-                            className={css({
-                                minWidth: '240px',
-                                background: 'surface.elevated',
-                                borderRadius: 'surface',
-                                border: '1px solid',
-                                borderColor: 'border',
-                                padding: '3',
-                                boxShadow: {
-                                    base: '0 30px 80px rgba(0,0,0,0.14)',
-                                    _dark: '0 30px 80px rgba(0,0,0,0.5)',
-                                },
-                                zIndex: 100,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '4',
-                                transformOrigin:
-                                    'var(--radix-dropdown-menu-content-transform-origin)',
-                                '&[data-state="open"]': {
-                                    animation: 'scaleUp 200ms ease',
-                                },
-                                '&[data-state="closed"]': {
-                                    animation: 'scaleDown 150ms ease',
-                                },
-                            })}
-                            sideOffset={8}
-                            align="end"
-                        >
-                            <MenuSection title="Für dich" items={PERSONAL_LINKS} />
-                            <DropdownMenu.Separator
+                {/* Profile menu — desktop dropdown */}
+                <div className={css({ display: { base: 'none', md: 'block' } })}>
+                    <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                            <button
                                 className={css({
-                                    height: '1px',
-                                    background: 'border',
-                                    marginY: '2',
-                                })}
-                            />
-                            <DropdownMenu.Item asChild>
-                                <button
-                                    onClick={() => handleSignOut()}
-                                    className={css({
-                                        width: '100%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '2',
-                                        padding: '3',
-                                        borderRadius: 'xl',
-                                        border: '1px solid',
-                                        borderColor: 'border.muted',
-                                        background: 'surface',
-                                        fontSize: 'sm',
-                                        fontWeight: '600',
-                                        color: 'red.500',
-                                        cursor: 'pointer',
-                                        transition: 'all 150ms ease',
-                                        _hover: {
-                                            borderColor: 'red.500',
-                                            boxShadow: {
-                                                base: '0 10px 30px rgba(224,123,83,0.25)',
-                                                _dark: '0 10px 30px rgba(224,123,83,0.3)',
-                                            },
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '44px',
+                                    height: '44px',
+                                    padding: '0',
+                                    borderRadius: 'full',
+                                    border: '1px solid',
+                                    borderColor: 'border',
+                                    background: 'surface.elevated',
+                                    cursor: 'pointer',
+                                    transition: 'all 150ms ease',
+                                    _hover: {
+                                        background: 'transparent',
+                                        borderColor: 'primary',
+                                    },
+                                    _focusVisible: {
+                                        boxShadow: {
+                                            base: '0 0 0 3px rgba(224,123,83,0.35)',
+                                            _dark: '0 0 0 3px rgba(224,123,83,0.4)',
                                         },
+                                    },
+                                })}
+                            >
+                                {avatarImage}
+                            </button>
+                        </DropdownMenu.Trigger>
+
+                        <DropdownMenu.Portal>
+                            <DropdownMenu.Content
+                                className={css({
+                                    minWidth: '240px',
+                                    background: 'surface.elevated',
+                                    borderRadius: 'surface',
+                                    border: '1px solid',
+                                    borderColor: 'border',
+                                    padding: '3',
+                                    boxShadow: {
+                                        base: '0 30px 80px rgba(0,0,0,0.14)',
+                                        _dark: '0 30px 80px rgba(0,0,0,0.5)',
+                                    },
+                                    zIndex: 100,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4',
+                                    transformOrigin:
+                                        'var(--radix-dropdown-menu-content-transform-origin)',
+                                    '&[data-state="open"]': {
+                                        animation: 'scaleUp 200ms ease',
+                                    },
+                                    '&[data-state="closed"]': {
+                                        animation: 'scaleDown 150ms ease',
+                                    },
+                                })}
+                                sideOffset={8}
+                                align="end"
+                            >
+                                <MenuSection title="Für dich" items={PERSONAL_LINKS} />
+                                <DropdownMenu.Separator
+                                    className={css({
+                                        height: '1px',
+                                        background: 'border',
+                                        marginY: '2',
                                     })}
-                                >
-                                    <LogOut size={16} />
-                                    <span>Abmelden</span>
-                                </button>
-                            </DropdownMenu.Item>
-                        </DropdownMenu.Content>
-                    </DropdownMenu.Portal>
-                </DropdownMenu.Root>
+                                />
+                                <DropdownMenu.Item asChild>
+                                    <button
+                                        onClick={() => handleSignOut()}
+                                        className={css({
+                                            width: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '2',
+                                            padding: '3',
+                                            borderRadius: 'xl',
+                                            border: '1px solid',
+                                            borderColor: 'border.muted',
+                                            background: 'surface',
+                                            fontSize: 'sm',
+                                            fontWeight: '600',
+                                            color: 'red.500',
+                                            cursor: 'pointer',
+                                            transition: 'all 150ms ease',
+                                            _hover: {
+                                                borderColor: 'red.500',
+                                                boxShadow: {
+                                                    base: '0 10px 30px rgba(224,123,83,0.25)',
+                                                    _dark: '0 10px 30px rgba(224,123,83,0.3)',
+                                                },
+                                            },
+                                        })}
+                                    >
+                                        <LogOut size={16} />
+                                        <span>Abmelden</span>
+                                    </button>
+                                </DropdownMenu.Item>
+                            </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                    </DropdownMenu.Root>
+                </div>
             </div>
         );
     }

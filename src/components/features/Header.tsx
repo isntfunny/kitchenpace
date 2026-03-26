@@ -18,6 +18,7 @@ import { SmartImage } from '../atoms/SmartImage';
 import { HeaderAuth } from './HeaderAuth';
 import { MenuSection, type NavLinkItem as MenuNavLinkItem } from './HeaderMenuPanel';
 import { HeaderSearch } from './HeaderSearch';
+import { MobileSearch } from './MobileSearch';
 import { RecipeTabs } from './RecipeTabs';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -441,7 +442,7 @@ export function Header() {
                     />
 
                     <div className={css({ flex: '1', minWidth: 0 })}>
-                        <HeaderSearch />
+                        <MobileSearch />
                     </div>
 
                     <HeaderAuth />

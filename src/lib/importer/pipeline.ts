@@ -8,6 +8,8 @@ import type { PrismaClient } from '@prisma/client';
 
 import { createIngredient, findOrCreateUnit } from '@app/components/recipe/ingredientActions';
 import { computeFlowLayout } from '@app/lib/flow-layout';
+import { approvedKey } from '@app/lib/s3/keys';
+import { moveObject } from '@app/lib/s3/operations';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
 
 import { importRecipeFromMarkdown } from './openai-client';
@@ -277,6 +279,21 @@ export async function saveImportedRecipe(
             },
         },
     });
+
+    // Move image from uploads/ to approved/ — imported recipes skip moderation
+    if (imageKey) {
+        const ext = imageKey.split('.').pop() ?? 'jpg';
+        const destKey = approvedKey('recipe', recipe.id, ext);
+        try {
+            await moveObject(imageKey, destKey);
+            await db.recipe.update({
+                where: { id: recipe.id },
+                data: { imageKey: destKey, moderationStatus: 'AUTO_APPROVED' },
+            });
+        } catch (err: unknown) {
+            console.warn('[saveImportedRecipe] Failed to move image to approved/', err);
+        }
+    }
 
     if (data.categoryIds?.length) {
         const categories = await db.category.findMany({

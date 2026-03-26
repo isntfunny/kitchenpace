@@ -406,6 +406,84 @@ program
         }
     });
 
+program
+    .command('fix-images')
+    .description('Move recipe images from uploads/ to approved/ and set moderationStatus')
+    .option('--dry-run', 'Show what would be done without making changes')
+    .action(async (options: { dryRun?: boolean }) => {
+        const { approvedKey } = await import('@app/lib/s3/keys');
+        const { moveObject } = await import('@app/lib/s3/operations');
+        const chalk = (await import('chalk')).default;
+        const ora = (await import('ora')).default;
+
+        await db.$connect();
+        try {
+            const spinner = ora('Finding recipes with uploads/ images...').start();
+            const recipes = await db.recipe.findMany({
+                where: { imageKey: { startsWith: 'uploads/' } },
+                select: { id: true, title: true, imageKey: true },
+            });
+            spinner.succeed(`Found ${recipes.length} recipes with uploads/ images`);
+
+            if (recipes.length === 0) return;
+
+            let moved = 0;
+            let failed = 0;
+
+            for (const recipe of recipes) {
+                const ext = recipe.imageKey!.split('.').pop() ?? 'jpg';
+                const destKey = approvedKey('recipe', recipe.id, ext);
+
+                if (options.dryRun) {
+                    console.log(chalk.dim(`  [dry-run] ${recipe.imageKey} → ${destKey}`));
+                    moved++;
+                    continue;
+                }
+
+                try {
+                    await moveObject(recipe.imageKey!, destKey);
+                    await db.recipe.update({
+                        where: { id: recipe.id },
+                        data: { imageKey: destKey, moderationStatus: 'AUTO_APPROVED' },
+                    });
+                    moved++;
+                } catch (err) {
+                    console.error(chalk.red(`  ✗ ${recipe.title}: ${err}`));
+                    failed++;
+                }
+
+                if (moved % 50 === 0) {
+                    console.log(chalk.dim(`  ... ${moved}/${recipes.length} moved`));
+                }
+            }
+
+            console.log();
+            console.log(
+                chalk.green.bold(
+                    `  ${moved} images ${options.dryRun ? 'would be ' : ''}moved to approved/`,
+                ),
+            );
+            if (failed > 0) {
+                console.log(chalk.red(`  ${failed} failed`));
+            }
+
+            // Clear thumbnail cache — old thumbs are keyed by uploads/ hash
+            if (!options.dryRun && moved > 0) {
+                const { listByPrefix, deleteObject } = await import('@app/lib/s3/operations');
+                const thumbSpinner = ora('Clearing thumbnail cache...').start();
+                const thumbKeys = await listByPrefix('thumbs/');
+                let deleted = 0;
+                for (const key of thumbKeys) {
+                    await deleteObject(key);
+                    deleted++;
+                }
+                thumbSpinner.succeed(`Cleared ${deleted} cached thumbnails`);
+            }
+        } finally {
+            await db.$disconnect();
+        }
+    });
+
 registerImportCommand(program);
 registerSeedCommand(program);
 registerRemoteCommand(program);

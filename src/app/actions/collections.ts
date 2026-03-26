@@ -351,11 +351,13 @@ async function fetchPublishedCollections(
     return collections.map(toCollectionCardData);
 }
 
-export const fetchPopularCollections = (limit = 8) =>
-    fetchPublishedCollections({ viewCount: 'desc' }, limit);
+export async function fetchPopularCollections(limit = 8) {
+    return fetchPublishedCollections({ viewCount: 'desc' }, limit);
+}
 
-export const fetchNewestCollections = (limit = 8) =>
-    fetchPublishedCollections({ createdAt: 'desc' }, limit);
+export async function fetchNewestCollections(limit = 8) {
+    return fetchPublishedCollections({ createdAt: 'desc' }, limit);
+}
 
 export async function fetchUserCollections(userId: string): Promise<CollectionCardData[]> {
     const collections = await prisma.collection.findMany({

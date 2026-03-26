@@ -16,6 +16,9 @@ export interface RecipeCardData {
     description?: string;
     stepCount?: number;
     difficulty?: string;
+    cookCount?: number;
+    ratingCount?: number;
+    viewCount?: number;
 }
 
 export type RecipeWithCategory = Prisma.RecipeGetPayload<{
@@ -51,5 +54,8 @@ export function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
                 : recipe.difficulty === 'HARD'
                   ? 'Schwer'
                   : 'Mittel',
+        cookCount: recipe.cookCount ?? undefined,
+        ratingCount: recipe.ratingCount ?? undefined,
+        viewCount: recipe.viewCount ?? undefined,
     };
 }

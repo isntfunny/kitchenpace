@@ -127,6 +127,11 @@ export async function approveContent(queueId: string, reviewNote?: string) {
         await approveStepImage(queueItem.contentId);
     } else if (queueItem.contentType === 'profile') {
         await approveProfileImage(queueItem.authorId, queueItem.contentId);
+    } else if (queueItem.contentType === 'collection') {
+        await prisma.collection.update({
+            where: { id: queueItem.contentId },
+            data: { moderationStatus: 'APPROVED', moderationNote: null, published: true },
+        });
     }
 
     // Write audit log
@@ -219,6 +224,11 @@ export async function rejectContent(queueId: string, reviewNote: string) {
         await rejectStepImage(queueItem.contentId);
     } else if (queueItem.contentType === 'profile') {
         await rejectProfileImage(queueItem.contentId);
+    } else if (queueItem.contentType === 'collection') {
+        await prisma.collection.update({
+            where: { id: queueItem.contentId },
+            data: { moderationStatus: 'REJECTED', moderationNote: reviewNote, published: false },
+        });
     }
 
     // Write audit log

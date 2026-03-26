@@ -1,7 +1,16 @@
 'use client';
 
 import type { ModerationQueue, User } from '@prisma/client';
-import { BookOpen, Check, ChevronRight, Eye, Image, MessageSquare, UserIcon } from 'lucide-react';
+import {
+    BookOpen,
+    Check,
+    ChevronRight,
+    Eye,
+    Image,
+    Library,
+    MessageSquare,
+    UserIcon,
+} from 'lucide-react';
 
 import { formatTimeAgo } from '@app/lib/activity-utils';
 import { getThumbnailUrl, extractKeyFromUrl } from '@app/lib/thumbnail-client';
@@ -28,6 +37,7 @@ export const TYPE_LABELS: Record<string, { label: string; icon: typeof BookOpen 
     profile: { label: 'Profil', icon: UserIcon },
     cook_image: { label: 'Bild', icon: Image },
     step_image: { label: 'Schrittbild', icon: Image },
+    collection: { label: 'Sammlung', icon: Library },
 };
 
 export function ScoreBadge({ score, size = 'sm' }: { score: number; size?: 'sm' | 'lg' }) {

@@ -25,6 +25,7 @@ function getModerationNotification(
         contentType === 'step_image' ||
         contentType === 'profile';
     const isRecipe = contentType === 'recipe';
+    const isCollection = contentType === 'collection';
 
     if (decision === 'AUTO_APPROVED') {
         if (isImage) return { title: 'Bild freigegeben', message: 'Dein Bild ist jetzt sichtbar!' };
@@ -32,6 +33,11 @@ function getModerationNotification(
             return {
                 title: 'Rezept freigegeben',
                 message: 'Dein Rezept ist jetzt öffentlich sichtbar!',
+            };
+        if (isCollection)
+            return {
+                title: 'Sammlung freigegeben',
+                message: 'Deine Sammlung ist jetzt öffentlich sichtbar!',
             };
         return { title: 'Inhalt freigegeben', message: 'Dein Inhalt ist jetzt sichtbar!' };
     }
@@ -46,6 +52,11 @@ function getModerationNotification(
             return {
                 title: 'Rezept wird geprüft',
                 message: 'Wir prüfen dein Rezept noch – es wird bald sichtbar.',
+            };
+        if (isCollection)
+            return {
+                title: 'Sammlung wird geprüft',
+                message: 'Wir prüfen deine Sammlung noch – sie wird bald sichtbar.',
             };
         return {
             title: 'Inhalt wird geprüft',
@@ -63,6 +74,11 @@ function getModerationNotification(
         return {
             title: 'Rezept abgelehnt',
             message: 'Dein Rezept entspricht leider nicht unseren Richtlinien.',
+        };
+    if (isCollection)
+        return {
+            title: 'Sammlung abgelehnt',
+            message: 'Deine Sammlung entspricht leider nicht unseren Richtlinien.',
         };
     return {
         title: 'Inhalt abgelehnt',

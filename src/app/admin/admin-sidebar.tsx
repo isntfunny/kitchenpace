@@ -10,6 +10,7 @@ import {
     Flag,
     LayoutDashboard,
     LayoutList,
+    Library,
     Menu,
     Scale,
     ShieldAlert,
@@ -100,6 +101,12 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'Inhalte',
         links: [
             { href: '/admin/recipes', icon: BookOpen, label: 'Rezepte', minRole: 'admin' },
+            {
+                href: '/admin/collections',
+                icon: Library,
+                label: 'Sammlungen',
+                minRole: 'moderator',
+            },
             { href: '/admin/ingredients', icon: Carrot, label: 'Zutaten', minRole: 'moderator' },
             { href: '/admin/units', icon: Scale, label: 'Einheiten', minRole: 'moderator' },
             { href: '/admin/tags', icon: Tag, label: 'Tags', minRole: 'admin' },

@@ -41,6 +41,12 @@ export async function deleteRecipe(id: string) {
         await addSyncRecipeJob(id).catch((err) =>
             console.error('[OpenSearch] Failed to queue sync for admin archive:', err),
         );
+        // Notify collection authors if this recipe was referenced
+        const { handleOrphanedRecipeInCollections } =
+            await import('@app/lib/collections/sync-recipes');
+        await handleOrphanedRecipeInCollections(id).catch((err) =>
+            console.error('[collections] Failed to handle orphaned recipe:', err),
+        );
         revalidatePath('/admin/recipes');
     } catch (error) {
         if (error instanceof Error && error.message.includes('Record to update not found')) {

@@ -246,9 +246,17 @@ Bei Set-Generation (Tier 3 Cache-Miss) werden nur Varianten im angeforderten For
 
 Bleibt identisch. Cache-Key ist weiterhin der S3 Thumb-Key (`thumbs/{hash}/{aspect}/{width}.{format}`), der jetzt das Format enthaelt.
 
-## Placeholder
+## Placeholder-Bereinigung
 
-Bleibt identisch. Wenn Entity nicht gefunden oder Key nicht aufloesbar, wird `recipe_placeholder.jpg` ausgeliefert.
+Aktuell wird `recipe_placeholder.jpg` an mehreren Stellen direkt als statisches Asset referenziert, statt ueber die Thumbnail-Route zu gehen. Diese Stellen werden bereinigt:
+
+| Datei                                 | Aktuell                                                         | Neu                                                                          |
+| ------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `src/components/atoms/SmartImage.tsx` | `RECIPE_PLACEHOLDER = '/recipe_placeholder.jpg'` hartcodiert    | Placeholder ueber Thumbnail-Route oder CSS-Fallback (wie Avatar-Komponente)  |
+| `src/lib/thumbnail-client.ts`         | `return '/placeholder.jpg'` bei fehlendem Key                   | Leerer String oder `null` — Aufrufer entscheidet ueber Fallback              |
+| `src/app/api/thumbnail/route.ts`      | `readFile('public/recipe_placeholder.jpg')` als Server-Fallback | Bleibt — serverseitig ist das korrekt (kein S3 Key → Placeholder ausliefern) |
+
+Die statische Datei `public/recipe_placeholder.jpg` bleibt bestehen (wird vom Server-Fallback benoetigt), aber Client-Komponenten referenzieren sie nicht mehr direkt.
 
 ## Betroffene Dateien
 

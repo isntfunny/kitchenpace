@@ -1,16 +1,6 @@
 'use client';
 
-import {
-    Activity,
-    Bookmark,
-    ChefHat,
-    Clock,
-    Flame,
-    Star,
-    TrendingUp,
-    Utensils,
-    type LucideIcon,
-} from 'lucide-react';
+import { Bookmark, ChefHat, Clock, Flame, Star, Utensils, type LucideIcon } from 'lucide-react';
 import * as icons from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
@@ -18,13 +8,18 @@ import { createElement } from 'react';
 
 import type { ActivityFeedItem } from '@app/app/actions/community';
 import type { RecipeCardData } from '@app/app/actions/recipes';
-import { ActivityList } from '@app/components/features/ActivitySidebar';
 import { HorizontalRecipeScroll } from '@app/components/features/HorizontalRecipeScroll';
+import type { TermFacet } from '@app/lib/recipeSearchTypes';
 
 import { css } from 'styled-system/css';
-import { flex, grid } from 'styled-system/patterns';
+import { flex } from 'styled-system/patterns';
 
-import type { CategoryPageData } from '../../actions/category';
+import type { CategoryAggregateStats, CategoryPageData } from '../../actions/category';
+
+import { CategorySidebar } from './components/CategorySidebar';
+import { CommunityPulse } from './components/CommunityPulse';
+import { FeaturedTrio } from './components/FeaturedTrio';
+import { RandomRecipeSpotlight } from './components/RandomRecipeSpotlight';
 
 // ─── Icon resolver ───────────────────────────────────────────────────────────
 
@@ -122,11 +117,13 @@ function RecipeSection({
     icon: Icon,
     recipes,
     accentColor,
+    cardVariant,
 }: {
     title: string;
     icon: LucideIcon;
     recipes: RecipeCardData[];
     accentColor: string;
+    cardVariant?: 'compact' | 'default';
 }) {
     if (recipes.length === 0) return null;
 
@@ -170,7 +167,11 @@ function RecipeSection({
                     {title}
                 </h2>
             </div>
-            <HorizontalRecipeScroll recipes={recipes} hideCategory={true} />
+            <HorizontalRecipeScroll
+                recipes={recipes}
+                hideCategory={true}
+                cardVariant={cardVariant}
+            />
         </motion.div>
     );
 }
@@ -182,9 +183,11 @@ interface CategoryLandingProps {
     newest: RecipeCardData[];
     topRated: RecipeCardData[];
     mostCooked: RecipeCardData[];
-    quick: RecipeCardData[];
-    popular: RecipeCardData[];
     activity: ActivityFeedItem[];
+    topByViews: RecipeCardData[];
+    difficultyStats: Record<string, number>;
+    aggregateStats: CategoryAggregateStats;
+    facets: { tags: TermFacet; ingredients: TermFacet; difficulties: TermFacet };
 }
 
 export function CategoryLanding({
@@ -192,9 +195,11 @@ export function CategoryLanding({
     newest,
     topRated,
     mostCooked,
-    quick,
-    popular,
     activity,
+    topByViews,
+    difficultyStats,
+    aggregateStats,
+    facets,
 }: CategoryLandingProps) {
     const color = category.color;
 
@@ -364,13 +369,16 @@ export function CategoryLanding({
                 })}
             >
                 <div
-                    className={grid({
-                        columns: { base: 1, lg: 12 },
+                    className={css({
+                        display: 'grid',
+                        gridTemplateColumns: { base: '1fr', lg: '1fr 220px' },
                         gap: '4',
                     })}
                 >
-                    {/* Left column — recipe sections */}
-                    <div className={css({ lg: { gridColumn: 'span 8' } })}>
+                    {/* Main content */}
+                    <div className={flex({ direction: 'column', gap: '5' })}>
+                        <FeaturedTrio recipes={mostCooked} categoryColor={category.color} />
+
                         <RecipeSection
                             title="Neueste Rezepte"
                             icon={Clock}
@@ -379,108 +387,53 @@ export function CategoryLanding({
                         />
 
                         <RecipeSection
-                            title="Am beliebtesten"
-                            icon={TrendingUp}
-                            recipes={popular}
-                            accentColor={color}
-                        />
-
-                        <RecipeSection
                             title="Bestbewertet"
                             icon={Star}
                             recipes={topRated}
                             accentColor={color}
+                            cardVariant="default"
                         />
 
-                        <RecipeSection
-                            title="Am meisten zubereitet"
-                            icon={Flame}
-                            recipes={mostCooked}
-                            accentColor={color}
-                        />
+                        <RandomRecipeSpotlight categorySlug={category.slug} />
+                        <CommunityPulse activities={activity} />
 
-                        <RecipeSection
-                            title="Schnell & einfach"
-                            icon={Clock}
-                            recipes={quick}
-                            accentColor={color}
-                        />
+                        {/* CTA button */}
+                        <Link
+                            href={`/recipes?category=${category.slug}`}
+                            className={css({
+                                display: 'block',
+                                width: '100%',
+                                py: '3',
+                                textAlign: 'center',
+                                fontSize: 'sm',
+                                fontWeight: '600',
+                                color: 'white',
+                                border: 'none',
+                                cursor: 'pointer',
+                                borderRadius: 'xl',
+                                textDecoration: 'none',
+                                transition: 'all 200ms ease',
+                                _hover: {
+                                    transform: 'translateY(-2px)',
+                                    opacity: 0.9,
+                                },
+                            })}
+                            style={{ backgroundColor: color }}
+                        >
+                            Alle {category.recipeCount} {category.name}-Rezepte durchsuchen
+                        </Link>
                     </div>
 
-                    {/* Right column — activity sidebar */}
-                    <div className={css({ lg: { gridColumn: 'span 4' } })}>
-                        {activity.length > 0 && (
-                            <motion.aside
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.4, duration: 0.5 }}
-                                className={css({
-                                    p: '5',
-                                    borderRadius: '2xl',
-                                    bg: 'surface',
-                                    boxShadow: 'shadow.medium',
-                                    height: 'fit-content',
-                                    position: 'sticky',
-                                    top: '100px',
-                                })}
-                            >
-                                <div className={css({ mb: '4' })}>
-                                    <h3
-                                        className={css({
-                                            fontFamily: 'heading',
-                                            fontSize: 'xl',
-                                            fontWeight: '600',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                        })}
-                                        style={{ color }}
-                                    >
-                                        <Activity size={18} />
-                                        <span>Aktivität</span>
-                                    </h3>
-                                    <p
-                                        className={css({
-                                            fontSize: '0.75rem',
-                                            color: 'text-muted',
-                                        })}
-                                    >
-                                        Was gerade in {category.name} passiert
-                                    </p>
-                                </div>
-
-                                <ActivityList activities={activity} />
-                            </motion.aside>
-                        )}
-
-                        {/* Browse all link */}
-                        <div className={css({ mt: '4' })}>
-                            <Link
-                                href={`/recipes?category=${category.slug}`}
-                                className={css({
-                                    display: 'block',
-                                    width: '100%',
-                                    py: '3',
-                                    textAlign: 'center',
-                                    fontSize: 'sm',
-                                    fontWeight: '600',
-                                    color: 'white',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    borderRadius: 'xl',
-                                    textDecoration: 'none',
-                                    transition: 'all 200ms ease',
-                                    _hover: {
-                                        transform: 'translateY(-2px)',
-                                        opacity: 0.9,
-                                    },
-                                })}
-                                style={{ backgroundColor: color }}
-                            >
-                                Alle {category.name}-Rezepte durchsuchen
-                            </Link>
-                        </div>
-                    </div>
+                    {/* Sidebar */}
+                    <CategorySidebar
+                        difficultyStats={difficultyStats}
+                        aggregateStats={aggregateStats}
+                        topByViews={topByViews}
+                        tags={facets.tags}
+                        ingredients={facets.ingredients}
+                        categorySlug={category.slug}
+                        topIngredient={facets.ingredients[0]?.key ?? null}
+                    />
                 </div>
             </main>
         </div>

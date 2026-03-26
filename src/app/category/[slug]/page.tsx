@@ -3,17 +3,23 @@ import { notFound } from 'next/navigation';
 
 import {
     fetchCategoryActivity,
+    fetchCategoryAggregateStats,
     fetchCategoryBySlug,
+    fetchCategoryDifficultyStats,
     fetchCategoryMostCooked,
     fetchCategoryNewest,
-    fetchCategoryPopular,
-    fetchCategoryQuickRecipes,
+    fetchCategoryTopByViews,
     fetchCategoryTopRated,
+    fetchActiveSeasonalRecipes,
 } from '@app/app/actions/category';
+import type { RecipeCardData } from '@app/app/actions/recipes';
 import { PageShell } from '@app/components/layouts/PageShell';
+import { detectContext } from '@app/lib/fits-now/context';
+import { fetchCategoryFacets } from '@app/lib/recipeSearch';
 import { APP_URL } from '@app/lib/url';
 
 import { CategoryLanding } from './CategoryLanding';
+import { SeasonalTeaserBar } from './components/SeasonalTeaserBar';
 
 export const revalidate = 60;
 
@@ -63,17 +69,42 @@ export default async function CategoryPage({ params }: Props) {
 
     if (!category) notFound();
 
-    const [newest, topRated, mostCooked, quick, popular, activity] = await Promise.allSettled([
-        fetchCategoryNewest(category.id),
-        fetchCategoryTopRated(category.id),
-        fetchCategoryMostCooked(category.id),
-        fetchCategoryQuickRecipes(category.id),
-        fetchCategoryPopular(category.id),
-        fetchCategoryActivity(category.id),
+    const results = await Promise.allSettled([
+        fetchCategoryNewest(category.id), // 0
+        fetchCategoryTopRated(category.id), // 1
+        fetchCategoryMostCooked(category.id, 3), // 2 - take 3
+        fetchCategoryActivity(category.id), // 3
+        fetchCategoryTopByViews(category.id, 5), // 4
+        fetchCategoryDifficultyStats(category.id), // 5
+        fetchCategoryAggregateStats(category.id), // 6
+        fetchCategoryFacets(category.slug), // 7 - uses slug
+        detectContext(), // 8
     ]);
 
     const safe = <T,>(r: PromiseSettledResult<T>, fallback: T): T =>
         r.status === 'fulfilled' ? r.value : fallback;
+
+    const newest = safe(results[0], []);
+    const topRated = safe(results[1], []);
+    const mostCooked = safe(results[2], []);
+    const activity = safe(results[3], []);
+    const topByViews = safe(results[4], []);
+    const difficultyStats = safe(results[5], {});
+    const aggregateStats = safe(results[6], {
+        avgTime: null,
+        avgCalories: null,
+        caloriesCoverage: 0,
+        fastestRecipe: null,
+        mostPopularRecipe: null,
+    });
+    const facets = safe(results[7], { tags: [], ingredients: [], difficulties: [] });
+    const detectResult = safe(results[8], { context: null as any, activePeriods: [] });
+
+    const activePeriod = detectResult.activePeriods[0]?.filterSet ?? null;
+    let seasonalRecipes: RecipeCardData[] = [];
+    if (activePeriod) {
+        seasonalRecipes = await fetchActiveSeasonalRecipes(category.id, activePeriod, 4);
+    }
 
     const breadcrumbJsonLd = {
         '@context': 'https://schema.org',
@@ -90,21 +121,32 @@ export default async function CategoryPage({ params }: Props) {
     };
 
     return (
-        <PageShell>
-            <script
-                type="application/ld+json"
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-            />
-            <CategoryLanding
-                category={category}
-                newest={safe(newest, [])}
-                topRated={safe(topRated, [])}
-                mostCooked={safe(mostCooked, [])}
-                quick={safe(quick, [])}
-                popular={safe(popular, [])}
-                activity={safe(activity, [])}
-            />
-        </PageShell>
+        <>
+            {activePeriod && seasonalRecipes.length > 0 && (
+                <SeasonalTeaserBar
+                    period={activePeriod}
+                    recipes={seasonalRecipes}
+                    categorySlug={category.slug}
+                />
+            )}
+            <PageShell>
+                <script
+                    type="application/ld+json"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+                />
+                <CategoryLanding
+                    category={category}
+                    newest={newest}
+                    topRated={topRated}
+                    mostCooked={mostCooked}
+                    activity={activity}
+                    topByViews={topByViews}
+                    difficultyStats={difficultyStats}
+                    aggregateStats={aggregateStats}
+                    facets={facets}
+                />
+            </PageShell>
+        </>
     );
 }

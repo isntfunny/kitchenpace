@@ -2,7 +2,7 @@ import type { RecipeCardData } from '@app/app/actions/recipes';
 import { cosineSimilarity } from '@app/lib/embeddings/embedding-service';
 import { RECIPE_FILTER_DEFAULT_LIMIT } from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
-import type { RecipeSearchFacets, RecipeSearchMeta } from '@app/lib/recipeSearchTypes';
+import type { RecipeSearchFacets, RecipeSearchMeta, TermFacet } from '@app/lib/recipeSearchTypes';
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
 import { createLogger } from '@shared/logger';
 import {
@@ -355,5 +355,37 @@ export async function queryRecipes(
     return {
         data,
         meta: { total: isTasteSort ? tasteTotal : total, page, limit, facets },
+    };
+}
+
+export async function fetchCategoryFacets(
+    categorySlug: string,
+    tagLimit = 10,
+    ingredientLimit = 10,
+): Promise<{ tags: TermFacet; ingredients: TermFacet; difficulties: TermFacet }> {
+    const { body } = await opensearchClient.search({
+        index: OPENSEARCH_INDEX,
+        body: {
+            size: 0,
+            query: {
+                bool: {
+                    filter: [{ term: { status: 'PUBLISHED' } }, { term: { categorySlug } }],
+                },
+            },
+            aggs: {
+                tags: { terms: { field: 'tags', size: tagLimit } },
+                ingredients: { terms: { field: 'ingredients', size: ingredientLimit } },
+                difficulties: { terms: { field: 'difficulty', size: 5 } },
+            },
+        },
+    });
+
+    const aggs = body.aggregations as
+        | Record<string, { buckets?: Array<{ key: string; doc_count: number }> }>
+        | undefined;
+    return {
+        tags: buildTermsAggregation(aggs?.tags?.buckets),
+        ingredients: buildTermsAggregation(aggs?.ingredients?.buckets),
+        difficulties: buildTermsAggregation(aggs?.difficulties?.buckets),
     };
 }

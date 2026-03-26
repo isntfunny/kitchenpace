@@ -78,6 +78,22 @@ enum ActivityType {
   MEAL_PLAN_CREATED
   SHOPPING_LIST_CREATED
   STREAM_STARTED
+  COLLECTION_CREATED
+  COLLECTION_FAVORITED
+}
+
+enum CollectionTemplate {
+  SIDEBAR
+  GRID_BELOW
+  HERO_PICKS
+  INLINE
+}
+
+enum CollectionRecipeRole {
+  HERO
+  SIDEBAR
+  INLINE
+  GRID
 }
 
 enum PaletteColor {
@@ -222,6 +238,8 @@ model User {
   trophyPoints              Int                       @default(0)
   twitchStream              TwitchStream?
   plannedStreams             PlannedStream[]
+  collections               Collection[]
+  collectionFavorites       CollectionFavorite[]
 }
 
 model UserTutorialCompletion {
@@ -354,6 +372,7 @@ model Recipe {
   stepImages                                                                 RecipeStepImage[]
   embedding                                                                  RecipeEmbedding?
   plannedStreams                                                              PlannedStream[]
+  collectionRecipes                                                           CollectionRecipe[]
 
   @@index([authorId])
   @@index([difficulty])
@@ -627,6 +646,7 @@ model Category {
 
   recipes                                                                       RecipeCategory[]
   filterSets                                                                    FilterSetCategory[]
+  collectionCategories                                                          CollectionCategory[]
 }
 
 model RecipeCategory {
@@ -646,9 +666,10 @@ model Tag {
   id         String           @id @default(cuid())
   name       String           @unique
   slug       String           @unique
-  recipes    RecipeTag[]
-  filterSets FilterSetTag[]
-  createdAt  DateTime         @default(now())
+  recipes        RecipeTag[]
+  filterSets     FilterSetTag[]
+  collectionTags CollectionTag[]
+  createdAt      DateTime         @default(now())
 }
 
 model RecipeTag {
@@ -869,6 +890,7 @@ model UserViewHistory {
   recipeId String
   viewedAt DateTime  @default(now())
   pinned   Boolean   @default(false)
+  source   String?   // e.g. "collection:cuid123", "category:pasta", "search"
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
@@ -1005,6 +1027,101 @@ model Report {
   @@unique([reporterId, contentType, contentId])
   @@index([contentType,                                                         contentId])
   @@index([resolved])
+}
+
+// ============================================
+// CURATED COLLECTIONS
+// ============================================
+
+model Collection {
+  id               String              @id @default(cuid())
+  title            String
+  slug             String              @unique
+  description      String?
+  coverImageKey    String?
+  template         CollectionTemplate  @default(INLINE)
+  blocks           Json?
+  published        Boolean             @default(false)
+  viewCount        Int                 @default(0)
+
+  // Content moderation
+  moderationStatus ModerationStatus    @default(PENDING)
+  moderationNote   String?
+  aiModerationScore Float?
+
+  authorId         String
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  // Relations
+  author           User                @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  recipes          CollectionRecipe[]
+  tags             CollectionTag[]
+  categories       CollectionCategory[]
+  favorites        CollectionFavorite[]
+  views            CollectionView[]
+
+  @@index([authorId])
+  @@index([slug])
+  @@index([published, moderationStatus])
+  @@index([createdAt])
+  @@index([viewCount])
+}
+
+model CollectionRecipe {
+  id           String               @id @default(cuid())
+  collectionId String
+  recipeId     String
+  position     Int                  @default(0)
+  role         CollectionRecipeRole @default(INLINE)
+
+  collection   Collection           @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  recipe       Recipe               @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, recipeId])
+  @@index([recipeId])
+}
+
+model CollectionFavorite {
+  id           String     @id @default(cuid())
+  collectionId String
+  userId       String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([collectionId, userId])
+  @@index([userId])
+}
+
+model CollectionView {
+  id           String     @id @default(cuid())
+  collectionId String
+  userId       String?
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@index([collectionId])
+}
+
+model CollectionTag {
+  collectionId String
+  tagId        String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  tag          Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, tagId])
+  @@index([tagId])
+}
+
+model CollectionCategory {
+  collectionId String
+  categoryId   String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  category     Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, categoryId])
+  @@index([categoryId])
 }
 
 // ============================================

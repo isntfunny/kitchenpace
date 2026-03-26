@@ -5,7 +5,7 @@
 
 import dagre from 'dagre';
 
-export const NODE_WIDTH = 240;
+const NODE_WIDTH = 240;
 export const NODE_HEIGHT_BASE = 160;
 export const NODE_HEIGHT_WITH_IMAGE = 240;
 

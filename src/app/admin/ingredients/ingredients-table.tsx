@@ -100,11 +100,7 @@ export { IngredientsDashboard as IngredientsTable };
 // Main Component
 // ---------------------------------------------------------------------------
 
-export function IngredientsDashboard({
-    ingredients,
-    categories,
-    units,
-}: IngredientsDashboardProps) {
+function IngredientsDashboard({ ingredients, categories, units }: IngredientsDashboardProps) {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategoryId, setFilterCategoryId] = useState<string | null>(null);

@@ -42,7 +42,7 @@ export interface IngredientMatch {
  * via OpenSearch (same fuzzy/wildcard search as the ingredient manager).
  * Does NOT create anything. Safe to call at preview/display time.
  */
-export async function matchIngredient(name: string): Promise<IngredientMatch> {
+async function matchIngredient(name: string): Promise<IngredientMatch> {
     const { searchIngredientsByName } = await import('@app/lib/ingredients/search');
 
     const { bestMatch, matchType } = await searchIngredientsByName(name.trim());
@@ -92,14 +92,6 @@ export async function findOrCreateUnit(unitName: string): Promise<string> {
     ingLog.warn('unknown unit, falling back to Stk', { input: trimmed });
     const fallback = await prisma.unit.findUnique({ where: { shortName: 'Stk' } });
     return fallback!.id;
-}
-
-/**
- * Resolve a unit shortName/longName to a Unit ID.
- * Batch version — resolves all names, never creates new units.
- */
-export async function resolveUnitIds(unitNames: string[]): Promise<string[]> {
-    return Promise.all(unitNames.map((n) => findOrCreateUnit(n)));
 }
 
 export async function createIngredient(name: string, _category?: string, _units: string[] = []) {

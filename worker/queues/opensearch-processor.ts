@@ -27,9 +27,9 @@ import {
     SyncTagsJob,
 } from './types';
 
-export const WATERMARK_KEY_RECIPES = 'opensearch:watermark:recipes';
-export const WATERMARK_KEY_INGREDIENTS = 'opensearch:watermark:ingredients';
-export const WATERMARK_KEY_TAGS = 'opensearch:watermark:tags';
+const WATERMARK_KEY_RECIPES = 'opensearch:watermark:recipes';
+const WATERMARK_KEY_INGREDIENTS = 'opensearch:watermark:ingredients';
+const WATERMARK_KEY_TAGS = 'opensearch:watermark:tags';
 
 /** Max documents per bulk request (each document = 2 bulk entries: action + body) */
 const BULK_DOCS_PER_CHUNK = 1000;

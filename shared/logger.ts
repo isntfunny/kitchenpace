@@ -79,7 +79,7 @@ if (process.env.SEQ_URL && process.env.SEQ_API_KEY) {
     );
 }
 
-export const logger = winston.createLogger({
+const logger = winston.createLogger({
     level: 'debug',
     format: winston.format.combine(
         winston.format.errors({ stack: true }),

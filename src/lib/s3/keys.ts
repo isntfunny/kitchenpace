@@ -52,12 +52,12 @@ export function trashKeyFrom(uploadKey: string): string {
 // ---------------------------------------------------------------------------
 
 /** Deterministic 12-char hex hash of an S3 key */
-export function keyHash(s3Key: string): string {
+function keyHash(s3Key: string): string {
     return createHash('sha256').update(s3Key).digest('hex').slice(0, 12);
 }
 
 /** Aspect ratio string safe for S3 paths (e.g. '16:9' → '16-9') */
-export function aspectSlug(aspect: AspectRatio): string {
+function aspectSlug(aspect: AspectRatio): string {
     return aspect.replace(':', '-');
 }
 
@@ -88,24 +88,6 @@ export function parsePrefix(key: string): KeyPrefix {
     if (key.startsWith('trash/')) return 'trash';
     if (key.startsWith('thumbs/')) return 'thumbs';
     return 'legacy'; // old keys like recipes/, steps/, profiles/
-}
-
-/** Extract S3 key from a full URL, or return key as-is if already a key */
-export function resolveKey(keyOrUrl: string | null | undefined): string | null {
-    if (!keyOrUrl) return null;
-
-    // Already a key (no protocol)
-    if (!keyOrUrl.includes('://')) return keyOrUrl;
-
-    const bucket = process.env.S3_BUCKET || 'kitchenpace';
-
-    // Try to extract key after bucket name
-    if (keyOrUrl.includes(`/${bucket}/`)) {
-        const parts = keyOrUrl.split(`/${bucket}/`);
-        return parts[1] || null;
-    }
-
-    return null;
 }
 
 // ---------------------------------------------------------------------------

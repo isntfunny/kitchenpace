@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { headers } from 'next/headers';
 import { UAParser } from 'ua-parser-js';
 
 export function parseDeviceLabel(userAgent: string | null): string {
@@ -11,23 +10,4 @@ export function parseDeviceLabel(userAgent: string | null): string {
     const os = parser.getOS().name ?? '';
 
     return os ? `${browser} auf ${os}` : browser;
-}
-
-export async function getRequestMetadata(): Promise<{
-    userAgent: string | null;
-    deviceLabel: string;
-    ipAddress: string | null;
-}> {
-    const headersList = await headers();
-    const userAgent = headersList.get('user-agent');
-    const ipAddress =
-        headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-        headersList.get('x-real-ip') ??
-        null;
-
-    return {
-        userAgent,
-        deviceLabel: parseDeviceLabel(userAgent),
-        ipAddress,
-    };
 }

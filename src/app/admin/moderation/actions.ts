@@ -1,6 +1,5 @@
 'use server';
 
-import { ModerationStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 import { publishAdminInboxRemoved } from '@app/lib/admin-inbox';
@@ -35,36 +34,6 @@ async function requireModerator() {
     }
 
     return session.user.id;
-}
-
-export async function fetchModerationQueue(status?: ModerationStatus) {
-    await requireModerator();
-
-    return prisma.moderationQueue.findMany({
-        where: status ? { status } : { status: 'PENDING' },
-        orderBy: { createdAt: 'asc' },
-        include: {
-            author: {
-                select: { id: true, name: true, email: true },
-            },
-        },
-        take: 100,
-    });
-}
-
-export async function fetchReports(resolved?: boolean) {
-    await requireModerator();
-
-    return prisma.report.findMany({
-        where: resolved !== undefined ? { resolved } : { resolved: false },
-        orderBy: { createdAt: 'desc' },
-        include: {
-            reporter: {
-                select: { id: true, name: true, email: true },
-            },
-        },
-        take: 100,
-    });
 }
 
 export async function approveContent(queueId: string, reviewNote?: string) {
@@ -289,15 +258,4 @@ export async function resolveReport(reportId: string) {
     });
 
     revalidatePath('/admin/moderation');
-}
-
-export async function getModerationStats() {
-    await requireModerator();
-
-    const [pendingCount, reportCount] = await Promise.all([
-        prisma.moderationQueue.count({ where: { status: 'PENDING' } }),
-        prisma.report.count({ where: { resolved: false } }),
-    ]);
-
-    return { pendingCount, reportCount };
 }

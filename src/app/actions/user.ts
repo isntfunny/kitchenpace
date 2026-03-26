@@ -1,6 +1,5 @@
 'use server';
 
-import { getServerAuthSession } from '@app/lib/auth';
 import { prisma } from '@shared/prisma';
 
 export interface UserStats {
@@ -27,15 +26,6 @@ export async function fetchUserStats(userId: string): Promise<UserStats> {
         cookedCount,
         ratingCount,
     };
-}
-
-export async function getCurrentUserStats(): Promise<UserStats | null> {
-    const session = await getServerAuthSession('fetchUserStats');
-    if (!session?.user?.id) {
-        return null;
-    }
-
-    return fetchUserStats(session.user.id);
 }
 
 export interface DraftRecipe {

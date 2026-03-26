@@ -1,11 +1,3 @@
-export function suggestComplete(): { name: string; description: string }[] {
-    return [
-        { name: 'acl', description: 'User access control' },
-        { name: 'recipe', description: 'Recipe management' },
-        { name: 'job', description: 'Dispatch BullMQ jobs' },
-    ];
-}
-
 export function generateCompletions(shell: string): string {
     switch (shell) {
         case 'bash':

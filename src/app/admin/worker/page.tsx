@@ -2,9 +2,8 @@ import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 import { getQueueSnapshots } from '@worker/queues/insights';
 import { getJobRuns, type JobRun, type JobStatus } from '@worker/queues/job-run';
 import { getQueueLabel, JOB_STATUS_DETAILS, STATUS_ORDER } from '@worker/queues/job-run-ui';
-import { getScheduledJobDefinitions } from '@worker/queues/scheduler';
+import { getScheduledJobDefinitions, getWorkerDefinitions } from '@worker/queues/registry-meta';
 import { QueueName, type JobPayloadSchema } from '@worker/queues/types';
-import { getWorkerDefinitions } from '@worker/queues/worker';
 
 import { css } from 'styled-system/css';
 

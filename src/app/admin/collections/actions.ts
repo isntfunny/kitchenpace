@@ -89,24 +89,3 @@ export async function adminApproveCollection(id: string) {
         throw error;
     }
 }
-
-export async function adminRejectCollection(id: string) {
-    await ensureModeratorSession('admin-collections');
-
-    if (!id?.trim()) {
-        throw new Error('Collection-ID ist erforderlich');
-    }
-
-    try {
-        await prisma.collection.update({
-            where: { id },
-            data: { moderationStatus: ModerationStatus.REJECTED },
-        });
-        revalidatePath('/admin/collections');
-    } catch (error) {
-        if (error instanceof Error && error.message.includes('Record to update not found')) {
-            throw new Error('Sammlung nicht gefunden');
-        }
-        throw error;
-    }
-}

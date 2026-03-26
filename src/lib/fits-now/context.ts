@@ -52,7 +52,7 @@ function detectSeason(month: number): Season {
 
 // ── Period Detection ─────────────────────────────────────────────────────────
 
-export async function detectActivePeriods(now: Date): Promise<ResolvedPeriod[]> {
+async function detectActivePeriods(now: Date): Promise<ResolvedPeriod[]> {
     const periodSets = await getFoodPeriodFilterSets();
     const year = now.getFullYear();
 

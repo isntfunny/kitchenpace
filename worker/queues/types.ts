@@ -25,10 +25,6 @@ export interface BackfillEmbeddingsJob {
     batchSize?: number;
 }
 
-export interface ReindexJob {
-    dropAndRecreate?: boolean;
-}
-
 export interface BackupJob {
     type: 'hourly' | 'daily';
 }

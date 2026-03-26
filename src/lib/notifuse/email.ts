@@ -5,11 +5,6 @@ const log = createLogger('notifuse-email');
 const NOTIFUSE_API_KEY = process.env.NOTIFUSE_API_KEY;
 const NOTIFUSE_BASE_URI = process.env.NOTIFUSE_BASE_URI || 'https://api.notifuse.com/v2/';
 const NOTIFUSE_WORKSPACE_ID = process.env.NOTIFUSE_WORKSPACE_ID;
-const NOTIFUSE_NOTIFICATION_ACTIVATION =
-    process.env.NOTIFUSE_NOTIFICATION_ACTIVATION || 'activate_account';
-const NOTIFUSE_NOTIFICATION_WELCOME = process.env.NOTIFUSE_NOTIFICATION_WELCOME || 'welcome';
-const NOTIFUSE_NOTIFICATION_PASSWORD_RESET =
-    process.env.NOTIFUSE_NOTIFICATION_PASSWORD_RESET || 'password_reset';
 const NOTIFUSE_LIST_KITCHENPACE_USERS =
     process.env.NOTIFUSE_LIST_USERS ??
     (process.env.NODE_ENV === 'production' ? 'kitchenpacelive' : 'kitchenpaceusers');
@@ -21,23 +16,12 @@ type NotifuseApiResponse<T extends object = Record<string, unknown>> = {
     error?: string;
 } & T;
 
-interface NotifuseResponse {
-    message_id: string;
-    success: boolean;
-}
-
 interface SyncContactParams {
     email: string;
     externalId?: string;
     firstName?: string;
     lastName?: string;
     nickname?: string;
-}
-
-interface TransactionalPayload {
-    email: string;
-    data: Record<string, unknown>;
-    notificationId: string;
 }
 
 const ensureConfig = () => {
@@ -147,36 +131,6 @@ const subscribeContactToList = async (contactId: string, externalId?: string) =>
     });
 };
 
-const sendTransactionalEmail = async ({
-    email,
-    data,
-    notificationId,
-}: TransactionalPayload): Promise<NotifuseResponse> => {
-    const { workspaceId } = ensureConfig();
-    const normalizedEmail = email.toLowerCase().trim();
-
-    const response = await callNotifuse<{ message_id?: string }>('transactional.send', {
-        workspace_id: workspaceId,
-        notification: {
-            id: notificationId,
-            contact: { email: normalizedEmail },
-            channels: ['email'],
-            data,
-        },
-    });
-
-    log.info('Notifuse email sent', {
-        email: normalizedEmail,
-        notificationId,
-        messageId: response.message_id,
-    });
-
-    return {
-        message_id: response.message_id ?? '',
-        success: response.success ?? true,
-    };
-};
-
 export async function syncContactToNotifuse(params: SyncContactParams): Promise<void> {
     const contactId = params.email.toLowerCase().trim();
 
@@ -187,60 +141,5 @@ export async function syncContactToNotifuse(params: SyncContactParams): Promise<
         email: contactId,
         externalId: params.externalId,
         list: NOTIFUSE_LIST_KITCHENPACE_USERS,
-    });
-}
-
-type SendActivationParams = {
-    email: string;
-    activationLink: string;
-};
-
-type SendPasswordResetParams = {
-    email: string;
-    resetLink: string;
-};
-
-type SendWelcomeParams = {
-    email: string;
-    dashboardLink?: string;
-    notifyOnNewsletter?: boolean;
-};
-
-export async function sendNotifuseWelcomeEmail({
-    email,
-    dashboardLink,
-    notifyOnNewsletter = true,
-}: SendWelcomeParams): Promise<NotifuseResponse | null> {
-    if (!notifyOnNewsletter) {
-        log.info('Skipping welcome email - user opted out of newsletter', { email });
-        return null;
-    }
-
-    return sendTransactionalEmail({
-        notificationId: NOTIFUSE_NOTIFICATION_WELCOME,
-        email,
-        data: { variables: { appUrl: dashboardLink } },
-    });
-}
-
-export async function sendNotifuseActivationEmail({
-    email,
-    activationLink,
-}: SendActivationParams): Promise<NotifuseResponse> {
-    return sendTransactionalEmail({
-        notificationId: NOTIFUSE_NOTIFICATION_ACTIVATION,
-        email,
-        data: { variables: { activationLink } },
-    });
-}
-
-export async function sendNotifusePasswordResetEmail({
-    email,
-    resetLink,
-}: SendPasswordResetParams): Promise<NotifuseResponse> {
-    return sendTransactionalEmail({
-        notificationId: NOTIFUSE_NOTIFICATION_PASSWORD_RESET,
-        email,
-        data: { variables: { resetLink } },
     });
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { triggerJobNow } from '@worker/queues/scheduler';
+import { isKnownJob } from '@worker/queues/registry-meta';
 import { QueueName } from '@worker/queues/types';
 
 function isQueueName(value: string): value is QueueName {
@@ -22,6 +22,10 @@ export async function triggerJobAction(formData: FormData): Promise<void> {
         throw new Error('Jobname fehlt');
     }
 
+    if (!isKnownJob(jobNameValue)) {
+        throw new Error(`Unknown job: ${jobNameValue}`);
+    }
+
     const payloadText = typeof payloadValue === 'string' ? payloadValue.trim() : '';
     let payload: Record<string, unknown> = {};
 
@@ -33,6 +37,10 @@ export async function triggerJobAction(formData: FormData): Promise<void> {
         }
     }
 
-    await triggerJobNow(queueValue, jobNameValue, payload);
+    // Lazy import to avoid pulling backup-processor (fs/child_process) into the bundle
+    const { getQueueForName } = await import('@worker/queues/queue');
+    const queue = getQueueForName(queueValue);
+    await queue.add(jobNameValue, payload);
+    console.log(`[Scheduler] Triggered job: ${jobNameValue}`);
     revalidatePath('/admin/worker');
 }

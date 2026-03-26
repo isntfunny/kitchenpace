@@ -75,14 +75,6 @@ export async function fetchFeaturedRecipe(): Promise<RecipeCardData | null> {
     return toRecipeCardData(recipe);
 }
 
-const timeFilters: Record<string, { lte: number }> = {
-    frueh: { lte: 20 },
-    mittag: { lte: 30 },
-    abend: { lte: 45 },
-    brunch: { lte: 30 },
-    fingerfood: { lte: 25 },
-};
-
 // ── "Passt zu jetzt" — context-aware recipes ────────────────────────────────
 
 export async function fetchFitsNowRecipes(
@@ -105,23 +97,6 @@ export async function fetchFitsNowRecipes(
 }
 
 export type { FitsNowContext } from '@app/lib/fits-now';
-
-/** @deprecated Use fetchFitsNowRecipes instead */
-export async function fetchRecipesByTime(mealTime: string, take = 6): Promise<RecipeCardData[]> {
-    const filter = timeFilters[mealTime] || { lte: 30 };
-
-    const recipes = await prisma.recipe.findMany({
-        where: {
-            publishedAt: { not: null },
-            totalTime: filter,
-        },
-        include: { categories: { include: { category: true } } },
-        orderBy: { rating: 'desc' },
-        take,
-    });
-
-    return recipes.map(toRecipeCardData);
-}
 
 export interface RecipeDetailData {
     id: string;

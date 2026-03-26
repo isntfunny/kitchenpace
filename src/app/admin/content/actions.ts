@@ -99,25 +99,3 @@ export async function getContentSettings() {
             : null,
     };
 }
-
-export async function getSelectableRecipes() {
-    return prisma.recipe.findMany({
-        where: { status: 'PUBLISHED', publishedAt: { not: null } },
-        select: { id: true, title: true, slug: true, imageKey: true, rating: true },
-        orderBy: { title: 'asc' },
-        take: 100,
-    });
-}
-
-export async function getSelectableUsers() {
-    return prisma.user.findMany({
-        where: { emailVerified: true },
-        select: {
-            id: true,
-            name: true,
-            image: true,
-            profile: { select: { id: true, nickname: true, photoKey: true, recipeCount: true } },
-        },
-        orderBy: { name: 'asc' },
-    });
-}

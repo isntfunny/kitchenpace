@@ -7,7 +7,7 @@ import { getTimeSeasonCriteria, type FilterCriteria } from './mappings';
 
 // ── Build Merged Criteria ────────────────────────────────────────────────────
 
-export async function buildCriteria(
+async function buildCriteria(
     context: FitsNowContext,
     activePeriods: ResolvedPeriod[],
 ): Promise<FilterCriteria> {

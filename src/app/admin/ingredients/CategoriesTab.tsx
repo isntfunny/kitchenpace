@@ -85,9 +85,6 @@ export function CategoriesSection({ categories }: { categories: IngredientCatego
     );
 }
 
-// Re-export under old name for backwards compat
-export { CategoriesSection as CategoriesTab };
-
 // ---------------------------------------------------------------------------
 // Inner table content
 // ---------------------------------------------------------------------------

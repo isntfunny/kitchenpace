@@ -64,7 +64,7 @@ export interface RecipeFormSidebarProps {
     tagQuery: string;
     onTagQueryChange: (value: string) => void;
     onTagSelectionChange: (value: string[]) => void;
-    onCreateTag: typeof import('../recipe/createActions').findOrCreateTag;
+    onCreateTag: typeof import('../recipe/ingredientActions').findOrCreateTag;
     ingredients: AddedIngredient[];
     onAddIngredient: (ing: IngredientSearchResult) => void;
     onAddNewIngredient: (name: string) => Promise<void>;

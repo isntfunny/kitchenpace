@@ -8,8 +8,8 @@ import { RecipeNode } from './editor/RecipeNode';
 
 /* ── constants ───────────────────────────────────────────── */
 
-export const NODE_WIDTH = 220;
-export const HORIZONTAL_GAP = 80;
+const NODE_WIDTH = 220;
+const HORIZONTAL_GAP = 80;
 
 /* ── sidebar resize constants ────────────────────────────── */
 

@@ -11,7 +11,7 @@
         "public/**/*.js",
         "k6/**/*.js",
     ],
-    "ignoreBinaries": ["eslint", "husky", "k6", "knip", "lint-staged", "prettier"],
+    "ignoreBinaries": ["k6"],
     "ignoreDependencies": ["k6"],
     "ignoreExportsUsedInFile": {
         "interface": true,

@@ -117,23 +117,3 @@ export async function deleteUserCookImage(imageId: string): Promise<void> {
     await prisma.cookImage.delete({ where: { id: imageId } });
     revalidatePath('/profile/images');
 }
-
-export async function fetchUserCookHistory(userId: string, take = 10) {
-    const history = await prisma.userCookHistory.findMany({
-        where: { userId },
-        orderBy: { cookedAt: 'desc' },
-        take,
-        include: {
-            recipe: {
-                select: {
-                    id: true,
-                    title: true,
-                    slug: true,
-                    imageKey: true,
-                },
-            },
-        },
-    });
-
-    return history;
-}

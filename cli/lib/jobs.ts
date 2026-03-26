@@ -15,15 +15,6 @@ export async function triggerJobNow(queue: string, jobName: string, data: Record
     await disconnectRedis();
 }
 
-export function listQueues(): string[] {
-    return Object.values(QueueName);
-}
-
-export function listJobs(queue: string): string[] {
-    const defs = getJobDefinitions();
-    return defs[queue as keyof typeof defs] || [];
-}
-
 export function getJobDefinitions(): Record<string, string[]> {
     return {
         opensearch: [

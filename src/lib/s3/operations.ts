@@ -8,7 +8,6 @@ import {
 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 
-// eslint-disable-next-line import/order
 import { BUCKET, s3Client } from './client';
 
 // ---------------------------------------------------------------------------
@@ -68,7 +67,7 @@ export async function deleteObject(key: string): Promise<void> {
 // Copy / Move
 // ---------------------------------------------------------------------------
 
-export async function copyObject(sourceKey: string, destKey: string): Promise<void> {
+async function copyObject(sourceKey: string, destKey: string): Promise<void> {
     await s3Client.send(
         new CopyObjectCommand({
             Bucket: BUCKET,
@@ -113,37 +112,4 @@ export async function putObject(
             ...(cacheControl ? { CacheControl: cacheControl } : {}),
         }),
     );
-}
-
-// ---------------------------------------------------------------------------
-// Backward-compat aliases
-// ---------------------------------------------------------------------------
-
-import type { UploadType } from './keys';
-import { generateUploadKey } from './keys';
-
-export interface UploadResult {
-    url: string;
-    key: string;
-}
-
-/** @deprecated Use `upload()` + `generateUploadKey()` directly */
-export async function uploadFile(
-    file: Buffer,
-    filename: string,
-    contentType: string,
-    type: UploadType,
-): Promise<UploadResult> {
-    const key = generateUploadKey(type, filename);
-    await upload(key, file, contentType);
-
-    const baseUrl = process.env.S3_ENDPOINT || '';
-    const url = `${baseUrl}/${BUCKET}/${key}`;
-    return { url, key };
-}
-
-/** @deprecated Use key directly — URLs should not be constructed from S3 */
-export async function getFileUrl(key: string): Promise<string> {
-    const baseUrl = process.env.S3_ENDPOINT || '';
-    return `${baseUrl}/${BUCKET}/${key}`;
 }

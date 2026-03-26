@@ -52,7 +52,7 @@ interface OAuthSignInButtonProps {
     style?: OAuthButtonStyle;
 }
 
-export function OAuthSignInButton({
+function OAuthSignInButton({
     provider,
     label,
     icon,

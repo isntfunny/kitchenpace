@@ -59,7 +59,7 @@ export function getBackupQueue(): Queue {
     return backupQueue;
 }
 
-export function getTwitchQueue(): Queue {
+function getTwitchQueue(): Queue {
     if (!twitchQueue) {
         twitchQueue = new Queue(QueueName.TWITCH, {
             defaultJobOptions: DEFAULT_JOB_OPTIONS,

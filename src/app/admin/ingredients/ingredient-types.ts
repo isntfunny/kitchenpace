@@ -110,12 +110,6 @@ const dialogBaseStyle = {
     flexDirection: 'column' as const,
 };
 
-export const dialogContentStyle = css({
-    ...dialogBaseStyle,
-    maxWidth: '680px',
-    maxHeight: '85vh',
-});
-
 export const dialogContentSmallStyle = css({
     ...dialogBaseStyle,
     maxWidth: '420px',
@@ -222,20 +216,6 @@ export const btnDanger = css({
         bg: 'error.bg',
     },
     _disabled: { opacity: '0.5', cursor: 'not-allowed' },
-});
-
-export const pillStyle = css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '1',
-    paddingX: '2',
-    paddingY: '0.5',
-    borderRadius: 'full',
-    fontSize: 'xs',
-    fontWeight: '500',
-    bg: 'accent.soft',
-    color: 'foreground',
-    whiteSpace: 'nowrap',
 });
 
 export const tagStyle = css({

@@ -47,13 +47,6 @@ export function getRedis(): Redis {
     return _redis;
 }
 
-export function getSubscriber(): Redis {
-    if (!_subscriber) {
-        _subscriber = createRedisInstance('bullmq-subscriber');
-    }
-    return _subscriber;
-}
-
 export async function disconnectRedis(): Promise<void> {
     if (_redis) {
         await _redis.quit();

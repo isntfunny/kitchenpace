@@ -13,4 +13,3 @@ const t = initTRPC.context<Awaited<ReturnType<typeof createTRPCContext>>>().crea
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
-export const createCallerFactory = t.createCallerFactory;

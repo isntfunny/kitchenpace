@@ -8,7 +8,7 @@ import {
 
 export type Phase = 'input' | 'processing' | 'review' | 'done' | 'error';
 
-export const DEFAULT_APPLY: ApplySelection = {
+const DEFAULT_APPLY: ApplySelection = {
     title: true,
     description: true,
     category: true,

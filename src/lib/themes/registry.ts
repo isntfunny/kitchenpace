@@ -69,9 +69,6 @@ export type ThemeId = keyof typeof THEME_REGISTRY;
 /** All valid theme IDs */
 export const VALID_THEME_IDS = new Set(Object.keys(THEME_REGISTRY));
 
-/** Base themes shown in the normal light/dark toggle */
-export const BASE_THEMES = Object.values(THEME_REGISTRY).filter((t) => t.isBase);
-
 /** Special themes activated via long-press or feature flag */
 export const SPECIAL_THEMES = Object.values(THEME_REGISTRY).filter((t) => !t.isBase);
 

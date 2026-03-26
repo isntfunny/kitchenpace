@@ -87,7 +87,14 @@ export function HeaderAuth() {
         );
 
         return (
-            <div className={css({ position: 'relative' })}>
+            <div
+                className={css({
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1',
+                })}
+            >
                 <ToastViewport anchorElement={notificationButtonEl} />
                 {/* Notification popover — desktop only */}
                 <div className={css({ display: { base: 'none', md: 'block' } })}>

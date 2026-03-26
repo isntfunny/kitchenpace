@@ -19,6 +19,7 @@ import { css } from 'styled-system/css';
 import { Avatar } from '../atoms/Avatar';
 
 import { MenuSection, PERSONAL_LINKS } from './HeaderMenuPanel';
+import { MobileNotifications } from './MobileNotifications';
 import { MobileUserDrawer } from './MobileUserDrawer';
 import { ToastViewport } from './ToastViewport';
 
@@ -88,69 +89,79 @@ export function HeaderAuth() {
         return (
             <div className={css({ position: 'relative' })}>
                 <ToastViewport anchorElement={notificationButtonEl} />
-                {/* Notification popover — always mounted so marking-as-read doesn't unmount it */}
-                <InboxDropdown
-                    trigger={
-                        <button
-                            ref={setNotificationButtonEl}
-                            type="button"
-                            aria-label="Benachrichtigungen öffnen"
-                            className={css({
-                                position: 'absolute',
-                                top: '-6px',
-                                right: '-8px',
-                                minWidth: '20px',
-                                height: '20px',
-                                borderRadius: 'full',
-                                background: unreadCount > 0 ? 'status.danger' : 'black',
-                                color: 'white',
-                                fontSize: '0.65rem',
-                                fontWeight: '700',
-                                display: 'flex',
-                                transition: 'background 200ms ease',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                px: '1',
-                                lineHeight: '1',
-                                border: '2px solid',
-                                borderColor: 'surface.elevated',
-                                cursor: 'pointer',
-                                zIndex: 2,
-                            })}
-                        >
-                            <motion.span
-                                animate={{ scale: [1, 1.15, 1] }}
-                                transition={{
-                                    duration: 2,
-                                    repeat: Infinity,
-                                    ease: 'easeInOut',
-                                }}
+                {/* Notification popover — desktop only */}
+                <div className={css({ display: { base: 'none', md: 'block' } })}>
+                    <InboxDropdown
+                        trigger={
+                            <button
+                                ref={setNotificationButtonEl}
+                                type="button"
+                                aria-label="Benachrichtigungen öffnen"
+                                className={css({
+                                    position: 'absolute',
+                                    top: '-6px',
+                                    right: '-8px',
+                                    minWidth: '20px',
+                                    height: '20px',
+                                    borderRadius: 'full',
+                                    background: unreadCount > 0 ? 'status.danger' : 'black',
+                                    color: 'white',
+                                    fontSize: '0.65rem',
+                                    fontWeight: '700',
+                                    display: 'flex',
+                                    transition: 'background 200ms ease',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    px: '1',
+                                    lineHeight: '1',
+                                    border: '2px solid',
+                                    borderColor: 'surface.elevated',
+                                    cursor: 'pointer',
+                                    zIndex: 2,
+                                })}
                             >
-                                {badgeContent}
-                            </motion.span>
-                        </button>
-                    }
-                    title="Benachrichtigungen"
-                    subtitle="Die neuesten 19 Einträge"
-                    actionLabel={notifications.length > 0 ? 'Alle lesen' : undefined}
-                    onAction={notifications.length > 0 ? () => markAllAsRead() : undefined}
-                    isLoading={isNotificationsLoading}
-                    isEmpty={notifications.length === 0}
-                    emptyLabel="Noch keine Benachrichtigungen"
-                    footerHref="/notifications"
-                    footerLabel="Alle anzeigen"
-                >
-                    {notifications.slice(0, 19).map((notification) => (
-                        <NotificationItem
-                            key={notification.id}
-                            notification={notification}
-                            onHover={() => {
-                                if (!notification.read) markAsRead([notification.id]);
-                            }}
-                            href={resolveNotificationHref(notification)}
-                        />
-                    ))}
-                </InboxDropdown>
+                                <motion.span
+                                    animate={{ scale: [1, 1.15, 1] }}
+                                    transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                        ease: 'easeInOut',
+                                    }}
+                                >
+                                    {badgeContent}
+                                </motion.span>
+                            </button>
+                        }
+                        title="Benachrichtigungen"
+                        subtitle="Die neuesten 19 Einträge"
+                        actionLabel={notifications.length > 0 ? 'Alle lesen' : undefined}
+                        onAction={notifications.length > 0 ? () => markAllAsRead() : undefined}
+                        isLoading={isNotificationsLoading}
+                        isEmpty={notifications.length === 0}
+                        emptyLabel="Noch keine Benachrichtigungen"
+                        footerHref="/notifications"
+                        footerLabel="Alle anzeigen"
+                    >
+                        {notifications.slice(0, 19).map((notification) => (
+                            <NotificationItem
+                                key={notification.id}
+                                notification={notification}
+                                onHover={() => {
+                                    if (!notification.read) markAsRead([notification.id]);
+                                }}
+                                href={resolveNotificationHref(notification)}
+                            />
+                        ))}
+                    </InboxDropdown>
+                </div>
+
+                {/* Notification overlay — mobile only */}
+                <MobileNotifications
+                    notifications={notifications}
+                    unreadCount={unreadCount}
+                    markAsRead={markAsRead}
+                    markAllAsRead={markAllAsRead}
+                />
 
                 {/* Profile menu — mobile drawer */}
                 <MobileUserDrawer />

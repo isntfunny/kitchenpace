@@ -355,7 +355,20 @@ The `CollectionRecipe` join table and MDX content serve different purposes:
 
 The `role` field on `CollectionRecipe` is derived from the component type used in MDX (RecipeCard → INLINE, FeaturedTrio → HERO, etc.) and is used for template-aware rendering on browse pages (e.g. showing the HERO recipes as the collection's preview card).
 
+**Sync on save (case 1 — user edits MDX):** Full sync — delete all existing `CollectionRecipe` rows for the collection, then re-insert from the parsed MDX. Recipes the user removed from the MDX are simply gone from the join table.
+
 **Parse failure on save:** If MDX parsing fails during the sync step, the save proceeds (MDX content is stored as-is) but `CollectionRecipe` rows are left unchanged from the last successful sync. The editor's live preview already validates MDX — parse failures on save are an edge case (e.g. manual API call with malformed MDX).
+
+---
+
+## Orphaned Recipe Handling
+
+When a recipe referenced in a collection is deleted or unpublished by its author (case 2 — external deletion):
+
+- **Detection:** On recipe delete/unpublish, query `CollectionRecipe` for all collections referencing that recipe
+- **Action:** Set affected collections to `published: false` (reverts to draft)
+- **Notification:** Notify the collection author that a referenced recipe was removed and their collection needs review
+- **MDX rendering:** The `<RecipeCard>` / other components render a "Rezept nicht mehr verfuegbar" placeholder for missing recipe IDs instead of crashing — allows the author to see what broke when editing
 
 ---
 

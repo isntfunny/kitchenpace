@@ -78,6 +78,7 @@ export function MobileFilterSheet({
                         animate={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
                         exit={{ backgroundColor: 'rgba(0,0,0,0)' }}
                         transition={{ duration: 0.2 }}
+                        style={{ backdropFilter: 'blur(8px)' }}
                     >
                         <motion.div
                             className={css({
@@ -100,6 +101,21 @@ export function MobileFilterSheet({
                             exit={{ y: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
                         >
+                            <div
+                                className={css({
+                                    width: '36px',
+                                    height: '4px',
+                                    borderRadius: 'full',
+                                    bg: {
+                                        base: 'rgba(0,0,0,0.15)',
+                                        _dark: 'rgba(255,255,255,0.2)',
+                                    },
+                                    mx: 'auto',
+                                    mt: '3',
+                                    mb: '2',
+                                    flexShrink: 0,
+                                })}
+                            />
                             <div
                                 className={css({
                                     display: 'flex',

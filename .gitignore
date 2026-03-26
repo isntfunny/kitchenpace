@@ -70,3 +70,4 @@ __pycache__
 /playwright-report
 tools.yaml
 .superpowers/
+*.png

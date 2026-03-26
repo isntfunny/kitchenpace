@@ -52,25 +52,6 @@ const activeQueues = [...dispatchByQueue.keys()];
 
 // ── Public API ──────────────────────────────────────────────────────
 
-export interface WorkerDefinitionSummary {
-    name: string;
-    queue: QueueName;
-    concurrency: number;
-    limiter?: WorkerOptions['limiter'];
-}
-
-export function getWorkerDefinitions(): WorkerDefinitionSummary[] {
-    return activeQueues.map((queue) => {
-        const opts = queueOptions[queue];
-        return {
-            name: queue,
-            queue,
-            concurrency: opts?.concurrency ?? DEFAULT_WORKER_OPTIONS.concurrency ?? 5,
-            limiter: opts?.limiter ?? DEFAULT_WORKER_OPTIONS.limiter,
-        };
-    });
-}
-
 export function startWorkers(): void {
     console.log('[Worker] Starting BullMQ workers...');
 
@@ -140,5 +121,3 @@ export async function stopWorkers(): Promise<void> {
     workers.length = 0;
     console.log('[Worker] All workers stopped');
 }
-
-export { QueueName };

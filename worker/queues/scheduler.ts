@@ -18,7 +18,7 @@ export interface ScheduledJobDefinition {
 
 // ── Derive job definitions from the central registry ────────────────
 
-export function getScheduledJobDefinitions(): ScheduledJobDefinition[] {
+function getScheduledJobDefinitions(): ScheduledJobDefinition[] {
     return Object.entries(JOB_REGISTRY).map(([name, def]) => {
         const d = def as {
             queue: QueueName;

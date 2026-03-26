@@ -105,9 +105,8 @@ export function MobileNotifications({
                         display: 'flex',
                         alignItems: 'center',
                         gap: '3',
-                        padding: '4',
-                        borderBottom: '1px solid',
-                        borderColor: 'border.subtle',
+                        px: '3',
+                        py: '3',
                         flexShrink: 0,
                     })}
                 >
@@ -213,8 +212,6 @@ export function MobileNotifications({
                 <div
                     className={css({
                         padding: '3',
-                        borderTop: '1px solid',
-                        borderColor: 'border.subtle',
                         flexShrink: 0,
                     })}
                 >

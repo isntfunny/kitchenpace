@@ -101,11 +101,8 @@ function MobileSearchContent({ onClose }: { onClose: () => void }) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '2',
-                    px: '4',
-                    pt: 'env(safe-area-inset-top, 12px)',
-                    pb: '3',
-                    borderBottom: '1px solid',
-                    borderColor: 'border.subtle',
+                    px: '3',
+                    py: '3',
                 })}
             >
                 <form onSubmit={handleSubmit} className={css({ flex: 1, minWidth: 0 })}>

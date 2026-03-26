@@ -64,8 +64,6 @@ export function MobileUserDrawer() {
                         alignItems: 'center',
                         gap: '3',
                         padding: '4',
-                        borderBottom: '1px solid',
-                        borderColor: 'border.subtle',
                     })}
                 >
                     <Avatar imageKey={profile?.photoKey} name={profile?.nickname} size="md" />
@@ -197,8 +195,6 @@ export function MobileUserDrawer() {
                 <div
                     className={css({
                         padding: '3',
-                        borderTop: '1px solid',
-                        borderColor: 'border.subtle',
                     })}
                 >
                     <button

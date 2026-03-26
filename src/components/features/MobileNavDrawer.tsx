@@ -211,8 +211,6 @@ export function MobileNavDrawer() {
                         justifyContent: 'space-between',
                         px: '4',
                         py: '3',
-                        borderBottom: '1px solid',
-                        borderColor: 'border.subtle',
                     })}
                 >
                     <span
@@ -265,10 +263,16 @@ export function MobileNavDrawer() {
                     {/* Quick filters */}
                     <div
                         className={css({
-                            mt: '2',
-                            pt: '2',
-                            borderTop: '1px solid',
-                            borderColor: 'border.subtle',
+                            mt: '1',
+                            mx: '4',
+                            mb: '1',
+                            height: '1px',
+                            bg: { base: 'rgba(0,0,0,0.05)', _dark: 'rgba(255,255,255,0.06)' },
+                            borderRadius: 'full',
+                        })}
+                    />
+                    <div
+                        className={css({
                             px: '2',
                         })}
                     >
@@ -279,33 +283,44 @@ export function MobileNavDrawer() {
 
                     {/* Admin links */}
                     {adminLinks.length > 0 && (
-                        <div
-                            className={css({
-                                mt: '2',
-                                pt: '2',
-                                borderTop: '1px solid',
-                                borderColor: 'border.subtle',
-                                px: '2',
-                            })}
-                        >
-                            <span
+                        <>
+                            <div
                                 className={css({
-                                    display: 'block',
-                                    px: '4',
-                                    py: '1',
-                                    fontSize: '0.6875rem',
-                                    fontWeight: '600',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
-                                    color: 'text.muted',
+                                    mt: '1',
+                                    mx: '4',
+                                    mb: '1',
+                                    height: '1px',
+                                    bg: {
+                                        base: 'rgba(0,0,0,0.05)',
+                                        _dark: 'rgba(255,255,255,0.06)',
+                                    },
+                                    borderRadius: 'full',
+                                })}
+                            />
+                            <div
+                                className={css({
+                                    px: '2',
                                 })}
                             >
-                                Verwaltung
-                            </span>
-                            {adminLinks.map((item) => (
-                                <DrawerItem key={item.href} item={item} onClose={close} />
-                            ))}
-                        </div>
+                                <span
+                                    className={css({
+                                        display: 'block',
+                                        px: '4',
+                                        py: '1',
+                                        fontSize: '0.6875rem',
+                                        fontWeight: '600',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.05em',
+                                        color: 'text.muted',
+                                    })}
+                                >
+                                    Verwaltung
+                                </span>
+                                {adminLinks.map((item) => (
+                                    <DrawerItem key={item.href} item={item} onClose={close} />
+                                ))}
+                            </div>
+                        </>
                     )}
                 </div>
 
@@ -317,8 +332,6 @@ export function MobileNavDrawer() {
                         justifyContent: 'space-between',
                         px: '4',
                         py: '3',
-                        borderTop: '1px solid',
-                        borderColor: 'border.subtle',
                     })}
                 >
                     <span

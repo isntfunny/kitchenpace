@@ -128,35 +128,6 @@ export async function fetchCategoryMostCooked(
     return recipes.map(toRecipeCardData);
 }
 
-export async function fetchCategoryQuickRecipes(
-    categoryId: string,
-    take = 8,
-): Promise<RecipeCardData[]> {
-    const recipes = await prisma.recipe.findMany({
-        where: {
-            ...publishedInCategory(categoryId),
-            totalTime: { gt: 0, lte: 30 },
-        },
-        include: { categories: { include: { category: true } } },
-        orderBy: { totalTime: 'asc' },
-        take,
-    });
-    return recipes.map(toRecipeCardData);
-}
-
-export async function fetchCategoryPopular(
-    categoryId: string,
-    take = 8,
-): Promise<RecipeCardData[]> {
-    const recipes = await prisma.recipe.findMany({
-        where: publishedInCategory(categoryId),
-        include: { categories: { include: { category: true } } },
-        orderBy: [{ viewCount: 'desc' }, { rating: 'desc' }],
-        take,
-    });
-    return recipes.map(toRecipeCardData);
-}
-
 export async function fetchCategoryActivity(
     categoryId: string,
     limit = 8,

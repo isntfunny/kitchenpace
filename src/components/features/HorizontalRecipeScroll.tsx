@@ -28,15 +28,22 @@ export function HorizontalRecipeScroll({
                 })}
             >
                 {recipes.map((recipe) => (
-                    <RecipeCard
+                    <div
                         key={recipe.id}
-                        recipe={recipe}
-                        variant={cardVariant ?? 'compact'}
-                        categoryOnImage
-                        categoryLink
-                        hideCategory={hideCategory}
-                        starRating
-                    />
+                        className={css({
+                            flex: '0 0 auto',
+                            width: cardVariant === 'default' ? '240px' : undefined,
+                        })}
+                    >
+                        <RecipeCard
+                            recipe={recipe}
+                            variant={cardVariant ?? 'compact'}
+                            categoryOnImage
+                            categoryLink
+                            hideCategory={hideCategory}
+                            starRating
+                        />
+                    </div>
                 ))}
             </CustomScrollbar>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -117,140 +118,151 @@ export function RandomRecipeSpotlight({ categorySlug }: RandomRecipeSpotlightPro
                 p: '4',
             })}
         >
-            <div
-                className={flex({
-                    direction: { base: 'column', sm: 'row' },
-                    align: { base: 'flex-start', sm: 'center' },
-                    gap: '4',
-                })}
-            >
-                {/* Image or dice placeholder */}
-                <div
-                    className={css({
-                        width: { base: '100%', sm: '80px' },
-                        height: { base: '120px', sm: '80px' },
-                        borderRadius: 'xl',
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        position: 'relative',
-                        bg: 'rgba(255,255,255,0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '2.5rem',
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={recipe.id}
+                    initial={{ opacity: 0, x: 30, scale: 0.97 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: -30, scale: 0.97 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className={flex({
+                        direction: { base: 'column', sm: 'row' },
+                        align: { base: 'flex-start', sm: 'center' },
+                        gap: '4',
                     })}
                 >
-                    {recipe.imageKey ? (
-                        <SmartImage
-                            imageKey={recipe.imageKey}
-                            recipeId={recipe.id}
-                            alt={recipe.title}
-                            aspect="1:1"
-                            sizes="80px"
-                            fill
-                            className={css({ objectFit: 'cover', width: '100%', height: '100%' })}
-                        />
-                    ) : (
-                        '🎲'
-                    )}
-                </div>
-
-                {/* Recipe info */}
-                <div className={css({ flex: 1, minW: 0 })}>
+                    {/* Image or dice placeholder */}
                     <div
                         className={css({
-                            fontSize: '0.65rem',
-                            fontWeight: '600',
-                            color: '#7c3aed',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.06em',
-                            mb: '1',
-                        })}
-                    >
-                        Zufaelliger Fund
-                    </div>
-                    <Link
-                        href={`/recipe/${recipe.slug}`}
-                        className={css({
-                            fontSize: { base: 'md', sm: 'lg' },
-                            fontWeight: '700',
-                            color: '#3b0764',
-                            textDecoration: 'none',
-                            lineHeight: '1.3',
+                            width: { base: '100%', sm: '80px' },
+                            height: { base: '120px', sm: '80px' },
+                            borderRadius: 'xl',
                             overflow: 'hidden',
-                            display: '-webkit-box',
-                            lineClamp: '2',
-                            mb: '1.5',
-                            _hover: { textDecoration: 'underline' },
+                            flexShrink: 0,
+                            position: 'relative',
+                            bg: 'rgba(255,255,255,0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '2.5rem',
                         })}
                     >
-                        {recipe.title}
-                    </Link>
-                    <div
-                        className={flex({
-                            align: 'center',
-                            gap: '3',
-                            wrap: 'wrap',
-                        })}
-                    >
-                        {recipe.rating > 0 && (
-                            <span
+                        {recipe.imageKey ? (
+                            <SmartImage
+                                imageKey={recipe.imageKey}
+                                recipeId={recipe.id}
+                                alt={recipe.title}
+                                aspect="1:1"
+                                sizes="80px"
+                                fill
                                 className={css({
-                                    fontSize: '0.72rem',
-                                    color: '#7c3aed',
-                                    fontWeight: '600',
+                                    objectFit: 'cover',
+                                    width: '100%',
+                                    height: '100%',
                                 })}
-                            >
-                                ★ {recipe.rating.toFixed(1)}
-                            </span>
-                        )}
-                        <span className={css({ fontSize: '0.72rem', color: '#5b21b6' })}>
-                            {recipe.time}
-                        </span>
-                        {recipe.difficulty && (
-                            <span className={css({ fontSize: '0.72rem', color: '#5b21b6' })}>
-                                {recipe.difficulty}
-                            </span>
+                            />
+                        ) : (
+                            '🎲'
                         )}
                     </div>
-                </div>
 
-                {/* Refresh button */}
-                <button
-                    onClick={loadRandom}
-                    disabled={spinning}
-                    className={css({
-                        flexShrink: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1.5',
-                        px: '3',
-                        py: '2',
-                        borderRadius: 'lg',
-                        border: '2px solid #7c3aed',
-                        bg: 'white',
-                        color: '#7c3aed',
-                        fontSize: '0.78rem',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        transition: 'all 180ms ease',
-                        _hover: { bg: '#7c3aed', color: 'white' },
-                        _disabled: { opacity: 0.6, cursor: 'not-allowed' },
-                        alignSelf: { base: 'flex-end', sm: 'center' },
-                    })}
-                    aria-label="Neues zufaelliges Rezept laden"
-                >
-                    {spinning ? (
-                        <Loader2
-                            size={14}
-                            className={css({ animation: 'spin 0.7s linear infinite' })}
-                        />
-                    ) : (
-                        '🎲'
-                    )}
-                    Neues
-                </button>
-            </div>
+                    {/* Recipe info */}
+                    <div className={css({ flex: 1, minW: 0 })}>
+                        <div
+                            className={css({
+                                fontSize: '0.65rem',
+                                fontWeight: '600',
+                                color: '#7c3aed',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.06em',
+                                mb: '1',
+                            })}
+                        >
+                            Zufaelliger Fund
+                        </div>
+                        <Link
+                            href={`/recipe/${recipe.slug}`}
+                            className={css({
+                                fontSize: { base: 'md', sm: 'lg' },
+                                fontWeight: '700',
+                                color: '#3b0764',
+                                textDecoration: 'none',
+                                lineHeight: '1.3',
+                                overflow: 'hidden',
+                                display: '-webkit-box',
+                                lineClamp: '2',
+                                mb: '1.5',
+                                _hover: { textDecoration: 'underline' },
+                            })}
+                        >
+                            {recipe.title}
+                        </Link>
+                        <div
+                            className={flex({
+                                align: 'center',
+                                gap: '3',
+                                wrap: 'wrap',
+                            })}
+                        >
+                            {recipe.rating > 0 && (
+                                <span
+                                    className={css({
+                                        fontSize: '0.72rem',
+                                        color: '#7c3aed',
+                                        fontWeight: '600',
+                                    })}
+                                >
+                                    ★ {recipe.rating.toFixed(1)}
+                                </span>
+                            )}
+                            <span className={css({ fontSize: '0.72rem', color: '#5b21b6' })}>
+                                {recipe.time}
+                            </span>
+                            {recipe.difficulty && (
+                                <span className={css({ fontSize: '0.72rem', color: '#5b21b6' })}>
+                                    {recipe.difficulty}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Refresh button */}
+                    <button
+                        onClick={loadRandom}
+                        disabled={spinning}
+                        className={css({
+                            flexShrink: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1.5',
+                            px: '3',
+                            py: '2',
+                            borderRadius: 'lg',
+                            border: '2px solid #7c3aed',
+                            bg: 'white',
+                            color: '#7c3aed',
+                            fontSize: '0.78rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            transition: 'all 180ms ease',
+                            _hover: { bg: '#7c3aed', color: 'white' },
+                            _disabled: { opacity: 0.6, cursor: 'not-allowed' },
+                            alignSelf: { base: 'flex-end', sm: 'center' },
+                        })}
+                        aria-label="Neues zufaelliges Rezept laden"
+                    >
+                        {spinning ? (
+                            <Loader2
+                                size={14}
+                                className={css({ animation: 'spin 0.7s linear infinite' })}
+                            />
+                        ) : (
+                            '🎲'
+                        )}
+                        Neues
+                    </button>
+                </motion.div>
+            </AnimatePresence>
         </div>
     );
 }

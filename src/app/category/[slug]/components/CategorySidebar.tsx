@@ -10,6 +10,45 @@ import { DifficultyFilter } from './sidebar/DifficultyFilter';
 import { TagIngredientCloud } from './sidebar/TagIngredientCloud';
 import { TopRankedList } from './sidebar/TopRankedList';
 
+// ─── Boring ingredient filter ────────────────────────────────────────────────
+
+/** Generic staple ingredients that aren't interesting for discovery */
+const BORING_INGREDIENTS = new Set([
+    'salz',
+    'pfeffer',
+    'wasser',
+    'öl',
+    'zucker',
+    'mehl',
+    'ei',
+    'eier',
+    'butter',
+    'milch',
+    'olivenöl',
+    'knoblauch',
+    'zwiebel',
+    'sahne',
+    'backpulver',
+    'vanillezucker',
+    'jodsalz',
+    'sonnenblumenöl',
+    'rapsöl',
+    'petersilie',
+    'paprikapulver',
+    'muskatnuss',
+    'oregano',
+    'thymian',
+    'essig',
+    'senf',
+    'tomatenmark',
+    'gemüsebrühe',
+    'hühnerbrühe',
+]);
+
+function filterBoringIngredients(ingredients: TermFacet): TermFacet {
+    return ingredients.filter((i) => !BORING_INGREDIENTS.has(i.key.toLowerCase()));
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface CategorySidebarProps {
@@ -33,6 +72,12 @@ export function CategorySidebar({
     categorySlug,
     topIngredient,
 }: CategorySidebarProps) {
+    const interestingIngredients = filterBoringIngredients(ingredients);
+    const filteredTopIngredient =
+        topIngredient && BORING_INGREDIENTS.has(topIngredient.toLowerCase())
+            ? (interestingIngredients[0]?.key ?? null)
+            : topIngredient;
+
     return (
         <aside
             className={css({
@@ -45,11 +90,15 @@ export function CategorySidebar({
         >
             <div className={flex({ direction: 'column', gap: '4' })}>
                 <DifficultyFilter counts={difficultyStats} categorySlug={categorySlug} />
-                <CategoryStats stats={aggregateStats} topIngredient={topIngredient} />
+                <CategoryStats
+                    stats={aggregateStats}
+                    topIngredient={filteredTopIngredient}
+                    categorySlug={categorySlug}
+                />
                 <TopRankedList recipes={topByViews} />
                 <TagIngredientCloud
                     tags={tags}
-                    ingredients={ingredients}
+                    ingredients={interestingIngredients}
                     categorySlug={categorySlug}
                 />
             </div>

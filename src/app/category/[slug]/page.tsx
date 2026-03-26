@@ -86,8 +86,11 @@ export default async function CategoryPage({ params }: Props) {
 
     const newest = safe(results[0], []);
     const topRated = safe(results[1], []);
-    const mostCooked = safe(results[2], []);
+    const mostCookedRaw = safe(results[2], []);
     const activity = safe(results[3], []);
+
+    // FeaturedTrio fallback: if no recipes with cookCount, use newest
+    const featured = mostCookedRaw.length > 0 ? mostCookedRaw : newest.slice(0, 3);
     const topByViews = safe(results[4], []);
     const difficultyStats = safe(results[5], {});
     const aggregateStats = safe(results[6], {
@@ -139,7 +142,7 @@ export default async function CategoryPage({ params }: Props) {
                     category={category}
                     newest={newest}
                     topRated={topRated}
-                    mostCooked={mostCooked}
+                    mostCooked={featured}
                     activity={activity}
                     topByViews={topByViews}
                     difficultyStats={difficultyStats}

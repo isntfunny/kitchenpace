@@ -12,7 +12,7 @@ import { HorizontalRecipeScroll } from '@app/components/features/HorizontalRecip
 import type { TermFacet } from '@app/lib/recipeSearchTypes';
 
 import { css } from 'styled-system/css';
-import { flex } from 'styled-system/patterns';
+import { flex, grid } from 'styled-system/patterns';
 
 import type { CategoryAggregateStats, CategoryPageData } from '../../actions/category';
 
@@ -368,15 +368,17 @@ export function CategoryLanding({
                     py: { base: '4', md: '5' },
                 })}
             >
-                <div
-                    className={css({
-                        display: 'grid',
-                        gridTemplateColumns: { base: '1fr', lg: '1fr 220px' },
-                        gap: '4',
-                    })}
-                >
+                <div className={grid({ columns: { base: 1, lg: 12 }, gap: 'grid' })}>
                     {/* Main content */}
-                    <div className={flex({ direction: 'column', gap: '5' })}>
+                    <div
+                        className={css({
+                            lg: { gridColumn: 'span 8' },
+                            minW: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '5',
+                        })}
+                    >
                         <FeaturedTrio recipes={mostCooked} categoryColor={category.color} />
 
                         <RecipeSection
@@ -425,15 +427,17 @@ export function CategoryLanding({
                     </div>
 
                     {/* Sidebar */}
-                    <CategorySidebar
-                        difficultyStats={difficultyStats}
-                        aggregateStats={aggregateStats}
-                        topByViews={topByViews}
-                        tags={facets.tags}
-                        ingredients={facets.ingredients}
-                        categorySlug={category.slug}
-                        topIngredient={facets.ingredients[0]?.key ?? null}
-                    />
+                    <div className={css({ lg: { gridColumn: 'span 4' } })}>
+                        <CategorySidebar
+                            difficultyStats={difficultyStats}
+                            aggregateStats={aggregateStats}
+                            topByViews={topByViews}
+                            tags={facets.tags}
+                            ingredients={facets.ingredients}
+                            categorySlug={category.slug}
+                            topIngredient={facets.ingredients[0]?.key ?? null}
+                        />
+                    </div>
                 </div>
             </main>
         </div>

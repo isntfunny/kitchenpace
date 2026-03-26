@@ -4,6 +4,7 @@ import type { ActivityFeedItem } from '@app/lib/activity-utils';
 import { mapLogToFeedItem } from '@app/lib/activity-utils';
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import { PALETTE } from '@app/lib/palette';
+import { bayesianAverage, getGlobalAverageRating } from '@app/lib/rating';
 import { prisma } from '@shared/prisma';
 
 import { type RecipeCardData, toRecipeCardData } from './recipes';
@@ -106,13 +107,26 @@ export async function fetchCategoryTopRated(
     categoryId: string,
     take = 8,
 ): Promise<RecipeCardData[]> {
-    const recipes = await prisma.recipe.findMany({
-        where: { ...publishedInCategory(categoryId), ratingCount: { gt: 0 } },
-        include: { categories: { include: { category: true } } },
-        orderBy: [{ rating: 'desc' }, { ratingCount: 'desc' }],
-        take,
-    });
-    return recipes.map(toRecipeCardData);
+    const POOL_SIZE = Math.max(take * 5, 40);
+
+    const [recipes, globalAvg] = await Promise.all([
+        prisma.recipe.findMany({
+            where: publishedInCategory(categoryId),
+            include: { categories: { include: { category: true } } },
+            orderBy: [{ rating: 'desc' }, { ratingCount: 'desc' }],
+            take: POOL_SIZE,
+        }),
+        getGlobalAverageRating(),
+    ]);
+
+    return recipes
+        .map((r) => ({
+            card: toRecipeCardData(r),
+            score: bayesianAverage(Number(r.rating), r.ratingCount, globalAvg),
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, take)
+        .map((r) => r.card);
 }
 
 export async function fetchCategoryMostCooked(

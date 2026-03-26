@@ -1,8 +1,9 @@
-import { Star } from 'lucide-react';
+import { Star, Trophy } from 'lucide-react';
 import Link from 'next/link';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import { SmartImage } from '@app/components/atoms/SmartImage';
+import { Heading } from '@app/components/atoms/Typography';
 
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
@@ -21,26 +22,26 @@ export function TopRankedList({ recipes }: TopRankedListProps) {
     return (
         <div
             className={css({
-                bg: 'surface.card',
-                border: '1px solid',
-                borderColor: 'border',
-                borderRadius: '10px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                overflow: 'hidden',
+                p: 'card',
+                bg: 'surface',
+                borderRadius: 'surface',
+                boxShadow: 'shadow.medium',
             })}
         >
-            <div
-                className={css({
-                    px: '4',
-                    py: '3',
-                    borderBottom: '1px solid',
-                    borderColor: 'border',
-                    fontWeight: '600',
-                    fontSize: 'sm',
-                    color: 'text.primary',
-                })}
-            >
-                Top 5 Rezepte
+            <div className={css({ mb: '2' })}>
+                <Heading
+                    as="h3"
+                    size="md"
+                    className={css({
+                        color: { base: '#e17055', _dark: '#fab1a0' },
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                    })}
+                >
+                    <Trophy size={18} />
+                    <span>Top 5 Rezepte</span>
+                </Heading>
             </div>
             <div className={flex({ direction: 'column', gap: '0' })}>
                 {recipes.slice(0, 5).map((recipe, i) => (
@@ -51,14 +52,11 @@ export function TopRankedList({ recipes }: TopRankedListProps) {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '3',
-                            px: '4',
-                            py: '2.5',
-                            borderBottom:
-                                i < Math.min(recipes.length, 5) - 1 ? '1px solid' : 'none',
-                            borderColor: 'border',
+                            py: '2',
+                            borderRadius: 'lg',
                             textDecoration: 'none',
                             transition: 'background 0.15s',
-                            _hover: { bg: 'surface.hover' },
+                            _hover: { bg: 'surface.muted' },
                         })}
                     >
                         {/* Rank number */}
@@ -133,7 +131,7 @@ export function TopRankedList({ recipes }: TopRankedListProps) {
                                         color: 'text.secondary',
                                     })}
                                 >
-                                    {recipe.rating.toFixed(1)}
+                                    {recipe.rating > 0 ? recipe.rating.toFixed(1) : '—'}
                                     {recipe.ratingCount != null && recipe.ratingCount > 0 && (
                                         <> &middot; {recipe.ratingCount}x</>
                                     )}

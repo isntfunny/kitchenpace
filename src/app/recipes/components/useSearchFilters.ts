@@ -47,9 +47,11 @@ export function useSearchFilters(
 
     // Sync when SSR-provided initialFilters change (e.g. URL navigation)
     const prevInitialRef = useRef(initialFilters);
+    const fromInitialSyncRef = useRef(false);
     useEffect(() => {
         if (prevInitialRef.current === initialFilters) return;
         prevInitialRef.current = initialFilters;
+        fromInitialSyncRef.current = true;
         setFilters({ ...initialFilters, sort: resolveSort(initialFilters) });
         setQueryInput(initialFilters.query ?? '');
         // eslint-disable-next-line react-hooks/exhaustive-deps -- savedSort intentionally excluded
@@ -92,7 +94,11 @@ export function useSearchFilters(
         if (isFirstRender.current) {
             isFirstRender.current = false;
             window.history.replaceState(null, '', next);
-        } else if (queryOnlyChangeRef.current || fromPopStateRef.current) {
+        } else if (
+            queryOnlyChangeRef.current ||
+            fromPopStateRef.current ||
+            fromInitialSyncRef.current
+        ) {
             window.history.replaceState(null, '', next);
         } else {
             window.history.pushState(null, '', next);
@@ -100,6 +106,7 @@ export function useSearchFilters(
 
         queryOnlyChangeRef.current = false;
         fromPopStateRef.current = false;
+        fromInitialSyncRef.current = false;
     }, [filters, pathname]);
 
     // Listen for browser back/forward to restore filter state from URL

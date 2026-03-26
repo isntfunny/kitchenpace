@@ -1,5 +1,7 @@
+import { Tags } from 'lucide-react';
 import Link from 'next/link';
 
+import { Heading } from '@app/components/atoms/Typography';
 import type { TermFacet } from '@app/lib/recipeSearchTypes';
 
 import { css } from 'styled-system/css';
@@ -20,88 +22,72 @@ export function TagIngredientCloud({ tags, ingredients, categorySlug }: TagIngre
     return (
         <div
             className={css({
-                bg: 'surface.card',
-                border: '1px solid',
-                borderColor: 'border',
-                borderRadius: '10px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                overflow: 'hidden',
+                p: 'card',
+                bg: 'surface',
+                borderRadius: 'surface',
+                boxShadow: 'shadow.medium',
             })}
         >
-            <div
-                className={css({
-                    px: '4',
-                    py: '3',
-                    borderBottom: '1px solid',
-                    borderColor: 'border',
-                    fontWeight: '600',
-                    fontSize: 'sm',
-                    color: 'text.primary',
-                })}
-            >
-                Tags &amp; Zutaten
+            <div className={css({ mb: '3' })}>
+                <Heading
+                    as="h3"
+                    size="md"
+                    className={css({
+                        color: { base: '#6c5ce7', _dark: '#a29bfe' },
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                    })}
+                >
+                    <Tags size={18} />
+                    <span>Tags &amp; Zutaten</span>
+                </Heading>
             </div>
             <div
                 className={css({
-                    px: '4',
-                    py: '3',
                     display: 'flex',
                     flexWrap: 'wrap',
                     gap: '1.5',
                 })}
             >
-                {tags.map((tag) => (
-                    <Link
-                        key={`tag-${tag.key}`}
-                        href={`/recipes?category=${categorySlug}&tags=${encodeURIComponent(tag.key)}`}
-                        className={css({
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5',
-                            px: '2.5',
-                            py: '1',
-                            borderRadius: '999px',
-                            fontSize: 'xs',
-                            fontWeight: '500',
-                            textDecoration: 'none',
-                            transition: 'opacity 0.15s',
-                            bg: '#fdf2f8',
-                            color: '#9d174d',
-                            border: '1px solid #fbcfe8',
-                            _hover: { opacity: '0.8' },
-                        })}
-                    >
-                        <span className={css({ opacity: '0.7' })}>#</span>
-                        {tag.key}
-                        <span className={css({ opacity: '0.6' })}>({tag.count})</span>
-                    </Link>
-                ))}
-
-                {ingredients.map((ingredient) => (
-                    <Link
-                        key={`ing-${ingredient.key}`}
-                        href={`/recipes?category=${categorySlug}&ingredients=${encodeURIComponent(ingredient.key)}`}
-                        className={css({
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5',
-                            px: '2.5',
-                            py: '1',
-                            borderRadius: '999px',
-                            fontSize: 'xs',
-                            fontWeight: '500',
-                            textDecoration: 'none',
-                            transition: 'opacity 0.15s',
-                            bg: '#fff7ed',
-                            color: '#9a3412',
-                            border: '1px solid #fed7aa',
-                            _hover: { opacity: '0.8' },
-                        })}
-                    >
-                        {ingredient.key}
-                        <span className={css({ opacity: '0.6' })}>({ingredient.count})</span>
-                    </Link>
-                ))}
+                {[
+                    ...tags.map((t) => ({ ...t, type: 'tag' as const })),
+                    ...ingredients.map((i) => ({ ...i, type: 'ingredient' as const })),
+                ]
+                    .sort((a, b) => b.count - a.count)
+                    .map((item) => (
+                        <Link
+                            key={`${item.type}-${item.key}`}
+                            href={
+                                item.type === 'tag'
+                                    ? `/recipes?category=${categorySlug}&tags=${encodeURIComponent(item.key)}`
+                                    : `/recipes?category=${categorySlug}&ingredients=${encodeURIComponent(item.key)}`
+                            }
+                            className={css({
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.5',
+                                px: '2.5',
+                                py: '1',
+                                borderRadius: '999px',
+                                fontSize: 'xs',
+                                fontWeight: '500',
+                                textDecoration: 'none',
+                                transition: 'opacity 0.15s',
+                                bg: item.type === 'tag' ? '#fdf2f8' : '#fff7ed',
+                                color: item.type === 'tag' ? '#9d174d' : '#9a3412',
+                                border:
+                                    item.type === 'tag' ? '1px solid #fbcfe8' : '1px solid #fed7aa',
+                                _hover: { opacity: '0.8' },
+                            })}
+                        >
+                            {item.type === 'tag' && (
+                                <span className={css({ opacity: '0.7' })}>#</span>
+                            )}
+                            {item.key}
+                            <span className={css({ opacity: '0.6' })}>({item.count})</span>
+                        </Link>
+                    ))}
             </div>
         </div>
     );

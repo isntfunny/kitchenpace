@@ -30,12 +30,7 @@ export function SeasonalTeaserBar({ period, recipes, categorySlug }: SeasonalTea
     return (
         <div
             className={css({
-                width: '100vw',
-                position: 'relative',
-                left: '50%',
-                right: '50%',
-                marginLeft: '-50vw',
-                marginRight: '-50vw',
+                width: '100%',
                 background: 'linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%)',
                 py: { base: '5', md: '6' },
             })}

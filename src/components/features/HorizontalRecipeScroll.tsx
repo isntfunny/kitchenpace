@@ -10,9 +10,14 @@ import { RecipeCard, type RecipeCardRecipe } from './RecipeCard';
 interface HorizontalRecipeScrollProps {
     recipes: RecipeCardRecipe[];
     hideCategory?: boolean;
+    cardVariant?: 'compact' | 'default';
 }
 
-export function HorizontalRecipeScroll({ recipes, hideCategory }: HorizontalRecipeScrollProps) {
+export function HorizontalRecipeScroll({
+    recipes,
+    hideCategory,
+    cardVariant,
+}: HorizontalRecipeScrollProps) {
     return (
         <div>
             <CustomScrollbar
@@ -26,7 +31,7 @@ export function HorizontalRecipeScroll({ recipes, hideCategory }: HorizontalReci
                     <RecipeCard
                         key={recipe.id}
                         recipe={recipe}
-                        variant="compact"
+                        variant={cardVariant ?? 'compact'}
                         categoryOnImage
                         categoryLink
                         hideCategory={hideCategory}

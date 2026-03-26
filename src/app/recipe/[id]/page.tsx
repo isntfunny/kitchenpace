@@ -20,8 +20,13 @@ type RecipePageParams = {
     id: string;
 };
 
+type RecipePageSearchParams = {
+    ref?: string;
+};
+
 type RecipePageProps = {
     params: RecipePageParams | Promise<RecipePageParams>;
+    searchParams: RecipePageSearchParams | Promise<RecipePageSearchParams>;
 };
 
 const buildRecipeMetadata = (
@@ -84,8 +89,10 @@ export async function generateMetadata({ params }: RecipePageProps): Promise<Met
     return buildRecipeMetadata(draft, true);
 }
 
-export default async function RecipePage({ params }: RecipePageProps) {
+export default async function RecipePage({ params, searchParams }: RecipePageProps) {
     const resolvedParams = await params;
+    const resolvedSearchParams = await searchParams;
+    const refSource = resolvedSearchParams?.ref ?? null;
     const session = await getServerAuthSession('recipe-page');
     const viewerId = session?.user?.id;
 
@@ -147,6 +154,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
                 isDraft={isDraft}
                 initialProgress={initialProgress}
                 isAuthenticated={!!viewerId}
+                refSource={refSource}
                 liveCook={
                     liveCook?.user?.profile?.twitchUsername
                         ? {

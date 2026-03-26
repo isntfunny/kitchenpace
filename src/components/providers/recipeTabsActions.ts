@@ -138,7 +138,7 @@ export async function unpinRecipeAction(recipeId: string): Promise<TabsResult> {
     return fetchTabsData(userId);
 }
 
-export async function addToRecentAction(recipeId: string): Promise<void> {
+export async function addToRecentAction(recipeId: string, source?: string | null): Promise<void> {
     const userId = await requireAuth('action/recipe-tabs:addRecent');
 
     const recipe = await prisma.recipe.findUnique({
@@ -155,11 +155,11 @@ export async function addToRecentAction(recipeId: string): Promise<void> {
     if (history) {
         await prisma.userViewHistory.update({
             where: { id: history.id },
-            data: { viewedAt: new Date() },
+            data: { viewedAt: new Date(), ...(source ? { source } : {}) },
         });
     } else {
         await prisma.userViewHistory.create({
-            data: { userId, recipeId, viewedAt: new Date() },
+            data: { userId, recipeId, viewedAt: new Date(), ...(source ? { source } : {}) },
         });
     }
 }

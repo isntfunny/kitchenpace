@@ -123,6 +123,7 @@ type RecipeDetailClientProps = {
     initialProgress?: PersistedViewerState | null;
     isAuthenticated?: boolean;
     liveCook?: LiveCookData | null;
+    refSource?: string | null;
 };
 
 export function RecipeDetailClient({
@@ -134,6 +135,7 @@ export function RecipeDetailClient({
     initialProgress,
     isAuthenticated,
     liveCook,
+    refSource,
 }: RecipeDetailClientProps) {
     // State declarations MUST come first
     const router = useRouter();
@@ -273,6 +275,13 @@ export function RecipeDetailClient({
             cookTime: recipe.cookTime,
             difficulty: recipe.difficulty,
         });
+
+        // Log referrer source (e.g. ?ref=col_<id>) to UserViewHistory
+        if (refSource) {
+            import('@app/components/providers/recipeTabsActions').then(({ addToRecentAction }) =>
+                addToRecentAction(recipe.id, refSource).catch(() => {}),
+            );
+        }
     }, [
         recipe.id,
         recipe.title,
@@ -282,6 +291,7 @@ export function RecipeDetailClient({
         recipe.cookTime,
         recipe.difficulty,
         addToRecent,
+        refSource,
     ]);
 
     const starValues = [1, 2, 3, 4, 5] as const;

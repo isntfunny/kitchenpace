@@ -24,6 +24,8 @@ const ACTIVITY_STRATEGIES: Record<ActivityType, Strategy> = {
     MEAL_PLAN_CREATED: 'append',
     SHOPPING_LIST_CREATED: 'append',
     STREAM_STARTED: 'append',
+    COLLECTION_CREATED: 'append',
+    COLLECTION_FAVORITED: 'append',
 };
 
 type CreateNotificationInput = {

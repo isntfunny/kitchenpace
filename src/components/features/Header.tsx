@@ -1,6 +1,16 @@
 'use client';
 
-import { ChefHat, Egg, LayoutGrid, Menu, Plus, Shield, ShieldCheck, Zap } from 'lucide-react';
+import {
+    ChefHat,
+    Egg,
+    LayoutGrid,
+    Library,
+    Menu,
+    Plus,
+    Shield,
+    ShieldCheck,
+    Zap,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
@@ -33,6 +43,12 @@ const GENERAL_NAV_LINKS: GeneralNavLinkItem[] = [
         description: 'Stöbere durch die komplette Sammlung',
         href: '/recipes',
         icon: LayoutGrid,
+    },
+    {
+        label: 'Sammlungen',
+        description: 'Kuratierte Rezeptsammlungen',
+        href: '/collections',
+        icon: Library,
     },
     {
         label: 'Rezept erstellen',

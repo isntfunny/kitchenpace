@@ -9,7 +9,8 @@ export type ActivityIconName =
     | 'calendar'
     | 'user-plus'
     | 'user-check'
-    | 'tv';
+    | 'tv'
+    | 'library';
 
 export interface ActivityFeedItem {
     id: string;
@@ -25,6 +26,9 @@ export interface ActivityFeedItem {
     recipeTitle?: string;
     recipeId?: string;
     recipeSlug?: string;
+    collectionTitle?: string;
+    collectionId?: string;
+    collectionSlug?: string;
     detail?: string;
     timeAgo: string;
     createdAt: string;
@@ -66,6 +70,16 @@ export const ACTIVITY_DECOR: Record<
         icon: 'tv',
         bg: SOCIAL.twitch,
         template: 'kocht {recipe} gerade live auf Twitch',
+    },
+    COLLECTION_CREATED: {
+        icon: 'library',
+        bg: PALETTE.blue,
+        template: 'hat die Sammlung {collection} erstellt',
+    },
+    COLLECTION_FAVORITED: {
+        icon: 'bookmark',
+        bg: PALETTE.blue,
+        template: 'hat die Sammlung {collection} gespeichert',
     },
 };
 
@@ -125,6 +139,8 @@ export function mapLogToFeedItem(
     const user = userMap.get(log.userId);
     const recipeId = log.targetType === 'recipe' ? log.targetId : null;
     const recipe = recipeId ? recipeMap.get(recipeId) : null;
+    const collectionId = log.targetType === 'collection' ? log.targetId : null;
+    const collection = collectionId ? recipeMap.get(collectionId) : null; // reuses same map shape
 
     let template = base.template;
     let targetUserName: string | undefined;
@@ -157,6 +173,9 @@ export function mapLogToFeedItem(
         recipeTitle: recipe?.title,
         recipeId: recipe?.id,
         recipeSlug: recipe?.slug,
+        collectionTitle: collection?.title,
+        collectionId: collection?.id,
+        collectionSlug: collection?.slug,
         detail: log.metadata ? JSON.stringify(log.metadata) : undefined,
         timeAgo: formatTimeAgo(log.createdAt),
         createdAt: log.createdAt.toISOString(),

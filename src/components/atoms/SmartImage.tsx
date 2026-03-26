@@ -35,6 +35,8 @@ interface SmartImageProps {
     width?: number;
     /** @deprecated Use aspect instead */
     height?: number;
+    /** Set to "eager" for above-the-fold hero images. Default: "lazy" */
+    loading?: 'lazy' | 'eager';
 }
 
 export function SmartImage({
@@ -52,6 +54,7 @@ export function SmartImage({
     imageKey,
     width,
     height,
+    loading = 'lazy',
 }: SmartImageProps) {
     const [error, setError] = useState(false);
 
@@ -128,6 +131,7 @@ export function SmartImage({
             alt={alt || ''}
             width={fill ? undefined : width}
             height={fill ? undefined : height}
+            loading={loading}
             onLoad={isShowingFallback ? undefined : handleLoad}
             onError={isShowingFallback ? undefined : handleError}
             className={cx(

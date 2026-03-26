@@ -7,6 +7,7 @@ import {
     Edit3,
     Flame,
     Handshake,
+    Library,
     MessageSquare,
     ShoppingCart,
     Star,
@@ -35,6 +36,7 @@ const ACTIVITY_ICON_MAP: Record<ActivityIconName, LucideIcon> = {
     'user-plus': UserPlus,
     'user-check': UserCheck,
     tv: Tv,
+    library: Library,
 };
 
 const linkCss = css({ color: 'primary', fontWeight: '600', textDecoration: 'none' });
@@ -49,11 +51,26 @@ function parseDetail(detail?: string): Record<string, unknown> | null {
     }
 }
 
-/** Renders a template string, replacing {recipe} and {target} with linked elements */
+/** Renders a template string, replacing {recipe}, {collection} and {target} with linked elements */
 function renderTemplate(activity: ActivityFeedItem) {
-    const parts = activity.template.split(/(\{recipe\}|\{target\})/);
+    const parts = activity.template.split(/(\{recipe\}|\{collection\}|\{target\})/);
 
     return parts.map((part, i) => {
+        if (part === '{collection}' && activity.collectionTitle) {
+            const href = `/collection/${activity.collectionSlug ?? activity.collectionId}`;
+            return activity.collectionSlug || activity.collectionId ? (
+                <Link key={i} href={href} className={linkCss}>
+                    {activity.collectionTitle}
+                </Link>
+            ) : (
+                <span key={i} className={linkCss}>
+                    {activity.collectionTitle}
+                </span>
+            );
+        }
+
+        if (part === '{collection}') return null;
+
         if (part === '{recipe}' && activity.recipeTitle) {
             const href = `/recipe/${activity.recipeSlug ?? activity.recipeId}`;
             return activity.recipeSlug || activity.recipeId ? (

@@ -4,6 +4,7 @@ import {
     Clock,
     LayoutGrid,
     Leaf,
+    Library,
     Menu,
     Plus,
     Salad,
@@ -37,6 +38,12 @@ const GENERAL_LINKS: (DrawerNavItem & { authOnly?: boolean })[] = [
         description: 'Stöbere durch die komplette Sammlung',
         href: '/recipes',
         icon: LayoutGrid,
+    },
+    {
+        label: 'Sammlungen',
+        description: 'Kuratierte Rezeptsammlungen',
+        href: '/collections',
+        icon: Library,
     },
     {
         label: 'Rezept erstellen',

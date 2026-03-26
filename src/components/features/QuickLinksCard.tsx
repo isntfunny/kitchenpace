@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Camera, Edit3, Settings, Shield } from 'lucide-react';
+import { Bell, Camera, Edit3, Library, Settings, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -15,6 +15,7 @@ const links = [
     { href: '/profile/settings', label: 'Privatsphäre', IconEl: Settings },
     { href: '/notifications', label: 'Benachrichtigungen', IconEl: Bell },
     { href: '/profile/images', label: 'Meine Zubereitet-Bilder', IconEl: Camera },
+    { href: '/profile/collections', label: 'Meine Sammlungen', IconEl: Library },
 ];
 
 export function QuickLinksCard({ userSlug: _userSlug }: { userSlug?: string }) {

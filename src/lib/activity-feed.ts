@@ -53,6 +53,24 @@ export async function hydrateActivityFeedItems(
             : [];
     const recipeMap = new Map(recipes.map((recipe) => [recipe.id, recipe]));
 
+    // Fetch collections referenced in activity logs (same shape as recipes for mapLogToFeedItem)
+    const collectionIds = Array.from(
+        new Set(
+            logs
+                .filter((log) => log.targetType === 'collection' && log.targetId)
+                .map((log) => log.targetId as string),
+        ),
+    );
+    if (collectionIds.length > 0) {
+        const collections = await prisma.collection.findMany({
+            where: { id: { in: collectionIds } },
+            select: { id: true, title: true, slug: true },
+        });
+        for (const col of collections) {
+            recipeMap.set(col.id, col); // reuses same map shape {id, title, slug}
+        }
+    }
+
     const followTargetIds = Array.from(
         new Set(
             logs

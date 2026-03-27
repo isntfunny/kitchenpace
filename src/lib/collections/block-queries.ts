@@ -13,11 +13,15 @@ export async function resolveRecipeFilter(
     props: RecipeFilterProps,
     viewerUserId?: string | null,
 ): Promise<RecipeCardData[]> {
+    const explicitIds = props.ids?.filter(
+        (id): id is string => typeof id === 'string' && id.length > 0,
+    );
+
     // Explicit IDs take priority
-    if (props.ids && props.ids.length > 0) {
+    if (explicitIds && explicitIds.length > 0) {
         const recipes = await prisma.recipe.findMany({
             where: {
-                id: { in: props.ids },
+                id: { in: explicitIds },
                 status: 'PUBLISHED',
                 moderationStatus: { in: ['AUTO_APPROVED', 'APPROVED'] },
             },
@@ -26,7 +30,7 @@ export async function resolveRecipeFilter(
 
         // Preserve ID order
         const byId = new Map(recipes.map((r) => [r.id, r]));
-        return props.ids
+        return explicitIds
             .map((id) => byId.get(id))
             .filter(Boolean)
             .map((r) => toRecipeCardData(r!));
@@ -53,11 +57,23 @@ export async function resolveRecipeFilter(
     }
 
     if (props.tags && props.tags.length > 0) {
-        where.tags = { some: { tag: { slug: { in: props.tags } } } };
+        where.tags = {
+            some: {
+                tag: {
+                    OR: [{ slug: { in: props.tags } }, { name: { in: props.tags } }],
+                },
+            },
+        };
     }
 
     if (props.category) {
-        where.categories = { some: { category: { slug: props.category } } };
+        where.categories = {
+            some: {
+                category: {
+                    OR: [{ slug: props.category }, { name: props.category }],
+                },
+            },
+        };
     }
 
     const orderBy = buildOrderBy(props.sort ?? 'newest');

@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { getRandomCategoryRecipe } from '@app/app/actions/category';
+import { getRandomFilteredRecipe } from '@app/app/actions/category';
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 
@@ -13,7 +13,8 @@ import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
 interface RandomRecipeSpotlightProps {
-    categorySlug: string;
+    categorySlug?: string;
+    tagSlugs?: string[];
 }
 
 function SkeletonSpotlight() {
@@ -83,7 +84,7 @@ function SkeletonSpotlight() {
     );
 }
 
-export function RandomRecipeSpotlight({ categorySlug }: RandomRecipeSpotlightProps) {
+export function RandomRecipeSpotlight({ categorySlug, tagSlugs }: RandomRecipeSpotlightProps) {
     const [recipe, setRecipe] = useState<RecipeCardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [spinning, setSpinning] = useState(false);
@@ -91,7 +92,7 @@ export function RandomRecipeSpotlight({ categorySlug }: RandomRecipeSpotlightPro
     async function loadRandom() {
         setSpinning(true);
         try {
-            const result = await getRandomCategoryRecipe(categorySlug);
+            const result = await getRandomFilteredRecipe({ categorySlug, tagSlugs });
             setRecipe(result);
         } catch {
             // silently fail — no recipe shown
@@ -104,7 +105,7 @@ export function RandomRecipeSpotlight({ categorySlug }: RandomRecipeSpotlightPro
     useEffect(() => {
         loadRandom();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [categorySlug]);
+    }, [categorySlug, tagSlugs?.join('|')]);
 
     if (loading) return <SkeletonSpotlight />;
     if (!recipe) return null;

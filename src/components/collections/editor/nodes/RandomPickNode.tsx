@@ -7,6 +7,7 @@ import { Shuffle } from 'lucide-react';
 
 import { css } from 'styled-system/css';
 
+import { FilterPanel } from './shared/FilterPanel';
 import { NodeWrapper } from './shared/NodeWrapper';
 
 export const RandomPickExtension = Node.create({
@@ -18,7 +19,9 @@ export const RandomPickExtension = Node.create({
     addAttributes() {
         return {
             category: { default: '' },
+            categoryLabel: { default: '' },
             tags: { default: '' },
+            tagLabels: { default: [] },
         };
     },
 
@@ -35,7 +38,7 @@ export const RandomPickExtension = Node.create({
 });
 
 function RandomPickView({ node, updateAttributes, deleteNode, selected }: ReactNodeViewProps) {
-    const { category, tags } = node.attrs;
+    const { category, categoryLabel, tags, tagLabels } = node.attrs;
 
     return (
         <NodeViewWrapper>
@@ -56,50 +59,20 @@ function RandomPickView({ node, updateAttributes, deleteNode, selected }: ReactN
                     >
                         Zeigt ein zufälliges Rezept aus den gewählten Filtern an.
                     </p>
-                    <label className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                        Kategorie
-                        <input
-                            type="text"
-                            value={typeof category === 'string' ? category : ''}
-                            onChange={(e) => updateAttributes({ category: e.target.value })}
-                            placeholder="z.B. Desserts (leer = alle)"
-                            className={css({
-                                w: '100%',
-                                mt: '1',
-                                px: '2',
-                                py: '1',
-                                border: '1px solid',
-                                borderColor: 'border',
-                                borderRadius: 'md',
-                                bg: 'background',
-                                fontSize: 'sm',
-                                outline: 'none',
-                                _focus: { borderColor: 'accent' },
-                            })}
-                        />
-                    </label>
-                    <label className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                        Tags (kommagetrennt)
-                        <input
-                            type="text"
-                            value={typeof tags === 'string' ? tags : ''}
-                            onChange={(e) => updateAttributes({ tags: e.target.value })}
-                            placeholder="z.B. vegan, schnell"
-                            className={css({
-                                w: '100%',
-                                mt: '1',
-                                px: '2',
-                                py: '1',
-                                border: '1px solid',
-                                borderColor: 'border',
-                                borderRadius: 'md',
-                                bg: 'background',
-                                fontSize: 'sm',
-                                outline: 'none',
-                                _focus: { borderColor: 'accent' },
-                            })}
-                        />
-                    </label>
+                    <FilterPanel
+                        category={category}
+                        categoryLabel={categoryLabel}
+                        tags={tags}
+                        tagLabels={tagLabels}
+                        sort="newest"
+                        limit={1}
+                        defaultSort="newest"
+                        defaultLimit={1}
+                        maxLimit={1}
+                        categoryPlaceholder="Kategorie suchen…"
+                        showSortLimit={false}
+                        updateAttributes={updateAttributes}
+                    />
                 </div>
             </NodeWrapper>
         </NodeViewWrapper>

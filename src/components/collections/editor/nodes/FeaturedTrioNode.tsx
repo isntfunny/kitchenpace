@@ -53,14 +53,17 @@ function FeaturedTrioView({ node, updateAttributes, deleteNode, selected }: Reac
         ? (node.attrs.recipeCategories as (string | null)[])
         : [];
 
+    const normalizeSlots = <T,>(values: (T | null)[]) =>
+        Array.from({ length: 3 }, (_, index) => values[index] ?? null);
+
     const setSlot = (
         index: number,
         recipe: { id: string; title: string; imageKey: string | null; category: string },
     ) => {
-        const newIds = [...ids];
-        const newTitles = [...titles];
-        const newImageKeys = [...imageKeys];
-        const newCategories = [...categories];
+        const newIds = normalizeSlots(ids);
+        const newTitles = normalizeSlots(titles);
+        const newImageKeys = normalizeSlots(imageKeys);
+        const newCategories = normalizeSlots(categories);
         newIds[index] = recipe.id;
         newTitles[index] = recipe.title;
         newImageKeys[index] = recipe.imageKey;
@@ -74,10 +77,10 @@ function FeaturedTrioView({ node, updateAttributes, deleteNode, selected }: Reac
     };
 
     const clearSlot = (index: number) => {
-        const newIds = [...ids];
-        const newTitles = [...titles];
-        const newImageKeys = [...imageKeys];
-        const newCategories = [...categories];
+        const newIds = normalizeSlots(ids);
+        const newTitles = normalizeSlots(titles);
+        const newImageKeys = normalizeSlots(imageKeys);
+        const newCategories = normalizeSlots(categories);
         newIds[index] = null;
         newTitles[index] = null;
         newImageKeys[index] = null;

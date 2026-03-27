@@ -24,6 +24,29 @@ export interface CollectionAutoSaveResult {
     buildPayload: () => CollectionMutationInput;
 }
 
+function sanitizeSerializableValue(value: unknown): unknown {
+    if (value == null) return null;
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        return value;
+    }
+    if (Array.isArray(value)) {
+        return value.map((item) => sanitizeSerializableValue(item) ?? null);
+    }
+    if (typeof value === 'object') {
+        const entries = Object.entries(value as Record<string, unknown>).flatMap(([key, entry]) => {
+            const sanitized = sanitizeSerializableValue(entry);
+            return sanitized === undefined ? [] : [[key, sanitized] as const];
+        });
+        return Object.fromEntries(entries);
+    }
+    return undefined;
+}
+
+function sanitizeBlocks(blocks: TiptapJSON | null): TiptapJSON | null {
+    const sanitized = sanitizeSerializableValue(blocks);
+    return sanitized && typeof sanitized === 'object' ? (sanitized as TiptapJSON) : null;
+}
+
 export function useCollectionAutoSave(deps: AutoSaveDeps): CollectionAutoSaveResult {
     const {
         title,
@@ -48,11 +71,11 @@ export function useCollectionAutoSave(deps: AutoSaveDeps): CollectionAutoSaveRes
         return {
             title: title.trim(),
             description: description.trim() || undefined,
-            blocks: blocks,
+            blocks: sanitizeBlocks(blocks),
             template,
             coverImageKey: coverImageKey ?? undefined,
-            categoryIds,
-            tagIds,
+            categoryIds: [...categoryIds],
+            tagIds: [...tagIds],
         };
     }, [title, description, blocks, template, coverImageKey, categoryIds, tagIds]);
 

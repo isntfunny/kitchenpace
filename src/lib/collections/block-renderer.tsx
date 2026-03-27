@@ -1,7 +1,9 @@
 import { FeaturedTrio } from '@app/app/category/[slug]/components/FeaturedTrio';
+import { RandomRecipeSpotlight } from '@app/app/category/[slug]/components/RandomRecipeSpotlight';
 import { TopRankedList } from '@app/app/category/[slug]/components/sidebar/TopRankedList';
 import { HorizontalRecipeScroll } from '@app/components/features/HorizontalRecipeScroll';
 import { RecipeCard } from '@app/components/features/RecipeCard';
+import { RecipeFlowEmbed } from '@app/components/flow/viewer/RecipeFlowEmbed';
 
 import { resolveRecipeFilter } from './block-queries';
 import type { TiptapJSON, RecipeFilterProps } from './types';
@@ -22,7 +24,8 @@ export async function CollectionBlockRenderer({
     // Pre-fetch all recipe data in parallel
     const queries: Array<{ index: number; props: RecipeFilterProps }> = [];
     for (let i = 0; i < blocks.content.length; i++) {
-        const props = blockToFilterProps(blocks.content[i]);
+        const node = blocks.content[i];
+        const props = blockToFilterProps(node);
         if (props) queries.push({ index: i, props });
     }
 
@@ -106,40 +109,32 @@ export async function CollectionBlockRenderer({
             }
 
             case 'recipeFlow': {
-                const title = node.attrs?.recipeTitle as string | undefined;
-                elements.push(
-                    <div
-                        key={key}
-                        style={{
-                            margin: '1.5rem 0',
-                            padding: '1rem',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '12px',
-                            textAlign: 'center',
-                            color: '#6b7280',
-                        }}
-                    >
-                        Rezept-Flow: {title ?? 'Unbekannt'}
-                    </div>,
-                );
+                const recipeId =
+                    typeof node.attrs?.recipeId === 'string' && node.attrs.recipeId.length > 0
+                        ? node.attrs.recipeId
+                        : null;
+                if (!recipeId) break;
+                elements.push(<RecipeFlowEmbed key={key} recipeId={recipeId} />);
                 break;
             }
 
             case 'randomPick': {
+                const category =
+                    typeof node.attrs?.category === 'string' && node.attrs.category.length > 0
+                        ? node.attrs.category
+                        : undefined;
+                const tags = Array.isArray(node.attrs?.tags)
+                    ? node.attrs.tags.filter(
+                          (tag): tag is string => typeof tag === 'string' && tag.length > 0,
+                      )
+                    : typeof node.attrs?.tags === 'string'
+                      ? node.attrs.tags
+                            .split(',')
+                            .map((tag) => tag.trim())
+                            .filter((tag): tag is string => tag.length > 0)
+                      : [];
                 elements.push(
-                    <div
-                        key={key}
-                        style={{
-                            margin: '1.5rem 0',
-                            padding: '1rem',
-                            border: '1px dashed #e5e7eb',
-                            borderRadius: '12px',
-                            textAlign: 'center',
-                            color: '#6b7280',
-                        }}
-                    >
-                        Zufälliges Rezept wird hier angezeigt
-                    </div>,
+                    <RandomRecipeSpotlight key={key} categorySlug={category} tagSlugs={tags} />,
                 );
                 break;
             }
@@ -170,6 +165,17 @@ const RECIPE_BLOCK_TYPES = new Set([
 function blockToFilterProps(node: TiptapJSON): RecipeFilterProps | null {
     if (!RECIPE_BLOCK_TYPES.has(node.type)) return null;
     const attrs = node.attrs ?? {};
+    const ids = Array.isArray(attrs.recipeIds)
+        ? attrs.recipeIds.filter((id): id is string => typeof id === 'string' && id.length > 0)
+        : undefined;
+    const tags = Array.isArray(attrs.tags)
+        ? attrs.tags.filter((tag): tag is string => typeof tag === 'string' && tag.length > 0)
+        : typeof attrs.tags === 'string'
+          ? attrs.tags
+                .split(',')
+                .map((tag) => tag.trim())
+                .filter((tag): tag is string => tag.length > 0)
+          : undefined;
 
     if (node.type === 'recipeCard' || node.type === 'recipeCardWithText') {
         const id = attrs.recipeId as string;
@@ -177,9 +183,9 @@ function blockToFilterProps(node: TiptapJSON): RecipeFilterProps | null {
     }
 
     return {
-        ids: attrs.recipeIds as string[] | undefined,
+        ids,
         category: attrs.category as string | undefined,
-        tags: attrs.tags as string[] | undefined,
+        tags,
         sort: attrs.sort as 'rating' | 'newest' | 'popular' | undefined,
         limit:
             (attrs.limit as number) ??

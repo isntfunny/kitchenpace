@@ -23,7 +23,9 @@ export const RecipeSliderExtension = Node.create({
             recipeIds: { default: [] },
             recipeTitles: { default: [] },
             category: { default: '' },
+            categoryLabel: { default: '' },
             tags: { default: '' },
+            tagLabels: { default: [] },
             sort: { default: 'newest' },
             limit: { default: 10 },
             mode: { default: 'manual' },
@@ -43,7 +45,8 @@ export const RecipeSliderExtension = Node.create({
 });
 
 function RecipeSliderView({ node, updateAttributes, deleteNode, selected }: ReactNodeViewProps) {
-    const { recipeIds, recipeTitles, category, tags, sort, limit, mode } = node.attrs;
+    const { recipeIds, recipeTitles, category, categoryLabel, tags, tagLabels, sort, limit, mode } =
+        node.attrs;
     const ids = Array.isArray(recipeIds) ? (recipeIds as string[]) : [];
     const titles = Array.isArray(recipeTitles) ? (recipeTitles as string[]) : [];
     const [showSearch, setShowSearch] = useState(false);
@@ -181,7 +184,9 @@ function RecipeSliderView({ node, updateAttributes, deleteNode, selected }: Reac
                 {isFilter && (
                     <FilterPanel
                         category={category as string}
-                        tags={tags as string}
+                        categoryLabel={categoryLabel}
+                        tags={tags}
+                        tagLabels={tagLabels}
                         sort={sort as string}
                         limit={limit as number}
                         defaultSort="newest"

@@ -10,7 +10,7 @@ interface InlineLayoutProps {
 
 export function InlineLayout({ mdxContent }: InlineLayoutProps) {
     return (
-        <div className={css({ maxW: '768px', mx: 'auto', px: '4', py: '8' })}>
+        <div className={css({ maxW: '1200px', mx: 'auto', px: '4', py: '8', width: '100%' })}>
             <article className={articleProseClass}>{mdxContent}</article>
         </div>
     );

@@ -36,6 +36,10 @@ const publishedInCategory = (categoryId: string) => ({
     categories: { some: { categoryId } },
 });
 
+const publishedOnly = () => ({
+    publishedAt: { not: null } as const,
+});
+
 // ─── Data fetching ───────────────────────────────────────────────────────────
 
 export async function fetchCategoryBySlug(slug: string): Promise<CategoryPageData | null> {
@@ -281,23 +285,60 @@ export async function fetchCategoryAggregateStats(
 export async function getRandomCategoryRecipe(
     categorySlug: string,
 ): Promise<RecipeCardData | null> {
-    const category = await prisma.category.findUnique({
-        where: { slug: categorySlug },
-    });
-    if (!category) return null;
+    return getRandomFilteredRecipe({ categorySlug });
+}
 
-    const count = await prisma.recipe.count({
-        where: publishedInCategory(category.id),
-    });
+export async function getRandomFilteredRecipe({
+    categorySlug,
+    tagSlugs,
+}: {
+    categorySlug?: string;
+    tagSlugs?: string[];
+}): Promise<RecipeCardData | null> {
+    let categoryId: string | undefined;
+
+    if (categorySlug) {
+        const category = await prisma.category.findFirst({
+            where: {
+                OR: [{ slug: categorySlug }, { name: categorySlug }],
+            },
+            select: { id: true },
+        });
+        if (!category) return null;
+        categoryId = category.id;
+    }
+
+    const normalizedTags = (tagSlugs ?? []).filter((tag) => tag.length > 0);
+
+    const where = {
+        ...(categoryId ? publishedInCategory(categoryId) : publishedOnly()),
+        ...(normalizedTags.length > 0
+            ? {
+                  tags: {
+                      some: {
+                          tag: {
+                              OR: [
+                                  { slug: { in: normalizedTags } },
+                                  { name: { in: normalizedTags } },
+                              ],
+                          },
+                      },
+                  },
+              }
+            : {}),
+    };
+
+    const count = await prisma.recipe.count({ where });
     if (count === 0) return null;
 
     const skip = Math.floor(Math.random() * count);
     const recipes = await prisma.recipe.findMany({
-        where: publishedInCategory(category.id),
+        where,
         include: { categories: { include: { category: true } } },
         skip,
         take: 1,
     });
+
     return recipes[0] ? toRecipeCardData(recipes[0]) : null;
 }
 

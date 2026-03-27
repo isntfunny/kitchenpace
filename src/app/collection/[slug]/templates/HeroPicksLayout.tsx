@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { FeaturedTrio } from '@app/app/category/[slug]/components/FeaturedTrio';
 import type { RecipeCardData } from '@app/lib/recipe-card';
 
-import { css, cx } from 'styled-system/css';
+import { css } from 'styled-system/css';
 
 import { articleProseClass } from './shared';
 
@@ -20,9 +20,7 @@ export function HeroPicksLayout({ mdxContent, heroRecipes }: HeroPicksLayoutProp
                     <FeaturedTrio recipes={heroRecipes} categoryColor="#f97316" />
                 </div>
             )}
-            <article className={cx(articleProseClass, css({ maxW: '768px', mx: 'auto' }))}>
-                {mdxContent}
-            </article>
+            <article className={articleProseClass}>{mdxContent}</article>
         </div>
     );
 }

@@ -2,7 +2,6 @@ import { FeaturedTrio } from '@app/app/category/[slug]/components/FeaturedTrio';
 import { TopRankedList } from '@app/app/category/[slug]/components/sidebar/TopRankedList';
 import { HorizontalRecipeScroll } from '@app/components/features/HorizontalRecipeScroll';
 import { RecipeCard } from '@app/components/features/RecipeCard';
-import type { RecipeCardData } from '@app/lib/recipe-card';
 
 import { resolveRecipeFilter } from './block-queries';
 import type { TiptapJSON, RecipeFilterProps } from './types';
@@ -20,119 +19,145 @@ export async function CollectionBlockRenderer({
 }: CollectionBlockRendererProps) {
     if (!blocks.content || blocks.content.length === 0) return null;
 
-    // Pre-fetch all recipe data in one pass to avoid sequential awaits per block
-    const recipeDataMap = await prefetchRecipeData(blocks, viewerUserId);
+    // Pre-fetch all recipe data in parallel
+    const queries: Array<{ index: number; props: RecipeFilterProps }> = [];
+    for (let i = 0; i < blocks.content.length; i++) {
+        const props = blockToFilterProps(blocks.content[i]);
+        if (props) queries.push({ index: i, props });
+    }
 
-    return (
-        <>
-            {blocks.content.map((node, i) => (
-                <BlockNode key={`block-${i}`} node={node} recipeDataMap={recipeDataMap} />
-            ))}
-        </>
+    const results = await Promise.all(
+        queries.map(async ({ index, props }) => ({
+            index,
+            data: await resolveRecipeFilter(props, viewerUserId),
+        })),
     );
-}
 
-// ── Individual Block Renderer (sync, uses pre-fetched data) ─────────────────
+    const recipeDataByIndex = new Map(results.map(({ index, data }) => [index, data]));
 
-interface BlockNodeProps {
-    node: TiptapJSON;
-    recipeDataMap: Map<string, RecipeCardData[]>;
-}
+    // Render blocks inline — Client Components must be rendered directly
+    // from this async Server Component, not from a nested function component
+    const elements: React.ReactNode[] = [];
 
-function BlockNode({ node, recipeDataMap }: BlockNodeProps) {
-    const cacheKey = blockCacheKey(node);
-    const recipes = recipeDataMap.get(cacheKey) ?? [];
+    for (let i = 0; i < blocks.content.length; i++) {
+        const node = blocks.content[i];
+        const recipes = recipeDataByIndex.get(i) ?? [];
+        const key = `block-${i}`;
 
-    switch (node.type) {
-        case 'recipeCard': {
-            if (recipes.length === 0) return null;
-            return (
-                <div style={{ maxWidth: 400, margin: '1.5rem 0' }}>
-                    <RecipeCard recipe={recipes[0]} variant="default" categoryOnImage starRating />
-                </div>
-            );
-        }
+        switch (node.type) {
+            case 'recipeCard': {
+                if (recipes.length === 0) break;
+                elements.push(
+                    <div key={key} style={{ maxWidth: 400, margin: '1.5rem 0' }}>
+                        <RecipeCard
+                            recipe={recipes[0]}
+                            variant="default"
+                            categoryOnImage
+                            starRating
+                        />
+                    </div>,
+                );
+                break;
+            }
 
-        case 'recipeCardWithText': {
-            if (recipes.length === 0) return null;
-            return (
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '1.5rem',
-                        margin: '1.5rem 0',
-                        alignItems: 'start',
-                    }}
-                >
-                    <div style={{ fontSize: '0.95rem', lineHeight: '1.7' }}>
-                        {String(node.attrs?.text ?? '')}
-                    </div>
-                    <RecipeCard recipe={recipes[0]} variant="default" categoryOnImage starRating />
-                </div>
-            );
-        }
+            case 'recipeCardWithText': {
+                if (recipes.length === 0) break;
+                elements.push(
+                    <div
+                        key={key}
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '1.5rem',
+                            margin: '1.5rem 0',
+                            alignItems: 'start',
+                        }}
+                    >
+                        <div style={{ fontSize: '0.95rem', lineHeight: '1.7' }}>
+                            {String(node.attrs?.text ?? '')}
+                        </div>
+                        <RecipeCard
+                            recipe={recipes[0]}
+                            variant="default"
+                            categoryOnImage
+                            starRating
+                        />
+                    </div>,
+                );
+                break;
+            }
 
-        case 'recipeSlider': {
-            if (recipes.length === 0) return null;
-            return <HorizontalRecipeScroll recipes={recipes} />;
-        }
+            case 'recipeSlider': {
+                if (recipes.length === 0) break;
+                elements.push(<HorizontalRecipeScroll key={key} recipes={recipes} />);
+                break;
+            }
 
-        case 'featuredTrio': {
-            if (recipes.length === 0) return null;
-            return <FeaturedTrio recipes={recipes} categoryColor="#f97316" />;
-        }
+            case 'featuredTrio': {
+                if (recipes.length === 0) break;
+                elements.push(<FeaturedTrio key={key} recipes={recipes} categoryColor="#f97316" />);
+                break;
+            }
 
-        case 'topList': {
-            if (recipes.length === 0) return null;
-            return <TopRankedList recipes={recipes} />;
-        }
+            case 'topList': {
+                if (recipes.length === 0) break;
+                elements.push(<TopRankedList key={key} recipes={recipes} />);
+                break;
+            }
 
-        case 'recipeFlow': {
-            const title = node.attrs?.recipeTitle as string | undefined;
-            return (
-                <div
-                    style={{
-                        margin: '1.5rem 0',
-                        padding: '1rem',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '12px',
-                        textAlign: 'center',
-                        color: '#6b7280',
-                    }}
-                >
-                    Rezept-Flow: {title ?? 'Unbekannt'}
-                </div>
-            );
-        }
+            case 'recipeFlow': {
+                const title = node.attrs?.recipeTitle as string | undefined;
+                elements.push(
+                    <div
+                        key={key}
+                        style={{
+                            margin: '1.5rem 0',
+                            padding: '1rem',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '12px',
+                            textAlign: 'center',
+                            color: '#6b7280',
+                        }}
+                    >
+                        Rezept-Flow: {title ?? 'Unbekannt'}
+                    </div>,
+                );
+                break;
+            }
 
-        case 'randomPick': {
-            return (
-                <div
-                    style={{
-                        margin: '1.5rem 0',
-                        padding: '1rem',
-                        border: '1px dashed #e5e7eb',
-                        borderRadius: '12px',
-                        textAlign: 'center',
-                        color: '#6b7280',
-                    }}
-                >
-                    Zufälliges Rezept wird hier angezeigt
-                </div>
-            );
-        }
+            case 'randomPick': {
+                elements.push(
+                    <div
+                        key={key}
+                        style={{
+                            margin: '1.5rem 0',
+                            padding: '1rem',
+                            border: '1px dashed #e5e7eb',
+                            borderRadius: '12px',
+                            textAlign: 'center',
+                            color: '#6b7280',
+                        }}
+                    >
+                        Zufälliges Rezept wird hier angezeigt
+                    </div>,
+                );
+                break;
+            }
 
-        // Text nodes
-        default: {
-            const html = renderNodeToHtml(node);
-            if (!html) return null;
-            return <div dangerouslySetInnerHTML={{ __html: html }} />;
+            default: {
+                const html = renderNodeToHtml(node);
+                if (html) {
+                    elements.push(<div key={key} dangerouslySetInnerHTML={{ __html: html }} />);
+                }
+                break;
+            }
         }
     }
+
+    return <>{elements}</>;
 }
 
-// ── Pre-fetch: gather all recipe queries, execute in parallel ────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 const RECIPE_BLOCK_TYPES = new Set([
     'recipeCard',
@@ -141,10 +166,6 @@ const RECIPE_BLOCK_TYPES = new Set([
     'featuredTrio',
     'topList',
 ]);
-
-function blockCacheKey(node: TiptapJSON): string {
-    return `${node.type}-${JSON.stringify(node.attrs ?? {})}`;
-}
 
 function blockToFilterProps(node: TiptapJSON): RecipeFilterProps | null {
     if (!RECIPE_BLOCK_TYPES.has(node.type)) return null;
@@ -164,36 +185,6 @@ function blockToFilterProps(node: TiptapJSON): RecipeFilterProps | null {
             (attrs.limit as number) ??
             (node.type === 'featuredTrio' ? 3 : node.type === 'topList' ? 5 : 8),
     };
-}
-
-async function prefetchRecipeData(
-    doc: TiptapJSON,
-    viewerUserId?: string | null,
-): Promise<Map<string, RecipeCardData[]>> {
-    const map = new Map<string, RecipeCardData[]>();
-    if (!doc.content) return map;
-
-    const queries: Array<{ key: string; props: RecipeFilterProps }> = [];
-
-    for (const node of doc.content) {
-        const props = blockToFilterProps(node);
-        if (props) {
-            queries.push({ key: blockCacheKey(node), props });
-        }
-    }
-
-    const results = await Promise.all(
-        queries.map(async ({ key, props }) => {
-            const data = await resolveRecipeFilter(props, viewerUserId);
-            return { key, data };
-        }),
-    );
-
-    for (const { key, data } of results) {
-        map.set(key, data);
-    }
-
-    return map;
 }
 
 // ── Text Node → HTML ─────────────────────────────────────────────────────────

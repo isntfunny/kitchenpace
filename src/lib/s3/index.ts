@@ -16,3 +16,6 @@ export {
 } from './keys';
 
 export { upload, getBuffer, exists, deleteObject, moveObject, putObject } from './operations';
+
+export type { VariantResult } from './responsive';
+export { generateOgImage } from './responsive';

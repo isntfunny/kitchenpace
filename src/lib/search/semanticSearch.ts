@@ -32,6 +32,7 @@ export type SemanticSearchResult = {
 const KNN_K = 10;
 const EMBEDDING_DIMENSIONS = 3072;
 const CACHE_KEY_PREFIX = 'search:emb:';
+const CACHE_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
 // ── Embedding Cache (Redis) ──────────────────────────────────────────────────
 
@@ -59,7 +60,7 @@ async function setCachedEmbedding(query: string, embedding: number[]): Promise<v
         const redis = getRealtimeRedis();
         const floats = new Float32Array(embedding);
         const buf = Buffer.from(floats.buffer);
-        await redis.set(cacheKey(query), buf);
+        await redis.set(cacheKey(query), buf, 'EX', CACHE_TTL_SECONDS);
     } catch {
         // Cache write failure is non-critical
     }
@@ -100,7 +101,7 @@ export async function semanticRecipeSearch(
         // 3. Generate embedding via OpenAI
         embedding = await generateEmbedding(query);
 
-        // 4. Cache for future queries (no TTL — embeddings are deterministic)
+        // 4. Cache for future queries (30-day TTL)
         await setCachedEmbedding(query, embedding);
     }
 

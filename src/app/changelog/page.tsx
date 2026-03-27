@@ -32,6 +32,38 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '27. März 2026',
+        version: 'v2026-03-27',
+        emoji: '📚',
+        title: 'Sammlungen, neue Kategorieseiten & Mobile-Menüs',
+        items: [
+            {
+                text: 'Neues Feature: Sammlungen — fasse deine Lieblingsrezepte in eigenen Sammlungen zusammen, nutze Vorlagen oder erstelle deine eigenen',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Kategorieseiten komplett überarbeitet — neue Übersicht mit saisonalen Empfehlungen, Schwierigkeitsverteilung, Top-5-Rezepten und mehr',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Auf dem Handy öffnen sich Suche, Menü, Profil und Benachrichtigungen jetzt als übersichtliche Vollbild-Overlays',
+                tag: 'feat',
+            },
+            {
+                text: 'Im Aktivitätsfeed siehst du jetzt auch, wenn jemand eine Sammlung erstellt oder ein Rezept zu einer Sammlung hinzufügt',
+                tag: 'feat',
+            },
+            {
+                text: 'Die Benachrichtigungsglocke wird auf dem Handy jetzt korrekt neben dem Profilbild angezeigt',
+                tag: 'fix',
+            },
+            {
+                text: 'Filter auf der Rezeptseite reagieren jetzt zuverlässiger — keine verzögerten oder fehlenden Ergebnisse mehr',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '24. März 2026',
         version: 'v2026-03-24',
         emoji: '✨',

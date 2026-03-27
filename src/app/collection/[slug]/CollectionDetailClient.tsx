@@ -1,6 +1,5 @@
 'use client';
 
-import { ModerationStatus } from '@prisma/client';
 import { Heart, Eye, BookOpen, Calendar, Edit2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -46,8 +45,8 @@ export function CollectionDetailClient({
     });
 
     const isDraft = !collection.published;
-    const isPending = collection.moderationStatus === ModerationStatus.PENDING;
-    const isRejected = collection.moderationStatus === ModerationStatus.REJECTED;
+    const isPending = collection.moderationStatus === 'PENDING';
+    const isRejected = collection.moderationStatus === 'REJECTED';
 
     return (
         <div>

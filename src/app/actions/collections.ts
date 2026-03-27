@@ -315,7 +315,13 @@ export async function fetchCollectionBySlug(
         description: collection.description,
         coverImageKey: collection.coverImageKey,
         template: collection.template,
-        blocks: collection.blocks as TiptapJSON | null,
+        blocks:
+            typeof collection.blocks === 'object' &&
+            collection.blocks !== null &&
+            !Array.isArray(collection.blocks) &&
+            'type' in collection.blocks
+                ? (collection.blocks as TiptapJSON)
+                : null,
         published: collection.published,
         moderationStatus: collection.moderationStatus,
         viewCount: collection.viewCount,

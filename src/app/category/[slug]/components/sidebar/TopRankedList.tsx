@@ -1,3 +1,5 @@
+'use client';
+
 import { Star, Trophy } from 'lucide-react';
 import Link from 'next/link';
 

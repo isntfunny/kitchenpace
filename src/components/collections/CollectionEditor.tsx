@@ -1,6 +1,5 @@
 'use client';
 
-import type { CollectionTemplate } from '@prisma/client';
 import { Save, Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -20,7 +19,7 @@ interface CollectionEditorProps {
         title: string;
         description: string | null;
         blocks: TiptapJSON | null;
-        template: CollectionTemplate;
+        template: string;
         coverImageKey: string | null;
         categoryIds: string[];
         tagIds: string[];
@@ -36,7 +35,7 @@ export function CollectionEditor({ initialData }: CollectionEditorProps) {
     const [blocks, setBlocks] = useState<TiptapJSON | null>(
         (initialData?.blocks as TiptapJSON) ?? null,
     );
-    const [template] = useState<CollectionTemplate>(initialData?.template ?? 'INLINE');
+    const [template] = useState<string>(initialData?.template ?? 'INLINE');
     const [coverImageKey] = useState<string | null>(initialData?.coverImageKey ?? null);
     const [categoryIds] = useState<string[]>(initialData?.categoryIds ?? []);
     const [tagIds] = useState<string[]>(initialData?.tagIds ?? []);

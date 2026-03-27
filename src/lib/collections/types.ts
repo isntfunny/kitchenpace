@@ -1,5 +1,3 @@
-import type { CollectionTemplate, ModerationStatus } from '@prisma/client';
-
 /** Tiptap JSON document type */
 export type TiptapJSON = {
     type: string;
@@ -9,6 +7,12 @@ export type TiptapJSON = {
     marks?: Array<{ type: string; attrs?: Record<string, unknown> }>;
 };
 
+/** Collection template layout type (mirrors Prisma CollectionTemplate enum) */
+export type CollectionTemplateName = 'SIDEBAR' | 'GRID_BELOW' | 'HERO_PICKS' | 'INLINE';
+
+/** Moderation status (mirrors Prisma ModerationStatus enum) */
+export type ModerationStatusName = 'APPROVED' | 'PENDING' | 'REJECTED' | 'AUTO_APPROVED';
+
 /** Card data for collection browse/homepage displays */
 export interface CollectionCardData {
     id: string;
@@ -16,7 +20,7 @@ export interface CollectionCardData {
     title: string;
     description: string | null;
     coverImageKey: string | null;
-    template: CollectionTemplate;
+    template: CollectionTemplateName;
     recipeCount: number;
     viewCount: number;
     favoriteCount: number;
@@ -46,10 +50,10 @@ export interface CollectionDetail {
     title: string;
     description: string | null;
     coverImageKey: string | null;
-    template: CollectionTemplate;
+    template: CollectionTemplateName;
     blocks: TiptapJSON | null;
     published: boolean;
-    moderationStatus: ModerationStatus;
+    moderationStatus: ModerationStatusName;
     viewCount: number;
     authorId: string;
     author: {
@@ -70,7 +74,7 @@ export interface CollectionMutationInput {
     title: string;
     description?: string;
     coverImageKey?: string;
-    template: CollectionTemplate;
+    template: string;
     blocks?: TiptapJSON | null;
     categoryIds?: string[];
     tagIds?: string[];

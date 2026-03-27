@@ -1,6 +1,6 @@
 'use server';
 
-import { Prisma } from '@prisma/client';
+import { Prisma, type CollectionTemplate } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 import { getServerAuthSession } from '@app/lib/auth';
@@ -63,7 +63,7 @@ export async function createCollection(
             slug,
             description: data.description ?? null,
             coverImageKey: data.coverImageKey ?? null,
-            template: data.template,
+            template: data.template as CollectionTemplate,
             blocks: data.blocks ? (data.blocks as Prisma.InputJsonValue) : Prisma.JsonNull,
             authorId,
             moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
@@ -123,7 +123,7 @@ export async function updateCollection(
             title: data.title,
             description: data.description ?? null,
             coverImageKey: data.coverImageKey ?? null,
-            template: data.template,
+            template: data.template as CollectionTemplate,
             blocks: data.blocks ? (data.blocks as Prisma.InputJsonValue) : Prisma.JsonNull,
             moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
             aiModerationScore: modResult.score,

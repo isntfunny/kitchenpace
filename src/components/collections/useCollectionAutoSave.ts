@@ -1,6 +1,5 @@
 'use client';
 
-import type { CollectionTemplate } from '@prisma/client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { createCollection, updateCollection } from '@app/app/actions/collections';
@@ -10,7 +9,7 @@ interface AutoSaveDeps {
     title: string;
     description: string;
     blocks: TiptapJSON | null;
-    template: CollectionTemplate;
+    template: string;
     coverImageKey: string | null;
     categoryIds: string[];
     tagIds: string[];

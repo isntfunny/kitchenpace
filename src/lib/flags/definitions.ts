@@ -6,6 +6,7 @@ export const FEATURE_FLAGS = {
     retroTheme: 'retro-theme',
     twitchSignIn: 'twitch-sign-in',
     simulateTwitchLive: 'simulate-twitch-live',
+    collections: 'collections',
 } as const;
 
 export type FeatureFlagName = keyof typeof FEATURE_FLAGS;
@@ -20,4 +21,5 @@ export const DEFAULT_FEATURE_FLAG_VALUES: FeatureFlagValues = {
     retroTheme: false,
     twitchSignIn: false,
     simulateTwitchLive: false,
+    collections: false,
 };

@@ -142,6 +142,7 @@ function mapKnownFlags(
         twitchSignIn: allFlags[getFeatureFlagName('twitchSignIn')] ?? fallback.twitchSignIn,
         simulateTwitchLive:
             allFlags[getFeatureFlagName('simulateTwitchLive')] ?? fallback.simulateTwitchLive,
+        collections: allFlags[getFeatureFlagName('collections')] ?? fallback.collections,
     };
 }
 

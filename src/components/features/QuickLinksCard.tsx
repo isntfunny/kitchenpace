@@ -6,20 +6,28 @@ import { usePathname } from 'next/navigation';
 
 import { Heading } from '@app/components/atoms/Typography';
 import SignOutButton from '@app/components/auth/SignOutButton';
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 
 import { css } from 'styled-system/css';
 
-const links = [
+const ALL_LINKS = [
     { href: '/profile/edit', label: 'Profil bearbeiten', IconEl: Edit3 },
     { href: '/profile/account', label: 'Konto & Sicherheit', IconEl: Shield },
     { href: '/profile/settings', label: 'Privatsphäre', IconEl: Settings },
     { href: '/notifications', label: 'Benachrichtigungen', IconEl: Bell },
     { href: '/profile/images', label: 'Meine Zubereitet-Bilder', IconEl: Camera },
-    { href: '/profile/collections', label: 'Meine Sammlungen', IconEl: Library },
+    {
+        href: '/profile/collections',
+        label: 'Meine Sammlungen',
+        IconEl: Library,
+        flag: 'collections' as const,
+    },
 ];
 
 export function QuickLinksCard({ userSlug: _userSlug }: { userSlug?: string }) {
     const pathname = usePathname();
+    const collectionsEnabled = useFeatureFlag('collections');
+    const links = ALL_LINKS.filter((link) => !link.flag || collectionsEnabled);
 
     return (
         <div

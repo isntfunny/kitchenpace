@@ -27,6 +27,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
+
 import { css, cx } from 'styled-system/css';
 
 /* ------------------------------------------------------------------ */
@@ -40,6 +42,7 @@ interface NavLink {
     icon: LucideIcon;
     label: string;
     minRole: AdminRole;
+    flag?: 'collections';
 }
 
 interface NavSection {
@@ -106,6 +109,7 @@ const NAV_SECTIONS: NavSection[] = [
                 icon: Library,
                 label: 'Sammlungen',
                 minRole: 'moderator',
+                flag: 'collections',
             },
             { href: '/admin/ingredients', icon: Carrot, label: 'Zutaten', minRole: 'moderator' },
             { href: '/admin/units', icon: Scale, label: 'Einheiten', minRole: 'moderator' },
@@ -279,9 +283,12 @@ export function AdminSidebar({ role }: { role: AdminRole }) {
         };
     }, [mobileOpen]);
 
+    const collectionsEnabled = useFeatureFlag('collections');
     const visibleSections = NAV_SECTIONS.map((section) => ({
         ...section,
-        links: section.links.filter((link) => canAccess(link.minRole, role)),
+        links: section.links.filter(
+            (link) => canAccess(link.minRole, role) && (!link.flag || collectionsEnabled),
+        ),
     })).filter((section) => section.links.length > 0);
 
     return (

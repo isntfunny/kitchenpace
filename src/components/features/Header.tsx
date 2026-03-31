@@ -15,6 +15,7 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
 
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { useTheme } from '@app/components/providers/ThemeProvider';
 import { useSession } from '@app/lib/auth-client';
 import { PALETTE } from '@app/lib/palette';
@@ -33,7 +34,7 @@ import { MobileSearch } from './MobileSearch';
 import { RecipeTabs } from './RecipeTabs';
 import { ThemeToggle } from './ThemeToggle';
 
-type GeneralNavLinkItem = MenuNavLinkItem & { authOnly?: boolean };
+type GeneralNavLinkItem = MenuNavLinkItem & { authOnly?: boolean; flag?: 'collections' };
 
 const HEADER_ICONS = [Egg, Zap, ChefHat] as const;
 
@@ -49,6 +50,7 @@ const GENERAL_NAV_LINKS: GeneralNavLinkItem[] = [
         description: 'Kuratierte Rezeptsammlungen',
         href: '/collections',
         icon: Library,
+        flag: 'collections',
     },
     {
         label: 'Rezept erstellen',
@@ -105,8 +107,9 @@ function HeaderNavigationMenu({
     isAdmin: boolean;
     isModerator: boolean;
 }) {
+    const collectionsEnabled = useFeatureFlag('collections');
     const availableGeneralLinks = GENERAL_NAV_LINKS.filter(
-        (link) => !link.authOnly || isAuthenticated,
+        (link) => (!link.authOnly || isAuthenticated) && (!link.flag || collectionsEnabled),
     ) as MenuNavLinkItem[];
 
     const adminLinks: MenuNavLinkItem[] = [];

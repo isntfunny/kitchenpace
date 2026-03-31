@@ -16,6 +16,7 @@ import {
 import Link from 'next/link';
 import { type ComponentType, useState } from 'react';
 
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { useSession } from '@app/lib/auth-client';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 
@@ -32,7 +33,7 @@ interface DrawerNavItem {
     icon?: ComponentType<{ size?: number }>;
 }
 
-const GENERAL_LINKS: (DrawerNavItem & { authOnly?: boolean })[] = [
+const GENERAL_LINKS: (DrawerNavItem & { authOnly?: boolean; flag?: 'collections' })[] = [
     {
         label: 'Rezepte entdecken',
         description: 'Stöbere durch die komplette Sammlung',
@@ -44,6 +45,7 @@ const GENERAL_LINKS: (DrawerNavItem & { authOnly?: boolean })[] = [
         description: 'Kuratierte Rezeptsammlungen',
         href: '/collections',
         icon: Library,
+        flag: 'collections',
     },
     {
         label: 'Rezept erstellen',
@@ -164,7 +166,10 @@ export function MobileNavDrawer() {
     const isAdmin = isAuthenticated && userRole === 'admin';
     const isModerator = isAuthenticated && userRole === 'moderator';
 
-    const visibleGeneralLinks = GENERAL_LINKS.filter((link) => !link.authOnly || isAuthenticated);
+    const collectionsEnabled = useFeatureFlag('collections');
+    const visibleGeneralLinks = GENERAL_LINKS.filter(
+        (link) => (!link.authOnly || isAuthenticated) && (!link.flag || collectionsEnabled),
+    );
 
     const adminLinks: DrawerNavItem[] = [];
     if (isAdmin) {

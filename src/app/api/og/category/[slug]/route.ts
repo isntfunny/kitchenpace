@@ -84,6 +84,10 @@ interface PanelDef {
     widthTop: number;
     /** SVG polygon clip-path points */
     clipPoints: string;
+    /** leftmost visible x of the clip polygon */
+    visibleLeft: number;
+    /** rightmost visible x of the clip polygon */
+    visibleRight: number;
 }
 
 function buildPanels(count: number): PanelDef[] {
@@ -95,6 +99,8 @@ function buildPanels(count: number): PanelDef[] {
                 x: 0,
                 widthTop: WIDTH,
                 clipPoints: `0,0 ${WIDTH},0 ${WIDTH},${PANEL_H} 0,${PANEL_H}`,
+                visibleLeft: 0,
+                visibleRight: WIDTH,
             },
         ];
     }
@@ -107,11 +113,15 @@ function buildPanels(count: number): PanelDef[] {
                 x: 0,
                 widthTop: mid + SKEW_PX,
                 clipPoints: `0,0 ${mid + SKEW_PX},0 ${mid - SKEW_PX},${PANEL_H} 0,${PANEL_H}`,
+                visibleLeft: 0,
+                visibleRight: mid + SKEW_PX,
             },
             {
                 x: mid - SKEW_PX - 4,
                 widthTop: WIDTH - mid + SKEW_PX + 4,
                 clipPoints: `${mid + SKEW_PX + 4},0 ${WIDTH},0 ${WIDTH},${PANEL_H} ${mid - SKEW_PX + 4},${PANEL_H}`,
+                visibleLeft: mid - SKEW_PX + 4,
+                visibleRight: WIDTH,
             },
         ];
     }
@@ -124,26 +134,42 @@ function buildPanels(count: number): PanelDef[] {
             x: 0,
             widthTop: cut1 + SKEW_PX,
             clipPoints: `0,0 ${cut1 + SKEW_PX},0 ${cut1 - SKEW_PX},${PANEL_H} 0,${PANEL_H}`,
+            visibleLeft: 0,
+            visibleRight: cut1 + SKEW_PX,
         },
         {
             x: cut1 - SKEW_PX - 4,
             widthTop: cut2 - cut1 + SKEW_PX * 2 + 8,
             clipPoints: `${cut1 + SKEW_PX + 4},0 ${cut2 + SKEW_PX},0 ${cut2 - SKEW_PX},${PANEL_H} ${cut1 - SKEW_PX + 4},${PANEL_H}`,
+            visibleLeft: cut1 - SKEW_PX + 4,
+            visibleRight: cut2 + SKEW_PX,
         },
         {
             x: cut2 - SKEW_PX - 4,
             widthTop: WIDTH - cut2 + SKEW_PX + 4,
             clipPoints: `${cut2 + SKEW_PX + 4},0 ${WIDTH},0 ${WIDTH},${PANEL_H} ${cut2 - SKEW_PX + 4},${PANEL_H}`,
+            visibleLeft: cut2 - SKEW_PX + 4,
+            visibleRight: WIDTH,
         },
     ];
 }
 
-async function loadRecipeImage(imageKey: string, width: number, height: number): Promise<Buffer> {
+/**
+ * Load a recipe image cropped to a panel's visible area.
+ * Uses sharp `position: 'attention'` so the most interesting region
+ * of the source lands inside the visible strip, not outside it.
+ */
+async function loadRecipeImageForPanel(
+    imageKey: string,
+    panel: PanelDef,
+): Promise<{ buffer: Buffer; left: number }> {
+    const visibleW = panel.visibleRight - panel.visibleLeft;
     const buf = await getBuffer(imageKey);
-    return sharp(buf)
-        .resize(width, height, { fit: 'cover', position: 'attention' })
+    const resized = await sharp(buf)
+        .resize(visibleW, PANEL_H, { fit: 'cover', position: 'attention' })
         .png()
         .toBuffer();
+    return { buffer: resized, left: panel.visibleLeft };
 }
 
 function buildSvgOverlay(
@@ -232,8 +258,9 @@ async function generateOgImage(
         if (!imageKey) continue;
 
         try {
-            // Load and resize image to cover the panel area
-            const resized = await loadRecipeImage(imageKey, WIDTH, PANEL_H);
+            // Load image cropped to the panel's visible area so attention-crop
+            // focuses on the interesting part that will actually be shown
+            const { buffer: resized, left } = await loadRecipeImageForPanel(imageKey, panel);
 
             // Create SVG clip mask for the diagonal cut
             const clipSvg = Buffer.from(
@@ -242,8 +269,20 @@ async function generateOgImage(
                 </svg>`,
             );
 
-            // Apply the clip mask to the image
-            const clipped = await sharp(resized)
+            // Place the panel-sized image at its visible offset, then clip
+            const placed = await sharp({
+                create: {
+                    width: WIDTH,
+                    height: PANEL_H,
+                    channels: 4,
+                    background: { r: 0, g: 0, b: 0, alpha: 0 },
+                },
+            })
+                .png()
+                .composite([{ input: resized, left, top: 0 }])
+                .toBuffer();
+
+            const clipped = await sharp(placed)
                 .composite([{ input: clipSvg, blend: 'dest-in' }])
                 .png()
                 .toBuffer();

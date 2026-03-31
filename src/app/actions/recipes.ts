@@ -23,15 +23,44 @@ import { fetchTrophyBadge } from './trophies';
 // Re-export for backward compatibility
 export { toRecipeCardData, type RecipeCardData, type RecipeWithCategory };
 
-export async function fetchNewestRecipes(take = 8): Promise<RecipeCardData[]> {
-    const recipes = await prisma.recipe.findMany({
-        where: { publishedAt: { not: null } },
-        include: { categories: { include: { category: true } } },
-        orderBy: { createdAt: 'desc' },
-        take,
+export async function fetchNewestRecipes(
+    perCategory = 2,
+    maxTotal = 10,
+): Promise<RecipeCardData[]> {
+    const categories = await prisma.category.findMany({
+        orderBy: { sortOrder: 'asc' },
+        select: { id: true },
     });
 
-    return recipes.map(toRecipeCardData);
+    const perCategoryResults = await Promise.all(
+        categories.map((cat) =>
+            prisma.recipe.findMany({
+                where: {
+                    publishedAt: { not: null },
+                    categories: { some: { categoryId: cat.id } },
+                },
+                include: { categories: { include: { category: true } } },
+                orderBy: { createdAt: 'desc' },
+                take: perCategory,
+            }),
+        ),
+    );
+
+    // Deduplicate (a recipe can be in multiple categories) and interleave
+    const seen = new Set<string>();
+    const mixed: (typeof perCategoryResults)[0] = [];
+
+    for (let slot = 0; slot < perCategory; slot++) {
+        for (const group of perCategoryResults) {
+            const recipe = group[slot];
+            if (recipe && !seen.has(recipe.id)) {
+                seen.add(recipe.id);
+                mixed.push(recipe);
+            }
+        }
+    }
+
+    return mixed.slice(0, maxTotal).map(toRecipeCardData);
 }
 
 export async function fetchTopRatedRecipes(take = 8): Promise<RecipeCardData[]> {

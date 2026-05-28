@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 const resolveAliasPath = (subpath: string) => new URL(subpath, import.meta.url).pathname;
 
 const nextConfig: NextConfig = {
-    allowedDevOrigins: ['kitchendev.tecfriends.ddns.net'],
+    allowedDevOrigins: ['kitchendev.isntlab.de'],
     async redirects() {
         return [
             { source: '/moderation', destination: '/admin/moderation', permanent: true },

@@ -13,6 +13,7 @@ env:
 jobs:
     promote-image:
         runs-on: ubuntu-latest
+        needs: e2e
         steps:
             - name: Log in to Docker registry
               run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login registry.isntfunny.de -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
@@ -68,5 +69,5 @@ jobs:
             - name: Trigger Coolify redeploy
               run: |
                   curl -fsSL -X GET \
-                    "https://deploy.tecfriends.ddns.net/api/v1/deploy?uuid=${{ env.COOLIFY_APP_UUID }}&force=false" \
+                    "https://deploy.isntlab.de/api/v1/deploy?uuid=${{ env.COOLIFY_APP_UUID }}&force=false" \
                     -H "Authorization: Bearer ${{ secrets.DEPLOYMENT_KEY }}"

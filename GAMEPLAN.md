@@ -1,8 +1,8 @@
-# KüchenTakt — Recipe Flow Editor Gameplan
+# KochTakt — Recipe Flow Editor Gameplan
 
 ## Goal
 
-Build a read-write flow editor using `@xyflow/react` (v12, already installed) into the recipe creation page (`/recipe/create`). This is the core feature of KüchenTakt — it lets recipe authors visually design their cooking workflow as a directed acyclic graph (DAG) showing parallel steps, dependencies, and timing.
+Build a read-write flow editor using `@xyflow/react` (v12, already installed) into the recipe creation page (`/recipe/create`). This is the core feature of KochTakt — it lets recipe authors visually design their cooking workflow as a directed acyclic graph (DAG) showing parallel steps, dependencies, and timing.
 
 ## Context for AI Agents
 

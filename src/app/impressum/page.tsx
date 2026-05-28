@@ -101,7 +101,7 @@ export default function ImpressumPage() {
                     </h1>
                     <p className={css({ color: 'text-muted', fontSize: 'sm', mb: '4' })}>
                         Stand: {LAST_UPDATED} · Anbieterkennzeichnung für{' '}
-                        <strong className={css({ color: 'text' })}>KüchenTakt</strong> unter{' '}
+                        <strong className={css({ color: 'text' })}>KochTakt</strong> unter{' '}
                         <Link
                             href="/"
                             className={css({
@@ -109,7 +109,7 @@ export default function ImpressumPage() {
                                 textDecoration: 'underline',
                             })}
                         >
-                            kuechentakt.de
+                            kochtakt.de
                         </Link>
                     </p>
                     <div
@@ -200,7 +200,7 @@ export default function ImpressumPage() {
                             color: 'text',
                         })}
                     >
-                        <strong>KüchenTakt</strong>
+                        <strong>KochTakt</strong>
                         <br />
                         [Vor- und Nachname / Firmenname]
                         <br />
@@ -210,11 +210,10 @@ export default function ImpressumPage() {
                         <br />
                         Deutschland
                         <br />
-                        E-Mail:{' '}
-                        <a href="mailto:impressum@kuechentakt.de">impressum@kuechentakt.de</a>
+                        E-Mail: <a href="mailto:impressum@kochtakt.de">impressum@kochtakt.de</a>
                     </div>
                     <p>
-                        Wenn KüchenTakt nicht von einer natürlichen Person, sondern z. B. durch eine
+                        Wenn KochTakt nicht von einer natürlichen Person, sondern z. B. durch eine
                         GmbH, UG oder ein Einzelunternehmen betrieben wird, sollte hier die
                         vollständige offizielle Firmierung inklusive Rechtsform stehen.
                     </p>
@@ -305,7 +304,7 @@ export default function ImpressumPage() {
                         [PLZ Ort]
                     </div>
                     <p>
-                        Da KüchenTakt redaktionelle Inhalte wie Rezeptbeschreibungen, redaktionell
+                        Da KochTakt redaktionelle Inhalte wie Rezeptbeschreibungen, redaktionell
                         kuratierte Seiten oder Community-Inhalte enthalten kann, ist dieser
                         Abschnitt als sinnvolle Standardergänzung aufgenommen.
                     </p>
@@ -377,9 +376,9 @@ export default function ImpressumPage() {
                                 textDecoration: 'underline',
                             })}
                         >
-                            kuechentakt.de
+                            kochtakt.de
                         </Link>{' '}
-                        sowie für zugehörige Online-Präsenzen von KüchenTakt, sofern dort auf dieses
+                        sowie für zugehörige Online-Präsenzen von KochTakt, sofern dort auf dieses
                         Impressum verwiesen wird.
                     </p>
                     <p>

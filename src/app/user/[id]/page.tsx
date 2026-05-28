@@ -47,14 +47,14 @@ const buildUserMetadata = async (
     const profileImageUrl = await getThumbnailUrlBySource({ type: 'user', id: userId }, '1:1', 640);
 
     return {
-        title: `${name} | KüchenTakt`,
-        description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+        title: `${name} | KochTakt`,
+        description: `Entdecke die Rezepte von ${name} auf KochTakt.`,
         alternates: { canonical: `${APP_URL}/user/${userSlug}` },
         openGraph: {
-            title: `${name} | KüchenTakt`,
-            description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+            title: `${name} | KochTakt`,
+            description: `Entdecke die Rezepte von ${name} auf KochTakt.`,
             url: `${APP_URL}/user/${userSlug}`,
-            siteName: 'KüchenTakt',
+            siteName: 'KochTakt',
             type: 'website',
             ...(profileImageUrl && {
                 images: [
@@ -69,8 +69,8 @@ const buildUserMetadata = async (
         },
         twitter: {
             card: profileImageUrl ? 'summary_large_image' : 'summary',
-            title: `${name} | KüchenTakt`,
-            description: `Entdecke die Rezepte von ${name} auf KüchenTakt.`,
+            title: `${name} | KochTakt`,
+            description: `Entdecke die Rezepte von ${name} auf KochTakt.`,
             ...(profileImageUrl && { images: [profileImageUrl] }),
         },
     };
@@ -319,7 +319,7 @@ export async function generateMetadata({ params }: UserProfileProps): Promise<Me
     const user = await getUserProfile(resolvedParams.id);
     if (!user) {
         return {
-            title: 'Benutzer nicht gefunden | KüchenTakt',
+            title: 'Benutzer nicht gefunden | KochTakt',
         };
     }
     return buildUserMetadata(user.name, user.id, user.slug);

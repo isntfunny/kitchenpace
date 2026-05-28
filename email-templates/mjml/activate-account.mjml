@@ -70,7 +70,7 @@
             <mj-column>
                 <mj-text>Hallo {{ contact.first_name }},</mj-text>
                 <mj-text
-                    >Vielen Dank für deine Registrierung bei KüchenTakt! Bitte klicke auf den Button
+                    >Vielen Dank für deine Registrierung bei KochTakt! Bitte klicke auf den Button
                     unten, um dein Konto zu aktivieren.</mj-text
                 >
                 <mj-button href="{{ variables.activationLink }}">Konto aktivieren</mj-button>
@@ -86,7 +86,7 @@
         <mj-section>
             <mj-column>
                 <mj-text align="center" font-size="14px" color="#666"
-                    >KüchenTakt · Deine Küche, dein Tempo</mj-text
+                    >KochTakt · Deine Küche, dein Tempo</mj-text
                 >
             </mj-column>
         </mj-section>

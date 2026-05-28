@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
     const collection = await fetchCollectionBySlug(slug);
     if (!collection) return { title: 'Sammlung nicht gefunden' };
     return {
-        title: `${collection.title} | Kuechentakt`,
+        title: `${collection.title} | KochTakt`,
         description: collection.description ?? `Rezeptsammlung von ${collection.author.name}`,
     };
 }

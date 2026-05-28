@@ -277,7 +277,7 @@ export const EVENT_DEFINITIONS: EventDefinitionsMap = {
             type: 'SYSTEM',
             preference: 'notifyOnSystemMessages',
             template: () => ({
-                title: 'Willkommen bei KüchenTakt!',
+                title: 'Willkommen bei KochTakt!',
                 message:
                     'Dein Konto wurde erfolgreich erstellt. Entdecke jetzt dein Dashboard und starte deine kulinarische Reise.',
             }),

@@ -125,7 +125,7 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                                     marginBottom: '3',
                                 })}
                             >
-                                Willkommen bei KüchenTakt!
+                                Willkommen bei KochTakt!
                             </h1>
                             <p
                                 className={css({

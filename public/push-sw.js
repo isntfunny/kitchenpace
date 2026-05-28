@@ -2,7 +2,7 @@
 
 self.addEventListener('push', (event) => {
     const data = event.data?.json() ?? {};
-    const title = data.title ?? 'KüchenTakt';
+    const title = data.title ?? 'KochTakt';
     const options = {
         body: data.body ?? 'Neue Aktivität in deiner Küche',
         icon: '/kitchenpace.png',

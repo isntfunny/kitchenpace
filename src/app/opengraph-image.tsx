@@ -5,7 +5,7 @@ export const runtime = 'edge';
 
 type IconNode = [string, Record<string, string>][];
 
-export const alt = 'KüchenTakt - Deine Rezepte im Takt';
+export const alt = 'KochTakt - Deine Rezepte im Takt';
 export const size = {
     width: 1200,
     height: 630,
@@ -60,7 +60,7 @@ export default async function Image() {
                     textAlign: 'center',
                 }}
             >
-                KüchenTakt
+                KochTakt
             </div>
             <div
                 style={{

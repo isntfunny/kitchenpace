@@ -91,7 +91,7 @@
         <mj-section>
             <mj-column>
                 <mj-text align="center" font-size="14px" color="#666"
-                    >KüchenTakt · Deine Küche, dein Tempo</mj-text
+                    >KochTakt · Deine Küche, dein Tempo</mj-text
                 >
             </mj-column>
         </mj-section>

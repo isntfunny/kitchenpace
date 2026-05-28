@@ -29,7 +29,7 @@ const websiteJsonLd = {
             '@type': 'WebSite',
             '@id': `${APP_URL}/#website`,
             url: APP_URL,
-            name: 'KüchenTakt',
+            name: 'KochTakt',
             description:
                 'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen.',
             inLanguage: 'de-DE',
@@ -45,7 +45,7 @@ const websiteJsonLd = {
         {
             '@type': 'Organization',
             '@id': `${APP_URL}/#organization`,
-            name: 'KüchenTakt',
+            name: 'KochTakt',
             url: APP_URL,
             logo: {
                 '@type': 'ImageObject',
@@ -83,22 +83,22 @@ const themeInitScript = `
 
 export const metadata: Metadata = {
     title: {
-        default: 'KüchenTakt - Deine Rezepte im Takt',
-        template: '%s | KüchenTakt',
+        default: 'KochTakt - Deine Rezepte im Takt',
+        template: '%s | KochTakt',
     },
     description:
         'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen. Koche effizient mit parallelen Aufgaben und Zeitangaben.',
     keywords: ['Rezepte', 'Kochen', 'Backen', 'Küche', 'Essen', 'Rezept teilen', 'Koch-Tipps'],
-    authors: [{ name: 'KüchenTakt' }],
-    creator: 'KüchenTakt',
-    publisher: 'KüchenTakt',
+    authors: [{ name: 'KochTakt' }],
+    creator: 'KochTakt',
+    publisher: 'KochTakt',
     metadataBase: new URL(APP_URL),
     openGraph: {
         type: 'website',
         locale: 'de_DE',
         url: APP_URL,
-        siteName: 'KüchenTakt',
-        title: 'KüchenTakt - Deine Rezepte im Takt',
+        siteName: 'KochTakt',
+        title: 'KochTakt - Deine Rezepte im Takt',
         description:
             'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen. Koche effizient mit parallelen Aufgaben und Zeitangaben.',
         images: [
@@ -106,16 +106,16 @@ export const metadata: Metadata = {
                 url: '/og-image.png',
                 width: 1200,
                 height: 630,
-                alt: 'KüchenTakt - Rezepte im Takt',
+                alt: 'KochTakt - Rezepte im Takt',
             },
         ],
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'KüchenTakt - Deine Rezepte im Takt',
+        title: 'KochTakt - Deine Rezepte im Takt',
         description:
             'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen.',
-        creator: '@kuechentakt',
+        creator: '@kochtakt',
         images: ['/og-image.png'],
     },
     robots: {

@@ -11,7 +11,7 @@ import { prisma } from '@shared/prisma';
 export const metadata: Metadata = {
     title: 'Rezept erstellen',
     description:
-        'Erstelle ein neues Rezept bei KüchenTakt. Teile deine kulinarischen Kreationen mit unserer Community.',
+        'Erstelle ein neues Rezept bei KochTakt. Teile deine kulinarischen Kreationen mit unserer Community.',
 };
 
 export default async function CreateRecipePage() {

@@ -1,6 +1,6 @@
 # KitchenPace
 
-KitchenPace ("KuechenTakt") ist eine Rezept-App, die klassische Schritt-fuer-Schritt-Rezepte in visuelle Kochablaeufe uebersetzt. Statt einer langen Liste sehen Nutzer:innen, was parallel passieren kann, welche Schritte voneinander abhaengen und wo der kritische Pfad liegt.
+KitchenPace ("KochTakt") ist eine Rezept-App, die klassische Schritt-fuer-Schritt-Rezepte in visuelle Kochablaeufe uebersetzt. Statt einer langen Liste sehen Nutzer:innen, was parallel passieren kann, welche Schritte voneinander abhaengen und wo der kritische Pfad liegt.
 
 ## Warum es das Projekt gibt
 

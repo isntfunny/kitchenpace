@@ -36,7 +36,7 @@ import { grid } from 'styled-system/patterns';
 
 export const metadata: Metadata = {
     title: 'Mein Profil',
-    description: 'Dein persönliches KüchenTakt Profil mit Aktivitäten, Rezepten und Einstellungen.',
+    description: 'Dein persönliches KochTakt Profil mit Aktivitäten, Rezepten und Einstellungen.',
 };
 
 export const dynamic = 'force-dynamic';
@@ -440,7 +440,7 @@ export default async function ProfilePage() {
                                 })}
                             >
                                 <Text size="sm" color="muted" className={css({ mb: '1' })}>
-                                    KüchenTakt Profil
+                                    KochTakt Profil
                                 </Text>
                                 <Heading as="h1" size="xl" className={css({ mb: '1' })}>
                                     {profile.nickname ?? 'Neuer KüchenFan'}

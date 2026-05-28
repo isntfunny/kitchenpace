@@ -41,10 +41,10 @@ export function Footer() {
                         marginBottom: '2',
                     })}
                 >
-                    KüchenTakt
+                    KochTakt
                 </div>
                 <div className={css({ marginBottom: '3' })}>
-                    © {new Date().getFullYear()} KüchenTakt · Produkte mit Gefühl entdecken
+                    © {new Date().getFullYear()} KochTakt · Produkte mit Gefühl entdecken
                 </div>
                 <div
                     className={css({

@@ -533,10 +533,10 @@ export const basicsSeeder: Seeder = {
             await db.user.create({
                 data: {
                     email: 'system@kitchenpace.internal',
-                    name: 'KüchenTakt',
+                    name: 'KochTakt',
                     role: 'admin',
                     emailVerified: true,
-                    profile: { create: { nickname: 'KüchenTakt', slug: 'kuechentakt' } },
+                    profile: { create: { nickname: 'KochTakt', slug: 'kochtakt' } },
                 },
             });
             created++;
@@ -637,10 +637,10 @@ export const basicsSeeder: Seeder = {
             update: {},
             create: {
                 email: 'system@kitchenpace.internal',
-                name: 'KüchenTakt',
+                name: 'KochTakt',
                 role: 'admin',
                 emailVerified: true,
-                profile: { create: { nickname: 'KüchenTakt', slug: 'kuechentakt' } },
+                profile: { create: { nickname: 'KochTakt', slug: 'kochtakt' } },
             },
         });
         created++;

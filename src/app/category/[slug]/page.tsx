@@ -30,12 +30,12 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
     const category = await fetchCategoryBySlug(slug);
-    if (!category) return { title: 'Kategorie nicht gefunden | KüchenTakt' };
+    if (!category) return { title: 'Kategorie nicht gefunden | KochTakt' };
 
-    const title = `${category.name} Rezepte | KüchenTakt`;
+    const title = `${category.name} Rezepte | KochTakt`;
     const description =
         category.description ??
-        `Entdecke ${category.recipeCount} ${category.name}-Rezepte auf KüchenTakt.`;
+        `Entdecke ${category.recipeCount} ${category.name}-Rezepte auf KochTakt.`;
     const url = `${APP_URL}/category/${category.slug}`;
     const ogImageUrl = `${APP_URL}/api/og/category/${category.slug}`;
 
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             title,
             description,
             url,
-            siteName: 'KüchenTakt',
+            siteName: 'KochTakt',
             type: 'website',
             locale: 'de_DE',
             images: [
@@ -113,7 +113,7 @@ export default async function CategoryPage({ params }: Props) {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'KüchenTakt', item: APP_URL },
+            { '@type': 'ListItem', position: 1, name: 'KochTakt', item: APP_URL },
             {
                 '@type': 'ListItem',
                 position: 2,

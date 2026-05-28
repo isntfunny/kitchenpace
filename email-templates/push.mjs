@@ -60,25 +60,25 @@ const TEMPLATE_CONFIG = {
         id: 'activate-account',
         name: 'Konto aktivieren',
         category: 'transactional',
-        subject: 'Bitte aktiviere dein KüchenTakt-Konto',
+        subject: 'Bitte aktiviere dein KochTakt-Konto',
     },
     welcome: {
         id: 'welcome',
-        name: 'Willkommen bei KüchenTakt',
+        name: 'Willkommen bei KochTakt',
         category: 'welcome',
-        subject: 'Willkommen bei KüchenTakt 👨‍🍳',
+        subject: 'Willkommen bei KochTakt 👨‍🍳',
     },
     'password-reset': {
         id: 'password-reset',
         name: 'Passwort zurücksetzen',
         category: 'transactional',
-        subject: 'Dein KüchenTakt-Passwort zurücksetzen',
+        subject: 'Dein KochTakt-Passwort zurücksetzen',
     },
     'password-changed': {
         id: 'password-changed',
         name: 'Passwort geändert',
         category: 'transactional',
-        subject: 'Dein KüchenTakt-Passwort wurde geändert',
+        subject: 'Dein KochTakt-Passwort wurde geändert',
     },
     'weekly-newsletter': {
         id: 'weekly-newsletter',
@@ -225,7 +225,7 @@ if (files.length === 0) {
     process.exit(1);
 }
 
-console.log(`\nKüchenTakt → Notifuse template push`);
+console.log(`\nKochTakt → Notifuse template push`);
 console.log(`Workspace: ${WORKSPACE_ID}  |  Endpoint: ${BASE_URI}`);
 if (dryRun) console.log('Mode: DRY RUN (no changes will be made)\n');
 else console.log('');

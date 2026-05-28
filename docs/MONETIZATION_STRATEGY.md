@@ -19,7 +19,7 @@ KitchenPace is a unique recipe application that transforms linear recipes into *
 
 ## Tier 1: Freemium Model (Recommended as First Step)
 
-### Free Tier (KüchenTakt Basic)
+### Free Tier (KochTakt Basic)
 
 **What's Free:**
 
@@ -37,7 +37,7 @@ KitchenPace is a unique recipe application that transforms linear recipes into *
 - The 5-recipe limit naturally encourages curation of "best" recipes
 - Watermarked exports act as viral marketing (free advertising)
 
-### Premium Tier: KüchenTakt Pro
+### Premium Tier: KochTakt Pro
 
 **Price:** €4.99/month or €39.99/year (33% savings)
 

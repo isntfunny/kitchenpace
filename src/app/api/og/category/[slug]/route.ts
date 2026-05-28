@@ -222,9 +222,9 @@ function buildSvgOverlay(
     ${countText}
   </text>
 
-  <!-- KüchenTakt branding -->
+  <!-- KochTakt branding -->
   <text x="${WIDTH - 60}" y="${PANEL_H + 90}" fill="${color}" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" text-anchor="end">
-    KüchenTakt
+    KochTakt
   </text>
 </svg>`;
 
@@ -378,9 +378,9 @@ function generateFallbackOg(
 
   ${countLine}
 
-  <!-- KüchenTakt branding -->
+  <!-- KochTakt branding -->
   <text x="${WIDTH / 2}" y="${recipeCount > 0 ? HEIGHT / 2 + 105 : HEIGHT / 2 + 70}" fill="${color}" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" text-anchor="middle">
-    KüchenTakt
+    KochTakt
   </text>
 </svg>`;
 

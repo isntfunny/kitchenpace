@@ -190,14 +190,14 @@ export function ImportStepProcessing({
                         <span className={terminalDotClass('#febc2e')} />
                         <span className={terminalDotClass('#28c840')} />
                     </div>
-                    <span className={terminalTitleClass}>küchentakt — import-log</span>
+                    <span className={terminalTitleClass}>kochtakt — import-log</span>
                     <div className={terminalTitleBarSpacerClass} />
                 </div>
 
                 {/* Terminal body */}
                 <div className={terminalBodyClass} ref={terminalRef}>
                     <div className={terminalInitClass}>
-                        KüchenTakt Import Engine v1.0 — {new Date().toISOString().split('T')[0]}
+                        KochTakt Import Engine v1.0 — {new Date().toISOString().split('T')[0]}
                     </div>
                     {streamEvents.map((event, idx) => (
                         <motion.div

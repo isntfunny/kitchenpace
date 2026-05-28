@@ -9,7 +9,7 @@ import { prisma } from '@shared/prisma';
 import { css } from 'styled-system/css';
 
 export const metadata: Metadata = {
-    title: 'Gesperrt | KüchenTakt',
+    title: 'Gesperrt | KochTakt',
     robots: { index: false, follow: false },
 };
 
@@ -103,7 +103,7 @@ export default async function BannedPage() {
                     )}
 
                     <Link
-                        href="mailto:support@kuechentakt.de"
+                        href="mailto:support@kochtakt.de"
                         className={css({
                             display: 'inline-block',
                             mt: '4',

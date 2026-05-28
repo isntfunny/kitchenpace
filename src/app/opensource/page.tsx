@@ -151,7 +151,7 @@ export default function OpenSourcePage() {
                         Open-Source-Bibliotheken
                     </h1>
                     <p className={css({ color: 'text-muted', fontSize: 'sm', lineHeight: '1.7' })}>
-                        KüchenTakt basiert auf {ALL_PACKAGES.length} Open-Source-Paketen. Wir danken
+                        KochTakt basiert auf {ALL_PACKAGES.length} Open-Source-Paketen. Wir danken
                         allen Entwickler·innen, die diese Projekte ermöglichen.
                     </p>
                 </div>

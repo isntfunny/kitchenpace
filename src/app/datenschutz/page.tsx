@@ -6,9 +6,9 @@ import { PageShell } from '@app/components/layouts/PageShell';
 import { css } from 'styled-system/css';
 
 export const metadata: Metadata = {
-    title: 'Datenschutzerklärung — KüchenTakt',
+    title: 'Datenschutzerklärung — KochTakt',
     description:
-        'Datenschutzerklärung von KüchenTakt — Informationen zur Verarbeitung personenbezogener Daten gemäß DSGVO.',
+        'Datenschutzerklärung von KochTakt — Informationen zur Verarbeitung personenbezogener Daten gemäß DSGVO.',
 };
 
 const LAST_UPDATED = 'März 2026';
@@ -220,7 +220,7 @@ export default function DatenschutzPage() {
                     </h1>
                     <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
                         Stand: {LAST_UPDATED} · Gültig für{' '}
-                        <strong className={css({ color: 'text' })}>KüchenTakt</strong> unter{' '}
+                        <strong className={css({ color: 'text' })}>KochTakt</strong> unter{' '}
                         <Link
                             href="/"
                             className={css({
@@ -228,7 +228,7 @@ export default function DatenschutzPage() {
                                 textDecoration: 'underline',
                             })}
                         >
-                            kuechentakt.de
+                            kochtakt.de
                         </Link>
                     </p>
                     <div
@@ -328,12 +328,11 @@ export default function DatenschutzPage() {
                             mb: '3',
                         })}
                     >
-                        <strong>KüchenTakt</strong>
+                        <strong>KochTakt</strong>
                         <br />
                         Angaben gemäß Impressum
                         <br />
-                        E-Mail:{' '}
-                        <a href="mailto:datenschutz@kuechentakt.de">datenschutz@kuechentakt.de</a>
+                        E-Mail: <a href="mailto:datenschutz@kochtakt.de">datenschutz@kochtakt.de</a>
                         <br />
                         Website:{' '}
                         <Link
@@ -343,7 +342,7 @@ export default function DatenschutzPage() {
                                 textDecoration: 'underline',
                             })}
                         >
-                            kuechentakt.de
+                            kochtakt.de
                         </Link>
                     </div>
                     <p>
@@ -462,7 +461,7 @@ export default function DatenschutzPage() {
                 {/* ── 4. Nutzerkonto ── */}
                 <Section id="konto" title="5. Nutzerkonto & Registrierung">
                     <p>
-                        Für die Nutzung aller Funktionen von KüchenTakt ist eine Registrierung
+                        Für die Nutzung aller Funktionen von KochTakt ist eine Registrierung
                         erforderlich. Dabei erheben wir folgende Daten:
                     </p>
                     <ul>
@@ -485,7 +484,7 @@ export default function DatenschutzPage() {
                 {/* ── 5. UGC ── */}
                 <Section id="ugc" title="6. Nutzergenerierte Inhalte">
                     <p>
-                        KüchenTakt ist eine Community-Plattform. Registrierte Nutzer können Rezepte
+                        KochTakt ist eine Community-Plattform. Registrierte Nutzer können Rezepte
                         erstellen, Fotos hochladen, kommentieren und mit anderen interagieren. Im
                         Rahmen dieser Funktionen werden folgende Daten verarbeitet:
                     </p>
@@ -705,7 +704,7 @@ export default function DatenschutzPage() {
                 <Section id="push" title="11. Push-Benachrichtigungen">
                     <p>
                         Wir bieten die Möglichkeit, Web-Push-Benachrichtigungen über Neuigkeiten auf
-                        KüchenTakt zu abonnieren (z.&nbsp;B. neue Kommentare, Follower,
+                        KochTakt zu abonnieren (z.&nbsp;B. neue Kommentare, Follower,
                         Rezept-Empfehlungen).
                     </p>
                     <p>
@@ -720,7 +719,7 @@ export default function DatenschutzPage() {
                         durch aktive Bestätigung der Browser-Berechtigungsanfrage). Sie können Ihre
                         Einwilligung jederzeit widerrufen, indem Sie die Push-Berechtigung in den
                         Einstellungen Ihres Browsers deaktivieren oder Push-Benachrichtigungen in
-                        Ihren KüchenTakt-Kontoeinstellungen abbestellen.
+                        Ihren KochTakt-Kontoeinstellungen abbestellen.
                     </p>
                 </Section>
 
@@ -985,9 +984,7 @@ export default function DatenschutzPage() {
                     >
                         <p className={css({ mb: '0 !important' })}>
                             Zur Ausübung Ihrer Rechte wenden Sie sich bitte per E-Mail an:{' '}
-                            <a href="mailto:datenschutz@kuechentakt.de">
-                                datenschutz@kuechentakt.de
-                            </a>
+                            <a href="mailto:datenschutz@kochtakt.de">datenschutz@kochtakt.de</a>
                         </p>
                     </div>
                 </Section>
@@ -1102,7 +1099,7 @@ export default function DatenschutzPage() {
                                 textDecoration: 'underline',
                             })}
                         >
-                            kuechentakt.de/datenschutz
+                            kochtakt.de/datenschutz
                         </Link>{' '}
                         abrufbar. Bei wesentlichen Änderungen werden registrierte Nutzer per E-Mail
                         informiert.

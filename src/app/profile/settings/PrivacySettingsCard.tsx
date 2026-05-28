@@ -146,7 +146,7 @@ export function PrivacySettingsCard({ profile }: PrivacySettingsCardProps) {
                     </Heading>
                 </div>
                 <Text color="muted" size="sm">
-                    Entscheide, welche Aktivitäten für andere KüchenTakt-Mitglieder sichtbar sein
+                    Entscheide, welche Aktivitäten für andere KochTakt-Mitglieder sichtbar sein
                     sollen.
                 </Text>
             </div>

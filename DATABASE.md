@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the PostgreSQL database schema for KitchenPace (KüchenTakt), a recipe application that transforms traditional linear recipes into interactive visual flow diagrams.
+This document describes the PostgreSQL database schema for KitchenPace (KochTakt), a recipe application that transforms traditional linear recipes into interactive visual flow diagrams.
 
 ## Search index layer
 

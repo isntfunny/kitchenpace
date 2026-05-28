@@ -16,7 +16,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 const CAST_APP_ID = process.env.NEXT_PUBLIC_CAST_APP_ID ?? 'CC1AD845';
 
 /** Namespace for custom messages between sender and receiver. */
-export const CAST_NAMESPACE = 'urn:x-cast:de.kuechentakt.recipe';
+export const CAST_NAMESPACE = 'urn:x-cast:de.kochtakt.recipe';
 
 export type CastMessage = { type: 'LOAD_RECIPE'; slug: string };
 

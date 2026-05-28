@@ -2423,7 +2423,7 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
     const collection = await fetchCollectionBySlug(slug);
     if (!collection) return { title: 'Sammlung nicht gefunden' };
     return {
-        title: `${collection.title} | Kuechentakt`,
+        title: `${collection.title} | KochTakt`,
         description: collection.description ?? `Rezeptsammlung von ${collection.author.name}`,
     };
 }
@@ -2850,7 +2850,7 @@ import type { Metadata } from 'next';
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-    title: 'Sammlungen | Kuechentakt',
+    title: 'Sammlungen | KochTakt',
     description: 'Entdecke kuratierte Rezeptsammlungen der Community.',
 };
 
@@ -2938,7 +2938,7 @@ import { Plus } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Meine Sammlungen | Kuechentakt',
+    title: 'Meine Sammlungen | KochTakt',
 };
 
 export default async function UserCollectionsPage() {

@@ -1,6 +1,6 @@
 {
-    "name": "KüchenTakt - Rezepte im Takt",
-    "short_name": "KüchenTakt",
+    "name": "KochTakt - Rezepte im Takt",
+    "short_name": "KochTakt",
     "description": "Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen",
     "start_url": "/",
     "display": "standalone",

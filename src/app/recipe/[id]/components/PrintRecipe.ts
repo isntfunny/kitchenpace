@@ -24,7 +24,7 @@ export function printRecipe(recipe: Recipe, servings: number) {
         .join('');
 
     const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>${recipe.title} — KüchenTakt</title>
+<html><head><meta charset="utf-8"><title>${recipe.title} — KochTakt</title>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 700px; margin: 0 auto; padding: 40px 24px; color: #222; }
   h1 { font-size: 1.8em; margin-bottom: 4px; }
@@ -45,7 +45,7 @@ ${recipe.description ? `<p style="color:#444;line-height:1.5">${recipe.descripti
 <table>${ingredientRows}</table>
 <h2>Zubereitung</h2>
 <ol>${stepRows}</ol>
-<div class="footer">KüchenTakt · kuechentakt.app</div>
+<div class="footer">KochTakt · kochtakt.app</div>
 </body></html>`;
 
     const w = window.open('', '_blank');

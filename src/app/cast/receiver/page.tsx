@@ -78,7 +78,7 @@ export default function CastReceiverPage() {
 
             // Signal immediately that the receiver is ready — this keeps the
             // Cast session alive even before a recipe message arrives.
-            ctx.setApplicationState('KüchenTakt bereit');
+            ctx.setApplicationState('KochTakt bereit');
 
             // ── Home Assistant touch hack ─────────────────────────────
             // The Cast framework injects a <touch-controls> element that
@@ -130,7 +130,7 @@ export default function CastReceiverPage() {
                 <div
                     style={{ fontSize: 38, fontWeight: 900, color: '#fff', letterSpacing: '-1px' }}
                 >
-                    KüchenTakt
+                    KochTakt
                 </div>
                 <div style={{ fontSize: 18, color: 'rgba(255,255,255,0.38)' }}>
                     Warte auf Rezept vom Sender…

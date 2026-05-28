@@ -45,8 +45,8 @@ export function AuthPageLayout({
     children,
     formFooter,
     heroTitle = 'Planen ohne Kompromisse',
-    heroSubtitle = 'KüchenTakt verbindet den visuellen Flow deiner Rezeptschritte mit smarten Filtern und Community-Insights.',
-    heroCaption = 'KüchenTakt',
+    heroSubtitle = 'KochTakt verbindet den visuellen Flow deiner Rezeptschritte mit smarten Filtern und Community-Insights.',
+    heroCaption = 'KochTakt',
 }: AuthPageLayoutProps) {
     return (
         <PageShell>

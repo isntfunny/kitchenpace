@@ -79,7 +79,7 @@ const SETTING_COPY: Record<
     },
     notifyOnSystemMessages: {
         title: 'Systemmeldungen',
-        description: 'Wichtige Hinweise von KüchenTakt (Wartung, Updates) kommen hier rein.',
+        description: 'Wichtige Hinweise von KochTakt (Wartung, Updates) kommen hier rein.',
         labelOn: 'Systemmeldungen annehmen',
         labelOff: 'Nur kritische Mails',
     },

@@ -33,7 +33,7 @@
             <mj-section padding="20px 0" />
             <mj-column width="100%" />
         </mj-attributes>
-        <mj-preview>Welcome bei KüchenTakt!</mj-preview>
+        <mj-preview>Welcome bei KochTakt!</mj-preview>
         <mj-style>
             body {
                 background: linear-gradient(
@@ -73,7 +73,7 @@
             <mj-column>
                 <mj-text>Hallo {{ contact.first_name }},</mj-text>
                 <mj-text
-                    >willkommen bei KüchenTakt! Dein Konto ist jetzt aktiv. Entdecke tausende von
+                    >willkommen bei KochTakt! Dein Konto ist jetzt aktiv. Entdecke tausende von
                     Rezepten und erstelle deine eigenen Koch-Flows.</mj-text
                 >
                 <mj-button href="{{ variables.appUrl }}">Loslegen</mj-button>
@@ -84,7 +84,7 @@
         <mj-section>
             <mj-column>
                 <mj-text align="center" font-size="14px" color="#666"
-                    >KüchenTakt · Deine Küche, dein Tempo</mj-text
+                    >KochTakt · Deine Küche, dein Tempo</mj-text
                 >
             </mj-column>
         </mj-section>

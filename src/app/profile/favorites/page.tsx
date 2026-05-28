@@ -12,7 +12,7 @@ export const revalidate = 0;
 export const metadata: Metadata = {
     title: 'Meine Favoriten',
     description:
-        'Deine gespeicherten Lieblingsrezepte bei KüchenTakt. Alle Rezepte, die du favorisiert hast, an einem Ort.',
+        'Deine gespeicherten Lieblingsrezepte bei KochTakt. Alle Rezepte, die du favorisiert hast, an einem Ort.',
 };
 
 export default async function FavoritesPage() {

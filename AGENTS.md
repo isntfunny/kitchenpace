@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**KitchenPace** (also branded as "KüchenTakt") is a recipe application that transforms traditional linear recipes into **interactive, visual flow diagrams**. The core vision is to help users manage complex cooking processes by visualizing parallel tasks, dependencies, and timing.
+**KitchenPace** (also branded as "KochTakt") is a recipe application that transforms traditional linear recipes into **interactive, visual flow diagrams**. The core vision is to help users manage complex cooking processes by visualizing parallel tasks, dependencies, and timing.
 
 The app takes the stress out of multi-tasking in the kitchen by showing:
 
@@ -369,7 +369,7 @@ Redis pub/sub powers server-sent events for live updates. `clientStream.ts` pool
 ### Flow
 
 1. **Sender (recipe page):** `useCast()` hook initializes Cast SDK, `CastButton` shows status
-2. **Message:** sends `{ type: 'LOAD_RECIPE', slug }` on namespace `urn:x-cast:de.kuechentakt.recipe`
+2. **Message:** sends `{ type: 'LOAD_RECIPE', slug }` on namespace `urn:x-cast:de.kochtakt.recipe`
 3. **Receiver (`/cast/receiver`):** loads Cast Receiver SDK, renders `/recipe/[slug]/mobile` in fullscreen iframe
 4. **Touch hack:** removes Cast's `<touch-controls>` overlay on Nest Hub for direct iframe interaction
 

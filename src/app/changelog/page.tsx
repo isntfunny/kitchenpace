@@ -7,8 +7,8 @@ import { css } from 'styled-system/css';
 import { FadeIn, ScaleIn } from './animations';
 
 export const metadata: Metadata = {
-    title: 'Changelog — KüchenTakt',
-    description: 'Was gibt es Neues bei KüchenTakt?',
+    title: 'Changelog — KochTakt',
+    description: 'Was gibt es Neues bei KochTakt?',
 };
 
 type ChangelogItem = {
@@ -98,7 +98,7 @@ const CHANGELOG: ChangelogEntry[] = [
         title: '„Passt jetzt" & bessere Suche',
         items: [
             {
-                text: 'Neuer „Passt jetzt"-Bereich auf der Startseite — KüchenTakt schlägt dir automatisch Rezepte vor, die zur Tageszeit, Jahreszeit oder aktuellen Feiertagen passen',
+                text: 'Neuer „Passt jetzt"-Bereich auf der Startseite — KochTakt schlägt dir automatisch Rezepte vor, die zur Tageszeit, Jahreszeit oder aktuellen Feiertagen passen',
                 tag: 'spotlight',
             },
             {
@@ -158,7 +158,7 @@ const CHANGELOG: ChangelogEntry[] = [
         title: 'Persönliche Empfehlungen & Import-Korrekturen',
         items: [
             {
-                text: 'Geschmacksprofil — KüchenTakt lernt aus deinen Rezepten und schlägt dir passende Gerichte vor',
+                text: 'Geschmacksprofil — KochTakt lernt aus deinen Rezepten und schlägt dir passende Gerichte vor',
                 tag: 'spotlight',
             },
             {
@@ -542,7 +542,7 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'fix',
             },
             {
-                text: 'Willkommens-Mail trägt jetzt korrekt den Namen KüchenTakt',
+                text: 'Willkommens-Mail trägt jetzt korrekt den Namen KochTakt',
                 tag: 'fix',
             },
         ],
@@ -557,7 +557,7 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'spotlight',
             },
             {
-                text: 'Neues Branding: KüchenTakt — frischer Name, gleicher Geschmack',
+                text: 'Neues Branding: KochTakt — frischer Name, gleicher Geschmack',
                 tag: 'feat',
             },
             {
@@ -650,7 +650,7 @@ export default function ChangelogPage() {
                 </FadeIn>
                 <FadeIn delay={0.1}>
                     <p className={css({ color: 'text-muted', fontSize: 'sm', mb: '8' })}>
-                        Was gibt es Neues bei KüchenTakt?
+                        Was gibt es Neues bei KochTakt?
                     </p>
                 </FadeIn>
 

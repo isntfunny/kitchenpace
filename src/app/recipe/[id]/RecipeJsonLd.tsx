@@ -27,7 +27,7 @@ export function RecipeJsonLd({ recipe, ogImageUrl, imageKey }: Props) {
             {
                 '@type': 'ListItem',
                 position: 1,
-                name: 'KüchenTakt',
+                name: 'KochTakt',
                 item: APP_URL,
             },
             ...(categorySlug

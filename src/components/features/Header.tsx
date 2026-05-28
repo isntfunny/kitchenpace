@@ -362,7 +362,7 @@ export function Header() {
                     >
                         <SmartImage
                             src={logoSrc}
-                            alt="KüchenTakt Logo"
+                            alt="KochTakt Logo"
                             width={100}
                             height={39}
                             className={css({ objectFit: 'contain' })}
@@ -438,7 +438,7 @@ export function Header() {
                     >
                         <SmartImage
                             src={logoSrc}
-                            alt="KüchenTakt Logo"
+                            alt="KochTakt Logo"
                             width={100}
                             height={39}
                             className={css({ objectFit: 'contain' })}

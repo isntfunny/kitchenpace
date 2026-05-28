@@ -288,7 +288,7 @@ Plan teilen
 [○] Per Link    Wer den Link hat, kann mitlesen
 [●] Öffentlich  Im Profil sichtbar + per direktem Link erreichbar
 
-Link: https://kuechentakt.de/meal-plan/share/abc123  [Kopieren]
+Link: https://kochtakt.de/meal-plan/share/abc123  [Kopieren]
 ```
 
 - `PRIVATE` → kein Link

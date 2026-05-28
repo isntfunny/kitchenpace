@@ -35,12 +35,12 @@ const buildRecipeMetadata = (
 ): Metadata => {
     if (!recipe) {
         return {
-            title: 'Rezept nicht gefunden | KüchenTakt',
+            title: 'Rezept nicht gefunden | KochTakt',
             description: 'Das gewünschte Rezept konnte nicht gefunden werden.',
         };
     }
 
-    const fallbackDescription = `Rezept von ${recipe.author?.name ?? 'KüchenTakt'} – Zutaten, Schritte und Zeiten auf einen Blick.`;
+    const fallbackDescription = `Rezept von ${recipe.author?.name ?? 'KochTakt'} – Zutaten, Schritte und Zeiten auf einen Blick.`;
     const description = recipe.description || fallbackDescription;
 
     const bannerUrl = recipe.imageKey
@@ -50,15 +50,15 @@ const buildRecipeMetadata = (
     const recipeUrl = `${APP_URL}/recipe/${recipe.slug}`;
 
     return {
-        title: `${recipe.title} | KüchenTakt`,
+        title: `${recipe.title} | KochTakt`,
         description,
         alternates: { canonical: recipeUrl },
         ...(isDraft && { robots: { index: false, follow: false } }),
         openGraph: {
-            title: `${recipe.title} | KüchenTakt`,
+            title: `${recipe.title} | KochTakt`,
             description,
             url: recipeUrl,
-            siteName: 'KüchenTakt',
+            siteName: 'KochTakt',
             type: 'article',
             publishedTime: recipe.publishedAt ?? undefined,
             modifiedTime: recipe.updatedAt,
@@ -73,7 +73,7 @@ const buildRecipeMetadata = (
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${recipe.title} | KüchenTakt`,
+            title: `${recipe.title} | KochTakt`,
             description,
             images: [bannerUrl],
         },

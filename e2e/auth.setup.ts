@@ -1,6 +1,6 @@
 import { test as setup, expect } from '@playwright/test';
 
-const BASE = process.env.E2E_BASE_URL ?? 'https://beta.xn--kchentakt-q9a.de';
+const BASE = process.env.E2E_BASE_URL ?? 'https://beta.kochtakt.de';
 const E2E_EMAIL = process.env.E2E_EMAIL ?? 'info@isntfunny.de';
 const E2E_PASSWORD = process.env.E2E_PASSWORD ?? 'voll1111';
 

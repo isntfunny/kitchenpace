@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-const BASE = process.env.E2E_BASE_URL ?? 'https://beta.xn--kchentakt-q9a.de';
+const BASE = process.env.E2E_BASE_URL ?? 'https://beta.kochtakt.de';
 
 // ---------------------------------------------------------------------------
 // Page lists
@@ -81,14 +81,14 @@ async function visitAndCheck(page: Page, path: string) {
         const status = response.status();
         const reqUrl = response.url();
         // Only care about our own domain, ignore third-party
-        if (!reqUrl.includes('xn--kchentakt-q9a.de') && !reqUrl.includes('localhost')) return;
+        if (!reqUrl.includes('kochtakt.de') && !reqUrl.includes('localhost')) return;
         if (status >= 400 && status !== 404) {
             failedRequests.push(`${status} ${reqUrl}`);
         }
     });
 
     await page.goto(url, { waitUntil: 'load', timeout: 30_000 });
-    await expect(page).toHaveTitle(/KüchenTakt|Authentifizierung|Passwort|Changelog/i);
+    await expect(page).toHaveTitle(/KochTakt|Authentifizierung|Passwort|Changelog/i);
 
     // Soak for 2 seconds to catch late-firing errors (hydration, lazy loads, SSE)
     await page.waitForTimeout(2_000);

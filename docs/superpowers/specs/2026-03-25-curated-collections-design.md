@@ -196,13 +196,13 @@ All recipe-embedding components share a common set of optional filter props. If 
 ### Examples
 
 ```mdx
-# Mein Weihnachtsmenue
+# Mein Weihnachtsmenü
 
 Als Vorspeise empfehle ich diesen Klassiker:
 
 <RecipeCard id="clx1abc..." />
 
-Fuer den Hauptgang, hier meine Pasta-Favoriten:
+Für den Hauptgang, hier meine Pasta-Favoriten:
 
 <RecipeSlider byMyself tags={['pasta']} sort="rating" limit={6} />
 
@@ -222,13 +222,13 @@ Split-view: Markdown textarea (left), live preview (right).
 ### Toolbar
 
 - Template dropdown (Sidebar / Grid Below / Hero Picks / Inline)
-- "Rezept einfuegen" button → opens recipe search modal
+- "Rezept einfügen" button → opens recipe search modal
 - Formatting buttons (Bold, Italic, Heading, Link, Image)
 - Component snippets dropdown (RecipeSlider, FeaturedTrio, TopList, RandomPick)
 
 ### Recipe Search Modal
 
-1. User clicks "Rezept einfuegen" or selects a component from dropdown
+1. User clicks "Rezept einfügen" or selects a component from dropdown
 2. Modal opens with search field + result list (reuse existing recipe search)
 3. User selects recipe(s) — multi-select for Slider/Trio/TopList
 4. Modal inserts MDX syntax at cursor position
@@ -293,12 +293,12 @@ Same pipeline as recipes (Phase 7):
 
 ### Visibility Rules
 
-| State                                            | Who sees it                          |
-| ------------------------------------------------ | ------------------------------------ |
-| `published: false`                               | Author only (draft)                  |
-| `published: true` + `PENDING`                    | Author only + "Wird geprueft" banner |
-| `published: true` + `AUTO_APPROVED` / `APPROVED` | Public                               |
-| `published: true` + `REJECTED`                   | Author only + rejected banner        |
+| State                                            | Who sees it                         |
+| ------------------------------------------------ | ----------------------------------- |
+| `published: false`                               | Author only (draft)                 |
+| `published: true` + `PENDING`                    | Author only + "Wird geprüft" banner |
+| `published: true` + `AUTO_APPROVED` / `APPROVED` | Public                              |
+| `published: true` + `REJECTED`                   | Author only + rejected banner       |
 
 ---
 
@@ -368,7 +368,7 @@ When a recipe referenced in a collection is deleted or unpublished by its author
 - **Detection:** On recipe delete/unpublish, query `CollectionRecipe` for all collections referencing that recipe
 - **Action:** Set affected collections to `published: false` (reverts to draft)
 - **Notification:** Notify the collection author that a referenced recipe was removed and their collection needs review
-- **MDX rendering:** The `<RecipeCard>` / other components render a "Rezept nicht mehr verfuegbar" placeholder for missing recipe IDs instead of crashing — allows the author to see what broke when editing
+- **MDX rendering:** The `<RecipeCard>` / other components render a "Rezept nicht mehr verfügbar" placeholder for missing recipe IDs instead of crashing — allows the author to see what broke when editing
 
 ---
 

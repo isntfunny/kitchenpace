@@ -1,14 +1,14 @@
 # Mobile Header, Search, Menu & Notifications — Design Spec
 
 **Status:** Bereit zur Implementierung
-**Prioritaet:** Hoch — betrifft alle Mobile-Nutzer auf jeder Seite
+**Priorität:** Hoch — betrifft alle Mobile-Nutzer auf jeder Seite
 **Scope:** Header-Suche, Hamburger-Menu, User-Menu, Notifications, Filter-Sheet Polishing
 
 ## Kontext
 
 Die Header-Elemente funktionieren auf Mobile (390px Viewport) schlecht:
 
-- **Suche**: Input zu schmal (Text wird links abgeschnitten bei laengeren Queries),
+- **Suche**: Input zu schmal (Text wird links abgeschnitten bei längeren Queries),
   Dropdown nicht full-width, kein Schliessen-Button
 - **Hamburger-Menu**: Radix DropdownMenu schwebt als kleines Overlay,
   Content der Seite scheint durch
@@ -20,14 +20,14 @@ Die Header-Elemente funktionieren auf Mobile (390px Viewport) schlecht:
 
 ### 1. Header Search → Fullscreen Overlay
 
-**Ausloeser:** Tap auf das Suchfeld oder Such-Icon im Mobile-Header
+**Auslöser:** Tap auf das Suchfeld oder Such-Icon im Mobile-Header
 
 **Verhalten:**
 
 - Fullscreen-Panel fadet ein (opacity 0→1 + leichter scale, ~200ms ease-out)
 - `backdrop-filter: blur(20px)` + hohe Opacity auf den Hintergrund
 - Auto-Focus auf das Input-Feld beim Oeffnen
-- Volle Bildschirmbreite fuer Input und Ergebnisse
+- Volle Bildschirmbreite für Input und Ergebnisse
 - Ergebnisse scrollen vertikal mit voller Breite
 
 **Schliessen:**
@@ -39,22 +39,22 @@ Die Header-Elemente funktionieren auf Mobile (390px Viewport) schlecht:
 **Technisch:**
 
 - Neuer `MobileSearchOverlay`-Wrapper um bestehende `HeaderSearch`-Logik
-- Bestehende Search-API/Debounce-Logik bleibt unveraendert
+- Bestehende Search-API/Debounce-Logik bleibt unverändert
 - Nur auf Mobile (`md` Breakpoint) — Desktop bleibt wie bisher
-- Panda CSS Tokens fuer Farben, Spacing, Radii
-- Dark Mode: `_dark` Condition fuer alle Farben
+- Panda CSS Tokens für Farben, Spacing, Radii
+- Dark Mode: `_dark` Condition für alle Farben
 
 ### 2. Hamburger Menu → Fullscreen Drawer (von links)
 
-**Ausloeser:** Tap auf Hamburger-Button im Mobile-Header
+**Auslöser:** Tap auf Hamburger-Button im Mobile-Header
 
 **Verhalten:**
 
-- Drawer gleitet von links ein, volle Hoehe, ~85% Breite (oder volle Breite)
+- Drawer gleitet von links ein, volle Höhe, ~85% Breite (oder volle Breite)
 - Backdrop: `backdrop-filter: blur(8px)` + Semi-transparentes Overlay
 - Spring-Animation (Framer Motion oder CSS transition)
 
-**Inhalt (abhaengig von Auth-Status):**
+**Inhalt (abhängig von Auth-Status):**
 
 - Nicht eingeloggt:
     - Rezepte entdecken
@@ -63,9 +63,9 @@ Die Header-Elemente funktionieren auf Mobile (390px Viewport) schlecht:
     - Vegetarische Highlights
     - Top bewertet
     - Darstellung (Dark Mode Toggle)
-- Eingeloggt (zusaetzlich):
+- Eingeloggt (zusätzlich):
     - Rezept erstellen
-    - Verwaltung-Sektion: Administration, Moderation (rollenabhaengig)
+    - Verwaltung-Sektion: Administration, Moderation (rollenabhängig)
 
 **Schliessen:**
 
@@ -77,14 +77,14 @@ Die Header-Elemente funktionieren auf Mobile (390px Viewport) schlecht:
 **Technisch:**
 
 - Ersetzt aktuelles Radix `DropdownMenu` auf Mobile
-- Desktop-Dropdown bleibt unveraendert (nur `md` Breakpoint Unterscheidung)
+- Desktop-Dropdown bleibt unverändert (nur `md` Breakpoint Unterscheidung)
 - Panda CSS: `_dark` Condition, semantische Tokens
-- Touch-Targets: min. 48px Hoehe pro Menu-Item
+- Touch-Targets: min. 48px Höhe pro Menu-Item
 - `body` scroll-lock wenn Drawer offen
 
 ### 3. User Menu → Fullscreen Drawer (von rechts)
 
-**Ausloeser:** Tap auf Avatar/Profile-Button im Mobile-Header
+**Auslöser:** Tap auf Avatar/Profile-Button im Mobile-Header
 
 **Visuell:** Identisches Pattern wie Hamburger-Drawer, aber:
 
@@ -93,8 +93,8 @@ Die Header-Elemente funktionieren auf Mobile (390px Viewport) schlecht:
 
 **Inhalt:**
 
-- Fuer Dich (Sektion):
-    - Profiluebersicht
+- Für Dich (Sektion):
+    - Profilübersicht
     - Favoriten
     - Meine Rezepte
     - Profil & Einstellungen
@@ -107,7 +107,7 @@ Die Header-Elemente funktionieren auf Mobile (390px Viewport) schlecht:
 
 ### 4. Notifications → Fullscreen Overlay
 
-**Ausloeser:** Tap auf Notification-Badge am Avatar
+**Auslöser:** Tap auf Notification-Badge am Avatar
 
 **Verhalten:**
 
@@ -115,7 +115,7 @@ Die Header-Elemente funktionieren auf Mobile (390px Viewport) schlecht:
 - `backdrop-filter: blur(20px)` + hohe Opacity
 - Notification-Liste mit Scroll
 - "Alle anzeigen" Button/Link am Ende
-- Badge-Count wird beim Oeffnen zurueckgesetzt
+- Badge-Count wird beim Oeffnen zurückgesetzt
 
 **Schliessen:**
 
@@ -140,16 +140,16 @@ Die Header-Elemente funktionieren auf Mobile (390px Viewport) schlecht:
     - Weniger Padding links/rechts (16px statt aktuell ~20px)
     - Tags kompakter gesetzt
 - Dark Mode Support:
-    - `_dark` Condition fuer alle Farben
+    - `_dark` Condition für alle Farben
     - Aktuell hardcoded Farben auf Panda CSS Tokens umstellen
 - Backdrop-Overlay verbessern:
-    - `backdrop-filter: blur(8px)` hinzufuegen
+    - `backdrop-filter: blur(8px)` hinzufügen
 
 ## Geteilte Komponenten
 
 ### `MobileDrawer` (neu)
 
-Wiederverwendbare Drawer-Komponente fuer Hamburger + User Menu:
+Wiederverwendbare Drawer-Komponente für Hamburger + User Menu:
 
 ```
 Props:
@@ -170,7 +170,7 @@ Features:
 
 ### `MobileOverlay` (neu)
 
-Wiederverwendbare Overlay-Komponente fuer Search + Notifications:
+Wiederverwendbare Overlay-Komponente für Search + Notifications:
 
 ```
 Props:
@@ -190,7 +190,7 @@ Features:
 ## Breakpoint-Strategie
 
 Alle Aenderungen nur auf Mobile (`base` in Panda CSS, unter `md` Breakpoint = 768px).
-Desktop-Verhalten bleibt komplett unveraendert:
+Desktop-Verhalten bleibt komplett unverändert:
 
 - `md`+: Radix DropdownMenu, Inline-Search-Dropdown, Notification-Dropdown
 - `base`: MobileDrawer, MobileOverlay, verbesserter Filter-Sheet
@@ -201,11 +201,11 @@ Desktop-Verhalten bleibt komplett unveraendert:
 - Dark Mode via `_dark` Condition
 - Spacing via semantische Tokens (`page.x`, `card`, etc.)
 - Border-Radius via `surface` / `control` Tokens
-- Animationen: CSS `transition` bevorzugt, Framer Motion nur wenn noetig
+- Animationen: CSS `transition` bevorzugt, Framer Motion nur wenn nötig
 
 ## Nicht im Scope
 
 - Aenderungen an der Search-Ranking-Logik (Backend)
 - Desktop-Layout Aenderungen
 - MobileView Kochansicht (eigener Spec: `2026-03-26-mobileview-rework-design.md`)
-- Neue Menu-Eintraege oder Navigation-Struktur
+- Neue Menu-Einträge oder Navigation-Struktur

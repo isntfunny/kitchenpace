@@ -58,7 +58,7 @@ type StepType =
     | 'backen'
     | 'mixen'
     | 'warten'
-    | 'wuerzen'
+    | 'würzen'
     | 'anrichten'
     | 'servieren';
 
@@ -113,7 +113,7 @@ Minimal but universal — each type covers a broad class of kitchen actions. All
 | `backen`    | Backen      | Backen, Rösten, Gratinieren, Ofengaren                                         | `UtensilsCrossed`           | `#fce4ec` (pink)        |
 | `mixen`     | Mixen       | Mixen, Rühren, Schlagen, Kneten, Pürieren, Vermengen                           | `Blend` / `Shuffle`         | `#e8eaf6` (indigo)      |
 | `warten`    | Warten      | Ruhen lassen, Marinieren, Abkühlen, Gehen lassen, Einweichen                   | `Clock`                     | `#f3e5f5` (purple)      |
-| `wuerzen`   | Würzen      | Würzen, Abschmecken, Verfeinern                                                | `Leaf`                      | `#e8f5e9` (green)       |
+| `würzen`    | Würzen      | Würzen, Abschmecken, Verfeinern                                                | `Leaf`                      | `#e8f5e9` (green)       |
 | `anrichten` | Anrichten   | Anrichten, Zusammenfügen, Aufteilen, Portionieren                              | `PanelTop` / `Layers`       | `#fff8e1` (amber)       |
 | `servieren` | Servieren   | Pflichtschritt. Einmalig. Kein ausgehender Pfeil möglich. Terminiert den Flow. | `Sparkles`                  | `#ffebee` (red)         |
 
@@ -429,7 +429,7 @@ interface NodeTimerState {
 - **Time display**: `MM:SS` format, shown in the top-right corner replacing the static "X Min." badge while running
 
 **Eligible step types** (have `duration` and make sense for timing):
-`kochen`, `braten`, `backen`, `warten` — not `schneiden`, `mixen`, `wuerzen`, `anrichten`
+`kochen`, `braten`, `backen`, `warten` — not `schneiden`, `mixen`, `würzen`, `anrichten`
 
 **Button states:**
 

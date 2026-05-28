@@ -1,29 +1,29 @@
-# Top Rezept-Websites in Deutschland -- Marktanalyse fuer Scraper-Priorisierung
+# Top Rezept-Websites in Deutschland -- Marktanalyse für Scraper-Priorisierung
 
-Stand: Maerz 2026 | Datenquellen: Semrush (Feb 2026), SimilarWeb, BuiltWith, recipe-scrapers Library
+Stand: März 2026 | Datenquellen: Semrush (Feb 2026), SimilarWeb, BuiltWith, recipe-scrapers Library
 
 ---
 
 ## Zusammenfassung
 
 Die deutsche Rezept-Landschaft wird von chefkoch.de dominiert (24M+ Visits/Monat). Dahinter
-kaempfen Food-Blogs (emmikochteinfach, einfachbacken, gaumenfreundin) und Supermarkt-Portale
-(rewe.de, edeka.de) um die Plaetze 2-8. Der Trend geht klar zu: WordPress-Blogs mit
-WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fuer uns.
+kämpfen Food-Blogs (emmikochteinfach, einfachbacken, gaumenfreundin) und Supermarkt-Portale
+(rewe.de, edeka.de) um die Plätze 2-8. Der Trend geht klar zu: WordPress-Blogs mit
+WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut für uns.
 
 ### Scraper-Priorisierung (Empfehlung)
 
-| Prioritaet        | Seiten                                                                      | Grund                                                         |
+| Priorität         | Seiten                                                                      | Grund                                                         |
 | ----------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | P0 (bereits)      | chefkoch.de, lecker.de, essen-und-trinken.de, edeka.de, dr-oetker.de        | Bereits implementiert                                         |
-| P1 (naechste)     | emmikochteinfach.de, einfachbacken.de, rewe.de                              | Top-Traffic, schema.org JSON-LD, WordPress/einfach zu scrapen |
-| P2 (danach)       | familienkost.de, gaumenfreundin.de, hellofresh.de, kitchenstories.com       | Solider Traffic, gute Datenqualitaet                          |
+| P1 (nächste)      | emmikochteinfach.de, einfachbacken.de, rewe.de                              | Top-Traffic, schema.org JSON-LD, WordPress/einfach zu scrapen |
+| P2 (danach)       | familienkost.de, gaumenfreundin.de, hellofresh.de, kitchenstories.com       | Solider Traffic, gute Datenqualität                           |
 | P3 (nice-to-have) | kochbar.de, biancazapatka.com, backenmachtgluecklich.de, leckerschmecker.me | Kleiner Traffic, aber gute Nischen                            |
-| Social            | YouTube, Instagram, TikTok                                                  | Eigene Strategie noetig (API/Embed, kein klassischer Scraper) |
+| Social            | YouTube, Instagram, TikTok                                                  | Eigene Strategie nötig (API/Embed, kein klassischer Scraper)  |
 
 ---
 
-## Top Rezept-Websites: Vollstaendige Analyse
+## Top Rezept-Websites: Vollständige Analyse
 
 ### 1. chefkoch.de
 
@@ -37,40 +37,40 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 | **App**                       | Ja, iOS + Android (10M+ Downloads Android)                                                                                                                                                                                                       |
 | **Video-Content**             | Ja, YouTube-Kanal + eingebettete Videos auf der Seite                                                                                                                                                                                            |
 | **Technische Besonderheiten** | **STARKER Anti-Bot-Schutz**: Custom CAPTCHA-System (Bild-Matching + Proof-of-Work), kein Cloudflare aber eigene Bot-Detection. Scraping mit normalem HTTP-Client schlaegt fehl -- braucht Headless Browser mit stealth. WebFetch wird blockiert. |
-| **recipe-scrapers**           | Ja, unterstuetzt                                                                                                                                                                                                                                 |
+| **recipe-scrapers**           | Ja, unterstützt                                                                                                                                                                                                                                  |
 | **Scraper-Schwierigkeit**     | HOCH -- Anti-Bot ist aggressiv                                                                                                                                                                                                                   |
 
 ---
 
 ### 2. emmikochteinfach.de
 
-| Merkmal                       | Details                                                                                                                                                                                 |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Monatliche Besucher**       | ~9.2M (Semrush Feb 2026)                                                                                                                                                                |
-| **Betreiber**                 | Christiane Emma (Food-Bloggerin)                                                                                                                                                        |
-| **Rezeptstruktur**            | Zutaten (strukturierte Liste), Schritte (nummeriert mit Bildern), Naehrwerte, Portionen, Druckansicht                                                                                   |
-| **Schema.org**                | Ja, JSON-LD via WP Recipe Maker Plugin                                                                                                                                                  |
-| **App**                       | Nein (nur Web, responsive)                                                                                                                                                              |
-| **Video-Content**             | YouTube-Kanal, Instagram (525K Follower), Pinterest                                                                                                                                     |
-| **Technische Besonderheiten** | **WordPress** + WP Recipe Maker (WPRM) Plugin + Bootstrap 5. CDN fuer Bilder. Kein nennenswerter Anti-Bot-Schutz. Cookie-basiertes Tracking. Sehr scraper-freundlich dank WPRM JSON-LD. |
-| **recipe-scrapers**           | Ja, unterstuetzt                                                                                                                                                                        |
-| **Scraper-Schwierigkeit**     | NIEDRIG -- Standard WordPress + JSON-LD                                                                                                                                                 |
+| Merkmal                       | Details                                                                                                                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Monatliche Besucher**       | ~9.2M (Semrush Feb 2026)                                                                                                                                                               |
+| **Betreiber**                 | Christiane Emma (Food-Bloggerin)                                                                                                                                                       |
+| **Rezeptstruktur**            | Zutaten (strukturierte Liste), Schritte (nummeriert mit Bildern), Nährwerte, Portionen, Druckansicht                                                                                   |
+| **Schema.org**                | Ja, JSON-LD via WP Recipe Maker Plugin                                                                                                                                                 |
+| **App**                       | Nein (nur Web, responsive)                                                                                                                                                             |
+| **Video-Content**             | YouTube-Kanal, Instagram (525K Follower), Pinterest                                                                                                                                    |
+| **Technische Besonderheiten** | **WordPress** + WP Recipe Maker (WPRM) Plugin + Bootstrap 5. CDN für Bilder. Kein nennenswerter Anti-Bot-Schutz. Cookie-basiertes Tracking. Sehr scraper-freundlich dank WPRM JSON-LD. |
+| **recipe-scrapers**           | Ja, unterstützt                                                                                                                                                                        |
+| **Scraper-Schwierigkeit**     | NIEDRIG -- Standard WordPress + JSON-LD                                                                                                                                                |
 
 ---
 
 ### 3. einfachbacken.de
 
-| Merkmal                       | Details                                                                                                      |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Monatliche Besucher**       | ~8.6M (Semrush Feb 2026)                                                                                     |
-| **Betreiber**                 | BurdaVerlag GmbH (Burda-Gruppe)                                                                              |
-| **Rezeptstruktur**            | Zutaten, Schritte, Bilder, Schwierigkeitsgrad, Zubereitungszeit                                              |
-| **Schema.org**                | Ja, JSON-LD                                                                                                  |
-| **App**                       | Ja, iOS + Android (seit 2025, 10K+ Downloads)                                                                |
-| **Video-Content**             | YouTube, Instagram, TikTok                                                                                   |
-| **Technische Besonderheiten** | Server-seitig gerendert, Burda-Medien-Infrastruktur. Consent-Management fuer DSGVO. Moderate Bot-Protection. |
-| **recipe-scrapers**           | Nicht direkt in der Liste (aber Schema.org JSON-LD vorhanden = wild_mode sollte funktionieren)               |
-| **Scraper-Schwierigkeit**     | MITTEL                                                                                                       |
+| Merkmal                       | Details                                                                                                     |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Monatliche Besucher**       | ~8.6M (Semrush Feb 2026)                                                                                    |
+| **Betreiber**                 | BurdaVerlag GmbH (Burda-Gruppe)                                                                             |
+| **Rezeptstruktur**            | Zutaten, Schritte, Bilder, Schwierigkeitsgrad, Zubereitungszeit                                             |
+| **Schema.org**                | Ja, JSON-LD                                                                                                 |
+| **App**                       | Ja, iOS + Android (seit 2025, 10K+ Downloads)                                                               |
+| **Video-Content**             | YouTube, Instagram, TikTok                                                                                  |
+| **Technische Besonderheiten** | Server-seitig gerendert, Burda-Medien-Infrastruktur. Consent-Management für DSGVO. Moderate Bot-Protection. |
+| **recipe-scrapers**           | Nicht direkt in der Liste (aber Schema.org JSON-LD vorhanden = wild_mode sollte funktionieren)              |
+| **Scraper-Schwierigkeit**     | MITTEL                                                                                                      |
 
 ---
 
@@ -81,12 +81,12 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 | **Monatliche Besucher**       | ~14.4M gesamt (Rezepte sind Teilbereich, aber grosser Traffic-Treiber)                                                                          |
 | **Betreiber**                 | REWE Markt GmbH                                                                                                                                 |
 | **Rezeptanzahl**              | 10.000+                                                                                                                                         |
-| **Rezeptstruktur**            | Zutaten (mit Mengenangaben), Schritte (nummeriert), Naehrwerte, "Zum Warenkorb hinzufuegen"-Button                                              |
+| **Rezeptstruktur**            | Zutaten (mit Mengenangaben), Schritte (nummeriert), Nährwerte, "Zum Warenkorb hinzufügen"-Button                                                |
 | **Schema.org**                | Ja, JSON-LD                                                                                                                                     |
-| **App**                       | Ja (REWE-App, primaer fuer Einkauf, Rezepte integriert)                                                                                         |
+| **App**                       | Ja (REWE-App, primär für Einkauf, Rezepte integriert)                                                                                           |
 | **Video-Content**             | YouTube-Kanal, Social Media                                                                                                                     |
 | **Technische Besonderheiten** | Modernes Frontend (vermutlich React/Next.js), API-getrieben. Rezepte sind tief in die E-Commerce-Plattform integriert. Mittlere Bot-Protection. |
-| **recipe-scrapers**           | Ja, unterstuetzt                                                                                                                                |
+| **recipe-scrapers**           | Ja, unterstützt                                                                                                                                 |
 | **Scraper-Schwierigkeit**     | MITTEL                                                                                                                                          |
 
 ---
@@ -102,7 +102,7 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 | **App**                       | Nein                                                                    |
 | **Video-Content**             | YouTube, Instagram, Pinterest                                           |
 | **Technische Besonderheiten** | WordPress-Blog. Kein nennenswerter Anti-Bot-Schutz. Scraper-freundlich. |
-| **recipe-scrapers**           | Nicht in der Liste (wild_mode moeglich)                                 |
+| **recipe-scrapers**           | Nicht in der Liste (wild_mode möglich)                                  |
 | **Scraper-Schwierigkeit**     | NIEDRIG                                                                 |
 
 ---
@@ -114,9 +114,9 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 | **Monatliche Besucher**       | ~4.8M gesamt (Rezepte sind Teilbereich)                                               |
 | **Betreiber**                 | EDEKA Zentrale Stiftung & Co. KG                                                      |
 | **Rezeptanzahl**              | 6.000+                                                                                |
-| **Rezeptstruktur**            | Zutaten, Schritte, Bilder, Naehrwerte, Schwierigkeitsgrad                             |
+| **Rezeptstruktur**            | Zutaten, Schritte, Bilder, Nährwerte, Schwierigkeitsgrad                              |
 | **Schema.org**                | Ja, JSON-LD                                                                           |
-| **App**                       | Ja (EDEKA-App, primaer Angebote, Rezepte integriert)                                  |
+| **App**                       | Ja (EDEKA-App, primär Angebote, Rezepte integriert)                                   |
 | **Video-Content**             | YouTube ("Yumtamtam"), Instagram, TikTok                                              |
 | **Technische Besonderheiten** | Java-basiertes Backend (.jsp URLs). Server-seitig gerendert. Moderate Bot-Protection. |
 | **recipe-scrapers**           | Nicht in der Liste                                                                    |
@@ -126,18 +126,18 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 
 ### 7. lecker.de
 
-| Merkmal                       | Details                                                                                                                                                                                |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Monatliche Besucher**       | ~4.1M (Semrush Feb 2026)                                                                                                                                                               |
-| **Betreiber**                 | Bauer Xcel Media Deutschland KG (Hamburg, seit 1985)                                                                                                                                   |
-| **Rezeptanzahl**              | 60.000+                                                                                                                                                                                |
-| **Rezeptstruktur**            | Zutaten, Schritte, Bilder, Schwierigkeitsgrad, Zubereitungszeit, Naehrwerte                                                                                                            |
-| **Schema.org**                | Ja, umfangreiches JSON-LD (Organization, Website, SearchAction, Recipe)                                                                                                                |
-| **App**                       | Ja, iOS + Android (500K+ Downloads)                                                                                                                                                    |
-| **Video-Content**             | YouTube, Instagram, Reels                                                                                                                                                              |
-| **Technische Besonderheiten** | Custom CMS (kein WordPress/React/Vue). Server-seitig gerendert. CDN via cdn.lecker.de. Nielsen-Tracking. Sourcepoint DSGVO-Consent. "bx-"-CSS-Klassen (proprietaer). Molten Ad-System. |
-| **recipe-scrapers**           | Ja, unterstuetzt                                                                                                                                                                       |
-| **Scraper-Schwierigkeit**     | MITTEL                                                                                                                                                                                 |
+| Merkmal                       | Details                                                                                                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Monatliche Besucher**       | ~4.1M (Semrush Feb 2026)                                                                                                                                                              |
+| **Betreiber**                 | Bauer Xcel Media Deutschland KG (Hamburg, seit 1985)                                                                                                                                  |
+| **Rezeptanzahl**              | 60.000+                                                                                                                                                                               |
+| **Rezeptstruktur**            | Zutaten, Schritte, Bilder, Schwierigkeitsgrad, Zubereitungszeit, Nährwerte                                                                                                            |
+| **Schema.org**                | Ja, umfangreiches JSON-LD (Organization, Website, SearchAction, Recipe)                                                                                                               |
+| **App**                       | Ja, iOS + Android (500K+ Downloads)                                                                                                                                                   |
+| **Video-Content**             | YouTube, Instagram, Reels                                                                                                                                                             |
+| **Technische Besonderheiten** | Custom CMS (kein WordPress/React/Vue). Server-seitig gerendert. CDN via cdn.lecker.de. Nielsen-Tracking. Sourcepoint DSGVO-Consent. "bx-"-CSS-Klassen (proprietär). Molten Ad-System. |
+| **recipe-scrapers**           | Ja, unterstützt                                                                                                                                                                       |
+| **Scraper-Schwierigkeit**     | MITTEL                                                                                                                                                                                |
 
 ---
 
@@ -153,7 +153,7 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 | **App**                       | Nein                                                   |
 | **Video-Content**             | YouTube, Instagram, Pinterest, TikTok                  |
 | **Technische Besonderheiten** | WordPress-Blog. Sehr scraper-freundlich.               |
-| **recipe-scrapers**           | Nicht in der Liste (wild_mode moeglich)                |
+| **recipe-scrapers**           | Nicht in der Liste (wild_mode möglich)                 |
 | **Scraper-Schwierigkeit**     | NIEDRIG                                                |
 
 ---
@@ -169,7 +169,7 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 | **App**                       | Nein                                                                                 |
 | **Video-Content**             | Facebook-Videos, YouTube, Instagram (Viral-Content-Fokus)                            |
 | **Technische Besonderheiten** | Viraler Content-Stil, viel Social-Traffic. WordPress-basiert. Starke Ad-Integration. |
-| **recipe-scrapers**           | Ja, unterstuetzt                                                                     |
+| **recipe-scrapers**           | Ja, unterstützt                                                                      |
 | **Scraper-Schwierigkeit**     | NIEDRIG-MITTEL                                                                       |
 
 ---
@@ -185,7 +185,7 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 | **App**                       | Nicht mehr aktiv gepflegt                                              |
 | **Video-Content**             | Eingebettete Videos, YouTube                                           |
 | **Technische Besonderheiten** | Hohe Bounce-Rate (87.6%). RTL-Infrastruktur. Moderate Bot-Protection.  |
-| **recipe-scrapers**           | Ja, unterstuetzt                                                       |
+| **recipe-scrapers**           | Ja, unterstützt                                                        |
 | **Scraper-Schwierigkeit**     | MITTEL                                                                 |
 
 ---
@@ -196,7 +196,7 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 | ----------------------------- | ------------------------------------------------------------------------ |
 | **Monatliche Besucher**       | ~2.3M (Semrush Feb 2026)                                                 |
 | **Betreiber**                 | Gruner + Jahr / RTL Group                                                |
-| **Rezeptstruktur**            | Zutaten, Schritte, professionelle Bilder, Naehrwerte                     |
+| **Rezeptstruktur**            | Zutaten, Schritte, professionelle Bilder, Nährwerte                      |
 | **Schema.org**                | Ja, JSON-LD                                                              |
 | **App**                       | Nein (nur Web)                                                           |
 | **Video-Content**             | YouTube, eingebettete Videos                                             |
@@ -210,9 +210,9 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 
 | Merkmal                       | Details                                                                            |
 | ----------------------------- | ---------------------------------------------------------------------------------- |
-| **Monatliche Besucher**       | ~1-2M (geschaetzt, nicht in Semrush Top 20)                                        |
+| **Monatliche Besucher**       | ~1-2M (geschätzt, nicht in Semrush Top 20)                                         |
 | **Betreiber**                 | Dr. August Oetker Nahrungsmittel KG                                                |
-| **Rezeptstruktur**            | Zutaten, Schritte, professionelle Bilder, Schwierigkeitsgrad, Naehrwerte           |
+| **Rezeptstruktur**            | Zutaten, Schritte, professionelle Bilder, Schwierigkeitsgrad, Nährwerte            |
 | **Schema.org**                | Ja, JSON-LD                                                                        |
 | **App**                       | Ja, iOS + Android ("Dr. Oetker Rezeptideen")                                       |
 | **Video-Content**             | YouTube, Instagram, TikTok                                                         |
@@ -224,33 +224,33 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 
 ### 13. hellofresh.de
 
-| Merkmal                       | Details                                                                                                                                   |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Monatliche Besucher**       | ~1.7M (Semrush Feb 2026)                                                                                                                  |
-| **Betreiber**                 | HelloFresh SE (Berlin)                                                                                                                    |
-| **Rezeptstruktur**            | Sehr strukturiert: Zutaten mit exakten Mengen, nummerierte Schritte mit Bildern, Naehrwerte, Allergene                                    |
-| **Schema.org**                | Ja, JSON-LD + API-Daten im HTML eingebettet                                                                                               |
-| **App**                       | Ja, iOS + Android (primaer Abo-Service)                                                                                                   |
-| **Video-Content**             | YouTube, Instagram, TikTok                                                                                                                |
-| **Technische Besonderheiten** | React SPA. API-basiert (JSON im HTML). Auth-Header fuer API noetig. Rezepte teilweise hinter Login. Gute Datenqualitaet wenn zugaenglich. |
-| **recipe-scrapers**           | Ja, unterstuetzt                                                                                                                          |
-| **Scraper-Schwierigkeit**     | MITTEL-HOCH (Login-Wall fuer manche Rezepte)                                                                                              |
+| Merkmal                       | Details                                                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **Monatliche Besucher**       | ~1.7M (Semrush Feb 2026)                                                                                                              |
+| **Betreiber**                 | HelloFresh SE (Berlin)                                                                                                                |
+| **Rezeptstruktur**            | Sehr strukturiert: Zutaten mit exakten Mengen, nummerierte Schritte mit Bildern, Nährwerte, Allergene                                 |
+| **Schema.org**                | Ja, JSON-LD + API-Daten im HTML eingebettet                                                                                           |
+| **App**                       | Ja, iOS + Android (primär Abo-Service)                                                                                                |
+| **Video-Content**             | YouTube, Instagram, TikTok                                                                                                            |
+| **Technische Besonderheiten** | React SPA. API-basiert (JSON im HTML). Auth-Header für API nötig. Rezepte teilweise hinter Login. Gute Datenqualität wenn zugänglich. |
+| **recipe-scrapers**           | Ja, unterstützt                                                                                                                       |
+| **Scraper-Schwierigkeit**     | MITTEL-HOCH (Login-Wall für manche Rezepte)                                                                                           |
 
 ---
 
 ### 14. biancazapatka.com
 
-| Merkmal                       | Details                                                    |
-| ----------------------------- | ---------------------------------------------------------- |
-| **Monatliche Besucher**       | ~1.7M (Semrush Feb 2026)                                   |
-| **Betreiber**                 | Bianca Zapatka (Vegane Food-Bloggerin)                     |
-| **Rezeptstruktur**            | Zutaten, Schritte, Bilder, Naehrwerte, vegan-Kennzeichnung |
-| **Schema.org**                | Ja, JSON-LD (WordPress + WP Recipe Maker)                  |
-| **App**                       | Nein                                                       |
-| **Video-Content**             | YouTube, Instagram (1M+ Follower), TikTok (stark)          |
-| **Technische Besonderheiten** | WordPress + WPRM. Kein Anti-Bot. Mehrsprachig (DE/EN).     |
-| **recipe-scrapers**           | Ja, unterstuetzt                                           |
-| **Scraper-Schwierigkeit**     | NIEDRIG                                                    |
+| Merkmal                       | Details                                                   |
+| ----------------------------- | --------------------------------------------------------- |
+| **Monatliche Besucher**       | ~1.7M (Semrush Feb 2026)                                  |
+| **Betreiber**                 | Bianca Zapatka (Vegane Food-Bloggerin)                    |
+| **Rezeptstruktur**            | Zutaten, Schritte, Bilder, Nährwerte, vegan-Kennzeichnung |
+| **Schema.org**                | Ja, JSON-LD (WordPress + WP Recipe Maker)                 |
+| **App**                       | Nein                                                      |
+| **Video-Content**             | YouTube, Instagram (1M+ Follower), TikTok (stark)         |
+| **Technische Besonderheiten** | WordPress + WPRM. Kein Anti-Bot. Mehrsprachig (DE/EN).    |
+| **recipe-scrapers**           | Ja, unterstützt                                           |
+| **Scraper-Schwierigkeit**     | NIEDRIG                                                   |
 
 ---
 
@@ -265,7 +265,7 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 | **App**                       | Nein                                          |
 | **Video-Content**             | YouTube, Instagram, Pinterest                 |
 | **Technische Besonderheiten** | WordPress-Blog. Einfach zu scrapen.           |
-| **recipe-scrapers**           | Nicht in der Liste (wild_mode moeglich)       |
+| **recipe-scrapers**           | Nicht in der Liste (wild_mode möglich)        |
 | **Scraper-Schwierigkeit**     | NIEDRIG                                       |
 
 ---
@@ -274,33 +274,33 @@ WP Recipe Maker Plugin und schema.org JSON-LD Structured Data -- das ist gut fue
 
 ### YouTube (Rezepte deutsch)
 
-| Merkmal             | Details                                                                                                                      |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **Relevanz**        | SEHR HOCH -- Laengere Koch-Tutorials, Schritt-fuer-Schritt                                                                   |
-| **Top-Kanaele DE**  | Sally's Welt (2M+ Subs), Esslust, CookingWithStefano, Kitchen Stories                                                        |
-| **Rezeptstruktur**  | Video + Beschreibung (oft unstrukturiert), manche nutzen Chapters                                                            |
-| **Scraping-Ansatz** | YouTube Data API v3 (kostenlos, Quota-Limits). Beschreibungstext parsen. Alternativ: yt-dlp fuer Metadaten. Kein Schema.org. |
-| **Schwierigkeit**   | MITTEL -- API verfuegbar, aber Rezeptdaten unstrukturiert in Beschreibung                                                    |
+| Merkmal             | Details                                                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Relevanz**        | SEHR HOCH -- Längere Koch-Tutorials, Schritt-für-Schritt                                                                    |
+| **Top-Kanäle DE**   | Sally's Welt (2M+ Subs), Esslust, CookingWithStefano, Kitchen Stories                                                       |
+| **Rezeptstruktur**  | Video + Beschreibung (oft unstrukturiert), manche nutzen Chapters                                                           |
+| **Scraping-Ansatz** | YouTube Data API v3 (kostenlos, Quota-Limits). Beschreibungstext parsen. Alternativ: yt-dlp für Metadaten. Kein Schema.org. |
+| **Schwierigkeit**   | MITTEL -- API verfügbar, aber Rezeptdaten unstrukturiert in Beschreibung                                                    |
 
 ### Instagram (Reels/Posts)
 
-| Merkmal             | Details                                                                                                                                                                                        |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Relevanz**        | HOCH -- Groesste Food-Influencer-Plattform, Reels dominieren                                                                                                                                   |
-| **Top-Accounts DE** | @foodwerk.de (1.1M), @emmikochteinfach (525K), @biancazapatka, @fruehlingszwiebel\_ (792K)                                                                                                     |
-| **Rezeptstruktur**  | Bild/Video + Caption (Freitext mit Zutaten/Schritte). Kein Standard-Format.                                                                                                                    |
-| **Scraping-Ansatz** | Instagram Basic Display API (eingeschraenkt), Meta Graph API (Business-Accounts). Scraping gegen ToS und technisch schwierig (Login-Wall). Kitchen Stories bietet Rezept-Import aus Instagram. |
-| **Schwierigkeit**   | SEHR HOCH -- Anti-Scraping aggressiv, Login-Wall, API-Einschraenkungen                                                                                                                         |
+| Merkmal             | Details                                                                                                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Relevanz**        | HOCH -- Größte Food-Influencer-Plattform, Reels dominieren                                                                                                                                    |
+| **Top-Accounts DE** | @foodwerk.de (1.1M), @emmikochteinfach (525K), @biancazapatka, @frühlingszwiebel\_ (792K)                                                                                                     |
+| **Rezeptstruktur**  | Bild/Video + Caption (Freitext mit Zutaten/Schritte). Kein Standard-Format.                                                                                                                   |
+| **Scraping-Ansatz** | Instagram Basic Display API (eingeschränkt), Meta Graph API (Business-Accounts). Scraping gegen ToS und technisch schwierig (Login-Wall). Kitchen Stories bietet Rezept-Import aus Instagram. |
+| **Schwierigkeit**   | SEHR HOCH -- Anti-Scraping aggressiv, Login-Wall, API-Einschränkungen                                                                                                                         |
 
 ### TikTok
 
-| Merkmal             | Details                                                                                                                                                |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Relevanz**        | HOCH -- Schnellwachsend, juengere Zielgruppe, virale Rezepte                                                                                           |
-| **Top-Accounts DE** | @foodie.beats (2.9M), @melikes.kitchen (1.1M), @biancazapatka                                                                                          |
-| **Rezeptstruktur**  | Kurzvideo (15-60s) + Caption. Rezept meist nur im Video (nicht als Text).                                                                              |
-| **Scraping-Ansatz** | TikTok API for Developers (sehr eingeschraenkt). Scraping technisch moeglich aber gegen ToS. Rezeptdaten muessen aus Video extrahiert werden (OCR/AI). |
-| **Schwierigkeit**   | EXTREM HOCH -- Rezeptdaten im Video, kein Text-Scraping moeglich                                                                                       |
+| Merkmal             | Details                                                                                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Relevanz**        | HOCH -- Schnellwachsend, jüngere Zielgruppe, virale Rezepte                                                                                         |
+| **Top-Accounts DE** | @foodie.beats (2.9M), @melikes.kitchen (1.1M), @biancazapatka                                                                                       |
+| **Rezeptstruktur**  | Kurzvideo (15-60s) + Caption. Rezept meist nur im Video (nicht als Text).                                                                           |
+| **Scraping-Ansatz** | TikTok API for Developers (sehr eingeschränkt). Scraping technisch möglich aber gegen ToS. Rezeptdaten müssen aus Video extrahiert werden (OCR/AI). |
+| **Schwierigkeit**   | EXTREM HOCH -- Rezeptdaten im Video, kein Text-Scraping möglich                                                                                     |
 
 ---
 
@@ -337,59 +337,59 @@ Typische Felder im JSON-LD:
 
 | Typ                       | Beispiele                                                                            | Strategie                                                                        |
 | ------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| **WordPress + WPRM**      | emmikochteinfach, biancazapatka, familienkost, gaumenfreundin, backenmachtgluecklich | JSON-LD aus HTML parsen. Sehr zuverlaessig und konsistent.                       |
+| **WordPress + WPRM**      | emmikochteinfach, biancazapatka, familienkost, gaumenfreundin, backenmachtgluecklich | JSON-LD aus HTML parsen. Sehr zuverlässig und konsistent.                        |
 | **Verlagsportale**        | lecker.de, essen-und-trinken.de, einfachbacken.de                                    | JSON-LD vorhanden, aber Custom CMS. Braucht evtl. seitenspezifische Anpassungen. |
 | **Supermaerkte**          | rewe.de, edeka.de                                                                    | JSON-LD + Zutat-zu-Warenkorb-Funktion. Gut strukturierte Daten.                  |
 | **Community-Plattformen** | chefkoch.de, kochbar.de                                                              | JSON-LD vorhanden, aber Anti-Bot-Schutz. Braucht Headless Browser.               |
-| **Abo-Services**          | hellofresh.de                                                                        | API-basiert, teilweise Login-Wall. Sehr gute Datenqualitaet wenn zugaenglich.    |
+| **Abo-Services**          | hellofresh.de                                                                        | API-basiert, teilweise Login-Wall. Sehr gute Datenqualität wenn zugänglich.      |
 | **Marken-Websites**       | dr-oetker.de                                                                         | Headless CMS, JSON-LD vorhanden.                                                 |
 
-### Empfohlene Architektur fuer den Scraper
+### Empfohlene Architektur für den Scraper
 
 1. **Generischer JSON-LD-Parser** als Basis (schema.org/Recipe)
-2. **Site-spezifische Selektoren** nur wo JSON-LD fehlt oder unvollstaendig ist
-3. **Headless Browser** (Playwright/Puppeteer) nur fuer bot-geschuetzte Seiten (chefkoch.de)
-4. **recipe-scrapers Python Library** als Referenz/Fallback -- unterstuetzt 18+ deutsche Seiten
+2. **Site-spezifische Selektoren** nur wo JSON-LD fehlt oder unvollständig ist
+3. **Headless Browser** (Playwright/Puppeteer) nur für bot-geschützte Seiten (chefkoch.de)
+4. **recipe-scrapers Python Library** als Referenz/Fallback -- unterstützt 18+ deutsche Seiten
 5. **URL-Normalisierung** pro Domain (verschiedene URL-Patterns)
 
 ### Existierende Open-Source-Tools
 
-| Tool                                                                   | Sprache | Deutsche Seiten                                  | Hinweis                                     |
-| ---------------------------------------------------------------------- | ------- | ------------------------------------------------ | ------------------------------------------- |
-| [recipe-scrapers](https://github.com/hhursev/recipe-scrapers)          | Python  | 18+ (chefkoch, lecker, kochbar, emmi, rewe, ...) | 620+ Seiten total, aktiv gepflegt           |
-| [hhursev/recipe-scrapers wild_mode](https://docs.recipe-scrapers.com/) | Python  | Generisch                                        | Fallback fuer unbekannte Seiten via JSON-LD |
-| Apify Recipes Scraper                                                  | Cloud   | Generisch                                        | Kommerziell, hosted                         |
+| Tool                                                                   | Sprache | Deutsche Seiten                                  | Hinweis                                    |
+| ---------------------------------------------------------------------- | ------- | ------------------------------------------------ | ------------------------------------------ |
+| [recipe-scrapers](https://github.com/hhursev/recipe-scrapers)          | Python  | 18+ (chefkoch, lecker, kochbar, emmi, rewe, ...) | 620+ Seiten total, aktiv gepflegt          |
+| [hhursev/recipe-scrapers wild_mode](https://docs.recipe-scrapers.com/) | Python  | Generisch                                        | Fallback für unbekannte Seiten via JSON-LD |
+| Apify Recipes Scraper                                                  | Cloud   | Generisch                                        | Kommerziell, hosted                        |
 
 ---
 
 ## Traffic-Ranking Zusammenfassung (Semrush, Feb 2026)
 
-| Rang | Domain                   | Monatl. Visits     | Bounce Rate | Typ                                |
-| ---- | ------------------------ | ------------------ | ----------- | ---------------------------------- |
-| 1    | chefkoch.de              | 24.1M              | 64.3%       | Community-Portal                   |
-| 2    | rewe.de\*                | 14.4M              | 55.6%       | Supermarkt (Rezepte = Teilbereich) |
-| 3    | emmikochteinfach.de      | 9.2M               | 79.9%       | WordPress Food-Blog                |
-| 4    | einfachbacken.de         | 8.6M               | 80.0%       | Verlagsportal (Burda)              |
-| 5    | familienkost.de          | 5.4M               | 72.8%       | WordPress Food-Blog                |
-| 6    | edeka.de\*               | 4.8M               | 63.6%       | Supermarkt (Rezepte = Teilbereich) |
-| 7    | gaumenfreundin.de        | 4.7M               | 71.4%       | WordPress Food-Blog                |
-| 8    | lecker.de                | 4.1M               | 78.5%       | Verlagsportal (Bauer)              |
-| 9    | leckerschmecker.me       | 3.9M               | 77.7%       | Viral-Content                      |
-| 10   | kochbar.de               | 3.0M               | 87.6%       | Community-Portal (RTL)             |
-| 11   | backenmachtgluecklich.de | 2.3M               | 71.6%       | WordPress Food-Blog                |
-| 12   | essen-und-trinken.de     | 2.3M               | 79.5%       | Verlagsportal (RTL)                |
-| 13   | hellofresh.de            | 1.7M               | 73.5%       | Abo-Service                        |
-| 14   | biancazapatka.com        | 1.7M               | 69.7%       | WordPress Food-Blog (vegan)        |
-| 15   | dr-oetker.de             | ~1-2M (geschaetzt) | --          | Marken-Website                     |
+| Rang | Domain                   | Monatl. Visits    | Bounce Rate | Typ                                |
+| ---- | ------------------------ | ----------------- | ----------- | ---------------------------------- |
+| 1    | chefkoch.de              | 24.1M             | 64.3%       | Community-Portal                   |
+| 2    | rewe.de\*                | 14.4M             | 55.6%       | Supermarkt (Rezepte = Teilbereich) |
+| 3    | emmikochteinfach.de      | 9.2M              | 79.9%       | WordPress Food-Blog                |
+| 4    | einfachbacken.de         | 8.6M              | 80.0%       | Verlagsportal (Burda)              |
+| 5    | familienkost.de          | 5.4M              | 72.8%       | WordPress Food-Blog                |
+| 6    | edeka.de\*               | 4.8M              | 63.6%       | Supermarkt (Rezepte = Teilbereich) |
+| 7    | gaumenfreundin.de        | 4.7M              | 71.4%       | WordPress Food-Blog                |
+| 8    | lecker.de                | 4.1M              | 78.5%       | Verlagsportal (Bauer)              |
+| 9    | leckerschmecker.me       | 3.9M              | 77.7%       | Viral-Content                      |
+| 10   | kochbar.de               | 3.0M              | 87.6%       | Community-Portal (RTL)             |
+| 11   | backenmachtgluecklich.de | 2.3M              | 71.6%       | WordPress Food-Blog                |
+| 12   | essen-und-trinken.de     | 2.3M              | 79.5%       | Verlagsportal (RTL)                |
+| 13   | hellofresh.de            | 1.7M              | 73.5%       | Abo-Service                        |
+| 14   | biancazapatka.com        | 1.7M              | 69.7%       | WordPress Food-Blog (vegan)        |
+| 15   | dr-oetker.de             | ~1-2M (geschätzt) | --          | Marken-Website                     |
 
 \*rewe.de und edeka.de: Gesamttraffic, Rezepte sind ein Teilbereich
 
 ---
 
-## Naechste Schritte
+## Nächste Schritte
 
 1. **Generischen JSON-LD-Parser bauen** -- deckt sofort alle WordPress-Blogs ab
-2. **emmikochteinfach.de + einfachbacken.de** als naechste Ziele (hoher Traffic, einfach zu scrapen)
-3. **rewe.de** einbinden (bereits in recipe-scrapers unterstuetzt)
-4. **chefkoch.de Headless-Browser** verbessern (bestehende Implementierung haerten gegen Bot-Detection)
-5. **Social-Media**: Kein klassischer Scraper moeglich. Stattdessen URL-Import durch Nutzer erwaegen (wie Kitchen Stories es macht).
+2. **emmikochteinfach.de + einfachbacken.de** als nächste Ziele (hoher Traffic, einfach zu scrapen)
+3. **rewe.de** einbinden (bereits in recipe-scrapers unterstützt)
+4. **chefkoch.de Headless-Browser** verbessern (bestehende Implementierung härten gegen Bot-Detection)
+5. **Social-Media**: Kein klassischer Scraper möglich. Stattdessen URL-Import durch Nutzer erwägen (wie Kitchen Stories es macht).

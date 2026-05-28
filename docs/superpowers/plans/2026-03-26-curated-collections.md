@@ -558,7 +558,7 @@ function MissingRecipePlaceholder() {
                 margin: '1rem 0',
             }}
         >
-            Rezept nicht mehr verfuegbar
+            Rezept nicht mehr verfügbar
         </div>
     );
 }
@@ -1139,7 +1139,7 @@ Then in each decision branch, add collection-specific messages. For `AUTO_APPROV
 if (isCollection)
     return {
         title: 'Sammlung freigegeben',
-        message: 'Deine Sammlung ist jetzt oeffentlich sichtbar!',
+        message: 'Deine Sammlung ist jetzt öffentlich sichtbar!',
     };
 ```
 
@@ -1148,8 +1148,8 @@ For `PENDING`:
 ```typescript
 if (isCollection)
     return {
-        title: 'Sammlung wird geprueft',
-        message: 'Wir pruefen deine Sammlung noch – sie wird bald sichtbar.',
+        title: 'Sammlung wird geprüft',
+        message: 'Wir prüfen deine Sammlung noch – sie wird bald sichtbar.',
     };
 ```
 
@@ -1421,9 +1421,7 @@ export function RecipeSearchModal({
                         mb: '4',
                     })}
                 >
-                    <h3 className={css({ fontSize: 'lg', fontWeight: 'bold' })}>
-                        Rezept einfuegen
-                    </h3>
+                    <h3 className={css({ fontSize: 'lg', fontWeight: 'bold' })}>Rezept einfügen</h3>
                     <button onClick={onClose} className={css({ cursor: 'pointer', p: '1' })}>
                         <X size={20} />
                     </button>
@@ -1495,7 +1493,7 @@ export function RecipeSearchModal({
                                 </span>
                                 {isSelected && (
                                     <span className={css({ color: 'orange.500', fontSize: 'xs' })}>
-                                        Ausgewaehlt
+                                        Ausgewählt
                                     </span>
                                 )}
                             </button>
@@ -1516,7 +1514,7 @@ export function RecipeSearchModal({
                         })}
                     >
                         <span className={css({ fontSize: 'sm', color: 'gray.600' })}>
-                            {selected.length} ausgewaehlt
+                            {selected.length} ausgewählt
                         </span>
                         <button
                             onClick={handleConfirm}
@@ -1532,7 +1530,7 @@ export function RecipeSearchModal({
                                 _hover: { bg: 'orange.600' },
                             })}
                         >
-                            Einfuegen
+                            Einfügen
                         </button>
                     </div>
                 )}
@@ -1685,7 +1683,7 @@ export function CollectionEditorToolbar({
                     _hover: { bg: 'orange.600' },
                 })}
             >
-                + Rezept einfuegen
+                + Rezept einfügen
             </button>
 
             {/* Component snippets */}
@@ -1923,7 +1921,7 @@ export function CollectionEditor({ initialData, authorId, isAdmin }: CollectionE
                     })}
                 >
                     <Send size={16} />
-                    Veroeffentlichen
+                    Veröffentlichen
                 </button>
             </div>
 
@@ -1999,7 +1997,7 @@ export function CollectionEditor({ initialData, authorId, isAdmin }: CollectionE
                         ref={textareaRef}
                         value={mdxContent}
                         onChange={(e) => setMdxContent(e.target.value)}
-                        placeholder="Schreibe deinen Beitrag hier...\n\nVerwende die Toolbar oben, um Rezepte und Komponenten einzufuegen."
+                        placeholder="Schreibe deinen Beitrag hier...\n\nVerwende die Toolbar oben, um Rezepte und Komponenten einzufügen."
                         className={css({
                             flex: 1,
                             p: '4',
@@ -2582,7 +2580,7 @@ export function CollectionDetailClient({
                         fontSize: 'sm',
                     })}
                 >
-                    Diese Sammlung ist ein Entwurf und nur fuer dich sichtbar.
+                    Diese Sammlung ist ein Entwurf und nur für dich sichtbar.
                 </div>
             )}
             {isPending && (
@@ -2595,7 +2593,7 @@ export function CollectionDetailClient({
                         fontSize: 'sm',
                     })}
                 >
-                    Diese Sammlung wird noch geprueft.
+                    Diese Sammlung wird noch geprüft.
                 </div>
             )}
             {isRejected && (
@@ -3100,7 +3098,7 @@ export async function handleOrphanedRecipeInCollections(recipeId: string): Promi
             userId: col.authorId,
             type: 'SYSTEM',
             title: 'Sammlung deaktiviert',
-            message: `Ein Rezept in deiner Sammlung "${col.title}" wurde entfernt. Bitte pruefe und aktualisiere deine Sammlung.`,
+            message: `Ein Rezept in deiner Sammlung "${col.title}" wurde entfernt. Bitte prüfe und aktualisiere deine Sammlung.`,
             data: { collectionId: col.id },
         }).catch((err) => console.error('[collections] Failed to notify author:', err));
     }

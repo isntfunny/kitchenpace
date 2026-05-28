@@ -5,7 +5,7 @@
 
 ## Motivation
 
-Die aktuelle Thumbnail-Route nutzt Query-Parameter (`?key=...&aspect=...&w=...`), wodurch S3-Keys im Frontend sichtbar sind und URLs unuebersichtlich werden. Ziel: saubere, pfad-basierte URLs mit Format-Suffix, die S3-Keys vollstaendig aus dem User-Frontend entfernen.
+Die aktuelle Thumbnail-Route nutzt Query-Parameter (`?key=...&aspect=...&w=...`), wodurch S3-Keys im Frontend sichtbar sind und URLs unübersichtlich werden. Ziel: saubere, pfad-basierte URLs mit Format-Suffix, die S3-Keys vollständig aus dem User-Frontend entfernen.
 
 ## URL-Schema
 
@@ -23,12 +23,12 @@ Ersetzt die bestehende `src/app/api/thumbnail/route.ts`.
 /api/thumbnail/{type}/{id}/{aspect}/{width}.{format}
 ```
 
-| Segment        | Beschreibung                                  | Werte                                                               |
-| -------------- | --------------------------------------------- | ------------------------------------------------------------------- |
-| `type`         | Entity-Typ oder `key`                         | `recipe`, `user`, `cook`, `comment`, `key`                          |
-| `id`           | Entity-ID oder base64url-encodierter S3-Key   | z.B. `clx1abc...` oder `dXBsb2Fkcy8uLi4`                            |
-| `aspect`       | Seitenverhaeltnis (Doppelpunkt → Bindestrich) | `16-9`, `4-3`, `3-2`, `1-1`, `4-1`, `3-1`, `3-4`, `2-1`, `original` |
-| `width.format` | Breakpoint-Breite + Dateiformat               | `1280.webp`, `1200.jpg`, `320.webp`                                 |
+| Segment        | Beschreibung                                 | Werte                                                               |
+| -------------- | -------------------------------------------- | ------------------------------------------------------------------- |
+| `type`         | Entity-Typ oder `key`                        | `recipe`, `user`, `cook`, `comment`, `key`                          |
+| `id`           | Entity-ID oder base64url-encodierter S3-Key  | z.B. `clx1abc...` oder `dXBsb2Fkcy8uLi4`                            |
+| `aspect`       | Seitenverhältnis (Doppelpunkt → Bindestrich) | `16-9`, `4-3`, `3-2`, `1-1`, `4-1`, `3-1`, `3-4`, `2-1`, `original` |
+| `width.format` | Breakpoint-Breite + Dateiformat              | `1280.webp`, `1200.jpg`, `320.webp`                                 |
 
 ### Beispiel-URLs
 
@@ -48,7 +48,7 @@ Ersetzt die bestehende `src/app/api/thumbnail/route.ts`.
 
 ## Entity Resolution
 
-Jeder Typ wird ueber einen Prisma-Lookup in einen S3-Key aufgeloest:
+Jeder Typ wird über einen Prisma-Lookup in einen S3-Key aufgelöst:
 
 ```typescript
 async function resolveImageKey(type: string, id: string): Promise<string | null> {
@@ -109,7 +109,7 @@ thumbs/{hash}/{aspect}/{width}.webp
 thumbs/{hash}/{aspect}/{width}.jpg
 ```
 
-Die bestehende `thumbKey()`-Funktion in `src/lib/s3/keys.ts` erhaelt einen optionalen `format`-Parameter:
+Die bestehende `thumbKey()`-Funktion in `src/lib/s3/keys.ts` erhält einen optionalen `format`-Parameter:
 
 ```typescript
 export function thumbKey(
@@ -168,7 +168,7 @@ const aspectMap: Record<string, AspectRatio> = {
 
 ## Client-Seitige URL-Builder
 
-`src/lib/thumbnail-client.ts` wird komplett ueberarbeitet:
+`src/lib/thumbnail-client.ts` wird komplett überarbeitet:
 
 ```typescript
 import type { AspectRatio } from './s3/keys';
@@ -182,7 +182,7 @@ function aspectToSlug(aspect: AspectRatio): string {
     return aspect.replace(':', '-');
 }
 
-/** Pfad-basierte Thumbnail-URL fuer eine Entity */
+/** Pfad-basierte Thumbnail-URL für eine Entity */
 export function getThumbnailPath(
     type: ThumbnailType,
     id: string,
@@ -194,7 +194,7 @@ export function getThumbnailPath(
     return `/api/thumbnail/${type}/${id}/${aspectToSlug(aspect)}/${width}.${format}`;
 }
 
-/** Pfad-basierte Thumbnail-URL fuer einen direkten S3 Key (Steps, generisch) */
+/** Pfad-basierte Thumbnail-URL für einen direkten S3 Key (Steps, generisch) */
 export function getThumbnailKeyPath(
     key: string,
     aspect: AspectRatio = 'original',
@@ -206,7 +206,7 @@ export function getThumbnailKeyPath(
     return `/api/thumbnail/key/${encoded}/${aspectToSlug(aspect)}/${width}.${format}`;
 }
 
-/** srcset fuer responsive Bilder (WebP) */
+/** srcset für responsive Bilder (WebP) */
 export function getSrcSet(
     type: ThumbnailType,
     id: string,
@@ -215,12 +215,12 @@ export function getSrcSet(
     return BREAKPOINTS.map((w) => `${getThumbnailPath(type, id, aspect, w)} ${w}w`).join(', ');
 }
 
-/** srcset fuer key-basierte Bilder (Steps) */
+/** srcset für key-basierte Bilder (Steps) */
 export function getSrcSetByKey(key: string, aspect: AspectRatio = 'original'): string {
     return BREAKPOINTS.map((w) => `${getThumbnailKeyPath(key, aspect, w)} ${w}w`).join(', ');
 }
 
-// extractKeyFromUrl() entfaellt — nicht mehr noetig
+// extractKeyFromUrl() entfällt — nicht mehr nötig
 ```
 
 **Hinweis:** `getThumbnailKeyPath` nutzt `Buffer.from(...).toString('base64url')`. Im Browser-Kontext (Client Components) muss stattdessen `btoa()` + URL-safe-Replacement verwendet werden:
@@ -244,19 +244,19 @@ Bei Set-Generation (Tier 3 Cache-Miss) werden nur Varianten im angeforderten For
 
 ## Memory Cache
 
-Bleibt identisch. Cache-Key ist weiterhin der S3 Thumb-Key (`thumbs/{hash}/{aspect}/{width}.{format}`), der jetzt das Format enthaelt.
+Bleibt identisch. Cache-Key ist weiterhin der S3 Thumb-Key (`thumbs/{hash}/{aspect}/{width}.{format}`), der jetzt das Format enthält.
 
 ## Placeholder-Bereinigung
 
-Aktuell wird `recipe_placeholder.jpg` an mehreren Stellen direkt als statisches Asset referenziert, statt ueber die Thumbnail-Route zu gehen. Diese Stellen werden bereinigt:
+Aktuell wird `recipe_placeholder.jpg` an mehreren Stellen direkt als statisches Asset referenziert, statt über die Thumbnail-Route zu gehen. Diese Stellen werden bereinigt:
 
 | Datei                                 | Aktuell                                                         | Neu                                                                          |
 | ------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `src/components/atoms/SmartImage.tsx` | `RECIPE_PLACEHOLDER = '/recipe_placeholder.jpg'` hartcodiert    | Placeholder ueber Thumbnail-Route oder CSS-Fallback (wie Avatar-Komponente)  |
-| `src/lib/thumbnail-client.ts`         | `return '/placeholder.jpg'` bei fehlendem Key                   | Leerer String oder `null` — Aufrufer entscheidet ueber Fallback              |
+| `src/components/atoms/SmartImage.tsx` | `RECIPE_PLACEHOLDER = '/recipe_placeholder.jpg'` hartcodiert    | Placeholder über Thumbnail-Route oder CSS-Fallback (wie Avatar-Komponente)   |
+| `src/lib/thumbnail-client.ts`         | `return '/placeholder.jpg'` bei fehlendem Key                   | Leerer String oder `null` — Aufrufer entscheidet über Fallback               |
 | `src/app/api/thumbnail/route.ts`      | `readFile('public/recipe_placeholder.jpg')` als Server-Fallback | Bleibt — serverseitig ist das korrekt (kein S3 Key → Placeholder ausliefern) |
 
-Die statische Datei `public/recipe_placeholder.jpg` bleibt bestehen (wird vom Server-Fallback benoetigt), aber Client-Komponenten referenzieren sie nicht mehr direkt.
+Die statische Datei `public/recipe_placeholder.jpg` bleibt bestehen (wird vom Server-Fallback benötigt), aber Client-Komponenten referenzieren sie nicht mehr direkt.
 
 ## Betroffene Dateien
 
@@ -264,20 +264,20 @@ Die statische Datei `public/recipe_placeholder.jpg` bleibt bestehen (wird vom Se
 
 | Aktion    | Datei                                        |
 | --------- | -------------------------------------------- |
-| Loeschen  | `src/app/api/thumbnail/route.ts`             |
+| Löschen   | `src/app/api/thumbnail/route.ts`             |
 | Erstellen | `src/app/api/thumbnail/[...params]/route.ts` |
 
 ### Client URL-Builder
 
-| Aktion        | Datei                         |
-| ------------- | ----------------------------- |
-| Ueberarbeiten | `src/lib/thumbnail-client.ts` |
+| Aktion       | Datei                         |
+| ------------ | ----------------------------- |
+| Überarbeiten | `src/lib/thumbnail-client.ts` |
 
 ### S3 Keys
 
-| Aktion    | Datei                                                          |
-| --------- | -------------------------------------------------------------- |
-| Erweitern | `src/lib/s3/keys.ts` — `thumbKey()` erhaelt `format`-Parameter |
+| Aktion    | Datei                                                         |
+| --------- | ------------------------------------------------------------- |
+| Erweitern | `src/lib/s3/keys.ts` — `thumbKey()` erhält `format`-Parameter |
 
 ### Aufrufer-Migration (Entity-basiert → `getThumbnailPath`)
 
@@ -336,6 +336,6 @@ Diese Stellen haben keinen Entity-ID-Zugriff und nutzen den base64url-Fallback:
 | `src/lib/s3/client.ts`     | S3-Client-Config                              |
 | `src/lib/tracking.ts`      | Erkennt Route-Pfad — muss ggf. Regex anpassen |
 
-## Abwaertskompatibilitaet
+## Abwärtskompatibilität
 
 Die alte Query-Parameter-Route wird geloescht. Es gibt keinen Redirect — alle Aufrufer werden im selben Release migriert. Extern gecachte URLs (CDN, Browser-Cache) laufen aus (`max-age=86400`).

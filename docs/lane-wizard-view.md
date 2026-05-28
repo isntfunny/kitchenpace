@@ -207,7 +207,7 @@ interface LaneStep {
     photoKey?: string; // S3-Key
     photoUrl?: string;
     ingredientIds?: string[];
-    continuation?: boolean; // Runtime-only: visueller Filler nach Partial-Merge, nie gespeichert
+    continuation?: boolean; // Runtime-only: visueller Füller nach Partial-Merge, nie gespeichert
 }
 ```
 
@@ -375,7 +375,7 @@ Aktiv/Timer:    bg: step-color fill →  border: #f39c12                 text: n
 Erledigt:       bg: rgba(0,184,148,0.06)  border: rgba(0,184,148,0.3) text: line-through, opacity 0.55
 Leer (edit):    bg: rgba(0,0,0,0.02)   border: 1px dashed rgba(0,0,0,0.1)
 Leer (view):    unsichtbar
-Continuation:   bg: step-color (flach) flexGrow: 1 — visueller Filler, kein Inhalt
+Continuation:   bg: step-color (flach) flexGrow: 1 — visueller Füller, kein Inhalt
 ```
 
 ---

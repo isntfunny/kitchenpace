@@ -419,7 +419,7 @@ export function MobileSearch() {
                                 pt: '8',
                             })}
                         >
-                            Keine Ergebnisse fuer &ldquo;{trimmedQuery}&rdquo;
+                            Keine Ergebnisse für &ldquo;{trimmedQuery}&rdquo;
                         </p>
                     )}
 
@@ -431,7 +431,7 @@ export function MobileSearch() {
                         if they aren't already, or import them directly. */}
 
                     {hasSemantic && semanticRecipes.length > 0 && (
-                        <MobileSearchSection icon={<Sparkles />} title="Das koennte passen">
+                        <MobileSearchSection icon={<Sparkles />} title="Das könnte passen">
                             {semanticRecipes.map((r) => (
                                 <MobileSearchRecipeItem
                                     key={r.id}
@@ -745,7 +745,7 @@ export function MobileNavDrawer() {
                     <DrawerItem
                         icon={<LayoutGrid />}
                         label="Rezepte entdecken"
-                        sub="Stoebere durch die komplette Sammlung"
+                        sub="Stöbere durch die komplette Sammlung"
                         href="/recipes"
                         onNavigate={() => setOpen(false)}
                     />
@@ -811,7 +811,7 @@ export function MobileNavDrawer() {
                             <DrawerItem
                                 icon={<ShieldCheck />}
                                 label="Moderation"
-                                sub="Inhalte pruefen & moderieren"
+                                sub="Inhalte prüfen & moderieren"
                                 href="/moderation"
                                 onNavigate={() => setOpen(false)}
                             />
@@ -1037,7 +1037,7 @@ export function MobileUserDrawer() {
                             color: 'text.muted',
                         })}
                     >
-                        Fuer dich
+                        Für dich
                     </div>
                     {PERSONAL_LINKS.map((link) => (
                         <a
@@ -1428,7 +1428,7 @@ At 390px viewport, test this sequence:
 2. Tap search → fullscreen overlay → type query → see results → close
 3. Tap avatar → drawer from right opens → close
 4. Tap notification bell → overlay → close
-5. Navigate to `/recipes` → tap "Filter oeffnen" → handle-bar visible, blur backdrop
+5. Navigate to `/recipes` → tap "Filter öffnen" → handle-bar visible, blur backdrop
 6. Switch to dark mode → repeat all steps → verify colors
 
 - [ ] **Step 2: Test desktop is unchanged**

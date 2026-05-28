@@ -201,7 +201,7 @@ Converts unstructured recipe text or scraped URLs into structured flow diagrams.
 - System prompt: ~130 lines in German covering ingredient parsing, flow node generation, edge validation
 
 **Step Types (AI schema + editor must stay in sync):**
-`start | schneiden | kochen | braten | backen | mixen | warten | wuerzen | anrichten | servieren`
+`start | schneiden | kochen | braten | backen | mixen | warten | würzen | anrichten | servieren`
 
 **AI Conversion Dialog (FlowEditor):**
 
@@ -472,7 +472,7 @@ MealType:          BREAKFAST | LUNCH | DINNER | SNACK
 PaletteColor:      orange | gold | emerald | purple | blue | pink
 
 StepTypes (AI + editor):
-  start | schneiden | kochen | braten | backen | mixen | warten | wuerzen | anrichten | servieren
+  start | schneiden | kochen | braten | backen | mixen | warten | würzen | anrichten | servieren
 
 ActivityType:
   RECIPE_CREATED | RECIPE_COOKED | RECIPE_RATED | RECIPE_COMMENTED |
@@ -512,7 +512,7 @@ The changelog at `src/app/changelog/page.tsx` is **for end users, not developers
 - Code cleanup: deleted files, removed dependencies, refactoring
 
 **Always describe the user-visible outcome**, not the implementation.
-Good: "Startseite laedt schneller". Bad: "Redis AOF-Persistenz hinzugefuegt".
+Good: "Startseite lädt schneller". Bad: "Redis AOF-Persistenz hinzugefügt".
 Good: "Zutaten werden automatisch in die Einzahlform gebracht". Bad: "Singularisierung mittels Nodehun".
 
 ## Secrets Management (Infisical)

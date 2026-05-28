@@ -47,9 +47,6 @@ jobs:
               if: steps.cache.outputs.cache-hit != 'true'
               run: npm ci
 
-            - name: Install Playwright browser
-              run: npx playwright install chromium
-
             - name: Run E2E tests against beta
               run: npx playwright test
               env:

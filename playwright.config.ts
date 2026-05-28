@@ -30,6 +30,7 @@ export default defineConfig({
             name: 'chromium',
             use: {
                 ...devices['Desktop Chrome'],
+                ...(process.env.CI ? { channel: 'chrome' as const } : {}),
                 storageState: 'e2e/.auth/user.json',
             },
             dependencies: ['setup'],

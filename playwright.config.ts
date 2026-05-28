@@ -25,6 +25,7 @@ export default defineConfig({
         {
             name: 'setup',
             testMatch: /auth\.setup\.ts/,
+            use: process.env.CI ? { channel: 'chrome' as const } : {},
         },
         {
             name: 'chromium',

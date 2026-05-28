@@ -38,7 +38,7 @@
         "test:load:heavy": "./k6/run-load-test.sh heavy",
         "test:load:granular": "./k6/run-load-test.sh granular",
         "test:load:smoke": "cd k6 && k6 run smoke-test.js",
-        "test:load:prod": "./k6/run-load-test.sh prod https://beta.kochtakt.de/",
+        "test:load:prod": "./k6/run-load-test.sh prod https://beta.xn--kchentakt-q9a.de/",
         "prepare": "husky",
         "db:generate": "prisma generate",
         "db:push": "prisma db push",

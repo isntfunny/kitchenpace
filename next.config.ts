@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
         remotePatterns: [
             {
                 protocol: 'https',
-                hostname: 'beta.kochtakt.de',
+                hostname: 'beta.xn--kchentakt-q9a.de',
             },
             {
                 protocol: 'https',

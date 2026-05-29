@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
+import { authClient } from '@app/lib/auth-client';
 
 import { css } from 'styled-system/css';
 
@@ -22,18 +23,12 @@ export default function ResendActivationPage() {
         setLoading(true);
 
         try {
-            const res = await fetch('/api/auth/resend-activation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }),
+            // Ask better-auth to re-send the verification email. We always show the
+            // success state afterwards to avoid leaking which addresses are registered.
+            await authClient.sendVerificationEmail({
+                email,
+                callbackURL: '/auth/activate?verified=1',
             });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError(data.message || 'Ein Fehler ist aufgetreten');
-                return;
-            }
 
             setSuccess(true);
         } catch {

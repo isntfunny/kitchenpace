@@ -13,12 +13,15 @@ import {
 } from '@app/components/auth/OAuthSignInButton';
 import { AuthPageLayout } from '@app/components/layouts/AuthPageLayout';
 import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
+import { authClient } from '@app/lib/auth-client';
 import { useUtmParams } from '@app/lib/hooks/useUtmParams';
 import { PALETTE } from '@app/lib/palette';
 
 import { css } from 'styled-system/css';
 
 import { authFormStackClass, authInputClass, getAuthButtonClass } from '../authStyles';
+
+import { trackRegistration } from './actions';
 
 const MAX_NICKNAME_LENGTH = 40;
 
@@ -264,18 +267,31 @@ export function RegisterForm({ siteKey }: { siteKey: string }) {
                 return;
             }
 
-            const res = await fetch('/api/auth/sign-up', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, nickname, password, turnstileToken, ...utmParams }),
-            });
+            const { data, error: signUpError } = await authClient.signUp.email(
+                {
+                    email,
+                    password,
+                    // The nickname is stored as the better-auth user name and used
+                    // server-side to create the Profile + slug (see auth-server.ts).
+                    name: nickname.trim(),
+                    // After clicking the verification link the user lands here.
+                    callbackURL: '/auth/activate?verified=1',
+                },
+                {
+                    // Cloudflare Turnstile token consumed by the better-auth captcha plugin.
+                    headers: { 'x-captcha-response': turnstileToken },
+                },
+            );
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError(data.message || 'Ein Fehler ist aufgetreten');
+            if (signUpError) {
+                setError(signUpError.message || 'Ein Fehler ist aufgetreten');
                 resetTurnstile();
                 return;
+            }
+
+            // Account created (pending email verification). Fire marketing attribution.
+            if (data?.user?.id) {
+                await trackRegistration(data.user.id, email, utmParams);
             }
 
             setRegisteredEmail(email);

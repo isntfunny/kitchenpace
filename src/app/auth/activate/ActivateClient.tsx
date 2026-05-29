@@ -2,7 +2,6 @@
 
 import { CheckCircle, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 
 import { PageShell } from '@app/components/layouts/PageShell';
 import { PALETTE } from '@app/lib/palette';
@@ -10,51 +9,15 @@ import { PALETTE } from '@app/lib/palette';
 import { css } from 'styled-system/css';
 
 type ActivateClientProps = {
-    token?: string | null;
+    error?: string | null;
 };
 
-export default function ActivateClient({ token }: ActivateClientProps) {
+export default function ActivateClient({ error }: ActivateClientProps) {
     const router = useRouter();
-    const [status, setStatus] = useState<'loading' | 'success' | 'error'>(() => {
-        if (!token) return 'error';
-        return 'loading';
-    });
-    const [message, setMessage] = useState(() => {
-        if (!token) return 'Kein Aktivierungscode gefunden';
-        return '';
-    });
-
-    useEffect(() => {
-        if (!token || status !== 'loading') return;
-
-        let cancelled = false;
-
-        fetch('/api/auth/activate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token }),
-        })
-            .then(async (res) => {
-                if (cancelled) return;
-                const data = await res.json();
-                if (res.ok) {
-                    setStatus('success');
-                    setMessage(data.message || 'Konto erfolgreich aktiviert!');
-                } else {
-                    setStatus('error');
-                    setMessage(data.message || 'Aktivierung fehlgeschlagen');
-                }
-            })
-            .catch(() => {
-                if (cancelled) return;
-                setStatus('error');
-                setMessage('Ein Fehler ist aufgetreten');
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [token, status]);
+    const status: 'success' | 'error' = error ? 'error' : 'success';
+    const message = error
+        ? 'Der Bestätigungslink ist ungültig oder abgelaufen. Bitte fordere einen neuen an.'
+        : 'Dein Konto wurde erfolgreich bestätigt. Du bist jetzt angemeldet.';
 
     return (
         <PageShell>
@@ -81,36 +44,6 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                         textAlign: 'center',
                     })}
                 >
-                    {status === 'loading' && (
-                        <>
-                            <div
-                                className={css({
-                                    width: '64px',
-                                    height: '64px',
-                                    marginX: 'auto',
-                                    marginBottom: '4',
-                                    borderRadius: '50%',
-                                    border: '3px solid',
-                                    borderColor: {
-                                        base: 'rgba(224,123,83,0.3)',
-                                        _dark: 'rgba(240,144,112,0.4)',
-                                    },
-                                    borderTopColor: 'palette.orange',
-                                    animation: 'spin 1s linear infinite',
-                                })}
-                            />
-                            <h1
-                                className={css({
-                                    fontSize: '2xl',
-                                    fontWeight: '700',
-                                    marginBottom: '3',
-                                })}
-                            >
-                                Konto wird aktiviert...
-                            </h1>
-                        </>
-                    )}
-
                     {status === 'success' && (
                         <>
                             <CheckCircle
@@ -191,7 +124,7 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                                 {message}
                             </p>
                             <button
-                                onClick={() => router.push('/auth/register')}
+                                onClick={() => router.push('/auth/resend-activation')}
                                 className={css({
                                     display: 'inline-flex',
                                     alignItems: 'center',
@@ -216,7 +149,7 @@ export default function ActivateClient({ token }: ActivateClientProps) {
                                     },
                                 })}
                             >
-                                Erneut registrieren
+                                Neuen Link anfordern
                             </button>
                         </>
                     )}

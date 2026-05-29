@@ -1,10 +1,12 @@
 import ActivateClient from './ActivateClient';
 
 type ActivatePageProps = {
-    searchParams: Promise<{ token?: string }>;
+    searchParams: Promise<{ verified?: string; error?: string }>;
 };
 
 export default async function ActivatePage({ searchParams }: ActivatePageProps) {
-    const { token } = await searchParams;
-    return <ActivateClient token={token ?? null} />;
+    // better-auth handles verification at /api/auth/verify-email and redirects here.
+    // On failure it appends `&error=<code>` to the callbackURL.
+    const { error } = await searchParams;
+    return <ActivateClient error={error ?? null} />;
 }

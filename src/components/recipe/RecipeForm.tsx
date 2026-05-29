@@ -344,7 +344,7 @@ export function RecipeForm({
     );
 
     const layoutForm = layout === 'sidebar' ? sidebarLayoutForm : stackLayoutForm;
-    const tutorialEligible = !state.isEditMode;
+    const tutorialEligible = !state.isEditMode && isDesktop;
 
     const [showTutorial, setShowTutorial] = useState(initialShouldShowTutorial);
 

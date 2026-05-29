@@ -16,6 +16,7 @@ interface TutorialOverlayProps {
     step: RecipeTutorialStep;
     canContinue: boolean;
     onContinue: () => void;
+    onSkip: () => void;
     /** True while auto-advance countdown is running */
     autoAdvancing?: boolean;
 }
@@ -38,6 +39,7 @@ export function TutorialOverlay({
     step,
     canContinue,
     onContinue,
+    onSkip,
     autoAdvancing = false,
 }: TutorialOverlayProps) {
     const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -194,6 +196,7 @@ export function TutorialOverlay({
                             helperText={helperText}
                             canContinue={canContinue}
                             onContinue={onContinue}
+                            onSkip={onSkip}
                             centered
                         />
                     </div>
@@ -299,6 +302,7 @@ export function TutorialOverlay({
                         helperText={helperText}
                         canContinue={canContinue}
                         onContinue={onContinue}
+                        onSkip={onSkip}
                         autoAdvancing={autoAdvancing}
                     />
                 </div>
@@ -322,6 +326,7 @@ interface TutorialCardContentProps {
     helperText: string | null;
     canContinue: boolean;
     onContinue: () => void;
+    onSkip: () => void;
     centered?: boolean;
     autoAdvancing?: boolean;
 }
@@ -331,6 +336,7 @@ function TutorialCardContent({
     helperText,
     canContinue,
     onContinue,
+    onSkip,
     centered = false,
     autoAdvancing = false,
 }: TutorialCardContentProps) {
@@ -370,66 +376,96 @@ function TutorialCardContent({
                     {helperText}
                 </p>
             ) : null}
-            <button
-                type="button"
+            <div
                 className={css({
-                    background: canContinue
-                        ? `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`
-                        : 'rgba(224,123,83,0.45)',
-                    color: 'white',
-                    fontWeight: '600',
-                    borderRadius: 'lg',
-                    px: '4',
-                    py: '2.5',
-                    border: 'none',
-                    cursor: canContinue ? 'pointer' : 'not-allowed',
-                    transition: 'all 150ms ease',
-                    fontSize: 'sm',
-                    display: 'inline-flex',
-                    alignItems: 'center',
+                    display: 'flex',
                     gap: '2',
-                    _hover: canContinue
-                        ? { transform: 'translateY(-1px)', filter: 'brightness(1.04)' }
-                        : undefined,
+                    flexDirection: centered ? 'column' : 'row',
+                    alignItems: centered ? 'stretch' : 'center',
                 })}
-                onClick={onContinue}
-                disabled={!canContinue}
             >
-                {step.primaryLabel}
-                {autoAdvancing && (
-                    <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        className="tutorial-auto-advance-ring"
-                    >
-                        <circle
-                            cx="8"
-                            cy="8"
-                            r="6"
-                            fill="none"
-                            stroke="rgba(255,255,255,0.3)"
-                            strokeWidth="2"
-                        />
-                        <circle
-                            cx="8"
-                            cy="8"
-                            r="6"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeDasharray={2 * Math.PI * 6}
-                            strokeDashoffset={2 * Math.PI * 6}
-                            style={{
-                                animation: `tutorial-countdown ${AUTO_ADVANCE_MS}ms linear forwards`,
-                                transformOrigin: 'center',
-                                transform: 'rotate(-90deg)',
-                            }}
-                        />
-                    </svg>
-                )}
-            </button>
+                <button
+                    type="button"
+                    className={css({
+                        background: canContinue
+                            ? `linear-gradient(135deg, ${PALETTE.orange}, ${PALETTE.gold})`
+                            : 'rgba(224,123,83,0.45)',
+                        color: 'white',
+                        fontWeight: '600',
+                        borderRadius: 'lg',
+                        px: '4',
+                        py: '2.5',
+                        border: 'none',
+                        cursor: canContinue ? 'pointer' : 'not-allowed',
+                        transition: 'all 150ms ease',
+                        fontSize: 'sm',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '2',
+                        flex: centered ? '1' : undefined,
+                        _hover: canContinue
+                            ? { transform: 'translateY(-1px)', filter: 'brightness(1.04)' }
+                            : undefined,
+                    })}
+                    onClick={onContinue}
+                    disabled={!canContinue}
+                >
+                    {step.primaryLabel}
+                    {autoAdvancing && (
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            className="tutorial-auto-advance-ring"
+                        >
+                            <circle
+                                cx="8"
+                                cy="8"
+                                r="6"
+                                fill="none"
+                                stroke="rgba(255,255,255,0.3)"
+                                strokeWidth="2"
+                            />
+                            <circle
+                                cx="8"
+                                cy="8"
+                                r="6"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeDasharray={2 * Math.PI * 6}
+                                strokeDashoffset={2 * Math.PI * 6}
+                                style={{
+                                    animation: `tutorial-countdown ${AUTO_ADVANCE_MS}ms linear forwards`,
+                                    transformOrigin: 'center',
+                                    transform: 'rotate(-90deg)',
+                                }}
+                            />
+                        </svg>
+                    )}
+                </button>
+                <button
+                    type="button"
+                    className={css({
+                        background: 'transparent',
+                        color: 'text.muted',
+                        fontWeight: '500',
+                        borderRadius: 'lg',
+                        px: '3',
+                        py: '2.5',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 150ms ease',
+                        fontSize: 'sm',
+                        _hover: { color: 'text.primary', backgroundColor: 'rgba(0,0,0,0.05)' },
+                    })}
+                    onClick={onSkip}
+                >
+                    Überspringen
+                </button>
+            </div>
         </div>
     );
 }

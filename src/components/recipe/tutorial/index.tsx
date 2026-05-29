@@ -182,6 +182,7 @@ export function RecipeCreationTutorial({
             step={step}
             canContinue={canContinue}
             onContinue={() => void handleContinue()}
+            onSkip={() => void onComplete()}
             autoAdvancing={autoAdvancing}
         />
     );

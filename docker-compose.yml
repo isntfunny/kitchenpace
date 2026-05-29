@@ -75,6 +75,7 @@ services:
             dockerfile: Dockerfile
             target: app
             args:
+                NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY}
                 REACT_PROFILE: 1
         image: registry.isntfunny.de/kitchenpace:beta
         container_name: kitchenpace-app

@@ -18,6 +18,25 @@ const log = createLogger('auth-server');
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
+const TURNSTILE_SECRET_KEY = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
+
+if (!TURNSTILE_SECRET_KEY) {
+    // Without the secret the captcha plugin would 500 every sign-up. Skip it and warn
+    // loudly so registration keeps working — but it is then NOT captcha-protected.
+    log.warn('CLOUDFLARE_TURNSTILE_SECRET_KEY missing — sign-up captcha protection is DISABLED');
+}
+
+// Only guard registration — the sign-in form does not send a captcha token.
+const captchaPlugins = TURNSTILE_SECRET_KEY
+    ? [
+          captcha({
+              provider: 'cloudflare-turnstile',
+              secretKey: TURNSTILE_SECRET_KEY,
+              endpoints: ['/sign-up/email'],
+          }),
+      ]
+    : [];
+
 const baseURL = process.env.BETTER_AUTH_URL ?? process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
 
 export const auth = betterAuth({
@@ -165,12 +184,7 @@ export const auth = betterAuth({
         },
     },
     plugins: [
-        captcha({
-            provider: 'cloudflare-turnstile',
-            secretKey: process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY ?? '',
-            // Only guard registration — the sign-in form does not send a captcha token.
-            endpoints: ['/sign-up/email'],
-        }),
+        ...captchaPlugins,
         passkey({
             rpID: process.env.AUTH_WEBAUTHN_RP_ID ?? 'localhost',
             rpName: 'KitchenPace',

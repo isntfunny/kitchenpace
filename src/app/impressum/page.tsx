@@ -1,6 +1,13 @@
+import { Metadata } from 'next';
+
 import { PageShell } from '@app/components/layouts/PageShell';
 
 import { css } from 'styled-system/css';
+
+export const metadata: Metadata = {
+    title: 'Impressum — KochTakt',
+    description: 'Impressum von KochTakt mit Angaben gemaess § 5 DDG.',
+};
 
 export default function ImpressumPage() {
     return (
@@ -13,67 +20,88 @@ export default function ImpressumPage() {
                     px: { base: '0', md: '4' },
                 })}
             >
-                <div
-                    role="status"
+                <article
                     className={css({
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '2',
-                        flexWrap: 'wrap',
-                        p: { base: '4', md: '5' },
+                        display: 'grid',
+                        gap: '6',
+                        p: { base: '5', md: '8' },
                         borderRadius: 'lg',
                         border: '1px solid',
-                        borderColor: 'palette.orange',
+                        borderColor: 'border',
                         background: 'surface-raised',
                         color: 'text',
-                        fontSize: { base: 'md', md: 'lg' },
-                        fontWeight: '700',
-                        textAlign: 'center',
-                        lineHeight: '1.6',
+                        lineHeight: '1.75',
                     })}
                 >
-                    <svg
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M12 9v4" />
-                        <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.875h16.214a1.914 1.914 0 0 0 1.636 -2.875l-8.106 -13.534a1.914 1.914 0 0 0 -3.274 0z" />
-                        <path d="M12 16h.01" />
-                    </svg>
-                    <span>Kommt bald - Softlaunch, kein finanzielles Interesse</span>
-                    <svg
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M12 9v4" />
-                        <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.875h16.214a1.914 1.914 0 0 0 1.636 -2.875l-8.106 -13.534a1.914 1.914 0 0 0 -3.274 0z" />
-                        <path d="M12 16h.01" />
-                    </svg>
-                </div>
+                    <header>
+                        <h1
+                            className={css({
+                                fontSize: { base: '3xl', md: '4xl' },
+                                fontWeight: '800',
+                                lineHeight: '1.15',
+                                mb: '2',
+                            })}
+                        >
+                            Impressum
+                        </h1>
+                        <p className={css({ color: 'text-muted' })}>Angaben gemaess § 5 DDG</p>
+                    </header>
 
-                {/*
-                    Softlaunch: Die bisherigen Impressums-Placeholder sind bewusst ausgeblendet.
-                    Firmen- und sonstige nicht zutreffende Pflichtangaben wurden entfernt, da
-                    KochTakt privat und ohne Firma veröffentlicht wird.
-                */}
+                    <section>
+                        <h2 className={sectionHeading}>Anbieter</h2>
+                        <p>
+                            Sebastian Reuther
+                            <br />
+                            c/o Impressumservice Dein-Impressum
+                            <br />
+                            Stettiner Str. 41
+                            <br />
+                            35410 Hungen
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className={sectionHeading}>Kontakt</h2>
+                        <p>
+                            E-Mail: info@kochtakt.de
+                            <br />
+                            Telefon: 0157 9234 1658
+                            <br />
+                            <span className={css({ color: 'text-muted' })}>
+                                Die Telefonnummer wird von Dein Impressum betreut.
+                            </span>
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className={sectionHeading}>Verantwortlich fuer den Inhalt</h2>
+                        <p>
+                            Sebastian Reuther
+                            <br />
+                            c/o Impressumservice Dein-Impressum
+                            <br />
+                            Stettiner Str. 41
+                            <br />
+                            35410 Hungen
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className={sectionHeading}>Streitbeilegung</h2>
+                        <p>
+                            Wir sind nicht bereit und nicht verpflichtet, an
+                            Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle
+                            teilzunehmen.
+                        </p>
+                    </section>
+                </article>
             </div>
         </PageShell>
     );
 }
+
+const sectionHeading = css({
+    fontSize: 'xl',
+    fontWeight: '700',
+    mb: '2',
+});

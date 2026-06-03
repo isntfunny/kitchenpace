@@ -216,8 +216,11 @@ export default function DatenschutzPage() {
                             hierbei nicht zwingend erforderliche Informationen auf deinem Endgerät
                             gespeichert oder ausgelesen werden, erfolgt dies auf Grundlage deiner
                             Einwilligung nach § 25 Abs. 1 TDDDG in Verbindung mit Art. 6 Abs. 1 lit.
-                            a DSGVO. Du kannst eine erteilte Einwilligung jederzeit mit Wirkung für
-                            die Zukunft widerrufen.
+                            a DSGVO. Diese Kategorien (Analyse, Fehler- &amp; Sitzungsaufzeichnung,
+                            Support-Chat) sind standardmäßig deaktiviert und werden erst nach deiner
+                            Einwilligung geladen. Deine Auswahl kannst du jederzeit mit Wirkung für
+                            die Zukunft über den Link „Cookie-Einstellungen" im Seitenfuß ändern
+                            oder widerrufen.
                         </p>
                     </section>
 

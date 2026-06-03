@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { CookieSettingsButton } from '@app/components/consent/CookieSettingsButton';
 import { AnimatedChefHat } from '@app/components/motion/AnimatedChefHat';
 
 import { css } from 'styled-system/css';
@@ -73,6 +74,7 @@ export function Footer() {
                     >
                         Datenschutz
                     </Link>
+                    <CookieSettingsButton />
                 </div>
             </div>
         </footer>

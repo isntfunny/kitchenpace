@@ -1,13 +1,14 @@
 import { createHmac } from 'crypto';
 
-import { IdentifyComponent, OpenPanelComponent } from '@openpanel/nextjs';
 import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 
 import { fetchPinnedEntries } from '@app/app/api/recipe-tabs/helpers';
+import { AnalyticsScripts } from '@app/components/analytics/AnalyticsScripts';
 import { ChatwootWidgetComponent } from '@app/components/ChatwootWidget';
 import { AchievementListener } from '@app/components/features/AchievementListener';
 import { AuthProvider } from '@app/components/providers/AuthProvider';
+import { ConsentProvider } from '@app/components/providers/ConsentProvider';
 import { FeatureFlagsProvider } from '@app/components/providers/FeatureFlagsProvider';
 import { PageProgress } from '@app/components/providers/PageProgress';
 import { PeriodAttribute } from '@app/components/providers/PeriodAttribute';
@@ -291,37 +292,30 @@ export default async function RootLayout({
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
                 />
-                <ChatwootWidgetComponent user={chatwootUser} />
-                {hasOpenPanel && (
-                    <>
-                        <OpenPanelComponent
-                            clientId={openPanelClientId}
-                            apiUrl="/api/op"
-                            cdnUrl="/api/op/op1.js"
-                            trackScreenViews={true}
-                            trackAttributes={true}
-                            waitForProfile={Boolean(identifyProps)}
-                            globalProperties={openPanelGlobalProperties}
-                        />
-                        {identifyProps && <IdentifyComponent {...identifyProps} />}
-                    </>
-                )}
                 <PageProgress />
                 <TRPCReactProvider>
                     <FeatureFlagsProvider initialState={featureFlags}>
                         <ThemeProvider>
                             <AuthProvider>
                                 <ToastProvider>
-                                    <AchievementListener />
-                                    <ProfileProvider profile={profile}>
-                                        <RecipeTabsProvider
-                                            initialPinned={pinnedRecipes}
-                                            initialRecent={recentRecipes}
-                                            serverDataFetched={!!session?.user?.id}
-                                        >
-                                            {children}
-                                        </RecipeTabsProvider>
-                                    </ProfileProvider>
+                                    <ConsentProvider>
+                                        <AnalyticsScripts
+                                            clientId={hasOpenPanel ? openPanelClientId : ''}
+                                            globalProperties={openPanelGlobalProperties}
+                                            identify={identifyProps}
+                                        />
+                                        <ChatwootWidgetComponent user={chatwootUser} />
+                                        <AchievementListener />
+                                        <ProfileProvider profile={profile}>
+                                            <RecipeTabsProvider
+                                                initialPinned={pinnedRecipes}
+                                                initialRecent={recentRecipes}
+                                                serverDataFetched={!!session?.user?.id}
+                                            >
+                                                {children}
+                                            </RecipeTabsProvider>
+                                        </ProfileProvider>
+                                    </ConsentProvider>
                                 </ToastProvider>
                             </AuthProvider>
                         </ThemeProvider>

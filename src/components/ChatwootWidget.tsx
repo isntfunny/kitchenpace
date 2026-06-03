@@ -1,4 +1,9 @@
+'use client';
+
 import Script from 'next/script';
+import { useEffect } from 'react';
+
+import { useConsent } from '@app/components/providers/ConsentProvider';
 
 interface ChatwootUser {
     id: string;
@@ -11,7 +16,33 @@ interface ChatwootWidgetProps {
     user?: ChatwootUser | null;
 }
 
+type ChatwootApi = {
+    reset?: () => void;
+    toggleBubbleVisibility?: (state: 'show' | 'hide') => void;
+};
+
+/**
+ * Chatwoot live-chat widget, gated behind the "support" consent category. The
+ * remote SDK (support.tecfriends.de/packs/js/sdk.js) is only injected after the
+ * user opts into support. On revoke we best-effort reset the session and hide
+ * the bubble (a full unload requires a page reload).
+ */
 export function ChatwootWidgetComponent({ user }: ChatwootWidgetProps) {
+    const { categories } = useConsent();
+
+    useEffect(() => {
+        if (categories.support) return;
+        const api = (window as unknown as { $chatwoot?: ChatwootApi }).$chatwoot;
+        try {
+            api?.reset?.();
+            api?.toggleBubbleVisibility?.('hide');
+        } catch {
+            // widget not loaded yet — nothing to clean up
+        }
+    }, [categories.support]);
+
+    if (!categories.support) return null;
+
     const userScript = user
         ? `
                 window.addEventListener('chatwoot:ready', function() {

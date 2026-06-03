@@ -32,6 +32,30 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '3. Juni 2026',
+        version: 'v2026-06-03',
+        emoji: '🍪',
+        title: 'Cookie-Einstellungen & aktualisierte Rechtstexte',
+        items: [
+            {
+                text: 'Neu: Du entscheidest jetzt selbst über optionale Cookies — beim ersten Besuch erscheint ein Cookie-Banner, und über „Cookie-Einstellungen" im Seitenfuß kannst du deine Auswahl jederzeit ändern oder widerrufen',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Optionale Funktionen wie die Reichweitenmessung und der Support-Chat werden erst geladen, wenn du zustimmst — notwendige Funktionen für Anmeldung und Sicherheit bleiben immer aktiv',
+                tag: 'feat',
+            },
+            {
+                text: 'Das Tutorial im Rezept-Editor startet auf dem Handy nicht mehr automatisch und lässt sich jederzeit mit einem Klick überspringen',
+                tag: 'feat',
+            },
+            {
+                text: 'Impressum und Datenschutzerklärung überarbeitet und auf den aktuellen Stand gebracht',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '27. März 2026',
         version: 'v2026-03-27',
         emoji: '📚',

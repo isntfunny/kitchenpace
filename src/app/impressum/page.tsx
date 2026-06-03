@@ -6,7 +6,7 @@ import { css } from 'styled-system/css';
 
 export const metadata: Metadata = {
     title: 'Impressum — KochTakt',
-    description: 'Impressum von KochTakt mit Angaben gemaess § 5 DDG.',
+    description: 'Impressum von KochTakt mit Angaben gemäß § 5 DDG.',
 };
 
 export default function ImpressumPage() {
@@ -44,7 +44,7 @@ export default function ImpressumPage() {
                         >
                             Impressum
                         </h1>
-                        <p className={css({ color: 'text-muted' })}>Angaben gemaess § 5 DDG</p>
+                        <p className={css({ color: 'text-muted' })}>Angaben gemäß § 5 DDG</p>
                     </header>
 
                     <section>
@@ -74,7 +74,9 @@ export default function ImpressumPage() {
                     </section>
 
                     <section>
-                        <h2 className={sectionHeading}>Verantwortlich fuer den Inhalt</h2>
+                        <h2 className={sectionHeading}>
+                            Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
+                        </h2>
                         <p>
                             Sebastian Reuther
                             <br />
@@ -87,11 +89,16 @@ export default function ImpressumPage() {
                     </section>
 
                     <section>
-                        <h2 className={sectionHeading}>Streitbeilegung</h2>
+                        <h2 className={sectionHeading}>Verbraucherstreitbeilegung</h2>
                         <p>
-                            Wir sind nicht bereit und nicht verpflichtet, an
-                            Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle
-                            teilzunehmen.
+                            Wir sind nicht verpflichtet und nicht bereit, an einem
+                            Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle im
+                            Sinne des Verbraucherstreitbeilegungsgesetzes (VSBG) teilzunehmen.
+                        </p>
+                        <p className={css({ mt: '2', color: 'text-muted' })}>
+                            Hinweis: Die Europäische Plattform zur Online-Streitbeilegung
+                            (OS-Plattform) wurde von der EU-Kommission zum 20. Juli 2025 eingestellt
+                            und steht nicht mehr zur Verfügung. Ein Link hierauf entfällt daher.
                         </p>
                     </section>
                 </article>

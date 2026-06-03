@@ -103,7 +103,7 @@ export default async function BannedPage() {
                     )}
 
                     <Link
-                        href="mailto:support@kochtakt.de"
+                        href="mailto:info@kochtakt.de"
                         className={css({
                             display: 'inline-block',
                             mt: '4',

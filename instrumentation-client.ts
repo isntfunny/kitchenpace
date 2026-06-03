@@ -7,25 +7,27 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({
     dsn: 'https://2f3154469c3745a08f6b6d1e7f2b5d07@bugs.isntfunny.de/2',
 
-    // Add optional integrations for additional features
-    integrations: [Sentry.replayIntegration()],
+    // Consent-gated: Session Replay is NOT loaded eagerly. Plain crash/error
+    // reporting runs under legitimate interest (Art. 6 Abs. 1 lit. f DSGVO);
+    // Session Replay + PII are added at runtime only after the user grants the
+    // "monitoring" consent category (see src/lib/consent/sentryReplay.ts).
+    integrations: [],
 
     // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
     tracesSampleRate: 1,
     // Enable logs to be sent to Sentry
     enableLogs: true,
 
-    // Define how likely Replay events are sampled.
-    // This sets the sample rate to be 10%. You may want this to be 100% while
-    // in development and sample at a lower rate in production
+    // Replay sample rates are respected once replayIntegration is added post-consent.
+    // This sets the sample rate to be 10%.
     replaysSessionSampleRate: 0.1,
 
     // Define how likely Replay events are sampled when an error occurs.
     replaysOnErrorSampleRate: 1.0,
 
-    // Enable sending user PII (Personally Identifiable Information)
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
-    sendDefaultPii: true,
+    // No PII without consent. Re-enabled together with Session Replay after the
+    // user opts into the "monitoring" category.
+    sendDefaultPii: false,
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

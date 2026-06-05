@@ -11,10 +11,13 @@ import { computeFlowLayout } from '@app/lib/flow-layout';
 import { approvedKey } from '@app/lib/s3/keys';
 import { moveObject } from '@app/lib/s3/operations';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
+import { createLogger } from '@shared/logger';
 
 import { importRecipeFromMarkdown } from './openai-client';
 import { type AnalyzedRecipe, transformImportedRecipe } from './transform';
 import { uploadImageFromUrl } from './upload-image-from-url';
+
+const logger = createLogger('importer');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // analyzeWithAI
@@ -63,7 +66,7 @@ export async function logImportRun(db: PrismaClient, data: ImportRunData): Promi
         )?.id;
 
     if (!userId) {
-        console.warn('[logImportRun] Kein User gefunden, ImportRun wird nicht geloggt');
+        logger.warn('logImportRun: Kein User gefunden, ImportRun wird nicht geloggt');
         return;
     }
 
@@ -127,7 +130,7 @@ export async function analyzeWithAI(
     });
 
     if (!result.success) {
-        console.error('AI analysis failed:', result.error);
+        logger.error('AI analysis failed', { error: result.error });
         let errorMessage = result.error.message;
         if (result.error.details) {
             const details = Array.isArray(result.error.details)
@@ -160,7 +163,7 @@ export async function analyzeWithAI(
         outputTokens: metadata.outputTokens,
         estimatedCostUsd: metadata.estimatedCostUsd,
         rawApiResponse: metadata.rawApiResponse,
-    }).catch((err) => console.error('ImportRun log failed:', err));
+    }).catch((err) => logger.error('ImportRun log failed', { err }));
 
     const recipe = transformImportedRecipe(result.data);
     return {
@@ -241,7 +244,7 @@ export async function saveImportedRecipe(
         if (imgResult.success) {
             imageKey = imgResult.key;
         } else {
-            console.warn('[saveImportedRecipe] Image upload failed:', imgResult.error);
+            logger.warn('saveImportedRecipe: Image upload failed', { error: imgResult.error });
         }
     }
 
@@ -291,7 +294,7 @@ export async function saveImportedRecipe(
                 data: { imageKey: destKey, moderationStatus: 'AUTO_APPROVED' },
             });
         } catch (err: unknown) {
-            console.warn('[saveImportedRecipe] Failed to move image to approved/', err);
+            logger.warn('saveImportedRecipe: Failed to move image to approved/', { err });
         }
     }
 

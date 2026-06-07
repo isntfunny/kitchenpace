@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
 
+import type { IngredientRef } from '@app/components/flow/editor/editorTypes';
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
 
 import { css } from 'styled-system/css';
@@ -38,6 +39,8 @@ interface LaneGridProps {
     criticalStepIds: Set<string>;
     timers: Map<string, TimerState>;
     anyPopupOpen: boolean;
+    /** Ingredients for resolving @[name](id) mentions in step descriptions. */
+    ingredients?: IngredientRef[];
     dispatch: React.Dispatch<LaneAction>;
     onToggleDone: (id: string) => void;
     onTimerStart: (id: string) => void;
@@ -61,6 +64,7 @@ export function buildGridElements({
     criticalStepIds,
     timers,
     anyPopupOpen,
+    ingredients,
     dispatch,
     onToggleDone,
     onTimerStart,
@@ -179,6 +183,7 @@ export function buildGridElements({
                                                 step={step}
                                                 photoKey={photosByStepId[step.id]}
                                                 mode={mode}
+                                                ingredients={ingredients}
                                                 isLast={stepIdx === lane.length - 1}
                                                 isDone={completed.has(step.id)}
                                                 isCriticalPath={criticalStepIds.has(step.id)}

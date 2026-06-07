@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { createPortal } from 'react-dom';
 
 import { CastButton } from '@app/components/cast/CastButton';
+import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { useCast } from '@app/hooks/useCast';
 
 import { css } from 'styled-system/css';
@@ -67,6 +68,13 @@ const DesktopView = dynamic(() => import('./viewer/DesktopView').then((m) => m.D
     loading: FlowSkeleton,
 });
 
+// Flag-gated swimlane view — loaded only when `laneView` is on, so the heavy
+// LaneWizard deps stay out of the recipe-page bundle by default.
+const LaneCookView = dynamic(() => import('./viewer/LaneCookView').then((m) => m.LaneCookView), {
+    ssr: false,
+    loading: FlowSkeleton,
+});
+
 /** Actions that represent deliberate user interactions (not the 1s tick). */
 const PERSISTABLE_ACTIONS = new Set<ViewerAction['type']>([
     'toggle',
@@ -93,6 +101,11 @@ export function RecipeStepsViewer({
         () => buildTopology(nodes, edges),
         [nodes, edges],
     );
+
+    // Flag-gated swimlane consumption view (reads xyflow data via flowToLaneGrid).
+    // Desktop only for now — the lane layout is not mobile-ready yet.
+    const laneViewEnabled = useFeatureFlag('laneView');
+    const useLaneView = laneViewEnabled && !embedded;
 
     // A flow is "linear" when no node has more than one outgoing or incoming edge
     const isLinear = useMemo(() => {
@@ -400,7 +413,7 @@ export function RecipeStepsViewer({
                             top: 12,
                             right: 12,
                             zIndex: 10,
-                            display: embedded ? 'none' : 'flex',
+                            display: embedded || useLaneView ? 'none' : 'flex',
                             gap: 6,
                             alignItems: 'center',
                         }}
@@ -523,7 +536,9 @@ export function RecipeStepsViewer({
                         )}
                     </div>
 
-                    {isLinear ? (
+                    {useLaneView ? (
+                        <LaneCookView nodes={nodes} edges={edges} ingredients={ingredients} />
+                    ) : isLinear ? (
                         <SimpleTextView
                             columnGroups={columnGroups}
                             completed={state.completed}
@@ -541,7 +556,7 @@ export function RecipeStepsViewer({
                         />
                     )}
 
-                    {allStepsDone && <CompletionBanner />}
+                    {allStepsDone && !useLaneView && <CompletionBanner />}
                 </div>
             )}
 

@@ -3,11 +3,14 @@
 import { Check, Pause, Pencil, Play, RotateCcw, Timer, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
+import type { IngredientRef } from '@app/components/flow/editor/editorTypes';
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 
 import { css } from 'styled-system/css';
+
+import { renderDescription } from '../../viewer/viewerUtils';
 
 import type { LaneMode, LaneStep, TimerState } from './types';
 
@@ -27,6 +30,8 @@ interface StepCardProps {
     isLast: boolean;
     isCriticalPath?: boolean;
     timer?: TimerState;
+    /** Ingredients for resolving @[name](id) mentions in the description. */
+    ingredients?: IngredientRef[];
     onToggleDone: () => void;
     onTimerStart: () => void;
     onTimerPause: () => void;
@@ -45,6 +50,7 @@ export function StepCard({
     isLast,
     isCriticalPath = false,
     timer,
+    ingredients,
     onToggleDone,
     onTimerStart,
     onTimerPause,
@@ -193,7 +199,9 @@ export function StepCard({
                 </div>
 
                 {/* ── Description ── */}
-                {step.description && <p className={descClass}>{step.description}</p>}
+                {step.description && (
+                    <p className={descClass}>{renderDescription(step.description, ingredients)}</p>
+                )}
 
                 {/* ── Timer controls (view mode) ── */}
                 {timer && !isDone && mode === 'view' && (

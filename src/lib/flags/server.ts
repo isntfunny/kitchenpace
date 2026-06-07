@@ -143,6 +143,7 @@ function mapKnownFlags(
         simulateTwitchLive:
             allFlags[getFeatureFlagName('simulateTwitchLive')] ?? fallback.simulateTwitchLive,
         collections: allFlags[getFeatureFlagName('collections')] ?? fallback.collections,
+        laneView: allFlags[getFeatureFlagName('laneView')] ?? fallback.laneView,
     };
 }
 

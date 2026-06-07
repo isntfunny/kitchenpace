@@ -7,6 +7,7 @@ export const FEATURE_FLAGS = {
     twitchSignIn: 'twitch-sign-in',
     simulateTwitchLive: 'simulate-twitch-live',
     collections: 'collections',
+    laneView: 'lane-view',
 } as const;
 
 export type FeatureFlagName = keyof typeof FEATURE_FLAGS;
@@ -22,4 +23,5 @@ export const DEFAULT_FEATURE_FLAG_VALUES: FeatureFlagValues = {
     twitchSignIn: false,
     simulateTwitchLive: false,
     collections: false,
+    laneView: false,
 };

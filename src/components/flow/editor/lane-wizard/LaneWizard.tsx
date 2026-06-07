@@ -4,6 +4,7 @@ import { Download, Sparkles, Upload } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import React, { useCallback, useMemo, useReducer, useRef, useState } from 'react';
 
+import type { IngredientRef } from '@app/components/flow/editor/editorTypes';
 import { STEP_CONFIGS } from '@app/components/flow/editor/stepConfig';
 
 import { css } from 'styled-system/css';
@@ -38,9 +39,16 @@ interface LaneWizardProps {
     mode?: LaneMode;
     /** Photos loaded from RecipeStepImage table, keyed by step ID */
     photosByStepId?: Record<string, string>;
+    /** Ingredients for resolving @[name](id) mentions in step descriptions. */
+    ingredients?: IngredientRef[];
 }
 
-export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: LaneWizardProps) {
+export function LaneWizard({
+    initialGrid,
+    mode = 'edit',
+    photosByStepId = {},
+    ingredients,
+}: LaneWizardProps) {
     const [grid, dispatch] = useReducer(gridReducer, initialGrid, normalizeLaneGrid);
     const [completed, setCompleted] = useState<Set<string>>(new Set());
     const [anyPopupOpen, setAnyPopupOpen] = useState(false);
@@ -166,6 +174,7 @@ export function LaneWizard({ initialGrid, mode = 'edit', photosByStepId = {} }: 
         criticalStepIds,
         timers,
         anyPopupOpen,
+        ingredients,
         dispatch,
         onToggleDone: toggleDone,
         onTimerStart: start,

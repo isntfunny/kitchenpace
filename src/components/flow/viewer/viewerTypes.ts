@@ -1,9 +1,9 @@
-import type { FlowEdgeSerialized, FlowNodeSerialized } from '../editor/editorTypes';
+import type { FlowEdgeSerialized, FlowNodeSerialized, IngredientRef } from '../editor/editorTypes';
 
 export interface RecipeStepsViewerProps {
     nodes: FlowNodeSerialized[];
     edges: FlowEdgeSerialized[];
-    ingredients?: { id: string; name: string; amount?: string; unit?: string }[];
+    ingredients?: IngredientRef[];
     /** Recipe slug — used to send the recipe to a Cast device. */
     recipeSlug?: string;
 }

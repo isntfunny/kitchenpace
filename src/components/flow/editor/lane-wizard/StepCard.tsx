@@ -109,7 +109,6 @@ export function StepCard({
             style={{
                 background: bg,
                 borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.07)',
-                borderLeft: isCriticalPath ? `3px solid ${PALETTE.amber}` : undefined,
                 flexGrow: isLast ? 1 : 0,
             }}
         >

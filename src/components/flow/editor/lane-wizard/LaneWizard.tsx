@@ -229,7 +229,7 @@ export function LaneWizard({
                 </div>
             )}
 
-            <TimeRuler grid={grid} />
+            {mode === 'edit' && <TimeRuler grid={grid} />}
 
             <div className={gridWrapClass}>
                 <AnimatePresence mode="popLayout" initial={false}>

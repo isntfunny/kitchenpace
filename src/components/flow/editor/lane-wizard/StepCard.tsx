@@ -108,7 +108,7 @@ export function StepCard({
             className={cardClass}
             style={{
                 background: bg,
-                borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.07)',
+                borderBottomWidth: isLast ? 0 : '1px',
                 flexGrow: isLast ? 1 : 0,
             }}
         >
@@ -235,9 +235,9 @@ function DoneToggle({ isDone, onClick }: { isDone: boolean; onClick: () => void 
             onClick={onClick}
             className={doneToggleClass}
             style={{
-                borderColor: isDone ? '#00b894' : 'rgba(0,0,0,0.12)',
+                borderColor: isDone ? '#00b894' : undefined,
                 backgroundColor: isDone ? 'rgba(0,184,148,0.08)' : 'transparent',
-                color: isDone ? '#00b894' : 'rgba(0,0,0,0.18)',
+                color: isDone ? '#00b894' : undefined,
             }}
         >
             <Check className={css({ w: '11px', h: '11px' })} />
@@ -316,7 +316,9 @@ const cardClass = css({
     position: 'relative',
     display: 'flex',
     flexDirection: 'row',
-    background: 'white',
+    background: 'surface',
+    borderBottomStyle: 'solid',
+    borderBottomColor: 'border',
     transition: 'opacity 0.2s ease, background 0.2s ease',
     overflow: 'hidden',
 });
@@ -325,7 +327,9 @@ const imageStripClass = css({
     w: '90px',
     flexShrink: '0',
     overflow: 'hidden',
-    borderRight: '1px solid rgba(0,0,0,0.06)',
+    borderRightWidth: '1px',
+    borderRightStyle: 'solid',
+    borderRightColor: 'border',
 });
 
 const imageStripImgClass = css({
@@ -378,7 +382,7 @@ const timerDisplayClass = css({
 const titleClass = css({
     fontWeight: '700',
     fontSize: '15px',
-    color: '#111',
+    color: 'text',
     lineHeight: '1.35',
 });
 
@@ -405,6 +409,8 @@ const doneToggleClass = css({
     h: '22px',
     borderRadius: 'full',
     border: '1.5px solid',
+    borderColor: 'border',
+    color: 'text.muted',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -432,7 +438,9 @@ const deleteClass = css({
 const timerWrapClass = css({
     mt: '4px',
     pt: '8px',
-    borderTop: '1px solid rgba(0,0,0,0.05)',
+    borderTopWidth: '1px',
+    borderTopStyle: 'solid',
+    borderTopColor: 'border',
 });
 
 const timerBtnClass = css({
@@ -456,12 +464,13 @@ const timerResetClass = css({
     w: '26px',
     h: '26px',
     borderRadius: 'full',
-    border: '1px solid rgba(0,0,0,0.08)',
+    border: '1px solid',
+    borderColor: 'border',
     bg: 'transparent',
-    color: '#aaa',
+    color: 'text.muted',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
-    _hover: { bg: 'rgba(0,0,0,0.04)' },
+    _hover: { bg: { base: 'rgba(0,0,0,0.04)', _dark: 'rgba(255,255,255,0.06)' } },
 });
 
 const editOverlayClass = css({

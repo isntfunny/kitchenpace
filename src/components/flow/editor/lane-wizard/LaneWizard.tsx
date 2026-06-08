@@ -21,6 +21,7 @@ import {
     aiToolbarBtnClass,
     containerClass,
     gridWrapClass,
+    gridWrapViewClass,
     toolbarBtnClass,
     toolbarClass,
 } from './lane-wizard-styles';
@@ -231,7 +232,7 @@ export function LaneWizard({
 
             {mode === 'edit' && <TimeRuler grid={grid} />}
 
-            <div className={gridWrapClass}>
+            <div className={mode === 'view' ? gridWrapViewClass : gridWrapClass}>
                 <AnimatePresence mode="popLayout" initial={false}>
                     {elements}
                 </AnimatePresence>

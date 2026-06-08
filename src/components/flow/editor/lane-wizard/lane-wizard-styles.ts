@@ -11,16 +11,25 @@ export const containerClass = css({
     flexDirection: 'column',
 });
 
-/* The whole recipe is ONE unified block — outer frame only */
+/* The whole recipe is ONE unified block — outer frame only (edit mode) */
 export const gridWrapClass = css({
     display: 'flex',
     flexDirection: 'column',
     m: '20px',
-    border: '1px solid rgba(0,0,0,0.1)',
+    border: '1px solid',
+    borderColor: 'border',
     borderRadius: '12px',
     overflow: 'hidden',
-    bg: 'white',
+    bg: 'surface',
     boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+});
+
+/* Read-only cook view: flush + full width so it matches the progress bar above */
+export const gridWrapViewClass = css({
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    bg: 'surface',
 });
 
 /* Segment block: positioning context; CSS :hover shows add-lane buttons */
@@ -76,7 +85,7 @@ export const laneColClass = css({
 
 export const progressWrapClass = css({
     p: '4',
-    bg: 'white',
+    bg: 'surface',
     borderBottom: '1px solid',
     borderColor: 'border',
     flexShrink: '0',
@@ -85,7 +94,7 @@ export const progressWrapClass = css({
 export const progressBarBgClass = css({
     h: '3px',
     borderRadius: 'full',
-    bg: 'rgba(0,0,0,0.07)',
+    bg: { base: 'rgba(0,0,0,0.07)', _dark: 'rgba(255,255,255,0.12)' },
     overflow: 'hidden',
 });
 

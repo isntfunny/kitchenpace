@@ -314,13 +314,23 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
 
 export async function generateMetadata({ params }: UserProfileProps): Promise<Metadata> {
     const resolvedParams = await params;
-    const user = await getUserProfile(resolvedParams.id);
+    // Slim lookup — the full profile query (recipes, favorites, trophies,
+    // activities) is far too heavy just to build title and OG image
+    const user = await prisma.user.findFirst({
+        where: { profile: { slug: resolvedParams.id } },
+        select: {
+            id: true,
+            name: true,
+            profile: { select: { slug: true, nickname: true } },
+        },
+    });
     if (!user) {
         return {
             title: 'Benutzer nicht gefunden',
         };
     }
-    return buildUserMetadata(user.name, user.id, user.slug);
+    const name = user.name ?? user.profile?.nickname ?? 'Unbekannt';
+    return buildUserMetadata(name, user.id, user.profile?.slug ?? user.id);
 }
 
 export default async function UserProfilePage({ params, searchParams }: UserProfileProps) {

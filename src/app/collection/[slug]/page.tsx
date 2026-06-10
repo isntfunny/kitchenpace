@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 
 import { fetchCollectionBySlug } from '@app/app/actions/collections';
 import { PageShell } from '@app/components/layouts/PageShell';
@@ -19,13 +20,18 @@ import { SidebarLayout } from './templates/SidebarLayout';
 export const revalidate = 60;
 export const dynamicParams = true;
 
+// Dedupes the collection fetch between generateMetadata and the page render
+const getCollection = cache((slug: string, viewerId: string | null) =>
+    fetchCollectionBySlug(slug, viewerId),
+);
+
 interface CollectionPageProps {
     params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: CollectionPageProps): Promise<Metadata> {
     const { slug } = await params;
-    const collection = await fetchCollectionBySlug(slug);
+    const collection = await getCollection(slug, null);
     if (!collection) {
         // Drafts render for their owner but must never be indexed
         return { title: 'Sammlung nicht gefunden', robots: { index: false, follow: false } };
@@ -67,7 +73,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
     const session = await getServerAuthSession('collection-detail');
     const viewerId = session?.user?.id ?? null;
 
-    let collection = await fetchCollectionBySlug(slug, viewerId);
+    let collection = await getCollection(slug, viewerId);
     if (!collection && viewerId) {
         collection = await fetchCollectionBySlug(slug, viewerId, true);
         if (collection && collection.authorId !== viewerId) {

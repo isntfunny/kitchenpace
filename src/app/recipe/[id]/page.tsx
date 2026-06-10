@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 
 import { fetchRecipeCookImages } from '@app/app/actions/cooks';
 import { fetchRecipeBySlug } from '@app/app/actions/recipes';
@@ -15,6 +16,12 @@ import { RecipeJsonLd } from './RecipeJsonLd';
 
 export const revalidate = 60;
 export const dynamicParams = true;
+
+// Dedupes the recipe fetch between generateMetadata and the page render
+// within a single request (args must match exactly for a cache hit)
+const getRecipe = cache((slug: string, viewerId: string | undefined, includeDrafts: boolean) =>
+    fetchRecipeBySlug(slug, viewerId, includeDrafts),
+);
 
 type RecipePageParams = {
     id: string;
@@ -83,9 +90,9 @@ const buildRecipeMetadata = (
 export async function generateMetadata({ params }: RecipePageProps): Promise<Metadata> {
     const resolvedParams = await params;
     // For generateMetadata we fetch with unpublished to detect draft status
-    const published = await fetchRecipeBySlug(resolvedParams.id);
+    const published = await getRecipe(resolvedParams.id, undefined, false);
     if (published) return buildRecipeMetadata(published, false);
-    const draft = await fetchRecipeBySlug(resolvedParams.id, undefined, true);
+    const draft = await getRecipe(resolvedParams.id, undefined, true);
     return buildRecipeMetadata(draft, true);
 }
 
@@ -97,11 +104,11 @@ export default async function RecipePage({ params, searchParams }: RecipePagePro
     const viewerId = session?.user?.id;
 
     // First try published lookup
-    let recipe = await fetchRecipeBySlug(resolvedParams.id, viewerId);
+    let recipe = await getRecipe(resolvedParams.id, viewerId, false);
 
     // If not found, check if it's a draft the viewer is allowed to see
     if (!recipe && viewerId) {
-        const draft = await fetchRecipeBySlug(resolvedParams.id, viewerId, true);
+        const draft = await getRecipe(resolvedParams.id, viewerId, true);
         if (draft) {
             const viewerIsAuthor = draft.authorId === viewerId;
             const viewerIsAdmin = await isAdmin(viewerId);

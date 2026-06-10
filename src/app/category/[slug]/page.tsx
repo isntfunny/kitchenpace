@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 
 import {
     fetchCategoryActivity,
@@ -23,13 +24,16 @@ import { SeasonalTeaserBar } from './components/SeasonalTeaserBar';
 
 export const revalidate = 60;
 
+// Dedupes the category fetch between generateMetadata and the page render
+const getCategory = cache((slug: string) => fetchCategoryBySlug(slug));
+
 type Props = {
     params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
-    const category = await fetchCategoryBySlug(slug);
+    const category = await getCategory(slug);
     if (!category) return { title: 'Kategorie nicht gefunden' };
 
     const title = `${category.name} Rezepte`;
@@ -67,7 +71,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CategoryPage({ params }: Props) {
     const { slug } = await params;
-    const category = await fetchCategoryBySlug(slug);
+    const category = await getCategory(slug);
 
     if (!category) notFound();
 

@@ -19,11 +19,14 @@ import {
     progressWrapClass,
     segmentGridClass,
     segmentOuterClass,
+    viewLaneCardClass,
+    viewLaneHeaderClass,
+    viewParallelRowClass,
 } from './lane-wizard-styles';
 import { SegmentDivider } from './SegmentDivider';
 import { StepCard } from './StepCard';
 import { StepTypePicker } from './StepTypePicker';
-import type { LaneAction, LaneGrid, LaneMode, LaneStep, TimerState } from './types';
+import type { LaneAction, LaneGrid, LaneMode, LaneSegment, LaneStep, TimerState } from './types';
 
 /* ══════════════════════════════════════════════════════════════
    LaneGrid — renders segments, lanes, cells, connectors, dividers
@@ -77,6 +80,66 @@ export function buildGridElements({
 }: LaneGridProps): React.ReactNode[] {
     const elements: React.ReactNode[] = [];
 
+    /* Renders the StepCards for one lane, optionally with intra-lane connectors. */
+    const renderLaneSteps = (
+        segment: LaneSegment,
+        lane: LaneStep[],
+        laneIdx: number,
+        { showIntra }: { showIntra: boolean },
+    ): React.ReactNode[] =>
+        lane.map((step, stepIdx) => {
+            const canEdit = mode === 'edit' && !step.continuation;
+            const canDelete = canEdit && step.type !== 'start' && step.type !== 'servieren';
+            const prevStep = stepIdx > 0 ? lane[stepIdx - 1] : null;
+            const showIntraConnector =
+                showIntra && !!prevStep && !step.continuation && !prevStep.continuation;
+            return (
+                <React.Fragment key={step.id}>
+                    {showIntraConnector && prevStep && (
+                        <IntraLaneConnector
+                            fromColor={STEP_CONFIGS[prevStep.type].accent}
+                            toColor={STEP_CONFIGS[step.type].accent}
+                        />
+                    )}
+                    <StepCard
+                        step={step}
+                        photoKey={photosByStepId[step.id]}
+                        mode={mode}
+                        ingredients={ingredients}
+                        isLast={stepIdx === lane.length - 1}
+                        isDone={completed.has(step.id)}
+                        isCriticalPath={criticalStepIds.has(step.id)}
+                        timer={timers.get(step.id)}
+                        onToggleDone={() => onToggleDone(step.id)}
+                        onTimerStart={() => onTimerStart(step.id)}
+                        onTimerPause={() => onTimerPause(step.id)}
+                        onTimerReset={() => onTimerReset(step.id)}
+                        onEdit={
+                            canEdit
+                                ? () =>
+                                      onEditStep({
+                                          step,
+                                          segmentId: segment.id,
+                                          laneIndex: laneIdx,
+                                      })
+                                : undefined
+                        }
+                        onDelete={
+                            canDelete
+                                ? () =>
+                                      dispatch({
+                                          type: 'DELETE_STEP',
+                                          segmentId: segment.id,
+                                          laneIndex: laneIdx,
+                                          stepId: step.id,
+                                      })
+                                : undefined
+                        }
+                    />
+                </React.Fragment>
+            );
+        });
+
     grid.segments.forEach((segment, segIdx) => {
         const laneCount = segment.lanes.length;
         const templateColumns = segment.columnSpans.map((s) => `${s}fr`).join(' ');
@@ -87,6 +150,46 @@ export function buildGridElements({
                 : lane.find((s) => !s.continuation);
             return step ? STEP_CONFIGS[step.type].accent : '#e07b53';
         };
+
+        /* ── VIEW (cook) mode — standalone gapped cards, no flow connectors ──
+           Each parallel lane is its own card with a coloured "Aufgabe N" header
+           so it's obvious they don't belong together; sections stack top→bottom. */
+        if (mode === 'view') {
+            const multi = laneCount > 1;
+            const laneCards = segment.lanes.map((lane, laneIdx) => (
+                <div key={`vlane-${segment.id}-${laneIdx}`} className={viewLaneCardClass}>
+                    {multi && (
+                        <div
+                            className={viewLaneHeaderClass}
+                            style={{ background: segmentColors(lane, false) }}
+                        >
+                            Aufgabe {laneIdx + 1}
+                        </div>
+                    )}
+                    {renderLaneSteps(segment, lane, laneIdx, { showIntra: false })}
+                </div>
+            ));
+
+            elements.push(
+                <motion.div
+                    key={segment.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className={multi ? viewParallelRowClass : undefined}
+                    style={
+                        multi
+                            ? { gridTemplateColumns: `repeat(${laneCount}, minmax(0, 1fr))` }
+                            : undefined
+                    }
+                >
+                    {laneCards}
+                </motion.div>,
+            );
+            return;
+        }
 
         /* Flow connector before first segment */
         if (segIdx === 0) {
@@ -162,61 +265,7 @@ export function buildGridElements({
                                         onClose={() => {}}
                                     />
                                 )}
-                                {lane.map((step, stepIdx) => {
-                                    const canEdit = mode === 'edit' && !step.continuation;
-                                    const canDelete =
-                                        canEdit &&
-                                        step.type !== 'start' &&
-                                        step.type !== 'servieren';
-                                    const prevStep = stepIdx > 0 ? lane[stepIdx - 1] : null;
-                                    const showIntraConnector =
-                                        prevStep && !step.continuation && !prevStep.continuation;
-                                    return (
-                                        <React.Fragment key={step.id}>
-                                            {showIntraConnector && (
-                                                <IntraLaneConnector
-                                                    fromColor={STEP_CONFIGS[prevStep.type].accent}
-                                                    toColor={STEP_CONFIGS[step.type].accent}
-                                                />
-                                            )}
-                                            <StepCard
-                                                step={step}
-                                                photoKey={photosByStepId[step.id]}
-                                                mode={mode}
-                                                ingredients={ingredients}
-                                                isLast={stepIdx === lane.length - 1}
-                                                isDone={completed.has(step.id)}
-                                                isCriticalPath={criticalStepIds.has(step.id)}
-                                                timer={timers.get(step.id)}
-                                                onToggleDone={() => onToggleDone(step.id)}
-                                                onTimerStart={() => onTimerStart(step.id)}
-                                                onTimerPause={() => onTimerPause(step.id)}
-                                                onTimerReset={() => onTimerReset(step.id)}
-                                                onEdit={
-                                                    canEdit
-                                                        ? () =>
-                                                              onEditStep({
-                                                                  step,
-                                                                  segmentId: segment.id,
-                                                                  laneIndex: laneIdx,
-                                                              })
-                                                        : undefined
-                                                }
-                                                onDelete={
-                                                    canDelete
-                                                        ? () =>
-                                                              dispatch({
-                                                                  type: 'DELETE_STEP',
-                                                                  segmentId: segment.id,
-                                                                  laneIndex: laneIdx,
-                                                                  stepId: step.id,
-                                                              })
-                                                        : undefined
-                                                }
-                                            />
-                                        </React.Fragment>
-                                    );
-                                })}
+                                {renderLaneSteps(segment, lane, laneIdx, { showIntra: true })}
                             </AnimatePresence>
                         </div>
                     ))}

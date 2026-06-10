@@ -24,12 +24,45 @@ export const gridWrapClass = css({
     boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
 });
 
-/* Read-only cook view: flush + full width so it matches the progress bar above */
+/* Read-only cook view: each section is a standalone card, separated by a gap.
+   No frame/bg here — the cards carry their own surface, border and shadow. */
 export const gridWrapViewClass = css({
     display: 'flex',
     flexDirection: 'column',
-    overflow: 'hidden',
+    gap: '16px',
+    p: '16px',
+});
+
+/* View mode: a row of parallel lanes, each its own card with a gap between them */
+export const viewParallelRowClass = css({
+    display: 'grid',
+    gap: '16px',
+    alignItems: 'start',
+});
+
+/* View mode: a single standalone lane/section card */
+export const viewLaneCardClass = css({
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0,
     bg: 'surface',
+    border: '1px solid',
+    borderColor: 'border',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+});
+
+/* View mode: coloured "Aufgabe N" header on parallel lane cards */
+export const viewLaneHeaderClass = css({
+    fontSize: '11px',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    color: 'white',
+    px: '14px',
+    py: '7px',
 });
 
 /* Segment block: positioning context; CSS :hover shows add-lane buttons */

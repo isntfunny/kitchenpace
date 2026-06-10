@@ -197,9 +197,11 @@ export function StepCard({
                     {step.label}
                 </div>
 
-                {/* ── Description ── */}
+                {/* ── Description — full text in the cook view, clamped in the editor ── */}
                 {step.description && (
-                    <p className={descClass}>{renderDescription(step.description, ingredients)}</p>
+                    <p className={mode === 'view' ? descFullClass : descClass}>
+                        {renderDescription(step.description, ingredients)}
+                    </p>
                 )}
 
                 {/* ── Timer controls (view mode) ── */}
@@ -391,6 +393,14 @@ const descClass = css({
     color: 'text.muted',
     lineHeight: '1.55',
     lineClamp: '3',
+    m: '0',
+});
+
+/* Cook view: never truncate — the full step text must always be visible */
+const descFullClass = css({
+    fontSize: '13px',
+    color: 'text.muted',
+    lineHeight: '1.55',
     m: '0',
 });
 

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { fetchPopularCollections, fetchNewestCollections } from '@app/app/actions/collections';
 import { CollectionCard } from '@app/components/collections/CollectionCard';
 import { PageShell } from '@app/components/layouts/PageShell';
+import { APP_URL } from '@app/lib/url';
 
 import { css } from 'styled-system/css';
 
@@ -11,6 +12,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
     title: 'Sammlungen',
     description: 'Entdecke kuratierte Rezeptsammlungen der Community.',
+    alternates: { canonical: `${APP_URL}/collections` },
 };
 
 export default async function CollectionsPage() {

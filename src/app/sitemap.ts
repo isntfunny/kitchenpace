@@ -58,24 +58,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const staticRoutes = await discoverStaticRoutes();
 
     try {
-        const [recipesResult, categoriesResult, usersResult] = await Promise.allSettled([
-            prisma.recipe.findMany({
-                where: { publishedAt: { not: null } },
-                select: { slug: true, updatedAt: true },
-                orderBy: { updatedAt: 'desc' },
-            }),
-            prisma.category.findMany({
-                select: { slug: true, createdAt: true },
-            }),
-            prisma.profile.findMany({
-                where: { user: { banned: false } },
-                select: { slug: true, updatedAt: true },
-            }),
-        ]);
+        const [recipesResult, categoriesResult, usersResult, collectionsResult] =
+            await Promise.allSettled([
+                prisma.recipe.findMany({
+                    where: { publishedAt: { not: null } },
+                    select: { slug: true, updatedAt: true },
+                    orderBy: { updatedAt: 'desc' },
+                }),
+                prisma.category.findMany({
+                    select: { slug: true, createdAt: true },
+                }),
+                prisma.profile.findMany({
+                    where: { user: { banned: false } },
+                    select: { slug: true, updatedAt: true },
+                }),
+                prisma.collection.findMany({
+                    where: {
+                        published: true,
+                        moderationStatus: { in: ['AUTO_APPROVED', 'APPROVED'] },
+                    },
+                    select: { slug: true, updatedAt: true },
+                }),
+            ]);
 
         const recipes = recipesResult.status === 'fulfilled' ? recipesResult.value : [];
         const categories = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
         const users = usersResult.status === 'fulfilled' ? usersResult.value : [];
+        const collections = collectionsResult.status === 'fulfilled' ? collectionsResult.value : [];
 
         const recipeRoutes: MetadataRoute.Sitemap = recipes.map((r) => ({
             url: `${APP_URL}/recipe/${r.slug}`,
@@ -98,7 +107,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.5,
         }));
 
-        return [...staticRoutes, ...recipeRoutes, ...categoryRoutes, ...userRoutes];
+        const collectionRoutes: MetadataRoute.Sitemap = collections.map((c) => ({
+            url: `${APP_URL}/collection/${c.slug}`,
+            lastModified: c.updatedAt,
+            changeFrequency: 'weekly',
+            priority: 0.7,
+        }));
+
+        return [
+            ...staticRoutes,
+            ...recipeRoutes,
+            ...categoryRoutes,
+            ...userRoutes,
+            ...collectionRoutes,
+        ];
     } catch (error) {
         console.error('[sitemap] Failed to fetch dynamic routes:', error);
         return staticRoutes;

@@ -3,6 +3,10 @@ import path from 'path';
 import { glob } from 'glob';
 import type { MetadataRoute } from 'next';
 
+import {
+    fetchIngredientSlugsWithRecipes,
+    fetchTagSlugsWithRecipes,
+} from '@app/lib/keyword-landing';
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 
@@ -58,33 +62,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const staticRoutes = await discoverStaticRoutes();
 
     try {
-        const [recipesResult, categoriesResult, usersResult, collectionsResult] =
-            await Promise.allSettled([
-                prisma.recipe.findMany({
-                    where: { publishedAt: { not: null } },
-                    select: { slug: true, updatedAt: true },
-                    orderBy: { updatedAt: 'desc' },
-                }),
-                prisma.category.findMany({
-                    select: { slug: true, createdAt: true },
-                }),
-                prisma.profile.findMany({
-                    where: { user: { banned: false } },
-                    select: { slug: true, updatedAt: true },
-                }),
-                prisma.collection.findMany({
-                    where: {
-                        published: true,
-                        moderationStatus: { in: ['AUTO_APPROVED', 'APPROVED'] },
-                    },
-                    select: { slug: true, updatedAt: true },
-                }),
-            ]);
+        const [
+            recipesResult,
+            categoriesResult,
+            usersResult,
+            collectionsResult,
+            tagSlugsResult,
+            ingredientSlugsResult,
+        ] = await Promise.allSettled([
+            prisma.recipe.findMany({
+                where: { publishedAt: { not: null } },
+                select: { slug: true, updatedAt: true },
+                orderBy: { updatedAt: 'desc' },
+            }),
+            prisma.category.findMany({
+                select: { slug: true, createdAt: true },
+            }),
+            prisma.profile.findMany({
+                where: { user: { banned: false } },
+                select: { slug: true, updatedAt: true },
+            }),
+            prisma.collection.findMany({
+                where: {
+                    published: true,
+                    moderationStatus: { in: ['AUTO_APPROVED', 'APPROVED'] },
+                },
+                select: { slug: true, updatedAt: true },
+            }),
+            fetchTagSlugsWithRecipes(),
+            fetchIngredientSlugsWithRecipes(),
+        ]);
 
         const recipes = recipesResult.status === 'fulfilled' ? recipesResult.value : [];
         const categories = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
         const users = usersResult.status === 'fulfilled' ? usersResult.value : [];
         const collections = collectionsResult.status === 'fulfilled' ? collectionsResult.value : [];
+        const tagSlugs = tagSlugsResult.status === 'fulfilled' ? tagSlugsResult.value : [];
+        const ingredientSlugs =
+            ingredientSlugsResult.status === 'fulfilled' ? ingredientSlugsResult.value : [];
 
         const recipeRoutes: MetadataRoute.Sitemap = recipes.map((r) => ({
             url: `${APP_URL}/recipe/${r.slug}`,
@@ -114,12 +129,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.7,
         }));
 
+        const tagRoutes: MetadataRoute.Sitemap = tagSlugs.map((slug) => ({
+            url: `${APP_URL}/tag/${slug}`,
+            changeFrequency: 'weekly',
+            priority: 0.6,
+        }));
+
+        const ingredientRoutes: MetadataRoute.Sitemap = ingredientSlugs.map((slug) => ({
+            url: `${APP_URL}/zutat/${slug}`,
+            changeFrequency: 'weekly',
+            priority: 0.6,
+        }));
+
         return [
             ...staticRoutes,
             ...recipeRoutes,
             ...categoryRoutes,
             ...userRoutes,
             ...collectionRoutes,
+            ...tagRoutes,
+            ...ingredientRoutes,
         ];
     } catch (error) {
         console.error('[sitemap] Failed to fetch dynamic routes:', error);

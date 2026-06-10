@@ -115,16 +115,43 @@ export default async function CategoryPage({ params }: Props) {
         seasonalRecipes = await fetchActiveSeasonalRecipes(category.id, activePeriod, 4);
     }
 
+    const categoryUrl = `${APP_URL}/category/${category.slug}`;
+    // Dedupe recipes shown on the page for the ItemList schema
+    const listedRecipes = [...new Map([...newest, ...topRated].map((r) => [r.id, r])).values()];
     const breadcrumbJsonLd = {
         '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'KochTakt', item: APP_URL },
+        '@graph': [
             {
-                '@type': 'ListItem',
-                position: 2,
-                name: category.name,
-                item: `${APP_URL}/category/${category.slug}`,
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'KochTakt', item: APP_URL },
+                    {
+                        '@type': 'ListItem',
+                        position: 2,
+                        name: category.name,
+                        item: categoryUrl,
+                    },
+                ],
+            },
+            {
+                '@type': 'CollectionPage',
+                '@id': `${categoryUrl}#category`,
+                url: categoryUrl,
+                name: `${category.name} Rezepte`,
+                ...(category.description && { description: category.description }),
+                inLanguage: 'de-DE',
+                ...(listedRecipes.length > 0 && {
+                    mainEntity: {
+                        '@type': 'ItemList',
+                        numberOfItems: listedRecipes.length,
+                        itemListElement: listedRecipes.map((recipe, i) => ({
+                            '@type': 'ListItem',
+                            position: i + 1,
+                            name: recipe.title,
+                            url: `${APP_URL}/recipe/${recipe.slug}`,
+                        })),
+                    },
+                }),
             },
         ],
     };

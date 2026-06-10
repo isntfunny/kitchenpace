@@ -369,8 +369,31 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
         }
     }
 
+    const profileUrl = `${APP_URL}/user/${user.slug}`;
+    const profileJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'ProfilePage',
+        '@id': `${profileUrl}#profile`,
+        url: profileUrl,
+        inLanguage: 'de-DE',
+        mainEntity: {
+            '@type': 'Person',
+            name: user.name,
+            url: profileUrl,
+            ...(user.bio && { description: user.bio }),
+            ...(user.avatar && {
+                image: user.avatar.startsWith('http') ? user.avatar : `${APP_URL}${user.avatar}`,
+            }),
+        },
+    };
+
     return (
         <PageShell>
+            <script
+                type="application/ld+json"
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
+            />
             <UserProfileClient user={user} viewer={viewer} />
         </PageShell>
     );

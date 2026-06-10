@@ -47,6 +47,45 @@ export function Footer() {
                 <div className={css({ marginBottom: '3' })}>
                     © {new Date().getFullYear()} KochTakt · Produkte mit Gefühl entdecken
                 </div>
+                <nav
+                    aria-label="Footer-Navigation"
+                    className={css({
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '4',
+                        justifyContent: 'center',
+                        marginBottom: '3',
+                        fontSize: 'sm',
+                    })}
+                >
+                    <Link
+                        href="/recipes"
+                        className={css({
+                            _hover: { color: 'palette.orange' },
+                            transition: 'color 0.15s',
+                        })}
+                    >
+                        Rezepte
+                    </Link>
+                    <Link
+                        href="/collections"
+                        className={css({
+                            _hover: { color: 'palette.orange' },
+                            transition: 'color 0.15s',
+                        })}
+                    >
+                        Sammlungen
+                    </Link>
+                    <Link
+                        href="/changelog"
+                        className={css({
+                            _hover: { color: 'palette.orange' },
+                            transition: 'color 0.15s',
+                        })}
+                    >
+                        Changelog
+                    </Link>
+                </nav>
                 <div
                     className={css({
                         display: 'flex',

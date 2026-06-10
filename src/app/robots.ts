@@ -6,7 +6,10 @@ export default function robots(): MetadataRoute.Robots {
     return {
         rules: {
             userAgent: '*',
-            allow: '/',
+            // Thumbnails and OG images live under /api — they must stay
+            // crawlable (longest-match wins over the /api/ disallow) or
+            // Google cannot index recipe images / rich-result previews
+            allow: ['/', '/api/thumbnail', '/api/og/'],
             disallow: [
                 '/api/',
                 '/admin/',

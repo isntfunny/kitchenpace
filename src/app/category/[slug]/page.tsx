@@ -30,21 +30,23 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
     const category = await fetchCategoryBySlug(slug);
-    if (!category) return { title: 'Kategorie nicht gefunden | KochTakt' };
+    if (!category) return { title: 'Kategorie nicht gefunden' };
 
-    const title = `${category.name} Rezepte | KochTakt`;
+    const title = `${category.name} Rezepte`;
     const description =
         category.description ??
         `Entdecke ${category.recipeCount} ${category.name}-Rezepte auf KochTakt.`;
     const url = `${APP_URL}/category/${category.slug}`;
     const ogImageUrl = `${APP_URL}/api/og/category/${category.slug}`;
 
+    const brandedTitle = `${title} | KochTakt`;
+
     return {
         title,
         description,
         alternates: { canonical: url },
         openGraph: {
-            title,
+            title: brandedTitle,
             description,
             url,
             siteName: 'KochTakt',
@@ -56,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         },
         twitter: {
             card: 'summary_large_image',
-            title,
+            title: brandedTitle,
             description,
             images: [ogImageUrl],
         },

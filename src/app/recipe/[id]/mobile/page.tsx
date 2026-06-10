@@ -1,8 +1,10 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { fetchRecipeBySlug } from '@app/app/actions/recipes';
 import { isAdmin } from '@app/lib/admin/check-admin';
 import { getServerAuthSession } from '@app/lib/auth';
+import { APP_URL } from '@app/lib/url';
 
 import { MobileRecipeClient } from './MobileRecipeClient';
 
@@ -16,6 +18,17 @@ type MobileRecipePageProps = {
 
 export const revalidate = 60;
 export const dynamicParams = true;
+
+// Duplicate of /recipe/[slug] for the in-app mobile flow — canonicalize to the main page
+export async function generateMetadata({ params }: MobileRecipePageProps): Promise<Metadata> {
+    const resolvedParams = await params;
+    const recipe = await fetchRecipeBySlug(resolvedParams.id);
+    if (!recipe) return { title: 'Rezept nicht gefunden' };
+    return {
+        title: recipe.title,
+        alternates: { canonical: `${APP_URL}/recipe/${recipe.slug}` },
+    };
+}
 
 export default async function MobileRecipePage({ params }: MobileRecipePageProps) {
     const resolvedParams = await params;

@@ -12,11 +12,13 @@ const EXCLUDED_PREFIXES = [
     '/admin',
     '/profile',
     '/recipe/create',
+    '/collection/create',
     '/notifications',
     '/banned',
     '/auth',
     '/cast',
     '/qrupload',
+    '/lane-view-mock',
     '/lane-wizard-mock',
 ];
 

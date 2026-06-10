@@ -9,7 +9,7 @@ import { css } from 'styled-system/css';
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-    title: 'Sammlungen | KochTakt',
+    title: 'Sammlungen',
     description: 'Entdecke kuratierte Rezeptsammlungen der Community.',
 };
 

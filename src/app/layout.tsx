@@ -104,7 +104,7 @@ export const metadata: Metadata = {
             'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen. Koche effizient mit parallelen Aufgaben und Zeitangaben.',
         images: [
             {
-                url: '/og-image.png',
+                url: '/opengraph-image',
                 width: 1200,
                 height: 630,
                 alt: 'KochTakt - Rezepte im Takt',
@@ -117,7 +117,7 @@ export const metadata: Metadata = {
         description:
             'Entdecke, erstelle und teile köstliche Rezepte mit interaktiven Flow-Diagrammen.',
         creator: '@kochtakt',
-        images: ['/og-image.png'],
+        images: ['/opengraph-image'],
     },
     robots: {
         index: true,

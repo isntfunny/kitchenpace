@@ -5,7 +5,7 @@ import { PageShell } from '@app/components/layouts/PageShell';
 import { css } from 'styled-system/css';
 
 export const metadata: Metadata = {
-    title: 'Impressum — KochTakt',
+    title: 'Impressum',
     description: 'Impressum von KochTakt mit Angaben gemäß § 5 DDG.',
 };
 

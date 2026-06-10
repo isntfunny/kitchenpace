@@ -9,7 +9,7 @@ import { prisma } from '@shared/prisma';
 import { css } from 'styled-system/css';
 
 export const metadata: Metadata = {
-    title: 'Gesperrt | KochTakt',
+    title: 'Gesperrt',
     robots: { index: false, follow: false },
 };
 

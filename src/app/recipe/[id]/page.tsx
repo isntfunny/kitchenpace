@@ -35,7 +35,7 @@ const buildRecipeMetadata = (
 ): Metadata => {
     if (!recipe) {
         return {
-            title: 'Rezept nicht gefunden | KochTakt',
+            title: 'Rezept nicht gefunden',
             description: 'Das gewünschte Rezept konnte nicht gefunden werden.',
         };
     }
@@ -45,12 +45,12 @@ const buildRecipeMetadata = (
 
     const bannerUrl = recipe.imageKey
         ? `${APP_URL}${getThumbnailUrl(recipe.imageKey, '16:9', 1280)}`
-        : `${APP_URL}/og-image.png`;
+        : `${APP_URL}/opengraph-image`;
 
     const recipeUrl = `${APP_URL}/recipe/${recipe.slug}`;
 
     return {
-        title: `${recipe.title} | KochTakt`,
+        title: recipe.title,
         description,
         alternates: { canonical: recipeUrl },
         ...(isDraft && { robots: { index: false, follow: false } }),
@@ -141,7 +141,7 @@ export default async function RecipePage({ params, searchParams }: RecipePagePro
 
     const ogImageUrl = recipe.imageKey
         ? getThumbnailUrl(recipe.imageKey, '16:9', 1280)
-        : '/og-image.png';
+        : `${APP_URL}/opengraph-image`;
 
     return (
         <>

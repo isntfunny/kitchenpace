@@ -161,46 +161,48 @@ export function IngredientList({
             </h2>
 
             <div
-                className={css({
-                    mb: '4',
-                    p: '3',
-                    bg: 'light',
-                    borderRadius: 'xl',
+                className={flex({
+                    justify: 'space-between',
+                    align: 'center',
+                    mb: '2',
+                    pb: '3',
+                    borderBottom: '1px solid',
+                    borderColor: 'border',
                 })}
             >
-                <label
+                <span
                     className={css({
-                        display: 'block',
                         fontSize: 'sm',
                         color: 'text-muted',
-                        mb: '2',
                         fontFamily: 'body',
                     })}
                 >
                     Portionen
-                </label>
+                </span>
                 <div className={flex({ gap: '2', align: 'center' })}>
                     <button
+                        aria-label="Weniger Portionen"
                         onClick={() => onServingsChange(Math.max(1, servings - 1))}
                         className={css({
-                            w: '10',
-                            h: '10',
+                            w: '8',
+                            h: '8',
                             borderRadius: 'full',
-                            bg: 'surface',
+                            bg: 'light',
                             border: '1px solid',
                             borderColor: 'border',
                             cursor: 'pointer',
-                            fontSize: 'xl',
-                            _hover: { bg: 'light' },
+                            fontSize: 'lg',
+                            lineHeight: '1',
+                            _hover: { bg: 'surface' },
                         })}
                     >
                         −
                     </button>
                     <span
                         className={css({
-                            fontSize: 'xl',
+                            fontSize: 'lg',
                             fontWeight: '600',
-                            minW: '12',
+                            minW: '8',
                             textAlign: 'center',
                             fontFamily: 'heading',
                         })}
@@ -208,17 +210,19 @@ export function IngredientList({
                         {servings}
                     </span>
                     <button
+                        aria-label="Mehr Portionen"
                         onClick={() => onServingsChange(servings + 1)}
                         className={css({
-                            w: '10',
-                            h: '10',
+                            w: '8',
+                            h: '8',
                             borderRadius: 'full',
-                            bg: 'surface',
+                            bg: 'light',
                             border: '1px solid',
                             borderColor: 'border',
                             cursor: 'pointer',
-                            fontSize: 'xl',
-                            _hover: { bg: 'light' },
+                            fontSize: 'lg',
+                            lineHeight: '1',
+                            _hover: { bg: 'surface' },
                         })}
                     >
                         +
@@ -226,17 +230,19 @@ export function IngredientList({
                 </div>
             </div>
 
-            <ul className={css({ spaceY: '2' })}>
+            <ul>
                 {ingredients.map((ingredient, index) => (
                     <li
                         key={index}
                         className={flex({
                             justify: 'space-between',
-                            align: 'center',
-                            p: '2',
-                            bg: 'light',
-                            borderRadius: 'lg',
+                            align: 'baseline',
+                            gap: '3',
+                            py: '1.5',
                             fontFamily: 'body',
+                            borderBottom: '1px solid',
+                            borderColor: 'border.muted',
+                            _last: { borderBottom: 'none' },
                         })}
                     >
                         <div>
@@ -250,7 +256,7 @@ export function IngredientList({
                             {ingredient.notes && (
                                 <span
                                     className={css({
-                                        display: 'block',
+                                        ml: '1.5',
                                         fontSize: 'xs',
                                         color: 'text-muted',
                                         fontStyle: 'italic',
@@ -260,7 +266,12 @@ export function IngredientList({
                                 </span>
                             )}
                         </div>
-                        <span className={css({ color: 'text-muted' })}>
+                        <span
+                            className={css({
+                                color: 'text-muted',
+                                whiteSpace: 'nowrap',
+                            })}
+                        >
                             {formatAmount(ingredient.amount)} {ingredient.unit}
                         </span>
                     </li>
@@ -466,7 +477,7 @@ export function IngredientList({
                                                     key={`${row.ingredient.name}-${row.ingredient.unit}-${row.ingredient.rawAmount ?? row.ingredient.amount}`}
                                                     className={css({
                                                         borderBottom: '1px solid',
-                                                        borderColor: 'border.subtle',
+                                                        borderColor: 'border.muted',
                                                     })}
                                                 >
                                                     <TableCell>

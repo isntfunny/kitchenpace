@@ -33,6 +33,38 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 const CHANGELOG: ChangelogEntry[] = [
     {
         date: '11. Juni 2026',
+        version: 'v2026-06-11.2',
+        emoji: '⚡',
+        title: 'Schnellere Startseite & rundum gepflegte Oberfläche',
+        items: [
+            {
+                text: 'Die Startseite lädt jetzt spürbar schneller — besonders auf dem Handy ist sie deutlich flotter da',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Frischer Startbildschirm: kompakteres Layout auf dem Handy und ein neuer Begrüßungstext',
+                tag: 'feat',
+            },
+            {
+                text: 'Beim Rezept-Import schätzt die KI Kochzeiten gezielter — nur noch dort, wo das Timing wirklich zählt',
+                tag: 'feat',
+            },
+            {
+                text: 'Die Portionen-Steuerung sitzt jetzt kompakt über der Zutatenliste, und die Zutatenliste selbst wird sauberer dargestellt',
+                tag: 'feat',
+            },
+            {
+                text: 'Die „Zuletzt angesehen"-Leiste im Kopfbereich wurde neu gebaut und funktioniert wieder zuverlässig',
+                tag: 'fix',
+            },
+            {
+                text: 'Dein Profilname wird jetzt überall korrekt angezeigt — auch im Aktivitätsfeed',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
+        date: '11. Juni 2026',
         version: 'v2026-06-11',
         emoji: '🔍',
         title: 'Themenseiten, besseres Teilen & Sichtbarkeit in Suchmaschinen',

@@ -1,28 +1,9 @@
 #!/bin/sh
 set -e
 
-# If Infisical is configured, load secrets into shell environment
-if [ -n "$INFISICAL_CLIENT_ID" ] && [ "$__INFISICAL_LOADED" != "1" ]; then
-  echo "[entrypoint] Loading secrets from Infisical..."
-  export __INFISICAL_LOADED=1
-  export HOME=/tmp
-  export INFISICAL_UNIVERSAL_AUTH_CLIENT_ID="${INFISICAL_CLIENT_ID}"
-  export INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET="${INFISICAL_CLIENT_SECRET}"
-  export INFISICAL_TOKEN=$(npx infisical login \
-    --method=universal-auth --plain --silent)
-  if [ -z "$INFISICAL_TOKEN" ]; then
-    echo "[entrypoint] ERROR: Failed to authenticate with Infisical" >&2
-    exit 1
-  fi
-  npx infisical export \
-    --projectId "${INFISICAL_PROJECT_ID}" \
-    --env "${INFISICAL_ENV:-prod}" \
-    --format=dotenv-export > /tmp/.env.infisical
-  . /tmp/.env.infisical
-  echo "[entrypoint] Loaded $(wc -l < /tmp/.env.infisical) secrets from Infisical"
-fi
+# Env vars (DATABASE_URL, secrets, …) are injected by Coolify at runtime.
 
-# Worker skips database setup (Infisical secrets are already loaded above)
+# Worker skips database setup
 if [ "$SKIP_MIGRATIONS" = "1" ]; then
   echo "[entrypoint] Skipping migrations (worker mode)"
   exec "$@"

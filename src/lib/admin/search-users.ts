@@ -29,7 +29,7 @@ export async function searchUsers(query: string) {
 
     return users.map((user) => ({
         id: user.id,
-        name: user.name ?? user.profile?.nickname ?? 'Unbekannt',
+        name: user.profile?.nickname ?? user.name ?? 'Unbekannt',
         nickname: user.profile?.nickname ?? null,
         role: user.role,
         photoKey: user.profile?.photoKey ?? null,

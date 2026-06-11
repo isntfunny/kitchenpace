@@ -152,7 +152,7 @@ export function mapLogToFeedItem(
         if (options?.respectShowInActivity && targetUser?.profile?.showInActivity === false) {
             template = 'hat jemandem gefolgt';
         } else {
-            targetUserName = targetUser?.name || targetUser?.profile?.nickname || undefined;
+            targetUserName = targetUser?.profile?.nickname || targetUser?.name || undefined;
             if (!targetUserName) template = 'hat jemandem gefolgt';
             targetUserId = targetUser?.id;
             targetUserSlug = targetUser?.profile?.slug ?? targetUserId;
@@ -165,7 +165,7 @@ export function mapLogToFeedItem(
         icon: base.icon,
         iconBg: base.bg,
         template,
-        userName: user?.name || user?.profile?.nickname || 'Küchenfreund',
+        userName: user?.profile?.nickname || user?.name || 'Küchenfreund',
         userId: user?.id,
         userSlug: user?.profile?.slug ?? user?.id,
         userPhotoKey: user?.profile?.photoKey ?? null,

@@ -1,5 +1,6 @@
 import type { ActivityType } from '@prisma/client';
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 import type { ActivityFeedItem } from '@app/app/actions/community';
 import { fetchUserTrophies } from '@app/app/actions/trophies';
@@ -10,9 +11,6 @@ import { getThumbnailUrlBySource } from '@app/lib/thumbnail';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
-
-import { css } from 'styled-system/css';
-import { container } from 'styled-system/patterns';
 
 import { UserProfileClient, type UserProfileData } from './UserProfileClient';
 
@@ -47,7 +45,7 @@ const buildUserMetadata = async (
     const profileImageUrl = await getThumbnailUrlBySource({ type: 'user', id: userId }, '1:1', 640);
 
     return {
-        title: `${name} | KochTakt`,
+        title: name,
         description: `Entdecke die Rezepte von ${name} auf KochTakt.`,
         alternates: { canonical: `${APP_URL}/user/${userSlug}` },
         openGraph: {
@@ -316,13 +314,23 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
 
 export async function generateMetadata({ params }: UserProfileProps): Promise<Metadata> {
     const resolvedParams = await params;
-    const user = await getUserProfile(resolvedParams.id);
+    // Slim lookup — the full profile query (recipes, favorites, trophies,
+    // activities) is far too heavy just to build title and OG image
+    const user = await prisma.user.findFirst({
+        where: { profile: { slug: resolvedParams.id } },
+        select: {
+            id: true,
+            name: true,
+            profile: { select: { slug: true, nickname: true } },
+        },
+    });
     if (!user) {
         return {
-            title: 'Benutzer nicht gefunden | KochTakt',
+            title: 'Benutzer nicht gefunden',
         };
     }
-    return buildUserMetadata(user.name, user.id, user.slug);
+    const name = user.name ?? user.profile?.nickname ?? 'Unbekannt';
+    return buildUserMetadata(name, user.id, user.profile?.slug ?? user.id);
 }
 
 export default async function UserProfilePage({ params, searchParams }: UserProfileProps) {
@@ -339,24 +347,7 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
     ]);
 
     if (!user) {
-        return (
-            <PageShell>
-                <div className={css({ minH: '100vh', color: 'text' })}>
-                    <main className={container({ maxW: '1400px', mx: 'auto', px: '4', py: '8' })}>
-                        <div className={css({ textAlign: 'center', py: '20' })}>
-                            <h1
-                                className={css({ fontFamily: 'heading', fontSize: '3xl', mb: '4' })}
-                            >
-                                Benutzer nicht gefunden
-                            </h1>
-                            <p className={css({ color: 'text-muted' })}>
-                                Der gesuchte Benutzer existiert leider nicht.
-                            </p>
-                        </div>
-                    </main>
-                </div>
-            </PageShell>
-        );
+        notFound();
     }
 
     let viewer: { id: string; isSelf: boolean; isFollowing: boolean } | undefined;
@@ -378,8 +369,31 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
         }
     }
 
+    const profileUrl = `${APP_URL}/user/${user.slug}`;
+    const profileJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'ProfilePage',
+        '@id': `${profileUrl}#profile`,
+        url: profileUrl,
+        inLanguage: 'de-DE',
+        mainEntity: {
+            '@type': 'Person',
+            name: user.name,
+            url: profileUrl,
+            ...(user.bio && { description: user.bio }),
+            ...(user.avatar && {
+                image: user.avatar.startsWith('http') ? user.avatar : `${APP_URL}${user.avatar}`,
+            }),
+        },
+    };
+
     return (
         <PageShell>
+            <script
+                type="application/ld+json"
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
+            />
             <UserProfileClient user={user} viewer={viewer} />
         </PageShell>
     );

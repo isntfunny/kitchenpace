@@ -12,7 +12,7 @@ import { css } from 'styled-system/css';
 import { NotificationsPageContent } from './NotificationsPageContent';
 
 export const metadata = {
-    title: 'Benachrichtigungen | KochTakt',
+    title: 'Benachrichtigungen',
 };
 
 export default async function NotificationsPage() {

@@ -5,7 +5,7 @@ import { PageShell } from '@app/components/layouts/PageShell';
 import { css } from 'styled-system/css';
 
 export const metadata: Metadata = {
-    title: 'Datenschutzerklärung — KochTakt',
+    title: 'Datenschutzerklärung',
     description:
         'Datenschutzerklärung von KochTakt — Informationen zur Verarbeitung personenbezogener Daten gemäß DSGVO.',
 };

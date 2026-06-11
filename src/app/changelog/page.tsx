@@ -7,7 +7,7 @@ import { css } from 'styled-system/css';
 import { FadeIn, ScaleIn } from './animations';
 
 export const metadata: Metadata = {
-    title: 'Changelog — KochTakt',
+    title: 'Changelog',
     description: 'Was gibt es Neues bei KochTakt?',
 };
 

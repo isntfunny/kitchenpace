@@ -3,7 +3,6 @@ import Link from 'next/link';
 
 import type { TrendingTagData } from '@app/app/actions/community';
 import { AnimatedFlame } from '@app/components/motion/AnimatedFlame';
-import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 
 import { css } from 'styled-system/css';
 
@@ -79,7 +78,7 @@ export function TrendingTags({ tags }: TrendingTagsProps) {
                 {tags.map((item) => (
                     <Link
                         key={item.tag}
-                        href={buildRecipeFilterHref({ tags: [item.tag] })}
+                        href={`/tag/${item.slug}`}
                         className={css({
                             position: 'relative',
                             display: 'inline-flex',

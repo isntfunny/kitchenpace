@@ -232,48 +232,56 @@ export function IngredientList({
 
             <ul>
                 {ingredients.map((ingredient, index) => (
-                    <li
-                        key={index}
-                        className={flex({
-                            justify: 'space-between',
-                            align: 'baseline',
-                            gap: '3',
-                            py: '1.5',
-                            fontFamily: 'body',
-                            borderBottom: '1px solid',
-                            borderColor: 'border.muted',
-                            _last: { borderBottom: 'none' },
-                        })}
-                    >
-                        <div>
-                            <span className={css({ fontWeight: '500' })}>
-                                {ingredientDisplayName(
-                                    ingredient.name,
-                                    ingredient.pluralName ?? null,
-                                    String(ingredient.amount),
-                                )}
-                            </span>
-                            {ingredient.notes && (
-                                <span
-                                    className={css({
-                                        ml: '1.5',
-                                        fontSize: 'xs',
-                                        color: 'text-muted',
-                                        fontStyle: 'italic',
-                                    })}
-                                >
-                                    {ingredient.notes}
-                                </span>
-                            )}
-                        </div>
-                        <span
-                            className={css({
-                                color: 'text-muted',
-                                whiteSpace: 'nowrap',
+                    <li key={index}>
+                        <div
+                            className={flex({
+                                justify: 'space-between',
+                                align: 'baseline',
+                                gap: '3',
+                                py: '2',
+                                fontFamily: 'body',
                             })}
                         >
-                            {formatAmount(ingredient.amount)} {ingredient.unit}
-                        </span>
+                            <div>
+                                <span className={css({ fontWeight: '500' })}>
+                                    {ingredientDisplayName(
+                                        ingredient.name,
+                                        ingredient.pluralName ?? null,
+                                        String(ingredient.amount),
+                                    )}
+                                </span>
+                                {ingredient.notes && (
+                                    <span
+                                        className={css({
+                                            ml: '1.5',
+                                            fontSize: 'xs',
+                                            color: 'text-muted',
+                                            fontStyle: 'italic',
+                                        })}
+                                    >
+                                        {ingredient.notes}
+                                    </span>
+                                )}
+                            </div>
+                            <span
+                                className={css({
+                                    color: 'text-muted',
+                                    whiteSpace: 'nowrap',
+                                })}
+                            >
+                                {formatAmount(ingredient.amount)} {ingredient.unit}
+                            </span>
+                        </div>
+                        {index < ingredients.length - 1 && (
+                            <div
+                                aria-hidden
+                                className={css({
+                                    mx: '2',
+                                    h: '1px',
+                                    bg: 'border',
+                                })}
+                            />
+                        )}
                     </li>
                 ))}
             </ul>

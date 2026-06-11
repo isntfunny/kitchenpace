@@ -2,6 +2,10 @@ import type { MetadataRoute } from 'next';
 
 import { APP_URL } from '@app/lib/url';
 
+// Resolve APP_URL at request time — a statically built robots.txt would
+// freeze the sitemap URL with the build-time domain (see sitemap.ts)
+export const dynamic = 'force-dynamic';
+
 export default function robots(): MetadataRoute.Robots {
     return {
         rules: {

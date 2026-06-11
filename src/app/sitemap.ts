@@ -10,6 +10,11 @@ import {
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 
+// The sitemap MUST be generated at request time: during `next build` the
+// database is unreachable (dummy DATABASE_URL in Docker), so a static
+// sitemap would be frozen without any recipe/category/user URLs.
+export const dynamic = 'force-dynamic';
+
 /** Routes excluded from sitemap (must match robots.ts disallow list) */
 const EXCLUDED_PREFIXES = [
     '/api',

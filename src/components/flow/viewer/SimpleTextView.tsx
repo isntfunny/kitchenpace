@@ -73,42 +73,83 @@ export function SimpleTextView({
                                 })}
                                 {...(isDone ? { 'data-done': '' } : {})}
                             >
-                                {/* Clickable step icon — toggles done */}
-                                <button
-                                    type="button"
-                                    onClick={() => dispatch({ type: 'toggle', nodeId: node.id })}
+                                {/* Left gutter: step-type icon + completion checkbox, stacked */}
+                                <div
                                     className={css({
                                         flexShrink: 0,
-                                        width: '32px',
-                                        height: '32px',
-                                        borderRadius: 'full',
                                         display: 'flex',
+                                        flexDirection: 'column',
                                         alignItems: 'center',
-                                        justifyContent: 'center',
-                                        border: 'none',
-                                        cursor: 'pointer',
+                                        gap: '1.5',
                                         mt: '0.5',
-                                        transition: 'all 0.2s ease',
                                     })}
-                                    style={{
-                                        backgroundColor: isDone
-                                            ? 'rgba(0,184,148,0.2)'
-                                            : isLast
-                                              ? 'rgba(0,184,148,0.12)'
-                                              : 'rgba(224,123,83,0.1)',
-                                        color: isDone
-                                            ? PALETTE.emerald
-                                            : isLast
-                                              ? PALETTE.emerald
-                                              : PALETTE.orange,
-                                    }}
                                 >
-                                    {isDone ? (
-                                        <Check style={{ width: 16, height: 16 }} />
-                                    ) : (
+                                    {/* Step-type icon (decorative — shows what kind of step this is) */}
+                                    <div
+                                        className={css({
+                                            width: '32px',
+                                            height: '32px',
+                                            borderRadius: 'full',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        })}
+                                        style={{
+                                            backgroundColor: isLast
+                                                ? 'rgba(0,184,148,0.12)'
+                                                : 'rgba(224,123,83,0.1)',
+                                            color: isLast ? PALETTE.emerald : PALETTE.orange,
+                                        }}
+                                    >
                                         <Icon style={{ width: 16, height: 16 }} />
-                                    )}
-                                </button>
+                                    </div>
+
+                                    {/* Completion checkbox — empty ring invites a tap; hover previews the check */}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            dispatch({ type: 'toggle', nodeId: node.id })
+                                        }
+                                        aria-pressed={isDone}
+                                        aria-label={
+                                            isDone
+                                                ? 'Schritt als nicht erledigt markieren'
+                                                : 'Schritt als erledigt markieren'
+                                        }
+                                        title={isDone ? 'Erledigt' : 'Als erledigt markieren'}
+                                        className={css({
+                                            width: '24px',
+                                            height: '24px',
+                                            borderRadius: 'md',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '2px solid',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease',
+                                            '& .check-preview': { opacity: 0 },
+                                            '&:hover .check-preview': { opacity: 0.45 },
+                                        })}
+                                        style={{
+                                            borderColor: isDone
+                                                ? PALETTE.emerald
+                                                : 'rgba(224,123,83,0.4)',
+                                            backgroundColor: isDone
+                                                ? 'rgba(0,184,148,0.15)'
+                                                : 'transparent',
+                                            color: PALETTE.emerald,
+                                        }}
+                                    >
+                                        {isDone ? (
+                                            <Check style={{ width: 15, height: 15 }} />
+                                        ) : (
+                                            <Check
+                                                className="check-preview"
+                                                style={{ width: 15, height: 15 }}
+                                            />
+                                        )}
+                                    </button>
+                                </div>
 
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     {/* Title + duration */}
@@ -128,7 +169,9 @@ export function SimpleTextView({
                                                 color: 'text',
                                             })}
                                             style={{
-                                                textDecoration: isDone ? 'line-through' : 'none',
+                                                textDecorationLine: isDone
+                                                    ? 'line-through'
+                                                    : 'none',
                                                 textDecorationColor: 'rgba(0,184,148,0.4)',
                                             }}
                                         >

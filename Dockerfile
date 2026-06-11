@@ -28,12 +28,6 @@ ENV DATABASE_URL=${DATABASE_URL}
 ENV REACT_PROFILE=${REACT_PROFILE}
 ENV NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
-# Force a production build even when the deploy platform (Coolify) injects
-# app env vars as build args — a non-standard NODE_ENV flips React into
-# dev mode: slower build, much higher memory, dev-only warnings
-ENV NODE_ENV=production
-# Headroom for static generation with the React compiler enabled
-ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 WORKDIR /app
 

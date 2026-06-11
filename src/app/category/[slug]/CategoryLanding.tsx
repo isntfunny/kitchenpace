@@ -1,13 +1,12 @@
 'use client';
 
-import { Bookmark, ChefHat, Clock, Flame, Star, Utensils, type LucideIcon } from 'lucide-react';
-import * as icons from 'lucide-react';
+import { Bookmark, ChefHat, Clock, Flame, Star, type LucideIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
-import { createElement } from 'react';
 
 import type { ActivityFeedItem } from '@app/app/actions/community';
 import type { RecipeCardData } from '@app/app/actions/recipes';
+import { DynamicLucideIcon } from '@app/components/atoms/DynamicLucideIcon';
 import { HorizontalRecipeScroll } from '@app/components/features/HorizontalRecipeScroll';
 import type { TermFacet } from '@app/lib/recipeSearchTypes';
 
@@ -23,16 +22,6 @@ import { RandomRecipeSpotlight } from './components/RandomRecipeSpotlight';
 
 // ─── Icon resolver ───────────────────────────────────────────────────────────
 
-function resolveLucideIcon(iconName: string | null): LucideIcon {
-    if (!iconName) return Utensils;
-    const pascal = iconName
-        .split('-')
-        .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-        .join('');
-    const icon = (icons as Record<string, unknown>)[pascal];
-    return (icon as LucideIcon) ?? Utensils;
-}
-
 function CategoryIcon({
     name,
     size,
@@ -42,7 +31,7 @@ function CategoryIcon({
     size: number;
     color?: string;
 }) {
-    return createElement(resolveLucideIcon(name), { size, color: iconColor });
+    return <DynamicLucideIcon name={name} size={size} color={iconColor} />;
 }
 
 // ─── Stat Pill ───────────────────────────────────────────────────────────────

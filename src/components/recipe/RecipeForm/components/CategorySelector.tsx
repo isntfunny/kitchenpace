@@ -1,25 +1,11 @@
 'use client';
 
-import type { LucideIcon } from 'lucide-react';
-import * as icons from 'lucide-react';
-import { Utensils } from 'lucide-react';
-import { createElement } from 'react';
-
+import { DynamicLucideIcon } from '@app/components/atoms/DynamicLucideIcon';
 import { PALETTE } from '@app/lib/palette';
 
 import { css, cx } from 'styled-system/css';
 
 import { Category } from '../data';
-
-function resolveIcon(iconName: string | null): LucideIcon {
-    if (!iconName) return Utensils;
-    const pascal = iconName
-        .split('-')
-        .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-        .join('');
-    const icon = (icons as Record<string, unknown>)[pascal];
-    return (icon as LucideIcon) ?? Utensils;
-}
 
 interface CategorySelectorProps {
     categories: Category[];
@@ -76,7 +62,7 @@ export function CategorySelector({ categories, selectedIds, onToggle }: Category
                                     : undefined
                             }
                         >
-                            {createElement(resolveIcon(cat.icon), { size: 14 })}
+                            <DynamicLucideIcon name={cat.icon} size={14} />
                             {cat.name}
                         </button>
                     );

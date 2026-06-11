@@ -1,26 +1,11 @@
 'use client';
 
-import type { LucideIcon } from 'lucide-react';
-import * as icons from 'lucide-react';
-import { Utensils } from 'lucide-react';
 import Link from 'next/link';
-import React, { createElement } from 'react';
+import React from 'react';
+
+import { DynamicLucideIcon } from '@app/components/atoms/DynamicLucideIcon';
 
 import { css } from 'styled-system/css';
-
-function resolveIcon(iconName: string | null): LucideIcon {
-    if (!iconName) return Utensils;
-    const pascal = iconName
-        .split('-')
-        .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-        .join('');
-    const icon = (icons as Record<string, unknown>)[pascal];
-    return (icon as LucideIcon) ?? Utensils;
-}
-
-function DynamicIcon({ name, size }: { name: string | null; size: number }) {
-    return createElement(resolveIcon(name), { size });
-}
 
 export interface CategoryBarItem {
     slug: string;
@@ -102,7 +87,7 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                     color,
                                 }}
                             >
-                                <DynamicIcon name={cat.icon} size={22} />
+                                <DynamicLucideIcon name={cat.icon} size={22} />
                                 <span
                                     data-cat-count
                                     className={css({

@@ -220,7 +220,7 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
     return {
         id: user.id,
         slug: user.profile?.slug ?? user.id,
-        name: user.name ?? user.profile?.nickname ?? 'Unbekannt',
+        name: user.profile?.nickname ?? user.name ?? 'Unbekannt',
         avatar: user.profile?.photoKey
             ? getThumbnailUrl(user.profile.photoKey, '1:1', 96)
             : (user.image ?? null),
@@ -295,7 +295,7 @@ async function getUserProfile(slug: string, page: number = 1): Promise<UserProfi
                     icon: decor.icon,
                     iconBg: decor.bg,
                     template: decor.template,
-                    userName: user.name ?? user.profile?.nickname ?? 'Unbekannt',
+                    userName: user.profile?.nickname ?? user.name ?? 'Unbekannt',
                     userId: user.id,
                     userSlug: user.profile?.slug ?? user.id,
                     userPhotoKey: user.profile?.photoKey ?? null,
@@ -329,7 +329,7 @@ export async function generateMetadata({ params }: UserProfileProps): Promise<Me
             title: 'Benutzer nicht gefunden',
         };
     }
-    const name = user.name ?? user.profile?.nickname ?? 'Unbekannt';
+    const name = user.profile?.nickname ?? user.name ?? 'Unbekannt';
     return buildUserMetadata(name, user.id, user.profile?.slug ?? user.id);
 }
 

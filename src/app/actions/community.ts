@@ -123,7 +123,7 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
             return {
                 id: profile.userId,
                 slug: profile.slug,
-                name: profile.user.name || profile.nickname,
+                name: profile.nickname || profile.user.name || 'Unbekannt',
                 nickname: profile.nickname,
                 bio: profile.bio,
                 photoKey: profile.photoKey ?? null,
@@ -164,7 +164,7 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
     return {
         id: profile.userId,
         slug: profile.slug,
-        name: profile.user.name || profile.nickname,
+        name: profile.nickname || profile.user.name || 'Unbekannt',
         nickname: profile.nickname,
         bio: profile.bio,
         photoKey: profile.photoKey ?? null,

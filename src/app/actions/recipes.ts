@@ -352,7 +352,7 @@ export async function fetchRecipeBySlug(
             ? {
                   id: recipe.author.id,
                   slug: recipe.author.profile?.slug ?? recipe.author.id,
-                  name: recipe.author.name || 'Unbekannt',
+                  name: recipe.author.profile?.nickname || recipe.author.name || 'Unbekannt',
                   avatar: recipe.author.profile?.photoKey ?? null,
                   bio: recipe.author.profile?.bio || null,
                   recipeCount: recipe.author.profile?.recipeCount ?? 0,

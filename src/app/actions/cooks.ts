@@ -57,7 +57,7 @@ export async function fetchRecipeCookImages(slugOrId: string): Promise<CookImage
         createdAt: img.createdAt,
         user: {
             id: img.user.id,
-            name: img.user.name ?? img.user.profile?.nickname ?? 'Unbekannt',
+            name: img.user.profile?.nickname ?? img.user.name ?? 'Unbekannt',
             nickname: img.user.profile?.nickname ?? null,
             avatar: img.user.profile?.photoKey
                 ? getThumbnailUrl(img.user.profile.photoKey, '1:1', 96)

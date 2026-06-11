@@ -80,7 +80,7 @@ export const upsertProfile = async (params: { userId: string; data: ProfileField
         async (s) => !!(await prisma.profile.findUnique({ where: { slug: s } })),
     );
 
-    return prisma.profile.upsert({
+    const profile = await prisma.profile.upsert({
         where: { userId: params.userId },
         create: {
             userId: params.userId,
@@ -128,4 +128,15 @@ export const upsertProfile = async (params: { userId: string; data: ProfileField
             notifyOnNewsletter: definedData.notifyOnNewsletter,
         },
     });
+
+    // Keep the auth-level display name in sync — consumers reading user.name
+    // (admin views, auth emails) would otherwise show the registration-time name forever.
+    if (definedData.nickname) {
+        await prisma.user.update({
+            where: { id: params.userId },
+            data: { name: definedData.nickname },
+        });
+    }
+
+    return profile;
 };

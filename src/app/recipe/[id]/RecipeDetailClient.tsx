@@ -246,7 +246,7 @@ export function RecipeDetailClient({
         const extras = cookImages.map((img) => ({
             src: img.imageKey,
             thumbKey: img.imageKey,
-            title: img.user.name || img.user.nickname || 'Küchenfreund',
+            title: img.user.nickname || img.user.name || 'Küchenfreund',
             subtitle: img.caption || 'Foto',
             reportable: {
                 contentType: 'cook_image' as const,

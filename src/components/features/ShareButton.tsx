@@ -2,7 +2,7 @@
 
 import { SiFacebook, SiPinterest, SiWhatsapp, SiX } from '@icons-pack/react-simple-icons';
 import { Check, Copy, Share2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
@@ -15,17 +15,22 @@ interface ShareButtonProps {
     imageKey?: string;
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://kitchenpace.app';
-
-function buildShareUrl(slug: string) {
-    return `${SITE_URL}/recipe/${slug}`;
-}
+const SITE_URL_FALLBACK = process.env.NEXT_PUBLIC_APP_URL ?? 'https://kochtakt.de';
 
 export function ShareButton({ title, slug, imageKey }: ShareButtonProps) {
     const imgUrl = imageKey ? getThumbnailUrl(imageKey, '16:9', 1200) : undefined;
     const [open, setOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    // The real origin is only known in the browser (NEXT_PUBLIC_APP_URL is
+    // baked at build time and may belong to another environment) — the
+    // server snapshot keeps SSR/hydration consistent
+    const origin = useSyncExternalStore(
+        () => () => {},
+        () => window.location.origin,
+        () => SITE_URL_FALLBACK,
+    );
+    const buildShareUrl = (recipeSlug: string) => `${origin}/recipe/${recipeSlug}`;
 
     useEffect(() => {
         if (!open) return;

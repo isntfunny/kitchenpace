@@ -11,12 +11,11 @@ import {
     syncContactToNotifuse,
 } from '@app/lib/notifuse/email';
 import { generateUniqueSlug } from '@app/lib/slug';
+import { APP_URL } from '@app/lib/url';
 import { createLogger } from '@shared/logger';
 import { prisma } from '@shared/prisma';
 
 const log = createLogger('auth-server');
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
 const baseURL = process.env.BETTER_AUTH_URL ?? process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
 

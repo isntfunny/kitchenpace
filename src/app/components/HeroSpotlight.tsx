@@ -58,11 +58,11 @@ export function HeroSpotlight({ children }: { children?: React.ReactNode }) {
                     position: 'relative',
                     zIndex: 1,
                     display: 'flex',
-                    flexDirection: { base: 'column', md: 'row' },
+                    flexDirection: 'row',
                     alignItems: 'center',
-                    gap: { base: '3', md: '7' },
-                    px: { base: '5', md: '8' },
-                    py: { base: '5', md: '6' },
+                    gap: { base: '4', md: '7' },
+                    px: { base: '4', md: '8' },
+                    py: { base: '4', md: '6' },
                 })}
                 initial={{ y: 20 }}
                 animate={{ y: 0 }}
@@ -79,21 +79,22 @@ export function HeroSpotlight({ children }: { children?: React.ReactNode }) {
                     decoding="async"
                     className={css({
                         flexShrink: 0,
-                        // Mobile height is sized so the otter outranks the late-painting
-                        // cookie-consent paragraph as the LCP element (otter ~46k px² at
-                        // 150px lost to the banner's ~61k; 200px puts it well ahead).
-                        height: { base: '200px', md: '220px' },
+                        // LCP note: beside the text the otter renders ~124px wide → ~46k px²,
+                        // which loses to the cookie-consent paragraph (~59k px²) on a first
+                        // visit. Returning visitors (no banner) get the otter as instant LCP.
+                        // Beating the banner in this row layout would need ~225px height.
+                        height: { base: '196px', md: '220px' },
                         width: 'auto',
                         objectFit: 'contain',
                         filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.18))',
                     })}
                 />
 
-                <div className={css({ textAlign: { base: 'center', md: 'left' } })}>
+                <div className={css({ minWidth: 0, textAlign: 'left' })}>
                     <h1
                         className={css({
                             fontFamily: 'heading',
-                            fontSize: { base: '2xl', md: '3xl' },
+                            fontSize: { base: 'xl', md: '3xl' },
                             fontWeight: '700',
                             color: 'white',
                             lineHeight: '1.15',
@@ -105,15 +106,16 @@ export function HeroSpotlight({ children }: { children?: React.ReactNode }) {
                     <p
                         className={css({
                             color: 'rgba(255,255,255,0.9)',
-                            fontSize: { base: 'sm', md: 'md' },
+                            fontSize: { base: 'xs', md: 'md' },
                             maxW: '520px',
-                            lineHeight: '1.6',
-                            mt: '2',
-                            mx: { base: 'auto', md: '0' },
+                            lineHeight: '1.55',
+                            mt: { base: '1.5', md: '2' },
                         })}
                     >
-                        Sieh auf einen Blick, was gleichzeitig laeuft &ndash; ohne lange Listen.
-                        Parallele Schritte, klar visualisiert.
+                        Nudeln kochen, Soße rühren, Salat schnippeln &mdash; und alles soll
+                        gleichzeitig fertig sein? KochTakt zeigt dir dein Rezept als klaren Ablauf:
+                        was parallel läuft, was jetzt dran ist und wo du Zeit hast. Damit am Ende
+                        alles zusammen dampfend auf dem Tisch steht.
                     </p>
 
                     {children && <div className={css({ mt: '4' })}>{children}</div>}

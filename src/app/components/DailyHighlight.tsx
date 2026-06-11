@@ -47,6 +47,7 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                                 recipeId={recipe.id}
                                 sizes="(max-width: 768px) 100vw, 600px"
                                 loading="eager"
+                                fetchPriority="high"
                                 className={css({ objectFit: 'cover' })}
                             />
                             <div

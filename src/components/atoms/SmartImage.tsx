@@ -37,6 +37,8 @@ interface SmartImageProps {
     height?: number;
     /** Set to "eager" for above-the-fold hero images. Default: "lazy" */
     loading?: 'lazy' | 'eager';
+    /** Set to "high" for the LCP hero image so the browser fetches it first. */
+    fetchPriority?: 'high' | 'low' | 'auto';
 }
 
 export function SmartImage({
@@ -55,6 +57,7 @@ export function SmartImage({
     width,
     height,
     loading = 'lazy',
+    fetchPriority = 'auto',
 }: SmartImageProps) {
     const [error, setError] = useState(false);
 
@@ -132,6 +135,7 @@ export function SmartImage({
             width={fill ? undefined : width}
             height={fill ? undefined : height}
             loading={loading}
+            fetchPriority={fetchPriority}
             onLoad={isShowingFallback ? undefined : handleLoad}
             onError={isShowingFallback ? undefined : handleError}
             className={cx(

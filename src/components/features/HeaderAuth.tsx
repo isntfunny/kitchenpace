@@ -178,6 +178,7 @@ export function HeaderAuth() {
                     <DropdownMenu.Root>
                         <DropdownMenu.Trigger asChild>
                             <button
+                                aria-label="Profil-Menü öffnen"
                                 className={css({
                                     display: 'flex',
                                     alignItems: 'center',
@@ -287,6 +288,7 @@ export function HeaderAuth() {
     return (
         <button
             onClick={() => handleSignIn()}
+            aria-label="Anmelden"
             className={css({
                 display: 'flex',
                 alignItems: 'center',

@@ -110,6 +110,12 @@ export function CategoryBar({ categories }: CategoryBarProps) {
                                         fontWeight: '700',
                                         lineHeight: '1',
                                         transition: 'color 200ms ease',
+                                        // Pull the category hue towards black/white so the
+                                        // count stays readable on the soft tinted background.
+                                        color: {
+                                            base: 'color-mix(in srgb, var(--cat-color) 55%, black)',
+                                            _dark: 'color-mix(in srgb, var(--cat-color) 60%, white)',
+                                        },
                                     })}
                                 >
                                     {cat.recipeCount}

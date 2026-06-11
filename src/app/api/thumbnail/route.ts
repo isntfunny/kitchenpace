@@ -145,11 +145,20 @@ async function resolveImageKey(type: string | null, id: string | null): Promise<
 // Response helpers
 // ---------------------------------------------------------------------------
 
-function imageResponse(buffer: Buffer, contentType: string, cacheHit: 'MEMORY' | 'S3' | 'MISS') {
+function imageResponse(
+    buffer: Buffer,
+    contentType: string,
+    cacheHit: 'MEMORY' | 'S3' | 'MISS',
+    immutable = false,
+) {
     return new NextResponse(new Uint8Array(buffer), {
         headers: {
             'Content-Type': contentType,
-            'Cache-Control': 'public, max-age=86400',
+            // Key-based URLs never change content (new upload = new key) → cache long.
+            // Id-based URLs can point to a new image after an edit → revalidate daily.
+            'Cache-Control': immutable
+                ? 'public, max-age=31536000, immutable'
+                : 'public, max-age=86400, stale-while-revalidate=604800',
             'X-Cache': cacheHit,
         },
     });
@@ -197,9 +206,10 @@ export async function GET(request: NextRequest) {
     const width = requestedWidth ? snapToBreakpoint(requestedWidth) : 960;
 
     // Resolve the S3 key
+    const directKey = searchParams.get('key');
+    const isImmutableUrl = directKey !== null;
     const resolvedKey =
-        searchParams.get('key') ??
-        (await resolveImageKey(searchParams.get('type'), searchParams.get('id')));
+        directKey ?? (await resolveImageKey(searchParams.get('type'), searchParams.get('id')));
 
     if (!resolvedKey) {
         if (searchParams.get('type')) return placeholderResponse();
@@ -217,7 +227,7 @@ export async function GET(request: NextRequest) {
         // Tier 1: Memory cache
         const memHit = getFromMemory(tKey);
         if (memHit) {
-            return imageResponse(memHit.buffer, memHit.contentType, 'MEMORY');
+            return imageResponse(memHit.buffer, memHit.contentType, 'MEMORY', isImmutableUrl);
         }
 
         // Tier 2: S3 thumb cache
@@ -225,7 +235,7 @@ export async function GET(request: NextRequest) {
             if (await exists(tKey)) {
                 const s3Hit = await getBuffer(tKey);
                 setInMemory(tKey, s3Hit, 'image/webp');
-                return imageResponse(s3Hit, 'image/webp', 'S3');
+                return imageResponse(s3Hit, 'image/webp', 'S3', isImmutableUrl);
             }
         } catch {
             /* cache miss */
@@ -272,7 +282,7 @@ export async function GET(request: NextRequest) {
         }
 
         if (resultBuffer) {
-            return imageResponse(resultBuffer, 'image/webp', 'MISS');
+            return imageResponse(resultBuffer, 'image/webp', 'MISS', isImmutableUrl);
         }
 
         // Width larger than source — generate at source width
@@ -286,7 +296,7 @@ export async function GET(request: NextRequest) {
                       .toBuffer();
 
         setInMemory(tKey, fallbackBuffer, 'image/webp');
-        return imageResponse(fallbackBuffer, 'image/webp', 'MISS');
+        return imageResponse(fallbackBuffer, 'image/webp', 'MISS', isImmutableUrl);
     } catch (error) {
         log.error('Thumbnail generation failed', {
             key: resolvedKey,

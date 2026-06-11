@@ -73,7 +73,7 @@ export function FitsNowClient({ initialRecipes, initialContext }: FitsNowClientP
                         </span>
                     )}
                     <Select value={context.timeSlot} onValueChange={handleTimeChange}>
-                        <SelectTrigger style={{ width: '100%' }}>
+                        <SelectTrigger aria-label="Tageszeit wählen" style={{ width: '100%' }}>
                             <SelectValue placeholder="Tageszeit" />
                         </SelectTrigger>
                         <SelectContent>

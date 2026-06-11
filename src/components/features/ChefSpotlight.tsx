@@ -142,6 +142,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                                 alt={recipe.title}
                                 aspect="1:1"
                                 fill
+                                sizes="(max-width: 1024px) 33vw, 200px"
                                 className={css({ objectFit: 'cover' })}
                             />
                         </div>

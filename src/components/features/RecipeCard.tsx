@@ -106,6 +106,9 @@ function CategoryOverlay({ recipe, link }: { recipe: RecipeCardRecipe; link?: bo
         left: '2',
         color: 'white',
         padding: '2px 10px',
+        minHeight: '24px',
+        display: 'inline-flex',
+        alignItems: 'center',
         borderRadius: 'full',
         fontSize: '0.7rem',
         fontWeight: '600',
@@ -197,6 +200,7 @@ export function RecipeCard({
                         alt={recipe.title}
                         fill
                         recipeId={recipe.id}
+                        sizes="120px"
                         className={css({ objectFit: 'cover' })}
                     />
                     {imageOverlay}
@@ -220,7 +224,7 @@ export function RecipeCard({
                             <Badge>{recipe.category}</Badge>
                         </div>
                     )}
-                    <h4
+                    <h3
                         className={css({
                             fontWeight: '700',
                             fontFamily: 'heading',
@@ -231,7 +235,7 @@ export function RecipeCard({
                         })}
                     >
                         {recipe.title}
-                    </h4>
+                    </h3>
                     {recipe.description && (
                         <p
                             className={css({
@@ -377,6 +381,7 @@ export function RecipeCard({
                     alt={recipe.title}
                     fill
                     recipeId={recipe.id}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                     className={css({ objectFit: 'cover' })}
                 />
                 {!hideCategory && categoryOnImage && (
@@ -400,7 +405,7 @@ export function RecipeCard({
                     </div>
                 )}
 
-                <h4
+                <h3
                     className={css({
                         fontWeight: isCompact ? '600' : '700',
                         fontFamily: 'heading',
@@ -412,7 +417,7 @@ export function RecipeCard({
                     })}
                 >
                     {recipe.title}
-                </h4>
+                </h3>
 
                 {!isCompact && recipe.description && (
                     <p

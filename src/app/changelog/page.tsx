@@ -32,6 +32,34 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '11. Juni 2026',
+        version: 'v2026-06-11',
+        emoji: '🔍',
+        title: 'Themenseiten, besseres Teilen & Sichtbarkeit in Suchmaschinen',
+        items: [
+            {
+                text: 'Neu: Themenseiten für Tags und Zutaten — entdecke alle Rezepte zu einem Stichwort oder einer Zutat auf einer eigenen Seite. Die Trending-Tags auf der Startseite führen dich direkt dorthin',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Sammlungen lassen sich jetzt richtig teilen — geteilte Links zeigen Titel, Beschreibung und Coverbild als Vorschau und Sammlungen sind über Suchmaschinen auffindbar',
+                tag: 'feat',
+            },
+            {
+                text: 'Neuer Schnellzugriff im Seitenfuß auf Rezepte, Sammlungen und Changelog',
+                tag: 'feat',
+            },
+            {
+                text: 'Geteilte Links zur Startseite und zu Rezepten ohne Foto zeigen jetzt zuverlässig ein Vorschaubild',
+                tag: 'fix',
+            },
+            {
+                text: 'Sichtbarkeit in Suchmaschinen deutlich verbessert: vollständige Sitemap mit allen Rezepten, korrigierte Seitentitel und mehr strukturierte Daten für Google-Rich-Results',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '3. Juni 2026',
         version: 'v2026-06-03',
         emoji: '🍪',

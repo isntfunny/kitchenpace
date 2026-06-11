@@ -2,6 +2,7 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { Metadata } from 'next';
 
 import { PageShell } from '@app/components/layouts/PageShell';
+import { QueryProvider } from '@app/components/providers/QueryProvider';
 import { getServerAuthSession } from '@app/lib/auth';
 import {
     getTimeSeasonFilterSets,
@@ -89,15 +90,17 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
 
     return (
         <PageShell>
-            <HydrationBoundary state={dehydrate(queryClient)}>
-                <RecipeSearchClient
-                    initialFilters={initialFilters}
-                    filterOptions={{ tags, ingredients, categories }}
-                    initialData={initialData}
-                    filterSets={filterSets}
-                    isLoggedIn={!!session?.user}
-                />
-            </HydrationBoundary>
+            <QueryProvider>
+                <HydrationBoundary state={dehydrate(queryClient)}>
+                    <RecipeSearchClient
+                        initialFilters={initialFilters}
+                        filterOptions={{ tags, ingredients, categories }}
+                        initialData={initialData}
+                        filterSets={filterSets}
+                        isLoggedIn={!!session?.user}
+                    />
+                </HydrationBoundary>
+            </QueryProvider>
         </PageShell>
     );
 }

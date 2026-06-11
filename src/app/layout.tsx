@@ -20,7 +20,6 @@ import { getServerAuthSession } from '@app/lib/auth';
 import { getServerFeatureFlags } from '@app/lib/flags/server';
 import { getOrCreateProfile } from '@app/lib/profile';
 import { APP_URL } from '@app/lib/url';
-import { TRPCReactProvider } from '@app/trpc/client';
 import { prisma } from '@shared/prisma';
 
 const websiteJsonLd = {
@@ -293,34 +292,32 @@ export default async function RootLayout({
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
                 />
                 <PageProgress />
-                <TRPCReactProvider>
-                    <FeatureFlagsProvider initialState={featureFlags}>
-                        <ThemeProvider>
-                            <AuthProvider>
-                                <ToastProvider>
-                                    <ConsentProvider>
-                                        <AnalyticsScripts
-                                            clientId={hasOpenPanel ? openPanelClientId : ''}
-                                            globalProperties={openPanelGlobalProperties}
-                                            identify={identifyProps}
-                                        />
-                                        <ChatwootWidgetComponent user={chatwootUser} />
-                                        <AchievementListener />
-                                        <ProfileProvider profile={profile}>
-                                            <RecipeTabsProvider
-                                                initialPinned={pinnedRecipes}
-                                                initialRecent={recentRecipes}
-                                                serverDataFetched={!!session?.user?.id}
-                                            >
-                                                {children}
-                                            </RecipeTabsProvider>
-                                        </ProfileProvider>
-                                    </ConsentProvider>
-                                </ToastProvider>
-                            </AuthProvider>
-                        </ThemeProvider>
-                    </FeatureFlagsProvider>
-                </TRPCReactProvider>
+                <FeatureFlagsProvider initialState={featureFlags}>
+                    <ThemeProvider>
+                        <AuthProvider>
+                            <ToastProvider>
+                                <ConsentProvider>
+                                    <AnalyticsScripts
+                                        clientId={hasOpenPanel ? openPanelClientId : ''}
+                                        globalProperties={openPanelGlobalProperties}
+                                        identify={identifyProps}
+                                    />
+                                    <ChatwootWidgetComponent user={chatwootUser} />
+                                    <AchievementListener />
+                                    <ProfileProvider profile={profile}>
+                                        <RecipeTabsProvider
+                                            initialPinned={pinnedRecipes}
+                                            initialRecent={recentRecipes}
+                                            serverDataFetched={!!session?.user?.id}
+                                        >
+                                            {children}
+                                        </RecipeTabsProvider>
+                                    </ProfileProvider>
+                                </ConsentProvider>
+                            </ToastProvider>
+                        </AuthProvider>
+                    </ThemeProvider>
+                </FeatureFlagsProvider>
             </body>
         </html>
     );

@@ -1,141 +1,22 @@
 'use server';
 
-import {
-    fetchPinnedEntries,
-    isPinnedTableMissingError,
-    markHistoryPinned,
-    MAX_PINNED,
-    type RecipeSummary,
-} from '@app/app/api/recipe-tabs/helpers';
 import { getServerAuthSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
+import { fetchRecipeTabs } from '@app/lib/recipe-tabs/queries';
+import { MAX_PINNED, MAX_RECENT, type RecipeTabsData } from '@app/lib/recipe-tabs/types';
 import { prisma } from '@shared/prisma';
 
-const MAX_RECENT = 5;
-const SIGNIN_ERROR = new Error('NOT_AUTHENTICATED');
-
-async function requireAuth(context: string) {
+async function requireAuth(context: string): Promise<string> {
     const session = await getServerAuthSession(context);
     if (!session?.user?.id) {
-        throw SIGNIN_ERROR;
+        throw new Error('NOT_AUTHENTICATED');
     }
     return session.user.id;
 }
 
-type TabsResult = {
-    pinned: RecipeSummary[];
-    recent: RecipeSummary[];
-};
-
-async function fetchTabsData(userId: string): Promise<TabsResult> {
-    const [{ entries: pinned }, recentViews] = await Promise.all([
-        fetchPinnedEntries(userId),
-        prisma.userViewHistory.findMany({
-            where: { userId },
-            include: {
-                recipe: {
-                    select: {
-                        id: true,
-                        title: true,
-                        slug: true,
-                        imageKey: true,
-                        prepTime: true,
-                        cookTime: true,
-                        difficulty: true,
-                    },
-                },
-            },
-            orderBy: { viewedAt: 'desc' },
-            take: MAX_RECENT + 3,
-        }),
-    ]);
-
-    const pinnedIds = new Set(pinned.map((p) => p.id));
-
-    const recent = recentViews
-        .filter((view) => !pinnedIds.has(view.recipe.id))
-        .slice(0, MAX_RECENT)
-        .map((view, index) => ({
-            id: view.recipe.id,
-            title: view.recipe.title,
-            slug: view.recipe.slug ?? undefined,
-            imageKey: view.recipe.imageKey,
-            prepTime: view.recipe.prepTime ?? undefined,
-            cookTime: view.recipe.cookTime ?? undefined,
-            difficulty: view.recipe.difficulty ?? undefined,
-            position: index,
-        }));
-
-    return { pinned, recent };
-}
-
-export async function refreshRecipeTabsAction(): Promise<TabsResult> {
+export async function refreshRecipeTabsAction(): Promise<RecipeTabsData> {
     const userId = await requireAuth('action/recipe-tabs:refresh');
-    return fetchTabsData(userId);
-}
-
-export async function pinRecipeAction(recipeId: string): Promise<TabsResult> {
-    const userId = await requireAuth('action/recipe-tabs:pin');
-
-    const recipe = await prisma.recipe.findUnique({
-        where: { id: recipeId },
-        select: { id: true },
-    });
-
-    if (!recipe) {
-        throw new Error('Recipe not found');
-    }
-
-    const { entries: existingPinned, source } = await fetchPinnedEntries(userId);
-
-    if (!existingPinned.some((entry) => entry.id === recipeId)) {
-        if (existingPinned.length >= MAX_PINNED) {
-            throw new Error(`Maximum ${MAX_PINNED} pinned recipes allowed`);
-        }
-
-        if (source === 'table') {
-            const usedSlots = new Set(existingPinned.map((entry) => entry.position));
-            const availablePosition = [0, 1, 2].find((slot) => !usedSlots.has(slot)) ?? 0;
-
-            await prisma.pinnedFavorite.create({
-                data: { userId, recipeId, position: availablePosition },
-            });
-
-            await markHistoryPinned(userId, recipeId, true);
-        } else {
-            await markHistoryPinned(userId, recipeId, true);
-        }
-
-        logAuth('info', 'pinRecipeAction: pinned recipe', { userId, recipeId });
-    }
-
-    return fetchTabsData(userId);
-}
-
-export async function unpinRecipeAction(recipeId: string): Promise<TabsResult> {
-    const userId = await requireAuth('action/recipe-tabs:unpin');
-
-    try {
-        const pinned = await prisma.pinnedFavorite.findUnique({
-            where: { userId_recipeId: { userId, recipeId } },
-        });
-
-        if (pinned) {
-            await prisma.pinnedFavorite.delete({ where: { id: pinned.id } });
-        }
-
-        await markHistoryPinned(userId, recipeId, false);
-    } catch (error) {
-        if (isPinnedTableMissingError(error)) {
-            await markHistoryPinned(userId, recipeId, false);
-        } else {
-            throw error;
-        }
-    }
-
-    logAuth('info', 'unpinRecipeAction: removed pinned recipe', { userId, recipeId });
-
-    return fetchTabsData(userId);
+    return fetchRecipeTabs(userId);
 }
 
 export async function addToRecentAction(recipeId: string, source?: string | null): Promise<void> {
@@ -145,51 +26,124 @@ export async function addToRecentAction(recipeId: string, source?: string | null
         where: { id: recipeId },
         select: { id: true },
     });
-
     if (!recipe) return;
 
-    const history = await prisma.userViewHistory.findFirst({
-        where: { userId, recipeId },
+    await prisma.userViewHistory.upsert({
+        where: { userId_recipeId: { userId, recipeId } },
+        update: { viewedAt: new Date(), ...(source ? { source } : {}) },
+        create: { userId, recipeId, ...(source ? { source } : {}) },
     });
-
-    if (history) {
-        await prisma.userViewHistory.update({
-            where: { id: history.id },
-            data: { viewedAt: new Date(), ...(source ? { source } : {}) },
-        });
-    } else {
-        await prisma.userViewHistory.create({
-            data: { userId, recipeId, viewedAt: new Date(), ...(source ? { source } : {}) },
-        });
-    }
 }
 
-export async function migrateLocalRecipesAction(recipeIds: string[]): Promise<TabsResult> {
-    const userId = await requireAuth('action/recipe-tabs:migrate');
+/**
+ * Pins a recipe. When all slots are taken, the oldest pin is replaced
+ * so pinning never fails silently for the user.
+ */
+export async function pinRecipeAction(recipeId: string): Promise<RecipeTabsData> {
+    const userId = await requireAuth('action/recipe-tabs:pin');
 
-    for (const recipeId of recipeIds.slice(0, MAX_RECENT)) {
-        const recipe = await prisma.recipe.findUnique({
-            where: { id: recipeId },
-            select: { id: true },
-        });
-
-        if (!recipe) continue;
-
-        const history = await prisma.userViewHistory.findFirst({
-            where: { userId, recipeId },
-        });
-
-        if (history) {
-            await prisma.userViewHistory.update({
-                where: { id: history.id },
-                data: { viewedAt: new Date() },
-            });
-        } else {
-            await prisma.userViewHistory.create({
-                data: { userId, recipeId, viewedAt: new Date() },
-            });
-        }
+    const recipe = await prisma.recipe.findUnique({
+        where: { id: recipeId },
+        select: { id: true },
+    });
+    if (!recipe) {
+        throw new Error('Recipe not found');
     }
 
-    return fetchTabsData(userId);
+    await prisma.$transaction(async (tx) => {
+        const existing = await tx.pinnedFavorite.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'asc' },
+        });
+
+        if (existing.some((pin) => pin.recipeId === recipeId)) return;
+
+        if (existing.length >= MAX_PINNED) {
+            await tx.pinnedFavorite.delete({ where: { id: existing[0].id } });
+            existing.shift();
+        }
+
+        const usedSlots = new Set(existing.map((pin) => pin.position));
+        const position =
+            Array.from({ length: MAX_PINNED }, (_, slot) => slot).find(
+                (slot) => !usedSlots.has(slot),
+            ) ?? 0;
+
+        await tx.pinnedFavorite.create({ data: { userId, recipeId, position } });
+    });
+
+    logAuth('info', 'pinRecipeAction: pinned recipe', { userId, recipeId });
+
+    return fetchRecipeTabs(userId);
+}
+
+export async function unpinRecipeAction(recipeId: string): Promise<RecipeTabsData> {
+    const userId = await requireAuth('action/recipe-tabs:unpin');
+
+    await prisma.pinnedFavorite.deleteMany({ where: { userId, recipeId } });
+
+    logAuth('info', 'unpinRecipeAction: removed pinned recipe', { userId, recipeId });
+
+    return fetchRecipeTabs(userId);
+}
+
+/**
+ * Imports guest data (localStorage) after sign-in. Recent views get
+ * staggered timestamps so their order survives; guest pins only fill
+ * slots that aren't already taken by server-side pins.
+ */
+export async function migrateGuestTabsAction(input: {
+    recentIds: string[];
+    pinnedIds: string[];
+}): Promise<RecipeTabsData> {
+    const userId = await requireAuth('action/recipe-tabs:migrate');
+
+    const recentIds = input.recentIds.slice(0, MAX_RECENT);
+    const pinnedIds = input.pinnedIds.slice(0, MAX_PINNED);
+
+    const candidateIds = [...new Set([...recentIds, ...pinnedIds])];
+    const existingRecipes = await prisma.recipe.findMany({
+        where: { id: { in: candidateIds } },
+        select: { id: true },
+    });
+    const validIds = new Set(existingRecipes.map((recipe) => recipe.id));
+
+    // recentIds[0] is the newest view — stagger timestamps backwards from now
+    const now = Date.now();
+    for (const [index, recipeId] of recentIds.entries()) {
+        if (!validIds.has(recipeId)) continue;
+        const viewedAt = new Date(now - index * 1000);
+        await prisma.userViewHistory.upsert({
+            where: { userId_recipeId: { userId, recipeId } },
+            update: { viewedAt },
+            create: { userId, recipeId, viewedAt },
+        });
+    }
+
+    const validPinnedIds = pinnedIds.filter((recipeId) => validIds.has(recipeId));
+    if (validPinnedIds.length > 0) {
+        await prisma.$transaction(async (tx) => {
+            const existing = await tx.pinnedFavorite.findMany({ where: { userId } });
+            const alreadyPinned = new Set(existing.map((pin) => pin.recipeId));
+            const usedSlots = new Set(existing.map((pin) => pin.position));
+
+            for (const recipeId of validPinnedIds) {
+                if (alreadyPinned.has(recipeId)) continue;
+                const slot = Array.from({ length: MAX_PINNED }, (_, s) => s).find(
+                    (s) => !usedSlots.has(s),
+                );
+                if (slot === undefined) break;
+                usedSlots.add(slot);
+                await tx.pinnedFavorite.create({ data: { userId, recipeId, position: slot } });
+            }
+        });
+    }
+
+    logAuth('info', 'migrateGuestTabsAction: imported guest tabs', {
+        userId,
+        recent: recentIds.length,
+        pinned: validPinnedIds.length,
+    });
+
+    return fetchRecipeTabs(userId);
 }

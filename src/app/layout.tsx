@@ -3,7 +3,6 @@ import { createHmac } from 'crypto';
 import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 
-import { fetchPinnedEntries } from '@app/app/api/recipe-tabs/helpers';
 import { AnalyticsScripts } from '@app/components/analytics/AnalyticsScripts';
 import { ChatwootWidgetComponent } from '@app/components/ChatwootWidget';
 import { AchievementListener } from '@app/components/features/AchievementListener';
@@ -19,8 +18,9 @@ import { ToastProvider } from '@app/components/providers/ToastProvider';
 import { getServerAuthSession } from '@app/lib/auth';
 import { getServerFeatureFlags } from '@app/lib/flags/server';
 import { getOrCreateProfile } from '@app/lib/profile';
+import { fetchRecipeTabs } from '@app/lib/recipe-tabs/queries';
+import type { RecipeTabItem } from '@app/lib/recipe-tabs/types';
 import { APP_URL } from '@app/lib/url';
-import { prisma } from '@shared/prisma';
 
 const websiteJsonLd = {
     '@context': 'https://schema.org',
@@ -149,27 +149,8 @@ export default async function RootLayout({
     const featureFlags = await getServerFeatureFlags(session);
 
     let profile: { photoKey: string | null; nickname: string | null } | null = null;
-    let pinnedRecipes: Array<{
-        id: string;
-        title: string;
-        slug?: string;
-        imageKey?: string | null;
-        prepTime?: number;
-        cookTime?: number;
-        difficulty?: string;
-        position: number;
-    }> = [];
-    let recentRecipes: Array<{
-        id: string;
-        title: string;
-        slug?: string;
-        imageKey?: string | null;
-        prepTime?: number;
-        cookTime?: number;
-        difficulty?: string;
-        viewedAt?: string;
-        pinned?: boolean;
-    }> = [];
+    let pinnedRecipes: RecipeTabItem[] = [];
+    let recentRecipes: RecipeTabItem[] = [];
 
     if (session?.user?.id) {
         const userProfile = await getOrCreateProfile(session.user.id);
@@ -180,61 +161,9 @@ export default async function RootLayout({
             };
         }
 
-        const { entries: pinned } = await fetchPinnedEntries(session.user.id);
-        pinnedRecipes = pinned.map((e) => ({
-            id: e.id,
-            title: e.title,
-            slug: e.slug,
-            imageKey: e.imageKey,
-            prepTime: e.prepTime,
-            cookTime: e.cookTime,
-            difficulty: e.difficulty,
-            position: e.position,
-        }));
-
-        const recentViews = await prisma.userViewHistory.findMany({
-            where: { userId: session.user.id },
-            include: {
-                recipe: {
-                    select: {
-                        id: true,
-                        title: true,
-                        slug: true,
-                        imageKey: true,
-                        prepTime: true,
-                        cookTime: true,
-                        difficulty: true,
-                    },
-                },
-            },
-            orderBy: { viewedAt: 'desc' },
-            take: 5,
-        });
-        recentRecipes = recentViews.map(
-            (view: {
-                recipeId: string;
-                viewedAt: Date;
-                recipe: {
-                    id: string;
-                    title: string;
-                    slug: string | null;
-                    imageKey: string | null;
-                    prepTime: number | null;
-                    cookTime: number | null;
-                    difficulty: string | null;
-                };
-            }) => ({
-                id: view.recipe.id,
-                title: view.recipe.title,
-                slug: view.recipe.slug ?? undefined,
-                imageKey: view.recipe.imageKey ?? null,
-                prepTime: view.recipe.prepTime ?? undefined,
-                cookTime: view.recipe.cookTime ?? undefined,
-                difficulty: view.recipe.difficulty ?? undefined,
-                viewedAt: view.viewedAt.toISOString(),
-                pinned: pinnedRecipes.some((p) => p.id === view.recipeId),
-            }),
-        );
+        const tabs = await fetchRecipeTabs(session.user.id);
+        pinnedRecipes = tabs.pinned;
+        recentRecipes = tabs.recent;
     }
 
     let chatwootUser = null;
@@ -308,7 +237,7 @@ export default async function RootLayout({
                                         <RecipeTabsProvider
                                             initialPinned={pinnedRecipes}
                                             initialRecent={recentRecipes}
-                                            serverDataFetched={!!session?.user?.id}
+                                            initialAuthenticated={!!session?.user?.id}
                                         >
                                             {children}
                                         </RecipeTabsProvider>

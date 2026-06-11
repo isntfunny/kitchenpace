@@ -266,26 +266,23 @@ export function RecipeDetailClient({
         if (trackedRef.current === recipe.id) return;
         trackedRef.current = recipe.id;
 
-        addToRecent({
-            id: recipe.id,
-            title: recipe.title,
-            slug: recipe.id,
-            imageKey: recipe.imageKey ?? undefined,
-            prepTime: recipe.prepTime,
-            cookTime: recipe.cookTime,
-            difficulty: recipe.difficulty,
-        });
-
-        // Log referrer source (e.g. ?ref=col_<id>) to UserViewHistory
-        if (refSource) {
-            import('@app/components/providers/recipeTabsActions').then(({ addToRecentAction }) =>
-                addToRecentAction(recipe.id, refSource).catch(() => {}),
-            );
-        }
+        // refSource (e.g. ?ref=col_<id>) is stored on the view history entry
+        addToRecent(
+            {
+                id: recipe.id,
+                title: recipe.title,
+                slug: recipe.slug,
+                imageKey: recipe.imageKey ?? undefined,
+                prepTime: recipe.prepTime,
+                cookTime: recipe.cookTime,
+                difficulty: recipe.difficulty,
+            },
+            refSource,
+        );
     }, [
         recipe.id,
         recipe.title,
-        recipe.image,
+        recipe.slug,
         recipe.imageKey,
         recipe.prepTime,
         recipe.cookTime,

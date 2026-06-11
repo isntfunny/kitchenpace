@@ -14,7 +14,8 @@ export const STORAGE_KEYS = {
     flowLeftVisible: 'flow-left-visible',
 
     // Recipe tabs (pinned / recent)
-    recipeTabs: 'kitchenpace_recipe_tabs',
+    recipeTabs: 'kochtakt_recipe_tabs_v2',
+    recipeTabsLegacy: 'kitchenpace_recipe_tabs',
 
     // Viewer progress (timer + step completion) — append recipe slug
     viewerProgress: 'kitchenpace:viewer:',

@@ -3,28 +3,29 @@
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useSession } from '@app/lib/auth-client';
+import {
+    MAX_PINNED,
+    MAX_RECENT,
+    type RecipeTabItem,
+    type RecipeTabsData,
+} from '@app/lib/recipe-tabs/types';
 
 import {
     addToRecentAction,
-    migrateLocalRecipesAction,
+    migrateGuestTabsAction,
     pinRecipeAction,
     refreshRecipeTabsAction,
     unpinRecipeAction,
 } from './recipeTabsActions';
+import {
+    clearGuestTabs,
+    guestAddRecent,
+    guestPin,
+    guestUnpin,
+    readGuestTabs,
+} from './recipeTabsStorage';
 
-export interface RecipeTabItem {
-    id: string;
-    title: string;
-    slug?: string;
-    emoji?: string;
-    imageKey?: string | null;
-    prepTime?: number;
-    cookTime?: number;
-    difficulty?: string;
-    position?: number;
-    viewedAt?: string;
-    pinned?: boolean;
-}
+export type { RecipeTabItem };
 
 interface RecipeTabsContextValue {
     pinned: RecipeTabItem[];
@@ -33,227 +34,171 @@ interface RecipeTabsContextValue {
     isAuthenticated: boolean;
     pinRecipe: (recipe: RecipeTabItem) => Promise<void>;
     unpinRecipe: (recipeId: string) => Promise<void>;
-    addToRecent: (recipe: RecipeTabItem) => Promise<void>;
+    addToRecent: (recipe: RecipeTabItem, source?: string | null) => Promise<void>;
     refreshData: () => Promise<void>;
 }
 
-const STORAGE_KEY = 'kitchenpace_recipe_tabs';
-const MAX_RECENT = 5;
-
-type RecipeTabsState = {
-    pinned: RecipeTabItem[];
-    recent: RecipeTabItem[];
-};
-
-function loadFromStorage(): RecipeTabsState {
-    if (typeof window === 'undefined') return { pinned: [], recent: [] };
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            // Only keep recent for unauthenticated users — pinned requires an account
-            return { pinned: [], recent: parsed.recent ?? [] };
-        }
-    } catch (error) {
-        console.error('Failed to read recipe tabs from storage', error);
-    }
-    return { pinned: [], recent: [] };
-}
-
-function saveToStorage(recent: RecipeTabItem[]) {
-    if (typeof window === 'undefined') return;
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ recent }));
-    } catch (error) {
-        console.error('Failed to write recipe tabs to storage', error);
-    }
-}
-
 export const RecipeTabsContext = createContext<RecipeTabsContextValue | null>(null);
-
-function withDefaultEmoji(recipe: RecipeTabItem): RecipeTabItem {
-    return {
-        ...recipe,
-        emoji: recipe.emoji ?? 'plating',
-    };
-}
-
-function applyTabsResult(result: {
-    pinned: RecipeTabItem[];
-    recent: RecipeTabItem[];
-}): RecipeTabsState {
-    return {
-        pinned: result.pinned
-            .map(withDefaultEmoji)
-            .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
-        recent: result.recent.map(withDefaultEmoji),
-    };
-}
-
-const emptyTabs: RecipeTabsState = { pinned: [], recent: [] };
 
 interface RecipeTabsProviderProps {
     children: React.ReactNode;
     initialPinned?: RecipeTabItem[];
     initialRecent?: RecipeTabItem[];
-    /** True when the layout has already fetched fresh data server-side */
-    serverDataFetched?: boolean;
+    /** Auth state as the server saw it — avoids waiting for the client session fetch */
+    initialAuthenticated?: boolean;
 }
 
 export function RecipeTabsProvider({
     children,
-    initialPinned,
-    initialRecent,
-    serverDataFetched = false,
+    initialPinned = [],
+    initialRecent = [],
+    initialAuthenticated = false,
 }: RecipeTabsProviderProps) {
     const { data: session, isPending } = useSession();
-    const isAuthenticated = !isPending && !!session?.user?.id;
-    const initialTabs =
-        initialPinned || initialRecent
-            ? { pinned: initialPinned ?? [], recent: initialRecent ?? [] }
-            : emptyTabs;
-    const [tabs, setTabs] = useState<RecipeTabsState>(initialTabs);
-    const [isLoading, setIsLoading] = useState(false);
-    const previousAuthRef = useRef(isAuthenticated);
-    // Skip the first client-side refresh when the layout already provided fresh SSR data
-    const skipInitialRefreshRef = useRef(serverDataFetched);
+    // While the client session is still loading, trust what the server rendered.
+    const isAuthenticated = isPending ? initialAuthenticated : !!session?.user?.id;
 
-    const updateTabs = useCallback(
-        (updater: (prev: RecipeTabsState) => RecipeTabsState) => {
-            setTabs((prev) => {
-                const next = updater(prev);
-                if (!isAuthenticated) {
-                    saveToStorage(next.recent);
-                }
-                return next;
-            });
-        },
-        [isAuthenticated],
-    );
+    const [tabs, setTabs] = useState<RecipeTabsData>({
+        pinned: initialPinned,
+        recent: initialRecent,
+    });
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Mutation callbacks need the auth state synchronously, without re-creating
+    // themselves (and re-running consumer effects) on every auth flip.
+    const authRef = useRef(isAuthenticated);
+    authRef.current = isAuthenticated;
+
+    // True until the SSR-provided data has been consumed by the auth effect once.
+    const serverDataFreshRef = useRef(initialAuthenticated);
 
     const refreshData = useCallback(async () => {
-        if (!isAuthenticated) return;
+        if (!authRef.current) {
+            setTabs(readGuestTabs());
+            return;
+        }
         setIsLoading(true);
         try {
-            const result = await refreshRecipeTabsAction();
-            updateTabs(() => applyTabsResult(result));
+            setTabs(await refreshRecipeTabsAction());
         } catch (error) {
             console.error('Failed to refresh recipe tabs', error);
         } finally {
             setIsLoading(false);
         }
-    }, [isAuthenticated, updateTabs]);
-
-    const migrateLocalData = useCallback(async () => {
-        const stored = loadFromStorage();
-        if (stored.recent.length === 0) return;
-        try {
-            const result = await migrateLocalRecipesAction(
-                stored.recent.slice(0, MAX_RECENT).map((r) => r.id),
-            );
-            updateTabs(() => applyTabsResult(result));
-        } catch (error) {
-            console.error('Failed to migrate local recipes', error);
-        } finally {
-            saveToStorage([]);
-        }
-    }, [updateTabs]);
+    }, []);
 
     useEffect(() => {
-        const prevAuth = previousAuthRef.current;
-        previousAuthRef.current = isAuthenticated;
+        let cancelled = false;
 
         const initialize = async () => {
-            if (isAuthenticated) {
-                if (!prevAuth) {
-                    // First time becoming authenticated — migrate any local data
-                    setIsLoading(true);
-                    await migrateLocalData();
-                    if (skipInitialRefreshRef.current) {
-                        skipInitialRefreshRef.current = false;
-                    } else {
-                        await refreshData();
-                    }
-                    setIsLoading(false);
-                } else if (skipInitialRefreshRef.current) {
-                    // Already authenticated on load — trust SSR data
-                    skipInitialRefreshRef.current = false;
-                } else {
-                    await refreshData();
-                }
-            } else {
-                setTabs(loadFromStorage());
+            if (!isAuthenticated) {
+                serverDataFreshRef.current = false;
+                setTabs(readGuestTabs());
+                return;
             }
+
+            // Signed in: import any guest data left in localStorage. This also
+            // covers logins that went through a full page reload.
+            const guest = readGuestTabs();
+            if (guest.recent.length > 0 || guest.pinned.length > 0) {
+                setIsLoading(true);
+                try {
+                    const result = await migrateGuestTabsAction({
+                        recentIds: guest.recent.map((item) => item.id),
+                        pinnedIds: guest.pinned.map((item) => item.id),
+                    });
+                    clearGuestTabs();
+                    if (!cancelled) setTabs(result);
+                } catch (error) {
+                    console.error('Failed to migrate guest recipe tabs', error);
+                } finally {
+                    if (!cancelled) setIsLoading(false);
+                }
+                serverDataFreshRef.current = false;
+                return;
+            }
+
+            if (serverDataFreshRef.current) {
+                // The layout already fetched this user's tabs server-side.
+                serverDataFreshRef.current = false;
+                return;
+            }
+
+            // Client-side login without reload — fetch fresh data.
+            await refreshData();
         };
 
         void initialize();
-    }, [isAuthenticated, migrateLocalData, refreshData]);
+        return () => {
+            cancelled = true;
+        };
+    }, [isAuthenticated, refreshData]);
+
+    const addToRecent = useCallback(async (recipe: RecipeTabItem, source?: string | null) => {
+        if (!authRef.current) {
+            setTabs(guestAddRecent(recipe));
+            return;
+        }
+        setTabs((prev) => ({
+            pinned: prev.pinned,
+            recent: [recipe, ...prev.recent.filter((item) => item.id !== recipe.id)].slice(
+                0,
+                MAX_RECENT,
+            ),
+        }));
+        try {
+            await addToRecentAction(recipe.id, source);
+        } catch (error) {
+            console.error('Failed to track recipe view', error);
+        }
+    }, []);
 
     const pinRecipe = useCallback(
         async (recipe: RecipeTabItem) => {
-            if (!isAuthenticated) return;
-
-            // Optimistic update
-            const prevTabs = tabs;
-            updateTabs((prev) => ({
-                ...prev,
-                pinned: [...prev.pinned, withDefaultEmoji(recipe)],
-            }));
-
+            if (!authRef.current) {
+                setTabs(guestPin(recipe));
+                return;
+            }
+            // Optimistic: mirror the server's replace-oldest behavior.
+            setTabs((prev) => {
+                if (prev.pinned.some((item) => item.id === recipe.id)) return prev;
+                const pinned = [...prev.pinned, recipe];
+                return {
+                    pinned:
+                        pinned.length > MAX_PINNED
+                            ? pinned.slice(pinned.length - MAX_PINNED)
+                            : pinned,
+                    recent: prev.recent,
+                };
+            });
             try {
-                const result = await pinRecipeAction(recipe.id);
-                updateTabs(() => applyTabsResult(result));
+                setTabs(await pinRecipeAction(recipe.id));
             } catch (error) {
                 console.error('Failed to pin recipe', error);
-                updateTabs(() => prevTabs);
+                await refreshData();
             }
         },
-        [isAuthenticated, tabs, updateTabs],
+        [refreshData],
     );
 
     const unpinRecipe = useCallback(
         async (recipeId: string) => {
-            if (!isAuthenticated) return;
-
-            // Optimistic update
-            const prevTabs = tabs;
-            updateTabs((prev) => ({
-                ...prev,
+            if (!authRef.current) {
+                setTabs(guestUnpin(recipeId));
+                return;
+            }
+            setTabs((prev) => ({
                 pinned: prev.pinned.filter((item) => item.id !== recipeId),
+                recent: prev.recent,
             }));
-
             try {
-                const result = await unpinRecipeAction(recipeId);
-                updateTabs(() => applyTabsResult(result));
+                setTabs(await unpinRecipeAction(recipeId));
             } catch (error) {
                 console.error('Failed to unpin recipe', error);
-                updateTabs(() => prevTabs);
+                await refreshData();
             }
         },
-        [isAuthenticated, tabs, updateTabs],
-    );
-
-    const addToRecent = useCallback(
-        async (recipe: RecipeTabItem) => {
-            const normalized = withDefaultEmoji(recipe);
-            // Optimistic update — move recipe to front, deduplicate, cap length
-            updateTabs((prev) => ({
-                ...prev,
-                recent: [normalized, ...prev.recent.filter((item) => item.id !== recipe.id)].slice(
-                    0,
-                    MAX_RECENT,
-                ),
-            }));
-
-            if (!isAuthenticated) return;
-
-            try {
-                await addToRecentAction(recipe.id);
-            } catch (error) {
-                console.error('Failed to track recipe view', error);
-            }
-        },
-        [isAuthenticated, updateTabs],
+        [refreshData],
     );
 
     const contextValue = useMemo(
@@ -267,16 +212,7 @@ export function RecipeTabsProvider({
             addToRecent,
             refreshData,
         }),
-        [
-            tabs.pinned,
-            tabs.recent,
-            isLoading,
-            isAuthenticated,
-            pinRecipe,
-            unpinRecipe,
-            addToRecent,
-            refreshData,
-        ],
+        [tabs, isLoading, isAuthenticated, pinRecipe, unpinRecipe, addToRecent, refreshData],
     );
 
     return <RecipeTabsContext.Provider value={contextValue}>{children}</RecipeTabsContext.Provider>;

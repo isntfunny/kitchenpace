@@ -122,7 +122,13 @@ FELDER PRO KNOTEN:
 - type: Einer der obigen Typen
 - label: Kurzer Titel (max 50 Zeichen)
 - description: Detaillierte Beschreibung der Aktion auf Deutsch. Keine @-Mentions — benutze einfach die Zutatennamen im Fließtext.
-- duration: Minuten als Integer, oder null
+- duration: Minuten als Integer, oder null.
+  NUR setzen, wenn der Schritt WIRKLICH zeitkritisch ist und eine konkrete Dauer hat —
+  z.B. "Nudeln 10 Min kochen", "30 Min bei 180°C backen", "20 Min köcheln", "1 Std marinieren".
+  Für vorbereitende / handwerkliche Schritte ohne feste Zeit IMMER null setzen —
+  z.B. "Gemüse schneiden", "Zwiebeln würfeln", "abschmecken", "anrichten", "servieren".
+  Im Zweifel null. Schätze keine Zeiten, die nicht im Rezept stehen oder die nur "ungefähr"
+  vom Arbeitstempo abhängen.
 - laneId: ID der parallelen Spur (z.B. "klopse", "bruehe", "sauce")
 - ingredientIds: Array der Zutaten-IDs die in diesem Schritt verwendet werden
 

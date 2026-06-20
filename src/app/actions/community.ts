@@ -103,9 +103,43 @@ export async function fetchTrendingTags(limit = 8): Promise<TrendingTagData[]> {
         .filter(Boolean) as TrendingTagData[];
 }
 
+/**
+ * Top-level ingredient categories worth surfacing as "popular ingredients" —
+ * real main ingredients and sides. Deliberately excludes boring categories like
+ * spices/salt (Verschiedenes), oils (Fette und Öle), sweets, drinks (incl. water),
+ * salty snacks and ready-made dishes (Gerichte).
+ */
+const POPULAR_INGREDIENT_CATEGORY_SLUGS = [
+    'gemuese',
+    'fruechte',
+    'fleisch-und-innereien',
+    'fisch',
+    'fleisch-und-wurstwaren',
+    'eier',
+    'milch-und-milchprodukte',
+    'getreideprodukte-huelsenfruechte-und-kartoffeln',
+    'nuesse-samen-und-oelfruechte',
+    'pflanzliche-proteinlieferanten-und-alternativen-zu-tierischen-produkten',
+    'brote-flocken-und-fruehstueckscerealien',
+];
+
 export async function fetchPopularIngredients(limit = 12): Promise<PopularIngredientData[]> {
+    // An ingredient can be linked to its top-level category and/or a leaf
+    // sub-category, so accept a match on the slug itself or its parent's slug.
     const ingredientCounts = await prisma.recipeIngredient.groupBy({
         by: ['ingredientId'],
+        where: {
+            ingredient: {
+                categories: {
+                    some: {
+                        OR: [
+                            { slug: { in: POPULAR_INGREDIENT_CATEGORY_SLUGS } },
+                            { parent: { slug: { in: POPULAR_INGREDIENT_CATEGORY_SLUGS } } },
+                        ],
+                    },
+                },
+            },
+        },
         _count: { ingredientId: true },
     });
 

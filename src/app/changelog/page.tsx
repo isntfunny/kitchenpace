@@ -32,6 +32,26 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '20. Juni 2026',
+        version: 'v2026-06-20',
+        emoji: '🥕',
+        title: 'Rezepte entdecken über Zutaten und Stichworte',
+        items: [
+            {
+                text: 'Neu: Tippe in einem Rezept einfach auf eine Zutat — und du siehst sofort alle Rezepte, die diese Zutat verwenden. Ideal, wenn du noch etwas im Kühlschrank hast und Inspiration suchst',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Auch die Stichworte unter jedem Rezept sind jetzt anklickbar und führen dich direkt zu allen passenden Rezepten',
+                tag: 'feat',
+            },
+            {
+                text: 'Auf der Startseite gibt es jetzt mehr beliebte Stichworte und neu einen Bereich „Beliebte Zutaten" — ein schneller Einstieg zum Stöbern',
+                tag: 'feat',
+            },
+        ],
+    },
+    {
         date: '11. Juni 2026',
         version: 'v2026-06-11.2',
         emoji: '⚡',

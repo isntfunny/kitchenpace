@@ -150,6 +150,7 @@ export interface RecipeDetailData {
     difficulty: 'Einfach' | 'Mittel' | 'Schwer';
     ingredients: Array<{
         name: string;
+        slug?: string | null;
         pluralName?: string | null;
         amount: number;
         rawAmount: string;
@@ -178,6 +179,8 @@ export interface RecipeDetailData {
         }>;
     };
     tags: string[];
+    /** Tags with slugs for internal links to /tag/<slug> landing pages */
+    tagLinks: Array<{ name: string; slug: string }>;
     status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
     authorId: string;
     author: {
@@ -322,6 +325,7 @@ export async function fetchRecipeBySlug(
 
             return {
                 name: ri.ingredient.name,
+                slug: ri.ingredient.slug ?? null,
                 pluralName: ri.ingredient.pluralName ?? null,
                 amount: parseFloat(ri.amount) || 0,
                 rawAmount: ri.amount,
@@ -346,6 +350,7 @@ export async function fetchRecipeBySlug(
             edges: (recipe.flowEdges as any[]) || [],
         },
         tags: recipe.tags.map((rt: any) => rt.tag.name),
+        tagLinks: recipe.tags.map((rt: any) => ({ name: rt.tag.name, slug: rt.tag.slug })),
         status: recipe.status as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED',
         authorId: recipe.authorId,
         author: recipe.author

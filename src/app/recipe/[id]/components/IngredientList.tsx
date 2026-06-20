@@ -1,6 +1,7 @@
 'use client';
 
 import { Info, X } from 'lucide-react';
+import Link from 'next/link';
 import { Dialog } from 'radix-ui';
 import { useMemo, useState, type ReactNode } from 'react';
 
@@ -11,6 +12,7 @@ import { flex } from 'styled-system/patterns';
 
 interface Ingredient {
     name: string;
+    slug?: string | null;
     pluralName?: string | null;
     amount: number;
     rawAmount?: string;
@@ -243,13 +245,31 @@ export function IngredientList({
                             })}
                         >
                             <div>
-                                <span className={css({ fontWeight: '500' })}>
-                                    {ingredientDisplayName(
-                                        ingredient.name,
-                                        ingredient.pluralName ?? null,
-                                        String(ingredient.amount),
-                                    )}
-                                </span>
+                                {ingredient.slug ? (
+                                    <Link
+                                        href={`/zutat/${ingredient.slug}`}
+                                        className={css({
+                                            fontWeight: '500',
+                                            color: 'inherit',
+                                            textDecoration: 'none',
+                                            _hover: { color: 'primary' },
+                                        })}
+                                    >
+                                        {ingredientDisplayName(
+                                            ingredient.name,
+                                            ingredient.pluralName ?? null,
+                                            String(ingredient.amount),
+                                        )}
+                                    </Link>
+                                ) : (
+                                    <span className={css({ fontWeight: '500' })}>
+                                        {ingredientDisplayName(
+                                            ingredient.name,
+                                            ingredient.pluralName ?? null,
+                                            String(ingredient.amount),
+                                        )}
+                                    </span>
+                                )}
                                 {ingredient.notes && (
                                     <span
                                         className={css({

@@ -38,7 +38,6 @@ type RecipeSummaryCardProps = {
     ratingCount: number;
     averageRating: number;
     starBursts: StarBurst[];
-    onTagClick: (tag: string) => void;
     onRatingSelect: (value: number) => void;
 };
 
@@ -52,9 +51,9 @@ export function RecipeSummaryCard({
     ratingCount,
     averageRating,
     starBursts,
-    onTagClick,
     onRatingSelect,
 }: RecipeSummaryCardProps) {
+    const tagLinks = recipe.tagLinks ?? [];
     return (
         <div
             className={css({
@@ -122,7 +121,7 @@ export function RecipeSummaryCard({
                 {recipe.description}
             </p>
 
-            {recipe.tags.length > 0 && (
+            {tagLinks.length > 0 && (
                 <div
                     className={css({
                         display: 'flex',
@@ -131,15 +130,15 @@ export function RecipeSummaryCard({
                         mb: '3',
                     })}
                 >
-                    {recipe.tags.map((tag) => (
-                        <button
-                            key={tag}
-                            onClick={() => onTagClick(tag)}
+                    {tagLinks.map((tag) => (
+                        <Link
+                            key={tag.slug}
+                            href={`/tag/${tag.slug}`}
                             className={css({
                                 fontSize: 'xs',
                                 color: 'text-muted',
                                 fontFamily: 'body',
-                                cursor: 'pointer',
+                                textDecoration: 'none',
                                 px: '2.5',
                                 py: '1',
                                 borderRadius: 'full',
@@ -148,8 +147,8 @@ export function RecipeSummaryCard({
                                 _hover: { color: 'primary' },
                             })}
                         >
-                            #{tag}
-                        </button>
+                            #{tag.name}
+                        </Link>
                     ))}
                 </div>
             )}

@@ -299,10 +299,6 @@ export function RecipeDetailClient({
         return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
     };
 
-    const handleTagClick = (tag: string) => {
-        router.push(buildRecipeFilterHref({ tags: [tag] }));
-    };
-
     const handlePrint = () => printRecipe(recipe, servings);
 
     const requireAuth = () => {
@@ -477,7 +473,6 @@ export function RecipeDetailClient({
                                 ratingCount={ratingCount}
                                 averageRating={averageRating}
                                 starBursts={starBursts}
-                                onTagClick={handleTagClick}
                                 onRatingSelect={handleRatingSelect}
                             />
 

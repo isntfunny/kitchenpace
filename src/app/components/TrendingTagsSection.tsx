@@ -2,6 +2,6 @@ import { fetchTrendingTags } from '@app/app/actions/community';
 import { TrendingTags } from '@app/components/features/TrendingTags';
 
 export async function TrendingTagsSection() {
-    const tags = await fetchTrendingTags();
+    const tags = await fetchTrendingTags(16);
     return <TrendingTags tags={tags} />;
 }

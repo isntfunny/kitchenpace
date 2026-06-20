@@ -48,6 +48,13 @@ export interface TrendingTagData {
     color: string;
 }
 
+export interface PopularIngredientData {
+    name: string;
+    slug: string;
+    count: number;
+    color: string;
+}
+
 export interface ChefSpotlightData extends UserCardData {
     nickname?: string | null;
     topRecipes: Array<{
@@ -94,6 +101,40 @@ export async function fetchTrendingTags(limit = 8): Promise<TrendingTagData[]> {
             };
         })
         .filter(Boolean) as TrendingTagData[];
+}
+
+export async function fetchPopularIngredients(limit = 12): Promise<PopularIngredientData[]> {
+    const ingredientCounts = await prisma.recipeIngredient.groupBy({
+        by: ['ingredientId'],
+        _count: { ingredientId: true },
+    });
+
+    if (ingredientCounts.length === 0) return [];
+
+    const ingredients = await prisma.ingredient.findMany({
+        where: { id: { in: ingredientCounts.map((item) => item.ingredientId) } },
+        select: { id: true, name: true, slug: true },
+    });
+
+    const ingredientMap = new Map(ingredients.map((ingredient) => [ingredient.id, ingredient]));
+
+    const sorted = [...ingredientCounts].sort(
+        (a, b) => (b._count?.ingredientId ?? 0) - (a._count?.ingredientId ?? 0),
+    );
+
+    return sorted
+        .slice(0, limit)
+        .map((item, index) => {
+            const ingredient = ingredientMap.get(item.ingredientId);
+            if (!ingredient) return null;
+            return {
+                name: ingredient.name,
+                slug: ingredient.slug,
+                count: item._count?.ingredientId ?? 0,
+                color: TAG_COLORS[index % TAG_COLORS.length],
+            };
+        })
+        .filter(Boolean) as PopularIngredientData[];
 }
 
 export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {

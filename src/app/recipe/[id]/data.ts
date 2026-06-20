@@ -1,5 +1,6 @@
 export interface Ingredient {
     name: string;
+    slug?: string | null;
     pluralName?: string | null;
     amount: number;
     rawAmount?: string;
@@ -79,6 +80,7 @@ export interface Recipe {
     ingredients: Ingredient[];
     flow: RecipeFlow;
     tags: string[];
+    tagLinks?: Array<{ name: string; slug: string }>;
     authorId: string;
     favoriteCount?: number;
     ratingCount?: number;

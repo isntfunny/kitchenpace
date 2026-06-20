@@ -16,6 +16,7 @@ import { HelloWorldBanner } from './components/HelloWorldBanner';
 import { HeroSpotlight } from './components/HeroSpotlight';
 import { LiveActivitySection } from './components/LiveActivitySection';
 import { NewestRecipesSection } from './components/NewestRecipesSection';
+import { PopularIngredientsSection } from './components/PopularIngredientsSection';
 import { QuickTipsSection } from './components/QuickTipsSection';
 import { TopRatedSection } from './components/TopRatedSection';
 import { TrendingTagsSection } from './components/TrendingTagsSection';
@@ -84,6 +85,12 @@ export default function Home() {
                         <div className={css({ marginTop: 'section' })}>
                             <Suspense fallback={<SectionSkeleton height="280px" />}>
                                 <ChefSpotlightSection />
+                            </Suspense>
+                        </div>
+
+                        <div className={css({ marginTop: 'section' })}>
+                            <Suspense fallback={<SectionSkeleton height="180px" />}>
+                                <PopularIngredientsSection />
                             </Suspense>
                         </div>
 

@@ -113,6 +113,11 @@ export function RecipeJsonLd({ recipe, ogImageUrl, imageKey }: Props) {
                           position: i + 1,
                           name: n.label,
                           text: n.description || n.label,
+                          // Anchor + image satisfy Google's "image/video" and "url"
+                          // recommendations for recipeInstructions. We have no
+                          // per-step images, so the recipe's primary image is used.
+                          url: `${recipeUrl}#step-${i + 1}`,
+                          image: images[0],
                           ...(n.duration && n.duration > 0
                               ? { totalTime: minutesToIso8601Duration(n.duration) }
                               : {}),

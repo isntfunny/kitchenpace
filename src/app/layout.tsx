@@ -1,5 +1,3 @@
-import { createHmac } from 'crypto';
-
 import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 
@@ -15,11 +13,7 @@ import { ProfileProvider } from '@app/components/providers/ProfileProvider';
 import { RecipeTabsProvider } from '@app/components/providers/RecipeTabsProvider';
 import { ThemeProvider } from '@app/components/providers/ThemeProvider';
 import { ToastProvider } from '@app/components/providers/ToastProvider';
-import { getServerAuthSession } from '@app/lib/auth';
 import { getServerFeatureFlags } from '@app/lib/flags/server';
-import { getOrCreateProfile } from '@app/lib/profile';
-import { fetchRecipeTabs } from '@app/lib/recipe-tabs/queries';
-import type { RecipeTabItem } from '@app/lib/recipe-tabs/types';
 import { APP_URL } from '@app/lib/url';
 
 const websiteJsonLd = {
@@ -145,66 +139,17 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const session = await getServerAuthSession('openpanel-root-layout');
-    const featureFlags = await getServerFeatureFlags(session);
-
-    let profile: { photoKey: string | null; nickname: string | null } | null = null;
-    let pinnedRecipes: RecipeTabItem[] = [];
-    let recentRecipes: RecipeTabItem[] = [];
-
-    if (session?.user?.id) {
-        const userProfile = await getOrCreateProfile(session.user.id);
-        if (userProfile) {
-            profile = {
-                photoKey: userProfile.photoKey,
-                nickname: userProfile.nickname,
-            };
-        }
-
-        const tabs = await fetchRecipeTabs(session.user.id);
-        pinnedRecipes = tabs.pinned;
-        recentRecipes = tabs.recent;
-    }
-
-    let chatwootUser = null;
-    if (session?.user?.id) {
-        const chatwootHmacToken = process.env.CHATWOOT_IDENTITY_TOKEN;
-        const identifier = session.user.id;
-        const identifierHash = chatwootHmacToken
-            ? createHmac('sha256', chatwootHmacToken).update(identifier).digest('hex')
-            : undefined;
-        chatwootUser = {
-            id: identifier,
-            name: profile?.nickname ?? session.user.name ?? undefined,
-            email: session.user.email ?? undefined,
-            identifierHash,
-        };
-    }
+    const featureFlags = await getServerFeatureFlags(null);
 
     const openPanelClientId = process.env.OPENPANEL_CLIENT_ID ?? process.env.OPENPANEL_ID ?? '';
     const openPanelApiUrl = process.env.OPENPANEL_API_URL;
     const hasOpenPanel = Boolean(openPanelClientId && openPanelApiUrl);
-    const userName = session?.user?.name?.trim() ?? '';
-    const nameParts = userName.split(/\s+/).filter(Boolean);
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ') || undefined;
     const openPanelGlobalProperties = {
         environment: process.env.NODE_ENV ?? 'development',
         appVersion:
             process.env.NEXT_PUBLIC_APP_VERSION ?? process.env.npm_package_version ?? '0.1.0',
         appId: 'kitchenpace',
     };
-    const identifyProps = session?.user?.id
-        ? {
-              profileId: session.user.id,
-              email: session.user.email ?? undefined,
-              firstName,
-              lastName,
-              properties: {
-                  name: userName || undefined,
-              },
-          }
-        : null;
     return (
         <html lang="de" suppressHydrationWarning>
             <head>
@@ -229,18 +174,12 @@ export default async function RootLayout({
                                     <AnalyticsScripts
                                         clientId={hasOpenPanel ? openPanelClientId : ''}
                                         globalProperties={openPanelGlobalProperties}
-                                        identify={identifyProps}
+                                        identify={null}
                                     />
-                                    <ChatwootWidgetComponent user={chatwootUser} />
+                                    <ChatwootWidgetComponent user={null} />
                                     <AchievementListener />
-                                    <ProfileProvider profile={profile}>
-                                        <RecipeTabsProvider
-                                            initialPinned={pinnedRecipes}
-                                            initialRecent={recentRecipes}
-                                            initialAuthenticated={!!session?.user?.id}
-                                        >
-                                            {children}
-                                        </RecipeTabsProvider>
+                                    <ProfileProvider profile={null}>
+                                        <RecipeTabsProvider>{children}</RecipeTabsProvider>
                                     </ProfileProvider>
                                 </ConsentProvider>
                             </ToastProvider>

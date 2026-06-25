@@ -1,7 +1,5 @@
 import 'server-only';
 
-import { unstable_noStore as noStore } from 'next/cache';
-
 import type { Session } from '@app/lib/auth';
 
 import {
@@ -78,7 +76,7 @@ async function listBooleanFlags(): Promise<FliptBooleanFlag[]> {
                 'x-flipt-environment': getFliptEnvironmentKey(),
                 ...getAuthHeaders(),
             },
-            cache: 'no-store',
+            next: { revalidate: 60 },
         },
     );
 
@@ -115,7 +113,7 @@ async function evaluateBooleanFlag(
             namespaceKey: getFliptNamespaceKey(),
             environmentKey: getFliptEnvironmentKey(),
         }),
-        cache: 'no-store',
+        next: { revalidate: 60 },
     });
 
     if (!response.ok) {
@@ -163,8 +161,6 @@ function getKnownFlagKeys(): string[] {
 export async function getServerFeatureFlags(
     session: Session | null,
 ): Promise<ServerFeatureFlagsResult> {
-    noStore();
-
     const fallback = getFeatureFlagDefaults();
 
     try {

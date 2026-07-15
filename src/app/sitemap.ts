@@ -10,12 +10,8 @@ import {
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 
-// The sitemap MUST be generated at request time: during `next build` the
-// database is unreachable (dummy DATABASE_URL in Docker), so a static
-// sitemap would be frozen without any recipe/category/user URLs.
 export const dynamic = 'force-dynamic';
 
-/** Routes excluded from sitemap (must match robots.ts disallow list) */
 const EXCLUDED_PREFIXES = [
     '/api',
     '/admin',
@@ -31,7 +27,6 @@ const EXCLUDED_PREFIXES = [
     '/lane-wizard-mock',
 ];
 
-/** Routes with custom priority/frequency overrides */
 const ROUTE_OVERRIDES: Record<
     string,
     { priority?: number; changeFrequency?: MetadataRoute.Sitemap[0]['changeFrequency'] }
@@ -49,7 +44,7 @@ async function discoverStaticRoutes(): Promise<MetadataRoute.Sitemap> {
             const dir = path.dirname(p);
             return dir === '.' ? '/' : '/' + dir;
         })
-        .filter((route) => !route.includes('[')) // skip dynamic segments
+        .filter((route) => !route.includes('['))
         .filter(
             (route) =>
                 !EXCLUDED_PREFIXES.some(
@@ -63,100 +58,127 @@ async function discoverStaticRoutes(): Promise<MetadataRoute.Sitemap> {
         }));
 }
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const staticRoutes = await discoverStaticRoutes();
+export async function generateSitemaps() {
+    return [
+        { id: 'static' as const },
+        { id: 'recipes' as const },
+        { id: 'categories' as const },
+        { id: 'users' as const },
+        { id: 'collections' as const },
+        { id: 'tags' as const },
+        { id: 'ingredients' as const },
+    ];
+}
 
-    try {
-        const [
-            recipesResult,
-            categoriesResult,
-            usersResult,
-            collectionsResult,
-            tagSlugsResult,
-            ingredientSlugsResult,
-        ] = await Promise.allSettled([
-            prisma.recipe.findMany({
-                where: { publishedAt: { not: null } },
-                select: { slug: true, updatedAt: true },
-                orderBy: { updatedAt: 'desc' },
-            }),
-            prisma.category.findMany({
-                select: { slug: true, createdAt: true },
-            }),
-            prisma.profile.findMany({
-                where: { user: { banned: false } },
-                select: { slug: true, updatedAt: true },
-            }),
-            prisma.collection.findMany({
-                where: {
-                    published: true,
-                    moderationStatus: { in: ['AUTO_APPROVED', 'APPROVED'] },
-                },
-                select: { slug: true, updatedAt: true },
-            }),
-            fetchTagSlugsWithRecipes(),
-            fetchIngredientSlugsWithRecipes(),
-        ]);
+export default async function sitemap({ id }: { id: string }): Promise<MetadataRoute.Sitemap> {
+    switch (id) {
+        case 'static':
+            return discoverStaticRoutes();
 
-        const recipes = recipesResult.status === 'fulfilled' ? recipesResult.value : [];
-        const categories = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
-        const users = usersResult.status === 'fulfilled' ? usersResult.value : [];
-        const collections = collectionsResult.status === 'fulfilled' ? collectionsResult.value : [];
-        const tagSlugs = tagSlugsResult.status === 'fulfilled' ? tagSlugsResult.value : [];
-        const ingredientSlugs =
-            ingredientSlugsResult.status === 'fulfilled' ? ingredientSlugsResult.value : [];
+        case 'recipes': {
+            try {
+                const recipes = await prisma.recipe.findMany({
+                    where: { publishedAt: { not: null } },
+                    select: { slug: true, updatedAt: true },
+                    orderBy: { updatedAt: 'desc' },
+                });
+                return recipes.map((r) => ({
+                    url: `${APP_URL}/recipe/${r.slug}`,
+                    lastModified: r.updatedAt,
+                    changeFrequency: 'weekly' as const,
+                    priority: 0.8,
+                }));
+            } catch (error) {
+                console.error('[sitemap:recipes] Failed:', error);
+                return [];
+            }
+        }
 
-        const recipeRoutes: MetadataRoute.Sitemap = recipes.map((r) => ({
-            url: `${APP_URL}/recipe/${r.slug}`,
-            lastModified: r.updatedAt,
-            changeFrequency: 'weekly',
-            priority: 0.8,
-        }));
+        case 'categories': {
+            try {
+                const categories = await prisma.category.findMany({
+                    select: { slug: true, createdAt: true },
+                });
+                return categories.map((c) => ({
+                    url: `${APP_URL}/category/${c.slug}`,
+                    lastModified: c.createdAt,
+                    changeFrequency: 'monthly' as const,
+                    priority: 0.7,
+                }));
+            } catch (error) {
+                console.error('[sitemap:categories] Failed:', error);
+                return [];
+            }
+        }
 
-        const categoryRoutes: MetadataRoute.Sitemap = categories.map((c) => ({
-            url: `${APP_URL}/category/${c.slug}`,
-            lastModified: c.createdAt,
-            changeFrequency: 'monthly',
-            priority: 0.7,
-        }));
+        case 'users': {
+            try {
+                const users = await prisma.profile.findMany({
+                    where: { user: { banned: false } },
+                    select: { slug: true, updatedAt: true },
+                });
+                return users.map((u) => ({
+                    url: `${APP_URL}/user/${u.slug}`,
+                    lastModified: u.updatedAt,
+                    changeFrequency: 'monthly' as const,
+                    priority: 0.5,
+                }));
+            } catch (error) {
+                console.error('[sitemap:users] Failed:', error);
+                return [];
+            }
+        }
 
-        const userRoutes: MetadataRoute.Sitemap = users.map((u) => ({
-            url: `${APP_URL}/user/${u.slug}`,
-            lastModified: u.updatedAt,
-            changeFrequency: 'monthly',
-            priority: 0.5,
-        }));
+        case 'collections': {
+            try {
+                const collections = await prisma.collection.findMany({
+                    where: {
+                        published: true,
+                        moderationStatus: { in: ['AUTO_APPROVED', 'APPROVED'] },
+                    },
+                    select: { slug: true, updatedAt: true },
+                });
+                return collections.map((c) => ({
+                    url: `${APP_URL}/collection/${c.slug}`,
+                    lastModified: c.updatedAt,
+                    changeFrequency: 'weekly' as const,
+                    priority: 0.7,
+                }));
+            } catch (error) {
+                console.error('[sitemap:collections] Failed:', error);
+                return [];
+            }
+        }
 
-        const collectionRoutes: MetadataRoute.Sitemap = collections.map((c) => ({
-            url: `${APP_URL}/collection/${c.slug}`,
-            lastModified: c.updatedAt,
-            changeFrequency: 'weekly',
-            priority: 0.7,
-        }));
+        case 'tags': {
+            try {
+                const tagSlugs = await fetchTagSlugsWithRecipes();
+                return tagSlugs.map((slug) => ({
+                    url: `${APP_URL}/tag/${slug}`,
+                    changeFrequency: 'weekly' as const,
+                    priority: 0.6,
+                }));
+            } catch (error) {
+                console.error('[sitemap:tags] Failed:', error);
+                return [];
+            }
+        }
 
-        const tagRoutes: MetadataRoute.Sitemap = tagSlugs.map((slug) => ({
-            url: `${APP_URL}/tag/${slug}`,
-            changeFrequency: 'weekly',
-            priority: 0.6,
-        }));
+        case 'ingredients': {
+            try {
+                const ingredientSlugs = await fetchIngredientSlugsWithRecipes();
+                return ingredientSlugs.map((slug) => ({
+                    url: `${APP_URL}/zutat/${slug}`,
+                    changeFrequency: 'weekly' as const,
+                    priority: 0.6,
+                }));
+            } catch (error) {
+                console.error('[sitemap:ingredients] Failed:', error);
+                return [];
+            }
+        }
 
-        const ingredientRoutes: MetadataRoute.Sitemap = ingredientSlugs.map((slug) => ({
-            url: `${APP_URL}/zutat/${slug}`,
-            changeFrequency: 'weekly',
-            priority: 0.6,
-        }));
-
-        return [
-            ...staticRoutes,
-            ...recipeRoutes,
-            ...categoryRoutes,
-            ...userRoutes,
-            ...collectionRoutes,
-            ...tagRoutes,
-            ...ingredientRoutes,
-        ];
-    } catch (error) {
-        console.error('[sitemap] Failed to fetch dynamic routes:', error);
-        return staticRoutes;
+        default:
+            return [];
     }
 }

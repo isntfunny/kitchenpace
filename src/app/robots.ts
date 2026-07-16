@@ -31,6 +31,14 @@ export default function robots(): MetadataRoute.Robots {
                 '/lane-wizard-mock',
             ],
         },
-        sitemap: `${APP_URL}/sitemap.xml`,
+        sitemap: [
+            `${APP_URL}/sitemap/static.xml`,
+            `${APP_URL}/sitemap/recipes.xml`,
+            `${APP_URL}/sitemap/categories.xml`,
+            `${APP_URL}/sitemap/users.xml`,
+            `${APP_URL}/sitemap/collections.xml`,
+            `${APP_URL}/sitemap/tags.xml`,
+            `${APP_URL}/sitemap/ingredients.xml`,
+        ],
     };
 }

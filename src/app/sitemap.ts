@@ -10,7 +10,7 @@ import {
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 
-export const dynamic = 'force-dynamic';
+// export const revalidate = 0;
 
 const EXCLUDED_PREFIXES = [
     '/api',

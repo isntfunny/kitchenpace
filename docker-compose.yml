@@ -1,21 +1,4 @@
 services:
-    postgres:
-        image: postgres:16-alpine
-        container_name: kitchenpace-db
-        environment:
-            POSTGRES_USER: kitchenpace
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kitchenpace_secret}
-            POSTGRES_DB: ${POSTGRES_DB:-kitchenpace}
-        volumes:
-            - postgres_data:/var/lib/postgresql/data
-        ports:
-            - '127.0.0.1:64000:5432'
-        healthcheck:
-            test: ['CMD-SHELL', 'pg_isready -U kitchenpace -d ${POSTGRES_DB:-kitchenpace}']
-            interval: 10s
-            timeout: 5s
-            retries: 5
-
     redis:
         image: redis:7-alpine
         container_name: kitchenpace-redis
@@ -80,7 +63,7 @@ services:
         image: registry.isntfunny.de/kitchenpace:beta
         container_name: kitchenpace-app
         depends_on:
-            postgres:
+            redis:
                 condition: service_healthy
             opensearch:
                 condition: service_healthy
@@ -97,8 +80,6 @@ services:
         command: ['npm', 'run', 'worker']
         container_name: kitchenpace-worker
         depends_on:
-            postgres:
-                condition: service_healthy
             redis:
                 condition: service_healthy
             opensearch:
@@ -125,6 +106,5 @@ services:
         restart: always
 
 volumes:
-    postgres_data:
     redis_data:
     opensearch_data:

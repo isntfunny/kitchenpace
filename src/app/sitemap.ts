@@ -74,8 +74,18 @@ export async function generateSitemaps() {
     ];
 }
 
-export default async function sitemap({ id }: { id: string }): Promise<MetadataRoute.Sitemap> {
-    switch (id) {
+// Next.js 16 changed the sitemap `id` param: it is now a Promise<string>
+// that must be awaited (see the sitemap.ts version history — v16.0.0).
+// Destructuring it as a plain string made `switch (id)` compare a Promise
+// object against the string cases, so nothing ever matched and every sitemap
+// fell through to `default` and rendered empty.
+export default async function sitemap({
+    id,
+}: {
+    id: Promise<string>;
+}): Promise<MetadataRoute.Sitemap> {
+    const sitemapId = await id;
+    switch (sitemapId) {
         case 'static':
             return discoverStaticRoutes();
 

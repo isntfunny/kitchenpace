@@ -10,11 +10,16 @@ import {
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 
-// generateSitemaps() must run at build-time (force-dynamic breaks the
-// sitemap.xml index route in Next.js 16 standalone builds — see robots.ts
-// which lists each /sitemap/[id].xml directly instead). Use ISR instead so
-// the prerendered sitemaps stay fresh without needing a fully dynamic route.
-export const revalidate = 3600;
+// Render at request time, not build time. The prod container runs the *beta*
+// image promoted unchanged to :latest (see .github/workflows/app-image-live.yml
+// and the APP_URL note in lib/url.ts), so anything baked at build carries the
+// beta domain. ISR froze the beta APP_URL into every <loc>, making the prod
+// sitemap point at beta.* URLs. force-dynamic resolves APP_URL from the
+// runtime SERVICE_URL on each request — exactly what robots.ts already does,
+// which is why robots.txt correctly shows the kochtakt.de host. Only the
+// abandoned /sitemap.xml index route is affected by force-dynamic; robots.ts
+// lists each /sitemap/[id].xml directly, so that index is never used.
+export const dynamic = 'force-dynamic';
 
 const EXCLUDED_PREFIXES = [
     '/api',

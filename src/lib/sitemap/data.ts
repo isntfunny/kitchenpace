@@ -1,7 +1,6 @@
 import path from 'path';
 
 import { glob } from 'glob';
-import type { MetadataRoute } from 'next';
 
 import {
     fetchIngredientSlugsWithRecipes,
@@ -10,16 +9,38 @@ import {
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 
-// Render at request time, not build time. The prod container runs the *beta*
-// image promoted unchanged to :latest (see .github/workflows/app-image-live.yml
-// and the APP_URL note in lib/url.ts), so anything baked at build carries the
-// beta domain. ISR froze the beta APP_URL into every <loc>, making the prod
-// sitemap point at beta.* URLs. force-dynamic resolves APP_URL from the
-// runtime SERVICE_URL on each request — exactly what robots.ts already does,
-// which is why robots.txt correctly shows the kochtakt.de host. Only the
-// abandoned /sitemap.xml index route is affected by force-dynamic; robots.ts
-// lists each /sitemap/[id].xml directly, so that index is never used.
-export const dynamic = 'force-dynamic';
+// Central sitemap logic, shared by the /sitemap.xml index route and the
+// per-type /sitemap/[type].xml child routes. Implemented as plain route
+// handlers rather than Next's `sitemap.ts` metadata convention because that
+// convention does not emit a working /sitemap.xml index in Next 16 standalone
+// builds (it 404s). All routes are force-dynamic so APP_URL resolves from the
+// runtime SERVICE_URL — the prod container runs the promoted beta image, so
+// anything baked at build time carries the beta domain (see lib/url.ts).
+
+export const SITEMAP_TYPES = [
+    'static',
+    'recipes',
+    'categories',
+    'users',
+    'collections',
+    'tags',
+    'ingredients',
+] as const;
+
+export type SitemapType = (typeof SITEMAP_TYPES)[number];
+
+export function isSitemapType(value: string): value is SitemapType {
+    return (SITEMAP_TYPES as readonly string[]).includes(value);
+}
+
+type ChangeFrequency = 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+
+export type SitemapEntry = {
+    url: string;
+    lastModified?: Date;
+    changeFrequency?: ChangeFrequency;
+    priority?: number;
+};
 
 const EXCLUDED_PREFIXES = [
     '/api',
@@ -36,15 +57,12 @@ const EXCLUDED_PREFIXES = [
     '/lane-wizard-mock',
 ];
 
-const ROUTE_OVERRIDES: Record<
-    string,
-    { priority?: number; changeFrequency?: MetadataRoute.Sitemap[0]['changeFrequency'] }
-> = {
+const ROUTE_OVERRIDES: Record<string, { priority?: number; changeFrequency?: ChangeFrequency }> = {
     '/': { priority: 1, changeFrequency: 'daily' },
     '/recipes': { priority: 0.9, changeFrequency: 'daily' },
 };
 
-async function discoverStaticRoutes(): Promise<MetadataRoute.Sitemap> {
+async function discoverStaticRoutes(): Promise<SitemapEntry[]> {
     const appDir = path.join(process.cwd(), 'src/app');
     const pages = await glob('**/page.tsx', { cwd: appDir });
 
@@ -62,35 +80,13 @@ async function discoverStaticRoutes(): Promise<MetadataRoute.Sitemap> {
         )
         .map((route) => ({
             url: `${APP_URL}${route === '/' ? '' : route}`,
-            changeFrequency: ROUTE_OVERRIDES[route]?.changeFrequency ?? ('monthly' as const),
+            changeFrequency: ROUTE_OVERRIDES[route]?.changeFrequency ?? 'monthly',
             priority: ROUTE_OVERRIDES[route]?.priority ?? 0.6,
         }));
 }
 
-export async function generateSitemaps() {
-    return [
-        { id: 'static' as const },
-        { id: 'recipes' as const },
-        { id: 'categories' as const },
-        { id: 'users' as const },
-        { id: 'collections' as const },
-        { id: 'tags' as const },
-        { id: 'ingredients' as const },
-    ];
-}
-
-// Next.js 16 changed the sitemap `id` param: it is now a Promise<string>
-// that must be awaited (see the sitemap.ts version history — v16.0.0).
-// Destructuring it as a plain string made `switch (id)` compare a Promise
-// object against the string cases, so nothing ever matched and every sitemap
-// fell through to `default` and rendered empty.
-export default async function sitemap({
-    id,
-}: {
-    id: Promise<string>;
-}): Promise<MetadataRoute.Sitemap> {
-    const sitemapId = await id;
-    switch (sitemapId) {
+export async function getSitemapEntries(type: SitemapType): Promise<SitemapEntry[]> {
+    switch (type) {
         case 'static':
             return discoverStaticRoutes();
 
@@ -104,7 +100,7 @@ export default async function sitemap({
                 return recipes.map((r) => ({
                     url: `${APP_URL}/recipe/${r.slug}`,
                     lastModified: r.updatedAt,
-                    changeFrequency: 'weekly' as const,
+                    changeFrequency: 'weekly',
                     priority: 0.8,
                 }));
             } catch (error) {
@@ -121,7 +117,7 @@ export default async function sitemap({
                 return categories.map((c) => ({
                     url: `${APP_URL}/category/${c.slug}`,
                     lastModified: c.createdAt,
-                    changeFrequency: 'monthly' as const,
+                    changeFrequency: 'monthly',
                     priority: 0.7,
                 }));
             } catch (error) {
@@ -139,7 +135,7 @@ export default async function sitemap({
                 return users.map((u) => ({
                     url: `${APP_URL}/user/${u.slug}`,
                     lastModified: u.updatedAt,
-                    changeFrequency: 'monthly' as const,
+                    changeFrequency: 'monthly',
                     priority: 0.5,
                 }));
             } catch (error) {
@@ -160,7 +156,7 @@ export default async function sitemap({
                 return collections.map((c) => ({
                     url: `${APP_URL}/collection/${c.slug}`,
                     lastModified: c.updatedAt,
-                    changeFrequency: 'weekly' as const,
+                    changeFrequency: 'weekly',
                     priority: 0.7,
                 }));
             } catch (error) {
@@ -174,7 +170,7 @@ export default async function sitemap({
                 const tagSlugs = await fetchTagSlugsWithRecipes();
                 return tagSlugs.map((slug) => ({
                     url: `${APP_URL}/tag/${slug}`,
-                    changeFrequency: 'weekly' as const,
+                    changeFrequency: 'weekly',
                     priority: 0.6,
                 }));
             } catch (error) {
@@ -188,7 +184,7 @@ export default async function sitemap({
                 const ingredientSlugs = await fetchIngredientSlugsWithRecipes();
                 return ingredientSlugs.map((slug) => ({
                     url: `${APP_URL}/zutat/${slug}`,
-                    changeFrequency: 'weekly' as const,
+                    changeFrequency: 'weekly',
                     priority: 0.6,
                 }));
             } catch (error) {
@@ -196,8 +192,35 @@ export default async function sitemap({
                 return [];
             }
         }
-
-        default:
-            return [];
     }
+}
+
+function xmlEscape(value: string): string {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+export function renderUrlset(entries: SitemapEntry[]): string {
+    const urls = entries
+        .map((e) => {
+            const parts = [`    <loc>${xmlEscape(e.url)}</loc>`];
+            if (e.lastModified)
+                parts.push(`    <lastmod>${e.lastModified.toISOString()}</lastmod>`);
+            if (e.changeFrequency) parts.push(`    <changefreq>${e.changeFrequency}</changefreq>`);
+            if (e.priority !== undefined) parts.push(`    <priority>${e.priority}</priority>`);
+            return `  <url>\n${parts.join('\n')}\n  </url>`;
+        })
+        .join('\n');
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+}
+
+export function renderSitemapIndex(locs: string[]): string {
+    const items = locs
+        .map((loc) => `  <sitemap>\n    <loc>${xmlEscape(loc)}</loc>\n  </sitemap>`)
+        .join('\n');
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</sitemapindex>\n`;
 }

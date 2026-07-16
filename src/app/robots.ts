@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 import { APP_URL } from '@app/lib/url';
 
 // Resolve APP_URL at request time — a statically built robots.txt would
-// freeze the sitemap URL with the build-time domain (see sitemap.ts)
+// freeze the sitemap URL with the build-time domain (see lib/sitemap/data.ts)
 export const dynamic = 'force-dynamic';
 
 export default function robots(): MetadataRoute.Robots {
@@ -31,14 +31,8 @@ export default function robots(): MetadataRoute.Robots {
                 '/lane-wizard-mock',
             ],
         },
-        sitemap: [
-            `${APP_URL}/sitemap/static.xml`,
-            `${APP_URL}/sitemap/recipes.xml`,
-            `${APP_URL}/sitemap/categories.xml`,
-            `${APP_URL}/sitemap/users.xml`,
-            `${APP_URL}/sitemap/collections.xml`,
-            `${APP_URL}/sitemap/tags.xml`,
-            `${APP_URL}/sitemap/ingredients.xml`,
-        ],
+        // Single sitemap index; it references each per-type child sitemap
+        // (/sitemap/<type>.xml). Google follows the index to the children.
+        sitemap: `${APP_URL}/sitemap.xml`,
     };
 }

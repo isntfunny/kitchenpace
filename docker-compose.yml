@@ -60,6 +60,8 @@ services:
             args:
                 NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY}
                 REACT_PROFILE: 1
+                DATABASE_URL: ${DATABASE_URL}
+                NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
         image: registry.isntfunny.de/kitchenpace:beta
         container_name: kitchenpace-app
         depends_on:

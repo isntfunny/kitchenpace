@@ -10,7 +10,11 @@ import {
 import { APP_URL } from '@app/lib/url';
 import { prisma } from '@shared/prisma';
 
-// export const revalidate = 0;
+// generateSitemaps() must run at build-time (force-dynamic breaks the
+// sitemap.xml index route in Next.js 16 standalone builds — see robots.ts
+// which lists each /sitemap/[id].xml directly instead). Use ISR instead so
+// the prerendered sitemaps stay fresh without needing a fully dynamic route.
+export const revalidate = 3600;
 
 const EXCLUDED_PREFIXES = [
     '/api',

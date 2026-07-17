@@ -20,7 +20,13 @@ interface LaneCookViewProps {
  * `flowEdges` stay the single source of truth; nothing is persisted here.
  */
 export function LaneCookView({ nodes, edges, ingredients, photosByStepId }: LaneCookViewProps) {
-    const grid = useMemo(() => flowToLaneGrid(nodes, edges).grid, [nodes, edges]);
+    const grid = useMemo(() => {
+        const result = flowToLaneGrid(nodes, edges);
+        if (!result.clean && process.env.NODE_ENV !== 'production') {
+            console.warn(`[LaneCookView] linear fallback: ${result.reason}`);
+        }
+        return result.grid;
+    }, [nodes, edges]);
 
     return (
         <LaneWizard

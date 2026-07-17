@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useMemo, useState } from 'react';
 
 import type {
     FlowEdgeSerialized,
@@ -126,14 +127,105 @@ const REAL_EDGES: FlowEdgeSerialized[] = [
     { id: 'edge-9', source: 'step-7', target: 'servieren' },
 ];
 
+/* ── Synthetisches Rezept mit verschachteltem Fork + partiellem Merge —
+      demonstriert die generalisierte Projektion. Open at /lane-view-mock?nested ── */
+const NESTED_NODES: FlowNodeSerialized[] = [
+    { id: 'start', type: 'start', label: "Los geht's!", description: 'Vorbereitung.' },
+    {
+        id: 'sauce',
+        type: 'kochen',
+        label: 'Sauce ansetzen',
+        duration: 6,
+        description: 'Tomaten einkochen.',
+    },
+    {
+        id: 's1',
+        type: 'schneiden',
+        label: 'Gemüse schneiden',
+        duration: 4,
+        description: 'Paprika würfeln.',
+    },
+    {
+        id: 's2',
+        type: 'braten',
+        label: 'Gemüse anbraten',
+        duration: 5,
+        description: 'Scharf anbraten.',
+    },
+    {
+        id: 'f1',
+        type: 'schneiden',
+        label: 'Fleisch parieren',
+        duration: 3,
+        description: 'Sehnen entfernen.',
+    },
+    {
+        id: 'f2',
+        type: 'braten',
+        label: 'Fleisch braten',
+        duration: 8,
+        description: 'Rundum braun.',
+    },
+    {
+        id: 'mA',
+        type: 'mixen',
+        label: 'Pfanne vereinen',
+        duration: 2,
+        description: 'Gemüse zum Fleisch.',
+    },
+    {
+        id: 'nudeln',
+        type: 'kochen',
+        label: 'Nudeln kochen',
+        duration: 10,
+        description: 'Al dente.',
+    },
+    {
+        id: 'mB',
+        type: 'anrichten',
+        label: 'Alles vermengen',
+        duration: 2,
+        description: 'Mit Sauce mischen.',
+    },
+    { id: 'servieren', type: 'servieren', label: 'Servieren', description: 'Heiß servieren.' },
+];
+const NESTED_EDGES: FlowEdgeSerialized[] = [
+    { id: 'n1', source: 'start', target: 'sauce' },
+    { id: 'n2', source: 'start', target: 's1' },
+    { id: 'n3', source: 'start', target: 'nudeln' },
+    { id: 'n4', source: 's1', target: 's2' },
+    { id: 'n5', source: 's1', target: 'f1' },
+    { id: 'n6', source: 'f1', target: 'f2' },
+    { id: 'n7', source: 's2', target: 'mA' },
+    { id: 'n8', source: 'f2', target: 'mA' },
+    { id: 'n9', source: 'mA', target: 'mB' },
+    { id: 'n10', source: 'nudeln', target: 'mB' },
+    { id: 'n11', source: 'sauce', target: 'mB' },
+    { id: 'n12', source: 'mB', target: 'servieren' },
+];
+
 export default function LaneViewMockPage() {
+    return (
+        <Suspense>
+            <LaneViewMockInner />
+        </Suspense>
+    );
+}
+
+function LaneViewMockInner() {
     const [mode, setMode] = useState<LaneMode>('view');
+    const nested = useSearchParams().get('nested') !== null;
+    const nodes = nested ? NESTED_NODES : REAL_NODES;
+    const nodeEdges = nested ? NESTED_EDGES : REAL_EDGES;
 
     // StepCard renders @[name](id) mentions via viewerUtils.renderDescription,
     // so feed the raw flow data straight through — no pre-stripping needed.
-    const { grid, clean, reason } = useMemo(() => flowToLaneGrid(REAL_NODES, REAL_EDGES), []);
+    const { grid, clean, reason } = useMemo(
+        () => flowToLaneGrid(nodes, nodeEdges),
+        [nodes, nodeEdges],
+    );
 
-    const totalMin = useMemo(() => REAL_NODES.reduce((acc, n) => acc + (n.duration ?? 0), 0), []);
+    const totalMin = useMemo(() => nodes.reduce((acc, n) => acc + (n.duration ?? 0), 0), [nodes]);
 
     return (
         <div className={pageClass}>
@@ -144,7 +236,7 @@ export default function LaneViewMockPage() {
                     LaneWizard ← flowToLaneGrid() ← echte kochtakt.de-Daten · Mapping:{' '}
                     {clean ? (
                         <span className={css({ color: '#00b894', fontWeight: '700' })}>
-                            sauber series-parallel ✓
+                            strukturell gemappt ✓
                         </span>
                     ) : (
                         <span className={css({ color: '#e17055', fontWeight: '700' })}>
@@ -188,7 +280,7 @@ export default function LaneViewMockPage() {
 
             {/* LaneWizard */}
             <div className={css({ flex: '1', minH: '0', overflow: 'auto', bg: '#faf9f7' })}>
-                <LaneWizard initialGrid={grid} mode={mode} />
+                <LaneWizard key={nested ? 'nested' : 'real'} initialGrid={grid} mode={mode} />
             </div>
         </div>
     );

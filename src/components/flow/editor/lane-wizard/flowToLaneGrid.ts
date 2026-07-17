@@ -9,22 +9,30 @@ import type { LaneGrid, LaneSegment, LaneStep } from './types';
  *
  * This is intentionally ONE-WAY and best-effort:
  *  - the xyflow data stays the single source of truth (nothing is persisted),
- *  - a clean series-parallel DAG (linear spine + parallel branches that
- *    fork and re-merge) maps losslessly onto segments + lanes,
- *  - anything that is NOT cleanly series-parallel (nested forks, cross-lane
- *    edges, multiple roots, cycles) falls back to a single-lane topological
- *    list so the viewer degrades gracefully instead of crashing.
+ *  - ANY directed acyclic graph maps onto segments + lanes: the graph is
+ *    decomposed into maximal linear chains, and every fork/merge becomes a
+ *    segment boundary. Lanes whose task keeps running across a boundary get
+ *    `continuation` fillers — the same visual language the editor's own
+ *    SPLIT/MERGE actions produce. Nested forks, partial merges, skip edges
+ *    (fork edge straight into a merge), multiple roots and dead-end branches
+ *    are all handled structurally.
+ *  - only genuinely broken data (cycles) and graphs too wide to read
+ *    (> MAX_PARALLEL_LANES concurrent lanes) fall back to a single-lane
+ *    topological list so the viewer degrades gracefully instead of crashing.
  *
  * Because it is display-only, we never hit the lossy round-trip problem that
  * a real DAG<->lane *migration* would have.
  */
 export interface FlowToLaneGridResult {
     grid: LaneGrid;
-    /** true = clean series-parallel mapping; false = degraded linear fallback */
+    /** true = structural lane mapping; false = degraded linear fallback */
     clean: boolean;
     /** human-readable reason when `clean` is false (for dev/telemetry) */
     reason?: string;
 }
+
+/** More concurrent lanes than this are unreadable — degrade to the list. */
+const MAX_PARALLEL_LANES = 6;
 
 const toStep = (n: FlowNodeSerialized): LaneStep => ({
     id: n.id,
@@ -35,8 +43,8 @@ const toStep = (n: FlowNodeSerialized): LaneStep => ({
     ingredientIds: n.ingredientIds,
 });
 
-const laneDuration = (lane: FlowNodeSerialized[]): number =>
-    lane.reduce((acc, n) => acc + (n.duration ?? 0), 0);
+const chainDuration = (chain: FlowNodeSerialized[]): number =>
+    chain.reduce((acc, n) => acc + (n.duration ?? 0), 0);
 
 /** Distribute a total column count `m` across `n` lanes (sum stays = m). */
 function columnSpansFor(n: number, m: number): number[] {
@@ -45,6 +53,21 @@ function columnSpansFor(n: number, m: number): number[] {
     const base = Math.floor(m / n);
     const rem = m % n;
     return Array.from({ length: n }, (_, i) => base + (i < rem ? 1 : 0));
+}
+
+/**
+ * A lane that is alive between two structural events (fork/merge).
+ * `chain === null` marks a passing track: a fork edge that runs straight
+ * into a merge without any steps of its own — it occupies a lane and
+ * renders as a continuation filler until the merge consumes it.
+ */
+interface Track {
+    key: number;
+    chain: FlowNodeSerialized[] | null;
+    /** Merge node that will consume this track (null = runs until the end). */
+    outlet: string | null;
+    /** Last real node — colours/labels this track's continuation fillers. */
+    source: FlowNodeSerialized;
 }
 
 export function flowToLaneGrid(
@@ -63,8 +86,14 @@ export function flowToLaneGrid(
         outgoing.set(n.id, []);
         incoming.set(n.id, []);
     }
+    // Self-loops and duplicate edges would fake cycles/merges — drop them.
+    const seenEdges = new Set<string>();
     for (const e of edges) {
         if (!nodeById.has(e.source) || !nodeById.has(e.target)) continue;
+        if (e.source === e.target) continue;
+        const key = `${e.source} -> ${e.target}`;
+        if (seenEdges.has(key)) continue;
+        seenEdges.add(key);
         outgoing.get(e.source)!.push(e.target);
         incoming.get(e.target)!.push(e.source);
     }
@@ -75,92 +104,156 @@ export function flowToLaneGrid(
         reason,
     });
 
-    // Single root required for a clean series-parallel walk.
-    const roots = nodes.filter((n) => (incoming.get(n.id)!.length ?? 0) === 0);
-    if (roots.length !== 1) {
-        return fallback(`expected 1 root, found ${roots.length}`);
-    }
-    const start = roots[0];
-
-    // Longest-path rank (for "nearest" common merge selection). Needs a DAG.
+    // Longest-path rank orders the structural events. Needs a DAG.
     const rank = computeRanks(nodes, outgoing, incoming);
     if (!rank) return fallback('graph contains a cycle');
 
-    const segments: FlowNodeSerialized[][][] = []; // segment -> lane -> nodes
-    const visited = new Set<string>();
-    let cursor: FlowNodeSerialized | null = start;
-    let guard = 0;
-    const guardMax = nodes.length * 4 + 8;
-
-    while (cursor && guard++ < guardMax) {
-        // 1) Walk a single-lane chain until a fork, an end, or an upcoming merge.
-        const chain: FlowNodeSerialized[] = [];
-        let node: FlowNodeSerialized | null = cursor;
-        while (node) {
-            if (visited.has(node.id)) return fallback('revisited node in spine');
-            visited.add(node.id);
-            chain.push(node);
-            const outs: string[] = outgoing.get(node.id)!;
-            if (outs.length === 0) {
-                node = null;
-                break;
-            }
-            if (outs.length > 1) break; // fork — `node` stays as the fork point
-            const next: FlowNodeSerialized = nodeById.get(outs[0])!;
-            if ((incoming.get(next.id)!.length ?? 0) > 1) {
-                // `next` is a merge → it begins the following segment
-                node = next;
-                break;
-            }
-            node = next;
+    /* ── 1) Chain decomposition ──────────────────────────────────────────
+       A chain is a maximal linear run (interior nodes have exactly one
+       incoming and one outgoing edge). Chain heads are roots, merge nodes
+       (indeg > 1) and fork children (pred outdeg > 1); every node belongs
+       to exactly one chain. */
+    const isHead = (id: string): boolean => {
+        const ins = incoming.get(id)!;
+        return ins.length !== 1 || outgoing.get(ins[0])!.length > 1;
+    };
+    const chainByHead = new Map<string, FlowNodeSerialized[]>();
+    let chainedNodes = 0;
+    for (const n of nodes) {
+        if (!isHead(n.id)) continue;
+        const chain: FlowNodeSerialized[] = [n];
+        let cur = n.id;
+        for (;;) {
+            const outs = outgoing.get(cur)!;
+            if (outs.length !== 1) break;
+            const next = outs[0];
+            if (incoming.get(next)!.length !== 1) break;
+            chain.push(nodeById.get(next)!);
+            cur = next;
         }
-        if (chain.length) segments.push([chain]);
+        chainByHead.set(n.id, chain);
+        chainedNodes += chain.length;
+    }
+    if (chainedNodes !== nodes.length) {
+        return fallback(`chain decomposition covered ${chainedNodes}/${nodes.length} nodes`);
+    }
 
-        if (!node) break;
+    /* ── 2) Structural events, ordered by topological rank ────────────── */
+    const events: { rank: number; kind: 'merge' | 'fork'; node: string }[] = [];
+    for (const n of nodes) {
+        if (incoming.get(n.id)!.length > 1) {
+            events.push({ rank: rank.get(n.id)!, kind: 'merge', node: n.id });
+        }
+        if (outgoing.get(n.id)!.length > 1) {
+            events.push({ rank: rank.get(n.id)!, kind: 'fork', node: n.id });
+        }
+    }
+    // Merges sort before forks on equal rank: a node that is both merge and
+    // fork must be born by its merge before its own fork can consume it.
+    events.sort(
+        (a, b) =>
+            a.rank - b.rank ||
+            (a.kind !== b.kind ? (a.kind === 'merge' ? -1 : 1) : a.node < b.node ? -1 : 1),
+    );
 
-        const outs = outgoing.get(node.id)!;
-        if (outs.length > 1) {
-            // 2) Fork: collect one linear lane per branch up to the common merge.
-            const merge = nearestCommonMerge(outs, outgoing, rank);
-            const laneChains: FlowNodeSerialized[][] = [];
-            for (const branchStart of outs) {
-                const lane = collectBranch(
-                    branchStart,
-                    merge,
-                    nodeById,
-                    outgoing,
-                    incoming,
-                    visited,
-                );
-                if (!lane) return fallback('branch is not linear (nested fork/merge)');
-                laneChains.push(lane);
+    /* ── 3) Sweep: keep an ordered list of live tracks, emit one segment
+            per event. Born tracks show their steps, surviving tracks show
+            continuation fillers. ─────────────────────────────────────── */
+    let trackKey = 0;
+    let contId = 0;
+    const tracks: Track[] = [];
+    const trackByForkTail = new Map<string, Track>();
+    const rawSegments: LaneStep[][][] = [];
+
+    const contStep = (tr: Track): LaneStep => ({
+        id: `lw-cont-${contId++}`,
+        type: tr.source.type,
+        label: tr.source.label,
+        description: '',
+        continuation: true,
+    });
+
+    const makeChainTrack = (headId: string): Track => {
+        const chain = chainByHead.get(headId)!;
+        const tail = chain[chain.length - 1];
+        const outs = outgoing.get(tail.id)!;
+        const track: Track = {
+            key: trackKey++,
+            chain,
+            outlet: outs.length === 1 ? outs[0] : null,
+            source: tail,
+        };
+        if (outs.length > 1) trackByForkTail.set(tail.id, track);
+        return track;
+    };
+
+    const emitSegment = (bornKeys: Set<number>) => {
+        rawSegments.push(
+            tracks.map((tr) =>
+                bornKeys.has(tr.key) && tr.chain ? tr.chain.map(toStep) : [contStep(tr)],
+            ),
+        );
+    };
+
+    // Birth all root chains side by side (longest task first, like the editor).
+    const rootTracks = nodes
+        .filter((n) => incoming.get(n.id)!.length === 0)
+        .map((n) => makeChainTrack(n.id));
+    rootTracks.sort((a, b) => chainDuration(b.chain!) - chainDuration(a.chain!));
+    tracks.push(...rootTracks);
+    emitSegment(new Set(tracks.map((t) => t.key)));
+
+    let maxLanes = tracks.length;
+    for (const ev of events) {
+        if (ev.kind === 'merge') {
+            const consumedIdx: number[] = [];
+            for (let i = 0; i < tracks.length; i++) {
+                if (tracks[i].outlet === ev.node) consumedIdx.push(i);
             }
-            // Critical path (longest by time) on top.
-            laneChains.sort((a, b) => laneDuration(b) - laneDuration(a));
-            segments.push(laneChains);
-
-            if (!merge) {
-                cursor = null; // branches never reconverge → recipe ends in parallel
-                break;
-            }
-            cursor = nodeById.get(merge)!;
+            if (consumedIdx.length === 0) return fallback('merge without live input lanes');
+            const insertAt = consumedIdx[0];
+            const merged = makeChainTrack(ev.node);
+            for (let k = consumedIdx.length - 1; k >= 0; k--) tracks.splice(consumedIdx[k], 1);
+            tracks.splice(Math.min(insertAt, tracks.length), 0, merged);
+            emitSegment(new Set([merged.key]));
         } else {
-            // node was advanced to an upcoming merge; continue the spine from it.
-            cursor = node;
+            const parent = trackByForkTail.get(ev.node);
+            const idx = parent ? tracks.indexOf(parent) : -1;
+            if (!parent || idx === -1) return fallback('fork on a dead lane');
+            const children: Track[] = outgoing.get(ev.node)!.map((t) => {
+                if (incoming.get(t)!.length > 1) {
+                    // Skip edge straight into a merge — lane with no own steps.
+                    return { key: trackKey++, chain: null, outlet: t, source: parent.source };
+                }
+                return makeChainTrack(t);
+            });
+            children.sort((a, b) => chainDuration(b.chain ?? []) - chainDuration(a.chain ?? []));
+            tracks.splice(idx, 1, ...children);
+            emitSegment(new Set(children.map((c) => c.key)));
         }
+        maxLanes = Math.max(maxLanes, tracks.length);
     }
 
-    if (guard >= guardMax) return fallback('walk did not terminate');
-    if (visited.size !== nodes.length) {
-        return fallback(`covered ${visited.size}/${nodes.length} nodes`);
+    if (maxLanes > MAX_PARALLEL_LANES) {
+        return fallback(
+            `${maxLanes} concurrent lanes exceed the readable max of ${MAX_PARALLEL_LANES}`,
+        );
     }
 
-    // Build LaneGrid with consistent column count across segments.
-    const maxLanes = segments.reduce((m, seg) => Math.max(m, seg.length), 1);
-    const laneSegments: LaneSegment[] = segments.map((seg, i) => ({
+    // Every real step must appear exactly once (defensive — holds on any DAG).
+    let placed = 0;
+    for (const seg of rawSegments) {
+        for (const lane of seg) for (const s of lane) if (!s.continuation) placed++;
+    }
+    if (placed !== nodes.length) {
+        return fallback(`placed ${placed}/${nodes.length} steps`);
+    }
+
+    const laneMax = rawSegments.reduce((m, seg) => Math.max(m, seg.length), 1);
+    const laneSegments: LaneSegment[] = rawSegments.map((seg, i) => ({
         id: `seg-${i}`,
-        lanes: seg.map((lane) => lane.map(toStep)),
-        columnSpans: columnSpansFor(seg.length, maxLanes),
+        lanes: seg,
+        columnSpans: columnSpansFor(seg.length, laneMax),
     }));
 
     return { grid: { segments: laneSegments }, clean: true };
@@ -192,86 +285,6 @@ function computeRanks(
     return processed === nodes.length ? rank : null;
 }
 
-/** Forward-reachable set (inclusive) from a node. */
-function reachable(startId: string, outgoing: Map<string, string[]>): Set<string> {
-    const seen = new Set<string>();
-    const stack = [startId];
-    while (stack.length) {
-        const id = stack.pop()!;
-        if (seen.has(id)) continue;
-        seen.add(id);
-        for (const t of outgoing.get(id) ?? []) stack.push(t);
-    }
-    return seen;
-}
-
-/** The lowest-rank node reachable from ALL branch starts, or null. */
-function nearestCommonMerge(
-    branchStarts: string[],
-    outgoing: Map<string, string[]>,
-    rank: Map<string, number>,
-): string | null {
-    const sets = branchStarts.map((b) => reachable(b, outgoing));
-    let common: Set<string> | null = null;
-    for (const s of sets) {
-        if (common === null) {
-            common = new Set<string>(s);
-        } else {
-            const filtered = new Set<string>();
-            for (const x of common) if (s.has(x)) filtered.add(x);
-            common = filtered;
-        }
-    }
-    if (!common || common.size === 0) return null;
-    let best: string | null = null;
-    let bestRank = Infinity;
-    for (const id of common) {
-        const r = rank.get(id) ?? Infinity;
-        if (r < bestRank) {
-            bestRank = r;
-            best = id;
-        }
-    }
-    return best;
-}
-
-/**
- * Walk a single branch from `startId` up to (excluding) `mergeId`.
- * Returns null if the branch is not a simple linear chain.
- */
-function collectBranch(
-    startId: string,
-    mergeId: string | null,
-    nodeById: Map<string, FlowNodeSerialized>,
-    outgoing: Map<string, string[]>,
-    incoming: Map<string, string[]>,
-    visited: Set<string>,
-): FlowNodeSerialized[] | null {
-    const out: FlowNodeSerialized[] = [];
-    let id: string | null = startId;
-    const seen = new Set<string>();
-    while (id && id !== mergeId) {
-        if (seen.has(id) || visited.has(id)) return null;
-        seen.add(id);
-        visited.add(id);
-        const node = nodeById.get(id);
-        if (!node) return null;
-        out.push(node);
-        const outs: string[] = outgoing.get(id)!;
-        if (outs.length === 0) {
-            id = null;
-            break; // branch ends without reaching the merge — allowed
-        }
-        if (outs.length > 1) return null; // nested fork → not linear
-        const next: string = outs[0];
-        if (next !== mergeId && (incoming.get(next)!.length ?? 0) > 1) {
-            return null; // unexpected internal merge → not linear
-        }
-        id = next;
-    }
-    return out;
-}
-
 /** Degraded mode: every node as one lane, in topological order. */
 function linearFallback(
     nodes: FlowNodeSerialized[],
@@ -280,18 +293,22 @@ function linearFallback(
 ): LaneGrid {
     const indeg = new Map<string, number>();
     for (const n of nodes) indeg.set(n.id, incoming.get(n.id)!.length);
-    const queue = nodes.filter((n) => indeg.get(n.id) === 0).map((n) => n.id);
+    // Depth-first over ready nodes so each branch stays contiguous instead
+    // of interleaving parallel branches step by step (BFS would).
+    const ready: string[] = nodes.filter((n) => indeg.get(n.id) === 0).map((n) => n.id);
     const order: string[] = [];
     const seen = new Set<string>();
-    while (queue.length) {
-        const id = queue.shift()!;
+    while (ready.length) {
+        const id = ready.shift()!;
         if (seen.has(id)) continue;
         seen.add(id);
         order.push(id);
+        const nowReady: string[] = [];
         for (const t of outgoing.get(id)!) {
             indeg.set(t, indeg.get(t)! - 1);
-            if (indeg.get(t)! <= 0) queue.push(t);
+            if (indeg.get(t)! <= 0) nowReady.push(t);
         }
+        ready.unshift(...nowReady);
     }
     // Append any nodes left out by a cycle, preserving input order.
     for (const n of nodes) if (!seen.has(n.id)) order.push(n.id);

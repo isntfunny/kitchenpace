@@ -74,7 +74,13 @@ export function StepCard({
                     flexGrow: 1,
                     minHeight: '32px',
                 }}
-            />
+            >
+                {mode === 'view' && step.label && (
+                    <span className={continuationLabelClass} style={{ color: config.accent }}>
+                        {step.label} läuft weiter …
+                    </span>
+                )}
+            </motion.div>
         );
     }
 
@@ -323,6 +329,17 @@ const cardClass = css({
     borderBottomColor: 'border',
     transition: 'opacity 0.2s ease, background 0.2s ease',
     overflow: 'hidden',
+});
+
+/* Muted "task keeps running" hint on continuation fillers in view mode */
+const continuationLabelClass = css({
+    m: 'auto',
+    px: '10px',
+    py: '6px',
+    fontSize: '11px',
+    fontStyle: 'italic',
+    fontWeight: '600',
+    opacity: '0.75',
 });
 
 const imageStripClass = css({

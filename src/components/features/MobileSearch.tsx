@@ -19,39 +19,79 @@ import { css } from 'styled-system/css';
 
 // ── Main Component ───────────────────────────────────────────────────────────
 
-export function MobileSearch() {
+export function MobileSearch({ variant = 'pill' }: { variant?: 'pill' | 'icon' }) {
     const [open, setOpen] = useState(false);
 
     return (
         <>
-            {/* Fake search trigger — looks like the real input */}
-            <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className={css({
-                    display: { base: 'flex', md: 'none' },
-                    alignItems: 'center',
-                    gap: '2',
-                    width: '100%',
-                    height: '44px',
-                    paddingLeft: '4',
-                    paddingRight: '3',
-                    borderRadius: 'full',
-                    border: '1px solid',
-                    borderColor: 'border',
-                    background: 'surface.elevated',
-                    fontSize: 'sm',
-                    fontFamily: 'body',
-                    color: 'text.muted',
-                    cursor: 'pointer',
-                    transition: 'all 150ms ease',
-                })}
-            >
-                <span className={css({ flex: 1, textAlign: 'left' })}>
-                    Rezepte, Zutaten, Tags suchen…
-                </span>
-                <Search size={18} />
-            </button>
+            {variant === 'icon' ? (
+                <button
+                    type="button"
+                    onClick={() => setOpen(true)}
+                    aria-label="Suche öffnen"
+                    className={css({
+                        display: { base: 'inline-flex', md: 'none' },
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: 'full',
+                        border: '1px solid',
+                        borderColor: 'border',
+                        background: 'surface.elevated',
+                        color: 'text',
+                        cursor: 'pointer',
+                        transition: 'all 150ms ease',
+                        _focusVisible: {
+                            boxShadow: {
+                                base: '0 0 0 3px rgba(224,123,83,0.35)',
+                                _dark: '0 0 0 3px rgba(224,123,83,0.3)',
+                            },
+                        },
+                    })}
+                >
+                    <Search size={20} />
+                </button>
+            ) : (
+                /* Fake search trigger — looks like the real input */
+                <button
+                    type="button"
+                    onClick={() => setOpen(true)}
+                    className={css({
+                        display: { base: 'flex', md: 'none' },
+                        alignItems: 'center',
+                        gap: '2',
+                        width: '100%',
+                        height: '44px',
+                        paddingLeft: '4',
+                        paddingRight: '3',
+                        borderRadius: 'full',
+                        border: '1px solid',
+                        borderColor: 'border',
+                        background: 'surface.elevated',
+                        fontSize: 'sm',
+                        fontFamily: 'body',
+                        color: 'text.muted',
+                        cursor: 'pointer',
+                        transition: 'all 150ms ease',
+                    })}
+                >
+                    <span
+                        className={css({
+                            flex: 1,
+                            minWidth: 0,
+                            textAlign: 'left',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                        })}
+                    >
+                        Rezepte, Zutaten, Tags suchen…
+                    </span>
+                    <Search size={18} className={css({ flexShrink: 0 })} />
+                </button>
+            )}
 
             <MobileOverlay open={open} onClose={() => setOpen(false)}>
                 <MobileSearchContent onClose={() => setOpen(false)} />

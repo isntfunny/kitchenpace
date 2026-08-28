@@ -278,9 +278,11 @@ export function Header() {
                 backdropFilter: 'blur(8px)',
             })}
         >
-            {/* Animated floating background elements — clipped to header bounds */}
+            {/* Animated floating background elements — clipped to header bounds.
+                Hidden on mobile: no room for them, and they cost paint time on the LCP path. */}
             <div
                 className={css({
+                    display: { base: 'none', md: 'block' },
                     position: 'absolute',
                     inset: 0,
                     overflow: 'hidden',
@@ -339,7 +341,7 @@ export function Header() {
                     marginX: 'auto',
                     width: '100%',
                     px: { base: 'page.x', md: 'page.x.md' },
-                    pt: 'card.compact',
+                    pt: { base: '1', md: 'card.compact' },
                     pb: '0',
                 })}
             >
@@ -421,45 +423,41 @@ export function Header() {
                     </div>
                 </div>
 
-                {/* Mobile: row 1 — Logo only */}
+                {/* Mobile: single row — Menu | Logo | Search | Notifications + Profile */}
                 <div
                     className={css({
                         display: { base: 'flex', md: 'none' },
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        gap: '1.5',
+                        minH: '52px',
                     })}
                 >
+                    <MobileNavDrawer />
+
                     <Link
                         href="/"
+                        aria-label="Zur Startseite"
                         className={css({
                             display: 'flex',
+                            flex: '1',
+                            minWidth: 0,
                             alignItems: 'center',
+                            justifyContent: 'center',
                         })}
                     >
                         <SmartImage
                             src={logoSrc}
                             alt="KochTakt Logo"
-                            width={100}
-                            height={39}
-                            className={css({ objectFit: 'contain' })}
+                            className={css({
+                                height: '32px',
+                                width: 'auto',
+                                maxWidth: '100%',
+                                objectFit: 'contain',
+                            })}
                         />
                     </Link>
-                </div>
 
-                {/* Mobile: row 2 — Menu | Search | Profile */}
-                <div
-                    className={css({
-                        display: { base: 'flex', md: 'none' },
-                        alignItems: 'center',
-                        gap: '2',
-                        mt: '2',
-                    })}
-                >
-                    <MobileNavDrawer />
-
-                    <div className={css({ flex: '1', minWidth: 0 })}>
-                        <MobileSearch />
-                    </div>
+                    <MobileSearch variant="icon" />
 
                     <HeaderAuth />
                 </div>

@@ -306,15 +306,16 @@ function RecipeChip({
                         display: 'flex',
                         alignItems: 'center',
                         gap: '2',
-                        px: '3',
-                        py: '1.5',
+                        px: { base: '2.5', md: '3' },
+                        py: { base: '1', md: '1.5' },
+                        maxWidth: { base: '45vw', md: 'none' },
                         borderRadius: 'full',
                         bg: isPinned
                             ? { base: 'rgba(248,181,0,0.15)', _dark: 'rgba(248,181,0,0.12)' }
                             : 'surface.muted',
                         border: '1px solid',
                         borderColor: isPinned ? 'rgba(248,181,0,0.3)' : 'transparent',
-                        fontSize: 'sm',
+                        fontSize: { base: 'xs', md: 'sm' },
                         fontWeight: isPinned ? '500' : '400',
                         color: isPinned ? 'text' : 'text-muted',
                         cursor: 'pointer',
@@ -376,7 +377,13 @@ function RecipeChip({
                         />
                     </motion.span>
                     <motion.span
-                        className={css({ whiteSpace: 'nowrap', position: 'relative' })}
+                        className={css({
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            minWidth: 0,
+                            position: 'relative',
+                        })}
                         variants={{
                             rest: {
                                 color: isPinned ? 'var(--colors-text)' : 'var(--colors-text-muted)',
@@ -443,11 +450,11 @@ export function RecipeTabs() {
                 maxW: '1400px',
                 marginX: 'auto',
                 width: '100%',
-                px: { base: '4', md: '6' },
-                py: '2',
+                px: { base: '3', md: '6' },
+                py: { base: '1.5', md: '2' },
                 display: 'flex',
                 alignItems: 'center',
-                gap: '3',
+                gap: { base: '1.5', md: '3' },
                 overflowX: 'auto',
                 overflowY: 'visible',
                 position: 'relative',
@@ -459,6 +466,7 @@ export function RecipeTabs() {
         >
             <span
                 className={css({
+                    display: { base: 'none', md: 'inline' },
                     fontSize: 'xs',
                     fontWeight: '600',
                     color: 'foreground.muted',
@@ -506,13 +514,20 @@ export function RecipeTabs() {
             ) : (
                 <span
                     className={css({
-                        fontSize: 'sm',
+                        fontSize: { base: 'xs', md: 'sm' },
                         color: 'foreground.muted',
                         opacity: 0.7,
                         whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                     })}
                 >
-                    Noch keine letzten Rezepte – öffne ein Rezept, um es hier abzulegen
+                    <span className={css({ display: { base: 'none', md: 'inline' } })}>
+                        Noch keine letzten Rezepte – öffne ein Rezept, um es hier abzulegen
+                    </span>
+                    <span className={css({ display: { base: 'inline', md: 'none' } })}>
+                        Noch keine zuletzt geöffneten Rezepte
+                    </span>
                 </span>
             )}
         </div>

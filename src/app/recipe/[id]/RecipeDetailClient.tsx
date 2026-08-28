@@ -18,6 +18,7 @@ import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY } from '@app/components/recipe/tutorial/shared';
 import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
+import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { TROPHIES } from '@app/lib/trophies/registry';
 
 import { css } from 'styled-system/css';
@@ -244,7 +245,8 @@ export function RecipeDetailClient({
             subtitle: 'Rezeptbild',
         };
         const extras = cookImages.map((img) => ({
-            src: img.imageKey,
+            // imageKey is a raw S3 key — SmartImage/Lightbox need a real URL
+            src: getThumbnailUrl(img.imageKey, 'original', 1920),
             thumbKey: img.imageKey,
             title: img.user.nickname || img.user.name || 'Küchenfreund',
             subtitle: img.caption || 'Foto',

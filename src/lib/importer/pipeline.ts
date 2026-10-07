@@ -4,10 +4,16 @@
  * Next.js server actions and the CLI.
  */
 
+import { randomUUID } from 'node:crypto';
+
 import type { PrismaClient } from '@prisma/client';
 
 import { createIngredient, findOrCreateUnit } from '@app/components/recipe/ingredientActions';
 import { computeFlowLayout } from '@app/lib/flow-layout';
+import {
+    assertResolvedMentions,
+    repairIngredientMentions,
+} from '@app/lib/ingredients/recipe-mentions';
 import { approvedKey } from '@app/lib/s3/keys';
 import { moveObject } from '@app/lib/s3/operations';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
@@ -215,6 +221,7 @@ export async function saveImportedRecipe(
 
     // Find or create ingredients + resolve units
     const syncedIngredients: ((typeof data.ingredients)[number] & {
+        referenceId: string;
         ingredientId: string;
         unitId: string;
     })[] = [];
@@ -223,16 +230,27 @@ export async function saveImportedRecipe(
             createIngredient(ing.name),
             findOrCreateUnit(ing.unit),
         ]);
-        syncedIngredients.push({ ...ing, ingredientId: ingredient.id, unitId });
+        syncedIngredients.push({
+            ...ing,
+            referenceId: randomUUID(),
+            ingredientId: ingredient.id,
+            unitId,
+        });
     }
 
-    // Deduplicate by ingredientId — AI can generate the same ingredient multiple times
-    const seenIngredientIds = new Set<string>();
-    const uniqueIngredients = syncedIngredients.filter((ing) => {
-        if (!ing.ingredientId || seenIngredientIds.has(ing.ingredientId)) return false;
-        seenIngredientIds.add(ing.ingredientId);
-        return true;
-    });
+    const sourceIds = new Map(syncedIngredients.map((ing) => [ing.id, ing.referenceId]));
+    if (sourceIds.size !== syncedIngredients.length) throw new Error('Doppelte Import-Zutaten-ID');
+    const resolvedFlow = repairIngredientMentions(
+        data.flowNodes,
+        syncedIngredients.map((ing) => ({
+            ...ing,
+            id: ing.referenceId,
+            sourceId: ing.id,
+        })),
+        sourceIds,
+        { allowNameFallback: false },
+    );
+    assertResolvedMentions(resolvedFlow.issues);
 
     // Download and upload external image to S3 (if provided)
     let imageKey: string | undefined;
@@ -265,10 +283,12 @@ export async function saveImportedRecipe(
             publishedAt: options?.publish ? new Date() : null,
             sourceUrl: data.sourceUrl ?? null,
             authorId,
-            flowNodes: applyFlowPositions(data.flowNodes, data.flowEdges) as unknown as object,
+            flowNodes: applyFlowPositions(resolvedFlow.nodes, data.flowEdges) as unknown as object,
             flowEdges: data.flowEdges as unknown as object,
             recipeIngredients: {
-                create: uniqueIngredients.map((ing, index) => ({
+                create: syncedIngredients.map((ing, index) => ({
+                    id: ing.referenceId,
+                    sourceId: ing.id,
                     ingredientId: ing.ingredientId,
                     unitId: ing.unitId,
                     amount: ing.amount,

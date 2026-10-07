@@ -52,10 +52,12 @@ export async function RecipeFlowEmbed({ recipeId, fallback = null }: RecipeFlowE
     });
     const edges = (recipe.flowEdges as FlowEdgeSerialized[] | null) ?? [];
     const ingredients = recipe.recipeIngredients.map((ri) => ({
-        id: ri.ingredientId,
+        id: ri.id,
+        ingredientId: ri.ingredientId,
         name: ri.ingredient.name,
         amount: ri.amount ?? undefined,
         unit: ri.unit.shortName,
+        notes: ri.notes,
     }));
 
     return (

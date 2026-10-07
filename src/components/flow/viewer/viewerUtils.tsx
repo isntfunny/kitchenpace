@@ -1,17 +1,9 @@
 import dagre from 'dagre';
 import type { ReactNode } from 'react';
 
-import { css } from 'styled-system/css';
+import type { FlowEdgeSerialized, FlowNodeSerialized, IngredientRef } from '../editor/editorTypes';
 
-import type { FlowEdgeSerialized, FlowNodeSerialized } from '../editor/editorTypes';
-
-const mentionCss = css({
-    bg: 'mention.bg',
-    color: 'mention.text',
-    borderRadius: '4px',
-    px: '0.75',
-    fontWeight: 600,
-});
+import { IngredientMention } from './IngredientMention';
 
 /* ── topology builder (dagre-powered) ───────────────────── */
 
@@ -100,7 +92,7 @@ const MENTION_REGEX = /@\[(.*?)(?:\|(.*?))?\]\((.*?)\)/g;
 
 export function renderDescription(
     text: string,
-    ingredients: { id: string; name: string; amount?: string; unit?: string }[] | undefined,
+    ingredients: IngredientRef[] | undefined,
 ): ReactNode[] {
     const parts: ReactNode[] = [];
     let lastIndex = 0;
@@ -110,17 +102,16 @@ export function renderDescription(
     while ((match = MENTION_REGEX.exec(text)) !== null) {
         if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
         const [, name, override, id] = match;
-        const ing = ingredients?.find((i) => i.id === id);
-        const amountStr = override
-            ? ` (${override})`
-            : ing && (ing.amount || ing.unit)
-              ? ` (${[ing.amount, ing.unit].filter(Boolean).join(' ')})`
-              : '';
+        const legacy = ingredients?.filter((i) => i.ingredientId === id);
+        const ing =
+            ingredients?.find((i) => i.id === id) ?? (legacy?.length === 1 ? legacy[0] : undefined);
         parts.push(
-            <span key={match.index} className={mentionCss}>
-                {name}
-                {amountStr}
-            </span>,
+            <IngredientMention
+                key={match.index}
+                name={name}
+                override={override}
+                ingredient={ing}
+            />,
         );
         lastIndex = match.index + match[0].length;
     }

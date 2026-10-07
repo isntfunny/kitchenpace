@@ -611,6 +611,7 @@ model IngredientUnit {
 
 model RecipeIngredient {
   id           String     @id @default(cuid())
+  sourceId     String?    // Stable editor/import alias across autosaves
   recipeId     String
   ingredientId String
   unitId       String
@@ -623,7 +624,10 @@ model RecipeIngredient {
   ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
   unit       Unit       @relation(fields: [unitId], references: [id])
 
-  @@unique([recipeId, ingredientId])
+  // The same catalogue ingredient can occur with different amounts/notes.
+  // Flow mentions reference this row's id, not the catalogue ingredientId.
+  @@index([recipeId, ingredientId])
+  @@unique([recipeId, sourceId])
   @@index([recipeId])
   @@index([ingredientId])
   @@index([unitId])

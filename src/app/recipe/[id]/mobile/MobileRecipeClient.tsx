@@ -34,10 +34,12 @@ export function MobileRecipeClient({ recipe }: MobileRecipeClientProps) {
                 nodes={(recipe.flow?.nodes ?? []) as any}
                 edges={(recipe.flow?.edges ?? []) as any}
                 ingredients={recipe.ingredients?.map((ing: any) => ({
-                    id: ing.id ?? ing.name,
+                    id: ing.id,
+                    ingredientId: ing.ingredientId,
                     name: ing.name,
-                    amount: ing.amount?.toString(),
+                    amount: ing.rawAmount ?? ing.amount?.toString(),
                     unit: ing.unit,
+                    notes: ing.notes,
                 }))}
                 embedded
             />

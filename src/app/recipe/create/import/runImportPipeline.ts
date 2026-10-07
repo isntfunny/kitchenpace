@@ -287,7 +287,7 @@ export async function runImportPipeline(
 
         // Transform ingredients to AddedIngredient format with match info
         const addedIngredients: AddedIngredient[] = analyzed.ingredients.map((ing, idx) => ({
-            id: `imported_${idx}`,
+            id: ing.id,
             name: ing.name,
             pluralName: null,
             amount: ing.amount,

@@ -59,4 +59,11 @@ export interface FlowEdgeSerialized {
 }
 
 /** Minimal ingredient shape for resolving @[name](id) mentions in step descriptions. */
-export type IngredientRef = { id: string; name: string; amount?: string; unit?: string };
+export type IngredientRef = {
+    id: string;
+    ingredientId?: string;
+    name: string;
+    amount?: string;
+    unit?: string;
+    notes?: string | null;
+};

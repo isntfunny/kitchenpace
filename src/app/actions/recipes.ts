@@ -4,6 +4,7 @@ import type { FlowEdgeInput, FlowNodeInput } from '@app/components/recipe/recipe
 import { getServerAuthSession } from '@app/lib/auth';
 import { cosineSimilarity } from '@app/lib/embeddings/embedding-service';
 import type { FitsNowContext } from '@app/lib/fits-now';
+import { repairIngredientMentions } from '@app/lib/ingredients/recipe-mentions';
 import { PALETTE } from '@app/lib/palette';
 import {
     toRecipeCardData,
@@ -149,6 +150,8 @@ export interface RecipeDetailData {
     servings: number;
     difficulty: 'Einfach' | 'Mittel' | 'Schwer';
     ingredients: Array<{
+        id: string;
+        ingredientId: string;
         name: string;
         slug?: string | null;
         pluralName?: string | null;
@@ -324,6 +327,8 @@ export async function fetchRecipeBySlug(
             );
 
             return {
+                id: ri.id,
+                ingredientId: ri.ingredientId,
                 name: ri.ingredient.name,
                 slug: ri.ingredient.slug ?? null,
                 pluralName: ri.ingredient.pluralName ?? null,
@@ -390,6 +395,7 @@ export async function fetchRecipeBySlug(
 
 export interface EditRecipeIngredient {
     id: string;
+    ingredientId: string;
     name: string;
     pluralName: string | null;
     amount: string;
@@ -650,7 +656,19 @@ export async function fetchRecipeForEdit(
     const photoKeyByStepId = new Map(stepImages.map((si) => [si.stepId, si.photoKey]));
 
     const rawNodes = (recipe.flowNodes as FlowNodeInput[] | null) ?? [];
-    const flowNodes = rawNodes.map((n) => {
+    // Resolve unique legacy catalogue IDs before removal/replacement changes the list.
+    // Ambiguous imported references remain intact for explicit repair.
+    const canonicalNodes = repairIngredientMentions(
+        rawNodes,
+        recipe.recipeIngredients.map((row) => ({
+            id: row.id,
+            ingredientId: row.ingredientId,
+            name: row.ingredient.name,
+        })),
+        new Map(),
+        { allowNameFallback: false },
+    ).nodes;
+    const flowNodes = canonicalNodes.map((n) => {
         const photoKey = photoKeyByStepId.get(n.id);
         return photoKey ? { ...n, photoKey } : n;
     });
@@ -669,7 +687,8 @@ export async function fetchRecipeForEdit(
         categoryIds: recipe.categories.map((c) => c.categoryId),
         tagIds: recipe.tags.map((t) => t.tagId),
         ingredients: recipe.recipeIngredients.map((ri: any) => ({
-            id: ri.ingredientId,
+            id: ri.id,
+            ingredientId: ri.ingredientId,
             name: ri.ingredient.name,
             pluralName: ri.ingredient.pluralName,
             amount: ri.amount,

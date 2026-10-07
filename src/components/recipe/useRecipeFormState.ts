@@ -10,6 +10,7 @@ import type {
 import { extractMentionedIds } from '@app/components/flow/viewer/viewerUtils';
 import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
 import { escapeRegex } from '@app/lib/ingredients/parseIngredientInput';
+import { removeIngredientReferences } from '@app/lib/ingredients/recipe-mentions';
 
 import { searchTags } from '../recipe/actions';
 
@@ -55,6 +56,7 @@ export function useRecipeFormState({
     const [ingredients, setIngredients] = useState<AddedIngredient[]>(
         (initialData?.ingredients ?? []).map((ing) => ({
             id: ing.id,
+            ingredientId: ing.ingredientId,
             name: ing.name,
             pluralName: ing.pluralName ?? null,
             amount: ing.amount,
@@ -75,6 +77,7 @@ export function useRecipeFormState({
 
     // -- flow state (stored in refs -- changes don't re-render form) --
     const flowNodesRef = useRef<FlowNodeInput[]>(initialData?.flowNodes ?? []);
+    const removedIngredientIdsRef = useRef(new Set<string>());
     const flowEdgesRef = useRef<FlowEdgeInput[]>(initialData?.flowEdges ?? []);
 
     const titleInputRef = useRef<HTMLInputElement>(null);
@@ -186,11 +189,12 @@ export function useRecipeFormState({
     };
 
     const handleAddIngredient = (ing: IngredientSearchResult) => {
-        if (ingredients.some((i) => i.id === ing.id)) return;
+        if (ingredients.some((i) => (i.ingredientId ?? i.id) === ing.id)) return;
         setIngredients((prev) => [
             ...prev,
             {
-                id: ing.id,
+                id: crypto.randomUUID(),
+                ingredientId: ing.id,
                 name: ing.name,
                 pluralName: ing.pluralName ?? null,
                 amount: '',
@@ -208,7 +212,8 @@ export function useRecipeFormState({
         setIngredients((prev) => [
             ...prev,
             {
-                id: created.id,
+                id: crypto.randomUUID(),
+                ingredientId: created.id,
                 name: created.name,
                 pluralName: created.pluralName ?? null,
                 amount: '',
@@ -222,6 +227,11 @@ export function useRecipeFormState({
     };
 
     const handleRemoveIngredient = (index: number) => {
+        removedIngredientIdsRef.current.add(ingredients[index].id);
+        flowNodesRef.current = removeIngredientReferences(
+            flowNodesRef.current,
+            new Set([ingredients[index].id]),
+        );
         setIngredients((prev) => prev.filter((_, i) => i !== index));
     };
 
@@ -230,15 +240,14 @@ export function useRecipeFormState({
     };
 
     const handleReplaceIngredient = (index: number, replacement: IngredientSearchResult) => {
-        if (ingredients.some((i, idx) => i.id === replacement.id && idx !== index)) return;
-
         const oldIngredient = ingredients[index];
 
         // 1. Replace in ingredient list
         setIngredients((prev) => {
             const next = [...prev];
             next[index] = {
-                id: replacement.id,
+                id: oldIngredient.id,
+                ingredientId: replacement.id,
                 name: replacement.name,
                 pluralName: replacement.pluralName ?? null,
                 amount: oldIngredient.amount,
@@ -264,7 +273,7 @@ export function useRecipeFormState({
             if (!node.description?.includes(oldIngredient.id)) return node;
             const newDesc = node.description.replace(
                 mentionRegex,
-                `@[${replacement.name}$1](${replacement.id})`,
+                `@[${replacement.name}$1](${oldIngredient.id})`,
             );
             return {
                 ...node,
@@ -336,8 +345,9 @@ export function useRecipeFormState({
                             ing.unit ? [ing.unit] : [],
                         );
                         newIngredients.push({
-                            id: created.id,
-                            name: created.name,
+                            id: ing.id,
+                            ingredientId: created.id,
+                            name: ing.name,
                             pluralName: created.pluralName ?? null,
                             amount: ing.amount ?? '',
                             unit: ing.unit || 'g',
@@ -407,6 +417,7 @@ export function useRecipeFormState({
 
         // Refs
         flowNodesRef,
+        removedIngredientIdsRef,
         flowEdgesRef,
         titleInputRef,
 

@@ -538,10 +538,12 @@ export function RecipeDetailClient({
                                 nodes={(recipe.flow?.nodes ?? []) as any}
                                 edges={(recipe.flow?.edges ?? []) as any}
                                 ingredients={recipe.ingredients?.map((ing: any) => ({
-                                    id: ing.id ?? ing.name,
+                                    id: ing.id,
+                                    ingredientId: ing.ingredientId,
                                     name: ing.name,
-                                    amount: ing.amount != null ? String(ing.amount) : undefined,
+                                    amount: ing.rawAmount ?? String(ing.amount),
                                     unit: ing.unit,
+                                    notes: ing.notes,
                                 }))}
                                 recipeSlug={recipe.slug}
                                 initialProgress={initialProgress}

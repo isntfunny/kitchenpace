@@ -11,6 +11,7 @@ import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
 
 interface Ingredient {
+    id: string;
     name: string;
     slug?: string | null;
     pluralName?: string | null;
@@ -502,7 +503,7 @@ export function IngredientList({
                                         <tbody>
                                             {nutritionBreakdown.rows.map((row) => (
                                                 <tr
-                                                    key={`${row.ingredient.name}-${row.ingredient.unit}-${row.ingredient.rawAmount ?? row.ingredient.amount}`}
+                                                    key={row.ingredient.id}
                                                     className={css({
                                                         borderBottom: '1px solid',
                                                         borderColor: 'border.muted',

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
+import { AddToListButton } from '@app/components/bring/AddToListButton';
 import { KeywordLandingContent } from '@app/components/features/KeywordLandingContent';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { fetchIngredientLanding } from '@app/lib/keyword-landing';
@@ -110,6 +111,7 @@ export default async function IngredientLandingPage({ params }: Props) {
             />
             <KeywordLandingContent
                 data={data}
+                action={<AddToListButton ingredients={[{ name: data.name }]} />}
                 heading={`Rezepte mit ${data.name}`}
                 intro={`Entdecke ${data.totalCount} Rezepte mit ${data.name} — bewertet von der Community, mit Zutaten, Zeiten und interaktiver Koch-Anleitung.`}
                 searchHref={`/recipes?ingredients=${encodeURIComponent(data.name)}`}

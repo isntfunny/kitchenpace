@@ -75,10 +75,10 @@ const app = createApiApp({
 });
 const call = (path: string, init: RequestInit = {}) =>
     app.request(`/api/v1${path}`, { ...init, headers: { 'x-api-key': key, ...init.headers } });
-const send = (input: unknown, token = 'bring-request-1', list = 'mine') =>
+const send = (input: unknown, list = 'mine') =>
     call(`/bring/lists/${list}/recipes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': token },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
     });
 before(async () => {
@@ -154,7 +154,6 @@ test('Bring recipe transfer scales stored ingredients and requires explicit writ
         headers: {
             'x-api-key': readKey,
             'Content-Type': 'application/json',
-            'Idempotency-Key': 'deny',
         },
         body: JSON.stringify({ recipeId: recipe }),
     });
@@ -164,9 +163,10 @@ test('Bring recipe transfer scales stored ingredients and requires explicit writ
     assert.deepEqual((await response.json()).items, [
         { id: ingredient, name: 'Mehl', status: 'added' },
     ]);
+    assert.match(transfers.at(-1)!.token, /^api-recipe:[0-9a-f-]{36}$/);
     assert.deepEqual(transfers.at(-1), {
         user: owner,
-        token: 'api-recipe:bring-request-1',
+        token: transfers.at(-1)!.token,
         list: 'mine',
         items: [{ id: ingredient, name: 'Mehl', specification: `1 g-${owner} gesiebt` }],
         context: { recipeId: recipe, servings: 4, ingredientIds: [ingredient] },
@@ -185,7 +185,7 @@ test('Bring transfer rejects foreign drafts and invalid selections before any re
         assert.equal((await send(body)).status, 400);
     }
     assert.equal(transfers.length, count);
-    assert.equal((await send({ recipeId: recipe }, 'foreign-list', 'foreign')).status, 404);
+    assert.equal((await send({ recipeId: recipe }, 'foreign')).status, 404);
 });
 test('Bring errors do not leak upstream text or disguise missing connection as invalid API key', async () => {
     for (const [code, status, expected] of [
@@ -205,7 +205,7 @@ test('Bring errors do not leak upstream text or disguise missing connection as i
 
 test('Bring defaults to recipe portions and preserves partial outcomes for callers', async () => {
     transferStatus = 'failed';
-    const response = await send({ recipeId: recipe }, 'partial');
+    const response = await send({ recipeId: recipe });
     assert.equal(response.status, 200);
     assert.deepEqual((await response.json()).items, [
         { id: ingredient, name: 'Mehl', status: 'failed' },
@@ -224,7 +224,7 @@ test('ordinary recipe keys cannot read Bring data and public recipes can be tran
         where: { id: recipe },
         data: { authorId: stranger, status: 'PUBLISHED', moderationStatus: 'APPROVED' },
     });
-    assert.equal((await send({ recipeId: recipe }, 'public-recipe')).status, 200);
+    assert.equal((await send({ recipeId: recipe })).status, 200);
     await db.recipe.update({ where: { id: recipe }, data: { moderationStatus: 'PENDING' } });
-    assert.equal((await send({ recipeId: recipe }, 'pending-recipe')).status, 404);
+    assert.equal((await send({ recipeId: recipe })).status, 404);
 });

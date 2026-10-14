@@ -8,7 +8,7 @@ Hono under `/api/v1`, explicit Zod request/response schemas and generated OpenAP
 
 Read scopes: recipes, favorites, collections, cooks. Default keys receive only recipes:read; additional scopes opt-in. Own recipes (including drafts), accessible recipe details (own or published/approved), own favorites, own collections with accessible recipe summaries, own cook history. Cursor pagination, default 20 maximum 100. Explicit DTOs exclude moderation internals and personal account information.
 
-Write scopes: favorites:write (idempotent PUT/DELETE), cooks:write (required Idempotency-Key), imports:create (required Idempotency-Key, also grants own import status). No publish/edit/delete recipe endpoint. Cook requests accept servings only in V1; no public text or images. Cook rows and counters update atomically; public events must not expose private recipes.
+Write scopes: favorites:write (idempotent PUT/DELETE), cooks:write, imports:create (also grants own import status). No publish/edit/delete recipe endpoint. Cook requests accept servings only in V1; no public text or images. Cook rows and counters update atomically; public events must not expose private recipes.
 
 ## Keys
 
@@ -16,7 +16,7 @@ Account page `/profile/api-keys`: named keys, selected permissions, expiration 3
 
 ## Imports
 
-Durable database request record plus BullMQ worker. POST returns 202 and GET reports queued/processing/completed/failed. Requests scoped by user and idempotency token; conflicting payload returns 409. Default 10 admissions per UTC day and 2 pending/running jobs per user. Admission atomic across keys; retries don't consume another slot. Pending jobs expire after 30 minutes. Failure is sanitized; raw user text is not put into generic job logs. Worker checks account/key again before spending resources.
+Durable database request record plus BullMQ worker. POST returns 202 and GET reports queued/processing/completed/failed. Requests are scoped by user. Each POST is a new request; no client-generated operation header. The response id identifies the task for status polling. Default 10 admissions per UTC day and 2 pending/running jobs per user. Admission is atomic across keys; each accepted POST consumes a slot. Worker retries reuse the stored job. Pending jobs expire after 30 minutes. Failure is sanitized; raw user text is not put into generic job logs. Worker checks account/key again before spending resources.
 
 Use existing AI analysis. Import URL fetch must validate all redirects and pin connections to public resolved IPs; bounded HTTP HTML/text download (no browser execution) is sufficient for API V1. Limit text 50,000 characters and downloads 1 MB. External image downloads omitted for private API imports. Imported recipe always DRAFT with publishedAt null, no public activity/index enqueue. Persist moderation decision without auto-publishing. Ensure recipe creation and completed job linkage are atomic for retries.
 
@@ -26,4 +26,4 @@ Owner checks on all API object accesses. Public metadata never loads drafts. API
 
 ## Verification
 
-Node test runner through tsx for route/service tests; real Hono app with injected dependencies. Integration tests with disposable PostgreSQL for plugin migration, scopes, account checks, idempotency and quotas. Typecheck/lint, OpenAPI validation and docs build checks. No production migrations, merge or deployment. Browser/E2E only against isolated local services.
+Node test runner through tsx for route/service tests; real Hono app with injected dependencies. Integration tests with disposable PostgreSQL for plugin migration, scopes, account checks, POSTs without extra headers, internal worker replay safety and quotas. Typecheck/lint, OpenAPI validation and docs build checks. No production migrations, merge or deployment. Browser/E2E only against isolated local services.

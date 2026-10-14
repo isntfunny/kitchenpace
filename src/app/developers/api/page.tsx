@@ -55,17 +55,18 @@ export default function ApiDocsPage() {
                     Einträge.
                 </p>
                 <p>
-                    Für POST /cooks und POST /imports ist ein eigener <code>Idempotency-Key</code>{' '}
-                    pro Vorgang erforderlich. Wiederhole denselben Vorgang mit demselben Schlüssel;
-                    ein veränderter Inhalt liefert 409. Favoriten setzen/entfernen ist ebenfalls
-                    wiederholbar.
+                    Für Schreibzugriffe genügen dein API-Key und ein JSON-Body. Jeder POST auf
+                    /cooks erstellt einen neuen Kocheintrag, jeder POST auf /imports einen neuen
+                    Importauftrag. Favoriten setzen und entfernen ist wiederholbar.
                 </p>
                 <p>
                     KI-Importe aus Text oder öffentlich erreichbaren HTML/Text-Seiten laufen im
                     Hintergrund. JavaScript-Seiten und Bildübernahmen werden nicht unterstützt. Das
                     Ergebnis bleibt ein privater Entwurf und kann nur in der Website veröffentlicht
-                    werden. Frage den Status unter <code>GET /api/v1/imports/&#123;id&#125;</code>{' '}
-                    ab.
+                    werden. Der Start liefert HTTP 202 und die Task-ID im Feld <code>id</code>.
+                    Frage den Status unter <code>GET /api/v1/imports/&#123;id&#125;</code> ab. Bei
+                    Erfolg enthält <code>recipeId</code> den privaten Entwurf, bei Fehlern steht der
+                    Code in <code>errorCode</code>.
                 </p>
                 <p>
                     Limits: 60 Anfragen pro Minute je Schlüssel; 10 Importaufträge pro UTC-Tag und
@@ -84,12 +85,10 @@ export default function ApiDocsPage() {
                     Rezeptzutaten hinzu. Sende <code>recipeId</code>, optional <code>servings</code>{' '}
                     und <code>ingredientIds</code>
                     aus dem Rezeptdetail. Ohne Auswahl werden alle Zutaten übernommen (maximal 50).
-                    Dafür ist ein <code>Idempotency-Key</code> erforderlich; Wiederholungsbelege
-                    gelten 7 Tage. Prüfe im Ergebnis jede Zutat auf <code>added</code>,{' '}
-                    <code>existing</code> oder <code>failed</code>. Bestehende Artikel bleiben
-                    unverändert. Bei Teilerfolgen nur fehlgeschlagene Zutaten nach Prüfung der Liste
-                    mit einem neuen Vorgang übertragen. Nach Rezeptänderungen kann eine Wiederholung
-                    mit demselben Schlüssel einen Konflikt ergeben.
+                    Alltagszutaten wie Salz, Pfeffer und Öl werden nicht automatisch ausgefiltert.
+                    Prüfe im Ergebnis jede Zutat auf <code>added</code>, <code>existing</code> oder
+                    <code>failed</code>. Bestehende Artikel bleiben unverändert. Bei Teilerfolgen
+                    nur fehlgeschlagene Zutaten nach Prüfung der Liste erneut übertragen.
                 </p>
                 <p>
                     Hier eingegebene Schlüssel werden nicht dauerhaft gespeichert.{' '}

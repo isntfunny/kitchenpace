@@ -20,7 +20,6 @@ import {
     cookInput,
     cookSchema,
     errorSchema,
-    idempotencyHeaders,
     idSchema,
     importInput,
     importSchema,
@@ -263,12 +262,11 @@ export function createApiApp({ services, authenticate }: ApiDependencies) {
             path: '/cooks',
             summary: 'Als gekocht eintragen',
             description:
-                'cooks:write. Idempotency-Key pro Kochvorgang; Wiederholung liefert denselben Eintrag. Keine öffentliche Aktivitätsmeldung.',
+                'cooks:write. Jeder POST erstellt einen neuen Kocheintrag. Keine öffentliche Aktivitätsmeldung.',
             tags: ['Gekocht'],
             security,
             middleware: [access('cooks:write')],
             request: {
-                headers: idempotencyHeaders,
                 body: { required: true, content: { 'application/json': { schema: cookInput } } },
             },
             responses: { ...errors, 201: json(cookSchema, 'Kocheintrag') },
@@ -278,7 +276,7 @@ export function createApiApp({ services, authenticate }: ApiDependencies) {
                 cookSchema.parse(
                     await services.cook(
                         c.get('principal'),
-                        c.req.valid('header')['idempotency-key'],
+                        c.get('requestId'),
                         c.req.valid('json'),
                     ),
                 ),
@@ -291,12 +289,11 @@ export function createApiApp({ services, authenticate }: ApiDependencies) {
             path: '/imports',
             summary: 'Privaten KI-Import starten',
             description:
-                'imports:create. Genau eines von text/url. 10 Aufträge pro UTC-Tag, maximal 2 gleichzeitig je Nutzer. Immer Entwurf, ohne Bildübernahme. Unterstützt öffentliche HTML/Text-Seiten ohne JavaScript-Ausführung.',
+                'imports:create. Jeder POST startet einen neuen Importauftrag. Genau eines von text/url. 10 Aufträge pro UTC-Tag, maximal 2 gleichzeitig je Nutzer. Immer Entwurf, ohne Bildübernahme. Unterstützt öffentliche HTML/Text-Seiten ohne JavaScript-Ausführung.',
             tags: ['Importe'],
             security,
             middleware: [access('imports:create')],
             request: {
-                headers: idempotencyHeaders,
                 body: { required: true, content: { 'application/json': { schema: importInput } } },
             },
             responses: { ...errors, 202: json(importSchema, 'Importauftrag') },
@@ -306,7 +303,7 @@ export function createApiApp({ services, authenticate }: ApiDependencies) {
                 importSchema.parse(
                     await services.createImport(
                         c.get('principal'),
-                        c.req.valid('header')['idempotency-key'],
+                        c.get('requestId'),
                         c.req.valid('json'),
                     ),
                 ),
@@ -374,13 +371,12 @@ export function createApiApp({ services, authenticate }: ApiDependencies) {
             path: '/bring/lists/{id}/recipes',
             summary: 'Rezeptzutaten zur Einkaufsliste hinzufügen',
             description:
-                'bring:write. Eigene oder öffentlich freigegebene Rezepte. servings überschreibt die Portionszahl; ingredientIds sind IDs aus GET /recipes/{id} (ingredients[].id), sonst alle Zutaten, maximal 50. Bestehende Artikel werden nicht überschrieben. Idempotency-Key je Übertragung, Belege 7 Tage; gleiche Auswahl unverändert wiederholen. Geänderte Rezeptzutaten oder Eingaben liefern 409. 200 kann Teilergebnisse enthalten: added/existing/failed prüfen. Für fehlgeschlagene Zutaten nach Prüfung der Liste einen neuen Vorgang mit neuer ID starten. Bei BRING_CONFLICT kann das Ergebnis unklar sein: Liste vor einem neuen Vorgang prüfen.',
+                'bring:write. Eigene oder öffentlich freigegebene Rezepte. servings überschreibt die Portionszahl; ingredientIds sind IDs aus GET /recipes/{id} (ingredients[].id), sonst alle Zutaten, maximal 50. Alltagszutaten werden nicht automatisch ausgefiltert. Bestehende Artikel werden nicht überschrieben. 200 kann Teilergebnisse enthalten: added/existing/failed prüfen. Fehlgeschlagene Zutaten nach Prüfung der Liste erneut übertragen. Bei BRING_CONFLICT die Liste vor einer erneuten Übertragung prüfen.',
             tags: ['Bring!'],
             security,
             middleware: [access('bring:write')],
             request: {
                 params: bringParams,
-                headers: idempotencyHeaders,
                 body: {
                     required: true,
                     content: { 'application/json': { schema: bringRecipeInput } },
@@ -394,7 +390,7 @@ export function createApiApp({ services, authenticate }: ApiDependencies) {
                     await services.bringRecipe(
                         c.get('principal'),
                         c.req.valid('param').id,
-                        c.req.valid('header')['idempotency-key'],
+                        c.get('requestId'),
                         c.req.valid('json'),
                     ),
                 ),

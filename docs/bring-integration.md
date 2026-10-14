@@ -41,3 +41,5 @@ Screenshots from component tests are written to ignored `test-results/bring/`. T
 The initial TypeScript check passed. After Next generated route validators, the whole-project check reports existing non-Promise parameter unions in `/recipe/[id]`, `/recipe/[id]/mobile`, and `/user/[id]`; these page files are unchanged. The webpack compile check also fails resolving the pre-existing `nodehun` native import. These are not a green production-build result.
 
 No live Bring login, migration on an application database, Infisical secret change, deployment or merge was performed. Those runtime checks remain required before release.
+
+Turbopack verification: `next build --experimental-build-mode compile` completed successfully (exit 0), including compilation and page-data collection. This compile-mode check skips final generation and does not resolve the existing generated-route TypeScript errors. Implementation commit: `d5a7c15` on `feat/KUC-89-bring-integration`.

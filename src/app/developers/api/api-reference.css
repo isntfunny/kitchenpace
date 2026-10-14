@@ -1,7 +1,5 @@
-.kuechentakt-api-reference {
-    --scalar-font: var(--font-inter), system-ui, sans-serif;
-    --scalar-font-code: ui-monospace, monospace;
-}
+@import '@scalar/api-reference-react/style.css' layer(scalar-reference);
+
 .kuechentakt-api-reference.light-mode,
 .kuechentakt-api-reference.dark-mode {
     --scalar-color-1: var(--colors-text);
@@ -17,4 +15,75 @@
     --scalar-sidebar-color-2: var(--colors-text-muted);
     --scalar-sidebar-color-active: var(--colors-primary);
     --scalar-sidebar-border-color: var(--colors-border);
+}
+
+/* Keep Scalar in the page flow, using the same content edges as the guide. */
+.kuechentakt-api-reference {
+    --scalar-font: var(--font-inter, system-ui), sans-serif;
+    --scalar-font-code: ui-monospace, SFMono-Regular, Consolas, monospace;
+    --scalar-custom-header-height: 110px;
+    --scalar-content-max-width: 1120px;
+    --scalar-radius: 8px;
+    --scalar-radius-lg: 12px;
+    --scalar-heading-1: 24px;
+    --scalar-heading-2: 20px;
+    font-family: var(--scalar-font);
+    min-width: 0;
+}
+.kuechentakt-api-reference .scalar-api-reference,
+.kuechentakt-api-reference .references-rendered {
+    background: transparent;
+    min-height: 0;
+}
+.kuechentakt-api-reference .section-container,
+.kuechentakt-api-reference .references-classic-header-container {
+    padding-inline: 0;
+}
+.kuechentakt-api-reference .references-classic .section {
+    padding: 28px 0;
+}
+.kuechentakt-api-reference .references-classic-header {
+    padding-inline: 0;
+}
+.kuechentakt-api-reference .section-header {
+    font-family: var(--font-playfair, Georgia), serif;
+}
+.kuechentakt-api-reference :is(code, pre) {
+    font-family: var(--scalar-font-code);
+}
+
+/* Font variables from next/font live on body, below Panda's root tokens.
+   Resolve them here so native guide typography and the reference agree. */
+#api-documentation {
+    --fonts-body: var(--font-inter, system-ui), sans-serif;
+    --fonts-heading: var(--font-playfair, Georgia), serif;
+    font-family: var(--fonts-body);
+}
+#api-documentation :is(pre, code) {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+/* The native page already provides the title, introduction and download link. */
+.kuechentakt-api-reference .introduction-section .section-header,
+.kuechentakt-api-reference .introduction-description,
+.kuechentakt-api-reference .introduction-section .selected-client-action {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .kuechentakt-api-reference .operation-title {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .kuechentakt-api-reference .operation-details {
+        width: 100%;
+    }
+    .kuechentakt-api-reference .endpoint-label {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+    .kuechentakt-api-reference :is(.endpoint-label-path, .endpoint-label-name) {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
 }

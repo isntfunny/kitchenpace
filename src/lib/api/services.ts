@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
 
 import type { ApiPrincipal } from './auth';
+import { createBringApiServices, type BringGateway } from './bring';
 import { ApiError } from './errors';
 import { createImportServices } from './imports';
 import type { PageQuery } from './schemas';
@@ -84,7 +85,7 @@ function flowSteps(value: Prisma.JsonValue) {
     });
 }
 
-export function createApiServices(db: PrismaClient) {
+export function createApiServices(db: PrismaClient, bringGateway?: BringGateway) {
     return {
         async recipes(p: ApiPrincipal, query: PageQuery) {
             const args = pageArgs(query);
@@ -265,6 +266,7 @@ export function createApiServices(db: PrismaClient) {
             });
         },
         ...createImportServices(db),
+        ...createBringApiServices(db, bringGateway),
     };
 }
 export type ApiServices = ReturnType<typeof createApiServices>;

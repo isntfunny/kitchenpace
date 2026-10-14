@@ -173,9 +173,10 @@ export async function transfer(
     operationId: string,
     listUuid: string,
     items: TransferItem[],
+    context?: unknown,
 ): Promise<TransferOutcome[]> {
     const requestHash = createHash('sha256')
-        .update(JSON.stringify({ listUuid, items }))
+        .update(JSON.stringify({ listUuid, items, ...(context === undefined ? {} : { context }) }))
         .digest('hex');
     return locked(userId, async (tx) => {
         const receipt = await tx.bringTransfer.findUnique({

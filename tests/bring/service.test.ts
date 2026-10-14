@@ -157,3 +157,20 @@ test('service presents localized names while retaining canonical item identity',
     assert.equal(result.purchase[0].name, 'Peperoni');
     assert.equal(result.purchase[0].displayName, 'Paprika');
 });
+
+test('API receipts reject a different recipe request even when expanded ingredients match', async () => {
+    failCommit = false;
+    failReceiptUpdate = false;
+    receipts.clear();
+    remote = [];
+    writeCount = 0;
+    const items = [{ id: '1', name: 'Nudeln', specification: '400 g' }];
+    await service.transfer('owner', 'api-recipe:request-1', 'mine', items, { recipeId: 'one' });
+    remote = [];
+    await service.transfer('owner', 'api-recipe:request-1', 'mine', items, { recipeId: 'one' });
+    assert.equal(writeCount, 1, 'completed API retry must not add again');
+    await assert.rejects(
+        service.transfer('owner', 'api-recipe:request-1', 'mine', items, { recipeId: 'two' }),
+    );
+    assert.equal(writeCount, 1);
+});

@@ -49,3 +49,15 @@ No API-key sessions, no publishing API, no production changes. Keys default to r
 - Final browser run also asserts Scalar's grid stylesheet is loaded; light/dark screenshots visually inspected. Full existing application E2E suite was not run.
 - Remaining low-priority hardening: DNS lookup itself uses the operating-system resolver timeout; the HTTP download/redirect budget is 30 seconds. DNS answers are validated and pinned before any connection.
 - Work remains on `feat/KUC-90-personal-api`; no merge, push, deployment or production migration performed.
+
+## Bring API extension (follow-up request)
+
+- Combined the API branch with Bring integration commit `68efb46` in this worktree; resolved additive User-model and account-navigation conflicts by retaining both features.
+- Added scoped Bring list/index reads and recipe-ingredient transfer with optional portions/selection. Recipe visibility is checked server-side, ingredients are loaded from the database, and existing Bring ownership/transfer logic is reused.
+- Separate `bring:read` and `bring:write` rights; new keys still default to recipes:read only. Account linking stays on the website.
+- Extended shared transfer receipts with optional request context so a different recipe/portion selection cannot reuse the same API token even when expanded items happen to match. Existing website receipt hashes remain compatible. Receipts retain the existing 7-day policy; uncertain writes require list inspection before a new operation.
+- Red/green regressions cover missing routes and receipt-context collisions. Independent review found no blockers; its suggested public-recipe and partial-result coverage was added. No real Bring credentials or production accounts used.
+
+- Extension verification: 3 API policy tests, 17 database/API/processor tests and 16 Bring tests passed. Standalone typecheck and full production build passed. Browser smoke passed including creating a key with Bring read scope and receiving the documented connection-required response through the real Next/service stack. Combined migration schema diff is empty.
+- Targeted lint has no errors; Hono app now has a max-lines warning (410 lines). Full external Bring account transfers are covered with simulated network boundaries, not a live account.
+- Extension and combined API/Bring tree remain in the feature worktree for integration; no additional main merge, push or deployment performed by this follow-up.

@@ -196,6 +196,9 @@ model Passkey {
 // ============================================
 
 model User {
+  apiKeys Apikey[]
+  apiMutations ApiMutation[]
+  apiImports ApiImport[]
   id                        String                    @id @default(cuid())
   name                      String?
   email                     String                    @unique
@@ -307,6 +310,7 @@ model Profile {
 // ============================================
 
 model Recipe {
+  apiImport ApiImport?
   id                                                                         String              @id @default(cuid())
   title                                                                      String
   slug                                                                       String              @unique
@@ -1261,4 +1265,65 @@ model FilterSetIngredient {
 
   @@id([filterSetId, ingredientId])
   @@index([ingredientId])
+}
+
+// Better Auth API-key plugin. Keys are hashed by the plugin; never store plaintext.
+model Apikey {
+  id                  String   @id
+  configId            String   @default("default")
+  name                String?
+  start               String?
+  prefix              String?
+  key                 String   @unique
+  referenceId         String
+  refillInterval      Int?
+  refillAmount        Int?
+  lastRefillAt        DateTime?
+  enabled             Boolean  @default(true)
+  rateLimitEnabled    Boolean  @default(true)
+  rateLimitTimeWindow  Int?
+  rateLimitMax        Int?
+  requestCount        Int      @default(0)
+  remaining           Int?
+  lastRequest         DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  permissions         String?
+  metadata            String?
+  user                User     @relation(fields: [referenceId], references: [id], onDelete: Cascade)
+  @@index([configId])
+  @@index([referenceId])
+}
+
+model ApiMutation {
+  id          String   @id @default(cuid())
+  userId      String
+  operation   String
+  token       String
+  requestHash String
+  response    Json
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, operation, token])
+}
+
+model ApiImport {
+  id             String   @id @default(cuid())
+  userId         String
+  keyId          String
+  idempotencyKey String
+  requestHash    String
+  input          Json
+  status         String   @default("queued")
+  recipeId       String?  @unique
+  errorCode      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deadline       DateTime
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe         Recipe?  @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
+  @@index([status, deadline])
 }

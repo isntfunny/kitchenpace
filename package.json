@@ -53,7 +53,10 @@
         "cli": "tsx cli/index.ts",
         "emails:push": "node email-templates/push.mjs",
         "emails:push:dry": "node email-templates/push.mjs --dry-run",
-        "emails:validate": "node email-templates/validate.mjs"
+        "emails:validate": "node email-templates/validate.mjs",
+        "test:api:browser": "tsx tests/api/browser-smoke.ts",
+        "test:api": "tsx --test tests/api/policy.test.ts",
+        "test:api:integration": "tsx --test tests/api/integration.test.ts tests/api/processor.test.ts"
     },
     "prisma": {
         "seed": "tsx cli/index.ts seed"
@@ -61,6 +64,7 @@
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1017.0",
         "@aws-sdk/lib-storage": "^3.1017.0",
+        "@better-auth/api-key": "1.5.6",
         "@better-auth/passkey": "^1.5.6",
         "@date-fns/tz": "^1.4.1",
         "@dnd-kit/core": "^6.3.1",
@@ -68,6 +72,7 @@
         "@dnd-kit/sortable": "^10.0.0",
         "@dnd-kit/utilities": "^3.2.2",
         "@floating-ui/react": "^0.27.19",
+        "@hono/zod-openapi": "1.6.3",
         "@icons-pack/react-simple-icons": "^13.13.0",
         "@infisical/cli": "^0.43.40",
         "@inquirer/prompts": "^8.3.2",
@@ -78,6 +83,7 @@
         "@pandacss/dev": "^1.9.1",
         "@prisma/adapter-pg": "^7.5.0",
         "@prisma/client": "^7.5.0",
+        "@scalar/api-reference-react": "0.9.80",
         "@sentry/nextjs": "^10.46.0",
         "@tanstack/react-query": "^5.95.2",
         "@tanstack/react-table": "^8.21.3",
@@ -105,7 +111,9 @@
         "fastest-levenshtein": "^1.0.16",
         "feiertagejs": "^1.5.0",
         "glob": "^13.0.6",
+        "hono": "4.13.13",
         "ioredis": "^5.10.1",
+        "ipaddr.js": "2.5.0",
         "jose": "^6.2.2",
         "jspdf": "^4.2.1",
         "lodash": "^4.17.23",

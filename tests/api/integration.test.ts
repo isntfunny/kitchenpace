@@ -123,10 +123,10 @@ test('scope-restricted, revoked, expired and banned keys are refused', async () 
     assert.equal((await call('/recipes')).status, 403);
     await db.user.update({ where: { id: alice }, data: { banned: false } });
 });
-test('concurrent cook retries produce exactly one row and counter increment; mismatched reuse conflicts', async () => {
+test('cook POSTs need only JSON and each request records a cooking event', async () => {
     const init = {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'Idempotency-Key': 'cook-once' },
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ recipeId: published, servings: 2 }),
     };
     const responses = await Promise.all(Array.from({ length: 5 }, () => call('/cooks', init)));
@@ -134,21 +134,8 @@ test('concurrent cook retries produce exactly one row and counter increment; mis
         responses.map((r) => r.status),
         [201, 201, 201, 201, 201],
     );
-    assert.equal(await db.userCookHistory.count({ where: { userId: alice } }), 1);
-    assert.equal((await db.recipe.findUniqueOrThrow({ where: { id: published } })).cookCount, 1);
-    assert.equal(
-        (
-            await call('/cooks', {
-                ...init,
-                body: JSON.stringify({ recipeId: published, servings: 3 }),
-            })
-        ).status,
-        409,
-    );
-    assert.equal(
-        (await call('/cooks', { ...init, headers: { 'content-type': 'application/json' } })).status,
-        400,
-    );
+    assert.equal(await db.userCookHistory.count({ where: { userId: alice } }), 5);
+    assert.equal((await db.recipe.findUniqueOrThrow({ where: { id: published } })).cookCount, 5);
 });
 test('favorite PUT and DELETE are idempotent and reject inaccessible recipes', async () => {
     assert.equal((await call(`/favorites/${draft}`, { method: 'PUT' })).status, 404);
@@ -159,43 +146,40 @@ test('favorite PUT and DELETE are idempotent and reject inaccessible recipes', a
         assert.equal((await call(`/favorites/${published}`, { method: 'DELETE' })).status, 200);
 });
 
-test('import admission is user-wide, atomic and idempotent; status is owner-only', async () => {
-    const init = (token: string) => ({
+test('import POSTs need only JSON while user-wide concurrency and daily quotas remain atomic', async () => {
+    const init = {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'Idempotency-Key': token },
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ text: 'Zwei Tomaten schneiden und mit Salz würzen.' }),
-    });
-    const retried = await Promise.all(
-        Array.from({ length: 4 }, () => call('/imports', init('import-once'))),
-    );
-    assert.deepEqual(
-        retried.map((r) => r.status),
-        [202, 202, 202, 202],
-    );
-    const first = await retried[0].json();
-    assert.equal(await db.apiImport.count({ where: { userId: alice } }), 1);
+    };
+    const responses = await Promise.all(Array.from({ length: 4 }, () => call('/imports', init)));
+    assert.deepEqual(responses.map((r) => r.status).sort(), [202, 202, 429, 429]);
+    const first = await responses.find((r) => r.status === 202)!.json();
+    assert.equal(typeof first.id, 'string');
+    assert.equal(first.status, 'queued');
+    const ownStatus = await call(`/imports/${first.id}`);
+    assert.equal(ownStatus.status, 200);
+    assert.deepEqual(await ownStatus.json(), first);
+    assert.equal(await db.apiImport.count({ where: { userId: alice } }), 2);
     const other = await auth.api.createApiKey({
-        body: { userId: bob, name: 'other', permissions: { imports: ['create'] } },
+        body: { userId: bob, permissions: { imports: ['create'] } },
     });
     assert.equal(
         (await call(`/imports/${first.id}`, { headers: { 'x-api-key': other.key } })).status,
         404,
     );
-    const more = await Promise.all(['two', 'three', 'four'].map((t) => call('/imports', init(t))));
-    assert.deepEqual(more.map((r) => r.status).sort(), [202, 429, 429]);
     await db.apiImport.updateMany({
         where: { userId: alice },
         data: { status: 'failed', input: {} },
     });
     for (let i = 0; i < 8; i++) {
-        assert.equal((await call('/imports', init(`daily-${i}`))).status, 202);
+        assert.equal((await call('/imports', init)).status, 202);
         await db.apiImport.updateMany({
             where: { userId: alice },
             data: { status: 'failed', input: {} },
         });
     }
-    assert.equal((await call('/imports', init('eleventh'))).status, 429);
-    assert.equal((await call('/imports', init('import-once'))).status, 202);
+    assert.equal((await call('/imports', init)).status, 429);
 });
 
 test('key management exposes secrets once, enforces owner and blocks direct plugin HTTP endpoints', async () => {
@@ -237,6 +221,7 @@ test('key management exposes secrets once, enforces owner and blocks direct plug
 test('OpenAPI declares protection for every data operation and documented schema matches runtime', async () => {
     const doc = await (await app.request('/api/v1/openapi.json')).json();
     assert.equal(doc.components.securitySchemes.ApiKey.name, 'x-api-key');
+    assert.equal(JSON.stringify(doc).toLowerCase().includes('idempotency'), false);
     for (const [path, operations] of Object.entries(doc.paths)) {
         for (const operation of Object.values(operations as Record<string, { security: unknown }>))
             assert.deepEqual(operation.security, [{ ApiKey: [] }], path);
@@ -246,7 +231,7 @@ test('OpenAPI declares protection for every data operation and documented schema
         (
             await call('/imports', {
                 method: 'POST',
-                headers: { 'content-type': 'application/json', 'Idempotency-Key': 'bad-publish' },
+                headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({
                     text: 'A complete recipe with enough content.',
                     publish: true,
@@ -260,7 +245,7 @@ test('OpenAPI declares protection for every data operation and documented schema
 test('malformed JSON is a client error, not an internal error', async () => {
     const response = await call('/cooks', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'Idempotency-Key': 'malformed' },
+        headers: { 'content-type': 'application/json' },
         body: '{',
     });
     assert.equal(response.status, 400);

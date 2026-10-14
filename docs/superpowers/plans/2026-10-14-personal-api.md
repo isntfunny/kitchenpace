@@ -61,3 +61,12 @@ No API-key sessions, no publishing API, no production changes. Keys default to r
 - Extension verification: 3 API policy tests, 17 database/API/processor tests and 16 Bring tests passed. Standalone typecheck and full production build passed. Browser smoke passed including creating a key with Bring read scope and receiving the documented connection-required response through the real Next/service stack. Combined migration schema diff is empty.
 - Targeted lint has no errors; Hono app now has a max-lines warning (410 lines). Full external Bring account transfers are covered with simulated network boundaries, not a live account.
 - Extension and combined API/Bring tree remain in the feature worktree for integration; no additional main merge, push or deployment performed by this follow-up.
+
+## API simplification (explicit follow-up correction)
+
+The user rejected client-generated operation keys. Removed the header entirely from
+all public routes and OpenAPI. Each cook/import POST is a new operation; Bring uses
+its existing list checks. Server-generated request IDs remain internal for receipts
+and worker safety. Import POST still returns HTTP 202 with task `id`, and its owner
+can poll GET /imports/{id} for status/recipeId/errorCode. This supersedes earlier
+client-key requirements in the execution history. No database migration required.

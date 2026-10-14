@@ -97,6 +97,3 @@ export const errorSchema = z
     .openapi('Error');
 export const pageOf = <T extends z.ZodType>(item: T) =>
     z.object({ items: z.array(item), nextCursor: z.string().nullable() });
-export const idempotencyHeaders = z.object({
-    'idempotency-key': z.string().regex(/^[A-Za-z0-9._-]{1,128}$/),
-});

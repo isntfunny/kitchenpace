@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Dialog } from 'radix-ui';
 import { useMemo, useState, type ReactNode } from 'react';
 
+import { AddToListButton } from '@app/components/bring/AddToListButton';
 import { ingredientDisplayName, parseAmount } from '@app/lib/ingredient-display';
 
 import { css } from 'styled-system/css';
@@ -231,6 +232,12 @@ export function IngredientList({
                     </button>
                 </div>
             </div>
+
+            <AddToListButton
+                ingredients={ingredients}
+                servings={servings}
+                originalServings={originalServings}
+            />
 
             <ul>
                 {ingredients.map((ingredient, index) => (

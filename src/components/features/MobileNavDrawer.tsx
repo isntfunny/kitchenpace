@@ -9,6 +9,7 @@ import {
     Plus,
     Salad,
     Shield,
+    ShoppingCart,
     ShieldCheck,
     Star,
     X,
@@ -46,6 +47,13 @@ const GENERAL_LINKS: (DrawerNavItem & { authOnly?: boolean; flag?: 'collections'
         href: '/collections',
         icon: Library,
         flag: 'collections',
+    },
+    {
+        label: 'Einkaufsliste',
+        description: 'Deine Bring!-Listen',
+        href: '/shopping-list',
+        icon: ShoppingCart,
+        authOnly: true,
     },
     {
         label: 'Rezept erstellen',

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 
 import { RecipeCard } from '@app/components/features/RecipeCard';
 import type { KeywordLandingData } from '@app/lib/keyword-landing';
@@ -13,9 +14,10 @@ type Props = {
     intro: string;
     /** Link target for browsing all matching recipes in the filter search */
     searchHref: string;
+    action?: ReactNode;
 };
 
-export function KeywordLandingContent({ data, heading, intro, searchHref }: Props) {
+export function KeywordLandingContent({ data, heading, intro, searchHref, action }: Props) {
     const hasMore = data.totalCount > KEYWORD_LANDING_LIMIT;
 
     return (
@@ -34,6 +36,7 @@ export function KeywordLandingContent({ data, heading, intro, searchHref }: Prop
                 <p className={css({ color: 'text-muted', fontSize: 'lg', maxW: '720px' })}>
                     {intro}
                 </p>
+                {action && <div className={css({ mt: '4' })}>{action}</div>}
             </header>
 
             <div

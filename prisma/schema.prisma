@@ -196,6 +196,8 @@ model Passkey {
 // ============================================
 
 model User {
+  bringConnection BringConnection?
+  bringTransfers BringTransfer[]
   id                        String                    @id @default(cuid())
   name                      String?
   email                     String                    @unique
@@ -1261,4 +1263,26 @@ model FilterSetIngredient {
 
   @@id([filterSetId, ingredientId])
   @@index([ingredientId])
+}
+
+// Bring remains the source of truth; these records only store access and operation receipts.
+model BringConnection {
+  userId String @id
+  credentials String
+  defaultListUuid String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BringTransfer {
+  userId String
+  operationId String
+  requestHash String
+  status String @default("PENDING")
+  result Json
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, operationId])
+  @@index([createdAt])
 }

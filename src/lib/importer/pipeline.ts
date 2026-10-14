@@ -4,7 +4,7 @@
  * Next.js server actions and the CLI.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 
 import { createIngredient, findOrCreateUnit } from '@app/components/recipe/ingredientActions';
 import { computeFlowLayout } from '@app/lib/flow-layout';
@@ -201,7 +201,7 @@ function applyFlowPositions<T extends { id: string }>(
  * @param authorId - The user ID to set as author
  */
 export async function saveImportedRecipe(
-    db: PrismaClient,
+    db: PrismaClient | Prisma.TransactionClient,
     data: AnalyzedRecipe,
     authorId: string,
     options?: { publish?: boolean },

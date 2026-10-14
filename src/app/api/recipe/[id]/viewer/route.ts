@@ -20,7 +20,18 @@ export async function GET(_request: Request, { params }: Params) {
 
     const recipe = await prisma.recipe.findFirst({
         where: {
-            OR: [{ slug: resolvedParams.id }, { id: resolvedParams.id }],
+            AND: [
+                { OR: [{ slug: resolvedParams.id }, { id: resolvedParams.id }] },
+                {
+                    OR: [
+                        { authorId: viewerId },
+                        {
+                            status: 'PUBLISHED',
+                            moderationStatus: { in: ['APPROVED', 'AUTO_APPROVED'] },
+                        },
+                    ],
+                },
+            ],
         },
         select: {
             id: true,

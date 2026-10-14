@@ -1,6 +1,12 @@
 'use server';
 
+import { getServerAuthSession } from '@app/lib/auth';
 import { prisma } from '@shared/prisma';
+
+async function requireOwner(userId: string) {
+    const session = await getServerAuthSession('private-profile-data');
+    if (!session?.user.id || session.user.id !== userId) throw new Error('Keine Berechtigung');
+}
 
 export interface UserStats {
     recipeCount: number;
@@ -11,6 +17,7 @@ export interface UserStats {
 }
 
 export async function fetchUserStats(userId: string): Promise<UserStats> {
+    await requireOwner(userId);
     const [recipeCount, draftCount, favoriteCount, cookedCount, ratingCount] = await Promise.all([
         prisma.recipe.count({ where: { authorId: userId, publishedAt: { not: null } } }),
         prisma.recipe.count({ where: { authorId: userId, status: 'DRAFT' } }),
@@ -38,6 +45,7 @@ export interface DraftRecipe {
 }
 
 export async function fetchUserDraftRecipes(userId: string): Promise<DraftRecipe[]> {
+    await requireOwner(userId);
     const drafts = await prisma.recipe.findMany({
         where: { authorId: userId, status: 'DRAFT' },
         select: {
@@ -70,6 +78,7 @@ export interface UserRecipe {
 }
 
 export async function fetchUserRecipes(userId: string): Promise<UserRecipe[]> {
+    await requireOwner(userId);
     const recipes = await prisma.recipe.findMany({
         where: { authorId: userId },
         select: {
@@ -159,6 +168,7 @@ export type CookHistoryEntry = ReturnType<
 >;
 
 export async function fetchUserCookHistory(userId: string, take = 6): Promise<CookHistoryEntry[]> {
+    await requireOwner(userId);
     const entries = await prisma.userCookHistory.findMany({
         where: { userId },
         select: { id: true, cookedAt: true, recipe: RECIPE_REF_SELECT },
@@ -177,6 +187,7 @@ export type FavoriteEntry = ReturnType<
 >;
 
 export async function fetchUserLastFavorites(userId: string, take = 6): Promise<FavoriteEntry[]> {
+    await requireOwner(userId);
     const entries = await prisma.favorite.findMany({
         where: { userId },
         select: { id: true, createdAt: true, recipe: RECIPE_REF_SELECT },
@@ -195,6 +206,7 @@ export type ViewHistoryEntry = ReturnType<
 >;
 
 export async function fetchUserViewHistory(userId: string, take = 8): Promise<ViewHistoryEntry[]> {
+    await requireOwner(userId);
     const entries = await prisma.userViewHistory.findMany({
         where: { userId },
         select: { id: true, viewedAt: true, recipe: RECIPE_REF_SELECT },

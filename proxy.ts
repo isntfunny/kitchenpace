@@ -50,6 +50,9 @@ export async function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
+    // Personal API uses only API keys; do not record credentials or apply browser redirects.
+    if (pathname === '/api/v1' || pathname.startsWith('/api/v1/')) return NextResponse.next();
+
     // 4. Tracking
     if (isTrackingEnabled()) {
         void trackApiRequest(request);

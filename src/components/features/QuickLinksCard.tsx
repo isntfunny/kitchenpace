@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Camera, Edit3, Library, Settings, Shield } from 'lucide-react';
+import { Bell, Camera, Edit3, KeyRound, Library, Settings, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -11,6 +11,7 @@ import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { css } from 'styled-system/css';
 
 const ALL_LINKS = [
+    { href: '/profile/api-keys', label: 'API & Integrationen', IconEl: KeyRound },
     { href: '/profile/edit', label: 'Profil bearbeiten', IconEl: Edit3 },
     { href: '/profile/account', label: 'Konto & Sicherheit', IconEl: Shield },
     { href: '/profile/settings', label: 'Privatsphäre', IconEl: Settings },

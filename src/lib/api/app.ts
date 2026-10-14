@@ -6,6 +6,13 @@ import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
 
 import type { ApiPrincipal } from './auth';
+import {
+    bringParams,
+    bringListsSchema,
+    bringListSchema,
+    bringRecipeInput,
+    bringTransferSchema,
+} from './bring-schemas';
 import { ApiError } from './errors';
 import type { Scope } from './permissions';
 import {
@@ -321,6 +328,75 @@ export function createApiApp({ services, authenticate }: ApiDependencies) {
             c.json(
                 importSchema.parse(
                     await services.importStatus(c.get('principal'), c.req.valid('param').id),
+                ),
+                200,
+            ),
+    );
+    app.openapi(
+        createRoute({
+            method: 'get',
+            path: '/bring/lists',
+            summary: 'Verknüpfte Bring!-Listen',
+            description:
+                'bring:read. Konto vorher unter /profile/integrations verknüpfen. 409 BRING_CONNECTION_REQUIRED bei fehlender oder ungültiger Verbindung.',
+            tags: ['Bring!'],
+            security,
+            middleware: [access('bring:read')],
+            responses: { ...errors, 200: json(bringListsSchema, 'Listen und Standardliste') },
+        }),
+        async (c) =>
+            c.json(bringListsSchema.parse(await services.bringLists(c.get('principal'))), 200),
+    );
+    app.openapi(
+        createRoute({
+            method: 'get',
+            path: '/bring/lists/{id}',
+            summary: 'Bring!-Artikel lesen',
+            description:
+                'bring:read. purchase enthält offene, recently zuletzt gekaufte Artikel. name ist die Bring!-Identität, displayName der lokalisierte Name.',
+            tags: ['Bring!'],
+            security,
+            middleware: [access('bring:read')],
+            request: { params: bringParams },
+            responses: { ...errors, 200: json(bringListSchema, 'Listeninhalt') },
+        }),
+        async (c) =>
+            c.json(
+                bringListSchema.parse(
+                    await services.bringList(c.get('principal'), c.req.valid('param').id),
+                ),
+                200,
+            ),
+    );
+    app.openapi(
+        createRoute({
+            method: 'post',
+            path: '/bring/lists/{id}/recipes',
+            summary: 'Rezeptzutaten zur Einkaufsliste hinzufügen',
+            description:
+                'bring:write. Eigene oder öffentlich freigegebene Rezepte. servings überschreibt die Portionszahl; ingredientIds sind IDs aus GET /recipes/{id} (ingredients[].id), sonst alle Zutaten, maximal 50. Bestehende Artikel werden nicht überschrieben. Idempotency-Key je Übertragung, Belege 7 Tage; gleiche Auswahl unverändert wiederholen. Geänderte Rezeptzutaten oder Eingaben liefern 409. 200 kann Teilergebnisse enthalten: added/existing/failed prüfen. Für fehlgeschlagene Zutaten nach Prüfung der Liste einen neuen Vorgang mit neuer ID starten. Bei BRING_CONFLICT kann das Ergebnis unklar sein: Liste vor einem neuen Vorgang prüfen.',
+            tags: ['Bring!'],
+            security,
+            middleware: [access('bring:write')],
+            request: {
+                params: bringParams,
+                headers: idempotencyHeaders,
+                body: {
+                    required: true,
+                    content: { 'application/json': { schema: bringRecipeInput } },
+                },
+            },
+            responses: { ...errors, 200: json(bringTransferSchema, 'Ergebnis je Zutat') },
+        }),
+        async (c) =>
+            c.json(
+                bringTransferSchema.parse(
+                    await services.bringRecipe(
+                        c.get('principal'),
+                        c.req.valid('param').id,
+                        c.req.valid('header')['idempotency-key'],
+                        c.req.valid('json'),
+                    ),
                 ),
                 200,
             ),

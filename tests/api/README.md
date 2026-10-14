@@ -22,3 +22,9 @@ Tests use the real Better Auth plugin, Prisma and Hono. AI/network calls in proc
 tests are injected: these checks never spend AI credits or call production services.
 The browser test checks account key lifecycle, real HTTP authorization, private
 metadata and rendered documentation. Full application E2E tests remain separate.
+
+Bring API tests use real Hono/Better Auth and PostgreSQL, replacing the external
+Bring gateway. Run `npm run test:bring` for the shared transfer/receipt tests,
+including recovery after uncertain writes and rejection of changed recipe requests.
+The browser smoke also checks the Bring read scope and a disconnected account
+through the actual production service, without sending requests to Bring.

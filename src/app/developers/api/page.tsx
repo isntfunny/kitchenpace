@@ -34,7 +34,8 @@ export default function ApiDocsPage() {
                     Sende ihn im Header <code>x-api-key</code>. Jeder Endpoint benötigt das passende
                     Recht: <code>recipes:read</code>, <code>favorites:read/write</code>,{' '}
                     <code>collections:read</code>, <code>cooks:read/write</code> oder{' '}
-                    <code>imports:create</code>. Schreibrechte sind standardmäßig ausgeschaltet.
+                    <code>imports:create</code>, <code>bring:read</code> oder{' '}
+                    <code>bring:write</code>. Schreibrechte sind standardmäßig ausgeschaltet.
                 </p>
                 <pre
                     className={css({
@@ -72,6 +73,23 @@ export default function ApiDocsPage() {
                     429 beachte <code>Retry-After</code>. Fehler enthalten einen Code und eine
                     Request-ID. „Gekocht“-Einträge über die API erzeugen keine öffentliche
                     Aktivitätsmeldung.
+                </p>
+                <p>
+                    Bring!: Verknüpfe dein Konto zuerst unter{' '}
+                    <Link href="/profile/integrations">Verknüpfte Dienste</Link>.
+                    <code> GET /api/v1/bring/lists</code> liefert verfügbare Listen;
+                    <code> GET /api/v1/bring/lists/&#123;id&#125;</code> deren offene und zuletzt
+                    gekaufte Artikel. Mit{' '}
+                    <code>POST /api/v1/bring/lists/&#123;id&#125;/recipes</code> fügst du
+                    Rezeptzutaten hinzu. Sende <code>recipeId</code>, optional <code>servings</code>{' '}
+                    und <code>ingredientIds</code>
+                    aus dem Rezeptdetail. Ohne Auswahl werden alle Zutaten übernommen (maximal 50).
+                    Dafür ist ein <code>Idempotency-Key</code> erforderlich; Wiederholungsbelege
+                    gelten 7 Tage. Prüfe im Ergebnis jede Zutat auf <code>added</code>,{' '}
+                    <code>existing</code> oder <code>failed</code>. Bestehende Artikel bleiben
+                    unverändert. Bei Teilerfolgen nur fehlgeschlagene Zutaten nach Prüfung der Liste
+                    mit einem neuen Vorgang übertragen. Nach Rezeptänderungen kann eine Wiederholung
+                    mit demselben Schlüssel einen Konflikt ergeben.
                 </p>
                 <p>
                     Hier eingegebene Schlüssel werden nicht dauerhaft gespeichert.{' '}

@@ -8,6 +8,8 @@ export const SCOPES = [
     'favorites:write',
     'cooks:write',
     'imports:create',
+    'bring:read',
+    'bring:write',
 ] as const;
 export type Scope = (typeof SCOPES)[number];
 export const SCOPE_LABELS: Record<Scope, string> = {
@@ -18,6 +20,8 @@ export const SCOPE_LABELS: Record<Scope, string> = {
     'favorites:write': 'Favoriten setzen und entfernen',
     'cooks:write': 'Als gekocht eintragen',
     'imports:create': 'KI-Importe erstellen und abrufen',
+    'bring:read': 'Bring!-Listen und Artikel lesen',
+    'bring:write': 'Rezeptzutaten zu Bring!-Listen hinzufügen',
 };
 export const keyInputSchema = z
     .object({

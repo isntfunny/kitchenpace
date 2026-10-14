@@ -88,6 +88,7 @@ try {
     await page.goto('/profile/api-keys', { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.getByRole('heading', { name: 'API & Integrationen' }).waitFor();
     assert.equal(await page.getByRole('checkbox', { checked: true }).count(), 1);
+    await page.getByLabel('Bring!-Listen und Artikel lesen', { exact: true }).check();
     await page.getByLabel('Name', { exact: true }).fill('Smoke integration');
     await page.getByRole('button', { name: 'Schlüssel erstellen', exact: true }).click();
     const secret = page
@@ -105,6 +106,11 @@ try {
         (await context.request.get('/api/v1/cooks', { headers: { 'x-api-key': key } })).status(),
         403,
     );
+    const bring = await context.request.get('/api/v1/bring/lists', {
+        headers: { 'x-api-key': key },
+    });
+    assert.equal(bring.status(), 409);
+    assert.equal((await bring.json()).error.code, 'BRING_CONNECTION_REQUIRED');
     await page.reload({ waitUntil: 'domcontentloaded' });
     assert.equal((await page.innerText('body')).includes(key), false, 'secret redisplayed');
     await page.getByRole('button', { name: 'Widerrufen', exact: true }).click();

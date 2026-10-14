@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
+import { Heading, Text } from '@app/components/atoms/Typography';
 import {
     connectBring,
     disconnectBring,
@@ -14,9 +15,12 @@ import {
 } from '@app/lib/bring/actions';
 import type { BringList } from '@app/lib/bring/types';
 
-import { card, field, heading, muted, row, stack } from './styles';
+import { Feedback, LoadingState, EmptyState } from './Feedback';
+import { ListSelect } from './ListSelect';
+import { card, field, label, link, row, stack } from './styles';
 
 export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
+    const [initialLoading, setInitialLoading] = useState(true);
     const [connected, setConnected] = useState(false);
     const [editing, setEditing] = useState(false);
     const [email, setEmail] = useState('');
@@ -49,7 +53,10 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
             } catch {
                 if (active) setError('Die Verbindung konnte nicht geladen werden.');
             } finally {
-                if (active) setBusy(false);
+                if (active) {
+                    setBusy(false);
+                    setInitialLoading(false);
+                }
             }
         })();
         return () => {
@@ -143,6 +150,13 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
         }
     }
 
+    if (initialLoading)
+        return (
+            <section className={card} aria-label="Bring!-Verknüpfung">
+                <LoadingState>Verbindung wird geladen …</LoadingState>
+            </section>
+        );
+
     return (
         <section className={card} aria-label="Bring!-Verknüpfung">
             <form
@@ -152,18 +166,20 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
                     void submit();
                 }}
             >
-                <h2 className={heading}>Bring! {connected ? '· Verbunden' : 'verbinden'}</h2>
-                <p className={muted}>
+                <Heading as="h2" size="md">
+                    Bring! {connected ? '· Verbunden' : 'verbinden'}
+                </Heading>
+                <Text color="muted" size="sm">
                     Übernimm Rezeptzutaten und verwalte deine Bring!-Einkaufslisten direkt in
                     KochTakt.
-                </p>
+                </Text>
                 {(!connected || editing) && (
                     <>
-                        <p className={muted}>
+                        <Text color="muted" size="sm">
                             Melde dich mit deinen Bring!-Zugangsdaten an. KochTakt speichert sie
                             verschlüsselt, damit du deine Listen hier nutzen kannst.
-                        </p>
-                        <label>
+                        </Text>
+                        <label className={label}>
                             E-Mail bei Bring!
                             <input
                                 className={field}
@@ -180,7 +196,7 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
                                 }}
                             />
                         </label>
-                        <label>
+                        <label className={label}>
                             Bring!-Passwort
                             <input
                                 className={field}
@@ -200,36 +216,31 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
                     </>
                 )}
                 {lists && lists.length > 0 && (
-                    <label>
-                        Standardliste
-                        <select
-                            className={field}
-                            required
-                            value={listId}
-                            disabled={busy}
-                            onChange={(event) => setListId(event.target.value)}
-                        >
-                            <option value="">Bitte Liste auswählen</option>
-                            {lists.map((list) => (
-                                <option key={list.listUuid} value={list.listUuid}>
-                                    {list.name}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
+                    <ListSelect
+                        label="Standardliste"
+                        lists={lists}
+                        value={listId}
+                        disabled={busy}
+                        onValueChange={setListId}
+                        required
+                    />
                 )}
                 {lists?.length === 0 && (
-                    <p>
+                    <EmptyState>
                         In diesem Konto gibt es noch keine Liste. Lege eine Liste in Bring! an und
                         lade sie anschließend neu.
-                    </p>
+                    </EmptyState>
                 )}
-                {error && <p role="alert">{error}</p>}
-                {message && <p role="status">{message}</p>}
+                {error && <Feedback error>{error}</Feedback>}
+                {message && <Feedback>{message}</Feedback>}
                 <div className={row}>
                     <Button
                         type="submit"
-                        disabled={busy || ((!!lists || (connected && !editing)) && !listId)}
+                        disabled={
+                            busy ||
+                            ((!!lists || (connected && !editing)) &&
+                                !lists?.some((list) => list.listUuid === listId))
+                        }
                     >
                         {busy
                             ? 'Bitte warten …'
@@ -275,7 +286,11 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
                         </Button>
                     )}
                 </div>
-                {connected && !onConnected && <Link href="/shopping-list">Zur Einkaufsliste</Link>}
+                {connected && !onConnected && (
+                    <Link className={link} href="/shopping-list">
+                        Zur Einkaufsliste
+                    </Link>
+                )}
             </form>
         </section>
     );

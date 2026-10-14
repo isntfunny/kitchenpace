@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { z } from 'zod';
 
 import { Button } from '@app/components/atoms/Button';
+import { Heading, Text } from '@app/components/atoms/Typography';
 import { getBringLists, getBringStatus, transferToBring } from '@app/lib/bring/actions';
 import { scaleQuantity } from '@app/lib/bring/items';
 import type { BringList, TransferItem, TransferOutcome } from '@app/lib/bring/types';
@@ -15,7 +16,9 @@ import type { BringList, TransferItem, TransferOutcome } from '@app/lib/bring/ty
 import { css } from 'styled-system/css';
 
 import { ConnectionCard } from './ConnectionCard';
-import { field, heading, muted, row, stack } from './styles';
+import { Feedback, LoadingState, EmptyState } from './Feedback';
+import { ListSelect } from './ListSelect';
+import { field, link, row, stack, checkbox, dialogOverlay, dialogContent } from './styles';
 import { TransferResults } from './TransferResults';
 
 interface Ingredient {
@@ -185,48 +188,34 @@ export function AddToListButton({
 
     return (
         <>
-            <Button type="button" variant="secondary" onClick={start}>
-                <ShoppingCart size={18} />
-                Auf die Einkaufsliste
-            </Button>
             <Dialog.Root
                 open={open}
                 onOpenChange={(value) => {
                     if (!busy) setOpen(value);
                 }}
             >
+                <Dialog.Trigger asChild>
+                    <Button type="button" variant="secondary" onClick={start}>
+                        <ShoppingCart size={18} />
+                        Auf die Einkaufsliste
+                    </Button>
+                </Dialog.Trigger>
                 <Dialog.Portal>
-                    <Dialog.Overlay
-                        className={css({
-                            position: 'fixed',
-                            inset: 0,
-                            bg: 'rgba(0,0,0,0.5)',
-                            zIndex: 1100,
-                        })}
-                    />
-                    <Dialog.Content
-                        className={css({
-                            position: 'fixed',
-                            zIndex: 1101,
-                            bg: 'surface',
-                            color: 'text',
-                            p: '5',
-                            boxShadow: 'shadow.medium',
-                            overflowY: 'auto',
-                            maxH: '90dvh',
-                            width: { base: '100%', md: 'min(560px, 90vw)' },
-                            bottom: { base: 0, md: 'auto' },
-                            top: { md: '50%' },
-                            left: { base: 0, md: '50%' },
-                            transform: { md: 'translate(-50%, -50%)' },
-                            borderTopRadius: '2xl',
-                            borderBottomRadius: { base: '0', md: '2xl' },
-                        })}
-                    >
+                    <Dialog.Overlay className={dialogOverlay} />
+                    <Dialog.Content className={dialogContent}>
                         <div className={stack}>
-                            <div className={row}>
-                                <Dialog.Title className={heading}>
-                                    Auf die Einkaufsliste
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: '3',
+                                })}
+                            >
+                                <Dialog.Title asChild>
+                                    <Heading as="h2" size="md">
+                                        Auf die Einkaufsliste
+                                    </Heading>
                                 </Dialog.Title>
                                 <Dialog.Close asChild>
                                     <Button
@@ -239,17 +228,22 @@ export function AddToListButton({
                                     </Button>
                                 </Dialog.Close>
                             </div>
-                            <Dialog.Description className={muted}>
-                                Wähle Zutaten und Mengen für deine Bring!-Liste.
+                            <Dialog.Description asChild>
+                                <Text size="sm" color="muted">
+                                    Wähle Zutaten und Mengen für deine Bring!-Liste.
+                                </Text>
                             </Dialog.Description>
-                            {connection === 'loading' && <p role="status">Bring! wird geladen …</p>}
+                            {connection === 'loading' && (
+                                <LoadingState>Bring! wird geladen …</LoadingState>
+                            )}
                             {connection === 'sign-in' && (
                                 <>
-                                    <p>
+                                    <Text>
                                         Melde dich bei KochTakt an, um deine Bring!-Listen zu
                                         nutzen. Deine Auswahl bleibt erhalten.
-                                    </p>
+                                    </Text>
                                     <Link
+                                        className={link}
                                         href={`/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`}
                                         onClick={preserveDraft}
                                     >
@@ -261,28 +255,19 @@ export function AddToListButton({
                                 <ConnectionCard onConnected={() => void loadConnection()} />
                             )}
                             {connection === 'ready' && (
-                                <label>
-                                    Bring!-Liste
-                                    <select
-                                        className={field}
-                                        value={listId}
-                                        disabled={busy || !!pending}
-                                        onChange={(event) => {
-                                            setListId(event.target.value);
-                                            setOutcomes([]);
-                                        }}
-                                    >
-                                        <option value="">Bitte Liste auswählen</option>
-                                        {lists.map((list) => (
-                                            <option key={list.listUuid} value={list.listUuid}>
-                                                {list.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
+                                <ListSelect
+                                    label="Bring!-Liste"
+                                    lists={lists}
+                                    value={listId}
+                                    disabled={busy || !!pending}
+                                    onValueChange={(value) => {
+                                        setListId(value);
+                                        setOutcomes([]);
+                                    }}
+                                />
                             )}
                             {connection === 'ready' && lists.length === 0 && (
-                                <p>Lege zuerst eine Liste in Bring! an.</p>
+                                <EmptyState>Lege zuerst eine Liste in Bring! an.</EmptyState>
                             )}
                             <div className={row}>
                                 <Button
@@ -306,10 +291,16 @@ export function AddToListButton({
                             </div>
                             <ul className={stack}>
                                 {items.map((item) => (
-                                    <li key={item.id}>
-                                        <label className={row}>
+                                    <li
+                                        key={item.id}
+                                        className={`${stack} ${css({ bg: 'background', border: '1px solid', borderColor: 'border', p: '3', borderRadius: 'xl' })}`}
+                                    >
+                                        <label
+                                            className={`${row} ${css({ minH: '11', fontWeight: '500', cursor: 'pointer', overflowWrap: 'anywhere' })}`}
+                                        >
                                             <input
                                                 type="checkbox"
+                                                className={checkbox}
                                                 checked={selected.includes(item.id)}
                                                 disabled={busy || !!pending}
                                                 onChange={(event) =>
@@ -347,9 +338,11 @@ export function AddToListButton({
                                 ))}
                             </ul>
                             {items.length > 50 && (
-                                <p role="alert">Bitte übertrage höchstens 50 Zutaten auf einmal.</p>
+                                <Feedback error>
+                                    Bitte übertrage höchstens 50 Zutaten auf einmal.
+                                </Feedback>
                             )}
-                            {error && <p role="alert">{error}</p>}
+                            {error && <Feedback error>{error}</Feedback>}
                             <TransferResults outcomes={outcomes} />
                             <Button
                                 type="button"
@@ -380,10 +373,10 @@ export function AddToListButton({
                                     Auswahl bearbeiten
                                 </Button>
                             )}
-                            <p className={muted}>
+                            <Text color="muted" size="sm">
                                 Bereits vorhandene Artikel bleiben unverändert. Mengen kannst du in
                                 der Einkaufsliste bearbeiten.
-                            </p>
+                            </Text>
                         </div>
                     </Dialog.Content>
                 </Dialog.Portal>

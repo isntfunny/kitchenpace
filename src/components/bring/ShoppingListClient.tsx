@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
+import { Heading } from '@app/components/atoms/Typography';
 import {
     changeBringItem,
     getBringItems,
@@ -12,8 +13,12 @@ import {
 } from '@app/lib/bring/actions';
 import type { BringItem, BringItems, BringList } from '@app/lib/bring/types';
 
+import { css } from 'styled-system/css';
+
 import { ConnectionCard } from './ConnectionCard';
-import { card, field, heading, muted, row, stack } from './styles';
+import { Feedback, LoadingState, EmptyState } from './Feedback';
+import { ListSelect } from './ListSelect';
+import { card, field, label, link, muted, row, stack, checkbox, itemRow } from './styles';
 
 export function ShoppingListClient() {
     const [lists, setLists] = useState<BringList[]>([]);
@@ -138,10 +143,13 @@ export function ShoppingListClient() {
 
     function renderItem(item: BringItem, purchased: boolean) {
         return (
-            <li key={item.displayName ?? item.name} className={row}>
-                <label className={row}>
+            <li key={item.name} className={itemRow}>
+                <label
+                    className={`${row} ${css({ flex: { base: '1 1 100%', sm: '1' }, minW: '120px', minH: '11', cursor: 'pointer', overflowWrap: 'anywhere' })}`}
+                >
                     <input
                         type="checkbox"
+                        className={checkbox}
                         checked={purchased}
                         disabled={busy}
                         onChange={() =>
@@ -155,41 +163,49 @@ export function ShoppingListClient() {
                         <span className={muted}> {item.specification}</span>
                     </span>
                 </label>
-                {!purchased && (
+                <div
+                    className={css({ display: 'flex', alignItems: 'center', gap: '1', ml: 'auto' })}
+                >
+                    {!purchased && (
+                        <Button
+                            size="sm"
+                            style={{ minHeight: 44 }}
+                            variant="ghost"
+                            disabled={busy}
+                            aria-label={`${item.displayName ?? item.name}: Menge bearbeiten`}
+                            onClick={() => {
+                                setEditing(item);
+                                setSpecification(item.specification);
+                            }}
+                        >
+                            Bearbeiten
+                        </Button>
+                    )}
                     <Button
                         size="sm"
+                        style={{ minHeight: 44 }}
                         variant="ghost"
                         disabled={busy}
-                        aria-label={`${item.displayName ?? item.name}: Menge bearbeiten`}
-                        onClick={() => {
-                            setEditing(item);
-                            setSpecification(item.specification);
-                        }}
+                        aria-label={`${item.displayName ?? item.name} entfernen`}
+                        onClick={() => void mutate('remove', item)}
                     >
-                        Bearbeiten
+                        Entfernen
                     </Button>
-                )}
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={busy}
-                    aria-label={`${item.displayName ?? item.name} entfernen`}
-                    onClick={() => void mutate('remove', item)}
-                >
-                    Entfernen
-                </Button>
+                </div>
             </li>
         );
     }
 
     return (
-        <div className={stack}>
+        <div className={`${stack} ${css({ fontFamily: 'body', color: 'text' })}`}>
             {connected === false ? (
                 <ConnectionCard onConnected={() => void loadLists()} />
             ) : (
                 <section className={`${card} ${stack}`}>
                     <div className={row}>
-                        <h2 className={heading}>Deine Bring!-Listen</h2>
+                        <Heading as="h2" size="md">
+                            Deine Bring!-Listen
+                        </Heading>
                         <Button
                             variant="secondary"
                             disabled={busy}
@@ -201,32 +217,27 @@ export function ShoppingListClient() {
                             Aktualisieren
                         </Button>
                     </div>
-                    {connected === null && !error && <p role="status">Listen werden geladen …</p>}
+                    {connected === null && !error && (
+                        <LoadingState>Listen werden geladen …</LoadingState>
+                    )}
                     {connected && (
-                        <label>
-                            Liste
-                            <select
-                                className={field}
-                                value={listId}
-                                disabled={busy}
-                                onChange={(event) => {
-                                    setSnapshot(null);
-                                    setEditing(null);
-                                    setListId(event.target.value);
-                                    setMessage('');
-                                }}
-                            >
-                                <option value="">Bitte Liste auswählen</option>
-                                {lists.map((list) => (
-                                    <option key={list.listUuid} value={list.listUuid}>
-                                        {list.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                        <ListSelect
+                            label="Liste"
+                            lists={lists}
+                            value={listId}
+                            disabled={busy}
+                            onValueChange={(value) => {
+                                setSnapshot(null);
+                                setEditing(null);
+                                setListId(value);
+                                setMessage('');
+                            }}
+                        />
                     )}
                     {connected && lists.length === 0 && !error && (
-                        <p>Lege eine Einkaufsliste in Bring! an und aktualisiere diese Ansicht.</p>
+                        <EmptyState>
+                            Lege eine Einkaufsliste in Bring! an und aktualisiere diese Ansicht.
+                        </EmptyState>
                     )}
                     {listId && (
                         <>
@@ -237,7 +248,7 @@ export function ShoppingListClient() {
                                     void mutate('add', { name, specification });
                                 }}
                             >
-                                <label>
+                                <label className={label}>
                                     Artikel hinzufügen
                                     <input
                                         className={field}
@@ -250,7 +261,7 @@ export function ShoppingListClient() {
                                     />
                                 </label>
                                 {!editing && (
-                                    <label>
+                                    <label className={label}>
                                         Menge oder Details
                                         <input
                                             className={field}
@@ -283,8 +294,8 @@ export function ShoppingListClient() {
                                         );
                                     }}
                                 >
-                                    <label>
-                                        Menge / Details für {editing.name}
+                                    <label className={label}>
+                                        Menge / Details für {editing.displayName ?? editing.name}
                                         <input
                                             className={field}
                                             autoFocus
@@ -314,23 +325,32 @@ export function ShoppingListClient() {
                                     </div>
                                 </form>
                             )}
-                            {!items && <p role="status">Artikel werden geladen …</p>}
+                            {!items && <LoadingState>Artikel werden geladen …</LoadingState>}
                             {items && (
                                 <>
-                                    <h3 className={heading}>
+                                    <Heading as="h3" size="sm">
                                         Noch einkaufen ({items.purchase.length})
-                                    </h3>
+                                    </Heading>
                                     {items.purchase.length === 0 && (
-                                        <p>
+                                        <EmptyState>
                                             Alles erledigt! Füge Artikel oder Zutaten aus einem
                                             Rezept hinzu.
-                                        </p>
+                                        </EmptyState>
                                     )}
                                     <ul className={stack}>
                                         {items.purchase.map((item) => renderItem(item, false))}
                                     </ul>
                                     <details>
-                                        <summary>Gekauft ({items.recently.length})</summary>
+                                        <summary
+                                            className={css({
+                                                cursor: 'pointer',
+                                                fontWeight: '600',
+                                                py: '3',
+                                                minH: '11',
+                                            })}
+                                        >
+                                            Gekauft ({items.recently.length})
+                                        </summary>
                                         <ul className={stack}>
                                             {items.recently.map((item) => renderItem(item, true))}
                                         </ul>
@@ -341,9 +361,11 @@ export function ShoppingListClient() {
                     )}
                 </section>
             )}
-            {error && <p role="alert">{error}</p>}
-            {message && <p role="status">{message}</p>}
-            <Link href="/profile/integrations">Bring!-Verknüpfung verwalten</Link>
+            {error && <Feedback error>{error}</Feedback>}
+            {message && <Feedback>{message}</Feedback>}
+            <Link className={link} href="/profile/integrations">
+                Bring!-Verknüpfung verwalten
+            </Link>
         </div>
     );
 }

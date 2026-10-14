@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
+import { Heading } from '@app/components/atoms/Typography';
 import { ShoppingListClient } from '@app/components/bring/ShoppingListClient';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { getServerAuthSession } from '@app/lib/auth';
@@ -18,9 +19,9 @@ export default async function ShoppingListPage() {
     return (
         <PageShell>
             <div className={css({ maxW: '800px', mx: 'auto', py: '6', px: '4' })}>
-                <h1 className={css({ fontFamily: 'heading', fontSize: '3xl', mb: '5' })}>
+                <Heading as="h1" size="xl" className={css({ mb: '5' })}>
                     Einkaufsliste
-                </h1>
+                </Heading>
                 <ShoppingListClient />
             </div>
         </PageShell>

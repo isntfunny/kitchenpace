@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
+import { Heading } from '@app/components/atoms/Typography';
 import { ConnectionCard } from '@app/components/bring/ConnectionCard';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayout';
@@ -19,9 +20,9 @@ export default async function IntegrationsPage() {
     return (
         <PageShell>
             <section className={css({ py: '6' })}>
-                <h1 className={css({ fontFamily: 'heading', fontSize: '3xl', mb: '5' })}>
+                <Heading as="h1" size="xl" className={css({ mb: '5' })}>
                     Verknüpfte Dienste
-                </h1>
+                </Heading>
                 <ProfileSidebarLayout>
                     <ConnectionCard />
                 </ProfileSidebarLayout>

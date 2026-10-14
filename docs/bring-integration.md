@@ -36,10 +36,18 @@ Screenshots from component tests are written to ignored `test-results/bring/`. T
 
 ## Current branch verification (2026-10-14)
 
-15 domain/service/action tests and 6 browser component tests pass. Migration smoke checks passed on a disposable PostgreSQL 17 instance, which was removed afterwards. Changed-file ESLint has no errors (the existing IngredientList length warning remains).
+15 domain/service/action tests and 12 browser component tests pass. Migration smoke checks passed on a disposable PostgreSQL 17 instance, which was removed afterwards. Changed-file ESLint has no errors (the existing IngredientList length warning remains).
 
 The initial TypeScript check and the final `tsc --noEmit` after the standard Turbopack compile both pass. The additional Webpack compile attempt fails resolving the pre-existing `nodehun` native import; its generated validators also reject existing non-Promise parameter unions in `/recipe/[id]`, `/recipe/[id]/mobile`, and `/user/[id]`. These variant-specific findings do not occur in the final Turbopack-generated typecheck. A full release build is still not claimed.
 
 No live Bring login, migration on an application database, Infisical secret change, deployment or merge was performed. Those runtime checks remain required before release.
 
 Turbopack verification: `next build --experimental-build-mode compile` completed successfully (exit 0), including compilation and page-data collection. This compile-mode check skips final generation; the subsequent TypeScript check passes with its generated validators. Implementation commit: `d5a7c15` on `feat/KUC-89-bring-integration`.
+
+## UI alignment (2026-10-14)
+
+Bring surfaces use the existing Button, Heading/Text, Select and Skeleton components and the existing PageShell/ProfileSidebarLayout. Inputs, checkboxes, card rows, links and feedback use semantic theme tokens. The recipe dialog retains Radix focus management, uses the app overlay token and blur treatment, and opens as a mobile bottom sheet with safe-area padding. Select menus sit above the dialog and wrap long household list names within the viewport. Mobile item actions are grouped together with 44px targets.
+
+Verified: 12 browser component tests (including keyboard selection/focus restoration, long mobile list names and 390px/1280px light/dark views), 15 domain/service/action tests, TypeScript, ESLint and Prettier. Loading, empty and error screenshots were also inspected. Browser responses are synthetic; screenshots use compiled app font faces when `BRING_UI_FONT_CSS` points to the generated Next.js font CSS chunk. The harness supplies the app theme CSS and fonts but does not render the complete authenticated Next.js layout. Full-app/live Bring acceptance remains pending as described above.
+
+Independent UI review found mobile overflow for long list names; reproduced with a failing browser test and fixed. Keyboard focus returns to the recipe action after closing the dialog. A removed/default list cannot be saved from the connection card when it is absent from the loaded lists.

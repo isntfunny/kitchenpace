@@ -5,7 +5,6 @@ import { useMemo } from 'react';
 
 import { useTheme } from '@app/components/providers/ThemeProvider';
 import { getThemeConfig } from '@app/lib/themes/registry';
-import '@scalar/api-reference-react/style.css';
 import './api-reference.css';
 
 const Scalar = dynamic(
@@ -19,7 +18,11 @@ export function ApiReference() {
         () => ({
             url: '/api/v1/openapi.json',
             theme: 'none',
-            layout: 'modern',
+            layout: 'classic',
+            showSidebar: false,
+            hideClientButton: true,
+            hideModels: true,
+            documentDownloadType: 'none',
             withDefaultFonts: false,
             darkMode: dark,
             forceDarkModeState: dark ? 'dark' : 'light',

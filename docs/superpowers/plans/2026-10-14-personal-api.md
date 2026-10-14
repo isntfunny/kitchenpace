@@ -70,3 +70,11 @@ its existing list checks. Server-generated request IDs remain internal for recei
 and worker safety. Import POST still returns HTTP 202 with task `id`, and its owner
 can poll GET /imports/{id} for status/recipeId/errorCode. This supersedes earlier
 client-key requirements in the execution history. No database migration required.
+
+## Embedded documentation redesign (follow-up)
+
+- Replaced Scalar's standalone modern layout with its compact classic layout in the normal page flow, without a duplicate sidebar. Kept generated OpenAPI and interactive requests.
+- Added a native three-step quickstart, copyable cURL example, account-key/reference/download links, and accessible disclosure guides for scopes, imports, Bring and limits.
+- Scoped theme/typography overrides to the docs, loaded vendor CSS in its own cascade layer, removed duplicate introduction/SDK promotion, and wrapped mobile operation headers.
+- Verified in Chromium at 390px and 1440px: light/dark styling, copy feedback, guide disclosures, reference anchor, endpoint expansion and request dialog without sending a request. No page exceptions or document overflow. Targeted ESLint, standalone TypeScript and diff whitespace checks passed. Independent review found no blockers; mobile truncation feedback addressed.
+- UI-only changes; no API contract or importer behavior change. Recorded on the feature branch; not merged or pushed as part of this follow-up.

@@ -1,12 +1,14 @@
 'use client';
 
+import { RefreshCw, ShoppingBasket } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
-import { Heading } from '@app/components/atoms/Typography';
+import { Heading, Text } from '@app/components/atoms/Typography';
 import {
     changeBringItem,
+    createBringList,
     getBringItems,
     getBringLists,
     getBringStatus,
@@ -16,9 +18,12 @@ import type { BringItem, BringItems, BringList } from '@app/lib/bring/types';
 import { css } from 'styled-system/css';
 
 import { ConnectionCard } from './ConnectionCard';
+import { CreateListForm } from './CreateListForm';
 import { Feedback, LoadingState, EmptyState } from './Feedback';
 import { ListSelect } from './ListSelect';
-import { card, field, label, link, muted, row, stack, checkbox, itemRow } from './styles';
+import { ShoppingAddForm } from './ShoppingAddForm';
+import { ShoppingItemRow } from './ShoppingItemRow';
+import { card, link, stack } from './styles';
 
 export function ShoppingListClient() {
     const [lists, setLists] = useState<BringList[]>([]);
@@ -28,17 +33,17 @@ export function ShoppingListClient() {
     const items = snapshot?.listUuid === listId ? snapshot.items : null;
     const busyRef = useRef(false);
     const requestVersion = useRef(0);
+    const listVersion = useRef(0);
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
-    const [name, setName] = useState('');
-    const [specification, setSpecification] = useState('');
-    const [editing, setEditing] = useState<BringItem | null>(null);
     const [message, setMessage] = useState('');
     const [refresh, setRefresh] = useState(0);
 
     const loadLists = useCallback(async () => {
+        const version = ++listVersion.current;
         try {
             const status = await getBringStatus();
+            if (version !== listVersion.current) return;
             if (!status.ok) {
                 setError(status.error);
                 return;
@@ -46,6 +51,7 @@ export function ShoppingListClient() {
             setConnected(status.data.connected);
             if (!status.data.connected) return;
             const result = await getBringLists();
+            if (version !== listVersion.current) return;
             if (!result.ok) {
                 setError(result.error);
                 return;
@@ -66,7 +72,6 @@ export function ShoppingListClient() {
         void loadLists();
     }, [loadLists]);
     useEffect(() => {
-        setEditing(null);
         if (!listId) return;
         let active = true;
         let loading = false;
@@ -109,7 +114,7 @@ export function ShoppingListClient() {
         item: BringItem,
         options: { previousSpecification?: string; restore?: boolean } = {},
     ) {
-        if (busyRef.current || !listId || !items) return;
+        if (busyRef.current || !listId || !items) return false;
         busyRef.current = true;
         requestVersion.current++;
         setBusy(true);
@@ -124,245 +129,264 @@ export function ShoppingListClient() {
             });
             if (!result.ok) {
                 setError(`${result.error} Aktualisiere die Liste vor einem erneuten Versuch.`);
-                return;
+                return false;
             }
             setSnapshot({ listUuid: listId, items: result.data });
             setMessage('Einkaufsliste aktualisiert.');
-            if (operation === 'add') {
-                setName('');
-                setSpecification('');
-                setEditing(null);
-            }
+            return true;
         } catch {
             setError('Ergebnis unklar. Bitte aktualisiere die Liste vor einem erneuten Versuch.');
+            return false;
         } finally {
             busyRef.current = false;
             setBusy(false);
         }
     }
 
-    function renderItem(item: BringItem, purchased: boolean) {
-        return (
-            <li key={item.name} className={itemRow}>
-                <label
-                    className={`${row} ${css({ flex: { base: '1 1 100%', sm: '1' }, minW: '120px', minH: '11', cursor: 'pointer', overflowWrap: 'anywhere' })}`}
-                >
-                    <input
-                        type="checkbox"
-                        className={checkbox}
-                        checked={purchased}
-                        disabled={busy}
-                        onChange={() =>
-                            void mutate(purchased ? 'add' : 'complete', item, {
-                                restore: purchased,
-                            })
-                        }
-                    />
-                    <span>
-                        {item.displayName ?? item.name}
-                        <span className={muted}> {item.specification}</span>
-                    </span>
-                </label>
-                <div
-                    className={css({ display: 'flex', alignItems: 'center', gap: '1', ml: 'auto' })}
-                >
-                    {!purchased && (
-                        <Button
-                            size="sm"
-                            style={{ minHeight: 44 }}
-                            variant="ghost"
-                            disabled={busy}
-                            aria-label={`${item.displayName ?? item.name}: Menge bearbeiten`}
-                            onClick={() => {
-                                setEditing(item);
-                                setSpecification(item.specification);
-                            }}
-                        >
-                            Bearbeiten
-                        </Button>
-                    )}
-                    <Button
-                        size="sm"
-                        style={{ minHeight: 44 }}
-                        variant="ghost"
-                        disabled={busy}
-                        aria-label={`${item.displayName ?? item.name} entfernen`}
-                        onClick={() => void mutate('remove', item)}
-                    >
-                        Entfernen
-                    </Button>
-                </div>
-            </li>
-        );
+    async function createList(name: string, operationId: string) {
+        if (busyRef.current) return false;
+        busyRef.current = true;
+        requestVersion.current++;
+        listVersion.current++;
+        setBusy(true);
+        setError('');
+        setMessage('');
+        try {
+            const result = await createBringList({ name, operationId });
+            if (!result.ok) {
+                setError(
+                    `${result.error} Bitte aktualisiere deine Listen vor einem neuen Versuch.`,
+                );
+                return false;
+            }
+            setLists((previous) => [
+                ...previous.filter((list) => list.listUuid !== result.data.listUuid),
+                result.data,
+            ]);
+            setSnapshot(null);
+            setListId(result.data.listUuid);
+            setMessage(`Liste „${result.data.name}“ erstellt.`);
+            return true;
+        } catch {
+            setError(
+                'Ergebnis unklar. Bitte aktualisiere deine Listen, bevor du eine weitere Liste anlegst.',
+            );
+            return false;
+        } finally {
+            busyRef.current = false;
+            setBusy(false);
+        }
     }
+
+    const count = items ? items.purchase.length + items.recently.length : 0;
+    const renderItem = (item: BringItem, purchased: boolean) => (
+        <ShoppingItemRow
+            key={item.name}
+            item={item}
+            purchased={purchased}
+            busy={busy}
+            onToggle={() =>
+                void mutate(purchased ? 'add' : 'complete', item, { restore: purchased })
+            }
+            onRemove={() => void mutate('remove', item)}
+            onEdit={(value, previousSpecification) =>
+                mutate('add', { ...item, specification: value }, { previousSpecification })
+            }
+        />
+    );
 
     return (
         <div className={`${stack} ${css({ fontFamily: 'body', color: 'text' })}`}>
             {connected === false ? (
                 <ConnectionCard onConnected={() => void loadLists()} />
             ) : (
-                <section className={`${card} ${stack}`}>
-                    <div className={row}>
-                        <Heading as="h2" size="md">
-                            Deine Bring!-Listen
-                        </Heading>
-                        <Button
-                            variant="secondary"
-                            disabled={busy}
-                            onClick={() => {
-                                void loadLists();
-                                setRefresh((value) => value + 1);
-                            }}
-                        >
-                            Aktualisieren
-                        </Button>
-                    </div>
-                    {connected === null && !error && (
-                        <LoadingState>Listen werden geladen …</LoadingState>
-                    )}
-                    {connected && (
-                        <ListSelect
-                            label="Liste"
-                            lists={lists}
-                            value={listId}
-                            disabled={busy}
-                            onValueChange={(value) => {
-                                setSnapshot(null);
-                                setEditing(null);
-                                setListId(value);
-                                setMessage('');
-                            }}
-                        />
-                    )}
-                    {connected && lists.length === 0 && !error && (
-                        <EmptyState>
-                            Lege eine Einkaufsliste in Bring! an und aktualisiere diese Ansicht.
-                        </EmptyState>
-                    )}
-                    {listId && (
-                        <>
-                            <form
-                                className={stack}
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-                                    void mutate('add', { name, specification });
+                <>
+                    <section className={`${card} ${stack}`} aria-label="Einkauf planen">
+                        <div className={css({ display: 'flex', alignItems: 'flex-end', gap: '3' })}>
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    w: '11',
+                                    h: '11',
+                                    flexShrink: 0,
+                                    borderRadius: 'lg',
+                                    bg: 'accent.soft',
+                                    color: 'primary',
+                                })}
+                            >
+                                <ShoppingBasket size={22} aria-hidden />
+                            </div>
+                            <div className={css({ flex: 1, minW: 0 })}>
+                                {connected ? (
+                                    <ListSelect
+                                        label="Liste"
+                                        lists={lists}
+                                        value={listId}
+                                        disabled={busy}
+                                        onValueChange={(value) => {
+                                            setSnapshot(null);
+                                            setListId(value);
+                                            setMessage('');
+                                        }}
+                                    />
+                                ) : (
+                                    <Heading as="h2" size="sm">
+                                        Deine Bring!-Listen
+                                    </Heading>
+                                )}
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                disabled={busy}
+                                aria-label="Aktualisieren"
+                                title="Aktualisieren"
+                                style={{ width: 44, height: 44, padding: 10, flexShrink: 0 }}
+                                onClick={() => {
+                                    void loadLists();
+                                    setRefresh((value) => value + 1);
                                 }}
                             >
-                                <label className={label}>
-                                    Artikel hinzufügen
-                                    <input
-                                        className={field}
-                                        required
-                                        maxLength={200}
-                                        placeholder="Zum Beispiel Milch"
-                                        value={name}
-                                        disabled={busy}
-                                        onChange={(event) => setName(event.target.value)}
-                                    />
-                                </label>
-                                {!editing && (
-                                    <label className={label}>
-                                        Menge oder Details
-                                        <input
-                                            className={field}
-                                            maxLength={500}
-                                            placeholder="Zum Beispiel 1 L"
-                                            value={specification}
-                                            disabled={busy}
-                                            onChange={(event) =>
-                                                setSpecification(event.target.value)
-                                            }
-                                        />
-                                    </label>
-                                )}
-                                <Button
-                                    disabled={busy || !!editing || !items || !name.trim()}
-                                    type="submit"
+                                <RefreshCw size={18} aria-hidden />
+                            </Button>
+                        </div>
+                        {connected && <CreateListForm busy={busy} onCreate={createList} />}
+                        {connected === null && !error && (
+                            <LoadingState>Listen werden geladen …</LoadingState>
+                        )}
+                        {connected && lists.length === 0 && !error && (
+                            <EmptyState>
+                                Lege deine erste Einkaufsliste an, um Artikel zu sammeln.
+                            </EmptyState>
+                        )}
+                        {items && (
+                            <div
+                                className={css({
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '2',
+                                })}
+                            >
+                                <div
+                                    className={css({
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        gap: '2',
+                                    })}
                                 >
-                                    Hinzufügen
-                                </Button>
-                            </form>
-                            {editing && items && (
-                                <form
-                                    className={stack}
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        void mutate(
-                                            'add',
-                                            { name: editing.name, specification },
-                                            { previousSpecification: editing.specification },
-                                        );
-                                    }}
-                                >
-                                    <label className={label}>
-                                        Menge / Details für {editing.displayName ?? editing.name}
-                                        <input
-                                            className={field}
-                                            autoFocus
-                                            maxLength={500}
-                                            value={specification}
-                                            disabled={busy}
-                                            onChange={(event) =>
-                                                setSpecification(event.target.value)
-                                            }
-                                        />
-                                    </label>
-                                    <div className={row}>
-                                        <Button type="submit" disabled={busy}>
-                                            Änderung speichern
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            type="button"
-                                            disabled={busy}
-                                            onClick={() => {
-                                                setEditing(null);
-                                                setSpecification('');
+                                    <Text size="sm">
+                                        <strong>{items.purchase.length}</strong> offen
+                                    </Text>
+                                    <Text size="sm" color="muted">
+                                        {items.recently.length} gekauft
+                                    </Text>
+                                </div>
+                                {count > 0 && (
+                                    <div
+                                        role="progressbar"
+                                        aria-label="Anteil gekaufter Artikel"
+                                        aria-valuemin={0}
+                                        aria-valuemax={count}
+                                        aria-valuenow={items.recently.length}
+                                        className={css({
+                                            h: '1',
+                                            bg: 'surface.muted',
+                                            borderRadius: 'full',
+                                            overflow: 'hidden',
+                                        })}
+                                    >
+                                        <div
+                                            className={css({
+                                                h: 'full',
+                                                bg: 'primary',
+                                                borderRadius: 'full',
+                                                transition: 'width 200ms ease',
+                                                _motionReduce: { transition: 'none' },
+                                            })}
+                                            style={{
+                                                width: `${(items.recently.length / count) * 100}%`,
                                             }}
-                                        >
-                                            Abbrechen
-                                        </Button>
+                                        />
                                     </div>
-                                </form>
-                            )}
-                            {!items && <LoadingState>Artikel werden geladen …</LoadingState>}
-                            {items && (
+                                )}
+                            </div>
+                        )}
+                        {listId && (
+                            <ShoppingAddForm
+                                key={listId}
+                                disabled={busy || !items}
+                                onAdd={(item) => mutate('add', item)}
+                            />
+                        )}
+                    </section>
+                    {error && <Feedback error>{error}</Feedback>}
+                    {message && (
+                        <Text size="sm" color="muted" role="status">
+                            {message}
+                        </Text>
+                    )}
+                    {listId && (
+                        <section className={card} aria-label="Artikel auf deiner Einkaufsliste">
+                            {!items ? (
+                                <LoadingState>Artikel werden geladen …</LoadingState>
+                            ) : (
                                 <>
-                                    <Heading as="h3" size="sm">
-                                        Noch einkaufen ({items.purchase.length})
+                                    <Heading as="h2" size="sm" className={css({ mb: '2' })}>
+                                        Noch einkaufen
                                     </Heading>
-                                    {items.purchase.length === 0 && (
+                                    {items.purchase.length === 0 ? (
                                         <EmptyState>
                                             Alles erledigt! Füge Artikel oder Zutaten aus einem
                                             Rezept hinzu.
                                         </EmptyState>
+                                    ) : (
+                                        <ul key={listId}>
+                                            {items.purchase.map((item) => renderItem(item, false))}
+                                        </ul>
                                     )}
-                                    <ul className={stack}>
-                                        {items.purchase.map((item) => renderItem(item, false))}
-                                    </ul>
-                                    <details>
+                                    <details
+                                        className={css({
+                                            mt: '3',
+                                            borderTopWidth: '1px',
+                                            borderTopStyle: 'solid',
+                                            borderColor: 'border',
+                                            pt: '2',
+                                        })}
+                                    >
                                         <summary
                                             className={css({
                                                 cursor: 'pointer',
+                                                fontSize: 'sm',
                                                 fontWeight: '600',
                                                 py: '3',
                                                 minH: '11',
+                                                color: 'text-muted',
                                             })}
                                         >
                                             Gekauft ({items.recently.length})
                                         </summary>
-                                        <ul className={stack}>
-                                            {items.recently.map((item) => renderItem(item, true))}
-                                        </ul>
+                                        {items.recently.length === 0 ? (
+                                            <Text size="sm" color="muted">
+                                                Abgehakte Artikel findest du hier. Du kannst sie
+                                                jederzeit wieder auf die Liste setzen.
+                                            </Text>
+                                        ) : (
+                                            <ul key={listId}>
+                                                {items.recently.map((item) =>
+                                                    renderItem(item, true),
+                                                )}
+                                            </ul>
+                                        )}
                                     </details>
                                 </>
                             )}
-                        </>
+                        </section>
                     )}
-                </section>
+                </>
             )}
-            {error && <Feedback error>{error}</Feedback>}
-            {message && <Feedback>{message}</Feedback>}
+            {connected === false && error && <Feedback error>{error}</Feedback>}
             <Link className={link} href="/profile/integrations">
                 Bring!-Verknüpfung verwalten
             </Link>

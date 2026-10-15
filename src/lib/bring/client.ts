@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { BringCredentials, BringItems, BringList, BringOperation } from './types';
 
-const BASE = 'https://api.getbring.com/rest/v2/';
+const BASE = 'https://api.getbring.com/rest/';
 const itemSchema = z.object({ name: z.string(), specification: z.string().default('') });
 const listsSchema = z.object({
     lists: z.array(z.object({ listUuid: z.string(), name: z.string() })),
@@ -62,10 +62,11 @@ export class BringClient {
         path: string,
         init: RequestInit,
         request: typeof fetch,
+        version: 'v2/' | '' = 'v2/',
     ): Promise<Response> {
         let response: Response;
         try {
-            response = await request(BASE + path, {
+            response = await request(BASE + version + path, {
                 ...init,
                 cache: 'no-store',
                 signal: AbortSignal.timeout(8000),
@@ -86,7 +87,7 @@ export class BringClient {
         return response;
     }
 
-    private async send(path: string, init: RequestInit = {}) {
+    private async send(path: string, init: RequestInit = {}, version: 'v2/' | '' = 'v2/') {
         return BringClient.send(
             path,
             {
@@ -103,6 +104,7 @@ export class BringClient {
                 },
             },
             this.request,
+            version,
         );
     }
 
@@ -112,6 +114,27 @@ export class BringClient {
         if (!parsed.success)
             throw new BringError('INVALID_RESPONSE', 'Bring!-Listen konnten nicht gelesen werden.');
         return parsed.data.lists;
+    }
+
+    async createList(name: string): Promise<BringList> {
+        // This endpoint is documented under /rest/, not /rest/v2/.
+        const response = await this.send(
+            `bringusers/${encodeURIComponent(this.uuid)}/lists`,
+            {
+                method: 'POST',
+                body: new URLSearchParams({ name, theme: 'ch.publisheria.bring.theme.grocery' }),
+            },
+            '',
+        );
+        const parsed = z
+            .object({ bringListUUID: z.string().min(1) })
+            .safeParse(await response.json().catch(() => null));
+        if (!parsed.success)
+            throw new BringError(
+                'INVALID_RESPONSE',
+                'Ergebnis unklar. Bitte aktualisiere deine Listen, bevor du eine weitere Liste anlegst.',
+            );
+        return { listUuid: parsed.data.bringListUUID, name };
     }
 
     async items(listUuid: string): Promise<BringItems> {

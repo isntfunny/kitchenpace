@@ -80,3 +80,33 @@ test('adapter rejects malformed success responses instead of inventing an empty 
     await assert.rejects(client.lists());
     await assert.rejects(client.items('list-1'));
 });
+
+test('list creation uses the legacy endpoint, encoded name and authenticated owner', async () => {
+    const requests: Request[] = [];
+    let malformed = false;
+    const client = await BringClient.login(
+        { email: 'test@example.org', password: 'test' },
+        async (url, init) => {
+            requests.push(new Request(url, init));
+            return Response.json(
+                String(url).endsWith('/bringauth')
+                    ? { uuid: 'owner/id', access_token: 'token' }
+                    : malformed
+                      ? {}
+                      : { bringListUUID: 'new-list' },
+            );
+        },
+    );
+    assert.deepEqual(await client.createList('Obst & Gemüse'), {
+        listUuid: 'new-list',
+        name: 'Obst & Gemüse',
+    });
+    assert.equal(requests[1].url, 'https://api.getbring.com/rest/bringusers/owner%2Fid/lists');
+    assert.equal(requests[1].method, 'POST');
+    assert.equal(requests[1].headers.get('Authorization'), 'Bearer token');
+    const body = new URLSearchParams(await requests[1].text());
+    assert.equal(body.get('name'), 'Obst & Gemüse');
+    assert.equal(body.get('theme'), 'ch.publisheria.bring.theme.grocery');
+    malformed = true;
+    await assert.rejects(client.createList('Test'));
+});

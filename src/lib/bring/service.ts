@@ -14,6 +14,7 @@ import { requireList, transferItems } from './transfer';
 import type {
     BringCredentials,
     BringItems,
+    BringList,
     BringOperation,
     TransferItem,
     TransferOutcome,
@@ -213,5 +214,37 @@ export async function transfer(
             where: { userId, createdAt: { lt: new Date(Date.now() - 7 * 86_400_000) } },
         });
         return outcomes;
+    });
+}
+
+export async function createList(
+    userId: string,
+    requestId: string,
+    name: string,
+): Promise<BringList> {
+    const operationId = `create-list:${requestId}`;
+    const requestHash = createHash('sha256').update(JSON.stringify({ name })).digest('hex');
+    return locked(userId, async (tx) => {
+        const { client } = await connected(userId, tx);
+        const where = { userId_operationId: { userId, operationId } };
+        const receipt = await tx.bringTransfer.findUnique({ where });
+        if (receipt) {
+            if (receipt.requestHash !== requestHash || receipt.status !== 'COMPLETED')
+                throw new BringError(
+                    'CONFLICT',
+                    'Ergebnis unklar. Bitte aktualisiere deine Listen, bevor du eine weitere Liste anlegst.',
+                );
+            return receipt.result as unknown as BringList;
+        }
+        // Persist outside the lock transaction so uncertain remote writes are never replayed.
+        await prisma.bringTransfer.create({
+            data: { userId, operationId, requestHash, status: 'PENDING', result: {} },
+        });
+        const list = await client.createList(name);
+        await prisma.bringTransfer.update({
+            where,
+            data: { status: 'COMPLETED', result: { ...list } },
+        });
+        return list;
     });
 }

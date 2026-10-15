@@ -95,6 +95,10 @@ globalThis.fetch = async (url, init) => {
     const path = String(url);
     if (path.endsWith('/bringauth'))
         return Response.json({ uuid: 'remote-owner', access_token: 'token' });
+    if (path.endsWith('/lists') && init?.method === 'POST') {
+        writeCount++;
+        return Response.json({ bringListUUID: 'created' });
+    }
     if (path.endsWith('/lists'))
         return Response.json({ lists: [{ listUuid: 'mine', name: 'Zuhause' }] });
     if (init?.method === 'PUT') {
@@ -204,5 +208,29 @@ test('removing an item checks ownership and uses the exact Bring identity', asyn
         service.mutateItem('owner', input),
         (error: { code?: string }) => error.code === 'CONFLICT',
     );
+    assert.equal(writeCount, 1);
+});
+
+test('list creation requires a connection and replays completed receipts without duplicates', async () => {
+    receipts.clear();
+    writeCount = 0;
+    failCommit = false;
+    failReceiptUpdate = false;
+    await assert.rejects(service.createList('stranger', 'create-1', 'Ausflug'));
+    assert.equal(writeCount, 0);
+    const created = await service.createList('owner', 'create-1', 'Ausflug');
+    assert.deepEqual(created, { listUuid: 'created', name: 'Ausflug' });
+    assert.deepEqual(await service.createList('owner', 'create-1', 'Ausflug'), created);
+    await assert.rejects(service.createList('owner', 'create-1', 'Anders'));
+    assert.equal(writeCount, 1);
+});
+
+test('uncertain list creation is not submitted again', async () => {
+    receipts.clear();
+    writeCount = 0;
+    failReceiptUpdate = true;
+    await assert.rejects(service.createList('owner', 'create-2', 'Ausflug'));
+    failReceiptUpdate = false;
+    await assert.rejects(service.createList('owner', 'create-2', 'Ausflug'));
     assert.equal(writeCount, 1);
 });

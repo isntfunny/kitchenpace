@@ -31,6 +31,9 @@ before(async () => {
                     build.onResolve({ filter: /^@app\/lib\/bring\/actions$/ }, () => ({
                         path: resolve('tests/bring/ui/actions.ts'),
                     }));
+                    build.onResolve({ filter: /^@app\/components\/recipe\/actions$/ }, () => ({
+                        path: resolve('tests/bring/ui/ingredients.ts'),
+                    }));
                     build.onResolve({ filter: /^next\/(link|navigation)$/ }, ({ path }) => ({
                         path,
                         namespace: 'next-stub',
@@ -238,7 +241,7 @@ test('dialog list picker supports keyboard selection and returns focus on close'
 for (const theme of ['light', 'dark']) {
     for (const width of [390, 1280]) {
         test(`Bring surfaces fit ${width}px in ${theme} mode`, async () => {
-            const page = await pageFor('/?mode=shopping', width);
+            const page = await pageFor('/?mode=shopping&full=1', width);
             await page.evaluate((theme) => (document.documentElement.dataset.theme = theme), theme);
             await page.getByRole('checkbox', { name: /^Milch/ }).waitFor();
             await page.evaluate(() => document.fonts.ready);
@@ -301,5 +304,134 @@ test('long list names stay readable inside a mobile dialog menu', async () => {
         await page.getByRole('combobox', { name: 'Bring!-Liste' }).textContent(),
         /Familienurlaub/,
     );
+    await page.close();
+});
+
+test('shopping autocomplete selects an ingredient with parsed quantity before adding', async () => {
+    const page = await pageFor('/?mode=shopping', 390);
+    const input = page.getByRole('combobox', { name: 'Artikel hinzufügen' });
+    await input.fill('200g Tom');
+    await page.getByRole('option', { name: /Tomate/ }).waitFor();
+    await page.screenshot({
+        animations: 'disabled',
+        path: 'test-results/bring/autocomplete-mobile.png',
+    });
+    await input.press('ArrowDown');
+    await input.press('Enter');
+    await page.waitForFunction(
+        () => document.querySelector('[aria-label="Artikel hinzufügen"]')?.value === 'Tomate',
+    );
+    assert.equal(await input.inputValue(), 'Tomate');
+    assert.equal(await page.getByLabel('Menge oder Details').inputValue(), '200 g');
+    assert.equal(await page.getByRole('checkbox', { name: /^Tomate/ }).count(), 0);
+    await page.getByRole('button', { name: 'Hinzufügen', exact: true }).click();
+    await page.getByRole('checkbox', { name: /Tomate.*200 g/ }).waitFor();
+    assert.equal(await input.inputValue(), '');
+    await page.close();
+});
+
+test('shopping autocomplete ignores older responses and preserves free text on failure', async () => {
+    const page = await pageFor('/?mode=shopping');
+    const input = page.getByRole('combobox', { name: 'Artikel hinzufügen' });
+    await input.fill('To');
+    await page.waitForTimeout(250);
+    await input.fill('Min');
+    await page.getByRole('option', { name: /Minze/ }).waitFor();
+    await page.waitForTimeout(700);
+    assert.equal(await page.getByRole('option', { name: /Tomate/ }).count(), 0);
+    await input.fill('Fehler');
+    await page
+        .getByText('Vorschläge gerade nicht verfügbar. Du kannst den Artikel trotzdem hinzufügen.')
+        .waitFor();
+    await input.fill('Küchenrolle');
+    await page.getByRole('button', { name: 'Hinzufügen', exact: true }).click();
+    await page.getByRole('checkbox', { name: /^Küchenrolle/ }).waitFor();
+    await page.close();
+});
+
+test('compact shopping rows expose editing in an accessible menu without losing an add draft', async () => {
+    const page = await pageFor('/?mode=shopping', 390);
+    await page.getByRole('checkbox', { name: /^Milch/ }).waitFor();
+    const input = page.getByRole('combobox', { name: 'Artikel hinzufügen' });
+    await input.fill('Küchenrolle');
+    await input.press('Escape');
+    await page.getByRole('button', { name: 'Aktionen für Milch' }).click();
+    await page.getByRole('menuitem', { name: 'Menge bearbeiten' }).click();
+    await page.getByLabel('Menge / Details für Milch').fill('2 L');
+    await page.getByRole('button', { name: 'Änderung speichern' }).click();
+    await page.getByRole('checkbox', { name: /Milch.*2 L/ }).waitFor();
+    assert.equal(await input.inputValue(), 'Küchenrolle');
+    const bounds = await page
+        .getByRole('checkbox', { name: /^Paprika/ })
+        .locator('xpath=ancestor::li')
+        .boundingBox();
+    assert.ok(bounds.height < 100, JSON.stringify(bounds));
+    await page.close();
+});
+
+test('quantity edits retain their original conflict baseline across a background refresh', async () => {
+    const page = await pageFor('/?mode=shopping');
+    await page.getByRole('button', { name: 'Aktionen für Milch' }).click();
+    await page.getByRole('menuitem', { name: 'Menge bearbeiten' }).click();
+    await page.getByLabel('Menge / Details für Milch').fill('2 L');
+    await page.evaluate(() => {
+        window.bringTest.items.a.purchase[0].specification = '3 L';
+        window.dispatchEvent(new Event('focus'));
+    });
+    await page.getByRole('checkbox', { name: /Milch.*3 L/ }).waitFor();
+    await page.getByRole('button', { name: 'Änderung speichern' }).click();
+    await page.getByRole('alert').filter({ hasText: 'zwischenzeitlich geändert' }).waitFor();
+    assert.equal(await page.getByLabel('Menge / Details für Milch').inputValue(), '2 L');
+    await page.close();
+});
+
+test('shopping rows can be completed, restored and removed through the new menu', async () => {
+    const page = await pageFor('/?mode=shopping');
+    await page.getByRole('checkbox', { name: /^Milch/ }).click();
+    await page.getByText('Gekauft (1)', { exact: true }).click();
+    await page.getByRole('checkbox', { name: /^Milch/ }).click();
+    await page.getByText('Gekauft (0)', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Aktionen für Milch' }).click();
+    await page.getByRole('menuitem', { name: 'Entfernen', exact: true }).click();
+    await page.getByRole('checkbox', { name: /^Milch/ }).waitFor({ state: 'hidden' });
+    await page.close();
+});
+
+test('new lists can be created from the switcher and opened without changing the default', async () => {
+    const page = await pageFor('/?mode=shopping', 390);
+    await page.getByRole('button', { name: 'Neue Liste', exact: true }).click();
+    const submit = page.getByRole('button', { name: 'Liste erstellen', exact: true });
+    assert.equal(await submit.isDisabled(), true);
+    await page.getByLabel('Listenname').fill('Ausflug & Picknick');
+    await page.screenshot({
+        path: 'test-results/bring/create-list-mobile.png',
+        animations: 'disabled',
+    });
+    await submit.click();
+    await page.getByText('Liste „Ausflug & Picknick“ erstellt.').waitFor();
+    assert.equal(
+        await page
+            .getByRole('button', { name: 'Neue Liste', exact: true })
+            .evaluate((el) => el === document.activeElement),
+        true,
+    );
+    await page.getByText('Alles erledigt!', { exact: false }).waitFor();
+    assert.equal(await page.evaluate(() => window.bringTest.defaultListUuid), 'a');
+    await page.getByRole('combobox', { name: 'Artikel hinzufügen' }).fill('Servietten');
+    await page.getByRole('button', { name: 'Hinzufügen', exact: true }).click();
+    await page.getByRole('checkbox', { name: /Servietten/ }).waitFor();
+    await page.close();
+});
+
+test('failed list creation preserves the entered name', async () => {
+    const page = await pageFor('/?mode=shopping', 390);
+    await page.getByRole('button', { name: 'Neue Liste', exact: true }).click();
+    await page.evaluate(() => {
+        window.bringTest.failWrite = true;
+    });
+    await page.getByLabel('Listenname').fill('Ausflug');
+    await page.getByRole('button', { name: 'Liste erstellen', exact: true }).click();
+    await page.getByText(/Test: Erstellen fehlgeschlagen/).waitFor();
+    assert.equal(await page.getByLabel('Listenname').inputValue(), 'Ausflug');
     await page.close();
 });

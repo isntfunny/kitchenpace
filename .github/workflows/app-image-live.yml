@@ -68,6 +68,6 @@ jobs:
         steps:
             - name: Trigger Coolify redeploy
               run: |
-                  curl -fsSL -X GET \
+                  curl -fsSL -X POST \
                     "https://deploy.isntlab.de/api/v1/deploy?uuid=${{ env.COOLIFY_APP_UUID }}&force=false" \
                     -H "Authorization: Bearer ${{ secrets.DEPLOYMENT_KEY }}"

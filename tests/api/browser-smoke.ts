@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 
-/** Local-only browser smoke: npm run test:api:browser (requires isolated Next on :3109). */
+/** Local-only browser smoke: isolated Next on :3109, disposable DB, and moderation-stub.mjs on :3110. */
 import { chromium } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
@@ -89,6 +89,10 @@ try {
     await page.getByRole('heading', { name: 'API & Integrationen' }).waitFor();
     assert.equal(await page.getByRole('checkbox', { checked: true }).count(), 1);
     await page.getByLabel('Bring!-Listen und Artikel lesen', { exact: true }).check();
+    await page.getByLabel('Eigene Sammlungen lesen', { exact: true }).check();
+    await page
+        .getByLabel('Eigene Sammlungen verwalten (erstellen, bearbeiten, löschen)', { exact: true })
+        .check();
     await page.getByLabel('Name', { exact: true }).fill('Smoke integration');
     await page.getByLabel('Gültigkeit').selectOption('never');
     await page.getByRole('button', { name: 'Schlüssel erstellen', exact: true }).click();
@@ -112,6 +116,38 @@ try {
     });
     assert.equal(bring.status(), 409);
     assert.equal((await bring.json()).error.code, 'BRING_CONNECTION_REQUIRED');
+    // Requires a local moderation stub via OPENAI_BASE_URL, never live credentials.
+    const collectionResponse = await context.request.post('/api/v1/collections', {
+        headers: { 'x-api-key': key },
+        data: { title: `Private collection ${stamp}`, recipeIds: [draft.id] },
+    });
+    assert.equal(collectionResponse.status(), 201, await collectionResponse.text());
+    const collection = await collectionResponse.json();
+    const updatedCollection = await context.request.patch(`/api/v1/collections/${collection.id}`, {
+        headers: { 'x-api-key': key },
+        data: { title: `Updated private collection ${stamp}` },
+    });
+    assert.equal(updatedCollection.status(), 200, await updatedCollection.text());
+    assert.equal((await updatedCollection.json()).published, false);
+    const anonCollection = await browser.newContext({ baseURL: base });
+    try {
+        const hiddenCollection = await anonCollection.request.get(`/collection/${collection.slug}`);
+        assert.equal(hiddenCollection.status(), 404);
+        assert.equal(
+            (await hiddenCollection.text()).includes(`Updated private collection ${stamp}`),
+            false,
+        );
+    } finally {
+        await anonCollection.close();
+    }
+    assert.equal(
+        (
+            await context.request.delete(`/api/v1/collections/${collection.id}`, {
+                headers: { 'x-api-key': key },
+            })
+        ).status(),
+        204,
+    );
     await page.reload({ waitUntil: 'domcontentloaded' });
     assert.ok((await page.innerText('body')).includes('Läuft ab: Nie'));
     assert.equal((await page.innerText('body')).includes(key), false, 'secret redisplayed');
@@ -143,7 +179,7 @@ try {
     await page.screenshot({ path: '/tmp/kuc90-api-docs-dark.png', fullPage: false });
     assert.deepEqual(errors, []);
     console.log(
-        'PASS: private metadata, account create/reload/revoke, scoped real HTTP, Scalar light/dark, no browser exceptions',
+        'PASS: private metadata, account create/reload/revoke, collection HTTP CRUD/privacy, scoped HTTP, Scalar light/dark',
     );
 } finally {
     await browser.close();

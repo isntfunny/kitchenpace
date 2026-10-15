@@ -4,6 +4,7 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 
 import type { ApiPrincipal } from './auth';
 import { createBringApiServices, type BringGateway } from './bring';
+import { createCollectionApiServices, type CollectionDependencies } from './collections';
 import { ApiError } from './errors';
 import { createImportServices } from './imports';
 import type { PageQuery } from './schemas';
@@ -85,7 +86,11 @@ function flowSteps(value: Prisma.JsonValue) {
     });
 }
 
-export function createApiServices(db: PrismaClient, bringGateway?: BringGateway) {
+export function createApiServices(
+    db: PrismaClient,
+    bringGateway?: BringGateway,
+    collectionDeps?: CollectionDependencies,
+) {
     return {
         async recipes(p: ApiPrincipal, query: PageQuery) {
             const args = pageArgs(query);
@@ -266,6 +271,7 @@ export function createApiServices(db: PrismaClient, bringGateway?: BringGateway)
             });
         },
         ...createImportServices(db),
+        ...createCollectionApiServices(db, collectionDeps),
         ...createBringApiServices(db, bringGateway),
     };
 }

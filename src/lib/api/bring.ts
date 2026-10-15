@@ -10,6 +10,7 @@ import { ApiError } from './errors';
 import { accessibleRecipeWhere } from './services';
 
 export interface BringGateway {
+    removeItem(userId: string, listUuid: string, name: string): Promise<BringItems>;
     availableLists(userId: string): Promise<{ lists: BringList[]; defaultListUuid: string | null }>;
     readList(userId: string, listUuid: string): Promise<BringItems>;
     transfer(
@@ -21,6 +22,13 @@ export interface BringGateway {
     ): Promise<TransferOutcome[]>;
 }
 const productionGateway: BringGateway = {
+    removeItem: async (userId, listUuid, name) =>
+        (await import('../bring/service')).mutateItem(userId, {
+            listUuid,
+            name,
+            operation: 'remove',
+            specification: '',
+        }),
     availableLists: async (userId) => (await import('../bring/service')).availableLists(userId),
     readList: async (userId, listUuid) =>
         (await import('../bring/service')).readList(userId, listUuid),
@@ -42,6 +50,8 @@ async function bringCall<T>(work: () => Promise<T>): Promise<T> {
 }
 export function createBringApiServices(db: PrismaClient, gateway = productionGateway) {
     return {
+        bringRemoveItem: (p: ApiPrincipal, listUuid: string, name: string) =>
+            bringCall(() => gateway.removeItem(p.userId, listUuid, name)),
         bringLists: (p: ApiPrincipal) => bringCall(() => gateway.availableLists(p.userId)),
         bringList: (p: ApiPrincipal, listUuid: string) =>
             bringCall(() => gateway.readList(p.userId, listUuid)),

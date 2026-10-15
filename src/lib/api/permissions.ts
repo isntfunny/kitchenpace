@@ -4,6 +4,7 @@ export const SCOPES = [
     'recipes:read',
     'favorites:read',
     'collections:read',
+    'collections:write',
     'cooks:read',
     'favorites:write',
     'cooks:write',
@@ -16,12 +17,13 @@ export const SCOPE_LABELS: Record<Scope, string> = {
     'recipes:read': 'Rezepte lesen (einschließlich eigener Entwürfe)',
     'favorites:read': 'Favoriten lesen',
     'collections:read': 'Eigene Sammlungen lesen',
+    'collections:write': 'Eigene Sammlungen verwalten (erstellen, bearbeiten, löschen)',
     'cooks:read': 'Eigene Kochhistorie lesen',
     'favorites:write': 'Favoriten setzen und entfernen',
     'cooks:write': 'Als gekocht eintragen',
     'imports:create': 'KI-Importe erstellen und abrufen',
     'bring:read': 'Bring!-Listen und Artikel lesen',
-    'bring:write': 'Rezeptzutaten zu Bring!-Listen hinzufügen',
+    'bring:write': 'Bring!-Listen verwalten (Zutaten hinzufügen und Artikel entfernen)',
 };
 export const keyInputSchema = z
     .object({

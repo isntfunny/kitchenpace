@@ -8,11 +8,17 @@ import { HTTPException } from 'hono/http-exception';
 import type { ApiPrincipal } from './auth';
 import {
     bringParams,
+    bringDeleteQuery,
     bringListsSchema,
     bringListSchema,
     bringRecipeInput,
     bringTransferSchema,
 } from './bring-schemas';
+import {
+    collectionCreateInput,
+    collectionUpdateInput,
+    collectionDetailSchema,
+} from './collection-schemas';
 import { ApiError } from './errors';
 import type { Scope } from './permissions';
 import {
@@ -238,6 +244,105 @@ export function createApiApp({ services, authenticate }: ApiDependencies) {
                 200,
             ),
     );
+    app.openapi(
+        createRoute({
+            method: 'get',
+            path: '/collections/{id}',
+            summary: 'Eigene Sammlung abrufen',
+            description:
+                'collections:read. recipeIds enthält nur weiterhin zugängliche Rezepte in Sammlungsreihenfolge.',
+            tags: ['Sammlungen'],
+            security,
+            middleware: [access('collections:read')],
+            request: { params },
+            responses: { ...errors, 200: json(collectionDetailSchema, 'Sammlung') },
+        }),
+        async (c) =>
+            c.json(
+                collectionDetailSchema.parse(
+                    await services.collection(c.get('principal'), c.req.valid('param').id),
+                ),
+                200,
+            ),
+    );
+    app.openapi(
+        createRoute({
+            method: 'post',
+            path: '/collections',
+            summary: 'Private Sammlung erstellen',
+            description:
+                'collections:write umfasst Erstellen, Bearbeiten und Löschen. title, optionale description und bis zu 50 eindeutige recipeIds. Nur eigene oder öffentlich zugängliche Rezepte. Immer privat; Veröffentlichung erfolgt auf der Website.',
+            tags: ['Sammlungen'],
+            security,
+            middleware: [access('collections:write')],
+            request: {
+                body: {
+                    required: true,
+                    content: { 'application/json': { schema: collectionCreateInput } },
+                },
+            },
+            responses: { ...errors, 201: json(collectionDetailSchema, 'Private Sammlung') },
+        }),
+        async (c) =>
+            c.json(
+                collectionDetailSchema.parse(
+                    await services.createCollection(c.get('principal'), c.req.valid('json')),
+                ),
+                201,
+            ),
+    );
+    app.openapi(
+        createRoute({
+            method: 'patch',
+            path: '/collections/{id}',
+            summary: 'Eigene Sammlung bearbeiten',
+            description:
+                'collections:write. Nur angegebene Felder ändern. description: null leert die Beschreibung. recipeIds ersetzt den gesamten Sammlungsinhalt durch Rezeptkarten; [] leert ihn. Ohne recipeIds bleiben Editor-Inhalte erhalten. Änderungen setzen auch veröffentlichte Sammlungen auf privat. 409 COLLECTION_CHANGED bei gleichzeitiger Änderung; neu lesen und abgleichen.',
+            tags: ['Sammlungen'],
+            security,
+            middleware: [access('collections:write')],
+            request: {
+                params,
+                body: {
+                    required: true,
+                    content: { 'application/json': { schema: collectionUpdateInput } },
+                },
+            },
+            responses: {
+                ...errors,
+                200: json(collectionDetailSchema, 'Aktualisierte private Sammlung'),
+            },
+        }),
+        async (c) =>
+            c.json(
+                collectionDetailSchema.parse(
+                    await services.updateCollection(
+                        c.get('principal'),
+                        c.req.valid('param').id,
+                        c.req.valid('json'),
+                    ),
+                ),
+                200,
+            ),
+    );
+    app.openapi(
+        createRoute({
+            method: 'delete',
+            path: '/collections/{id}',
+            summary: 'Eigene Sammlung löschen',
+            description:
+                'collections:write. Löscht die eigene Sammlung samt Zuordnungen; die Rezepte bleiben erhalten.',
+            tags: ['Sammlungen'],
+            security,
+            middleware: [access('collections:write')],
+            request: { params },
+            responses: { ...errors, 204: { description: 'Sammlung gelöscht' } },
+        }),
+        async (c) => {
+            await services.deleteCollection(c.get('principal'), c.req.valid('param').id);
+            return c.body(null, 204);
+        },
+    );
     const cooksPage = pageOf(cookSchema);
     app.openapi(
         createRoute({
@@ -392,6 +497,31 @@ export function createApiApp({ services, authenticate }: ApiDependencies) {
                         c.req.valid('param').id,
                         c.get('requestId'),
                         c.req.valid('json'),
+                    ),
+                ),
+                200,
+            ),
+    );
+    app.openapi(
+        createRoute({
+            method: 'delete',
+            path: '/bring/lists/{id}/items',
+            summary: 'Bring!-Artikel entfernen',
+            description:
+                'bring:write. name muss die exakte Bring!-Identität aus GET /bring/lists/{id} sein, nicht displayName oder eine Zutaten-ID. Query-Parameter URL-kodieren. Entfernt den Artikel aus offenen oder zuletzt gekauften Artikeln. 200 liefert den aktualisierten Listeninhalt; 409 BRING_CONFLICT, wenn der Artikel bereits fehlt.',
+            tags: ['Bring!'],
+            security,
+            middleware: [access('bring:write')],
+            request: { params: bringParams, query: bringDeleteQuery },
+            responses: { ...errors, 200: json(bringListSchema, 'Aktualisierter Listeninhalt') },
+        }),
+        async (c) =>
+            c.json(
+                bringListSchema.parse(
+                    await services.bringRemoveItem(
+                        c.get('principal'),
+                        c.req.valid('param').id,
+                        c.req.valid('query').name,
                     ),
                 ),
                 200,

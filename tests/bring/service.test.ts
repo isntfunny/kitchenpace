@@ -100,7 +100,11 @@ globalThis.fetch = async (url, init) => {
     if (init?.method === 'PUT') {
         writeCount++;
         const body = new URLSearchParams(init.body as URLSearchParams);
-        remote.push({ name: body.get('purchase')!, specification: body.get('specification')! });
+        if (body.get('remove')) {
+            remote = remote.filter((item) => item.name !== body.get('remove'));
+        } else {
+            remote.push({ name: body.get('purchase')!, specification: body.get('specification')! });
+        }
         return new Response(null, { status: 204 });
     }
     return Response.json({ purchase: remote, recently: [] });
@@ -171,6 +175,34 @@ test('API receipts reject a different recipe request even when expanded ingredie
     assert.equal(writeCount, 1, 'completed API retry must not add again');
     await assert.rejects(
         service.transfer('owner', 'api-recipe:request-1', 'mine', items, { recipeId: 'two' }),
+    );
+    assert.equal(writeCount, 1);
+});
+
+test('removing an item checks ownership and uses the exact Bring identity', async () => {
+    remote = [
+        { name: 'Salz & Pfeffer / mild', specification: '1 Packung' },
+        { name: 'Milch', specification: '1 L' },
+    ];
+    writeCount = 0;
+    const input = {
+        listUuid: 'mine',
+        operation: 'remove',
+        name: 'Salz & Pfeffer / mild',
+        specification: '',
+    };
+    await assert.rejects(service.mutateItem('stranger', input));
+    await assert.rejects(service.mutateItem('owner', { ...input, listUuid: 'foreign' }));
+    assert.equal(writeCount, 0);
+    const result = await service.mutateItem('owner', input);
+    assert.deepEqual(
+        result.purchase.map((item: { name: string }) => item.name),
+        ['Milch'],
+    );
+    assert.equal(writeCount, 1);
+    await assert.rejects(
+        service.mutateItem('owner', input),
+        (error: { code?: string }) => error.code === 'CONFLICT',
     );
     assert.equal(writeCount, 1);
 });

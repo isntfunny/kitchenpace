@@ -222,3 +222,29 @@ test('restored occurrences cannot silently remain unrelated to the repaired flow
         /unused|unreferenced|mapping/i,
     );
 });
+
+test('repair is idempotent when newly annotated prose has a different order than existing mentions', () => {
+    const water = {
+        ...fixture.ingredients[0],
+        id: 'water-use',
+        ingredientId: 'water-catalogue',
+        name: 'Wasser',
+        amount: '250',
+    };
+    const input = {
+        ...fixture,
+        ingredients: [...fixture.ingredients, water],
+        flowNodes: [
+            {
+                id: 's',
+                description: 'Wasser mit @[Milch](imported_4) mischen.',
+                ingredientIds: ['water-source', 'imported_4'],
+            },
+        ],
+    };
+    const first = planRecipeRepair(input, {
+        sourceIds: { 'water-source': 'water-use', imported_4: 'milk' },
+    });
+    assert.equal(planRecipeRepair(first.after).changed, false);
+    assert.deepEqual(first.after.flowNodes[0].ingredientIds, ['water-use', 'milk']);
+});

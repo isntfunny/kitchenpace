@@ -6,7 +6,8 @@ export function personalApiKeyPlugin() {
         enableSessionForAPIKeys: false,
         rateLimit: { enabled: true, timeWindow: 60_000, maxRequests: 60 },
         permissions: { defaultPermissions: { recipes: ['read'] } },
-        keyExpiration: { defaultExpiresIn: 90 * 86400, minExpiresIn: 1, maxExpiresIn: 365 },
+        // The account manager supplies 90 days by default; null explicitly means no expiry.
+        keyExpiration: { defaultExpiresIn: null, minExpiresIn: 1, maxExpiresIn: 365 },
     });
 }
 

@@ -58,7 +58,7 @@
         "emails:validate": "node email-templates/validate.mjs",
         "test:api:browser": "tsx tests/api/browser-smoke.ts",
         "test:api": "tsx --test tests/api/policy.test.ts",
-        "test:api:integration": "tsx --test tests/api/integration.test.ts tests/api/processor.test.ts tests/api/bring.test.ts"
+        "test:api:integration": "tsx --test tests/api/integration.test.ts tests/api/processor.test.ts tests/api/bring.test.ts tests/api/collections.test.ts tests/api/collection-action-privacy.test.ts"
     },
     "prisma": {
         "seed": "tsx cli/index.ts seed"

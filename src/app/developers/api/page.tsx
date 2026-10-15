@@ -239,7 +239,8 @@ export default function ApiDocsPage() {
                         <p>
                             Zusätzliche Lese- und Schreibrechte wählst du beim Erstellen des
                             Schlüssels. Deine Zugangsdaten und die Veröffentlichung von Rezepten
-                            bleiben in der Website.
+                            bleiben in der Website. Für Sammlungen gibt es nur Lesen und Verwalten;
+                            Verwalten umfasst Erstellen, Bearbeiten und Löschen.
                         </p>
                         <dl className={css({ mt: '3', display: 'grid', gap: '2' })}>
                             {SCOPES.map((scope) => (
@@ -299,6 +300,41 @@ export default function ApiDocsPage() {
                             Bestehende Artikel bleiben unverändert. Prüfe pro Zutat{' '}
                             <code>added</code>, <code>existing</code> oder <code>failed</code>. Nach
                             einem Teilerfolg nur fehlgeschlagene Zutaten erneut übertragen.
+                        </p>
+                        <p>
+                            <code>DELETE /api/v1/bring/lists/&#123;id&#125;/items?name=Tomate</code>{' '}
+                            entfernt einen Artikel mit dem Recht <code>bring:write</code>. Verwende
+                            den exakten <code>name</code> aus der Listenantwort und kodiere ihn als
+                            URL-Parameter, nicht den <code>displayName</code>. Die Antwort enthält
+                            den aktualisierten Listeninhalt. Fehlt der Artikel bereits, erhältst du{' '}
+                            <code>409 BRING_CONFLICT</code>.
+                        </p>
+                    </ApiGuide>
+                    <ApiGuide
+                        title="Sammlungen"
+                        hint="Eigene Rezeptsammlungen lesen und verwalten"
+                        icon={<BookOpen size={19} aria-hidden="true" />}
+                    >
+                        <p>
+                            <code>GET /api/v1/collections</code> listet deine Sammlungen.{' '}
+                            <code>GET /api/v1/collections/&#123;id&#125;</code> liefert Details und
+                            Rezept-IDs; <code>/recipes</code> die Rezeptdaten.
+                        </p>
+                        <p>
+                            <code>POST /api/v1/collections</code> erstellt eine private Sammlung mit{' '}
+                            <code>title</code>, optionaler <code>description</code> und bis zu 50{' '}
+                            <code>recipeIds</code>.
+                        </p>
+                        <p>
+                            <code>PATCH /api/v1/collections/&#123;id&#125;</code> ändert angegebene
+                            Felder. Eine übergebene Rezeptliste ersetzt den gesamten Inhalt; ohne
+                            sie bleibt der Editor-Inhalt erhalten. Änderungen setzen die Sammlung
+                            auf privat, auch wenn sie zuvor veröffentlicht war.
+                        </p>
+                        <p>
+                            <code>DELETE /api/v1/collections/&#123;id&#125;</code> löscht nur die
+                            Sammlung, nicht ihre Rezepte. Alle drei Schreibaktionen brauchen das
+                            gemeinsame Recht <code>collections:write</code>.
                         </p>
                     </ApiGuide>
                     <ApiGuide

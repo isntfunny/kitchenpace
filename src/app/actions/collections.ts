@@ -281,9 +281,12 @@ export async function trackCollectionView(collectionId: string): Promise<void> {
 
 export async function fetchCollectionBySlug(
     slug: string,
-    viewerId?: string | null,
+    _viewerId?: string | null,
     includeDrafts = false,
 ): Promise<CollectionDetail | null> {
+    const session = await getServerAuthSession('collection-query');
+    const viewerId = session?.user?.id ?? null;
+    if (includeDrafts && !viewerId) return null;
     const where: Prisma.CollectionWhereInput = {
         OR: [{ slug }, { id: slug }],
     };
@@ -291,6 +294,8 @@ export async function fetchCollectionBySlug(
     if (!includeDrafts) {
         where.published = true;
         where.moderationStatus = { in: ['AUTO_APPROVED', 'APPROVED'] };
+    } else if (session?.user?.role !== 'admin' && session?.user?.role !== 'moderator') {
+        where.authorId = viewerId!;
     }
 
     const collection = await prisma.collection.findFirst({
@@ -366,6 +371,8 @@ export async function fetchNewestCollections(limit = 8) {
 }
 
 export async function fetchUserCollections(userId: string): Promise<CollectionCardData[]> {
+    const session = await getServerAuthSession('my-collection-query');
+    if (!session?.user?.id || session.user.id !== userId) return [];
     const collections = await prisma.collection.findMany({
         where: { authorId: userId },
         orderBy: { updatedAt: 'desc' },

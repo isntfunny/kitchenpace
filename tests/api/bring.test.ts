@@ -40,7 +40,14 @@ const transfers: {
     items: TransferItem[];
     context: unknown;
 }[] = [];
+const removals: { user: string; list: string; name: string }[] = [];
 const gateway = {
+    async removeItem(user: string, list: string, name: string) {
+        if (upstreamError) throw upstreamError;
+        if (list !== 'mine') throw new BringError('FORBIDDEN', 'private upstream detail');
+        removals.push({ user, list, name });
+        return { purchase: [], recently: [] };
+    },
     async availableLists(user: string) {
         assert.equal(user, owner);
         if (upstreamError) throw upstreamError;
@@ -227,4 +234,41 @@ test('ordinary recipe keys cannot read Bring data and public recipes can be tran
     assert.equal((await send({ recipeId: recipe })).status, 200);
     await db.recipe.update({ where: { id: recipe }, data: { moderationStatus: 'PENDING' } });
     assert.equal((await send({ recipeId: recipe })).status, 404);
+});
+
+test('Bring item deletion requires write scope, validates input and preserves canonical names', async () => {
+    const path = '/bring/lists/mine/items?name=' + encodeURIComponent('Salz & Pfeffer / mild');
+    assert.equal((await app.request('/api/v1' + path, { method: 'DELETE' })).status, 401);
+    assert.equal(
+        (await call(path, { method: 'DELETE', headers: { 'x-api-key': readKey } })).status,
+        403,
+    );
+    for (const query of ['', '?name=', '?name=%20', '?name=' + 'x'.repeat(201)]) {
+        assert.equal(
+            (await call('/bring/lists/mine/items' + query, { method: 'DELETE' })).status,
+            400,
+        );
+    }
+    const response = await call(path, { method: 'DELETE' });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { purchase: [], recently: [] });
+    assert.deepEqual(removals.at(-1), { user: owner, list: 'mine', name: 'Salz & Pfeffer / mild' });
+    assert.equal(
+        (await call('/bring/lists/foreign/items?name=Tomate', { method: 'DELETE' })).status,
+        404,
+    );
+    upstreamError = new BringError('CONFLICT', 'private upstream detail');
+    const conflict = await call(path, { method: 'DELETE' });
+    assert.equal(conflict.status, 409);
+    assert.equal((await conflict.json()).error.code, 'BRING_CONFLICT');
+    upstreamError = undefined;
+    const spec = await (await app.request('/api/v1/openapi.json')).json();
+    const operation = spec.paths['/api/v1/bring/lists/{id}/items'].delete;
+    assert.deepEqual(operation.security, [{ ApiKey: [] }]);
+    assert.ok(
+        operation.parameters.some(
+            (p: { name: string; in: string; required: boolean }) =>
+                p.name === 'name' && p.in === 'query' && p.required,
+        ),
+    );
 });

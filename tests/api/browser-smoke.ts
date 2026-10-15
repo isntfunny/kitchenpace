@@ -90,6 +90,7 @@ try {
     assert.equal(await page.getByRole('checkbox', { checked: true }).count(), 1);
     await page.getByLabel('Bring!-Listen und Artikel lesen', { exact: true }).check();
     await page.getByLabel('Name', { exact: true }).fill('Smoke integration');
+    await page.getByLabel('Gültigkeit').selectOption('never');
     await page.getByRole('button', { name: 'Schlüssel erstellen', exact: true }).click();
     const secret = page
         .locator('code')
@@ -112,6 +113,7 @@ try {
     assert.equal(bring.status(), 409);
     assert.equal((await bring.json()).error.code, 'BRING_CONNECTION_REQUIRED');
     await page.reload({ waitUntil: 'domcontentloaded' });
+    assert.ok((await page.innerText('body')).includes('Läuft ab: Nie'));
     assert.equal((await page.innerText('body')).includes(key), false, 'secret redisplayed');
     await page.getByRole('button', { name: 'Widerrufen', exact: true }).click();
     await page.getByRole('button', { name: 'Jetzt widerrufen' }).click();

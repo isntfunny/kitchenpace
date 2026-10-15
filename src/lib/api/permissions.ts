@@ -26,7 +26,10 @@ export const SCOPE_LABELS: Record<Scope, string> = {
 export const keyInputSchema = z
     .object({
         name: z.string().trim().min(1).max(60),
-        days: z.union([z.literal(30), z.literal(90), z.literal(365)]).default(90),
+        days: z
+            .union([z.literal(30), z.literal(90), z.literal(365)])
+            .nullable()
+            .default(90),
         scopes: z.array(z.enum(SCOPES)).min(1).max(SCOPES.length).default(['recipes:read']),
     })
     .strict();

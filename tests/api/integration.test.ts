@@ -250,3 +250,17 @@ test('malformed JSON is a client error, not an internal error', async () => {
     });
     assert.equal(response.status, 400);
 });
+
+test('managed keys support no expiry, keep the default lifetime and can be revoked', async () => {
+    const manager = createKeyManager(db, auth.api.createApiKey);
+    const permanent = await manager.create(alice, { name: 'Permanent integration', days: null });
+    const stored = await db.apikey.findUniqueOrThrow({ where: { id: permanent.id } });
+    assert.equal(stored.expiresAt, null);
+    assert.equal((await call('/recipes', { headers: { 'x-api-key': permanent.key } })).status, 200);
+    const defaultKey = await manager.create(alice, { name: 'Default lifetime' });
+    const timed = await db.apikey.findUniqueOrThrow({ where: { id: defaultKey.id } });
+    assert.ok(timed.expiresAt);
+    assert.ok(Math.abs(timed.expiresAt.getTime() - Date.now() - 90 * 86400000) < 10000);
+    await manager.revoke(alice, permanent.id);
+    assert.equal((await call('/recipes', { headers: { 'x-api-key': permanent.key } })).status, 401);
+});

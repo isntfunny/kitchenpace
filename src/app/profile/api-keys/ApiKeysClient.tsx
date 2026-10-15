@@ -33,7 +33,7 @@ const formatDate = (value: Date | null) =>
 export function ApiKeysClient({ initialKeys }: { initialKeys: Keys }) {
     const [keys, setKeys] = useState(initialKeys);
     const [name, setName] = useState('');
-    const [days, setDays] = useState(90);
+    const [days, setDays] = useState<number | null>(90);
     const [scopes, setScopes] = useState<Scope[]>(['recipes:read']);
     const [secret, setSecret] = useState<string | null>(null);
     const [message, setMessage] = useState('');
@@ -124,12 +124,15 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: Keys }) {
                         Gültigkeit
                         <select
                             className={inputStyle}
-                            value={days}
-                            onChange={(e) => setDays(Number(e.target.value))}
+                            value={days ?? 'never'}
+                            onChange={(e) =>
+                                setDays(e.target.value === 'never' ? null : Number(e.target.value))
+                            }
                         >
                             <option value={30}>30 Tage</option>
                             <option value={90}>90 Tage</option>
                             <option value={365}>1 Jahr</option>
+                            <option value="never">Nie ablaufen</option>
                         </select>
                     </label>
                     <fieldset className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
@@ -183,7 +186,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: Keys }) {
                         <code>{key.start}…</code>
                         <p>
                             Erstellt: {formatDate(key.createdAt)} · Läuft ab:{' '}
-                            {formatDate(key.expiresAt)} · Zuletzt genutzt:{' '}
+                            {key.expiresAt ? formatDate(key.expiresAt) : 'Nie'} · Zuletzt genutzt:{' '}
                             {formatDate(key.lastRequest)}
                         </p>
                         <p className={css({ fontSize: 'sm' })}>

@@ -22,7 +22,7 @@ export function createKeyManager(db: PrismaClient, create: typeof auth.api.creat
                 body: {
                     userId,
                     name: data.name,
-                    expiresIn: data.days * 86400,
+                    expiresIn: data.days === null ? null : data.days * 86400,
                     permissions: permissionsForScopes(data.scopes),
                 },
             });

@@ -14,7 +14,7 @@ import { BringError } from '../../src/lib/bring/client';
 import type { TransferItem } from '../../src/lib/bring/types';
 
 const url = process.env.API_TEST_DATABASE_URL;
-if (!url?.includes('127.0.0.1:55490/kuc90')) throw new Error('Disposable API database required');
+if (!url?.includes('127.0.0.1:55492/kuc90')) throw new Error('Disposable API database required');
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 const auth = betterAuth({
     secret: 'kuc90-bring-test-secret-at-least-32-characters',
@@ -29,6 +29,7 @@ let owner = '',
     foreign = '',
     ingredient = '',
     unit = '';
+let occurrence = '';
 let key = '',
     readKey = '';
 let upstreamError: BringError | undefined;
@@ -122,6 +123,7 @@ before(async () => {
             },
         })
     ).id;
+    occurrence = (await db.recipeIngredient.findFirstOrThrow({ where: { recipeId: recipe } })).id;
     foreign = (
         await db.recipe.create({
             data: { authorId: stranger, title: 'Secret', slug: `bring-${stranger}` },
@@ -168,14 +170,14 @@ test('Bring recipe transfer scales stored ingredients and requires explicit writ
     const response = await send({ recipeId: recipe, servings: 4, ingredientIds: [ingredient] });
     assert.equal(response.status, 200);
     assert.deepEqual((await response.json()).items, [
-        { id: ingredient, name: 'Mehl', status: 'added' },
+        { id: occurrence, name: 'Mehl', status: 'added' },
     ]);
     assert.match(transfers.at(-1)!.token, /^api-recipe:[0-9a-f-]{36}$/);
     assert.deepEqual(transfers.at(-1), {
         user: owner,
         token: transfers.at(-1)!.token,
         list: 'mine',
-        items: [{ id: ingredient, name: 'Mehl', specification: `1 g-${owner} gesiebt` }],
+        items: [{ id: occurrence, name: 'Mehl', specification: `1 g-${owner} gesiebt` }],
         context: { recipeId: recipe, servings: 4, ingredientIds: [ingredient] },
     });
 });
@@ -215,7 +217,7 @@ test('Bring defaults to recipe portions and preserves partial outcomes for calle
     const response = await send({ recipeId: recipe });
     assert.equal(response.status, 200);
     assert.deepEqual((await response.json()).items, [
-        { id: ingredient, name: 'Mehl', status: 'failed' },
+        { id: occurrence, name: 'Mehl', status: 'failed' },
     ]);
     assert.equal(transfers.at(-1)?.items[0].specification, `0,5 g-${owner} gesiebt`);
     transferStatus = 'added';
@@ -271,4 +273,41 @@ test('Bring item deletion requires write scope, validates input and preserves ca
                 p.name === 'name' && p.in === 'query' && p.required,
         ),
     );
+});
+
+test('distinct recipe occurrences are exposed and can be transferred independently', async () => {
+    await db.recipe.update({ where: { id: recipe }, data: { authorId: owner, status: 'DRAFT' } });
+    const first = await db.recipeIngredient.findFirstOrThrow({ where: { recipeId: recipe } });
+    const second = await db.recipeIngredient.create({
+        data: {
+            recipeId: recipe,
+            ingredientId: ingredient,
+            unitId: unit,
+            amount: '',
+            notes: 'für die Creme',
+            position: 1,
+        },
+    });
+    try {
+        const reader = createApiServices(db, gateway);
+        const dto = await reader.recipe({ userId: owner } as any, recipe);
+        assert.equal(dto.ingredients.length, 2);
+        assert.deepEqual(
+            dto.ingredients.map((i: any) => i.recipeIngredientId),
+            [first.id, second.id],
+        );
+        assert.ok(dto.ingredients.every((i: any) => i.id === ingredient));
+        assert.equal(
+            (await send({ recipeId: recipe, servings: 4, ingredientIds: [second.id] })).status,
+            200,
+        );
+        assert.deepEqual(transfers.at(-1)!.items, [
+            { id: second.id, name: 'Mehl', specification: `g-${owner} für die Creme` },
+        ]);
+        assert.equal((await send({ recipeId: recipe, ingredientIds: [ingredient] })).status, 200);
+        assert.equal(transfers.at(-1)!.items.length, 2);
+        assert.equal(new Set(transfers.at(-1)!.items.map((i) => i.id)).size, 2);
+    } finally {
+        await db.recipeIngredient.delete({ where: { id: second.id } });
+    }
 });

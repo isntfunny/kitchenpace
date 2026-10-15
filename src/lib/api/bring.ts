@@ -68,6 +68,7 @@ export function createBringApiServices(db: PrismaClient, gateway = productionGat
                     recipeIngredients: {
                         orderBy: [{ position: 'asc' }, { ingredientId: 'asc' }],
                         select: {
+                            id: true,
                             ingredientId: true,
                             amount: true,
                             notes: true,
@@ -82,18 +83,21 @@ export function createBringApiServices(db: PrismaClient, gateway = productionGat
             if (
                 selection &&
                 [...selection].some(
-                    (id) => !recipe.recipeIngredients.some((item) => item.ingredientId === id),
+                    (id) =>
+                        !recipe.recipeIngredients.some(
+                            (item) => item.id === id || item.ingredientId === id,
+                        ),
                 )
             )
                 throw new ApiError(400, 'INVALID_INGREDIENT_SELECTION');
             const selected = recipe.recipeIngredients.filter(
-                (item) => !selection || selection.has(item.ingredientId),
+                (item) => !selection || selection.has(item.id) || selection.has(item.ingredientId),
             );
             if (!selected.length || selected.length > 50)
                 throw new ApiError(400, 'INVALID_INGREDIENT_SELECTION');
             const factor = (input.servings ?? recipe.servings) / Math.max(1, recipe.servings);
             const items = selected.map((item) => ({
-                id: item.ingredientId,
+                id: item.id,
                 name: item.ingredient.name,
                 specification: [scaleQuantity(item.amount, factor), item.unit.shortName, item.notes]
                     .filter(Boolean)

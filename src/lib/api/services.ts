@@ -118,6 +118,7 @@ export function createApiServices(
                     recipeIngredients: {
                         orderBy: { position: 'asc' },
                         select: {
+                            id: true,
                             ingredientId: true,
                             ingredient: { select: { name: true } },
                             amount: true,
@@ -148,6 +149,7 @@ export function createApiServices(
                     : [],
                 ingredients: recipeIngredients.map((i) => ({
                     id: i.ingredientId,
+                    recipeIngredientId: i.id,
                     name: i.ingredient.name,
                     amount: i.amount,
                     unit: i.unit.shortName,

@@ -6,7 +6,7 @@ import { PrismaClient } from '@prisma/client';
 
 import { createImportProcessor } from '../../src/lib/api/import-processor';
 const url = process.env.API_TEST_DATABASE_URL;
-if (!url?.includes('127.0.0.1:55490/kuc90')) throw new Error('Disposable test DB required');
+if (!url?.includes('127.0.0.1:55492/kuc90')) throw new Error('Disposable test DB required');
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 let userId = '';
 let keyId = '';

@@ -18,7 +18,7 @@ const CAST_APP_ID = process.env.NEXT_PUBLIC_CAST_APP_ID ?? 'CC1AD845';
 /** Namespace for custom messages between sender and receiver. */
 export const CAST_NAMESPACE = 'urn:x-cast:de.kochtakt.recipe';
 
-export type CastMessage = { type: 'LOAD_RECIPE'; slug: string };
+export type CastMessage = { type: 'LOAD_RECIPE'; slug: string; servings?: number };
 
 export type CastState = 'unavailable' | 'available' | 'connecting' | 'connected';
 

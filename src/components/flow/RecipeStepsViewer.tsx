@@ -12,6 +12,7 @@ import { useCast } from '@app/hooks/useCast';
 import { css } from 'styled-system/css';
 
 import { CompletionBanner } from './viewer/CompletionBanner';
+import { IngredientPortionsProvider } from './viewer/IngredientPortionsContext';
 import { MobileView } from './viewer/MobileView';
 import { NodeDetailModal } from './viewer/NodeDetailModal';
 import { SimpleTextView } from './viewer/SimpleTextView';
@@ -87,6 +88,8 @@ export function RecipeStepsViewer({
     nodes,
     edges,
     ingredients,
+    servings,
+    originalServings,
     recipeSlug,
     initialProgress,
     isAuthenticated,
@@ -146,7 +149,7 @@ export function RecipeStepsViewer({
         // load race condition on the receiver (Cast SDK loads dynamically, so
         // the receiver's message listener may not be registered when the first
         // message arrives right after SESSION_STARTED).
-        const msg = { type: 'LOAD_RECIPE' as const, slug: recipeSlug };
+        const msg = { type: 'LOAD_RECIPE' as const, slug: recipeSlug, servings };
         sendMessage(msg);
         const t1 = setTimeout(() => sendMessage(msg), 1500);
         const t2 = setTimeout(() => sendMessage(msg), 4000);
@@ -156,7 +159,7 @@ export function RecipeStepsViewer({
             clearTimeout(t2);
             clearTimeout(t3);
         };
-    }, [castState, recipeSlug, sendMessage]);
+    }, [castState, recipeSlug, servings, sendMessage]);
     // ─────────────────────────────────────────────────────────────────────
 
     // Lock body scroll when overlay is open
@@ -330,7 +333,7 @@ export function RecipeStepsViewer({
     const selectedNode = selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) : null;
 
     return (
-        <>
+        <IngredientPortionsProvider servings={servings} originalServings={originalServings}>
             {/* On mobile: show action buttons instead of desktop flow (unless embedded) */}
             {isMobileDevice && !embedded ? (
                 <div
@@ -756,6 +759,6 @@ export function RecipeStepsViewer({
                     />,
                     document.body,
                 )}
-        </>
+        </IngredientPortionsProvider>
     );
 }

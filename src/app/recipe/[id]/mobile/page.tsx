@@ -5,6 +5,7 @@ import { cache } from 'react';
 import { fetchRecipeBySlug } from '@app/app/actions/recipes';
 import { isAdmin } from '@app/lib/admin/check-admin';
 import { getServerAuthSession } from '@app/lib/auth';
+import { servingCount } from '@app/lib/cast-recipe';
 import { APP_URL } from '@app/lib/url';
 
 import { MobileRecipeClient } from './MobileRecipeClient';
@@ -15,6 +16,7 @@ type MobileRecipePageParams = {
 
 type MobileRecipePageProps = {
     params: MobileRecipePageParams | Promise<MobileRecipePageParams>;
+    searchParams?: Promise<{ servings?: string | string[] }>;
 };
 
 export const revalidate = 60;
@@ -36,7 +38,7 @@ export async function generateMetadata({ params }: MobileRecipePageProps): Promi
     };
 }
 
-export default async function MobileRecipePage({ params }: MobileRecipePageProps) {
+export default async function MobileRecipePage({ params, searchParams }: MobileRecipePageProps) {
     const resolvedParams = await params;
     const session = await getServerAuthSession('recipe-mobile-page');
     const viewerId = session?.user?.id;
@@ -60,5 +62,11 @@ export default async function MobileRecipePage({ params }: MobileRecipePageProps
         notFound();
     }
 
-    return <MobileRecipeClient recipe={recipe as any} />;
+    const requested = (await searchParams)?.servings;
+    return (
+        <MobileRecipeClient
+            recipe={recipe as any}
+            initialServings={servingCount(requested, recipe.servings)}
+        />
+    );
 }

@@ -7,6 +7,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 
 import { AddToListButton } from '@app/components/bring/AddToListButton';
 import { ingredientDisplayName, parseAmount } from '@app/lib/ingredient-display';
+import { scaleQuantity, portionFactor } from '@app/lib/ingredients/quantities';
 
 import { css } from 'styled-system/css';
 import { flex } from 'styled-system/patterns';
@@ -38,7 +39,6 @@ interface IngredientListProps {
     fatPerServing?: number | null;
     carbsPerServing?: number | null;
     nutritionCompleteness?: number | null;
-    formatAmount: (amount: number) => string;
 }
 
 export function IngredientList({
@@ -51,9 +51,8 @@ export function IngredientList({
     fatPerServing,
     carbsPerServing,
     nutritionCompleteness,
-    formatAmount,
 }: IngredientListProps) {
-    const scale = servings / originalServings;
+    const scale = portionFactor(servings, originalServings);
     const hasNutrition = calories != null && calories > 0;
     const [isCalculationOpen, setIsCalculationOpen] = useState(false);
 
@@ -297,7 +296,11 @@ export function IngredientList({
                                     whiteSpace: 'nowrap',
                                 })}
                             >
-                                {formatAmount(ingredient.amount)} {ingredient.unit}
+                                {scaleQuantity(
+                                    ingredient.rawAmount ?? String(ingredient.amount),
+                                    scale,
+                                )}{' '}
+                                {ingredient.unit}
                             </span>
                         </div>
                         {index < ingredients.length - 1 && (
@@ -528,12 +531,12 @@ export function IngredientList({
                                                     </TableCell>
                                                     <TableCell>
                                                         {row.scaledAmount != null
-                                                            ? `${formatAmount(row.scaledAmount)} ${row.ingredient.unit}`
+                                                            ? `${scaleQuantity(String(row.scaledAmount), 1)} ${row.ingredient.unit}`
                                                             : '-'}
                                                     </TableCell>
                                                     <TableCell>
                                                         {row.gramsAmount != null
-                                                            ? `${formatAmount(row.gramsAmount)} g`
+                                                            ? `${scaleQuantity(String(row.gramsAmount), 1)} g`
                                                             : '-'}
                                                     </TableCell>
                                                     <TableCell>

@@ -3,9 +3,13 @@
 import { X } from 'lucide-react';
 import { Popover } from 'radix-ui';
 
+import { scaleQuantity, scaleMentionOverride } from '@app/lib/ingredients/quantities';
+
 import { css } from 'styled-system/css';
 
 import type { IngredientRef } from '../editor/editorTypes';
+
+import { useIngredientPortionFactor } from './IngredientPortionsContext';
 
 export function IngredientMention({
     name,
@@ -16,10 +20,11 @@ export function IngredientMention({
     override?: string;
     ingredient?: IngredientRef;
 }) {
+    const factor = useIngredientPortionFactor();
     const recipeAmount = ingredient?.amount?.trim()
-        ? [ingredient.amount, ingredient.unit].filter(Boolean).join(' ')
+        ? [scaleQuantity(ingredient.amount, factor), ingredient.unit].filter(Boolean).join(' ')
         : '';
-    const amount = override || recipeAmount;
+    const amount = override ? scaleMentionOverride(override, factor) : recipeAmount;
     const label = (
         <>
             {name}
@@ -100,7 +105,7 @@ export function IngredientMention({
                         </Popover.Close>
                     </div>
                     <div>{amount || 'Menge nach Bedarf'}</div>
-                    {override && recipeAmount && override !== recipeAmount && (
+                    {override && recipeAmount && amount !== recipeAmount && (
                         <div className={css({ color: 'text.muted', fontSize: 'sm', mt: '1' })}>
                             Im Rezept: {recipeAmount}
                         </div>

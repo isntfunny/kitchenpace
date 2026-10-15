@@ -219,7 +219,7 @@ test('Bring defaults to recipe portions and preserves partial outcomes for calle
     assert.deepEqual((await response.json()).items, [
         { id: occurrence, name: 'Mehl', status: 'failed' },
     ]);
-    assert.equal(transfers.at(-1)?.items[0].specification, `0,5 g-${owner} gesiebt`);
+    assert.equal(transfers.at(-1)?.items[0].specification, `1/2 g-${owner} gesiebt`);
     transferStatus = 'added';
 });
 

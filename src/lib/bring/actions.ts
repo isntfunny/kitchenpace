@@ -105,3 +105,12 @@ export async function transferToBring(input: unknown) {
         return service.transfer(userId, parsed.operationId, parsed.listUuid, parsed.items);
     });
 }
+
+export async function createBringList(input: unknown) {
+    return run((userId) => {
+        const parsed = z
+            .object({ operationId: z.uuid(), name: z.string().trim().min(1).max(100) })
+            .parse(input);
+        return service.createList(userId, parsed.operationId, parsed.name);
+    });
+}

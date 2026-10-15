@@ -29,7 +29,7 @@ const bundle = await build({
                         : path.endsWith('/rate-limit')
                           ? 'export async function checkRateLimit() { return {allowed:globalThis.__bringActionBoundary.allowed}; }'
                           : `export async function connectionStatus(userId) { globalThis.__bringActionBoundary.userId = userId; return {connected:false,defaultListUuid:null}; }
-             export const previewConnection=connectionStatus,connectAccount=connectionStatus,disconnectAccount=connectionStatus,availableLists=connectionStatus,chooseDefault=connectionStatus,readList=connectionStatus,mutateItem=connectionStatus,transfer=connectionStatus;`,
+             export const previewConnection=connectionStatus,connectAccount=connectionStatus,disconnectAccount=connectionStatus,availableLists=connectionStatus,chooseDefault=connectionStatus,readList=connectionStatus,mutateItem=connectionStatus,transfer=connectionStatus,createList=connectionStatus;`,
                     loader: 'js',
                 }));
             },
@@ -66,4 +66,23 @@ test('rate-limited requests return a retryable error', async () => {
     boundary.session = { user: { id: 'real-owner', role: 'user' } };
     boundary.allowed = false;
     assert.equal((await actions.getBringStatus()).code, 'RATE_LIMIT');
+});
+
+test('creating lists validates names and operation IDs and derives the authenticated owner', async () => {
+    boundary.session = { user: { id: 'real-owner', role: 'user' } };
+    boundary.allowed = true;
+    const input = {
+        operationId: '123e4567-e89b-42d3-a456-426614174000',
+        name: 'Ausflug',
+        userId: 'other',
+    };
+    assert.equal((await actions.createBringList({ ...input, name: '   ' })).code, 'VALIDATION');
+    assert.equal(
+        (await actions.createBringList({ ...input, operationId: 'bad' })).code,
+        'VALIDATION',
+    );
+    assert.equal((await actions.createBringList(input)).ok, true);
+    assert.equal(boundary.userId, 'real-owner');
+    boundary.session = null;
+    assert.equal((await actions.createBringList(input)).code, 'SIGN_IN');
 });

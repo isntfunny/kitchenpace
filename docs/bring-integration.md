@@ -2,7 +2,7 @@
 
 ## Scope
 
-One Bring account per KochTakt user. Existing lists are read directly from Bring; local shopping-list tables are not mirrored. Users can select a default list, add ingredients with serving-adjusted quantities, edit details, mark purchased, restore and remove items. Creation/deletion/renaming/sharing of lists stays in Bring.
+One Bring account per KochTakt user. Existing lists are read directly from Bring; local shopping-list tables are not mirrored. Users can select a default list, add ingredients with serving-adjusted quantities, edit details, mark purchased, restore and remove items. Connected users can also create lists directly from the list switcher. Deletion/renaming/sharing of lists stays in Bring.
 
 Entry points: ingredient card below the serving control, ingredient landing header, desktop personal menu, mobile navigation and profile quick links. Connection management is at `/profile/integrations`; lists at `/shopping-list`. The recipe dialog connects inline and preserves a selected draft through local sign-in (session storage, one-hour expiry, no credentials).
 
@@ -51,3 +51,19 @@ Bring surfaces use the existing Button, Heading/Text, Select and Skeleton compon
 Verified: 12 browser component tests (including keyboard selection/focus restoration, long mobile list names and 390px/1280px light/dark views), 15 domain/service/action tests, TypeScript, ESLint and Prettier. Loading, empty and error screenshots were also inspected. Browser responses are synthetic; screenshots use compiled app font faces when `BRING_UI_FONT_CSS` points to the generated Next.js font CSS chunk. The harness supplies the app theme CSS and fonts but does not render the complete authenticated Next.js layout. Full-app/live Bring acceptance remains pending as described above.
 
 Independent UI review found mobile overflow for long list names; reproduced with a failing browser test and fixed. Keyboard focus returns to the recipe action after closing the dialog. A removed/default list cannot be saved from the connection card when it is absent from the loaded lists.
+
+## Shopping-list structure and ingredient autocomplete (2026-10-15)
+
+The shopping page keeps PageShell and the existing component/theme system. A compact list selector and refresh action sit above open/purchased counts and quick-add. Quantity/details are optional until selected. Items share one continuous list with their quantity on a secondary line; the Radix action menu provides edit/remove. Purchased items remain collapsible. Editing one item does not overwrite the separate quick-add draft.
+
+Quick-add uses the same `searchIngredients` server action as the recipe editor, backed by the ingredient index and quantity parser. Suggestions start after two characters with a 180ms debounce. Selection is explicit and fills the ingredient/parsed amount; adding remains a separate action. Free-text household articles remain supported and do not create ingredient database records. Request cleanup ignores old responses, and search failure does not block free-text entry.
+
+Regression coverage includes keyboard selection, parsed amounts, delayed/out-of-order search responses, free-text fallback, edit/add draft isolation, menu actions and a shared-list update during editing. Edits retain the quantity from when editing began for the server's conflict check. Screenshots cover ten-item lists on mobile/desktop in both themes, plus the suggestion dropdown. These are component-harness checks with synthetic service responses, not a live Bring account test.
+
+### Creating lists
+
+The list switcher offers “Neue Liste”, opening a compact name form using existing controls. A successful create selects the returned list without changing the configured default. Errors retain the name. Names are trimmed and limited to 100 characters. Creation requires a connected, authenticated account and uses the existing rate limit and account write lock.
+
+The endpoint is `POST /rest/bringusers/{userUuid}/lists` (without `v2`), with form-encoded `name` and grocery `theme`, returning `bringListUUID`; source: [Bring client project API wiki](https://github.com/miaucl/bring-api/wiki/Raw-API-Requests#create-a-new-list). This is an unofficial API; real-account verification remains required. A namespaced creation receipt in `BringTransfer` records pending/completed attempts independently of transaction rollback. Repeating the same operation never submits a second remote creation; an ambiguous response requires refreshing the lists before starting another attempt. No automatic creation retry or default-list change occurs.
+
+Regression checks cover encoded names/endpoint, invalid responses, authentication/input validation, successful receipt replay and uncertain receipt finalization, plus browser creation/selection and preserved names after errors.

@@ -10,10 +10,10 @@ let browser, server, url;
 before(async () => {
     const result = await build({
         stdin: {
-            contents: `import React, {useState} from 'react'; import {createRoot} from 'react-dom/client'; import {RecipeStepsViewer} from './src/components/flow/RecipeStepsViewer'; import {MobileRecipeClient} from './src/app/recipe/[id]/mobile/MobileRecipeClient'; import {IngredientList} from './src/app/recipe/[id]/components/IngredientList';
+            contents: `import React, {useState} from 'react'; import {createRoot} from 'react-dom/client'; import {RecipeStepsViewer} from './src/components/flow/RecipeStepsViewer'; import {MobileRecipeClient} from './src/app/recipe/[id]/mobile/MobileRecipeClient'; import {IngredientList} from './src/app/recipe/[id]/components/IngredientList'; import {DescriptionEditor} from './src/components/flow/editor/DescriptionEditor'; import {useRecipeFormState} from './src/components/recipe/useRecipeFormState';
         const ingredients=[{id:'cream',ingredientId:'dairy',name:'Schmand',amount:'200',unit:'g'}, {id:'water',name:'Wasser',amount:'250',unit:'ml'}, {id:'salt-dough',ingredientId:'salt',name:'Salz',amount:'2',unit:'TL',notes:'für den Teig'}, {id:'salt-cream',ingredientId:'salt',name:'Salz',amount:'',unit:'',notes:'für die Creme'}];
         const nodes=[{id:'start',type:'start',label:'Start',description:'Bereit'}, {id:'s1',type:'mixen',label:'Creme',description:'@[Schmand](cream) und @[Wasser|100 ml](water) mischen. @[Salz](salt-cream) für die Creme.'}, {id:'s2',type:'mixen',label:'Teig',description:'@[Salz](salt-dough) für den Teig.'}, {id:'servieren',type:'servieren',label:'Servieren',description:'Servieren'}]; const edges=nodes.slice(1).map((n,i)=>({id:'e'+i,source:nodes[i].id,target:n.id}));
-        function App(){const [servings,setServings]=useState(5);if(new URLSearchParams(location.search).has('standalone'))return <MobileRecipeClient recipe={{servings:5,ingredients:ingredients.map(i=>({...i,rawAmount:i.amount,amount:parseFloat(i.amount)||0})),flow:{nodes,edges}} as any} initialServings={10}/>;return <><label>Testportionen<select aria-label="Testportionen" value={servings} onChange={e=>setServings(Number(e.target.value))}><option>5</option><option>10</option></select></label><IngredientList ingredients={ingredients.map(i=>({...i,rawAmount:i.amount,amount:parseFloat(i.amount)||0})) as any} servings={servings} originalServings={5} onServingsChange={setServings}/><RecipeStepsViewer nodes={nodes} edges={edges} ingredients={ingredients} servings={servings} originalServings={5} recipeSlug="fixture" embedded={!new URLSearchParams(location.search).has('lane')} /></>}; createRoot(document.getElementById('root')).render(<App/>);`,
+        function EditorFixture(){const [value,setValue]=useState('');const state=useRecipeFormState({categories:[],tags:[],initialData:{ingredients:[{id:'salt-use',ingredientId:'salt-cat',name:'Salz',amount:'1/2',unit:'TL',notes:'Teig'}]} as any});return <><button onClick={()=>state.handleAddIngredient({id:'salt-cat',name:'Salz',units:['TL'],categories:[],pluralName:null})}>Salz erneut hinzufügen</button><output aria-label="Anzahl">{state.ingredients.length}</output><output aria-label="Rohtext">{value}</output><select aria-label="Menge" onChange={e=>state.updateIngredient(0,{amount:e.target.value})}>{['1/2','0.01','2–3','nach Geschmack'].map(a=><option key={a}>{a}</option>)}</select><DescriptionEditor value={value} onChange={setValue} availableIngredients={state.ingredients} onAddIngredient={state.handleAddIngredient}/></>}; function App(){if(new URLSearchParams(location.search).has('editor'))return <EditorFixture/>;const [servings,setServings]=useState(5);if(new URLSearchParams(location.search).has('standalone'))return <MobileRecipeClient recipe={{servings:5,ingredients:ingredients.map(i=>({...i,rawAmount:i.amount,amount:parseFloat(i.amount)||0})),flow:{nodes,edges}} as any} initialServings={10}/>;return <><label>Testportionen<select aria-label="Testportionen" value={servings} onChange={e=>setServings(Number(e.target.value))}><option>5</option><option>10</option></select></label><IngredientList ingredients={ingredients.map(i=>({...i,rawAmount:i.amount,amount:parseFloat(i.amount)||0})) as any} servings={servings} originalServings={5} onServingsChange={setServings}/><RecipeStepsViewer nodes={nodes} edges={edges} ingredients={ingredients} servings={servings} originalServings={5} recipeSlug="fixture" embedded={!new URLSearchParams(location.search).has('lane')} /></>}; createRoot(document.getElementById('root')).render(<App/>);`,
             loader: 'tsx',
             resolveDir: process.cwd(),
         },
@@ -32,6 +32,10 @@ before(async () => {
             {
                 name: 'boundaries',
                 setup(b) {
+                    b.onResolve(
+                        { filter: /^@app\/components\/recipe\/useIngredientSearch$/ },
+                        () => ({ path: 'search', namespace: 'stub' }),
+                    );
                     b.onLoad({ filter: /\.[jt]sx?$/ }, async ({ path }) => {
                         if (!path.includes('/src/')) return;
                         const source = await readFile(path, 'utf8');
@@ -78,13 +82,15 @@ before(async () => {
                     }));
                     b.onLoad({ filter: /.*/, namespace: 'stub' }, ({ path }) => ({
                         contents:
-                            path === 'flags'
-                                ? `export const useFeatureFlag=()=>new URLSearchParams(location.search).has('lane');`
-                                : path === 'cast'
-                                  ? `export const useCast=()=>({castState:'connected',startCast(){},stopCast(){},sendMessage(m){window.castMessages??=[];window.castMessages.push(m)}});`
-                                  : path === 'progress'
-                                    ? `export const saveRecipeProgress=async()=>{}; export const deleteRecipeProgress=async()=>{};`
-                                    : `import React,{lazy,Suspense} from 'react'; export default function dynamic(loader){const C=lazy(async()=>({default:await loader()}));return props=><Suspense fallback={null}><C {...props}/></Suspense>}`,
+                            path === 'search'
+                                ? `export const useIngredientSearch=(query)=>({results:query.toLowerCase().includes('salz')?[{id:'salt-cat',name:'Salz',units:['TL'],categories:[]}]:query.toLowerCase().includes('zucker')?[{id:'sugar-cat',name:'Zucker',units:['g'],categories:[]}]:[]});`
+                                : path === 'flags'
+                                  ? `export const useFeatureFlag=()=>new URLSearchParams(location.search).has('lane');`
+                                  : path === 'cast'
+                                    ? `export const useCast=()=>({castState:'connected',startCast(){},stopCast(){},sendMessage(m){window.castMessages??=[];window.castMessages.push(m)}});`
+                                    : path === 'progress'
+                                      ? `export const saveRecipeProgress=async()=>{}; export const deleteRecipeProgress=async()=>{};`
+                                      : `import React,{lazy,Suspense} from 'react'; export default function dynamic(loader){const C=lazy(async()=>({default:await loader()}));return props=><Suspense fallback={null}><C {...props}/></Suspense>}`,
                         loader: 'jsx',
                         resolveDir: process.cwd(),
                     }));
@@ -151,5 +157,62 @@ test('lane cooking view shares quantities and details', async () => {
     await page.goto(url + '/?lane');
     await page.getByLabel('Testportionen').selectOption('10');
     await page.getByRole('button', { name: 'Schmand, 400 g: Zutatendetails anzeigen' }).waitFor();
+    await page.close();
+});
+
+test('editor allows separate occurrences and excludes their catalogue item from DB results', async () => {
+    const page = await browser.newPage();
+    await page.goto(url + '/?editor');
+    await page.getByRole('button', { name: 'Salz erneut hinzufügen' }).click();
+    assert.equal(await page.getByLabel('Anzahl').textContent(), '2');
+    await page.locator('textarea').fill('@Salz');
+    assert.equal(await page.getByText('+ hinzufügen', { exact: true }).count(), 0);
+    await page
+        .getByText(/^Salz(?: · Teig)?$/)
+        .nth(1)
+        .click();
+    const raw = await page.getByLabel('Rohtext').textContent();
+    assert.match(raw, /@\[Salz\]\((?!salt-cat|salt-use)[^)]+\)/);
+    await page.close();
+});
+test('editor DB selection inserts the new occurrence identity', async () => {
+    const page = await browser.newPage();
+    await page.goto(url + '/?editor');
+    await page.locator('textarea').fill('@Zucker');
+    await page.getByText('Zucker', { exact: true }).click();
+    assert.equal(await page.getByLabel('Anzahl').textContent(), '2');
+    assert.match(
+        await page.getByLabel('Rohtext').textContent(),
+        /@\[Zucker\]\((?!sugar-cat)[^)]+\)/,
+    );
+    await page.close();
+});
+test('editor fraction controls preserve fractional, small and range quantities', async () => {
+    const page = await browser.newPage();
+    await page.goto(url + '/?editor');
+    for (const [amount, expected] of [
+        ['1/2', '0,25 TL'],
+        ['0.01', '0,005 TL'],
+        ['2–3', '1–1,5 TL'],
+    ]) {
+        await page.getByLabel('Menge', { exact: true }).selectOption(amount);
+        await page.locator('textarea').fill('@Salz');
+        await page
+            .getByText(/^Salz(?: · Teig)?$/)
+            .first()
+            .hover();
+        await page.getByRole('button', { name: '½', exact: true }).click();
+        assert.equal(
+            await page.getByLabel('Rohtext').textContent(),
+            '@[Salz|' + expected + '](salt-use) ',
+        );
+    }
+    await page.getByLabel('Menge', { exact: true }).selectOption('nach Geschmack');
+    await page.locator('textarea').fill('@Salz');
+    await page
+        .getByText(/^Salz(?: · Teig)?$/)
+        .first()
+        .hover();
+    assert.equal(await page.getByRole('button', { name: '½', exact: true }).count(), 0);
     await page.close();
 });

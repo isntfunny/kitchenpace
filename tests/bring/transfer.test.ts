@@ -63,7 +63,7 @@ test('catalog-equivalent ingredients in one import cannot overwrite each other',
         outcomes.map((o) => o.status),
         ['added', 'existing'],
     );
-    assert.equal(purchase[0].specification, '2 Stück');
+    assert.equal(purchase[0].specification, '2 Stück + 1 Stück');
 });
 
 test('two uses of the same ingredient retain both specifications in one shopping item', async () => {

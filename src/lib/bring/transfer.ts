@@ -44,7 +44,7 @@ export async function transferItems(
         // Bring stores one item per name. Keep all selected occurrences in its
         // specification instead of silently discarding the second recipe use.
         const specification = items
-            .filter((other) => other.name === item.name)
+            .filter((other) => resolveCatalogItem(other.name, catalog) === name)
             .map((other) => other.specification)
             .filter(Boolean)
             .join(' + ');

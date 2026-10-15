@@ -46,6 +46,10 @@ export function portionFactor(servings: number, originalServings: number): numbe
     const factor = servings / originalServings;
     return Number.isFinite(factor) && factor > 0 ? factor : 1;
 }
+export function isNumericQuantity(raw: string): boolean {
+    const parts = raw.trim().split(/\s*[-–]\s*/);
+    return parts.length <= 2 && parts.every((part) => parseNumber(part) !== null);
+}
 export function scaleQuantity(raw: string, factor: number): string {
     if (!Number.isFinite(factor) || factor <= 0 || factor === 1) return raw;
     const range = raw.trim().split(/\s*[-–]\s*/);

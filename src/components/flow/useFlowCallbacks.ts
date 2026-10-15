@@ -62,7 +62,7 @@ export interface UseFlowCallbacksArgs {
     availableIngredients: AddedIngredient[];
     onAddIngredientToRecipe?: (
         ing: import('@app/components/recipe/RecipeForm/data').IngredientSearchResult,
-    ) => void;
+    ) => string;
     canvasRef: MutableRefObject<HTMLDivElement | null>;
 }
 

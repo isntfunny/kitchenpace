@@ -21,7 +21,7 @@ export interface FlowEditorContextValue {
     /** Fork: add a new node on a brand-new edge without rewiring existing edges */
     onForkNodeAfter?: (parentNodeId: string, stepType: StepType) => void;
     /** Add a DB ingredient to the recipe (called when user @-mentions it in a step) */
-    onAddIngredientToRecipe?: (ing: IngredientSearchResult) => void;
+    onAddIngredientToRecipe?: (ing: IngredientSearchResult) => string;
     /** Insert a new node onto an existing edge, splitting it into two edges */
     onInsertOnEdge?: (edgeId: string, source: string, target: string, stepType: StepType) => void;
     /** Recipe ID — passed from RecipeForm, used by QRUploadButton in NodeEditPanel */

@@ -10,16 +10,11 @@ export async function mergeRecipeIngredientOccurrences(
     sourceId: string,
     targetId: string,
 ) {
+    const target = await tx.ingredient.findUniqueOrThrow({ where: { id: targetId } });
     const sourceRecipeIngredients = await tx.recipeIngredient.findMany({
         where: { ingredientId: sourceId },
     });
 
-    // Keep recipe occurrences, their stable IDs, amounts, units and notes.
-    // Catalogue consolidation is not a recipe quantity aggregation.
-    await tx.recipeIngredient.updateMany({
-        where: { ingredientId: sourceId },
-        data: { ingredientId: targetId },
-    });
     for (const recipeId of new Set(sourceRecipeIngredients.map((row) => row.recipeId))) {
         const recipe = await tx.recipe.findUniqueOrThrow({
             where: { id: recipeId },
@@ -29,21 +24,21 @@ export async function mergeRecipeIngredientOccurrences(
             where: { recipeId },
             include: { ingredient: true },
         });
-        const sourceOccurrences = sourceRecipeIngredients.filter(
-            (row) => row.recipeId === recipeId,
-        );
-        const ids =
-            sourceOccurrences.length === 1
-                ? new Map([[sourceId, sourceOccurrences[0].id]])
-                : new Map<string, string>();
         const repair = repairIngredientMentions(
             (recipe.flowNodes as FlowNodeInput[] | null) ?? [],
             rows.map((row) => ({
                 id: row.id,
                 ingredientId: row.ingredientId,
-                name: row.ingredient.name,
+                name: row.ingredientId === sourceId ? target.name : row.ingredient.name,
             })),
-            ids,
+            new Map([
+                ...rows
+                    .filter((row) => row.ingredientId === sourceId)
+                    .map((row) => [row.id, row.id] as const),
+                ...(rows.filter((row) => row.ingredientId === sourceId).length === 1
+                    ? [[sourceId, rows.find((row) => row.ingredientId === sourceId)!.id] as const]
+                    : []),
+            ]),
             { allowNameFallback: false },
         );
         await tx.recipe.update({
@@ -51,4 +46,10 @@ export async function mergeRecipeIngredientOccurrences(
             data: { flowNodes: repair.nodes as unknown as object },
         });
     }
+    // Resolve legacy catalogue references against the pre-merge rows first.
+    // Keep every occurrence, amount and stable reference while retargeting.
+    await tx.recipeIngredient.updateMany({
+        where: { ingredientId: sourceId },
+        data: { ingredientId: targetId },
+    });
 }

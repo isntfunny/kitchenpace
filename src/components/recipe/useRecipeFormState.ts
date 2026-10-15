@@ -189,11 +189,11 @@ export function useRecipeFormState({
     };
 
     const handleAddIngredient = (ing: IngredientSearchResult) => {
-        if (ingredients.some((i) => (i.ingredientId ?? i.id) === ing.id)) return;
+        const occurrenceId = crypto.randomUUID();
         setIngredients((prev) => [
             ...prev,
             {
-                id: crypto.randomUUID(),
+                id: occurrenceId,
                 ingredientId: ing.id,
                 name: ing.name,
                 pluralName: ing.pluralName ?? null,
@@ -205,6 +205,7 @@ export function useRecipeFormState({
                 isNew: false,
             },
         ]);
+        return occurrenceId;
     };
 
     const handleAddNewIngredient = async (name: string) => {

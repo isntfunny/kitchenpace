@@ -212,3 +212,13 @@ test('reviewed restoration also restores collapsed per-step reference lists', ()
         /changed|match/i,
     );
 });
+
+test('restored occurrences cannot silently remain unrelated to the repaired flow', () => {
+    assert.throws(
+        () =>
+            planRecipeRepair(fixture, {
+                restoreRows: [{ ...fixture.ingredients[0], id: 'unused-restoration' }],
+            }),
+        /unused|unreferenced|mapping/i,
+    );
+});

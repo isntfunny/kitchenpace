@@ -93,6 +93,15 @@ export function planRecipeRepair(input: RecipeMentionSnapshotInput, decisions?: 
             : node,
     );
     const repair = repairIngredientMentions(nodes, ingredients, new Map(Object.entries(sourceIds)));
+    for (const restored of restoreRows) {
+        const referenced = repair.nodes.some(
+            (node) =>
+                node.ingredientIds?.includes(restored.id) ||
+                (node.description ?? '').includes(`](${restored.id})`),
+        );
+        if (!referenced)
+            throw new Error(`Restored ingredient ${restored.id} is unreferenced; supply a mapping`);
+    }
     const after = { ...snapshot, flowNodes: repair.nodes, ingredients };
     return {
         before: snapshot,

@@ -130,7 +130,7 @@ export interface FlowEditorProps {
     onChange?: (nodes: FlowNodeSerialized[], edges: FlowEdgeSerialized[]) => void;
     onAddIngredientToRecipe?: (
         ing: import('@app/components/recipe/RecipeForm/data').IngredientSearchResult,
-    ) => void;
+    ) => string;
     onAiApply?: (
         result: import('@app/lib/importer/ai-text-analysis').AIAnalysisResult,
         apply: import('@app/lib/importer/ai-text-analysis').ApplySelection,

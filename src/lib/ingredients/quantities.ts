@@ -11,7 +11,7 @@ const unicodeFractions: Record<string, string> = {
     '⅞': '7/8',
 };
 const numberPattern = String.raw`(?:\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)`;
-function parseNumber(raw: string): number | null {
+export function parseQuantityNumber(raw: string): number | null {
     const value = raw
         .trim()
         .replace(/[½¼¾⅓⅔⅛⅜⅝⅞]/g, (c) => ` ${unicodeFractions[c]}`)
@@ -48,13 +48,13 @@ export function portionFactor(servings: number, originalServings: number): numbe
 }
 export function isNumericQuantity(raw: string): boolean {
     const parts = raw.trim().split(/\s*[-–]\s*/);
-    return parts.length <= 2 && parts.every((part) => parseNumber(part) !== null);
+    return parts.length <= 2 && parts.every((part) => parseQuantityNumber(part) !== null);
 }
 export function scaleQuantity(raw: string, factor: number): string {
     if (!Number.isFinite(factor) || factor <= 0 || factor === 1) return raw;
     const range = raw.trim().split(/\s*[-–]\s*/);
     if (range.length > 2) return raw;
-    const numbers = range.map(parseNumber);
+    const numbers = range.map(parseQuantityNumber);
     if (numbers.some((n) => n === null)) return raw;
     const scaled = (numbers as number[]).map((n) => n * factor);
     if (scaled.some((n) => !Number.isFinite(n))) return raw;

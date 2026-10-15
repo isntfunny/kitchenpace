@@ -1,3 +1,5 @@
+import { parseQuantityNumber, isNumericQuantity } from './ingredients/quantities';
+
 /**
  * Returns singular or plural ingredient name based on amount.
  * Uses pluralName when amount > 1, otherwise singular name.
@@ -14,18 +16,7 @@ export function ingredientDisplayName(
 }
 
 export function parseAmount(amount: string): number | null {
-    const trimmed = amount.trim();
-    if (!trimmed) return null;
-
-    // Fractions: "1/2" → 0.5
-    if (trimmed.includes('/')) {
-        const parts = trimmed.split('/');
-        const n = parseFloat(parts[0]);
-        const d = parseFloat(parts[1]);
-        if (!isNaN(n) && !isNaN(d) && d !== 0) return n / d;
-    }
-
-    // Ranges: "2-3" → take first number
-    const first = parseFloat(trimmed);
-    return isNaN(first) ? null : first;
+    if (!isNumericQuantity(amount)) return null;
+    // Nutrition remains an estimate using the lower end of a stated range.
+    return parseQuantityNumber(amount.trim().split(/\s*[-–]\s*/)[0]);
 }

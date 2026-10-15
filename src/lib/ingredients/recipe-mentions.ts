@@ -94,6 +94,7 @@ export function repairIngredientMentions<T extends MentionNode>(
 
     const repaired = nodes.map((node) => {
         const resolved = new Set<string>();
+        const bindings = new Map<string, string>();
         const unresolved = new Set<string>();
         let description = (node.description ?? '').replace(
             mentionPattern(),
@@ -103,6 +104,7 @@ export function repairIngredientMentions<T extends MentionNode>(
                     unresolved.add(id);
                     return full;
                 }
+                bindings.set(id, row.id);
                 resolved.add(row.id);
                 // An explicit source mapping also covers an intentionally replaced ingredient.
                 const label = sourceIds.has(id) ? row.name : name;
@@ -121,6 +123,7 @@ export function repairIngredientMentions<T extends MentionNode>(
                 unresolved.add(id);
                 continue;
             }
+            bindings.set(id, row.id);
             resolved.add(row.id);
             if ([...description.matchAll(mentionPattern())].some((m) => m[3] === row.id)) continue;
             // Only annotate plain text explicitly attributed to this step. Leave
@@ -147,7 +150,15 @@ export function repairIngredientMentions<T extends MentionNode>(
         const result = { ...node };
         if (node.description !== undefined) result.description = description;
         if (node.ingredientIds !== undefined || resolved.size > 0) {
-            result.ingredientIds = [...resolved, ...unresolved];
+            // Preserve the caller's reference order. Newly inserted mentions may
+            // appear earlier in the prose; rescanning must not reorder the list.
+            const ordered = new Set<string>();
+            for (const id of node.ingredientIds ?? []) {
+                const bound =
+                    bindings.get(id) ?? (resolved.has(id) || unresolved.has(id) ? id : undefined);
+                if (bound) ordered.add(bound);
+            }
+            result.ingredientIds = [...new Set([...ordered, ...resolved, ...unresolved])];
         }
         return result;
     });

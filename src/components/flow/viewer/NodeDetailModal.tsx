@@ -3,6 +3,7 @@
 import { Check, CheckCircle2, Clock, Pause, Play, RotateCcw, X } from 'lucide-react';
 import { useEffect, useMemo, useRef } from 'react';
 
+import { scaleQuantity } from '@app/lib/ingredients/quantities';
 import { PALETTE } from '@app/lib/palette';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 
@@ -11,6 +12,7 @@ import { css } from 'styled-system/css';
 import type { FlowNodeSerialized, StepType } from '../editor/editorTypes';
 import { getStepConfig } from '../editor/stepConfig';
 
+import { useIngredientPortionFactor } from './IngredientPortionsContext';
 import type { RecipeStepsViewerProps, TimerState } from './viewerTypes';
 import { extractMentionedIds, formatTime, renderDescription } from './viewerUtils';
 
@@ -40,6 +42,7 @@ export function NodeDetailModal({
     const isSpecial = node.type === 'start' || node.type === 'servieren';
     const dialogRef = useRef<HTMLDivElement>(null);
 
+    const factor = useIngredientPortionFactor();
     const stepIngredients = useMemo(() => {
         if (!ingredients) return [];
         const ids = extractMentionedIds(node.description);
@@ -403,7 +406,14 @@ export function NodeDetailModal({
                                                     flexShrink: 0,
                                                 })}
                                             >
-                                                {[ing.amount, ing.unit].filter(Boolean).join(' ')}
+                                                {[
+                                                    ing.amount
+                                                        ? scaleQuantity(ing.amount, factor)
+                                                        : '',
+                                                    ing.unit,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' ')}
                                             </span>
                                         )}
                                     </div>

@@ -12,6 +12,7 @@ import {
 } from '@app/components/recipe/tutorial/shared';
 import { useDropdownNavigation } from '@app/components/recipe/useDropdownNavigation';
 import { useIngredientSearch } from '@app/components/recipe/useIngredientSearch';
+import { isNumericQuantity, scaleQuantity } from '@app/lib/ingredients/quantities';
 
 import { css } from 'styled-system/css';
 
@@ -21,7 +22,7 @@ interface DescriptionEditorProps {
     availableIngredients: AddedIngredient[];
     placeholder?: string;
     /** Called when user selects a DB ingredient — add it to recipe list */
-    onAddIngredient?: (ing: IngredientSearchResult) => void;
+    onAddIngredient?: (ing: IngredientSearchResult) => string;
 }
 
 type DropdownIngredient =
@@ -38,17 +39,7 @@ const FRACTIONS: { label: string; value: number }[] = [
 ];
 
 function computeFraction(ing: AddedIngredient, frac: number): string {
-    const num = parseFloat(ing.amount);
-    if (!isNaN(num) && num > 0) {
-        const result = num * frac;
-        const nice = Number.isInteger(result)
-            ? String(result)
-            : result.toFixed(1).replace(/\.0$/, '');
-        return ing.unit ? `${nice} ${ing.unit}` : nice;
-    }
-    // Non-numeric amount — use symbol
-    const fracLabel = FRACTIONS.find((f) => Math.abs(f.value - frac) < 0.001)?.label;
-    return fracLabel ?? `${Math.round(frac * 100)}%`;
+    return [scaleQuantity(ing.amount, frac), ing.unit].filter(Boolean).join(' ');
 }
 
 /** Render raw description string with @[Name](id) or @[Name|override](id) as inline chips */
@@ -119,7 +110,7 @@ export function DescriptionEditor({
 
     // Combine: recipe matches first, then DB results not already in recipe
     const dropdownItems = useMemo<DropdownIngredient[]>(() => {
-        const recipeIds = new Set(availableIngredients.map((i) => i.id));
+        const recipeIds = new Set(availableIngredients.map((i) => i.ingredientId ?? i.id));
         const dbFiltered = dbResults.filter((r) => !recipeIds.has(r.id));
         return [
             ...recipeMatches,
@@ -155,11 +146,9 @@ export function DescriptionEditor({
 
     const insertMention = useCallback(
         (item: DropdownIngredient, amountOverride?: string) => {
-            // If DB ingredient, add it to recipe first
-            if (item.source === 'db' && onAddIngredient) {
-                onAddIngredient(item.ingredient as IngredientSearchResult);
-            }
-            doInsertMention(item.ingredient.id, item.ingredient.name, amountOverride);
+            const id =
+                item.source === 'db' ? onAddIngredient?.(item.ingredient) : item.ingredient.id;
+            if (id) doInsertMention(id, item.ingredient.name, amountOverride);
         },
         [doInsertMention, onAddIngredient],
     );
@@ -169,25 +158,29 @@ export function DescriptionEditor({
         async (mentionQuery: string) => {
             const fresh = await searchIngredients(mentionQuery);
             if (fresh.bestMatch) {
-                // Add to recipe if not already there
-                if (onAddIngredient) onAddIngredient(fresh.bestMatch);
-                doInsertMention(fresh.bestMatch.id, fresh.bestMatch.name);
-            } else {
-                // Create new ingredient
-                const created = await createIngredient(mentionQuery);
-                if (onAddIngredient) {
-                    onAddIngredient({
-                        id: created.id,
-                        name: created.name,
-                        pluralName: null,
-                        categories: [],
-                        units: [],
-                    });
+                const existing = availableIngredients.filter(
+                    (ing) => (ing.ingredientId ?? ing.id) === fresh.bestMatch!.id,
+                );
+                // An alias may match multiple uses. Let the user select the use.
+                if (existing.length > 1) {
+                    setQuery(existing[0].name);
+                    return;
                 }
-                doInsertMention(created.id, created.name);
+                const id = existing[0]?.id ?? onAddIngredient?.(fresh.bestMatch);
+                if (id) doInsertMention(id, fresh.bestMatch.name);
+            } else if (onAddIngredient) {
+                const created = await createIngredient(mentionQuery);
+                const id = onAddIngredient({
+                    id: created.id,
+                    name: created.name,
+                    pluralName: null,
+                    categories: [],
+                    units: [],
+                });
+                doInsertMention(id, created.name);
             }
         },
-        [doInsertMention, onAddIngredient],
+        [doInsertMention, onAddIngredient, availableIngredients],
     );
 
     const showDropdown = isOpen && dropdownItems.length > 0;
@@ -309,7 +302,7 @@ export function DescriptionEditor({
                         const isHovered = hoveredDropdownIndex === index;
                         const recipeIng = !isDb ? (ing as AddedIngredient) : null;
                         const hasFractions =
-                            recipeIng !== null && !!(recipeIng.amount || recipeIng.unit);
+                            recipeIng !== null && isNumericQuantity(recipeIng.amount);
                         return (
                             <div key={`${item.source}-${ing.id}`}>
                                 {showSeparator && (
@@ -338,6 +331,7 @@ export function DescriptionEditor({
                                         style={{ cursor: 'pointer', flex: 1 }}
                                     >
                                         {ing.name}
+                                        {recipeIng?.notes && <small> · {recipeIng.notes}</small>}
                                     </span>
 
                                     {/* Right: amount or fraction buttons */}

@@ -41,15 +41,22 @@ export async function transferItems(
             outcomes.push({ id: item.id, name: item.name, status: 'failed' });
             continue;
         }
+        // Bring stores one item per name. Keep all selected occurrences in its
+        // specification instead of silently discarding the second recipe use.
+        const specification = items
+            .filter((other) => resolveCatalogItem(other.name, catalog) === name)
+            .map((other) => other.specification)
+            .filter(Boolean)
+            .join(' + ');
         let added = false;
         try {
-            await client.write(listUuid, 'add', name, item.specification);
+            await client.write(listUuid, 'add', name, specification);
             added = true;
         } catch {
             // A lost response can follow a successful write. Read before offering a retry.
             try {
                 added = (await client.items(listUuid)).purchase.some(
-                    (entry) => entry.name === name && entry.specification === item.specification,
+                    (entry) => entry.name === name && entry.specification === specification,
                 );
             } catch {
                 /* Remains failed/uncertain. Retry reads the list again. */

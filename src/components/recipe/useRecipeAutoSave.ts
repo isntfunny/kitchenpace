@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { removeIngredientReferences } from '@app/lib/ingredients/recipe-mentions';
+
 import type { FlowEdgeInput, FlowNodeInput } from './recipeFormTypes';
 import { createRecipe, updateRecipe } from './recipeMutations';
 
@@ -21,6 +23,7 @@ export interface AutoSaveDeps {
     selectedTags: string[];
     ingredients: {
         id: string;
+        ingredientId?: string;
         name: string;
         amount: string;
         unit: string;
@@ -28,6 +31,7 @@ export interface AutoSaveDeps {
         isOptional: boolean;
     }[];
     flowNodesRef: React.RefObject<FlowNodeInput[]>;
+    removedIngredientIdsRef: React.RefObject<Set<string>>;
     flowEdgesRef: React.RefObject<FlowEdgeInput[]>;
     authorId: string;
     isAdmin: boolean;
@@ -53,6 +57,7 @@ export interface AutoSaveResult {
         categoryIds: string[];
         tagIds: string[];
         ingredients: {
+            referenceId: string;
             ingredientId: string;
             ingredientName: string;
             amount: string;
@@ -79,6 +84,7 @@ export function useRecipeAutoSave(deps: AutoSaveDeps): AutoSaveResult {
         selectedTags,
         ingredients,
         flowNodesRef,
+        removedIngredientIdsRef,
         flowEdgesRef,
         authorId,
         isAdmin,
@@ -108,14 +114,22 @@ export function useRecipeAutoSave(deps: AutoSaveDeps): AutoSaveResult {
             categoryIds,
             tagIds: selectedTags,
             ingredients: ingredients.map((ing) => ({
-                ingredientId: ing.id,
+                referenceId: ing.id,
+                ingredientId: ing.ingredientId ?? ing.id,
                 ingredientName: ing.name,
                 amount: ing.amount,
                 unit: ing.unit,
                 notes: ing.notes || undefined,
                 isOptional: ing.isOptional,
             })),
-            flowNodes: flowNodesRef.current,
+            flowNodes: removeIngredientReferences(
+                flowNodesRef.current,
+                new Set(
+                    [...removedIngredientIdsRef.current].filter(
+                        (id) => !ingredients.some((ing) => ing.id === id),
+                    ),
+                ),
+            ),
             flowEdges: flowEdgesRef.current,
             status,
         }),
@@ -131,6 +145,7 @@ export function useRecipeAutoSave(deps: AutoSaveDeps): AutoSaveResult {
             selectedTags,
             ingredients,
             flowNodesRef,
+            removedIngredientIdsRef,
             flowEdgesRef,
         ],
     );

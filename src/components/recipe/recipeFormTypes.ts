@@ -1,6 +1,8 @@
 import type { FlowEdgeSerialized } from '../flow/editor/editorTypes';
 
 export interface RecipeIngredientInput {
+    /** Editor/source identity; saved flows reference RecipeIngredient.id. */
+    referenceId?: string;
     ingredientId: string;
     ingredientName?: string; // For syncing missing ingredients
     amount: string;

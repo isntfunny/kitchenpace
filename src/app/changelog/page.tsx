@@ -32,6 +32,21 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '15. Oktober 2026',
+        title: 'Passende Zutatenmengen beim Kochen',
+        emoji: '🥣',
+        items: [
+            {
+                text: 'Zutatenmengen in der Anleitung passen sich an die gewählte Portionszahl an – auch beim Drucken und in der mobilen Kochansicht.',
+                tag: 'fix',
+            },
+            {
+                text: 'Tippe auf eine Zutat in der Anleitung, um Menge und Zubereitungshinweise anzusehen.',
+                tag: 'feat',
+            },
+        ],
+    },
+    {
         date: '20. Juni 2026',
         version: 'v2026-06-20',
         emoji: '🥕',

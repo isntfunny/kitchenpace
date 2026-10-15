@@ -85,6 +85,7 @@ export function RecipeForm({
         selectedTags: state.selectedTags,
         ingredients: state.ingredients,
         flowNodesRef: state.flowNodesRef,
+        removedIngredientIdsRef: state.removedIngredientIdsRef,
         flowEdgesRef: state.flowEdgesRef,
         authorId,
         isAdmin,

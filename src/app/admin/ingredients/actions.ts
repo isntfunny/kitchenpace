@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 import { ensureModeratorSession } from '@app/lib/admin/ensure-moderator';
+import { mergeRecipeIngredientOccurrences } from '@app/lib/ingredients/merge-occurrences';
 import { slugify } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
@@ -185,32 +186,7 @@ export async function mergeIngredients(sourceId: string, targetId: string) {
                 tx.ingredient.findUniqueOrThrow({ where: { id: targetId } }),
             ]);
 
-            const sourceRecipeIngredients = await tx.recipeIngredient.findMany({
-                where: { ingredientId: sourceId },
-            });
-
-            for (const sourceRi of sourceRecipeIngredients) {
-                const existingTargetRi = await tx.recipeIngredient.findFirst({
-                    where: {
-                        recipeId: sourceRi.recipeId,
-                        ingredientId: targetId,
-                    },
-                });
-
-                if (existingTargetRi) {
-                    const combinedAmount = `${existingTargetRi.amount} + ${sourceRi.amount}`;
-                    await tx.recipeIngredient.update({
-                        where: { id: existingTargetRi.id },
-                        data: { amount: combinedAmount },
-                    });
-                    await tx.recipeIngredient.delete({ where: { id: sourceRi.id } });
-                } else {
-                    await tx.recipeIngredient.update({
-                        where: { id: sourceRi.id },
-                        data: { ingredientId: targetId },
-                    });
-                }
-            }
+            await mergeRecipeIngredientOccurrences(tx, sourceId, targetId);
 
             // Transfer source name + aliases to target aliases
             const mergedAliases = Array.from(

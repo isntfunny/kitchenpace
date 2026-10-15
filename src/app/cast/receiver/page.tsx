@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react';
 
 import { CAST_NAMESPACE } from '@app/hooks/useCast';
 import type { CastMessage } from '@app/hooks/useCast';
+import { castRecipeUrl } from '@app/lib/cast-recipe';
 import { PALETTE } from '@app/lib/palette';
 
 // ── Cast Receiver SDK types ─────────────────────────────────────────────
@@ -63,8 +64,9 @@ export default function CastReceiverPage() {
                     return;
                 }
 
-                if (msg.type === 'LOAD_RECIPE') {
-                    setRecipeUrl(`/recipe/${msg.slug}/mobile`);
+                const url = castRecipeUrl(msg);
+                if (url) {
+                    setRecipeUrl(url);
                     // Signal to the Cast framework that the app is active so
                     // it doesn't terminate the session due to perceived idleness.
                     ctx.setApplicationState('Rezept wird angezeigt');

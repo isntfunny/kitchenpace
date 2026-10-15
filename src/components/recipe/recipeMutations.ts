@@ -1,6 +1,12 @@
 'use server';
 
+import { randomUUID } from 'node:crypto';
+
 import { createActivityLog } from '@app/lib/events/persist';
+import {
+    assertResolvedMentions,
+    repairIngredientMentions,
+} from '@app/lib/ingredients/recipe-mentions';
 import { moderateContent, persistModerationResult } from '@app/lib/moderation/moderationService';
 import { updateRecipeNutrition } from '@app/lib/nutrition/update-recipe-nutrition';
 import { generateUniqueSlug } from '@app/lib/slug';
@@ -23,7 +29,10 @@ import type {
 } from './recipeFormTypes';
 
 /** Verify and sync ingredients — ensure all referenced ingredient/unit IDs exist. */
-async function syncIngredients(ingredients: RecipeIngredientInput[]) {
+async function syncIngredients(ingredients: RecipeIngredientInput[], recipeId?: string) {
+    const existingRows = recipeId
+        ? await prisma.recipeIngredient.findMany({ where: { recipeId } })
+        : [];
     const synced = await Promise.all(
         ingredients.map(async (ing) => {
             // Resolve ingredient
@@ -47,17 +56,44 @@ async function syncIngredients(ingredients: RecipeIngredientInput[]) {
             // Resolve unit string → unitId
             const unitId = await findOrCreateUnit(ing.unit);
 
-            return { ...ing, ingredientId, unitId };
+            const old = existingRows.find(
+                (row) =>
+                    row.id === ing.referenceId ||
+                    row.sourceId === (ing.referenceId ?? ing.ingredientId),
+            );
+            return {
+                ...ing,
+                ingredientId,
+                unitId,
+                id: old?.id ?? randomUUID(),
+                sourceId: old?.sourceId ?? ing.referenceId ?? ing.ingredientId,
+            };
         }),
     );
 
-    // Deduplicate by ingredientId (AI imports can produce duplicates)
-    const seen = new Set<string>();
-    return synced.filter((ing) => {
-        if (seen.has(ing.ingredientId)) return false;
-        seen.add(ing.ingredientId);
-        return true;
-    });
+    const sourceIds = synced.map((ing) => ing.referenceId ?? ing.ingredientId);
+    if (new Set(sourceIds).size !== sourceIds.length) throw new Error('Doppelte Rezept-Zutaten-ID');
+    return synced;
+}
+
+function resolveFlow(
+    data: UpdateRecipeInput | CreateRecipeInput,
+    ingredients: Awaited<ReturnType<typeof syncIngredients>>,
+) {
+    if (!data.flowNodes) return undefined;
+    const resolved = repairIngredientMentions(
+        data.flowNodes,
+        ingredients.map((ing) => ({
+            id: ing.id,
+            sourceId: ing.sourceId,
+            ingredientId: ing.ingredientId,
+            name: ing.ingredientName ?? '',
+        })),
+        new Map(ingredients.map((ing) => [ing.referenceId ?? ing.ingredientId, ing.id])),
+        { allowNameFallback: false },
+    );
+    assertResolvedMentions(resolved.issues);
+    return stripPhotoKeys(resolved.nodes);
 }
 
 export async function updateRecipe(
@@ -68,7 +104,14 @@ export async function updateRecipe(
 ) {
     const existing = await prisma.recipe.findFirst({
         where: isUserAdmin ? { id: recipeId } : { id: recipeId, authorId },
-        select: { id: true, slug: true, title: true, status: true, authorId: true },
+        select: {
+            id: true,
+            slug: true,
+            title: true,
+            status: true,
+            authorId: true,
+            updatedAt: true,
+        },
     });
 
     if (!existing) {
@@ -102,26 +145,46 @@ export async function updateRecipe(
         });
     }
 
-    const recipe = await prisma.recipe.update({
-        where: { id: recipeId },
-        data: {
-            title: data.title,
-            slug,
-            description: data.description,
-            imageKey: data.imageKey,
-            servings: data.servings,
-            prepTime: data.prepTime,
-            cookTime: data.cookTime,
-            totalTime: data.prepTime + data.cookTime,
-            difficulty: data.difficulty,
-            status: recipeStatus as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED',
-            publishedAt: isPublishing ? new Date() : undefined,
-            moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
-            aiModerationScore: modResult.score,
-            moderationNote: modResult.decision === 'PENDING' ? null : undefined,
-            flowNodes: data.flowNodes ? stripPhotoKeys(data.flowNodes) : undefined,
-            flowEdges: data.flowEdges ? (data.flowEdges as unknown as object) : undefined,
-        },
+    const syncedIngredients = await syncIngredients(data.ingredients, recipeId);
+    const flowNodes = resolveFlow(data, syncedIngredients);
+    const recipe = await prisma.$transaction(async (tx) => {
+        const saved = await tx.recipe.update({
+            where: { id: recipeId, updatedAt: existing.updatedAt },
+            data: {
+                title: data.title,
+                slug,
+                description: data.description,
+                imageKey: data.imageKey,
+                servings: data.servings,
+                prepTime: data.prepTime,
+                cookTime: data.cookTime,
+                totalTime: data.prepTime + data.cookTime,
+                difficulty: data.difficulty,
+                status: recipeStatus as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED',
+                publishedAt: isPublishing ? new Date() : undefined,
+                moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
+                aiModerationScore: modResult.score,
+                moderationNote: modResult.decision === 'PENDING' ? null : undefined,
+                flowNodes,
+                flowEdges: data.flowEdges ? (data.flowEdges as unknown as object) : undefined,
+            },
+        });
+        await tx.recipeIngredient.deleteMany({ where: { recipeId } });
+        if (syncedIngredients.length)
+            await tx.recipeIngredient.createMany({
+                data: syncedIngredients.map((ing, position) => ({
+                    id: ing.id,
+                    sourceId: ing.sourceId,
+                    recipeId,
+                    ingredientId: ing.ingredientId,
+                    unitId: ing.unitId,
+                    amount: ing.amount,
+                    notes: ing.notes || null,
+                    isOptional: ing.isOptional,
+                    position,
+                })),
+            });
+        return saved;
     });
 
     if (data.flowNodes) {
@@ -170,23 +233,6 @@ export async function updateRecipe(
         });
     }
 
-    // Replace ingredients
-    const uniqueIngredients = await syncIngredients(data.ingredients);
-    await prisma.recipeIngredient.deleteMany({ where: { recipeId } });
-    if (uniqueIngredients.length > 0) {
-        await prisma.recipeIngredient.createMany({
-            data: uniqueIngredients.map((ing, index) => ({
-                recipeId,
-                ingredientId: ing.ingredientId,
-                unitId: ing.unitId,
-                amount: ing.amount,
-                notes: ing.notes || null,
-                isOptional: ing.isOptional,
-                position: index,
-            })),
-        });
-    }
-
     await updateRecipeNutrition(recipeId, data.servings);
 
     if (isPublishing) {
@@ -230,7 +276,8 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
     const recipeStatus = modResult.decision === 'PENDING' ? 'DRAFT' : intendedStatus;
     const isPublished = recipeStatus === 'PUBLISHED';
 
-    const uniqueIngredients = await syncIngredients(data.ingredients);
+    const syncedIngredients = await syncIngredients(data.ingredients);
+    const flowNodes = resolveFlow(data, syncedIngredients);
 
     const recipe = await prisma.recipe.create({
         data: {
@@ -248,10 +295,12 @@ export async function createRecipe(data: CreateRecipeInput, authorId: string) {
             moderationStatus: modResult.decision === 'PENDING' ? 'PENDING' : 'AUTO_APPROVED',
             aiModerationScore: modResult.score,
             authorId,
-            flowNodes: data.flowNodes ? stripPhotoKeys(data.flowNodes) : undefined,
+            flowNodes,
             flowEdges: (data.flowEdges as unknown as object) ?? undefined,
             recipeIngredients: {
-                create: uniqueIngredients.map((ing, index) => ({
+                create: syncedIngredients.map((ing, index) => ({
+                    id: ing.id,
+                    sourceId: ing.sourceId,
                     ingredientId: ing.ingredientId,
                     unitId: ing.unitId,
                     amount: ing.amount,

@@ -4,6 +4,7 @@ import { Command } from 'commander';
 
 import { registerImportCommand } from './commands/import.js';
 import { registerRemoteCommand } from './commands/remote.js';
+import { registerMentionRepairCommand } from './commands/repair-ingredient-mentions.js';
 import { registerSeedCommand } from './commands/seed.js';
 import { generateCompletions } from './lib/complete.js';
 import { db, RecipeStatus } from './lib/db.js';
@@ -485,6 +486,7 @@ program
     });
 
 registerImportCommand(program);
+registerMentionRepairCommand(program);
 registerSeedCommand(program);
 registerRemoteCommand(program);
 

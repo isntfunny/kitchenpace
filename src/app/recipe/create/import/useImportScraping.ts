@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 
 import type { Category, Tag, AddedIngredient } from '@app/components/recipe/RecipeForm/data';
+import { removeIngredientReferences } from '@app/lib/ingredients/recipe-mentions';
 
 import {
     saveImportedRecipe,
@@ -155,13 +156,23 @@ export function useImportScraping({ categories, tags: _tags, authorId }: UseImpo
                 categoryIds,
                 tags: analyzedRecipe.tags ?? [],
                 ingredients: ingredients.map((ing) => ({
+                    id: ing.id,
                     name: ing.name,
                     amount: ing.amount,
                     unit: ing.unit,
                     notes: ing.notes,
                     isOptional: ing.isOptional,
                 })),
-                flowNodes: flowNodesRef.current,
+                flowNodes: removeIngredientReferences(
+                    flowNodesRef.current,
+                    new Set(
+                        analyzedRecipe.ingredients
+                            .filter(
+                                (ing) => !ingredients.some((selected) => selected.id === ing.id),
+                            )
+                            .map((ing) => ing.id),
+                    ),
+                ),
                 flowEdges: flowEdgesRef.current,
             };
 

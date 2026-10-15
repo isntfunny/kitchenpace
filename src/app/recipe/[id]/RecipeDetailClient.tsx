@@ -296,11 +296,6 @@ export function RecipeDetailClient({
     const starValues = [1, 2, 3, 4, 5] as const;
     const activeStarValue = viewerRating ?? Math.round(averageRating || 0);
 
-    const formatAmount = (amount: number): string => {
-        const scaled = amount * (servings / recipe.servings);
-        return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
-    };
-
     const handlePrint = () => printRecipe(recipe, servings);
 
     const requireAuth = () => {
@@ -510,7 +505,6 @@ export function RecipeDetailClient({
                             fatPerServing={recipe.fatPerServing}
                             carbsPerServing={recipe.carbsPerServing}
                             nutritionCompleteness={recipe.nutritionCompleteness}
-                            formatAmount={formatAmount}
                         />
                     </div>
 
@@ -535,13 +529,17 @@ export function RecipeDetailClient({
                             </h2>
 
                             <RecipeStepsViewer
+                                servings={servings}
+                                originalServings={recipe.servings}
                                 nodes={(recipe.flow?.nodes ?? []) as any}
                                 edges={(recipe.flow?.edges ?? []) as any}
                                 ingredients={recipe.ingredients?.map((ing: any) => ({
-                                    id: ing.id ?? ing.name,
+                                    id: ing.id,
+                                    ingredientId: ing.ingredientId,
                                     name: ing.name,
-                                    amount: ing.amount != null ? String(ing.amount) : undefined,
+                                    amount: ing.rawAmount ?? String(ing.amount),
                                     unit: ing.unit,
+                                    notes: ing.notes,
                                 }))}
                                 recipeSlug={recipe.slug}
                                 initialProgress={initialProgress}

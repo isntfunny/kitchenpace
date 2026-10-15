@@ -3,6 +3,8 @@
  * No Next.js dependencies — reusable from server actions and CLI.
  */
 
+import { randomUUID } from 'node:crypto';
+
 import type { FlowNodeInput, FlowEdgeInput } from '@app/components/recipe/recipeFormTypes';
 
 import type { ImportedRecipe } from './openai-recipe-schema';
@@ -31,6 +33,8 @@ export interface AnalyzedRecipe {
 }
 
 export interface AnalyzedIngredient {
+    /** Stable source identity; retain when reordering/removing/replacing ingredients. */
+    id: string;
     name: string;
     amount: string;
     unit: string;
@@ -71,7 +75,7 @@ export function transformImportedRecipe(data: ImportedRecipe): AnalyzedRecipe {
 
     // Build ingredient refs for mention resolution
     const ingredientRefs = data.ingredients.map((ing, idx) => ({
-        id: `imported_${idx}`,
+        id: `imported_${idx}_${randomUUID()}`,
         name: ing.name,
     }));
 
@@ -96,7 +100,8 @@ export function transformImportedRecipe(data: ImportedRecipe): AnalyzedRecipe {
         difficulty: difficultyMap[data.difficulty] ?? 'MEDIUM',
         categoryIds: data.categories.map(categoryToSlug),
         tags: data.tags,
-        ingredients: data.ingredients.map((ing) => ({
+        ingredients: data.ingredients.map((ing, idx) => ({
+            id: ingredientRefs[idx].id,
             name: ing.name,
             amount: ing.amount != null ? String(ing.amount) : '',
             unit: ing.unit ?? 'Stück',

@@ -16,6 +16,7 @@ import '@xyflow/react/dist/style.css';
 
 import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import type { AIAnalysisResult, ApplySelection } from '@app/lib/importer/ai-text-analysis';
+import { bindFlowToExistingIngredients } from '@app/lib/ingredients/recipe-mentions';
 import { PALETTE } from '@app/lib/palette';
 
 import { css } from 'styled-system/css';
@@ -178,7 +179,14 @@ function FlowEditorInner({
 
     const handleAiResult = useCallback(
         (result: AIAnalysisResult, apply: ApplySelection) => {
-            const newNodes: RecipeFlowNode[] = result.flowNodes.map((node) => ({
+            const flowNodes = apply.ingredients
+                ? result.flowNodes
+                : bindFlowToExistingIngredients(
+                      result.flowNodes,
+                      result.ingredients,
+                      availableIngredients,
+                  );
+            const newNodes: RecipeFlowNode[] = flowNodes.map((node) => ({
                 id: node.id,
                 type: 'recipeStep' as const,
                 position: { x: 0, y: 0 },
@@ -205,7 +213,7 @@ function FlowEditorInner({
             onAiApply?.(result, apply);
             setAiDialogOpen(false);
         },
-        [autoLayoutAndFit, onAiApply, setAiDialogOpen],
+        [autoLayoutAndFit, onAiApply, setAiDialogOpen, availableIngredients],
     );
 
     return (

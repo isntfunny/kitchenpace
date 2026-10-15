@@ -29,6 +29,7 @@ import { type IngredientMatch, matchIngredients } from '@app/components/recipe/i
 import { analyzeWithAI, saveImportedRecipe } from '@app/lib/importer/pipeline';
 import { checkScraplerHealth, scrapeRecipe } from '@app/lib/importer/scraper';
 import type { AnalyzedIngredient, AnalyzedRecipe } from '@app/lib/importer/transform';
+import { removeIngredientReferences } from '@app/lib/ingredients/recipe-mentions';
 
 import { db } from '../lib/db.js';
 
@@ -308,7 +309,20 @@ async function importOne(
         }
     }
 
-    const saved = await saveRecipe(user, { ...analyzed, ingredients: finalIngredients }, publish);
+    const removedIds = new Set(
+        analyzed.ingredients
+            .filter((ing) => !finalIngredients.some((selected) => selected.id === ing.id))
+            .map((ing) => ing.id),
+    );
+    const saved = await saveRecipe(
+        user,
+        {
+            ...analyzed,
+            ingredients: finalIngredients,
+            flowNodes: removeIngredientReferences(analyzed.flowNodes, removedIds),
+        },
+        publish,
+    );
     if (saved) {
         return { url, status: 'ok', title: analyzed.title, slug: saved.slug };
     }

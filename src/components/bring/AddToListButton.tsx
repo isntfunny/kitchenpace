@@ -22,6 +22,7 @@ import { field, link, row, stack, checkbox, dialogOverlay, dialogContent } from 
 import { TransferResults } from './TransferResults';
 
 interface Ingredient {
+    id?: string;
     name: string;
     amount?: number;
     rawAmount?: string;
@@ -115,7 +116,7 @@ export function AddToListButton({
 
     function start() {
         const prepared = ingredients.map((ingredient, index) => ({
-            id: String(index),
+            id: ingredient.id ?? String(index),
             name: ingredient.name,
             specification: [
                 scaleQuantity(

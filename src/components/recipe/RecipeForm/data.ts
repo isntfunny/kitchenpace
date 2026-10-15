@@ -25,6 +25,8 @@ export interface IngredientSearchResult {
 
 export interface AddedIngredient {
     id: string;
+    /** Catalogue identity, distinct from the recipe occurrence/source id. */
+    ingredientId?: string;
     name: string;
     pluralName: string | null;
     amount: string;

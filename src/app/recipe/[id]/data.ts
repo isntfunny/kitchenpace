@@ -1,4 +1,6 @@
 export interface Ingredient {
+    id: string;
+    ingredientId: string;
     name: string;
     slug?: string | null;
     pluralName?: string | null;

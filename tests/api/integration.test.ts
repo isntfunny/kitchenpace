@@ -13,8 +13,8 @@ import { createKeyManager } from '../../src/lib/api/keys';
 import { createApiServices } from '../../src/lib/api/services';
 
 const url = process.env.API_TEST_DATABASE_URL;
-if (!url || !url.includes('127.0.0.1:55490/kuc90'))
-    throw new Error('Use disposable API_TEST_DATABASE_URL on port 55490');
+if (!url || !url.includes('127.0.0.1:55492/kuc90'))
+    throw new Error('Use disposable API_TEST_DATABASE_URL on port 55492');
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 const auth = betterAuth({
     secret: 'kuc90-disposable-test-secret-at-least-32-characters',

@@ -20,3 +20,22 @@ test('nutrition counts each known occurrence once and reports an unknown occurre
     assert.equal(result.calories, 5);
     assert.deepEqual(result.missingIngredients, ['Salz']);
 });
+
+test('nutrition interprets comma decimals, mixed and Unicode fractions as original quantities', () => {
+    const row = {
+        name: 'Mehl',
+        unitShortName: 'g',
+        energyKcal: 100,
+        protein: 0,
+        fat: 0,
+        carbs: 0,
+        fiber: 0,
+        ingredientUnitGrams: 1,
+        unitGramsDefault: 1,
+    };
+    const result = calculateRecipeNutrition(
+        ['0,5', '1 1/2', '½'].map((amount) => ({ ...row, amount })),
+    );
+    assert.equal(result.calories, 3);
+    assert.equal(result.completeness, 1);
+});

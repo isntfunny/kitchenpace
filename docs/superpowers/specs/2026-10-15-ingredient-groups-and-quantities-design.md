@@ -1,184 +1,113 @@
-# Zutatenverwendungen, Portionsmengen und Teilzubereitungen
+# Zutatenverwendungen und dynamische Portionsmengen
 
-Stand: 15.10.2026. Schriftlicher Entwurf zur Review vor Umsetzung der Erweiterung.
-Tickets: KUC-88 (Referenzen, Mengen, Bestandsreparatur), KUC-92 (Gruppen).
+Stand: 15.10.2026. Vom Nutzer nach Rückstellung der Gruppierung inhaltlich bestätigt.
+Ticket: KUC-88. KUC-92 (Zutatengruppen) bleibt im Backlog.
 
-## Ziel und beauftragter Umfang
+## Ziel und Umfang
 
-Zutaten in einer Anleitung zeigen die Menge für die ausgewählte Portionszahl.
-Antippen öffnet die Details der konkreten Verwendung. Zutaten können nach
-Teilzubereitungen wie „Teig“, „Knoblauchcreme“ und „Zum Belegen“ gruppiert sein.
-Die KI erzeugt Gruppen und kurze bearbeitbare Titel zusammen mit dem Verlauf.
-Dieselbe Katalogzutat darf mit verschiedenen Mengen in mehreren Gruppen stehen.
-Neue Importe, manuelles Bearbeiten und alte Rezepte sollen dieselben Regeln nutzen.
+Zutaten in Anleitung und Zutatenliste zeigen die Menge für die ausgewählte
+Portionszahl. Antippen öffnet die Details der konkreten Verwendung. Dieselbe
+Katalogzutat darf mehrfach mit verschiedenen Mengen und Hinweisen vorkommen.
+Neue Importe, manuelles Bearbeiten und alte Rezepte nutzen dieselben Identitäten.
 
-Der Nutzer hat Mengenreparatur, Skalierung und automatische Gruppen ausdrücklich
-beauftragt. Sichere Bestandskorrekturen gehören zur Arbeit; unklare historische
-Mengen und Zuordnungen bleiben als konkrete Prüffälle offen, statt geraten zu werden.
+Beauftragt sind Mengenreparatur, dynamische Skalierung und geprüfte Bestandskorrektur.
+Unklare historische Mengen und Verweise bleiben konkrete Prüffälle. Zutatengruppen,
+KI-Gruppentitel, Gruppenmodell und Gruppenbearbeitung sind zurückgestellt: Titel
+allein wären einfach, die verlässliche Zuordnung und Integration sind Zusatzarbeit.
 
-## Befund und Integrationsbasis
+## Bestand und Datenmodell
 
-- `fix/KUC-88-ingredient-references`, Commit `e4fe753`, enthält den vorbereiteten
-  Resolver, getrennte Verwendungen, Popover und eine Reparatur-CLI mit Journal.
-  Der Branch muss mit aktuellem `main` integriert werden, ohne Squash.
-- `main` hat inzwischen Bring! und eine persönliche API. Diese Save-/Read-Wege
-  müssen dieselben Identitäten und optionalen Gruppen erhalten.
-- Die Portionsauswahl skaliert bisher nur die Zutatenliste. Der Viewer bekommt
-  unskalierte Mengen; sein `override` überschreibt die Mengenauswahl vollständig.
-- Der vorbereitete Popover allein schließt diese Lücke nicht.
-- Der Live-Versuch änderte ausschließlich das Lángos-Rezept
-  `cmn1pai9300lqszmg6f1alje6`: Katalogreferenzen und feste Mention-Mengen für fünf
-  Portionen. Vorher-/Nachher-Snapshots und Rücknahme liegen unter
-  `/home/paseo/task-artifacts/kuc88-live-single-20261015/` und auf jupiter unter
-  `/root/maintenance/kuc88-langos-20261015/`.
-- Der heutige Unique-Index lässt nur eine Verwendung je Katalogzutat zu. Dadurch
-  fehlt beim Lángos die separate Salzzeile für die Creme. Die gespeicherte
-  Originalantwort belegt hierfür eine unbekannte Menge zum Abschmecken.
+`fix/KUC-88-ingredient-references`, Commit `e4fe753`, enthält bereits Resolver,
+getrennte Verwendungen, Popover und Reparatur-CLI mit Journal. Der Branch muss mit
+aktuellem `main` integriert werden, ohne Squash; Bring! und persönliche API kamen
+seitdem hinzu. Vorhandene fremde Änderungen bleiben erhalten.
 
-## Entscheidung und Alternativen
+`RecipeIngredient.id` identifiziert eine konkrete Verwendung. `ingredientId`
+bleibt die Katalogidentität. `sourceId` hält Import-/Editor-IDs über wiederholtes
+Speichern stabil. Die vorbereitete Migration entfernt den Unique-Index je
+Katalogzutat und ergänzt `sourceId`. Keine weitere Schemaänderung für Gruppen.
 
-Empfohlen: eigene Rezeptgruppen und konkrete Zutatenverwendungen speichern;
-Mengen beim Rendern skalieren. Dies trägt manuelle Änderungen, mehrere Mengen
-derselben Zutat und stabile Verweise über wiederholtes Speichern.
+Der aktuelle Viewer erhält unskalierte Mengen. Die vorbereitete Detailanzeige
+allein löst diese Lücke nicht. Beim Speichern dürfen getrennte Verwendungen weder
+zusammenfallen noch durch erneutes Autosave vervielfacht werden. Alle Importwege
+(URL, Text, Bulk, CLI, Editor, persönliche API) nutzen denselben Resolver.
 
-Gruppen nur aus aktuellen Graphverzweigungen zu berechnen wäre instabil: Ein
-Schritt kann Zutaten mehrerer Teilzubereitungen zusammenführen, und eine Kante
-liefert keinen zuverlässigen Gruppentitel. Feste Mengen in Beschreibungstexten
-lösen dagegen weder Portionsänderungen noch verlorene Zutatenverwendungen.
+## Mengenberechnung
 
-## Datenmodell und Identität
+Eine gemeinsame reine Zahlenlogik verarbeitet die originale Mengenzeichenfolge
+mit dem Faktor `ausgewählte Portionen / Originalportionen`. Zutatenliste, Viewer,
+Druck und Bring! verwenden sie, ohne Mengen doppelt zu skalieren.
 
-- `RecipeIngredient.id` identifiziert eine konkrete Verwendung. `ingredientId`
-  bleibt die Katalogidentität; `sourceId` bindet Import-/Editor-IDs stabil.
-- KUC-88 entfernt die Eindeutigkeitsbeschränkung je Katalogzutat. Zwei Salzzeilen
-  sind zulässig; erneutes Autosave erzeugt keine zusätzlichen Verwendungen.
-- Neues `RecipeIngredientGroup`: `id`, `recipeId`, `title`, `position`.
-  Gruppen gehören genau einem Rezept; beim Löschen des Rezepts verschwinden sie.
-- `RecipeIngredient.groupId` ist nullable. Ungruppierte Zutaten bleiben gültig.
-  Beim Löschen einer Gruppe bleiben ihre Zutaten erhalten und werden ungruppiert.
-- Eine Verwendung gehört höchstens einer Gruppe. Braucht dieselbe Zutat zwei
-  Mengen in zwei Teilzubereitungen, gibt es zwei Verwendungen mit eigener Menge.
-- Gruppe und Verwendung werden in derselben Rezepttransaktion gespeichert.
-  Fremde Gruppen-IDs und ungültige Zuordnungen werden abgewiesen.
-- Gruppen haben eine explizite Reihenfolge, Zutaten ihre bestehende Reihenfolge.
-  Innerhalb jeder Gruppe gilt die Zutatenreihenfolge. Leere Gruppen werden nicht
-  als leere Abschnitte im öffentlichen Rezept dargestellt.
+- Dezimalpunkt/-komma, Brüche, gemischte und Unicode-Brüche sowie einfache Bereiche.
+- Faktor eins erhält die Originalschreibweise. Sonst deutsche Zahlendarstellung,
+  höchstens zwei Nachkommastellen, ohne unnötige Nullen. Sehr kleine positive
+  Mengen werden mit zwei signifikanten Stellen statt als null dargestellt.
+- Beispiele bei Faktor zwei: `1/2` → `1`, `2–3` → `4–6`, `0,5` → `1`, `0,001` → `0,002`.
+- Einheiten bleiben unverändert. Leere/unbekannte Mengen, „nach Geschmack“, „zum
+  Frittieren“ und nicht eindeutig numerische Texte bleiben unverändert.
+- Ungültige Faktoren (nicht endlich oder nicht positiv) verändern die Menge nicht;
+  ungültige Portionswerte werden an der Eingabe abgewiesen.
+- Normale Mentions speichern keine Gesamtmenge: `@[Schmand](row-id)`. Der Renderer
+  liest die Verwendung und skaliert beim Anzeigen.
+- Explizite Teilmengen wie `@[Wasser|100 ml](row-id)` beziehen sich auf die
+  Originalportionen und skalieren ebenfalls einmal. Freie Overrides bleiben Text.
+- Der Popover zeigt die skalierte Teilmenge, gegebenenfalls die skalierte gesamte
+  Verwendung und deren Hinweise. Keine Übernahme der Menge einer anderen Verwendung.
 
-## Mengenberechnung und Anzeige
+## Anzeige und Transport
 
-Eine gemeinsame reine Mengenfunktion verarbeitet die originale Mengenzeichenfolge
-und den Faktor `ausgewählte Portionen / Originalportionen`. Sie wird von
-Zutatenliste, Viewer und Druck benutzt; Bring! verwendet dieselbe Zahlenlogik.
+Die vorhandene Portionsauswahl steuert Zutatenliste, Text-, Flow-, Lane- und mobile
+Kochansicht. Ansichtswechsel setzt Mengen nicht zurück. Eine gemeinsame Viewer-
+Mengenquelle verhindert, dass einzelne Ansichten eigene Regeln entwickeln.
 
-- Dezimalpunkt und Dezimalkomma, Brüche einschließlich gemischter Brüche,
-  Unicode-Brüche und einfache Bereiche werden unterstützt.
-- Bei Faktor eins bleibt die ursprüngliche Schreibweise erhalten.
-- Bei anderen Faktoren werden Zahlen mit maximal zwei Nachkommastellen ohne
-  abschließende Nullen dargestellt; sehr kleine positive Mengen bleiben sichtbar
-  und werden nicht auf null gerundet. Einheiten werden nicht umgerechnet.
-- Mengenbereiche skalieren beide Grenzen. Beispielsweise wird `1/2` bei Faktor
-  zwei zu `1`, `2–3` zu `4–6` und `0,5` zu `1`.
-- Leere oder unbekannte Mengen, „nach Geschmack“, „zum Frittieren“ und sonstige
-  nicht eindeutig numerische Hinweise bleiben Text. Es wird keine Menge erfunden.
-- Nur positive endliche Portionszahlen und Faktoren sind gültig. Ungültige
-  Eingaben skalieren nicht und werden an der Eingabe abgewiesen.
-- Normale Mentions enthalten keine kopierte Gesamtmenge: `@[Schmand](row-id)`.
-  Der Renderer liest die konkrete Verwendung und skaliert genau einmal.
-- Explizite Teilmengen wie `@[Wasser|100 ml](row-id)` sind auf die Originalportionen
-  bezogen und skalieren ebenfalls einmal. Nichtnumerische Overrides bleiben Text.
-- Der Popover zeigt die skalierte Teilmenge, bei Abweichung die skalierte gesamte
-  Rezeptverwendung und deren Hinweise. Er darf keine Menge einer anderen
-  gleichnamigen Verwendung zeigen.
+Die eigenständige `/mobile`-Seite bekommt eine kompakte Portionsauswahl und einen
+validierten optionalen `servings`-Queryparameter. Ohne gültigen Parameter gelten
+Originalportionen. Cast überträgt die gewählten Portionen optional mit dem Rezept;
+der Receiver bleibt zu alten Nachrichten ohne Portionszahl kompatibel.
 
-Die Portionsauswahl der Rezeptseite speist alle Ansichten des Viewers, einschließlich
-Textansicht, Flow, Lane-Ansicht und mobiler Kochansicht. Wechsel zwischen Ansichten
-darf Mengen nicht zurücksetzen. Die eigenständige `/mobile`-Seite bekommt eine
-kompakte Portionsauswahl und akzeptiert einen validierten optionalen
-`servings`-Queryparameter. Aufrufe ohne Parameter beginnen bei den Originalportionen.
-Cast überträgt die gewählten Portionen optional mit dem Rezept; der Receiver
-bleibt zu alten Nachrichten ohne Portionszahl kompatibel.
+Druck erhält dieselben skalierten Originalmengen, auch bei Brüchen/Bereichen, und
+lesbare Anleitungstexte ohne rohe Mention-Syntax. Suchindex und Nährwertberechnung
+berücksichtigen jede Verwendung genau einmal. Bring!-Auswahl identifiziert eine
+Verwendung separat vom Katalogartikel und skaliert deren Menge genau einmal.
+Unbekannte Mengen bleiben als Hinweise erhalten. Die persönliche API erhält
+bestehende Felder und ergänzt, soweit nötig, die eindeutige Verwendungsidentität.
 
-## Gruppierung bei Import und Bearbeitung
+## Bestandsreparatur und Lángos
 
-Das gemeinsame KI-Ergebnis bekommt `ingredientGroups: [{ id, title }]` und ein
-nullable `groupId` pro Zutat. IDs sind lokale Ergebnis-IDs und werden beim Speichern
-in Rezeptgruppen-IDs übersetzt. Ein leerer Gruppenarray bedeutet ein flaches Rezept.
-Die Servervalidierung prüft eindeutige Gruppen-IDs und gültige Verweise.
+Die CLI bleibt ohne Apply read-only. Plan und Journal enthalten Verweise und
+wiederhergestellte Verwendungen; vollständiger Vorhervergleich verhindert das
+Überschreiben paralleler Änderungen. Idempotenz, Resume und Rollback bleiben Pflicht.
 
-Der Prompt verlangt Teilzubereitungen statt bloßer Aktionskategorien. Vorhandene
-Überschriften der Quelle werden bevorzugt. Fehlen sie, darf die KI aus dem
-vollständigen Rezept und dessen Zwischenprodukten kurze deutsche Titel vorschlagen.
-Bei fehlender belastbarer Zuordnung bleibt `groupId` null. Mengen dürfen weder
-durch Gruppierung erfunden noch auf mehrere Verwendungen kopiert werden.
+Sichere Verweise werden automatisch repariert. Fehlende Verwendungen werden nur
+aus geprüfter Evidenz bzw. einer expliziten Entscheidungsdatei wiederhergestellt.
+Quell-URL allein und heutige Zutatenpositionen sind keine ausreichende Evidenz.
 
-URL-, Text-, Bulk-, CLI-, Editor- und persönliche API-Importe verwenden dieselben
-Schemas und Transformations-/Speicherfunktionen. Zod und das strikte JSON-Schema
-werden gemeinsam angepasst. Alte gespeicherte Importantworten ohne Gruppen bleiben
-als Beweismaterial lesbar. Die Promptänderung benötigt keinen Modellwechsel.
+Lángos `cmn1pai9300lqszmg6f1alje6` wurde beim Live-Versuch mit Katalogverweisen und
+festen Mention-Mengen für fünf Portionen versehen. Snapshots und Rücknahme liegen
+unter `/home/paseo/task-artifacts/kuc88-live-single-20261015/` und auf jupiter unter
+`/root/maintenance/kuc88-langos-20261015/`.
 
-Im Zutatenbereich des Formulars können Nutzer Gruppen anlegen, benennen,
-umsortieren und löschen sowie jede Verwendung einer Gruppe zuweisen. Dieselbe
-Katalogzutat kann erneut als eigene Verwendung hinzugefügt werden. Gruppentitel
-und Zuordnung gehören zu Autosave und manuellem Speichern. Im KI-Review ist die
-Gruppierung Bestandteil der Zutatenübernahme: „nur Verlauf übernehmen“ ersetzt
-keine vorhandenen Gruppen, Zutaten oder manuell vergebenen Titel.
+Den aktuellen Stand gegen diese Snapshots prüfen; aus der belegten Originalstruktur
+Verwendungsreferenzen rekonstruieren, Creme-Salz ohne erfundene Menge als eigene
+Verwendung wiederherstellen und ausschließlich die durch den Live-Versuch erzeugten
+Gesamtmengen-Overrides entfernen. Echte Teilmengen und spätere Bearbeitungen bleiben
+erhalten. Kein vorübergehendes Zurückrollen auf den fehlerhaften alten Zustand.
 
-Die öffentliche Zutatenliste und der Druck zeigen geordnete Gruppenüberschriften,
-danach gegebenenfalls „Weitere Zutaten“. Ein völlig ungruppiertes Rezept behält
-seine flache Darstellung. Titel werden als Text behandelt.
-
-## Kompatibilität mit Suche, Ernährung, Bring! und API
-
-Gruppen ergänzen die bisherigen flachen Zutaten. Suchindex, Nährwertberechnung und
-Einkaufsübernahme verarbeiten weiterhin jede konkrete Verwendung genau einmal.
-Gleiche Katalogzutaten dürfen für eine Einkaufsliste nur bei kompatiblen Einheiten
-zusammengefasst werden. Unbekannte Mengen werden nicht in numerische Summen
-umgewandelt oder fallengelassen. Die API liefert zusätzlich geordnete Gruppen und
-nullable `groupId`, ohne bestehende Zutatenfelder zu entfernen.
-
-## Bestandsreparatur und Live-Versuch
-
-Die vorhandene CLI bleibt read-only ohne explizites Apply. Bericht und Journal
-enthalten auch Gruppen, Zuordnungen und bei Bedarf wiederhergestellte Verwendungen.
-Vollständiger Vorhervergleich schützt Rezept, Zutaten und Gruppen vor dem
-Überschreiben paralleler Änderungen. Resume, idempotenter Wiederholungslauf und
-Rollback gehören zur Verifikation.
-
-Sichere Referenzen werden automatisch repariert. Fehlende Verwendungen und Gruppen
-werden nur aus überprüfter Evidenz oder einer expliziten Entscheidungsdatei
-wiederhergestellt. Eine per Quell-URL gefundene Importantwort ist allein kein
-Beweis. Indexpositionen der heutigen Zutatenliste sind kein Ersatz für historische
-Import-IDs. Ohne belastbare Evidenz bleibt ein Rezept ungruppiert beziehungsweise
-der konkrete Verweis im Prüfbericht.
-
-Für Lángos: Vorher-/Nachher-Snapshot des Live-Versuchs gegen den aktuellen Stand
-prüfen. Auf dieser Grundlage die ursprünglichen Referenzen aus der gesicherten
-Originalstruktur in dauerhafte Verwendungs-IDs auflösen, Creme-Salz als eigene
-Verwendung ohne erfundene Menge wiederherstellen und die nur durch den Live-Versuch
-hinzugefügten festen Gesamtmengen entfernen. Andere echte Teilmengen bleiben
-erhalten. Gruppen „Teig“, „Knoblauchcreme“, „Zum Ausbacken“ und „Zum Belegen“ werden
-anhand der geprüften Originalzutaten und Schritte ausdrücklich zugeordnet.
-
-Alle übrigen Rezepte werden gescannt. Der Abschlussbericht unterscheidet geprüft,
-sicher repariert, bereits korrekt, ungültig sowie offen wegen fehlender Evidenz.
-Eine erfolgreiche sichere Teilmigration bedeutet nicht, dass alle Altbestände
-vollständig wiederhergestellt sind.
+Alle übrigen Rezepte werden gescannt. Abschlussbericht: geprüft, bereits korrekt,
+sicher repariert, ungültig und offen wegen fehlender Evidenz. Sichere Teilmigration
+bedeutet nicht, dass sämtliche verlorenen Daten wiederhergestellt sind.
 
 ## Nachweis und Bereitstellung
 
-1. Aktuelles `main` und KUC-88 im bestehenden isolierten Worktree integrieren.
-2. Mengen-, Identitäts-, Gruppen- und Migrationsregressionen lokal und auf einer
-   isolierten Datenbank prüfen. Keine Testfixtures oder Tests auf jupiter.
-3. Browserprüfung auf Mobile und Desktop: 5 → 10 → 5 Portionen, sämtliche Ansichten,
-   Teilmengen, Popover und Gruppen; Autosave mit wiederholten Salzverwendungen.
-4. API-Import, Druck, Einkauf und Ernährung auf Erhaltung aller Verwendungen prüfen.
-5. Review, Merge ohne Squash nach `main`, Schema-/Anwendungsbereitstellung zuerst
-   auf Staging; Backup und überprüfte Bestandspläne vor produktivem Apply.
-6. Live nur reale beauftragte Datenkorrekturen und anschließende Verifikation.
-   Den Lángos-Fall zuerst vollständig prüfen, danach sichere Änderungen des
-   Gesamtplans anwenden und offene Fälle mit Zahlen dokumentieren.
+Lokal und in isolierter Datenbank testen: 5 → 10 → 5 Portionen, doppelte Salzzeilen,
+Teilmenge, unbekannte Menge, Popover, Autosave, Import, API, Druck und Einkauf.
+Keine Testfixtures oder Tests auf jupiter. Browserprüfung auf Mobile und Desktop.
 
-Die Freigabe dieses Entwurfs definiert den Umfang. Konkrete Implementierungsschritte
-werden anschließend im Ausführungsplan festgelegt. Neue Secrets, Modellwechsel,
-ungefragte Abhängigkeiten und allgemeine Neugestaltung der Rezeptseite sind nicht
-Teil dieser Arbeit.
+Review, Merge ohne Squash nach `main`, Schema-/App-Bereitstellung zuerst auf Staging.
+Backup und geprüfte Bestandspläne vor produktivem Apply. Live ausschließlich reale
+beauftragte Korrekturen und anschließende Verifikation: Lángos zuerst vollständig,
+danach sichere Änderungen des Gesamtplans; verbleibende Prüffälle beziffern.
+
+Keine neuen Secrets, Modellwechsel, Produktabhängigkeiten oder allgemeine
+Neugestaltung der Rezeptseite. Umsetzung inline im bestehenden isolierten Worktree
+ist die empfohlene Ausführung; der Ausführungsplan wird vor Beginn geprüft.

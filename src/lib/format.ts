@@ -1,3 +1,5 @@
+import { portionFactor, scaleQuantity } from './ingredients/quantities';
+
 /**
  * Format a scaled ingredient amount for display.
  * Integers stay whole, decimals get 1 decimal place.
@@ -7,6 +9,5 @@ export function formatScaledAmount(
     servings: number,
     originalServings: number,
 ): string {
-    const scaled = amount * (servings / originalServings);
-    return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
+    return scaleQuantity(String(amount), portionFactor(servings, originalServings));
 }

@@ -65,3 +65,29 @@ test('catalog-equivalent ingredients in one import cannot overwrite each other',
     );
     assert.equal(purchase[0].specification, '2 Stück');
 });
+
+test('two uses of the same ingredient retain both specifications in one shopping item', async () => {
+    const writes: { name: string; specification: string }[] = [];
+    const client = {
+        items: async () => ({ purchase: [], recently: [] }),
+        write: async (_l: string, _o: string, name: string, specification: string) => {
+            writes.push({ name, specification });
+        },
+    };
+    const result = await transferItems(
+        client as any,
+        'mine',
+        [
+            { id: 'dough-salt', name: 'Salz', specification: '2 TL für den Teig' },
+            { id: 'cream-salt', name: 'Salz', specification: 'nach Geschmack für die Creme' },
+        ],
+        [],
+    );
+    assert.equal(writes.length, 1);
+    assert.equal(writes[0].specification, '2 TL für den Teig + nach Geschmack für die Creme');
+    assert.equal(result.length, 2);
+    assert.deepEqual(
+        result.map((i) => i.id),
+        ['dough-salt', 'cream-salt'],
+    );
+});

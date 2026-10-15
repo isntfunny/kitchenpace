@@ -97,9 +97,14 @@ export async function approveContent(queueId: string, reviewNote?: string) {
     } else if (queueItem.contentType === 'profile') {
         await approveProfileImage(queueItem.authorId, queueItem.contentId);
     } else if (queueItem.contentType === 'collection') {
+        const snapshot = queueItem.contentSnapshot as Record<string, unknown> | null;
         await prisma.collection.update({
             where: { id: queueItem.contentId },
-            data: { moderationStatus: 'APPROVED', moderationNote: null, published: true },
+            data: {
+                moderationStatus: 'APPROVED',
+                moderationNote: null,
+                published: snapshot?.intendedPublished !== false,
+            },
         });
     }
 

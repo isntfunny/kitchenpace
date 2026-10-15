@@ -7,10 +7,8 @@ datasource db {
   provider = "postgresql"
 }
 
-// ============================================
-// ENUMS
-// ============================================
-
+// =====================================// ENUMS
+// =====================================
 // Roles are stored as strings: "user", "admin", "moderator", "banned"
 
 enum TrophyTier {
@@ -123,10 +121,8 @@ enum ModerationStatus {
   AUTO_APPROVED
 }
 
-// ============================================
-// AUTH MODELS (Better Auth)
-// ============================================
-
+// =====================================// AUTH MODELS (Better Auth)
+// =====================================
 model Account {
   id                    String     @id @default(cuid())
   userId                String
@@ -191,11 +187,14 @@ model Passkey {
   @@index([userId])
 }
 
-// ============================================
-// USER & PROFILE
-// ============================================
-
+// =====================================// USER & PROFILE
+// =====================================
 model User {
+  apiKeys Apikey[]
+  apiMutations ApiMutation[]
+  apiImports ApiImport[]
+  bringConnection BringConnection?
+  bringTransfers BringTransfer[]
   id                        String                    @id @default(cuid())
   name                      String?
   email                     String                    @unique
@@ -302,11 +301,10 @@ model Profile {
   @@unique([nickname])
 }
 
-// ============================================
-// RECIPE & INGREDIENTS
-// ============================================
-
+// =====================================// RECIPE & INGREDIENTS
+// =====================================
 model Recipe {
+  apiImport ApiImport?
   id                                                                         String              @id @default(cuid())
   title                                                                      String
   slug                                                                       String              @unique
@@ -435,10 +433,8 @@ model PlannedStream {
   @@index([recipeId])
 }
 
-// ============================================
-// RECIPE STEP IMAGES
-// ============================================
-
+// =====================================// RECIPE STEP IMAGES
+// =====================================
 model RecipeStepImage {
   id        String    @id @default(cuid())
   recipeId  String
@@ -454,10 +450,8 @@ model RecipeStepImage {
   @@index([photoKey])
 }
 
-// ============================================
-// RECIPE IMPORTER RUNS (audit + cost tracking)
-// ============================================
-
+// =====================================// RECIPE IMPORTER RUNS (audit + cost tracking)
+// =====================================
 enum ImportRunStatus {
   SUCCESS  // AI analyzed + recipe saved
   FALLBACK // AI failed/unavailable, used regex fallback parser
@@ -501,10 +495,8 @@ model ImportRun {
   @@index([createdAt])
 }
 
-// ============================================
-// INGREDIENTS (Master List + Recipe-specific)
-// ============================================
-
+// =====================================// INGREDIENTS (Master List + Recipe-specific)
+// =====================================
 model Ingredient {
   id              String              @id @default(cuid())
   name            String
@@ -633,10 +625,8 @@ model RecipeIngredient {
   @@index([unitId])
 }
 
-// ============================================
-// CATEGORIES & TAGS
-// ============================================
-
+// =====================================// CATEGORIES & TAGS
+// =====================================
 model Category {
   id                                                                            String            @id @default(cuid())
   name                                                                          String            @unique
@@ -707,10 +697,8 @@ model Comment {
   @@index([moderationStatus])
 }
 
-// ============================================
-// SOCIAL: RATINGS & FAVORITES
-// ============================================
-
+// =====================================// SOCIAL: RATINGS & FAVORITES
+// =====================================
 model UserRating {
   id                        String    @id @default(cuid())
   recipeId                  String
@@ -741,10 +729,8 @@ model Favorite {
   @@index([recipeId, createdAt])
 }
 
-// ============================================
-// SOCIAL: FOLLOW SYSTEM
-// ============================================
-
+// =====================================// SOCIAL: FOLLOW SYSTEM
+// =====================================
 model Follow {
   id          String    @id @default(cuid())
   followerId  String
@@ -759,10 +745,8 @@ model Follow {
   @@index([followingId])
 }
 
-// ============================================
-// NOTIFICATIONS
-// ============================================
-
+// =====================================// NOTIFICATIONS
+// =====================================
 model Notification {
   id                                                                        String            @id @default(cuid())
   userId                                                                    String
@@ -793,10 +777,8 @@ model PushSubscription {
   @@index([userId])
 }
 
-// ============================================
-// MEAL PLANNING
-// ============================================
-
+// =====================================// MEAL PLANNING
+// =====================================
 model MealPlan {
   id            String            @id @default(cuid())
   userId        String
@@ -831,10 +813,8 @@ model MealPlanRecipe {
   @@index([recipeId])
 }
 
-// ============================================
-// SHOPPING LISTS
-// ============================================
-
+// =====================================// SHOPPING LISTS
+// =====================================
 model ShoppingList {
   id         String          @id @default(cuid())
   userId     String
@@ -868,10 +848,8 @@ model ShoppingItem {
   @@index([shoppingListId])
 }
 
-// ============================================
-// ACTIVITY & VIEW HISTORY
-// ============================================
-
+// =====================================// ACTIVITY & VIEW HISTORY
+// =====================================
 model ActivityLog {
   id         String        @id @default(cuid())
   userId     String
@@ -924,10 +902,8 @@ model UserCookHistory {
   @@index([recipeId,                         cookedAt])
 }
 
-// ============================================
-// COOK IMAGES (User-submitted photos)
-// ============================================
-
+// =====================================// COOK IMAGES (User-submitted photos)
+// =====================================
 model CookImage {
   id               String            @id @default(cuid())
   recipeId         String
@@ -948,10 +924,8 @@ model CookImage {
   @@index([moderationStatus])
 }
 
-// ============================================
-// PINNED FAVORITES (KUC-5)
-// ============================================
-
+// =====================================// PINNED FAVORITES (KUC-5)
+// =====================================
 model PinnedFavorite {
   id                                       String    @id @default(cuid())
   userId                                   String
@@ -967,10 +941,8 @@ model PinnedFavorite {
   @@index([userId])
 }
 
-// ============================================
-// CONTENT MODERATION
-// ============================================
-
+// =====================================// CONTENT MODERATION
+// =====================================
 model ModerationQueue {
   id                                                                                 String            @id @default(cuid())
   contentType    String           // "recipe" | "comment" | "profile" | "cook_image"
@@ -1033,10 +1005,8 @@ model Report {
   @@index([resolved])
 }
 
-// ============================================
-// CURATED COLLECTIONS
-// ============================================
-
+// =====================================// CURATED COLLECTIONS
+// =====================================
 model Collection {
   id               String              @id @default(cuid())
   title            String
@@ -1128,10 +1098,8 @@ model CollectionCategory {
   @@index([categoryId])
 }
 
-// ============================================
-// SITE SETTINGS
-// ============================================
-
+// =====================================// SITE SETTINGS
+// =====================================
 model SiteSettings {
   id        String    @id @default(cuid())
   key       String    @unique
@@ -1140,10 +1108,8 @@ model SiteSettings {
   updatedBy String?
 }
 
-// ============================================
-// JOB RUNS (BullMQ History)
-// ============================================
-
+// =====================================// JOB RUNS (BullMQ History)
+// =====================================
 model JobRun {
   id                                                String     @id @default(cuid())
   queueName                                         String
@@ -1163,10 +1129,8 @@ model JobRun {
   @@index([jobId])
 }
 
-// ============================================
-// TROPHIES / ACHIEVEMENTS
-// ============================================
-
+// =====================================// TROPHIES / ACHIEVEMENTS
+// =====================================
 model Trophy {
   id                                                             String        @id // slug: "finished-tutorial" or "recipe-creator:bronze"
   groupSlug                                                      String
@@ -1265,4 +1229,87 @@ model FilterSetIngredient {
 
   @@id([filterSetId, ingredientId])
   @@index([ingredientId])
+}
+
+// Better Auth API-key plugin. Keys are hashed by the plugin; never store plaintext.
+model Apikey {
+  id                  String   @id
+  configId            String   @default("default")
+  name                String?
+  start               String?
+  prefix              String?
+  key                 String   @unique
+  referenceId         String
+  refillInterval      Int?
+  refillAmount        Int?
+  lastRefillAt        DateTime?
+  enabled             Boolean  @default(true)
+  rateLimitEnabled    Boolean  @default(true)
+  rateLimitTimeWindow  Int?
+  rateLimitMax        Int?
+  requestCount        Int      @default(0)
+  remaining           Int?
+  lastRequest         DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  permissions         String?
+  metadata            String?
+  user                User     @relation(fields: [referenceId], references: [id], onDelete: Cascade)
+  @@index([configId])
+  @@index([referenceId])
+}
+
+model ApiMutation {
+  id          String   @id @default(cuid())
+  userId      String
+  operation   String
+  token       String
+  requestHash String
+  response    Json
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, operation, token])
+}
+
+model ApiImport {
+  id             String   @id @default(cuid())
+  userId         String
+  keyId          String
+  idempotencyKey String
+  requestHash    String
+  input          Json
+  status         String   @default("queued")
+  recipeId       String?  @unique
+  errorCode      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deadline       DateTime
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe         Recipe?  @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
+  @@index([status, deadline])
+}
+
+// Bring remains the source of truth; these records only store access and operation receipts.
+model BringConnection {
+  userId String @id
+  credentials String
+  defaultListUuid String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BringTransfer {
+  userId String
+  operationId String
+  requestHash String
+  status String @default("PENDING")
+  result Json
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, operationId])
+  @@index([createdAt])
 }

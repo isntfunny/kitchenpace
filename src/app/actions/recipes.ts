@@ -1,6 +1,7 @@
 'use server';
 
 import type { FlowEdgeInput, FlowNodeInput } from '@app/components/recipe/recipeFormTypes';
+import { isAdmin } from '@app/lib/admin/check-admin';
 import { getServerAuthSession } from '@app/lib/auth';
 import { cosineSimilarity } from '@app/lib/embeddings/embedding-service';
 import type { FitsNowContext } from '@app/lib/fits-now';
@@ -220,10 +221,19 @@ export async function fetchRecipeBySlug(
     viewerId?: string,
     includeUnpublished?: boolean,
 ): Promise<RecipeDetailData | null> {
+    // Server Action arguments are untrusted: a caller cannot grant draft access.
+    const session = await getServerAuthSession('fetchRecipeBySlug');
+    viewerId = session?.user?.id;
+    const mayReadDrafts = Boolean(includeUnpublished && viewerId);
+    const admin = mayReadDrafts && (await isAdmin(viewerId!));
     const recipe = await prisma.recipe.findFirst({
         where: {
             OR: [{ slug: slugOrId }, { id: slugOrId }],
-            ...(includeUnpublished ? {} : { publishedAt: { not: null } }),
+            ...(mayReadDrafts
+                ? admin
+                    ? {}
+                    : { authorId: viewerId! }
+                : { status: 'PUBLISHED', moderationStatus: { in: ['APPROVED', 'AUTO_APPROVED'] } }),
         },
         include: {
             categories: { include: { category: true }, orderBy: { position: 'asc' } },
@@ -628,9 +638,13 @@ async function fetchSimilarDetails(
 
 export async function fetchRecipeForEdit(
     recipeId: string,
-    authorId: string,
-    isUserAdmin: boolean = false,
+    _authorId: string,
+    _isUserAdmin: boolean = false,
 ): Promise<EditRecipeData | null> {
+    const session = await getServerAuthSession('fetchRecipeForEdit');
+    const authorId = session?.user?.id;
+    if (!authorId) return null;
+    const isUserAdmin = await isAdmin(authorId);
     const [recipe, stepImages] = await Promise.all([
         prisma.recipe.findFirst({
             where: isUserAdmin ? { id: recipeId } : { id: recipeId, authorId },

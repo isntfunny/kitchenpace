@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
+import { isTurnstileCspProbe } from './turnstile-console';
+
 const BASE = process.env.E2E_BASE_URL ?? 'https://beta.xn--kchentakt-q9a.de';
 
 // ---------------------------------------------------------------------------
@@ -48,6 +50,7 @@ function createErrorCatcher(page: Page) {
     page.on('console', (msg) => {
         if (msg.type() === 'error') {
             const text = msg.text();
+            if (isTurnstileCspProbe(text, msg.location().url)) return;
             // Ignore Cloudflare Turnstile / captcha errors
             if (text.includes('challenges.cloudflare') || text.includes('font-size:0')) return;
             // Ignore CSP reports from third-party iframes

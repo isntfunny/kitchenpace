@@ -4,6 +4,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError } from 'better-auth/api';
 import { admin, captcha } from 'better-auth/plugins';
 
+import { API_KEY_DISABLED_PATHS, personalApiKeyPlugin } from '@app/lib/api/key-plugin';
 import { fireEvent } from '@app/lib/events/fire';
 import {
     sendNotifuseActivationEmail,
@@ -163,7 +164,10 @@ export const auth = betterAuth({
             },
         },
     },
+    // Key management is exposed only through session-guarded account actions.
+    disabledPaths: API_KEY_DISABLED_PATHS,
     plugins: [
+        personalApiKeyPlugin(),
         captcha({
             provider: 'cloudflare-turnstile',
             secretKey: process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY ?? '',

@@ -89,11 +89,9 @@ const buildRecipeMetadata = (
 
 export async function generateMetadata({ params }: RecipePageProps): Promise<Metadata> {
     const resolvedParams = await params;
-    // For generateMetadata we fetch with unpublished to detect draft status
     const published = await getRecipe(resolvedParams.id, undefined, false);
-    if (published) return buildRecipeMetadata(published, false);
-    const draft = await getRecipe(resolvedParams.id, undefined, true);
-    return buildRecipeMetadata(draft, true);
+    // Metadata is public, including on 404 pages: never load draft content here.
+    return buildRecipeMetadata(published, false);
 }
 
 export default async function RecipePage({ params, searchParams }: RecipePageProps) {

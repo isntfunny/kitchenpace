@@ -1,5 +1,6 @@
 import 'dotenv/config';
 
+import { startApiImportWorker, stopApiImportWorker } from './queues/api-import-worker';
 import { getRedis, disconnectRedis } from './queues/connection';
 import { closeAllQueues } from './queues/queue';
 import { startScheduler, stopScheduler } from './queues/scheduler';
@@ -21,6 +22,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
     }
 
     try {
+        await stopApiImportWorker();
         await stopWorkers();
         console.log('[Main] Workers stopped');
     } catch (error) {
@@ -56,6 +58,7 @@ async function main(): Promise<void> {
     console.log('[Main] Scheduler started');
 
     startWorkers();
+    startApiImportWorker();
     console.log('[Main] Workers started');
 
     console.log('[Main] BullMQ Worker is running');

@@ -99,3 +99,41 @@ MENTION_TEST_DATABASE_URL=... node --import tsx --test \
 ```
 
 Integrationstests legen eigene Fixtures an und entfernen sie anschließend. Der Speichertest benötigt die vorhandene native Nodehun-Abhängigkeit und deutsche Hunspell-Wörterbücher. Die Moderationsantwort kommt ausschließlich von einem lokalen Testserver; es gibt keine OpenAI-Aufrufe. Produktionsdatenbanken sind keine Testumgebung.
+
+## Portionsmengen und der Live-Versuch vom 15.10.2026
+
+Mengen werden beim Anzeigen aus den originalen Zeichenfolgen skaliert. Normale
+Mentions sollen auf eine Rezeptverwendung verweisen und keine kopierte Gesamtmenge
+enthalten. Numerische explizite Teilmengen werden ebenfalls skaliert; freie Hinweise
+wie „nach Geschmack“ bleiben unverändert. Die persönliche API liefert zusätzlich
+`recipeIngredientId`, während `id` weiterhin die Katalog-ID bezeichnet. Bring! kann
+Verwendungen separat auswählen und erhält bei mehreren gleichnamigen Verwendungen
+alle Mengen/Hinweise in der gemeinsamen Spezifikation.
+
+Für eine ausdrücklich geprüfte Textkorrektur unterstützt die Entscheidungsdatei:
+
+```json
+{
+    "REZEPT-ID": {
+        "sourceIds": { "ALTE-ID": "REZEPTVERWENDUNGS-ID" },
+        "descriptionOverrides": {
+            "SCHRITT-ID": {
+                "expected": "Exakter aktuell gespeicherter Beschreibungstext",
+                "replacement": "Geprüfter Ersatz mit dynamischen Zutatenverweisen"
+            }
+        }
+    }
+}
+```
+
+Ein unbekannter Schritt oder abweichender aktueller Text bricht die Planung ab.
+Die Textkorrektur gehört anschließend zu Plan, Snapshotprüfung und Rücknahme.
+Dies ist für die festen Gesamtmengen des einzelnen Lángos-Liveversuchs vorgesehen,
+nicht zum pauschalen Entfernen aller Mengen-Overrides. Echte Teilmengen bleiben.
+Vor Anwendung die gesicherten Vorher-/Nachher-Snapshots gegen den aktuellen Stand
+prüfen und die separate Salzverwendung für die Creme anhand der Originalantwort
+wiederherstellen. Es darf nie die Teigmenge für die Creme übernommen werden.
+
+Bei vollständigen Bestandsläufen geprüfte, bereits korrekte, sicher reparierte,
+unaufgelöste und ungültige Rezepte getrennt zählen. Bei fehlender Evidenz offen
+lassen. Gruppen/KI-Gruppentitel sind unter KUC-92 zurückgestellt.

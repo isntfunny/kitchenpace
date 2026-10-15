@@ -36,12 +36,23 @@ export type RecipeMentionSnapshotInput = z.input<typeof snapshotSchema>;
 export const decisionsSchema = z.object({
     sourceIds: z.record(z.string(), z.string()).default({}),
     restoreRows: z.array(migrationIngredientSchema).default([]),
+    descriptionOverrides: z
+        .record(
+            z.string(),
+            z.object({
+                expected: z.string(),
+                replacement: z.string(),
+                expectedIngredientIds: z.array(z.string()).optional(),
+                replacementIngredientIds: z.array(z.string()).optional(),
+            }),
+        )
+        .default({}),
 });
 export type RepairDecisions = z.input<typeof decisionsSchema>;
 
 export function planRecipeRepair(input: RecipeMentionSnapshotInput, decisions?: RepairDecisions) {
     const snapshot = snapshotSchema.parse(input);
-    const { sourceIds, restoreRows } = decisionsSchema.parse(decisions ?? {});
+    const { sourceIds, restoreRows, descriptionOverrides } = decisionsSchema.parse(decisions ?? {});
     const ingredients = [...snapshot.ingredients, ...restoreRows];
     if (new Set(ingredients.map((row) => row.id)).size !== ingredients.length)
         throw new Error('Duplicate recipe ingredient row ID');
@@ -49,11 +60,39 @@ export function planRecipeRepair(input: RecipeMentionSnapshotInput, decisions?: 
         if (!ingredients.some((row) => row.id === target))
             throw new Error(`Decision targets missing ingredient ${target}`);
     }
-    const repair = repairIngredientMentions(
-        snapshot.flowNodes,
-        ingredients,
-        new Map(Object.entries(sourceIds)),
+    for (const [id, override] of Object.entries(descriptionOverrides)) {
+        const matches = snapshot.flowNodes.filter((node) => node.id === id);
+        if (matches.length !== 1) throw new Error(`Unknown or duplicate step node ${id}`);
+        if (
+            (override.expectedIngredientIds === undefined) !==
+            (override.replacementIngredientIds === undefined)
+        )
+            throw new Error(
+                'Reference list replacement requires both expected and replacement ingredientIds',
+            );
+        if (
+            override.expectedIngredientIds &&
+            JSON.stringify(matches[0].ingredientIds) !==
+                JSON.stringify(override.expectedIngredientIds)
+        )
+            throw new Error(
+                `Step ${id} ingredient references changed since review; must match exactly`,
+            );
+        if (matches[0].description !== override.expected)
+            throw new Error(`Step ${id} changed since review; description must match exactly`);
+    }
+    const nodes = snapshot.flowNodes.map((node) =>
+        descriptionOverrides[node.id]
+            ? {
+                  ...node,
+                  description: descriptionOverrides[node.id].replacement,
+                  ...(descriptionOverrides[node.id].replacementIngredientIds
+                      ? { ingredientIds: descriptionOverrides[node.id].replacementIngredientIds }
+                      : {}),
+              }
+            : node,
     );
+    const repair = repairIngredientMentions(nodes, ingredients, new Map(Object.entries(sourceIds)));
     const after = { ...snapshot, flowNodes: repair.nodes, ingredients };
     return {
         before: snapshot,

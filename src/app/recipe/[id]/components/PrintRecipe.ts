@@ -79,7 +79,7 @@ ${recipe.description ? `<p style="color:#444;line-height:1.5">${escapeHtml(recip
 <table>${ingredientRows}</table>
 <h2>Zubereitung</h2>
 <ol>${stepRows}</ol>
-<div class="footer">KochTakt · kochtakt.app</div>
+<div class="footer">KochTakt · kochtakt.de</div>
 </body></html>`;
 
     const w = window.open('', '_blank');

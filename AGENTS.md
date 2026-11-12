@@ -21,7 +21,7 @@ The app takes the stress out of multi-tasking in the kitchen by showing:
 | **Flow Editor**  | React Flow (@xyflow/react v12) + Dagre auto-layout                                       |
 | **Styling**      | Panda CSS (semantic dark-mode tokens)                                                    |
 | **Language**     | TypeScript                                                                               |
-| **User Auth**    | Logto                                                                                    |
+| **User Auth**    | better-auth (E-Mail, Passkeys, Google/Discord/Twitch; eigene Nutzer-DB)                  |
 | **Search**       | OpenSearch (recipes + ingredients + tags indices)                                        |
 | **Queue / Jobs** | BullMQ + Redis (ioredis) — migrating to Hatchet (self-hosted)                            |
 | **AI**           | OpenAI (gpt-6.2-sol for text generation, text-embedding-3-large, omni-moderation-latest) |

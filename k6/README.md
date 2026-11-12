@@ -67,7 +67,7 @@ choco install k6
 k6 run --out web-dashboard k6/load-test.js --env BASE_URL=http://localhost:3000
 
 # Against production
-./k6/run-dashboard.sh prod https://kitchenpace.app
+./k6/run-dashboard.sh prod https://kochtakt.de
 ```
 
 ✅ **Vorteile:**
@@ -86,7 +86,7 @@ k6 run --out web-dashboard k6/load-test.js --env BASE_URL=http://localhost:3000
 ./k6/run-load-test.sh
 
 # Run against production
-./k6/run-load-test.sh prod https://kitchenpace.app
+./k6/run-load-test.sh prod https://kochtakt.de
 
 # Run against custom URL
 ./k6/run-load-test.sh dev http://localhost:3001
@@ -380,7 +380,7 @@ k6 run --out influxdb=http://localhost:8086/k6 k6/load-test.js
 ### Distributed Load Testing with k6 Cloud
 
 ```bash
-k6 cloud k6/load-test.js --env BASE_URL=https://kitchenpace.app
+k6 cloud k6/load-test.js --env BASE_URL=https://kochtakt.de
 ```
 
 ### Running Specific Scenarios Only

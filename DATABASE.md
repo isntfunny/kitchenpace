@@ -19,7 +19,7 @@ While PostgreSQL remains the source of truth, an OpenSearch cluster (available v
 | Database    | PostgreSQL                 |
 | ORM         | Prisma 7                   |
 | Flow Editor | React Flow (@xyflow/react) |
-| Auth        | Logto                      |
+| Auth        | better-auth                |
 | Storage     | S3 (MinIO)                 |
 
 ### Core Features (from KUC-1 MVP)

@@ -39,7 +39,7 @@ export async function uploadImageFromUrl(
             signal: controller.signal,
             headers: {
                 // Some CDNs require a browser-like User-Agent
-                'User-Agent': 'Mozilla/5.0 (compatible; KitchenPace/1.0; +https://kitchenpace.com)',
+                'User-Agent': 'Mozilla/5.0 (compatible; KitchenPace/1.0; +https://kochtakt.de)',
             },
         });
         clearTimeout(timeoutId);

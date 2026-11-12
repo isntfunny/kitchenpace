@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { prisma } from '@shared/prisma';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://kitchenpace.app';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://kochtakt.de';
 
 interface RecipeData {
     name: string;

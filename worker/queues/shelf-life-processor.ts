@@ -340,26 +340,29 @@ export interface ShelfLifeEnrichment {
 }
 
 /**
- * Same prompt, schema and import rules as the batch, as a direct request for
- * one new ingredient. Only runs while the ingredient is not assessed yet;
- * errors are reported, not thrown, so the caller's other results stay.
+ * Same model, prompt, schema and import rules as the batch, as a direct request
+ * for one new ingredient. Skips assessed ingredients (any shelfLifeSource,
+ * including MANUAL) that already have a display name. If only the name is
+ * missing, the request runs and the import rules keep MANUAL shelf life as is.
+ * Errors are reported, not thrown, so the caller's other results stay.
  */
 export async function enrichIngredientShelfLife(
     prisma: PrismaClient,
     client: OpenAI,
-    model: string,
     ingredientId: string,
     name: string,
 ): Promise<ShelfLifeEnrichment> {
     const current = await prisma.ingredient.findUnique({
         where: { id: ingredientId },
-        select: { shelfLifeSource: true },
+        select: { shelfLifeSource: true, normalizedName: true, normalizedNameManual: true },
     });
-    if (!current || current.shelfLifeSource) return { status: 'skipped' };
+    if (!current) return { status: 'skipped' };
+    const hasName = Boolean(current.normalizedName?.trim()) || current.normalizedNameManual;
+    if (current.shelfLifeSource && hasName) return { status: 'skipped' };
 
     try {
         const response = await client.responses.create({
-            model,
+            model: SHELF_LIFE_MODEL,
             instructions: SHELF_LIFE_PROMPT,
             input: buildShelfLifeInput([{ id: ingredientId, name }]),
             text: { format: getShelfLifeResponseFormat() },

@@ -2,6 +2,7 @@
 
 import { createUserNotification } from '@app/lib/events/persist';
 import { uploadImageFromUrl as uploadImageFromUrlShared } from '@app/lib/importer/upload-image-from-url';
+import { enqueueIngredientEnrichment } from '@app/lib/ingredients/enqueue-enrichment';
 import { slugify } from '@app/lib/slug';
 import { createLogger } from '@shared/logger';
 import { prisma } from '@shared/prisma';
@@ -180,12 +181,9 @@ export async function createIngredient(name: string, _category?: string, _units:
         // Notify moderators about the new ingredient
         notifyModeratorsNewIngredient(ingredient.id, ingredient.name).catch(() => {});
 
-        // Enqueue nutrition enrichment via AI
-        import('@worker/queues')
-            .then(({ addEnrichIngredientNutritionJob }) =>
-                addEnrichIngredientNutritionJob(ingredient.id),
-            )
-            .catch((err) => ingLog.error('Failed to enqueue nutrition job', { err }));
+        // AI enrichment incl. shelf life and display name; not awaited so a
+        // queue outage never blocks saving. The daily backfill is the safety net.
+        void enqueueIngredientEnrichment(ingredient.id);
 
         return ingredient;
     } catch (e) {

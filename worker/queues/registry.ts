@@ -222,9 +222,9 @@ export const JOB_REGISTRY = defineJobs({
     'backfill-ingredient-enrichment': {
         queue: QueueName.SCHEDULED,
         processor: processBackfillIngredientEnrichment,
-        defaultData: { batchSize: 100, dryRun: false, includeNeedsReview: false },
+        defaultData: { batchSize: 50, dryRun: false, includeNeedsReview: false },
         schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 1, max: 500 },
+            batchSize: { type: 'number', label: 'Batch Size', default: 50, min: 1, max: 500 },
             dryRun: { type: 'boolean', label: 'Dry Run (no DB writes)', default: false },
             includeNeedsReview: {
                 type: 'boolean',
@@ -232,6 +232,9 @@ export const JOB_REGISTRY = defineJobs({
                 default: false,
             },
         },
+        // Daily safety net: enrichment of new ingredients must not depend on
+        // the enqueue at creation time (KUC-94, KUC-114)
+        repeat: { pattern: '30 5 * * *', tz: 'Europe/Berlin' },
     },
 
     'backfill-ingredient-shelf-life': {

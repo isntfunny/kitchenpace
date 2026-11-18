@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { ensureAdminSession } from '@app/lib/admin/ensure-admin';
 import { ensureModeratorSession } from '@app/lib/admin/ensure-moderator';
+import { enqueueIngredientEnrichment } from '@app/lib/ingredients/enqueue-enrichment';
 import { mergeRecipeIngredientOccurrences } from '@app/lib/ingredients/merge-occurrences';
 import { slugify } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
@@ -29,12 +30,9 @@ export async function createIngredient(data: { name: string }) {
             },
         });
 
-        // Enqueue nutrition enrichment via AI
-        import('@worker/queues')
-            .then(({ addEnrichIngredientNutritionJob }) =>
-                addEnrichIngredientNutritionJob(ingredient.id),
-            )
-            .catch((err) => console.error('Failed to enqueue nutrition job:', err));
+        // AI enrichment incl. shelf life and display name; the daily backfill
+        // catches it if the queue is down
+        void enqueueIngredientEnrichment(ingredient.id);
 
         revalidatePath('/admin/ingredients');
     } catch (error) {

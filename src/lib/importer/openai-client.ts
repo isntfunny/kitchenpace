@@ -3,6 +3,8 @@
 
 import OpenAI from 'openai';
 
+import { AI_TEXT_MODEL, AI_TEXT_PRICING } from '@shared/ai-models';
+
 import {
     ImportedRecipeSchema,
     getOpenAIResponseFormat,
@@ -224,10 +226,10 @@ ${markdown}
 Bitte analysiere den Inhalt und gib die strukturierten Rezeptdaten zurück.`;
 }
 
-// Pricing (USD per 1M tokens) — gpt-5.4-mini
-const PRICE_INPUT = 0.75 / 1_000_000;
-const PRICE_CACHED = 0.075 / 1_000_000;
-const PRICE_OUTPUT = 4.5 / 1_000_000;
+// Pricing (USD per 1M tokens) — see shared/ai-models.ts
+const PRICE_INPUT = AI_TEXT_PRICING.input / 1_000_000;
+const PRICE_CACHED = AI_TEXT_PRICING.cachedInput / 1_000_000;
+const PRICE_OUTPUT = AI_TEXT_PRICING.output / 1_000_000;
 
 function computeCost(
     inputTokens: number | null,
@@ -245,10 +247,8 @@ function computeCost(
 // ============================================================================
 
 export interface ImportRecipeOptions {
-    /** OpenAI Model (Default: gpt-5.4-mini) */
+    /** OpenAI Model (Default: AI_TEXT_MODEL) */
     model?: string;
-    /** Temperatur für die Generierung (0-1, Default: 0.1) */
-    temperature?: number;
     /**
      * Optional context injected into the user prompt so the AI prefers
      * existing database records over inventing new ones.
@@ -273,7 +273,7 @@ export async function importRecipeFromMarkdown(
     sourceUrl: string,
     options: ImportRecipeOptions = {},
 ): Promise<RecipeParseResult> {
-    const { model = 'gpt-5.4-mini', temperature = 0.1, context } = options;
+    const { model = AI_TEXT_MODEL, context } = options;
 
     try {
         const openai = getOpenAIClient();
@@ -292,7 +292,6 @@ export async function importRecipeFromMarkdown(
         const completion = await openai.chat.completions.create({
             model,
             messages,
-            temperature,
             response_format: getOpenAIResponseFormat(),
         });
 
@@ -423,7 +422,7 @@ export async function streamRecipeFromMarkdown(
     options: ImportRecipeOptions = {},
     onDelta: (text: string) => void,
 ): Promise<RecipeParseResult> {
-    const { model = 'gpt-5.4-mini', temperature = 0.1, context } = options;
+    const { model = AI_TEXT_MODEL, context } = options;
 
     try {
         const openai = getOpenAIClient();
@@ -438,7 +437,6 @@ export async function streamRecipeFromMarkdown(
         const stream = await openai.chat.completions.create({
             model,
             messages,
-            temperature,
             response_format: getOpenAIResponseFormat(),
             stream: true,
             stream_options: { include_usage: true },

@@ -3,6 +3,8 @@
 
 import OpenAI from 'openai';
 
+import { AI_TEXT_MODEL } from '@shared/ai-models';
+
 import {
     ImportedRecipeWithLaneGridSchema,
     getOpenAIResponseFormat as getLaneGridResponseFormat,
@@ -108,9 +110,8 @@ export async function generateLaneGrid(text: string): Promise<LaneGridAIResponse
         ];
 
         const completion = await openai.chat.completions.create({
-            model: 'gpt-5.4-mini',
+            model: AI_TEXT_MODEL,
             messages,
-            temperature: 0.1,
             response_format: getLaneGridResponseFormat(),
         });
 

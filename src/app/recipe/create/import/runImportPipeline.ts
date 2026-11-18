@@ -1,4 +1,5 @@
 import type { AddedIngredient } from '@app/components/recipe/RecipeForm/data';
+import { AI_TEXT_MODEL } from '@shared/ai-models';
 
 import {
     matchImportedIngredients,
@@ -135,7 +136,7 @@ export async function runImportPipeline(
         addStreamEvent({
             type: 'progress',
             message: 'POST /api/ai/import-stream',
-            detail: 'model=gpt-5.4-mini  stream=true  response_format=json_schema',
+            detail: `model=${AI_TEXT_MODEL}  stream=true  response_format=json_schema`,
         });
 
         const streamResponse = await fetch('/api/ai/import-stream', {

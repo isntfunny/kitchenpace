@@ -13,22 +13,22 @@ The app takes the stress out of multi-tasking in the kitchen by showing:
 
 ## Technology Stack
 
-| Category         | Tech Stack                                                                        |
-| ---------------- | --------------------------------------------------------------------------------- |
-| **Framework**    | Next.js 16 (App Router)                                                           |
-| **UI Library**   | Radix UI + Panda CSS + Framer Motion                                              |
-| **Database**     | Prisma 7 + PostgreSQL                                                             |
-| **Flow Editor**  | React Flow (@xyflow/react v12) + Dagre auto-layout                                |
-| **Styling**      | Panda CSS (semantic dark-mode tokens)                                             |
-| **Language**     | TypeScript                                                                        |
-| **User Auth**    | Logto                                                                             |
-| **Search**       | OpenSearch (recipes + ingredients + tags indices)                                 |
-| **Queue / Jobs** | BullMQ + Redis (ioredis) — migrating to Hatchet (self-hosted)                     |
-| **AI**           | OpenAI (gpt-5.4 for recipe import, omni-moderation-latest for content moderation) |
-| **Realtime**     | SSE via Redis pub/sub                                                             |
-| **Storage**      | S3 / MinIO                                                                        |
-| **Scraper**      | Python FastAPI + Scrapling/Camoufox                                               |
-| **Monitoring**   | Seq (winston-seq-updated), Sentry                                                 |
+| Category         | Tech Stack                                                                               |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| **Framework**    | Next.js 16 (App Router)                                                                  |
+| **UI Library**   | Radix UI + Panda CSS + Framer Motion                                                     |
+| **Database**     | Prisma 7 + PostgreSQL                                                                    |
+| **Flow Editor**  | React Flow (@xyflow/react v12) + Dagre auto-layout                                       |
+| **Styling**      | Panda CSS (semantic dark-mode tokens)                                                    |
+| **Language**     | TypeScript                                                                               |
+| **User Auth**    | Logto                                                                                    |
+| **Search**       | OpenSearch (recipes + ingredients + tags indices)                                        |
+| **Queue / Jobs** | BullMQ + Redis (ioredis) — migrating to Hatchet (self-hosted)                            |
+| **AI**           | OpenAI (gpt-6.2-sol for text generation, text-embedding-3-large, omni-moderation-latest) |
+| **Realtime**     | SSE via Redis pub/sub                                                                    |
+| **Storage**      | S3 / MinIO                                                                               |
+| **Scraper**      | Python FastAPI + Scrapling/Camoufox                                                      |
+| **Monitoring**   | Seq (winston-seq-updated), Sentry                                                        |
 
 ---
 
@@ -188,7 +188,7 @@ Every job execution creates a `JobRun` DB record with status (PENDING → PROCES
 
 ## OpenAI Usage
 
-### 1. AI Recipe Import (gpt-5.4)
+### 1. AI Recipe Import (gpt-6.2-sol)
 
 Converts unstructured recipe text or scraped URLs into structured flow diagrams.
 
@@ -196,8 +196,10 @@ Converts unstructured recipe text or scraped URLs into structured flow diagrams.
 
 **Configuration:**
 
-- Model: `gpt-5.4` (temperature 0.1, strict JSON mode)
-- Pricing: Input $2.50/1M, cached $0.25/1M, output $15.00/1M tokens
+- Model: `AI_TEXT_MODEL` in `shared/ai-models.ts` (`gpt-6.2-sol`, strict JSON mode). Custom `temperature` is rejected (HTTP 400), so none may be passed
+- Pricing: Input $2.00/1M, cached $0.10/1M, output $10.00/1M tokens
+- Also used by the lane-grid AI and the ingredient enrichment worker (`worker/queues/nutrition-processor.ts` with web search, `worker/queues/shelf-life-processor.ts`)
+- The OpenAI SDK is called directly (no LiteLLM or other gateway)
 - System prompt: ~130 lines in German covering ingredient parsing, flow node generation, edge validation
 
 **Step Types (AI schema + editor must stay in sync):**

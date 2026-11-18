@@ -17,6 +17,7 @@ import {
 import { approvedKey } from '@app/lib/s3/keys';
 import { moveObject } from '@app/lib/s3/operations';
 import { slugify, generateUniqueSlug } from '@app/lib/slug';
+import { AI_TEXT_MODEL } from '@shared/ai-models';
 
 import { importRecipeFromMarkdown } from './openai-client';
 import { type AnalyzedRecipe, transformImportedRecipe } from './transform';
@@ -127,8 +128,7 @@ export async function analyzeWithAI(
     const context = await fetchImportContext(db);
 
     const result = await importRecipeFromMarkdown(markdown, sourceUrl, {
-        model: 'gpt-5.4-mini',
-        temperature: 0.1,
+        model: AI_TEXT_MODEL,
         context,
     });
 

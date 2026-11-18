@@ -584,12 +584,17 @@ export async function processBackfillIngredientEnrichment(
                 { energyKcal: null },
                 { ingredientUnits: { none: {} } },
                 { categories: { none: {} } },
+                // Safety net for KUC-94/KUC-114: also catches ingredients whose
+                // enqueue was lost (e.g. Redis down when they were created)
+                { shelfLifeSource: null },
+                { normalizedName: null, normalizedNameManual: false },
                 ...(includeNeedsReview ? [{ needsReview: true }] : []),
             ],
         },
         select: { id: true, name: true },
         take: batchSize,
-        orderBy: { createdAt: 'asc' },
+        // Newest first, so fresh ingredients are not starved by old stock
+        orderBy: { createdAt: 'desc' },
     });
 
     console.log(`[EnrichBackfill] Found ${unenriched.length} unenriched ingredients`);
@@ -602,19 +607,60 @@ export async function processBackfillIngredientEnrichment(
     }
 
     const queue = getScheduledQueue();
+    const { toAdd, toRetry } = await splitByExistingEnrichJob(
+        unenriched.map((ing) => ing.id),
+        (jobId) => queue.getJob(jobId),
+    );
+    // Same jobId as on creation: a job that is still waiting is not duplicated
     await queue.addBulk(
-        unenriched.map((ing) => ({
+        toAdd.map((ingredientId) => ({
             name: 'enrich-ingredient-nutrition',
-            data: { ingredientId: ing.id },
+            data: { ingredientId },
             opts: {
                 priority: 5,
-                jobId: `enrich-nutrition-${ing.id}`,
+                jobId: enrichJobId(ingredientId),
                 attempts: 3,
                 backoff: { type: 'exponential' as const, delay: 30_000 },
             },
         })),
     );
+    // A kept failed job would block its jobId forever; run it again instead
+    await Promise.all(toRetry.map((job) => job.retry('failed')));
 
-    console.log(`[EnrichBackfill] Done — enqueued: ${unenriched.length}`);
-    return { enqueued: unenriched.length, total: unenriched.length };
+    console.log(
+        `[EnrichBackfill] Done — enqueued: ${toAdd.length}, retried: ${toRetry.length}, already queued: ${unenriched.length - toAdd.length - toRetry.length}`,
+    );
+    return { enqueued: toAdd.length + toRetry.length, total: unenriched.length };
+}
+
+const enrichJobId = (ingredientId: string) => `enrich-nutrition-${ingredientId}`;
+
+/** Sorts candidates into new jobs, failed jobs to retry and jobs still pending. */
+export async function splitByExistingEnrichJob<
+    TJob extends {
+        getState(): Promise<string>;
+        retry(state?: 'failed' | 'completed'): Promise<void>;
+        remove(): Promise<void>;
+    },
+>(
+    ingredientIds: string[],
+    getJob: (jobId: string) => Promise<TJob | undefined | null>,
+): Promise<{ toAdd: string[]; toRetry: TJob[] }> {
+    const toAdd: string[] = [];
+    const toRetry: TJob[] = [];
+    for (const ingredientId of ingredientIds) {
+        const job = await getJob(enrichJobId(ingredientId));
+        if (!job) {
+            toAdd.push(ingredientId);
+            continue;
+        }
+        const state = await job.getState();
+        if (state === 'failed') toRetry.push(job);
+        else if (state === 'completed') {
+            // Finished without filling everything: run it again
+            await job.remove();
+            toAdd.push(ingredientId);
+        }
+    }
+    return { toAdd, toRetry };
 }

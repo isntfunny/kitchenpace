@@ -271,7 +271,6 @@ export async function processEnrichIngredientNutrition(
             shelfLife: await enrichIngredientShelfLife(
                 prisma,
                 getOpenAIClient(),
-                ENRICH_MODEL,
                 ingredientId,
                 ingredient.name,
             ),
@@ -444,7 +443,6 @@ export async function processEnrichIngredientNutrition(
     const shelfLife = await enrichIngredientShelfLife(
         prisma,
         getOpenAIClient(),
-        ENRICH_MODEL,
         ingredientId,
         ingredient.name,
     );

@@ -1,219 +1,219 @@
 [
- {
-  "id": "cmn39ryxx00imogqjt4vzl4xe",
-  "applicable": true,
-  "normalizedName": "Gambas",
-  "defaultStorage": "FRIDGE",
-  "storageLives": [
-   {
-    "storage": "FRIDGE",
-    "days": 2
-   },
-   {
-    "storage": "FREEZER",
-    "days": 90
-   }
-  ],
-  "packSize": 200,
-  "packUnit": "G",
-  "shelfLifeOpenedDays": 1,
-  "openSensitive": true,
-  "confidence": "HIGH",
-  "note": "",
-  "pluralName": "Gambas"
- },
- {
-  "id": "cmmthah5z004wagpv9wo954ge",
-  "applicable": false,
-  "normalizedName": "Armer Ritter",
-  "defaultStorage": null,
-  "storageLives": [],
-  "packSize": null,
-  "packUnit": null,
-  "shelfLifeOpenedDays": null,
-  "openSensitive": false,
-  "confidence": "HIGH",
-  "note": "",
-  "pluralName": null
- },
- {
-  "id": "cmmthak2v00hiagpv4qp2luof",
-  "applicable": true,
-  "normalizedName": "Kefe",
-  "defaultStorage": "FRIDGE",
-  "storageLives": [
-   {
-    "storage": "FRIDGE",
-    "days": 4
-   },
-   {
-    "storage": "FREEZER",
-    "days": 180
-   }
-  ],
-  "packSize": 200,
-  "packUnit": "G",
-  "shelfLifeOpenedDays": 4,
-  "openSensitive": false,
-  "confidence": "HIGH",
-  "note": "Frische Zuckerschote",
-  "pluralName": "Kefen"
- },
- {
-  "id": "cmmthakt100ltagpv94jqteqi",
-  "applicable": true,
-  "normalizedName": "Milch",
-  "defaultStorage": "FRIDGE",
-  "storageLives": [
-   {
-    "storage": "FRIDGE",
-    "days": 7
-   },
-   {
-    "storage": "FREEZER",
-    "days": 90
-   }
-  ],
-  "packSize": 1000,
-  "packUnit": "ML",
-  "shelfLifeOpenedDays": 4,
-  "openSensitive": true,
-  "confidence": "HIGH",
-  "note": "",
-  "pluralName": null
- },
- {
-  "id": "cmmz1obmj007001qu5z4qf02n",
-  "applicable": true,
-  "normalizedName": "Paprika",
-  "defaultStorage": "FRIDGE",
-  "storageLives": [
-   {
-    "storage": "FRIDGE",
-    "days": 7
-   },
-   {
-    "storage": "PANTRY",
-    "days": 3
-   },
-   {
-    "storage": "FREEZER",
-    "days": 180
-   }
-  ],
-  "packSize": 1,
-  "packUnit": "PIECE",
-  "shelfLifeOpenedDays": 3,
-  "openSensitive": true,
-  "confidence": "HIGH",
-  "note": "",
-  "pluralName": "Paprikas"
- },
- {
-  "id": "cmmthalnm00r1agpvo2ulnwwi",
-  "applicable": true,
-  "normalizedName": "Rosmarin",
-  "defaultStorage": "FRIDGE",
-  "storageLives": [
-   {
-    "storage": "FRIDGE",
-    "days": 10
-   },
-   {
-    "storage": "FREEZER",
-    "days": 180
-   }
-  ],
-  "packSize": 1,
-  "packUnit": "BUNCH",
-  "shelfLifeOpenedDays": 7,
-  "openSensitive": true,
-  "confidence": "HIGH",
-  "note": "",
-  "pluralName": null
- },
- {
-  "id": "cmmz1nn0d002x01quo795ji1x",
-  "applicable": true,
-  "normalizedName": "Salz",
-  "defaultStorage": "PANTRY",
-  "storageLives": [
-   {
-    "storage": "PANTRY",
-    "days": 3650
-   }
-  ],
-  "packSize": 500,
-  "packUnit": "G",
-  "shelfLifeOpenedDays": 3650,
-  "openSensitive": false,
-  "confidence": "HIGH",
-  "note": "",
-  "pluralName": null
- },
- {
-  "id": "cmmthaizw00b4agpv3smybl7p",
-  "applicable": true,
-  "normalizedName": "Flunderfilet",
-  "defaultStorage": "FRIDGE",
-  "storageLives": [
-   {
-    "storage": "FRIDGE",
-    "days": 1
-   },
-   {
-    "storage": "FREEZER",
-    "days": 90
-   }
-  ],
-  "packSize": 200,
-  "packUnit": "G",
-  "shelfLifeOpenedDays": 1,
-  "openSensitive": true,
-  "confidence": "MEDIUM",
-  "note": "",
-  "pluralName": "Flunderfilets"
- },
- {
-  "id": "invalid-default-missing",
-  "applicable": true,
-  "normalizedName": "Gambas",
-  "defaultStorage": "FRIDGE",
-  "storageLives": [
-   {
-    "storage": "FREEZER",
-    "days": 90
-   }
-  ],
-  "packSize": 200,
-  "packUnit": "G",
-  "shelfLifeOpenedDays": 1,
-  "openSensitive": true,
-  "confidence": "HIGH",
-  "note": "",
-  "pluralName": "Gambas"
- },
- {
-  "id": "invalid-days",
-  "applicable": true,
-  "normalizedName": "Gambas",
-  "defaultStorage": "FRIDGE",
-  "storageLives": [
-   {
-    "storage": "FRIDGE",
-    "days": 0
-   }
-  ],
-  "packSize": 200,
-  "packUnit": "G",
-  "shelfLifeOpenedDays": 1,
-  "openSensitive": true,
-  "confidence": "HIGH",
-  "note": "",
-  "pluralName": "Gambas"
- },
- {
-  "id": "invalid-shape",
-  "applicable": true
- }
+    {
+        "id": "cmn39ryxx00imogqjt4vzl4xe",
+        "applicable": true,
+        "normalizedName": "Gambas",
+        "defaultStorage": "FRIDGE",
+        "storageLives": [
+            {
+                "storage": "FRIDGE",
+                "days": 2
+            },
+            {
+                "storage": "FREEZER",
+                "days": 90
+            }
+        ],
+        "packSize": 200,
+        "packUnit": "G",
+        "shelfLifeOpenedDays": 1,
+        "openSensitive": true,
+        "confidence": "HIGH",
+        "note": "",
+        "pluralName": "Gambas"
+    },
+    {
+        "id": "cmmthah5z004wagpv9wo954ge",
+        "applicable": false,
+        "normalizedName": "Armer Ritter",
+        "defaultStorage": null,
+        "storageLives": [],
+        "packSize": null,
+        "packUnit": null,
+        "shelfLifeOpenedDays": null,
+        "openSensitive": false,
+        "confidence": "HIGH",
+        "note": "",
+        "pluralName": null
+    },
+    {
+        "id": "cmmthak2v00hiagpv4qp2luof",
+        "applicable": true,
+        "normalizedName": "Kefe",
+        "defaultStorage": "FRIDGE",
+        "storageLives": [
+            {
+                "storage": "FRIDGE",
+                "days": 4
+            },
+            {
+                "storage": "FREEZER",
+                "days": 180
+            }
+        ],
+        "packSize": 200,
+        "packUnit": "G",
+        "shelfLifeOpenedDays": 4,
+        "openSensitive": false,
+        "confidence": "HIGH",
+        "note": "Frische Zuckerschote",
+        "pluralName": "Kefen"
+    },
+    {
+        "id": "cmmthakt100ltagpv94jqteqi",
+        "applicable": true,
+        "normalizedName": "Milch",
+        "defaultStorage": "FRIDGE",
+        "storageLives": [
+            {
+                "storage": "FRIDGE",
+                "days": 7
+            },
+            {
+                "storage": "FREEZER",
+                "days": 90
+            }
+        ],
+        "packSize": 1000,
+        "packUnit": "ML",
+        "shelfLifeOpenedDays": 4,
+        "openSensitive": true,
+        "confidence": "HIGH",
+        "note": "",
+        "pluralName": null
+    },
+    {
+        "id": "cmmz1obmj007001qu5z4qf02n",
+        "applicable": true,
+        "normalizedName": "Paprika",
+        "defaultStorage": "FRIDGE",
+        "storageLives": [
+            {
+                "storage": "FRIDGE",
+                "days": 7
+            },
+            {
+                "storage": "PANTRY",
+                "days": 3
+            },
+            {
+                "storage": "FREEZER",
+                "days": 180
+            }
+        ],
+        "packSize": 1,
+        "packUnit": "PIECE",
+        "shelfLifeOpenedDays": 3,
+        "openSensitive": true,
+        "confidence": "HIGH",
+        "note": "",
+        "pluralName": "Paprikas"
+    },
+    {
+        "id": "cmmthalnm00r1agpvo2ulnwwi",
+        "applicable": true,
+        "normalizedName": "Rosmarin",
+        "defaultStorage": "FRIDGE",
+        "storageLives": [
+            {
+                "storage": "FRIDGE",
+                "days": 10
+            },
+            {
+                "storage": "FREEZER",
+                "days": 180
+            }
+        ],
+        "packSize": 1,
+        "packUnit": "BUNCH",
+        "shelfLifeOpenedDays": 7,
+        "openSensitive": true,
+        "confidence": "HIGH",
+        "note": "",
+        "pluralName": null
+    },
+    {
+        "id": "cmmz1nn0d002x01quo795ji1x",
+        "applicable": true,
+        "normalizedName": "Salz",
+        "defaultStorage": "PANTRY",
+        "storageLives": [
+            {
+                "storage": "PANTRY",
+                "days": 3650
+            }
+        ],
+        "packSize": 500,
+        "packUnit": "G",
+        "shelfLifeOpenedDays": 3650,
+        "openSensitive": false,
+        "confidence": "HIGH",
+        "note": "",
+        "pluralName": null
+    },
+    {
+        "id": "cmmthaizw00b4agpv3smybl7p",
+        "applicable": true,
+        "normalizedName": "Flunderfilet",
+        "defaultStorage": "FRIDGE",
+        "storageLives": [
+            {
+                "storage": "FRIDGE",
+                "days": 1
+            },
+            {
+                "storage": "FREEZER",
+                "days": 90
+            }
+        ],
+        "packSize": 200,
+        "packUnit": "G",
+        "shelfLifeOpenedDays": 1,
+        "openSensitive": true,
+        "confidence": "MEDIUM",
+        "note": "",
+        "pluralName": "Flunderfilets"
+    },
+    {
+        "id": "invalid-default-missing",
+        "applicable": true,
+        "normalizedName": "Gambas",
+        "defaultStorage": "FRIDGE",
+        "storageLives": [
+            {
+                "storage": "FREEZER",
+                "days": 90
+            }
+        ],
+        "packSize": 200,
+        "packUnit": "G",
+        "shelfLifeOpenedDays": 1,
+        "openSensitive": true,
+        "confidence": "HIGH",
+        "note": "",
+        "pluralName": "Gambas"
+    },
+    {
+        "id": "invalid-days",
+        "applicable": true,
+        "normalizedName": "Gambas",
+        "defaultStorage": "FRIDGE",
+        "storageLives": [
+            {
+                "storage": "FRIDGE",
+                "days": 0
+            }
+        ],
+        "packSize": 200,
+        "packUnit": "G",
+        "shelfLifeOpenedDays": 1,
+        "openSensitive": true,
+        "confidence": "HIGH",
+        "note": "",
+        "pluralName": "Gambas"
+    },
+    {
+        "id": "invalid-shape",
+        "applicable": true
+    }
 ]

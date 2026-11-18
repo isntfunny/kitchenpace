@@ -1,0 +1,122 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "items"
+ ],
+ "properties": {
+  "items": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "applicable",
+     "normalizedName",
+     "defaultStorage",
+     "storageLives",
+     "packSize",
+     "packUnit",
+     "shelfLifeOpenedDays",
+     "openSensitive",
+     "confidence",
+     "note",
+     "pluralName"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "applicable": {
+      "type": "boolean"
+     },
+     "normalizedName": {
+      "type": "string"
+     },
+     "defaultStorage": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "enum": [
+       "FRIDGE",
+       "PANTRY",
+       "FREEZER",
+       null
+      ]
+     },
+     "storageLives": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "storage",
+        "days"
+       ],
+       "properties": {
+        "storage": {
+         "type": "string",
+         "enum": [
+          "FRIDGE",
+          "PANTRY",
+          "FREEZER"
+         ]
+        },
+        "days": {
+         "type": "integer"
+        }
+       }
+      }
+     },
+     "packSize": {
+      "type": [
+       "number",
+       "null"
+      ]
+     },
+     "packUnit": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "enum": [
+       "G",
+       "ML",
+       "PIECE",
+       "BUNCH",
+       null
+      ]
+     },
+     "shelfLifeOpenedDays": {
+      "type": [
+       "integer",
+       "null"
+      ]
+     },
+     "openSensitive": {
+      "type": "boolean"
+     },
+     "confidence": {
+      "type": "string",
+      "enum": [
+       "HIGH",
+       "MEDIUM",
+       "LOW"
+      ]
+     },
+     "note": {
+      "type": "string"
+     },
+     "pluralName": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   }
+  }
+ }
+}

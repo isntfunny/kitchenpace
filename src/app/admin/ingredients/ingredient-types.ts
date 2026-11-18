@@ -2,6 +2,13 @@
 // Shared types and styles for the ingredients admin table
 // ---------------------------------------------------------------------------
 
+import type {
+    PackUnitValue,
+    ShelfLifeConfidenceValue,
+    ShelfLifeSourceValue,
+    StorageTypeValue,
+} from '@shared/ingredient-shelf-life/schema';
+
 import { css } from 'styled-system/css';
 
 // ---------------------------------------------------------------------------
@@ -29,6 +36,18 @@ export type Ingredient = {
     sodium: number | null;
     saturatedFat: number | null;
     recipeCount: number;
+    // KUC-114
+    normalizedName: string | null;
+    normalizedNameManual: boolean;
+    // KUC-94
+    defaultStorage: StorageTypeValue | null;
+    openedShelfLifeDays: number | null;
+    openSensitive: boolean;
+    packSize: number | null;
+    packUnit: PackUnitValue | null;
+    shelfLifeSource: ShelfLifeSourceValue | null;
+    shelfLifeConfidence: ShelfLifeConfidenceValue | null;
+    storageLives: Array<{ storage: StorageTypeValue; days: number }>;
 };
 
 export type IngredientCategory = {
@@ -228,6 +247,14 @@ export const tagStyle = css({
     fontSize: 'xs',
     bg: 'surface.muted',
     color: 'foreground',
+});
+
+export const fieldLabelStyle = css({
+    fontSize: 'xs',
+    color: 'foreground.muted',
+    display: 'block',
+    marginBottom: '1',
+    fontWeight: '500',
 });
 
 export const sectionLabelStyle = css({

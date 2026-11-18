@@ -35,6 +35,7 @@ export function getJobDefinitions(): Record<string, string[]> {
             'enrich-ingredient-nutrition',
             'backfill-ingredient-enrichment',
             'backfill-ingredient-plurals',
+            'backfill-ingredient-shelf-life',
         ],
         backup: ['database-backup'],
     };

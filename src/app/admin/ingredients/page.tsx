@@ -1,9 +1,11 @@
 import { ensureModeratorSession } from '@app/lib/admin/ensure-moderator';
+import { findDuplicateGroups } from '@app/lib/ingredients/duplicate-groups';
 import { prisma } from '@shared/prisma';
 
 import { css } from 'styled-system/css';
 
 import { CategoriesSection } from './CategoriesTab';
+import { DuplicateGroupsSection } from './DuplicateGroupsSection';
 import { IngredientsTable } from './ingredients-table';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +28,17 @@ async function getData() {
                 sugar: true,
                 sodium: true,
                 saturatedFat: true,
+                normalizedName: true,
+                normalizedNameManual: true,
+                defaultStorage: true,
+                openedShelfLifeDays: true,
+                openSensitive: true,
+                packSize: true,
+                packUnit: true,
+                shelfLifeSource: true,
+                shelfLifeConfidence: true,
+                swissFoodId: true,
+                storageLives: { select: { storage: true, days: true } },
                 categories: { select: { id: true, name: true, slug: true } },
                 ingredientUnits: {
                     select: {
@@ -65,12 +78,23 @@ async function getData() {
         recipeCount: _count.recipes,
     }));
 
-    return { ingredients, needsReviewCount, categories, units };
+    const duplicateGroups = findDuplicateGroups(
+        ingredients.map((ingredient) => ({
+            id: ingredient.id,
+            name: ingredient.name,
+            normalizedName: ingredient.normalizedName,
+            recipeCount: ingredient.recipeCount,
+            shelfLifeSource: ingredient.shelfLifeSource,
+            swissFoodId: ingredient.swissFoodId,
+        })),
+    );
+
+    return { ingredients, needsReviewCount, categories, units, duplicateGroups };
 }
 
 export default async function IngredientsPage() {
     await ensureModeratorSession('admin-ingredients');
-    const { ingredients, needsReviewCount, categories, units } = await getData();
+    const { ingredients, needsReviewCount, categories, units, duplicateGroups } = await getData();
 
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '6' })}>
@@ -103,6 +127,8 @@ export default async function IngredientsPage() {
             )}
 
             <IngredientsTable ingredients={ingredients} categories={categories} units={units} />
+
+            <DuplicateGroupsSection groups={duplicateGroups} />
 
             <CategoriesSection categories={categories} />
         </div>

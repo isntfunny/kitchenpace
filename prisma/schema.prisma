@@ -121,6 +121,32 @@ enum ModerationStatus {
   AUTO_APPROVED
 }
 
+// Ingredient shelf life (KUC-94)
+enum StorageType {
+  FRIDGE
+  PANTRY
+  FREEZER
+}
+
+enum ShelfLifeSource {
+  AI
+  MANUAL
+  DEFAULT
+}
+
+enum ShelfLifeConfidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum PackUnit {
+  G
+  ML
+  PIECE
+  BUNCH
+}
+
 // =====================================// AUTH MODELS (Better Auth)
 // =====================================
 model Account {
@@ -506,6 +532,23 @@ model Ingredient {
   needsReview     Boolean             @default(false)
   createdAt       DateTime            @default(now())
 
+  // Clean display name (KUC-114); `name` stays unchanged.
+  normalizedName       String?
+  // true = edited in admin, the AI never overwrites it
+  normalizedNameManual Boolean @default(false)
+
+  // Shelf life of the raw ingredient (KUC-94). Without shelfLifeSource the
+  // ingredient is not assessed yet; once set, a missing IngredientStorageLife
+  // row means this storage type is not possible.
+  defaultStorage      StorageType?
+  // Days after opening at defaultStorage; 0 = use the same day
+  openedShelfLifeDays Int?
+  openSensitive       Boolean              @default(false)
+  packSize            Float?
+  packUnit            PackUnit?
+  shelfLifeSource     ShelfLifeSource?
+  shelfLifeConfidence ShelfLifeConfidence?
+
   // Swiss Food DB reference
   swissFoodId              Int?    @unique
 
@@ -561,9 +604,22 @@ model Ingredient {
   recipes         RecipeIngredient[]
   shoppingItems   ShoppingItem[]
   filterSets      FilterSetIngredient[]
+  storageLives    IngredientStorageLife[]
 
   @@index([name])
+  @@index([normalizedName])
   @@index([aliases], type: Gin)
+}
+
+model IngredientStorageLife {
+  id           String      @id @default(cuid())
+  ingredientId String
+  storage      StorageType
+  days         Int // > 0, enforced by a CHECK constraint
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([ingredientId, storage])
 }
 
 model IngredientCategory {

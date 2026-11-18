@@ -15,11 +15,13 @@ import {
     btnPrimary,
     btnSecondary,
     closeButtonStyle,
+    fieldLabelStyle,
     inputStyle,
     sectionLabelStyle,
     tagStyle,
 } from './ingredient-types';
 import { NutritionCalculator, NutritionSection, UnitsSection } from './IngredientEditSections';
+import { DisplayNameField, ShelfLifeSection, useShelfLifeForm } from './ShelfLifeSection';
 
 export function IngredientEditPanel({
     ingredient,
@@ -38,6 +40,8 @@ export function IngredientEditPanel({
     const [error, setError] = useState('');
     const [name, setName] = useState(ingredient.name);
     const [pluralName, setPluralName] = useState(ingredient.pluralName ?? '');
+    const displayName = useState(ingredient.normalizedName ?? '');
+    const shelfLife = useShelfLifeForm(ingredient);
     const [aliases, setAliases] = useState<string[]>(ingredient.aliases);
     const [newAlias, setNewAlias] = useState('');
     const [selectedCatIds, setSelectedCatIds] = useState<Set<string>>(
@@ -106,6 +110,7 @@ export function IngredientEditPanel({
                 await updateIngredient(ingredient.id, {
                     name,
                     pluralName: pluralName.trim() || null,
+                    normalizedName: displayName[0].trim() || null,
                     aliases,
                     categoryIds: Array.from(selectedCatIds),
                     ...nutrition,
@@ -115,6 +120,7 @@ export function IngredientEditPanel({
                     grams,
                 }));
                 await updateIngredientUnits(ingredient.id, unitEntries);
+                await shelfLife.save();
                 if (mode === 'dialog') onClose();
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
@@ -246,6 +252,7 @@ export function IngredientEditPanel({
                                 placeholder="z.B. Tomaten"
                             />
                         </div>
+                        <DisplayNameField ingredient={ingredient} state={displayName} />
                     </div>
                 </div>
 
@@ -356,6 +363,8 @@ export function IngredientEditPanel({
                     nutrition={nutrition}
                 />
 
+                <ShelfLifeSection form={shelfLife} />
+
                 {/* Section: Naehrwerte */}
                 <NutritionSection nutrition={nutrition} onFieldChange={updateNutritionField} />
 
@@ -408,11 +417,3 @@ export function IngredientEditPanel({
         </>
     );
 }
-
-const fieldLabelStyle = css({
-    fontSize: 'xs',
-    color: 'foreground.muted',
-    display: 'block',
-    marginBottom: '1',
-    fontWeight: '500',
-});

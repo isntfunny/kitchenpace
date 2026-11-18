@@ -50,6 +50,7 @@ export async function updateIngredient(
     data: {
         name?: string;
         pluralName?: string | null;
+        normalizedName?: string | null;
         aliases?: string[];
         categoryIds?: string[];
         unitIds?: string[];
@@ -81,6 +82,19 @@ export async function updateIngredient(
 
     if (data.pluralName !== undefined) {
         updateData.pluralName = data.pluralName?.trim() || null;
+    }
+
+    if (data.normalizedName !== undefined) {
+        const normalizedName = data.normalizedName?.trim() || null;
+        const current = await prisma.ingredient.findUnique({
+            where: { id },
+            select: { normalizedName: true },
+        });
+        // A changed display name is maintained manually from now on (KUC-114)
+        if (current && current.normalizedName !== normalizedName) {
+            updateData.normalizedName = normalizedName;
+            updateData.normalizedNameManual = normalizedName !== null;
+        }
     }
 
     if (data.aliases !== undefined) {

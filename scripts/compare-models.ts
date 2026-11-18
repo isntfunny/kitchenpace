@@ -91,7 +91,6 @@ async function runModel(model: string, markdown: string, sourceUrl: string): Pro
     try {
         result = await importRecipeFromMarkdown(markdown, sourceUrl, {
             model,
-            temperature: 0.1,
         });
     } catch (err) {
         return {

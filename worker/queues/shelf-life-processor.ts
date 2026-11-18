@@ -13,6 +13,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { Job } from 'bullmq';
 import OpenAI, { toFile } from 'openai';
 
+import { AI_TEXT_MODEL } from '@shared/ai-models';
 import {
     extractRawItems,
     importShelfLifeResults,
@@ -31,7 +32,7 @@ import { getScheduledQueue } from './queue';
 import type { BackfillIngredientShelfLifeJob } from './types';
 
 // Model chosen for this batch in KUC-94 (probe runs with prompt v6e).
-const SHELF_LIFE_MODEL = 'gpt-6.2-sol';
+const SHELF_LIFE_MODEL = AI_TEXT_MODEL;
 
 export const SHELF_LIFE_JOB_NAME = 'backfill-ingredient-shelf-life';
 const STATE_KEY = 'shelf-life:batch';

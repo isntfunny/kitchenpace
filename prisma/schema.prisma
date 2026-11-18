@@ -500,11 +500,11 @@ model ImportRun {
   recipeId         String?         // linked recipe if successfully saved
 
   // AI usage (matches OpenAI usage object fields)
-  model             String?         // e.g. "gpt-4o-mini"
+  model             String?         // e.g. "gpt-6.2-sol"
   inputTokens       Int?            // prompt_tokens
   cachedInputTokens Int?            // prompt_tokens_details.cached_tokens
   outputTokens      Int?            // completion_tokens
-  // Cost: input $2.50/1M, cached $0.25/1M, output $15.00/1M
+  // Cost: input $2.00/1M, cached $0.10/1M, output $10.00/1M
   estimatedCostUsd                                                             Float?
 
   // Raw OpenAI completion object for debugging & auditing

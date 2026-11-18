@@ -1,11 +1,13 @@
 import { Job } from 'bullmq';
 import OpenAI from 'openai';
 
+import { AI_TEXT_MODEL } from '@shared/ai-models';
+
 import { prisma } from './prisma';
 import { enrichIngredientShelfLife, type ShelfLifeEnrichment } from './shelf-life-processor';
 import type { EnrichIngredientNutritionJob } from './types';
 
-const ENRICH_MODEL = 'gpt-5.4';
+const ENRICH_MODEL = AI_TEXT_MODEL;
 
 const CORE_FIELDS = ['energyKcal', 'protein', 'fat', 'carbs', 'fiber', 'sugar', 'salt'] as const;
 

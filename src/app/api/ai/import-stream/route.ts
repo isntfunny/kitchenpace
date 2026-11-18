@@ -4,6 +4,7 @@ import { getServerAuthSession } from '@app/lib/auth';
 import { streamRecipeFromMarkdown } from '@app/lib/importer/openai-client';
 import { fetchImportContext, logImportRun } from '@app/lib/importer/pipeline';
 import { transformImportedRecipe } from '@app/lib/importer/transform';
+import { AI_TEXT_MODEL } from '@shared/ai-models';
 import { prisma } from '@shared/prisma';
 
 // Allow streaming responses up to 5 minutes
@@ -40,14 +41,13 @@ export async function POST(request: NextRequest) {
             try {
                 const context = await fetchImportContext(prisma);
 
-                send({ type: 'start', model: 'gpt-5.4-mini' });
+                send({ type: 'start', model: AI_TEXT_MODEL });
 
                 const result = await streamRecipeFromMarkdown(
                     markdown,
                     sourceUrl,
                     {
-                        model: 'gpt-5.4-mini',
-                        temperature: 0.1,
+                        model: AI_TEXT_MODEL,
                         context,
                     },
                     (text) => send({ type: 'delta', text }),

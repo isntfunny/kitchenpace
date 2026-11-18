@@ -53,6 +53,19 @@ export interface BackfillIngredientEnrichmentJob {
     includeNeedsReview?: boolean;
 }
 
+export interface BackfillIngredientShelfLifeJob {
+    /** Import into the database; false = dry run report only */
+    write?: boolean;
+    /** Max ingredients for a new batch (0 = all not yet assessed) */
+    limit?: number;
+    /** Ingredients per request */
+    chunkSize?: number;
+    /** Poll interval while the batch runs (0 = no automatic polling) */
+    pollMinutes?: number;
+    /** Forget the saved batch and start over */
+    reset?: boolean;
+}
+
 export interface ComputeTasteProfilesJob {
     batchSize?: number;
 }

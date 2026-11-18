@@ -21,6 +21,7 @@ import {
     processBackfillIngredientEnrichment,
     processRecalculateStats,
 } from './scheduled-processor';
+import { processBackfillIngredientShelfLife } from './shelf-life-processor';
 import { processComputeTasteProfiles } from './taste-processor';
 import {
     processRegisterEventSub,
@@ -230,6 +231,37 @@ export const JOB_REGISTRY = defineJobs({
                 label: 'Include needsReview (re-enrich even if data exists)',
                 default: false,
             },
+        },
+    },
+
+    'backfill-ingredient-shelf-life': {
+        queue: QueueName.SCHEDULED,
+        processor: processBackfillIngredientShelfLife,
+        defaultData: { write: false, limit: 0, chunkSize: 50, pollMinutes: 10, reset: false },
+        schema: {
+            write: { type: 'boolean', label: 'Write to DB (off = dry run report)', default: false },
+            limit: {
+                type: 'number',
+                label: 'Max ingredients (0 = all not assessed)',
+                default: 0,
+                min: 0,
+                max: 5000,
+            },
+            chunkSize: {
+                type: 'number',
+                label: 'Ingredients per request',
+                default: 50,
+                min: 1,
+                max: 100,
+            },
+            pollMinutes: {
+                type: 'number',
+                label: 'Poll every (minutes, 0 = off)',
+                default: 10,
+                min: 0,
+                max: 720,
+            },
+            reset: { type: 'boolean', label: 'Forget saved batch and start over', default: false },
         },
     },
 

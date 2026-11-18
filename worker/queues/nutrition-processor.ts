@@ -2,7 +2,10 @@ import { Job } from 'bullmq';
 import OpenAI from 'openai';
 
 import { prisma } from './prisma';
+import { enrichIngredientShelfLife, type ShelfLifeEnrichment } from './shelf-life-processor';
 import type { EnrichIngredientNutritionJob } from './types';
+
+const ENRICH_MODEL = 'gpt-5.4';
 
 const CORE_FIELDS = ['energyKcal', 'protein', 'fat', 'carbs', 'fiber', 'sugar', 'salt'] as const;
 
@@ -218,6 +221,7 @@ export async function processEnrichIngredientNutrition(
     source?: string;
     units: Array<{ shortName: string; grams: number | null }>;
     autoApproved: boolean;
+    shelfLife?: ShelfLifeEnrichment;
 }> {
     const { ingredientId } = job.data;
 
@@ -264,6 +268,13 @@ export async function processEnrichIngredientNutrition(
             fieldsUpdated: 0,
             units: [],
             autoApproved: false,
+            shelfLife: await enrichIngredientShelfLife(
+                prisma,
+                getOpenAIClient(),
+                ENRICH_MODEL,
+                ingredientId,
+                ingredient.name,
+            ),
         };
     }
 
@@ -284,7 +295,7 @@ export async function processEnrichIngredientNutrition(
     const systemPrompt = buildSystemPrompt(allUnits, allCategories);
 
     const response = await openai.responses.create({
-        model: 'gpt-5.4',
+        model: ENRICH_MODEL,
         tools: [{ type: 'web_search_preview' }],
         instructions: systemPrompt,
         input: `Bestimme Nährwerte, relevante Einheiten und Kategorien für: "${ingredient.name}"`,
@@ -429,6 +440,15 @@ export async function processEnrichIngredientNutrition(
         }
     }
 
+    // After the auto-approval so that LOW confidence keeps needsReview
+    const shelfLife = await enrichIngredientShelfLife(
+        prisma,
+        getOpenAIClient(),
+        ENRICH_MODEL,
+        ingredientId,
+        ingredient.name,
+    );
+
     return {
         success: true,
         ingredientId,
@@ -437,5 +457,6 @@ export async function processEnrichIngredientNutrition(
         source,
         units: assignedUnits,
         autoApproved,
+        shelfLife,
     };
 }

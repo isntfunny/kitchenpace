@@ -47,6 +47,17 @@ COPY public ./public
 COPY email-templates ./email-templates
 COPY cli ./cli
 
+# Prerendering queries the database, so the schema must already match the new
+# Prisma client. Migrate BEFORE building (migrations must stay backward
+# compatible: the old container keeps running against the migrated schema until
+# the new one is up). The placeholder URL from the ARG default is skipped, so
+# builds without a real database (CI, local) still work.
+RUN if [ "$DATABASE_URL" != "postgresql://build:build@localhost:5432/build" ]; then \
+        echo "[build] Running prisma migrate deploy before build..." && npx prisma migrate deploy; \
+    else \
+        echo "[build] Placeholder DATABASE_URL, skipping migrations"; \
+    fi
+
 RUN if [ "$REACT_PROFILE" = "1" ]; then npm run build -- --profile; else npm run build; fi
 
 # ── Stage 3: Production app (runner + worker share this image) ─────────

@@ -125,6 +125,8 @@ type RecipeDetailClientProps = {
     isAuthenticated?: boolean;
     liveCook?: LiveCookData | null;
     refSource?: string | null;
+    /** Servings from the meal plan (`?portionen=`), KUC-99 */
+    initialServings?: number | null;
 };
 
 export function RecipeDetailClient({
@@ -137,12 +139,13 @@ export function RecipeDetailClient({
     isAuthenticated,
     liveCook,
     refSource,
+    initialServings,
 }: RecipeDetailClientProps) {
     // State declarations MUST come first
     const router = useRouter();
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
-    const [servings, setServings] = useState(recipe.servings);
+    const [servings, setServings] = useState(initialServings ?? recipe.servings);
     const initialViewer = recipe.viewer ?? null;
     const [favoriteState, setFavoriteState] = useState({
         isFavorite: initialViewer?.isFavorite ?? false,
@@ -485,6 +488,7 @@ export function RecipeDetailClient({
                                 isFavoritePending={isFavoritePending}
                                 isCookPending={isCookPending}
                                 isAuthor={recipe.viewer?.isAuthor ?? false}
+                                isAuthenticated={!!isAuthenticated}
                                 onFavoriteToggle={handleFavoriteToggle}
                                 onCookToggle={handleMarkCooked}
                                 onPrint={handlePrint}

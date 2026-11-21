@@ -29,7 +29,15 @@ type RecipePageParams = {
 
 type RecipePageSearchParams = {
     ref?: string;
+    /** Servings from the meal plan (KUC-99) */
+    portionen?: string;
 };
+
+function parseServingsParam(value: string | undefined): number | null {
+    if (!value || !/^\d{1,3}$/.test(value)) return null;
+    const servings = Number(value);
+    return servings >= 1 && servings <= 100 ? servings : null;
+}
 
 type RecipePageProps = {
     params: RecipePageParams | Promise<RecipePageParams>;
@@ -160,6 +168,7 @@ export default async function RecipePage({ params, searchParams }: RecipePagePro
                 initialProgress={initialProgress}
                 isAuthenticated={!!viewerId}
                 refSource={refSource}
+                initialServings={parseServingsParam(resolvedSearchParams?.portionen)}
                 liveCook={
                     liveCook?.user?.profile?.twitchUsername
                         ? {

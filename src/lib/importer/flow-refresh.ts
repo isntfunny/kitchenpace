@@ -150,6 +150,8 @@ export interface RefreshProposal {
     title: string;
     source: 'scrape' | 'fallback';
     status: RefreshStatus;
+    /** RecipeIngredient ids the model was given (values of the request's idMap) */
+    ingredientRowIds: string[];
     flowNodes?: StoredFlowNode[];
     flowEdges?: StoredFlowEdge[];
     warnings: string[];
@@ -172,7 +174,12 @@ export function evaluateRefreshEntry(
     entry: BatchOutputEntry | undefined,
     current: { flowNodes: StoredFlowNode[]; flowEdges: StoredFlowEdge[] } | null,
 ): RefreshProposal {
-    const base = { recipeId: request.recipeId, title: request.title, source: request.source };
+    const base = {
+        recipeId: request.recipeId,
+        title: request.title,
+        source: request.source,
+        ingredientRowIds: Object.values(request.idMap),
+    };
     if (!entry)
         return { ...base, status: 'failed', warnings: [], errors: ['keine Antwort im Batch'] };
     if (entry.error || entry.body === undefined)
@@ -239,11 +246,54 @@ export function evaluateRefreshEntry(
     };
 }
 
-/** Ingredient rows the proposal refers to that the recipe no longer has. */
+/**
+ * Ingredient rows that changed since the batch was built: rows the proposal
+ * refers to or was given that the recipe no longer has, and rows added to the
+ * recipe since then (the new flow would never mention them). Any entry means
+ * the proposal is stale and must not be written.
+ */
 export function staleIngredientRefs(
     proposal: RefreshProposal,
     rowIds: ReadonlySet<string>,
 ): string[] {
-    const refs = new Set((proposal.flowNodes ?? []).flatMap((node) => node.ingredientIds ?? []));
-    return [...refs].filter((id) => !rowIds.has(id));
+    const given = new Set(proposal.ingredientRowIds);
+    const refs = (proposal.flowNodes ?? []).flatMap((node) => node.ingredientIds ?? []);
+    const removed = [...new Set([...given, ...refs])].filter((id) => !rowIds.has(id));
+    const added = [...rowIds].filter((id) => !given.has(id));
+    return [...removed, ...added];
+}
+
+export interface FlowBackupEntry {
+    id: string;
+    flowNodes: unknown;
+    flowEdges: unknown;
+}
+
+/**
+ * Writes the backed-up flows back one recipe at a time. A failing recipe does
+ * not stop the others; the failures are returned for the report. `null` stays
+ * `null` (recipes that had no flow); the caller maps it to a database NULL.
+ */
+export async function restoreFlowBackup(
+    recipes: FlowBackupEntry[],
+    write: (entry: FlowBackupEntry) => Promise<unknown>,
+): Promise<{ restored: string[]; failed: { id: string; error: string }[] }> {
+    const restored: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+    for (const entry of recipes) {
+        try {
+            await write({
+                id: entry.id,
+                flowNodes: entry.flowNodes ?? null,
+                flowEdges: entry.flowEdges ?? null,
+            });
+            restored.push(entry.id);
+        } catch (error) {
+            failed.push({
+                id: entry.id,
+                error: error instanceof Error ? error.message : String(error),
+            });
+        }
+    }
+    return { restored, failed };
 }

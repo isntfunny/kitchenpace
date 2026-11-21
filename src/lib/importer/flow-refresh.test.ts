@@ -6,6 +6,7 @@ import {
     buildRefreshRequest,
     evaluateRefreshEntry,
     fallbackMarkdown,
+    restoreFlowBackup,
     staleIngredientRefs,
     type RefreshRecipe,
 } from './flow-refresh';
@@ -152,4 +153,47 @@ test('unknown mention id: accepted, becomes plain text with a warning', () => {
         'Mit Zucker servieren.',
     );
     assert.ok(proposal.warnings.length >= 1);
+});
+
+test('ingredient added since the batch: proposal is stale', () => {
+    const { request } = buildRefreshRequest(recipe, '# Seite', 'scrape');
+    const proposal = evaluateRefreshEntry(request, answer(goodNodes, goodEdges), null);
+    assert.deepEqual(proposal.ingredientRowIds, ['row-flour', 'row-milk']);
+    assert.deepEqual(
+        staleIngredientRefs(proposal, new Set(['row-flour', 'row-milk', 'row-sugar'])),
+        ['row-sugar'],
+    );
+});
+
+test('incomplete mention without id after the last attempt: becomes plain text', () => {
+    const { request } = buildRefreshRequest(recipe, '# Seite', 'scrape');
+    const nodes = goodNodes.map((n) =>
+        n.id === 'servieren'
+            ? { ...n, description: 'Mit @[Butter] und @[Zucker|1 TL] servieren.' }
+            : n,
+    );
+    const proposal = evaluateRefreshEntry(request, answer(nodes, goodEdges), null);
+    assert.equal(proposal.status, 'changed');
+    const serve = proposal.flowNodes!.find((n) => n.id === 'servieren')!;
+    assert.equal(serve.description, 'Mit Butter und Zucker (1 TL) servieren.');
+    assert.deepEqual(serve.ingredientIds, []);
+    assert.ok(proposal.warnings.some((w) => w.includes('@[Butter]')));
+});
+
+test('rollback: recipes without a flow get null back, a failing recipe does not stop the rest', async () => {
+    const written: unknown[] = [];
+    const result = await restoreFlowBackup(
+        [
+            { id: 'a', flowNodes: [{ id: 'n' }], flowEdges: [] },
+            { id: 'b', flowNodes: null, flowEdges: null },
+            { id: 'c', flowNodes: [], flowEdges: [] },
+        ],
+        async (entry) => {
+            if (entry.id === 'a') throw new Error('Datensatz fehlt');
+            written.push(entry);
+        },
+    );
+    assert.deepEqual(result.restored, ['b', 'c']);
+    assert.deepEqual(result.failed, [{ id: 'a', error: 'Datensatz fehlt' }]);
+    assert.deepEqual(written[0], { id: 'b', flowNodes: null, flowEdges: null });
 });

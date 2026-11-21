@@ -37,6 +37,7 @@ export interface BindMentionsOptions {
     /**
      * What happens with an id that is not in the map:
      * 'text' — the mention becomes plain text (import result), with a warning;
+     *          incomplete mentions without an id (`@[Butter]`) likewise;
      * 'keep' — left untouched for a later check (save path).
      */
     unknown: 'text' | 'keep';
@@ -55,7 +56,7 @@ export function bindMentions<T extends { id: string; description: string }>(
     const warnings: string[] = [];
     const bound = nodes.map((node) => {
         const ids: string[] = [];
-        const description = node.description.replace(
+        let description = node.description.replace(
             mentionRegex(),
             (full, text: string, part: string | undefined, id: string) => {
                 const mapped = idMap.get(id);
@@ -73,7 +74,28 @@ export function bindMentions<T extends { id: string; description: string }>(
                 return part ? `${text} (${part})` : text;
             },
         );
+        if (options.unknown === 'text')
+            description = plainMalformed(description, node.id, warnings);
         return { ...node, description, ingredientIds: [...new Set(ids)] };
     });
     return { nodes: bound, warnings };
+}
+
+/**
+ * Incomplete mentions left after the valid ones were mapped become plain text:
+ * `@[Butter]` → `Butter`, `@[Butter|50 g]` → `Butter (50 g)`, a stray `@[` is dropped.
+ */
+function plainMalformed(description: string, nodeId: string, warnings: string[]): string {
+    const warn = (snippet: string) =>
+        warnings.push(`Schritt "${nodeId}": unvollständige Erwähnung "${snippet}" wurde zu Text`);
+    return description
+        .replace(/@\[([^\]\n]*)\](?!\()/g, (full, inner: string) => {
+            warn(full);
+            const [text, part] = inner.split('|');
+            return part ? `${text} (${part})` : text;
+        })
+        .replace(/@\[(?![^\]\n]*\]\()/g, (full, offset: number, all: string) => {
+            warn(all.slice(offset, offset + 20));
+            return '';
+        });
 }

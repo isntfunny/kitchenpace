@@ -20,6 +20,7 @@ import 'dotenv/config';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { Prisma } from '@prisma/client';
 import { Command } from 'commander';
 
 import { AI_TEXT_MODEL, AI_TEXT_PRICING } from '../shared/ai-models';
@@ -34,7 +35,9 @@ import {
     buildRefreshRequest,
     evaluateRefreshEntry,
     fallbackMarkdown,
+    restoreFlowBackup,
     staleIngredientRefs,
+    type FlowBackupEntry,
     type RefreshProposal,
     type RefreshRecipe,
     type RefreshRequest,
@@ -42,6 +45,8 @@ import {
     type StoredFlowNode,
 } from '../src/lib/importer/flow-refresh';
 import { scrapeRecipe } from '../src/lib/importer/scraper';
+
+import { syncSearch } from './lib/sync-search';
 
 /** Below this the scraped page is treated as failed (blocked, cookie wall, …). */
 const MIN_MARKDOWN = 300;
@@ -57,7 +62,7 @@ interface RefreshState {
 
 interface FlowBackup {
     createdAt: string;
-    recipes: { id: string; flowNodes: unknown; flowEdges: unknown }[];
+    recipes: FlowBackupEntry[];
 }
 
 const dirOf = (opts: { dir?: string }) => {
@@ -75,6 +80,8 @@ async function loadRecipes(where: { ids?: string[]; limit?: number }): Promise<R
         where: {
             sourceUrl: { not: null },
             NOT: { sourceUrl: '' },
+            // only recipes that already have a flow: refresh, not first build
+            flowNodes: { not: Prisma.AnyNull },
             ...(where.ids?.length ? { id: { in: where.ids } } : {}),
         },
         orderBy: { createdAt: 'asc' },
@@ -156,11 +163,15 @@ async function submit(opts: {
         ids: opts.ids?.split(',').filter(Boolean),
         limit: opts.limit ? Number(opts.limit) : undefined,
     });
-    const usable = recipes.filter((r) => r.ingredients.length > 0);
-    for (const r of recipes)
+    const usable = recipes.filter((r) => r.ingredients.length > 0 && r.flowNodes.length > 0);
+    for (const r of recipes) {
         if (r.ingredients.length === 0)
             console.log(`übersprungen (keine Zutaten): ${r.id} ${r.title}`);
-    if (usable.length === 0) throw new Error('Keine Rezepte mit sourceUrl und Zutaten gefunden');
+        else if (r.flowNodes.length === 0)
+            console.log(`übersprungen (kein Ablauf): ${r.id} ${r.title}`);
+    }
+    if (usable.length === 0)
+        throw new Error('Keine Rezepte mit sourceUrl, Zutaten und Ablauf gefunden');
 
     const built: ReturnType<typeof buildRefreshRequest>[] = [];
     for (let i = 0; i < usable.length; i += SCRAPE_CONCURRENCY) {
@@ -326,7 +337,9 @@ async function apply(opts: { dir?: string; write?: boolean; proposals?: string }
         }
         const stale = staleIngredientRefs(p, new Set(recipe.recipeIngredients.map((ri) => ri.id)));
         if (stale.length > 0) {
-            console.log(`übersprungen (Zutatenliste geändert): ${p.recipeId} ${p.title}`);
+            console.log(
+                `übersprungen (veraltet, Zutatenliste seit dem Batch geändert): ${p.recipeId} ${p.title}`,
+            );
             continue;
         }
         ready.push(p);
@@ -368,27 +381,19 @@ async function rollback(file: string, opts: { write?: boolean }) {
         console.log('Trockenlauf: nichts geschrieben. Mit --write zurückspielen.');
         return;
     }
-    for (const r of backup.recipes) {
-        await prisma.recipe.update({
+    const { restored, failed } = await restoreFlowBackup(backup.recipes, (r) =>
+        prisma.recipe.update({
             where: { id: r.id },
-            data: { flowNodes: r.flowNodes as object, flowEdges: r.flowEdges as object },
-        });
-    }
-    console.log(`${backup.recipes.length} Abläufe zurückgespielt.`);
-    await syncSearch(backup.recipes.map((r) => r.id));
-}
-
-/** Search index update through the worker queue (sync-recipe job). */
-async function syncSearch(recipeIds: string[]) {
-    try {
-        const { addSyncRecipeJob } = await import('../worker/queues');
-        for (const id of recipeIds) await addSyncRecipeJob(id);
-        console.log(`${recipeIds.length} Suchindex-Jobs eingereiht.`);
-    } catch (error) {
-        console.warn(
-            `Suchindex-Sync nicht eingereiht (${error instanceof Error ? error.message : error}); der 15-Minuten-Sync holt es nach.`,
-        );
-    }
+            data: {
+                flowNodes: r.flowNodes === null ? Prisma.DbNull : (r.flowNodes as object),
+                flowEdges: r.flowEdges === null ? Prisma.DbNull : (r.flowEdges as object),
+            },
+        }),
+    );
+    console.log(`${restored.length} von ${backup.recipes.length} Abläufen zurückgespielt.`);
+    for (const f of failed) console.error(`fehlgeschlagen: ${f.id} — ${f.error}`);
+    if (restored.length > 0) await syncSearch(restored);
+    if (failed.length > 0) process.exitCode = 1;
 }
 
 const program = new Command('refresh-recipe-flows');
@@ -425,7 +430,7 @@ program
 
 program
     .parseAsync(process.argv)
-    .then(() => process.exit(0))
+    .then(() => process.exit(process.exitCode ?? 0))
     .catch((error: unknown) => {
         console.error(error instanceof Error ? error.message : String(error));
         process.exit(1);

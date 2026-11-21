@@ -5,6 +5,7 @@ import { uploadImageFromUrl as uploadImageFromUrlShared } from '@app/lib/importe
 import { enqueueIngredientEnrichment } from '@app/lib/ingredients/enqueue-enrichment';
 import { matchExistingIngredient } from '@app/lib/ingredients/match-ingredient';
 import { newIngredientNotificationsEnabled } from '@app/lib/ingredients/new-ingredient-notifications';
+import { canonicalUnitName } from '@app/lib/ingredients/unit-aliases';
 import { slugify } from '@app/lib/slug';
 import { createLogger } from '@shared/logger';
 import { prisma } from '@shared/prisma';
@@ -71,7 +72,7 @@ export async function matchIngredients(names: string[]): Promise<IngredientMatch
  * Falls back to 'Stk' if no match is found — never creates new units.
  */
 export async function findOrCreateUnit(unitName: string): Promise<string> {
-    const trimmed = unitName.trim();
+    const trimmed = canonicalUnitName(unitName);
     if (!trimmed) {
         const fallback = await prisma.unit.findUnique({ where: { shortName: 'Stk' } });
         return fallback!.id;

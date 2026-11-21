@@ -17,6 +17,8 @@ import {
 } from '@app/lib/ingredients/constants';
 import { slugify } from '@app/lib/slug';
 
+import { syncCategoryIcons } from '../lib/category-icons.js';
+
 import type { Seeder, SeederResult } from './index.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -204,6 +206,9 @@ async function seedCategories(
             }
         }
     }
+
+    // Fixed icons of the main categories (KUC-125); keeps icons that are already set
+    await syncCategoryIcons(db, { apply: true });
 
     return { categoryMap, created, skipped };
 }

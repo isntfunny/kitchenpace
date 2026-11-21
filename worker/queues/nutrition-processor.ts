@@ -9,7 +9,11 @@ import { Job } from 'bullmq';
 import OpenAI from 'openai';
 
 import { AI_TEXT_MODEL } from '@shared/ai-models';
-import { buildIconPromptRules, getIconSchemaProperty } from '@shared/ingredient-icons/enrichment';
+import {
+    buildIconPromptRules,
+    getIconSchemaProperty,
+    parseIconAnswer,
+} from '@shared/ingredient-icons/enrichment';
 import { responsesOutputText } from '@shared/openai-batch';
 
 import { prisma } from './prisma';
@@ -253,6 +257,7 @@ export async function importNutritionResult(
         where: { id: ingredientId },
         select: {
             name: true,
+            icon: true,
             energyKcal: true,
             ingredientUnits: { select: { unitId: true } },
             categories: { select: { id: true } },
@@ -346,6 +351,20 @@ export async function importNutritionResult(
                 );
             }
         }
+    }
+
+    // ── 4. Icon ─────────────────────────────────────────────────────────
+    // Only an allowed name is stored. An existing icon is never replaced (there
+    // is no "set by admin" flag, so any value counts as chosen); `icon: null`
+    // in the where clause also covers a parallel run or an admin edit since
+    // the read above.
+    const icon = parseIconAnswer(parsed.icon);
+    if (icon && ingredient.icon == null) {
+        const { count } = await db.ingredient.updateMany({
+            where: { id: ingredientId, icon: null },
+            data: { icon },
+        });
+        fieldsUpdated += count;
     }
 
     const source = typeof parsed.source === 'string' ? parsed.source : undefined;

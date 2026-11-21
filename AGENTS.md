@@ -128,27 +128,32 @@ The worker is a standalone Node.js process (`worker/entrypoint.ts`) separate fro
 
 ### Jobs
 
-| Job                              | Queue      | Schedule     | What it does                                                                        |
-| -------------------------------- | ---------- | ------------ | ----------------------------------------------------------------------------------- |
-| `sync-recipes`                   | opensearch | Every 15 min | Incremental recipe sync (watermark-based)                                           |
-| `sync-ingredients`               | opensearch | Every 1h     | Incremental ingredient sync                                                         |
-| `sync-tags`                      | opensearch | Every 1h     | Incremental tag sync                                                                |
-| `sync-recipe`                    | opensearch | On-demand    | Single recipe upsert/delete after publish/update                                    |
-| `trending-recipes`               | scheduled  | Daily 06:00  | Weighted trending score: cooks (8pt), ratings (6pt), favorites (4pt), views (2pt)   |
-| `sync-contacts-notifuse`         | scheduled  | Every 6h     | Sync user contacts to email service                                                 |
-| `backup-database-hourly`         | scheduled  | Every 1h     | Enqueues hourly backup job                                                          |
-| `backup-database-daily`          | scheduled  | Daily 02:00  | Enqueues daily backup job                                                           |
-| `purge-thumbnail-cache`          | scheduled  | Every 1h     | Clean S3 cache objects older than 3 days                                            |
-| `database-backup`                | backup     | On-demand    | `pg_dump` → S3 upload → retention cleanup                                           |
-| `enrich-ingredient-nutrition`    | scheduled  | On-demand    | New ingredient: nutrition (web_search), units, categories, shelf life — direct call |
-| `backfill-ingredient-enrichment` | scheduled  | Daily 05:30  | Batch API: same requests for all incomplete ingredients (safety net)                |
-| `backfill-ingredient-shelf-life` | scheduled  | On-demand    | Batch API: shelf life + display name (`write: false` = dry run)                     |
-| `backfill-embeddings`            | opensearch | On-demand    | Batch API (`/v1/embeddings`) for recipes without embedding; restores stored ones    |
-| `poll-openai-batches`            | scheduled  | Every 15 min | Re-enqueues a batch job whose poll chain broke; never submits                       |
+| Job                              | Queue      | Schedule     | What it does                                                                                   |
+| -------------------------------- | ---------- | ------------ | ---------------------------------------------------------------------------------------------- |
+| `sync-recipes`                   | opensearch | Every 15 min | Incremental recipe sync (watermark-based)                                                      |
+| `sync-ingredients`               | opensearch | Every 1h     | Incremental ingredient sync                                                                    |
+| `sync-tags`                      | opensearch | Every 1h     | Incremental tag sync                                                                           |
+| `sync-recipe`                    | opensearch | On-demand    | Single recipe upsert/delete after publish/update                                               |
+| `trending-recipes`               | scheduled  | Daily 06:00  | Weighted trending score: cooks (8pt), ratings (6pt), favorites (4pt), views (2pt)              |
+| `sync-contacts-notifuse`         | scheduled  | Every 6h     | Sync user contacts to email service                                                            |
+| `backup-database-hourly`         | scheduled  | Every 1h     | Enqueues hourly backup job                                                                     |
+| `backup-database-daily`          | scheduled  | Daily 02:00  | Enqueues daily backup job                                                                      |
+| `purge-thumbnail-cache`          | scheduled  | Every 1h     | Clean S3 cache objects older than 3 days                                                       |
+| `database-backup`                | backup     | On-demand    | `pg_dump` → S3 upload → retention cleanup                                                      |
+| `enrich-ingredient-nutrition`    | scheduled  | On-demand    | New ingredient: nutrition (web_search), units, categories, shelf life — direct call            |
+| `backfill-ingredient-enrichment` | scheduled  | Daily 05:30  | Batch API: same requests for all incomplete ingredients (safety net)                           |
+| `backfill-ingredient-shelf-life` | scheduled  | On-demand    | Batch API: shelf life + display name (`write: false` = dry run)                                |
+| `backfill-ingredient-icons`      | scheduled  | On-demand    | Batch API: one icon per ingredient without icon, allowed names only (`write: false` = dry run) |
+| `backfill-embeddings`            | opensearch | On-demand    | Batch API (`/v1/embeddings`) for recipes without embedding; restores stored ones               |
+| `poll-openai-batches`            | scheduled  | Every 15 min | Re-enqueues a batch job whose poll chain broke; never submits                                  |
 
 ### OpenAI Batch Jobs (KUC-118)
 
 Backfills and crons never call OpenAI per entry; only event jobs (new ingredient, `sync-recipe`) call directly. Batch jobs run one step per run: no saved batch → submit; running → schedule the next poll (once, `nextPollAt`); completed or expired → import (partial output of expired batches too), retry failed entries in up to two rounds. State and lock live in Redis (`<name>:batch`, `<name>:lock`); shared code in `worker/queues/batch-job.ts` and `shared/openai-batch.ts`. Request body and result import are the same functions as the direct calls. Results are visible as job run results in `/admin/worker`.
+
+### Ingredient Icons (KUC-125)
+
+Every ingredient shows an IconOven icon (`IngredientIcon`): own icon → icon of its category (stored value, else the slug mapping `MAIN_CATEGORY_ICONS`) → parent category → neutral `fork-knife`; free-text items get a household icon by keyword. Only the allowed subset is bundled (`src/lib/icons/iconoven-food.ts`, generated by `scripts/generate-ingredient-icons.mjs` from `scripts/ingredient-icons/manifest.json`); the browser loads no icons. The enrichment of new ingredients (and the daily batch) asks for an icon from the allowed names; `backfill-ingredient-icons` assigns icons to existing ingredients. An existing icon is never overwritten by enrichment or backfill (no "set by admin" flag: any stored value counts as chosen). Category icons: `npm run cli -- sync-category-icons [--apply]` (also run by the ingredient seeder; keeps existing values). Tests: `npm run test:icons`.
 
 ### Backup Processor
 

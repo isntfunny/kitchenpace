@@ -35,6 +35,10 @@ interface DishCardProps {
     side?: boolean;
     extraMarkers?: DishMarker[];
     compact?: boolean;
+    /** The user's today, for the "Gekocht?" question on past days (KUC-103) */
+    today?: string;
+    /** Room on the right for the menu button of the editing layer (KUC-101) */
+    menuSpace?: boolean;
 }
 
 export function DishCard({
@@ -44,13 +48,16 @@ export function DishCard({
     side,
     extraMarkers = [],
     compact,
+    today,
+    menuSpace,
 }: DishCardProps) {
     const cooked = dish.status === 'COMPLETED';
     const gone = !dish.recipeAvailable;
-    const markers = [...builtInMarkers(dish), ...extraMarkers];
+    const markers = [...builtInMarkers(dish, today), ...extraMarkers];
     const time = dish.time ?? slotTime;
     const label = [
         dish.recipe.title,
+        dish.isLeftover ? 'Rest' : null,
         display.showTime && !side ? `${time} Uhr` : null,
         display.showServings ? `${dish.servings} Portionen` : null,
     ]
@@ -85,6 +92,7 @@ export function DishCard({
                     '& + &': { mt: '1.5' },
                 }),
                 side && css({ ml: compact ? '1.5' : '3.5' }),
+                menuSpace && css({ pr: compact ? '7' : '10' }),
                 (cooked || gone) && css({ opacity: 0.65 }),
             )}
         >
@@ -113,6 +121,20 @@ export function DishCard({
             >
                 {dish.recipe.title}
             </span>
+            {dish.notes && !compact && (
+                <span
+                    className={css({
+                        display: 'block',
+                        fontSize: '11px',
+                        color: 'foreground.muted',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                    })}
+                >
+                    {dish.notes}
+                </span>
+            )}
             {display.showServings && (
                 <span
                     className={css({

@@ -91,8 +91,49 @@ export const entrySnapshotSchema = z
         notes: notesSchema.nullable(),
         cookedAt: z.coerce.date().nullable(),
         leftoverOfId: idSchema.nullable(),
+        /** Leftover entries that pointed to this one; relinked on restore */
+        leftoverIds: z.array(idSchema).max(20).optional(),
     })
     .strict();
 export type EntrySnapshot = z.infer<typeof entrySnapshotSchema>;
+
+// ---------------------------------------------------------------- editing (KUC-101)
+
+const cellSchema = z.object({ date: isoDateSchema, slot: slotKeySchema }).strict();
+
+/** "Verschieben nach …" / "Kopieren nach …" and drag & drop */
+export const moveEntrySchema = cellSchema.extend({ copy: z.boolean().optional() }).strict();
+
+export const swapCellsSchema = z.object({ a: cellSchema, b: cellSchema }).strict();
+
+export const conflictModeSchema = z.enum(['add', 'skip', 'replace']);
+
+/** Copies 1 (day) or 7 (week) days from `from` to `to` */
+export const copyDaysSchema = z
+    .object({
+        from: isoDateSchema,
+        to: isoDateSchema,
+        days: z.union([z.literal(1), z.literal(7)]),
+        mode: conflictModeSchema.default('add'),
+    })
+    .strict()
+    .refine((input) => input.from !== input.to, 'Quelle und Ziel sind gleich');
+
+export const templateNameSchema = z.string().trim().min(1).max(80);
+
+export const saveTemplateSchema = z
+    .object({ startDate: isoDateSchema, name: templateNameSchema })
+    .strict();
+
+export const applyTemplateSchema = z
+    .object({
+        templateId: idSchema,
+        startDate: isoDateSchema,
+        mode: conflictModeSchema.default('add'),
+    })
+    .strict();
+
+/** "Für 2 Mahlzeiten kochen": where the leftover meal goes */
+export const leftoverTargetSchema = cellSchema;
 
 export const shareTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{32,64}$/);

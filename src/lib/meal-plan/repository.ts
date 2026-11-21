@@ -26,7 +26,7 @@ import {
 } from './slots';
 import { formatIsoDate, toDbDate, weekDays, weekRange } from './week';
 
-const recipeSummary = {
+export const recipeSummary = {
     select: {
         id: true,
         title: true,
@@ -98,7 +98,7 @@ const SETTINGS_DEFAULTS: Omit<MealPlanSettings, 'slots'> = {
     quietHoursEnd: null,
 };
 
-function isRecipeAvailable(
+export function isRecipeAvailable(
     recipe: { status: string; moderationStatus: string; authorId: string },
     userId: string,
 ): boolean {
@@ -107,7 +107,7 @@ function isRecipeAvailable(
     return recipe.status === 'PUBLISHED';
 }
 
-function withSlot<
+export function withSlot<
     T extends MealPlanRecipe & {
         recipe: { status: string; moderationStatus: string; authorId: string };
     },
@@ -154,7 +154,7 @@ export async function updateMealPlanSettings(
 
 // ---------------------------------------------------------------- entries
 
-async function assertRecipePlannable(db: Db, userId: string, recipeId: string) {
+export async function assertRecipePlannable(db: Db, userId: string, recipeId: string) {
     const recipe = await db.recipe.findUnique({
         where: { id: recipeId },
         select: { status: true, moderationStatus: true, authorId: true },
@@ -162,7 +162,7 @@ async function assertRecipePlannable(db: Db, userId: string, recipeId: string) {
     if (!recipe || !isRecipeAvailable(recipe, userId)) throw notFound('Rezept');
 }
 
-async function findOwnedEntry(db: Db, userId: string, entryId: string) {
+export async function findOwnedEntry(db: Db, userId: string, entryId: string) {
     const entry = await db.mealPlanRecipe.findFirst({
         where: { id: idSchema.parse(entryId), userId },
     });
@@ -170,7 +170,7 @@ async function findOwnedEntry(db: Db, userId: string, entryId: string) {
     return entry;
 }
 
-async function nextPosition(db: Db, userId: string, date: string, slot: SlotKey) {
+export async function nextPosition(db: Db, userId: string, date: string, slot: SlotKey) {
     const last = await db.mealPlanRecipe.findFirst({
         where: { userId, date: toDbDate(date), ...slotColumns(slot) },
         orderBy: { position: 'desc' },
@@ -322,8 +322,13 @@ function snapshotOf(entry: MealPlanRecipe): EntrySnapshot {
 export async function deleteMealPlanEntry(db: Db, userId: string, entryId: string) {
     const owner = userIdSchema.parse(userId);
     const current = await findOwnedEntry(db, owner, entryId);
+    const leftovers = await db.mealPlanRecipe.findMany({
+        where: { userId: owner, leftoverOfId: current.id },
+        select: { id: true },
+    });
     await db.mealPlanRecipe.delete({ where: { id: current.id } });
-    return snapshotOf(current);
+    const snapshot = snapshotOf(current);
+    return leftovers.length ? { ...snapshot, leftoverIds: leftovers.map((l) => l.id) } : snapshot;
 }
 
 /** Undo for deleteMealPlanEntry: recreates the entry with its old id. */
@@ -360,6 +365,12 @@ export async function restoreMealPlanEntry(db: Db, userId: string, snapshot: unk
         },
         include: { recipe: recipeSummary },
     });
+    // The leftovers lost their link when the origin was deleted (ON DELETE SET NULL)
+    if (data.leftoverIds?.length)
+        await db.mealPlanRecipe.updateMany({
+            where: { id: { in: data.leftoverIds }, userId: owner, leftoverOfId: null },
+            data: { leftoverOfId: entry.id },
+        });
     return withSlot(entry, owner);
 }
 

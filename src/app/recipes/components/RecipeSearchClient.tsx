@@ -10,6 +10,7 @@ import { RecipeCardSkeleton } from '@app/components/features/RecipeCardSkeleton'
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import type { Season } from '@app/lib/fits-now/labels';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import type { ThemeChip } from '@shared/theme-clusters/release';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
@@ -79,6 +80,7 @@ type RecipeSearchClientProps = {
     initialData?: InitialSearchData;
     filterSets?: FilterSetWithRelations[];
     currentSeason?: Season;
+    themes?: ThemeChip[];
     isLoggedIn?: boolean;
 };
 
@@ -88,6 +90,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     initialData,
     filterSets,
     currentSeason,
+    themes,
     isLoggedIn,
 }) => {
     const {
@@ -100,6 +103,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         resetFilters,
         handleSortChange,
         handleFilterSetToggle,
+        handleThemeToggle,
         activeFilterCount,
     } = useSearchFilters(initialFilters, filterSets, isLoggedIn);
 
@@ -224,14 +228,15 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                     isLoggedIn={isLoggedIn}
                 />
 
-                {filterSets && filterSets.length > 0 && (
-                    <FilterSetChipBar
-                        filterSets={filterSets}
-                        activeFilterSetId={filters.filterSetId}
-                        currentSeason={currentSeason}
-                        onToggle={handleFilterSetToggle}
-                    />
-                )}
+                <FilterSetChipBar
+                    filterSets={filterSets ?? []}
+                    activeFilterSetId={filters.filterSetId}
+                    currentSeason={currentSeason}
+                    onToggle={handleFilterSetToggle}
+                    themes={themes}
+                    filters={filters}
+                    onThemeToggle={handleThemeToggle}
+                />
 
                 {error ? (
                     <p className={css({ fontSize: 'sm', color: 'text-muted' })}>{error}</p>

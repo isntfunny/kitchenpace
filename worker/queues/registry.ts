@@ -24,6 +24,7 @@ import {
 } from './scheduled-processor';
 import { processBackfillIngredientShelfLife } from './shelf-life-processor';
 import { processComputeTasteProfiles } from './taste-processor';
+import { processClusterRecipeThemes } from './theme-cluster-processor';
 import {
     processRegisterEventSub,
     processUnregisterEventSub,
@@ -319,6 +320,48 @@ export const JOB_REGISTRY = defineJobs({
             batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 10, max: 500 },
         },
         repeat: { pattern: '0 3 * * *', tz: 'Europe/Berlin' },
+    },
+
+    'cluster-recipe-themes': {
+        queue: QueueName.SCHEDULED,
+        processor: (job) => processClusterRecipeThemes(job),
+        defaultData: {
+            clusters: 0,
+            seed: 42,
+            minSimilarity: 0.8,
+            minClusterSize: 5,
+            dryRun: false,
+        },
+        schema: {
+            clusters: {
+                type: 'number',
+                label: 'Number of clusters (0 = automatic)',
+                default: 0,
+                min: 0,
+                max: 60,
+            },
+            seed: { type: 'number', label: 'Seed (fixed = reproducible)', default: 42, min: 0 },
+            minSimilarity: {
+                type: 'number',
+                label: 'Min. centroid similarity to continue a cluster (%)',
+                default: 80,
+                min: 50,
+                max: 100,
+            },
+            minClusterSize: {
+                type: 'number',
+                label: 'Min. recipes per releasable cluster',
+                default: 5,
+                min: 1,
+                max: 200,
+            },
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (report only, persist nothing)',
+                default: true,
+            },
+        },
+        repeat: { pattern: '30 4 * * 0', tz: 'Europe/Berlin' },
     },
 
     // ── Backup queue ────────────────────────────────────────────────

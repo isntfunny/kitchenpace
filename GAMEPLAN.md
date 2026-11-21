@@ -11,7 +11,7 @@
 <!-- gameplan:start project=KUC -->
 Quelle: [YouTrack-Projekt KUC · KüchenTakt](https://youtrack.tecfriends.de/projects/KUC) – erzeugt von gameplan.py, nicht von Hand ändern.
 
-48 erledigte Tickets ausgeblendet. Done bleibt in offenen Abhängigkeitsgruppen sichtbar; vollständig erledigte Gruppen entfallen. Vollständiger Stand: `--include-done`.
+51 erledigte Tickets ausgeblendet. Done bleibt in offenen Abhängigkeitsgruppen sichtbar; vollständig erledigte Gruppen entfallen. Vollständiger Stand: `--include-done`.
 
 ## Nicht einsortiert
 
@@ -44,9 +44,9 @@ Tickets ohne Epic und ohne Abhängigkeit.
 | [KUC-91](https://youtrack.tecfriends.de/issue/KUC-91) | Eigenen SMTP-Mailversand einführen und Admins über neue Rezepte informieren | Task | Todo |
 | [KUC-93](https://youtrack.tecfriends.de/issue/KUC-93) | UI-Neuvision mit Hallmark: moderne Gestaltung und verlässliche Navigation | Task | Ideas |
 | [KUC-95](https://youtrack.tecfriends.de/issue/KUC-95) | HelloFresh-Rezepte per URL importieren | Task | Backlog |
-| [KUC-97](https://youtrack.tecfriends.de/issue/KUC-97) | Alle KI-Text- und Anreicherungsmodelle zentral auf gpt-6.2-sol umstellen | Task | Doing |
 | [KUC-119](https://youtrack.tecfriends.de/issue/KUC-119) | Feature-Schalter im Admin-Panel verwalten und Flipt ablösen | Task | Todo |
 | [KUC-120](https://youtrack.tecfriends.de/issue/KUC-120) | Lane-Viewer überarbeiten: mobil eine Spalte, ruhigere Farben, dezentere Zutaten | Task | Todo |
+| [KUC-121](https://youtrack.tecfriends.de/issue/KUC-121) | Moderatoren-Benachrichtigung und Import-Protokoll suchen Rollen in Großschreibung | Bug | Todo |
 
 **Legende**
 
@@ -85,7 +85,7 @@ flowchart LR
 flowchart LR
     KUC78["KUC-78<br/>Filterseite"]:::doing
     KUC89["KUC-89<br/>Bring!-Kontoverknüpfung<br/>und Einkaufslisten…"]:::todo
-    KUC94["KUC-94<br/>Haltbarkeit roher<br/>Zutaten erfassen…"]:::doing
+    KUC94["KUC-94<br/>Haltbarkeit roher<br/>Zutaten erfassen…"]:::done
     KUC114["KUC-114<br/>Zutaten normalisieren"]:::doing
     KUC79[["KUC-79<br/>Wochenplan<br/><br/>0 von 17 erledigt"]]:::todo
     KUC78 -.-> KUC79
@@ -111,7 +111,7 @@ flowchart LR
 ```mermaid
 %%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
-    KUC88["KUC-88<br/>Importierte<br/>Zutatenverweise<br/>dauerhaft…"]:::todo
+    KUC88["KUC-88<br/>Importierte<br/>Zutatenverweise<br/>dauerhaft…"]:::done
     KUC92["KUC-92<br/>Zutaten nach<br/>Teilzubereitungen<br/>gruppieren…"]:::backlog
     KUC88 --> KUC92
     click KUC88 "https://youtrack.tecfriends.de/issue/KUC-88"
@@ -130,7 +130,7 @@ flowchart LR
 ```mermaid
 %%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
-    KUC115[["KUC-115<br/>Rezept import KI<br/>überarbeiten und<br/>komplett…<br/><br/>0 von 2 erledigt"]]:::doing
+    KUC115[["KUC-115<br/>Rezept import KI<br/>überarbeiten und<br/>komplett…<br/><br/>1 von 1 erledigt"]]:::done
     KUC118["KUC-118<br/>KI-Backfills und<br/>Cron-Jobs über die<br/>OpenAI…"]:::doing
     KUC115 --> KUC118
     click KUC115 "https://youtrack.tecfriends.de/issue/KUC-115"
@@ -159,7 +159,7 @@ Keine sichtbaren Untertickets.
 flowchart LR
     KUC78(["KUC-78<br/>Filterseite:<br/>FilterSet-Chips + „Passt<br/>zu dir#quot;-Sortierung"]):::doing
     KUC89(["KUC-89<br/>Bring!-Kontoverknüpfung<br/>und Einkaufslisten in<br/>KochTakt…"]):::todo
-    KUC94(["KUC-94<br/>Haltbarkeit roher<br/>Zutaten erfassen<br/>#40;KI-Batch für den…"]):::doing
+    KUC94(["KUC-94<br/>Haltbarkeit roher<br/>Zutaten erfassen<br/>#40;KI-Batch für den…"]):::done
     KUC98["KUC-98<br/>Wochenplan S1:<br/>Datenmodell für Plan,<br/>Einkaufsliste und…"]:::todo
     KUC99["KUC-99<br/>Wochenplan S2:<br/>Wochenansicht mit<br/>Navigation, Portionen…"]:::todo
     KUC100["KUC-100<br/>Wochenplan S3: Rezepte<br/>einplanen per Slot-Suche<br/>und „Zum…"]:::todo
@@ -234,30 +234,11 @@ flowchart LR
 
 ## KUC-115 · Rezept import KI überarbeiten und komplett neu importieren
 
-[KUC-115](https://youtrack.tecfriends.de/issue/KUC-115) · Doing · 0 von 2 erledigt
+[KUC-115](https://youtrack.tecfriends.de/issue/KUC-115) · Done · 1 von 1 erledigt
 
 ### Ohne Abhängigkeiten
 
 | Ticket | Titel | Typ | Status |
 |---|---|---|---|
-| [KUC-117](https://youtrack.tecfriends.de/issue/KUC-117) | Importer verlinkt Zutaten mit Umlaut am Anfang und in Pluralform nicht | Bug | Todo |
-
-### Abhängigkeiten
-
-```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
-flowchart LR
-    KUC116["KUC-116<br/>Tag-Bestand bereinigen<br/>und feste Tag-Liste für<br/>den Import"]:::doing
-    KUC115[["KUC-115<br/>Rezept import KI<br/>überarbeiten und<br/>komplett neu importieren"]]:::doing
-    KUC116 --> KUC115
-    click KUC115 "https://youtrack.tecfriends.de/issue/KUC-115"
-    click KUC116 "https://youtrack.tecfriends.de/issue/KUC-116"
-    classDef ideas fill:#f3e8ff,stroke:#7e22ce,color:#3b0764,stroke-dasharray:2 4
-    classDef backlog fill:#f1f5f9,stroke:#64748b,color:#0f172a,stroke-dasharray:6 4
-    classDef todo fill:#2563eb,stroke:#1e3a8a,color:#ffffff,stroke-width:2px
-    classDef doing fill:#f59e0b,stroke:#7c2d12,color:#1c1917,stroke-width:4px
-    classDef done fill:#15803d,stroke:#052e16,color:#ffffff,stroke-width:2px
-    classDef wontdo fill:#fee2e2,stroke:#b91c1c,color:#450a0a,stroke-dasharray:2 2
-    classDef unknown fill:#ffffff,stroke:#6b7280,color:#111827,stroke-dasharray:1 3
-```
+| [KUC-117](https://youtrack.tecfriends.de/issue/KUC-117) | Importer verlinkt Zutaten mit Umlaut am Anfang und in Pluralform nicht | Bug | Won't Do |
 <!-- gameplan:end -->

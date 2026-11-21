@@ -258,7 +258,13 @@ async function fetchResults(opts: { dir?: string }) {
     console.log(`Vorschläge: ${proposalsPath}\nBericht: ${reportPath}`);
 }
 
-async function apply(opts: { dir?: string; write?: boolean; proposals?: string; ids?: string }) {
+async function apply(opts: {
+    dir?: string;
+    write?: boolean;
+    proposals?: string;
+    ids?: string;
+    includeMismatch?: boolean;
+}) {
     const dir = dirOf(opts);
     const state = readJson<AnyState>(join(dir, 'state.json'));
     if (isFull(state)) return applyFull(dir, state, opts);
@@ -400,6 +406,10 @@ program
     .option(...dirOption)
     .option('--proposals <file>', 'Vorschlagsdatei (Standard: die des Batches aus state.json)')
     .option('--ids <ids>', 'nur diese Rezept-IDs aus den Vorschlägen (Komma-getrennt)')
+    .option(
+        '--include-mismatch',
+        'Vollmodus: auch Rezepte schreiben, deren Quelle nicht mehr passt',
+    )
     .option('--write', 'wirklich schreiben (sonst Trockenlauf)')
     .action(apply);
 program

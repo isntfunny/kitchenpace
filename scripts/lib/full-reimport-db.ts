@@ -3,10 +3,10 @@
  * they are now and the catalogue ingredients a write would create.
  */
 import { prisma } from '../../shared/prisma';
-import type {
-    CurrentRecipeSummary,
-    FullRefreshProposal,
-} from '../../src/lib/importer/full-refresh';
+import { createIngredient } from '../../src/components/recipe/ingredientActions';
+import type { FullRefreshProposal } from '../../src/lib/importer/full-refresh';
+import type { CurrentRecipeSummary } from '../../src/lib/importer/full-refresh-report';
+import type { ResolveIngredient } from '../../src/lib/importer/pipeline';
 import { matchExistingIngredient } from '../../src/lib/ingredients/match-ingredient';
 
 export async function currentSummaries(ids: string[]): Promise<Map<string, CurrentRecipeSummary>> {
@@ -16,7 +16,7 @@ export async function currentSummaries(ids: string[]): Promise<Map<string, Curre
             id: true,
             title: true,
             flowNodes: true,
-            _count: { select: { recipeIngredients: true } },
+            recipeIngredients: { select: { ingredientId: true } },
             tags: { select: { tag: { select: { name: true } } } },
         },
     });
@@ -25,7 +25,8 @@ export async function currentSummaries(ids: string[]): Promise<Map<string, Curre
             r.id,
             {
                 title: r.title,
-                ingredientCount: r._count.recipeIngredients,
+                ingredientCount: r.recipeIngredients.length,
+                ingredientIds: r.recipeIngredients.map((ri) => ri.ingredientId),
                 nodeCount: Array.isArray(r.flowNodes) ? r.flowNodes.length : 0,
                 tags: r.tags.map((t) => t.tag.name),
             },
@@ -33,24 +34,51 @@ export async function currentSummaries(ids: string[]): Promise<Map<string, Curre
     );
 }
 
-/** recipeId → canonical names the apply would add to the catalogue (lookup only, no write). */
-export async function plannedNewIngredients(proposals: FullRefreshProposal[]) {
-    const cache = new Map<string, string | null>();
-    const result = new Map<string, string[]>();
+/**
+ * Catalogue lookup (no write) of every proposal's ingredients: the existing
+ * catalogue id per ingredient (null if the apply would create it) and the
+ * canonical names of the ones it would create.
+ */
+export async function matchProposalIngredients(proposals: FullRefreshProposal[]) {
+    const cache = new Map<string, { id: string | null; name: string }>();
+    const ids = new Map<string, (string | null)[]>();
+    const newNames = new Map<string, string[]>();
     for (const p of proposals) {
         if (!p.recipe) continue;
+        const recipeIds: (string | null)[] = [];
         const names: string[] = [];
         for (const ing of p.recipe.ingredients) {
-            const key = ing.name.trim().toLowerCase();
+            const key = ing.name.trim().toLocaleLowerCase('de');
             if (!key) continue;
             if (!cache.has(key)) {
                 const match = await matchExistingIngredient(ing.name);
-                cache.set(key, match.existing ? null : match.canonicalName);
+                cache.set(key, {
+                    id: match.existing?.id ?? null,
+                    name: match.existing?.name ?? match.canonicalName,
+                });
             }
-            const created = cache.get(key);
-            if (created && !names.includes(created)) names.push(created);
+            const hit = cache.get(key)!;
+            recipeIds.push(hit.id);
+            if (!hit.id && !names.includes(hit.name)) names.push(hit.name);
         }
-        if (names.length) result.set(p.recipeId, names);
+        ids.set(p.recipeId, recipeIds);
+        if (names.length) newNames.set(p.recipeId, names);
     }
-    return result;
+    return { ids, newNames };
+}
+
+/** createIngredient with a name → ingredient cache for the whole run. */
+export function cachedIngredientResolver(): ResolveIngredient {
+    const cache = new Map<string, Promise<{ id: string }>>();
+    return (name) => {
+        const key = name.trim().toLocaleLowerCase('de');
+        let hit = cache.get(key);
+        if (!hit) {
+            hit = createIngredient(name);
+            // a failed lookup must not stick
+            hit.catch(() => cache.delete(key));
+            cache.set(key, hit);
+        }
+        return hit;
+    };
 }

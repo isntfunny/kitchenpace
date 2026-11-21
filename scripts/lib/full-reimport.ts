@@ -15,35 +15,38 @@ import {
     parseBatchOutputJsonl,
 } from '../../shared/openai-batch';
 import { prisma } from '../../shared/prisma';
-import { createIngredient } from '../../src/components/recipe/ingredientActions';
 import {
     buildFullRefreshRequest,
     buildFullRepairRequest,
-    buildFullReport,
     checkScrapedSource,
     evaluateFullRefreshEntry,
     fullRefreshWhere,
     isFullBackup,
     mergeRepairProposals,
-    renderFullReportMarkdown,
     repairCandidates,
+    writableProposals,
     type FullBackup,
     type FullRefreshProposal,
     type FullRefreshRequest,
     type FullRefreshSkip,
 } from '../../src/lib/importer/full-refresh';
 import { restoreFullBackupEntry, snapshotRecipes } from '../../src/lib/importer/full-refresh-db';
-import type { ChatRequestBody } from '../../src/lib/importer/import-prompt';
 import {
-    fetchImportContext,
-    replaceImportedRecipe,
-    type ResolveIngredient,
-} from '../../src/lib/importer/pipeline';
+    applySourceCheck,
+    buildFullReport,
+    renderFullReportMarkdown,
+} from '../../src/lib/importer/full-refresh-report';
+import type { ChatRequestBody } from '../../src/lib/importer/import-prompt';
+import { fetchImportContext, replaceImportedRecipe } from '../../src/lib/importer/pipeline';
 import { scrapeRecipe } from '../../src/lib/importer/scraper';
 import { setEnrichmentEnqueuer } from '../../src/lib/ingredients/enqueue-enrichment';
 import { setNewIngredientNotifications } from '../../src/lib/ingredients/new-ingredient-notifications';
 
-import { currentSummaries, plannedNewIngredients } from './full-reimport-db';
+import {
+    cachedIngredientResolver,
+    currentSummaries,
+    matchProposalIngredients,
+} from './full-reimport-db';
 import { syncSearch } from './sync-search';
 
 const SCRAPE_CONCURRENCY = 3;
@@ -246,12 +249,23 @@ export async function fetchFull(dir: string, state: FullState) {
     const evaluated = state.requests.map((request) =>
         evaluateFullRefreshEntry(request, entries.get(request.customId)),
     );
-    const proposals = state.previousProposals
+    const merged = state.previousProposals
         ? mergeRepairProposals(
               readJson<ProposalsFile>(state.previousProposals).proposals,
               evaluated,
           )
         : evaluated;
+
+    // Is the source still the same recipe? Old title and catalogue ingredients
+    // against the new ones (catalogue lookup only, nothing is created).
+    const current = await currentSummaries([
+        ...merged.map((p) => p.recipeId),
+        ...state.skipped.map((s) => s.recipeId),
+    ]);
+    const matches = await matchProposalIngredients(
+        merged.filter((p) => p.status === 'ready' || p.status === 'mismatch'),
+    );
+    const proposals = applySourceCheck(merged, current, matches.ids);
 
     const proposalsPath = proposalsPathOf(dir, state.batchId);
     const file: ProposalsFile = {
@@ -267,16 +281,17 @@ export async function fetchFull(dir: string, state: FullState) {
         batchId: state.batchId,
         proposals,
         skipped: state.skipped,
-        current: await currentSummaries([
-            ...proposals.map((p) => p.recipeId),
-            ...state.skipped.map((s) => s.recipeId),
-        ]),
-        newIngredients: await plannedNewIngredients(proposals.filter((p) => p.status === 'ready')),
+        current,
+        newIngredients: matches.newNames,
     });
     const markdown = renderFullReportMarkdown(report);
     writeJson(join(dir, `report-${state.batchId}.json`), report);
     writeFileSync(join(dir, `report-${state.batchId}.md`), markdown);
     console.log(markdown.split('\n').slice(0, 5).join('\n'));
+    if (report.summary.mismatch > 0)
+        console.log(
+            `${report.summary.mismatch} Rezepte mit unpassender Quelle: siehe Abschnitt im Bericht; apply schreibt sie nur mit --include-mismatch oder --ids.`,
+        );
     console.log(
         `Vorschläge: ${proposalsPath}\nBericht: ${join(dir, `report-${state.batchId}.md`)} (+ .json)`,
     );
@@ -289,14 +304,19 @@ export async function fetchFull(dir: string, state: FullState) {
 export async function applyFull(
     dir: string,
     state: FullState,
-    opts: { write?: boolean; proposals?: string; ids?: string },
+    opts: { write?: boolean; proposals?: string; ids?: string; includeMismatch?: boolean },
 ) {
     const proposalsPath = opts.proposals ?? proposalsPathOf(dir, state.batchId);
     const { proposals } = readJson<ProposalsFile>(proposalsPath);
-    const only = splitIds(opts.ids);
-    const ready = proposals.filter(
-        (p) => p.status === 'ready' && p.recipe && (!only?.length || only.includes(p.recipeId)),
-    );
+    const ready = writableProposals(proposals, {
+        ids: splitIds(opts.ids),
+        includeMismatch: opts.includeMismatch,
+    });
+    const held = proposals.filter((p) => p.status === 'mismatch' && !ready.includes(p));
+    if (held.length)
+        console.log(
+            `${held.length} Rezepte mit unpassender Quelle zurückgehalten (--include-mismatch oder --ids).`,
+        );
 
     const recipes = await prisma.recipe.findMany({
         where: { id: { in: ready.map((p) => p.recipeId) } },
@@ -379,22 +399,6 @@ export async function applyFull(
     );
     await syncSearch(applied, { enrichIngredientIds: [...created] });
     if (failed.length > 0) process.exitCode = 1;
-}
-
-/** createIngredient with a name → ingredient cache for the whole run. */
-function cachedIngredientResolver(): ResolveIngredient {
-    const cache = new Map<string, Promise<{ id: string }>>();
-    return (name) => {
-        const key = name.trim().toLocaleLowerCase('de');
-        let hit = cache.get(key);
-        if (!hit) {
-            hit = createIngredient(name);
-            // a failed lookup must not stick
-            hit.catch(() => cache.delete(key));
-            cache.set(key, hit);
-        }
-        return hit;
-    };
 }
 
 export async function rollbackFull(file: string, backup: unknown, opts: { write?: boolean }) {

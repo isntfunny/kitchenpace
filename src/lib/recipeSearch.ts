@@ -1,7 +1,8 @@
 import type { RecipeCardData } from '@app/app/actions/recipes';
-import { cosineSimilarity } from '@app/lib/embeddings/embedding-service';
 import { RECIPE_FILTER_DEFAULT_LIMIT } from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import { paginate, resolveEffectiveSort, TASTE_POOL_SIZE } from '@app/lib/recipes/taste-ranking';
+import { loadTasteEmbedding, rankRecipeIdsByTaste } from '@app/lib/recipes/taste-ranking.server';
 import type { RecipeSearchFacets, RecipeSearchMeta, TermFacet } from '@app/lib/recipeSearchTypes';
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
 import { createLogger } from '@shared/logger';
@@ -10,7 +11,6 @@ import {
     opensearchClient,
     OPENSEARCH_INDEX,
 } from '@shared/opensearch/client';
-import { prisma } from '@shared/prisma';
 
 const log = createLogger('recipeSearch');
 
@@ -69,7 +69,6 @@ const buildHistogramFacet = (agg: HistogramAggregation | undefined, interval: nu
 };
 
 const SEMANTIC_MIN_WORD_COUNT = 4;
-const TASTE_POOL_SIZE = 200;
 
 export async function queryRecipes(
     filters: RecipeFilterSearchParams,
@@ -100,7 +99,22 @@ export async function queryRecipes(
         sort = 'rating',
     } = filters;
 
-    const isTasteSort = sort === 'taste' && !!userId;
+    // "Passt zu dir" needs a logged-in user with a taste profile; otherwise fall back to popular.
+    let tasteEmbedding: number[] | null = null;
+    if (sort === 'taste' && userId) {
+        try {
+            tasteEmbedding = await loadTasteEmbedding(userId);
+        } catch (err) {
+            log.warn('Loading taste profile failed, falling back to popular sort', {
+                error: err instanceof Error ? err.message : String(err),
+            });
+        }
+    }
+    const effectiveSort = resolveEffectiveSort(sort, {
+        isLoggedIn: !!userId,
+        hasTasteProfile: !!tasteEmbedding,
+    });
+    const isTasteSort = effectiveSort === 'taste';
 
     const sortMap: Record<string, Record<string, unknown>[]> = {
         rating: [{ rating: 'desc' }, { publishedAt: 'desc' }],
@@ -108,7 +122,8 @@ export async function queryRecipes(
         fastest: [{ totalTime: 'asc' }, { rating: 'desc' }],
         popular: [{ cookCount: 'desc' }, { rating: 'desc' }],
     };
-    const osSort = sortMap[isTasteSort ? 'popular' : sort] ?? sortMap.rating;
+    // Taste re-ranking works on the top pool by rating (after all other filters).
+    const osSort = sortMap[isTasteSort ? 'rating' : effectiveSort] ?? sortMap.rating;
 
     type BoolClause = Record<string, unknown>;
     type BoolQuery = {
@@ -283,40 +298,28 @@ export async function queryRecipes(
         .filter(Boolean)
         .map((source) => mapDocumentToRecipeCard(source ?? {}));
 
-    // Taste sort: re-rank by cosine similarity against user's taste profile
+    // Taste sort: re-rank the pool (max. TASTE_POOL_SIZE) by cosine similarity to the taste profile
     let tasteTotal = total;
-    if (isTasteSort && data.length > 0) {
+    if (isTasteSort) {
+        tasteTotal = Math.min(TASTE_POOL_SIZE, total);
+        let ranked = data;
         try {
-            const profile = await prisma.profile.findFirst({
-                where: { userId: userId! },
-                select: { tasteEmbedding: true },
-            });
-
-            if (profile?.tasteEmbedding && profile.tasteEmbedding.length > 0) {
-                const recipeIds = data.map((r) => r.id);
-                const embeddings = await prisma.recipeEmbedding.findMany({
-                    where: { recipeId: { in: recipeIds } },
-                    select: { recipeId: true, embedding: true },
-                });
-
-                const embeddingMap = new Map(embeddings.map((e) => [e.recipeId, e.embedding]));
-                const taste = profile.tasteEmbedding;
-
-                const scored = data.map((recipe) => {
-                    const emb = embeddingMap.get(recipe.id);
-                    const score = emb ? cosineSimilarity(taste, emb) : -1;
-                    return { recipe, score };
-                });
-
-                scored.sort((a, b) => b.score - a.score);
-                tasteTotal = Math.min(TASTE_POOL_SIZE, total);
-                data = scored.slice(from, from + limit).map((s) => s.recipe);
+            const scored = await rankRecipeIdsByTaste(
+                userId!,
+                data.map((recipe) => recipe.id),
+                { taste: tasteEmbedding ?? undefined },
+            );
+            if (scored) {
+                const byId = new Map(data.map((recipe) => [recipe.id, recipe]));
+                ranked = scored.map(({ id }) => byId.get(id)!);
             }
         } catch (err) {
-            log.warn('Taste re-ranking failed, falling back to popular sort', {
+            log.warn('Taste re-ranking failed, keeping rating order', {
                 error: err instanceof Error ? err.message : String(err),
             });
         }
+        // The pool was fetched from offset 0, so paginate it here.
+        data = paginate(ranked, page, limit);
     }
 
     // Semantic search: prepend embedding-based hits on first page for 4+ word queries

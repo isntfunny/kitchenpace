@@ -32,6 +32,7 @@
         "format:check": "prettier --check .",
         "test:bring:ui": "mkdir -p .superpowers && panda cssgen --outfile .superpowers/bring-ui.css && node --test tests/bring/ui.test.mjs",
         "test:bring": "node --import tsx --test tests/bring/*.test.ts",
+        "test:meal-plan": "node --import tsx --test tests/meal-plan/*.test.ts",
         "test:e2e": "playwright test",
         "test:load": "./k6/run-load-test.sh",
         "test:load:dashboard": "./k6/run-dashboard.sh",

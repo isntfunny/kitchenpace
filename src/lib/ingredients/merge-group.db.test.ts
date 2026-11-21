@@ -91,7 +91,16 @@ test('merge moves every reference and keeps amounts and mentions', { skip }, asy
         data: {
             id: P + 'sl',
             userId: P + 'u',
-            items: { create: [{ id: P + 'si', name: 'Hühnerei', ingredientId: P + 'dup' }] },
+            items: {
+                create: [
+                    {
+                        id: P + 'si',
+                        name: 'Hühnerei',
+                        ingredientId: P + 'dup',
+                        itemKey: 'i:' + P + 'dup',
+                    },
+                ],
+            },
         },
     });
     await db.filterSet.create({

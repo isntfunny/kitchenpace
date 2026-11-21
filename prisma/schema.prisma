@@ -45,6 +45,77 @@ enum MealStatus {
   CANCELLED
 }
 
+// Meal plan, shopping list and pantry (KUC-79 / KUC-98)
+// Base unit of a stored quantity; other units are converted via IngredientUnit/Unit
+enum BaseUnit {
+  G
+  ML
+  PIECE
+}
+
+enum ShoppingItemStatus {
+  OPEN
+  PURCHASED
+  DORMANT
+}
+
+enum ShoppingSourceKind {
+  RECIPE
+  MEAL_PLAN
+  MANUAL
+  SUGGESTION
+  BRING
+}
+
+enum ShoppingHistoryEvent {
+  ADDED
+  PURCHASED
+}
+
+enum ShoppingOrigin {
+  KOCHTAKT
+  BRING
+}
+
+enum BringSyncStatus {
+  IDLE
+  OK
+  ERROR
+  AUTH_FAILED
+}
+
+enum PantrySource {
+  PURCHASE
+  BRING
+  COOKING
+  MANUAL
+}
+
+// AVAILABLE = still there ("offen" in the tickets); openedAt tracks the opening separately
+enum PantryStatus {
+  AVAILABLE
+  USED_UP
+  DISCARDED
+}
+
+enum MealPlanReminderKind {
+  COOK_START
+  WEEKLY_PLAN
+}
+
+enum MealPlanReminderStatus {
+  SCHEDULED
+  SENT
+  SKIPPED
+  CANCELLED
+}
+
+enum RecipeClusterRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 enum JobStatus {
   PENDING
   PROCESSING
@@ -247,7 +318,15 @@ model User {
   notifications             Notification[]
   pushSubscriptions         PushSubscription[]
   mealPlans                 MealPlan[]
-  shoppingLists             ShoppingList[]
+  mealPlanEntries           MealPlanRecipe[]
+  mealPlanTemplates         MealPlanTemplate[]
+  mealPlanReminders         MealPlanReminder[]
+  shoppingList              ShoppingList?
+  shoppingHistory           ShoppingHistory[]
+  shoppingSuggestionSnoozes ShoppingSuggestionSnooze[]
+  bringSyncConflicts        BringSyncConflict[]
+  pantryItems               PantryItem[]
+  approvedClusterRuns       RecipeClusterRun[]
   activities                ActivityLog[]
   viewHistory               UserViewHistory[]
   cookHistory               UserCookHistory[]
@@ -310,6 +389,22 @@ model Profile {
   notifyOnSystemMessages     Boolean   @default(true)
   notifyOnNewsletter         Boolean   @default(true)
   notifyOnStreamStarted      Boolean   @default(true)
+  // Push "Zeit anzufangen" before a planned slot (KUC-109)
+  notifyOnCookStart          Boolean   @default(true)
+
+  // Meal plan settings (KUC-102). Days are ISO weekdays: 1 = Monday … 7 = Sunday.
+  householdSize              Int?      // null = not asked yet; the UI asks on first planning
+  weekStartDay               Int       @default(1)
+  shoppingDay                Int?
+  timezone                   String    @default("Europe/Berlin") @db.VarChar(64)
+  mealPlanShowTime           Boolean   @default(true)
+  mealPlanShowServings       Boolean   @default(false)
+  mealPlanShowCalories       Boolean   @default(true)
+  // Slot configuration, see src/lib/meal-plan/slots.ts (null = defaults)
+  mealPlanSlots              Json?
+  // Quiet hours for push reminders, local HH:mm (null = none)
+  quietHoursStart            String?   @db.VarChar(5)
+  quietHoursEnd              String?   @db.VarChar(5)
 
   // Twitch integration (twitchId lives in account.accountId where providerId='twitch')
   twitchUsername              String?   @db.VarChar(60)
@@ -387,7 +482,10 @@ model Recipe {
   favorites                                                                  Favorite[]
   tags                                                                       RecipeTag[]
   mealPlanRecipes                                                            MealPlanRecipe[]
-  shoppingItems                                                              ShoppingItem[]
+  mealPlanTemplateEntries                                                    MealPlanTemplateEntry[]
+  shoppingItemSources                                                        ShoppingItemSource[]
+  shoppingHistory                                                            ShoppingHistory[]
+  clusterMemberships                                                         RecipeClusterMember[]
   userViewHistory                                                            UserViewHistory[]
   cookHistory                                                                UserCookHistory[]
   pinnedFavorites                                                            PinnedFavorite[]
@@ -549,6 +647,9 @@ model Ingredient {
   shelfLifeSource     ShelfLifeSource?
   shelfLifeConfidence ShelfLifeConfidence?
 
+  // IconOven icon name without prefix, e.g. "carrot" (KUC-125)
+  icon String? @db.VarChar(64)
+
   // Swiss Food DB reference
   swissFoodId              Int?    @unique
 
@@ -603,6 +704,8 @@ model Ingredient {
   ingredientUnits IngredientUnit[]
   recipes         RecipeIngredient[]
   shoppingItems   ShoppingItem[]
+  shoppingHistory ShoppingHistory[]
+  pantryItems     PantryItem[]
   filterSets      FilterSetIngredient[]
   storageLives    IngredientStorageLife[]
 
@@ -627,6 +730,8 @@ model IngredientCategory {
   name        String
   slug        String               @unique
   sortOrder   Int                  @default(0)
+  // IconOven icon name without prefix; subcategories inherit (KUC-125)
+  icon        String?              @db.VarChar(64)
   parentId    String?
   parent      IngredientCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
   children    IngredientCategory[] @relation("CategoryTree")
@@ -833,75 +938,299 @@ model PushSubscription {
   @@index([userId])
 }
 
-// =====================================// MEAL PLANNING
+// =====================================// MEAL PLANNING (KUC-98)
 // =====================================
 model MealPlan {
-  id            String            @id @default(cuid())
-  userId        String
-  name          String?
-  startDate     DateTime
-  endDate       DateTime
-  meals         MealPlanRecipe[]
-  shoppingLists ShoppingList[]
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  // Optional week record (KUC-98): entries hang on dates, not on this row.
+  // Holds week-only settings and the revocable share link (KUC-110).
+  id                    String            @id @default(cuid())
+  userId                String
+  startDate             DateTime          @db.Date
+  name                  String?           @db.VarChar(80)
+  // Week-only slot configuration, same shape as Profile.mealPlanSlots (null = user default)
+  slotOverride          Json?
+  shareToken            String?           @unique @db.VarChar(64)
+  shareCreatedAt        DateTime?
+  shareRevokedAt        DateTime?
+  // Notes and custom slot names are moderated before sharing (KUC-110)
+  shareModerationStatus ModerationStatus?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([userId, startDate])
+  @@unique([userId, startDate])
 }
 
+// One planned dish (KUC-98). Several dishes per slot via position.
 model MealPlanRecipe {
-  id         String      @id @default(cuid())
-  mealPlanId String
-  recipeId   String
-  date       DateTime
-  mealType   MealType
-  servings   Int         @default(4)
-  status     MealStatus  @default(PLANNED)
-  notes      String?
+  id             String     @id @default(cuid())
+  userId         String
+  recipeId       String
+  date           DateTime   @db.Date
+  // Exactly one of mealType / customMealType is set (CHECK constraint)
+  mealType       MealType?
+  // Key of a custom slot from the slot configuration
+  customMealType String?    @db.VarChar(40)
+  position       Int        @default(0)
+  // Local time HH:mm in Profile.timezone; null = slot default
+  time           String?    @db.VarChar(5)
+  servings       Int
+  status         MealStatus @default(PLANNED)
+  // Fixed by the user, never moved by suggestions (KUC-96)
+  pinned         Boolean    @default(false)
+  notes          String?    @db.VarChar(500)
+  // Confirmed "Gekocht" (KUC-103); cookHistoryId prevents double counting
+  cookedAt       DateTime?
+  cookHistoryId  String?    @unique
+  // Usage booked into the pantry (confirmed or assumed after the day passed, KUC-103/107)
+  pantryBookedAt DateTime?
+  // "Für 2 Mahlzeiten kochen": this entry is the leftover of another one (KUC-101)
+  leftoverOfId   String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
-  mealPlan   MealPlan   @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
-  recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe         Recipe               @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  cookHistory    UserCookHistory?     @relation(fields: [cookHistoryId], references: [id], onDelete: SetNull)
+  leftoverOf     MealPlanRecipe?      @relation("MealPlanLeftover", fields: [leftoverOfId], references: [id], onDelete: SetNull)
+  leftovers      MealPlanRecipe[]     @relation("MealPlanLeftover")
+  shoppingSources ShoppingItemSource[]
+  pantryItems    PantryItem[]
 
-  @@index([mealPlanId])
+  @@index([userId, date])
   @@index([recipeId])
+  @@index([leftoverOfId])
+}
+
+// Named week template (KUC-101)
+model MealPlanTemplate {
+  id        String                  @id @default(cuid())
+  userId    String
+  name      String                  @db.VarChar(80)
+  entries   MealPlanTemplateEntry[]
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model MealPlanTemplateEntry {
+  id             String    @id @default(cuid())
+  templateId     String
+  recipeId       String
+  // 0 = first day of the week the template is applied to
+  dayOffset      Int
+  mealType       MealType?
+  customMealType String?   @db.VarChar(40)
+  position       Int       @default(0)
+  time           String?   @db.VarChar(5)
+  servings       Int
+  notes          String?   @db.VarChar(500)
+
+  template MealPlanTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  recipe   Recipe           @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([recipeId])
+}
+
+// Reminder bookkeeping (KUC-109): one row per user, kind, day and slot.
+// fingerprint = hash of the slot's entries and time; a mismatch means the job is stale.
+model MealPlanReminder {
+  id           String                 @id @default(cuid())
+  userId       String
+  kind         MealPlanReminderKind
+  date         DateTime               @db.Date
+  // MealType name or custom slot key; "" for the weekly reminder
+  slotKey      String                 @default("") @db.VarChar(40)
+  scheduledFor DateTime
+  jobId        String?                @db.VarChar(200)
+  fingerprint  String                 @db.VarChar(64)
+  status       MealPlanReminderStatus @default(SCHEDULED)
+  sentAt       DateTime?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, date, slotKey])
+  @@index([status, scheduledFor])
 }
 
 // =====================================// SHOPPING LISTS
 // =====================================
+// One continuous list per user (Bring! principle, KUC-104)
 model ShoppingList {
-  id         String          @id @default(cuid())
-  userId     String
-  name       String?
-  mealPlanId String?
-  items      ShoppingItem[]
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  id        String         @id @default(cuid())
+  userId    String         @unique
+  items     ShoppingItem[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
-  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  mealPlan   MealPlan?      @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// Each ingredient / free-text name exactly once per list.
+// itemKey = "i:<ingredientId>" or "t:<normalized name>" (see src/lib/shopping/item-key.ts)
 model ShoppingItem {
-  id                                                              String            @id @default(cuid())
-  shoppingListId                                                  String
-  recipeId       String?          // Original recipe (optional)
-  ingredientId   String?          // Master ingredient (optional)
-  name           String           // Display name (fallback)
-  amount                                                          String?
-  unit                                                            String?
-  checked                                                         Boolean           @default(false)
-  position                                                        Int               @default(0)
+  id              String             @id @default(cuid())
+  shoppingListId  String
+  ingredientId    String?
+  itemKey         String             @db.VarChar(220)
+  name            String             @db.VarChar(200)
+  status          ShoppingItemStatus @default(OPEN)
+  // Current amount: quantity in baseUnit, shown in displayUnit; quantityText holds
+  // what could not be converted safely ("1 Bund"). All three may be empty.
+  quantity        Float?
+  baseUnit        BaseUnit?
+  displayUnit     String?            @db.VarChar(20)
+  quantityText    String?            @db.VarChar(200)
+  note            String?            @db.VarChar(500)
+  position        Int                @default(0)
+  statusChangedAt DateTime           @default(now())
+  // Bring! sync per item (KUC-106)
+  bringName       String?            @db.VarChar(200)
+  bringSpec       String?            @db.VarChar(500)
+  // Hash of name/spec/status at the last sync; tells which side changed since
+  bringSyncHash   String?            @db.VarChar(64)
+  bringSyncedAt   DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
-  shoppingList                                                    ShoppingList     @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
-  recipe                                                          Recipe?          @relation(fields: [recipeId], references: [id], onDelete: SetNull)
-  ingredient                                                      Ingredient?      @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+  shoppingList ShoppingList         @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient?          @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+  sources      ShoppingItemSource[]
+  history      ShoppingHistory[]
+  conflicts    BringSyncConflict[]
 
-  @@index([shoppingListId])
+  @@unique([shoppingListId, itemKey])
+  @@unique([shoppingListId, ingredientId])
+  @@index([shoppingListId, status])
+  @@index([ingredientId])
+}
+
+// Where an item's amount comes from ("Di: Alfredo · 200 ml")
+model ShoppingItemSource {
+  id               String             @id @default(cuid())
+  shoppingItemId   String
+  kind             ShoppingSourceKind
+  recipeId         String?
+  mealPlanRecipeId String?
+  // Original statement from the recipe, unconverted
+  originalAmount   String?            @db.VarChar(50)
+  originalUnit     String?            @db.VarChar(20)
+  // Converted share of the item's amount (null if not convertible)
+  quantity         Float?
+  baseUnit         BaseUnit?
+  servings         Int?
+  createdAt        DateTime           @default(now())
+
+  shoppingItem  ShoppingItem    @relation(fields: [shoppingItemId], references: [id], onDelete: Cascade)
+  recipe        Recipe?         @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  mealPlanEntry MealPlanRecipe? @relation(fields: [mealPlanRecipeId], references: [id], onDelete: SetNull)
+
+  @@unique([shoppingItemId, mealPlanRecipeId])
+  @@index([shoppingItemId])
+  @@index([recipeId])
+  @@index([mealPlanRecipeId])
+}
+
+// Purchase/add history per user and item (KUC-104); feeds pantry, rhythm (KUC-124), "zuletzt gekauft"
+model ShoppingHistory {
+  id             String               @id @default(cuid())
+  userId         String
+  ingredientId   String?
+  itemKey        String               @db.VarChar(220)
+  name           String               @db.VarChar(200)
+  event          ShoppingHistoryEvent
+  origin         ShoppingOrigin       @default(KOCHTAKT)
+  occurredAt     DateTime             @default(now())
+  quantity       Float?
+  baseUnit       BaseUnit?
+  quantityText   String?              @db.VarChar(200)
+  // For which recipe it was added (if any)
+  recipeId       String?
+  shoppingItemId String?
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient?   @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+  recipe       Recipe?       @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  shoppingItem ShoppingItem? @relation(fields: [shoppingItemId], references: [id], onDelete: SetNull)
+  pantryItems  PantryItem[]
+
+  @@index([userId, itemKey, occurredAt])
+  @@index([userId, event, occurredAt])
+  @@index([ingredientId])
+}
+
+// "Nicht jetzt" on rhythm suggestions (KUC-124)
+model ShoppingSuggestionSnooze {
+  userId       String
+  itemKey      String   @db.VarChar(220)
+  snoozedUntil DateTime
+  // Repeated dismissals damp the item
+  dismissCount Int      @default(1)
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, itemKey])
+}
+
+// Logged Bring! sync conflicts (KUC-106: checking off wins, otherwise newest change)
+model BringSyncConflict {
+  id             String   @id @default(cuid())
+  userId         String
+  shoppingItemId String?
+  field          String   @db.VarChar(40)
+  localValue     String?
+  remoteValue    String?
+  resolution     String   @db.VarChar(40)
+  createdAt      DateTime @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shoppingItem ShoppingItem? @relation(fields: [shoppingItemId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
+
+// =====================================// PANTRY (KUC-107)
+// =====================================
+model PantryItem {
+  id                      String       @id @default(cuid())
+  userId                  String
+  ingredientId            String?
+  name                    String       @db.VarChar(200)
+  // Remaining amount; approximate = shown with "~"
+  quantity                Float?
+  baseUnit                BaseUnit?
+  quantityText            String?      @db.VarChar(200)
+  approximate             Boolean      @default(false)
+  source                  PantrySource
+  status                  PantryStatus @default(AVAILABLE)
+  purchasedAt             DateTime?
+  openedAt                DateTime?
+  expiresAt               DateTime?
+  statusChangedAt         DateTime     @default(now())
+  // Leftover suggestion declined for this item (KUC-108)
+  leftoverHintDismissedAt DateTime?
+  shoppingHistoryId       String?
+  // Last plan entry that used this item
+  mealPlanRecipeId        String?
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredient      Ingredient?      @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+  shoppingHistory ShoppingHistory? @relation(fields: [shoppingHistoryId], references: [id], onDelete: SetNull)
+  mealPlanEntry   MealPlanRecipe?  @relation(fields: [mealPlanRecipeId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status, expiresAt])
+  @@index([userId, ingredientId])
+  @@index([ingredientId])
 }
 
 // =====================================// ACTIVITY & VIEW HISTORY
@@ -948,6 +1277,7 @@ model UserCookHistory {
   servings                                   Int?
   notes                                      String?
   imageKey  String?  // S3 key for the image
+  mealPlanEntry                              MealPlanRecipe?
 
   user                                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe                                     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
@@ -1355,7 +1685,18 @@ model BringConnection {
   defaultListUuid String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  // Two-way sync with the KochTakt list (KUC-106)
+  syncEnabled    Boolean         @default(false)
+  syncListUuid   String?
+  syncStatus     BringSyncStatus @default(IDLE)
+  lastSyncAt     DateTime?
+  lastSyncError  String?
+  syncErrorCount Int             @default(0)
+  // Remote snapshot of the last successful sync, base for the three-way diff
+  syncSnapshot   Json?
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([syncEnabled, lastSyncAt])
 }
 
 model BringTransfer {
@@ -1368,4 +1709,63 @@ model BringTransfer {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@id([userId, operationId])
   @@index([createdAt])
+}
+
+// =====================================// RECIPE THEME CLUSTERS (KUC-111)
+// =====================================
+model RecipeClusterRun {
+  id           String                 @id @default(cuid())
+  k            Int
+  seed         Int
+  // Embedding model of the clustered vectors (RecipeEmbedding.model)
+  model        String                 @db.VarChar(60)
+  status       RecipeClusterRunStatus @default(RUNNING)
+  recipeCount  Int                    @default(0)
+  error        String?
+  // Quality check before clusters become visible
+  approvedAt   DateTime?
+  approvedById String?
+  createdAt    DateTime               @default(now())
+  finishedAt   DateTime?
+
+  approvedBy User?           @relation(fields: [approvedById], references: [id], onDelete: SetNull)
+  clusters   RecipeCluster[]
+
+  @@index([status, createdAt])
+}
+
+model RecipeCluster {
+  id          String                @id @default(cuid())
+  runId       String
+  // Stable across runs (matched by centroid similarity)
+  key         String                @db.VarChar(64)
+  label       String                @db.VarChar(120)
+  // Same type as RecipeEmbedding.embedding
+  centroid    Float[]
+  size        Int
+  tagIds      String[]              @default([])
+  categoryIds String[]              @default([])
+  // Further derived search filters
+  filters     Json?
+  active      Boolean               @default(false)
+  createdAt   DateTime              @default(now())
+
+  run     RecipeClusterRun      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  members RecipeClusterMember[]
+
+  @@unique([runId, key])
+  @@index([key])
+  @@index([active])
+}
+
+model RecipeClusterMember {
+  clusterId  String
+  recipeId   String
+  similarity Float
+
+  cluster RecipeCluster @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  recipe  Recipe        @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([clusterId, recipeId])
+  @@index([recipeId])
 }

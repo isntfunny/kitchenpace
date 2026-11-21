@@ -3,6 +3,8 @@
 import { createUserNotification } from '@app/lib/events/persist';
 import { uploadImageFromUrl as uploadImageFromUrlShared } from '@app/lib/importer/upload-image-from-url';
 import { enqueueIngredientEnrichment } from '@app/lib/ingredients/enqueue-enrichment';
+import { matchExistingIngredient } from '@app/lib/ingredients/match-ingredient';
+import { newIngredientNotificationsEnabled } from '@app/lib/ingredients/new-ingredient-notifications';
 import { slugify } from '@app/lib/slug';
 import { createLogger } from '@shared/logger';
 import { prisma } from '@shared/prisma';
@@ -96,60 +98,9 @@ export async function findOrCreateUnit(unitName: string): Promise<string> {
 }
 
 export async function createIngredient(name: string, _category?: string, _units: string[] = []) {
-    const { stemGerman, getWordVariants } = await import('@app/lib/german-stem');
-
-    const trimmed = name.trim();
-
-    // 1. Hunspell stemming → singular base form
-    const singular = await stemGerman(trimmed);
-    const isStemmed = singular.toLowerCase() !== trimmed.toLowerCase();
-
-    // Canonical name: keep original casing style, use singular form
-    const canonicalName = trimmed[0].toUpperCase() + singular.slice(1);
-    const slug = slugify(canonicalName);
-
-    ingLog.debug('lookup', { input: trimmed, singular, slug, stemmed: isStemmed });
-
-    // 2. Try slug match (singular slug)
-    const bySlug = await prisma.ingredient.findUnique({ where: { slug } });
-    if (bySlug) {
-        ingLog.debug('found by slug', { input: trimmed, match: bySlug.name, id: bySlug.id });
-        return bySlug;
-    }
-
-    // 3. Try alias match (for regional synonyms)
-    const variants = await getWordVariants(trimmed);
-    if (variants.length > 1) {
-        const byAlias = await prisma.ingredient.findFirst({
-            where: { aliases: { hasSome: variants } },
-        });
-        if (byAlias) {
-            ingLog.debug('found by alias', {
-                input: trimmed,
-                variants,
-                match: byAlias.name,
-                id: byAlias.id,
-            });
-            return byAlias;
-        }
-    }
-
-    // 4. Also try the original name's slug (in case it wasn't stemmed to the same slug)
-    const originalSlug = slugify(trimmed);
-    if (originalSlug !== slug) {
-        const byOriginalSlug = await prisma.ingredient.findUnique({
-            where: { slug: originalSlug },
-        });
-        if (byOriginalSlug) {
-            ingLog.debug('found by original slug', {
-                input: trimmed,
-                originalSlug,
-                match: byOriginalSlug.name,
-                id: byOriginalSlug.id,
-            });
-            return byOriginalSlug;
-        }
-    }
+    const match = await matchExistingIngredient(name);
+    if (match.existing) return match.existing;
+    const { trimmed, canonicalName, slug, isStemmed } = match;
 
     // 5. Create new ingredient with singular as canonical name + default units
     ingLog.info('creating new ingredient', {
@@ -179,7 +130,9 @@ export async function createIngredient(name: string, _category?: string, _units:
         ingLog.info('created', { id: ingredient.id, name: ingredient.name, slug });
 
         // Notify moderators about the new ingredient
-        notifyModeratorsNewIngredient(ingredient.id, ingredient.name).catch(() => {});
+        // (off in bulk scripts, whose report lists the new ingredients)
+        if (newIngredientNotificationsEnabled())
+            notifyModeratorsNewIngredient(ingredient.id, ingredient.name).catch(() => {});
 
         // AI enrichment incl. shelf life and display name; not awaited so a
         // queue outage never blocks saving. The daily backfill is the safety net.

@@ -16,10 +16,16 @@ const defaultEnqueue: Enqueue = async (ingredientId) => {
 
 let enqueue: Enqueue = defaultEnqueue;
 
-/** Test seam: replaces the queue call; pass nothing to restore it. */
-export function setEnrichmentEnqueuerForTests(next?: Enqueue) {
+/**
+ * Replaces the queue call; pass nothing to restore it. Used by tests and by
+ * bulk scripts that collect the new ingredients and enqueue them at the end.
+ */
+export function setEnrichmentEnqueuer(next?: Enqueue) {
     enqueue = next ?? defaultEnqueue;
 }
+
+/** Test seam (same as setEnrichmentEnqueuer). */
+export const setEnrichmentEnqueuerForTests = setEnrichmentEnqueuer;
 
 /** Returns false when enqueueing failed; the caller can ignore the result. */
 export async function enqueueIngredientEnrichment(ingredientId: string): Promise<boolean> {

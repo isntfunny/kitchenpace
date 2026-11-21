@@ -1,7 +1,8 @@
 /**
- * OpenAI Batch API helpers (KUC-115): upload a JSONL file, create a batch,
- * poll it and read its output. Shared by the shelf-life backfill
- * (worker/queues/shelf-life-processor.ts, /v1/responses) and the recipe flow
+ * OpenAI Batch API helpers (KUC-115, KUC-118): upload a JSONL file, create a
+ * batch, poll it and read its output. Shared by the worker backfills
+ * (worker/queues/batch-job.ts: shelf life, ingredient enrichment via
+ * /v1/responses, recipe embeddings via /v1/embeddings) and the recipe flow
  * refresh (scripts/refresh-recipe-flows.ts, /v1/chat/completions).
  *
  * Callers build the request bodies themselves, with the same functions as
@@ -10,7 +11,7 @@
 
 import OpenAI, { toFile } from 'openai';
 
-export type BatchEndpoint = '/v1/responses' | '/v1/chat/completions';
+export type BatchEndpoint = '/v1/responses' | '/v1/chat/completions' | '/v1/embeddings';
 
 export interface BatchInfo {
     status: string;
@@ -140,4 +141,15 @@ export function chatCompletionContent(body: unknown): string | null {
     const choices = (body as { choices?: Array<{ message?: { content?: string | null } }> })
         ?.choices;
     return choices?.[0]?.message?.content ?? null;
+}
+
+/** Vectors of a /v1/embeddings answer, in input order. */
+export function embeddingVectors(body: unknown): number[][] {
+    const data = (body as { data?: Array<{ index?: number; embedding?: number[] }> })?.data ?? [];
+    return [...data]
+        .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+        .map((item) => {
+            if (!Array.isArray(item.embedding)) throw new Error('Embedding fehlt in der Antwort');
+            return item.embedding;
+        });
 }

@@ -4,9 +4,9 @@ import {
     buildRecipeEmbeddingText,
     EMBEDDING_MODEL,
     generateEmbedding,
-    generateEmbeddings,
     type RecipeEmbeddingInput,
 } from '@app/lib/embeddings/embedding-service';
+import { createOpenAIBatchApi } from '@shared/openai-batch';
 import {
     ensureIndices,
     opensearchClient,
@@ -16,8 +16,18 @@ import {
     OPENSEARCH_EMBEDDINGS_INDEX,
 } from '@shared/opensearch/client';
 
+import { LOCKED_REQUEUE_DELAY_MS, redisBatchStore, withBatchLock } from './batch-job';
 import { getRedis } from './connection';
+import {
+    EMBEDDINGS_JOB_NAME,
+    EMBEDDINGS_STORE_NAME,
+    rowsToStore,
+    runEmbeddingsBackfill,
+    type EmbeddingsBatchState,
+    type RecipeEmbeddingText,
+} from './embeddings-backfill';
 import { prisma } from './prisma';
+import { getOpenSearchQueue } from './queue';
 import {
     BackfillEmbeddingsJob,
     QueueName,
@@ -801,24 +811,21 @@ async function indexRecipeEmbedding(recipe: RecipeWithRelations): Promise<void> 
     ]);
 }
 
-// ── Bulk embedding backfill ──────────────────────────────────────────
+// ── Bulk embedding backfill (Batch API, embeddings-backfill.ts) ──────
 
-export async function processBackfillEmbeddings(
-    job: Job<BackfillEmbeddingsJob>,
-): Promise<{ embedded: number; restored: number; generated: number }> {
-    const batchSize = job.data.batchSize ?? 50;
-    console.log(`[OpenSearch] Processing backfill-embeddings job ${job.id}`, { batchSize });
-
-    let totalRestored = 0;
-    let totalGenerated = 0;
-    let cursor: string | undefined;
-
-    // Load existing embeddings from PostgreSQL (source of truth)
+/**
+ * Copies embeddings stored in PostgreSQL (source of truth) into OpenSearch
+ * and returns the published recipes without one, with their embedding text.
+ */
+async function restoreStoredEmbeddings(pageSize: number) {
     const existingRows = await prisma.recipeEmbedding.findMany({
         where: { model: EMBEDDING_MODEL },
         select: { recipeId: true, embedding: true },
     });
     const existingMap = new Map(existingRows.map((r) => [r.recipeId, r.embedding as number[]]));
+    const missing: RecipeEmbeddingText[] = [];
+    let restored = 0;
+    let cursor: string | undefined;
 
     while (true) {
         const recipes = await prisma.recipe.findMany({
@@ -836,80 +843,106 @@ export async function processBackfillEmbeddings(
                 recipeIngredients: { include: { ingredient: true } },
             },
             orderBy: { id: 'asc' },
-            take: batchSize,
+            take: pageSize,
         });
-
         if (recipes.length === 0) break;
 
-        // Split: recipes with cached embeddings vs. ones that need OpenAI
-        const hasEmbedding = recipes.filter((r) => existingMap.has(r.id));
-        const needsEmbedding = recipes.filter((r) => !existingMap.has(r.id));
-
-        // Restore cached embeddings from PostgreSQL → OpenSearch (no API call)
-        if (hasEmbedding.length > 0) {
-            const operations: BulkOperation[] = [];
-            for (const r of hasEmbedding) {
-                operations.push({
-                    index: { _index: OPENSEARCH_EMBEDDINGS_INDEX, _id: r.id },
+        const operations: BulkOperation[] = [];
+        for (const r of recipes) {
+            const embedding = existingMap.get(r.id);
+            if (embedding) {
+                operations.push({ index: { _index: OPENSEARCH_EMBEDDINGS_INDEX, _id: r.id } });
+                operations.push({ id: r.id, embedding });
+                restored += 1;
+            } else {
+                missing.push({
+                    id: r.id,
+                    text: buildRecipeEmbeddingText(recipeToEmbeddingInput(r)),
                 });
-                operations.push({ id: r.id, embedding: existingMap.get(r.id)! });
             }
-            await runBulkOperations(operations);
-            totalRestored += hasEmbedding.length;
         }
-
-        // Generate new embeddings via OpenAI for recipes without cache
-        if (needsEmbedding.length > 0) {
-            const texts = needsEmbedding.map((r) =>
-                buildRecipeEmbeddingText(recipeToEmbeddingInput(r)),
-            );
-            const embeddings = await generateEmbeddings(texts);
-
-            // Bulk index into OpenSearch
-            const operations: BulkOperation[] = [];
-            for (let i = 0; i < needsEmbedding.length; i++) {
-                operations.push({
-                    index: { _index: OPENSEARCH_EMBEDDINGS_INDEX, _id: needsEmbedding[i].id },
-                });
-                operations.push({ id: needsEmbedding[i].id, embedding: embeddings[i] });
-            }
-            await runBulkOperations(operations);
-
-            // Persist to PostgreSQL
-            await prisma.$transaction(
-                needsEmbedding.map((r, i) =>
-                    prisma.recipeEmbedding.upsert({
-                        where: { recipeId: r.id },
-                        create: {
-                            recipeId: r.id,
-                            embedding: embeddings[i],
-                            model: EMBEDDING_MODEL,
-                        },
-                        update: { embedding: embeddings[i], model: EMBEDDING_MODEL },
-                    }),
-                ),
-            );
-
-            totalGenerated += needsEmbedding.length;
-        }
+        if (operations.length > 0) await runBulkOperations(operations);
 
         cursor = recipes[recipes.length - 1].id;
-
-        console.log(
-            `[OpenSearch] Backfill batch: ${hasEmbedding.length} restored from cache, ${needsEmbedding.length} generated (total: ${totalRestored + totalGenerated})`,
-        );
-
-        if (recipes.length < batchSize) break;
+        if (recipes.length < pageSize) break;
     }
 
-    console.log(
-        `[OpenSearch] Backfill complete: ${totalRestored} restored from PostgreSQL, ${totalGenerated} generated via OpenAI`,
+    return { restored, missing };
+}
+
+/** Stores batch vectors (PostgreSQL + OpenSearch), see rowsToStore. */
+async function saveEmbeddings(rows: Array<{ id: string; embedding: number[] }>) {
+    if (rows.length === 0) return 0;
+    const ids = rows.map((row) => row.id);
+    const [published, current] = await Promise.all([
+        prisma.recipe.findMany({
+            where: { id: { in: ids }, status: 'PUBLISHED' },
+            select: { id: true },
+        }),
+        prisma.recipeEmbedding.findMany({
+            where: { recipeId: { in: ids }, model: EMBEDDING_MODEL },
+            select: { recipeId: true },
+        }),
+    ]);
+    const kept = rowsToStore(
+        rows,
+        new Set(published.map((recipe) => recipe.id)),
+        new Set(current.map((row) => row.recipeId)),
     );
-    return {
-        embedded: totalRestored + totalGenerated,
-        restored: totalRestored,
-        generated: totalGenerated,
-    };
+    if (kept.length === 0) return 0;
+
+    await prisma.$transaction(
+        kept.map((row) =>
+            prisma.recipeEmbedding.upsert({
+                where: { recipeId: row.id },
+                create: { recipeId: row.id, embedding: row.embedding, model: EMBEDDING_MODEL },
+                update: { embedding: row.embedding, model: EMBEDDING_MODEL },
+            }),
+        ),
+    );
+    const operations: BulkOperation[] = [];
+    for (const row of kept) {
+        operations.push({ index: { _index: OPENSEARCH_EMBEDDINGS_INDEX, _id: row.id } });
+        operations.push({ id: row.id, embedding: row.embedding });
+    }
+    await runBulkOperations(operations);
+    return kept.length;
+}
+
+export async function processBackfillEmbeddings(
+    job: Job<BackfillEmbeddingsJob>,
+): Promise<Record<string, unknown>> {
+    const store = redisBatchStore<EmbeddingsBatchState>(EMBEDDINGS_STORE_NAME);
+    return withBatchLock(
+        store,
+        async () => {
+            const result = await runEmbeddingsBackfill(
+                {
+                    api: createOpenAIBatchApi(),
+                    store,
+                    restoreStored: restoreStoredEmbeddings,
+                    saveEmbeddings,
+                    schedulePoll: async (delay, data) => {
+                        // Poll jobs never reset the saved batch
+                        await getOpenSearchQueue().add(
+                            EMBEDDINGS_JOB_NAME,
+                            { ...data, reset: false },
+                            { delay },
+                        );
+                    },
+                },
+                job.data,
+            );
+            console.log(`[OpenSearch] backfill-embeddings ${JSON.stringify(result)}`);
+            return result;
+        },
+        () =>
+            getOpenSearchQueue().add(
+                EMBEDDINGS_JOB_NAME,
+                { ...job.data, reset: false },
+                { delay: LOCKED_REQUEUE_DELAY_MS },
+            ),
+    );
 }
 
 // ── Reindex ──────────────────────────────────────────────────────────────

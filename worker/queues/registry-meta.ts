@@ -110,9 +110,23 @@ const JOB_CATALOG: Record<
     },
     'backfill-embeddings': {
         queue: QueueName.OPENSEARCH,
-        defaultData: { batchSize: 50 },
+        defaultData: { batchSize: 50, pollMinutes: 10, reset: false },
         schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 50, min: 1, max: 500 },
+            batchSize: {
+                type: 'number',
+                label: 'Page size (copy stored)',
+                default: 50,
+                min: 1,
+                max: 500,
+            },
+            pollMinutes: {
+                type: 'number',
+                label: 'Poll interval in minutes (0 = no polling)',
+                default: 10,
+                min: 0,
+                max: 1440,
+            },
+            reset: { type: 'boolean', label: 'Forget saved batch and start over', default: false },
         },
     },
     reindex: {
@@ -195,19 +209,45 @@ const JOB_CATALOG: Record<
     },
     'backfill-ingredient-enrichment': {
         queue: QueueName.SCHEDULED,
-        defaultData: { batchSize: 50, dryRun: false, includeNeedsReview: false },
+        defaultData: {
+            batchSize: 50,
+            dryRun: false,
+            includeNeedsReview: false,
+            pollMinutes: 10,
+            reset: false,
+        },
         schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 50, min: 1, max: 500 },
-            dryRun: { type: 'boolean', label: 'Dry Run (no DB writes)', default: false },
+            batchSize: {
+                type: 'number',
+                label: 'Max ingredients per batch',
+                default: 50,
+                min: 1,
+                max: 2000,
+            },
+            dryRun: { type: 'boolean', label: 'Dry Run (list only, no batch)', default: false },
             includeNeedsReview: {
                 type: 'boolean',
                 label: 'Include needsReview (re-enrich even if data exists)',
                 default: false,
             },
+            pollMinutes: {
+                type: 'number',
+                label: 'Poll interval in minutes (0 = no polling)',
+                default: 10,
+                min: 0,
+                max: 1440,
+            },
+            reset: { type: 'boolean', label: 'Forget saved batch and start over', default: false },
         },
         // Daily safety net: enrichment of new ingredients must not depend on
         // the enqueue at creation time (KUC-94, KUC-114)
         repeat: { pattern: '30 5 * * *', tz: 'Europe/Berlin' },
+    },
+    'poll-openai-batches': {
+        queue: QueueName.SCHEDULED,
+        defaultData: {},
+        // Safety net for the poll chains of the batch jobs (KUC-118); never submits
+        repeat: { pattern: '*/15 * * * *', tz: 'Europe/Berlin' },
     },
     'backfill-ingredient-shelf-life': {
         queue: QueueName.SCHEDULED,

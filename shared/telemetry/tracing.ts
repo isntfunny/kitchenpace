@@ -8,7 +8,6 @@ import {
 } from '@opentelemetry/api';
 import { type AnyValueMap, logs, SeverityNumber } from '@opentelemetry/api-logs';
 
-import { scheduleTelemetryFlush } from './lifecycle';
 import { isNextControlFlowError, type SanitizedError, sanitizeError, sanitizeMeta } from './redact';
 
 const TRACER_NAME = 'kitchenpace';
@@ -150,8 +149,6 @@ export function recordError(
             }),
         );
     };
-
-    scheduleTelemetryFlush();
 
     const active = trace.getActiveSpan();
     if (active?.isRecording() && !opts.ownSpan) {

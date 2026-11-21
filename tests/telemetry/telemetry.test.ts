@@ -3,8 +3,6 @@ import http from 'node:http';
 import { afterEach, test } from 'node:test';
 
 import { createLogger } from '../../shared/logger';
-import { observeExporter } from '../../shared/telemetry/exporter-health';
-import { flushTelemetry } from '../../shared/telemetry/lifecycle';
 import { initTelemetry, shutdownTelemetry } from '../../shared/telemetry/node-sdk';
 import {
     isNextControlFlowError,
@@ -58,41 +56,6 @@ test('isNextControlFlowError detects Next.js control flow digests and ignores re
     assert.equal(isNextControlFlowError({ $$typeof: Symbol.for('react.postpone') }), true);
     assert.equal(isNextControlFlowError(new Error('Real boom')), false);
     assert.equal(isNextControlFlowError(null), false);
-});
-
-test('observeExporter reports first failure, throttles repeats, and reports recovery', () => {
-    const lines: string[] = [];
-    let currentTime = 1_000;
-    let nextCode = 1;
-
-    const observed = observeExporter(
-        'traces',
-        {
-            export(_items: unknown[], cb) {
-                cb({
-                    code: nextCode,
-                    error: nextCode === 0 ? undefined : new Error('HTTP 502 Bad Gateway'),
-                });
-            },
-        },
-        (line) => lines.push(line),
-        () => currentTime,
-    );
-
-    observed.export([1], () => {});
-    currentTime += 10_000;
-    observed.export([2], () => {});
-    currentTime += 60_000;
-    observed.export([3], () => {});
-    nextCode = 0;
-    observed.export([4], () => {});
-
-    assert.equal(lines.length, 3);
-    assert.match(lines[0] ?? '', /export failed, data dropped: HTTP 502/);
-    assert.match(lines[1] ?? '', /still failing: 3 batches dropped/);
-    assert.match(lines[2] ?? '', /recovered after 3 failed batches/);
-    assert.equal(observed.health.failing, 0);
-    assert.equal(observed.health.failedTotal, 3);
 });
 
 test('POST /api/telemetry/client-error returns 204 for valid, invalid, and oversized bodies', async () => {
@@ -209,7 +172,6 @@ test('NodeSDK exports parent spans, Undici auto-instrumentation, exception event
             );
         });
 
-        await flushTelemetry(3000);
         await shutdownTelemetry();
 
         assert.ok(pingTraceparent, 'Expected W3C traceparent header on outbound fetch');

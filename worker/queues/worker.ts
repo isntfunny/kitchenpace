@@ -2,7 +2,6 @@ import { SpanKind } from '@opentelemetry/api';
 import { Job, Worker, WorkerOptions } from 'bullmq';
 
 import { createLogger } from '../../shared/logger';
-import { flushTelemetry } from '../../shared/telemetry/lifecycle';
 import { withSpan } from '../../shared/telemetry/tracing';
 
 import { getRedis } from './connection';
@@ -111,8 +110,6 @@ export function startWorkers(): void {
                                 completedAt: new Date(),
                             });
                             throw error;
-                        } finally {
-                            await flushTelemetry();
                         }
                     },
                     {

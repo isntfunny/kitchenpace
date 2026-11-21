@@ -2,20 +2,7 @@ import type { Instrumentation } from 'next';
 
 export async function register(): Promise<void> {
     if (process.env.NEXT_RUNTIME === 'nodejs') {
-        const [{ after }, { configureFlushScheduler }, { initTelemetry }] = await Promise.all([
-            import('next/server'),
-            import('@shared/telemetry/lifecycle'),
-            import('@shared/telemetry/node-sdk'),
-        ]);
-
-        configureFlushScheduler((task) => {
-            try {
-                after(task);
-            } catch {
-                // Outside a Next.js request context (e.g. startup)
-            }
-        });
-
+        const { initTelemetry } = await import('@shared/telemetry/node-sdk');
         initTelemetry('kitchenpace-web');
     }
 }

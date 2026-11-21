@@ -1,5 +1,9 @@
 import Redis from 'ioredis';
 
+import { createLogger } from '../../shared/logger';
+
+const log = createLogger('redis');
+
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379', 10);
 const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
@@ -27,11 +31,11 @@ function createRedisInstance(name?: string): Redis {
     });
 
     redis.on('error', (err) => {
-        console.error(`[Redis ${name || 'default'}] Error:`, err.message);
+        log.error('Redis connection error', { client: name || 'default', error: err });
     });
 
     redis.on('connect', () => {
-        console.log(`[Redis ${name || 'default'}] Connected`);
+        log.info('Redis connected', { client: name || 'default' });
     });
 
     return redis;

@@ -53,6 +53,12 @@ services:
         image: registry.isntfunny.de/kitchenpace:latest
         pull_policy: always
         container_name: kitchenpace-app
+        environment:
+            LOG_LEVEL: ${LOG_LEVEL:-info}
+            OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+            OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+            OTEL_SERVICE_NAME: kitchenpace-web
+            OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=production}
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         depends_on:
@@ -86,6 +92,11 @@ services:
         environment:
             SKIP_MIGRATIONS: '1'
             BACKUP_DIR: /app/backups
+            LOG_LEVEL: ${LOG_LEVEL:-info}
+            OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+            OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+            OTEL_SERVICE_NAME: kitchenpace-worker
+            OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=production}
         volumes:
             - /data/kitchenpace/worker-backups:/app/backups
 
@@ -93,6 +104,10 @@ services:
         image: registry.isntfunny.de/kitchenpace/scraper:latest
         pull_policy: always
         container_name: kitchenpace-scraper
+        environment:
+            OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+            OTEL_SERVICE_NAME: kitchenpace-scraper
+            OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=production}
         volumes:
             - ./kitchenpace/firefox:/config
         ports:

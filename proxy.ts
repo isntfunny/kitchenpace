@@ -53,6 +53,9 @@ export async function proxy(request: NextRequest) {
     // Personal API uses only API keys; do not record credentials or apply browser redirects.
     if (pathname === '/api/v1' || pathname.startsWith('/api/v1/')) return NextResponse.next();
 
+    // Same-origin browser error beacons must work without session or cookie checks.
+    if (pathname.startsWith('/api/telemetry/')) return NextResponse.next();
+
     // 4. Tracking
     if (isTrackingEnabled()) {
         void trackApiRequest(request);

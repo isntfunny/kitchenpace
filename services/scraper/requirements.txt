@@ -35,3 +35,10 @@ faster-whisper>=1.0.0
 # Additional utilities
 httpx>=0.25.0
 certifi>=2024.0.0
+
+# Observability (OpenTelemetry -> SigNoz)
+opentelemetry-sdk>=1.30.0
+opentelemetry-exporter-otlp-proto-http>=1.30.0
+opentelemetry-instrumentation-fastapi>=0.51b0
+opentelemetry-instrumentation-httpx>=0.51b0
+opentelemetry-instrumentation-logging>=0.51b0

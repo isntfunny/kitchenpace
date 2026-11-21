@@ -1,12 +1,12 @@
 'use client';
 
 import { useOpenPanel } from '@openpanel/nextjs';
-import * as Sentry from '@sentry/nextjs';
 import { createContext, useContext, useEffect, useMemo } from 'react';
 
 import type { FeatureFlagName } from '@app/lib/flags/definitions';
 import type { ServerFeatureFlagsResult } from '@app/lib/flags/server';
 import { buildFeatureFlagTelemetryPayload } from '@app/lib/flags/telemetry';
+import { setClientTelemetryContext } from '@app/lib/telemetry/client';
 
 type FeatureFlagsContextValue = ServerFeatureFlagsResult;
 
@@ -38,15 +38,10 @@ export function FeatureFlagsProvider({ children, initialState }: FeatureFlagsPro
             featureFlagsReady: telemetry.ready,
         });
 
-        Sentry.setContext('feature_flags', {
-            provider: telemetry.provider,
-            ready: telemetry.ready,
-            active: telemetry.active,
-            all: telemetry.all,
-            error: telemetry.error,
+        setClientTelemetryContext({
+            featureFlagProvider: telemetry.provider,
+            featureFlagsReady: telemetry.ready,
         });
-        Sentry.setTag('feature_flags.provider', telemetry.provider);
-        Sentry.setTag('feature_flags.ready', telemetry.ready ? 'true' : 'false');
     }, [op, telemetry.active, telemetry.all, telemetry.error, telemetry.provider, telemetry.ready]);
 
     return (

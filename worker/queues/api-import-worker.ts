@@ -1,11 +1,16 @@
+import { SpanKind } from '@opentelemetry/api';
 import { Queue, Worker, type ConnectionOptions } from 'bullmq';
 
+import { createLogger } from '../../shared/logger';
+import { flushTelemetry } from '../../shared/telemetry/lifecycle';
+import { withSpan } from '../../shared/telemetry/tracing';
 import { createImportProcessor } from '../../src/lib/api/import-processor';
 import { fetchImportText } from '../../src/lib/api/safe-fetch';
 
 import { getRedis } from './connection';
 import { prisma } from './prisma';
 
+const log = createLogger('api-import-worker');
 const queueName = 'personal-api-imports';
 let queue: Queue | undefined;
 let worker: Worker | undefined;
@@ -30,12 +35,36 @@ export function startApiImportWorker() {
         },
         fetchText: fetchImportText,
     });
-    worker = new Worker(queueName, (job) => processImport(job.data.importId), {
-        connection,
-        concurrency: 2,
-    });
-    worker.on('error', (error) => console.error('[API imports] Worker error:', error.name));
-    worker.on('failed', (job) => console.error('[API imports] Worker job failed:', job?.id));
+    worker = new Worker(
+        queueName,
+        (job) =>
+            withSpan(
+                'job.personal-api-imports.import-recipe',
+                async () => {
+                    try {
+                        return await processImport(job.data.importId);
+                    } finally {
+                        await flushTelemetry();
+                    }
+                },
+                {
+                    kind: SpanKind.CONSUMER,
+                    attributes: {
+                        'messaging.system': 'bullmq',
+                        'messaging.destination.name': queueName,
+                        'bullmq.job.name': job.name,
+                        'bullmq.job.id': job.id ?? '',
+                        'api_import.id': String(job.data?.importId ?? ''),
+                    },
+                },
+            ),
+        {
+            connection,
+            concurrency: 2,
+        },
+    );
+    worker.on('error', (error) => log.error('Worker error', { error }));
+    worker.on('failed', (job, error) => log.error('Worker job failed', { jobId: job?.id, error }));
     async function dispatch() {
         await prisma.apiImport.updateMany({
             where: { status: { in: ['queued', 'processing'] }, deadline: { lte: new Date() } },
@@ -63,12 +92,7 @@ export function startApiImportWorker() {
     const tick = () => {
         if (dispatching) return;
         dispatching = dispatch()
-            .catch((error) =>
-                console.error(
-                    '[API imports] Dispatch failed:',
-                    error instanceof Error ? error.name : 'Unknown',
-                ),
-            )
+            .catch((error) => log.error('Dispatch failed', { error }))
             .finally(() => {
                 dispatching = undefined;
             });

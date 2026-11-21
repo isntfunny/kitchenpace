@@ -1,9 +1,27 @@
-import { withSentryConfig } from '@sentry/nextjs';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+
 import type { NextConfig } from 'next';
+
 const resolveAliasPath = (subpath: string) => new URL(subpath, import.meta.url).pathname;
+
+function buildRelease(): string {
+    if (process.env.SOURCE_COMMIT) return process.env.SOURCE_COMMIT.slice(0, 12);
+    try {
+        return execSync('git rev-parse --short=12 HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+            .toString()
+            .trim();
+    } catch {
+        const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
+        return `v${pkg.version}`;
+    }
+}
 
 const nextConfig: NextConfig = {
     allowedDevOrigins: ['kitchendev.isntlab.de'],
+    env: {
+        NEXT_PUBLIC_RELEASE: buildRelease(),
+    },
     async redirects() {
         return [
             { source: '/moderation', destination: '/admin/moderation', permanent: true },
@@ -17,7 +35,31 @@ const nextConfig: NextConfig = {
     },
     reactCompiler: true,
     output: 'standalone',
-    serverExternalPackages: ['bullmq', 'sharp', 'nodehun'],
+    serverExternalPackages: [
+        'bullmq',
+        'sharp',
+        'nodehun',
+        'pg',
+        'ioredis',
+        '@opentelemetry/api',
+        '@opentelemetry/api-logs',
+        '@opentelemetry/sdk-node',
+        '@opentelemetry/sdk-logs',
+        '@opentelemetry/sdk-trace-base',
+        '@opentelemetry/sdk-metrics',
+        '@opentelemetry/resources',
+        '@opentelemetry/exporter-trace-otlp-http',
+        '@opentelemetry/exporter-trace-otlp-proto',
+        '@opentelemetry/exporter-logs-otlp-http',
+        '@opentelemetry/exporter-metrics-otlp-http',
+        '@opentelemetry/exporter-metrics-otlp-proto',
+        '@opentelemetry/instrumentation-pg',
+        '@opentelemetry/instrumentation-ioredis',
+        '@opentelemetry/instrumentation-undici',
+        '@opentelemetry/instrumentation-http',
+        '@opentelemetry/instrumentation-aws-sdk',
+        '@opentelemetry/instrumentation-runtime-node',
+    ],
     productionBrowserSourceMaps: process.env.NEXT_PUBLIC_DEBUG === '1',
     experimental: {
         serverActions: {
@@ -78,41 +120,4 @@ const nextConfig: NextConfig = {
     },
 };
 
-export default withSentryConfig(nextConfig, {
-    // For all available options, see:
-    // https://www.npmjs.com/package/@sentry/webpack-plugin#options
-
-    org: 'tecfriends',
-
-    project: 'kitchenpace',
-    sentryUrl: 'https://bugs.isntfunny.de/',
-
-    // Only print logs for uploading source maps in CI
-    silent: !process.env.CI,
-
-    // For all available options, see:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
-
-    // Upload a larger set of source maps for prettier stack traces (increases build time)
-    widenClientFileUpload: true,
-
-    // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-    // This can increase your server load as well as your hosting bill.
-    // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
-    // side errors will fail.
-    tunnelRoute: '/monitoring',
-
-    webpack: {
-        // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-        // See the following for more information:
-        // https://docs.sentry.io/product/crons/
-        // https://vercel.com/docs/cron-jobs
-        automaticVercelMonitors: true,
-
-        // Tree-shaking options for reducing bundle size
-        treeshake: {
-            // Automatically tree-shake Sentry logger statements to reduce bundle size
-            removeDebugLogging: true,
-        },
-    },
-});
+export default nextConfig;

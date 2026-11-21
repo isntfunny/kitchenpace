@@ -108,11 +108,7 @@ export const ImportedRecipeSchema = z.object({
         .min(1)
         .max(3)
         .describe('Kategorien des Rezepts (mindestens 1, maximal 3)'),
-    tags: z
-        .array(z.string().min(1))
-        .min(5)
-        .max(25)
-        .describe('Tags für das Rezept (mindestens 8, maximal 25)'),
+    tags: z.array(z.string().min(1)).max(15).describe('Tags aus der festen Tag-Liste (3 bis 10)'),
     prepTime: z.number().int().positive().describe('Vorbereitungszeit in Minuten'),
     cookTime: z.number().int().nonnegative().describe('Kochzeit in Minuten'),
     servings: z.number().int().positive().describe('Anzahl der Portionen'),
@@ -179,7 +175,8 @@ export function getOpenAIResponseFormat() {
                     tags: {
                         type: 'array',
                         items: { type: 'string' },
-                        description: 'Tags für das Rezept',
+                        description:
+                            'Tags für das Rezept: 3 bis 10, nur aus der vorgegebenen Tag-Liste',
                     },
                     prepTime: {
                         type: 'integer',

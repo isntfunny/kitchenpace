@@ -16,8 +16,9 @@ import {
 } from '@app/lib/ingredients/recipe-mentions';
 import { approvedKey } from '@app/lib/s3/keys';
 import { moveObject } from '@app/lib/s3/operations';
-import { slugify, generateUniqueSlug } from '@app/lib/slug';
+import { generateUniqueSlug } from '@app/lib/slug';
 import { AI_TEXT_MODEL } from '@shared/ai-models';
+import { pickListedTags, TAG_NAMES_SORTED } from '@shared/tags/tag-list';
 
 import { importRecipeFromMarkdown } from './openai-client';
 import { type AnalyzedRecipe, transformImportedRecipe } from './transform';
@@ -44,16 +45,17 @@ interface ImportRunData {
 }
 
 /**
- * Fetches tags and ingredients from DB, sorted alphabetically for stable prompt caching.
+ * Import context for the prompt: the whole fixed tag list (alphabetical, KUC-116)
+ * and the known ingredients. Both orders are stable for prompt caching.
  */
 export async function fetchImportContext(db: PrismaClient) {
     // Sorted by createdAt so new entries append at the end — maximises prompt cache hits.
-    const [allTags, allIngredients] = await Promise.all([
-        db.tag.findMany({ select: { name: true }, orderBy: { createdAt: 'asc' } }),
-        db.ingredient.findMany({ select: { name: true }, orderBy: { createdAt: 'asc' } }),
-    ]);
+    const allIngredients = await db.ingredient.findMany({
+        select: { name: true },
+        orderBy: { createdAt: 'asc' },
+    });
     return {
-        availableTags: allTags.map((t) => t.name),
+        availableTags: [...TAG_NAMES_SORTED],
         topIngredients: allIngredients.map((i) => i.name),
     };
 }
@@ -334,16 +336,27 @@ export async function saveImportedRecipe(
         }
     }
 
-    // Find or create tags
-    if (data.tags?.length) {
-        const uniqueTagNames = [...new Set(data.tags)];
+    // Only tags from the fixed list (KUC-116); anything else is discarded, never created
+    const listedTags = pickListedTags(data.tags ?? []);
+    if (listedTags.length) {
         const tags: { id: string }[] = [];
-        for (const name of uniqueTagNames) {
-            const tagSlug = slugify(name);
+        for (const listed of listedTags) {
+            // Name match too: before the cleanup some tags have a non-standard slug
             const existing = await db.tag.findFirst({
-                where: { OR: [{ slug: tagSlug }, { name: { equals: name, mode: 'insensitive' } }] },
+                where: {
+                    OR: [
+                        { slug: listed.slug },
+                        { name: { equals: listed.name, mode: 'insensitive' } },
+                    ],
+                },
+                select: { id: true },
             });
-            const tag = existing ?? (await db.tag.create({ data: { name, slug: tagSlug } }));
+            const tag =
+                existing ??
+                (await db.tag.create({
+                    data: { name: listed.name, slug: listed.slug },
+                    select: { id: true },
+                }));
             tags.push(tag);
         }
 

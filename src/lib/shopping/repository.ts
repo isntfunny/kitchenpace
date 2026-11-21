@@ -6,6 +6,7 @@ import type { Prisma, ShoppingItemStatus } from '@prisma/client';
 
 import { type Db, inTransaction, notFound } from '@app/lib/meal-plan/db';
 import { idSchema, userIdSchema } from '@app/lib/meal-plan/schemas';
+import { recordPurchaseInPantry, removePurchaseFromPantry } from '@app/lib/pantry/purchase';
 
 import { itemKeyFor } from './item-key';
 import {
@@ -281,7 +282,7 @@ export async function updateShoppingItem(db: Db, userId: string, itemId: string,
 
 /**
  * Changes the status. PURCHASED writes a history row with time and bought amount
- * (default: the item's current amount); KUC-107 turns it into a pantry item.
+ * (default: the item's current amount); KUC-107 turns it into a pantry post.
  */
 export async function setShoppingItemStatus(
     db: Db,
@@ -324,6 +325,11 @@ export async function setShoppingItemStatus(
                     shoppingItemId: item.id,
                 },
             });
+            // KUC-107: the bought amount becomes a pantry post (same transaction)
+            await recordPurchaseInPantry(tx, owner, history);
+        } else if (item.status === 'PURCHASED' && data.status !== 'PURCHASED') {
+            // KUC-107: resetting a purchase takes its unused pantry post out again
+            await removePurchaseFromPantry(tx, owner, item.id);
         }
         return { item: updated, history };
     });

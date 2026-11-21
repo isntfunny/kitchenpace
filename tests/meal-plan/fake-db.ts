@@ -79,6 +79,8 @@ export function createFakeDb(seed: Record<string, Row[]> = {}) {
                     if (op === 'not') return !same(v, value);
                     if (op === 'gte') return v >= (value as any);
                     if (op === 'lte') return v <= (value as any);
+                    if (op === 'lt') return v < (value as any);
+                    if (op === 'gt') return v > (value as any);
                     if (op === 'startsWith') return String(v).startsWith(value as string);
                     throw new Error(`fake db: unsupported operator ${op}`);
                 });

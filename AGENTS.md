@@ -147,6 +147,7 @@ The worker is a standalone Node.js process (`worker/entrypoint.ts`) separate fro
 | `backfill-embeddings`            | opensearch | On-demand    | Batch API (`/v1/embeddings`) for recipes without embedding; restores stored ones                       |
 | `poll-openai-batches`            | scheduled  | Every 15 min | Re-enqueues a batch job whose poll chain broke; never submits                                          |
 | `cluster-recipe-themes`          | scheduled  | Sun 04:30    | k-means over recipe embeddings → theme cluster run; inactive until released at `/admin/theme-clusters` |
+| `book-assumed-cooked`            | scheduled  | Daily 03:30  | Books past plan entries without "Gekocht" into the pantry (`dryRun` = report only)                     |
 
 ### OpenAI Batch Jobs (KUC-118)
 

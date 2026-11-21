@@ -120,6 +120,37 @@ describe('getRhythmSuggestions', () => {
         assert.equal((await getRhythmSuggestions(noDay, USER, at('2026-01-25'))).length, 0);
     });
 
+    it('a pantry post blocks only while it is younger than one interval', async () => {
+        const post = (extra: object) => ({
+            id: 'p1',
+            userId: USER,
+            ingredientId: 'banane',
+            name: 'Bananen',
+            quantity: 200,
+            expiresAt: null,
+            status: 'AVAILABLE',
+            purchasedAt: null,
+            createdAt: at('2026-01-22'),
+            ...extra,
+        });
+        // 7-day rhythm, now = 2026-01-28
+        const young = createFakeDb({
+            shoppingHistory: weekly(),
+            pantryItem: [post({ purchasedAt: at('2026-01-22') })], // 6 days old
+        });
+        assert.deepEqual(await getRhythmSuggestions(young, USER, NOW), []);
+        const old = createFakeDb({
+            shoppingHistory: weekly(),
+            pantryItem: [post({ purchasedAt: at('2026-01-20') })], // 8 days old
+        });
+        assert.equal((await getRhythmSuggestions(old, USER, NOW)).length, 1);
+        const noPurchase = createFakeDb({
+            shoppingHistory: weekly(),
+            pantryItem: [post({ createdAt: at('2026-01-10') })], // falls back to createdAt
+        });
+        assert.equal((await getRhythmSuggestions(noPurchase, USER, NOW)).length, 1);
+    });
+
     it('respects an active snooze', async () => {
         const snooze = {
             userId: USER,

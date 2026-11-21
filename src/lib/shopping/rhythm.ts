@@ -59,7 +59,14 @@ export async function getRhythmSuggestions(
         }),
         db.pantryItem.findMany({
             where: { userId: owner, status: 'AVAILABLE' },
-            select: { ingredientId: true, name: true, quantity: true, expiresAt: true },
+            select: {
+                ingredientId: true,
+                name: true,
+                quantity: true,
+                expiresAt: true,
+                purchasedAt: true,
+                createdAt: true,
+            },
         }),
         db.shoppingSuggestionSnooze.findMany({
             where: { userId: owner },
@@ -71,7 +78,10 @@ export async function getRhythmSuggestions(
     return suggestRhythmItems({
         history,
         openItemKeys: new Set(openItems.map((item) => item.itemKey)),
-        pantry,
+        pantry: pantry.map(({ purchasedAt, createdAt, ...entry }) => ({
+            ...entry,
+            acquiredAt: purchasedAt ?? createdAt,
+        })),
         snoozes: new Map(snoozes.map((snooze) => [snooze.itemKey, snooze])),
         now,
         shoppingDay: profile?.shoppingDay ?? null,

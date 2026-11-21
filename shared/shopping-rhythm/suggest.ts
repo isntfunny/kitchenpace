@@ -5,6 +5,8 @@
  * Pantry assumption: an AVAILABLE pantry entry counts as "enough" when it has a positive
  * amount or no amount at all ("vorhanden"); only an entry with amount 0 or a passed
  * `expiresAt` does not. There is no comparison with typical purchase sizes.
+ * An entry only blocks while it is younger than one interval (`acquiredAt` = purchase or
+ * creation time): a post nobody ever used up must not hide the suggestion for good.
  */
 import { normalizeItemName } from '../../src/lib/shopping/item-key';
 import { toBerlinDate } from '../meal-planning/dates';
@@ -27,6 +29,8 @@ export interface RhythmPantryEntry {
     name: string;
     quantity: number | null;
     expiresAt: Date | null;
+    /** `purchasedAt ?? createdAt`; unknown = always blocks */
+    acquiredAt?: Date | null;
 }
 
 export interface RhythmInput {
@@ -47,6 +51,7 @@ export function pantryHasEnough(
     name: string,
     pantry: readonly RhythmPantryEntry[],
     now: Date,
+    intervalDays?: number,
 ): boolean {
     const ingredientId = itemKey.startsWith('i:') ? itemKey.slice(2) : null;
     const normalized = normalizeItemName(name);
@@ -56,6 +61,12 @@ export function pantryHasEnough(
             : !entry.ingredientId && normalizeItemName(entry.name) === normalized;
         if (!matches) return false;
         if (entry.expiresAt && entry.expiresAt.getTime() <= now.getTime()) return false;
+        if (
+            intervalDays !== undefined &&
+            entry.acquiredAt &&
+            now.getTime() - entry.acquiredAt.getTime() >= intervalDays * 86_400_000
+        )
+            return false;
         return entry.quantity === null || entry.quantity > 0;
     });
 }
@@ -97,7 +108,8 @@ export function suggestRhythmItems(input: RhythmInput): RhythmSuggestion[] {
         if (!due.due) continue;
 
         const latest = rows[0];
-        if (pantryHasEnough(itemKey, latest.name, input.pantry, input.now)) continue;
+        if (pantryHasEnough(itemKey, latest.name, input.pantry, input.now, estimate.intervalDays))
+            continue;
 
         found.push({
             progress: due.daysSince / estimate.intervalDays,

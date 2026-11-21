@@ -141,6 +141,9 @@ export async function addShoppingItems(db: Db, userId: string, input: unknown) {
         const conversion = await loadConversion(tx, ingredientIds);
         const now = new Date();
         const touched = new Map<string, string>();
+        // "itemKey|plan entry" pairs written by this call: a second line of the same
+        // ingredient in one recipe adds its amount to the existing source
+        const sourcesInCall = new Map<string, string>();
 
         for (const input of items) {
             const entry = ownEntries.find((e) => e.id === input.mealPlanRecipeId);
@@ -154,8 +157,12 @@ export async function addShoppingItems(db: Db, userId: string, input: unknown) {
             // A bought/dormant entry starts a new round with a fresh amount and sources
             const reopened = !!item && item.status !== 'OPEN';
             // The same plan entry never adds its amount twice
+            const callKey = `${itemKey}|${input.mealPlanRecipeId ?? ''}`;
+            const sameCallSourceId = input.mealPlanRecipeId
+                ? sourcesInCall.get(callKey)
+                : undefined;
             const duplicateSource =
-                item && !reopened && input.mealPlanRecipeId
+                item && !reopened && input.mealPlanRecipeId && !sameCallSourceId
                     ? await tx.shoppingItemSource.findFirst({
                           where: {
                               shoppingItemId: item.id,
@@ -201,9 +208,31 @@ export async function addShoppingItems(db: Db, userId: string, input: unknown) {
                 });
             }
 
-            if (!duplicateSource) {
+            if (sameCallSourceId) {
+                // Same plan entry, same ingredient, another line: grow the source's share
+                const source = await tx.shoppingItemSource.findUnique({
+                    where: { id: sameCallSourceId },
+                });
+                if (source) {
+                    const grown = addToQuantity(
+                        {
+                            quantity: source.quantity,
+                            baseUnit: source.baseUnit,
+                            displayUnit: null,
+                            quantityText: null,
+                        },
+                        input.amount,
+                        input.unit,
+                        context,
+                    );
+                    await tx.shoppingItemSource.update({
+                        where: { id: source.id },
+                        data: { quantity: grown.quantity, baseUnit: grown.baseUnit },
+                    });
+                }
+            } else if (!duplicateSource) {
                 const converted = addToQuantity(EMPTY_QUANTITY, input.amount, input.unit, context);
-                await tx.shoppingItemSource.create({
+                const source = await tx.shoppingItemSource.create({
                     data: {
                         shoppingItemId: item.id,
                         kind: input.mealPlanRecipeId ? 'MEAL_PLAN' : input.kind,
@@ -216,6 +245,7 @@ export async function addShoppingItems(db: Db, userId: string, input: unknown) {
                         servings: input.servings ?? entry?.servings ?? null,
                     },
                 });
+                if (input.mealPlanRecipeId) sourcesInCall.set(callKey, source.id);
                 await tx.shoppingHistory.create({
                     data: {
                         userId: owner,

@@ -95,7 +95,13 @@ export async function findOrCreateUnit(unitName: string): Promise<string> {
     return fallback!.id;
 }
 
-export async function createIngredient(name: string, _category?: string, _units: string[] = []) {
+/**
+ * Catalogue lookup of createIngredient without creating anything: the
+ * existing ingredient a name resolves to (singular slug, alias, original slug),
+ * or `null` plus the canonical name a new entry would get. Also used by
+ * dry runs that report which ingredients an import would create (KUC-115).
+ */
+export async function matchExistingIngredient(name: string) {
     const { stemGerman, getWordVariants } = await import('@app/lib/german-stem');
 
     const trimmed = name.trim();
@@ -107,6 +113,7 @@ export async function createIngredient(name: string, _category?: string, _units:
     // Canonical name: keep original casing style, use singular form
     const canonicalName = trimmed[0].toUpperCase() + singular.slice(1);
     const slug = slugify(canonicalName);
+    const miss = { existing: null, trimmed, canonicalName, slug, isStemmed };
 
     ingLog.debug('lookup', { input: trimmed, singular, slug, stemmed: isStemmed });
 
@@ -114,7 +121,7 @@ export async function createIngredient(name: string, _category?: string, _units:
     const bySlug = await prisma.ingredient.findUnique({ where: { slug } });
     if (bySlug) {
         ingLog.debug('found by slug', { input: trimmed, match: bySlug.name, id: bySlug.id });
-        return bySlug;
+        return { ...miss, existing: bySlug };
     }
 
     // 3. Try alias match (for regional synonyms)
@@ -130,7 +137,7 @@ export async function createIngredient(name: string, _category?: string, _units:
                 match: byAlias.name,
                 id: byAlias.id,
             });
-            return byAlias;
+            return { ...miss, existing: byAlias };
         }
     }
 
@@ -147,9 +154,16 @@ export async function createIngredient(name: string, _category?: string, _units:
                 match: byOriginalSlug.name,
                 id: byOriginalSlug.id,
             });
-            return byOriginalSlug;
+            return { ...miss, existing: byOriginalSlug };
         }
     }
+    return miss;
+}
+
+export async function createIngredient(name: string, _category?: string, _units: string[] = []) {
+    const match = await matchExistingIngredient(name);
+    if (match.existing) return match.existing;
+    const { trimmed, canonicalName, slug, isStemmed } = match;
 
     // 5. Create new ingredient with singular as canonical name + default units
     ingLog.info('creating new ingredient', {

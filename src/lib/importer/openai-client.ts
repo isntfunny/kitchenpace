@@ -65,25 +65,13 @@ METADATEN
 - description: Prägnante Beschreibung (1-3 Sätze)
 - imageUrl: Hauptbild-URL aus dem Markdown (og:image, große <img>, Markdown-Bilder). Keine Logos/Icons/Werbung. Null wenn keins gefunden.
 - categories: 1–3 aus: "Hauptgericht", "Beilage", "Backen", "Dessert", "Frühstück", "Getränk", "Vorspeise", "Salat"
-- tags: 8-20 relevante Tags auf Deutsch. Sei SEHR großzügig — erfinde frei neue Tags!
-  Tags helfen beim Filtern, Entdecken und saisonalen Einsortieren. Du DARFST und SOLLST neue Tags erfinden die zum Rezept passen. Decke ALLE zutreffenden Dimensionen ab:
-
-  ★★★ HÖCHSTE PRIORITÄT — bei JEDEM Rezept mindestens 2-3 davon vergeben: ★★★
-  • Jahreszeit: "Frühling", "Sommer", "Herbst", "Winter" — wähle nach typischer Passung. Suppen/Eintöpfe→Herbst/Winter, Salate/Grill→Sommer, leichte Gerichte→Frühling, etc. MEHRERE Jahreszeiten wenn passend!
-  • Saisonale Events & Feiertage: "Weihnachten", "Ostern", "Silvester", "Valentinstag", "Muttertag", "Vatertag", "Erntedank", "Fasching/Karneval", "Nikolaus", "Advent", "Grillsaison", "Oktoberfest", "Sommerfest", "Gartenparty", "Osterbrunch", ... — vergib wenn das Rezept typisch dafür wäre oder gut dazu passt
-  • Stimmung & Gefühl: "gemütlich", "sommerlich leicht", "wärmend", "erfrischend", "festlich", "rustikal", "elegant", "schnell & unkompliziert", "zum Verwöhnen", "Seelenwärmer", "Sonntagsglück", ...
-  • Tageszeit: "Mittagessen", "Abendessen", "Frühstück", "Brunch", "Snack", "Nachtisch", "Nachmittagskaffee"
-  • Anlass: "Party", "Familienessen", "Kindergeburtstag", "Feierabendküche", "Sonntagsessen", "Für Gäste", "Picknick", "Meal Prep", "Büro-Lunch", "Date Night", "Brunch mit Freunden", "Grillabend", "Wochenend-Kochen", ...
-
-  Weitere Tags:
-  • Küchenart: "Italienisch", "Asiatisch", "Deutsch", "Mexikanisch", "Mediterran", "Orientalisch", ...
-  • Ernährung: "Vegetarisch", "Vegan", "Low Carb", "Glutenfrei", "Proteinreich", "Kalorienarm", ...
-  • Zubereitungsart: "Ofengericht", "Eintopf", "Auflauf", "Suppe", "Salat", "Fingerfood", "Pfannengericht", "One Pot", ...
-  • Charakter: "Klassiker", "Comfort Food", "Schnell", "Einfach", "Aufwendig", "Für Einsteiger", ...
-
-  ✘ VERBOTEN — NIEMALS als Tag verwenden:
-  • Einzelne Zutaten: "Tomate", "Kartoffeln", "Lachs", "Schokolade", etc. — dafür gibt es den Zutatenfilter
-  • "mit [Zutat]": "mit Hackfleisch", "mit Hühnchen", "mit Fisch", etc. — wird über Zutatenkategorien berechnet
+- tags: 3-10 Tags, AUSSCHLIESSLICH aus der TAG-LISTE (separate Nachricht). Exakte Schreibweise übernehmen.
+  Erfinde KEINE neuen Tags — Tags, die nicht in der Liste stehen, werden verworfen.
+  Tags helfen beim Filtern und Entdecken. Vergib nur, was wirklich typisch für das Gericht ist:
+  Mahlzeit, Jahreszeit, Anlass, Ernährungsform, Küche, Charakter, Praktisches.
+  • „-frei“-Tags (Glutenfrei, Laktosefrei, Eifrei, Nussfrei, Alkoholfrei) NUR, wenn man es bei diesem Gericht nicht erwarten würde
+    (z. B. Glutenfrei bei einem Kuchen ohne Mehl, Eifrei bei einer Mousse ohne Ei) — NICHT, weil die Zutat schlicht fehlt.
+  ✘ KEINE Tags für Schwierigkeit oder Zeit (eigene Felder), Kategorie (eigenes Feld), einzelne Zutaten oder den Gerichtsnamen.
 - prepTime / cookTime: in Minuten
 - servings: Portionen
 - difficulty: "Einfach", "Mittel" oder "Schwer"
@@ -183,12 +171,12 @@ GRAPH-REGELN:
 - Keine Zyklen`;
 
 /**
- * Builds an optional context message with known DB tags and ingredients.
+ * Builds an optional context message with the fixed tag list and known ingredients.
  * Sent as a separate user message so the static system prompt stays cacheable.
  *
- * Lists are ordered by createdAt (from the DB query) so new entries append
- * at the end — this maximises OpenAI prompt-caching hits since the prefix
- * stays identical across requests.
+ * The tag list is alphabetical (fixed in code); ingredients are ordered by
+ * createdAt so new entries append at the end — both keep the prefix identical
+ * across requests for OpenAI prompt caching.
  * Each entry sits on its own line for clearer tokenisation.
  *
  * Returns null when there is no context to inject.
@@ -198,7 +186,7 @@ function buildContextMessage(context?: ImportRecipeOptions['context']): string |
 
     if (context?.availableTags?.length) {
         parts.push(
-            `VORHANDENE TAGS IN DER DATENBANK (bevorzuge diese, neue Tags sind aber erlaubt):\n${context.availableTags.join('\n')}`,
+            `TAG-LISTE (nur diese Tags verwenden, keine neuen erfinden):\n${context.availableTags.join('\n')}`,
         );
     }
 
@@ -254,7 +242,7 @@ export interface ImportRecipeOptions {
      * existing database records over inventing new ones.
      */
     context?: {
-        /** Existing tag names — AI should prefer these but may add new ones */
+        /** The fixed tag list — the AI may only pick from these */
         availableTags?: string[];
         /** Most-used ingredient names — AI should use exact names for deduplication */
         topIngredients?: string[];

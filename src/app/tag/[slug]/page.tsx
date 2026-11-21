@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { cache } from 'react';
 
 import { KeywordLandingContent } from '@app/components/features/KeywordLandingContent';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { fetchTagLanding } from '@app/lib/keyword-landing';
 import { APP_URL } from '@app/lib/url';
+import { mergedTagSlugTarget } from '@shared/tags/tag-list';
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -13,13 +14,22 @@ export const dynamicParams = true;
 // Dedupes the landing fetch between generateMetadata and the page render
 const getTagLanding = cache((slug: string) => fetchTagLanding(slug));
 
+/** Landing data; old slugs of tags merged into the fixed list redirect permanently (KUC-116). */
+async function loadTagOrRedirect(slug: string) {
+    const data = await getTagLanding(slug);
+    if (data) return data;
+    const target = mergedTagSlugTarget(slug);
+    if (target) permanentRedirect(`/tag/${target}`);
+    return null;
+}
+
 type Props = {
     params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
-    const data = await getTagLanding(slug);
+    const data = await loadTagOrRedirect(slug);
     if (!data) return { title: 'Tag nicht gefunden', robots: { index: false, follow: false } };
 
     const title = `${data.name} Rezepte`;
@@ -55,7 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TagLandingPage({ params }: Props) {
     const { slug } = await params;
-    const data = await getTagLanding(slug);
+    const data = await loadTagOrRedirect(slug);
 
     if (!data) notFound();
 

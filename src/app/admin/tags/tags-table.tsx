@@ -13,6 +13,8 @@ import {
 import { ArrowUpDown, Search, Plus, Trash2, X, Check } from 'lucide-react';
 import { useState } from 'react';
 
+import { TAG_LIST } from '@shared/tags/tag-list';
+
 import { css } from 'styled-system/css';
 
 import { createTag, deleteTag, updateTag } from './actions';
@@ -295,9 +297,14 @@ export function TagsTable({ tags }: { tags: Tag[] }) {
     const [globalFilter, setGlobalFilter] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [newName, setNewName] = useState('');
+    const [addError, setAddError] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
 
     const columns = getColumns((id) => setEditingId(id));
+    const existingSlugs = new Set(tags.map((t) => t.slug));
+    const missingListTags = TAG_LIST.filter((t) => !existingSlugs.has(t.slug))
+        .map((t) => t.name)
+        .sort((a, b) => a.localeCompare(b, 'de'));
 
     // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
@@ -324,9 +331,14 @@ export function TagsTable({ tags }: { tags: Tag[] }) {
         e.preventDefault();
         if (!newName.trim()) return;
 
-        await createTag({ name: newName });
-        setNewName('');
-        setIsAdding(false);
+        setAddError('');
+        try {
+            await createTag({ name: newName });
+            setNewName('');
+            setIsAdding(false);
+        } catch (err) {
+            setAddError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
+        }
     };
 
     return (
@@ -419,6 +431,7 @@ export function TagsTable({ tags }: { tags: Tag[] }) {
                         display: 'flex',
                         gap: '3',
                         alignItems: 'flex-end',
+                        flexWrap: 'wrap',
                     })}
                 >
                     <div className={css({ display: 'flex', flexDirection: 'column', gap: '1' })}>
@@ -430,6 +443,7 @@ export function TagsTable({ tags }: { tags: Tag[] }) {
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
                             placeholder="Tag-Name"
+                            list="tag-list-names"
                             className={css({
                                 paddingX: '3',
                                 paddingY: '2',
@@ -461,6 +475,21 @@ export function TagsTable({ tags }: { tags: Tag[] }) {
                     >
                         Speichern
                     </button>
+                    <datalist id="tag-list-names">
+                        {missingListTags.map((name) => (
+                            <option key={name} value={name} />
+                        ))}
+                    </datalist>
+                    <p
+                        className={css({
+                            fontSize: 'xs',
+                            color: addError ? 'red.500' : 'foreground.muted',
+                            flexBasis: '100%',
+                        })}
+                    >
+                        {addError ||
+                            'Nur Tags aus der festen Tag-Liste. Die Liste wird im Code gepflegt (shared/tags/tag-list.ts).'}
+                    </p>
                 </form>
             )}
 

@@ -2,13 +2,18 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { slugify } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
+import { findListedTag } from '@shared/tags/tag-list';
 
-function generateSlug(name: string): string {
-    const slug = slugify(name);
-    if (!slug) throw new Error('Name muss mindestens ein Zeichen enthalten');
-    return slug;
+/** Tags come from the fixed list in shared/tags/tag-list.ts (KUC-116). */
+function listedTag(name: string) {
+    const tag = findListedTag(name);
+    if (!tag) {
+        throw new Error(
+            'Nur Tags aus der festen Tag-Liste sind erlaubt. Neue Tags werden im Code gepflegt (shared/tags/tag-list.ts).',
+        );
+    }
+    return tag;
 }
 
 export async function createTag(data: { name: string }) {
@@ -17,13 +22,8 @@ export async function createTag(data: { name: string }) {
     }
 
     try {
-        const slug = generateSlug(data.name);
-        await prisma.tag.create({
-            data: {
-                name: data.name.trim(),
-                slug,
-            },
-        });
+        const { name, slug } = listedTag(data.name);
+        await prisma.tag.create({ data: { name, slug } });
         revalidatePath('/admin/tags');
     } catch (error) {
         if (error instanceof Error && error.message.includes('Unique constraint failed')) {
@@ -43,14 +43,8 @@ export async function updateTag(id: string, data: { name: string }) {
     }
 
     try {
-        const slug = generateSlug(data.name);
-        await prisma.tag.update({
-            where: { id },
-            data: {
-                name: data.name.trim(),
-                slug,
-            },
-        });
+        const { name, slug } = listedTag(data.name);
+        await prisma.tag.update({ where: { id }, data: { name, slug } });
         revalidatePath('/admin/tags');
     } catch (error) {
         if (error instanceof Error && error.message.includes('Record to update not found')) {

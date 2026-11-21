@@ -1721,6 +1721,9 @@ model RecipeClusterRun {
   model        String                 @db.VarChar(60)
   status       RecipeClusterRunStatus @default(RUNNING)
   recipeCount  Int                    @default(0)
+  // k-means iterations and share of clusters matched to the previous run (KUC-111)
+  iterations     Int?
+  stabilityRatio Float?
   error        String?
   // Quality check before clusters become visible
   approvedAt   DateTime?
@@ -1743,10 +1746,15 @@ model RecipeCluster {
   // Same type as RecipeEmbedding.embedding
   centroid    Float[]
   size        Int
-  tagIds      String[]              @default([])
-  categoryIds String[]              @default([])
+  // Search filters as used by /recipes: tag names and category slugs (AND-combined, keep small)
+  filterTags       String[]         @default([])
+  filterCategories String[]         @default([])
   // Further derived search filters
   filters     Json?
+  // Dominant terms with weights, for the admin review
+  topTerms    Json?
+  // Large and coherent enough to be shown as a theme
+  eligible    Boolean               @default(true)
   active      Boolean               @default(false)
   createdAt   DateTime              @default(now())
 

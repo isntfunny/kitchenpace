@@ -1,10 +1,16 @@
 import 'dotenv/config';
 
+import { createLogger } from '../shared/logger';
+import { initTelemetry, shutdownTelemetry } from '../shared/telemetry/node-sdk';
+import { recordError } from '../shared/telemetry/tracing';
+
 import { startApiImportWorker, stopApiImportWorker } from './queues/api-import-worker';
-import { getRedis, disconnectRedis } from './queues/connection';
+import { disconnectRedis, getRedis } from './queues/connection';
 import { closeAllQueues } from './queues/queue';
 import { startScheduler, stopScheduler } from './queues/scheduler';
 import { startWorkers, stopWorkers } from './queues/worker';
+
+const log = createLogger('worker');
 
 let isShuttingDown = false;
 
@@ -12,71 +18,72 @@ async function gracefulShutdown(signal: string): Promise<void> {
     if (isShuttingDown) return;
     isShuttingDown = true;
 
-    console.log(`[Main] Received ${signal}, starting graceful shutdown...`);
+    log.info('Starting graceful shutdown', { signal });
 
     try {
         stopScheduler();
-        console.log('[Main] Scheduler stopped');
+        log.info('Scheduler stopped');
     } catch (error) {
-        console.error('[Main] Error stopping scheduler:', error);
+        log.error('Error stopping scheduler', { error });
     }
 
     try {
         await stopApiImportWorker();
         await stopWorkers();
-        console.log('[Main] Workers stopped');
+        log.info('Workers stopped');
     } catch (error) {
-        console.error('[Main] Error stopping workers:', error);
+        log.error('Error stopping workers', { error });
     }
 
     try {
         await closeAllQueues();
-        console.log('[Main] Queues closed');
+        log.info('Queues closed');
     } catch (error) {
-        console.error('[Main] Error closing queues:', error);
+        log.error('Error closing queues', { error });
     }
 
     try {
         await disconnectRedis();
-        console.log('[Main] Redis disconnected');
+        log.info('Redis disconnected');
     } catch (error) {
-        console.error('[Main] Error disconnecting Redis:', error);
+        log.error('Error disconnecting Redis', { error });
     }
 
-    console.log('[Main] Graceful shutdown complete');
+    await shutdownTelemetry();
+
+    log.info('Graceful shutdown complete');
     process.exit(0);
 }
 
 async function main(): Promise<void> {
-    console.log('[Main] Starting BullMQ Worker...');
+    initTelemetry('kitchenpace-worker');
+    log.info('Starting BullMQ Worker...');
 
     const redis = getRedis();
     await redis.connect();
-    console.log('[Main] Redis connected');
+    log.info('Redis connected');
 
     await startScheduler();
-    console.log('[Main] Scheduler started');
+    log.info('Scheduler started');
 
     startWorkers();
     startApiImportWorker();
-    console.log('[Main] Workers started');
+    log.info('BullMQ Worker is running');
 
-    console.log('[Main] BullMQ Worker is running');
-
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
 
     process.on('uncaughtException', (error) => {
-        console.error('[Main] Uncaught exception:', error);
-        gracefulShutdown('uncaughtException');
+        recordError('worker.uncaught_exception', error, {}, { ownSpan: true, module: 'worker' });
+        void gracefulShutdown('uncaughtException');
     });
 
     process.on('unhandledRejection', (reason) => {
-        console.error('[Main] Unhandled rejection:', reason);
+        recordError('worker.unhandled_rejection', reason, {}, { ownSpan: true, module: 'worker' });
     });
 }
 
 main().catch((error) => {
-    console.error('[Main] Fatal error:', error);
-    process.exit(1);
+    recordError('worker.fatal', error, {}, { ownSpan: true, module: 'worker' });
+    void shutdownTelemetry().finally(() => process.exit(1));
 });

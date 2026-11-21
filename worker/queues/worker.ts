@@ -1,9 +1,16 @@
+import { SpanKind } from '@opentelemetry/api';
 import { Job, Worker, WorkerOptions } from 'bullmq';
+
+import { createLogger } from '../../shared/logger';
+import { flushTelemetry } from '../../shared/telemetry/lifecycle';
+import { withSpan } from '../../shared/telemetry/tracing';
 
 import { getRedis } from './connection';
 import { createJobRun, updateJobRun } from './job-run';
 import { JOB_REGISTRY } from './registry';
 import { QueueName } from './types';
+
+const log = createLogger('worker');
 
 // ── Registry-driven dispatch ────────────────────────────────────────
 // Build a dispatch map from the central registry at module load.
@@ -53,7 +60,7 @@ const activeQueues = [...dispatchByQueue.keys()];
 // ── Public API ──────────────────────────────────────────────────────
 
 export function startWorkers(): void {
-    console.log('[Worker] Starting BullMQ workers...');
+    log.info('Starting BullMQ workers');
 
     for (const queueName of activeQueues) {
         const processor = createQueueProcessor(queueName);
@@ -61,35 +68,64 @@ export function startWorkers(): void {
         const worker = new Worker(
             queueName,
             async (job) => {
-                const jobRun = await createJobRun({
-                    queueName,
-                    jobName: job.name,
-                    jobId: job.id,
-                    payload: job.data as Record<string, unknown>,
-                });
+                return withSpan(
+                    `job.${queueName}.${job.name}`,
+                    async () => {
+                        const jobRun = await createJobRun({
+                            queueName,
+                            jobName: job.name,
+                            jobId: job.id,
+                            payload: job.data as Record<string, unknown>,
+                        });
 
-                try {
-                    console.log(`[Worker] Processing job: ${job.name} (${job.id})`);
-                    await updateJobRun(jobRun.id, { status: 'PROCESSING', startedAt: new Date() });
+                        try {
+                            log.info('Processing job', {
+                                queue: queueName,
+                                jobName: job.name,
+                                jobId: job.id,
+                            });
+                            await updateJobRun(jobRun.id, {
+                                status: 'PROCESSING',
+                                startedAt: new Date(),
+                            });
 
-                    const result = await processor(job);
+                            const result = await processor(job);
 
-                    await updateJobRun(jobRun.id, {
-                        status: 'COMPLETED',
-                        result: result as Record<string, unknown>,
-                        completedAt: new Date(),
-                    });
+                            await updateJobRun(jobRun.id, {
+                                status: 'COMPLETED',
+                                result: result as Record<string, unknown>,
+                                completedAt: new Date(),
+                            });
 
-                    console.log(`[Worker] Completed job: ${job.name} (${job.id})`);
-                    return result;
-                } catch (error) {
-                    await updateJobRun(jobRun.id, {
-                        status: 'FAILED',
-                        errorMessage: error instanceof Error ? error.message : String(error),
-                        completedAt: new Date(),
-                    });
-                    throw error;
-                }
+                            log.info('Completed job', {
+                                queue: queueName,
+                                jobName: job.name,
+                                jobId: job.id,
+                            });
+                            return result;
+                        } catch (error) {
+                            await updateJobRun(jobRun.id, {
+                                status: 'FAILED',
+                                errorMessage:
+                                    error instanceof Error ? error.message : String(error),
+                                completedAt: new Date(),
+                            });
+                            throw error;
+                        } finally {
+                            await flushTelemetry();
+                        }
+                    },
+                    {
+                        kind: SpanKind.CONSUMER,
+                        attributes: {
+                            'messaging.system': 'bullmq',
+                            'messaging.destination.name': queueName,
+                            'bullmq.job.name': job.name,
+                            'bullmq.job.id': job.id ?? '',
+                            'bullmq.job.attempt': job.attemptsMade + 1,
+                        },
+                    },
+                );
             },
             {
                 ...DEFAULT_WORKER_OPTIONS,
@@ -99,25 +135,30 @@ export function startWorkers(): void {
         );
 
         worker.on('completed', (job) => {
-            console.log(`[Worker] Job ${job.name} (${job.id}) completed successfully`);
+            log.info('Job completed', { queue: queueName, jobName: job.name, jobId: job.id });
         });
         worker.on('failed', (job, err) => {
-            console.error(`[Worker] Job ${job?.name} (${job?.id}) failed:`, err.message);
+            log.error('Job failed', {
+                queue: queueName,
+                jobName: job?.name,
+                jobId: job?.id,
+                error: err,
+            });
         });
         worker.on('error', (err) => {
-            console.error(`[Worker] Worker error:`, err.message);
+            log.error('Worker error', { queue: queueName, error: err });
         });
 
         workers.push(worker);
-        console.log(`[Worker] Registered worker for queue: ${queueName}`);
+        log.info('Registered worker', { queue: queueName });
     }
 
-    console.log(`[Worker] All workers started (${workers.length} workers)`);
+    log.info('All workers started', { count: workers.length });
 }
 
 export async function stopWorkers(): Promise<void> {
-    console.log('[Worker] Stopping BullMQ workers...');
+    log.info('Stopping BullMQ workers');
     await Promise.all(workers.map((w) => w.close()));
     workers.length = 0;
-    console.log('[Worker] All workers stopped');
+    log.info('All workers stopped');
 }

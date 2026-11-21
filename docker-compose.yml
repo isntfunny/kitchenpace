@@ -62,8 +62,15 @@ services:
                 REACT_PROFILE: 1
                 DATABASE_URL: ${DATABASE_URL}
                 NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+                SOURCE_COMMIT: ${SOURCE_COMMIT:-}
         image: registry.isntfunny.de/kitchenpace:beta
         container_name: kitchenpace-app
+        environment:
+            LOG_LEVEL: ${LOG_LEVEL:-info}
+            OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+            OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+            OTEL_SERVICE_NAME: kitchenpace-web
+            OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=beta}
         depends_on:
             redis:
                 condition: service_healthy
@@ -90,11 +97,20 @@ services:
         environment:
             SKIP_MIGRATIONS: '1'
             BACKUP_DIR: /tmp/backups
+            LOG_LEVEL: ${LOG_LEVEL:-info}
+            OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+            OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+            OTEL_SERVICE_NAME: kitchenpace-worker
+            OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=beta}
 
     scraper:
         image: registry.isntfunny.de/kitchenpace/scraper:latest
         pull_policy: always
         container_name: kitchenpace-scraper
+        environment:
+            OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+            OTEL_SERVICE_NAME: kitchenpace-scraper
+            OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=beta}
         volumes:
             - ~/kitchenpace/firefox:/config
         ports:

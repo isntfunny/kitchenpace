@@ -5,7 +5,7 @@
  * Reichweitenmessung").
  */
 
-export type ConsentCategory = 'necessary' | 'analytics' | 'monitoring' | 'support';
+export type ConsentCategory = 'necessary' | 'analytics' | 'support';
 
 export type ConsentState = Record<ConsentCategory, boolean>;
 
@@ -18,6 +18,5 @@ export const CONSENT_REVISION = 1;
 export const DEFAULT_CONSENT: ConsentState = {
     necessary: true,
     analytics: false,
-    monitoring: false,
     support: false,
 };

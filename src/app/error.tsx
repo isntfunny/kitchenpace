@@ -4,6 +4,7 @@ import { Lock, AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { Header } from '@app/components/features/Header';
+import { reportClientError } from '@app/lib/telemetry/client';
 
 import { css } from 'styled-system/css';
 
@@ -16,6 +17,7 @@ export default function ErrorPage({
 }) {
     useEffect(() => {
         console.error(error);
+        reportClientError(error, 'route');
     }, [error]);
 
     const isPermissionError =

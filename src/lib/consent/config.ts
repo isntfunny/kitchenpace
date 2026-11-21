@@ -34,7 +34,6 @@ export function buildConsentConfig(onUpdate: () => void): CookieConsentConfig {
         categories: {
             necessary: { enabled: true, readOnly: true },
             analytics: {},
-            monitoring: {},
             support: {},
         },
 
@@ -49,7 +48,7 @@ export function buildConsentConfig(onUpdate: () => void): CookieConsentConfig {
                     consentModal: {
                         title: 'Wir respektieren deine Privatsphäre',
                         description:
-                            'Wir verwenden notwendige Cookies, damit KochTakt funktioniert. Zusätzlich möchten wir mit deiner Einwilligung die Nutzung analysieren, Fehler eingrenzen und einen Support-Chat anbieten. Du entscheidest frei und kannst deine Auswahl jederzeit über „Cookie-Einstellungen" im Seitenfuß ändern. Mehr dazu in unserer <a href="/datenschutz">Datenschutzerklärung</a>.',
+                            'Wir verwenden notwendige Cookies, damit KochTakt funktioniert. Zusätzlich möchten wir mit deiner Einwilligung die Nutzung analysieren und einen Support-Chat anbieten. Du entscheidest frei und kannst deine Auswahl jederzeit über „Cookie-Einstellungen" im Seitenfuß ändern. Mehr dazu in unserer <a href="/datenschutz">Datenschutzerklärung</a>.',
                         acceptAllBtn: 'Alle akzeptieren',
                         acceptNecessaryBtn: 'Nur notwendige',
                         showPreferencesBtn: 'Einstellungen',
@@ -77,12 +76,6 @@ export function buildConsentConfig(onUpdate: () => void): CookieConsentConfig {
                                 description:
                                     'Hilft uns zu verstehen, wie KochTakt genutzt wird (Seitenaufrufe, Interaktionen), um das Angebot zu verbessern. Wird auf eigener Infrastruktur in Deutschland betrieben.',
                                 linkedCategory: 'analytics',
-                            },
-                            {
-                                title: 'Fehler- & Sitzungsaufzeichnung',
-                                description:
-                                    'Erfasst technische Fehler und zeichnet stichprobenartig Sitzungsverläufe auf, um Probleme schneller zu beheben. Reines Fehler-Reporting läuft auch ohne diese Einwilligung; erst mit ihr kommen Sitzungsaufzeichnung und erweiterte Diagnosedaten hinzu.',
-                                linkedCategory: 'monitoring',
                             },
                             {
                                 title: 'Support-Chat',

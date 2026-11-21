@@ -1,10 +1,10 @@
 'use client';
 
-import * as Sentry from '@sentry/nextjs';
 import { AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
+import { reportClientError } from '@app/lib/telemetry/client';
 
 export default function GlobalError({
     error,
@@ -14,17 +14,7 @@ export default function GlobalError({
     reset: () => void;
 }) {
     useEffect(() => {
-        Sentry.captureException(error);
-        // Show feedback dialog so users can provide context about the error
-        Sentry.showReportDialog({
-            title: 'Fehler aufgetreten',
-            subtitle:
-                'Unser Team wurde benachrichtigt. Hilf uns, das Problem schneller zu beheben.',
-            labelComments: 'Was ist passiert?',
-            labelClose: 'Schließen',
-            labelSubmit: 'Fehler melden',
-            successMessage: 'Danke für Dein Feedback! Wir werden das Problem schnell beheben.',
-        });
+        reportClientError(error, 'global');
     }, [error]);
 
     return (

@@ -19,6 +19,7 @@ FROM node:24-slim AS builder
 ARG DEBUG=0
 ARG DATABASE_URL="postgresql://build:build@localhost:5432/build"
 ARG REACT_PROFILE=0
+ARG SOURCE_COMMIT=""
 ARG NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY
 # Canonical base URL — baked into client bundles; must match the public domain
 ARG NEXT_PUBLIC_APP_URL
@@ -26,6 +27,7 @@ ARG NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_DEBUG=${DEBUG}
 ENV DATABASE_URL=${DATABASE_URL}
 ENV REACT_PROFILE=${REACT_PROFILE}
+ENV SOURCE_COMMIT=${SOURCE_COMMIT}
 ENV NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 
@@ -38,7 +40,6 @@ COPY package.json package-lock.json* ./
 COPY panda.config.ts tsconfig.json postcss.config.cjs ./
 COPY prisma.config.ts next.config.ts ./
 COPY instrumentation.ts instrumentation-client.ts ./
-COPY sentry.server.config.ts sentry.edge.config.ts ./
 COPY prisma ./prisma
 COPY src ./src
 COPY shared ./shared

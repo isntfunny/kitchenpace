@@ -13,11 +13,13 @@ from typing import Optional
 from app.sites import get_mode, get_site_name, get_strategy
 from app.strategies import dispatch
 from app.strategies.ytdlp import scrape_steps as ytdlp_steps
+from app.telemetry import init_telemetry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("scraper")
 
 app = FastAPI(title="KitchenPace Scraper", version="2.4.0")
+init_telemetry(app)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 
@@ -76,7 +78,7 @@ async def scrape(req: ScrapeRequest):
     except HTTPException:
         raise
     except Exception as e:
-        log.error("SCRAPE ERROR %s: %s", url, e)
+        log.exception("SCRAPE ERROR %s: %s", url, e)
         raise HTTPException(status_code=500, detail=str(e))
 
 

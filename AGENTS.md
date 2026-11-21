@@ -28,7 +28,7 @@ The app takes the stress out of multi-tasking in the kitchen by showing:
 | **Realtime**     | SSE via Redis pub/sub                                                                    |
 | **Storage**      | S3 / MinIO                                                                               |
 | **Scraper**      | Python FastAPI + Scrapling/Camoufox                                                      |
-| **Monitoring**   | Seq (winston-seq-updated), Sentry                                                        |
+| **Monitoring**   | SigNoz (OpenTelemetry: Traces, Logs, Metrics, Auto-Instrumentation)                      |
 
 ---
 

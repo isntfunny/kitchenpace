@@ -209,18 +209,21 @@ export default function DatenschutzPage() {
                         </p>
                         <p className={css({ mt: '2' })}>
                             Darüber hinaus nutzen wir Funktionen zur Reichweitenmessung und Analyse
-                            der Nutzung, zur Fehler- und Stabilitätsanalyse (einschließlich einer
-                            stichprobenartigen Aufzeichnung von Sitzungsverläufen zur Eingrenzung
-                            technischer Fehler) sowie eine Support-Chat-Funktion. Diese Dienste
-                            werden auf eigener Infrastruktur in Deutschland betrieben. Soweit
-                            hierbei nicht zwingend erforderliche Informationen auf deinem Endgerät
-                            gespeichert oder ausgelesen werden, erfolgt dies auf Grundlage deiner
-                            Einwilligung nach § 25 Abs. 1 TDDDG in Verbindung mit Art. 6 Abs. 1 lit.
-                            a DSGVO. Diese Kategorien (Analyse, Fehler- &amp; Sitzungsaufzeichnung,
-                            Support-Chat) sind standardmäßig deaktiviert und werden erst nach deiner
-                            Einwilligung geladen. Deine Auswahl kannst du jederzeit mit Wirkung für
-                            die Zukunft über den Link „Cookie-Einstellungen" im Seitenfuß ändern
-                            oder widerrufen.
+                            der Nutzung sowie eine Support-Chat-Funktion. Diese Dienste werden auf
+                            eigener Infrastruktur in Deutschland betrieben. Soweit hierbei nicht
+                            zwingend erforderliche Informationen auf deinem Endgerät gespeichert
+                            oder ausgelesen werden, erfolgt dies auf Grundlage deiner Einwilligung
+                            nach § 25 Abs. 1 TDDDG in Verbindung mit Art. 6 Abs. 1 lit. a DSGVO.
+                            Diese Kategorien (Analyse, Support-Chat) sind standardmäßig deaktiviert
+                            und werden erst nach deiner Einwilligung geladen. Deine Auswahl kannst
+                            du jederzeit mit Wirkung für die Zukunft über den Link
+                            „Cookie-Einstellungen" im Seitenfuß ändern oder widerrufen.
+                        </p>
+                        <p className={css({ mt: '2' })}>
+                            Zur Erkennung und Eingrenzung technischer Fehler verarbeiten wir
+                            technische Fehler- und Stabilitätsdaten ohne Cookies und ohne
+                            Sitzungsaufzeichnung auf eigener Infrastruktur in Deutschland auf
+                            Grundlage von Art. 6 Abs. 1 lit. f DSGVO.
                         </p>
                     </section>
 

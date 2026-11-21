@@ -5,6 +5,8 @@ import { bodyLimit } from 'hono/body-limit';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
 
+import { recordError } from '@shared/telemetry/tracing';
+
 import type { ApiPrincipal } from './auth';
 import {
     bringParams,
@@ -102,12 +104,18 @@ export function createApiApp({ services, authenticate }: ApiDependencies) {
                     ? String(Math.ceil((86400000 - (Date.now() % 86400000)) / 1000))
                     : '60',
             );
-        if (status === 500)
-            console.error(
-                '[Personal API]',
-                c.get('requestId'),
-                err instanceof Error ? err.name : 'UnknownError',
+        if (status === 500) {
+            recordError(
+                'api.v1.error',
+                err,
+                {
+                    requestId: c.get('requestId'),
+                    method: c.req.method,
+                    path: c.req.path,
+                },
+                { module: 'personal-api' },
             );
+        }
         return c.json({ error: { code, message: code, requestId: c.get('requestId') } }, status);
     });
     app.notFound((c) =>

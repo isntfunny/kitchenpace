@@ -6,7 +6,6 @@ import * as CookieConsent from 'vanilla-cookieconsent';
 import 'vanilla-cookieconsent/dist/cookieconsent.css';
 
 import { buildConsentConfig } from '@app/lib/consent/config';
-import { disableReplay, enableReplay } from '@app/lib/consent/sentryReplay';
 import { DEFAULT_CONSENT, type ConsentState } from '@app/lib/consent/types';
 
 interface ConsentContextValue {
@@ -31,19 +30,11 @@ export function ConsentProvider({ children }: { children: React.ReactNode }) {
     const started = useRef(false);
 
     const sync = useCallback(() => {
-        const next: ConsentState = {
+        setCategories({
             necessary: true,
             analytics: CookieConsent.acceptedCategory('analytics'),
-            monitoring: CookieConsent.acceptedCategory('monitoring'),
             support: CookieConsent.acceptedCategory('support'),
-        };
-        setCategories(next);
-
-        if (next.monitoring) {
-            enableReplay();
-        } else {
-            disableReplay();
-        }
+        });
     }, []);
 
     useEffect(() => {

@@ -1,6 +1,10 @@
+import { createLogger } from '../../shared/logger';
+
 import { getQueueForName } from './queue';
 import { JOB_REGISTRY } from './registry';
 import { QueueName, type JobPayloadSchema } from './types';
+
+const log = createLogger('scheduler');
 
 export interface ScheduledJobDefinition {
     name: string;
@@ -52,12 +56,12 @@ async function addRepeatableJob(job: ScheduledJobDefinition): Promise<void> {
                 tz: repeatOpts.tz,
             },
         });
-        console.log(`[Scheduler] Added repeatable job: ${jobName} (${repeatOpts.pattern})`);
+        log.info('Added repeatable job', { jobName, pattern: repeatOpts.pattern });
     } else if (job.options?.delay) {
         await queue.add(jobName, jobData, {
             delay: job.options.delay,
         });
-        console.log(`[Scheduler] Added delayed job: ${jobName} (${job.options.delay}ms)`);
+        log.info('Added delayed job', { jobName, delayMs: job.options.delay });
     }
 }
 
@@ -83,16 +87,14 @@ async function pruneStaleRepeatables(): Promise<void> {
         for (const rep of repeatables) {
             if (!expectedNames.has(rep.name)) {
                 await queue.removeRepeatableByKey(rep.key);
-                console.log(
-                    `[Scheduler] Removed stale repeatable job: "${rep.name}" from queue "${queueName}"`,
-                );
+                log.info('Removed stale repeatable job', { jobName: rep.name, queue: queueName });
             }
         }
     }
 }
 
 export async function startScheduler(): Promise<void> {
-    console.log('[Scheduler] Starting job scheduler...');
+    log.info('Starting job scheduler');
 
     await pruneStaleRepeatables();
 
@@ -101,11 +103,11 @@ export async function startScheduler(): Promise<void> {
         await addRepeatableJob(job);
     }
 
-    console.log(`[Scheduler] Scheduler started with ${allJobs.length} jobs`);
+    log.info('Scheduler started', { jobCount: allJobs.length });
 }
 
 export function stopScheduler(): void {
-    console.log('[Scheduler] Scheduler stopped');
+    log.info('Scheduler stopped');
 }
 
 export async function triggerJobNow(
@@ -118,5 +120,5 @@ export async function triggerJobNow(
     }
     const queue = getQueueForName(name);
     await queue.add(jobName, data);
-    console.log(`[Scheduler] Triggered job: ${jobName}`);
+    log.info('Triggered job', { queue: name, jobName });
 }

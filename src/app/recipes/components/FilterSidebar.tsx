@@ -4,8 +4,6 @@ import { Star, ChevronDown } from 'lucide-react';
 import { Accordion, ToggleGroup, Tooltip } from 'radix-ui';
 import { useMemo, type ReactNode } from 'react';
 
-import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
-import { SEASON_LABELS, TIME_SLOT_LABELS } from '@app/lib/fits-now/labels';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 
 import { css } from 'styled-system/css';
@@ -26,8 +24,6 @@ type FilterSidebarProps = {
     facets?: RecipeSearchFacets;
     onFiltersChange: (next: Partial<RecipeFilterSearchParams>) => void;
     loading?: boolean;
-    filterSets?: FilterSetWithRelations[];
-    onFilterSetToggle?: (filterSet: FilterSetWithRelations) => void;
     /** Strip container chrome (border, shadow, scroll) when embedded inside another panel */
     embedded?: boolean;
 };
@@ -49,7 +45,6 @@ const RANGE_FALLBACKS = {
 };
 
 const FILTER_SECTION_IDS = {
-    schnellfilter: 'schnellfilter',
     tags: 'tags',
     categories: 'categories',
     ingredients: 'ingredients',
@@ -58,18 +53,6 @@ const FILTER_SECTION_IDS = {
     timing: 'timing',
     rating: 'rating',
 } as const;
-
-function getFilterSetLabel(fs: FilterSetWithRelations): string {
-    if (fs.displayLabel) return fs.displayLabel;
-    if (fs.label) return fs.label;
-    if (fs.timeSlot && fs.season) {
-        const slot = (TIME_SLOT_LABELS as Record<string, string>)[fs.timeSlot] ?? fs.timeSlot;
-        const season = (SEASON_LABELS as Record<string, string>)[fs.season] ?? fs.season;
-        return `${slot} (${season})`;
-    }
-    if (fs.slug) return fs.slug;
-    return 'Filter';
-}
 
 const normalizeTag = (value: string) => value.trim().toLowerCase();
 
@@ -194,40 +177,6 @@ const chipItemClass = css({
     },
 });
 
-const filterSetChipRowClass = css({
-    display: 'flex',
-    gap: '2',
-    overflowX: 'auto',
-    pb: '2',
-    scrollbarWidth: 'none',
-    '&::-webkit-scrollbar': { display: 'none' },
-});
-
-const filterSetChipBaseClass = css({
-    borderRadius: 'full',
-    px: '3',
-    py: '1.5',
-    fontSize: 'xs',
-    fontWeight: '600',
-    border: '1px solid',
-    cursor: 'pointer',
-    transition: 'all 150ms ease',
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-});
-
-const filterSetChipActiveClass = css({
-    borderColor: 'accent',
-    background: 'accent',
-    color: 'white',
-});
-
-const filterSetChipInactiveClass = css({
-    borderColor: 'border.muted',
-    background: 'surface',
-    color: 'foreground',
-});
-
 const FilterSection = ({
     value,
     title,
@@ -273,8 +222,6 @@ export function FilterSidebar({
     facets,
     onFiltersChange,
     loading,
-    filterSets,
-    onFilterSetToggle,
     embedded,
 }: FilterSidebarProps) {
     const ingredients = options.ingredients;
@@ -456,39 +403,9 @@ export function FilterSidebar({
             >
                 <Accordion.Root
                     type="multiple"
-                    defaultValue={[
-                        ...(filterSets && filterSets.length > 0
-                            ? [FILTER_SECTION_IDS.schnellfilter]
-                            : []),
-                        FILTER_SECTION_IDS.tags,
-                    ]}
+                    defaultValue={[FILTER_SECTION_IDS.tags]}
                     className={accordionRootClass}
                 >
-                    {filterSets && filterSets.length > 0 && onFilterSetToggle && (
-                        <FilterSection
-                            value={FILTER_SECTION_IDS.schnellfilter}
-                            title="Schnell-Filter"
-                            description="Vorgefertigte Themen"
-                            activeCount={filters.filterSetId ? 1 : 0}
-                        >
-                            <div className={filterSetChipRowClass}>
-                                {filterSets.map((fs) => {
-                                    const isActive = filters.filterSetId === fs.id;
-                                    return (
-                                        <button
-                                            key={fs.id}
-                                            type="button"
-                                            onClick={() => onFilterSetToggle(fs)}
-                                            className={`${filterSetChipBaseClass} ${isActive ? filterSetChipActiveClass : filterSetChipInactiveClass}`}
-                                        >
-                                            {getFilterSetLabel(fs)}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </FilterSection>
-                    )}
-
                     <FilterSection
                         value={FILTER_SECTION_IDS.tags}
                         title="Tags"

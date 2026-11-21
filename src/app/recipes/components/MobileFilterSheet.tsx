@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
-import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import { PALETTE } from '@app/lib/palette';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 
@@ -29,8 +28,6 @@ type MobileFilterSheetProps = {
     loading: boolean;
     onFiltersChange: (next: Partial<RecipeFilterSearchParams>) => void;
     onReset: () => void;
-    filterSets?: FilterSetWithRelations[];
-    onFilterSetToggle?: (filterSet: FilterSetWithRelations) => void;
 };
 
 export function MobileFilterSheet({
@@ -43,8 +40,6 @@ export function MobileFilterSheet({
     loading,
     onFiltersChange,
     onReset,
-    filterSets,
-    onFilterSetToggle,
 }: MobileFilterSheetProps) {
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -173,8 +168,6 @@ export function MobileFilterSheet({
                                     facets={facets}
                                     onFiltersChange={onFiltersChange}
                                     loading={loading}
-                                    filterSets={filterSets}
-                                    onFilterSetToggle={onFilterSetToggle}
                                     embedded
                                 />
                             </div>

@@ -5,6 +5,7 @@ import { inRange, resolveDisplayWindow } from './date-resolver';
 import { type FilterSetWithRelations, getFoodPeriodFilterSets } from './db-queries';
 import { SEASON_LABELS, TIME_SLOT_LABELS, type Season, type TimeSlot } from './labels';
 import { toFilterCriteria, type FilterCriteria } from './mappings';
+import { detectSeason } from './season';
 
 export type { Season, TimeSlot } from './labels';
 
@@ -42,13 +43,6 @@ function detectTimeSlot(hour: number, minute: number): TimeSlot {
 }
 
 // ── Season Detection ─────────────────────────────────────────────────────────
-
-function detectSeason(month: number): Season {
-    if (month >= 2 && month <= 4) return 'fruehling'; // Mar–May (0-indexed: 2–4)
-    if (month >= 5 && month <= 7) return 'sommer'; // Jun–Aug
-    if (month >= 8 && month <= 10) return 'herbst'; // Sep–Nov
-    return 'winter'; // Dec–Feb
-}
 
 // ── Period Detection ─────────────────────────────────────────────────────────
 

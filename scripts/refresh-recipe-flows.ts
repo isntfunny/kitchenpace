@@ -59,13 +59,13 @@ import { batchCostUsd } from '../src/lib/importer/full-refresh';
 
 import { loadRecipes, markdownFor } from './lib/flow-refresh-input';
 import {
-    applyFull,
+    applyFullFromState,
     fetchFull,
     repairFull,
-    rollbackFull,
     submitFull,
     type FullState,
 } from './lib/full-reimport';
+import { rollbackFull } from './lib/full-reimport-apply';
 import { syncSearch } from './lib/sync-search';
 
 const SCRAPE_CONCURRENCY = 3;
@@ -267,7 +267,7 @@ async function apply(opts: {
 }) {
     const dir = dirOf(opts);
     const state = readJson<AnyState>(join(dir, 'state.json'));
-    if (isFull(state)) return applyFull(dir, state, opts);
+    if (isFull(state)) return applyFullFromState(dir, state, opts);
     const only = opts.ids
         ?.split(',')
         .map((id) => id.trim())
@@ -348,7 +348,7 @@ async function repair(opts: { dir?: string }) {
     await repairFull(dir, statePath, state);
 }
 
-async function rollback(file: string, opts: { write?: boolean }) {
+async function rollback(file: string, opts: { write?: boolean; applied?: string; all?: boolean }) {
     const raw = readJson<unknown>(file);
     if ((raw as { kind?: unknown }).kind === 'full') return rollbackFull(file, raw, opts);
     const backup = raw as FlowBackup;
@@ -414,6 +414,11 @@ program
     .action(apply);
 program
     .command('rollback <backup>')
+    .option(
+        '--applied <file>',
+        'Vollmodus: Fortschrittsdatei (Standard: applied.jsonl neben der Sicherung)',
+    )
+    .option('--all', 'Vollmodus: alle Rezepte der Sicherung, auch nicht angewandte')
     .option('--write', 'wirklich zurückspielen (sonst Trockenlauf)')
     .action(rollback);
 

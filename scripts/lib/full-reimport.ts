@@ -21,33 +21,26 @@ import {
     checkScrapedSource,
     evaluateFullRefreshEntry,
     fullRefreshWhere,
-    isFullBackup,
     mergeRepairProposals,
     repairCandidates,
-    writableProposals,
-    type FullBackup,
     type FullRefreshProposal,
     type FullRefreshRequest,
     type FullRefreshSkip,
 } from '../../src/lib/importer/full-refresh';
-import { restoreFullBackupEntry, snapshotRecipes } from '../../src/lib/importer/full-refresh-db';
 import {
     applySourceCheck,
     buildFullReport,
     renderFullReportMarkdown,
 } from '../../src/lib/importer/full-refresh-report';
 import type { ChatRequestBody } from '../../src/lib/importer/import-prompt';
-import { fetchImportContext, replaceImportedRecipe } from '../../src/lib/importer/pipeline';
+import { fetchImportContext } from '../../src/lib/importer/pipeline';
 import { scrapeRecipe } from '../../src/lib/importer/scraper';
-import { setEnrichmentEnqueuer } from '../../src/lib/ingredients/enqueue-enrichment';
-import { setNewIngredientNotifications } from '../../src/lib/ingredients/new-ingredient-notifications';
 
+import { applyFull } from './full-reimport-apply';
 import {
-    cachedIngredientResolver,
     currentSummaries,
     matchProposalIngredients,
 } from './full-reimport-db';
-import { syncSearch } from './sync-search';
 
 const SCRAPE_CONCURRENCY = 3;
 
@@ -301,130 +294,16 @@ export async function fetchFull(dir: string, state: FullState) {
         );
 }
 
-export async function applyFull(
+export async function applyFullFromState(
     dir: string,
     state: FullState,
     opts: { write?: boolean; proposals?: string; ids?: string; includeMismatch?: boolean },
 ) {
     const proposalsPath = opts.proposals ?? proposalsPathOf(dir, state.batchId);
     const { proposals } = readJson<ProposalsFile>(proposalsPath);
-    const ready = writableProposals(proposals, {
+    await applyFull(dir, proposals, {
+        write: opts.write,
         ids: splitIds(opts.ids),
         includeMismatch: opts.includeMismatch,
     });
-    const held = proposals.filter((p) => p.status === 'mismatch' && !ready.includes(p));
-    if (held.length)
-        console.log(
-            `${held.length} Rezepte mit unpassender Quelle zurückgehalten (--include-mismatch oder --ids).`,
-        );
-
-    const recipes = await prisma.recipe.findMany({
-        where: { id: { in: ready.map((p) => p.recipeId) } },
-        select: { id: true, _count: { select: { stepImages: true } } },
-    });
-    const byId = new Map(recipes.map((r) => [r.id, r]));
-    const todo: FullRefreshProposal[] = [];
-    for (const p of ready) {
-        const recipe = byId.get(p.recipeId);
-        if (!recipe) console.log(`übersprungen (gelöscht): ${p.recipeId}`);
-        // Step photos hang on node ids, which the new flow does not keep
-        else if (recipe._count.stepImages > 0)
-            console.log(`übersprungen (hat Schrittfotos): ${p.recipeId} ${p.title}`);
-        else todo.push(p);
-    }
-    console.log(`${todo.length} von ${proposals.length} Rezepten bereit zum Vollimport.`);
-    if (!opts.write) {
-        console.log('Trockenlauf: nichts geschrieben. Mit --write anwenden.');
-        return;
-    }
-    if (todo.length === 0) return;
-
-    // Bulk run: no moderator notification per new ingredient (the report lists
-    // them), enrichment collected and enqueued once at the end, catalogue
-    // lookups cached over the whole run.
-    setNewIngredientNotifications(false);
-    const created = new Set<string>();
-    setEnrichmentEnqueuer(async (id) => {
-        created.add(id);
-    });
-    const resolveIngredient = cachedIngredientResolver();
-    const startedAt = new Date();
-    const backup: FullBackup = {
-        kind: 'full',
-        createdAt: startedAt.toISOString(),
-        recipes: await snapshotRecipes(
-            prisma,
-            todo.map((p) => p.recipeId),
-        ),
-    };
-    const backupPath = join(dir, `backup-full-${stamp()}.json`);
-    writeJson(backupPath, backup);
-    console.log(`Vollständige Sicherung: ${backupPath}`);
-
-    const applied: string[] = [];
-    const failed: { id: string; error: string }[] = [];
-    const warnings: { id: string; warnings: string[] }[] = [];
-    for (const [index, p] of todo.entries()) {
-        try {
-            const result = await replaceImportedRecipe(prisma, p.recipeId, p.recipe!, {
-                resolveIngredient,
-            });
-            applied.push(p.recipeId);
-            if (result.warnings.length)
-                warnings.push({ id: p.recipeId, warnings: result.warnings });
-            console.log(
-                `[${index + 1}/${todo.length}] neu importiert: ${p.recipeId} ${p.recipe!.title}${result.imageAdded ? ' (+ Bild)' : ''}`,
-            );
-        } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            failed.push({ id: p.recipeId, error: message });
-            console.error(
-                `[${index + 1}/${todo.length}] fehlgeschlagen: ${p.recipeId} — ${message}`,
-            );
-        }
-    }
-    const createdIngredients = await prisma.ingredient.findMany({
-        where: { id: { in: [...created] } },
-        select: { id: true, name: true },
-    });
-    writeJson(join(dir, `apply-full-${stamp()}.json`), {
-        backup: backupPath,
-        applied,
-        failed,
-        warnings,
-        createdIngredients,
-    });
-    console.log(
-        `${applied.length} Rezepte neu importiert, ${failed.length} fehlgeschlagen, ${created.size} Zutaten neu angelegt.`,
-    );
-    await syncSearch(applied, { enrichIngredientIds: [...created] });
-    if (failed.length > 0) process.exitCode = 1;
-}
-
-export async function rollbackFull(file: string, backup: unknown, opts: { write?: boolean }) {
-    if (!isFullBackup(backup)) throw new Error(`${file} ist keine Vollsicherung`);
-    console.log(
-        `${backup.recipes.length} Rezepte in ${file} (Vollsicherung vom ${backup.createdAt}).`,
-    );
-    if (!opts.write) {
-        console.log('Trockenlauf: nichts geschrieben. Mit --write zurückspielen.');
-        return;
-    }
-    const restored: string[] = [];
-    const failed: { id: string; error: string }[] = [];
-    for (const entry of backup.recipes) {
-        try {
-            await restoreFullBackupEntry(prisma, entry);
-            restored.push(entry.id);
-        } catch (error) {
-            failed.push({
-                id: entry.id,
-                error: error instanceof Error ? error.message : String(error),
-            });
-        }
-    }
-    console.log(`${restored.length} von ${backup.recipes.length} Rezepten zurückgespielt.`);
-    for (const f of failed) console.error(`fehlgeschlagen: ${f.id} — ${f.error}`);
-    if (restored.length > 0) await syncSearch(restored);
-    if (failed.length > 0) process.exitCode = 1;
 }

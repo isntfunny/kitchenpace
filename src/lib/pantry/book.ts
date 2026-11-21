@@ -219,7 +219,7 @@ async function loadLines(db: Db, recipeId: string) {
 }
 
 /** Conversion data (piece weights, unit defaults) and opened shelf life per ingredient. */
-async function loadFacts(db: Db, ingredientIds: string[]) {
+export async function loadFacts(db: Db, ingredientIds: string[]) {
     const [units, ingredientUnits, ingredients] = await Promise.all([
         db.unit.findMany({ select: { id: true, shortName: true, gramsDefault: true } }),
         db.ingredientUnit.findMany({

@@ -1,10 +1,14 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { Suspense } from 'react';
 
 import { PageShell } from '@app/components/layouts/PageShell';
+import { InspirationSection } from '@app/components/meal-plan/intelligence/InspirationSection';
+import { IntelligentWeekView } from '@app/components/meal-plan/intelligence/IntelligentWeekView';
+import { LeftoverSection } from '@app/components/meal-plan/intelligence/LeftoverSection';
 import type { PlanSlot, PlanWeekData } from '@app/components/meal-plan/types';
-import { WeekView } from '@app/components/meal-plan/WeekView';
 import { getServerAuthSession } from '@app/lib/auth';
+import { getFreshnessMarkers } from '@app/lib/meal-plan/intelligence/week-planner';
 import { getMealPlanSettings, getMealPlanWeek } from '@app/lib/meal-plan/repository';
 import { slotLabel, visibleSlots, type SlotConfig } from '@app/lib/meal-plan/slots';
 import { resolveWeekStart, weekNumber, weekParam, weekRangeLabel } from '@app/lib/meal-plan/view';
@@ -44,7 +48,14 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
     const startDate = resolveWeekStart(week, settings.weekStartDay, today);
     if (!startDate) notFound();
 
-    const view = await getMealPlanWeek(prisma, userId, startDate);
+    // Freshness markers (KUC-96) load next to the week; a failure only drops the markers
+    const [view, markers] = await Promise.all([
+        getMealPlanWeek(prisma, userId, startDate),
+        getFreshnessMarkers(prisma, userId, startDate).catch((error) => {
+            console.error('[plan] freshness markers failed', error);
+            return {};
+        }),
+    ]);
     const used = new Set(view.entries.map((entry) => entry.slot));
     const leftoverDates = new Map(
         view.entries.map((entry) => [entry.id, formatIsoDate(entry.date)]),
@@ -97,8 +108,23 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
     return (
         <PageShell>
             <div className={css({ maxW: '1400px', mx: 'auto', py: { base: '4', md: '6' } })}>
-                <WeekView
+                <IntelligentWeekView
                     data={data}
+                    markers={markers}
+                    inspiration={
+                        <Suspense fallback={null}>
+                            <InspirationSection userId={userId} today={today} />
+                        </Suspense>
+                    }
+                    notices={
+                        <Suspense fallback={null}>
+                            <LeftoverSection
+                                userId={userId}
+                                today={today}
+                                householdSize={settings.householdSize ?? 2}
+                            />
+                        </Suspense>
+                    }
                     settings={{
                         householdSize: settings.householdSize,
                         weekStartDay: settings.weekStartDay,

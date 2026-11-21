@@ -14,8 +14,12 @@ services:
                 '--maxmemory',
                 '512mb',
                 '--maxmemory-policy',
-                'allkeys-lru',
+                'noeviction',
+                '--requirepass',
+                '${REDIS_PASSWORD:?}',
             ]
+        environment:
+            REDISCLI_AUTH: ${REDIS_PASSWORD:?}
         volumes:
             - /data/kitchenpace/redis:/data
         healthcheck:
@@ -138,6 +142,7 @@ services:
         container_name: kitchenpace-redis-exporter
         environment:
             REDIS_ADDR: redis://redis:6379
+            REDIS_PASSWORD: ${REDIS_PASSWORD:?}
         depends_on:
             redis:
                 condition: service_healthy

@@ -15,7 +15,6 @@ import {
     parseBatchOutputJsonl,
 } from '../../shared/openai-batch';
 import { prisma } from '../../shared/prisma';
-import { matchExistingIngredient } from '../../src/components/recipe/ingredientActions';
 import {
     buildFullRefreshRequest,
     buildFullRepairRequest,
@@ -27,7 +26,6 @@ import {
     mergeRepairProposals,
     renderFullReportMarkdown,
     repairCandidates,
-    type CurrentRecipeSummary,
     type FullBackup,
     type FullRefreshProposal,
     type FullRefreshRequest,
@@ -37,7 +35,9 @@ import { restoreFullBackupEntry, snapshotRecipes } from '../../src/lib/importer/
 import type { ChatRequestBody } from '../../src/lib/importer/import-prompt';
 import { fetchImportContext, replaceImportedRecipe } from '../../src/lib/importer/pipeline';
 import { scrapeRecipe } from '../../src/lib/importer/scraper';
+import { setNewIngredientNotifications } from '../../src/lib/ingredients/new-ingredient-notifications';
 
+import { currentSummaries, plannedNewIngredients } from './full-reimport-db';
 import { syncSearch } from './sync-search';
 
 const SCRAPE_CONCURRENCY = 3;
@@ -171,7 +171,7 @@ export async function submitFull(
 
 const proposalsPathOf = (dir: string, batchId: string) => join(dir, `proposals-${batchId}.json`);
 
-/** Second batch with the invalid first answers and their problems (one repair round). */
+/** Second batch, at most once: invalid answers with their problems, failed or missing ones unchanged. */
 export async function repairFull(dir: string, statePath: string, state: FullState) {
     if (state.attempt !== 1) throw new Error('Die Korrekturrunde lief schon (nur eine Runde).');
     const proposalsPath = proposalsPathOf(dir, state.batchId);
@@ -180,7 +180,9 @@ export async function repairFull(dir: string, statePath: string, state: FullStat
     const { proposals } = readJson<ProposalsFile>(proposalsPath);
     const candidates = repairCandidates(proposals);
     if (candidates.length === 0) {
-        console.log('Keine ungültigen Antworten, keine Korrekturrunde nötig.');
+        console.log(
+            'Keine ungültigen oder fehlgeschlagenen Antworten, keine Korrekturrunde nötig.',
+        );
         return;
     }
 
@@ -219,52 +221,6 @@ export async function repairFull(dir: string, statePath: string, state: FullStat
     console.log(
         `Korrektur-Batch ${upload.batchId} angelegt: ${built.length} Rezepte. Zustand: ${statePath}`,
     );
-}
-
-async function currentSummaries(ids: string[]): Promise<Map<string, CurrentRecipeSummary>> {
-    const rows = await prisma.recipe.findMany({
-        where: { id: { in: ids } },
-        select: {
-            id: true,
-            title: true,
-            flowNodes: true,
-            _count: { select: { recipeIngredients: true } },
-            tags: { select: { tag: { select: { name: true } } } },
-        },
-    });
-    return new Map(
-        rows.map((r) => [
-            r.id,
-            {
-                title: r.title,
-                ingredientCount: r._count.recipeIngredients,
-                nodeCount: Array.isArray(r.flowNodes) ? r.flowNodes.length : 0,
-                tags: r.tags.map((t) => t.tag.name),
-            },
-        ]),
-    );
-}
-
-/** recipeId → canonical names the apply would add to the catalogue (lookup only, no write). */
-async function plannedNewIngredients(proposals: FullRefreshProposal[]) {
-    const cache = new Map<string, string | null>();
-    const result = new Map<string, string[]>();
-    for (const p of proposals) {
-        if (!p.recipe) continue;
-        const names: string[] = [];
-        for (const ing of p.recipe.ingredients) {
-            const key = ing.name.trim().toLowerCase();
-            if (!key) continue;
-            if (!cache.has(key)) {
-                const match = await matchExistingIngredient(ing.name);
-                cache.set(key, match.existing ? null : match.canonicalName);
-            }
-            const created = cache.get(key);
-            if (created && !names.includes(created)) names.push(created);
-        }
-        if (names.length) result.set(p.recipeId, names);
-    }
-    return result;
 }
 
 export async function fetchFull(dir: string, state: FullState) {
@@ -320,7 +276,7 @@ export async function fetchFull(dir: string, state: FullState) {
     );
     if (state.attempt === 1 && report.summary.repairable > 0)
         console.log(
-            `${report.summary.repairable} ungültige Antworten: mit "repair" eine Korrekturrunde starten.`,
+            `${report.summary.repairable} ungültige oder fehlgeschlagene Antworten: mit "repair" einmal erneut senden.`,
         );
 }
 
@@ -357,6 +313,8 @@ export async function applyFull(
     }
     if (todo.length === 0) return;
 
+    // Bulk run: no moderator notification per new ingredient, the report lists them
+    setNewIngredientNotifications(false);
     const startedAt = new Date();
     const backup: FullBackup = {
         kind: 'full',

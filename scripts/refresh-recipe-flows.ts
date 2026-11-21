@@ -15,7 +15,7 @@
  *   submit   [--full] [--ids=a,b] [--limit=N] [--no-scrape]   build JSONL, create batch, save state
  *   status                                         show the batch state
  *   fetch                                          evaluate the result: proposals + dry-run report
- *   repair                                         full mode: second batch for invalid answers (one round)
+ *   repair                                         full mode: invalid/failed answers once more (one round)
  *   apply    [--write] [--ids=a,b]                 back up, then write the proposals (dry run without --write)
  *   rollback <backup.json> [--write]                restore a backup (flow-only or full)
  *

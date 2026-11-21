@@ -288,3 +288,45 @@ test(
         }
     },
 );
+
+test(
+    'bulk runs create new ingredients without moderator notifications; the app still notifies',
+    { skip: !url },
+    async () => {
+        const { prisma } = await import('../../../shared/prisma');
+        const { setEnrichmentEnqueuerForTests } = await import('../ingredients/enqueue-enrichment');
+        const { setNewIngredientNotifications } =
+            await import('../ingredients/new-ingredient-notifications');
+        const { createIngredient } = await import('../../components/recipe/ingredientActions');
+        setEnrichmentEnqueuerForTests(async () => {});
+        const key = randomUUID().slice(0, 8);
+        const moderator = await prisma.user.create({
+            data: { email: `mod-${key}@example.invalid`, role: 'MODERATOR' },
+        });
+        const notes = () =>
+            prisma.notification.count({
+                where: { userId: moderator.id, title: 'Neue Zutat erstellt' },
+            });
+        try {
+            setNewIngredientNotifications(false);
+            await createIngredient(`Stillzutat${key}`);
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            assert.equal(await notes(), 0);
+
+            setNewIngredientNotifications(true);
+            await createIngredient(`Lautzutat${key}`);
+            for (let i = 0; i < 30 && (await notes()) === 0; i++)
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            assert.equal(await notes(), 1);
+        } finally {
+            setNewIngredientNotifications(true);
+            setEnrichmentEnqueuerForTests();
+            await prisma.notification.deleteMany({ where: { userId: moderator.id } });
+            await prisma.user.delete({ where: { id: moderator.id } });
+            await prisma.ingredient.deleteMany({
+                where: { name: { in: [`Stillzutat${key}`, `Lautzutat${key}`] } },
+            });
+            await prisma.$disconnect();
+        }
+    },
+);

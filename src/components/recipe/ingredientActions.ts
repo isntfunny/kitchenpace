@@ -3,6 +3,7 @@
 import { createUserNotification } from '@app/lib/events/persist';
 import { uploadImageFromUrl as uploadImageFromUrlShared } from '@app/lib/importer/upload-image-from-url';
 import { enqueueIngredientEnrichment } from '@app/lib/ingredients/enqueue-enrichment';
+import { newIngredientNotificationsEnabled } from '@app/lib/ingredients/new-ingredient-notifications';
 import { slugify } from '@app/lib/slug';
 import { createLogger } from '@shared/logger';
 import { prisma } from '@shared/prisma';
@@ -193,7 +194,9 @@ export async function createIngredient(name: string, _category?: string, _units:
         ingLog.info('created', { id: ingredient.id, name: ingredient.name, slug });
 
         // Notify moderators about the new ingredient
-        notifyModeratorsNewIngredient(ingredient.id, ingredient.name).catch(() => {});
+        // (off in bulk scripts, whose report lists the new ingredients)
+        if (newIngredientNotificationsEnabled())
+            notifyModeratorsNewIngredient(ingredient.id, ingredient.name).catch(() => {});
 
         // AI enrichment incl. shelf life and display name; not awaited so a
         // queue outage never blocks saving. The daily backfill is the safety net.

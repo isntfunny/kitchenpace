@@ -232,8 +232,9 @@ export function evaluateFullRefreshEntry(
 }
 
 /**
- * Repair round: the first request, the invalid answer and its problems go
- * back to the model once (same body as the direct import's repair).
+ * Second and last attempt. An invalid answer goes back with its problems
+ * (same body as the direct import's repair round); a request that failed or
+ * got no answer (API error, missing line) is sent again unchanged.
  */
 export function buildFullRepairRequest(
     request: FullRefreshRequest,
@@ -242,18 +243,28 @@ export function buildFullRepairRequest(
 ): { request: FullRefreshRequest; body: ChatRequestBody } {
     const problems = proposal.errors.slice(1);
     return {
-        body: buildRepairRequestBody(
-            body,
-            proposal.content ?? '',
-            problems.length > 0 ? problems : proposal.errors,
-        ),
+        body:
+            proposal.status === 'invalid' && proposal.content
+                ? buildRepairRequestBody(
+                      body,
+                      proposal.content,
+                      problems.length > 0 ? problems : proposal.errors,
+                  )
+                : body,
         request: { ...request, customId: fullCustomIdFor(request.recipeId, 2), attempt: 2 },
     };
 }
 
-/** Invalid first answers with text: the candidates for the repair round. */
+/**
+ * Candidates for the second attempt (at most one per recipe): invalid first
+ * answers with text, and first requests that failed or got no answer.
+ */
 export function repairCandidates(proposals: FullRefreshProposal[]): FullRefreshProposal[] {
-    return proposals.filter((p) => p.status === 'invalid' && p.attempt === 1 && p.content);
+    return proposals.filter(
+        (p) =>
+            p.attempt === 1 &&
+            ((p.status === 'invalid' && p.content !== undefined) || p.status === 'failed'),
+    );
 }
 
 /**
@@ -399,7 +410,7 @@ export function renderFullReportMarkdown(report: FullReport): string {
     const lines = [
         `# Voll-Neuimport Trockenlauf (Batch ${report.batchId})`,
         '',
-        `Rezepte: ${s.recipes} · bereit: ${s.ready} · ungültig: ${s.invalid} (davon reparierbar: ${s.repairable}) · fehlgeschlagen: ${s.failed} · übersprungen: ${s.skipped} · Kosten ca. $${s.costUsd.toFixed(3)} (Batch-Preis)`,
+        `Rezepte: ${s.recipes} · bereit: ${s.ready} · ungültig: ${s.invalid} · fehlgeschlagen: ${s.failed} · erneut zu senden: ${s.repairable} · übersprungen: ${s.skipped} · Kosten ca. $${s.costUsd.toFixed(3)} (Batch-Preis)`,
         '',
         `Neu anzulegende Zutaten: ${s.newIngredients.length}${s.newIngredients.length ? ` — ${s.newIngredients.join(', ')}` : ''}`,
         '',

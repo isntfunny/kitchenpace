@@ -191,6 +191,25 @@ test('hard problems stay invalid after the repair round; missing answers fail', 
     );
 });
 
+test('failed or missing first answers are sent once more, unchanged; not a third time', () => {
+    const { request, body } = buildFullRefreshRequest(recipe, { markdown: '# Seite' }, context);
+    const apiError = evaluateFullRefreshEntry(request, { customId: 'full-r1', error: 'HTTP 500' });
+    const missing = evaluateFullRefreshEntry(request, undefined);
+    assert.deepEqual(repairCandidates([apiError, missing]), [apiError, missing]);
+
+    const retry = buildFullRepairRequest(request, body, apiError);
+    assert.deepEqual(retry.body, body, 'no repair message without an answer');
+    assert.equal(retry.request.customId, 'full-r1-repair');
+    assert.equal(retry.request.attempt, 2);
+
+    const second = evaluateFullRefreshEntry(retry.request, entry('full-r1-repair', imported()));
+    assert.equal(second.status, 'ready');
+    assert.equal(mergeRepairProposals([apiError], [second])[0].status, 'ready');
+
+    const failedAgain = evaluateFullRefreshEntry(retry.request, undefined);
+    assert.deepEqual(repairCandidates([failedAgain]), []);
+});
+
 test('cost at batch price (half): uncached, cached and output tokens', () => {
     // (6000 * 2 + 4000 * 0.1 + 2000 * 10) / 2 / 1e6
     assert.equal(
@@ -240,7 +259,7 @@ test('report: old → new per recipe, skipped sources, distinct new ingredients,
             invalid: 0,
             failed: 1,
             skipped: 1,
-            repairable: 0,
+            repairable: 1,
             costUsd: 0.0162,
             newIngredients: ['dinkelmehl', 'Hafermilch'],
         },
@@ -259,7 +278,7 @@ test('report: old → new per recipe, skipped sources, distinct new ingredients,
     const md = renderFullReportMarkdown(report);
     assert.match(
         md,
-        /bereit: 1 · ungültig: 0 \(davon reparierbar: 0\) · fehlgeschlagen: 1 · übersprungen: 1/,
+        /bereit: 1 · ungültig: 0 · fehlgeschlagen: 1 · erneut zu senden: 1 · übersprungen: 1/,
     );
     assert.match(md, /Neu anzulegende Zutaten: 2/);
     assert.match(md, /\| r1 \| ready \| .* \| Pfannkuchen alt → Pfannkuchen \| 3 → 2 \| 5 → 3 \|/);

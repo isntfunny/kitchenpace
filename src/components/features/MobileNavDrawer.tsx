@@ -59,7 +59,7 @@ const GENERAL_LINKS: (DrawerNavItem & { authOnly?: boolean; flag?: 'collections'
     },
     {
         label: 'Einkaufsliste',
-        description: 'Deine Bring!-Listen',
+        description: 'Zutaten für Plan und Rezepte',
         href: '/shopping-list',
         icon: ShoppingCart,
         authOnly: true,

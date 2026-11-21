@@ -31,7 +31,7 @@ export const PERSONAL_LINKS: NavLinkItem[] = [
     },
     {
         label: 'Einkaufsliste',
-        description: 'Deine Bring!-Listen',
+        description: 'Zutaten für Plan und Rezepte',
         href: '/shopping-list',
         icon: ShoppingCart,
     },

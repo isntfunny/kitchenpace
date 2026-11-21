@@ -16,6 +16,8 @@ export interface AddToListResult {
     /** Number of recipe lines added (several lines can end up in one entry) */
     added: number;
     itemIds: string[];
+    /** Plan entries left out because their recipe is no longer available (unpublished) */
+    skipped: string[];
 }
 
 /** "Zur Einkaufsliste" on the recipe page: the recipe's ingredients for `servings`. */
@@ -33,7 +35,7 @@ export async function addRecipeToList(
     if (!recipe) throw notFound('Rezept');
 
     const lines = selectRecipeLines(recipe.lines, selection);
-    if (lines.length === 0) return { added: 0, itemIds: [] };
+    if (lines.length === 0) return { added: 0, itemIds: [], skipped: [] };
     const items = await addShoppingItems(
         db,
         owner,
@@ -43,13 +45,14 @@ export async function addRecipeToList(
             servings: portions,
         }),
     );
-    return { added: lines.length, itemIds: items.map((item) => item.id) };
+    return { added: lines.length, itemIds: items.map((item) => item.id), skipped: [] };
 }
 
 /**
  * Plan entries (MEAL_PLAN source) with the servings planned for each: the
  * ingredients of every entry's recipe. The same entry never adds its amount
- * twice; ownership of the entries is checked.
+ * twice; ownership of the entries is checked. Entries whose recipe is no longer
+ * available (unpublished, deleted) are skipped and listed in `skipped`.
  */
 export async function addMealPlanEntriesToList(
     db: Db,
@@ -68,11 +71,15 @@ export async function addMealPlanEntriesToList(
         db,
         owner,
         entries.map((entry) => entry.recipeId),
+        { lenient: true },
     );
 
+    const skipped = entries
+        .filter((entry) => !recipes.has(entry.recipeId))
+        .map((entry) => entry.id);
     const inputs = entries.flatMap((entry) => {
         const recipe = recipes.get(entry.recipeId);
-        if (!recipe) throw notFound('Rezept');
+        if (!recipe) return [];
         return buildShoppingInputs(selectRecipeLines(recipe.lines, selection), {
             recipeId: entry.recipeId,
             recipeServings: recipe.servings,
@@ -80,7 +87,7 @@ export async function addMealPlanEntriesToList(
             mealPlanRecipeId: entry.id,
         });
     });
-    if (inputs.length === 0) return { added: 0, itemIds: [] };
+    if (inputs.length === 0) return { added: 0, itemIds: [], skipped };
     const items = await addShoppingItems(db, owner, inputs);
-    return { added: inputs.length, itemIds: items.map((item) => item.id) };
+    return { added: inputs.length, itemIds: items.map((item) => item.id), skipped };
 }

@@ -3,9 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { searchIngredients } from '@app/components/recipe/actions';
 import { getServerAuthSession } from '@app/lib/auth';
 import { DataAccessError } from '@app/lib/meal-plan/db';
 import { checkRateLimit } from '@app/lib/rate-limit';
+import { loadShoppingPageData } from '@app/lib/shopping/page-data';
+import { loadRecipeLines } from '@app/lib/shopping/recipe-lines';
 import { addMealPlanEntriesToList, addRecipeToList } from '@app/lib/shopping/recipe-to-list';
 import {
     addShoppingItems,
@@ -14,6 +17,7 @@ import {
     setShoppingItemStatus,
     updateShoppingItem,
 } from '@app/lib/shopping/repository';
+import { snoozeSuggestion } from '@app/lib/shopping/suggestions-source';
 import { prisma } from '@shared/prisma';
 
 // Server actions of the own shopping list (KUC-104). The list page and its
@@ -72,6 +76,43 @@ export async function getShoppingList() {
     return run((userId) => listShoppingItems(prisma, userId));
 }
 
+/** Everything the list page shows: items, suggestions and the plan column. */
+export async function getShoppingPageData() {
+    return run((userId) => loadShoppingPageData(prisma, userId));
+}
+
+/** Ingredient lines of a recipe for the selection dialog (amounts for the recipe's own servings). */
+export async function getRecipeShoppingLines(recipeId: string) {
+    return run(async (userId) => {
+        const id = idSchema.parse(recipeId);
+        const recipe = (await loadRecipeLines(prisma, userId, [id])).get(id);
+        return recipe ? { servings: recipe.servings, lines: recipe.lines } : null;
+    });
+}
+
+/** Autocomplete for the quick add: catalogue ingredients, plus the parsed amount ("500 g Mehl"). */
+export async function searchShoppingIngredients(query: string) {
+    return run(async () => {
+        const trimmed = z.string().trim().max(100).parse(query);
+        if (trimmed.length < 2) return { results: [], amount: null, unit: null };
+        const found = await searchIngredients(trimmed);
+        return {
+            results: found.results
+                .slice(0, 6)
+                .map((hit) => ({ id: hit.id, name: hit.name, pluralName: hit.pluralName })),
+            amount: found.parsed.amount || null,
+            unit: found.parsed.unit ?? null,
+        };
+    });
+}
+
+/** "Nicht jetzt" on a suggestion tile. */
+export async function snoozeShoppingSuggestionTile(itemKey: string) {
+    return run((userId) =>
+        snoozeSuggestion(prisma, userId, z.string().min(3).max(220).parse(itemKey), new Date()),
+    );
+}
+
 /** "Auf die Einkaufsliste" on the recipe page, scaled to the chosen servings. */
 export async function addRecipeToShoppingList(
     recipeId: string,
@@ -99,8 +140,20 @@ export async function addManualShoppingItem(input: {
     ingredientId?: string | null;
     amount?: string | null;
     unit?: string | null;
+    /** SUGGESTION when it comes from a suggestion tile */
+    kind?: 'MANUAL' | 'SUGGESTION';
 }) {
-    return run((userId) => addShoppingItems(prisma, userId, [{ ...input, kind: 'MANUAL' }]));
+    return run((userId) =>
+        addShoppingItems(prisma, userId, [
+            {
+                name: input.name,
+                ingredientId: input.ingredientId,
+                amount: input.amount,
+                unit: input.unit,
+                kind: input.kind === 'SUGGESTION' ? 'SUGGESTION' : 'MANUAL',
+            },
+        ]),
+    );
 }
 
 /** Checking off writes time and bought amount to the history; unchecking reopens. */

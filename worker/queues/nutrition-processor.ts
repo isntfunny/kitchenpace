@@ -1,7 +1,15 @@
+// enrich-ingredient-nutrition: nutrition values, units and categories for one
+// ingredient, then shelf life and display name. Runs directly after a new
+// ingredient is created. The daily backfill sends the same requests through
+// the Batch API (enrichment-backfill.ts); both use the request builder and
+// the result import below.
+
+import type { PrismaClient } from '@prisma/client';
 import { Job } from 'bullmq';
 import OpenAI from 'openai';
 
 import { AI_TEXT_MODEL } from '@shared/ai-models';
+import { responsesOutputText } from '@shared/openai-batch';
 
 import { prisma } from './prisma';
 import { enrichIngredientShelfLife, type ShelfLifeEnrichment } from './shelf-life-processor';
@@ -177,142 +185,87 @@ VERFÜGBARE KATEGORIEN:
 ${categoryList}`;
 }
 
-// ── OpenAI client ───────────────────────────────────────────────────────
+// ── Request and import (shared with the batch backfill) ─────────────────
 
-let _openai: OpenAI | null = null;
-
-function getOpenAIClient(): OpenAI {
-    if (_openai) return _openai;
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error('OPENAI_API_KEY is not configured');
-    _openai = new OpenAI({ apiKey, organization: process.env.OPENAI_ORG_ID });
-    return _openai;
+export interface EnrichmentContext {
+    units: Array<{ id: string; shortName: string; longName: string }>;
+    categories: Array<{ id: string; slug: string; name: string }>;
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────
-
-function extractTextFromResponse(response: OpenAI.Responses.Response): string {
-    const textOutput = response.output.find(
-        (o): o is Extract<(typeof response.output)[number], { type: 'message' }> =>
-            o.type === 'message',
-    );
-    if (!textOutput) {
-        throw new Error('No message output from OpenAI Responses API');
-    }
-
-    const content = textOutput.content.find(
-        (c): c is Extract<(typeof textOutput.content)[number], { type: 'output_text' }> =>
-            c.type === 'output_text',
-    );
-    if (!content) {
-        throw new Error('No output_text content in response');
-    }
-
-    return content.text;
+/** Units and categories the model may choose from. */
+export async function loadEnrichmentContext(db: PrismaClient): Promise<EnrichmentContext> {
+    const [units, categories] = await Promise.all([
+        db.unit.findMany({ select: { id: true, shortName: true, longName: true } }),
+        db.ingredientCategory.findMany({ select: { id: true, slug: true, name: true } }),
+    ]);
+    return { units, categories };
 }
 
-// ── Main processor ──────────────────────────────────────────────────────
+/** /v1/responses body for one ingredient, with web search. */
+export function buildNutritionRequest(name: string, context: EnrichmentContext) {
+    return {
+        model: ENRICH_MODEL,
+        tools: [{ type: 'web_search' as const }],
+        instructions: buildSystemPrompt(context.units, context.categories),
+        input: `Bestimme Nährwerte, relevante Einheiten und Kategorien für: "${name}"`,
+        text: { format: getEnrichResponseFormat(context.units, context.categories) },
+    };
+}
 
-export async function processEnrichIngredientNutrition(
-    job: Job<EnrichIngredientNutritionJob>,
-): Promise<{
-    success: boolean;
-    ingredientId: string;
+/** Whether nutrition, units or categories are still missing. */
+export function needsNutritionEnrichment(row: {
+    energyKcal: number | null;
+    ingredientUnits: unknown[];
+    categories: unknown[];
+}): boolean {
+    return (
+        row.energyKcal == null || row.ingredientUnits.length === 0 || row.categories.length === 0
+    );
+}
+
+export interface NutritionImportResult {
+    status: 'skipped' | 'imported';
     name: string;
     fieldsUpdated: number;
     source?: string;
     units: Array<{ shortName: string; grams: number | null }>;
     autoApproved: boolean;
-    shelfLife?: ShelfLifeEnrichment;
-}> {
-    const { ingredientId } = job.data;
+}
 
-    if (!ingredientId) {
-        throw new Error('[EnrichWorker] ingredientId is empty — cannot enrich');
-    }
-
-    console.log(`[EnrichWorker] Enriching ingredient ${ingredientId}`);
-
-    // Fetch ingredient with existing enrichment state
-    const ingredient = await prisma.ingredient.findUnique({
+/**
+ * Writes a model answer (parsed JSON) for one ingredient: only parts that are
+ * still missing are filled, then the ingredient is auto-approved when the
+ * sanity checks pass. The state is read fresh, so a parallel run or a manual
+ * edit in between is respected.
+ */
+export async function importNutritionResult(
+    db: PrismaClient,
+    ingredientId: string,
+    parsed: Record<string, unknown>,
+    context: EnrichmentContext,
+): Promise<NutritionImportResult> {
+    const ingredient = await db.ingredient.findUnique({
         where: { id: ingredientId },
         select: {
-            id: true,
             name: true,
             energyKcal: true,
             ingredientUnits: { select: { unitId: true } },
             categories: { select: { id: true } },
         },
     });
-
     if (!ingredient) {
-        console.log(`[EnrichWorker] Ingredient ${ingredientId} not found — skipping`);
-        return {
-            success: false,
-            ingredientId,
-            name: '',
-            fieldsUpdated: 0,
-            units: [],
-            autoApproved: false,
-        };
+        return { status: 'skipped', name: '', fieldsUpdated: 0, units: [], autoApproved: false };
     }
 
-    const hasNutrition = ingredient.energyKcal != null;
-    const hasUnits = ingredient.ingredientUnits.length > 0;
-    const hasCategories = ingredient.categories.length > 0;
-
-    if (hasNutrition && hasUnits && hasCategories) {
-        console.log(`[EnrichWorker] ${ingredient.name} already fully enriched — skipping`);
-        return {
-            success: true,
-            ingredientId,
-            name: ingredient.name,
-            fieldsUpdated: 0,
-            units: [],
-            autoApproved: false,
-            shelfLife: await enrichIngredientShelfLife(
-                prisma,
-                getOpenAIClient(),
-                ingredientId,
-                ingredient.name,
-            ),
-        };
-    }
-
-    // Load available units and categories for the AI prompt
-    const [allUnits, allCategories] = await Promise.all([
-        prisma.unit.findMany({ select: { id: true, shortName: true, longName: true } }),
-        prisma.ingredientCategory.findMany({
-            select: { id: true, slug: true, name: true },
-        }),
-    ]);
-
-    // Build lookup maps
-    const unitByShortName = new Map(allUnits.map((u) => [u.shortName, u.id]));
-    const categoryBySlug = new Map(allCategories.map((c) => [c.slug, c.id]));
-
-    const openai = getOpenAIClient();
-
-    const systemPrompt = buildSystemPrompt(allUnits, allCategories);
-
-    const response = await openai.responses.create({
-        model: ENRICH_MODEL,
-        tools: [{ type: 'web_search_preview' }],
-        instructions: systemPrompt,
-        input: `Bestimme Nährwerte, relevante Einheiten und Kategorien für: "${ingredient.name}"`,
-        text: {
-            format: getEnrichResponseFormat(allUnits, allCategories),
-        },
-    });
-
-    const parsed = JSON.parse(extractTextFromResponse(response)) as Record<string, unknown>;
+    const unitByShortName = new Map(context.units.map((u) => [u.shortName, u.id]));
+    const categoryBySlug = new Map(context.categories.map((c) => [c.slug, c.id]));
 
     let fieldsUpdated = 0;
     const assignedUnits: Array<{ shortName: string; grams: number | null }> = [];
     let autoApproved = false;
 
     // ── 1. Nutrition ────────────────────────────────────────────────────
-    if (!hasNutrition) {
+    if (ingredient.energyKcal == null) {
         const nutritionData: Record<string, number> = {};
         for (const field of ALL_FIELDS) {
             const value = parsed[field];
@@ -322,7 +275,7 @@ export async function processEnrichIngredientNutrition(
         }
 
         if (Object.keys(nutritionData).length > 0) {
-            await prisma.ingredient.update({
+            await db.ingredient.update({
                 where: { id: ingredientId },
                 data: nutritionData,
             });
@@ -331,7 +284,7 @@ export async function processEnrichIngredientNutrition(
     }
 
     // ── 2. Relevant units with gram weights ─────────────────────────────
-    if (!hasUnits) {
+    if (ingredient.ingredientUnits.length === 0) {
         const relevantUnits = parsed.relevantUnits;
         if (Array.isArray(relevantUnits) && relevantUnits.length > 0) {
             const unitRecords: Array<{
@@ -352,7 +305,7 @@ export async function processEnrichIngredientNutrition(
             }
 
             if (unitRecords.length > 0) {
-                await prisma.ingredientUnit.createMany({
+                await db.ingredientUnit.createMany({
                     data: unitRecords,
                     skipDuplicates: true,
                 });
@@ -365,7 +318,7 @@ export async function processEnrichIngredientNutrition(
     }
 
     // ── 3. Categories ───────────────────────────────────────────────────
-    if (!hasCategories) {
+    if (ingredient.categories.length === 0) {
         const categories = parsed.categories;
         if (Array.isArray(categories) && categories.length > 0) {
             const categoryIds = categories
@@ -374,7 +327,7 @@ export async function processEnrichIngredientNutrition(
                 .filter((id): id is string => id != null);
 
             if (categoryIds.length > 0) {
-                await prisma.ingredient.update({
+                await db.ingredient.update({
                     where: { id: ingredientId },
                     data: {
                         categories: {
@@ -396,7 +349,7 @@ export async function processEnrichIngredientNutrition(
     );
 
     // ── Auto-approve if sanity checks pass ────────────────────────────
-    const refreshed = await prisma.ingredient.findUnique({
+    const refreshed = await db.ingredient.findUnique({
         where: { id: ingredientId },
         select: {
             needsReview: true,
@@ -426,7 +379,7 @@ export async function processEnrichIngredientNutrition(
         if (macroSum > 105) reasons.push(`Makros zu hoch (${Math.round(macroSum)}g/100g)`);
 
         if (reasons.length === 0) {
-            await prisma.ingredient.update({
+            await db.ingredient.update({
                 where: { id: ingredientId },
                 data: { needsReview: false },
             });
@@ -441,6 +394,94 @@ export async function processEnrichIngredientNutrition(
         }
     }
 
+    return {
+        status: 'imported',
+        name: ingredient.name,
+        fieldsUpdated,
+        source,
+        units: assignedUnits,
+        autoApproved,
+    };
+}
+
+/** Parses the answer text; throws when it is no JSON object. */
+export function parseNutritionAnswer(text: string): Record<string, unknown> {
+    const parsed: unknown = JSON.parse(text);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('Antwort ist kein JSON-Objekt');
+    }
+    return parsed as Record<string, unknown>;
+}
+
+// ── OpenAI client ───────────────────────────────────────────────────────
+
+let _openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+    if (_openai) return _openai;
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error('OPENAI_API_KEY is not configured');
+    _openai = new OpenAI({ apiKey, organization: process.env.OPENAI_ORG_ID });
+    return _openai;
+}
+
+// ── Main processor ──────────────────────────────────────────────────────
+
+export async function processEnrichIngredientNutrition(
+    job: Job<EnrichIngredientNutritionJob>,
+): Promise<{
+    success: boolean;
+    ingredientId: string;
+    name: string;
+    fieldsUpdated: number;
+    source?: string;
+    units: Array<{ shortName: string; grams: number | null }>;
+    autoApproved: boolean;
+    shelfLife?: ShelfLifeEnrichment;
+}> {
+    const { ingredientId } = job.data;
+
+    if (!ingredientId) {
+        throw new Error('[EnrichWorker] ingredientId is empty — cannot enrich');
+    }
+
+    console.log(`[EnrichWorker] Enriching ingredient ${ingredientId}`);
+
+    const ingredient = await prisma.ingredient.findUnique({
+        where: { id: ingredientId },
+        select: {
+            id: true,
+            name: true,
+            energyKcal: true,
+            ingredientUnits: { select: { unitId: true } },
+            categories: { select: { id: true } },
+        },
+    });
+
+    if (!ingredient) {
+        console.log(`[EnrichWorker] Ingredient ${ingredientId} not found — skipping`);
+        return {
+            success: false,
+            ingredientId,
+            name: '',
+            fieldsUpdated: 0,
+            units: [],
+            autoApproved: false,
+        };
+    }
+
+    let imported: NutritionImportResult | null = null;
+    if (needsNutritionEnrichment(ingredient)) {
+        const context = await loadEnrichmentContext(prisma);
+        const response = await getOpenAIClient().responses.create(
+            buildNutritionRequest(ingredient.name, context),
+        );
+        const parsed = parseNutritionAnswer(responsesOutputText(response));
+        imported = await importNutritionResult(prisma, ingredientId, parsed, context);
+    } else {
+        console.log(`[EnrichWorker] ${ingredient.name} already fully enriched — skipping`);
+    }
+
     // After the auto-approval so that LOW confidence keeps needsReview
     const shelfLife = await enrichIngredientShelfLife(
         prisma,
@@ -453,10 +494,10 @@ export async function processEnrichIngredientNutrition(
         success: true,
         ingredientId,
         name: ingredient.name,
-        fieldsUpdated,
-        source,
-        units: assignedUnits,
-        autoApproved,
+        fieldsUpdated: imported?.fieldsUpdated ?? 0,
+        source: imported?.source,
+        units: imported?.units ?? [],
+        autoApproved: imported?.autoApproved ?? false,
         shelfLife,
     };
 }

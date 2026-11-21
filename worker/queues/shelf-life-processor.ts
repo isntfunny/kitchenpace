@@ -26,14 +26,20 @@ import {
     getShelfLifeResponseFormat,
 } from '@shared/ingredient-shelf-life/schema';
 import {
-    BATCH_RUNNING_STATUSES,
     buildBatchJsonl,
     createOpenAIBatchApi,
     parseBatchOutputJsonl,
     responsesOutputText,
 } from '@shared/openai-batch';
 
-import { getRedis } from './connection';
+import {
+    checkBatch,
+    redisBatchStore,
+    schedulePollIfDue,
+    withBatchLock,
+    type BatchStateStore,
+    type SavedBatch,
+} from './batch-job';
 import { prisma as workerPrisma } from './prisma';
 import { getScheduledQueue } from './queue';
 import type { BackfillIngredientShelfLifeJob } from './types';
@@ -42,22 +48,15 @@ import type { BackfillIngredientShelfLifeJob } from './types';
 const SHELF_LIFE_MODEL = AI_TEXT_MODEL;
 
 export const SHELF_LIFE_JOB_NAME = 'backfill-ingredient-shelf-life';
-const STATE_KEY = 'shelf-life:batch';
-const LOCK_KEY = 'shelf-life:lock';
-const LOCK_SECONDS = 600;
+const STORE_NAME = 'shelf-life';
 /** Rounds of single-ingredient retries after the first batch */
 const MAX_RETRY_ROUNDS = 2;
 
 // ── State ───────────────────────────────────────────────────────────────
 
-export interface ShelfLifeBatchState {
-    batchId: string;
-    inputFileId: string;
+export interface ShelfLifeBatchState extends SavedBatch {
     model: string;
     promptVersion: string;
-    createdAt: string;
-    /** 0 = first batch, 1.. = single-ingredient retry rounds */
-    round: number;
     /** custom_id → ingredient ids of that request */
     requests: Record<string, string[]>;
     /** Set once a dry run reported this batch */
@@ -76,13 +75,7 @@ export interface ShelfLifeBatchApi {
     fileText(fileId: string): Promise<string>;
 }
 
-export interface ShelfLifeStateStore {
-    get(): Promise<ShelfLifeBatchState | null>;
-    set(state: ShelfLifeBatchState): Promise<void>;
-    clear(): Promise<void>;
-    lock(): Promise<boolean>;
-    unlock(): Promise<void>;
-}
+export type ShelfLifeStateStore = BatchStateStore<ShelfLifeBatchState>;
 
 export interface ShelfLifeDeps {
     prisma: PrismaClient;
@@ -164,6 +157,19 @@ export function missingAfterImport(
 
 // ── Ingredient selection ────────────────────────────────────────────────
 
+/**
+ * Whether shelf life or display name still have to be estimated: not assessed
+ * yet, or assessed (also MANUAL) but without a display name.
+ */
+export function needsShelfLifeEnrichment(row: {
+    shelfLifeSource: string | null;
+    normalizedName: string | null;
+    normalizedNameManual: boolean;
+}): boolean {
+    const hasName = Boolean(row.normalizedName?.trim()) || row.normalizedNameManual;
+    return !row.shelfLifeSource || !hasName;
+}
+
 /** Not assessed yet: used in recipes first, then the rest. */
 export async function selectIngredientsForShelfLife(
     prisma: PrismaClient,
@@ -178,6 +184,49 @@ export async function selectIngredientsForShelfLife(
     const unused = rows.filter((row) => row._count.recipes === 0);
     const ordered = [...used, ...unused].map(({ id, name }) => ({ id, name }));
     return limit > 0 ? ordered.slice(0, limit) : ordered;
+}
+
+// ── Import of a finished batch ──────────────────────────────────────────
+
+/**
+ * Imports the shelf-life answers of a finished batch with the shared rules.
+ * `missing` lists requested ingredients that still have no imported result
+ * and should be asked again (one per request). Also used by the daily
+ * ingredient enrichment batch (enrichment-backfill.ts).
+ */
+export async function importShelfLifeBatchOutput(
+    prisma: PrismaClient,
+    outputJsonl: string,
+    requests: Record<string, string[]>,
+    write: boolean,
+) {
+    const { rawItems, failedRequests } = parseBatchOutput(outputJsonl, requests);
+    const requestedIds = new Set(Object.values(requests).flat());
+    // Ignore ids the model invented; the requested ingredient is retried instead.
+    const relevantItems = rawItems.filter(
+        (item) =>
+            item &&
+            typeof item === 'object' &&
+            requestedIds.has((item as { id?: unknown }).id as string),
+    );
+    const report = await importShelfLifeResults(prisma, relevantItems, { write });
+    const validIds = new Set(validateShelfLifeItems(relevantItems).items.map((item) => item.id));
+    const missing = missingAfterImport(requests, validIds, report);
+    return {
+        missing,
+        summary: {
+            failedRequests: failedRequests.length,
+            unknownIds: rawItems.length - relevantItems.length,
+            updated: report.updated,
+            unchanged: report.unchanged,
+            invalid: report.invalid.length,
+            manualKept: report.manualKept.length,
+            notApplicable: report.notApplicable,
+            lowConfidence: report.lowConfidence.length,
+            writeErrors: report.failed.length,
+            withoutResult: missing.length,
+        },
+    };
 }
 
 // ── Steps ───────────────────────────────────────────────────────────────
@@ -215,9 +264,9 @@ export async function runShelfLifeBackfill(
 ): Promise<Record<string, unknown>> {
     const options = { ...DEFAULTS, ...data };
     const pollDelay = options.pollMinutes * 60_000;
-    const schedule = async () => {
-        if (options.pollMinutes > 0) await deps.schedulePoll(pollDelay, data);
-    };
+    const schedule = () => deps.schedulePoll(pollDelay, data);
+    const scheduleFirstPoll = (created: ShelfLifeBatchState) =>
+        schedulePollIfDue(deps.store, created, pollDelay, deps.now?.() ?? new Date(), schedule);
 
     if (options.reset) {
         await deps.store.clear();
@@ -229,7 +278,7 @@ export async function runShelfLifeBackfill(
         const ingredients = await selectIngredientsForShelfLife(deps.prisma, options.limit);
         if (ingredients.length === 0) return { step: 'idle', message: 'Alle Zutaten bewertet' };
         const created = await submit(deps, ingredients, options.chunkSize, 0);
-        await schedule();
+        await scheduleFirstPoll(created);
         return {
             step: 'submitted',
             batchId: created.batchId,
@@ -239,56 +288,25 @@ export async function runShelfLifeBackfill(
         };
     }
 
-    const batch = await deps.api.retrieveBatch(state.batchId);
-    const base = { batchId: state.batchId, round: state.round, status: batch.status };
+    const now = deps.now?.() ?? new Date();
+    const check = await checkBatch(deps.api, deps.store, state.batchId);
+    const base = { batchId: state.batchId, round: state.round, status: check.status };
 
-    if (BATCH_RUNNING_STATUSES.includes(batch.status)) {
-        await schedule();
-        return { step: 'waiting', ...base, requestCounts: batch.request_counts ?? null };
-    }
-    if (batch.status !== 'completed') {
-        // failed, expired or cancelled: forget it so the next run starts over
-        await deps.store.clear();
-        throw new Error(`Batch ${state.batchId} endete mit Status ${batch.status}`);
+    if (check.kind === 'running') {
+        await schedulePollIfDue(deps.store, state, pollDelay, now, schedule);
+        return { step: 'waiting', ...base, requestCounts: check.requestCounts };
     }
 
-    const outputJsonl = batch.output_file_id ? await deps.api.fileText(batch.output_file_id) : '';
-    const { rawItems, failedRequests } = parseBatchOutput(outputJsonl, state.requests);
-    const requestedIds = new Set(Object.values(state.requests).flat());
-    // Ignore ids the model invented; the requested ingredient is retried instead.
-    const relevantItems = rawItems.filter(
-        (item) =>
-            item &&
-            typeof item === 'object' &&
-            requestedIds.has((item as { id?: unknown }).id as string),
+    const { summary: imported, missing } = await importShelfLifeBatchOutput(
+        deps.prisma,
+        check.outputJsonl,
+        state.requests,
+        options.write,
     );
-    const unknownIds = rawItems.length - relevantItems.length;
-
-    const report = await importShelfLifeResults(deps.prisma, relevantItems, {
-        write: options.write,
-    });
-    const validIds = new Set(validateShelfLifeItems(relevantItems).items.map((item) => item.id));
-    const missing = missingAfterImport(state.requests, validIds, report);
-    const summary = {
-        ...base,
-        write: options.write,
-        failedRequests: failedRequests.length,
-        unknownIds,
-        updated: report.updated,
-        unchanged: report.unchanged,
-        invalid: report.invalid.length,
-        manualKept: report.manualKept.length,
-        notApplicable: report.notApplicable,
-        lowConfidence: report.lowConfidence.length,
-        writeErrors: report.failed.length,
-        withoutResult: missing.length,
-    };
+    const summary = { ...base, write: options.write, ...imported };
 
     if (!options.write) {
-        await deps.store.set({
-            ...state,
-            dryRunReportedAt: (deps.now?.() ?? new Date()).toISOString(),
-        });
+        await deps.store.set({ ...state, dryRunReportedAt: now.toISOString() });
         return { step: 'dry-run', ...summary, missingIds: missing.slice(0, 50) };
     }
 
@@ -300,7 +318,7 @@ export async function runShelfLifeBackfill(
         });
         if (rows.length > 0) {
             const retry = await submit(deps, rows, 1, state.round + 1);
-            await schedule();
+            await scheduleFirstPoll(retry);
             return {
                 step: 'imported',
                 ...summary,
@@ -336,9 +354,7 @@ export async function enrichIngredientShelfLife(
         where: { id: ingredientId },
         select: { shelfLifeSource: true, normalizedName: true, normalizedNameManual: true },
     });
-    if (!current) return { status: 'skipped' };
-    const hasName = Boolean(current.normalizedName?.trim()) || current.normalizedNameManual;
-    if (current.shelfLifeSource && hasName) return { status: 'skipped' };
+    if (!current || !needsShelfLifeEnrichment(current)) return { status: 'skipped' };
 
     try {
         const response = await client.responses.create({
@@ -377,36 +393,11 @@ function openAiBatchApi(): ShelfLifeBatchApi {
     };
 }
 
-function redisStateStore(): ShelfLifeStateStore {
-    const redis = getRedis();
-    return {
-        async get() {
-            const raw = await redis.get(STATE_KEY);
-            return raw ? (JSON.parse(raw) as ShelfLifeBatchState) : null;
-        },
-        async set(state) {
-            await redis.set(STATE_KEY, JSON.stringify(state));
-        },
-        async clear() {
-            await redis.del(STATE_KEY);
-        },
-        async lock() {
-            return (await redis.set(LOCK_KEY, '1', 'EX', LOCK_SECONDS, 'NX')) === 'OK';
-        },
-        async unlock() {
-            await redis.del(LOCK_KEY);
-        },
-    };
-}
-
 export async function processBackfillIngredientShelfLife(
     job: Job<BackfillIngredientShelfLifeJob>,
 ): Promise<Record<string, unknown>> {
-    const store = redisStateStore();
-    if (!(await store.lock())) {
-        return { step: 'skipped', message: 'Ein anderer Lauf ist aktiv' };
-    }
-    try {
+    const store = redisBatchStore<ShelfLifeBatchState>(STORE_NAME);
+    return withBatchLock(store, async () => {
         const result = await runShelfLifeBackfill(
             {
                 prisma: workerPrisma,
@@ -425,7 +416,5 @@ export async function processBackfillIngredientShelfLife(
         );
         console.log(`[ShelfLifeBackfill] ${JSON.stringify(result)}`);
         return result;
-    } finally {
-        await store.unlock();
-    }
+    });
 }

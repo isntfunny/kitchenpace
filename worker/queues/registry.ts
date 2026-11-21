@@ -1,6 +1,7 @@
 import type { Job } from 'bullmq';
 
 import { runDatabaseBackup } from './backup-processor';
+import { processBackfillIngredientEnrichment } from './enrichment-backfill';
 import { processEnrichIngredientNutrition } from './nutrition-processor';
 import {
     processBackfillEmbeddings,
@@ -18,7 +19,6 @@ import {
     processGenerateRecipeOg,
     processGenerateOgImages,
     processBackfillIngredientPlurals,
-    processBackfillIngredientEnrichment,
     processRecalculateStats,
 } from './scheduled-processor';
 import { processBackfillIngredientShelfLife } from './shelf-life-processor';
@@ -111,9 +111,23 @@ export const JOB_REGISTRY = defineJobs({
     'backfill-embeddings': {
         queue: QueueName.OPENSEARCH,
         processor: processBackfillEmbeddings,
-        defaultData: { batchSize: 50 },
+        defaultData: { batchSize: 50, pollMinutes: 10, reset: false },
         schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 50, min: 1, max: 500 },
+            batchSize: {
+                type: 'number',
+                label: 'Page size (copy stored)',
+                default: 50,
+                min: 1,
+                max: 500,
+            },
+            pollMinutes: {
+                type: 'number',
+                label: 'Poll interval in minutes (0 = no polling)',
+                default: 10,
+                min: 0,
+                max: 1440,
+            },
+            reset: { type: 'boolean', label: 'Forget saved batch and start over', default: false },
         },
     },
 
@@ -222,15 +236,35 @@ export const JOB_REGISTRY = defineJobs({
     'backfill-ingredient-enrichment': {
         queue: QueueName.SCHEDULED,
         processor: processBackfillIngredientEnrichment,
-        defaultData: { batchSize: 50, dryRun: false, includeNeedsReview: false },
+        defaultData: {
+            batchSize: 50,
+            dryRun: false,
+            includeNeedsReview: false,
+            pollMinutes: 10,
+            reset: false,
+        },
         schema: {
-            batchSize: { type: 'number', label: 'Batch Size', default: 50, min: 1, max: 500 },
-            dryRun: { type: 'boolean', label: 'Dry Run (no DB writes)', default: false },
+            batchSize: {
+                type: 'number',
+                label: 'Max ingredients per batch',
+                default: 50,
+                min: 1,
+                max: 2000,
+            },
+            dryRun: { type: 'boolean', label: 'Dry Run (list only, no batch)', default: false },
             includeNeedsReview: {
                 type: 'boolean',
                 label: 'Include needsReview (re-enrich even if data exists)',
                 default: false,
             },
+            pollMinutes: {
+                type: 'number',
+                label: 'Poll interval in minutes (0 = no polling)',
+                default: 10,
+                min: 0,
+                max: 1440,
+            },
+            reset: { type: 'boolean', label: 'Forget saved batch and start over', default: false },
         },
         // Daily safety net: enrichment of new ingredients must not depend on
         // the enqueue at creation time (KUC-94, KUC-114)

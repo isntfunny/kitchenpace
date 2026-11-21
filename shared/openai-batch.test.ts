@@ -8,6 +8,7 @@ import {
     buildBatchJsonl,
     chatCompletionContent,
     createOpenAIBatchApi,
+    embeddingVectors,
     parseBatchOutputJsonl,
     responsesOutputText,
 } from './openai-batch';
@@ -120,4 +121,25 @@ test('API wrapper passes endpoint, window and metadata to OpenAI', async () => {
             },
         ],
     ]);
+});
+
+test('reads embedding vectors in input order and rejects answers without vector', () => {
+    assert.deepEqual(
+        embeddingVectors({
+            data: [
+                { index: 1, embedding: [3, 4] },
+                { index: 0, embedding: [1, 2] },
+            ],
+        }),
+        [
+            [1, 2],
+            [3, 4],
+        ],
+    );
+    assert.deepEqual(embeddingVectors(undefined), []);
+    assert.throws(() => embeddingVectors({ data: [{ index: 0 }] }), /Embedding fehlt/);
+    assert.equal(
+        JSON.parse(buildBatchJsonl('/v1/embeddings', [{ customId: 'e', body: {} }])).url,
+        '/v1/embeddings',
+    );
 });

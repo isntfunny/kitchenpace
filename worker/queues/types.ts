@@ -22,7 +22,12 @@ export interface SyncTagsJob {
 }
 
 export interface BackfillEmbeddingsJob {
+    /** Recipes per page when copying stored embeddings into OpenSearch */
     batchSize?: number;
+    /** Poll interval while the batch runs (0 = no automatic polling) */
+    pollMinutes?: number;
+    /** Forget the saved batch and start over */
+    reset?: boolean;
 }
 
 export interface BackupJob {
@@ -48,9 +53,15 @@ export interface EnrichIngredientNutritionJob {
 }
 
 export interface BackfillIngredientEnrichmentJob {
+    /** Max ingredients per new batch */
     batchSize?: number;
+    /** Only list what would be submitted; never imports */
     dryRun?: boolean;
     includeNeedsReview?: boolean;
+    /** Poll interval while the batch runs (0 = no automatic polling) */
+    pollMinutes?: number;
+    /** Forget the saved batch and start over */
+    reset?: boolean;
 }
 
 export interface BackfillIngredientShelfLifeJob {

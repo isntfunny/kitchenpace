@@ -6,12 +6,11 @@ import { s3Client, BUCKET, generateOgImage, ogThumbKey, exists } from '@app/lib/
 
 import { redisConfig } from './connection';
 import { prisma } from './prisma';
-import { getBackupQueue, getScheduledQueue } from './queue';
+import { getBackupQueue } from './queue';
 import type {
     GenerateRecipeOgJob,
     GenerateOgImagesJob,
     BackfillIngredientPluralsJob,
-    BackfillIngredientEnrichmentJob,
     BackupJob,
 } from './types';
 
@@ -563,104 +562,4 @@ export async function processRecalculateStats(job: Job<Record<string, unknown>>)
         });
         throw error;
     }
-}
-
-// ── Backfill: enqueue enrichment for all unenriched ingredients ──────
-
-export async function processBackfillIngredientEnrichment(
-    job: Job<BackfillIngredientEnrichmentJob>,
-): Promise<{ enqueued: number; total: number }> {
-    const batchSize = job.data.batchSize ?? 100;
-    const dryRun = job.data.dryRun ?? false;
-    const includeNeedsReview = job.data.includeNeedsReview ?? false;
-
-    console.log(
-        `[EnrichBackfill] Starting backfill (batchSize=${batchSize}, dryRun=${dryRun}, includeNeedsReview=${includeNeedsReview})`,
-    );
-
-    const unenriched = await prisma.ingredient.findMany({
-        where: {
-            OR: [
-                { energyKcal: null },
-                { ingredientUnits: { none: {} } },
-                { categories: { none: {} } },
-                // Safety net for KUC-94/KUC-114: also catches ingredients whose
-                // enqueue was lost (e.g. Redis down when they were created)
-                { shelfLifeSource: null },
-                { normalizedName: null, normalizedNameManual: false },
-                ...(includeNeedsReview ? [{ needsReview: true }] : []),
-            ],
-        },
-        select: { id: true, name: true },
-        take: batchSize,
-        // Newest first, so fresh ingredients are not starved by old stock
-        orderBy: { createdAt: 'desc' },
-    });
-
-    console.log(`[EnrichBackfill] Found ${unenriched.length} unenriched ingredients`);
-
-    if (dryRun) {
-        for (const ing of unenriched) {
-            console.log(`[EnrichBackfill] [DRY RUN] Would enqueue: ${ing.name}`);
-        }
-        return { enqueued: 0, total: unenriched.length };
-    }
-
-    const queue = getScheduledQueue();
-    const { toAdd, toRetry } = await splitByExistingEnrichJob(
-        unenriched.map((ing) => ing.id),
-        (jobId) => queue.getJob(jobId),
-    );
-    // Same jobId as on creation: a job that is still waiting is not duplicated
-    await queue.addBulk(
-        toAdd.map((ingredientId) => ({
-            name: 'enrich-ingredient-nutrition',
-            data: { ingredientId },
-            opts: {
-                priority: 5,
-                jobId: enrichJobId(ingredientId),
-                attempts: 3,
-                backoff: { type: 'exponential' as const, delay: 30_000 },
-            },
-        })),
-    );
-    // A kept failed job would block its jobId forever; run it again instead
-    await Promise.all(toRetry.map((job) => job.retry('failed')));
-
-    console.log(
-        `[EnrichBackfill] Done — enqueued: ${toAdd.length}, retried: ${toRetry.length}, already queued: ${unenriched.length - toAdd.length - toRetry.length}`,
-    );
-    return { enqueued: toAdd.length + toRetry.length, total: unenriched.length };
-}
-
-const enrichJobId = (ingredientId: string) => `enrich-nutrition-${ingredientId}`;
-
-/** Sorts candidates into new jobs, failed jobs to retry and jobs still pending. */
-export async function splitByExistingEnrichJob<
-    TJob extends {
-        getState(): Promise<string>;
-        retry(state?: 'failed' | 'completed'): Promise<void>;
-        remove(): Promise<void>;
-    },
->(
-    ingredientIds: string[],
-    getJob: (jobId: string) => Promise<TJob | undefined | null>,
-): Promise<{ toAdd: string[]; toRetry: TJob[] }> {
-    const toAdd: string[] = [];
-    const toRetry: TJob[] = [];
-    for (const ingredientId of ingredientIds) {
-        const job = await getJob(enrichJobId(ingredientId));
-        if (!job) {
-            toAdd.push(ingredientId);
-            continue;
-        }
-        const state = await job.getState();
-        if (state === 'failed') toRetry.push(job);
-        else if (state === 'completed') {
-            // Finished without filling everything: run it again
-            await job.remove();
-            toAdd.push(ingredientId);
-        }
-    }
-    return { toAdd, toRetry };
 }

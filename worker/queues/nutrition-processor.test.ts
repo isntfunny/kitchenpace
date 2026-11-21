@@ -28,8 +28,8 @@ async function load() {
     process.env.OPENAI_API_KEY = 'test-key-not-real';
     const { prisma } = await import('./prisma');
     const { processEnrichIngredientNutrition } = await import('./nutrition-processor');
-    const { processBackfillIngredientEnrichment } = await import('./scheduled-processor');
-    return { prisma, processEnrichIngredientNutrition, processBackfillIngredientEnrichment };
+    const { runEnrichmentBackfill } = await import('./enrichment-backfill');
+    return { prisma, processEnrichIngredientNutrition, runEnrichmentBackfill };
 }
 
 type CapturedRequest = { url: string; body: Record<string, unknown> };
@@ -194,10 +194,34 @@ test(
 );
 
 test(
+    'missing nutrition: direct request with web_search, then shelf life without tools',
+    { skip },
+    async () => {
+        const { prisma, processEnrichIngredientNutrition } = await load();
+        await resetFixtures(prisma);
+        await prisma.ingredient.create({
+            data: { id: ID, name: 'Garnelen, roh', slug: ID },
+        });
+
+        const requests: CapturedRequest[] = [];
+        useOpenAiMock(requests, (targetId) => ({ ...gambas, id: targetId }));
+
+        await processEnrichIngredientNutrition({
+            data: { ingredientId: ID },
+        } as Job<{ ingredientId: string }>);
+        assert.equal(requests.length, 2);
+        assert.deepEqual(requests[0].body.tools, [{ type: 'web_search' }]);
+        assert.equal(requests[0].body.model, 'gpt-6.2-sol');
+        assert.equal(requests[0].body.temperature, undefined);
+        assert.equal(requests[1].body.tools, undefined);
+    },
+);
+
+test(
     'backfill finds ingredient with nutrition, units and categories when shelfLifeSource is null',
     { skip },
     async () => {
-        const { prisma, processBackfillIngredientEnrichment } = await load();
+        const { prisma, runEnrichmentBackfill } = await load();
         await resetFixtures(prisma);
         await prisma.ingredient.create({
             data: {
@@ -216,6 +240,27 @@ test(
             },
         });
 
+        const unused = async () => {
+            throw new Error('a dry run must not call the batch API');
+        };
+        const deps = {
+            prisma,
+            api: {
+                uploadJsonl: unused,
+                createBatch: unused,
+                retrieveBatch: unused,
+                fileText: unused,
+            },
+            store: {
+                get: async () => null,
+                set: unused,
+                clear: unused,
+                lock: async () => true,
+                unlock: async () => {},
+            },
+            schedulePoll: unused,
+        };
+
         const logs: string[] = [];
         const originalLog = console.log;
         console.log = (...args: unknown[]) => {
@@ -223,14 +268,14 @@ test(
         };
 
         try {
-            const foundRun = await processBackfillIngredientEnrichment({
-                data: { batchSize: 1, dryRun: true, includeNeedsReview: false },
-            } as Job<{ batchSize?: number; dryRun?: boolean; includeNeedsReview?: boolean }>);
-            assert.equal(foundRun.enqueued, 0);
+            const foundRun = await runEnrichmentBackfill(deps, { batchSize: 1, dryRun: true });
+            assert.equal(foundRun.step, 'dry-run');
             assert.equal(foundRun.total, 1);
+            assert.equal(foundRun.nutrition, 0);
+            assert.equal(foundRun.shelfLife, 1);
             assert.ok(
                 logs.some((line) =>
-                    line.includes('[DRY RUN] Would enqueue: Backfill-Zutat-Ohne-Haltbarkeit'),
+                    line.includes('[DRY RUN] Would submit: Backfill-Zutat-Ohne-Haltbarkeit'),
                 ),
             );
 
@@ -240,12 +285,10 @@ test(
             });
 
             logs.length = 0;
-            await processBackfillIngredientEnrichment({
-                data: { batchSize: 50, dryRun: true, includeNeedsReview: false },
-            } as Job<{ batchSize?: number; dryRun?: boolean; includeNeedsReview?: boolean }>);
+            await runEnrichmentBackfill(deps, { batchSize: 50, dryRun: true });
             assert.equal(
                 logs.some((line) =>
-                    line.includes('[DRY RUN] Would enqueue: Backfill-Zutat-Ohne-Haltbarkeit'),
+                    line.includes('[DRY RUN] Would submit: Backfill-Zutat-Ohne-Haltbarkeit'),
                 ),
                 false,
             );

@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 
 import { toRecipeCardData, type RecipeCardData } from '@app/lib/recipe-card';
+import { describeShelfLife, type ShelfLifeSummary } from '@shared/ingredient-shelf-life/describe';
 import { prisma } from '@shared/prisma';
 
 /** Max recipes rendered on a keyword landing page */
@@ -60,10 +61,19 @@ export async function fetchTagLanding(slug: string): Promise<KeywordLandingData 
     };
 }
 
-export async function fetchIngredientLanding(slug: string): Promise<KeywordLandingData | null> {
+export async function fetchIngredientLanding(
+    slug: string,
+): Promise<(KeywordLandingData & { shelfLife: ShelfLifeSummary | null }) | null> {
     const ingredient = await prisma.ingredient.findUnique({
         where: { slug },
-        select: { name: true, slug: true },
+        select: {
+            name: true,
+            slug: true,
+            shelfLifeSource: true,
+            defaultStorage: true,
+            openedShelfLifeDays: true,
+            storageLives: { select: { storage: true, days: true } },
+        },
     });
     if (!ingredient) return null;
 
@@ -89,6 +99,7 @@ export async function fetchIngredientLanding(slug: string): Promise<KeywordLandi
         slug: ingredient.slug,
         totalCount,
         recipes: recipes.map(toRecipeCardData),
+        shelfLife: describeShelfLife(ingredient),
     };
 }
 

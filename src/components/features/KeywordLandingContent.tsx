@@ -15,9 +15,18 @@ type Props = {
     /** Link target for browsing all matching recipes in the filter search */
     searchHref: string;
     action?: ReactNode;
+    /** Extra content below the intro, e.g. the shelf-life hint on ingredient pages */
+    details?: ReactNode;
 };
 
-export function KeywordLandingContent({ data, heading, intro, searchHref, action }: Props) {
+export function KeywordLandingContent({
+    data,
+    heading,
+    intro,
+    searchHref,
+    action,
+    details,
+}: Props) {
     const hasMore = data.totalCount > KEYWORD_LANDING_LIMIT;
 
     return (
@@ -37,6 +46,7 @@ export function KeywordLandingContent({ data, heading, intro, searchHref, action
                     {intro}
                 </p>
                 {action && <div className={css({ mt: '4' })}>{action}</div>}
+                {details}
             </header>
 
             <div

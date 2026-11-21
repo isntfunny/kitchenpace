@@ -4,6 +4,7 @@ import { cache } from 'react';
 
 import { AddToListButton } from '@app/components/bring/AddToListButton';
 import { KeywordLandingContent } from '@app/components/features/KeywordLandingContent';
+import { ShelfLifeHint } from '@app/components/features/ShelfLifeHint';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { fetchIngredientLanding } from '@app/lib/keyword-landing';
 import { APP_URL } from '@app/lib/url';
@@ -112,6 +113,11 @@ export default async function IngredientLandingPage({ params }: Props) {
             <KeywordLandingContent
                 data={data}
                 action={<AddToListButton ingredients={[{ name: data.name }]} />}
+                details={
+                    data.shelfLife ? (
+                        <ShelfLifeHint name={data.name} summary={data.shelfLife} />
+                    ) : undefined
+                }
                 heading={`Rezepte mit ${data.name}`}
                 intro={`Entdecke ${data.totalCount} Rezepte mit ${data.name} — bewertet von der Community, mit Zutaten, Zeiten und interaktiver Koch-Anleitung.`}
                 searchHref={`/recipes?ingredients=${encodeURIComponent(data.name)}`}

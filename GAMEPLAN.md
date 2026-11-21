@@ -41,10 +41,12 @@ Tickets ohne Epic und ohne Abhängigkeit.
 | [KUC-84](https://youtrack.tecfriends.de/issue/KUC-84) | Category Page Redesign — Discovery Hub mit Sidebar, Seasonal Teaser, Activity Feed | Task | Doing |
 | [KUC-85](https://youtrack.tecfriends.de/issue/KUC-85) | Refactor: Activity-Type Registry als Single Source of Truth | Task | Todo |
 | [KUC-87](https://youtrack.tecfriends.de/issue/KUC-87) | "Rezepte Entdecken" — Tinder-Style Recipe Swiper | Task | Ideas |
-| [KUC-91](https://youtrack.tecfriends.de/issue/KUC-91) | Eigenen SMTP-Mailversand einführen und Admins über neue Rezepte informieren | Task | Ideas |
+| [KUC-91](https://youtrack.tecfriends.de/issue/KUC-91) | Eigenen SMTP-Mailversand einführen und Admins über neue Rezepte informieren | Task | Todo |
 | [KUC-93](https://youtrack.tecfriends.de/issue/KUC-93) | UI-Neuvision mit Hallmark: moderne Gestaltung und verlässliche Navigation | Task | Ideas |
 | [KUC-95](https://youtrack.tecfriends.de/issue/KUC-95) | HelloFresh-Rezepte per URL importieren | Task | Backlog |
 | [KUC-97](https://youtrack.tecfriends.de/issue/KUC-97) | Alle KI-Text- und Anreicherungsmodelle zentral auf gpt-6.2-sol umstellen | Task | Doing |
+| [KUC-119](https://youtrack.tecfriends.de/issue/KUC-119) | Feature-Schalter im Admin-Panel verwalten und Flipt ablösen | Task | Todo |
+| [KUC-120](https://youtrack.tecfriends.de/issue/KUC-120) | Lane-Viewer überarbeiten: mobil eine Spalte, ruhigere Farben, dezentere Zutaten | Task | Todo |
 
 **Legende**
 
@@ -129,7 +131,7 @@ flowchart LR
 %%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
     KUC115[["KUC-115<br/>Rezept import KI<br/>überarbeiten und<br/>komplett…<br/><br/>0 von 2 erledigt"]]:::doing
-    KUC118["KUC-118<br/>KI-Backfills und<br/>Cron-Jobs über die<br/>OpenAI…"]:::todo
+    KUC118["KUC-118<br/>KI-Backfills und<br/>Cron-Jobs über die<br/>OpenAI…"]:::doing
     KUC115 --> KUC118
     click KUC115 "https://youtrack.tecfriends.de/issue/KUC-115"
     click KUC118 "https://youtrack.tecfriends.de/issue/KUC-118"

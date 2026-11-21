@@ -12,8 +12,12 @@ services:
                 '--maxmemory',
                 '512mb',
                 '--maxmemory-policy',
-                'allkeys-lru',
+                'noeviction',
+                '--requirepass',
+                '${REDIS_PASSWORD:?}',
             ]
+        environment:
+            REDISCLI_AUTH: ${REDIS_PASSWORD:?}
         volumes:
             - redis_data:/data
         ports:

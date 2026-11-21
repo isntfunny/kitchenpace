@@ -81,6 +81,19 @@ export interface ComputeTasteProfilesJob {
     batchSize?: number;
 }
 
+export interface ClusterRecipeThemesJob {
+    /** Number of clusters (0 = automatic) */
+    clusters?: number;
+    /** Seed of the k-means initialisation (fixed seed = reproducible runs) */
+    seed?: number;
+    /** Min. centroid similarity to continue a cluster of the previous run */
+    minSimilarity?: number;
+    /** Clusters below this size are not eligible for release */
+    minClusterSize?: number;
+    /** Compute and report only, persist nothing */
+    dryRun?: boolean;
+}
+
 // ── Twitch jobs ──────────────────────────────────────────────────────
 
 export interface TwitchRegisterEventSubJob {

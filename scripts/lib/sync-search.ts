@@ -19,10 +19,16 @@ const withTimeout = <T>(promise: Promise<T>, ms: number, what: string): Promise<
         }),
     ]);
 
-export async function syncSearch(recipeIds: string[]) {
+export async function syncSearch(
+    recipeIds: string[],
+    options: {
+        /** New catalogue ingredients whose enrichment is enqueued too */ enrichIngredientIds?: string[];
+    } = {},
+) {
     let close: () => Promise<unknown> = async () => {};
     try {
-        const { addSyncRecipeJob } = await import('../../worker/queues');
+        const { addEnrichIngredientNutritionJob, addSyncRecipeJob } =
+            await import('../../worker/queues');
         const { closeAllQueues, getQueueForName } = await import('../../worker/queues/queue');
         const { disconnectRedis, getRedis } = await import('../../worker/queues/connection');
         const { QueueName } = await import('../../worker/queues/types');
@@ -35,16 +41,20 @@ export async function syncSearch(recipeIds: string[]) {
         close = () => disconnectRedis();
         const work = (async () => {
             for (const id of recipeIds) await addSyncRecipeJob(id);
+            for (const id of options.enrichIngredientIds ?? [])
+                await addEnrichIngredientNutritionJob(id);
         })();
         work.catch(ignore);
         await withTimeout(work, QUEUE_TIMEOUT_MS, 'Redis');
         close = async () => {
             await Promise.allSettled([closeAllQueues(), disconnectRedis()]);
         };
-        console.log(`${recipeIds.length} Suchindex-Jobs eingereiht.`);
+        console.log(
+            `${recipeIds.length} Suchindex-Jobs eingereiht${options.enrichIngredientIds?.length ? `, ${options.enrichIngredientIds.length} Zutaten-Anreicherungen` : ''}.`,
+        );
     } catch (error) {
         console.warn(
-            `Suchindex-Sync nicht eingereiht (${error instanceof Error ? error.message : error}); der 15-Minuten-Sync holt es nach.`,
+            `Suchindex-Sync nicht eingereiht (${error instanceof Error ? error.message : error}); der 15-Minuten-Sync und die tägliche Zutaten-Anreicherung holen es nach.`,
         );
     } finally {
         await withTimeout(close(), 2_000, 'Redis schließen').catch(() => undefined);

@@ -9,6 +9,7 @@ import {
     Plus,
     Shield,
     ShieldCheck,
+    ShoppingCart,
     Zap,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -51,6 +52,13 @@ const GENERAL_NAV_LINKS: GeneralNavLinkItem[] = [
         href: '/collections',
         icon: Library,
         flag: 'collections',
+    },
+    {
+        label: 'Einkaufsliste',
+        description: 'Zutaten für Plan und Rezepte',
+        href: '/shopping-list',
+        icon: ShoppingCart,
+        authOnly: true,
     },
     {
         label: 'Rezept erstellen',

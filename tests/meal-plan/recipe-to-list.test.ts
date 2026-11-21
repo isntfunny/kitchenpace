@@ -163,6 +163,7 @@ test('selection and optional filter limit what is added', async () => {
     assert.deepEqual(await addRecipeToList(other, 'alice', 'pasta', 2, { lineIds: [] }), {
         added: 0,
         itemIds: [],
+        skipped: [],
     });
 });
 
@@ -255,4 +256,15 @@ test('manual and recipe adds share the same entry per ingredient', async () => {
     await addRecipeToList(db, 'alice', 'pasta', 2);
     assert.equal(db.tables.shoppingItem.filter((i: any) => i.itemKey === 'i:egg').length, 1);
     assert.equal(item(db, 'i:egg').quantity, 8);
+});
+
+test('plan entries whose recipe is no longer available are skipped and reported', async () => {
+    const db = seed();
+    db.tables.recipe.find((r: any) => r.id === 'soup').status = 'DRAFT';
+    const result = await addMealPlanEntriesToList(db, 'alice', ['mon', 'tue']);
+    assert.deepEqual(result.skipped, ['tue']);
+    assert.equal(result.added, 5);
+    assert.equal(item(db, 'i:flour').quantity, 400, 'only the available entry was added');
+    const none = await addMealPlanEntriesToList(db, 'alice', ['tue']);
+    assert.deepEqual([none.added, none.skipped], [0, ['tue']]);
 });

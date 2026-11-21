@@ -11,12 +11,14 @@ export interface RecipeLines {
 
 /**
  * Ingredient lines and base servings of recipes the user may see (published, or
- * their own). A recipe that is not visible is reported as missing.
+ * their own). A recipe that is not visible is reported as missing, unless
+ * `lenient` is set: then it is left out of the result.
  */
 export async function loadRecipeLines(
     db: Db,
     userId: string,
     recipeIds: readonly string[],
+    options: { lenient?: boolean } = {},
 ): Promise<Map<string, RecipeLines>> {
     const ids = [...new Set(recipeIds)];
     if (ids.length === 0) return new Map();
@@ -24,9 +26,9 @@ export async function loadRecipeLines(
         where: { id: { in: ids }, OR: [{ status: 'PUBLISHED' }, { authorId: userId }] },
         select: { id: true, servings: true },
     });
-    if (recipes.length !== ids.length) throw notFound('Rezept');
+    if (recipes.length !== ids.length && !options.lenient) throw notFound('Rezept');
     const rows = await db.recipeIngredient.findMany({
-        where: { recipeId: { in: ids } },
+        where: { recipeId: { in: recipes.map((recipe) => recipe.id) } },
         select: {
             id: true,
             recipeId: true,

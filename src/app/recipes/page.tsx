@@ -1,3 +1,4 @@
+import { TZDate } from '@date-fns/tz';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { Metadata } from 'next';
 
@@ -10,6 +11,7 @@ import {
     type FilterSetWithRelations,
 } from '@app/lib/fits-now/db-queries';
 import { toFilterCriteria } from '@app/lib/fits-now/mappings';
+import { detectSeason } from '@app/lib/fits-now/season';
 import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
 import { APP_URL } from '@app/lib/url';
@@ -55,7 +57,11 @@ function mergeFilterSetIntoFilters(
     if (!filters.filterSetId) return;
 
     const match = filterSets.find((fs) => fs.id === filters.filterSetId);
-    if (!match) return;
+    if (!match) {
+        // Unknown or deleted FilterSet: ignore the param instead of keeping a dead chip state
+        filters.filterSetId = undefined;
+        return;
+    }
 
     const criteria = toFilterCriteria(match);
     filters.tags = [...new Set([...(filters.tags ?? []), ...criteria.tagKeywords])];
@@ -86,6 +92,8 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
     // Merge FilterSet criteria into initial filters for correct SSR
     mergeFilterSetIntoFilters(initialFilters, filterSets);
 
+    const currentSeason = detectSeason(new TZDate(new Date(), 'Europe/Berlin').getMonth());
+
     const initialData = await queryRecipes(initialFilters, session?.user?.id);
 
     return (
@@ -97,6 +105,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
                         filterOptions={{ tags, ingredients, categories }}
                         initialData={initialData}
                         filterSets={filterSets}
+                        currentSeason={currentSeason}
                         isLoggedIn={!!session?.user}
                     />
                 </HydrationBoundary>

@@ -1,9 +1,11 @@
 // Merges duplicate catalogue ingredients into one kept ingredient (KUC-114).
 // Every reference is moved: recipe occurrences (with flow mentions, KUC-88),
-// shopping list items and filter sets. The other entries' names become aliases
+// shopping list items (with history, pantry and snoozes, KUC-98) and filter sets. The other entries' names become aliases
 // of the kept ingredient; nothing else on the kept ingredient changes.
 
 import type { Prisma } from '@prisma/client';
+
+import { moveIngredientShoppingReferences } from '@app/lib/shopping/merge-ingredient';
 
 import { duplicateKey } from './duplicate-groups';
 import { mergeRecipeIngredientOccurrences } from './merge-occurrences';
@@ -129,12 +131,11 @@ export async function mergeIngredientGroup(
     const affected = new Set<string>();
 
     for (const source of others) {
-        const [recipeRows, shoppingRows, filterRows] = await Promise.all([
+        const [recipeRows, filterRows] = await Promise.all([
             tx.recipeIngredient.findMany({
                 where: { ingredientId: source.id },
                 select: { id: true, recipeId: true },
             }),
-            tx.shoppingItem.findMany({ where: { ingredientId: source.id }, select: { id: true } }),
             tx.filterSetIngredient.findMany({
                 where: { ingredientId: source.id },
                 select: { filterSetId: true },
@@ -144,11 +145,9 @@ export async function mergeIngredientGroup(
 
         // Recipe rows keep their id, amount and flow mentions (KUC-88)
         await mergeRecipeIngredientOccurrences(tx, source.id, keepId);
-        // Would be set to null (shopping) or deleted (filter sets) on delete otherwise
-        await tx.shoppingItem.updateMany({
-            where: { ingredientId: source.id },
-            data: { ingredientId: keepId },
-        });
+        // Would be set to null (shopping, history, pantry) or deleted (filter sets) on
+        // delete otherwise; a list that already has the kept ingredient absorbs the entry
+        const { shoppingItemIds } = await moveIngredientShoppingReferences(tx, source.id, keepId);
         if (filterRows.length > 0) {
             await tx.filterSetIngredient.createMany({
                 data: filterRows.map((row) => ({
@@ -167,7 +166,7 @@ export async function mergeIngredientGroup(
             normalizedName: source.normalizedName,
             aliases: source.aliases,
             recipeIngredientIds: recipeRows.map((row) => row.id),
-            shoppingItemIds: shoppingRows.map((row) => row.id),
+            shoppingItemIds,
             filterSetIds: filterRows.map((row) => row.filterSetId),
         });
     }

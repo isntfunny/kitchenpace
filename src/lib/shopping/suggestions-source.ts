@@ -1,37 +1,30 @@
-// Source of the "Vorschläge" row on the shopping list (KUC-105). The rhythm
-// suggestions of KUC-124 (src/lib/shopping/rhythm.ts: getRhythmSuggestions,
-// snoozeRhythmSuggestion) are plugged in here after both branches are merged;
-// until then the source is empty. Nothing else in the UI knows where the
+// Source of the "Vorschläge" row on the shopping list (KUC-105): the purchase
+// rhythm suggestions of KUC-124. Nothing else in the UI knows where the
 // suggestions come from.
 import type { Db } from '@app/lib/meal-plan/db';
 
-import { snoozeShoppingSuggestion } from './repository';
+import { getRhythmSuggestions, snoozeRhythmSuggestion } from './rhythm';
 
 /** Same shape as the DTO of getRhythmSuggestions (KUC-124). */
 export interface RhythmSuggestionView {
     itemKey: string;
     ingredientId?: string | null;
     name: string;
-    /** Why it is suggested, e.g. "alle 2 Wochen" or "vor 9 Tagen" */
+    /** Why it is suggested, e.g. "alle 2 Wochen" or "alle ~12 Tage · zuletzt vor 11 T." */
     reason: string;
     intervalDays: number;
     lastPurchasedAt: string | Date | null;
 }
 
-const SNOOZE_DAYS = 7;
-
 export async function loadSuggestions(
-    _db: Db,
-    _userId: string,
-    _now: Date,
+    db: Db,
+    userId: string,
+    now: Date,
 ): Promise<RhythmSuggestionView[]> {
-    return [];
+    return getRhythmSuggestions(db, userId, now);
 }
 
-/** "Nicht jetzt": hides the suggestion for a week. */
+/** "Nicht jetzt": half an interval, longer after repeated dismissals (KUC-124). */
 export async function snoozeSuggestion(db: Db, userId: string, itemKey: string, now: Date) {
-    await snoozeShoppingSuggestion(db, userId, {
-        itemKey,
-        until: new Date(now.getTime() + SNOOZE_DAYS * 86_400_000),
-    });
+    await snoozeRhythmSuggestion(db, userId, itemKey, now);
 }

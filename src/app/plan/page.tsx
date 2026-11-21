@@ -4,11 +4,13 @@ import { notFound, redirect } from 'next/navigation';
 import { PageShell } from '@app/components/layouts/PageShell';
 import type { PlanSlot, PlanWeekData } from '@app/components/meal-plan/types';
 import { WeekView } from '@app/components/meal-plan/WeekView';
+import { ShoppingPlanWidget } from '@app/components/shopping/ShoppingPlanWidget';
 import { getServerAuthSession } from '@app/lib/auth';
 import { getMealPlanSettings, getMealPlanWeek } from '@app/lib/meal-plan/repository';
 import { slotLabel, visibleSlots, type SlotConfig } from '@app/lib/meal-plan/slots';
 import { resolveWeekStart, weekNumber, weekParam, weekRangeLabel } from '@app/lib/meal-plan/view';
 import { addDays, formatIsoDate, todayIn, weekStartFor } from '@app/lib/meal-plan/week';
+import { loadShoppingPlanStatus } from '@app/lib/shopping/page-data';
 import { prisma } from '@shared/prisma';
 
 import { css } from 'styled-system/css';
@@ -44,7 +46,11 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
     const startDate = resolveWeekStart(week, settings.weekStartDay, today);
     if (!startDate) notFound();
 
-    const view = await getMealPlanWeek(prisma, userId, startDate);
+    const [view, shoppingPlan] = await Promise.all([
+        getMealPlanWeek(prisma, userId, startDate),
+        // Right column: what the week's dishes still need on the shopping list (KUC-105)
+        loadShoppingPlanStatus(prisma, userId, new Date(), startDate),
+    ]);
     const used = new Set(view.entries.map((entry) => entry.slot));
     const leftoverDates = new Map(
         view.entries.map((entry) => [entry.id, formatIsoDate(entry.date)]),
@@ -109,6 +115,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
                         mealPlanShowCalories: settings.mealPlanShowCalories,
                         slots: settings.slots,
                     }}
+                    shoppingPanel={<ShoppingPlanWidget plan={shoppingPlan} variant="column" />}
                 />
             </div>
         </PageShell>

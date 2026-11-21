@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 
+import { recipeFingerprint } from './full-refresh-progress';
 import type { ImportedRecipe } from './openai-recipe-schema';
 
 const url = process.env.MENTION_TEST_DATABASE_URL;
@@ -191,12 +192,14 @@ test(
             } as ImportedRecipe);
             const nutrition: [string, number][] = [];
             const order: string[] = [];
+            let written: Parameters<typeof recipeFingerprint>[0] | undefined;
             const result = await replaceImportedRecipe(
                 prisma,
                 recipeId,
                 { ...fresh, sourceUrl: `https://x.test/${key}` },
                 {
-                    onCommitted: async () => {
+                    onCommitted: async (state) => {
+                        written = state;
                         // already visible outside the transaction
                         const { title } = await prisma.recipe.findUniqueOrThrow({
                             where: { id: recipeId },
@@ -213,6 +216,23 @@ test(
             assert.equal(result.imageAdded, false, 'an existing image is kept, none fetched');
             assert.deepEqual(nutrition, [[recipeId, 4]]);
             assert.deepEqual(order, ['committed:true', 'nutrition']);
+            // the fingerprint taken at commit matches the recipe as read back (jsonb)
+            const reread = await prisma.recipe.findUniqueOrThrow({
+                where: { id: recipeId },
+                select: {
+                    title: true,
+                    flowEdges: true,
+                    _count: { select: { recipeIngredients: true } },
+                },
+            });
+            assert.deepEqual(
+                recipeFingerprint({
+                    title: reread.title,
+                    ingredientCount: reread._count.recipeIngredients,
+                    flowEdges: reread.flowEdges,
+                }),
+                recipeFingerprint(written!),
+            );
 
             const after = await prisma.recipe.findUniqueOrThrow({
                 where: { id: recipeId },

@@ -419,8 +419,12 @@ export async function replaceImportedRecipe(
         updateNutrition?: (recipeId: string, servings: number) => Promise<unknown>;
         /** Catalogue lookup/creation, e.g. cached over a whole run (default: createIngredient) */
         resolveIngredient?: ResolveIngredient;
-        /** Runs right after the transaction committed (e.g. a progress log line) */
-        onCommitted?: () => void | Promise<void>;
+        /** Runs right after the transaction committed (e.g. a progress log line), with what was written */
+        onCommitted?: (written: {
+            title: string;
+            ingredientCount: number;
+            flowEdges: unknown;
+        }) => void | Promise<void>;
     },
 ): Promise<{ id: string; imageAdded: boolean; warnings: string[] }> {
     const current = await db.recipe.findUniqueOrThrow({
@@ -447,7 +451,11 @@ export async function replaceImportedRecipe(
         await linkCategoryIds(tx, recipeId, categoryIds);
         await linkTagIds(tx, recipeId, tagIds);
     }, BULK_TRANSACTION_OPTIONS);
-    await options?.onCommitted?.();
+    await options?.onCommitted?.({
+        title: fields.title,
+        ingredientCount: prepared.ingredientRows.length,
+        flowEdges: prepared.flowEdges,
+    });
 
     // The recipe is written at this point; later problems are reported, not thrown
     const warnings: string[] = [];

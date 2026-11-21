@@ -23,6 +23,7 @@ import {
     editedSinceApply,
     parseAppliedLog,
     progressLine,
+    recipeFingerprint,
     selectRollbackEntries,
     type AppliedEntry,
 } from '../../src/lib/importer/full-refresh-progress';
@@ -136,13 +137,14 @@ export async function applyFull(
                     resolveIngredient,
                     // recorded before image and nutrition: a stop after this
                     // point must not leave a written recipe out of the log
-                    onCommitted: () => {
+                    onCommitted: (written) => {
                         appendFileSync(
                             logPath,
                             progressLine({
                                 recipeId: p.recipeId,
                                 at: new Date().toISOString(),
                                 backup: backupPath,
+                                fingerprint: recipeFingerprint(written),
                             }),
                         );
                         applied.push(p.recipeId);
@@ -200,12 +202,33 @@ export async function rollbackFull(
     if (log) {
         const current = await prisma.recipe.findMany({
             where: { id: { in: entries.map((e) => e.id) } },
-            select: { id: true, updatedAt: true },
+            select: {
+                id: true,
+                title: true,
+                flowEdges: true,
+                _count: { select: { recipeIngredients: true } },
+            },
         });
-        const edited = editedSinceApply(log, new Map(current.map((r) => [r.id, r.updatedAt])));
+        const { edited, unknown } = editedSinceApply(
+            log,
+            new Map(
+                current.map((r) => [
+                    r.id,
+                    recipeFingerprint({
+                        title: r.title,
+                        ingredientCount: r._count.recipeIngredients,
+                        flowEdges: r.flowEdges,
+                    }),
+                ]),
+            ),
+        );
         for (const id of edited)
             console.warn(
-                `Achtung: ${id} wurde nach dem Neuimport bearbeitet; der Rollback überschreibt diese Änderungen.`,
+                `Achtung: ${id} wurde nach dem Neuimport bearbeitet (Titel, Zutaten oder Ablauf); der Rollback überschreibt diese Änderungen.`,
+            );
+        if (unknown.length)
+            console.warn(
+                `${unknown.length} Einträge ohne Fingerabdruck (älterer Lauf): ob sie seitdem bearbeitet wurden, lässt sich nicht prüfen.`,
             );
     }
     if (!opts.write) {

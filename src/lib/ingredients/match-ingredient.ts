@@ -69,5 +69,29 @@ export async function matchExistingIngredient(name: string) {
             return { ...miss, existing: byOriginalSlug };
         }
     }
+
+    // 5. Exact name: older entries keep the slug of an earlier slugify
+    //    ("Kirschtomate(n)" → kirschtomate-n, today kirschtomaten)
+    const names = [...new Set([trimmed, canonicalName])];
+    const byName = await prisma.ingredient.findFirst({
+        where: { OR: names.map((n) => ({ name: { equals: n, mode: 'insensitive' as const } })) },
+    });
+    if (byName) {
+        ingLog.debug('found by name', { input: trimmed, match: byName.name, id: byName.id });
+        return { ...miss, existing: byName };
+    }
+
+    // 6. Display name ("Weißwein" → "Wein weiss, 12.5 vol%"), only if unambiguous
+    const byDisplayName = await prisma.ingredient.findMany({
+        where: {
+            OR: names.map((n) => ({ normalizedName: { equals: n, mode: 'insensitive' as const } })),
+        },
+        take: 2,
+    });
+    if (byDisplayName.length === 1) {
+        const [hit] = byDisplayName;
+        ingLog.debug('found by display name', { input: trimmed, match: hit.name, id: hit.id });
+        return { ...miss, existing: hit };
+    }
     return miss;
 }

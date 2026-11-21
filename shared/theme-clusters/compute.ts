@@ -2,7 +2,7 @@
  * One clustering run as a pure function: embeddings + recipe metadata (+ the previous
  * run's clusters) in, clusters with labels, filters and stable ids out.
  */
-import { kmeans, suggestClusterCount, type Vector } from './kmeans';
+import { cosineSimilarity, kmeans, suggestClusterCount, type Vector } from './kmeans';
 import { assignmentStability, keepStableLabel, matchClusters, type StabilityReport } from './match';
 import { profileClusters, type ClusterMemberMeta, type ClusterProfile } from './profile';
 
@@ -39,6 +39,8 @@ export interface ComputedCluster {
     label: string;
     profile: ClusterProfile;
     recipeIds: string[];
+    /** Cosine similarity of each member to the centroid (same order as `recipeIds`) */
+    similarities: number[];
 }
 
 export interface ComputeResult {
@@ -72,7 +74,7 @@ export function computeThemeClusters(
         { seed: options.seed, maxIterations: options.maxIterations },
     );
 
-    const members: ClusterMemberMeta[][] = result.centroids.map(() => []);
+    const members: ClusterRecipeInput[][] = result.centroids.map(() => []);
     sorted.forEach((recipe, i) => members[result.assignments[i]].push(recipe));
 
     const profiles = profileClusters(members, { minClusterSize: options.minClusterSize });
@@ -98,6 +100,10 @@ export function computeThemeClusters(
             label: profile.label,
             profile,
             recipeIds: members[index].map((member) => member.recipeId),
+            similarities: members[index].map(
+                (member) =>
+                    Math.round(cosineSimilarity(member.embedding, centroid) * 10000) / 10000,
+            ),
         };
     });
 

@@ -14,6 +14,7 @@ import { toFilterCriteria } from '@app/lib/fits-now/mappings';
 import { detectSeason } from '@app/lib/fits-now/season';
 import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
+import { getThemeChips } from '@app/lib/theme-clusters/queries';
 import { APP_URL } from '@app/lib/url';
 import { getQueryClient, trpc } from '@app/trpc/server';
 
@@ -77,13 +78,16 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
 
     const session = await getServerAuthSession('recipes-page');
 
-    const [tags, ingredients, categories, timeSeasonSets, foodPeriodSets] = await Promise.all([
-        fetchFilterTags(),
-        fetchFilterIngredients(),
-        queryClient.fetchQuery(trpc.filters.categories.queryOptions()),
-        getTimeSeasonFilterSets(),
-        getFoodPeriodFilterSets(),
-    ]);
+    const [tags, ingredients, categories, timeSeasonSets, foodPeriodSets, themes] =
+        await Promise.all([
+            fetchFilterTags(),
+            fetchFilterIngredients(),
+            queryClient.fetchQuery(trpc.filters.categories.queryOptions()),
+            getTimeSeasonFilterSets(),
+            getFoodPeriodFilterSets(),
+            // Released theme clusters; the page must keep working if the cluster tables are empty
+            getThemeChips().catch(() => []),
+        ]);
 
     const filterSets = [...timeSeasonSets, ...foodPeriodSets].sort(
         (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
@@ -106,6 +110,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
                         initialData={initialData}
                         filterSets={filterSets}
                         currentSeason={currentSeason}
+                        themes={themes}
                         isLoggedIn={!!session?.user}
                     />
                 </HydrationBoundary>

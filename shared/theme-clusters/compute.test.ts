@@ -46,6 +46,14 @@ test('a run builds labelled, filterable clusters', () => {
     assert.match(labels, /Suppe|Herbst/);
 });
 
+test('members carry their similarity to the centroid', () => {
+    const { clusters } = computeThemeClusters(makeRecipes(10, 4), [], { k: 3 });
+    for (const cluster of clusters) {
+        assert.equal(cluster.similarities.length, cluster.recipeIds.length);
+        assert.ok(cluster.similarities.every((value) => value > 0.9 && value <= 1));
+    }
+});
+
 test('input order does not change the result', () => {
     const recipes = makeRecipes(10, 3);
     const a = computeThemeClusters(recipes, [], { k: 3 });

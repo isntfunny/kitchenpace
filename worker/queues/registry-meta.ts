@@ -288,7 +288,13 @@ const JOB_CATALOG: Record<
     },
     'cluster-recipe-themes': {
         queue: QueueName.SCHEDULED,
-        defaultData: { clusters: 0, seed: 42, minSimilarity: 0.8, minClusterSize: 5, dryRun: true },
+        defaultData: {
+            clusters: 0,
+            seed: 42,
+            minSimilarity: 0.8,
+            minClusterSize: 5,
+            dryRun: false,
+        },
         schema: {
             clusters: {
                 type: 'number',

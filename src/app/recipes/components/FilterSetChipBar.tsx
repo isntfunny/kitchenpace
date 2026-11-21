@@ -3,6 +3,7 @@
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import { SEASON_LABELS, TIME_SLOT_LABELS, type Season } from '@app/lib/fits-now/labels';
 import { isSeasonalFilterSetHighlighted } from '@app/lib/fits-now/season';
+import { isThemeActive, type ThemeChip } from '@shared/theme-clusters/release';
 
 import { css } from 'styled-system/css';
 
@@ -65,6 +66,11 @@ type FilterSetChipBarProps = {
     /** Season of the current date; matching `TIME_SEASON` chips are highlighted. */
     currentSeason?: Season;
     onToggle: (filterSet: FilterSetWithRelations) => void;
+    /** Released theme clusters (KUC-111), shown after the FilterSets */
+    themes?: ThemeChip[];
+    /** Current tag/category filters, to mark active themes */
+    filters?: { tags?: string[]; categories?: string[] };
+    onThemeToggle?: (theme: ThemeChip) => void;
 };
 
 /** Horizontally scrollable FilterSet chips between the search header and the results. */
@@ -73,8 +79,11 @@ export function FilterSetChipBar({
     activeFilterSetId,
     currentSeason,
     onToggle,
+    themes = [],
+    filters = {},
+    onThemeToggle,
 }: FilterSetChipBarProps) {
-    if (filterSets.length === 0) return null;
+    if (filterSets.length === 0 && themes.length === 0) return null;
 
     return (
         <div role="group" aria-label="Schnell-Filter" className={rowClass}>
@@ -103,6 +112,22 @@ export function FilterSetChipBar({
                     </button>
                 );
             })}
+            {onThemeToggle &&
+                themes.map((theme) => {
+                    const isActive = isThemeActive(filters, theme);
+                    return (
+                        <button
+                            key={theme.key}
+                            type="button"
+                            aria-pressed={isActive}
+                            title="Thema"
+                            onClick={() => onThemeToggle(theme)}
+                            className={`${chipBaseClass} ${isActive ? chipActiveClass : chipInactiveClass}`}
+                        >
+                            {theme.label}
+                        </button>
+                    );
+                })}
         </div>
     );
 }

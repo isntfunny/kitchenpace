@@ -12,6 +12,7 @@ import {
 import type { RecipeFilterSearchParams, RecipeSortOption } from '@app/lib/recipeFilters';
 import { resolveEffectiveSort } from '@app/lib/recipes/taste-ranking';
 import { STORAGE_KEYS } from '@app/lib/storageKeys';
+import { toggleThemeFilters, type ThemeChip } from '@shared/theme-clusters/release';
 
 type FiltersWithSort = RecipeFilterSearchParams & { sort: RecipeSortOption };
 
@@ -246,6 +247,11 @@ export function useSearchFilters(
         [filterSets],
     );
 
+    // Theme clusters act like FilterSets, but only add/remove their tags and categories
+    const handleThemeToggle = useCallback((theme: ThemeChip) => {
+        setFilters((prev) => ({ ...prev, ...toggleThemeFilters(prev, theme) }));
+    }, []);
+
     const activeFilterCount = useMemo(() => {
         const arrayCount = MULTI_VALUE_KEYS.reduce((sum, key) => {
             const value = filters[key];
@@ -269,6 +275,7 @@ export function useSearchFilters(
         resetFilters,
         handleSortChange,
         handleFilterSetToggle,
+        handleThemeToggle,
         activeFilterCount,
     };
 }

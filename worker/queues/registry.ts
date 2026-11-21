@@ -324,8 +324,14 @@ export const JOB_REGISTRY = defineJobs({
 
     'cluster-recipe-themes': {
         queue: QueueName.SCHEDULED,
-        processor: processClusterRecipeThemes,
-        defaultData: { clusters: 0, seed: 42, minSimilarity: 0.8, minClusterSize: 5, dryRun: true },
+        processor: (job) => processClusterRecipeThemes(job),
+        defaultData: {
+            clusters: 0,
+            seed: 42,
+            minSimilarity: 0.8,
+            minClusterSize: 5,
+            dryRun: false,
+        },
         schema: {
             clusters: {
                 type: 'number',

@@ -7,11 +7,14 @@ import { PageShell } from '@app/components/layouts/PageShell';
 import { ProfileSidebarLayout } from '@app/components/layouts/ProfileSidebarLayout';
 import { getServerAuthSession, logMissingSession } from '@app/lib/auth';
 import { logAuth } from '@app/lib/auth-logger';
+import { getMealPlanSettings } from '@app/lib/meal-plan/repository';
 import { getOrCreateProfile } from '@app/lib/profile';
+import { prisma } from '@shared/prisma';
 
 import { css } from 'styled-system/css';
 
 import { EmailSettingsCard } from './EmailSettingsCard';
+import { MealPlanSettingsCard } from './MealPlanSettingsCard';
 import { NotificationSettingsCard } from './NotificationSettingsCard';
 import { PrivacySettingsCard } from './PrivacySettingsCard';
 
@@ -50,6 +53,7 @@ const ManageProfilePage = async () => {
     }
 
     const privacyReadyProfile = profile as PrivacyReadyProfile;
+    const mealPlan = await getMealPlanSettings(prisma, session.user.id);
 
     return (
         <PageShell>
@@ -127,6 +131,19 @@ const ManageProfilePage = async () => {
                             notifyOnStreamStarted: privacyReadyProfile.notifyOnStreamStarted,
                             notifyOnSystemMessages: privacyReadyProfile.notifyOnSystemMessages,
                             notifyOnNewsletter: privacyReadyProfile.notifyOnNewsletter,
+                        }}
+                    />
+
+                    <MealPlanSettingsCard
+                        initial={{
+                            householdSize: mealPlan.householdSize,
+                            weekStartDay: mealPlan.weekStartDay,
+                            shoppingDay: mealPlan.shoppingDay,
+                            timezone: mealPlan.timezone,
+                            mealPlanShowTime: mealPlan.mealPlanShowTime,
+                            mealPlanShowServings: mealPlan.mealPlanShowServings,
+                            mealPlanShowCalories: mealPlan.mealPlanShowCalories,
+                            slots: mealPlan.slots,
                         }}
                     />
 

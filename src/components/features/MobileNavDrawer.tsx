@@ -1,6 +1,7 @@
 'use client';
 
 import {
+    CalendarDays,
     Clock,
     LayoutGrid,
     Leaf,
@@ -48,6 +49,13 @@ const GENERAL_LINKS: (DrawerNavItem & { authOnly?: boolean; flag?: 'collections'
         href: '/collections',
         icon: Library,
         flag: 'collections',
+    },
+    {
+        label: 'Wochenplan',
+        description: 'Deine Woche planen',
+        href: '/plan',
+        icon: CalendarDays,
+        authOnly: true,
     },
     {
         label: 'Einkaufsliste',

@@ -12,7 +12,9 @@
  * moderation, sourceUrl and everything users added. A source that cannot be
  * scraped means: skipped, never rebuilt from the stored recipe.
  *
- *   submit   [--full] [--ids=a,b] [--limit=N] [--no-scrape]   build JSONL, create batch, save state
+ *   select   --full [--ids=a,b] [--limit=N]       full mode: write the selection once (selection.json)
+ *   submit   [--full] [--ids=a,b | --ids-file=F | --chunk=N/M [--selection=F]] [--limit=N] [--no-scrape]
+ *                                                  build JSONL, create batch, save state
  *   status                                         show the batch state
  *   fetch                                          evaluate the result: proposals + dry-run report
  *   repair                                         full mode: invalid/failed answers once more (one round)
@@ -31,13 +33,16 @@
  * again continues where the run stopped.
  *
  * All files go to --dir (default: $BACKUP_DIR/refresh-flows or ./backups/refresh-flows).
+ * One --dir per batch: status, fetch, repair, apply and resuming a broken-off
+ * apply need the same --dir as its submit (state.json, applied.jsonl).
  * Input per recipe: the source page scraped again (SCRAPLER_URL); if that fails,
  * the stored recipe (ingredient list + previous flow) as text.
  *
  *   npx tsx scripts/refresh-recipe-flows.ts submit --limit=10
  *   npx tsx scripts/refresh-recipe-flows.ts submit --full --ids=<id1>,<id2>
- *   npx tsx scripts/refresh-recipe-flows.ts submit --full --offset=0 --limit=400 --dir=backups/refresh-flows/teil-1
- *   npx tsx scripts/refresh-recipe-flows.ts submit --full --offset=400 --limit=400 --dir=backups/refresh-flows/teil-2
+ *   npx tsx scripts/refresh-recipe-flows.ts select --full --dir=backups/refresh-flows
+ *   npx tsx scripts/refresh-recipe-flows.ts submit --full --selection=backups/refresh-flows/selection.json --chunk=1/2 --dir=backups/refresh-flows/teil-1
+ *   npx tsx scripts/refresh-recipe-flows.ts submit --full --selection=backups/refresh-flows/selection.json --chunk=2/2 --dir=backups/refresh-flows/teil-2
  */
 import 'dotenv/config';
 
@@ -59,8 +64,6 @@ import {
     buildRefreshRequest,
     evaluateRefreshEntry,
     restoreFlowBackup,
-    staleIngredientRefs,
-    type FlowBackupEntry,
     type RefreshProposal,
     type RefreshRequest,
     type StoredFlowEdge,
@@ -68,13 +71,16 @@ import {
 } from '../src/lib/importer/flow-refresh';
 import { batchCostUsd } from '../src/lib/importer/full-refresh';
 
+import { applyFlow, type FlowBackup } from './lib/flow-refresh-apply';
 import { loadRecipes, markdownFor } from './lib/flow-refresh-input';
 import {
     applyFullFromState,
     fetchFull,
     repairFull,
+    selectFull,
     submitFull,
     type FullState,
+    type SubmitFullOptions,
 } from './lib/full-reimport';
 import { rollbackFull } from './lib/full-reimport-apply';
 import { syncSearch } from './lib/sync-search';
@@ -90,11 +96,6 @@ interface RefreshState {
     requests: RefreshRequest[];
 }
 
-interface FlowBackup {
-    createdAt: string;
-    recipes: FlowBackupEntry[];
-}
-
 const dirOf = (opts: { dir?: string }) => {
     const dir = opts.dir ?? join(process.env.BACKUP_DIR ?? './backups', 'refresh-flows');
     mkdirSync(dir, { recursive: true });
@@ -108,16 +109,22 @@ const writeJson = (path: string, value: unknown) =>
     writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 const stamp = () => new Date().toISOString().replace(/[:.]/g, '-');
 
-async function submit(opts: {
+async function select(opts: {
     dir?: string;
     ids?: string;
     limit?: string;
-    offset?: string;
-    scrape: boolean;
     force?: boolean;
     full?: boolean;
 }) {
-    if (opts.offset && !opts.full) throw new Error('--offset gibt es nur im Vollmodus (--full).');
+    if (!opts.full) throw new Error('select gibt es nur im Vollmodus (select --full).');
+    await selectFull(dirOf(opts), opts);
+}
+
+async function submit(
+    opts: SubmitFullOptions & { dir?: string; scrape: boolean; force?: boolean; full?: boolean },
+) {
+    if ((opts.chunk || opts.idsFile || opts.selection) && !opts.full)
+        throw new Error('--chunk, --ids-file und --selection gibt es nur im Vollmodus (--full).');
     const dir = dirOf(opts);
     const statePath = join(dir, 'state.json');
     if (existsSync(statePath) && !opts.force)
@@ -282,76 +289,7 @@ async function apply(opts: {
     const dir = dirOf(opts);
     const state = readJson<AnyState>(join(dir, 'state.json'));
     if (isFull(state)) return applyFullFromState(dir, state, opts);
-    const only = opts.ids
-        ?.split(',')
-        .map((id) => id.trim())
-        .filter(Boolean);
-    const proposalsPath = opts.proposals ?? join(dir, `proposals-${state.batchId}.json`);
-    const { proposals } = readJson<{ proposals: RefreshProposal[] }>(proposalsPath);
-    const changed = proposals.filter(
-        (p) => p.status === 'changed' && (!only?.length || only.includes(p.recipeId)),
-    );
-
-    const recipes = await prisma.recipe.findMany({
-        where: { id: { in: changed.map((p) => p.recipeId) } },
-        select: {
-            id: true,
-            flowNodes: true,
-            flowEdges: true,
-            recipeIngredients: { select: { id: true } },
-            _count: { select: { stepImages: true } },
-        },
-    });
-    const byId = new Map(recipes.map((r) => [r.id, r]));
-    const ready: RefreshProposal[] = [];
-    for (const p of changed) {
-        const recipe = byId.get(p.recipeId);
-        if (!recipe) {
-            console.log(`übersprungen (gelöscht): ${p.recipeId}`);
-            continue;
-        }
-        // Step photos hang on node ids, which the new flow does not keep
-        if (recipe._count.stepImages > 0) {
-            console.log(`übersprungen (hat Schrittfotos): ${p.recipeId} ${p.title}`);
-            continue;
-        }
-        const stale = staleIngredientRefs(p, new Set(recipe.recipeIngredients.map((ri) => ri.id)));
-        if (stale.length > 0) {
-            console.log(
-                `übersprungen (veraltet, Zutatenliste seit dem Batch geändert): ${p.recipeId} ${p.title}`,
-            );
-            continue;
-        }
-        ready.push(p);
-    }
-    console.log(
-        `${ready.length} von ${proposals.length} Rezepten bereit (${changed.length} geändert).`,
-    );
-    if (!opts.write) {
-        console.log('Trockenlauf: nichts geschrieben. Mit --write anwenden.');
-        return;
-    }
-    if (ready.length === 0) return;
-
-    const backup: FlowBackup = {
-        createdAt: new Date().toISOString(),
-        recipes: ready.map((p) => {
-            const r = byId.get(p.recipeId)!;
-            return { id: r.id, flowNodes: r.flowNodes, flowEdges: r.flowEdges };
-        }),
-    };
-    const backupPath = join(dir, `backup-${stamp()}.json`);
-    writeJson(backupPath, backup);
-    console.log(`Sicherung: ${backupPath}`);
-
-    for (const p of ready) {
-        await prisma.recipe.update({
-            where: { id: p.recipeId },
-            data: { flowNodes: p.flowNodes as object, flowEdges: p.flowEdges as object },
-        });
-    }
-    console.log(`${ready.length} Abläufe geschrieben.`);
-    await syncSearch(ready.map((p) => p.recipeId));
+    await applyFlow(dir, state, opts);
 }
 
 async function repair(opts: { dir?: string }) {
@@ -392,19 +330,41 @@ const dirOption = [
     'Arbeitsverzeichnis für Zustand, Berichte und Sicherungen',
 ] as const;
 program
+    .command('select')
+    .option(...dirOption)
+    .option('--full', 'Vollmodus (nötig): Admin-Importe mit sourceUrl')
+    .option('--ids <ids>', 'nur diese Rezept-IDs (Komma-getrennt)')
+    .option('--limit <n>', 'höchstens n Rezepte')
+    .option('--force', 'vorhandene selection.json überschreiben')
+    .action(select);
+program
     .command('submit')
     .option(...dirOption)
     .option('--ids <ids>', 'nur diese Rezept-IDs (Komma-getrennt)')
-    .option('--limit <n>', 'höchstens n Rezepte')
     .option(
-        '--offset <n>',
-        'Vollmodus: die ersten n Rezepte der Auswahl überspringen (Aufteilen in mehrere Batches, je eigenes --dir)',
+        '--ids-file <file>',
+        'Vollmodus: IDs aus Datei (selection.json, JSON-Liste oder eine pro Zeile)',
     )
+    .option(
+        '--chunk <n/m>',
+        'Vollmodus: Teil n von m der festgeschriebenen Auswahl (select --full), je Teil ein eigenes --dir',
+    )
+    .option(
+        '--selection <file>',
+        'Vollmodus: Auswahl-Datei für --chunk (Standard: selection.json in --dir)',
+    )
+    .option('--limit <n>', 'höchstens n Rezepte')
     .option('--no-scrape', 'Quelle nicht neu scrapen, nur den gespeicherten Stand verwenden')
     .option('--force', 'vorhandene state.json überschreiben')
     .option(
         '--full',
         'Vollimport: Rezept komplett aus der Quelle neu (Admin-Importe mit sourceUrl)',
+    )
+    .addHelpText(
+        'after',
+        `
+Jeder Batch hat sein eigenes --dir. status, fetch, repair, apply und das
+Fortsetzen eines abgebrochenen apply brauchen dasselbe --dir wie sein submit.`,
     )
     .action(submit);
 program

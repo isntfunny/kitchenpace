@@ -32,6 +32,13 @@ import {
     buildFullReport,
     renderFullReportMarkdown,
 } from '../../src/lib/importer/full-refresh-report';
+import {
+    chunkIds,
+    isFullSelection,
+    parseChunk,
+    parseIdsFile,
+    type FullSelection,
+} from '../../src/lib/importer/full-refresh-selection';
 import type { ChatRequestBody } from '../../src/lib/importer/import-prompt';
 import { fetchImportContext } from '../../src/lib/importer/pipeline';
 import { scrapeRecipe } from '../../src/lib/importer/scraper';
@@ -89,24 +96,83 @@ async function uploadBatch(
     return { batchId: batch.id, inputFileId, requestsFile };
 }
 
-export async function submitFull(
+export interface SubmitFullOptions {
+    ids?: string;
+    limit?: string;
+    chunk?: string;
+    idsFile?: string;
+    selection?: string;
+}
+
+// stable order, so a selection reads the same every time
+const SELECTION_ORDER = [{ createdAt: 'asc' as const }, { id: 'asc' as const }];
+
+/** `select --full`: writes the selection once, so submit --chunk parts cannot shift. */
+export async function selectFull(
     dir: string,
-    statePath: string,
-    opts: { ids?: string; limit?: string; offset?: string },
+    opts: { ids?: string; limit?: string; force?: boolean },
 ) {
-    const ids = splitIds(opts.ids);
+    const path = join(dir, 'selection.json');
+    if (existsSync(path) && !opts.force)
+        throw new Error(`${path} existiert schon. Mit --force neu festschreiben.`);
     const recipes = await prisma.recipe.findMany({
-        where: fullRefreshWhere({ ids }),
-        // stable order, so --offset/--limit split the selection into batches
-        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-        ...(opts.offset ? { skip: Number(opts.offset) } : {}),
+        where: fullRefreshWhere({ ids: splitIds(opts.ids) }),
+        orderBy: SELECTION_ORDER,
         ...(opts.limit ? { take: Number(opts.limit) } : {}),
         select: { id: true, title: true, sourceUrl: true },
     });
+    if (recipes.length === 0)
+        throw new Error('Keine Rezepte mit sourceUrl von Admin-Autoren gefunden');
+    const selection: FullSelection = {
+        kind: 'full-selection',
+        createdAt: new Date().toISOString(),
+        ids: recipes.map((r) => r.id),
+        recipes: recipes.map((r) => ({ id: r.id, title: r.title, sourceUrl: r.sourceUrl! })),
+    };
+    writeJson(path, selection);
+    console.log(
+        `Auswahl festgeschrieben: ${recipes.length} Rezepte in ${path}.\nAufteilen z. B.: submit --full --selection=${path} --chunk=1/3 --dir=${join(dir, 'teil-1')}`,
+    );
+}
+
+/** The ids submit works on: a part of the fixed selection, an ids file, --ids, or none (all). */
+function chosenIds(dir: string, opts: SubmitFullOptions): string[] | undefined {
+    const given = [opts.ids, opts.idsFile, opts.chunk].filter(Boolean).length;
+    if (given > 1) throw new Error('--ids, --ids-file und --chunk schließen sich gegenseitig aus.');
+    if (opts.chunk) {
+        const path = opts.selection ?? join(dir, 'selection.json');
+        if (!existsSync(path))
+            throw new Error(
+                `--chunk braucht die festgeschriebene Auswahl: ${path} fehlt (erst "select --full", sonst --selection=<datei>).`,
+            );
+        const selection = readJson<unknown>(path);
+        if (!isFullSelection(selection)) throw new Error(`${path} ist keine Auswahl-Datei.`);
+        const chunk = parseChunk(opts.chunk);
+        const ids = chunkIds(selection.ids, chunk);
+        console.log(
+            `Teil ${chunk.index}/${chunk.total} der Auswahl ${path}: ${ids.length} von ${selection.ids.length} Rezepten.`,
+        );
+        return ids;
+    }
+    if (opts.idsFile) return parseIdsFile(readFileSync(opts.idsFile, 'utf8'));
+    return splitIds(opts.ids);
+}
+
+export async function submitFull(dir: string, statePath: string, opts: SubmitFullOptions) {
+    const ids = chosenIds(dir, opts);
+    if (ids && ids.length === 0) throw new Error('Keine Rezept-IDs ausgewählt.');
+    const found = await prisma.recipe.findMany({
+        where: fullRefreshWhere({ ids }),
+        orderBy: SELECTION_ORDER,
+        select: { id: true, title: true, sourceUrl: true },
+    });
+    // given ids keep their order (the selection's), --limit cuts after that
+    const byId = new Map(found.map((r) => [r.id, r]));
+    const ordered = ids ? ids.flatMap((id) => byId.get(id) ?? []) : found;
+    const recipes = opts.limit ? ordered.slice(0, Number(opts.limit)) : ordered;
     if (ids?.length) {
-        const found = new Set(recipes.map((r) => r.id));
         for (const id of ids)
-            if (!found.has(id))
+            if (!byId.has(id))
                 console.log(
                     `nicht ausgewählt (fehlt, ohne sourceUrl oder kein Admin-Autor): ${id}`,
                 );

@@ -251,15 +251,14 @@ export async function fetchFull(dir: string, state: FullState) {
         : evaluated;
 
     // Is the source still the same recipe? Old title and catalogue ingredients
-    // against the new ones (catalogue lookup only, nothing is created).
+    // (without basic ones) against the new ones (catalogue lookup only,
+    // nothing is created).
     const current = await currentSummaries([
         ...merged.map((p) => p.recipeId),
         ...state.skipped.map((s) => s.recipeId),
     ]);
-    const matches = await matchProposalIngredients(
-        merged.filter((p) => p.status === 'ready' || p.status === 'mismatch'),
-    );
-    const proposals = applySourceCheck(merged, current, matches.ids);
+    const matches = await matchProposalIngredients(merged.filter((p) => p.recipe !== undefined));
+    const proposals = applySourceCheck(merged, current, matches.refs);
 
     const proposalsPath = proposalsPathOf(dir, state.batchId);
     const file: ProposalsFile = {
@@ -282,9 +281,9 @@ export async function fetchFull(dir: string, state: FullState) {
     writeJson(join(dir, `report-${state.batchId}.json`), report);
     writeFileSync(join(dir, `report-${state.batchId}.md`), markdown);
     console.log(markdown.split('\n').slice(0, 5).join('\n'));
-    if (report.summary.mismatch > 0)
+    if (report.summary.review + report.summary.mismatch > 0)
         console.log(
-            `${report.summary.mismatch} Rezepte mit unpassender Quelle: siehe Abschnitt im Bericht; apply schreibt sie nur mit --include-mismatch oder --ids.`,
+            `${report.summary.review} zu prüfen, ${report.summary.mismatch} mit unpassender Quelle: siehe Abschnitt "Quelle prüfen" im Bericht; apply schreibt sie nur mit --include-review / --include-mismatch oder --ids.`,
         );
     console.log(
         `Vorschläge: ${proposalsPath}\nBericht: ${join(dir, `report-${state.batchId}.md`)} (+ .json)`,
@@ -298,13 +297,20 @@ export async function fetchFull(dir: string, state: FullState) {
 export async function applyFullFromState(
     dir: string,
     state: FullState,
-    opts: { write?: boolean; proposals?: string; ids?: string; includeMismatch?: boolean },
+    opts: {
+        write?: boolean;
+        proposals?: string;
+        ids?: string;
+        includeReview?: boolean;
+        includeMismatch?: boolean;
+    },
 ) {
     const proposalsPath = opts.proposals ?? proposalsPathOf(dir, state.batchId);
     const { proposals } = readJson<ProposalsFile>(proposalsPath);
     await applyFull(dir, proposals, {
         write: opts.write,
         ids: splitIds(opts.ids),
+        includeReview: opts.includeReview,
         includeMismatch: opts.includeMismatch,
     });
 }

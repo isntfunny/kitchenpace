@@ -47,16 +47,18 @@ const readAppliedLog = (path: string) =>
 export async function applyFull(
     dir: string,
     proposals: FullRefreshProposal[],
-    opts: { write?: boolean; ids?: string[]; includeMismatch?: boolean },
+    opts: { write?: boolean; ids?: string[]; includeReview?: boolean; includeMismatch?: boolean },
 ) {
-    const ready = writableProposals(proposals, {
-        ids: opts.ids,
-        includeMismatch: opts.includeMismatch,
-    });
-    const held = proposals.filter((p) => p.status === 'mismatch' && !ready.includes(p));
-    if (held.length)
+    const ready = writableProposals(proposals, opts);
+    const held = (status: FullRefreshProposal['status']) =>
+        proposals.filter((p) => p.status === status && !ready.includes(p)).length;
+    if (held('review'))
         console.log(
-            `${held.length} Rezepte mit unpassender Quelle zurückgehalten (--include-mismatch oder --ids).`,
+            `${held('review')} Rezepte mit abweichendem Titel zurückgehalten (--include-review oder --ids).`,
+        );
+    if (held('mismatch'))
+        console.log(
+            `${held('mismatch')} Rezepte mit unpassender Quelle zurückgehalten (--include-mismatch oder --ids).`,
         );
 
     const logPath = join(dir, APPLIED_LOG);

@@ -177,11 +177,13 @@ export function buildFullRefreshRequest(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * ready: can be written; mismatch: valid, but the source page seems to be a
- * different recipe now (written only on request); invalid / failed: no usable
- * answer (candidates for the second attempt).
+ * ready: can be written; review: valid, but the title differs a lot from the
+ * stored one while the ingredients match (written only on request);
+ * mismatch: valid, but the source page seems to be a different recipe now
+ * (written only on request); invalid / failed: no usable answer (candidates
+ * for the second attempt).
  */
-export type FullRefreshStatus = 'ready' | 'mismatch' | 'invalid' | 'failed';
+export type FullRefreshStatus = 'ready' | 'review' | 'mismatch' | 'invalid' | 'failed';
 
 export interface FullRefreshProposal {
     recipeId: string;
@@ -198,6 +200,8 @@ export interface FullRefreshProposal {
     usage?: TokenUsage;
     /** Answer text of an invalid attempt, for the repair round */
     content?: string;
+    /** Shares of title stems and distinctive ingredients in common with the stored recipe (fetch) */
+    sourceCheck?: { title: number; ingredients: number | null };
 }
 
 /**
@@ -322,17 +326,19 @@ export function mergeRepairProposals(
 }
 
 /**
- * Proposals apply writes: ready ones, plus mismatches when asked for with
- * --include-mismatch or by naming them in --ids. --ids limits either way.
+ * Proposals apply writes: ready ones; review cases with --include-review,
+ * mismatches with --include-mismatch, either of them also by naming them in
+ * --ids. --ids limits either way.
  */
 export function writableProposals(
     proposals: FullRefreshProposal[],
-    opts: { ids?: string[]; includeMismatch?: boolean },
+    opts: { ids?: string[]; includeReview?: boolean; includeMismatch?: boolean },
 ): FullRefreshProposal[] {
     const only = opts.ids?.length ? new Set(opts.ids) : null;
     return proposals.filter((p) => {
         if (!p.recipe || (only && !only.has(p.recipeId))) return false;
         if (p.status === 'ready') return true;
+        if (p.status === 'review') return opts.includeReview === true || only !== null;
         return p.status === 'mismatch' && (opts.includeMismatch === true || only !== null);
     });
 }

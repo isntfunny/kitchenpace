@@ -18,9 +18,11 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Below this share for BOTH title stems and catalogue ingredients the source
- * page counts as a different recipe (404 page, start page, other recipe
- * served with HTTP 200). Shares are overlap coefficients: common / smaller set.
+ * Shares are overlap coefficients (common / smaller set). Title below this
+ * share and catalogue ingredients too: the source page counts as a different
+ * recipe (404 page, start page, other recipe served with HTTP 200) →
+ * `mismatch`. Title below it but ingredients above: probably the same dish
+ * renamed, but checked by hand → `review`.
  */
 export const SOURCE_MATCH_THRESHOLD = 0.3;
 
@@ -86,17 +88,82 @@ const overlap = (a: ReadonlySet<string>, b: ReadonlySet<string>): number => {
     return common / Math.min(a.size, b.size);
 };
 
+/**
+ * Basic ingredients nearly every savoury or sweet recipe has. They say little
+ * about whether the source is still the same dish, so the ingredient
+ * comparison leaves them out.
+ */
+const STAPLE_INGREDIENTS = new Set([
+    'salz',
+    'meersalz',
+    'pfeffer',
+    'schwarzer pfeffer',
+    'salz und pfeffer',
+    'zwiebel',
+    'zwiebeln',
+    'rote zwiebel',
+    'knoblauch',
+    'knoblauchzehe',
+    'knoblauchzehen',
+    'butter',
+    'zucker',
+    'brauner zucker',
+    'puderzucker',
+    'wasser',
+    'mehl',
+    'weizenmehl',
+    'ei',
+    'eier',
+    'eigelb',
+    'eiweiss',
+    'milch',
+    'backpulver',
+    'natron',
+    'bruehe',
+    'gemuesebruehe',
+]);
+
+const foldName = (name: string) =>
+    name
+        .toLocaleLowerCase('de')
+        .replace(/\(.*?\)|,.*$/g, '')
+        .replace(/ä/g, 'ae')
+        .replace(/ö/g, 'oe')
+        .replace(/ü/g, 'ue')
+        .replace(/ß/g, 'ss')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+/** Salt, pepper, oil, onion, garlic, butter, sugar, water, flour, egg, milk and the like. */
+export function isStapleIngredient(name: string): boolean {
+    const folded = foldName(name);
+    // Öl, Olivenöl, Rapsöl, Sonnenblumenöl …
+    return STAPLE_INGREDIENTS.has(folded) || /(^|[a-z])oel$/.test(folded);
+}
+
+/** One ingredient row for the comparison: catalogue id (null = not in the catalogue yet) and name. */
+export interface IngredientRef {
+    id: string | null;
+    name: string;
+}
+
 export interface SourceSimilarity {
     title: number;
-    /** null when the stored recipe has no ingredients to compare */
+    /** null when the stored recipe has no ingredients beyond basic ones to compare */
     ingredients: number | null;
 }
 
 export function sourceSimilarity(
-    before: { title: string; ingredientIds: readonly string[] },
-    after: { title: string; ingredientIds: readonly (string | null)[] },
+    before: { title: string; ingredients: readonly IngredientRef[] },
+    after: { title: string; ingredients: readonly IngredientRef[] },
 ): SourceSimilarity {
-    const oldIds = new Set(before.ingredientIds);
+    const distinctive = (list: readonly IngredientRef[]) =>
+        list.filter((ing) => !isStapleIngredient(ing.name));
+    const oldIds = new Set(
+        distinctive(before.ingredients)
+            .map((ing) => ing.id)
+            .filter((id) => id !== null),
+    );
     return {
         title: overlap(titleStems(before.title), titleStems(after.title)),
         ingredients:
@@ -105,39 +172,51 @@ export function sourceSimilarity(
                 : overlap(
                       oldIds,
                       // new catalogue entries (null) count as no match
-                      new Set(after.ingredientIds.map((id, i) => id ?? `new-${i}`)),
+                      new Set(distinctive(after.ingredients).map((ing, i) => ing.id ?? `new-${i}`)),
                   ),
     };
 }
 
-export function isSourceMismatch(similarity: SourceSimilarity): boolean {
-    return (
-        similarity.title < SOURCE_MATCH_THRESHOLD &&
-        (similarity.ingredients === null || similarity.ingredients < SOURCE_MATCH_THRESHOLD)
-    );
+export type SourceVerdict = 'same' | 'review' | 'mismatch';
+
+export function judgeSource(similarity: SourceSimilarity): SourceVerdict {
+    if (similarity.title >= SOURCE_MATCH_THRESHOLD) return 'same';
+    return similarity.ingredients !== null && similarity.ingredients >= SOURCE_MATCH_THRESHOLD
+        ? 'review'
+        : 'mismatch';
 }
 
-/** Marks ready proposals whose source no longer matches the stored recipe. */
+const pct = (x: number | null) => (x === null ? '–' : `${Math.round(x * 100)} %`);
+
+/**
+ * Checks ready proposals against the stored recipe: the similarity is kept
+ * on the proposal; a different-looking title becomes `review`, a different
+ * recipe `mismatch`.
+ */
 export function applySourceCheck(
     proposals: FullRefreshProposal[],
-    before: ReadonlyMap<string, { title: string; ingredientIds: readonly string[] }>,
-    /** recipeId → catalogue id per new ingredient (null: not in the catalogue yet) */
-    newIngredientIds: ReadonlyMap<string, readonly (string | null)[]>,
+    before: ReadonlyMap<string, { title: string; ingredients: readonly IngredientRef[] }>,
+    /** recipeId → the new ingredients with their catalogue match */
+    newIngredients: ReadonlyMap<string, readonly IngredientRef[]>,
 ): FullRefreshProposal[] {
     return proposals.map((p) => {
         const old = before.get(p.recipeId);
         if (p.status !== 'ready' || !p.recipe || !old) return p;
         const similarity = sourceSimilarity(old, {
             title: p.recipe.title,
-            ingredientIds: newIngredientIds.get(p.recipeId) ?? [],
+            ingredients: newIngredients.get(p.recipeId) ?? [],
         });
-        if (!isSourceMismatch(similarity)) return p;
-        const pct = (x: number | null) => (x === null ? '–' : `${Math.round(x * 100)} %`);
+        const verdict = judgeSource(similarity);
+        if (verdict === 'same') return { ...p, sourceCheck: similarity };
+        const shares = `Titel ${pct(similarity.title)}, Zutaten ${pct(similarity.ingredients)} gemeinsam (ohne Grundzutaten, Schwelle ${pct(SOURCE_MATCH_THRESHOLD)})`;
         return {
             ...p,
-            status: 'mismatch',
+            status: verdict,
+            sourceCheck: similarity,
             warnings: [
-                `Quelle passt nicht mehr: Titel ${pct(similarity.title)}, Zutaten ${pct(similarity.ingredients)} gemeinsam (Schwelle ${pct(SOURCE_MATCH_THRESHOLD)})`,
+                verdict === 'mismatch'
+                    ? `Quelle passt nicht mehr: ${shares}`
+                    : `Titel weicht ab, bitte prüfen: ${shares}`,
                 ...p.warnings,
             ],
         };
@@ -151,8 +230,8 @@ export function applySourceCheck(
 export interface CurrentRecipeSummary {
     title: string;
     ingredientCount: number;
-    /** Catalogue ids of the stored ingredient rows (source check) */
-    ingredientIds: string[];
+    /** Catalogue ingredients of the stored rows (source check) */
+    ingredients: IngredientRef[];
     nodeCount: number;
     tags: string[];
 }
@@ -167,6 +246,8 @@ export interface FullReportRow {
     tags: { old: string[]; new: string[] };
     /** Ingredient names the apply would add to the catalogue */
     newIngredients: string[];
+    /** Source check of the fetch (ready, review, mismatch) */
+    similarity: SourceSimilarity | null;
     notes: string[];
 }
 
@@ -176,6 +257,7 @@ export interface FullReport {
     summary: {
         recipes: number;
         ready: number;
+        review: number;
         mismatch: number;
         invalid: number;
         failed: number;
@@ -216,6 +298,7 @@ export function buildFullReport(input: {
                 nodes: { old: before?.nodeCount ?? null, new: p.recipe?.flowNodes.length ?? null },
                 tags: { old: before?.tags ?? [], new: listed },
                 newIngredients: input.newIngredients.get(p.recipeId) ?? [],
+                similarity: p.sourceCheck ?? null,
                 notes: [
                     ...p.errors,
                     ...p.warnings,
@@ -238,6 +321,7 @@ export function buildFullReport(input: {
                 nodes: { old: input.current.get(s.recipeId)?.nodeCount ?? null, new: null },
                 tags: { old: input.current.get(s.recipeId)?.tags ?? [], new: [] },
                 newIngredients: [],
+                similarity: null,
                 notes: [s.reason],
             }),
         ),
@@ -253,6 +337,7 @@ export function buildFullReport(input: {
         summary: {
             recipes: rows.length,
             ready: count('ready'),
+            review: count('review'),
             mismatch: count('mismatch'),
             invalid: count('invalid'),
             failed: count('failed'),
@@ -271,19 +356,23 @@ const cell = (text: string, max = 300) =>
         .replace(/\s*\n\s*/g, ' ')
         .slice(0, max);
 
-function mismatchSection(rows: FullReportRow[]): string[] {
-    const mismatches = rows.filter((r) => r.status === 'mismatch');
-    if (mismatches.length === 0) return [];
+/** review and mismatch cases, least similar title first. */
+function sourceCheckSection(rows: FullReportRow[]): string[] {
+    const flagged = rows
+        .filter((r) => r.status === 'review' || r.status === 'mismatch')
+        .sort((a, b) => (a.similarity?.title ?? 0) - (b.similarity?.title ?? 0));
+    if (flagged.length === 0) return [];
+    const threshold = pct(SOURCE_MATCH_THRESHOLD);
     return [
-        `## Quelle passt nicht mehr (${mismatches.length})`,
+        `## Quelle prüfen (${flagged.length})`,
         '',
-        `Titel-Wortstämme und Katalog-Zutaten haben beide weniger als ${Math.round(SOURCE_MATCH_THRESHOLD * 100)} % gemeinsam (Anteil an der kleineren Menge). Diese Rezepte schreibt apply nur mit --include-mismatch oder ausdrücklich per --ids.`,
+        `Titel-Wortstämme unter ${threshold} gemeinsam (Anteil an der kleineren Menge), sortiert nach Titel-Ähnlichkeit. review: die Zutaten (ohne Grundzutaten wie Salz, Öl, Zwiebel) passen noch zu ${threshold} oder mehr, apply schreibt sie nur mit --include-review. mismatch: auch die Zutaten passen nicht, apply schreibt sie nur mit --include-mismatch. Beide auch ausdrücklich per --ids.`,
         '',
-        '| Rezept | Quelle | Titel alt → neu | Hinweis |',
-        '|---|---|---|---|',
-        ...mismatches.map(
+        '| Rezept | Status | Titel | Zutaten | Titel alt → neu | Quelle |',
+        '|---|---|---|---|---|---|',
+        ...flagged.map(
             (r) =>
-                `| ${r.recipeId} | ${cell(r.source ?? '–', 120)} | ${cell(`${r.title.old} → ${r.title.new ?? '–'}`, 200)} | ${cell(r.notes[0] ?? '')} |`,
+                `| ${r.recipeId} | ${r.status} | ${pct(r.similarity?.title ?? null)} | ${pct(r.similarity?.ingredients ?? null)} | ${cell(`${r.title.old} → ${r.title.new ?? '–'}`, 200)} | ${cell(r.source ?? '–', 120)} |`,
         ),
         '',
         '## Alle Rezepte',
@@ -296,11 +385,11 @@ export function renderFullReportMarkdown(report: FullReport): string {
     const lines = [
         `# Voll-Neuimport Trockenlauf (Batch ${report.batchId})`,
         '',
-        `Rezepte: ${s.recipes} · bereit: ${s.ready} · Quelle passt nicht: ${s.mismatch} · ungültig: ${s.invalid} · fehlgeschlagen: ${s.failed} · erneut zu senden: ${s.repairable} · übersprungen: ${s.skipped} · Kosten ca. $${s.costUsd.toFixed(3)} (Batch-Preis)`,
+        `Rezepte: ${s.recipes} · bereit: ${s.ready} · prüfen: ${s.review} · Quelle passt nicht: ${s.mismatch} · ungültig: ${s.invalid} · fehlgeschlagen: ${s.failed} · erneut zu senden: ${s.repairable} · übersprungen: ${s.skipped} · Kosten ca. $${s.costUsd.toFixed(3)} (Batch-Preis)`,
         '',
         `Neu anzulegende Zutaten: ${s.newIngredients.length}${s.newIngredients.length ? ` — ${s.newIngredients.join(', ')}` : ''}`,
         '',
-        ...mismatchSection(report.rows),
+        ...sourceCheckSection(report.rows),
         '| Rezept | Status | Quelle | Titel alt → neu | Zutaten alt → neu | Knoten alt → neu | Tags neu | Neue Zutaten | Hinweise |',
         '|---|---|---|---|---|---|---|---|---|',
         ...report.rows.map((r) => {

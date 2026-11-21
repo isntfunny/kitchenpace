@@ -16,14 +16,7 @@ import {
     writableProposals,
     type FullRefreshProposal,
 } from './full-refresh';
-import {
-    applySourceCheck,
-    buildFullReport,
-    renderFullReportMarkdown,
-    SOURCE_MATCH_THRESHOLD,
-    sourceSimilarity,
-    titleStems,
-} from './full-refresh-report';
+import { buildFullReport, renderFullReportMarkdown } from './full-refresh-report';
 import { importedFlowProblems } from './import-flow-binding';
 import { IMPORT_SYSTEM_PROMPT } from './import-prompt';
 
@@ -256,14 +249,14 @@ test('report: old → new per recipe, skipped sources, distinct new ingredients,
                 {
                     title: 'Pfannkuchen alt',
                     ingredientCount: 3,
-                    ingredientIds: [],
+                    ingredients: [],
                     nodeCount: 5,
                     tags: ['Alt'],
                 },
             ],
             [
                 'r3',
-                { title: 'Kuchen', ingredientCount: 6, ingredientIds: [], nodeCount: 7, tags: [] },
+                { title: 'Kuchen', ingredientCount: 6, ingredients: [], nodeCount: 7, tags: [] },
             ],
         ]),
         newIngredients: new Map([
@@ -277,6 +270,7 @@ test('report: old → new per recipe, skipped sources, distinct new ingredients,
         {
             recipes: 3,
             ready: 1,
+            review: 0,
             mismatch: 0,
             invalid: 0,
             failed: 1,
@@ -300,7 +294,7 @@ test('report: old → new per recipe, skipped sources, distinct new ingredients,
     const md = renderFullReportMarkdown(report);
     assert.match(
         md,
-        /bereit: 1 · Quelle passt nicht: 0 · ungültig: 0 · fehlgeschlagen: 1 · erneut zu senden: 1 · übersprungen: 1/,
+        /bereit: 1 · prüfen: 0 · Quelle passt nicht: 0 · ungültig: 0 · fehlgeschlagen: 1 · erneut zu senden: 1 · übersprungen: 1/,
     );
     assert.match(md, /Neu anzulegende Zutaten: 2/);
     assert.match(md, /\| r1 \| ready \| .* \| Pfannkuchen alt → Pfannkuchen \| 3 → 2 \| 5 → 3 \|/);
@@ -320,62 +314,17 @@ test('ready proposals are saveable: their flow binds without problems', () => {
     assert.deepEqual(importedFlowProblems(p.recipe!), []);
 });
 
-test('source check: title stems and catalogue ingredients, both below the threshold = mismatch', () => {
-    assert.deepEqual(
-        [...titleStems('Omas einfache Zwiebel-Lauch-Suppe mit Speck')],
-        ['omas', 'zwieb', 'lauch', 'suppe', 'speck'],
-    );
-    assert.equal(SOURCE_MATCH_THRESHOLD, 0.3);
-    const same = sourceSimilarity(
-        { title: 'Zwiebelsuppe', ingredientIds: ['onion', 'water'] },
-        { title: 'Französische Zwiebelsuppe', ingredientIds: ['onion', 'water', null] },
-    );
-    assert.equal(same.ingredients, 1);
-
-    const proposal = (title: string): FullRefreshProposal => ({
-        recipeId: 'r1',
-        title: 'Zwiebelsuppe',
-        sourceUrl: 'https://x.test/a',
-        status: 'ready',
-        attempt: 1,
-        recipe: { ...evaluateReady().recipe!, title },
-        warnings: [],
-        errors: [],
-    });
-    const before = new Map([['r1', { title: 'Zwiebelsuppe', ingredientIds: ['onion', 'water'] }]]);
-    // a 404 / start page parsed as some other recipe
-    const [other] = applySourceCheck(
-        [proposal('Schokoladenkuchen')],
-        before,
-        new Map([['r1', ['sugar', 'chocolate', null]]]),
-    );
-    assert.equal(other.status, 'mismatch');
-    assert.match(other.warnings[0], /Titel 0 %, Zutaten 0 % gemeinsam \(Schwelle 30 %\)/);
-    // title changed, ingredients still match: not a mismatch
-    const [renamed] = applySourceCheck(
-        [proposal('Gratinierte Suppe')],
-        before,
-        new Map([['r1', ['onion', 'water']]]),
-    );
-    assert.equal(renamed.status, 'ready');
-    // no stored ingredients: the title decides
-    const [noIngredients] = applySourceCheck(
-        [proposal('Schokoladenkuchen')],
-        new Map([['r1', { title: 'Zwiebelsuppe', ingredientIds: [] }]]),
-        new Map(),
-    );
-    assert.equal(noIngredients.status, 'mismatch');
-});
-
-test('apply writes mismatches only with --include-mismatch or explicit --ids', () => {
+test('apply writes review cases and mismatches only on request or by explicit --ids', () => {
     const ready = { ...evaluateReady(), recipeId: 'a' };
     const mismatch: FullRefreshProposal = { ...evaluateReady(), recipeId: 'b', status: 'mismatch' };
     const invalid: FullRefreshProposal = { ...evaluateReady(), recipeId: 'c', status: 'invalid' };
-    const all = [ready, mismatch, invalid];
+    const review: FullRefreshProposal = { ...evaluateReady(), recipeId: 'd', status: 'review' };
+    const all = [ready, mismatch, invalid, review];
     const ids = (list: FullRefreshProposal[]) => list.map((p) => p.recipeId);
     assert.deepEqual(ids(writableProposals(all, {})), ['a']);
     assert.deepEqual(ids(writableProposals(all, { includeMismatch: true })), ['a', 'b']);
-    assert.deepEqual(ids(writableProposals(all, { ids: ['b', 'c'] })), ['b']);
+    assert.deepEqual(ids(writableProposals(all, { includeReview: true })), ['a', 'd']);
+    assert.deepEqual(ids(writableProposals(all, { ids: ['b', 'c', 'd'] })), ['b', 'd']);
 });
 
 function evaluateReady(): FullRefreshProposal {

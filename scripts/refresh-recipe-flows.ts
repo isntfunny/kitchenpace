@@ -16,7 +16,8 @@
  *   status                                         show the batch state
  *   fetch                                          evaluate the result: proposals + dry-run report
  *   repair                                         full mode: invalid/failed answers once more (one round)
- *   apply    [--write] [--ids=a,b]                 back up, then write the proposals (dry run without --write)
+ *   apply    [--write] [--ids=a,b] [--include-review] [--include-mismatch]
+ *                                                  back up, then write the proposals (dry run without --write)
  *   rollback <backup.json> [--write]                restore a backup (flow-only or full)
  *
  * The mode is kept in state.json; status/fetch/repair/apply follow it.
@@ -275,6 +276,7 @@ async function apply(opts: {
     write?: boolean;
     proposals?: string;
     ids?: string;
+    includeReview?: boolean;
     includeMismatch?: boolean;
 }) {
     const dir = dirOf(opts);
@@ -422,6 +424,10 @@ program
     .option(...dirOption)
     .option('--proposals <file>', 'Vorschlagsdatei (Standard: die des Batches aus state.json)')
     .option('--ids <ids>', 'nur diese Rezept-IDs aus den Vorschlägen (Komma-getrennt)')
+    .option(
+        '--include-review',
+        'Vollmodus: auch Rezepte schreiben, deren Titel stark abweicht, die Zutaten aber passen',
+    )
     .option(
         '--include-mismatch',
         'Vollmodus: auch Rezepte schreiben, deren Quelle nicht mehr passt',

@@ -5,7 +5,10 @@
 import { prisma } from '../../shared/prisma';
 import { createIngredient } from '../../src/components/recipe/ingredientActions';
 import type { FullRefreshProposal } from '../../src/lib/importer/full-refresh';
-import type { CurrentRecipeSummary } from '../../src/lib/importer/full-refresh-report';
+import type {
+    CurrentRecipeSummary,
+    IngredientRef,
+} from '../../src/lib/importer/full-refresh-report';
 import type { ResolveIngredient } from '../../src/lib/importer/pipeline';
 import { matchExistingIngredient } from '../../src/lib/ingredients/match-ingredient';
 
@@ -16,7 +19,9 @@ export async function currentSummaries(ids: string[]): Promise<Map<string, Curre
             id: true,
             title: true,
             flowNodes: true,
-            recipeIngredients: { select: { ingredientId: true } },
+            recipeIngredients: {
+                select: { ingredientId: true, ingredient: { select: { name: true } } },
+            },
             tags: { select: { tag: { select: { name: true } } } },
         },
     });
@@ -26,7 +31,10 @@ export async function currentSummaries(ids: string[]): Promise<Map<string, Curre
             {
                 title: r.title,
                 ingredientCount: r.recipeIngredients.length,
-                ingredientIds: r.recipeIngredients.map((ri) => ri.ingredientId),
+                ingredients: r.recipeIngredients.map((ri) => ({
+                    id: ri.ingredientId,
+                    name: ri.ingredient.name,
+                })),
                 nodeCount: Array.isArray(r.flowNodes) ? r.flowNodes.length : 0,
                 tags: r.tags.map((t) => t.tag.name),
             },
@@ -36,16 +44,16 @@ export async function currentSummaries(ids: string[]): Promise<Map<string, Curre
 
 /**
  * Catalogue lookup (no write) of every proposal's ingredients: the existing
- * catalogue id per ingredient (null if the apply would create it) and the
- * canonical names of the ones it would create.
+ * catalogue id and name per ingredient (id null if the apply would create
+ * it) and the canonical names of the ones it would create.
  */
 export async function matchProposalIngredients(proposals: FullRefreshProposal[]) {
     const cache = new Map<string, { id: string | null; name: string }>();
-    const ids = new Map<string, (string | null)[]>();
+    const refs = new Map<string, IngredientRef[]>();
     const newNames = new Map<string, string[]>();
     for (const p of proposals) {
         if (!p.recipe) continue;
-        const recipeIds: (string | null)[] = [];
+        const recipeRefs: IngredientRef[] = [];
         const names: string[] = [];
         for (const ing of p.recipe.ingredients) {
             const key = ing.name.trim().toLocaleLowerCase('de');
@@ -58,13 +66,13 @@ export async function matchProposalIngredients(proposals: FullRefreshProposal[])
                 });
             }
             const hit = cache.get(key)!;
-            recipeIds.push(hit.id);
+            recipeRefs.push(hit);
             if (!hit.id && !names.includes(hit.name)) names.push(hit.name);
         }
-        ids.set(p.recipeId, recipeIds);
+        refs.set(p.recipeId, recipeRefs);
         if (names.length) newNames.set(p.recipeId, names);
     }
-    return { ids, newNames };
+    return { refs, newNames };
 }
 
 /** createIngredient with a name → ingredient cache for the whole run. */

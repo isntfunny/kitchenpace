@@ -213,7 +213,7 @@ export function initTelemetry(fallbackService: string): boolean {
                 ignoreRequestHook: (req) => isIgnoredOutgoingTarget(req.origin, req.path),
             }),
             new HttpInstrumentation({
-                ignoreIncomingRequestHook: () => true,
+                disableIncomingRequestInstrumentation: true,
                 ignoreOutgoingRequestHook: (req) => {
                     const host = String(req.host ?? req.hostname ?? '');
                     const path = String(req.path ?? '');

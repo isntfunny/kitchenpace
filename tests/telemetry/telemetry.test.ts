@@ -137,6 +137,7 @@ test('NodeSDK exports parent spans, Undici auto-instrumentation, exception event
             const raw = Buffer.concat(chunks).toString('utf8');
             if (req.url === '/ping') {
                 pingTraceparent = req.headers.traceparent as string | undefined;
+                recordError('server.incoming.check', new Error('Incoming handler span check'));
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end('{"ok":true}');
                 return;
@@ -234,6 +235,11 @@ test('NodeSDK exports parent spans, Undici auto-instrumentation, exception event
         assert.ok(
             events.some((e) => e.name === 'exception'),
             'Expected exception span event on test.parent',
+        );
+
+        assert.ok(
+            spans.some((s) => s.name === 'server.incoming.check'),
+            'Expected incoming node:http handler span not to be suppressed',
         );
 
         const logRecords = logPayloads.flatMap((payload) => {

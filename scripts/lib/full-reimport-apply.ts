@@ -1,8 +1,10 @@
 /**
  * apply and rollback of the full re-import (KUC-115). apply is resumable:
- * every written recipe is appended to `applied.jsonl` right away, so a run
- * that breaks off can be started again and skips what is done (its backup is
- * the first run's). rollback restores only what the log lists as applied
+ * every written recipe is appended to `applied.jsonl` right after its
+ * transaction commits (before image and nutrition), so a run that breaks off
+ * can be started again and skips what is done (its backup is the first
+ * run's). SIGINT/SIGTERM/SIGHUP stop after the recipe in hand; the search
+ * sync and the result file still follow. rollback restores only what the log lists as applied
  * from that backup and warns about recipes edited since.
  */
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -25,6 +27,7 @@ import {
     type AppliedEntry,
 } from '../../src/lib/importer/full-refresh-progress';
 import { replaceImportedRecipe } from '../../src/lib/importer/pipeline';
+import { stopOnSignal } from '../../src/lib/importer/stop-on-signal';
 import { setEnrichmentEnqueuer } from '../../src/lib/ingredients/enqueue-enrichment';
 import { setNewIngredientNotifications } from '../../src/lib/ingredients/new-ingredient-notifications';
 
@@ -113,21 +116,36 @@ export async function applyFull(
     const applied: string[] = [];
     const failed: { id: string; error: string }[] = [];
     const warnings: { id: string; warnings: string[] }[] = [];
+    const stop = stopOnSignal((signal) =>
+        console.warn(
+            `${signal}: höre nach dem laufenden Rezept auf (Suche und Ergebnisdatei folgen noch). Erneut senden bricht sofort ab.`,
+        ),
+    );
     try {
         for (const [index, p] of todo.entries()) {
+            if (stop.requested) {
+                console.warn(
+                    `Abgebrochen nach ${applied.length} Rezepten; ${todo.length - index} offen. Erneut "apply --write" mit demselben --dir setzt fort.`,
+                );
+                break;
+            }
             try {
                 const result = await replaceImportedRecipe(prisma, p.recipeId, p.recipe!, {
                     resolveIngredient,
+                    // recorded before image and nutrition: a stop after this
+                    // point must not leave a written recipe out of the log
+                    onCommitted: () => {
+                        appendFileSync(
+                            logPath,
+                            progressLine({
+                                recipeId: p.recipeId,
+                                at: new Date().toISOString(),
+                                backup: backupPath,
+                            }),
+                        );
+                        applied.push(p.recipeId);
+                    },
                 });
-                appendFileSync(
-                    logPath,
-                    progressLine({
-                        recipeId: p.recipeId,
-                        at: new Date().toISOString(),
-                        backup: backupPath,
-                    }),
-                );
-                applied.push(p.recipeId);
                 if (result.warnings.length)
                     warnings.push({ id: p.recipeId, warnings: result.warnings });
                 console.log(
@@ -141,7 +159,8 @@ export async function applyFull(
             }
         }
     } finally {
-        // Also after a crash: what was written gets its search sync and enrichment
+        stop.dispose();
+        // Also after a crash or a stop: what was written gets its search sync and enrichment
         const createdIngredients = await prisma.ingredient
             .findMany({ where: { id: { in: [...created] } }, select: { id: true, name: true } })
             .catch(() => [...created].map((id) => ({ id, name: null })));

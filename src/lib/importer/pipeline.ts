@@ -405,8 +405,10 @@ export async function saveImportedRecipe(
  *
  * Ingredients, units, categories and tags are resolved first (new catalogue
  * entries stay even if the write fails); the recipe itself is replaced in one
- * short transaction. A fetched image is moved to approved/ only after that
- * transaction succeeded. Nutrition is recalculated afterwards.
+ * short transaction. `onCommitted` runs right after that transaction, before
+ * anything slow, so a caller can record the write even if the process is
+ * stopped afterwards. A fetched image is moved to approved/ only then;
+ * nutrition is recalculated last. Problems after the commit become warnings.
  */
 export async function replaceImportedRecipe(
     db: PrismaClient,
@@ -417,6 +419,8 @@ export async function replaceImportedRecipe(
         updateNutrition?: (recipeId: string, servings: number) => Promise<unknown>;
         /** Catalogue lookup/creation, e.g. cached over a whole run (default: createIngredient) */
         resolveIngredient?: ResolveIngredient;
+        /** Runs right after the transaction committed (e.g. a progress log line) */
+        onCommitted?: () => void | Promise<void>;
     },
 ): Promise<{ id: string; imageAdded: boolean; warnings: string[] }> {
     const current = await db.recipe.findUniqueOrThrow({
@@ -443,20 +447,26 @@ export async function replaceImportedRecipe(
         await linkCategoryIds(tx, recipeId, categoryIds);
         await linkTagIds(tx, recipeId, tagIds);
     }, BULK_TRANSACTION_OPTIONS);
+    await options?.onCommitted?.();
 
     // The recipe is written at this point; later problems are reported, not thrown
     const warnings: string[] = [];
+    const reason = (error: unknown) => (error instanceof Error ? error.message : String(error));
     let imageAdded = false;
     if (uploaded) {
-        const imageKey = await approveImportImage(uploaded, recipeId);
-        if (imageKey) {
-            // Only if nobody set an image in the meantime
-            const set = await db.recipe.updateMany({
-                where: { id: recipeId, imageKey: null },
-                data: { imageKey },
-            });
-            imageAdded = set.count > 0;
-        } else warnings.push('Bild aus der Quelle nicht übernommen');
+        try {
+            const imageKey = await approveImportImage(uploaded, recipeId);
+            if (imageKey) {
+                // Only if nobody set an image in the meantime
+                const set = await db.recipe.updateMany({
+                    where: { id: recipeId, imageKey: null },
+                    data: { imageKey },
+                });
+                imageAdded = set.count > 0;
+            } else warnings.push('Bild aus der Quelle nicht übernommen');
+        } catch (error) {
+            warnings.push(`Bild aus der Quelle nicht übernommen: ${reason(error)}`);
+        }
     }
 
     const updateNutrition =
@@ -469,9 +479,7 @@ export async function replaceImportedRecipe(
     try {
         await updateNutrition(recipeId, fields.servings);
     } catch (error) {
-        warnings.push(
-            `Nährwerte nicht neu berechnet: ${error instanceof Error ? error.message : String(error)}`,
-        );
+        warnings.push(`Nährwerte nicht neu berechnet: ${reason(error)}`);
     }
 
     return { id: recipeId, imageAdded, warnings };

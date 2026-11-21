@@ -17,7 +17,7 @@ export type ProgressLine =
 
 export interface AppliedEntry {
     recipeId: string;
-    /** When the write (incl. nutrition) finished */
+    /** When the transaction of the write committed (image and nutrition follow) */
     at: string;
     /** Backup file holding the recipe's state before the write */
     backup: string;

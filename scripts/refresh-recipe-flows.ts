@@ -21,6 +21,14 @@
  *
  * The mode is kept in state.json; status/fetch/repair/apply follow it.
  *
+ * Long runs (full apply): start them so that a closed terminal does not stop
+ * them, e.g. in tmux, or in the worker container with
+ * `docker exec -d <worker> sh -c 'npx tsx scripts/refresh-recipe-flows.ts apply --write --dir=… > /app/backups/refresh-flows/apply.log 2>&1'`.
+ * SIGINT/SIGTERM/SIGHUP stop after the recipe in hand (search sync and the
+ * result file still follow); a second signal stops at once. Each written
+ * recipe is in applied.jsonl right after its transaction, so `apply --write`
+ * again continues where the run stopped.
+ *
  * All files go to --dir (default: $BACKUP_DIR/refresh-flows or ./backups/refresh-flows).
  * Input per recipe: the source page scraped again (SCRAPLER_URL); if that fails,
  * the stored recipe (ingredient list + previous flow) as text.
@@ -419,6 +427,15 @@ program
         'Vollmodus: auch Rezepte schreiben, deren Quelle nicht mehr passt',
     )
     .option('--write', 'wirklich schreiben (sonst Trockenlauf)')
+    .addHelpText(
+        'after',
+        `
+Lange Läufe in tmux oder im Container mit "docker exec -d" starten, damit ein
+geschlossenes Terminal sie nicht beendet. Strg+C, SIGTERM oder SIGHUP beenden
+nach dem laufenden Rezept sauber (Suche und Ergebnisdatei folgen noch); ein
+zweites Signal bricht sofort ab. Erneut "apply --write" mit demselben --dir
+setzt fort.`,
+    )
     .action(apply);
 program
     .command('rollback <backup>')

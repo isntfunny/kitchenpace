@@ -156,7 +156,15 @@ test(
                 ...flow(['Die @[Zwiebeln](ingredient-0) schälen.', 'Aufkochen.']),
             });
             broken.flowNodes[1].description = 'Mit @[Salz](kein-zutaten-eintrag) würzen.';
-            await assert.rejects(replaceImportedRecipe(prisma, recipeId, broken));
+            let committedBroken = false;
+            await assert.rejects(
+                replaceImportedRecipe(prisma, recipeId, broken, {
+                    onCommitted: () => {
+                        committedBroken = true;
+                    },
+                }),
+            );
+            assert.equal(committedBroken, false, 'no commit callback for a failed write');
             const [untouched] = await snapshotRecipes(prisma, [recipeId]);
             assert.deepEqual(untouched, backup);
 
@@ -182,18 +190,29 @@ test(
                 ]),
             } as ImportedRecipe);
             const nutrition: [string, number][] = [];
+            const order: string[] = [];
             const result = await replaceImportedRecipe(
                 prisma,
                 recipeId,
                 { ...fresh, sourceUrl: `https://x.test/${key}` },
                 {
+                    onCommitted: async () => {
+                        // already visible outside the transaction
+                        const { title } = await prisma.recipe.findUniqueOrThrow({
+                            where: { id: recipeId },
+                            select: { title: true },
+                        });
+                        order.push(`committed:${title === fresh.title}`);
+                    },
                     updateNutrition: async (id, servings) => {
+                        order.push('nutrition');
                         nutrition.push([id, servings]);
                     },
                 },
             );
             assert.equal(result.imageAdded, false, 'an existing image is kept, none fetched');
             assert.deepEqual(nutrition, [[recipeId, 4]]);
+            assert.deepEqual(order, ['committed:true', 'nutrition']);
 
             const after = await prisma.recipe.findUniqueOrThrow({
                 where: { id: recipeId },

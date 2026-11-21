@@ -56,7 +56,6 @@ services:
         environment:
             LOG_LEVEL: ${LOG_LEVEL:-info}
             OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
-            OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
             OTEL_SERVICE_NAME: kitchenpace-web
             OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=production}
         extra_hosts:
@@ -94,7 +93,6 @@ services:
             BACKUP_DIR: /app/backups
             LOG_LEVEL: ${LOG_LEVEL:-info}
             OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
-            OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
             OTEL_SERVICE_NAME: kitchenpace-worker
             OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=production}
         volumes:

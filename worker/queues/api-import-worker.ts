@@ -2,7 +2,6 @@ import { SpanKind } from '@opentelemetry/api';
 import { Queue, Worker, type ConnectionOptions } from 'bullmq';
 
 import { createLogger } from '../../shared/logger';
-import { flushTelemetry } from '../../shared/telemetry/lifecycle';
 import { withSpan } from '../../shared/telemetry/tracing';
 import { createImportProcessor } from '../../src/lib/api/import-processor';
 import { fetchImportText } from '../../src/lib/api/safe-fetch';
@@ -40,13 +39,7 @@ export function startApiImportWorker() {
         (job) =>
             withSpan(
                 'job.personal-api-imports.import-recipe',
-                async () => {
-                    try {
-                        return await processImport(job.data.importId);
-                    } finally {
-                        await flushTelemetry();
-                    }
-                },
+                () => processImport(job.data.importId),
                 {
                     kind: SpanKind.CONSUMER,
                     attributes: {

@@ -10,17 +10,14 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 
 import { createIngredient, findOrCreateUnit } from '@app/components/recipe/ingredientActions';
 import { applyFlowPositions } from '@app/lib/flow-layout';
-import {
-    assertResolvedMentions,
-    repairIngredientMentions,
-} from '@app/lib/ingredients/recipe-mentions';
+import { assertResolvedMentions } from '@app/lib/ingredients/recipe-mentions';
 import { approvedKey } from '@app/lib/s3/keys';
 import { moveObject } from '@app/lib/s3/operations';
 import { generateUniqueSlug } from '@app/lib/slug';
 import { AI_TEXT_MODEL } from '@shared/ai-models';
 import { pickListedTags, TAG_NAMES_SORTED } from '@shared/tags/tag-list';
 
-import { bindMentions } from './import-mentions';
+import { bindImportedFlow } from './import-flow-binding';
 import { describeParseError, importRecipeFromMarkdown } from './openai-client';
 import { type AnalyzedRecipe, transformImportedRecipe } from './transform';
 import { uploadImageFromUrl } from './upload-image-from-url';
@@ -199,13 +196,19 @@ export interface PreparedImport {
     flowEdges: object;
 }
 
+/** Finds or creates a catalogue ingredient by name (default: createIngredient). */
+export type ResolveIngredient = (name: string) => Promise<{ id: string }>;
+
 /**
  * Finds or creates the catalogue ingredients and units, binds the AI's
  * mentions to the new RecipeIngredient ids and checks that every mention
  * resolves. Runs before the recipe write (ingredient creation uses its own
  * connection and enqueues the enrichment, KUC-94/114).
  */
-export async function prepareImportedRecipe(data: AnalyzedRecipe): Promise<PreparedImport> {
+export async function prepareImportedRecipe(
+    data: AnalyzedRecipe,
+    resolveIngredient: ResolveIngredient = createIngredient,
+): Promise<PreparedImport> {
     if (!data.title?.trim()) {
         throw new Error('Bitte gib einen Rezepttitel ein.');
     }
@@ -214,66 +217,30 @@ export async function prepareImportedRecipe(data: AnalyzedRecipe): Promise<Prepa
     }
 
     // Find or create ingredients + resolve units
-    const syncedIngredients: ((typeof data.ingredients)[number] & {
-        referenceId: string;
-        ingredientId: string;
-        unitId: string;
-    })[] = [];
-    for (const ing of data.ingredients) {
+    const rows: PreparedImport['ingredientRows'] = [];
+    for (const [index, ing] of data.ingredients.entries()) {
         const [ingredient, unitId] = await Promise.all([
-            createIngredient(ing.name),
+            resolveIngredient(ing.name),
             findOrCreateUnit(ing.unit),
         ]);
-        syncedIngredients.push({
-            ...ing,
-            referenceId: randomUUID(),
+        rows.push({
+            id: randomUUID(),
+            sourceId: ing.id,
             ingredientId: ingredient.id,
             unitId,
-        });
-    }
-
-    const sourceIds = new Map(syncedIngredients.map((ing) => [ing.id, ing.referenceId]));
-    if (sourceIds.size !== syncedIngredients.length) throw new Error('Doppelte Import-Zutaten-ID');
-    // Pure id mapping: the AI's display text ("Zwiebeln") and partial amounts stay.
-    // Unknown ids are kept so the repair check below reports them.
-    const mapped = bindMentions(
-        data.flowNodes.map((node) => ({ ...node, description: node.description ?? '' })),
-        sourceIds,
-        { unknown: 'keep' },
-    );
-    // Ingredients picked for a step in the review keep their place in ingredientIds.
-    const mappedNodes = mapped.nodes.map((node, index) => ({
-        ...node,
-        ingredientIds: [
-            ...new Set([
-                ...node.ingredientIds,
-                ...(data.flowNodes[index].ingredientIds ?? []).map((id) => sourceIds.get(id) ?? id),
-            ]),
-        ],
-    }));
-    const resolvedFlow = repairIngredientMentions(
-        mappedNodes,
-        syncedIngredients.map((ing) => ({
-            ...ing,
-            id: ing.referenceId,
-            sourceId: ing.id,
-        })),
-        new Map(),
-        { allowNameFallback: false },
-    );
-    assertResolvedMentions(resolvedFlow.issues);
-
-    return {
-        ingredientRows: syncedIngredients.map((ing, index) => ({
-            id: ing.referenceId,
-            sourceId: ing.id,
-            ingredientId: ing.ingredientId,
-            unitId: ing.unitId,
             amount: ing.amount,
             notes: ing.notes ?? null,
             isOptional: ing.isOptional,
             position: index,
-        })),
+        });
+    }
+
+    // Pure id mapping: the AI's display text ("Zwiebeln") and partial amounts stay.
+    const resolvedFlow = bindImportedFlow(data, new Map(rows.map((row) => [row.sourceId, row.id])));
+    assertResolvedMentions(resolvedFlow.issues);
+
+    return {
+        ingredientRows: rows,
         flowNodes: applyFlowPositions(resolvedFlow.nodes, data.flowEdges) as unknown as object,
         flowEdges: data.flowEdges as unknown as object,
     };
@@ -301,29 +268,21 @@ async function approveImportImage(imageKey: string, recipeId: string): Promise<s
     }
 }
 
-/** Links the AI's categories (slugs) to the recipe; unknown slugs are dropped. */
-export async function linkImportedCategories(db: Db, recipeId: string, categorySlugs: string[]) {
-    if (!categorySlugs.length) return;
+/** Category ids for the AI's category slugs, in their order; unknown slugs are dropped. */
+async function resolveCategoryIds(db: Db, categorySlugs: string[]): Promise<string[]> {
+    if (!categorySlugs.length) return [];
     const categories = await db.category.findMany({
         where: { slug: { in: categorySlugs } },
         select: { id: true, slug: true },
     });
     const slugToId = new Map(categories.map((c) => [c.slug, c.id]));
-    const validEntries = categorySlugs
-        .map((slug, index) => ({ id: slugToId.get(slug), index }))
-        .filter((e): e is { id: string; index: number } => e.id != null)
-        .map(({ id, index }) => ({ recipeId, categoryId: id, position: index }));
-    if (validEntries.length) {
-        await db.recipeCategory.createMany({ data: validEntries, skipDuplicates: true });
-    }
+    return [...new Set(categorySlugs.map((slug) => slugToId.get(slug)).filter((id) => id != null))];
 }
 
-/** Links the AI's tags; only tags from the fixed list (KUC-116), never new free tags. */
-export async function linkImportedTags(db: Db, recipeId: string, tagNames: string[]) {
-    const listedTags = pickListedTags(tagNames);
-    if (!listedTags.length) return;
-    const tags: { id: string }[] = [];
-    for (const listed of listedTags) {
+/** Tag ids for the AI's tags: only tags from the fixed list (KUC-116), created if missing. */
+export async function resolveListedTagIds(db: Db, tagNames: string[]): Promise<string[]> {
+    const ids: string[] = [];
+    for (const listed of pickListedTags(tagNames)) {
         // Name match too: before the cleanup some tags have a non-standard slug
         const existing = await db.tag.findFirst({
             where: {
@@ -337,11 +296,23 @@ export async function linkImportedTags(db: Db, recipeId: string, tagNames: strin
                 data: { name: listed.name, slug: listed.slug },
                 select: { id: true },
             }));
-        tags.push(tag);
+        ids.push(tag.id);
     }
+    return [...new Set(ids)];
+}
 
+async function linkCategoryIds(db: Db, recipeId: string, categoryIds: string[]) {
+    if (!categoryIds.length) return;
+    await db.recipeCategory.createMany({
+        data: categoryIds.map((categoryId, position) => ({ recipeId, categoryId, position })),
+        skipDuplicates: true,
+    });
+}
+
+async function linkTagIds(db: Db, recipeId: string, tagIds: string[]) {
+    if (!tagIds.length) return;
     await db.recipeTag.createMany({
-        data: tags.map((tag) => ({ recipeId, tagId: tag.id })),
+        data: tagIds.map((tagId) => ({ recipeId, tagId })),
         skipDuplicates: true,
     });
 }
@@ -358,6 +329,9 @@ function importedRecipeFields(data: AnalyzedRecipe) {
         difficulty: data.difficulty ?? 'MEDIUM',
     } as const;
 }
+
+/** Interactive transactions of the bulk paths: room for big recipes on a busy pool. */
+export const BULK_TRANSACTION_OPTIONS = { timeout: 60_000, maxWait: 10_000 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // saveImportedRecipe
@@ -411,8 +385,8 @@ export async function saveImportedRecipe(
             });
     }
 
-    await linkImportedCategories(db, recipe.id, data.categoryIds ?? []);
-    await linkImportedTags(db, recipe.id, data.tags ?? []);
+    await linkCategoryIds(db, recipe.id, await resolveCategoryIds(db, data.categoryIds ?? []));
+    await linkTagIds(db, recipe.id, await resolveListedTagIds(db, data.tags ?? []));
 
     return { id: recipe.id, slug: recipe.slug };
 }
@@ -429,9 +403,10 @@ export async function saveImportedRecipe(
  * image is fetched from the source) and everything users added (ratings,
  * comments, favourites, cook counts and photos, collections, views).
  *
- * Ingredients and units are resolved first (new catalogue entries stay even
- * if the write fails); the recipe itself is replaced in one transaction.
- * Nutrition is recalculated afterwards from the new ingredient rows.
+ * Ingredients, units, categories and tags are resolved first (new catalogue
+ * entries stay even if the write fails); the recipe itself is replaced in one
+ * short transaction. A fetched image is moved to approved/ only after that
+ * transaction succeeded. Nutrition is recalculated afterwards.
  */
 export async function replaceImportedRecipe(
     db: PrismaClient,
@@ -440,19 +415,18 @@ export async function replaceImportedRecipe(
     options?: {
         /** Recalculates nutrition after the write (default: updateRecipeNutrition) */
         updateNutrition?: (recipeId: string, servings: number) => Promise<unknown>;
+        /** Catalogue lookup/creation, e.g. cached over a whole run (default: createIngredient) */
+        resolveIngredient?: ResolveIngredient;
     },
 ): Promise<{ id: string; imageAdded: boolean; warnings: string[] }> {
     const current = await db.recipe.findUniqueOrThrow({
         where: { id: recipeId },
         select: { id: true, imageKey: true },
     });
-    const prepared = await prepareImportedRecipe(data);
-
-    let imageKey: string | null = null;
-    if (!current.imageKey) {
-        const uploaded = await uploadImportImage(data.imageUrl);
-        if (uploaded) imageKey = await approveImportImage(uploaded, recipeId);
-    }
+    const prepared = await prepareImportedRecipe(data, options?.resolveIngredient);
+    const categoryIds = await resolveCategoryIds(db, data.categoryIds ?? []);
+    const tagIds = await resolveListedTagIds(db, data.tags ?? []);
+    const uploaded = current.imageKey ? undefined : await uploadImportImage(data.imageUrl);
 
     const fields = importedRecipeFields(data);
     await db.$transaction(async (tx) => {
@@ -461,17 +435,29 @@ export async function replaceImportedRecipe(
         await tx.recipeCategory.deleteMany({ where: { recipeId } });
         await tx.recipe.update({
             where: { id: recipeId },
-            data: {
-                ...fields,
-                ...(imageKey ? { imageKey } : {}),
-                flowNodes: prepared.flowNodes,
-                flowEdges: prepared.flowEdges,
-                recipeIngredients: { create: prepared.ingredientRows },
-            },
+            data: { ...fields, flowNodes: prepared.flowNodes, flowEdges: prepared.flowEdges },
         });
-        await linkImportedCategories(tx, recipeId, data.categoryIds ?? []);
-        await linkImportedTags(tx, recipeId, data.tags ?? []);
-    });
+        await tx.recipeIngredient.createMany({
+            data: prepared.ingredientRows.map((row) => ({ ...row, recipeId })),
+        });
+        await linkCategoryIds(tx, recipeId, categoryIds);
+        await linkTagIds(tx, recipeId, tagIds);
+    }, BULK_TRANSACTION_OPTIONS);
+
+    // The recipe is written at this point; later problems are reported, not thrown
+    const warnings: string[] = [];
+    let imageAdded = false;
+    if (uploaded) {
+        const imageKey = await approveImportImage(uploaded, recipeId);
+        if (imageKey) {
+            // Only if nobody set an image in the meantime
+            const set = await db.recipe.updateMany({
+                where: { id: recipeId, imageKey: null },
+                data: { imageKey },
+            });
+            imageAdded = set.count > 0;
+        } else warnings.push('Bild aus der Quelle nicht übernommen');
+    }
 
     const updateNutrition =
         options?.updateNutrition ??
@@ -480,8 +466,6 @@ export async function replaceImportedRecipe(
                 await import('@app/lib/nutrition/update-recipe-nutrition');
             return updateRecipeNutrition(id, servings);
         });
-    // The recipe is written at this point; a failed recalculation is reported, not thrown
-    const warnings: string[] = [];
     try {
         await updateNutrition(recipeId, fields.servings);
     } catch (error) {
@@ -490,5 +474,5 @@ export async function replaceImportedRecipe(
         );
     }
 
-    return { id: recipeId, imageAdded: imageKey !== null, warnings };
+    return { id: recipeId, imageAdded, warnings };
 }

@@ -3,11 +3,11 @@
  * they are now and the catalogue ingredients a write would create.
  */
 import { prisma } from '../../shared/prisma';
-import { matchExistingIngredient } from '../../src/components/recipe/ingredientActions';
 import type {
     CurrentRecipeSummary,
     FullRefreshProposal,
 } from '../../src/lib/importer/full-refresh';
+import { matchExistingIngredient } from '../../src/lib/ingredients/match-ingredient';
 
 export async function currentSummaries(ids: string[]): Promise<Map<string, CurrentRecipeSummary>> {
     const rows = await prisma.recipe.findMany({

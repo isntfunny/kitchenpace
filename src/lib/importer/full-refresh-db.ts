@@ -7,6 +7,7 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 
 import type { FullBackupEntry } from './full-refresh';
+import { BULK_TRANSACTION_OPTIONS } from './pipeline';
 
 /** Full backup rows for the given recipes (missing ids are left out). */
 export async function snapshotRecipes(db: PrismaClient, ids: string[]): Promise<FullBackupEntry[]> {
@@ -98,5 +99,5 @@ export async function restoreFullBackupEntry(db: PrismaClient, entry: FullBackup
             await tx.recipeCategory.createMany({
                 data: entry.recipeCategories.map((c) => ({ ...c, recipeId: entry.id })),
             });
-    });
+    }, BULK_TRANSACTION_OPTIONS);
 }

@@ -15,6 +15,7 @@ import {
     parseBatchOutputJsonl,
 } from '../../shared/openai-batch';
 import { prisma } from '../../shared/prisma';
+import { createIngredient } from '../../src/components/recipe/ingredientActions';
 import {
     buildFullRefreshRequest,
     buildFullRepairRequest,
@@ -33,8 +34,13 @@ import {
 } from '../../src/lib/importer/full-refresh';
 import { restoreFullBackupEntry, snapshotRecipes } from '../../src/lib/importer/full-refresh-db';
 import type { ChatRequestBody } from '../../src/lib/importer/import-prompt';
-import { fetchImportContext, replaceImportedRecipe } from '../../src/lib/importer/pipeline';
+import {
+    fetchImportContext,
+    replaceImportedRecipe,
+    type ResolveIngredient,
+} from '../../src/lib/importer/pipeline';
 import { scrapeRecipe } from '../../src/lib/importer/scraper';
+import { setEnrichmentEnqueuer } from '../../src/lib/ingredients/enqueue-enrichment';
 import { setNewIngredientNotifications } from '../../src/lib/ingredients/new-ingredient-notifications';
 
 import { currentSummaries, plannedNewIngredients } from './full-reimport-db';
@@ -313,8 +319,15 @@ export async function applyFull(
     }
     if (todo.length === 0) return;
 
-    // Bulk run: no moderator notification per new ingredient, the report lists them
+    // Bulk run: no moderator notification per new ingredient (the report lists
+    // them), enrichment collected and enqueued once at the end, catalogue
+    // lookups cached over the whole run.
     setNewIngredientNotifications(false);
+    const created = new Set<string>();
+    setEnrichmentEnqueuer(async (id) => {
+        created.add(id);
+    });
+    const resolveIngredient = cachedIngredientResolver();
     const startedAt = new Date();
     const backup: FullBackup = {
         kind: 'full',
@@ -333,7 +346,9 @@ export async function applyFull(
     const warnings: { id: string; warnings: string[] }[] = [];
     for (const [index, p] of todo.entries()) {
         try {
-            const result = await replaceImportedRecipe(prisma, p.recipeId, p.recipe!);
+            const result = await replaceImportedRecipe(prisma, p.recipeId, p.recipe!, {
+                resolveIngredient,
+            });
             applied.push(p.recipeId);
             if (result.warnings.length)
                 warnings.push({ id: p.recipeId, warnings: result.warnings });
@@ -348,8 +363,8 @@ export async function applyFull(
             );
         }
     }
-    const created = await prisma.ingredient.findMany({
-        where: { createdAt: { gte: startedAt } },
+    const createdIngredients = await prisma.ingredient.findMany({
+        where: { id: { in: [...created] } },
         select: { id: true, name: true },
     });
     writeJson(join(dir, `apply-full-${stamp()}.json`), {
@@ -357,15 +372,29 @@ export async function applyFull(
         applied,
         failed,
         warnings,
-        createdIngredients: created,
+        createdIngredients,
     });
     console.log(
-        `${applied.length} Rezepte neu importiert, ${failed.length} fehlgeschlagen, ${created.length} Zutaten neu angelegt.`,
+        `${applied.length} Rezepte neu importiert, ${failed.length} fehlgeschlagen, ${created.size} Zutaten neu angelegt.`,
     );
-    // Enrichment was enqueued on creation already; again here because the script
-    // exits right after (same jobId, BullMQ deduplicates).
-    await syncSearch(applied, { enrichIngredientIds: created.map((i) => i.id) });
+    await syncSearch(applied, { enrichIngredientIds: [...created] });
     if (failed.length > 0) process.exitCode = 1;
+}
+
+/** createIngredient with a name → ingredient cache for the whole run. */
+function cachedIngredientResolver(): ResolveIngredient {
+    const cache = new Map<string, Promise<{ id: string }>>();
+    return (name) => {
+        const key = name.trim().toLocaleLowerCase('de');
+        let hit = cache.get(key);
+        if (!hit) {
+            hit = createIngredient(name);
+            // a failed lookup must not stick
+            hit.catch(() => cache.delete(key));
+            cache.set(key, hit);
+        }
+        return hit;
+    };
 }
 
 export async function rollbackFull(file: string, backup: unknown, opts: { write?: boolean }) {

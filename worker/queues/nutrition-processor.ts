@@ -9,6 +9,7 @@ import { Job } from 'bullmq';
 import OpenAI from 'openai';
 
 import { AI_TEXT_MODEL } from '@shared/ai-models';
+import { buildIconPromptRules, getIconSchemaProperty } from '@shared/ingredient-icons/enrichment';
 import { responsesOutputText } from '@shared/openai-batch';
 
 import { prisma } from './prisma';
@@ -127,8 +128,9 @@ function getEnrichResponseFormat(
                         enum: categories.map((c) => c.slug),
                     },
                 },
+                icon: getIconSchemaProperty(),
             },
-            required: [...ALL_FIELDS, 'source', 'relevantUnits', 'categories'],
+            required: [...ALL_FIELDS, 'source', 'relevantUnits', 'categories', 'icon'],
             additionalProperties: false,
         },
     };
@@ -147,6 +149,7 @@ function buildSystemPrompt(
 1. Nährwerte pro 100g essbarem Anteil
 2. Relevante Einheiten mit ungefährem Gewicht pro Stück/Einheit
 3. Passende Kategorien
+4. Ein Icon für die Einkaufsliste
 
 NÄHRWERT-REGELN:
 - Alle Werte beziehen sich auf 100g des essbaren Anteils (roh, unverarbeitet sofern nicht anders angegeben).
@@ -182,7 +185,9 @@ KATEGORIE-REGELN:
 - Eine Zutat kann mehreren Kategorien angehören (z.B. "Tomate" → Gemüse; "Olivenöl" → Öle & Fette).
 
 VERFÜGBARE KATEGORIEN:
-${categoryList}`;
+${categoryList}
+
+${buildIconPromptRules()}`;
 }
 
 // ── Request and import (shared with the batch backfill) ─────────────────

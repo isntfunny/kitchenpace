@@ -1,14 +1,17 @@
 // src/lib/importer/openai-recipe-schema.ts
-// Zod-Schemas für die OpenAI Response Format Validierung
+// Zod schemas and strict JSON schemas for the OpenAI response (KUC-115, G2M-1).
+//
+// The ingredients come first so the model knows their temporary ids
+// ("ingredient-N") while it writes the mentions in the flow texts.
 
 import { z } from 'zod';
 
 // ============================================================================
-// Enums und Konstanten — müssen mit editorTypes.ts StepType übereinstimmen
+// Enums — must match editorTypes.ts StepType
 // ============================================================================
 
-/** Alle Schritttypen des Flow-Editors. 'start' ist Pflicht als erster Knoten. */
-const STEP_TYPES = [
+/** All step types of the flow editor. 'start' and 'servieren' occur exactly once. */
+export const STEP_TYPES = [
     'start',
     'schneiden',
     'kochen',
@@ -35,267 +38,172 @@ const CATEGORIES = [
 const DIFFICULTIES = ['Einfach', 'Mittel', 'Schwer'] as const;
 
 // ============================================================================
-// Basis-Schemas
+// Zod schemas
 // ============================================================================
 
 const IngredientSchema = z.object({
-    name: z
-        .string()
-        .min(1)
-        .describe(
-            'Name der Zutat auf DEUTSCH (nur der reine Name, z.B. "Tomaten", "Linguine", "Maisstärke"). NIEMALS englische Namen — immer ins Deutsche übersetzen.',
-        ),
-    amount: z
-        .number()
-        .positive()
-        .nullable()
-        .describe('Menge der Zutat als Zahl, null wenn nicht klar'),
-    unit: z
-        .string()
-        .min(1)
-        .nullable()
-        .describe('Einheit (z.B. g, ml, Stück, EL), null wenn nicht klar'),
-    notes: z
-        .string()
-        .nullable()
-        .describe(
-            'Zubereitungshinweis zur Zutat, z.B. "frisch gehackt", "fein gewürfelt", "zimmerwarm". Null wenn kein Hinweis nötig.',
-        ),
+    id: z.string().regex(/^ingredient-\d+$/, 'id muss die Form "ingredient-N" haben'),
+    name: z.string().min(1),
+    amount: z.number().positive().nullable(),
+    unit: z.string().min(1).nullable(),
+    notes: z.string().nullable(),
 });
 
-const FlowNodeSchema = z.object({
-    id: z.string().min(1).describe('Eindeutige ID des Knotens (z.B. start, step-1, servieren)'),
-    type: z.enum(STEP_TYPES).describe('Typ des Schritts'),
-    label: z.string().min(1).max(50).describe('Kurzer Titel des Schritts'),
-    description: z.string().min(1).describe('Detaillierte Beschreibung der Aktion'),
-    duration: z
-        .number()
-        .positive()
-        .nullable()
-        .describe('Dauer in Minuten, null wenn nicht angegeben'),
-    laneId: z.string().min(1).describe('ID der Lane/Spur für parallele Prozesse'),
-    ingredientIds: z
-        .array(z.string())
-        .describe('Array von Zutaten-IDs die in diesem Schritt verwendet werden'),
+export const FlowNodeSchema = z.object({
+    id: z.string().min(1),
+    type: z.enum(STEP_TYPES),
+    label: z.string().min(1).max(50),
+    description: z.string().min(1),
+    duration: z.number().positive().nullable(),
+    /** Ignored by the code: the ingredients of a step are derived from its mentions. */
+    ingredientIds: z.array(z.string()),
 });
 
-const FlowEdgeSchema = z.object({
-    id: z.string().min(1).describe('Eindeutige ID der Kante'),
-    source: z.string().min(1).describe('ID des Quellknotens'),
-    target: z.string().min(1).describe('ID des Zielknotens'),
-    label: z
-        .string()
-        .nullable()
-        .describe('Optionale Beschriftung der Verbindung (z.B. "Zwiebeln", "Sauce")'),
+export const FlowEdgeSchema = z.object({
+    source: z.string().min(1),
+    target: z.string().min(1),
 });
-
-// ============================================================================
-// Haupt-Rezept-Schema
-// ============================================================================
 
 export const ImportedRecipeSchema = z.object({
-    id: z.string().uuid().describe('UUID des Rezepts'),
-    title: z.string().min(1).max(200).describe('Titel des Rezepts'),
-    description: z.string().min(10).describe('Beschreibung/Zubereitungshinweis'),
-    imageUrl: z
-        .string()
-        .nullable()
-        .describe(
-            'URL des Hauptbilds des Rezepts (aus <img>, og:image, oder Markdown ![](...)). Null wenn kein Bild gefunden.',
-        ),
-    categories: z
-        .array(z.enum(CATEGORIES))
-        .min(1)
-        .max(3)
-        .describe('Kategorien des Rezepts (mindestens 1, maximal 3)'),
-    tags: z.array(z.string().min(1)).max(15).describe('Tags aus der festen Tag-Liste (3 bis 10)'),
-    prepTime: z.number().int().positive().describe('Vorbereitungszeit in Minuten'),
-    cookTime: z.number().int().nonnegative().describe('Kochzeit in Minuten'),
-    servings: z.number().int().positive().describe('Anzahl der Portionen'),
-    difficulty: z.enum(DIFFICULTIES).describe('Schwierigkeitsgrad'),
-    ingredients: z.array(IngredientSchema).min(1).describe('Liste aller Zutaten'),
-    flowNodes: z
-        .array(FlowNodeSchema)
-        .min(2)
-        .describe('Liste aller Rezeptschritte als Flow-Knoten'),
-    flowEdges: z.array(FlowEdgeSchema).describe('Verbindungen zwischen den Schritten'),
+    ingredients: z.array(IngredientSchema).min(1),
+    title: z.string().min(1).max(200),
+    description: z.string().min(10),
+    categories: z.array(z.enum(CATEGORIES)).min(1).max(3),
+    tags: z.array(z.string().min(1)).max(15),
+    difficulty: z.enum(DIFFICULTIES),
+    prepTime: z.number().int().nonnegative(),
+    cookTime: z.number().int().nonnegative(),
+    servings: z.number().int().positive(),
+    imageUrl: z.string().nullable(),
+    nodes: z.array(FlowNodeSchema).min(2),
+    edges: z.array(FlowEdgeSchema),
 });
 
-// ============================================================================
-// TypeScript Types (abgeleitet von Zod)
-// ============================================================================
+/** Flow-only answer of the refresh (fixed ingredient list). */
+export const ImportedFlowSchema = z.object({
+    nodes: z.array(FlowNodeSchema).min(2),
+    edges: z.array(FlowEdgeSchema),
+});
 
 export type ImportedRecipe = z.infer<typeof ImportedRecipeSchema>;
+export type ImportedFlow = z.infer<typeof ImportedFlowSchema>;
+export type ImportedFlowNode = z.infer<typeof FlowNodeSchema>;
+export type ImportedFlowEdge = z.infer<typeof FlowEdgeSchema>;
 
 // ============================================================================
-// JSON Schema Export für OpenAI Response Format (strict: true)
-//
-// Bei strict: true müssen ALLE Properties in required stehen.
-// Optionale Felder werden als nullable deklariert statt weggelassen.
+// Strict JSON schemas for response_format (strict: true → every property required)
 // ============================================================================
+
+const nodesJsonSchema = {
+    type: 'array',
+    description: 'Die Schritte des Kochablaufs',
+    items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'type', 'label', 'description', 'duration', 'ingredientIds'],
+        properties: {
+            id: { type: 'string' },
+            type: { type: 'string', enum: [...STEP_TYPES] },
+            label: { type: 'string', description: 'Kurze Handlung im Infinitiv, max. 50 Zeichen' },
+            description: {
+                type: 'string',
+                description: 'Kochbuchsatz im Infinitiv mit Erwähnungen @[Text](ingredient-N)',
+            },
+            duration: { type: ['integer', 'null'], description: 'Minuten oder null' },
+            ingredientIds: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Genau die ids, die die Beschreibung erwähnt',
+            },
+        },
+    },
+} as const;
+
+const edgesJsonSchema = {
+    type: 'array',
+    description: 'Abhängigkeiten: target braucht das Ergebnis von source',
+    items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['source', 'target'],
+        properties: { source: { type: 'string' }, target: { type: 'string' } },
+    },
+} as const;
 
 export function getOpenAIResponseFormat() {
     return {
         type: 'json_schema',
         json_schema: {
             name: 'recipe_import',
-            description:
-                'Strukturierte Rezeptdaten für die KitchenPace App. Enthält alle Informationen für das Rezept inklusive Flow-Diagramm.',
             strict: true,
             schema: {
                 type: 'object',
+                additionalProperties: false,
+                required: [
+                    'ingredients',
+                    'title',
+                    'description',
+                    'categories',
+                    'tags',
+                    'difficulty',
+                    'prepTime',
+                    'cookTime',
+                    'servings',
+                    'imageUrl',
+                    'nodes',
+                    'edges',
+                ],
                 properties: {
-                    id: {
-                        type: 'string',
-                        description:
-                            'UUID des Rezepts (Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
-                    },
-                    title: {
-                        type: 'string',
-                        description: 'Titel des Rezepts',
-                    },
-                    description: {
-                        type: 'string',
-                        description: 'Beschreibung/Zubereitungshinweis',
-                    },
-                    imageUrl: {
-                        type: ['string', 'null'],
-                        description:
-                            'URL des Hauptbilds des Rezepts (aus <img>, og:image, oder Markdown ![](...)). Null wenn kein Bild gefunden.',
-                    },
-                    categories: {
-                        type: 'array',
-                        items: {
-                            type: 'string',
-                            enum: [...CATEGORIES],
-                        },
-                        description:
-                            'Kategorien des Rezepts (mindestens 1, maximal 3). PFLICHTFELD — muss immer mindestens eine Kategorie enthalten.',
-                    },
-                    tags: {
-                        type: 'array',
-                        items: { type: 'string' },
-                        description:
-                            'Tags für das Rezept: 3 bis 10, nur aus der vorgegebenen Tag-Liste',
-                    },
-                    prepTime: {
-                        type: 'integer',
-                        description: 'Vorbereitungszeit in Minuten',
-                    },
-                    cookTime: {
-                        type: 'integer',
-                        description: 'Kochzeit in Minuten',
-                    },
-                    servings: {
-                        type: 'integer',
-                        description: 'Anzahl der Portionen',
-                    },
-                    difficulty: {
-                        type: 'string',
-                        enum: [...DIFFICULTIES],
-                        description: 'Schwierigkeitsgrad',
-                    },
                     ingredients: {
                         type: 'array',
                         items: {
                             type: 'object',
+                            additionalProperties: false,
+                            required: ['id', 'name', 'amount', 'unit', 'notes'],
                             properties: {
-                                name: {
+                                id: {
                                     type: 'string',
-                                    description:
-                                        'Reiner Name der Zutat auf DEUTSCH ohne Zubereitungshinweise. Beispiele: "Linguine" statt "Linguine noodles", "Maisstärke" statt "Cornstarch", "Rinderfleischbrühe" statt "Beef broth", "Sojasoße" statt "Soy sauce", "Wasser" statt "Water". Immer ins Deutsche übersetzen.',
+                                    description: '"ingredient-0", "ingredient-1", …',
                                 },
-                                amount: {
-                                    type: ['number', 'null'],
-                                    description: 'Menge oder null wenn nicht klar',
-                                },
-                                unit: {
-                                    type: ['string', 'null'],
-                                    description: 'Einheit oder null wenn nicht klar',
-                                },
-                                notes: {
-                                    type: ['string', 'null'],
-                                    description:
-                                        'Zubereitungshinweis, z.B. "frisch gehackt", "fein gewürfelt". Null wenn nicht nötig.',
-                                },
+                                name: { type: 'string' },
+                                amount: { type: ['number', 'null'] },
+                                unit: { type: ['string', 'null'] },
+                                notes: { type: ['string', 'null'] },
                             },
-                            required: ['name', 'amount', 'unit', 'notes'],
-                            additionalProperties: false,
                         },
-                        description: 'Liste aller Zutaten',
                     },
-                    flowNodes: {
+                    title: { type: 'string' },
+                    description: { type: 'string' },
+                    categories: { type: 'array', items: { type: 'string', enum: [...CATEGORIES] } },
+                    tags: {
                         type: 'array',
-                        items: {
-                            type: 'object',
-                            properties: {
-                                id: { type: 'string' },
-                                type: {
-                                    type: 'string',
-                                    enum: [...STEP_TYPES],
-                                },
-                                label: { type: 'string' },
-                                description: { type: 'string' },
-                                duration: {
-                                    type: ['integer', 'null'],
-                                    description: 'Dauer in Minuten oder null',
-                                },
-                                laneId: { type: 'string' },
-                                ingredientIds: {
-                                    type: 'array',
-                                    items: { type: 'string' },
-                                    description:
-                                        'Zutaten-IDs die in diesem Schritt verwendet werden',
-                                },
-                            },
-                            required: [
-                                'id',
-                                'type',
-                                'label',
-                                'description',
-                                'duration',
-                                'laneId',
-                                'ingredientIds',
-                            ],
-                            additionalProperties: false,
-                        },
-                        description: 'Liste aller Rezeptschritte als Flow-Knoten',
+                        items: { type: 'string' },
+                        description: '3 bis 10 Tags, nur aus der Tag-Liste',
                     },
-                    flowEdges: {
-                        type: 'array',
-                        items: {
-                            type: 'object',
-                            properties: {
-                                id: { type: 'string' },
-                                source: { type: 'string' },
-                                target: { type: 'string' },
-                                label: {
-                                    type: ['string', 'null'],
-                                    description: 'Optionale Beschriftung',
-                                },
-                            },
-                            required: ['id', 'source', 'target', 'label'],
-                            additionalProperties: false,
-                        },
-                        description: 'Verbindungen zwischen den Schritten',
-                    },
+                    difficulty: { type: 'string', enum: [...DIFFICULTIES] },
+                    prepTime: { type: 'integer' },
+                    cookTime: { type: 'integer' },
+                    servings: { type: 'integer' },
+                    imageUrl: { type: ['string', 'null'] },
+                    nodes: nodesJsonSchema,
+                    edges: edgesJsonSchema,
                 },
-                required: [
-                    'id',
-                    'title',
-                    'description',
-                    'imageUrl',
-                    'categories',
-                    'tags',
-                    'prepTime',
-                    'cookTime',
-                    'servings',
-                    'difficulty',
-                    'ingredients',
-                    'flowNodes',
-                    'flowEdges',
-                ],
+            },
+        },
+    } as const;
+}
+
+export function getFlowOnlyResponseFormat() {
+    return {
+        type: 'json_schema',
+        json_schema: {
+            name: 'recipe_flow',
+            strict: true,
+            schema: {
+                type: 'object',
                 additionalProperties: false,
+                required: ['nodes', 'edges'],
+                properties: { nodes: nodesJsonSchema, edges: edgesJsonSchema },
             },
         },
     } as const;

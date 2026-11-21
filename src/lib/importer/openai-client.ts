@@ -1,39 +1,38 @@
 // src/lib/importer/openai-client.ts
-// OpenAI Client Integration für den Rezept-Importer
+// OpenAI calls of the recipe importer (KUC-115): one request with the G2M-1
+// prompt, evaluation of the answer and exactly one repair round.
 
 import OpenAI from 'openai';
 
 import { AI_TEXT_MODEL, AI_TEXT_PRICING } from '@shared/ai-models';
 
 import {
-    ImportedRecipeSchema,
-    getOpenAIResponseFormat,
-    type ImportedRecipe,
-} from './openai-recipe-schema';
-import type { ImportRunMetadata, RecipeParseResult } from './types';
+    buildImportRequestBody,
+    buildRepairRequestBody,
+    type ChatRequestBody,
+    type ImportPromptContext,
+} from './import-prompt';
+import {
+    acceptSoft,
+    evaluateImportContent,
+    formatDetails,
+    type Evaluation,
+} from './import-validation';
+import type { ImportedRecipe } from './openai-recipe-schema';
+import type { ImportRunMetadata, RecipeParseError, RecipeParseResult } from './types';
 
 // ============================================================================
-// OpenAI Client Initialisierung
+// Client
 // ============================================================================
 
-/**
- * Erstellt einen OpenAI Client mit den Umgebungsvariablen
- */
 function createOpenAIClient(): OpenAI {
     const apiKey = process.env.OPENAI_API_KEY;
-
     if (!apiKey) {
         throw new Error('OPENAI_API_KEY ist nicht konfiguriert');
     }
-
-    return new OpenAI({
-        apiKey,
-        // Optional: Organization ID für Enterprise Accounts
-        organization: process.env.OPENAI_ORG_ID,
-    });
+    return new OpenAI({ apiKey, organization: process.env.OPENAI_ORG_ID });
 }
 
-// Singleton-Instance für wiederverwendeten Client
 let openaiClient: OpenAI | null = null;
 
 export function getOpenAIClient(): OpenAI {
@@ -44,365 +43,169 @@ export function getOpenAIClient(): OpenAI {
 }
 
 // ============================================================================
-// Prompt Engineering
+// Cost
 // ============================================================================
 
-/**
- * System-Prompt für den Rezept-Importer
- * Definiert die Aufgabe und das erwartete Output-Format
- */
-const RECIPE_IMPORT_SYSTEM_PROMPT = `Du bist ein Experte für das Extrahieren von Rezeptdaten aus Webseiten.
-Deine Aufgabe ist es, Rezepte aus Markdown zu analysieren und als strukturiertes JSON zurückzugeben.
-
-SPRACHE: Alle Ausgaben DEUTSCH — Titel, Beschreibungen, Labels, Tags, Zutaten-Namen. Fremdsprachige Rezepte vollständig ins Deutsche übersetzen.
-
-═══════════════════════════════════════════════════════════
-METADATEN
-═══════════════════════════════════════════════════════════
-
-- id: UUID v4 generieren
-- title: Vollständiger Rezepttitel
-- description: Prägnante Beschreibung (1-3 Sätze)
-- imageUrl: Hauptbild-URL aus dem Markdown (og:image, große <img>, Markdown-Bilder). Keine Logos/Icons/Werbung. Null wenn keins gefunden.
-- categories: 1–3 aus: "Hauptgericht", "Beilage", "Backen", "Dessert", "Frühstück", "Getränk", "Vorspeise", "Salat"
-- tags: 3-10 Tags, AUSSCHLIESSLICH aus der TAG-LISTE (separate Nachricht). Exakte Schreibweise übernehmen.
-  Erfinde KEINE neuen Tags — Tags, die nicht in der Liste stehen, werden verworfen.
-  Tags helfen beim Filtern und Entdecken. Vergib nur, was wirklich typisch für das Gericht ist:
-  Mahlzeit, Jahreszeit, Anlass, Ernährungsform, Küche, Charakter, Praktisches.
-  • „-frei“-Tags (Glutenfrei, Laktosefrei, Eifrei, Nussfrei, Alkoholfrei) NUR, wenn man es bei diesem Gericht nicht erwarten würde
-    (z. B. Glutenfrei bei einem Kuchen ohne Mehl, Eifrei bei einer Mousse ohne Ei) — NICHT, weil die Zutat schlicht fehlt.
-  ✘ KEINE Tags für Schwierigkeit oder Zeit (eigene Felder), Kategorie (eigenes Feld), einzelne Zutaten oder den Gerichtsnamen.
-- prepTime / cookTime: in Minuten
-- servings: Portionen
-- difficulty: "Einfach", "Mittel" oder "Schwer"
-
-═══════════════════════════════════════════════════════════
-ZUTATEN
-═══════════════════════════════════════════════════════════
-
-Jede Zutat hat:
-- name: REINER Name ohne Zubereitungsangaben, auf Deutsch. RICHTIG: "Tomaten", "Zwiebel" — FALSCH: "frisch gehackte Tomaten", "fein gewürfelte Zwiebel"
-- amount: Zahl (Brüche konvertieren: "1/2" → 0.5). Null wenn unklar.
-- unit: Einheit auf Deutsch (g, ml, EL, TL, Stück, Prise). Null wenn unklar.
-- notes: Zubereitungshinweis ("frisch gehackt", "fein gewürfelt"). Null wenn nicht nötig.
-
-Referenz-IDs: "ingredient-0", "ingredient-1", ... (Index in der Zutatenliste).
-
-═══════════════════════════════════════════════════════════
-FLOW-GRAPH — DAS WICHTIGSTE
-═══════════════════════════════════════════════════════════
-
-Du erstellst einen gerichteten azyklischen Graphen (DAG) der Zubereitungsschritte.
-Der Graph wird als Flussdiagramm visualisiert — die Qualität des Flows ist entscheidend.
-
-SCHRITTTYPEN (type):
-- "start"     → PFLICHT. Erster Knoten. id="start". Label: "Los geht's!" o.ä.
-- "schneiden" → Schneiden, Hacken, Würfeln, Reiben, Schälen
-- "kochen"    → Kochen, Sieden, Blanchieren, Dämpfen
-- "braten"    → Anbraten, Sautieren, Grillen
-- "backen"    → Backen, Rösten, Gratinieren, Ofengaren
-- "mixen"     → Mixen, Rühren, Schlagen, Kneten, Pürieren, Vermengen
-- "warten"    → Ruhen, Marinieren, Abkühlen, Quellen, Ziehen lassen
-- "wuerzen"   → Würzen, Abschmecken, Salzen, Pfeffern
-- "anrichten" → Anrichten, Zusammenfügen, Portionieren
-- "servieren" → PFLICHT. Letzter Knoten. id="servieren".
-
-FELDER PRO KNOTEN:
-- id: "start", "step-1", "step-2", ..., "servieren"
-- type: Einer der obigen Typen
-- label: Kurzer Titel (max 50 Zeichen)
-- description: Detaillierte Beschreibung der Aktion auf Deutsch. Keine @-Mentions — benutze einfach die Zutatennamen im Fließtext.
-- duration: Minuten als Integer, oder null.
-  NUR setzen, wenn der Schritt WIRKLICH zeitkritisch ist und eine konkrete Dauer hat —
-  z.B. "Nudeln 10 Min kochen", "30 Min bei 180°C backen", "20 Min köcheln", "1 Std marinieren".
-  Für vorbereitende / handwerkliche Schritte ohne feste Zeit IMMER null setzen —
-  z.B. "Gemüse schneiden", "Zwiebeln würfeln", "abschmecken", "anrichten", "servieren".
-  Im Zweifel null. Schätze keine Zeiten, die nicht im Rezept stehen oder die nur "ungefähr"
-  vom Arbeitstempo abhängen.
-- laneId: ID der parallelen Spur (z.B. "klopse", "bruehe", "sauce")
-- ingredientIds: Array der Zutaten-IDs die in diesem Schritt verwendet werden
-
-═══════════════════════════════════════════════════════════
-PARALLELE BRANCHES — KRITISCH WICHTIG
-═══════════════════════════════════════════════════════════
-
-Viele Rezepte haben PARALLELE ARBEITSSCHRITTE die gleichzeitig ablaufen.
-Du MUSST diese als separate Branches im Graph modellieren!
-
-ERKENNE PARALLELE ABSCHNITTE an:
-1. Explizite Überschriften: "Für die Sauce:", "Für den Teig:", "Für die Füllung:"
-2. Separate Zutatenlisten mit eigenen Überschriften
-3. Unabhängige Prozesse: Nudeln kochen WÄHREND Sauce zubereitet wird
-4. Ofengaren (passiv) WÄHREND andere Schritte aktiv ausgeführt werden
-
-SO MODELLIERST DU BRANCHES:
-- Der "start"-Knoten hat MEHRERE ausgehende Kanten — eine pro Branch
-- Jeder Branch hat seine eigenen Schritte mit eigener laneId
-- Branches kommen am Ende zusammen (z.B. beim "anrichten" oder "servieren")
-
-BEISPIEL Königsberger Klopse (3 Branches):
-  start → [Klopse formen] → [Klopse garen] ─────────────────────→ anrichten → servieren
-  start → [Brühe aufsetzen] → [Klopse in Brühe geben] ──────────→ anrichten
-  start → [Mehlschwitze] → [Sauce mit Brühe ablöschen] → [Abschmecken] → anrichten
-
-BEISPIEL Pasta mit Sauce (2 Branches):
-  start → [Nudeln kochen] → [Nudeln abgießen] ────→ anrichten → servieren
-  start → [Zwiebeln anbraten] → [Sauce kochen] ───→ anrichten
-
-ANTI-PATTERN — MACHE DAS NIEMALS:
-- Alles in eine lineare Kette packen wenn das Rezept mehrere Komponenten hat
-- "Brühe aufsetzen" → "Klopse formen" → "Sauce machen" als Kette (das sind parallele Arbeiten!)
-
-═══════════════════════════════════════════════════════════
-KANTEN (flowEdges)
-═══════════════════════════════════════════════════════════
-
-- id: "edge-1", "edge-2", ...
-- source: ID des Quellknotens
-- target: ID des Zielknotens
-- label: Null setzen (wird nicht angezeigt)
-
-GRAPH-REGELN:
-- "start": keine eingehenden Kanten, mindestens eine ausgehende
-- "servieren": keine ausgehenden Kanten, mindestens eine eingehende
-- Alle anderen Knoten: mind. 1 eingehend + mind. 1 ausgehend
-- Alle Knoten müssen von "start" erreichbar sein
-- Alle Knoten müssen zu "servieren" führen
-- Keine Zyklen`;
-
-/**
- * Builds an optional context message with the fixed tag list and known ingredients.
- * Sent as a separate user message so the static system prompt stays cacheable.
- *
- * The tag list is alphabetical (fixed in code); ingredients are ordered by
- * createdAt so new entries append at the end — both keep the prefix identical
- * across requests for OpenAI prompt caching.
- * Each entry sits on its own line for clearer tokenisation.
- *
- * Returns null when there is no context to inject.
- */
-function buildContextMessage(context?: ImportRecipeOptions['context']): string | null {
-    const parts: string[] = [];
-
-    if (context?.availableTags?.length) {
-        parts.push(
-            `TAG-LISTE (nur diese Tags verwenden, keine neuen erfinden):\n${context.availableTags.join('\n')}`,
-        );
-    }
-
-    if (context?.topIngredients?.length) {
-        parts.push(
-            `BEKANNTE ZUTATEN (verwende exakt diese Schreibweise wenn zutreffend):\n${context.topIngredients.join('\n')}`,
-        );
-    }
-
-    return parts.length > 0 ? parts.join('\n\n') : null;
-}
-
-/**
- * Builds the recipe extraction user message.
- */
-function buildRecipeMessage(markdown: string, sourceUrl: string): string {
-    return `Extrahiere das Rezept aus folgendem Markdown:
-
-QUELLE: ${sourceUrl}
-
---- MARKDOWN START ---
-${markdown}
---- MARKDOWN END ---
-
-Bitte analysiere den Inhalt und gib die strukturierten Rezeptdaten zurück.`;
-}
-
-// Pricing (USD per 1M tokens) — see shared/ai-models.ts
 const PRICE_INPUT = AI_TEXT_PRICING.input / 1_000_000;
 const PRICE_CACHED = AI_TEXT_PRICING.cachedInput / 1_000_000;
 const PRICE_OUTPUT = AI_TEXT_PRICING.output / 1_000_000;
 
-function computeCost(
+export function computeCost(
     inputTokens: number | null,
     cachedInputTokens: number | null,
     outputTokens: number | null,
 ): number | null {
     if (inputTokens == null || outputTokens == null) return null;
     const cached = cachedInputTokens ?? 0;
-    const uncached = inputTokens - cached;
-    return uncached * PRICE_INPUT + cached * PRICE_CACHED + outputTokens * PRICE_OUTPUT;
+    return (
+        (inputTokens - cached) * PRICE_INPUT + cached * PRICE_CACHED + outputTokens * PRICE_OUTPUT
+    );
 }
 
 // ============================================================================
-// Haupt-Import-Funktion
+// Import with repair round
 // ============================================================================
 
 export interface ImportRecipeOptions {
-    /** OpenAI Model (Default: AI_TEXT_MODEL) */
+    /** OpenAI model (default: AI_TEXT_MODEL) */
     model?: string;
-    /**
-     * Optional context injected into the user prompt so the AI prefers
-     * existing database records over inventing new ones.
-     */
-    context?: {
-        /** The fixed tag list — the AI may only pick from these */
-        availableTags?: string[];
-        /** Most-used ingredient names — AI should use exact names for deduplication */
-        topIngredients?: string[];
+    /** Fixed tag list and known ingredients for the context message */
+    context?: ImportPromptContext;
+    /** Called before the repair round with the problems sent back to the model */
+    onRepair?: (problems: string[]) => void;
+}
+
+/** One model call: the answer text, its usage and the raw object for the audit log. */
+export type ModelCall = (body: ChatRequestBody) => Promise<{
+    content: string | null;
+    usage: OpenAI.CompletionUsage | null | undefined;
+    raw: unknown;
+}>;
+
+/**
+ * Sends the request, evaluates the answer and, if it is not usable, sends it
+ * back once with the problems. After the second answer, unknown mention ids
+ * are accepted as warnings (they become plain text); everything else fails
+ * with the validation details.
+ */
+export async function runImportWithRepair(
+    body: ChatRequestBody,
+    call: ModelCall,
+    sourceUrl: string,
+    onRepair?: (problems: string[]) => void,
+): Promise<RecipeParseResult> {
+    const usages: (OpenAI.CompletionUsage | null | undefined)[] = [];
+    const raws: unknown[] = [];
+    const metadata = (warnings: string[] = []): ImportRunMetadata | undefined => {
+        if (raws.length === 0) return undefined;
+        const sum = (pick: (u: OpenAI.CompletionUsage) => number | undefined) =>
+            usages.every((u) => u && pick(u) != null)
+                ? usages.reduce((total, u) => total + (pick(u!) ?? 0), 0)
+                : null;
+        const inputTokens = sum((u) => u.prompt_tokens);
+        const cachedInputTokens = sum((u) => u.prompt_tokens_details?.cached_tokens ?? 0);
+        const outputTokens = sum((u) => u.completion_tokens);
+        return {
+            model: body.model,
+            sourceUrl,
+            inputTokens,
+            cachedInputTokens,
+            outputTokens,
+            estimatedCostUsd: computeCost(inputTokens, cachedInputTokens, outputTokens),
+            rawApiResponse: { attempts: raws, warnings },
+            attempts: raws.length,
+            warnings,
+        };
+    };
+
+    try {
+        const first = await call(body);
+        usages.push(first.usage);
+        raws.push(first.raw);
+        let evaluation: Evaluation<ImportedRecipe> = evaluateImportContent(first.content);
+
+        if (!evaluation.ok) {
+            const problems = formatDetails(evaluation.details);
+            onRepair?.(problems);
+            const second = await call(buildRepairRequestBody(body, first.content ?? '', problems));
+            usages.push(second.usage);
+            raws.push(second.raw);
+            evaluation = acceptSoft(evaluateImportContent(second.content));
+        }
+
+        if (!evaluation.ok) {
+            return {
+                success: false,
+                error: {
+                    type: evaluation.errorType,
+                    message: `${evaluation.message} (auch nach einer Korrekturrunde)`,
+                    details: evaluation.details,
+                },
+                metadata: metadata(),
+            };
+        }
+        return { success: true, data: evaluation.data, metadata: metadata(evaluation.warnings)! };
+    } catch (error) {
+        return { success: false, error: toParseError(error), metadata: metadata() };
+    }
+}
+
+function toParseError(error: unknown): RecipeParseError {
+    const apiError = error as { status?: number; code?: string; type?: string; message?: string };
+    if (apiError?.status || apiError?.code) {
+        return {
+            type: 'OPENAI_API_ERROR',
+            message: `OpenAI API Fehler: ${apiError.message ?? 'Unbekannter API Fehler'}`,
+            details: { status: apiError.status, code: apiError.code, type: apiError.type },
+        };
+    }
+    return {
+        type: 'UNKNOWN_ERROR',
+        message: error instanceof Error ? error.message : 'Unbekannter Fehler',
     };
 }
 
+/** Error text for ImportRun.errorMessage: message plus validation details. */
+export function describeParseError(error: RecipeParseError): string {
+    if (!error.details) return error.message;
+    const details = Array.isArray(error.details)
+        ? error.details
+              .map((d: { path?: string; message?: string }) =>
+                  d.path ? `${d.path}: ${d.message}` : `${d.message}`,
+              )
+              .join('; ')
+        : JSON.stringify(error.details);
+    return `${error.message} — ${details}`;
+}
+
 /**
- * Importiert ein Rezept von einer Markdown-Quelle mittels OpenAI
- * @param markdown - Der extrahierte Markdown-Inhalt
- * @param sourceUrl - Die Quell-URL für Referenz
- * @param options - Optionale Konfiguration
- * @returns Promise<RecipeParseResult>
+ * Imports a recipe from scraped markdown.
  */
 export async function importRecipeFromMarkdown(
     markdown: string,
     sourceUrl: string,
     options: ImportRecipeOptions = {},
 ): Promise<RecipeParseResult> {
-    const { model = AI_TEXT_MODEL, context } = options;
-
-    try {
-        const openai = getOpenAIClient();
-
-        // Build messages:
-        // 1. System prompt — static, eligible for OpenAI prompt caching
-        // 2. Context message — dynamic DB tags/ingredients (separate so system stays cacheable)
-        // 3. Recipe message — the actual scraped markdown
-        const contextMessage = buildContextMessage(context);
-        const messages: OpenAI.ChatCompletionMessageParam[] = [
-            { role: 'system', content: RECIPE_IMPORT_SYSTEM_PROMPT },
-            ...(contextMessage ? [{ role: 'user' as const, content: contextMessage }] : []),
-            { role: 'user', content: buildRecipeMessage(markdown, sourceUrl) },
-        ];
-
-        const completion = await openai.chat.completions.create({
-            model,
-            messages,
-            response_format: getOpenAIResponseFormat(),
-        });
-
-        // Response extrahieren
-        const content = completion.choices[0]?.message?.content;
-
-        if (!content) {
-            return {
-                success: false,
-                error: {
-                    type: 'EMPTY_RESPONSE',
-                    message: 'OpenAI hat keine Antwort zurückgegeben',
-                },
-            };
-        }
-
-        // JSON parsen und validieren
-        let parsedData: unknown;
-        try {
-            parsedData = JSON.parse(content);
-        } catch (parseError) {
-            return {
-                success: false,
-                error: {
-                    type: 'JSON_PARSE_ERROR',
-                    message: 'OpenAI-Antwort ist kein gültiges JSON',
-                    details: parseError instanceof Error ? parseError.message : undefined,
-                },
-            };
-        }
-
-        // Zod-Validierung
-        const validationResult = ImportedRecipeSchema.safeParse(parsedData);
-
-        if (!validationResult.success) {
-            const errors = validationResult.error.issues.map((issue) => ({
-                path: issue.path.join('.'),
-                message: issue.message,
-                code: issue.code,
-            }));
-
-            return {
-                success: false,
-                error: {
-                    type: 'VALIDATION_ERROR',
-                    message: 'Validierung der Rezeptdaten fehlgeschlagen',
-                    details: errors,
-                },
-            };
-        }
-
-        // Validierung des Flow-Graphen
-        const flowValidation = validateFlowGraph(validationResult.data);
-        if (!flowValidation.valid) {
-            return {
-                success: false,
-                error: {
-                    type: 'FLOW_VALIDATION_ERROR',
-                    message: flowValidation.message,
-                    details: flowValidation.issues,
-                },
-            };
-        }
-
-        // Extract token usage for cost tracking and ImportRun logging
-        const inputTokens = completion.usage?.prompt_tokens ?? null;
-        const cachedInputTokens = completion.usage?.prompt_tokens_details?.cached_tokens ?? null;
-        const outputTokens = completion.usage?.completion_tokens ?? null;
-
-        const metadata: ImportRunMetadata = {
-            model,
-            sourceUrl,
-            inputTokens,
-            cachedInputTokens,
-            outputTokens,
-            estimatedCostUsd: computeCost(inputTokens, cachedInputTokens, outputTokens),
-            rawApiResponse: completion,
-        };
-
+    const body = buildImportRequestBody({
+        markdown,
+        sourceUrl,
+        context: options.context,
+        model: options.model ?? AI_TEXT_MODEL,
+    });
+    const call: ModelCall = async (request) => {
+        const completion = await getOpenAIClient().chat.completions.create(request);
         return {
-            success: true,
-            data: validationResult.data,
-            metadata,
+            content: completion.choices[0]?.message?.content ?? null,
+            usage: completion.usage,
+            raw: completion,
         };
-    } catch (error) {
-        // OpenAI-spezifische Fehler behandeln
-        // OpenAI APIError hat folgende Properties: status, code, type, message
-        const apiError = error as {
-            status?: number;
-            code?: string;
-            type?: string;
-            message?: string;
-        };
-        if (apiError.status || apiError.code) {
-            return {
-                success: false,
-                error: {
-                    type: 'OPENAI_API_ERROR',
-                    message: `OpenAI API Fehler: ${apiError.message ?? 'Unbekannter API Fehler'}`,
-                    details: {
-                        status: apiError.status,
-                        code: apiError.code,
-                        type: apiError.type,
-                    },
-                },
-            };
-        }
-
-        // Allgemeine Fehler
-        return {
-            success: false,
-            error: {
-                type: 'UNKNOWN_ERROR',
-                message: error instanceof Error ? error.message : 'Unbekannter Fehler',
-            },
-        };
-    }
+    };
+    return runImportWithRepair(body, call, sourceUrl, options.onRepair);
 }
 
 /**
- * Same as importRecipeFromMarkdown but streams the OpenAI response token by token.
- * onDelta is called with each raw text fragment as it arrives from the API.
- * Returns the same RecipeParseResult after collecting and validating the full JSON.
+ * Same as importRecipeFromMarkdown, but streams the answer token by token
+ * (both attempts). onDelta receives each raw text fragment.
  */
 export async function streamRecipeFromMarkdown(
     markdown: string,
@@ -410,346 +213,29 @@ export async function streamRecipeFromMarkdown(
     options: ImportRecipeOptions = {},
     onDelta: (text: string) => void,
 ): Promise<RecipeParseResult> {
-    const { model = AI_TEXT_MODEL, context } = options;
-
-    try {
-        const openai = getOpenAIClient();
-
-        const contextMessage = buildContextMessage(context);
-        const messages: OpenAI.ChatCompletionMessageParam[] = [
-            { role: 'system', content: RECIPE_IMPORT_SYSTEM_PROMPT },
-            ...(contextMessage ? [{ role: 'user' as const, content: contextMessage }] : []),
-            { role: 'user', content: buildRecipeMessage(markdown, sourceUrl) },
-        ];
-
-        const stream = await openai.chat.completions.create({
-            model,
-            messages,
-            response_format: getOpenAIResponseFormat(),
+    const body = buildImportRequestBody({
+        markdown,
+        sourceUrl,
+        context: options.context,
+        model: options.model ?? AI_TEXT_MODEL,
+    });
+    const call: ModelCall = async (request) => {
+        const stream = await getOpenAIClient().chat.completions.create({
+            ...request,
             stream: true,
             stream_options: { include_usage: true },
         });
-
-        let fullContent = '';
+        let content = '';
         let usage: OpenAI.CompletionUsage | undefined;
-
         for await (const chunk of stream) {
             const delta = chunk.choices[0]?.delta?.content;
             if (delta) {
-                fullContent += delta;
+                content += delta;
                 onDelta(delta);
             }
-            if (chunk.usage) {
-                usage = chunk.usage;
-            }
+            if (chunk.usage) usage = chunk.usage;
         }
-
-        if (!fullContent) {
-            return {
-                success: false,
-                error: {
-                    type: 'EMPTY_RESPONSE',
-                    message: 'OpenAI hat keine Antwort zurückgegeben',
-                },
-            };
-        }
-
-        let parsedData: unknown;
-        try {
-            parsedData = JSON.parse(fullContent);
-        } catch (parseError) {
-            return {
-                success: false,
-                error: {
-                    type: 'JSON_PARSE_ERROR',
-                    message: 'OpenAI-Antwort ist kein gültiges JSON',
-                    details: parseError instanceof Error ? parseError.message : undefined,
-                },
-            };
-        }
-
-        const validationResult = ImportedRecipeSchema.safeParse(parsedData);
-        if (!validationResult.success) {
-            return {
-                success: false,
-                error: {
-                    type: 'VALIDATION_ERROR',
-                    message: 'Validierung der Rezeptdaten fehlgeschlagen',
-                    details: validationResult.error.issues.map((issue) => ({
-                        path: issue.path.join('.'),
-                        message: issue.message,
-                        code: issue.code,
-                    })),
-                },
-            };
-        }
-
-        const flowValidation = validateFlowGraph(validationResult.data);
-        if (!flowValidation.valid) {
-            return {
-                success: false,
-                error: {
-                    type: 'FLOW_VALIDATION_ERROR',
-                    message: flowValidation.message,
-                    details: flowValidation.issues,
-                },
-            };
-        }
-
-        const inputTokens = usage?.prompt_tokens ?? null;
-        const cachedInputTokens = usage?.prompt_tokens_details?.cached_tokens ?? null;
-        const outputTokens = usage?.completion_tokens ?? null;
-
-        const metadata: ImportRunMetadata = {
-            model,
-            sourceUrl,
-            inputTokens,
-            cachedInputTokens,
-            outputTokens,
-            estimatedCostUsd: computeCost(inputTokens, cachedInputTokens, outputTokens),
-            rawApiResponse: { usage },
-        };
-
-        return { success: true, data: validationResult.data, metadata };
-    } catch (error) {
-        const apiError = error as {
-            status?: number;
-            code?: string;
-            type?: string;
-            message?: string;
-        };
-        if (apiError.status || apiError.code) {
-            return {
-                success: false,
-                error: {
-                    type: 'OPENAI_API_ERROR',
-                    message: `OpenAI API Fehler: ${apiError.message ?? 'Unbekannter API Fehler'}`,
-                    details: { status: apiError.status, code: apiError.code, type: apiError.type },
-                },
-            };
-        }
-        return {
-            success: false,
-            error: {
-                type: 'UNKNOWN_ERROR',
-                message: error instanceof Error ? error.message : 'Unbekannter Fehler',
-            },
-        };
-    }
-}
-
-// ============================================================================
-// Flow-Graph Validierung
-// ============================================================================
-
-interface FlowValidationResult {
-    valid: boolean;
-    message: string;
-    issues?: string[];
-}
-
-/**
- * Validiert die Flow-Struktur:
- * - Jeder Knoten (außer dem ersten) muss mindestens einen incoming Edge haben
- * - Jeder Knoten (außer "servieren") muss mindestens einen outgoing Edge haben
- * - "servieren" ist der finale Node - alle Pfade müssen dorthin führen
- * - Keine Zyklen erlaubt
- */
-function validateFlowGraph(recipe: ImportedRecipe): FlowValidationResult {
-    const issues: string[] = [];
-    const { flowNodes, flowEdges } = recipe;
-
-    // 1. Prüfe auf Start- und Servieren-Knoten (beide Pflicht)
-    const startNodes = flowNodes.filter((n) => n.type === 'start');
-    if (startNodes.length === 0) {
-        issues.push('Kein Start-Knoten gefunden (type: "start")');
-    }
-    if (startNodes.length > 1) {
-        issues.push('Mehrere Start-Knoten gefunden');
-    }
-
-    const serveNodes = flowNodes.filter((n) => n.type === 'servieren');
-    if (serveNodes.length === 0) {
-        issues.push('Kein Servieren-Knoten gefunden (type: "servieren")');
-    }
-    if (serveNodes.length > 1) {
-        issues.push('Mehrere Servieren-Knoten gefunden');
-    }
-
-    // 2. Validiere Kanten-Referenzen
-    const nodeIds = new Set(flowNodes.map((n) => n.id));
-
-    for (const edge of flowEdges) {
-        if (!nodeIds.has(edge.source)) {
-            issues.push(`Kante ${edge.id}: Quellknoten "${edge.source}" existiert nicht`);
-        }
-        if (!nodeIds.has(edge.target)) {
-            issues.push(`Kante ${edge.id}: Zielknoten "${edge.target}" existiert nicht`);
-        }
-    }
-
-    // 3. Baue Adjazenzlisten auf
-    const outgoingEdges = new Map<string, string[]>();
-    const incomingEdges = new Map<string, string[]>();
-
-    for (const edge of flowEdges) {
-        // Outgoing
-        if (!outgoingEdges.has(edge.source)) {
-            outgoingEdges.set(edge.source, []);
-        }
-        outgoingEdges.get(edge.source)!.push(edge.target);
-
-        // Incoming
-        if (!incomingEdges.has(edge.target)) {
-            incomingEdges.set(edge.target, []);
-        }
-        incomingEdges.get(edge.target)!.push(edge.source);
-    }
-
-    // 4. Prüfe incoming/outgoing Edge Regeln
-    for (const node of flowNodes) {
-        const incoming = incomingEdges.get(node.id) ?? [];
-        const outgoing = outgoingEdges.get(node.id) ?? [];
-
-        // Alle Knoten außer "start" müssen mindestens einen incoming Edge haben
-        if (node.type !== 'start' && incoming.length === 0) {
-            issues.push(`Knoten "${node.label}" (${node.id}) hat keinen incoming Edge`);
-        }
-
-        // Alle Knoten außer "servieren" müssen mindestens einen outgoing Edge haben
-        if (node.type !== 'servieren' && outgoing.length === 0) {
-            issues.push(
-                `Knoten "${node.label}" (${node.id}, type: "${node.type}") hat keinen outgoing Edge`,
-            );
-        }
-    }
-
-    // 5. Prüfe auf erreichbare Knoten (BFS vom Start-Knoten, type="start")
-    const rootNodes = flowNodes.filter((n) => n.type === 'start');
-
-    if (rootNodes.length > 0) {
-        const startNodeId = rootNodes[0].id;
-        const reachable = new Set<string>();
-        const queue = [startNodeId];
-
-        // BFS
-        while (queue.length > 0) {
-            const current = queue.shift()!;
-            if (reachable.has(current)) continue;
-            reachable.add(current);
-
-            const neighbors = outgoingEdges.get(current) ?? [];
-            for (const neighbor of neighbors) {
-                if (!reachable.has(neighbor)) {
-                    queue.push(neighbor);
-                }
-            }
-        }
-
-        // Prüfe auf nicht erreichbare Knoten
-        for (const node of flowNodes) {
-            if (!reachable.has(node.id)) {
-                issues.push(`Knoten "${node.label}" (${node.id}) ist nicht vom Start erreichbar`);
-            }
-        }
-
-        // 6. Prüfe ob alle Pfade zum Servieren führen (Reverse BFS)
-        if (serveNodes.length > 0) {
-            const serveNodeId = serveNodes[0].id;
-            const canReachServe = new Set<string>();
-            const reverseQueue = [serveNodeId];
-            const reverseAdjacency = new Map<string, string[]>();
-
-            // Reverse Adjazenzliste
-            for (const edge of flowEdges) {
-                if (!reverseAdjacency.has(edge.target)) {
-                    reverseAdjacency.set(edge.target, []);
-                }
-                reverseAdjacency.get(edge.target)!.push(edge.source);
-            }
-
-            // Reverse BFS
-            while (reverseQueue.length > 0) {
-                const current = reverseQueue.shift()!;
-                if (canReachServe.has(current)) continue;
-                canReachServe.add(current);
-
-                const predecessors = reverseAdjacency.get(current) ?? [];
-                for (const pred of predecessors) {
-                    if (!canReachServe.has(pred)) {
-                        reverseQueue.push(pred);
-                    }
-                }
-            }
-
-            // Prüfe ob alle Knoten zum Servieren führen
-            for (const node of flowNodes) {
-                if (!canReachServe.has(node.id)) {
-                    issues.push(
-                        `Von Knoten "${node.label}" (${node.id}) führt kein Pfad zum Servieren`,
-                    );
-                }
-            }
-        }
-    }
-
-    // 7. Prüfe auf Zyklen (DFS)
-    const hasCycle = detectCycle(flowNodes, flowEdges);
-    if (hasCycle) {
-        issues.push('Flow enthält einen Zyklus (kreisförmige Abhängigkeit)');
-    }
-
-    if (issues.length > 0) {
-        return {
-            valid: false,
-            message: `Flow-Validierung fehlgeschlagen: ${issues.length} Problem(e) gefunden`,
-            issues,
-        };
-    }
-
-    return { valid: true, message: 'Flow-Struktur ist gültig' };
-}
-
-/**
- * Einfache Zyklen-Erkennung mittels DFS
- */
-function detectCycle(
-    nodes: ImportedRecipe['flowNodes'],
-    edges: ImportedRecipe['flowEdges'],
-): boolean {
-    const adjacency = new Map<string, string[]>();
-    for (const edge of edges) {
-        if (!adjacency.has(edge.source)) {
-            adjacency.set(edge.source, []);
-        }
-        adjacency.get(edge.source)!.push(edge.target);
-    }
-
-    const visited = new Set<string>();
-    const recursionStack = new Set<string>();
-
-    function dfs(nodeId: string): boolean {
-        visited.add(nodeId);
-        recursionStack.add(nodeId);
-
-        const neighbors = adjacency.get(nodeId) ?? [];
-        for (const neighbor of neighbors) {
-            if (!visited.has(neighbor)) {
-                if (dfs(neighbor)) return true;
-            } else if (recursionStack.has(neighbor)) {
-                return true;
-            }
-        }
-
-        recursionStack.delete(nodeId);
-        return false;
-    }
-
-    for (const node of nodes) {
-        if (!visited.has(node.id)) {
-            if (dfs(node.id)) return true;
-        }
-    }
-
-    return false;
+        return { content, usage, raw: { content, usage } };
+    };
+    return runImportWithRepair(body, call, sourceUrl, options.onRepair);
 }

@@ -74,3 +74,4 @@ __pycache__
 tools.yaml
 .superpowers/
 *.png
+/backups/

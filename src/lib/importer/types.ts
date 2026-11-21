@@ -17,12 +17,15 @@ export interface ImportRunMetadata {
     /** Completion tokens */
     outputTokens: number | null;
     /**
-     * Estimated cost in USD.
-     * Rates: input $2.50/1M, cached $0.25/1M, output $15.00/1M
+     * Estimated cost in USD (all attempts), rates from shared/ai-models.ts
      */
     estimatedCostUsd: number | null;
-    /** Raw OpenAI completion object — stored in ImportRun.rawApiResponse for auditing */
+    /** Raw OpenAI answers of all attempts — stored in ImportRun.rawApiResponse for auditing */
     rawApiResponse: unknown;
+    /** 1, or 2 when the repair round ran */
+    attempts: number;
+    /** Accepted problems, e.g. a mention with an unknown id that became plain text */
+    warnings: string[];
 }
 
 /**
@@ -42,6 +45,7 @@ export type ErrorType =
     | 'JSON_PARSE_ERROR' // Antwort ist kein gültiges JSON
     | 'VALIDATION_ERROR' // Zod-Validierung fehlgeschlagen
     | 'FLOW_VALIDATION_ERROR' // Flow-Graph Validierung fehlgeschlagen
+    | 'MENTION_VALIDATION_ERROR' // Zutaten-Erwähnungen fehlerhaft (unbekannte id, Zutat nie erwähnt)
     | 'OPENAI_API_ERROR' // OpenAI API Fehler
     | 'UNKNOWN_ERROR'; // Unbekannter Fehler
 
@@ -60,6 +64,8 @@ export interface RecipeParseError {
 export interface RecipeParseFailure {
     success: false;
     error: RecipeParseError;
+    /** Token usage and cost of the failed attempts, when the API answered */
+    metadata?: ImportRunMetadata;
 }
 
 /**

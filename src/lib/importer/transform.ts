@@ -7,8 +7,8 @@ import { randomUUID } from 'node:crypto';
 
 import type { FlowNodeInput, FlowEdgeInput } from '@app/components/recipe/recipeFormTypes';
 
+import { bindMentions } from './import-mentions';
 import type { ImportedRecipe } from './openai-recipe-schema';
-import { resolveIngredientMentions } from './resolve-mentions';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -30,6 +30,8 @@ export interface AnalyzedRecipe {
     ingredients: AnalyzedIngredient[];
     flowNodes: FlowNodeInput[];
     flowEdges: FlowEdgeInput[];
+    /** Accepted problems of the AI answer, e.g. a mention that became plain text */
+    warnings?: string[];
 }
 
 export interface AnalyzedIngredient {
@@ -63,8 +65,20 @@ function categoryToSlug(category: string): string {
     return map[category] ?? 'hauptgericht';
 }
 
+/** Edge list of the AI (source/target only) with stable ids. */
+export function toFlowEdges(edges: { source: string; target: string }[]): FlowEdgeInput[] {
+    return edges.map((edge, index) => ({
+        id: `edge-${index + 1}`,
+        source: edge.source,
+        target: edge.target,
+    }));
+}
+
 /**
  * Transforms a validated ImportedRecipe (from OpenAI) into AnalyzedRecipe.
+ * The temporary ingredient ids of the AI ("ingredient-N") become fresh
+ * import ids; mentions keep their display text and partial amount, and
+ * each step's ingredientIds are derived from its mentions.
  */
 export function transformImportedRecipe(data: ImportedRecipe): AnalyzedRecipe {
     const difficultyMap: Record<string, 'EASY' | 'MEDIUM' | 'HARD'> = {
@@ -73,22 +87,21 @@ export function transformImportedRecipe(data: ImportedRecipe): AnalyzedRecipe {
         Schwer: 'HARD',
     };
 
-    // Build ingredient refs for mention resolution
-    const ingredientRefs = data.ingredients.map((ing, idx) => ({
-        id: `imported_${idx}_${randomUUID()}`,
-        name: ing.name,
-    }));
+    const ingredientIds = new Map(
+        data.ingredients.map((ing, idx) => [ing.id, `imported_${idx}_${randomUUID()}`]),
+    );
 
-    const rawNodes = data.flowNodes.map((node) => ({
-        id: node.id,
-        type: node.type,
-        label: node.label,
-        description: node.description,
-        duration: node.duration ?? undefined,
-        ingredientIds: node.ingredientIds,
-    }));
-
-    const resolvedNodes = resolveIngredientMentions(rawNodes, ingredientRefs);
+    const bound = bindMentions(
+        data.nodes.map((node) => ({
+            id: node.id,
+            type: node.type,
+            label: node.label,
+            description: node.description,
+            duration: node.duration ?? undefined,
+        })),
+        ingredientIds,
+        { unknown: 'text' },
+    );
 
     return {
         title: data.title,
@@ -100,19 +113,16 @@ export function transformImportedRecipe(data: ImportedRecipe): AnalyzedRecipe {
         difficulty: difficultyMap[data.difficulty] ?? 'MEDIUM',
         categoryIds: data.categories.map(categoryToSlug),
         tags: data.tags,
-        ingredients: data.ingredients.map((ing, idx) => ({
-            id: ingredientRefs[idx].id,
+        ingredients: data.ingredients.map((ing) => ({
+            id: ingredientIds.get(ing.id)!,
             name: ing.name,
             amount: ing.amount != null ? String(ing.amount) : '',
             unit: ing.unit ?? 'Stück',
             notes: ing.notes ?? undefined,
             isOptional: false,
         })),
-        flowNodes: resolvedNodes,
-        flowEdges: data.flowEdges.map((edge) => ({
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
-        })),
+        flowNodes: bound.nodes,
+        flowEdges: toFlowEdges(data.edges),
+        ...(bound.warnings.length > 0 ? { warnings: bound.warnings } : {}),
     };
 }

@@ -11,7 +11,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { Job } from 'bullmq';
-import OpenAI, { toFile } from 'openai';
+import type OpenAI from 'openai';
 
 import { AI_TEXT_MODEL } from '@shared/ai-models';
 import {
@@ -25,6 +25,13 @@ import {
     buildShelfLifeInput,
     getShelfLifeResponseFormat,
 } from '@shared/ingredient-shelf-life/schema';
+import {
+    BATCH_RUNNING_STATUSES,
+    buildBatchJsonl,
+    createOpenAIBatchApi,
+    parseBatchOutputJsonl,
+    responsesOutputText,
+} from '@shared/openai-batch';
 
 import { getRedis } from './connection';
 import { prisma as workerPrisma } from './prisma';
@@ -93,39 +100,24 @@ export function buildBatchRequests(
     round: number,
 ): { jsonl: string; requests: Record<string, string[]> } {
     const size = Math.max(1, chunkSize);
-    const lines: string[] = [];
+    const lines: { customId: string; body: unknown }[] = [];
     const requests: Record<string, string[]> = {};
     for (let offset = 0, index = 0; offset < ingredients.length; offset += size, index += 1) {
         const chunk = ingredients.slice(offset, offset + size);
         const customId = `shelf-life-r${round}-${index}`;
         requests[customId] = chunk.map((ingredient) => ingredient.id);
-        lines.push(
-            JSON.stringify({
-                custom_id: customId,
-                method: 'POST',
-                url: '/v1/responses',
-                body: {
-                    model: SHELF_LIFE_MODEL,
-                    instructions: SHELF_LIFE_PROMPT,
-                    input: buildShelfLifeInput(chunk),
-                    text: { format: getShelfLifeResponseFormat() },
-                },
-            }),
-        );
+        lines.push({
+            customId,
+            body: {
+                model: SHELF_LIFE_MODEL,
+                instructions: SHELF_LIFE_PROMPT,
+                input: buildShelfLifeInput(chunk),
+                text: { format: getShelfLifeResponseFormat() },
+            },
+        });
     }
-    return { jsonl: lines.length > 0 ? `${lines.join('\n')}\n` : '', requests };
+    return { jsonl: buildBatchJsonl('/v1/responses', lines), requests };
 }
-
-interface ResponseBody {
-    output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
-}
-
-const outputText = (body: ResponseBody) =>
-    (body.output ?? [])
-        .flatMap((entry) => entry.content ?? [])
-        .filter((content) => content.type === 'output_text')
-        .map((content) => content.text ?? '')
-        .join('');
 
 /**
  * Collects the result items of all successful requests. Requests that failed,
@@ -138,24 +130,11 @@ export function parseBatchOutput(
     const rawItems: unknown[] = [];
     const succeeded = new Set<string>();
 
-    for (const line of outputJsonl.split('\n')) {
-        if (!line.trim()) continue;
-        let entry: {
-            custom_id?: string;
-            error?: unknown;
-            response?: { status_code?: number; body?: ResponseBody };
-        };
+    for (const entry of parseBatchOutputJsonl(outputJsonl)) {
+        if (!(entry.customId in requests) || entry.body === undefined) continue;
         try {
-            entry = JSON.parse(line);
-        } catch {
-            continue;
-        }
-        const customId = entry.custom_id;
-        if (!customId || !(customId in requests)) continue;
-        if (entry.error || entry.response?.status_code !== 200 || !entry.response.body) continue;
-        try {
-            rawItems.push(...extractRawItems(JSON.parse(outputText(entry.response.body))));
-            succeeded.add(customId);
+            rawItems.push(...extractRawItems(JSON.parse(responsesOutputText(entry.body))));
+            succeeded.add(entry.customId);
         } catch {
             // counted as failed below
         }
@@ -263,7 +242,7 @@ export async function runShelfLifeBackfill(
     const batch = await deps.api.retrieveBatch(state.batchId);
     const base = { batchId: state.batchId, round: state.round, status: batch.status };
 
-    if (['validating', 'in_progress', 'finalizing', 'cancelling'].includes(batch.status)) {
+    if (BATCH_RUNNING_STATUSES.includes(batch.status)) {
         await schedule();
         return { step: 'waiting', ...base, requestCounts: batch.request_counts ?? null };
     }
@@ -368,7 +347,7 @@ export async function enrichIngredientShelfLife(
             input: buildShelfLifeInput([{ id: ingredientId, name }]),
             text: { format: getShelfLifeResponseFormat() },
         });
-        const items = extractRawItems(JSON.parse(outputText(response as ResponseBody))).filter(
+        const items = extractRawItems(JSON.parse(responsesOutputText(response))).filter(
             (item) => (item as { id?: unknown } | null)?.id === ingredientId,
         );
         if (items.length === 0) return { status: 'invalid', detail: 'kein Eintrag für die Zutat' };
@@ -388,29 +367,13 @@ export async function enrichIngredientShelfLife(
 // ── Real dependencies ───────────────────────────────────────────────────
 
 function openAiBatchApi(): ShelfLifeBatchApi {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error('OPENAI_API_KEY is not configured');
-    const client = new OpenAI({ apiKey, organization: process.env.OPENAI_ORG_ID });
+    const api = createOpenAIBatchApi();
     return {
-        async uploadJsonl(content, filename) {
-            const file = await client.files.create({
-                file: await toFile(Buffer.from(content, 'utf8'), filename),
-                purpose: 'batch',
-            });
-            return file.id;
-        },
+        uploadJsonl: api.uploadJsonl,
         createBatch: (inputFileId, metadata) =>
-            client.batches.create({
-                input_file_id: inputFileId,
-                endpoint: '/v1/responses',
-                completion_window: '24h',
-                metadata,
-            }),
-        retrieveBatch: (batchId) => client.batches.retrieve(batchId),
-        async fileText(fileId) {
-            const response = await client.files.content(fileId);
-            return response.text();
-        },
+            api.createBatch(inputFileId, '/v1/responses', metadata),
+        retrieveBatch: api.retrieveBatch,
+        fileText: api.fileText,
     };
 }
 

@@ -181,6 +181,15 @@ export async function runImportPipeline(
                         message: 'Stream geöffnet',
                         detail: `model=${event.model as string}`,
                     });
+                } else if (event.type === 'repair') {
+                    // The first answer was not usable; the AI gets one correction round
+                    const problems = (event.problems as string[] | undefined) ?? [];
+                    addStreamEvent({
+                        type: 'progress',
+                        message: 'KI korrigiert ihre Antwort',
+                        detail: problems.slice(0, 3).join('; '),
+                    });
+                    clearStreamingBuffer();
                 } else if (event.type === 'delta') {
                     setStreamingBuffer((prev) => prev + (event.text as string));
                 } else if (event.type === 'usage') {

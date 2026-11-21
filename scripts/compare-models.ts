@@ -71,14 +71,14 @@ interface RunResult {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function countBranches(recipe: ImportedRecipe): number {
-    const startNode = recipe.flowNodes.find((n) => n.type === 'start');
+    const startNode = recipe.nodes.find((n) => n.type === 'start');
     if (!startNode) return 0;
-    return recipe.flowEdges.filter((e) => e.source === startNode.id).length;
+    return recipe.edges.filter((e) => e.source === startNode.id).length;
 }
 
 function countStepTypes(recipe: ImportedRecipe): Record<string, number> {
     const counts: Record<string, number> = {};
-    for (const node of recipe.flowNodes) {
+    for (const node of recipe.nodes) {
         counts[node.type] = (counts[node.type] ?? 0) + 1;
     }
     return counts;
@@ -162,10 +162,10 @@ async function runModel(model: string, markdown: string, sourceUrl: string): Pro
         outputTokens,
         costUsd: computeCost(model, inputTokens, cachedTokens, outputTokens),
         ingredientCount: data.ingredients.length,
-        nodeCount: data.flowNodes.length,
-        edgeCount: data.flowEdges.length,
+        nodeCount: data.nodes.length,
+        edgeCount: data.edges.length,
         branchCount: countBranches(data),
-        laneIds: [...new Set(data.flowNodes.map((n) => n.laneId))],
+        laneIds: [], // the G2M-1 import has no lanes (KUC-115)
         stepTypes: countStepTypes(data),
         difficulty: data.difficulty,
         categories: data.categories,

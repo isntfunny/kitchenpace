@@ -25,7 +25,7 @@ export const addItemSchema = z
     .strict();
 export type AddItemInput = z.input<typeof addItemSchema>;
 
-export const addItemsSchema = z.array(addItemSchema).min(1).max(200);
+export const addItemsSchema = z.array(addItemSchema).min(1).max(500);
 
 export const updateItemSchema = z
     .object({

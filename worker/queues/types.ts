@@ -77,6 +77,19 @@ export interface BackfillIngredientShelfLifeJob {
     reset?: boolean;
 }
 
+export interface BackfillIngredientIconsJob {
+    /** Write icons to the database; false = dry run report only */
+    write?: boolean;
+    /** Max ingredients for a new batch (0 = all without icon) */
+    limit?: number;
+    /** Ingredients per request */
+    chunkSize?: number;
+    /** Poll interval while the batch runs (0 = no automatic polling) */
+    pollMinutes?: number;
+    /** Forget the saved batch and start over */
+    reset?: boolean;
+}
+
 export interface ComputeTasteProfilesJob {
     batchSize?: number;
 }

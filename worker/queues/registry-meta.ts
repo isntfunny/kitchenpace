@@ -243,6 +243,35 @@ const JOB_CATALOG: Record<
         // the enqueue at creation time (KUC-94, KUC-114)
         repeat: { pattern: '30 5 * * *', tz: 'Europe/Berlin' },
     },
+    'backfill-ingredient-icons': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { write: false, limit: 0, chunkSize: 100, pollMinutes: 10, reset: false },
+        schema: {
+            write: { type: 'boolean', label: 'Write to DB (off = dry run report)', default: false },
+            limit: {
+                type: 'number',
+                label: 'Max ingredients (0 = all without icon)',
+                default: 0,
+                min: 0,
+                max: 5000,
+            },
+            chunkSize: {
+                type: 'number',
+                label: 'Ingredients per request',
+                default: 100,
+                min: 1,
+                max: 200,
+            },
+            pollMinutes: {
+                type: 'number',
+                label: 'Poll interval in minutes (0 = no polling)',
+                default: 10,
+                min: 0,
+                max: 1440,
+            },
+            reset: { type: 'boolean', label: 'Forget saved batch and start over', default: false },
+        },
+    },
     'poll-openai-batches': {
         queue: QueueName.SCHEDULED,
         defaultData: {},

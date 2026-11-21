@@ -20,7 +20,15 @@ export type Ingredient = {
     name: string;
     slug: string;
     pluralName: string | null;
-    categories: Array<{ id: string; name: string; slug: string }>;
+    // KUC-125: own icon (IconOven name) and the categories with their parents for the fallback
+    icon: string | null;
+    categories: Array<{
+        id: string;
+        name: string;
+        slug: string;
+        icon: string | null;
+        parent: IconCategoryRef | null;
+    }>;
     ingredientUnits: Array<{
         grams: number | null;
         unit: { id: string; shortName: string; longName: string };
@@ -50,10 +58,18 @@ export type Ingredient = {
     storageLives: Array<{ storage: StorageTypeValue; days: number }>;
 };
 
+export type IconCategoryRef = {
+    slug: string;
+    icon: string | null;
+    parent?: IconCategoryRef | null;
+};
+
 export type IngredientCategory = {
     id: string;
     name: string;
     slug: string;
+    icon: string | null;
+    parent: IconCategoryRef | null;
     sortOrder: number;
     _count: { ingredients: number };
 };

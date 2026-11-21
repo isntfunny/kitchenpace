@@ -9,6 +9,11 @@ import { Job } from 'bullmq';
 import OpenAI from 'openai';
 
 import { AI_TEXT_MODEL } from '@shared/ai-models';
+import {
+    buildIconPromptRules,
+    getIconSchemaProperty,
+    parseIconAnswer,
+} from '@shared/ingredient-icons/enrichment';
 import { responsesOutputText } from '@shared/openai-batch';
 
 import { prisma } from './prisma';
@@ -127,8 +132,9 @@ function getEnrichResponseFormat(
                         enum: categories.map((c) => c.slug),
                     },
                 },
+                icon: getIconSchemaProperty(),
             },
-            required: [...ALL_FIELDS, 'source', 'relevantUnits', 'categories'],
+            required: [...ALL_FIELDS, 'source', 'relevantUnits', 'categories', 'icon'],
             additionalProperties: false,
         },
     };
@@ -147,6 +153,7 @@ function buildSystemPrompt(
 1. Nährwerte pro 100g essbarem Anteil
 2. Relevante Einheiten mit ungefährem Gewicht pro Stück/Einheit
 3. Passende Kategorien
+4. Ein Icon für die Einkaufsliste
 
 NÄHRWERT-REGELN:
 - Alle Werte beziehen sich auf 100g des essbaren Anteils (roh, unverarbeitet sofern nicht anders angegeben).
@@ -182,7 +189,9 @@ KATEGORIE-REGELN:
 - Eine Zutat kann mehreren Kategorien angehören (z.B. "Tomate" → Gemüse; "Olivenöl" → Öle & Fette).
 
 VERFÜGBARE KATEGORIEN:
-${categoryList}`;
+${categoryList}
+
+${buildIconPromptRules()}`;
 }
 
 // ── Request and import (shared with the batch backfill) ─────────────────
@@ -248,6 +257,7 @@ export async function importNutritionResult(
         where: { id: ingredientId },
         select: {
             name: true,
+            icon: true,
             energyKcal: true,
             ingredientUnits: { select: { unitId: true } },
             categories: { select: { id: true } },
@@ -341,6 +351,20 @@ export async function importNutritionResult(
                 );
             }
         }
+    }
+
+    // ── 4. Icon ─────────────────────────────────────────────────────────
+    // Only an allowed name is stored. An existing icon is never replaced (there
+    // is no "set by admin" flag, so any value counts as chosen); `icon: null`
+    // in the where clause also covers a parallel run or an admin edit since
+    // the read above.
+    const icon = parseIconAnswer(parsed.icon);
+    if (icon && ingredient.icon == null) {
+        const { count } = await db.ingredient.updateMany({
+            where: { id: ingredientId, icon: null },
+            data: { icon },
+        });
+        fieldsUpdated += count;
     }
 
     const source = typeof parsed.source === 'string' ? parsed.source : undefined;

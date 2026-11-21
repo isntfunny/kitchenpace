@@ -496,6 +496,7 @@ export function RecipeDetailClient({
                 <div className={grid({ columns: { base: 1, md: 12 }, gap: '5' })}>
                     <div className={css({ md: { gridColumn: 'span 4' } })}>
                         <IngredientList
+                            recipeId={recipe.id}
                             ingredients={recipe.ingredients}
                             servings={servings}
                             originalServings={recipe.servings}

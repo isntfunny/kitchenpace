@@ -12,7 +12,8 @@ type RateLimitBucket =
     | 'search'
     | 'semantic'
     | 'bring'
-    | 'bringConnect';
+    | 'bringConnect'
+    | 'shopping';
 
 interface RateLimitRule {
     /** Max requests allowed in the window */
@@ -24,6 +25,7 @@ interface RateLimitRule {
 const RULES: Record<RateLimitBucket, RateLimitRule> = {
     bring: { limit: 60, window: 60 },
     bringConnect: { limit: 5, window: 60 },
+    shopping: { limit: 120, window: 60 }, // shopping list edits (KUC-104)
     auth: { limit: 10, window: 60 }, // 10 login attempts / min
     upload: { limit: 20, window: 600 }, // 20 uploads / 10 min
     ai: { limit: 5, window: 60 }, // 5 AI calls / min

@@ -39,7 +39,6 @@ COPY --from=deps /app/styled-system ./styled-system
 COPY package.json package-lock.json* ./
 COPY panda.config.ts tsconfig.json postcss.config.cjs ./
 COPY prisma.config.ts next.config.ts ./
-COPY instrumentation.ts instrumentation-client.ts ./
 COPY prisma ./prisma
 COPY src ./src
 COPY shared ./shared

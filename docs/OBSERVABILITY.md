@@ -6,10 +6,10 @@ KitchenPace exportiert **Traces**, **strukturierte Logs**, **Runtime-Metriken** 
 
 | Service            | `OTEL_SERVICE_NAME`          | Einstiegspunkt                                                            | Auto-Instrumentation & Instrumentierung                                                                                                                                                                                                                                     |
 | ------------------ | ---------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Next.js App**    | `kitchenpace-web`            | `instrumentation.ts` → `shared/telemetry/node-sdk.ts`                     | Next.js Request/RSC-Spans, `PgInstrumentation` (`requireParentSpan: true`), `IORedisInstrumentation` (`requireParentSpan: true`), `UndiciInstrumentation`, `HttpInstrumentation` (outbound only), `AwsInstrumentation` (S3), `RuntimeNodeInstrumentation`, `onRequestError` |
+| **Next.js App**    | `kitchenpace-web`            | `src/instrumentation.ts` → `shared/telemetry/node-sdk.ts`                 | Next.js Request/RSC-Spans, `PgInstrumentation` (`requireParentSpan: true`), `IORedisInstrumentation` (`requireParentSpan: true`), `UndiciInstrumentation`, `HttpInstrumentation` (outbound only), `AwsInstrumentation` (S3), `RuntimeNodeInstrumentation`, `onRequestError` |
 | **BullMQ Worker**  | `kitchenpace-worker`         | `tsx --import ./shared/telemetry/worker-register.ts worker/entrypoint.ts` | Alle Auto-Instrumentierungen + expliziter Consumer-Span `job.<queue>.<jobName>` je Job + `flushTelemetry()` im `finally` + `shutdownTelemetry()` bei Shutdown                                                                                                               |
 | **Python Scraper** | `kitchenpace-scraper`        | `services/scraper/app/telemetry.py`                                       | `FastAPIInstrumentor` (ohne `/health`), `HTTPXClientInstrumentor`, `LoggingInstrumentor` + OTLP Log/Trace-Export                                                                                                                                                            |
-| **Browser**        | `kitchenpace-web` (`client`) | `instrumentation-client.ts` + Error Boundaries                            | Deduplizierter Beacon an `POST /api/telemetry/client-error` → erzeugt `client.error`-Span + korrelierten Log                                                                                                                                                                |
+| **Browser**        | `kitchenpace-web` (`client`) | `src/instrumentation-client.ts` + Error Boundaries                        | Deduplizierter Beacon an `POST /api/telemetry/client-error` → erzeugt `client.error`-Span + korrelierten Log                                                                                                                                                                |
 
 ## Aktivierung & Umgebungsvariablen
 
@@ -44,7 +44,7 @@ Ohne gesetzten `OTEL_EXPORTER_OTLP_ENDPOINT` (oder bei `OTEL_SDK_DISABLED=true`)
 ## Datenschutz & Browser-Fehler
 
 - Kein Session Replay, keine Tracking-Cookies und keine Collector-Credentials im Browser.
-- `instrumentation-client.ts`, `src/app/global-error.tsx` und `src/app/error.tsx` senden deduplizierte Fehler-Beacons (max. 20 pro Seitenaufruf, 16 KB/Payload, 60/min Rate-Limit am Server) an `/api/telemetry/client-error`.
+- `src/instrumentation-client.ts`, `src/app/global-error.tsx` und `src/app/error.tsx` senden deduplizierte Fehler-Beacons (max. 20 pro Seitenaufruf, 16 KB/Payload, 60/min Rate-Limit am Server) an `/api/telemetry/client-error`.
 
 ## Coolify-Konfiguration (Deployment-Hinweis)
 

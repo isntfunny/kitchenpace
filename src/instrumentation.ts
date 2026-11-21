@@ -4,8 +4,8 @@ export async function register(): Promise<void> {
     if (process.env.NEXT_RUNTIME === 'nodejs') {
         const [{ after }, { configureFlushScheduler }, { initTelemetry }] = await Promise.all([
             import('next/server'),
-            import('./shared/telemetry/lifecycle'),
-            import('./shared/telemetry/node-sdk'),
+            import('@shared/telemetry/lifecycle'),
+            import('@shared/telemetry/node-sdk'),
         ]);
 
         configureFlushScheduler((task) => {
@@ -24,8 +24,8 @@ export const onRequestError: Instrumentation.onRequestError = async (err, reques
     if (process.env.NEXT_RUNTIME !== 'nodejs') return;
 
     const [{ recordError }, { RELEASE }] = await Promise.all([
-        import('./shared/telemetry/tracing'),
-        import('./shared/telemetry/release'),
+        import('@shared/telemetry/tracing'),
+        import('@shared/telemetry/release'),
     ]);
 
     const digest =

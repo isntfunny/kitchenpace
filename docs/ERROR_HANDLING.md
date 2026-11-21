@@ -5,8 +5,8 @@ KitchenPace nutzt **OpenTelemetry + SigNoz** für Traces, strukturierte Logs und
 ## Überblick
 
 - **Automatische Erfassung**:
-    - Next.js Server/RSC/Action-Fehler landen über `onRequestError` (`instrumentation.ts`) als Span-Exceptions + korrelierte Logs in SigNoz.
-    - Unbehandelte Browser-Fehler und Promise-Rejections landen über `instrumentation-client.ts`, `global-error.tsx` und `error.tsx` via `POST /api/telemetry/client-error` in SigNoz.
+    - Next.js Server/RSC/Action-Fehler landen über `onRequestError` (`src/instrumentation.ts`) als Span-Exceptions + korrelierte Logs in SigNoz.
+    - Unbehandelte Browser-Fehler und Promise-Rejections landen über `src/instrumentation-client.ts`, `global-error.tsx` und `error.tsx` via `POST /api/telemetry/client-error` in SigNoz.
     - BullMQ-Worker-Jobs laufen jeweils in einem Consumer-Span (`job.<queue>.<jobName>`) und melden Fehler automatisch.
     - Personal API (`/api/v1`) und tRPC (`/api/trpc`) erfassen 500er-Fehler über `recordError()`.
 

@@ -32,6 +32,29 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '21. November 2026',
+        title: 'Klarere Kochschritte',
+        emoji: '🧭',
+        items: [
+            {
+                text: 'Die Kochschritte aller Rezepte sind überarbeitet: Was du gleichzeitig erledigen kannst, steht jetzt nebeneinander, und jede Zutat ist im Schritt mit ihrer Menge verlinkt.',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Rezepte per Link importieren klappt zuverlässiger – auch Zutaten wie Äpfel, Öl oder Mehrzahlformen werden erkannt.',
+                tag: 'feat',
+            },
+            {
+                text: 'Auf jeder Zutatenseite siehst du, wie lange sie sich hält – im Kühlschrank, im Vorrat und im Tiefkühler.',
+                tag: 'feat',
+            },
+            {
+                text: 'Die Stichworte sind aufgeräumt. Alte Stichwort-Links führen automatisch zur passenden neuen Seite.',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '15. Oktober 2026',
         title: 'Passende Zutatenmengen beim Kochen',
         emoji: '🥣',

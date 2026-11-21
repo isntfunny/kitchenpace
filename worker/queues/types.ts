@@ -94,6 +94,13 @@ export interface ComputeTasteProfilesJob {
     batchSize?: number;
 }
 
+export interface BookAssumedCookedJob {
+    /** Compute and report only, book nothing */
+    dryRun?: boolean;
+    /** Max. plan entries per run */
+    limit?: number;
+}
+
 export interface ClusterRecipeThemesJob {
     /** Number of clusters (0 = automatic) */
     clusters?: number;

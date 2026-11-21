@@ -1,6 +1,14 @@
 'use client';
 
-import { Bookmark, FileText, Settings, ShoppingCart, User, type LucideIcon } from 'lucide-react';
+import {
+    Bookmark,
+    FileText,
+    Package,
+    Settings,
+    ShoppingCart,
+    User,
+    type LucideIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
 
@@ -19,6 +27,12 @@ export const PERSONAL_LINKS: NavLinkItem[] = [
         description: 'Deine Bring!-Listen',
         href: '/shopping-list',
         icon: ShoppingCart,
+    },
+    {
+        label: 'Vorrat',
+        description: 'Was noch da ist',
+        href: '/pantry',
+        icon: Package,
     },
     {
         label: 'Profilübersicht',

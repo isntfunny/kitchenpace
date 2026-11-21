@@ -13,6 +13,7 @@ import {
     processSyncRecipeToOpenSearch,
     processSyncTags,
 } from './opensearch-processor';
+import { processBookAssumedCooked } from './pantry-booking-processor';
 import {
     processTrendingRecipes,
     processSyncContactsNotifuse,
@@ -394,6 +395,27 @@ export const JOB_REGISTRY = defineJobs({
             },
         },
         repeat: { pattern: '30 4 * * 0', tz: 'Europe/Berlin' },
+    },
+
+    'book-assumed-cooked': {
+        queue: QueueName.SCHEDULED,
+        processor: (job) => processBookAssumedCooked(job),
+        defaultData: { dryRun: false, limit: 500 },
+        schema: {
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (report only, book nothing)',
+                default: false,
+            },
+            limit: {
+                type: 'number',
+                label: 'Max. plan entries per run',
+                default: 500,
+                min: 1,
+                max: 5000,
+            },
+        },
+        repeat: { pattern: '30 3 * * *', tz: 'Europe/Berlin' },
     },
 
     // ── Backup queue ────────────────────────────────────────────────

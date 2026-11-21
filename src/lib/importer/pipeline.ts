@@ -9,7 +9,7 @@ import { randomUUID } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
 
 import { createIngredient, findOrCreateUnit } from '@app/components/recipe/ingredientActions';
-import { computeFlowLayout } from '@app/lib/flow-layout';
+import { applyFlowPositions } from '@app/lib/flow-layout';
 import {
     assertResolvedMentions,
     repairIngredientMentions,
@@ -20,7 +20,8 @@ import { generateUniqueSlug } from '@app/lib/slug';
 import { AI_TEXT_MODEL } from '@shared/ai-models';
 import { pickListedTags, TAG_NAMES_SORTED } from '@shared/tags/tag-list';
 
-import { importRecipeFromMarkdown } from './openai-client';
+import { bindMentions } from './import-mentions';
+import { describeParseError, importRecipeFromMarkdown } from './openai-client';
 import { type AnalyzedRecipe, transformImportedRecipe } from './transform';
 import { uploadImageFromUrl } from './upload-image-from-url';
 
@@ -136,15 +137,7 @@ export async function analyzeWithAI(
 
     if (!result.success) {
         console.error('AI analysis failed:', result.error);
-        let errorMessage = result.error.message;
-        if (result.error.details) {
-            const details = Array.isArray(result.error.details)
-                ? result.error.details
-                      .map((d: { path?: string; message?: string }) => `${d.path}: ${d.message}`)
-                      .join('; ')
-                : JSON.stringify(result.error.details);
-            errorMessage += ` — ${details}`;
-        }
+        const errorMessage = describeParseError(result.error);
         await logImportRun(db, {
             userId,
             sourceUrl,
@@ -152,6 +145,12 @@ export async function analyzeWithAI(
             status: 'FAILED',
             errorType: result.error.type,
             errorMessage,
+            model: result.metadata?.model,
+            inputTokens: result.metadata?.inputTokens,
+            cachedInputTokens: result.metadata?.cachedInputTokens,
+            outputTokens: result.metadata?.outputTokens,
+            estimatedCostUsd: result.metadata?.estimatedCostUsd,
+            rawApiResponse: result.metadata?.rawApiResponse,
         });
         throw new Error(`KI-Analyse fehlgeschlagen: ${errorMessage}`);
     }
@@ -176,25 +175,6 @@ export async function analyzeWithAI(
         sourceUrl: sourceUrl || undefined,
         imageUrl: recipe.imageUrl || scrapedImageUrl || undefined,
     };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Flow layout helper
-// ─────────────────────────────────────────────────────────────────────────────
-
-function applyFlowPositions<T extends { id: string }>(
-    nodes: T[],
-    edges: { source: string; target: string }[],
-): (T & { position: { x: number; y: number } })[] {
-    if (nodes.length === 0) return [];
-    const positions = computeFlowLayout(
-        nodes.map((n) => ({ id: n.id })),
-        edges,
-    );
-    return nodes.map((node) => ({
-        ...node,
-        position: positions.get(node.id) ?? { x: 0, y: 0 },
-    }));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -242,14 +222,31 @@ export async function saveImportedRecipe(
 
     const sourceIds = new Map(syncedIngredients.map((ing) => [ing.id, ing.referenceId]));
     if (sourceIds.size !== syncedIngredients.length) throw new Error('Doppelte Import-Zutaten-ID');
+    // Pure id mapping: the AI's display text ("Zwiebeln") and partial amounts stay.
+    // Unknown ids are kept so the repair check below reports them.
+    const mapped = bindMentions(
+        data.flowNodes.map((node) => ({ ...node, description: node.description ?? '' })),
+        sourceIds,
+        { unknown: 'keep' },
+    );
+    // Ingredients picked for a step in the review keep their place in ingredientIds.
+    const mappedNodes = mapped.nodes.map((node, index) => ({
+        ...node,
+        ingredientIds: [
+            ...new Set([
+                ...node.ingredientIds,
+                ...(data.flowNodes[index].ingredientIds ?? []).map((id) => sourceIds.get(id) ?? id),
+            ]),
+        ],
+    }));
     const resolvedFlow = repairIngredientMentions(
-        data.flowNodes,
+        mappedNodes,
         syncedIngredients.map((ing) => ({
             ...ing,
             id: ing.referenceId,
             sourceId: ing.id,
         })),
-        sourceIds,
+        new Map(),
         { allowNameFallback: false },
     );
     assertResolvedMentions(resolvedFlow.issues);

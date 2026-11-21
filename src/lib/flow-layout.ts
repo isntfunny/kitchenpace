@@ -190,3 +190,19 @@ export function computeFlowLayout(
     }
     return result;
 }
+
+/** Dagre positions for stored nodes (import and flow refresh). */
+export function applyFlowPositions<T extends { id: string }>(
+    nodes: T[],
+    edges: { source: string; target: string }[],
+): (T & { position: { x: number; y: number } })[] {
+    if (nodes.length === 0) return [];
+    const positions = computeFlowLayout(
+        nodes.map((n) => ({ id: n.id })),
+        edges,
+    );
+    return nodes.map((node) => ({
+        ...node,
+        position: positions.get(node.id) ?? { x: 0, y: 0 },
+    }));
+}

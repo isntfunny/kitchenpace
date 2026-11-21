@@ -47,3 +47,10 @@ test('portion factors reject invalid values', () => {
     ])
         assert.equal(portionFactor(a, b), 1);
 });
+
+test('free-text partial amounts from the import stay unchanged when scaling (KUC-115)', () => {
+    for (const text of ['etwas', 'Rest', 'den Rest', 'etwas zum Bestreuen'])
+        assert.equal(scaleMentionOverride(text, 2), text);
+    assert.equal(scaleMentionOverride('½ TL', 2), '1 TL');
+    assert.equal(scaleMentionOverride('2', 1.5), '3');
+});

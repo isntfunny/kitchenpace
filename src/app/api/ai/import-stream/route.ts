@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 
 import { getServerAuthSession } from '@app/lib/auth';
-import { streamRecipeFromMarkdown } from '@app/lib/importer/openai-client';
+import { describeParseError, streamRecipeFromMarkdown } from '@app/lib/importer/openai-client';
 import { fetchImportContext, logImportRun } from '@app/lib/importer/pipeline';
 import { transformImportedRecipe } from '@app/lib/importer/transform';
 import { AI_TEXT_MODEL } from '@shared/ai-models';
@@ -49,24 +49,14 @@ export async function POST(request: NextRequest) {
                     {
                         model: AI_TEXT_MODEL,
                         context,
+                        onRepair: (problems) => send({ type: 'repair', problems }),
                     },
                     (text) => send({ type: 'delta', text }),
                 );
 
                 if (!result.success) {
                     // Include validation details in errorMessage for import history
-                    let errorMessage = result.error.message;
-                    if (result.error.details) {
-                        const details = Array.isArray(result.error.details)
-                            ? result.error.details
-                                  .map(
-                                      (d: { path?: string; message?: string }) =>
-                                          `${d.path}: ${d.message}`,
-                                  )
-                                  .join('; ')
-                            : JSON.stringify(result.error.details);
-                        errorMessage += ` — ${details}`;
-                    }
+                    const errorMessage = describeParseError(result.error);
 
                     logImportRun(prisma, {
                         userId,
@@ -75,6 +65,12 @@ export async function POST(request: NextRequest) {
                         status: 'FAILED',
                         errorType: result.error.type,
                         errorMessage,
+                        model: result.metadata?.model,
+                        inputTokens: result.metadata?.inputTokens,
+                        cachedInputTokens: result.metadata?.cachedInputTokens,
+                        outputTokens: result.metadata?.outputTokens,
+                        estimatedCostUsd: result.metadata?.estimatedCostUsd,
+                        rawApiResponse: result.metadata?.rawApiResponse,
                     }).catch((err) => console.error('ImportRun log failed:', err));
 
                     send({

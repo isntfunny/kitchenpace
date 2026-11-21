@@ -11,7 +11,11 @@
  */
 
 import { AI_TEXT_MODEL, AI_TEXT_PRICING } from '@shared/ai-models';
-import { chatCompletionContent, type BatchOutputEntry } from '@shared/openai-batch';
+import {
+    BATCH_RUNNING_STATUSES,
+    chatCompletionContent,
+    type BatchOutputEntry,
+} from '@shared/openai-batch';
 
 import { importedFlowProblems } from './import-flow-binding';
 import {
@@ -40,6 +44,21 @@ export function fullRefreshWhere(opts: { ids?: string[] }) {
         author: { role: FULL_REFRESH_AUTHOR_ROLE },
         ...(opts.ids?.length ? { id: { in: opts.ids } } : {}),
     };
+}
+
+/**
+ * Why a batch cannot be evaluated yet, or null. Finished batches are
+ * evaluated even when expired, cancelled or failed, as long as they have an
+ * output or error file: requests without an answer count as failed.
+ */
+export function batchNotEvaluable(batch: {
+    status: string;
+    output_file_id?: string | null;
+    error_file_id?: string | null;
+}): string | null {
+    if (BATCH_RUNNING_STATUSES.includes(batch.status)) return `läuft noch (${batch.status})`;
+    if (batch.status === 'completed' || batch.output_file_id || batch.error_file_id) return null;
+    return `endete mit ${batch.status} ohne Ausgabedatei`;
 }
 
 export interface TokenUsage {

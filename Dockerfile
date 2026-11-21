@@ -99,6 +99,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
 COPY --from=builder --chown=nextjs:nodejs /app/email-templates ./email-templates
 
+# Maintenance scripts (tsx), e.g. scripts/refresh-recipe-flows.ts in the worker container
+COPY --chown=nextjs:nodejs scripts ./scripts
+
 # CLI
 COPY --from=builder --chown=nextjs:nodejs /app/cli ./cli
 RUN printf '#!/bin/sh\nexec /app/node_modules/.bin/tsx /app/cli/index.ts "$@"\n' > /usr/local/bin/kitchen \

@@ -27,6 +27,8 @@
  *
  *   npx tsx scripts/refresh-recipe-flows.ts submit --limit=10
  *   npx tsx scripts/refresh-recipe-flows.ts submit --full --ids=<id1>,<id2>
+ *   npx tsx scripts/refresh-recipe-flows.ts submit --full --offset=0 --limit=400 --dir=backups/refresh-flows/teil-1
+ *   npx tsx scripts/refresh-recipe-flows.ts submit --full --offset=400 --limit=400 --dir=backups/refresh-flows/teil-2
  */
 import 'dotenv/config';
 
@@ -101,10 +103,12 @@ async function submit(opts: {
     dir?: string;
     ids?: string;
     limit?: string;
+    offset?: string;
     scrape: boolean;
     force?: boolean;
     full?: boolean;
 }) {
+    if (opts.offset && !opts.full) throw new Error('--offset gibt es nur im Vollmodus (--full).');
     const dir = dirOf(opts);
     const statePath = join(dir, 'state.json');
     if (existsSync(statePath) && !opts.force)
@@ -382,6 +386,10 @@ program
     .option(...dirOption)
     .option('--ids <ids>', 'nur diese Rezept-IDs (Komma-getrennt)')
     .option('--limit <n>', 'höchstens n Rezepte')
+    .option(
+        '--offset <n>',
+        'Vollmodus: die ersten n Rezepte der Auswahl überspringen (Aufteilen in mehrere Batches, je eigenes --dir)',
+    )
     .option('--no-scrape', 'Quelle nicht neu scrapen, nur den gespeicherten Stand verwenden')
     .option('--force', 'vorhandene state.json überschreiben')
     .option(

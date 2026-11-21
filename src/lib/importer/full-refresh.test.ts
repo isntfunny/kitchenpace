@@ -4,6 +4,7 @@ import { test } from 'node:test';
 
 import {
     batchCostUsd,
+    batchNotEvaluable,
     buildFullRefreshRequest,
     buildFullRepairRequest,
     checkScrapedSource,
@@ -381,3 +382,14 @@ function evaluateReady(): FullRefreshProposal {
     const { request } = buildFullRefreshRequest(recipe, { markdown: '# Seite' }, context);
     return evaluateFullRefreshEntry(request, entry('full-r1', imported()));
 }
+
+test('batches: running ones wait; finished ones with a file are evaluated even if expired', () => {
+    assert.equal(batchNotEvaluable({ status: 'in_progress' }), 'läuft noch (in_progress)');
+    assert.equal(batchNotEvaluable({ status: 'completed', output_file_id: 'f' }), null);
+    assert.equal(batchNotEvaluable({ status: 'expired', output_file_id: 'f' }), null);
+    assert.equal(batchNotEvaluable({ status: 'cancelled', error_file_id: 'e' }), null);
+    assert.equal(
+        batchNotEvaluable({ status: 'failed', output_file_id: null }),
+        'endete mit failed ohne Ausgabedatei',
+    );
+});

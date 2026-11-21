@@ -9,13 +9,13 @@ import { join } from 'node:path';
 
 import { AI_TEXT_MODEL } from '../../shared/ai-models';
 import {
-    BATCH_RUNNING_STATUSES,
     buildBatchJsonl,
     createOpenAIBatchApi,
     parseBatchOutputJsonl,
 } from '../../shared/openai-batch';
 import { prisma } from '../../shared/prisma';
 import {
+    batchNotEvaluable,
     buildFullRefreshRequest,
     buildFullRepairRequest,
     checkScrapedSource,
@@ -37,10 +37,7 @@ import { fetchImportContext } from '../../src/lib/importer/pipeline';
 import { scrapeRecipe } from '../../src/lib/importer/scraper';
 
 import { applyFull } from './full-reimport-apply';
-import {
-    currentSummaries,
-    matchProposalIngredients,
-} from './full-reimport-db';
+import { currentSummaries, matchProposalIngredients } from './full-reimport-db';
 
 const SCRAPE_CONCURRENCY = 3;
 
@@ -95,12 +92,14 @@ async function uploadBatch(
 export async function submitFull(
     dir: string,
     statePath: string,
-    opts: { ids?: string; limit?: string },
+    opts: { ids?: string; limit?: string; offset?: string },
 ) {
     const ids = splitIds(opts.ids);
     const recipes = await prisma.recipe.findMany({
         where: fullRefreshWhere({ ids }),
-        orderBy: { createdAt: 'asc' },
+        // stable order, so --offset/--limit split the selection into batches
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        ...(opts.offset ? { skip: Number(opts.offset) } : {}),
         ...(opts.limit ? { take: Number(opts.limit) } : {}),
         select: { id: true, title: true, sourceUrl: true },
     });
@@ -228,10 +227,12 @@ export async function repairFull(dir: string, statePath: string, state: FullStat
 export async function fetchFull(dir: string, state: FullState) {
     const api = createOpenAIBatchApi();
     const batch = await api.retrieveBatch(state.batchId);
-    if (BATCH_RUNNING_STATUSES.includes(batch.status))
-        throw new Error(`Batch ${state.batchId} läuft noch (${batch.status})`);
+    const problem = batchNotEvaluable(batch);
+    if (problem) throw new Error(`Batch ${state.batchId}: ${problem}`);
     if (batch.status !== 'completed')
-        throw new Error(`Batch ${state.batchId} endete mit ${batch.status}`);
+        console.log(
+            `Batch ${state.batchId} endete mit ${batch.status}: vorhandene Antworten werden ausgewertet, fehlende gelten als fehlgeschlagen ("repair" sendet sie erneut).`,
+        );
 
     const text = [
         batch.output_file_id ? await api.fileText(batch.output_file_id) : '',

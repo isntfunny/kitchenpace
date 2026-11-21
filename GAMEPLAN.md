@@ -11,7 +11,7 @@
 <!-- gameplan:start project=KUC -->
 Quelle: [YouTrack-Projekt KUC · KüchenTakt](https://youtrack.tecfriends.de/projects/KUC) – erzeugt von gameplan.py, nicht von Hand ändern.
 
-51 erledigte Tickets ausgeblendet. Done bleibt in offenen Abhängigkeitsgruppen sichtbar; vollständig erledigte Gruppen entfallen. Vollständiger Stand: `--include-done`.
+52 erledigte Tickets ausgeblendet. Done bleibt in offenen Abhängigkeitsgruppen sichtbar; vollständig erledigte Gruppen entfallen. Vollständiger Stand: `--include-done`.
 
 ## Nicht einsortiert
 

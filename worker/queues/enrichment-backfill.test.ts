@@ -249,3 +249,116 @@ test(
         assert.equal(remaining, 0);
     },
 );
+
+test('findPendingSingleJobs: only waiting, active or delayed single jobs count', async () => {
+    const { findPendingSingleJobs } = await load();
+    const states: Record<string, string> = {
+        'enrich-nutrition-a': 'waiting',
+        'enrich-nutrition-b': 'active',
+        'enrich-nutrition-c': 'delayed',
+        'enrich-nutrition-d': 'failed',
+        'enrich-nutrition-e': 'completed',
+    };
+    const asked: string[] = [];
+    const pending = await findPendingSingleJobs(['a', 'b', 'c', 'd', 'e', 'f'], async (jobId) => {
+        asked.push(jobId);
+        return states[jobId] ? { getState: async () => states[jobId] } : null;
+    });
+    assert.deepEqual([...pending], ['a', 'b', 'c']);
+    assert.equal(asked.length, 6);
+});
+
+test(
+    'pending single job is not batched; still incomplete ingredients wait for the cooldown',
+    { skip },
+    async () => {
+        const { prisma, runEnrichmentBackfill, ATTEMPT_COOLDOWN_MS } = await load();
+        await prisma.ingredient.deleteMany({ where: { id: { startsWith: PREFIX } } });
+        await prisma.ingredientCategory.deleteMany({ where: { id: CAT_ID } });
+        await prisma.unit.deleteMany({ where: { id: UNIT_ID } });
+        await prisma.unit.create({ data: { id: UNIT_ID, shortName: UNIT_ID, longName: 'Stück' } });
+        await prisma.ingredientCategory.create({
+            data: { id: CAT_ID, name: 'Gemüse', slug: CAT_ID },
+        });
+        const QUEUED = `${PREFIX}queued`;
+        const STUCK = `${PREFIX}stuck`;
+        const OLD = `${PREFIX}old`;
+        const later = (minutes: number) => new Date(Date.now() + minutes * 60_000);
+        // STUCK is the newest and will stay incomplete; OLD is older
+        await prisma.ingredient.create({
+            data: { id: QUEUED, name: 'Neu', slug: QUEUED, createdAt: later(30) },
+        });
+        await prisma.ingredient.create({
+            data: { id: STUCK, name: 'Unklar', slug: STUCK, createdAt: later(20) },
+        });
+        await prisma.ingredient.create({
+            data: { id: OLD, name: 'Alt', slug: OLD, createdAt: later(10) },
+        });
+
+        let state = null as EnrichmentBatchState | null;
+        const uploads: string[] = [];
+        const batch = { output: '' };
+        const marks = new Map<string, Date>();
+        const clock = new Date('2026-11-21T05:30:00Z');
+        const deps: EnrichmentDeps = {
+            prisma,
+            api: {
+                uploadJsonl: async (content) => {
+                    uploads.push(content);
+                    return `file-${uploads.length}`;
+                },
+                createBatch: async () => ({ id: `batch-${uploads.length}` }),
+                retrieveBatch: async () => ({ status: 'completed', output_file_id: 'out' }),
+                fileText: async () => batch.output,
+            },
+            store: {
+                get: async () => state,
+                set: async (next) => {
+                    state = next;
+                },
+                clear: async () => {
+                    state = null;
+                },
+                lock: async () => true,
+                unlock: async () => {},
+            },
+            schedulePoll: async () => {},
+            pendingSingleJobs: async (ids) => new Set(ids.filter((id) => id === QUEUED)),
+            attempts: {
+                recent: async (now) =>
+                    [...marks]
+                        .filter(([, at]) => now.getTime() - at.getTime() <= ATTEMPT_COOLDOWN_MS)
+                        .map(([id]) => id),
+                mark: async (ids, now) => {
+                    for (const id of ids) marks.set(id, now);
+                },
+            },
+            now: () => clock,
+        };
+
+        // The newest three minus the one with a pending single job
+        const submitted = await runEnrichmentBackfill(deps, { batchSize: 3 });
+        assert.equal(submitted.skippedPendingJobs, 1);
+        const asked = () => [
+            ...new Set([
+                ...Object.values(state!.nutrition),
+                ...Object.values(state!.shelfLife).flat(),
+            ]),
+        ];
+        assert.deepEqual(asked().sort(), [OLD, STUCK].sort());
+
+        // All rounds fail for STUCK and OLD: after the last round both are marked
+        for (let round = 0; round <= 2; round += 1) {
+            batch.output = '';
+            const result = await runEnrichmentBackfill(deps, {});
+            assert.equal(result.step, 'imported');
+        }
+        assert.equal(state, null);
+        assert.deepEqual([...marks.keys()].sort(), [OLD, STUCK].sort());
+
+        // Next day: marked ones wait, the rest goes first
+        const dry = await runEnrichmentBackfill(deps, { dryRun: true, batchSize: 500 });
+        assert.equal(dry.skippedRecentlyTried, 2);
+        await prisma.ingredient.deleteMany({ where: { id: { startsWith: PREFIX } } });
+    },
+);

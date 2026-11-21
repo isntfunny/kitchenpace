@@ -3,7 +3,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { checkBatch, schedulePollIfDue, type SavedBatch } from './batch-job';
+import {
+    checkBatch,
+    pollOverdueBatches,
+    schedulePollIfDue,
+    withBatchLock,
+    type SavedBatch,
+} from './batch-job';
 
 const saved = (extra: Partial<SavedBatch> = {}): SavedBatch => ({
     batchId: 'b1',
@@ -74,7 +80,127 @@ test('checkBatch: running, completed with output, failed clears the state', asyn
     assert.equal(done.kind === 'completed' && done.outputJsonl, 'text of out-1');
     assert.equal(cleared, 0);
 
+    // Expired: the partial output is paid for and gets imported
     status = 'expired';
-    await assert.rejects(checkBatch(api, store, 'b1'), /Status expired/);
+    const expired = await checkBatch(api, store, 'b1');
+    assert.equal(expired.kind, 'completed');
+    assert.equal(expired.status, 'expired');
+    assert.equal(cleared, 0);
+
+    status = 'cancelled';
+    await assert.rejects(checkBatch(api, store, 'b1'), /Status cancelled/);
     assert.equal(cleared, 1);
+});
+
+test('expired batch without output file: everything counts as missing', async () => {
+    const api = {
+        retrieveBatch: async () => ({ status: 'expired', output_file_id: null }),
+        fileText: async () => {
+            throw new Error('no file');
+        },
+    };
+    const result = await checkBatch(api, { clear: async () => {} }, 'b1');
+    assert.deepEqual(result, { kind: 'completed', status: 'expired', outputJsonl: '' });
+});
+
+test('pollMinutes 0 marks the batch as not polled automatically', async () => {
+    let state = saved();
+    await schedulePollIfDue(
+        {
+            set: async (next: SavedBatch) => {
+                state = next;
+            },
+        },
+        state,
+        0,
+        new Date(),
+        async () => assert.fail('no poll with pollMinutes 0'),
+    );
+    assert.equal(state.pollStopped, true);
+});
+
+test('skipped run (lock held) re-enqueues only when a batch is saved', async () => {
+    let requeued = 0;
+    const requeue = async () => {
+        requeued += 1;
+    };
+    const locked = (state: SavedBatch | null) => ({
+        lock: async () => false,
+        unlock: async () => assert.fail('not locked by us'),
+        get: async () => state,
+    });
+
+    const withBatch = await withBatchLock(locked(saved()), async () => assert.fail(), requeue);
+    assert.equal(withBatch.step, 'skipped');
+    assert.equal(withBatch.requeued, true);
+    assert.equal(requeued, 1);
+
+    const withoutBatch = await withBatchLock(locked(null), async () => assert.fail(), requeue);
+    assert.equal(withoutBatch.requeued, false);
+    assert.equal(requeued, 1);
+
+    let unlocked = false;
+    const ran = await withBatchLock(
+        {
+            lock: async () => true,
+            unlock: async () => {
+                unlocked = true;
+            },
+            get: async () => null,
+        },
+        async () => ({ step: 'idle' }),
+        requeue,
+    );
+    assert.equal(ran.step, 'idle');
+    assert.ok(unlocked);
+});
+
+test('poll cron re-enqueues only saved batches whose poll is overdue, with their data', async () => {
+    const now = new Date('2026-11-21T06:00:00Z');
+    const enqueued: Array<[string, Record<string, unknown>]> = [];
+    const targetFor = (job: string, state: SavedBatch | null) => ({
+        job,
+        store: { get: async () => state },
+        enqueue: async (data: Record<string, unknown>) => {
+            enqueued.push([job, data]);
+        },
+    });
+    const result = await pollOverdueBatches(
+        [
+            targetFor(
+                'lost',
+                saved({ nextPollAt: '2026-11-21T05:40:00Z', pollData: { write: true } }),
+            ),
+            targetFor('pending', saved({ nextPollAt: '2026-11-21T05:58:00Z' })),
+            targetFor('never-scheduled', saved()),
+            targetFor('manual', saved({ pollStopped: true })),
+            targetFor('none', null),
+        ],
+        now,
+        5 * 60_000,
+    );
+    assert.deepEqual(result.requeued, ['lost', 'never-scheduled']);
+    assert.deepEqual(result.pending, ['lost', 'pending', 'never-scheduled']);
+    assert.deepEqual(enqueued, [
+        ['lost', { write: true, reset: false }],
+        ['never-scheduled', { reset: false }],
+    ]);
+});
+
+test('scheduled polls store the job data for the poll cron', async () => {
+    let state = saved();
+    await schedulePollIfDue(
+        {
+            set: async (next: SavedBatch) => {
+                state = next;
+            },
+        },
+        state,
+        60_000,
+        new Date('2026-11-21T06:00:00Z'),
+        async () => {},
+        { write: true, reset: true },
+    );
+    assert.deepEqual(state.pollData, { write: true, reset: false });
+    assert.equal(state.pollStopped, false);
 });

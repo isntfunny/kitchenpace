@@ -19,6 +19,10 @@ export interface SavedBatch {
     round: number;
     /** When the scheduled poll job is due; runs before that do not add another one */
     nextPollAt?: string;
+    /** Job data of the poll job, so the poll cron can re-enqueue the same run */
+    pollData?: Record<string, unknown>;
+    /** No automatic polling (pollMinutes 0, or kept after a dry run): the poll cron leaves it alone */
+    pollStopped?: boolean;
 }
 
 export interface BatchStateStore<T> {
@@ -30,6 +34,8 @@ export interface BatchStateStore<T> {
 }
 
 const LOCK_SECONDS = 600;
+/** Delay for a run re-enqueued because another run held the lock */
+export const LOCKED_REQUEUE_DELAY_MS = 60_000;
 /** A delayed poll job may start a little early compared to our clock */
 const POLL_SLACK_MS = 5_000;
 
@@ -58,13 +64,24 @@ export function redisBatchStore<T>(name: string): BatchStateStore<T> {
     };
 }
 
-/** Runs `run` under the store's lock; a second run at the same time is skipped. */
+/**
+ * Runs `run` under the store's lock. A second run at the same time is skipped;
+ * if a batch is saved, `requeue` adds it again for later so a skipped poll
+ * does not end the poll chain.
+ */
 export async function withBatchLock(
-    store: Pick<BatchStateStore<unknown>, 'lock' | 'unlock'>,
+    store: Pick<BatchStateStore<unknown>, 'lock' | 'unlock' | 'get'>,
     run: () => Promise<Record<string, unknown>>,
+    requeue?: () => Promise<unknown>,
 ): Promise<Record<string, unknown>> {
     if (!(await store.lock())) {
-        return { step: 'skipped', message: 'Ein anderer Lauf ist aktiv' };
+        const pending = requeue && (await store.get()) ? requeue : null;
+        if (pending) await pending();
+        return {
+            step: 'skipped',
+            message: 'Ein anderer Lauf ist aktiv',
+            requeued: Boolean(pending),
+        };
     }
     try {
         return await run();
@@ -84,11 +101,54 @@ export async function schedulePollIfDue<T extends SavedBatch>(
     delayMs: number,
     now: Date,
     schedule: () => Promise<void>,
+    pollData?: Record<string, unknown>,
 ): Promise<void> {
-    if (delayMs <= 0) return;
+    if (delayMs <= 0) {
+        if (!state.pollStopped) await store.set({ ...state, pollStopped: true });
+        return;
+    }
     if (state.nextPollAt && now.getTime() < Date.parse(state.nextPollAt) - POLL_SLACK_MS) return;
     await schedule();
-    await store.set({ ...state, nextPollAt: new Date(now.getTime() + delayMs).toISOString() });
+    await store.set({
+        ...state,
+        nextPollAt: new Date(now.getTime() + delayMs).toISOString(),
+        pollStopped: false,
+        ...(pollData ? { pollData: { ...pollData, reset: false } } : {}),
+    });
+}
+
+/** A saved batch whose poll is overdue (or was never scheduled). */
+export function pollOverdue(state: SavedBatch, now: Date, graceMs: number): boolean {
+    return !state.nextPollAt || now.getTime() > Date.parse(state.nextPollAt) + graceMs;
+}
+
+export interface PollTarget {
+    job: string;
+    store: Pick<BatchStateStore<SavedBatch>, 'get'>;
+    enqueue(data: Record<string, unknown>): Promise<void>;
+}
+
+/**
+ * poll-openai-batches (cron): re-enqueues the job of every saved batch whose
+ * poll chain broke (failed poll job, lost delayed job). Never submits; jobs
+ * without a saved batch are left alone.
+ */
+export async function pollOverdueBatches(
+    targets: PollTarget[],
+    now: Date,
+    graceMs: number,
+): Promise<{ requeued: string[]; pending: string[] }> {
+    const requeued: string[] = [];
+    const pending: string[] = [];
+    for (const target of targets) {
+        const state = await target.store.get();
+        if (!state || state.pollStopped) continue;
+        pending.push(target.job);
+        if (!pollOverdue(state, now, graceMs)) continue;
+        await target.enqueue({ ...(state.pollData ?? {}), reset: false });
+        requeued.push(target.job);
+    }
+    return { requeued, pending };
 }
 
 export type BatchCheck =
@@ -100,8 +160,10 @@ export type BatchCheck =
     | { kind: 'completed'; status: string; outputJsonl: string };
 
 /**
- * Looks at a saved batch. A batch that failed, expired or was cancelled is
- * forgotten (so the next run submits again) and reported as an error.
+ * Looks at a saved batch. An expired batch counts as completed: its partial
+ * output is paid for and gets imported, the callers ask again for the rest.
+ * A batch that failed or was cancelled is forgotten (so the next run submits
+ * again) and reported as an error.
  */
 export async function checkBatch(
     api: Pick<OpenAIBatchApi, 'retrieveBatch' | 'fileText'>,
@@ -116,7 +178,7 @@ export async function checkBatch(
             requestCounts: batch.request_counts ?? null,
         };
     }
-    if (batch.status !== 'completed') {
+    if (batch.status !== 'completed' && batch.status !== 'expired') {
         await store.clear();
         throw new Error(`Batch ${batchId} endete mit Status ${batch.status}`);
     }

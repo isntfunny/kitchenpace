@@ -10,8 +10,11 @@
 //   batch completed  → import nutrition first, then shelf life (same order as
 //                      enrich-ingredient-nutrition, so LOW confidence keeps
 //                      needsReview); failed entries go into a retry batch
-// Whatever is still missing after the retry rounds is selected again by the
-// next daily run, so no ingredient stays without enrichment.
+// Ingredients with a single enrich-ingredient-nutrition job still waiting or
+// running are left out (no double enrichment). Whatever is still incomplete
+// after the retry rounds is left out for ATTEMPT_COOLDOWN_MS (so it does not
+// block older ingredients) and then selected again, so no ingredient stays
+// without enrichment.
 //
 // Request bodies and result import are the ones of the direct job
 // (nutrition-processor.ts, shelf-life-processor.ts).
@@ -33,9 +36,11 @@ import {
     redisBatchStore,
     schedulePollIfDue,
     withBatchLock,
+    LOCKED_REQUEUE_DELAY_MS,
     type BatchStateStore,
     type SavedBatch,
 } from './batch-job';
+import { getRedis } from './connection';
 import {
     buildNutritionRequest,
     importNutritionResult,
@@ -53,11 +58,25 @@ import {
 import type { BackfillIngredientEnrichmentJob } from './types';
 
 export const ENRICHMENT_JOB_NAME = 'backfill-ingredient-enrichment';
-const STORE_NAME = 'ingredient-enrichment';
+export const ENRICHMENT_STORE_NAME = 'ingredient-enrichment';
 /** Rounds of retries for failed entries after the first batch */
 const MAX_RETRY_ROUNDS = 2;
 /** Ingredients per shelf-life request in the first round (as in KUC-94) */
 const SHELF_LIFE_CHUNK_SIZE = 50;
+/**
+ * Ingredients that are still incomplete after a full batch run (all retry
+ * rounds) are left out for this long, so a few permanently incomplete new
+ * ingredients do not block older ones; afterwards they are asked again.
+ */
+export const ATTEMPT_COOLDOWN_MS = 7 * 24 * 3600_000;
+/** BullMQ states of a single enrich-ingredient-nutrition job that will still run */
+const PENDING_JOB_STATES = new Set([
+    'waiting',
+    'active',
+    'delayed',
+    'prioritized',
+    'waiting-children',
+]);
 
 export interface EnrichmentBatchState extends SavedBatch {
     model: string;
@@ -72,7 +91,16 @@ export interface EnrichmentDeps {
     api: OpenAIBatchApi;
     store: BatchStateStore<EnrichmentBatchState>;
     schedulePoll(delayMs: number, data: BackfillIngredientEnrichmentJob): Promise<void>;
+    /** Ingredients that have a single enrich-ingredient-nutrition job still to run */
+    pendingSingleJobs?(ingredientIds: string[]): Promise<Set<string>>;
+    /** Ingredients left incomplete by a recent run (see ATTEMPT_COOLDOWN_MS) */
+    attempts?: AttemptLog;
     now?: () => Date;
+}
+
+export interface AttemptLog {
+    recent(now: Date): Promise<string[]>;
+    mark(ingredientIds: string[], now: Date): Promise<void>;
 }
 
 interface Candidate {
@@ -111,14 +139,36 @@ function toCandidates(
         .filter((candidate) => candidate.nutrition || candidate.shelfLife);
 }
 
-/** Ingredients with something missing, newest first so fresh ones are not starved. */
+/**
+ * Ingredients whose single job (queued on creation, jobId as in
+ * addEnrichIngredientNutritionJob) is still waiting or running; the batch
+ * leaves them out so they are not enriched twice.
+ */
+export async function findPendingSingleJobs(
+    ingredientIds: string[],
+    getJob: (jobId: string) => Promise<{ getState(): Promise<string> } | undefined | null>,
+): Promise<Set<string>> {
+    const pending = new Set<string>();
+    for (const ingredientId of ingredientIds) {
+        const job = await getJob(`enrich-nutrition-${ingredientId}`);
+        if (job && PENDING_JOB_STATES.has(await job.getState())) pending.add(ingredientId);
+    }
+    return pending;
+}
+
+/**
+ * Ingredients with something missing, newest first so fresh ones are not
+ * starved; `excludeIds` (recently tried, still incomplete) come later.
+ */
 export async function selectEnrichmentCandidates(
     prisma: PrismaClient,
     limit: number,
     includeNeedsReview: boolean,
+    excludeIds: string[] = [],
 ): Promise<Candidate[]> {
     const rows = await prisma.ingredient.findMany({
         where: {
+            ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
             OR: [
                 { energyKcal: null },
                 { ingredientUnits: { none: {} } },
@@ -264,20 +314,41 @@ export async function runEnrichmentBackfill(
     const pollDelay = options.pollMinutes * 60_000;
     const now = deps.now?.() ?? new Date();
     const schedulePoll = (state: EnrichmentBatchState) =>
-        schedulePollIfDue(deps.store, state, pollDelay, now, () =>
-            deps.schedulePoll(pollDelay, data),
+        schedulePollIfDue(
+            deps.store,
+            state,
+            pollDelay,
+            now,
+            () => deps.schedulePoll(pollDelay, data),
+            { ...data },
         );
 
     if (options.reset && !options.dryRun) await deps.store.clear();
     const state = await deps.store.get();
 
+    const withoutPendingSingleJobs = async (list: Candidate[]) => {
+        if (!deps.pendingSingleJobs || list.length === 0) return { list, skipped: 0 };
+        const pending = await deps.pendingSingleJobs(list.map((candidate) => candidate.id));
+        return {
+            list: list.filter((candidate) => !pending.has(candidate.id)),
+            skipped: pending.size,
+        };
+    };
+
     if (!state) {
-        const candidates = await selectEnrichmentCandidates(
-            deps.prisma,
-            options.batchSize,
-            options.includeNeedsReview,
+        const recentlyTried = (await deps.attempts?.recent(now)) ?? [];
+        const selected = await withoutPendingSingleJobs(
+            await selectEnrichmentCandidates(
+                deps.prisma,
+                options.batchSize,
+                options.includeNeedsReview,
+                recentlyTried,
+            ),
         );
+        const candidates = selected.list;
         const counts = {
+            skippedPendingJobs: selected.skipped,
+            skippedRecentlyTried: recentlyTried.length,
             total: candidates.length,
             nutrition: candidates.filter((candidate) => candidate.nutrition).length,
             shelfLife: candidates.filter((candidate) => candidate.shelfLife).length,
@@ -343,13 +414,15 @@ export async function runEnrichmentBackfill(
         // Only what is still missing now (and was asked for in this batch)
         const nutritionMissing = new Set(nutrition.missing);
         const shelfLifeMissing = new Set(shelfLife.missing);
-        const retry = toCandidates(rows)
-            .map((candidate) => ({
-                ...candidate,
-                nutrition: candidate.nutrition && nutritionMissing.has(candidate.id),
-                shelfLife: candidate.shelfLife && shelfLifeMissing.has(candidate.id),
-            }))
-            .filter((candidate) => candidate.nutrition || candidate.shelfLife);
+        const { list: retry } = await withoutPendingSingleJobs(
+            toCandidates(rows)
+                .map((candidate) => ({
+                    ...candidate,
+                    nutrition: candidate.nutrition && nutritionMissing.has(candidate.id),
+                    shelfLife: candidate.shelfLife && shelfLifeMissing.has(candidate.id),
+                }))
+                .filter((candidate) => candidate.nutrition || candidate.shelfLife),
+        );
         if (retry.length > 0) {
             const created = await submit(deps, retry, state.round + 1);
             await schedulePoll(created);
@@ -361,7 +434,43 @@ export async function runEnrichmentBackfill(
             };
         }
     }
-    return { step: 'imported', ...summary, missingIds: missing.slice(0, 50) };
+
+    // End of this run: whatever is still incomplete waits for the cooldown
+    const requested = [
+        ...new Set([...Object.values(state.nutrition), ...Object.values(state.shelfLife).flat()]),
+    ];
+    const incomplete = toCandidates(
+        await deps.prisma.ingredient.findMany({
+            where: { id: { in: requested } },
+            select: candidateSelect,
+        }),
+    ).map((candidate) => candidate.id);
+    if (incomplete.length > 0) await deps.attempts?.mark(incomplete, now);
+    return {
+        step: 'imported',
+        ...summary,
+        missingIds: missing.slice(0, 50),
+        stillIncomplete: incomplete.length,
+    };
+}
+
+function redisAttemptLog(): AttemptLog {
+    const redis = getRedis();
+    const key = `${ENRICHMENT_STORE_NAME}:attempts`;
+    return {
+        async recent(now) {
+            const all = await redis.hgetall(key);
+            const expired = Object.keys(all).filter(
+                (id) => now.getTime() - Date.parse(all[id]) > ATTEMPT_COOLDOWN_MS,
+            );
+            if (expired.length > 0) await redis.hdel(key, ...expired);
+            return Object.keys(all).filter((id) => !expired.includes(id));
+        },
+        async mark(ingredientIds, now) {
+            const stamp = now.toISOString();
+            await redis.hset(key, Object.fromEntries(ingredientIds.map((id) => [id, stamp])));
+        },
+    };
 }
 
 // ── Real dependencies ───────────────────────────────────────────────────
@@ -369,25 +478,37 @@ export async function runEnrichmentBackfill(
 export async function processBackfillIngredientEnrichment(
     job: Job<BackfillIngredientEnrichmentJob>,
 ): Promise<Record<string, unknown>> {
-    const store = redisBatchStore<EnrichmentBatchState>(STORE_NAME);
-    return withBatchLock(store, async () => {
-        const result = await runEnrichmentBackfill(
-            {
-                prisma: workerPrisma,
-                api: createOpenAIBatchApi(),
-                store,
-                schedulePoll: async (delay, data) => {
-                    // Poll jobs never reset the saved batch
-                    await getScheduledQueue().add(
-                        ENRICHMENT_JOB_NAME,
-                        { ...data, reset: false },
-                        { delay },
-                    );
+    const store = redisBatchStore<EnrichmentBatchState>(ENRICHMENT_STORE_NAME);
+    return withBatchLock(
+        store,
+        async () => {
+            const result = await runEnrichmentBackfill(
+                {
+                    prisma: workerPrisma,
+                    api: createOpenAIBatchApi(),
+                    store,
+                    pendingSingleJobs: (ids) =>
+                        findPendingSingleJobs(ids, (jobId) => getScheduledQueue().getJob(jobId)),
+                    attempts: redisAttemptLog(),
+                    schedulePoll: async (delay, data) => {
+                        // Poll jobs never reset the saved batch
+                        await getScheduledQueue().add(
+                            ENRICHMENT_JOB_NAME,
+                            { ...data, reset: false },
+                            { delay },
+                        );
+                    },
                 },
-            },
-            job.data,
-        );
-        console.log(`[EnrichBackfill] ${JSON.stringify(result)}`);
-        return result;
-    });
+                job.data,
+            );
+            console.log(`[EnrichBackfill] ${JSON.stringify(result)}`);
+            return result;
+        },
+        () =>
+            getScheduledQueue().add(
+                ENRICHMENT_JOB_NAME,
+                { ...job.data, reset: false },
+                { delay: LOCKED_REQUEUE_DELAY_MS },
+            ),
+    );
 }

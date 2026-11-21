@@ -7,6 +7,7 @@ import type { OpenAIBatchApi } from '@shared/openai-batch';
 import {
     buildEmbeddingsBatch,
     parseEmbeddingsOutput,
+    rowsToStore,
     runEmbeddingsBackfill,
     type EmbeddingsBatchState,
     type EmbeddingsDeps,
@@ -62,6 +63,7 @@ function harness(missingRecipes: Array<{ id: string; text: string }>) {
     const endpoints: string[] = [];
     const polls: number[] = [];
     const saved: Array<{ id: string; embedding: number[] }> = [];
+    const restoreCalls: number[] = [];
     const batch = { status: 'in_progress', output: '' };
     let clock = new Date('2026-11-21T06:00:00Z');
     const api: OpenAIBatchApi = {
@@ -89,10 +91,15 @@ function harness(missingRecipes: Array<{ id: string; text: string }>) {
             lock: async () => true,
             unlock: async () => {},
         },
-        restoreStored: async () => ({
-            restored: 3,
-            missing: missingRecipes.filter((recipe) => !saved.some((row) => row.id === recipe.id)),
-        }),
+        restoreStored: async (pageSize) => {
+            restoreCalls.push(pageSize);
+            return {
+                restored: 3,
+                missing: missingRecipes.filter(
+                    (recipe) => !saved.some((row) => row.id === recipe.id),
+                ),
+            };
+        },
         saveEmbeddings: async (rows) => {
             saved.push(...rows);
             return rows.length;
@@ -108,6 +115,7 @@ function harness(missingRecipes: Array<{ id: string; text: string }>) {
         endpoints,
         polls,
         saved,
+        restoreCalls,
         batch,
         state: () => state,
         advance: (minutes: number) => {
@@ -140,6 +148,8 @@ test('flow: submit, wait, import, retry the failed recipe, done', async () => {
     h.advance(9);
     await runEmbeddingsBackfill(h.deps, {});
     assert.equal(h.polls.length, 2);
+    // Copying stored embeddings only happened when submitting, not while polling
+    assert.equal(h.restoreCalls.length, 1);
 
     // r2 failed
     h.batch.status = 'completed';
@@ -155,6 +165,8 @@ test('flow: submit, wait, import, retry the failed recipe, done', async () => {
     assert.equal(imported.step, 'imported');
     assert.equal(imported.generated, 1);
     assert.equal(imported.retried, 1);
+    assert.equal(imported.restored, 3);
+    assert.equal(h.restoreCalls.length, 2);
     assert.deepEqual(h.saved, [{ id: 'r1', embedding: [1, 2, 3] }]);
     assert.equal(h.state()!.round, 1);
     assert.deepEqual(Object.values(h.state()!.requests), ['r2']);
@@ -198,4 +210,35 @@ test('no retry after the last round; nothing is lost because the next run asks a
     assert.equal(h.state(), null);
     h.batch.status = 'in_progress';
     assert.equal((await runEmbeddingsBackfill(h.deps, {})).step, 'submitted');
+});
+
+test('expired batch: partial vectors are stored, only the rest is asked again', async () => {
+    const h = harness([
+        { id: 'r1', text: 'Pfannkuchen' },
+        { id: 'r2', text: 'Gulasch' },
+    ]);
+    await runEmbeddingsBackfill(h.deps, {});
+    h.batch.status = 'expired';
+    const ids = h.state()!.requests;
+    h.batch.output = Object.entries(ids)
+        .filter(([, recipeId]) => recipeId === 'r1')
+        .map(([customId]) => embeddingLine(customId, [1]))
+        .join('\n');
+    const result = await runEmbeddingsBackfill(h.deps, {});
+    assert.equal(result.step, 'imported');
+    assert.equal(result.status, 'expired');
+    assert.deepEqual(h.saved, [{ id: 'r1', embedding: [1] }]);
+    assert.deepEqual(Object.values(h.state()!.requests), ['r2']);
+});
+
+test('batch vectors never replace an embedding written meanwhile, nor unpublished recipes', () => {
+    const rows = [
+        { id: 'new', embedding: [1] },
+        { id: 'synced-meanwhile', embedding: [2] },
+        { id: 'unpublished', embedding: [3] },
+    ];
+    assert.deepEqual(
+        rowsToStore(rows, new Set(['new', 'synced-meanwhile']), new Set(['synced-meanwhile'])),
+        [{ id: 'new', embedding: [1] }],
+    );
 });

@@ -37,6 +37,7 @@ import {
     redisBatchStore,
     schedulePollIfDue,
     withBatchLock,
+    LOCKED_REQUEUE_DELAY_MS,
     type BatchStateStore,
     type SavedBatch,
 } from './batch-job';
@@ -48,7 +49,7 @@ import type { BackfillIngredientShelfLifeJob } from './types';
 const SHELF_LIFE_MODEL = AI_TEXT_MODEL;
 
 export const SHELF_LIFE_JOB_NAME = 'backfill-ingredient-shelf-life';
-const STORE_NAME = 'shelf-life';
+export const SHELF_LIFE_STORE_NAME = 'shelf-life';
 /** Rounds of single-ingredient retries after the first batch */
 const MAX_RETRY_ROUNDS = 2;
 
@@ -265,8 +266,16 @@ export async function runShelfLifeBackfill(
     const options = { ...DEFAULTS, ...data };
     const pollDelay = options.pollMinutes * 60_000;
     const schedule = () => deps.schedulePoll(pollDelay, data);
+    const pollData = { ...data } as Record<string, unknown>;
     const scheduleFirstPoll = (created: ShelfLifeBatchState) =>
-        schedulePollIfDue(deps.store, created, pollDelay, deps.now?.() ?? new Date(), schedule);
+        schedulePollIfDue(
+            deps.store,
+            created,
+            pollDelay,
+            deps.now?.() ?? new Date(),
+            schedule,
+            pollData,
+        );
 
     if (options.reset) {
         await deps.store.clear();
@@ -293,7 +302,7 @@ export async function runShelfLifeBackfill(
     const base = { batchId: state.batchId, round: state.round, status: check.status };
 
     if (check.kind === 'running') {
-        await schedulePollIfDue(deps.store, state, pollDelay, now, schedule);
+        await schedulePollIfDue(deps.store, state, pollDelay, now, schedule, pollData);
         return { step: 'waiting', ...base, requestCounts: check.requestCounts };
     }
 
@@ -306,7 +315,8 @@ export async function runShelfLifeBackfill(
     const summary = { ...base, write: options.write, ...imported };
 
     if (!options.write) {
-        await deps.store.set({ ...state, dryRunReportedAt: now.toISOString() });
+        // Kept for a later write run; the poll cron leaves it alone
+        await deps.store.set({ ...state, dryRunReportedAt: now.toISOString(), pollStopped: true });
         return { step: 'dry-run', ...summary, missingIds: missing.slice(0, 50) };
     }
 
@@ -396,25 +406,34 @@ function openAiBatchApi(): ShelfLifeBatchApi {
 export async function processBackfillIngredientShelfLife(
     job: Job<BackfillIngredientShelfLifeJob>,
 ): Promise<Record<string, unknown>> {
-    const store = redisBatchStore<ShelfLifeBatchState>(STORE_NAME);
-    return withBatchLock(store, async () => {
-        const result = await runShelfLifeBackfill(
-            {
-                prisma: workerPrisma,
-                api: openAiBatchApi(),
-                store,
-                schedulePoll: async (delay, data) => {
-                    // Poll jobs never reset the saved batch
-                    await getScheduledQueue().add(
-                        SHELF_LIFE_JOB_NAME,
-                        { ...data, reset: false },
-                        { delay },
-                    );
+    const store = redisBatchStore<ShelfLifeBatchState>(SHELF_LIFE_STORE_NAME);
+    return withBatchLock(
+        store,
+        async () => {
+            const result = await runShelfLifeBackfill(
+                {
+                    prisma: workerPrisma,
+                    api: openAiBatchApi(),
+                    store,
+                    schedulePoll: async (delay, data) => {
+                        // Poll jobs never reset the saved batch
+                        await getScheduledQueue().add(
+                            SHELF_LIFE_JOB_NAME,
+                            { ...data, reset: false },
+                            { delay },
+                        );
+                    },
                 },
-            },
-            job.data,
-        );
-        console.log(`[ShelfLifeBackfill] ${JSON.stringify(result)}`);
-        return result;
-    });
+                job.data,
+            );
+            console.log(`[ShelfLifeBackfill] ${JSON.stringify(result)}`);
+            return result;
+        },
+        () =>
+            getScheduledQueue().add(
+                SHELF_LIFE_JOB_NAME,
+                { ...job.data, reset: false },
+                { delay: LOCKED_REQUEUE_DELAY_MS },
+            ),
+    );
 }

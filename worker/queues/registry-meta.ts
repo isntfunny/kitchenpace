@@ -243,6 +243,12 @@ const JOB_CATALOG: Record<
         // the enqueue at creation time (KUC-94, KUC-114)
         repeat: { pattern: '30 5 * * *', tz: 'Europe/Berlin' },
     },
+    'poll-openai-batches': {
+        queue: QueueName.SCHEDULED,
+        defaultData: {},
+        // Safety net for the poll chains of the batch jobs (KUC-118); never submits
+        repeat: { pattern: '*/15 * * * *', tz: 'Europe/Berlin' },
+    },
     'backfill-ingredient-shelf-life': {
         queue: QueueName.SCHEDULED,
         defaultData: { write: false, limit: 0, chunkSize: 50, pollMinutes: 10, reset: false },

@@ -49,7 +49,11 @@ export interface EmbeddingsDeps {
      * recipes that have none yet, with their embedding text.
      */
     restoreStored(pageSize: number): Promise<{ restored: number; missing: RecipeEmbeddingText[] }>;
-    /** Stores vectors (database + OpenSearch); returns how many recipes were written */
+    /**
+     * Stores vectors (database + OpenSearch) for recipes that are still
+     * published and have no embedding of the current model yet (see
+     * rowsToStore); returns how many were written.
+     */
     saveEmbeddings(rows: Array<{ id: string; embedding: number[] }>): Promise<number>;
     schedulePoll(delayMs: number, data: BackfillEmbeddingsJob): Promise<void>;
     now?: () => Date;
@@ -95,6 +99,19 @@ export function parseEmbeddingsOutput(
     return { rows, missing };
 }
 
+/**
+ * Batch vectors that may be stored: the recipe is still published and has no
+ * embedding of the current model yet. One written meanwhile (sync-recipe
+ * after an edit) is newer than the batch and is kept.
+ */
+export function rowsToStore<T extends { id: string }>(
+    rows: T[],
+    publishedIds: ReadonlySet<string>,
+    currentIds: ReadonlySet<string>,
+): T[] {
+    return rows.filter((row) => publishedIds.has(row.id) && !currentIds.has(row.id));
+}
+
 // ── Steps ───────────────────────────────────────────────────────────────
 
 const DEFAULTS = { batchSize: 50, pollMinutes: 10, reset: false };
@@ -126,15 +143,22 @@ export async function runEmbeddingsBackfill(
     const pollDelay = options.pollMinutes * 60_000;
     const now = deps.now?.() ?? new Date();
     const schedulePoll = (state: EmbeddingsBatchState) =>
-        schedulePollIfDue(deps.store, state, pollDelay, now, () =>
-            deps.schedulePoll(pollDelay, data),
+        schedulePollIfDue(
+            deps.store,
+            state,
+            pollDelay,
+            now,
+            () => deps.schedulePoll(pollDelay, data),
+            { ...data },
         );
 
     if (options.reset) await deps.store.clear();
-    const { restored, missing } = await deps.restoreStored(options.batchSize);
     const state = await deps.store.get();
 
+    // Copying stored embeddings runs once per run: when submitting or after
+    // an import, never while just polling.
     if (!state) {
+        const { restored, missing } = await deps.restoreStored(options.batchSize);
         if (missing.length === 0) return { step: 'idle', restored, generated: 0 };
         const created = await submit(deps, missing, 0);
         await schedulePoll(created);
@@ -148,7 +172,7 @@ export async function runEmbeddingsBackfill(
     }
 
     const check = await checkBatch(deps.api, deps.store, state.batchId);
-    const base = { restored, batchId: state.batchId, round: state.round, status: check.status };
+    const base = { batchId: state.batchId, round: state.round, status: check.status };
     if (check.kind === 'running') {
         await schedulePoll(state);
         return { step: 'waiting', ...base, requestCounts: check.requestCounts };
@@ -156,9 +180,10 @@ export async function runEmbeddingsBackfill(
 
     const output = parseEmbeddingsOutput(check.outputJsonl, state.requests);
     const generated = await deps.saveEmbeddings(output.rows);
-    const summary = { ...base, generated, withoutResult: output.missing.length };
-
     await deps.store.clear();
+    const { restored, missing } = await deps.restoreStored(options.batchSize);
+    const summary = { ...base, restored, generated, withoutResult: output.missing.length };
+
     if (output.missing.length > 0 && state.round < MAX_RETRY_ROUNDS) {
         // Still published and still without embedding, with the current text
         const failed = new Set(output.missing);

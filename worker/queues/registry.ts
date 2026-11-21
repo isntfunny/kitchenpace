@@ -1,6 +1,7 @@
 import type { Job } from 'bullmq';
 
 import { runDatabaseBackup } from './backup-processor';
+import { processPollOpenAIBatches } from './batch-poll';
 import { processBackfillIngredientEnrichment } from './enrichment-backfill';
 import { processEnrichIngredientNutrition } from './nutrition-processor';
 import {
@@ -269,6 +270,14 @@ export const JOB_REGISTRY = defineJobs({
         // Daily safety net: enrichment of new ingredients must not depend on
         // the enqueue at creation time (KUC-94, KUC-114)
         repeat: { pattern: '30 5 * * *', tz: 'Europe/Berlin' },
+    },
+
+    'poll-openai-batches': {
+        queue: QueueName.SCHEDULED,
+        processor: processPollOpenAIBatches,
+        defaultData: {},
+        // Safety net for the poll chains of the batch jobs (KUC-118); never submits
+        repeat: { pattern: '*/15 * * * *', tz: 'Europe/Berlin' },
     },
 
     'backfill-ingredient-shelf-life': {

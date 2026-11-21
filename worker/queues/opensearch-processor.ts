@@ -16,11 +16,12 @@ import {
     OPENSEARCH_EMBEDDINGS_INDEX,
 } from '@shared/opensearch/client';
 
-import { redisBatchStore, withBatchLock } from './batch-job';
+import { LOCKED_REQUEUE_DELAY_MS, redisBatchStore, withBatchLock } from './batch-job';
 import { getRedis } from './connection';
 import {
     EMBEDDINGS_JOB_NAME,
     EMBEDDINGS_STORE_NAME,
+    rowsToStore,
     runEmbeddingsBackfill,
     type EmbeddingsBatchState,
     type RecipeEmbeddingText,
@@ -869,18 +870,25 @@ async function restoreStoredEmbeddings(pageSize: number) {
     return { restored, missing };
 }
 
-/** Stores new vectors for recipes that are still published (PostgreSQL + OpenSearch). */
+/** Stores batch vectors (PostgreSQL + OpenSearch), see rowsToStore. */
 async function saveEmbeddings(rows: Array<{ id: string; embedding: number[] }>) {
     if (rows.length === 0) return 0;
-    const published = new Set(
-        (
-            await prisma.recipe.findMany({
-                where: { id: { in: rows.map((row) => row.id) }, status: 'PUBLISHED' },
-                select: { id: true },
-            })
-        ).map((recipe) => recipe.id),
+    const ids = rows.map((row) => row.id);
+    const [published, current] = await Promise.all([
+        prisma.recipe.findMany({
+            where: { id: { in: ids }, status: 'PUBLISHED' },
+            select: { id: true },
+        }),
+        prisma.recipeEmbedding.findMany({
+            where: { recipeId: { in: ids }, model: EMBEDDING_MODEL },
+            select: { recipeId: true },
+        }),
+    ]);
+    const kept = rowsToStore(
+        rows,
+        new Set(published.map((recipe) => recipe.id)),
+        new Set(current.map((row) => row.recipeId)),
     );
-    const kept = rows.filter((row) => published.has(row.id));
     if (kept.length === 0) return 0;
 
     await prisma.$transaction(
@@ -905,27 +913,36 @@ export async function processBackfillEmbeddings(
     job: Job<BackfillEmbeddingsJob>,
 ): Promise<Record<string, unknown>> {
     const store = redisBatchStore<EmbeddingsBatchState>(EMBEDDINGS_STORE_NAME);
-    return withBatchLock(store, async () => {
-        const result = await runEmbeddingsBackfill(
-            {
-                api: createOpenAIBatchApi(),
-                store,
-                restoreStored: restoreStoredEmbeddings,
-                saveEmbeddings,
-                schedulePoll: async (delay, data) => {
-                    // Poll jobs never reset the saved batch
-                    await getOpenSearchQueue().add(
-                        EMBEDDINGS_JOB_NAME,
-                        { ...data, reset: false },
-                        { delay },
-                    );
+    return withBatchLock(
+        store,
+        async () => {
+            const result = await runEmbeddingsBackfill(
+                {
+                    api: createOpenAIBatchApi(),
+                    store,
+                    restoreStored: restoreStoredEmbeddings,
+                    saveEmbeddings,
+                    schedulePoll: async (delay, data) => {
+                        // Poll jobs never reset the saved batch
+                        await getOpenSearchQueue().add(
+                            EMBEDDINGS_JOB_NAME,
+                            { ...data, reset: false },
+                            { delay },
+                        );
+                    },
                 },
-            },
-            job.data,
-        );
-        console.log(`[OpenSearch] backfill-embeddings ${JSON.stringify(result)}`);
-        return result;
-    });
+                job.data,
+            );
+            console.log(`[OpenSearch] backfill-embeddings ${JSON.stringify(result)}`);
+            return result;
+        },
+        () =>
+            getOpenSearchQueue().add(
+                EMBEDDINGS_JOB_NAME,
+                { ...job.data, reset: false },
+                { delay: LOCKED_REQUEUE_DELAY_MS },
+            ),
+    );
 }
 
 // ── Reindex ──────────────────────────────────────────────────────────────

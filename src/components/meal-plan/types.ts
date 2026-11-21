@@ -12,6 +12,11 @@ export interface PlanDish {
     servings: number;
     status: string;
     leftoverOfDate: string | null;
+    /** This entry is the leftover meal of another one (also when that lies in another week) */
+    isLeftover: boolean;
+    /** Day of the first leftover meal of this dish in this week ("reicht für Do") */
+    leftoverForDate: string | null;
+    notes: string | null;
     recipeAvailable: boolean;
     recipe: {
         slug: string;

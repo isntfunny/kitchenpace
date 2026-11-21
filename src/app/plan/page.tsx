@@ -49,6 +49,14 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
     const leftoverDates = new Map(
         view.entries.map((entry) => [entry.id, formatIsoDate(entry.date)]),
     );
+    // First leftover meal per origin ("reicht für Do", KUC-101)
+    const leftoverFor = new Map<string, string>();
+    for (const entry of view.entries) {
+        if (!entry.leftoverOfId) continue;
+        const date = formatIsoDate(entry.date);
+        const known = leftoverFor.get(entry.leftoverOfId);
+        if (!known || date < known) leftoverFor.set(entry.leftoverOfId, date);
+    }
 
     const data: PlanWeekData = {
         startDate,
@@ -82,6 +90,9 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
             leftoverOfDate: entry.leftoverOfId
                 ? (leftoverDates.get(entry.leftoverOfId) ?? null)
                 : null,
+            isLeftover: !!entry.leftoverOfId,
+            leftoverForDate: leftoverFor.get(entry.id) ?? null,
+            notes: entry.notes,
             recipeAvailable: entry.recipeAvailable,
             recipe: {
                 slug: entry.recipe.slug,

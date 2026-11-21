@@ -107,6 +107,8 @@ export function createFakeDb(seed: Record<string, Row[]> = {}) {
         for (const [key, value] of Object.entries(data)) {
             if (value && typeof value === 'object' && 'increment' in value)
                 row[key] += value.increment;
+            else if (value && typeof value === 'object' && 'decrement' in value)
+                row[key] -= value.decrement;
             else if (value === undefined) continue;
             else if (
                 value &&
@@ -128,6 +130,10 @@ export function createFakeDb(seed: Record<string, Row[]> = {}) {
             copy.recipe = table('recipe').find((r) => r.id === row.recipeId);
         if (model === 'mealPlan')
             copy.user = { profile: table('profile').find((p) => p.userId === row.userId) ?? null };
+        if (model === 'mealPlanTemplate')
+            copy.entries = table('mealPlanTemplateEntry')
+                .filter((e) => e.templateId === row.id)
+                .map((e) => ({ ...e, recipe: table('recipe').find((r) => r.id === e.recipeId) }));
         if (model === 'shoppingItem')
             copy.sources = table('shoppingItemSource').filter((s) => s.shoppingItemId === row.id);
         return copy;
@@ -140,9 +146,20 @@ export function createFakeDb(seed: Record<string, Row[]> = {}) {
                 createdAt: new Date(),
                 ...(DEFAULTS[model]?.() ?? {}),
             };
-            apply(row, data);
+            // Nested create of template entries (the only nested write in use)
+            const { entries, ...plain } = data;
+            apply(row, model === 'mealPlanTemplate' ? plain : data);
             checkUnique(model, row);
             table(model).push(row);
+            if (model === 'mealPlanTemplate' && entries?.create)
+                for (const entry of entries.create)
+                    table('mealPlanTemplateEntry').push({
+                        id: `mealPlanTemplateEntry-${++counter}`,
+                        mealType: null,
+                        customMealType: null,
+                        ...entry,
+                        templateId: row.id,
+                    });
             return withIncludes(model, row);
         };
         const pick = (row: Row, select?: Row) =>

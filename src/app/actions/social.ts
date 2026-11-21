@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { getServerAuthSession } from '@app/lib/auth';
 import { fireEvent } from '@app/lib/events/fire';
+import { linkCookToMealPlan } from '@app/lib/meal-plan/cook-link';
 import { generateUniqueSlug } from '@app/lib/slug';
 import { prisma } from '@shared/prisma';
 
@@ -311,6 +312,9 @@ export async function markRecipeCookedAction(
             cookCount: { increment: 1 },
         },
     });
+
+    // A planned dish of today or yesterday counts as this cook (KUC-103, no double count)
+    await linkCookToMealPlan(viewer.id, recipeId, cookHistory.id, cookHistory.cookedAt);
 
     await fireEvent({
         event: 'recipeCooked',

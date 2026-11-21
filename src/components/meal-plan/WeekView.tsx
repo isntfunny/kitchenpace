@@ -15,12 +15,13 @@ import {
 
 import { css, cx } from 'styled-system/css';
 
-import { DishCard } from './DishCard';
 import type { MealPlanSettingsValues } from './MealPlanSettingsForm';
+import { EditableDish, PlanEditorProvider, usePlanEditor } from './PlanEditor';
 import { SlotSearchDialog } from './SlotSearchDialog';
 import { actionButton, emptySlot, iconButton } from './styles';
 import type { PlanDish, PlanExtensions, PlanSlot, PlanWeekData } from './types';
 import { WeekSettingsDialog } from './WeekSettingsDialog';
+import { WeekTools } from './WeekTools';
 
 export interface WeekViewProps extends PlanExtensions {
     data: PlanWeekData;
@@ -37,7 +38,16 @@ export interface WeekViewProps extends PlanExtensions {
 
 type Target = { date: string; slot: PlanSlot } | null;
 
-export function WeekView({
+/** Week view with the editing layer (KUC-101); see WeekGrid for the layout. */
+export function WeekView(props: WeekViewProps) {
+    return (
+        <PlanEditorProvider data={props.data}>
+            <WeekGrid {...props} />
+        </PlanEditorProvider>
+    );
+}
+
+function WeekGrid({
     data,
     settings,
     inspiration,
@@ -91,7 +101,7 @@ export function WeekView({
         return (
             <div className={css({ display: 'flex', flexDirection: 'column', minW: 0 })}>
                 {dishes.map((dish, index) => (
-                    <DishCard
+                    <EditableDish
                         key={dish.id}
                         dish={dish}
                         slotTime={slot.time}
@@ -99,6 +109,7 @@ export function WeekView({
                         side={index > 0}
                         compact={compact}
                         extraMarkers={markers[dish.id]}
+                        today={data.today}
                     />
                 ))}
                 {dishes.length === 0 && suggestion}
@@ -245,6 +256,7 @@ export function WeekView({
                 )}
                 <div className={css({ flex: 1 })} />
                 {toolbarActions}
+                <WeekTools data={data} />
                 <WeekSettingsDialog data={data} settings={settings} />
             </div>
 
@@ -484,6 +496,7 @@ function SlotRow({
     today: string;
     renderCell: (day: string, slot: PlanSlot, compact: boolean) => ReactNode;
 }) {
+    const editor = usePlanEditor();
     return (
         <>
             <div
@@ -510,6 +523,7 @@ function SlotRow({
             {days.map((day) => (
                 <div
                     key={day}
+                    {...editor?.dropTarget({ date: day, slot: slot.key })}
                     className={cx(
                         css({
                             p: '1.5',
@@ -517,6 +531,12 @@ function SlotRow({
                             borderLeft: '1px solid',
                             borderColor: 'border.muted',
                             minW: 0,
+                            '&[data-drop-over]': {
+                                outline: '2px dashed',
+                                outlineColor: 'primary',
+                                outlineOffset: '-3px',
+                                bg: 'accent.soft',
+                            },
                         }),
                         day === today && css({ bg: 'accent.soft' }),
                     )}

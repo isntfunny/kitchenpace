@@ -147,22 +147,44 @@ export interface DishMarker {
     icon?: 'check' | 'clock' | 'cart' | 'refresh' | 'bell';
 }
 
-export function builtInMarkers(entry: {
-    status: string;
-    recipeAvailable: boolean;
-    leftoverOfDate?: string | null;
-}): DishMarker[] {
+export function builtInMarkers(
+    entry: {
+        status: string;
+        recipeAvailable: boolean;
+        leftoverOfDate?: string | null;
+        /** Day of the first leftover meal of this dish ("reicht für Do") */
+        leftoverForDate?: string | null;
+        date?: string;
+    },
+    /** The user's today; past dishes not marked yet ask "Gekocht?" (KUC-103) */
+    today?: string,
+): DishMarker[] {
     const markers: DishMarker[] = [];
     if (!entry.recipeAvailable) markers.push({ tone: 'off', label: 'nicht mehr verfügbar' });
     if (entry.status === 'COMPLETED') markers.push({ tone: 'ok', label: 'Gekocht', icon: 'check' });
+    else if (entry.status === 'CANCELLED') markers.push({ tone: 'off', label: 'Nicht gekocht' });
+    else if (today && entry.date && needsCookedAnswer({ ...entry, date: entry.date }, today))
+        markers.push({ tone: 'warn', label: 'Gekocht?' });
     if (entry.leftoverOfDate)
         markers.push({
             tone: 'rest',
             label: `Rest von ${weekdayShort(entry.leftoverOfDate)}`,
             icon: 'refresh',
         });
+    if (entry.leftoverForDate)
+        markers.push({ tone: 'rest', label: `reicht für ${weekdayShort(entry.leftoverForDate)}` });
     return markers;
 }
+
+/** Past dishes that are neither marked cooked nor skipped */
+export const needsCookedAnswer = (
+    entry: { status: string; date: string; recipeAvailable: boolean },
+    today: string,
+) =>
+    entry.date < today &&
+    entry.recipeAvailable &&
+    entry.status !== 'COMPLETED' &&
+    entry.status !== 'CANCELLED';
 
 /** Key of one grid cell; also the key for suggestion slots passed in by later tickets. */
 export const cellKey = (date: string, slot: string) => `${date}|${slot}`;

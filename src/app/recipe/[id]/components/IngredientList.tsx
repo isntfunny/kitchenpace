@@ -1,11 +1,12 @@
 'use client';
 
-import { Info, X } from 'lucide-react';
+import { Info } from 'lucide-react';
 import Link from 'next/link';
-import { Dialog } from 'radix-ui';
 import { useMemo, useState, type ReactNode } from 'react';
 
 import { AddToShoppingListButton } from '@app/components/shopping/AddToShoppingListButton';
+import { ServingsStepper } from '@app/components/ui/ServingsStepper';
+import { Sheet } from '@app/components/ui/Sheet';
 import { ingredientDisplayName, parseAmount } from '@app/lib/ingredient-display';
 import { scaleQuantity, portionFactor } from '@app/lib/ingredients/quantities';
 
@@ -167,9 +168,7 @@ export function IngredientList({
             </h2>
 
             <div
-                className={flex({
-                    justify: 'space-between',
-                    align: 'center',
+                className={css({
                     mb: '2',
                     pb: '3',
                     borderBottomWidth: '1px',
@@ -177,64 +176,12 @@ export function IngredientList({
                     borderColor: 'border',
                 })}
             >
-                <span
-                    className={css({
-                        fontSize: 'sm',
-                        color: 'text.muted',
-                        fontFamily: 'body',
-                    })}
-                >
-                    Portionen
-                </span>
-                <div className={flex({ gap: '2', align: 'center' })}>
-                    <button
-                        aria-label="Weniger Portionen"
-                        onClick={() => onServingsChange(Math.max(1, servings - 1))}
-                        className={css({
-                            w: '8',
-                            h: '8',
-                            borderRadius: 'full',
-                            bg: 'background',
-                            border: '1px solid',
-                            borderColor: 'border',
-                            cursor: 'pointer',
-                            fontSize: 'lg',
-                            lineHeight: '1',
-                            _hover: { bg: 'surface' },
-                        })}
-                    >
-                        −
-                    </button>
-                    <span
-                        className={css({
-                            fontSize: 'lg',
-                            fontWeight: '600',
-                            minW: '8',
-                            textAlign: 'center',
-                            fontFamily: 'heading',
-                        })}
-                    >
-                        {servings}
-                    </span>
-                    <button
-                        aria-label="Mehr Portionen"
-                        onClick={() => onServingsChange(servings + 1)}
-                        className={css({
-                            w: '8',
-                            h: '8',
-                            borderRadius: 'full',
-                            bg: 'background',
-                            border: '1px solid',
-                            borderColor: 'border',
-                            cursor: 'pointer',
-                            fontSize: 'lg',
-                            lineHeight: '1',
-                            _hover: { bg: 'surface' },
-                        })}
-                    >
-                        +
-                    </button>
-                </div>
+                <ServingsStepper
+                    value={servings}
+                    onChange={onServingsChange}
+                    layout="inline"
+                    size="sm"
+                />
             </div>
 
             {recipeId && <AddToShoppingListButton recipeId={recipeId} servings={servings} />}
@@ -390,8 +337,12 @@ export function IngredientList({
                             ? `, basierend auf ${Math.round(nutritionCompleteness * ingredients.length)} von ${ingredients.length} Zutaten`
                             : ''}
                     </p>
-                    <Dialog.Root open={isCalculationOpen} onOpenChange={setIsCalculationOpen}>
-                        <Dialog.Trigger asChild>
+                    <Sheet
+                        open={isCalculationOpen}
+                        onOpenChange={setIsCalculationOpen}
+                        title="Naehrwert-Berechnung"
+                        size="lg"
+                        trigger={
                             <button
                                 type="button"
                                 className={css({
@@ -406,242 +357,174 @@ export function IngredientList({
                             >
                                 Berechnung anzeigen
                             </button>
-                        </Dialog.Trigger>
-                        <Dialog.Portal>
-                            <Dialog.Overlay
+                        }
+                    >
+                        <p
+                            className={css({
+                                fontSize: 'xs',
+                                color: 'text.muted',
+                                mb: '3',
+                            })}
+                        >
+                            Geschaetzte Naehrwerte fuer {servings} Portionen. Alle Angaben sind
+                            Richtwerte und koennen je nach Produkt und Zubereitung abweichen.
+                        </p>
+                        <div
+                            className={css({
+                                overflowX: 'auto',
+                                overflowY: 'auto',
+                                flex: '1',
+                                WebkitOverflowScrolling: 'touch',
+                            })}
+                        >
+                            <table
                                 className={css({
-                                    position: 'fixed',
-                                    inset: '0',
-                                    bg: 'surface.overlay',
-                                    zIndex: '50',
-                                })}
-                            />
-                            <Dialog.Content
-                                className={css({
-                                    position: 'fixed',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    bg: 'surface',
-                                    borderRadius: '2xl',
-                                    boxShadow: 'shadow.medium',
-                                    p: '5',
-                                    zIndex: '51',
-                                    width: '95vw',
-                                    maxWidth: '800px',
-                                    maxHeight: '85vh',
-                                    display: 'flex',
-                                    flexDirection: 'column',
+                                    width: 'full',
+                                    minWidth: '640px',
+                                    borderCollapse: 'collapse',
+                                    fontSize: 'xs',
                                 })}
                             >
-                                <div
-                                    className={css({
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        mb: '3',
-                                    })}
-                                >
-                                    <Dialog.Title
+                                <thead>
+                                    <tr
                                         className={css({
-                                            fontSize: 'md',
-                                            fontWeight: '600',
+                                            borderBottomWidth: '1px',
+                                            borderBottomStyle: 'solid',
+                                            borderColor: 'border',
+                                            position: 'sticky',
+                                            top: '0',
+                                            bg: 'surface',
                                         })}
                                     >
-                                        Naehrwert-Berechnung
-                                    </Dialog.Title>
-                                    <Dialog.Close asChild>
-                                        <button
-                                            type="button"
+                                        <TableHeader>Zutat</TableHeader>
+                                        <TableHeader>Menge</TableHeader>
+                                        <TableHeader>Gramm</TableHeader>
+                                        <TableHeader>kcal/100g</TableHeader>
+                                        <TableHeader>kcal</TableHeader>
+                                        <TableHeader>Protein</TableHeader>
+                                        <TableHeader>KH</TableHeader>
+                                        <TableHeader>Fett</TableHeader>
+                                        <TableHeader>Hinweis</TableHeader>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {nutritionBreakdown.rows.map((row) => (
+                                        <tr
+                                            key={row.ingredient.id}
                                             className={css({
-                                                cursor: 'pointer',
-                                                color: 'text.muted',
-                                                _hover: { color: 'text' },
+                                                borderBottomWidth: '1px',
+                                                borderBottomStyle: 'solid',
+                                                borderColor: 'border.muted',
                                             })}
                                         >
-                                            <X size={20} />
-                                        </button>
-                                    </Dialog.Close>
-                                </div>
-                                <p
-                                    className={css({
-                                        fontSize: 'xs',
-                                        color: 'text.muted',
-                                        mb: '3',
-                                    })}
-                                >
-                                    Geschaetzte Naehrwerte fuer {servings} Portionen. Alle Angaben
-                                    sind Richtwerte und koennen je nach Produkt und Zubereitung
-                                    abweichen.
-                                </p>
-                                <div
-                                    className={css({
-                                        overflowX: 'auto',
-                                        overflowY: 'auto',
-                                        flex: '1',
-                                        WebkitOverflowScrolling: 'touch',
-                                    })}
-                                >
-                                    <table
+                                            <TableCell>
+                                                {ingredientDisplayName(
+                                                    row.ingredient.name,
+                                                    row.ingredient.pluralName ?? null,
+                                                    String(
+                                                        row.scaledAmount ?? row.ingredient.amount,
+                                                    ),
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {row.scaledAmount != null
+                                                    ? `${scaleQuantity(String(row.scaledAmount), 1)} ${row.ingredient.unit}`
+                                                    : '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {row.gramsAmount != null
+                                                    ? `${scaleQuantity(String(row.gramsAmount), 1)} g`
+                                                    : '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(
+                                                    row.ingredient.energyKcal,
+                                                    'kcal',
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(row.caloriesTotal, 'kcal')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(row.proteinTotal, 'g')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(row.carbsTotal, 'g')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatNullableNumber(row.fatTotal, 'g')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {row.missingReason ?? 'eingerechnet'}
+                                            </TableCell>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr
                                         className={css({
-                                            width: 'full',
-                                            minWidth: '640px',
-                                            borderCollapse: 'collapse',
-                                            fontSize: 'xs',
+                                            fontWeight: '600',
+                                            bg: 'background',
                                         })}
                                     >
-                                        <thead>
-                                            <tr
-                                                className={css({
-                                                    borderBottomWidth: '1px',
-                                                    borderBottomStyle: 'solid',
-                                                    borderColor: 'border',
-                                                    position: 'sticky',
-                                                    top: '0',
-                                                    bg: 'surface',
-                                                })}
-                                            >
-                                                <TableHeader>Zutat</TableHeader>
-                                                <TableHeader>Menge</TableHeader>
-                                                <TableHeader>Gramm</TableHeader>
-                                                <TableHeader>kcal/100g</TableHeader>
-                                                <TableHeader>kcal</TableHeader>
-                                                <TableHeader>Protein</TableHeader>
-                                                <TableHeader>KH</TableHeader>
-                                                <TableHeader>Fett</TableHeader>
-                                                <TableHeader>Hinweis</TableHeader>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {nutritionBreakdown.rows.map((row) => (
-                                                <tr
-                                                    key={row.ingredient.id}
-                                                    className={css({
-                                                        borderBottomWidth: '1px',
-                                                        borderBottomStyle: 'solid',
-                                                        borderColor: 'border.muted',
-                                                    })}
-                                                >
-                                                    <TableCell>
-                                                        {ingredientDisplayName(
-                                                            row.ingredient.name,
-                                                            row.ingredient.pluralName ?? null,
-                                                            String(
-                                                                row.scaledAmount ??
-                                                                    row.ingredient.amount,
-                                                            ),
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {row.scaledAmount != null
-                                                            ? `${scaleQuantity(String(row.scaledAmount), 1)} ${row.ingredient.unit}`
-                                                            : '-'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {row.gramsAmount != null
-                                                            ? `${scaleQuantity(String(row.gramsAmount), 1)} g`
-                                                            : '-'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {formatNullableNumber(
-                                                            row.ingredient.energyKcal,
-                                                            'kcal',
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {formatNullableNumber(
-                                                            row.caloriesTotal,
-                                                            'kcal',
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {formatNullableNumber(
-                                                            row.proteinTotal,
-                                                            'g',
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {formatNullableNumber(row.carbsTotal, 'g')}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {formatNullableNumber(row.fatTotal, 'g')}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {row.missingReason ?? 'eingerechnet'}
-                                                    </TableCell>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                        <tfoot>
-                                            <tr
-                                                className={css({
-                                                    fontWeight: '600',
-                                                    bg: 'background',
-                                                })}
-                                            >
-                                                <TableCell>Gesamt</TableCell>
-                                                <TableCell>{servings} Portionen</TableCell>
-                                                <TableCell>-</TableCell>
-                                                <TableCell>-</TableCell>
-                                                <TableCell>
-                                                    {formatNullableNumber(
-                                                        nutritionBreakdown.totals.calories,
-                                                        'kcal',
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {formatNullableNumber(
-                                                        nutritionBreakdown.totals.protein,
-                                                        'g',
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {formatNullableNumber(
-                                                        nutritionBreakdown.totals.carbs,
-                                                        'g',
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {formatNullableNumber(
-                                                        nutritionBreakdown.totals.fat,
-                                                        'g',
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {nutritionCompleteness != null &&
-                                                    nutritionCompleteness < 1
-                                                        ? 'teilweise'
-                                                        : 'vollstaendig'}
-                                                </TableCell>
-                                            </tr>
-                                            <tr className={css({ fontWeight: '600' })}>
-                                                <TableCell>Pro Portion</TableCell>
-                                                <TableCell>1 Portion</TableCell>
-                                                <TableCell>-</TableCell>
-                                                <TableCell>-</TableCell>
-                                                <TableCell>
-                                                    {formatNullableNumber(
-                                                        displayedCalories,
-                                                        'kcal',
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {formatNullableNumber(displayedProtein, 'g')}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {formatNullableNumber(displayedCarbs, 'g')}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {formatNullableNumber(displayedFat, 'g')}
-                                                </TableCell>
-                                                <TableCell>-</TableCell>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
-                            </Dialog.Content>
-                        </Dialog.Portal>
-                    </Dialog.Root>
+                                        <TableCell>Gesamt</TableCell>
+                                        <TableCell>{servings} Portionen</TableCell>
+                                        <TableCell>-</TableCell>
+                                        <TableCell>-</TableCell>
+                                        <TableCell>
+                                            {formatNullableNumber(
+                                                nutritionBreakdown.totals.calories,
+                                                'kcal',
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {formatNullableNumber(
+                                                nutritionBreakdown.totals.protein,
+                                                'g',
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {formatNullableNumber(
+                                                nutritionBreakdown.totals.carbs,
+                                                'g',
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {formatNullableNumber(
+                                                nutritionBreakdown.totals.fat,
+                                                'g',
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {nutritionCompleteness != null &&
+                                            nutritionCompleteness < 1
+                                                ? 'teilweise'
+                                                : 'vollstaendig'}
+                                        </TableCell>
+                                    </tr>
+                                    <tr className={css({ fontWeight: '600' })}>
+                                        <TableCell>Pro Portion</TableCell>
+                                        <TableCell>1 Portion</TableCell>
+                                        <TableCell>-</TableCell>
+                                        <TableCell>-</TableCell>
+                                        <TableCell>
+                                            {formatNullableNumber(displayedCalories, 'kcal')}
+                                        </TableCell>
+                                        <TableCell>
+                                            {formatNullableNumber(displayedProtein, 'g')}
+                                        </TableCell>
+                                        <TableCell>
+                                            {formatNullableNumber(displayedCarbs, 'g')}
+                                        </TableCell>
+                                        <TableCell>
+                                            {formatNullableNumber(displayedFat, 'g')}
+                                        </TableCell>
+                                        <TableCell>-</TableCell>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </Sheet>
                 </div>
             )}
         </div>

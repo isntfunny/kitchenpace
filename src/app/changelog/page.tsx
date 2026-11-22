@@ -41,6 +41,10 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'spotlight',
             },
             {
+                text: 'Teile deine Woche per Link – Freunde sehen den Plan ohne Anmeldung und können ihn mit einem Klick in ihren eigenen Plan übernehmen.',
+                tag: 'feat',
+            },
+            {
                 text: '„Plan mir die Woche“ füllt freie Plätze mit Vorschlägen, die zu deinem Geschmack, zur Saison und zum Wochentag passen – du entscheidest, was übernommen wird.',
                 tag: 'feat',
             },

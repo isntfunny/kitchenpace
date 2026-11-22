@@ -51,6 +51,11 @@ export function servingsForLeftoverDays(eaters: number, days: number): number {
     return Math.max(1, eaters) * (1 + Math.max(0, days));
 }
 
+/** Servings when a dish is cooked for two meals: one more meal, at most 100 servings. */
+export function leftoverCookServings(servings: number): number {
+    return Math.min(100, servingsForLeftoverDays(servings, 1));
+}
+
 type Placed = { date: IsoDate; kind: MealKind; mainCategory: string | null; dishType: string };
 
 export function distributeSelection(

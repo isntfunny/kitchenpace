@@ -1,34 +1,24 @@
 'use client';
 
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import {
     addManualShoppingItem,
-    deleteShoppingListItem,
-    getShoppingPageData,
-    setShoppingItemChecked,
     snoozeShoppingSuggestionTile,
     updateShoppingListItem,
 } from '@app/app/shopping-list/actions';
-import {
-    groupItems,
-    type QuantityChange,
-    type ShoppingItemView,
-} from '@app/lib/shopping/list-view';
+import { groupItems } from '@app/lib/shopping/list-view';
 import type { ShoppingPageData } from '@app/lib/shopping/page-data';
-import { BASE_UNIT_LABEL } from '@app/lib/shopping/quantity';
-import { ingredientIdFromKey } from '@shared/shopping/item-key';
 
-import { css, cx } from 'styled-system/css';
+import { css } from 'styled-system/css';
 
 import { BringSyncPill } from './BringSyncPill';
 import { ItemDetail } from './ItemDetail';
-import { QuickAdd, type QuickAddEntry } from './QuickAdd';
+import { QuickAdd } from './QuickAdd';
 import { ShoppingPlanWidget } from './ShoppingPlanWidget';
-import { ShoppingTile } from './ShoppingTile';
-import { UndoToast, type UndoToastState } from './UndoToast';
+import { BoughtSection, OpenSection, SuggestionSection } from './ShoppingSections';
+import { UndoToast } from './UndoToast';
+import { useShoppingList } from './useShoppingList';
 
 const layout = css({
     display: 'grid',
@@ -36,58 +26,13 @@ const layout = css({
     gap: { base: '5', lg: '8' },
     alignItems: 'start',
 });
+const main = css({ minW: 0 });
 const stripOnly = css({ display: { base: 'block', lg: 'none' } });
+const stripSpace = css({ mb: '4' });
 const columnOnly = css({
     display: { base: 'none', lg: 'block' },
     position: 'sticky',
     top: '5',
-});
-const section = css({ mb: '8' });
-const sectionHead = css({
-    display: 'flex',
-    alignItems: 'baseline',
-    flexWrap: 'wrap',
-    columnGap: '3',
-    rowGap: '1',
-    mb: '3',
-});
-const sectionTitle = css({ fontFamily: 'heading', fontSize: 'xl', fontWeight: '700', m: '0' });
-const hint = css({ color: 'foreground.muted', fontSize: 'sm', fontFamily: 'body' });
-const tiles = css({
-    display: 'grid',
-    gridTemplateColumns: {
-        base: 'repeat(auto-fill, minmax(100px, 1fr))',
-        md: 'repeat(auto-fill, minmax(112px, 1fr))',
-    },
-    gap: '3',
-    m: '0',
-    p: '0',
-    listStyle: 'none',
-});
-const empty = css({
-    p: '8',
-    textAlign: 'center',
-    color: 'foreground.muted',
-    fontFamily: 'body',
-    bg: 'surface',
-    border: '1px dashed',
-    borderColor: 'border',
-    borderRadius: '2xl',
-});
-const foldButton = css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '2',
-    bg: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    color: 'foreground',
-    fontFamily: 'heading',
-    fontSize: 'xl',
-    fontWeight: '700',
-    whiteSpace: 'nowrap',
-    p: '0',
-    _focusVisible: { outline: '2px solid', outlineColor: 'primary', outlineOffset: '3px' },
 });
 const toolbar = css({
     display: 'flex',
@@ -96,6 +41,7 @@ const toolbar = css({
     mb: '6',
     flexWrap: 'wrap',
 });
+const pushRight = css({ ml: 'auto' });
 const errorBox = css({
     p: '3',
     mb: '4',
@@ -106,138 +52,23 @@ const errorBox = css({
     fontSize: 'sm',
 });
 
-/** Fallback to the open list when an item is gone from the server state. */
-const withItem = (
-    data: ShoppingPageData,
-    id: string,
-    patch: Partial<ShoppingItemView>,
-): ShoppingPageData => ({
-    ...data,
-    items: data.items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
-});
-
 /**
  * The own shopping list (KUC-105): open items as tiles (tap = bought), rhythm
  * suggestions, recently bought, quick add, and the plan column.
  */
 export function ShoppingListView({ initial }: { initial: ShoppingPageData }) {
-    const [data, setData] = useState(initial);
-    const [detailId, setDetailId] = useState<string | null>(null);
-    const [toast, setToast] = useState<UndoToastState | null>(null);
-    const [error, setError] = useState('');
+    const list = useShoppingList(initial);
+    const { data, write, refresh } = list;
     const [showBought, setShowBought] = useState(true);
-    const toastId = useRef(0);
     const now = new Date();
-
     const grouped = groupItems(data.items);
-    const detail = data.items.find((item) => item.id === detailId) ?? null;
-
-    const notify = useCallback((message: string, onUndo?: () => void) => {
-        toastId.current += 1;
-        setToast({ id: toastId.current, message, onUndo });
-    }, []);
-
-    const refresh = useCallback(async () => {
-        const result = await getShoppingPageData();
-        if (result.ok) setData(result.data as unknown as ShoppingPageData);
-        else setError(result.error);
-    }, []);
-
-    // With the Bring! sync on, changes made there arrive while the page is open
-    const syncing = data.bringSync.enabled && data.bringSync.status !== 'AUTH_FAILED';
-    useEffect(() => {
-        if (!syncing) return;
-        const reload = () => {
-            if (document.visibilityState === 'visible') void refresh();
-        };
-        const timer = window.setInterval(reload, 60_000);
-        document.addEventListener('visibilitychange', reload);
-        return () => {
-            window.clearInterval(timer);
-            document.removeEventListener('visibilitychange', reload);
-        };
-    }, [syncing, refresh]);
-
-    /** Runs a write; on failure shows the error and restores the server state. */
-    const write = useCallback(
-        async (work: () => Promise<{ ok: boolean; error?: string }>) => {
-            setError('');
-            const result = await work();
-            if (!result.ok) setError(result.error ?? 'Das hat nicht geklappt.');
-            await refresh();
-            return result.ok;
-        },
-        [refresh],
-    );
-
-    const setBought = useCallback(
-        async (item: ShoppingItemView, bought: boolean) => {
-            setData((current) =>
-                withItem(current, item.id, {
-                    status: bought ? 'PURCHASED' : 'OPEN',
-                    statusChangedAt: new Date().toISOString(),
-                }),
-            );
-            const ok = await write(() => setShoppingItemChecked(item.id, bought));
-            if (ok && bought) {
-                notify(
-                    `${item.name} gekauft`,
-                    () => void write(() => setShoppingItemChecked(item.id, false)),
-                );
-            }
-        },
-        [notify, write],
-    );
-
-    const remove = useCallback(
-        async (item: ShoppingItemView) => {
-            setDetailId(null);
-            setData((current) => ({
-                ...current,
-                items: current.items.filter((i) => i.id !== item.id),
-            }));
-            const ok = await write(() => deleteShoppingListItem(item.id));
-            if (!ok) return;
-            notify(
-                `${item.name} entfernt`,
-                () =>
-                    void write(() =>
-                        addManualShoppingItem({
-                            name: item.name,
-                            ingredientId: ingredientIdFromKey(item.itemKey),
-                            amount: item.quantity !== null ? String(item.quantity) : null,
-                            unit: item.baseUnit ? BASE_UNIT_LABEL[item.baseUnit] : null,
-                        }),
-                    ),
-            );
-        },
-        [notify, write],
-    );
-
-    const changeQuantity = useCallback(
-        (item: ShoppingItemView, change: QuantityChange) => {
-            setData((current) =>
-                withItem(current, item.id, { ...change, quantityText: item.quantityText }),
-            );
-            void write(() => updateShoppingListItem(item.id, { ...change }));
-        },
-        [write],
-    );
-
-    const addEntry = useCallback(
-        async (entry: QuickAddEntry) => {
-            const ok = await write(() => addManualShoppingItem(entry));
-            if (ok) notify(`${entry.name} steht auf der Liste`);
-            return ok;
-        },
-        [notify, write],
-    );
+    const detail = data.items.find((item) => item.id === list.detailId) ?? null;
 
     return (
         <div className={layout}>
-            <div className={css({ minW: 0 })}>
+            <div className={main}>
                 <div className={stripOnly}>
-                    <div className={css({ mb: '4' })}>
+                    <div className={stripSpace}>
                         <ShoppingPlanWidget
                             plan={data.plan}
                             variant="strip"
@@ -247,133 +78,59 @@ export function ShoppingListView({ initial }: { initial: ShoppingPageData }) {
                 </div>
 
                 <div className={toolbar}>
-                    <QuickAdd onAdd={addEntry} />
-                    <div className={css({ ml: 'auto' })}>
+                    <QuickAdd onAdd={list.addEntry} />
+                    <div className={pushRight}>
                         <BringSyncPill
                             state={data.bringSync}
                             onChange={(bringSync) =>
-                                setData((current) => ({ ...current, bringSync }))
+                                list.setData((current) => ({ ...current, bringSync }))
                             }
                             onSynced={() => void refresh()}
                         />
                     </div>
                 </div>
 
-                {error && (
+                {list.error && (
                     <p role="alert" className={errorBox}>
-                        {error}
+                        {list.error}
                     </p>
                 )}
 
-                <section className={section} aria-labelledby="shopping-open">
-                    <div className={sectionHead}>
-                        <h2 id="shopping-open" className={sectionTitle}>
-                            Offen
-                        </h2>
-                        <span className={hint}>Antippen = gekauft · lange drücken = Details</span>
-                    </div>
-                    {grouped.open.length === 0 ? (
-                        <p className={empty}>
-                            Nichts mehr zu besorgen. Füge oben etwas hinzu oder setze Zutaten aus
-                            einem{' '}
-                            <Link
-                                href="/recipes"
-                                className={css({ color: 'primary', fontWeight: '600' })}
-                            >
-                                Rezept
-                            </Link>{' '}
-                            auf die Liste.
-                        </p>
-                    ) : (
-                        <ul className={tiles} role="list">
-                            {grouped.open.map((item) => (
-                                <ShoppingTile
-                                    key={item.id}
-                                    variant="open"
-                                    item={item}
-                                    onActivate={() => void setBought(item, true)}
-                                    onDetails={() => setDetailId(item.id)}
-                                />
-                            ))}
-                        </ul>
-                    )}
-                </section>
-
+                <OpenSection
+                    items={grouped.open}
+                    onBought={(item) => void list.setBought(item, true)}
+                    onDetails={(item) => list.setDetailId(item.id)}
+                />
                 {data.suggestions.length > 0 && (
-                    <section className={section} aria-labelledby="shopping-suggestions">
-                        <div className={sectionHead}>
-                            <h2 id="shopping-suggestions" className={sectionTitle}>
-                                Vorschläge
-                            </h2>
-                            <span className={hint}>aus deinem Einkaufsverlauf</span>
-                        </div>
-                        <ul className={tiles} role="list">
-                            {data.suggestions.map((suggestion) => (
-                                <ShoppingTile
-                                    key={suggestion.itemKey}
-                                    variant="suggestion"
-                                    name={suggestion.name}
-                                    icon={suggestion.icon}
-                                    quantityText={suggestion.reason}
-                                    onActivate={() =>
-                                        void write(() =>
-                                            addManualShoppingItem({
-                                                name: suggestion.name,
-                                                ingredientId: suggestion.ingredientId ?? null,
-                                                kind: 'SUGGESTION',
-                                            }),
-                                        )
-                                    }
-                                    onDismiss={() =>
-                                        void write(() =>
-                                            snoozeShoppingSuggestionTile(suggestion.itemKey),
-                                        )
-                                    }
-                                />
-                            ))}
-                        </ul>
-                    </section>
+                    <SuggestionSection
+                        suggestions={data.suggestions}
+                        onAdd={(suggestion) =>
+                            void write(() =>
+                                addManualShoppingItem({
+                                    name: suggestion.name,
+                                    ingredientId: suggestion.ingredientId ?? null,
+                                    kind: 'SUGGESTION',
+                                }),
+                            )
+                        }
+                        onDismiss={(suggestion) =>
+                            void write(() => snoozeShoppingSuggestionTile(suggestion.itemKey))
+                        }
+                    />
                 )}
-
                 {grouped.boughtTotal > 0 && (
-                    <section className={section} aria-labelledby="shopping-bought">
-                        <div className={sectionHead}>
-                            <button
-                                type="button"
-                                id="shopping-bought"
-                                className={foldButton}
-                                aria-expanded={showBought}
-                                onClick={() => setShowBought((value) => !value)}
-                            >
-                                {showBought ? (
-                                    <ChevronDown size={20} aria-hidden="true" />
-                                ) : (
-                                    <ChevronRight size={20} aria-hidden="true" />
-                                )}
-                                Zuletzt gekauft
-                            </button>
-                            <span className={hint}>
-                                {grouped.boughtTotal} · antippen holt zurück
-                            </span>
-                        </div>
-                        {showBought && (
-                            <ul className={tiles} role="list">
-                                {grouped.bought.map((item) => (
-                                    <ShoppingTile
-                                        key={item.id}
-                                        variant="done"
-                                        item={item}
-                                        now={now}
-                                        onActivate={() => void setBought(item, false)}
-                                    />
-                                ))}
-                            </ul>
-                        )}
-                    </section>
+                    <BoughtSection
+                        items={grouped.bought}
+                        total={grouped.boughtTotal}
+                        open={showBought}
+                        onToggle={() => setShowBought((value) => !value)}
+                        now={now}
+                        onBack={(item) => void list.setBought(item, false)}
+                    />
                 )}
             </div>
 
-            <div className={cx(columnOnly)}>
+            <div className={columnOnly}>
                 <ShoppingPlanWidget
                     plan={data.plan}
                     variant="column"
@@ -383,18 +140,18 @@ export function ShoppingListView({ initial }: { initial: ShoppingPageData }) {
 
             <ItemDetail
                 item={detail}
-                onClose={() => setDetailId(null)}
-                onQuantity={changeQuantity}
+                onClose={() => list.setDetailId(null)}
+                onQuantity={list.changeQuantity}
                 onNote={(item, note) =>
                     void write(() => updateShoppingListItem(item.id, { note: note || null }))
                 }
                 onToggleBought={(item) => {
-                    setDetailId(null);
-                    void setBought(item, item.status === 'OPEN');
+                    list.setDetailId(null);
+                    void list.setBought(item, item.status === 'OPEN');
                 }}
-                onRemove={(item) => void remove(item)}
+                onRemove={(item) => void list.remove(item)}
             />
-            <UndoToast toast={toast} onClose={() => setToast(null)} />
+            <UndoToast toast={list.toast} onClose={() => list.setToast(null)} />
         </div>
     );
 }

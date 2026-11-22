@@ -46,3 +46,27 @@ export const emptySlot = css({
     _hover: { borderColor: 'primary', color: 'primary', bg: 'accent.soft' },
     _focusVisible: { outline: '2px solid', outlineColor: 'primary', outlineOffset: '2px' },
 });
+
+/** Card surface of the week: desktop grid, day card, shopping placeholder. */
+export const surfaceCard = css.raw({
+    bg: 'surface',
+    borderRadius: 'surface',
+    border: '1px solid',
+    borderColor: 'border.muted',
+    boxShadow: 'shadow.small',
+});
+
+/** Small uppercase name of a meal slot in the grid and in day cards. */
+export const slotName = css.raw({
+    fontSize: '10px',
+    fontWeight: '700',
+    color: 'foreground.muted',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+});
+
+/** Calories of a day ("~1.850 kcal"). */
+export const kcalText = css.raw({
+    fontWeight: '600',
+    color: { base: '#8a6a00', _dark: 'palette.gold' },
+});

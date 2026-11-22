@@ -5,7 +5,7 @@ import type { Prisma } from '@prisma/client';
 
 import { idSchema, servingsSchema } from '@app/lib/schemas';
 import { addDays, formatIsoDate } from '@shared/dates';
-import { servingsForLeftoverDays } from '@shared/meal-planning/distribute';
+import { leftoverCookServings } from '@shared/meal-planning/distribute';
 
 import { planCopy, type ConflictMode, type CopySource, type CopyTarget } from './copy';
 import { DataAccessError, type Db, inTransaction, notFound } from './db';
@@ -112,7 +112,7 @@ export async function cookForTwoMeals(db: Db, userId: string, entryId: string, i
         const portion = origin.servings;
         await tx.mealPlanRecipe.update({
             where: { id: origin.id },
-            data: { servings: Math.min(100, servingsForLeftoverDays(portion, 1)) },
+            data: { servings: leftoverCookServings(portion) },
         });
         const leftover = await tx.mealPlanRecipe.create({
             data: {

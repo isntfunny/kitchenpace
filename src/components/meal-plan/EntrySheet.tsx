@@ -1,33 +1,38 @@
 'use client';
 
-import { ArrowRightLeft, BookOpen, ChefHat, Copy, CopyPlus, MoveRight, Trash2 } from 'lucide-react';
+import { BookOpen, ChefHat, Copy, CopyPlus, MoveRight, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import {
-    cookPlanEntryForTwo,
-    deletePlanEntry,
-    movePlanEntry,
-    restorePlanEntry,
-    swapPlanCells,
-    undoCookForTwo,
-} from '@app/app/plan/edit-actions';
+import { deletePlanEntry, restorePlanEntry } from '@app/app/plan/edit-actions';
 import { Button } from '@app/components/atoms/Button';
 import { button } from '@app/components/atoms/recipes';
 import { Sheet } from '@app/components/ui/Sheet';
 import { builtInMarkers } from '@app/lib/meal-plan/view';
 import { weekdayShort } from '@shared/dates';
-import { addDays } from '@shared/dates';
 
 import { css } from 'styled-system/css';
 
 import { DishMarkers } from './DishCard';
 import { CookedSection, EntryFields } from './EntryParts';
-import { dishesIn, TargetPicker, type Cell } from './TargetPicker';
+import { EntryTargetStep, type TargetMode } from './EntryTargetStep';
 import type { PlanDish, PlanSlot, PlanWeekData } from './types';
 import { usePlanAction } from './usePlanAction';
 
-type Mode = 'menu' | 'move' | 'copy' | 'leftover';
+type Mode = 'menu' | TargetMode;
+
+const column = css({ display: 'flex', flexDirection: 'column', gap: '5' });
+const links = css({ display: 'flex', gap: '2', flexWrap: 'wrap' });
+const menu = css({
+    display: 'grid',
+    gridTemplateColumns: { base: '1fr', sm: '1fr 1fr' },
+    gap: '2',
+    pt: '4',
+    borderTopWidth: '1px',
+    borderTopStyle: 'solid',
+    borderColor: 'border.muted',
+});
+const danger = css({ color: 'status.error' });
 
 interface EntrySheetProps {
     dish: PlanDish | null;
@@ -102,7 +107,7 @@ function EntryBody({
 
     if (mode !== 'menu')
         return (
-            <TargetStep
+            <EntryTargetStep
                 mode={mode}
                 dish={dish}
                 data={data}
@@ -113,9 +118,9 @@ function EntryBody({
         );
 
     return (
-        <div className={css({ display: 'flex', flexDirection: 'column', gap: '5' })}>
+        <div className={column}>
             <DishMarkers markers={builtInMarkers(dish, data.today)} />
-            <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
+            <div className={links}>
                 <Link
                     href={`/recipe/${dish.recipe.slug}?portionen=${dish.servings}`}
                     className={button()}
@@ -136,17 +141,7 @@ function EntryBody({
 
             <EntryFields dish={dish} slotTime={slotTime} householdSize={data.householdSize} />
 
-            <div
-                className={css({
-                    display: 'grid',
-                    gridTemplateColumns: { base: '1fr', sm: '1fr 1fr' },
-                    gap: '2',
-                    pt: '4',
-                    borderTopWidth: '1px',
-                    borderTopStyle: 'solid',
-                    borderColor: 'border.muted',
-                })}
-            >
+            <div className={menu}>
                 <Button type="button" onClick={() => setMode('move')}>
                     <MoveRight size={16} aria-hidden /> Verschieben …
                 </Button>
@@ -159,122 +154,9 @@ function EntryBody({
                     </Button>
                 )}
                 <Button variant="ghost" type="button" onClick={remove} disabled={busy}>
-                    <Trash2 size={16} aria-hidden className={css({ color: 'status.error' })} />{' '}
-                    Entfernen
+                    <Trash2 size={16} aria-hidden className={danger} /> Entfernen
                 </Button>
             </div>
         </div>
     );
-}
-
-function TargetStep({
-    mode,
-    dish,
-    data,
-    slots,
-    onBack,
-    onDone,
-}: {
-    mode: Exclude<Mode, 'menu'>;
-    dish: PlanDish;
-    data: PlanWeekData;
-    slots: PlanSlot[];
-    onBack: () => void;
-    onDone: () => void;
-}) {
-    const { call, busy, showToast } = usePlanAction();
-    // The leftover may also go into the first days of next week
-    const days =
-        mode === 'leftover'
-            ? [...data.days, ...[1, 2, 3].map((n) => addDays(data.days[6], n))].filter(
-                  (day) => day >= dish.date,
-              )
-            : data.days;
-    const [cell, setCell] = useState<Cell>(() => defaultTarget(mode, dish, slots, days));
-    const taken = dishesIn(data.dishes, cell, dish.id);
-    const same = cell.date === dish.date && cell.slot === dish.slot;
-
-    const title = {
-        move: 'Verschieben nach',
-        copy: 'Kopieren nach',
-        leftover: 'Rest einplanen für',
-    }[mode];
-
-    const submit = async (swap = false) => {
-        if (mode === 'leftover') {
-            const result = await call(() => cookPlanEntryForTwo(dish.id, cell));
-            if (!result) return;
-            onDone();
-            showToast({
-                type: 'success',
-                title: 'Für 2 Mahlzeiten geplant',
-                message: `${dish.servings * 2} Portionen kochen, Rest am ${weekdayShort(cell.date)}.`,
-                duration: 8000,
-                action: {
-                    label: 'Rückgängig',
-                    onClick: () =>
-                        void call(() => undoCookForTwo(result.leftoverId, result.originServings)),
-                },
-            });
-            return;
-        }
-        const done = swap
-            ? await call(() => swapPlanCells({ a: { date: dish.date, slot: dish.slot }, b: cell }))
-            : await call(() => movePlanEntry(dish.id, { ...cell, copy: mode === 'copy' }));
-        if (!done) return;
-        onDone();
-        showToast({
-            type: 'success',
-            title: swap ? 'Getauscht' : mode === 'copy' ? 'Kopiert' : 'Verschoben',
-        });
-    };
-
-    return (
-        <div className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
-            <p className={css({ fontWeight: '600' })}>{title}</p>
-            {mode === 'leftover' && (
-                <p className={css({ fontSize: 'sm', color: 'foreground.muted' })}>
-                    Du kochst {dish.servings * 2} statt {dish.servings} Portionen. Der Rest kommt
-                    nicht noch einmal auf die Einkaufsliste.
-                </p>
-            )}
-            <TargetPicker
-                days={days}
-                slots={slots}
-                value={cell}
-                onChange={setCell}
-                dishes={data.dishes}
-                ignoreId={dish.id}
-            />
-            <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
-                <Button variant="ghost" type="button" onClick={onBack}>
-                    Zurück
-                </Button>
-                <span className={css({ flex: 1 })} />
-                {mode === 'move' && taken.length > 0 && (
-                    <Button type="button" onClick={() => submit(true)} disabled={busy}>
-                        <ArrowRightLeft size={16} aria-hidden /> Tauschen
-                    </Button>
-                )}
-                <Button
-                    variant="primary"
-                    type="button"
-                    onClick={() => submit()}
-                    disabled={busy || (same && mode !== 'copy')}
-                >
-                    {taken.length > 0 && mode !== 'leftover'
-                        ? 'Dazulegen'
-                        : { move: 'Verschieben', copy: 'Kopieren', leftover: 'Einplanen' }[mode]}
-                </Button>
-            </div>
-        </div>
-    );
-}
-
-function defaultTarget(mode: Mode, dish: PlanDish, slots: PlanSlot[], days: string[]): Cell {
-    if (mode !== 'leftover') return { date: dish.date, slot: dish.slot };
-    // "Bolognese vom Vortag": next day, lunch if there is one
-    const nextDay = days.find((day) => day > dish.date) ?? dish.date;
-    const lunch = slots.find((slot) => slot.key === 'LUNCH' && slot.enabled);
-    return { date: nextDay, slot: lunch?.key ?? dish.slot };
 }

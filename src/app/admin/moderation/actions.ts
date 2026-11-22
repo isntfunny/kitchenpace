@@ -18,6 +18,7 @@ import {
     rejectStepImage,
     rejectProfileImage,
 } from '@app/lib/image-approval';
+import { SHARE_CONTENT_TYPE } from '@app/lib/meal-plan/share';
 import { prisma } from '@shared/prisma';
 
 async function requireModerator() {
@@ -105,6 +106,12 @@ export async function approveContent(queueId: string, reviewNote?: string) {
                 moderationNote: null,
                 published: snapshot?.intendedPublished !== false,
             },
+        });
+    } else if (queueItem.contentType === SHARE_CONTENT_TYPE) {
+        // Shared week (KUC-110): the moderated notes and slot names become visible
+        await prisma.mealPlan.updateMany({
+            where: { id: queueItem.contentId },
+            data: { shareModerationStatus: 'APPROVED' },
         });
     }
 
@@ -202,6 +209,12 @@ export async function rejectContent(queueId: string, reviewNote: string) {
         await prisma.collection.update({
             where: { id: queueItem.contentId },
             data: { moderationStatus: 'REJECTED', moderationNote: reviewNote, published: false },
+        });
+    } else if (queueItem.contentType === SHARE_CONTENT_TYPE) {
+        // The link keeps working; notes and custom slot names stay hidden
+        await prisma.mealPlan.updateMany({
+            where: { id: queueItem.contentId },
+            data: { shareModerationStatus: 'REJECTED' },
         });
     }
 

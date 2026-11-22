@@ -201,7 +201,7 @@ export interface CopyPreview {
     conflicts: Array<{ date: string; slot: string; titles: string[] }>;
 }
 
-async function previewFor(
+export async function previewFor(
     db: Db,
     userId: string,
     sources: CopySource[],
@@ -242,7 +242,7 @@ async function previewFor(
     };
 }
 
-async function executeCopy(
+export async function executeCopy(
     tx: Db,
     userId: string,
     sources: CopySource[],

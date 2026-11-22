@@ -2,7 +2,7 @@
 // mean, soon-expiring pantry items and kNN on the stored embeddings. Never calls OpenAI.
 import 'server-only';
 
-import { addDays } from '@shared/meal-planning/dates';
+import { addDays } from '@shared/dates';
 import { opensearchClient, OPENSEARCH_EMBEDDINGS_INDEX } from '@shared/opensearch/client';
 import { prisma } from '@shared/prisma';
 import { RANKING_CONFIG } from '@shared/recipe-ranking/config';

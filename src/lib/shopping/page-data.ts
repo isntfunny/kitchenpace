@@ -2,7 +2,8 @@
 import { type BringSyncState, loadBringSyncState } from '@app/lib/bring/sync-settings';
 import type { Db } from '@app/lib/meal-plan/db';
 import { getMealPlanSettings, getMealPlanWeek } from '@app/lib/meal-plan/repository';
-import { formatIsoDate, todayIn, weekStartFor } from '@app/lib/meal-plan/week';
+import { weekStartFor } from '@app/lib/meal-plan/week';
+import { formatIsoDate, todayIn } from '@shared/dates';
 import type { IngredientIconName } from '@shared/ingredient-icons/names';
 import { resolveFreeTextIcon, resolveIngredientIcon } from '@shared/ingredient-icons/resolve';
 

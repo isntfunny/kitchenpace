@@ -1,4 +1,4 @@
-import { SEASON_NAMES_DE } from '../meal-planning/dates';
+import { SEASON_NAMES_DE } from '../meal-planning/season';
 import type { Season } from '../meal-planning/types';
 
 import { RANKING_CONFIG, type RankingConfig } from './config';

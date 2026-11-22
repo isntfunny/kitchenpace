@@ -3,7 +3,8 @@
 import { AlertTriangle } from 'lucide-react';
 import { useId } from 'react';
 
-import { cellKey, shortDate, weekdayLong, weekdayShort } from '@app/lib/meal-plan/view';
+import { cellKey, shortDate } from '@app/lib/meal-plan/view';
+import { weekdayLong, weekdayShort } from '@shared/dates';
 
 import { css } from 'styled-system/css';
 

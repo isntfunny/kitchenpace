@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { zonedTimeToUtc } from './time';
+import { zonedTimeToUtc } from '../dates';
+
 import { nextWeekStart, weeklyReminder, weeklyReminderNeeded, weeklyReminderSlot } from './weekly';
 
 const BERLIN = 'Europe/Berlin';

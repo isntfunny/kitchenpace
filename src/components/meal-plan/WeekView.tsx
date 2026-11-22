@@ -4,14 +4,8 @@ import { ChevronLeft, ChevronRight, Plus, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { type ReactNode, useMemo, useRef, useState } from 'react';
 
-import {
-    cellKey,
-    dayCalories,
-    formatKcal,
-    shortDate,
-    weekdayLong,
-    weekdayShort,
-} from '@app/lib/meal-plan/view';
+import { cellKey, dayCalories, formatKcal, shortDate } from '@app/lib/meal-plan/view';
+import { weekdayLong, weekdayShort } from '@shared/dates';
 
 import { css, cx } from 'styled-system/css';
 

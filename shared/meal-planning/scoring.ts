@@ -1,5 +1,6 @@
 /** Small scoring helpers shared by the planner and the leftover suggestions. */
-import { isWeekend } from './dates';
+import { isWeekend } from '../dates';
+
 import type { IsoDate } from './types';
 
 export interface DurationConfig {

@@ -11,7 +11,7 @@ import {
 } from '@app/app/plan/intelligence-actions';
 import type { ShelfLifeProposalDTO } from '@app/lib/meal-plan/intelligence/week-planner';
 import { MEAL_TYPE_LABELS } from '@app/lib/meal-plan/slots';
-import { weekdayShort } from '@app/lib/meal-plan/view';
+import { weekdayShort } from '@shared/dates';
 
 import { css, cx } from 'styled-system/css';
 

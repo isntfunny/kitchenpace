@@ -13,8 +13,9 @@ import { getFreshnessMarkers } from '@app/lib/meal-plan/intelligence/week-planne
 import { getMealPlanSettings, getMealPlanWeek } from '@app/lib/meal-plan/repository';
 import { slotLabel, visibleSlots, type SlotConfig } from '@app/lib/meal-plan/slots';
 import { resolveWeekStart, weekNumber, weekParam, weekRangeLabel } from '@app/lib/meal-plan/view';
-import { addDays, formatIsoDate, todayIn, weekStartFor } from '@app/lib/meal-plan/week';
+import { weekStartFor } from '@app/lib/meal-plan/week';
 import { loadShoppingPlanStatus } from '@app/lib/shopping/page-data';
+import { addDays, formatIsoDate, todayIn } from '@shared/dates';
 import { prisma } from '@shared/prisma';
 
 import { css } from 'styled-system/css';

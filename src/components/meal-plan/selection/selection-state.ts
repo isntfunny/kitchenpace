@@ -6,9 +6,9 @@
 import type { RecipeCardData } from '@app/app/actions/recipes';
 
 // Relative on purpose: the unit tests run without the path aliases
+import { weekdayShort } from '../../../../shared/dates';
 import { leftoverDays } from '../../../../shared/meal-planning/distribute';
 import { MEAL_KIND_LABELS, type MealKind } from '../../../../shared/meal-planning/meal-kind';
-import { weekdayShort } from '../../../lib/meal-plan/view';
 
 export type Pick = {
     recipe: RecipeCardData;

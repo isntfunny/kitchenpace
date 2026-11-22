@@ -11,7 +11,7 @@ import {
     sortSlots,
     type SlotConfig,
 } from '@app/lib/meal-plan/slots';
-import { weekdayNameLong } from '@app/lib/meal-plan/view';
+import { weekdayNameLong } from '@shared/dates';
 
 import { css, cx } from 'styled-system/css';
 

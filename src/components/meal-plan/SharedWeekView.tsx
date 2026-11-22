@@ -1,7 +1,8 @@
 import Link from 'next/link';
 
 import type { SharedMealPlanWeek } from '@app/lib/meal-plan/share';
-import { cellKey, shortDate, weekdayLong } from '@app/lib/meal-plan/view';
+import { cellKey, shortDate } from '@app/lib/meal-plan/view';
+import { weekdayLong } from '@shared/dates';
 
 import { css } from 'styled-system/css';
 

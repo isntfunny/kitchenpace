@@ -6,9 +6,9 @@ import type { Db } from '@app/lib/meal-plan/db';
 import { getMealPlanWeek } from '@app/lib/meal-plan/repository';
 import { DEFAULT_HOUSEHOLD_SIZE } from '@app/lib/meal-plan/slots';
 import type { DishMarker } from '@app/lib/meal-plan/view';
-import { todayIn } from '@app/lib/meal-plan/week';
 import { getLeftoverHints } from '@app/lib/pantry/leftovers';
-import { weekdayNameDe } from '@shared/meal-planning/dates';
+import { todayIn } from '@shared/dates';
+import { weekdayLong } from '@shared/dates';
 import { suggestLeftoverRecipes, type LeftoverHint } from '@shared/meal-planning/leftovers';
 import {
     analyzeShelfLife,
@@ -233,7 +233,7 @@ export async function getLeftoverNotices(
         leftoverId: hint.leftoverId,
         message: hint.message,
         suggestedDate: hint.suggestedDate,
-        dayLabel: weekdayNameDe(hint.suggestedDate),
+        dayLabel: weekdayLong(hint.suggestedDate),
         recipes: hint.recipes.flatMap((recipe) => {
             const card = cards.get(recipe.recipeId);
             return card ? [{ ...card, reasons: recipe.reasons }] : [];

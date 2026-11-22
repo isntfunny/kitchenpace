@@ -11,7 +11,7 @@ import { useToastContext } from '@app/components/providers/ToastProvider';
 import { useMultiSearch } from '@app/lib/hooks/useMultiSearch';
 import { recipesForSlot } from '@app/lib/meal-plan/picker';
 import { defaultServings } from '@app/lib/meal-plan/slots';
-import { weekdayLong, weekdayShort } from '@app/lib/meal-plan/view';
+import { weekdayLong, weekdayShort } from '@shared/dates';
 
 import { css, cx } from 'styled-system/css';
 

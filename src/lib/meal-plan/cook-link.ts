@@ -2,11 +2,11 @@
 // (KUC-103): links the cook to a planned entry and books it into the pantry.
 // Never throws; the cook itself is already saved.
 import { bookCookedEntry } from '@app/lib/pantry/book';
+import { todayIn } from '@shared/dates';
 import { prisma } from '@shared/prisma';
 
 import { linkCookToPlan } from './cook';
 import { getMealPlanSettings } from './repository';
-import { todayIn } from './week';
 
 export async function linkCookToMealPlan(
     userId: string,

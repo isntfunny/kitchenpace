@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import { addDays, todayIn } from '@shared/dates';
+
 import {
     applyShelfLifeOrder,
     getFreshnessMarkers,
     previewShelfLifeOrder,
 } from '../../../src/lib/meal-plan/intelligence/week-planner';
-import { addDays, todayIn } from '../../../src/lib/meal-plan/week';
 import { createFakeDb } from '../fake-db';
 
 const USER = 'user-1';

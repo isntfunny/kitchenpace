@@ -6,7 +6,7 @@ import { type Db, inTransaction, notFound } from '@app/lib/meal-plan/db';
 import { idSchema, userIdSchema } from '@app/lib/meal-plan/schemas';
 import type { ConversionContext } from '@app/lib/shopping/quantity';
 import type { RecipeLine } from '@app/lib/shopping/recipe-items';
-import { toBerlinDate } from '@shared/meal-planning/dates';
+import { toBerlinDate } from '@shared/dates';
 
 import { needsFromRecipe, planUsage, type PantryPost, type PostUpdate } from './booking';
 

@@ -7,7 +7,8 @@
  * The hint targets the day before the expiry (or today, if that day has passed) and is only
  * shown while planning, never pushed. Rejected leftovers (by id) never show up again.
  */
-import { addDays, diffDays, weekdayNameDe } from './dates';
+import { addDays, diffDays, weekdayLong } from '../dates';
+
 import { clamp01, DEFAULT_DURATION, durationFit, tasteOf, type DurationConfig } from './scoring';
 import type { BaseUnit, Candidate, IsoDate } from './types';
 
@@ -80,11 +81,11 @@ export function suggestLeftoverRecipes(input: LeftoverInput): LeftoverHint[] {
 
     for (const leftover of input.leftovers) {
         if (rejected.has(leftover.id) || !isReliableLeftover(leftover)) continue;
-        const daysLeft = diffDays(leftover.expiresOn, today);
+        const daysLeft = diffDays(today, leftover.expiresOn);
         if (daysLeft < 0 || daysLeft > windowDays) continue; // expired or not soon
 
         const dayBefore = addDays(leftover.expiresOn, -1);
-        const suggestedDate = diffDays(dayBefore, today) < 0 ? today : dayBefore;
+        const suggestedDate = diffDays(today, dayBefore) < 0 ? today : dayBefore;
         const name = leftover.name ?? 'Zutat';
 
         const recipes: LeftoverRecipeSuggestion[] = [];
@@ -142,7 +143,7 @@ export function suggestLeftoverRecipes(input: LeftoverInput): LeftoverHint[] {
             message: `Du hast noch ca. ${formatAmount(leftover.amountBase, leftover.unitBase)} ${name}, ${
                 daysLeft === 0
                     ? 'die heute ablaufen'
-                    : `die ${weekdayNameDe(leftover.expiresOn)} ablaufen`
+                    : `die ${weekdayLong(leftover.expiresOn)} ablaufen`
             }. Wie wäre es mit einem dieser Gerichte?`,
             recipes: recipes.slice(0, maxRecipes),
         });

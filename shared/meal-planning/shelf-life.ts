@@ -7,7 +7,8 @@
  * Ingredients without a (valid) shelf life are never critical.
  * Nothing here mutates the plan: `suggestShelfLifeOrder` only returns a proposal.
  */
-import { diffDays, weekdayNameDe } from './dates';
+import { diffDays, weekdayLong } from '../dates';
+
 import { compareSlots, slotKey, type IsoDate, type PlannedSlot, type SlotRef } from './types';
 
 export interface ShelfLifeIngredient {
@@ -93,7 +94,7 @@ export function analyzeShelfLife(input: ShelfLifeInput): DishFreshness[] {
     const recipes = new Map(input.recipes.map((recipe) => [recipe.id, recipe]));
 
     return uniqueFilledSlots(input.slots).map((slot): DishFreshness => {
-        const daysAfterPurchase = Math.max(0, diffDays(slot.date, input.purchaseDate));
+        const daysAfterPurchase = Math.max(0, diffDays(input.purchaseDate, slot.date));
         const base = { date: slot.date, slot: slot.slot, recipeId: slot.recipeId };
 
         let limiting: DishFreshness['limitingIngredient'];
@@ -121,7 +122,7 @@ export function analyzeShelfLife(input: ShelfLifeInput): DishFreshness[] {
                 limitingIngredient: limiting,
                 daysAfterPurchase,
                 status: 'warning',
-                message: `${name} hält nur etwa ${limiting.days} Tage nach dem Einkauf, das Gericht liegt am ${weekdayNameDe(slot.date)}.`,
+                message: `${name} hält nur etwa ${limiting.days} Tage nach dem Einkauf, das Gericht liegt am ${weekdayLong(slot.date)}.`,
             };
         }
         if (daysAfterPurchase === limiting.days) {
@@ -131,7 +132,7 @@ export function analyzeShelfLife(input: ShelfLifeInput): DishFreshness[] {
                 limitingIngredient: limiting,
                 daysAfterPurchase,
                 status: 'tight',
-                message: `${name} ist am ${weekdayNameDe(slot.date)} am letzten Tag haltbar.`,
+                message: `${name} ist am ${weekdayLong(slot.date)} am letzten Tag haltbar.`,
             };
         }
         return {
@@ -243,7 +244,7 @@ export function suggestShelfLifeOrder(input: ShelfLifeInput): ShelfLifeOrderSugg
         const title = titles.get(move.recipeId) ?? 'Ein Gericht';
         const ingredient = dish?.limitingIngredient;
         reasons.push(
-            `${title} rückt von ${weekdayNameDe(move.from.date)} auf ${weekdayNameDe(move.to.date)} vor${
+            `${title} rückt von ${weekdayLong(move.from.date)} auf ${weekdayLong(move.to.date)} vor${
                 ingredient
                     ? `, weil ${ingredient.name ?? 'eine Zutat'} nur etwa ${ingredient.days} Tage hält`
                     : ''

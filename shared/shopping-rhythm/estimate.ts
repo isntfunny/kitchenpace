@@ -9,7 +9,7 @@
  *   7 d and 9 d gaps (0.125) are regular.
  * - Fewer than `minPurchases` (3) purchase days: no estimate.
  */
-import { diffDays, toBerlinDate } from '../meal-planning/dates';
+import { diffDays, toBerlinDate } from '../dates';
 
 import {
     DEFAULT_RHYTHM_CONFIG,
@@ -36,7 +36,7 @@ export function estimateRhythm(
 
     if (days.length < cfg.minPurchases) return { kind: 'insufficient', purchaseCount: days.length };
 
-    const gaps = days.slice(1).map((day, i) => diffDays(day, days[i]));
+    const gaps = days.slice(1).map((day, i) => diffDays(days[i], day));
     const intervalDays = median(gaps);
     const spread = median(gaps.map((gap) => Math.abs(gap - intervalDays))) / intervalDays;
 

@@ -17,8 +17,9 @@ import {
 } from '@app/lib/recipeSearchQuery';
 import type { RecipeSearchFacets, RecipeSearchMeta, TermFacet } from '@app/lib/recipeSearchTypes';
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
+import { toBerlinDate } from '@shared/dates';
 import { createLogger } from '@shared/logger';
-import { seasonOf, toBerlinDate } from '@shared/meal-planning/dates';
+import { seasonOf } from '@shared/meal-planning/season';
 import { opensearchClient, OPENSEARCH_INDEX } from '@shared/opensearch/client';
 
 const log = createLogger('recipeSearch');

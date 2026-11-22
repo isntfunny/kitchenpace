@@ -9,7 +9,7 @@
  * creation time): a post nobody ever used up must not hide the suggestion for good.
  */
 import { normalizeItemName } from '../../src/lib/shopping/item-key';
-import { toBerlinDate } from '../meal-planning/dates';
+import { toBerlinDate } from '../dates';
 
 import { checkDue } from './due';
 import { estimateRhythm } from './estimate';

@@ -4,7 +4,7 @@
 // are left out; `dismissLeftoverHint` in `repository.ts` records a decline.
 import { type Db } from '@app/lib/meal-plan/db';
 import { userIdSchema } from '@app/lib/meal-plan/schemas';
-import { toBerlinDate } from '@shared/meal-planning/dates';
+import { toBerlinDate } from '@shared/dates';
 import type { Leftover } from '@shared/meal-planning/leftovers';
 import type { BaseUnit, IsoDate } from '@shared/meal-planning/types';
 

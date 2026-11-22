@@ -5,7 +5,7 @@
 // filled with suggestions nor reordered, but their recipes still count as "already planned".
 import { MEAL_TYPES } from '@app/lib/meal-plan/slots';
 import type { DishMarker } from '@app/lib/meal-plan/view';
-import { addDays, isoWeekday } from '@shared/meal-planning/dates';
+import { addDays, isoWeekday } from '@shared/dates';
 import type { DishFreshness, ShelfLifeMove } from '@shared/meal-planning/shelf-life';
 import type {
     Candidate,

@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { zonedTimeToUtc } from '../dates';
+
 import { cookReminderFor, groupCookCells, joinDishes, planCookReminders } from './cook';
 import { cookFingerprint } from './fingerprint';
 import { parseQuietHours } from './quiet';
-import { zonedTimeToUtc } from './time';
 import type { CookCell, ReminderEntry } from './types';
 
 const BERLIN = 'Europe/Berlin';

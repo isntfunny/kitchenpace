@@ -3,6 +3,8 @@
 // `fn(db, userId, input)`, Zod-validated input, foreign rows answer NOT_FOUND.
 import type { Prisma } from '@prisma/client';
 
+import { addDays, formatIsoDate } from '@shared/dates';
+
 import { planCopy, type ConflictMode, type CopySource, type CopyTarget } from './copy';
 import { DataAccessError, type Db, inTransaction, notFound } from './db';
 import {
@@ -26,7 +28,7 @@ import {
 } from './schemas';
 import { slotColumns, slotKeyOf, type SlotKey } from './slots';
 import { cellKey } from './view';
-import { addDays, formatIsoDate, toDbDate } from './week';
+import { toDbDate } from './week';
 
 /** Upper bound of saved templates per user */
 export const MAX_TEMPLATES = 30;

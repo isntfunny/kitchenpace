@@ -2,7 +2,8 @@
  * Distributes the dishes chosen in the week dialog onto the chosen slots (KUC-126).
  * Pure and deterministic: greedy over all (dish, slot) pairs of the same kind, best fit first.
  */
-import { addDays, diffDays, isWeekend } from './dates';
+import { addDays, diffDays, isWeekend } from '../dates';
+
 import type { MealKind } from './meal-kind';
 import { clamp01, durationFit } from './scoring';
 import type { IsoDate } from './types';
@@ -92,7 +93,7 @@ export function distributeSelection(
         placed.some(
             (p) =>
                 p.kind === pick.kind &&
-                Math.abs(diffDays(p.date, date)) === 1 &&
+                Math.abs(diffDays(date, p.date)) === 1 &&
                 ((pick.mainCategory !== null && p.mainCategory === pick.mainCategory) ||
                     p.dishType === pick.dishType),
         )
@@ -103,7 +104,7 @@ export function distributeSelection(
         const effortFit = isWeekend(date) ? pick.effort : 1 - pick.effort;
         const perishable =
             pick.shortestShelfLifeDays == null ? 0 : clamp01(1 - pick.shortestShelfLifeDays / 7);
-        const freshFit = 1 - perishable * clamp01(diffDays(date, ctx.purchaseDate) / 6);
+        const freshFit = 1 - perishable * clamp01(diffDays(ctx.purchaseDate, date) / 6);
         return (
             FIT.effort * effortFit +
             FIT.duration * durationFit(pick.totalTime, date) +

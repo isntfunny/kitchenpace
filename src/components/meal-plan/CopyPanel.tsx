@@ -3,7 +3,8 @@
 import { useEffect, useId, useState } from 'react';
 
 import type { PlanActionResult } from '@app/app/plan/run';
-import { shortDate, weekdayLong, weekdayShort } from '@app/lib/meal-plan/view';
+import { shortDate } from '@app/lib/meal-plan/view';
+import { weekdayLong, weekdayShort } from '@shared/dates';
 
 import { css } from 'styled-system/css';
 

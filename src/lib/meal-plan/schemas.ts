@@ -2,8 +2,9 @@
 // in prisma/migrations/20261121210000_meal_plan_shopping_pantry.
 import { z } from 'zod';
 
+import { isIsoDate, isValidTimeZone } from '@shared/dates';
+
 import { slotKeySchema, slotListSchema, timeSchema } from './slots';
-import { isIsoDate, isValidTimezone } from './week';
 
 export const idSchema = z.string().trim().min(1).max(64);
 export const userIdSchema = idSchema;
@@ -17,7 +18,7 @@ export const mealPlanSettingsSchema = z
         householdSize: z.number().int().min(1).max(20),
         weekStartDay: weekdaySchema,
         shoppingDay: weekdaySchema.nullable(),
-        timezone: z.string().max(64).refine(isValidTimezone, 'Unbekannte Zeitzone'),
+        timezone: z.string().max(64).refine(isValidTimeZone, 'Unbekannte Zeitzone'),
         mealPlanShowTime: z.boolean(),
         mealPlanShowServings: z.boolean(),
         mealPlanShowCalories: z.boolean(),

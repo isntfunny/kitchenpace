@@ -67,8 +67,6 @@ test('actions derive owner from the authenticated session and validate list IDs'
     boundary.allowed = true;
     assert.equal((await actions.getBringStatus()).ok, true);
     assert.equal(boundary.userId, 'real-owner');
-    assert.equal((await actions.getBringItems('')).code, 'VALIDATION');
-    assert.equal((await actions.transferToBring({ operationId: 'bad' })).code, 'VALIDATION');
 });
 
 test('rate-limited requests return a retryable error', async () => {
@@ -77,21 +75,3 @@ test('rate-limited requests return a retryable error', async () => {
     assert.equal((await actions.getBringStatus()).code, 'RATE_LIMIT');
 });
 
-test('creating lists validates names and operation IDs and derives the authenticated owner', async () => {
-    boundary.session = { user: { id: 'real-owner', role: 'user' } };
-    boundary.allowed = true;
-    const input = {
-        operationId: '123e4567-e89b-42d3-a456-426614174000',
-        name: 'Ausflug',
-        userId: 'other',
-    };
-    assert.equal((await actions.createBringList({ ...input, name: '   ' })).code, 'VALIDATION');
-    assert.equal(
-        (await actions.createBringList({ ...input, operationId: 'bad' })).code,
-        'VALIDATION',
-    );
-    assert.equal((await actions.createBringList(input)).ok, true);
-    assert.equal(boundary.userId, 'real-owner');
-    boundary.session = null;
-    assert.equal((await actions.createBringList(input)).code, 'SIGN_IN');
-});

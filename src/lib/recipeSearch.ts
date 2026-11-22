@@ -75,6 +75,20 @@ const buildHistogramFacet = (agg: HistogramAggregation | undefined, interval: nu
 
 const SEMANTIC_MIN_WORD_COUNT = 4;
 
+/** Ids of published recipes matching `query`, best rated first (week selection helpers). */
+export async function searchRecipeIds(
+    query: Record<string, unknown>,
+    size: number,
+): Promise<string[]> {
+    const response = await opensearchClient.search({
+        index: OPENSEARCH_INDEX,
+        body: { query, size, _source: ['id'], sort: [{ rating: 'desc' }, { publishedAt: 'desc' }] },
+    });
+    return ((response.body.hits?.hits ?? []) as Array<{ _source?: { id?: unknown } }>).flatMap(
+        (hit) => (typeof hit._source?.id === 'string' ? [hit._source.id] : []),
+    );
+}
+
 /** Ids fetched for the ranked sorts (taste, week): kNN and scoring pick from these. */
 const RANKED_POOL_SIZE = 1000;
 
@@ -123,7 +137,9 @@ async function rankIds(
 }
 
 /** Recipe cards for the given ranked ids, in that order, with the ranking reason. */
-async function loadCards(order: { id: string; reason?: string }[]): Promise<RecipeCardData[]> {
+export async function loadCards(
+    order: { id: string; reason?: string }[],
+): Promise<RecipeCardData[]> {
     if (order.length === 0) return [];
     const response = await opensearchClient.search({
         index: OPENSEARCH_INDEX,

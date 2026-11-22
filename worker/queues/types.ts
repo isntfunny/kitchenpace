@@ -101,6 +101,19 @@ export interface BookAssumedCookedJob {
     limit?: number;
 }
 
+export interface ReconcileMealRemindersJob {
+    /** Compute and report only, schedule and write nothing */
+    dryRun?: boolean;
+    /** Max. users per run */
+    limit?: number;
+    /** Only this user (empty = everyone with a plan) */
+    userId?: string;
+}
+
+export interface SendMealReminderJob {
+    reminderId: string;
+}
+
 export interface ClusterRecipeThemesJob {
     /** Number of clusters (0 = automatic) */
     clusters?: number;

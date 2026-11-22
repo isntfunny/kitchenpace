@@ -3,6 +3,10 @@ export function resolveNotificationHref(notification: {
     type: string;
 }) {
     const data = notification.data ?? {};
+    // Internal target set by the sender (e.g. meal plan reminders)
+    if (typeof data.href === 'string' && /^\/(?!\/)/.test(data.href)) {
+        return data.href;
+    }
     if (typeof data.recipeSlug === 'string') {
         return `/recipe/${data.recipeSlug}`;
     }

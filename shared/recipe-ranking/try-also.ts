@@ -1,8 +1,8 @@
 import { hash01 } from '../meal-planning/scoring';
 
+import { RANKING_CONFIG } from './config';
 import { dishTypeOf } from './dish-type';
 import { styleTags, type RankingRecipe } from './features';
-import { RANKING_CONFIG } from './config';
 import { bayesRating, dot, meanVector, normalize } from './vector';
 
 /**

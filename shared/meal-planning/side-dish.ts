@@ -2,9 +2,9 @@
  * "Dazu passt": a main dish that lacks something filling or vegetables gets at most one
  * side (KUC-126). Constants and regexes come from `scripts/probe-week-selection.mjs`.
  */
+import { RANKING_CONFIG } from '../recipe-ranking/config';
 import { requiredIngredients, rootsOf, type RankingRecipe } from '../recipe-ranking/features';
 import { bayesRating, dot } from '../recipe-ranking/vector';
-import { RANKING_CONFIG } from '../recipe-ranking/config';
 
 export type SideNeed = 'starch' | 'veg' | null;
 

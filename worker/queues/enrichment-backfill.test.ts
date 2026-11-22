@@ -157,7 +157,7 @@ test(
         assert.deepEqual(ourNutrition.body.tools, [{ type: 'web_search' }]);
         assert.equal(ourNutrition.body.model, 'gpt-6.2-sol');
         assert.equal(ourNutrition.body.temperature, undefined);
-        assert.match(ourNutrition.body.input, /"Karotte"/);
+        assert.match(JSON.stringify(ourNutrition.body.input), /Karotte/);
         assert.equal(ourNutrition.body.text.format.name, 'ingredient_enrichment');
         const shelfLifeIds = Object.values(state!.shelfLife).flat();
         assert.ok(shelfLifeIds.includes(BARE) && shelfLifeIds.includes(FULL));

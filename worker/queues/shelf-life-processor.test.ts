@@ -64,10 +64,20 @@ test('builds one /v1/responses request per chunk with prompt and strict schema',
     );
     assert.equal(lines[0].url, '/v1/responses');
     assert.equal(lines[0].body.model, 'gpt-6.2-sol');
-    assert.equal(lines[0].body.instructions, SHELF_LIFE_PROMPT);
+    // Instructions as cached developer message, not top-level `instructions` (KUC-128)
+    assert.equal(lines[0].body.instructions, undefined);
+    assert.equal(lines[0].body.input[0].role, 'developer');
+    assert.equal(lines[0].body.input[0].content[0].text, SHELF_LIFE_PROMPT);
+    assert.deepEqual(lines[0].body.input[0].content[0].prompt_cache_breakpoint, {
+        mode: 'explicit',
+    });
+    assert.deepEqual(lines[0].body.prompt_cache_options, { mode: 'explicit' });
     assert.deepEqual(lines[0].body.text.format, getShelfLifeResponseFormat());
     assert.equal(lines[0].body.tools, undefined);
-    assert.match(lines[2].body.input, /^Zutaten \(JSON\):\n\[\{"id":"i100","name":"Z100"\}/);
+    assert.match(
+        lines[2].body.input[1].content,
+        /^Zutaten \(JSON\):\n\[\{"id":"i100","name":"Z100"\}/,
+    );
 });
 
 test('parses output, failed and missing requests are listed', () => {

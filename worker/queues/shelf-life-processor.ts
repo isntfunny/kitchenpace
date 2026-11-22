@@ -31,6 +31,7 @@ import {
     parseBatchOutputJsonl,
     responsesOutputText,
 } from '@shared/openai-batch';
+import { EXPLICIT_CACHE_OPTIONS, cachedResponsesInput } from '@shared/prompt-cache';
 
 import {
     checkBatch,
@@ -104,8 +105,8 @@ export function buildBatchRequests(
             customId,
             body: {
                 model: SHELF_LIFE_MODEL,
-                instructions: SHELF_LIFE_PROMPT,
-                input: buildShelfLifeInput(chunk),
+                ...EXPLICIT_CACHE_OPTIONS,
+                input: cachedResponsesInput(SHELF_LIFE_PROMPT, buildShelfLifeInput(chunk)),
                 text: { format: getShelfLifeResponseFormat() },
             },
         });
@@ -367,12 +368,19 @@ export async function enrichIngredientShelfLife(
     if (!current || !needsShelfLifeEnrichment(current)) return { status: 'skipped' };
 
     try {
-        const response = await client.responses.create({
+        const body = {
             model: SHELF_LIFE_MODEL,
-            instructions: SHELF_LIFE_PROMPT,
-            input: buildShelfLifeInput([{ id: ingredientId, name }]),
+            ...EXPLICIT_CACHE_OPTIONS,
+            input: cachedResponsesInput(
+                SHELF_LIFE_PROMPT,
+                buildShelfLifeInput([{ id: ingredientId, name }]),
+            ),
             text: { format: getShelfLifeResponseFormat() },
-        });
+        };
+        // prompt_cache_breakpoint / prompt_cache_options are not in the SDK types yet
+        const response = await client.responses.create(
+            body as unknown as OpenAI.Responses.ResponseCreateParamsNonStreaming,
+        );
         const items = extractRawItems(JSON.parse(responsesOutputText(response))).filter(
             (item) => (item as { id?: unknown } | null)?.id === ingredientId,
         );

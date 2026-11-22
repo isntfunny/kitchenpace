@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { contentText } from '@shared/prompt-cache';
+
 import {
     batchCostUsd,
     batchNotEvaluable,
@@ -104,9 +106,9 @@ test('request: same prompt and context as the URL import', () => {
         { markdown: '# Seite', imageUrl: 'https://x.test/bild.jpg' },
         context,
     );
-    assert.equal(body.messages[0].content, IMPORT_SYSTEM_PROMPT);
-    assert.match(String(body.messages[1].content), /<tag_liste>[\s\S]*Vegetarisch/);
-    assert.match(String(body.messages[2].content), /Quelle: https:\/\/x\.test\/pfannkuchen/);
+    assert.equal(contentText(body.messages[0].content), IMPORT_SYSTEM_PROMPT);
+    assert.match(contentText(body.messages[1].content), /<tag_liste>[\s\S]*Vegetarisch/);
+    assert.match(contentText(body.messages[2].content), /Quelle: https:\/\/x\.test\/pfannkuchen/);
     assert.deepEqual(request, {
         customId: 'full-r1',
         recipeId: 'r1',

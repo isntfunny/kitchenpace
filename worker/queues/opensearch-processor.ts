@@ -6,6 +6,7 @@ import {
     generateEmbedding,
     type RecipeEmbeddingInput,
 } from '@app/lib/embeddings/embedding-service';
+import { isAiAutomationEnabled } from '@shared/ai-automation';
 import { createOpenAIBatchApi } from '@shared/openai-batch';
 import {
     ensureIndices,
@@ -604,9 +605,11 @@ export async function processSyncRecipeToOpenSearch(
             refresh: 'wait_for',
         });
 
-        // Generate and index embedding (best-effort — don't fail the sync)
+        // Generate and index embedding (best-effort — don't fail the sync).
+        // With AI_AUTOMATION=off (Beta, KUC-128) no new embedding is requested.
         try {
-            await indexRecipeEmbedding(recipe);
+            if (isAiAutomationEnabled()) await indexRecipeEmbedding(recipe);
+            else console.log(`[OpenSearch] AI automation off, no embedding for ${recipeId}`);
         } catch (embeddingError) {
             console.warn(`[OpenSearch] Embedding generation failed for ${recipeId}`, {
                 error:

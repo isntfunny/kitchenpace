@@ -1,25 +1,18 @@
-import { TZDate } from '@date-fns/tz';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { Metadata } from 'next';
 
 import { PageShell } from '@app/components/layouts/PageShell';
 import { QueryProvider } from '@app/components/providers/QueryProvider';
 import { getServerAuthSession } from '@app/lib/auth';
-import {
-    getTimeSeasonFilterSets,
-    getFoodPeriodFilterSets,
-    type FilterSetWithRelations,
-} from '@app/lib/fits-now/db-queries';
+import { type FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import { toFilterCriteria } from '@app/lib/fits-now/mappings';
-import { detectSeason } from '@app/lib/fits-now/season';
 import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
-import { getThemeChips } from '@app/lib/theme-clusters/queries';
 import { APP_URL } from '@app/lib/url';
-import { getQueryClient, trpc } from '@app/trpc/server';
+import { getQueryClient } from '@app/trpc/server';
 
-import { fetchFilterIngredients, fetchFilterTags } from './actions';
 import { RecipeSearchClient } from './components/RecipeSearchClient';
+import { loadSearchStartData } from './start-data';
 
 type RecipesPageProps = {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -79,25 +72,10 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
 
     const session = await getServerAuthSession('recipes-page');
 
-    const [tags, ingredients, categories, timeSeasonSets, foodPeriodSets, themes] =
-        await Promise.all([
-            fetchFilterTags(),
-            fetchFilterIngredients(),
-            queryClient.fetchQuery(trpc.filters.categories.queryOptions()),
-            getTimeSeasonFilterSets(),
-            getFoodPeriodFilterSets(),
-            // Released theme clusters; the page must keep working if the cluster tables are empty
-            getThemeChips().catch(() => []),
-        ]);
-
-    const filterSets = [...timeSeasonSets, ...foodPeriodSets].sort(
-        (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
-    );
+    const { filterOptions, filterSets, themes, currentSeason } = await loadSearchStartData();
 
     // Merge FilterSet criteria into initial filters for correct SSR
     mergeFilterSetIntoFilters(initialFilters, filterSets);
-
-    const currentSeason = detectSeason(new TZDate(new Date(), 'Europe/Berlin').getMonth());
 
     const initialData = await queryRecipes(initialFilters, session?.user?.id);
 
@@ -107,7 +85,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
                 <HydrationBoundary state={dehydrate(queryClient)}>
                     <RecipeSearchClient
                         initialFilters={initialFilters}
-                        filterOptions={{ tags, ingredients, categories }}
+                        filterOptions={filterOptions}
                         initialData={initialData}
                         filterSets={filterSets}
                         currentSeason={currentSeason}

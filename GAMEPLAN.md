@@ -47,6 +47,8 @@ Tickets ohne Epic und ohne Abhängigkeit.
 | [KUC-119](https://youtrack.tecfriends.de/issue/KUC-119) | Feature-Schalter im Admin-Panel verwalten und Flipt ablösen | Task | Todo |
 | [KUC-120](https://youtrack.tecfriends.de/issue/KUC-120) | Lane-Viewer überarbeiten: mobil eine Spalte, ruhigere Farben, dezentere Zutaten | Task | Todo |
 | [KUC-121](https://youtrack.tecfriends.de/issue/KUC-121) | Moderatoren-Benachrichtigung und Import-Protokoll suchen Rollen in Großschreibung | Bug | Todo |
+| [KUC-127](https://youtrack.tecfriends.de/issue/KUC-127) | Rezeptbestand ausbauen: Import in Wellen aus mehreren Quellen mit Lückenanalyse | Task | Backlog |
+| [KUC-128](https://youtrack.tecfriends.de/issue/KUC-128) | Laufende KI-Kosten stoppen: Beta kostenfrei, Kategorie ohne Websuche, Prompt-Cache | Task | Doing |
 
 **Legende**
 
@@ -87,7 +89,7 @@ flowchart LR
     KUC89["KUC-89<br/>Bring!-Kontoverknüpfung<br/>und Einkaufslisten…"]:::todo
     KUC94["KUC-94<br/>Haltbarkeit roher<br/>Zutaten erfassen…"]:::done
     KUC114["KUC-114<br/>Zutaten normalisieren"]:::doing
-    KUC79[["KUC-79<br/>Wochenplan<br/><br/>0 von 19 erledigt"]]:::doing
+    KUC79[["KUC-79<br/>Wochenplan<br/><br/>0 von 25 erledigt"]]:::doing
     KUC78 -.-> KUC79
     KUC89 -.-> KUC79
     KUC94 -.-> KUC79
@@ -152,7 +154,15 @@ Keine sichtbaren Untertickets.
 
 ## KUC-79 · Wochenplan: planen, smart einkaufen, Reste verwerten und rechtzeitig kochen
 
-[KUC-79](https://youtrack.tecfriends.de/issue/KUC-79) · Doing · 0 von 19 erledigt
+[KUC-79](https://youtrack.tecfriends.de/issue/KUC-79) · Doing · 0 von 25 erledigt
+
+### Ohne Abhängigkeiten
+
+| Ticket | Titel | Typ | Status |
+|---|---|---|---|
+| [KUC-129](https://youtrack.tecfriends.de/issue/KUC-129) | Wochenplan S20: Seitenränder werden app-weit schwarz statt in Randfarbe | Bug | Todo |
+
+### Abhängigkeiten
 
 ```mermaid
 %%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
@@ -180,6 +190,11 @@ flowchart LR
     KUC108["KUC-108<br/>Wochenplan S10:<br/>Reste-Vorschläge beim<br/>Planen"]:::doing
     KUC113["KUC-113<br/>Wochenplan S16: „Plan<br/>mir die Woche“<br/>#40;regelbasiert#41;"]:::doing
     KUC124["KUC-124<br/>Wochenplan S17:<br/>Kaufrhythmus erkennen<br/>und fällige Artikel…"]:::doing
+    KUC126["KUC-126<br/>Wochenplan S19:<br/>Wochenauswahl im<br/>Box-Stil ersetzt „Plan…"]:::todo
+    KUC130["KUC-130<br/>Wochenplan S21:<br/>„Hinzufügen zu …“ mit<br/>Kalender auf der…"]:::todo
+    KUC131["KUC-131<br/>Wochenplan S22:<br/>Hauptzutaten ableiten<br/>und Schnellfilter…"]:::todo
+    KUC132["KUC-132<br/>Wochenplan S23:<br/>Sortierung „Verbraucht<br/>meine Reste“"]:::todo
+    KUC133["KUC-133<br/>Wochenplan S24:<br/>Push-Erinnerungen Ende<br/>zu Ende prüfen"]:::todo
     KUC78 --> KUC112
     KUC89 --> KUC106
     KUC94 --> KUC107
@@ -193,6 +208,7 @@ flowchart LR
     KUC100 --> KUC108
     KUC100 --> KUC112
     KUC100 --> KUC113
+    KUC100 --> KUC130
     KUC102 --> KUC109
     KUC103 --> KUC107
     KUC104 --> KUC105
@@ -202,10 +218,14 @@ flowchart LR
     KUC107 --> KUC96
     KUC107 --> KUC108
     KUC107 --> KUC113
+    KUC107 --> KUC132
+    KUC109 --> KUC133
     KUC111 --> KUC112
     KUC111 --> KUC113
     KUC114 --> KUC104
     KUC125 --> KUC104
+    KUC126 --> KUC131
+    KUC126 --> KUC132
     click KUC78 "https://youtrack.tecfriends.de/issue/KUC-78"
     click KUC89 "https://youtrack.tecfriends.de/issue/KUC-89"
     click KUC94 "https://youtrack.tecfriends.de/issue/KUC-94"
@@ -229,6 +249,11 @@ flowchart LR
     click KUC114 "https://youtrack.tecfriends.de/issue/KUC-114"
     click KUC124 "https://youtrack.tecfriends.de/issue/KUC-124"
     click KUC125 "https://youtrack.tecfriends.de/issue/KUC-125"
+    click KUC126 "https://youtrack.tecfriends.de/issue/KUC-126"
+    click KUC130 "https://youtrack.tecfriends.de/issue/KUC-130"
+    click KUC131 "https://youtrack.tecfriends.de/issue/KUC-131"
+    click KUC132 "https://youtrack.tecfriends.de/issue/KUC-132"
+    click KUC133 "https://youtrack.tecfriends.de/issue/KUC-133"
     classDef ideas fill:#f3e8ff,stroke:#7e22ce,color:#3b0764,stroke-dasharray:2 4
     classDef backlog fill:#f1f5f9,stroke:#64748b,color:#0f172a,stroke-dasharray:6 4
     classDef todo fill:#2563eb,stroke:#1e3a8a,color:#ffffff,stroke-width:2px

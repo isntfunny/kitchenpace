@@ -1,28 +1,34 @@
 'use client';
 
-import { CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarPlus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { addPlanEntries, getPlanContext, type PlanContext } from '@app/app/plan/actions';
-import { Button, IconButton } from '@app/components/atoms/Button';
-import { chip, fieldLabel } from '@app/components/atoms/recipes';
+import { Button } from '@app/components/atoms/Button';
 import { useToastContext } from '@app/components/providers/ToastProvider';
 import { ServingsStepper } from '@app/components/ui/ServingsStepper';
 import { Sheet } from '@app/components/ui/Sheet';
 import { defaultServings, slotLabel } from '@app/lib/meal-plan/slots';
-import { shortDate, weekNumber, weekParam } from '@app/lib/meal-plan/view';
+import { shortDate, weekParam } from '@app/lib/meal-plan/view';
 import { weekDays } from '@app/lib/meal-plan/week';
-import { weekdayShort } from '@shared/dates';
-import { addDays } from '@shared/dates';
+import { addDays, weekdayShort } from '@shared/dates';
 
-import { css, cx } from 'styled-system/css';
+import { css } from 'styled-system/css';
 
+import { PlanDayPicker, SlotChoice } from './AddToPlanParts';
 import { TimeField } from './FormParts';
 import { HouseholdPrompt } from './HouseholdPrompt';
 
 const OPEN_PARAM = 'zumPlan';
+
+const column = css({ display: 'flex', flexDirection: 'column', gap: '4' });
+const amounts = css({ display: 'flex', flexWrap: 'wrap', gap: '4', alignItems: 'flex-end' });
+const errorText = css({ color: 'status.error', fontSize: 'sm' });
+const planLink = css({ textAlign: 'center', fontSize: 'sm', color: 'primary', fontWeight: '600' });
+const loading = css({ py: '6', textAlign: 'center', color: 'foreground.muted' });
+const loadError = css({ py: '6', textAlign: 'center', color: 'status.error' });
 
 interface AddToPlanButtonProps {
     recipe: { id: string; title: string };
@@ -152,14 +158,7 @@ function AddToPlanBody({
 
     if (!context || !weekStart || !date) {
         return (
-            <p
-                role={error ? 'alert' : 'status'}
-                className={css({
-                    py: '6',
-                    textAlign: 'center',
-                    color: error ? 'status.error' : 'foreground.muted',
-                })}
-            >
+            <p role={error ? 'alert' : 'status'} className={error ? loadError : loading}>
                 {error ?? 'Lade …'}
             </p>
         );
@@ -179,150 +178,27 @@ function AddToPlanBody({
         );
     }
 
-    const placements = context.placements;
-    const days = weekDays(weekStart);
-
     return (
-        <div className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
-            <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
-                <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-                    <span className={cx(fieldLabel, css({ flex: 1 }))}>Tag</span>
-                    <IconButton
-                        aria-label="Vorherige Woche"
-                        onClick={() => load(addDays(weekStart, -7))}
-                    >
-                        <ChevronLeft size={16} />
-                    </IconButton>
-                    <span
-                        className={css({
-                            fontSize: 'sm',
-                            fontWeight: '600',
-                            minW: '14',
-                            textAlign: 'center',
-                        })}
-                    >
-                        KW {weekNumber(weekStart)}
-                    </span>
-                    <IconButton
-                        aria-label="Nächste Woche"
-                        onClick={() => load(addDays(weekStart, 7))}
-                    >
-                        <ChevronRight size={16} />
-                    </IconButton>
-                </div>
-                <div
-                    role="radiogroup"
-                    aria-label="Tag"
-                    className={css({
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-                        gap: '1',
-                    })}
-                >
-                    {days.map((day) => {
-                        const active = day === date;
-                        const past = day < context.today;
-                        const planned = placements.some((item) => item.date === day);
-                        return (
-                            <button
-                                key={day}
-                                type="button"
-                                role="radio"
-                                aria-checked={active}
-                                aria-label={`${weekdayShort(day)}, ${shortDate(day)}${planned ? ', schon geplant' : ''}`}
-                                onClick={() => setDate(day)}
-                                className={css({
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    minH: '56px',
-                                    py: '1.5',
-                                    borderRadius: 'xl',
-                                    border: '1px solid',
-                                    borderColor: active ? 'primary' : 'border.muted',
-                                    bg: active ? 'primary' : 'surface',
-                                    color: active ? 'white' : 'text',
-                                    opacity: past && !active ? 0.45 : 1,
-                                    cursor: 'pointer',
-                                    fontSize: 'xs',
-                                    _focusVisible: {
-                                        outline: '2px solid',
-                                        outlineColor: 'primary',
-                                        outlineOffset: '2px',
-                                    },
-                                })}
-                            >
-                                <span className={css({ fontWeight: '700' })}>
-                                    {weekdayShort(day)}
-                                </span>
-                                <span className={css({ fontSize: 'md' })}>
-                                    {Number(day.slice(8))}
-                                </span>
-                                <span
-                                    aria-hidden
-                                    className={css({
-                                        w: '1.5',
-                                        h: '1.5',
-                                        borderRadius: 'full',
-                                        bg: planned
-                                            ? active
-                                                ? 'white'
-                                                : 'primary'
-                                            : 'transparent',
-                                    })}
-                                />
-                            </button>
-                        );
-                    })}
-                </div>
-                {placements.length > 0 && (
-                    <p className={css({ fontSize: 'sm', color: 'primary', fontWeight: '500' })}>
-                        Liegt schon am{' '}
-                        {placements
-                            .map((item) => {
-                                const config = context.settings.slots.find(
-                                    (s) => s.key === item.slot,
-                                );
-                                return `${weekdayShort(item.date)} (${config ? slotLabel(config) : 'Mahlzeit'})`;
-                            })
-                            .join(', ')}
-                    </p>
-                )}
-            </div>
-
-            <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
-                <span className={fieldLabel}>Mahlzeit</span>
-                <div
-                    role="radiogroup"
-                    aria-label="Mahlzeit"
-                    className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}
-                >
-                    {slots.map((item) => (
-                        <button
-                            key={item.key}
-                            type="button"
-                            role="radio"
-                            aria-checked={item.key === slotKey}
-                            className={chip({ active: item.key === slotKey })}
-                            onClick={() => {
-                                setSlotKey(item.key);
-                                setTime(null);
-                            }}
-                        >
-                            {slotLabel(item)}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div
-                className={css({
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '4',
-                    alignItems: 'flex-end',
-                })}
-            >
+        <div className={column}>
+            <PlanDayPicker
+                weekStart={weekStart}
+                days={weekDays(weekStart)}
+                today={context.today}
+                value={date}
+                onChange={setDate}
+                onWeek={(delta) => load(addDays(weekStart, delta))}
+                placements={context.placements}
+                slots={context.settings.slots}
+            />
+            <SlotChoice
+                slots={slots}
+                value={slotKey}
+                onChange={(key) => {
+                    setSlotKey(key);
+                    setTime(null);
+                }}
+            />
+            <div className={amounts}>
                 <ServingsStepper
                     value={servings ?? 2}
                     onChange={setServings}
@@ -330,9 +206,8 @@ function AddToPlanBody({
                 />
                 <TimeField value={effectiveTime} onChange={setTime} />
             </div>
-
             {error && (
-                <p role="alert" className={css({ color: 'status.error', fontSize: 'sm' })}>
+                <p role="alert" className={errorText}>
                     {error}
                 </p>
             )}
@@ -345,15 +220,7 @@ function AddToPlanBody({
             >
                 Zum Plan · {weekdayShort(date)}, {shortDate(date)}
             </Button>
-            <Link
-                href={`/plan?week=${weekParam(weekStart)}`}
-                className={css({
-                    textAlign: 'center',
-                    fontSize: 'sm',
-                    color: 'primary',
-                    fontWeight: '600',
-                })}
-            >
+            <Link href={`/plan?week=${weekParam(weekStart)}`} className={planLink}>
                 Wochenplan öffnen
             </Link>
         </div>

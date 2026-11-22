@@ -8,9 +8,11 @@
  * shown while planning, never pushed. Rejected leftovers (by id) never show up again.
  */
 import { addDays, diffDays, weekdayLong } from '../dates';
+import { requiredIngredients, type RankingRecipe } from '../recipe-ranking/features';
+import { dot } from '../recipe-ranking/vector';
 
 import { clamp01, DEFAULT_DURATION, durationFit, tasteOf, type DurationConfig } from './scoring';
-import type { BaseUnit, Candidate, IsoDate } from './types';
+import type { BaseUnit, IsoDate } from './types';
 
 export interface Leftover {
     /** Id of this leftover (e.g. pantry entry), used to remember rejections */
@@ -26,7 +28,12 @@ export interface Leftover {
 
 export interface LeftoverInput {
     leftovers: Leftover[];
-    candidates: Candidate[];
+    /** Recipes with their amounts (`loadRankingRecipes(ids, db, { amounts: true })`) */
+    recipes: readonly RankingRecipe[];
+    /** Normalised taste profile; null = no profile, every recipe tastes neutral */
+    profile: readonly number[] | null;
+    /** Eaters of one meal: amounts are scaled from the recipe's servings to this */
+    household: number;
     today: IsoDate;
     /** Leftovers the user dismissed */
     rejectedLeftoverIds?: readonly string[];
@@ -61,6 +68,29 @@ function formatAmount(amount: number, unit: BaseUnit): string {
     return `${String(rounded).replace('.', ',')} ${UNIT_LABEL[unit]}`;
 }
 
+/** Taste 0..1 from the cosine of profile and recipe embedding; unknown = undefined. */
+export function tasteScoreOf(
+    profile: readonly number[] | null,
+    embedding: readonly number[] | null,
+): number | undefined {
+    if (!profile || !embedding || embedding.length === 0) return undefined;
+    // Both are unit length, so the dot product is the cosine; other lengths do not compare
+    const cosine = profile.length === embedding.length ? dot(profile, embedding) : 0;
+    return Number.isFinite(cosine) ? clamp01((cosine + 1) / 2) : undefined;
+}
+
+/** Amount of an ingredient the household needs for one meal of `recipe`; unknown = null. */
+export function neededAmount(
+    recipe: RankingRecipe,
+    ingredientId: string,
+    household: number,
+): { amount: number; unit: BaseUnit } | null {
+    const needed = requiredIngredients(recipe).find((i) => i.id === ingredientId);
+    if (!needed || needed.amount === undefined || !needed.unit) return null;
+    const factor = recipe.servings && recipe.servings > 0 ? household / recipe.servings : 1;
+    return { amount: Math.round(needed.amount * factor * 1000) / 1000, unit: needed.unit };
+}
+
 export function isReliableLeftover(
     leftover: Leftover,
 ): leftover is Leftover & { amountBase: number; unitBase: BaseUnit; expiresOn: IsoDate } {
@@ -89,24 +119,21 @@ export function suggestLeftoverRecipes(input: LeftoverInput): LeftoverHint[] {
         const name = leftover.name ?? 'Zutat';
 
         const recipes: LeftoverRecipeSuggestion[] = [];
-        for (const candidate of input.candidates) {
-            const needed = candidate.ingredients.find(
-                (ingredient) => ingredient.ingredientId === leftover.ingredientId,
-            );
+        for (const recipe of input.recipes) {
+            const needed = neededAmount(recipe, leftover.ingredientId, input.household);
             // Unknown or differently measured amounts are unreliable: no suggestion
             if (
                 !needed ||
-                typeof needed.amountBase !== 'number' ||
-                needed.amountBase <= 0 ||
-                needed.unitBase !== leftover.unitBase ||
-                needed.amountBase > leftover.amountBase
+                needed.amount <= 0 ||
+                needed.unit !== leftover.unitBase ||
+                needed.amount > leftover.amountBase
             ) {
                 continue;
             }
 
-            const usage = clamp01(needed.amountBase / leftover.amountBase);
-            const taste = tasteOf(candidate.tasteScore);
-            const time = durationFit(candidate.totalTime, suggestedDate, duration);
+            const usage = clamp01(needed.amount / leftover.amountBase);
+            const taste = tasteOf(tasteScoreOf(input.profile, recipe.embedding));
+            const time = durationFit(recipe.totalTime, suggestedDate, duration);
             const score = 3 * usage + 2 * taste + 1 * time;
 
             const reasons: { text: string; weight: number }[] = [
@@ -114,19 +141,19 @@ export function suggestLeftoverRecipes(input: LeftoverInput): LeftoverHint[] {
                     text:
                         usage >= 0.95
                             ? `Verbraucht ${name} komplett (${formatAmount(leftover.amountBase, leftover.unitBase)})`
-                            : `${formatAmount(leftover.amountBase, leftover.unitBase)} ${name} reichen, es werden ${formatAmount(needed.amountBase, leftover.unitBase)} gebraucht`,
+                            : `${formatAmount(leftover.amountBase, leftover.unitBase)} ${name} reichen, es werden ${formatAmount(needed.amount, leftover.unitBase)} gebraucht`,
                     weight: 3 * usage,
                 },
             ];
             if (taste >= 0.65)
                 reasons.push({ text: 'Passt zu deinem Geschmack', weight: 2 * taste });
             if (time === 1) {
-                reasons.push({ text: `Fertig in ${candidate.totalTime} Min.`, weight: 1 });
+                reasons.push({ text: `Fertig in ${recipe.totalTime} Min.`, weight: 1 });
             }
             reasons.sort((a, b) => b.weight - a.weight);
 
             recipes.push({
-                recipeId: candidate.id,
+                recipeId: recipe.id,
                 score: Math.round(score * 1000) / 1000,
                 reasons: reasons.slice(0, 2).map((reason) => reason.text),
             });

@@ -2,21 +2,49 @@
 // mean, soon-expiring pantry items and kNN on the stored embeddings. Never calls OpenAI.
 import 'server-only';
 
+import type { Db } from '@app/lib/meal-plan/db';
+import { loadFacts } from '@app/lib/pantry/book';
+import { toBaseQuantity } from '@app/lib/shopping/quantity';
 import { addDays } from '@shared/dates';
 import { opensearchClient, OPENSEARCH_EMBEDDINGS_INDEX } from '@shared/opensearch/client';
 import { prisma } from '@shared/prisma';
 import { RANKING_CONFIG } from '@shared/recipe-ranking/config';
-import type { RankingRecipe } from '@shared/recipe-ranking/features';
+import type { RankingBaseUnit, RankingRecipe } from '@shared/recipe-ranking/features';
 import { globalMeanRating, normalize } from '@shared/recipe-ranking/vector';
-
-type Db = typeof prisma;
 
 const DIFFICULTIES = new Set(['EASY', 'MEDIUM', 'HARD']);
 
-/** Features of the given recipes for scoring; unknown or unpublished ids are missing. */
+const BASE_LABEL: Record<'G' | 'ML' | 'PIECE', RankingBaseUnit> = {
+    G: 'g',
+    ML: 'ml',
+    PIECE: 'Stk',
+};
+
+/** Converts recipe line amounts to base units (grams, millilitres, pieces). */
+async function baseAmountConverter(db: Db, ingredientIds: string[]) {
+    const [facts, units] = await Promise.all([
+        loadFacts(db, ingredientIds),
+        db.unit.findMany({ select: { id: true, shortName: true } }),
+    ]);
+    const unitShort = new Map(units.map((u) => [u.id, u.shortName]));
+    return (line: { ingredientId: string; amount: string; unitId: string }) => {
+        const base = toBaseQuantity(
+            line.amount,
+            unitShort.get(line.unitId) ?? null,
+            facts.contextFor(line.ingredientId),
+        );
+        return base ? { amount: base.quantity, unit: BASE_LABEL[base.baseUnit] } : null;
+    };
+}
+
+/**
+ * Features of the given recipes for scoring; unknown ids are missing. With `amounts`, every
+ * required ingredient line also carries its amount in a base unit (for `servings`).
+ */
 export async function loadRankingRecipes(
     ids: string[],
     db: Db = prisma,
+    options: { amounts?: boolean } = {},
 ): Promise<Map<string, RankingRecipe>> {
     if (ids.length === 0) return new Map();
     const [rows, embeddings] = await Promise.all([
@@ -28,6 +56,7 @@ export async function loadRankingRecipes(
                 rating: true,
                 ratingCount: true,
                 totalTime: true,
+                servings: true,
                 difficulty: true,
                 flowNodes: true,
                 categories: { select: { category: { select: { slug: true } } } },
@@ -35,6 +64,9 @@ export async function loadRankingRecipes(
                 recipeIngredients: {
                     select: {
                         isOptional: true,
+                        ingredientId: true,
+                        amount: true,
+                        unitId: true,
                         ingredient: {
                             select: {
                                 id: true,
@@ -56,6 +88,11 @@ export async function loadRankingRecipes(
         }),
     ]);
     const embeddingOf = new Map(embeddings.map((e) => [e.recipeId, e.embedding]));
+    const toBase = options.amounts
+        ? await baseAmountConverter(db, [
+              ...new Set(rows.flatMap((row) => row.recipeIngredients.map((l) => l.ingredientId))),
+          ])
+        : null;
 
     return new Map(
         rows.map((row) => {
@@ -67,6 +104,7 @@ export async function loadRankingRecipes(
                 tags: row.tags.flatMap((t) => (t.tag ? [t.tag.name] : [])),
                 ingredients: row.recipeIngredients.map((line) => {
                     const category = line.ingredient.categories[0];
+                    const base = toBase && !line.isOptional ? toBase(line) : null;
                     return {
                         id: line.ingredient.id,
                         name: (
@@ -74,8 +112,10 @@ export async function loadRankingRecipes(
                         ).toLowerCase(),
                         root: category ? (category.parent?.slug ?? category.slug) : null,
                         optional: line.isOptional,
+                        ...(base && { amount: base.amount, unit: base.unit }),
                     };
                 }),
+                servings: row.servings,
                 rating: row.rating ?? 0,
                 ratingCount: row.ratingCount ?? 0,
                 totalTime: row.totalTime ?? 0,

@@ -1,5 +1,4 @@
-import { loadTimeSeasonSets } from '@app/lib/meal-plan/intelligence/sets';
-import { getLeftoverNotices } from '@app/lib/meal-plan/intelligence/week-planner';
+import { getLeftoverNotices } from '@app/lib/meal-plan/intelligence/leftover-notices.server';
 import { prisma } from '@shared/prisma';
 
 import { LeftoverNotices } from './LeftoverNotices';
@@ -14,11 +13,11 @@ export async function LeftoverSection({
     today: string;
     householdSize: number;
 }) {
-    const notices = await loadTimeSeasonSets()
-        .then((sets) => getLeftoverNotices(prisma, userId, sets, { today, householdSize }))
-        .catch((error) => {
+    const notices = await getLeftoverNotices(prisma, userId, { today, householdSize }).catch(
+        (error) => {
             console.error('[plan] leftover hints failed', error);
             return [];
-        });
+        },
+    );
     return <LeftoverNotices notices={notices} />;
 }

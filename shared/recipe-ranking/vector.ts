@@ -1,6 +1,6 @@
 import { RANKING_CONFIG, type RankingConfig } from './config';
 
-export function dot(a: number[], b: number[]): number {
+export function dot(a: readonly number[], b: readonly number[]): number {
     let d = 0;
     for (let i = 0; i < a.length; i++) d += a[i]! * b[i]!;
     return d;

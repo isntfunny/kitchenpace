@@ -6,10 +6,8 @@ import type { Db } from '@app/lib/meal-plan/db';
 import { getMealPlanWeek } from '@app/lib/meal-plan/repository';
 import { DEFAULT_HOUSEHOLD_SIZE } from '@app/lib/meal-plan/slots';
 import type { DishMarker } from '@app/lib/meal-plan/view';
-import { getLeftoverHints } from '@app/lib/pantry/leftovers';
-import { todayIn, weekdayLong } from '@shared/dates';
+import { todayIn } from '@shared/dates';
 import { loadShelfLifeDays } from '@shared/ingredient-shelf-life/storage-life';
-import { suggestLeftoverRecipes, type LeftoverHint } from '@shared/meal-planning/leftovers';
 import {
     analyzeShelfLife,
     suggestShelfLifeOrder,
@@ -18,14 +16,12 @@ import {
 } from '@shared/meal-planning/shelf-life';
 import type { IsoDate, SlotRef } from '@shared/meal-planning/types';
 
-import { loadRecipeRows, toCandidates, type RecipeCard } from './candidates';
 import {
     buildPlannedSlots,
     freshnessMarkers,
     movesToEntryUpdates,
     purchaseDateFor,
     type PlanEntryLite,
-    type TimeSeasonSet,
 } from './mappers';
 
 export interface WeekContext {
@@ -180,42 +176,4 @@ export async function applyShelfLifeOrder(
     for (const update of updates)
         await move(update.entryId, { date: update.date, slot: update.slot });
     return { moved: updates.length };
-}
-
-// ── Leftovers (KUC-108) ─────────────────────────────────────────────────────
-
-export interface LeftoverNoticeDTO {
-    leftoverId: string;
-    message: string;
-    suggestedDate: IsoDate;
-    /** "Donnerstag" */
-    dayLabel: string;
-    recipes: (RecipeCard & { reasons: string[] })[];
-}
-
-/** Hints for leftovers that expire soon, each with up to three matching recipes. */
-export async function getLeftoverNotices(
-    db: Db,
-    userId: string,
-    sets: readonly TimeSeasonSet[],
-    ctx: Pick<WeekContext, 'today' | 'householdSize'>,
-): Promise<LeftoverNoticeDTO[]> {
-    const leftovers = await getLeftoverHints(db, userId, ctx.today);
-    if (leftovers.length === 0) return [];
-    const { rows, cards } = await loadRecipeRows(db, userId);
-    const hints: LeftoverHint[] = suggestLeftoverRecipes({
-        leftovers,
-        candidates: toCandidates(rows, sets, ctx.householdSize),
-        today: ctx.today,
-    });
-    return hints.map((hint) => ({
-        leftoverId: hint.leftoverId,
-        message: hint.message,
-        suggestedDate: hint.suggestedDate,
-        dayLabel: weekdayLong(hint.suggestedDate),
-        recipes: hint.recipes.flatMap((recipe) => {
-            const card = cards.get(recipe.recipeId);
-            return card ? [{ ...card, reasons: recipe.reasons }] : [];
-        }),
-    }));
 }

@@ -4,9 +4,12 @@ import { z } from 'zod';
 
 import { getServerAuthSession } from '@app/lib/auth';
 import { checkRateLimit } from '@app/lib/rate-limit';
+import { prisma } from '@shared/prisma';
 
 import { BringError } from './client';
 import * as service from './service';
+import { loadBringSyncState } from './sync-settings';
+import { requestBringSync } from './sync-trigger';
 import type { ActionResult } from './types';
 
 const listId = z.string().min(1).max(200);
@@ -112,5 +115,36 @@ export async function createBringList(input: unknown) {
             .object({ operationId: z.uuid(), name: z.string().trim().min(1).max(100) })
             .parse(input);
         return service.createList(userId, parsed.operationId, parsed.name);
+    });
+}
+
+export async function getBringSyncState() {
+    return run((userId) => loadBringSyncState(prisma, userId));
+}
+
+/** Turns the two-way sync on for the chosen Bring! list and starts the first run. */
+export async function enableBringSync(input: unknown) {
+    return run(async (userId) => {
+        await service.enableSync(userId, listId.parse(input));
+        await requestBringSync(prisma, userId, { delayMs: 500 });
+        return loadBringSyncState(prisma, userId);
+    });
+}
+
+export async function disableBringSync() {
+    return run(async (userId) => {
+        await service.disableSync(userId);
+        return loadBringSyncState(prisma, userId);
+    });
+}
+
+/** "Jetzt abgleichen" (also after a reconnect when the sync had stopped). */
+export async function syncBringNow() {
+    return run(async (userId) => {
+        const state = await loadBringSyncState(prisma, userId);
+        if (state.status === 'AUTH_FAILED')
+            throw new BringError('AUTH', 'Bitte verbinde dein Bring!-Konto erneut.');
+        await requestBringSync(prisma, userId, { delayMs: 200 });
+        return state;
     });
 }

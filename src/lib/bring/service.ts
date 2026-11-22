@@ -10,6 +10,7 @@ import { loadCatalog } from './catalog';
 import { BringClient, BringError } from './client';
 import { decryptCredentials, encryptCredentials } from './crypto';
 import { resolveCatalogItem } from './items';
+import { disableBringSync, resetSyncData } from './sync-settings';
 import { requireList, transferItems } from './transfer';
 import type {
     BringCredentials,
@@ -74,8 +75,20 @@ export async function connectAccount(
         await tx.bringConnection.upsert({
             where: { userId },
             create: { userId, credentials: encrypted, defaultListUuid },
-            update: { credentials: encrypted, defaultListUuid },
+            // A different account starts without sync, base and item links
+            update: {
+                credentials: encrypted,
+                defaultListUuid,
+                syncEnabled: false,
+                syncListUuid: null,
+                syncStatus: 'IDLE',
+                syncSnapshot: {},
+                lastSyncAt: null,
+                lastSyncError: null,
+                syncErrorCount: 0,
+            },
         });
+        await resetSyncData(tx, userId);
         // Receipts belong to the previous account; never replay them against a replacement.
         await tx.bringTransfer.deleteMany({ where: { userId } });
     });
@@ -85,7 +98,33 @@ export async function disconnectAccount(userId: string) {
     return locked(userId, async (tx) => {
         await tx.bringConnection.deleteMany({ where: { userId } });
         await tx.bringTransfer.deleteMany({ where: { userId } });
+        await resetSyncData(tx, userId);
     });
+}
+
+/** Turns the sync on for one Bring! list; starts from a clean base. */
+export async function enableSync(userId: string, listUuid: string) {
+    return locked(userId, async (tx) => {
+        const { client } = await connected(userId, tx);
+        requireList(await client.lists(), listUuid);
+        await resetSyncData(tx, userId);
+        await tx.bringConnection.update({
+            where: { userId },
+            data: {
+                syncEnabled: true,
+                syncListUuid: listUuid,
+                syncStatus: 'IDLE',
+                syncSnapshot: {},
+                lastSyncAt: null,
+                lastSyncError: null,
+                syncErrorCount: 0,
+            },
+        });
+    });
+}
+
+export async function disableSync(userId: string) {
+    return locked(userId, (tx) => disableBringSync(tx, userId));
 }
 
 export async function availableLists(userId: string) {

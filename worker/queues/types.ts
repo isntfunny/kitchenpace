@@ -114,6 +114,18 @@ export interface SendMealReminderJob {
     reminderId: string;
 }
 
+export interface BringSyncJob {
+    /** Report only: list who would be synced / what would change, write nothing */
+    dryRun?: boolean;
+    /** Max. connections per run */
+    limit?: number;
+}
+
+export interface BringSyncConnectionJob {
+    userId: string;
+    dryRun?: boolean;
+}
+
 export interface ClusterRecipeThemesJob {
     /** Number of clusters (0 = automatic) */
     clusters?: number;

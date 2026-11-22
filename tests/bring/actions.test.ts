@@ -19,16 +19,25 @@ const bundle = await build({
                     path,
                     namespace: 'test',
                 }));
+                build.onResolve(
+                    { filter: /^(@shared\/prisma|\.\/sync-trigger|\.\/sync-settings)$/ },
+                    ({ path }) => ({
+                        path,
+                        namespace: 'test',
+                    }),
+                );
                 build.onResolve({ filter: /^\.\/service$/ }, () => ({
                     path: 'service',
                     namespace: 'test',
                 }));
                 build.onLoad({ filter: /.*/, namespace: 'test' }, ({ path }) => ({
-                    contents: path.endsWith('/auth')
-                        ? 'export async function getServerAuthSession() { return globalThis.__bringActionBoundary.session; }'
-                        : path.endsWith('/rate-limit')
-                          ? 'export async function checkRateLimit() { return {allowed:globalThis.__bringActionBoundary.allowed}; }'
-                          : `export async function connectionStatus(userId) { globalThis.__bringActionBoundary.userId = userId; return {connected:false,defaultListUuid:null}; }
+                    contents: /prisma|sync-/.test(path)
+                        ? 'export const prisma = {}; export const requestBringSync = async () => false; export const loadBringSyncState = async () => ({});'
+                        : path.endsWith('/auth')
+                          ? 'export async function getServerAuthSession() { return globalThis.__bringActionBoundary.session; }'
+                          : path.endsWith('/rate-limit')
+                            ? 'export async function checkRateLimit() { return {allowed:globalThis.__bringActionBoundary.allowed}; }'
+                            : `export async function connectionStatus(userId) { globalThis.__bringActionBoundary.userId = userId; return {connected:false,defaultListUuid:null}; }
              export const previewConnection=connectionStatus,connectAccount=connectionStatus,disconnectAccount=connectionStatus,availableLists=connectionStatus,chooseDefault=connectionStatus,readList=connectionStatus,mutateItem=connectionStatus,transfer=connectionStatus,createList=connectionStatus;`,
                     loader: 'js',
                 }));

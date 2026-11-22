@@ -2,7 +2,7 @@
 
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
     addManualShoppingItem,
@@ -23,6 +23,7 @@ import { BASE_UNIT_LABEL } from '@app/lib/shopping/quantity';
 
 import { css, cx } from 'styled-system/css';
 
+import { BringSyncPill } from './BringSyncPill';
 import { ItemDetail } from './ItemDetail';
 import { QuickAdd, type QuickAddEntry } from './QuickAdd';
 import { ShoppingPlanWidget } from './ShoppingPlanWidget';
@@ -142,6 +143,21 @@ export function ShoppingListView({ initial }: { initial: ShoppingPageData }) {
         else setError(result.error);
     }, []);
 
+    // With the Bring! sync on, changes made there arrive while the page is open
+    const syncing = data.bringSync.enabled && data.bringSync.status !== 'AUTH_FAILED';
+    useEffect(() => {
+        if (!syncing) return;
+        const reload = () => {
+            if (document.visibilityState === 'visible') void refresh();
+        };
+        const timer = window.setInterval(reload, 60_000);
+        document.addEventListener('visibilitychange', reload);
+        return () => {
+            window.clearInterval(timer);
+            document.removeEventListener('visibilitychange', reload);
+        };
+    }, [syncing, refresh]);
+
     /** Runs a write; on failure shows the error and restores the server state. */
     const write = useCallback(
         async (work: () => Promise<{ ok: boolean; error?: string }>) => {
@@ -232,6 +248,15 @@ export function ShoppingListView({ initial }: { initial: ShoppingPageData }) {
 
                 <div className={toolbar}>
                     <QuickAdd onAdd={addEntry} />
+                    <div className={css({ ml: 'auto' })}>
+                        <BringSyncPill
+                            state={data.bringSync}
+                            onChange={(bringSync) =>
+                                setData((current) => ({ ...current, bringSync }))
+                            }
+                            onSynced={() => void refresh()}
+                        />
+                    </div>
                 </div>
 
                 {error && (

@@ -1,4 +1,5 @@
 // Data of the shopping list page (KUC-105): Prisma rows → serializable views.
+import { type BringSyncState, loadBringSyncState } from '@app/lib/bring/sync-settings';
 import type { Db } from '@app/lib/meal-plan/db';
 import { getMealPlanSettings, getMealPlanWeek } from '@app/lib/meal-plan/repository';
 import { formatIsoDate, todayIn, weekStartFor } from '@app/lib/meal-plan/week';
@@ -152,6 +153,7 @@ export interface SuggestionTileView extends Omit<RhythmSuggestionView, 'lastPurc
 }
 
 export interface ShoppingPageData {
+    bringSync: BringSyncState;
     items: ShoppingItemView[];
     suggestions: SuggestionTileView[];
     plan: Awaited<ReturnType<typeof loadShoppingPlanStatus>>;
@@ -163,11 +165,12 @@ export async function loadShoppingPageData(
     userId: string,
     now: Date = new Date(),
 ): Promise<ShoppingPageData> {
-    const [items, suggestions, plan, settings] = await Promise.all([
+    const [items, suggestions, plan, settings, bringSync] = await Promise.all([
         loadShoppingItems(db, userId),
         loadSuggestions(db, userId, now),
         loadShoppingPlanStatus(db, userId, now),
         getMealPlanSettings(db, userId),
+        loadBringSyncState(db, userId),
     ]);
     // Suggestions that are already on the list make no sense
     const onList = new Set(items.filter((item) => item.status === 'OPEN').map((i) => i.itemKey));
@@ -177,6 +180,7 @@ export async function loadShoppingPageData(
         visible.flatMap((s) => (s.ingredientId ? [s.ingredientId] : [])),
     );
     return {
+        bringSync,
         items,
         suggestions: visible.map((s) => ({
             ...s,

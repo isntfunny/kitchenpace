@@ -366,6 +366,40 @@ const JOB_CATALOG: Record<
         },
     },
 
+    'bring-sync': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { dryRun: false, limit: 500 },
+        schema: {
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (list connections due, enqueue nothing)',
+                default: false,
+            },
+            limit: {
+                type: 'number',
+                label: 'Max. connections per run',
+                default: 500,
+                min: 1,
+                max: 5000,
+            },
+        },
+        // Fan-out: one bring-sync-connection job per active connection
+        repeat: { pattern: '*/5 * * * *', tz: 'Europe/Berlin' },
+    },
+
+    'bring-sync-connection': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { userId: '', dryRun: false },
+        schema: {
+            userId: { type: 'string', label: 'User ID', placeholder: 'cuid of the user' },
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (plan only, write nothing)',
+                default: false,
+            },
+        },
+    },
+
     'cluster-recipe-themes': {
         queue: QueueName.SCHEDULED,
         defaultData: {

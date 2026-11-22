@@ -9,9 +9,8 @@ import {
     dismissLeftoverAction,
     planLeftoverRecipeAction,
 } from '@app/app/plan/intelligence-actions';
-import { button } from '@app/components/atoms/recipes';
+import { Button } from '@app/components/atoms/Button';
 import type { LeftoverNoticeDTO } from '@app/lib/meal-plan/intelligence/week-planner';
-
 
 import { css } from 'styled-system/css';
 
@@ -111,26 +110,26 @@ export function LeftoverNotices({ notices }: { notices: LeftoverNoticeDTO[] }) {
                                 >
                                     {recipe.reasons.join(' · ')}
                                 </span>
-                                <button
+                                <Button
+                                    variant="outline"
                                     type="button"
                                     disabled={busy}
                                     onClick={() => plan(notice, recipe.id)}
-                                    className={button({ variant: 'outline' })}
                                 >
                                     Für {notice.dayLabel} einplanen
-                                </button>
+                                </Button>
                             </li>
                         ))}
                     </ul>
                     <div className={css({ display: 'flex', justifyContent: 'flex-end' })}>
-                        <button
+                        <Button
+                            variant="ghost"
                             type="button"
                             disabled={busy}
                             onClick={() => dismiss(notice)}
-                            className={button({ variant: 'ghost' })}
                         >
                             Ablehnen
-                        </button>
+                        </Button>
                     </div>
                 </section>
             ))}

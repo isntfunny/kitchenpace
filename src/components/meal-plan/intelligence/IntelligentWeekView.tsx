@@ -4,7 +4,7 @@ import { Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { button } from '@app/components/atoms/recipes';
+import { Button } from '@app/components/atoms/Button';
 
 import { WeekSelectionDialog } from '../selection/WeekSelectionDialog';
 import { WeekView, type WeekViewProps } from '../WeekView';
@@ -23,10 +23,10 @@ export function IntelligentWeekView(props: Omit<WeekViewProps, 'toolbarActions'>
 
     const toolbarActions = (
         <>
-            <button type="button" className={button()} onClick={() => setSelecting(true)}>
+            <Button type="button" onClick={() => setSelecting(true)}>
                 <Sparkles size={16} aria-hidden />
                 <span>Plan mir die Woche</span>
-            </button>
+            </Button>
             <ShelfLifeDialog startDate={data.startDate} />
             <WeekSelectionDialog
                 startDate={data.startDate}

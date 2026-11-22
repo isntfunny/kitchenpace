@@ -14,7 +14,6 @@ import {
     weekdayShort,
 } from '@app/lib/meal-plan/view';
 
-
 import { css, cx } from 'styled-system/css';
 
 import type { MealPlanSettingsValues } from './MealPlanSettingsForm';

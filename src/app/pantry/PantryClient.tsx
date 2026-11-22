@@ -61,19 +61,6 @@ const field = css({
     py: '2',
     minW: 0,
 });
-const tap = css({
-    fontSize: 'xs',
-    px: '2.5',
-    py: '1.5',
-    borderRadius: 'full',
-    border: '1px solid',
-    borderColor: 'border',
-    color: 'text',
-    bg: 'transparent',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    _hover: { borderColor: 'primary', color: 'primary' },
-});
 const TONE_COLOR = { ok: 'text.muted', soon: 'status.warning', expired: 'status.error' } as const;
 
 export function PantryClient({ entries }: { entries: PantryEntry[] }) {
@@ -163,7 +150,12 @@ export function PantryClient({ entries }: { entries: PantryEntry[] }) {
                         </option>
                     ))}
                 </select>
-                <Button type="submit" size="sm" disabled={pending || !name.trim()}>
+                <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={pending || !name.trim()}
+                >
                     Hinzufügen
                 </Button>
             </form>
@@ -264,22 +256,22 @@ export function PantryClient({ entries }: { entries: PantryEntry[] }) {
                                         )}
                                     </div>
                                     <div className={css({ display: 'flex', gap: '1.5' })}>
-                                        <button
+                                        <Button
                                             type="button"
-                                            className={tap}
+                                            size="sm"
                                             disabled={pending}
                                             onClick={() => finish(entry, 'USED_UP')}
                                         >
                                             Aufgebraucht
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
                                             type="button"
-                                            className={tap}
+                                            size="sm"
                                             disabled={pending}
                                             onClick={() => finish(entry, 'DISCARDED')}
                                         >
                                             Weggeworfen
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             );

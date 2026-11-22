@@ -6,7 +6,6 @@ import { ServingsStepper } from '@app/components/ui/ServingsStepper';
 
 import { css } from 'styled-system/css';
 
-
 import { leftoverLabel, type Pick } from './selection-state';
 
 type SelectionCardFooterProps = {

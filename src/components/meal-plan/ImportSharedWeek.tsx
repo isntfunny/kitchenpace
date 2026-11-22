@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { importSharedPlan, previewSharedPlanImport } from '@app/app/plan/share-actions';
+import { Button } from '@app/components/atoms/Button';
 import { button, chip } from '@app/components/atoms/recipes';
 import { Sheet } from '@app/components/ui/Sheet';
 import { weekNumber, weekParam, weekRangeLabel } from '@app/lib/meal-plan/view';
-
 
 import { css } from 'styled-system/css';
 
@@ -41,13 +41,9 @@ export function ImportSharedWeek({
         );
     return (
         <>
-            <button
-                type="button"
-                className={button({ variant: 'primary' })}
-                onClick={() => setOpen(true)}
-            >
+            <Button variant="primary" type="button" onClick={() => setOpen(true)}>
                 <CalendarPlus size={16} aria-hidden /> In meinen Plan übernehmen
-            </button>
+            </Button>
             <Sheet open={open} onOpenChange={setOpen} title="In meinen Plan übernehmen">
                 {open && <ImportBody token={token} targets={targets} slotLabels={slotLabels} />}
             </Sheet>

@@ -4,7 +4,8 @@ import { Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useId, useState, useSyncExternalStore } from 'react';
 
 import { savePlanSettings, saveWeekSlots } from '@app/app/plan/actions';
-import { button, fieldLabel, input } from '@app/components/atoms/recipes';
+import { Button } from '@app/components/atoms/Button';
+import { fieldLabel, input } from '@app/components/atoms/recipes';
 import { ServingsStepper } from '@app/components/ui/ServingsStepper';
 import {
     customSlotKey,
@@ -15,11 +16,9 @@ import {
 } from '@app/lib/meal-plan/slots';
 import { weekdayNameLong } from '@app/lib/meal-plan/view';
 
-
 import { css, cx } from 'styled-system/css';
 
 import { Switch } from './FormParts';
-
 
 export interface MealPlanSettingsValues {
     householdSize: number | null;
@@ -245,16 +244,14 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                     </select>
                 </label>
                 {browserZone && values.timezone !== browserZone && (
-                    <button
+                    <Button
+                        variant="ghost"
                         type="button"
-                        className={cx(
-                            button({ variant: 'ghost' }),
-                            css({ alignSelf: 'flex-start' }),
-                        )}
+                        className={css({ alignSelf: 'flex-start' })}
                         onClick={() => set('timezone', browserZone)}
                     >
                         Zeitzone deines Geräts übernehmen ({browserZone.replace(/_/g, ' ')})
-                    </button>
+                    </Button>
                 )}
                 <p className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
                     Ein anderer Wochenstart verschiebt keine Gerichte, nur die Ansicht.
@@ -328,9 +325,9 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                             {isFixedSlot(slot.key) ? (
                                 <span className={css({ w: '40px' })} />
                             ) : (
-                                <button
+                                <Button
+                                    variant="ghost"
                                     type="button"
-                                    className={button({ variant: 'ghost' })}
                                     onClick={() =>
                                         setSlots((current) =>
                                             current.filter((s) => s.key !== slot.key),
@@ -339,7 +336,7 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                                     aria-label={`${slotLabel(slot)} entfernen`}
                                 >
                                     <Trash2 size={16} />
-                                </button>
+                                </Button>
                             )}
                         </li>
                     ))}
@@ -389,29 +386,26 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                         aria-label="Uhrzeit der eigenen Mahlzeit"
                         className={cx(input, css({ w: '120px' }))}
                     />
-                    <button
+                    <Button
                         type="button"
-                        className={button()}
                         onClick={addSlot}
                         disabled={!newName.trim() || slots.length >= 12}
                     >
                         <Plus size={16} /> Hinzufügen
-                    </button>
+                    </Button>
                 </div>
                 {week?.hasOverride && weekOnly && (
-                    <button
+                    <Button
+                        variant="ghost"
                         type="button"
-                        className={cx(
-                            button({ variant: 'ghost' }),
-                            css({ alignSelf: 'flex-start' }),
-                        )}
+                        className={css({ alignSelf: 'flex-start' })}
                         onClick={() => {
                             setWeekOnly(false);
                             setSlots(initial.slots);
                         }}
                     >
                         <RotateCcw size={16} /> Auf deine Standard-Mahlzeiten zurücksetzen
-                    </button>
+                    </Button>
                 )}
             </fieldset>
 
@@ -528,9 +522,9 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                     borderColor: 'border.muted',
                 })}
             >
-                <button type="submit" className={button({ variant: 'primary' })} disabled={busy}>
+                <Button variant="primary" type="submit" disabled={busy}>
                     Speichern
-                </button>
+                </Button>
                 {status && (
                     <span
                         role="status"

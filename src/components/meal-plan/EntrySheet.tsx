@@ -12,11 +12,11 @@ import {
     swapPlanCells,
     undoCookForTwo,
 } from '@app/app/plan/edit-actions';
+import { Button } from '@app/components/atoms/Button';
 import { button } from '@app/components/atoms/recipes';
 import { Sheet } from '@app/components/ui/Sheet';
 import { builtInMarkers, weekdayShort } from '@app/lib/meal-plan/view';
 import { addDays } from '@app/lib/meal-plan/week';
-
 
 import { css } from 'styled-system/css';
 
@@ -146,26 +146,21 @@ function EntryBody({
                     borderColor: 'border.muted',
                 })}
             >
-                <button type="button" className={button()} onClick={() => setMode('move')}>
+                <Button type="button" onClick={() => setMode('move')}>
                     <MoveRight size={16} aria-hidden /> Verschieben …
-                </button>
-                <button type="button" className={button()} onClick={() => setMode('copy')}>
+                </Button>
+                <Button type="button" onClick={() => setMode('copy')}>
                     <Copy size={16} aria-hidden /> Kopieren …
-                </button>
+                </Button>
                 {!dish.isLeftover && dish.recipeAvailable && (
-                    <button type="button" className={button()} onClick={() => setMode('leftover')}>
+                    <Button type="button" onClick={() => setMode('leftover')}>
                         <CopyPlus size={16} aria-hidden /> Für 2 Mahlzeiten kochen …
-                    </button>
+                    </Button>
                 )}
-                <button
-                    type="button"
-                    className={button({ variant: 'ghost' })}
-                    onClick={remove}
-                    disabled={busy}
-                >
+                <Button variant="ghost" type="button" onClick={remove} disabled={busy}>
                     <Trash2 size={16} aria-hidden className={css({ color: 'status.error' })} />{' '}
                     Entfernen
-                </button>
+                </Button>
             </div>
         </div>
     );
@@ -251,30 +246,25 @@ function TargetStep({
                 ignoreId={dish.id}
             />
             <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
-                <button type="button" className={button({ variant: 'ghost' })} onClick={onBack}>
+                <Button variant="ghost" type="button" onClick={onBack}>
                     Zurück
-                </button>
+                </Button>
                 <span className={css({ flex: 1 })} />
                 {mode === 'move' && taken.length > 0 && (
-                    <button
-                        type="button"
-                        className={button()}
-                        onClick={() => submit(true)}
-                        disabled={busy}
-                    >
+                    <Button type="button" onClick={() => submit(true)} disabled={busy}>
                         <ArrowRightLeft size={16} aria-hidden /> Tauschen
-                    </button>
+                    </Button>
                 )}
-                <button
+                <Button
+                    variant="primary"
                     type="button"
-                    className={button({ variant: 'primary' })}
                     onClick={() => submit()}
                     disabled={busy || (same && mode !== 'copy')}
                 >
                     {taken.length > 0 && mode !== 'leftover'
                         ? 'Dazulegen'
                         : { move: 'Verschieben', copy: 'Kopieren', leftover: 'Einplanen' }[mode]}
-                </button>
+                </Button>
             </div>
         </div>
     );

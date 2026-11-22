@@ -21,11 +21,11 @@ import {
     previewPlanTemplate,
     savePlanTemplate,
 } from '@app/app/plan/edit-actions';
+import { Button } from '@app/components/atoms/Button';
 import { button, fieldLabel, input } from '@app/components/atoms/recipes';
 import { Sheet } from '@app/components/ui/Sheet';
 import { weekdayLong } from '@app/lib/meal-plan/view';
 import { addDays } from '@app/lib/meal-plan/week';
-
 
 import { css, cx } from 'styled-system/css';
 
@@ -228,13 +228,9 @@ function SaveTemplate({ data, onDone }: { data: PlanWeekData; onDone: () => void
                 {count} {count === 1 ? 'Gericht' : 'Gerichte'} mit Tag, Mahlzeit, Uhrzeit und
                 Portionen. Reste werden über die doppelte Portion mitgespeichert.
             </p>
-            <button
-                type="submit"
-                className={button({ variant: 'primary' })}
-                disabled={busy || !name.trim()}
-            >
+            <Button variant="primary" type="submit" disabled={busy || !name.trim()}>
                 Speichern
-            </button>
+            </Button>
         </form>
     );
 }
@@ -327,10 +323,10 @@ function ApplyTemplate({ data, onDone }: { data: PlanWeekData; onDone: () => voi
                                 {template.count > template.titles.length ? ' …' : ''}
                             </span>
                         </button>
-                        <button
+                        <Button
+                            variant="ghost"
                             type="button"
                             aria-label={`Vorlage „${template.name}“ löschen`}
-                            className={button({ variant: 'ghost' })}
                             disabled={busy}
                             onClick={async () => {
                                 if (!(await call(() => deletePlanTemplate(template.id)))) return;
@@ -341,7 +337,7 @@ function ApplyTemplate({ data, onDone }: { data: PlanWeekData; onDone: () => voi
                             }}
                         >
                             <Trash2 size={16} aria-hidden />
-                        </button>
+                        </Button>
                     </li>
                 ))}
             </ul>

@@ -4,13 +4,11 @@ import { Users } from 'lucide-react';
 import { useState } from 'react';
 
 import { savePlanSettings } from '@app/app/plan/actions';
-import { button } from '@app/components/atoms/recipes';
+import { Button } from '@app/components/atoms/Button';
 import { ServingsStepper } from '@app/components/ui/ServingsStepper';
 import { DEFAULT_HOUSEHOLD_SIZE } from '@app/lib/meal-plan/slots';
 
-
 import { css } from 'styled-system/css';
-
 
 /** Asked once, before the first dish is planned (KUC-102). */
 export function HouseholdPrompt({ onSaved }: { onSaved: (householdSize: number) => void }) {
@@ -59,14 +57,9 @@ export function HouseholdPrompt({ onSaved }: { onSaved: (householdSize: number) 
                     {error}
                 </p>
             )}
-            <button
-                type="button"
-                className={button({ variant: 'primary' })}
-                onClick={save}
-                disabled={busy}
-            >
+            <Button variant="primary" type="button" onClick={save} disabled={busy}>
                 Weiter
-            </button>
+            </Button>
         </div>
     );
 }

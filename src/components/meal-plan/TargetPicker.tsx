@@ -6,7 +6,6 @@ import { useId } from 'react';
 import { fieldLabel, input } from '@app/components/atoms/recipes';
 import { cellKey, shortDate, weekdayLong, weekdayShort } from '@app/lib/meal-plan/view';
 
-
 import { css } from 'styled-system/css';
 
 import type { PlanDish, PlanSlot } from './types';

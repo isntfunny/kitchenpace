@@ -3,9 +3,9 @@
 import { useEffect, useId, useState } from 'react';
 
 import type { PlanActionResult } from '@app/app/plan/run';
-import { button, fieldLabel, input } from '@app/components/atoms/recipes';
+import { Button } from '@app/components/atoms/Button';
+import { fieldLabel, input } from '@app/components/atoms/recipes';
 import { shortDate, weekdayLong, weekdayShort } from '@app/lib/meal-plan/view';
-
 
 import { css } from 'styled-system/css';
 
@@ -133,14 +133,9 @@ export function CopyPanel({
                     ))}
                 </fieldset>
             )}
-            <button
-                type="button"
-                className={button({ variant: 'primary' })}
-                onClick={() => onConfirm(mode)}
-                disabled={busy}
-            >
+            <Button variant="primary" type="button" onClick={() => onConfirm(mode)} disabled={busy}>
                 {confirmLabel}
-            </button>
+            </Button>
         </div>
     );
 }

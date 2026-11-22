@@ -228,7 +228,7 @@ export default function QRUploadPage() {
                                         width: '64px',
                                         height: '64px',
                                         borderRadius: 'xl',
-                                        bg: 'bg.card',
+                                        bg: 'surface',
                                         border: '1px solid',
                                         borderColor: 'border',
                                         display: 'flex',
@@ -289,7 +289,7 @@ export default function QRUploadPage() {
                                         width: '64px',
                                         height: '64px',
                                         borderRadius: 'xl',
-                                        bg: 'bg.card',
+                                        bg: 'surface',
                                         border: '1px solid',
                                         borderColor: 'border',
                                         display: 'flex',
@@ -394,7 +394,7 @@ export default function QRUploadPage() {
                                                     mt: '1',
                                                     px: '3',
                                                     py: '1.5',
-                                                    bg: 'bg.card',
+                                                    bg: 'surface',
                                                     border: '1px solid',
                                                     borderColor: 'border',
                                                     borderRadius: 'full',
@@ -547,7 +547,7 @@ export default function QRUploadPage() {
                                         </AnimatePresence>
                                         <span
                                             className={css({
-                                                fontSize: 'base',
+                                                fontSize: 'md',
                                                 fontWeight: '700',
                                                 color: 'text',
                                             })}

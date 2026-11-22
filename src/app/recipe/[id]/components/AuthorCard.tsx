@@ -104,7 +104,7 @@ export function AuthorCard({
                                 <p
                                     className={css({
                                         fontFamily: 'body',
-                                        color: 'text-muted',
+                                        color: 'text.muted',
                                         mt: '2',
                                         maxW: '600px',
                                     })}
@@ -151,7 +151,7 @@ export function AuthorCard({
                                 <div
                                     className={css({
                                         fontSize: 'sm',
-                                        color: 'text-muted',
+                                        color: 'text.muted',
                                         fontFamily: 'body',
                                     })}
                                 >
@@ -171,7 +171,7 @@ export function AuthorCard({
                                 <div
                                     className={css({
                                         fontSize: 'sm',
-                                        color: 'text-muted',
+                                        color: 'text.muted',
                                         fontFamily: 'body',
                                     })}
                                 >

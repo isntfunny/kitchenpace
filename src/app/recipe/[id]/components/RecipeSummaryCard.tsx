@@ -72,7 +72,7 @@ export function RecipeSummaryCard({
                     flexWrap: 'wrap',
                     fontSize: 'sm',
                     fontFamily: 'body',
-                    color: 'text-muted',
+                    color: 'text.muted',
                     mb: '3',
                 })}
             >
@@ -136,13 +136,13 @@ export function RecipeSummaryCard({
                             href={`/tag/${tag.slug}`}
                             className={css({
                                 fontSize: 'xs',
-                                color: 'text-muted',
+                                color: 'text.muted',
                                 fontFamily: 'body',
                                 textDecoration: 'none',
                                 px: '2.5',
                                 py: '1',
                                 borderRadius: 'full',
-                                bg: 'light',
+                                bg: 'background',
                                 transition: 'all 150ms ease',
                                 _hover: { color: 'primary' },
                             })}
@@ -263,7 +263,7 @@ export function RecipeSummaryCard({
                     <span
                         className={css({
                             fontSize: 'sm',
-                            color: 'text-muted',
+                            color: 'text.muted',
                             fontFamily: 'body',
                             ml: '1',
                         })}

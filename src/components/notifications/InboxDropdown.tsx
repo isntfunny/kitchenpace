@@ -115,7 +115,7 @@ export function InboxDropdown({
                                     <p
                                         className={css({
                                             fontSize: '2xs',
-                                            color: 'text-muted',
+                                            color: 'text.muted',
                                             lineHeight: '1.2',
                                         })}
                                     >
@@ -217,9 +217,9 @@ export function InboxDropdown({
                                             mb: '2',
                                         })}
                                     >
-                                        <Bell size={18} className={css({ color: 'text-muted' })} />
+                                        <Bell size={18} className={css({ color: 'text.muted' })} />
                                     </div>
-                                    <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                                    <p className={css({ color: 'text.muted', fontSize: 'sm' })}>
                                         {emptyLabel}
                                     </p>
                                 </div>

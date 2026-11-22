@@ -53,7 +53,7 @@ interface TextProps extends React.HTMLAttributes<HTMLParagraphElement> {
 export function Text({ children, size = 'md', color = 'default', className, ...props }: TextProps) {
     const colorStyles = {
         default: css.raw({ color: 'text' }),
-        muted: css.raw({ color: 'text-muted' }),
+        muted: css.raw({ color: 'text.muted' }),
         primary: css.raw({ color: 'primary' }),
     };
 

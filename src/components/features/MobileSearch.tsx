@@ -402,7 +402,7 @@ function MobileRecipeSection({
             className={css({
                 borderBottomWidth: '1px',
                 borderBottomStyle: 'solid',
-                borderColor: 'border.subtle',
+                borderColor: 'border.muted',
             })}
         >
             <MobileSectionHeader icon={icon} title={title} />
@@ -485,7 +485,7 @@ function MobileUserSection({
             className={css({
                 borderBottomWidth: '1px',
                 borderBottomStyle: 'solid',
-                borderColor: 'border.subtle',
+                borderColor: 'border.muted',
             })}
         >
             <MobileSectionHeader icon={<User size={14} />} title="Profile" />
@@ -561,7 +561,7 @@ function MobileSuggestSection({
             className={css({
                 borderBottomWidth: '1px',
                 borderBottomStyle: 'solid',
-                borderColor: 'border.subtle',
+                borderColor: 'border.muted',
             })}
         >
             <MobileSectionHeader icon={icon} title={title} />

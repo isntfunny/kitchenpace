@@ -109,7 +109,7 @@ export function LinkedAccountsCard({
                             w: '10',
                             h: '10',
                             borderRadius: 'lg',
-                            bg: 'secondary',
+                            bg: 'brand.secondary',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',

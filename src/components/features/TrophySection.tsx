@@ -63,7 +63,7 @@ function TrophyCard({ trophy }: { trophy: EarnedTrophy }) {
                 <p className={css({ fontSize: 'xs', color: 'text.muted', mt: '0.5' })}>
                     {trophy.description}
                 </p>
-                <p className={css({ fontSize: 'xs', color: 'text.secondary', mt: '1' })}>
+                <p className={css({ fontSize: 'xs', color: 'text.muted', mt: '1' })}>
                     {earnedDate}
                 </p>
             </div>

@@ -42,7 +42,7 @@ export function KeywordLandingContent({
                 >
                     {heading}
                 </h1>
-                <p className={css({ color: 'text-muted', fontSize: 'lg', maxW: '720px' })}>
+                <p className={css({ color: 'text.muted', fontSize: 'lg', maxW: '720px' })}>
                     {intro}
                 </p>
                 {action && <div className={css({ mt: '4' })}>{action}</div>}

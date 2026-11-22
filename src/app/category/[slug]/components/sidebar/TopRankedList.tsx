@@ -66,7 +66,7 @@ export function TopRankedList({ recipes }: TopRankedListProps) {
                             className={css({
                                 fontSize: 'xs',
                                 fontWeight: '700',
-                                color: 'text.tertiary',
+                                color: 'text.subtle',
                                 w: '4',
                                 flexShrink: '0',
                                 textAlign: 'center',
@@ -83,7 +83,7 @@ export function TopRankedList({ recipes }: TopRankedListProps) {
                                 borderRadius: '6px',
                                 overflow: 'hidden',
                                 flexShrink: '0',
-                                bg: 'surface.subtle',
+                                bg: 'surface.muted',
                             })}
                         >
                             <SmartImage
@@ -109,7 +109,7 @@ export function TopRankedList({ recipes }: TopRankedListProps) {
                                 className={css({
                                     fontSize: 'sm',
                                     fontWeight: '500',
-                                    color: 'text.primary',
+                                    color: 'text',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
                                     whiteSpace: 'nowrap',
@@ -130,7 +130,7 @@ export function TopRankedList({ recipes }: TopRankedListProps) {
                                 <span
                                     className={css({
                                         fontSize: 'xs',
-                                        color: 'text.secondary',
+                                        color: 'text.muted',
                                     })}
                                 >
                                     {recipe.rating > 0 ? recipe.rating.toFixed(1) : '—'}

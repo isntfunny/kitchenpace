@@ -32,7 +32,7 @@ export function TryAlsoRow({ cards, renderSelection }: TryAlsoRowProps) {
                 <h3 id="try-also-title" className={css({ fontSize: 'lg', fontWeight: '700' })}>
                     Probier auch mal
                 </h3>
-                <span className={css({ fontSize: 'sm', color: 'text-muted' })}>
+                <span className={css({ fontSize: 'sm', color: 'text.muted' })}>
                     Gut bewertet, weit weg von deinem Üblichen
                 </span>
             </div>

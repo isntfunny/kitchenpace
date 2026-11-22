@@ -135,7 +135,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '2',
-                    color: 'text-muted',
+                    color: 'text.muted',
                     textDecoration: 'none',
                     mb: '4',
                     transition: 'color 150ms ease',
@@ -331,7 +331,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                                                 right: '12px',
                                                 top: '50%',
                                                 transform: 'translateY(-50%)',
-                                                color: 'text-muted',
+                                                color: 'text.muted',
                                                 animation: 'spin 1s linear infinite',
                                             })}
                                         />
@@ -511,7 +511,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
                                         gap: '2',
                                         mt: '4',
                                         fontSize: 'sm',
-                                        color: 'text-muted',
+                                        color: 'text.muted',
                                         textDecoration: 'none',
                                         transition: 'color 150ms ease',
                                         _hover: { color: 'primary' },

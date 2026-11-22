@@ -21,7 +21,7 @@ type SlotPickerProps = {
 const label = css({
     fontSize: 'xs',
     fontWeight: '600',
-    color: 'text-muted',
+    color: 'text.muted',
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
     mr: '1',
@@ -100,7 +100,7 @@ export function SlotPicker({ selection, days, slots }: SlotPickerProps) {
             <span
                 className={css({
                     fontSize: 'sm',
-                    color: 'text-muted',
+                    color: 'text.muted',
                     display: { base: 'none', md: 'inline' },
                 })}
             >

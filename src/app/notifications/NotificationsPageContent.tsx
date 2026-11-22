@@ -120,7 +120,7 @@ export function NotificationsPageContent() {
                     {isLoading && (
                         <p
                             className={css({
-                                color: 'text-muted',
+                                color: 'text.muted',
                                 fontSize: 'sm',
                                 px: { base: '4', md: '5' },
                                 py: '4',
@@ -132,7 +132,7 @@ export function NotificationsPageContent() {
                     {!isLoading && notifications.length === 0 && (
                         <p
                             className={css({
-                                color: 'text-muted',
+                                color: 'text.muted',
                                 fontSize: 'sm',
                                 px: { base: '4', md: '5' },
                                 py: '6',

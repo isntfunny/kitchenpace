@@ -29,7 +29,7 @@ export default function DatenschutzPage() {
                         borderRadius: 'lg',
                         border: '1px solid',
                         borderColor: 'border',
-                        background: 'surface-raised',
+                        background: 'surface.elevated',
                         color: 'text',
                         lineHeight: '1.75',
                     })}
@@ -45,7 +45,7 @@ export default function DatenschutzPage() {
                         >
                             Datenschutzerklärung
                         </h1>
-                        <p className={css({ color: 'text-muted' })}>Stand: 03. Juni 2026</p>
+                        <p className={css({ color: 'text.muted' })}>Stand: 03. Juni 2026</p>
                     </header>
 
                     <section>
@@ -67,7 +67,7 @@ export default function DatenschutzPage() {
                             <br />
                             Telefon: 0157 9234 1658
                         </p>
-                        <p className={css({ mt: '2', color: 'text-muted' })}>
+                        <p className={css({ mt: '2', color: 'text.muted' })}>
                             Wir sind gesetzlich nicht zur Bestellung eines Datenschutzbeauftragten
                             verpflichtet.
                         </p>
@@ -288,7 +288,7 @@ export default function DatenschutzPage() {
                             jeweiligen Garantien kannst du über die unter Punkt 1 genannten
                             Kontaktdaten anfordern.
                         </p>
-                        <p className={css({ mt: '2', color: 'text-muted' })}>
+                        <p className={css({ mt: '2', color: 'text.muted' })}>
                             Wir weisen darauf hin, dass in den USA kein dem europäischen Recht
                             vollständig entsprechendes Datenschutzniveau garantiert werden kann und
                             insbesondere ein Zugriff durch US-Behörden nicht vollständig

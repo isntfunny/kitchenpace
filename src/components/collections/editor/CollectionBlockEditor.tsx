@@ -49,7 +49,7 @@ export function CollectionBlockEditor({ initialContent, onUpdate }: CollectionBl
                     minH: '300px',
                     px: '4',
                     py: '3',
-                    fontSize: 'base',
+                    fontSize: 'md',
                     lineHeight: '1.8',
                     color: 'text',
                     '& h1': { fontSize: '2xl', fontWeight: 'bold', mt: '6', mb: '2' },

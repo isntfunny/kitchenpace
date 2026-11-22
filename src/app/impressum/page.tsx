@@ -28,7 +28,7 @@ export default function ImpressumPage() {
                         borderRadius: 'lg',
                         border: '1px solid',
                         borderColor: 'border',
-                        background: 'surface-raised',
+                        background: 'surface.elevated',
                         color: 'text',
                         lineHeight: '1.75',
                     })}
@@ -44,7 +44,7 @@ export default function ImpressumPage() {
                         >
                             Impressum
                         </h1>
-                        <p className={css({ color: 'text-muted' })}>Angaben gemäß § 5 DDG</p>
+                        <p className={css({ color: 'text.muted' })}>Angaben gemäß § 5 DDG</p>
                     </header>
 
                     <section>
@@ -67,7 +67,7 @@ export default function ImpressumPage() {
                             <br />
                             Telefon: 0157 9234 1658
                             <br />
-                            <span className={css({ color: 'text-muted' })}>
+                            <span className={css({ color: 'text.muted' })}>
                                 Die Telefonnummer wird von Dein Impressum betreut.
                             </span>
                         </p>
@@ -95,7 +95,7 @@ export default function ImpressumPage() {
                             Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle im
                             Sinne des Verbraucherstreitbeilegungsgesetzes (VSBG) teilzunehmen.
                         </p>
-                        <p className={css({ mt: '2', color: 'text-muted' })}>
+                        <p className={css({ mt: '2', color: 'text.muted' })}>
                             Hinweis: Die Europäische Plattform zur Online-Streitbeilegung
                             (OS-Plattform) wurde von der EU-Kommission zum 20. Juli 2025 eingestellt
                             und steht nicht mehr zur Verfügung. Ein Link hierauf entfällt daher.

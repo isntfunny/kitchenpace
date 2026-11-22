@@ -18,7 +18,7 @@ export function RecipeMetaStats({ prepTime, cookTime }: RecipeMetaStatsProps) {
         alignItems: 'center',
         gap: '0.5',
         p: '2',
-        bg: 'light',
+        bg: 'background',
         borderRadius: 'xl',
         flex: '1',
         minWidth: 0,
@@ -26,7 +26,7 @@ export function RecipeMetaStats({ prepTime, cookTime }: RecipeMetaStatsProps) {
 
     const labelStyle = css({
         fontSize: 'xs',
-        color: 'text-muted',
+        color: 'text.muted',
         fontFamily: 'body',
     });
 

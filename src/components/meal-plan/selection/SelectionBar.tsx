@@ -77,7 +77,7 @@ export function SelectionBar({ picks, tabs, onApply, applying, error }: Selectio
             >
                 <p className={css({ fontSize: 'sm' })} aria-live="polite">
                     <b>{used}</b>{' '}
-                    <span className={css({ color: 'text-muted' })}>
+                    <span className={css({ color: 'text.muted' })}>
                         von {capacity} {capacity === 1 ? 'Platz' : 'Plätzen'}
                         {sides > 0 && ` · ${sides} ${sides === 1 ? 'Beilage' : 'Beilagen'}`}
                     </span>

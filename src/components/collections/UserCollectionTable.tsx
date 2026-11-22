@@ -393,7 +393,7 @@ function UserCollectionCard({ collection }: { collection: CollectionCardData }) 
                         <h3
                             className={css({
                                 fontWeight: '700',
-                                fontSize: 'base',
+                                fontSize: 'md',
                                 lineHeight: 'tight',
                                 lineClamp: 2,
                                 color: 'text',

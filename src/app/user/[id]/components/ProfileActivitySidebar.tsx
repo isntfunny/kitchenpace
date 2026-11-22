@@ -72,7 +72,7 @@ export function ProfileActivitySidebar({ activities, trophies }: ProfileActivity
                     >
                         <FileText size={36} />
                     </div>
-                    <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                    <p className={css({ color: 'text.muted', fontSize: 'sm' })}>
                         Noch keine Aktivitäten.
                     </p>
                 </div>

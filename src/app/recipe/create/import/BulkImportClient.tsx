@@ -110,7 +110,7 @@ export function BulkImportClient({ tags: _tags, authorId }: BulkImportClientProp
                     justifyContent: 'center',
                     gap: '4',
                     py: '16',
-                    color: 'text.dimmed',
+                    color: 'text.subtle',
                 })}
             >
                 <Loader2

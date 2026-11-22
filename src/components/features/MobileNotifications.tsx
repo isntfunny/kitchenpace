@@ -226,7 +226,7 @@ export function MobileNotifications({
                             padding: '3',
                             borderRadius: 'lg',
                             border: '1px solid',
-                            borderColor: 'border.subtle',
+                            borderColor: 'border.muted',
                             background: 'accent.soft',
                             fontSize: 'sm',
                             fontWeight: '600',

@@ -49,7 +49,7 @@ export function KindTabs({ tabs, active, onChange }: KindTabsProps) {
                             borderBottomWidth: '2px',
                             borderBottomStyle: 'solid',
                             borderBottomColor: 'transparent',
-                            color: 'text-muted',
+                            color: 'text.muted',
                             fontSize: 'sm',
                             fontWeight: '600',
                             whiteSpace: 'nowrap',

@@ -197,7 +197,7 @@ export function CollectionEditor({ initialData }: CollectionEditorProps) {
                         border: 'none',
                         outline: 'none',
                         bg: 'transparent',
-                        color: 'text-muted',
+                        color: 'text.muted',
                     })}
                 />
             </div>

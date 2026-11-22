@@ -34,7 +34,7 @@ export const field = css({
     py: '2',
     minH: '11',
     transition: 'border-color 150ms ease-in-out',
-    _placeholder: { color: 'text-muted' },
+    _placeholder: { color: 'text.muted' },
     _hover: { borderColor: 'primary' },
     _focusVisible: { outline: '2px solid', outlineColor: 'primary', outlineOffset: '2px' },
     _disabled: { opacity: 0.5, cursor: 'not-allowed' },
@@ -48,4 +48,3 @@ export const link = css({
     borderRadius: 'sm',
     _focusVisible: { outline: '2px solid', outlineColor: 'primary', outlineOffset: '3px' },
 });
-

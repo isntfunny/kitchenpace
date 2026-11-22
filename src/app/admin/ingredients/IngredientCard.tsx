@@ -53,7 +53,7 @@ const nameStyle = css({
 const unitLineStyle = css({
     fontSize: 'xs',
     lineHeight: '1.2',
-    color: 'foreground.subtle',
+    color: 'text.subtle',
     truncate: true,
 });
 

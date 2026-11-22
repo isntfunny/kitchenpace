@@ -383,7 +383,7 @@ export function RecipeStepsViewer({
                             px: '6',
                             borderRadius: 'xl',
                             border: '1px solid',
-                            borderColor: 'border.primary',
+                            borderColor: 'primary',
                             bg: 'transparent',
                             color: 'primary',
                             fontSize: 'sm',

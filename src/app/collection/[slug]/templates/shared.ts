@@ -1,7 +1,7 @@
 import { css } from 'styled-system/css';
 
 export const articleProseClass = css({
-    fontSize: 'base',
+    fontSize: 'md',
     lineHeight: '1.8',
     width: '100%',
     '& > h1, & > h2, & > h3, & > p, & > ul, & > ol, & > blockquote': {

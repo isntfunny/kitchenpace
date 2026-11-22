@@ -62,7 +62,7 @@ export default function ActivateClient({ error }: ActivateClientProps) {
                             </h1>
                             <p
                                 className={css({
-                                    color: 'text-muted',
+                                    color: 'text.muted',
                                     marginBottom: '6',
                                 })}
                             >
@@ -117,7 +117,7 @@ export default function ActivateClient({ error }: ActivateClientProps) {
                             </h1>
                             <p
                                 className={css({
-                                    color: 'text-muted',
+                                    color: 'text.muted',
                                     marginBottom: '6',
                                 })}
                             >

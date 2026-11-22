@@ -117,7 +117,7 @@ function MediaStrip({ media }: { media?: MediaContext }) {
                 <span
                     className={css({
                         fontSize: '2xs',
-                        color: 'text-muted',
+                        color: 'text.muted',
                         background: 'surface',
                         borderRadius: 'full',
                         paddingX: '1.5',
@@ -274,7 +274,7 @@ export function InboxItemCard({
                     <p
                         className={css({
                             fontSize: dense ? '2xs' : 'xs',
-                            color: 'text-muted',
+                            color: 'text.muted',
                             margin: 0,
                             lineHeight: '1.4',
                             lineClamp: '2',

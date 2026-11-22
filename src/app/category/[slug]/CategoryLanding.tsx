@@ -90,7 +90,7 @@ function StatPill({
                     {value}
                 </div>
                 <div
-                    className={css({ fontSize: '0.7rem', color: 'text-muted', lineHeight: '1.2' })}
+                    className={css({ fontSize: '0.7rem', color: 'text.muted', lineHeight: '1.2' })}
                 >
                     {label}
                 </div>

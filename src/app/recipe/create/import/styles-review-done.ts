@@ -43,7 +43,7 @@ export const reviewDotClass = (state: 'saved' | 'skipped' | 'current' | 'pending
 
 export const skipAllButtonClass = css({
     fontSize: 'xs',
-    color: 'text.dimmed',
+    color: 'text.subtle',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
@@ -72,7 +72,7 @@ export const reviewSourceClass = css({
     borderBottomStyle: 'solid',
     borderColor: { base: 'rgba(0,0,0,0.05)', _dark: 'rgba(255,255,255,0.06)' },
     fontSize: 'xs',
-    color: 'text.dimmed',
+    color: 'text.subtle',
 });
 
 export const reviewSourceLinkClass = css({

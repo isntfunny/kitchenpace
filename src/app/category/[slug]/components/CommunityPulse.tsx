@@ -161,7 +161,7 @@ export function CommunityPulse({ activities }: CommunityPulseProps) {
                             <p
                                 className={css({
                                     fontSize: '0.78rem',
-                                    color: 'text-muted',
+                                    color: 'text.muted',
                                     lineHeight: '1.45',
                                     display: '-webkit-box',
                                     lineClamp: '3',
@@ -176,7 +176,7 @@ export function CommunityPulse({ activities }: CommunityPulseProps) {
                     <div
                         className={css({
                             fontSize: '0.65rem',
-                            color: 'text-muted',
+                            color: 'text.muted',
                             mt: 'auto',
                         })}
                     >

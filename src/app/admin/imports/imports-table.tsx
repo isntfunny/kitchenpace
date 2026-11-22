@@ -52,8 +52,8 @@ function StatusBadge({ status }: { status: ImportRunRow['status'] }) {
             borderRadius: 'sm',
             fontSize: '0.75rem',
             fontWeight: 600,
-            background: 'green-100',
-            color: 'green-800',
+            background: 'green.100',
+            color: 'green.800',
         }),
         FAILED: css({
             display: 'inline-flex',
@@ -63,8 +63,8 @@ function StatusBadge({ status }: { status: ImportRunRow['status'] }) {
             borderRadius: 'sm',
             fontSize: '0.75rem',
             fontWeight: 600,
-            background: 'red-100',
-            color: 'red-800',
+            background: 'red.100',
+            color: 'red.800',
         }),
     };
     const labels: Record<string, string> = {
@@ -119,7 +119,7 @@ function SortHeader({ label, column }: { label: string; column: Column<ImportRun
                 fontSize: 'sm',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
-                color: 'muted',
+                color: 'text.muted',
                 cursor: 'pointer',
                 _hover: { color: 'text' },
             })}
@@ -139,7 +139,7 @@ function DetailField({ label, children }: { label: string; children: React.React
                     fontSize: '0.7rem',
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
-                    color: 'muted',
+                    color: 'text.muted',
                     fontWeight: 600,
                 })}
             >
@@ -213,7 +213,7 @@ function ImportDetailDialog({
                             <span
                                 className={css({
                                     fontSize: 'sm',
-                                    color: 'muted',
+                                    color: 'text.muted',
                                     fontFamily: 'mono',
                                 })}
                             >
@@ -229,7 +229,7 @@ function ImportDetailDialog({
                                     width: '2rem',
                                     height: '2rem',
                                     borderRadius: 'md',
-                                    color: 'muted',
+                                    color: 'text.muted',
                                     cursor: 'pointer',
                                     _hover: { background: 'surface.card', color: 'text' },
                                 })}
@@ -366,7 +366,7 @@ function ImportDetailDialog({
                                         target="_blank"
                                         className={css({
                                             fontSize: 'xs',
-                                            color: 'muted',
+                                            color: 'text.muted',
                                             textDecoration: 'underline',
                                             _hover: { color: 'text' },
                                         })}
@@ -384,7 +384,7 @@ function ImportDetailDialog({
                                     borderRadius: 'md',
                                     borderWidth: '1px',
                                     borderColor: 'red.200',
-                                    background: 'red-50',
+                                    background: 'red.50',
                                     padding: '1rem',
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -429,7 +429,7 @@ function ImportDetailDialog({
                                     fontSize: '0.7rem',
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.08em',
-                                    color: 'muted',
+                                    color: 'text.muted',
                                     fontWeight: 600,
                                 })}
                             >
@@ -463,7 +463,7 @@ function ImportDetailDialog({
                                     <div
                                         className={css({
                                             padding: '1rem',
-                                            color: 'muted',
+                                            color: 'text.muted',
                                             fontSize: 'sm',
                                         })}
                                     >
@@ -485,7 +485,9 @@ function buildColumns(): ColumnDef<ImportRunRow>[] {
             accessorKey: 'createdAt',
             header: ({ column }) => <SortHeader label="Datum" column={column} />,
             cell: ({ row }) => (
-                <span className={css({ fontSize: 'sm', color: 'muted', whiteSpace: 'nowrap' })}>
+                <span
+                    className={css({ fontSize: 'sm', color: 'text.muted', whiteSpace: 'nowrap' })}
+                >
                     {formatDate(row.original.createdAt)}
                 </span>
             ),
@@ -498,7 +500,7 @@ function buildColumns(): ColumnDef<ImportRunRow>[] {
                     <StatusBadge status={row.original.status} />
                     {row.original.errorType && (
                         <span
-                            className={css({ fontSize: '0.75rem', color: 'muted' })}
+                            className={css({ fontSize: '0.75rem', color: 'text.muted' })}
                             title={row.original.errorMessage ?? ''}
                         >
                             {row.original.errorType}
@@ -515,7 +517,7 @@ function buildColumns(): ColumnDef<ImportRunRow>[] {
                     href={`/user/${row.original.userId}`}
                     onClick={(e) => e.stopPropagation()}
                     className={css({
-                        fontSize: 'base',
+                        fontSize: 'md',
                         fontWeight: 600,
                         color: 'text',
                         textDecoration: 'none',
@@ -537,7 +539,7 @@ function buildColumns(): ColumnDef<ImportRunRow>[] {
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         className={css({
-                            color: 'muted',
+                            color: 'text.muted',
                             fontSize: 'sm',
                             textDecoration: 'underline',
                             _hover: { color: 'text' },
@@ -558,14 +560,16 @@ function buildColumns(): ColumnDef<ImportRunRow>[] {
                         })()}
                     </a>
                 ) : (
-                    <span className={css({ color: 'muted', fontSize: 'sm' })}>Text</span>
+                    <span className={css({ color: 'text.muted', fontSize: 'sm' })}>Text</span>
                 ),
         },
         {
             accessorKey: 'model',
             header: ({ column }) => <SortHeader label="Modell" column={column} />,
             cell: ({ row }) => (
-                <span className={css({ fontSize: 'sm', color: 'muted', whiteSpace: 'nowrap' })}>
+                <span
+                    className={css({ fontSize: 'sm', color: 'text.muted', whiteSpace: 'nowrap' })}
+                >
                     {row.original.model ?? '—'}
                 </span>
             ),
@@ -574,7 +578,9 @@ function buildColumns(): ColumnDef<ImportRunRow>[] {
             accessorKey: 'inputTokens',
             header: ({ column }) => <SortHeader label="Tokens in/cached/out" column={column} />,
             cell: ({ row }) => (
-                <span className={css({ fontSize: 'sm', color: 'muted', whiteSpace: 'nowrap' })}>
+                <span
+                    className={css({ fontSize: 'sm', color: 'text.muted', whiteSpace: 'nowrap' })}
+                >
                     {formatTokens(row.original.inputTokens)} /{' '}
                     <span className={css({ color: 'green.600', fontWeight: 500 })}>
                         {formatTokens(row.original.cachedInputTokens)}
@@ -613,7 +619,7 @@ function buildColumns(): ColumnDef<ImportRunRow>[] {
                             }
                             target="_blank"
                             className={css({
-                                fontSize: 'base',
+                                fontSize: 'md',
                                 fontWeight: 600,
                                 color: 'text',
                                 textDecoration: 'none',
@@ -655,7 +661,7 @@ function buildColumns(): ColumnDef<ImportRunRow>[] {
                         </span>
                     </div>
                 ) : (
-                    <span className={css({ color: 'muted', fontSize: 'sm' })}>—</span>
+                    <span className={css({ color: 'text.muted', fontSize: 'sm' })}>—</span>
                 ),
         },
     ];
@@ -732,7 +738,7 @@ export function ImportsTable({ runs }: { runs: ImportRunRow[] }) {
                             maxWidth: '350px',
                         })}
                     >
-                        <Search size={18} className={css({ color: 'muted', flexShrink: 0 })} />
+                        <Search size={18} className={css({ color: 'text.muted', flexShrink: 0 })} />
                         <input
                             type="text"
                             placeholder="Import-Läufe suchen…"
@@ -745,7 +751,7 @@ export function ImportsTable({ runs }: { runs: ImportRunRow[] }) {
                                 fontSize: 'sm',
                                 color: 'text',
                                 width: '100%',
-                                '&::placeholder': { color: 'muted' },
+                                '&::placeholder': { color: 'text.muted' },
                             })}
                         />
                     </div>
@@ -811,7 +817,7 @@ export function ImportsTable({ runs }: { runs: ImportRunRow[] }) {
                                         className={css({
                                             padding: '3rem 1.5rem',
                                             textAlign: 'center',
-                                            color: 'muted',
+                                            color: 'text.muted',
                                         })}
                                     >
                                         Keine Import-Läufe gefunden.
@@ -864,7 +870,7 @@ export function ImportsTable({ runs }: { runs: ImportRunRow[] }) {
                         flexWrap: 'wrap',
                     })}
                 >
-                    <span className={css({ fontSize: 'sm', color: 'muted' })}>
+                    <span className={css({ fontSize: 'sm', color: 'text.muted' })}>
                         {table.getFilteredRowModel().rows.length} von {filtered.length} Einträgen
                     </span>
                     <div className={css({ display: 'flex', gap: '0.75rem' })}>
@@ -888,7 +894,11 @@ export function ImportsTable({ runs }: { runs: ImportRunRow[] }) {
                             ← Zurück
                         </button>
                         <span
-                            className={css({ fontSize: 'sm', color: 'muted', alignSelf: 'center' })}
+                            className={css({
+                                fontSize: 'sm',
+                                color: 'text.muted',
+                                alignSelf: 'center',
+                            })}
                         >
                             Seite {table.getState().pagination.pageIndex + 1} von{' '}
                             {table.getPageCount()}

@@ -5,7 +5,11 @@
 // - amounts from several recipes are added in the base unit,
 // - without a safe conversion the amount stays as text ("200 g + 1 Bund").
 // Rounding to pack sizes (KUC-94) is display only and never stored.
-import { isNumericQuantity, parseQuantityNumber } from '@app/lib/ingredients/quantities';
+import {
+    formatNumber,
+    isNumericQuantity,
+    parseQuantityNumber,
+} from '@app/lib/ingredients/quantities';
 
 export type BaseUnitName = 'G' | 'ML' | 'PIECE';
 
@@ -188,12 +192,6 @@ export function displayValue(
     if (!factor) return null;
     const inBase = convertBase(stored.quantity, stored.baseUnit, factor.baseUnit, context);
     return inBase === null ? null : round(inBase / factor.factor);
-}
-
-function formatNumber(value: number): string {
-    return new Intl.NumberFormat('de-DE', { useGrouping: false, maximumFractionDigits: 2 }).format(
-        value,
-    );
 }
 
 /** "450 g + 1 Bund"; falls back to the base unit when the display unit cannot be used. */

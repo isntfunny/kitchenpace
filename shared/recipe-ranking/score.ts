@@ -1,3 +1,4 @@
+import { clamp01 } from '../math';
 import { SEASON_NAMES_DE } from '../meal-planning/season';
 import type { Season } from '../meal-planning/types';
 
@@ -30,8 +31,6 @@ export type Scored = {
     dishType: DishType;
     parts: { taste: number; pick: number; season: number; rating: number; expiring: number };
 };
-
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
 /** Season tag of the recipe vs. the season of the week: 1 fits, 0 only other seasons, else 0.5. */
 function seasonFit(r: RankingRecipe, season: Season): number {

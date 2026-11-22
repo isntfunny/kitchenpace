@@ -8,10 +8,11 @@
  * shown while planning, never pushed. Rejected leftovers (by id) never show up again.
  */
 import { addDays, diffDays, weekdayLong } from '../dates';
+import { clamp01 } from '../math';
 import { requiredIngredients, type RankingRecipe } from '../recipe-ranking/features';
 import { dot } from '../recipe-ranking/vector';
 
-import { clamp01, DEFAULT_DURATION, durationFit, tasteOf, type DurationConfig } from './scoring';
+import { DEFAULT_DURATION, durationFit, tasteOf, type DurationConfig } from './scoring';
 import type { BaseUnit, IsoDate } from './types';
 
 export interface Leftover {

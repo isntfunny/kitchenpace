@@ -2,6 +2,8 @@
  * Stable assignment of clusters between two runs (by centroid similarity) plus
  * stability metrics. Pure functions.
  */
+import { jaccard } from '../math';
+
 import { cosineSimilarity, type Vector } from './kmeans';
 
 export interface PreviousCluster {
@@ -69,15 +71,6 @@ export function matchClusters(
     return { matches, retiredPrevIds };
 }
 
-export function jaccard(a: readonly string[], b: readonly string[]): number {
-    const setA = new Set(a);
-    const setB = new Set(b);
-    if (setA.size === 0 && setB.size === 0) return 1;
-    let intersection = 0;
-    for (const value of setA) if (setB.has(value)) intersection++;
-    return intersection / (setA.size + setB.size - intersection);
-}
-
 /**
  * A continued cluster keeps its previous label while its dominant terms barely changed,
  * so labels do not flicker between runs.
@@ -87,7 +80,9 @@ export function keepStableLabel(
     next: { label: string; terms: readonly string[] },
     minOverlap = 0.6,
 ): string {
-    return jaccard(previous.terms, next.terms) >= minOverlap ? previous.label : next.label;
+    return jaccard(previous.terms, next.terms, { bothEmpty: 1 }) >= minOverlap
+        ? previous.label
+        : next.label;
 }
 
 export interface StabilityReport {

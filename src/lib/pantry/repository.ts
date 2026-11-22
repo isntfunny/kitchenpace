@@ -3,11 +3,11 @@
 import { z } from 'zod';
 
 import { type Db, notFound } from '@app/lib/meal-plan/db';
-import { idSchema, userIdSchema } from '@app/lib/meal-plan/schemas';
+import { userIdSchema } from '@app/lib/meal-plan/schemas';
+import { idSchema, quantitySchema } from '@app/lib/schemas';
 import { BASE_UNITS } from '@app/lib/shopping/schemas';
 
 const STATUSES = ['AVAILABLE', 'USED_UP', 'DISCARDED'] as const;
-const quantitySchema = z.number().finite().min(0).max(1_000_000);
 
 const quantityFields = {
     quantity: quantitySchema.nullable(),

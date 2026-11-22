@@ -2,11 +2,12 @@
 // `status`/`cookHistoryId` makes repeated taps and parallel requests no-ops, and a
 // cook the user already logged on the recipe page in the last hours is linked instead
 // of creating a second one. Pantry booking is separate (src/lib/pantry/book.ts).
+import { idSchema } from '@app/lib/schemas';
 import { addDays, formatIsoDate } from '@shared/dates';
 
 import { type Db, inTransaction, notFound } from './db';
 import { findOwnedEntry } from './repository';
-import { idSchema, userIdSchema } from './schemas';
+import { userIdSchema } from './schemas';
 import { toDbDate } from './week';
 
 /** A recipe-page cook this recent is taken as the cook of the planned entry */

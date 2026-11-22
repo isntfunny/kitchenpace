@@ -3,9 +3,10 @@
  * Pure and deterministic: greedy over all (dish, slot) pairs of the same kind, best fit first.
  */
 import { addDays, diffDays, isWeekend } from '../dates';
+import { clamp01 } from '../math';
 
 import type { MealKind } from './meal-kind';
-import { clamp01, durationFit } from './scoring';
+import { durationFit } from './scoring';
 import type { IsoDate } from './types';
 
 export type SelectionSlot = { date: IsoDate; slotKey: string; kind: MealKind };

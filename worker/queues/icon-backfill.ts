@@ -33,13 +33,16 @@ import {
     createOpenAIBatchApi,
     parseBatchOutputJsonl,
     responsesOutputText,
+    type OpenAIBatchApi,
 } from '@shared/openai-batch';
 import { EXPLICIT_CACHE_OPTIONS, cachedResponsesInput } from '@shared/prompt-cache';
 
 import {
+    BATCH_BACKFILL_DEFAULTS,
     checkBatch,
     redisBatchStore,
     schedulePollIfDue,
+    submitBatch,
     withBatchLock,
     LOCKED_REQUEUE_DELAY_MS,
     type BatchStateStore,
@@ -68,23 +71,11 @@ export interface IconBatchState extends SavedBatch {
     dryRunReportedAt?: string;
 }
 
-export interface IconBatchApi {
-    uploadJsonl(content: string, filename: string): Promise<string>;
-    createBatch(inputFileId: string, metadata: Record<string, string>): Promise<{ id: string }>;
-    retrieveBatch(batchId: string): Promise<{
-        status: string;
-        output_file_id?: string | null;
-        error_file_id?: string | null;
-        request_counts?: { total: number; completed: number; failed: number } | null;
-    }>;
-    fileText(fileId: string): Promise<string>;
-}
-
 export type IconStateStore = BatchStateStore<IconBatchState>;
 
 export interface IconBackfillDeps {
     prisma: PrismaClient;
-    api: IconBatchApi;
+    api: OpenAIBatchApi;
     store: IconStateStore;
     schedulePoll(delayMs: number, data: BackfillIngredientIconsJob): Promise<void>;
     now?: () => Date;
@@ -242,31 +233,23 @@ export async function importIconBatchOutput(
 
 // ── Steps ───────────────────────────────────────────────────────────────
 
-const DEFAULTS = { write: false, limit: 0, chunkSize: 100, pollMinutes: 10, reset: false };
+const DEFAULTS = { ...BATCH_BACKFILL_DEFAULTS, chunkSize: 100 };
 
-async function submit(
+function submit(
     deps: IconBackfillDeps,
     ingredients: Array<{ id: string; name: string }>,
     chunkSize: number,
     round: number,
 ) {
     const { jsonl, requests } = buildIconBatchRequests(ingredients, chunkSize, round);
-    const inputFileId = await deps.api.uploadJsonl(jsonl, `ingredient-icons-r${round}.jsonl`);
-    const batch = await deps.api.createBatch(inputFileId, {
-        purpose: 'KUC-125 ingredient icons',
-        round: String(round),
-    });
-    const state: IconBatchState = {
-        batchId: batch.id,
-        inputFileId,
-        model: ICON_MODEL,
-        promptVersion: ICON_PROMPT_VERSION,
-        createdAt: (deps.now?.() ?? new Date()).toISOString(),
+    return submitBatch<IconBatchState>(deps, {
+        jsonl,
+        filename: `ingredient-icons-r${round}.jsonl`,
+        endpoint: '/v1/responses',
+        metadata: { purpose: 'KUC-125 ingredient icons', round: String(round) },
         round,
-        requests,
-    };
-    await deps.store.set(state);
-    return state;
+        extra: { model: ICON_MODEL, promptVersion: ICON_PROMPT_VERSION, requests },
+    });
 }
 
 export async function runIconBackfill(
@@ -352,17 +335,6 @@ export async function runIconBackfill(
 
 // ── Real dependencies ───────────────────────────────────────────────────
 
-function openAiBatchApi(): IconBatchApi {
-    const api = createOpenAIBatchApi();
-    return {
-        uploadJsonl: api.uploadJsonl,
-        createBatch: (inputFileId, metadata) =>
-            api.createBatch(inputFileId, '/v1/responses', metadata),
-        retrieveBatch: api.retrieveBatch,
-        fileText: api.fileText,
-    };
-}
-
 export async function processBackfillIngredientIcons(
     job: Job<BackfillIngredientIconsJob>,
 ): Promise<Record<string, unknown>> {
@@ -373,7 +345,7 @@ export async function processBackfillIngredientIcons(
             const result = await runIconBackfill(
                 {
                     prisma: workerPrisma,
-                    api: openAiBatchApi(),
+                    api: createOpenAIBatchApi(),
                     store,
                     schedulePoll: async (delay, data) => {
                         // Poll jobs never reset the saved batch

@@ -3,6 +3,7 @@
 // Recipe features come in through `loadPicks`, so this file stays testable with the fake db.
 import { z } from 'zod';
 
+import { idSchema } from '@app/lib/schemas';
 import { todayIn } from '@shared/dates';
 import { distributeSelection, type SelectionSlot } from '@shared/meal-planning/distribute';
 import { effortOf } from '@shared/meal-planning/effort';
@@ -11,8 +12,9 @@ import { allowedFor, mealKindOf, type MealKind } from '@shared/meal-planning/mea
 import { DataAccessError, type Db, inTransaction } from './db';
 import { purchaseDateFor } from './intelligence/mappers';
 import { getMealPlanWeek } from './repository';
-import { idSchema, isoDateSchema } from './schemas';
+import { isoDateSchema } from './schemas';
 import { DEFAULT_HOUSEHOLD_SIZE, slotColumns, slotKeyOf, type SlotKey } from './slots';
+import { cellKey } from './view';
 import { toDbDate } from './week';
 
 /** What distributing and checking needs of a picked recipe. */
@@ -55,8 +57,6 @@ export const applySelectionSchema = z
 
 export type WeekSelectionSlot = { key: string; label: string; time: string; kind: MealKind };
 
-const cell = (date: string, slotKey: string) => `${date}|${slotKey}`;
-
 /** Enabled slots of the week with their kind, and the cells that already hold an entry. */
 export async function loadWeekSelection(db: Db, userId: string, startDate: string) {
     const week = await getMealPlanWeek(db, userId, startDate);
@@ -75,7 +75,7 @@ export async function loadWeekSelection(db: Db, userId: string, startDate: strin
         occupied: [
             ...new Set(
                 week.entries.map((entry) =>
-                    cell(entry.date.toISOString().slice(0, 10), slotKeyOf(entry)),
+                    cellKey(entry.date.toISOString().slice(0, 10), slotKeyOf(entry)),
                 ),
             ),
         ],
@@ -153,7 +153,7 @@ export async function planWeekSelection(
         const ids: string[] = [];
         const taken = new Set<string>();
         for (const entry of entries) {
-            const key = cell(entry.date, entry.slotKey);
+            const key = cellKey(entry.date, entry.slotKey);
             // Re-check inside the write: another tab may have filled the slot meanwhile
             if (entry.sideOf === undefined && entry.leftoverOf === undefined && !taken.has(key)) {
                 const existing = await tx.mealPlanRecipe.findFirst({

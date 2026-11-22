@@ -3,6 +3,7 @@
 // `fn(db, userId, input)`, Zod-validated input, foreign rows answer NOT_FOUND.
 import type { Prisma } from '@prisma/client';
 
+import { idSchema, servingsSchema } from '@app/lib/schemas';
 import { addDays, formatIsoDate } from '@shared/dates';
 import { servingsForLeftoverDays } from '@shared/meal-planning/distribute';
 
@@ -19,11 +20,9 @@ import {
 import {
     applyTemplateSchema,
     copyDaysSchema,
-    idSchema,
     leftoverTargetSchema,
     moveEntrySchema,
     saveTemplateSchema,
-    servingsSchema,
     swapCellsSchema,
     userIdSchema,
 } from './schemas';

@@ -4,9 +4,11 @@
  * of chosen slots of that kind, a dish uses one slot plus one per leftover day.
  */
 import type { RecipeCardData } from '@app/app/actions/recipes';
+import { cellKey } from '@app/lib/meal-plan/view';
 import { weekdayShort } from '@shared/dates';
 import { leftoverDays } from '@shared/meal-planning/distribute';
 import { MEAL_KIND_LABELS, type MealKind } from '@shared/meal-planning/meal-kind';
+import { plural } from '@shared/text';
 
 export type Pick = {
     recipe: RecipeCardData;
@@ -151,9 +153,6 @@ export function selectionReducer(s: SelectionState, a: SelectionAction): Selecti
     }
 }
 
-const cell = (date: string, slotKey: string) => `${date}|${slotKey}`;
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
 /** Every day × slot of the week without an entry, with the kind of its slot. */
 export function freeCells(
     days: string[],
@@ -164,7 +163,7 @@ export function freeCells(
     const free: Record<string, MealKind> = {};
     for (const date of days)
         for (const slot of slots)
-            if (!taken.has(cell(date, slot.key))) free[cell(date, slot.key)] = slot.kind;
+            if (!taken.has(cellKey(date, slot.key))) free[cellKey(date, slot.key)] = slot.kind;
     return free;
 }
 
@@ -174,7 +173,9 @@ export function cellsFor(
     days: string[],
     free: Record<string, MealKind>,
 ): string[] {
-    return days.flatMap((date) => meals.map((key) => cell(date, key)).filter((key) => key in free));
+    return days.flatMap((date) =>
+        meals.map((key) => cellKey(date, key)).filter((key) => key in free),
+    );
 }
 
 /** Collapsed slot head on phones: "4 Plätze · Abendessen, Frühstück So". */

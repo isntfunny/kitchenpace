@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { searchIngredients } from '@app/components/recipe/actions';
 import { requestBringSync } from '@app/lib/bring/sync-trigger';
+import { idSchema } from '@app/lib/schemas';
 import { createActionRunner, type ActionResult } from '@app/lib/server-action.server';
 import { loadShoppingPageData } from '@app/lib/shopping/page-data';
 import { loadRecipeLines } from '@app/lib/shopping/recipe-lines';
@@ -49,7 +50,6 @@ function run<T>(
     return runAction(work, writes ? undefined : { after: revalidateList });
 }
 
-const idSchema = z.string().trim().min(1).max(64);
 const selectionSchema = z
     .object({
         lineIds: z.array(idSchema).max(200).optional(),

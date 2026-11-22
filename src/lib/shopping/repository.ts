@@ -5,8 +5,9 @@
 import type { Prisma, ShoppingItemStatus } from '@prisma/client';
 
 import { type Db, inTransaction, notFound } from '@app/lib/meal-plan/db';
-import { idSchema, userIdSchema } from '@app/lib/meal-plan/schemas';
+import { userIdSchema } from '@app/lib/meal-plan/schemas';
 import { recordPurchaseInPantry, removePurchaseFromPantry } from '@app/lib/pantry/purchase';
+import { idSchema } from '@app/lib/schemas';
 import { itemKeyFor } from '@shared/shopping/item-key';
 
 import {

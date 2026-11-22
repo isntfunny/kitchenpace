@@ -4,9 +4,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
+    BATCH_BACKFILL_DEFAULTS,
     checkBatch,
     pollOverdueBatches,
     schedulePollIfDue,
+    submitBatch,
     withBatchLock,
     type SavedBatch,
 } from './batch-job';
@@ -203,4 +205,57 @@ test('scheduled polls store the job data for the poll cron', async () => {
     );
     assert.deepEqual(state.pollData, { write: true, reset: false });
     assert.equal(state.pollStopped, false);
+});
+
+test('submitBatch uploads, creates on the endpoint and saves the state with the extra fields', async () => {
+    const calls: unknown[] = [];
+    let saved: unknown = null;
+    type State = SavedBatch & { model: string; requests: Record<string, string[]> };
+    const state = await submitBatch<State>(
+        {
+            api: {
+                uploadJsonl: async (content, filename) => {
+                    calls.push(['upload', content, filename]);
+                    return 'file-1';
+                },
+                createBatch: async (file, endpoint, metadata) => {
+                    calls.push(['create', file, endpoint, metadata]);
+                    return { id: 'batch-1' };
+                },
+            },
+            store: {
+                set: async (value) => {
+                    saved = value;
+                },
+            },
+            now: () => new Date('2026-11-22T10:00:00Z'),
+        },
+        {
+            jsonl: '{}\n',
+            filename: 'x-r1.jsonl',
+            endpoint: '/v1/responses',
+            metadata: { purpose: 'test', round: '1' },
+            round: 1,
+            extra: { model: 'm', requests: { 'r1-0': ['a'] } },
+        },
+    );
+    assert.deepEqual(calls, [
+        ['upload', '{}\n', 'x-r1.jsonl'],
+        ['create', 'file-1', '/v1/responses', { purpose: 'test', round: '1' }],
+    ]);
+    assert.deepEqual(state, {
+        batchId: 'batch-1',
+        inputFileId: 'file-1',
+        model: 'm',
+        requests: { 'r1-0': ['a'] },
+        createdAt: '2026-11-22T10:00:00.000Z',
+        round: 1,
+    });
+    assert.deepEqual(saved, state);
+    assert.deepEqual(BATCH_BACKFILL_DEFAULTS, {
+        write: false,
+        limit: 0,
+        pollMinutes: 10,
+        reset: false,
+    });
 });

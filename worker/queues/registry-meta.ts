@@ -1,5 +1,5 @@
 /**
- * Lightweight metadata derived from JOB_REGISTRY — no processor imports.
+ * Job metadata (the catalog JOB_REGISTRY is built from) — no processor imports.
  *
  * Use this module from Next.js pages / Server Components that only need
  * job names, queues, schemas, cron patterns, etc.  Importing the full
@@ -67,19 +67,23 @@ export interface ScheduledJobDefinition {
     };
 }
 
+/** Metadata of one job: everything except the processor. */
+export interface JobMeta {
+    /** Which BullMQ queue this job runs on */
+    queue: QueueName;
+    /** Default data when triggered from admin UI or scheduler */
+    defaultData: Record<string, unknown>;
+    /** Optional admin UI form schema for payload fields */
+    schema?: JobPayloadSchema;
+    /** Cron schedule (if repeatable) */
+    repeat?: { pattern: string; tz?: string };
+}
+
 /**
- * Static job catalog — mirrors the JOB_REGISTRY shape but without
- * importing any processor modules.
+ * Job catalog: the single source of the job metadata (KUC-139). `registry.ts` adds the
+ * processors; this module imports none, so pages can use it.
  */
-const JOB_CATALOG: Record<
-    string,
-    {
-        queue: QueueName;
-        defaultData: Record<string, unknown>;
-        schema?: JobPayloadSchema;
-        repeat?: { pattern: string; tz?: string };
-    }
-> = {
+export const JOB_CATALOG = {
     'sync-recipes': {
         queue: QueueName.OPENSEARCH,
         defaultData: { batchSize: 150 },
@@ -475,7 +479,9 @@ const JOB_CATALOG: Record<
         defaultData: {},
         repeat: { pattern: '0 */6 * * *', tz: 'Europe/Berlin' },
     },
-};
+} satisfies Record<string, JobMeta>;
+
+export type JobName = keyof typeof JOB_CATALOG;
 
 /** Same schedule as the worker uses (AI jobs without repeat when AI_AUTOMATION=off). */
 export function getScheduledJobDefinitions(): ScheduledJobDefinition[] {

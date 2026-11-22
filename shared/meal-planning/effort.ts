@@ -1,4 +1,4 @@
-import { clamp01 } from './scoring';
+import { clamp01 } from '../math';
 
 const DIFFICULTY_EFFORT = { EASY: 0, MEDIUM: 0.5, HARD: 1 } as const;
 

@@ -29,9 +29,10 @@ import {
     restoreMealPlanEntry,
     updateMealPlanEntry,
 } from '@app/lib/meal-plan/repository';
-import { idSchema, notesSchema, servingsSchema } from '@app/lib/meal-plan/schemas';
+import { notesSchema } from '@app/lib/meal-plan/schemas';
 import { timeSchema } from '@app/lib/meal-plan/slots';
 import { bookCookedEntry } from '@app/lib/pantry/book';
+import { idSchema, servingsSchema } from '@app/lib/schemas';
 import { todayIn } from '@shared/dates';
 import { prisma } from '@shared/prisma';
 

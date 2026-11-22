@@ -3,6 +3,10 @@
 // ingredient is created. The daily backfill sends the same requests through
 // the Batch API (enrichment-backfill.ts); both use the request builder and
 // the result import below.
+//
+// Web search is only used when nutrition values or units are missing. An
+// ingredient that only lacks categories gets a small request without web
+// search (KUC-128: the full request cost ~56k input tokens for one category).
 
 import type { PrismaClient } from '@prisma/client';
 import { Job } from 'bullmq';
@@ -15,6 +19,7 @@ import {
     parseIconAnswer,
 } from '@shared/ingredient-icons/enrichment';
 import { responsesOutputText } from '@shared/openai-batch';
+import { EXPLICIT_CACHE_OPTIONS, cachedResponsesInput } from '@shared/prompt-cache';
 
 import { prisma } from './prisma';
 import { enrichIngredientShelfLife, type ShelfLifeEnrichment } from './shelf-life-processor';
@@ -210,15 +215,81 @@ export async function loadEnrichmentContext(db: PrismaClient): Promise<Enrichmen
     return { units, categories };
 }
 
-/** /v1/responses body for one ingredient, with web search. */
+/**
+ * /v1/responses body for one ingredient, with web search. The instructions are
+ * a cached developer message (KUC-128); the implicit breakpoint stays on so
+ * the turns of the web search can reuse each other.
+ */
 export function buildNutritionRequest(name: string, context: EnrichmentContext) {
     return {
         model: ENRICH_MODEL,
         tools: [{ type: 'web_search' as const }],
-        instructions: buildSystemPrompt(context.units, context.categories),
-        input: `Bestimme Nährwerte, relevante Einheiten und Kategorien für: "${name}"`,
+        input: cachedResponsesInput(
+            buildSystemPrompt(context.units, context.categories),
+            `Bestimme Nährwerte, relevante Einheiten und Kategorien für: "${name}"`,
+        ),
         text: { format: getEnrichResponseFormat(context.units, context.categories) },
     };
+}
+
+function buildCategoryPrompt(categories: Array<{ slug: string; name: string }>): string {
+    const categoryList = categories.map((c) => `  - ${c.slug} → ${c.name}`).join('\n');
+    return `Du ordnest Zutaten einer deutschen Koch-App Kategorien zu.
+
+REGELN:
+- Wähle ALLE passenden Kategorien aus der Liste. Die meisten Zutaten haben 1-3 Kategorien.
+- Eine Zutat kann mehreren Kategorien angehören (z.B. "Tomate" → Gemüse; "Olivenöl" → Öle & Fette).
+- Ist die Angabe kein Lebensmittel (z.B. Backform, Papierförmchen) oder passt keine Kategorie, gib eine leere Liste zurück.
+
+VERFÜGBARE KATEGORIEN:
+${categoryList}`;
+}
+
+/** /v1/responses body when only the categories are missing: no web search. */
+export function buildCategoryRequest(name: string, context: EnrichmentContext) {
+    return {
+        model: ENRICH_MODEL,
+        ...EXPLICIT_CACHE_OPTIONS,
+        input: cachedResponsesInput(
+            buildCategoryPrompt(context.categories),
+            `Kategorien für: "${name}"`,
+        ),
+        text: {
+            format: {
+                type: 'json_schema' as const,
+                name: 'ingredient_categories',
+                strict: true,
+                schema: {
+                    type: 'object',
+                    properties: {
+                        categories: {
+                            type: 'array',
+                            items: {
+                                type: 'string',
+                                enum: context.categories.map((c) => c.slug),
+                            },
+                        },
+                    },
+                    required: ['categories'],
+                    additionalProperties: false,
+                },
+            },
+        },
+    };
+}
+
+/** Web search only when nutrition values or units are missing. */
+export function needsWebSearch(row: { energyKcal: number | null; ingredientUnits: unknown[] }) {
+    return row.energyKcal == null || row.ingredientUnits.length === 0;
+}
+
+/** The cheapest request that fills what is missing (see needsWebSearch). */
+export function buildEnrichmentRequest(
+    name: string,
+    webSearch: boolean,
+    context: EnrichmentContext,
+) {
+    return webSearch ? buildNutritionRequest(name, context) : buildCategoryRequest(name, context);
 }
 
 /** Whether nutrition, units or categories are still missing. */
@@ -497,8 +568,10 @@ export async function processEnrichIngredientNutrition(
     let imported: NutritionImportResult | null = null;
     if (needsNutritionEnrichment(ingredient)) {
         const context = await loadEnrichmentContext(prisma);
+        const body = buildEnrichmentRequest(ingredient.name, needsWebSearch(ingredient), context);
+        // prompt_cache_breakpoint / prompt_cache_options are not in the SDK types yet
         const response = await getOpenAIClient().responses.create(
-            buildNutritionRequest(ingredient.name, context),
+            body as unknown as OpenAI.Responses.ResponseCreateParamsNonStreaming,
         );
         const parsed = parseNutritionAnswer(responsesOutputText(response));
         imported = await importNutritionResult(prisma, ingredientId, parsed, context);

@@ -2,7 +2,9 @@
 // name) for a newly created ingredient. Never throws: if the queue is down,
 // the daily backfill-ingredient-enrichment job finds the ingredient later
 // (it selects ingredients without shelfLifeSource or normalizedName).
+// With AI_AUTOMATION=off (Beta, KUC-128) nothing is enqueued.
 
+import { isAiAutomationEnabled } from '@shared/ai-automation';
 import { createLogger } from '@shared/logger';
 
 const log = createLogger('ingredient-enrichment');
@@ -29,6 +31,10 @@ export const setEnrichmentEnqueuerForTests = setEnrichmentEnqueuer;
 
 /** Returns false when enqueueing failed; the caller can ignore the result. */
 export async function enqueueIngredientEnrichment(ingredientId: string): Promise<boolean> {
+    if (!isAiAutomationEnabled()) {
+        log.info('AI automation off, enrichment not enqueued', { ingredientId });
+        return false;
+    }
     try {
         await enqueue(ingredientId);
         return true;

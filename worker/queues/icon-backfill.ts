@@ -34,6 +34,7 @@ import {
     parseBatchOutputJsonl,
     responsesOutputText,
 } from '@shared/openai-batch';
+import { EXPLICIT_CACHE_OPTIONS, cachedResponsesInput } from '@shared/prompt-cache';
 
 import {
     checkBatch,
@@ -107,8 +108,8 @@ export function buildIconBatchRequests(
             customId,
             body: {
                 model: ICON_MODEL,
-                instructions: ICON_BACKFILL_PROMPT,
-                input: buildIconBackfillInput(chunk),
+                ...EXPLICIT_CACHE_OPTIONS,
+                input: cachedResponsesInput(ICON_BACKFILL_PROMPT, buildIconBackfillInput(chunk)),
                 text: { format: getIconBackfillResponseFormat() },
             },
         });

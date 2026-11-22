@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { generateEmbedding } from '@app/lib/embeddings/embedding-service';
 import { checkRateLimit } from '@app/lib/rate-limit';
 import { getRealtimeRedis } from '@app/lib/realtime/redis';
+import { isAiAutomationEnabled } from '@shared/ai-automation';
 import {
     opensearchClient,
     OPENSEARCH_EMBEDDINGS_INDEX,
@@ -92,6 +93,9 @@ export async function semanticRecipeSearch(
     const cached = embedding !== null;
 
     if (!embedding) {
+        // No new OpenAI call with AI_AUTOMATION=off (Beta, KUC-128)
+        if (!isAiAutomationEnabled()) return { recipes: [], cached: false };
+
         // 2. Rate limit (only on cache miss — cache hits are free)
         if (!skipRateLimit && userId) {
             const { allowed } = await checkRateLimit('semantic', userId);

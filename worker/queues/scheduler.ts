@@ -1,43 +1,21 @@
+import { isAiAutomationEnabled } from '../../shared/ai-automation';
 import { createLogger } from '../../shared/logger';
 
 import { getQueueForName } from './queue';
 import { JOB_REGISTRY } from './registry';
-import { QueueName, type JobPayloadSchema } from './types';
+import {
+    buildScheduledJobDefinitions,
+    staleRepeatableKeys,
+    type ScheduledJobDefinition,
+} from './schedule-definitions';
+import { QueueName } from './types';
+
+export type { ScheduledJobDefinition } from './schedule-definitions';
 
 const log = createLogger('scheduler');
 
-export interface ScheduledJobDefinition {
-    name: string;
-    queue: QueueName;
-    data: Record<string, unknown>;
-    schema?: JobPayloadSchema;
-    options?: {
-        repeat?: {
-            pattern: string;
-            tz?: string;
-        };
-        delay?: number;
-    };
-}
-
-// ── Derive job definitions from the central registry ────────────────
-
 function getScheduledJobDefinitions(): ScheduledJobDefinition[] {
-    return Object.entries(JOB_REGISTRY).map(([name, def]) => {
-        const d = def as {
-            queue: QueueName;
-            defaultData: unknown;
-            schema?: JobPayloadSchema;
-            repeat?: { pattern: string; tz?: string };
-        };
-        return {
-            name,
-            queue: d.queue,
-            data: d.defaultData as Record<string, unknown>,
-            schema: d.schema,
-            options: d.repeat ? { repeat: d.repeat } : undefined,
-        };
-    });
+    return buildScheduledJobDefinitions(JOB_REGISTRY, isAiAutomationEnabled());
 }
 
 // ── Scheduler internals ─────────────────────────────────────────────
@@ -66,35 +44,35 @@ async function addRepeatableJob(job: ScheduledJobDefinition): Promise<void> {
 }
 
 /**
- * Remove repeatable jobs from a queue that are no longer defined in the registry.
- * This prevents stale/renamed jobs from firing indefinitely in Redis.
+ * Remove repeatable jobs that have no repeat in the current definitions
+ * (gone from the registry, renamed, or switched off with AI_AUTOMATION=off).
+ * This prevents stale jobs from firing indefinitely in Redis.
  */
 async function pruneStaleRepeatables(): Promise<void> {
     const allJobs = getScheduledJobDefinitions();
     const expectedByQueue = new Map<QueueName, Set<string>>();
 
+    // Every queue of the registry is checked, also one whose jobs all lost their repeat
     for (const job of allJobs) {
         if (!expectedByQueue.has(job.queue)) {
             expectedByQueue.set(job.queue, new Set());
         }
-        expectedByQueue.get(job.queue)!.add(job.name);
+        if (job.options?.repeat) expectedByQueue.get(job.queue)!.add(job.name);
     }
 
     for (const [queueName, expectedNames] of expectedByQueue) {
         const queue = getQueueForName(queueName);
         const repeatables = await queue.getRepeatableJobs();
 
-        for (const rep of repeatables) {
-            if (!expectedNames.has(rep.name)) {
-                await queue.removeRepeatableByKey(rep.key);
-                log.info('Removed stale repeatable job', { jobName: rep.name, queue: queueName });
-            }
+        for (const key of staleRepeatableKeys(repeatables, expectedNames)) {
+            await queue.removeRepeatableByKey(key);
+            log.info('Removed stale repeatable job', { key, queue: queueName });
         }
     }
 }
 
 export async function startScheduler(): Promise<void> {
-    log.info('Starting job scheduler');
+    log.info('Starting job scheduler', { aiAutomation: isAiAutomationEnabled() });
 
     await pruneStaleRepeatables();
 

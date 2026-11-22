@@ -2,12 +2,15 @@
 
 import { Check, Search, Star, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Dialog } from 'radix-ui';
 import { useEffect, useMemo, useState } from 'react';
 
 import { addPlanEntries, getPickerLists, type PickerRecipe } from '@app/app/plan/actions';
+import { Button } from '@app/components/atoms/Button';
+import { chip, fieldLabel, input } from '@app/components/atoms/recipes';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { useToastContext } from '@app/components/providers/ToastProvider';
+import { ServingsStepper } from '@app/components/ui/ServingsStepper';
+import { Sheet } from '@app/components/ui/Sheet';
 import { useMultiSearch } from '@app/lib/hooks/useMultiSearch';
 import { recipesForSlot } from '@app/lib/meal-plan/picker';
 import { defaultServings } from '@app/lib/meal-plan/slots';
@@ -15,9 +18,8 @@ import { weekdayLong, weekdayShort } from '@shared/dates';
 
 import { css, cx } from 'styled-system/css';
 
-import { ServingsStepper, TimeField } from './FormParts';
+import { TimeField } from './FormParts';
 import { HouseholdPrompt } from './HouseholdPrompt';
-import { actionButton, chip, fieldLabel, input, overlay, sheet, sheetWide } from './styles';
 import type { PlanDish, PlanSlot } from './types';
 
 type Tab = 'favorites' | 'cooked';
@@ -44,32 +46,30 @@ export function SlotSearchDialog({
     returnFocus,
 }: SlotSearchDialogProps) {
     return (
-        <Dialog.Root open={!!target} onOpenChange={(open) => !open && onClose()}>
-            <Dialog.Portal>
-                <Dialog.Overlay className={overlay} />
-                <Dialog.Content
-                    className={cx(sheet, sheetWide)}
-                    aria-describedby={undefined}
-                    onCloseAutoFocus={(event) => {
-                        const element = returnFocus?.();
-                        if (element?.isConnected) {
-                            event.preventDefault();
-                            element.focus();
-                        }
-                    }}
-                >
-                    {target && (
-                        <SlotSearchBody
-                            key={`${target.date}|${target.slot.key}`}
-                            target={target}
-                            onClose={onClose}
-                            householdSize={householdSize}
-                            weekDishes={weekDishes}
-                        />
-                    )}
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+        <Sheet
+            open={!!target}
+            onOpenChange={(open) => !open && onClose()}
+            title={target ? `${weekdayLong(target.date)} · ${target.slot.label}` : ''}
+            subtitle={target && `Standardzeit ${target.slot.time}`}
+            size="lg"
+            onCloseAutoFocus={(event) => {
+                const element = returnFocus?.();
+                if (element?.isConnected) {
+                    event.preventDefault();
+                    element.focus();
+                }
+            }}
+        >
+            {target && (
+                <SlotSearchBody
+                    key={`${target.date}|${target.slot.key}`}
+                    target={target}
+                    onClose={onClose}
+                    householdSize={householdSize}
+                    weekDishes={weekDishes}
+                />
+            )}
+        </Sheet>
     );
 }
 
@@ -175,30 +175,8 @@ function SlotSearchBody({
         router.refresh();
     };
 
-    const title = `${weekdayLong(target.date)} · ${target.slot.label}`;
-
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
-            <header className={css({ display: 'flex', alignItems: 'flex-start', gap: '3' })}>
-                <div className={css({ flex: 1 })}>
-                    <Dialog.Title
-                        className={css({
-                            fontFamily: 'heading',
-                            fontSize: 'xl',
-                            fontWeight: '700',
-                        })}
-                    >
-                        {title}
-                    </Dialog.Title>
-                    <p className={css({ fontSize: 'sm', color: 'foreground.muted' })}>
-                        Standardzeit {target.slot.time}
-                    </p>
-                </div>
-                <Dialog.Close className={actionButton({ variant: 'ghost' })} aria-label="Schließen">
-                    <X size={18} />
-                </Dialog.Close>
-            </header>
-
             {household === null ? (
                 <HouseholdPrompt
                     onSaved={(size) => {
@@ -452,16 +430,16 @@ function SlotSearchBody({
                                     Wähle ein oder mehrere Rezepte
                                 </span>
                             )}
-                            <button
+                            <Button
                                 type="button"
-                                className={actionButton({ variant: 'primary' })}
+                                variant="primary"
                                 disabled={busy || selected.length === 0 || !time}
                                 onClick={submit}
                             >
                                 {selected.length > 1
                                     ? `${selected.length} Gerichte einplanen`
                                     : 'Einplanen'}
-                            </button>
+                            </Button>
                         </div>
                     </footer>
                     {error && (

@@ -21,6 +21,9 @@ import {
     previewPlanTemplate,
     savePlanTemplate,
 } from '@app/app/plan/edit-actions';
+import { Button } from '@app/components/atoms/Button';
+import { button, fieldLabel, input } from '@app/components/atoms/recipes';
+import { Sheet } from '@app/components/ui/Sheet';
 import { weekdayLong } from '@shared/dates';
 import { addDays } from '@shared/dates';
 
@@ -28,8 +31,6 @@ import { css, cx } from 'styled-system/css';
 
 import { CopyPanel, DaySelect, muted, resultMessage, slotLabelFor, usePreview } from './CopyPanel';
 import { ShareWeek } from './ShareWeek';
-import { SheetFrame } from './SheetFrame';
-import { actionButton, fieldLabel, input } from './styles';
 import type { PlanWeekData } from './types';
 import { usePlanAction } from './usePlanAction';
 
@@ -69,7 +70,7 @@ export function WeekTools({ data }: { data: PlanWeekData }) {
     return (
         <>
             <DropdownMenu.Root>
-                <DropdownMenu.Trigger className={actionButton()}>
+                <DropdownMenu.Trigger className={button()}>
                     Woche <ChevronDown size={16} aria-hidden />
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
@@ -100,7 +101,7 @@ export function WeekTools({ data }: { data: PlanWeekData }) {
                     </DropdownMenu.Content>
                 </DropdownMenu.Portal>
             </DropdownMenu.Root>
-            <SheetFrame
+            <Sheet
                 open={!!tool}
                 onOpenChange={(open) => !open && setTool(null)}
                 title={tool ? titles[tool] : ''}
@@ -111,7 +112,7 @@ export function WeekTools({ data }: { data: PlanWeekData }) {
                 {tool === 'save' && <SaveTemplate data={data} onDone={() => setTool(null)} />}
                 {tool === 'apply' && <ApplyTemplate data={data} onDone={() => setTool(null)} />}
                 {tool === 'share' && <ShareWeek data={data} />}
-            </SheetFrame>
+            </Sheet>
         </>
     );
 }
@@ -227,13 +228,9 @@ function SaveTemplate({ data, onDone }: { data: PlanWeekData; onDone: () => void
                 {count} {count === 1 ? 'Gericht' : 'Gerichte'} mit Tag, Mahlzeit, Uhrzeit und
                 Portionen. Reste werden über die doppelte Portion mitgespeichert.
             </p>
-            <button
-                type="submit"
-                className={actionButton({ variant: 'primary' })}
-                disabled={busy || !name.trim()}
-            >
+            <Button variant="primary" type="submit" disabled={busy || !name.trim()}>
                 Speichern
-            </button>
+            </Button>
         </form>
     );
 }
@@ -326,10 +323,10 @@ function ApplyTemplate({ data, onDone }: { data: PlanWeekData; onDone: () => voi
                                 {template.count > template.titles.length ? ' …' : ''}
                             </span>
                         </button>
-                        <button
+                        <Button
+                            variant="ghost"
                             type="button"
                             aria-label={`Vorlage „${template.name}“ löschen`}
-                            className={actionButton({ variant: 'ghost' })}
                             disabled={busy}
                             onClick={async () => {
                                 if (!(await call(() => deletePlanTemplate(template.id)))) return;
@@ -340,7 +337,7 @@ function ApplyTemplate({ data, onDone }: { data: PlanWeekData; onDone: () => voi
                             }}
                         >
                             <Trash2 size={16} aria-hidden />
-                        </button>
+                        </Button>
                     </li>
                 ))}
             </ul>

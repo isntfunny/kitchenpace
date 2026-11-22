@@ -9,11 +9,10 @@ import {
     dismissLeftoverAction,
     planLeftoverRecipeAction,
 } from '@app/app/plan/intelligence-actions';
+import { Button } from '@app/components/atoms/Button';
 import type { LeftoverNoticeDTO } from '@app/lib/meal-plan/intelligence/leftover-notices.server';
 
 import { css } from 'styled-system/css';
-
-import { actionButton } from '../styles';
 
 /** Hints for leftovers that expire soon: up to three recipes each, "Einplanen" or "Ablehnen". */
 export function LeftoverNotices({ notices }: { notices: LeftoverNoticeDTO[] }) {
@@ -111,26 +110,26 @@ export function LeftoverNotices({ notices }: { notices: LeftoverNoticeDTO[] }) {
                                 >
                                     {recipe.reasons.join(' · ')}
                                 </span>
-                                <button
+                                <Button
+                                    variant="outline"
                                     type="button"
                                     disabled={busy}
                                     onClick={() => plan(notice, recipe.id)}
-                                    className={actionButton({ variant: 'outline' })}
                                 >
                                     Für {notice.dayLabel} einplanen
-                                </button>
+                                </Button>
                             </li>
                         ))}
                     </ul>
                     <div className={css({ display: 'flex', justifyContent: 'flex-end' })}>
-                        <button
+                        <Button
+                            variant="ghost"
                             type="button"
                             disabled={busy}
                             onClick={() => dismiss(notice)}
-                            className={actionButton({ variant: 'ghost' })}
                         >
                             Ablehnen
-                        </button>
+                        </Button>
                     </div>
                 </section>
             ))}

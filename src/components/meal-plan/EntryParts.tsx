@@ -9,12 +9,14 @@ import {
     unmarkPlanEntryCooked,
     updatePlanEntry,
 } from '@app/app/plan/edit-actions';
+import { Button } from '@app/components/atoms/Button';
+import { fieldLabel, input } from '@app/components/atoms/recipes';
+import { ServingsStepper } from '@app/components/ui/ServingsStepper';
 import { needsCookedAnswer } from '@app/lib/meal-plan/view';
 
 import { css, cx } from 'styled-system/css';
 
-import { ServingsStepper, Switch, TimeField } from './FormParts';
-import { actionButton, fieldLabel, input } from './styles';
+import { Switch, TimeField } from './FormParts';
 import type { PlanDish } from './types';
 import { usePlanAction } from './usePlanAction';
 
@@ -63,23 +65,18 @@ export function CookedSection({ dish, today }: { dish: PlanDish; today: string }
                     />
                     {eaten}
                 </span>
-                <button
-                    type="button"
-                    className={actionButton({ variant: 'ghost' })}
-                    onClick={uncook}
-                    disabled={busy}
-                >
+                <Button variant="ghost" type="button" onClick={uncook} disabled={busy}>
                     <Undo2 size={16} aria-hidden /> Doch nicht {eaten.toLowerCase()}
-                </button>
+                </Button>
             </div>
         );
     if (dish.status === 'CANCELLED')
         return (
             <div className={box}>
                 <span className={text}>Nicht {eaten.toLowerCase()}</span>
-                <button type="button" className={actionButton()} onClick={cook} disabled={busy}>
+                <Button type="button" onClick={cook} disabled={busy}>
                     Doch {eaten.toLowerCase()}
-                </button>
+                </Button>
             </div>
         );
     if (needsCookedAnswer(dish, today))
@@ -88,29 +85,19 @@ export function CookedSection({ dish, today }: { dish: PlanDish; today: string }
                 <span className={text}>
                     {dish.isLeftover ? 'Gegessen?' : 'Hast du das gekocht?'}
                 </span>
-                <button
-                    type="button"
-                    className={actionButton({ variant: 'primary' })}
-                    onClick={cook}
-                    disabled={busy}
-                >
+                <Button variant="primary" type="button" onClick={cook} disabled={busy}>
                     <Check size={16} aria-hidden /> Ja
-                </button>
-                <button type="button" className={actionButton()} onClick={skip} disabled={busy}>
+                </Button>
+                <Button type="button" onClick={skip} disabled={busy}>
                     Nein
-                </button>
+                </Button>
             </div>
         );
     if (!dish.recipeAvailable) return null;
     return (
-        <button
-            type="button"
-            className={actionButton({ variant: 'outline' })}
-            onClick={cook}
-            disabled={busy}
-        >
+        <Button variant="outline" type="button" onClick={cook} disabled={busy}>
             <Check size={16} aria-hidden /> {eaten}
-        </button>
+        </Button>
     );
 }
 
@@ -174,14 +161,14 @@ export function EntryFields({
                 />
             </div>
             {dirty && (
-                <button
+                <Button
+                    variant="primary"
                     type="button"
-                    className={actionButton({ variant: 'primary' })}
                     onClick={save}
                     disabled={busy || (ownTime && !time)}
                 >
                     Speichern
-                </button>
+                </Button>
             )}
         </div>
     );

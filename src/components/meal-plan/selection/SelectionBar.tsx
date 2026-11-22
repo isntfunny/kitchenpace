@@ -2,11 +2,10 @@
 
 import { Loader2 } from 'lucide-react';
 
+import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 
 import { css } from 'styled-system/css';
-
-import { actionButton } from '../styles';
 
 import type { Pick, tabsOf } from './selection-state';
 
@@ -119,17 +118,17 @@ export function SelectionBar({ picks, tabs, onApply, applying, error }: Selectio
                     </span>
                 ))}
             </div>
-            <button
+            <Button
+                variant="primary"
                 type="button"
                 onClick={onApply}
                 disabled={applying || picks.length === 0}
-                className={actionButton({ variant: 'primary' })}
             >
                 {applying && (
                     <Loader2 size={16} className={css({ animation: 'spin 1s linear infinite' })} />
                 )}
                 Übernehmen
-            </button>
+            </Button>
         </footer>
     );
 }

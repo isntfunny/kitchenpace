@@ -1,7 +1,6 @@
 'use client';
 
 import { Loader2, X } from 'lucide-react';
-import { Dialog } from 'radix-ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
@@ -11,16 +10,16 @@ import { searchSortOptions, type SortChoice } from '@app/app/recipes/components/
 import { useRecipeFilterState } from '@app/app/recipes/components/useRecipeFilterState';
 import { useRecipeSearch } from '@app/app/recipes/components/useRecipeSearch';
 import { addMealPlanEntriesToShoppingList } from '@app/app/shopping-list/actions';
+import { IconButton } from '@app/components/atoms/Button';
 import type { RecipeCardSelection } from '@app/components/features/RecipeCard';
 import { QueryProvider } from '@app/components/providers/QueryProvider';
 import { useToastContext } from '@app/components/providers/ToastProvider';
+import { Sheet } from '@app/components/ui/Sheet';
 import { weekRangeLabel } from '@app/lib/meal-plan/view';
 import type { RecipeSearchContext } from '@app/lib/recipeSearchContext';
 import type { MealKind } from '@shared/meal-planning/meal-kind';
 
 import { css } from 'styled-system/css';
-
-import { overlay } from '../styles';
 
 import { KindTabs } from './KindTabs';
 import { appliedMessage, canIncrement, canPick } from './selection-state';
@@ -46,26 +45,6 @@ const SORT_OPTIONS: SortChoice[] = [
     ...searchSortOptions(true),
 ];
 
-const shell = css({
-    position: 'fixed',
-    zIndex: 71,
-    display: 'flex',
-    flexDirection: 'column',
-    bg: 'surface',
-    color: 'text',
-    fontFamily: 'body',
-    boxShadow: 'shadow.medium',
-    overflow: 'hidden',
-    inset: { base: 0, md: 'auto' },
-    top: { md: '50%' },
-    left: { md: '50%' },
-    transform: { md: 'translate(-50%, -50%)' },
-    width: { base: '100%', md: 'min(1320px, 96vw)' },
-    height: { base: '100dvh', md: '92dvh' },
-    borderRadius: { base: '0', md: '2xl' },
-    _focusVisible: { outline: 'none' },
-});
-
 /**
  * "Woche planen" (KUC-126): pick dishes for the free slots of a week like in a meal kit,
  * on the same search as /recipes. "Übernehmen" distributes them onto the chosen slots.
@@ -77,23 +56,25 @@ export function WeekSelectionDialog({
     onApplied,
 }: WeekSelectionDialogProps) {
     return (
-        <Dialog.Root open={open} onOpenChange={onOpenChange}>
-            <Dialog.Portal>
-                <Dialog.Overlay className={overlay} />
-                <Dialog.Content className={shell} aria-describedby={undefined}>
-                    {open && (
-                        <QueryProvider>
-                            <WeekSelectionLoader
-                                key={startDate}
-                                startDate={startDate}
-                                onClose={() => onOpenChange(false)}
-                                onApplied={onApplied}
-                            />
-                        </QueryProvider>
-                    )}
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+        <Sheet
+            open={open}
+            onOpenChange={onOpenChange}
+            title="Woche planen"
+            header={false}
+            placement="full"
+            size="xl"
+        >
+            {open && (
+                <QueryProvider>
+                    <WeekSelectionLoader
+                        key={startDate}
+                        startDate={startDate}
+                        onClose={() => onOpenChange(false)}
+                        onApplied={onApplied}
+                    />
+                </QueryProvider>
+            )}
+        </Sheet>
     );
 }
 
@@ -117,33 +98,14 @@ function DialogHead({ startDate, onClose }: { startDate: string; onClose: () => 
             })}
         >
             <div className={css({ flex: 1, minW: 0 })}>
-                <Dialog.Title className={css({ fontSize: 'xl', fontWeight: '700' })}>
-                    Woche planen
-                </Dialog.Title>
+                <h2 className={css({ fontSize: 'xl', fontWeight: '700' })}>Woche planen</h2>
                 <p className={css({ fontSize: 'sm', color: 'text.muted' })}>
                     {weekRangeLabel(startDate)}
                 </p>
             </div>
-            <button
-                type="button"
-                onClick={onClose}
-                aria-label="Schließen"
-                className={css({
-                    display: 'grid',
-                    placeItems: 'center',
-                    w: '40px',
-                    h: '40px',
-                    borderRadius: 'full',
-                    border: 'none',
-                    bg: 'transparent',
-                    color: 'text',
-                    cursor: 'pointer',
-                    _hover: { bg: 'surface.muted' },
-                    _focusVisible: { outline: '2px solid', outlineColor: 'primary' },
-                })}
-            >
+            <IconButton variant="ghost" onClick={onClose} aria-label="Schließen">
                 <X size={20} />
-            </button>
+            </IconButton>
         </header>
     );
 }

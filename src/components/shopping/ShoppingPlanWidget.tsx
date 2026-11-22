@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
 import { addMealPlanEntriesToShoppingList } from '@app/app/shopping-list/actions';
+import { Button } from '@app/components/atoms/Button';
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import {
     addMissingLabel,
@@ -66,22 +67,6 @@ const state = css({ fontSize: 'xs', mt: '0.5' });
 const stateOk = css({ color: 'status.success' });
 const stateMissing = css({ color: 'primary', fontWeight: '600' });
 const stateMuted = css({ color: 'foreground.muted' });
-const cta = css({
-    width: '100%',
-    minH: '11',
-    mt: '4',
-    px: '4',
-    bg: 'primary',
-    color: 'white',
-    border: 'none',
-    borderRadius: 'lg',
-    fontWeight: '600',
-    fontFamily: 'body',
-    cursor: 'pointer',
-    _hover: { bg: 'button.primary-hover' },
-    _disabled: { opacity: 0.6, cursor: 'wait' },
-    _focusVisible: { outline: '3px solid', outlineColor: 'foreground', outlineOffset: '2px' },
-});
 const strip = css({
     display: 'flex',
     gap: '2',
@@ -148,9 +133,16 @@ export function ShoppingPlanWidget({
         });
 
     const addButton = label && (
-        <button type="button" className={cta} onClick={addMissing} disabled={pending}>
+        <Button
+            type="button"
+            variant="primary"
+            block
+            className={css({ mt: '4' })}
+            onClick={addMissing}
+            disabled={pending}
+        >
             {pending ? 'Wird hinzugefügt …' : label}
-        </button>
+        </Button>
     );
     const status = message && (
         <p className={cx(hint, css({ mt: '2' }))} role="status">

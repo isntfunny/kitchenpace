@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Plus, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { type ReactNode, useMemo, useRef, useState } from 'react';
 
+import { button, iconButton } from '@app/components/atoms/recipes';
 import { cellKey, dayCalories, formatKcal, shortDate } from '@app/lib/meal-plan/view';
 import { weekdayLong, weekdayShort } from '@shared/dates';
 
@@ -12,7 +13,7 @@ import { css, cx } from 'styled-system/css';
 import type { MealPlanSettingsValues } from './MealPlanSettingsForm';
 import { EditableDish, PlanEditorProvider, usePlanEditor } from './PlanEditor';
 import { SlotSearchDialog } from './SlotSearchDialog';
-import { actionButton, emptySlot, iconButton } from './styles';
+import { emptySlot } from './styles';
 import type { PlanDish, PlanExtensions, PlanSlot, PlanWeekData } from './types';
 import { WeekSettingsDialog } from './WeekSettingsDialog';
 import { WeekTools } from './WeekTools';
@@ -204,7 +205,7 @@ function WeekGrid({
                 >
                     <Link
                         href={`/plan?week=${data.prevParam}`}
-                        className={iconButton}
+                        className={iconButton()}
                         aria-label="Vorherige Woche"
                     >
                         <ChevronLeft size={18} />
@@ -232,7 +233,7 @@ function WeekGrid({
                     </div>
                     <Link
                         href={`/plan?week=${data.nextParam}`}
-                        className={iconButton}
+                        className={iconButton()}
                         aria-label="Nächste Woche"
                     >
                         <ChevronRight size={18} />
@@ -241,7 +242,7 @@ function WeekGrid({
                 {!data.isCurrentWeek && (
                     <Link
                         href={`/plan?week=${data.todayParam}`}
-                        className={actionButton({ variant: 'ghost' })}
+                        className={button({ variant: 'ghost' })}
                     >
                         Heute
                     </Link>

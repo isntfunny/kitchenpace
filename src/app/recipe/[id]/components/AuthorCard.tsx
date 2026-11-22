@@ -115,7 +115,7 @@ export function AuthorCard({
 
                             <Button
                                 type="button"
-                                variant={isFollowing ? 'secondary' : 'primary'}
+                                variant={isFollowing ? 'outline' : 'primary'}
                                 size="sm"
                                 onClick={onFollowToggle}
                                 disabled={isFollowPending || isOwnProfile}

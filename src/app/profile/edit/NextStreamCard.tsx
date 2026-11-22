@@ -444,7 +444,7 @@ export function NextStreamCard({ plannedStreams: initialStreams }: NextStreamCar
                     </div>
                 </div>
             ) : (
-                <Button variant="secondary" onClick={() => setShowForm(true)}>
+                <Button variant="outline" onClick={() => setShowForm(true)}>
                     <Plus size={16} />
                     Stream hinzufügen
                 </Button>

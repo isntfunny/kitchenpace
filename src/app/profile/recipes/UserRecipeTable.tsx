@@ -238,7 +238,7 @@ function RecipeCardActions({
                             })}
                         >
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 onClick={() => setDeleteConfirm(false)}
                                 disabled={isDeleting}
                             >

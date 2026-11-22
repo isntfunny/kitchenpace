@@ -13,6 +13,8 @@ import {
 } from 'react';
 
 import { movePlanEntry, swapPlanCells } from '@app/app/plan/edit-actions';
+import { Button } from '@app/components/atoms/Button';
+import { Sheet } from '@app/components/ui/Sheet';
 import type { DishMarker } from '@app/lib/meal-plan/view';
 import { cellKey } from '@app/lib/meal-plan/view';
 import { weekdayShort } from '@shared/dates';
@@ -21,8 +23,6 @@ import { css, cx } from 'styled-system/css';
 
 import { DishCard } from './DishCard';
 import { EntrySheet } from './EntrySheet';
-import { SheetFrame } from './SheetFrame';
-import { actionButton } from './styles';
 import { dishesIn, type Cell } from './TargetPicker';
 import type { PlanDish, PlanDisplay, PlanWeekData } from './types';
 import { usePlanAction } from './usePlanAction';
@@ -204,7 +204,7 @@ function DropDialog({
 }) {
     const taken = pending ? dishesIn(data.dishes, pending.target, pending.dish.id) : [];
     return (
-        <SheetFrame
+        <Sheet
             open={!!pending}
             onOpenChange={(open) => !open && onClose()}
             title="Mahlzeit ist schon belegt"
@@ -217,34 +217,22 @@ function DropDialog({
                         Was soll mit „{pending.dish.recipe.title}“ passieren?
                     </p>
                     <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
-                        <button
-                            type="button"
-                            className={actionButton({ variant: 'ghost' })}
-                            onClick={onClose}
-                        >
+                        <Button variant="ghost" type="button" onClick={onClose}>
                             Abbrechen
-                        </button>
+                        </Button>
                         <span className={css({ flex: 1 })} />
                         {!pending.copy && (
-                            <button
-                                type="button"
-                                className={actionButton()}
-                                onClick={() => onSwap(pending)}
-                            >
+                            <Button type="button" onClick={() => onSwap(pending)}>
                                 <ArrowRightLeft size={16} aria-hidden /> Tauschen
-                            </button>
+                            </Button>
                         )}
-                        <button
-                            type="button"
-                            className={actionButton({ variant: 'primary' })}
-                            onClick={() => onAdd(pending)}
-                        >
+                        <Button variant="primary" type="button" onClick={() => onAdd(pending)}>
                             Dazulegen
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
-        </SheetFrame>
+        </Sheet>
     );
 }
 

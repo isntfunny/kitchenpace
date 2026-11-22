@@ -258,7 +258,7 @@ function CollectionCardActions({ collection }: { collection: CollectionCardData 
                             })}
                         >
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 onClick={() => setDeleteConfirm(false)}
                                 disabled={isDeleting}
                             >

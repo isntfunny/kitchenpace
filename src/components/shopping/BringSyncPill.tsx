@@ -1,10 +1,12 @@
 'use client';
 
-import { RefreshCw, X } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import Link from 'next/link';
-import { Dialog } from 'radix-ui';
 import { useState } from 'react';
 
+import { Button } from '@app/components/atoms/Button';
+import { chip, fieldLabel, input, notice } from '@app/components/atoms/recipes';
+import { Sheet } from '@app/components/ui/Sheet';
 import {
     disableBringSync,
     enableBringSync,
@@ -15,7 +17,7 @@ import type { BringSyncState } from '@app/lib/bring/sync-settings';
 import { syncStatusText, syncTone, type SyncTone } from '@app/lib/bring/sync-view';
 import type { BringList } from '@app/lib/bring/types';
 
-import { css } from 'styled-system/css';
+import { css, cx } from 'styled-system/css';
 
 const DOT: Record<SyncTone, string> = {
     off: css({ bg: 'foreground.muted' }),
@@ -26,23 +28,6 @@ const DOT: Record<SyncTone, string> = {
 const trackOn = css({ bg: 'primary', _after: { transform: 'translateX(13px)' } });
 const trackOff = css({ bg: 'border' });
 
-const pill = css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '2',
-    minH: '36px',
-    px: '3',
-    borderRadius: 'full',
-    border: '1px solid',
-    borderColor: 'border',
-    bg: 'surface.elevated',
-    color: 'foreground',
-    fontFamily: 'body',
-    fontSize: 'sm',
-    fontWeight: '600',
-    cursor: 'pointer',
-    _focusVisible: { outline: '2px solid', outlineColor: 'primary', outlineOffset: '2px' },
-});
 const dotClass = css({ w: '8px', h: '8px', borderRadius: 'full', flexShrink: 0 });
 const track = css({
     position: 'relative',
@@ -63,52 +48,7 @@ const track = css({
         transition: 'transform 0.15s',
     },
 });
-const overlay = css({ position: 'fixed', inset: 0, bg: 'rgba(0,0,0,0.4)', zIndex: 50 });
-const panel = css({
-    position: 'fixed',
-    zIndex: 51,
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    w: 'min(420px, calc(100vw - 24px))',
-    maxH: 'calc(100vh - 24px)',
-    overflowY: 'auto',
-    p: '5',
-    borderRadius: '2xl',
-    bg: 'surface.elevated',
-    color: 'foreground',
-    boxShadow: 'shadow.large',
-    fontFamily: 'body',
-});
-const heading = css({ fontFamily: 'heading', fontSize: 'lg', fontWeight: '700', m: 0 });
 const muted = css({ color: 'foreground.muted', fontSize: 'sm', lineHeight: '1.5' });
-const button = css({
-    minH: '40px',
-    px: '4',
-    borderRadius: 'lg',
-    border: '1px solid',
-    borderColor: 'border',
-    bg: 'surface',
-    color: 'foreground',
-    fontWeight: '600',
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '2',
-    _disabled: { opacity: 0.5, cursor: 'not-allowed' },
-});
-const primaryButton = css({ bg: 'primary', color: 'white', borderColor: 'primary' });
-const selectClass = css({
-    w: '100%',
-    minH: '44px',
-    px: '3',
-    borderRadius: 'lg',
-    border: '1px solid',
-    borderColor: 'border',
-    bg: 'surface',
-    color: 'foreground',
-    fontFamily: 'body',
-});
 const linkClass = css({ color: 'primary', fontWeight: '600' });
 
 /**
@@ -164,126 +104,104 @@ export function BringSyncPill({
     }
 
     return (
-        <Dialog.Root open={open} onOpenChange={(next) => void openPanel(next)}>
-            <Dialog.Trigger
-                className={pill}
-                aria-label={`Bring!-Abgleich, ${on ? 'an' : 'aus'}. Einstellungen öffnen`}
-            >
-                <span className={`${dotClass} ${DOT[tone]}`} aria-hidden="true" />
-                <span>Bring!{on && listName ? ` · „${listName}“` : ''}</span>
-                <span className={`${track} ${on ? trackOn : trackOff}`} aria-hidden="true" />
-            </Dialog.Trigger>
-            <Dialog.Portal>
-                <Dialog.Overlay className={overlay} />
-                <Dialog.Content className={panel} aria-describedby="bring-sync-status">
-                    <div
-                        className={css({
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            mb: '3',
-                        })}
-                    >
-                        <Dialog.Title className={heading}>Bring!-Abgleich</Dialog.Title>
-                        <Dialog.Close className={button} aria-label="Schließen">
-                            <X size={16} aria-hidden="true" />
-                        </Dialog.Close>
-                    </div>
-                    <p id="bring-sync-status" className={muted} role="status">
-                        {syncStatusText(state, new Date())}
-                    </p>
-                    {error && (
-                        <p
-                            role="alert"
-                            className={css({ color: 'error.text', fontSize: 'sm', mt: '3' })}
-                        >
-                            {error}
-                        </p>
-                    )}
+        <Sheet
+            open={open}
+            onOpenChange={(next) => void openPanel(next)}
+            title="Bring!-Abgleich"
+            size="sm"
+            describedBy="bring-sync-status"
+            trigger={
+                <button
+                    type="button"
+                    className={chip()}
+                    aria-label={`Bring!-Abgleich, ${on ? 'an' : 'aus'}. Einstellungen öffnen`}
+                >
+                    <span className={`${dotClass} ${DOT[tone]}`} aria-hidden="true" />
+                    <span>Bring!{on && listName ? ` · „${listName}“` : ''}</span>
+                    <span className={`${track} ${on ? trackOn : trackOff}`} aria-hidden="true" />
+                </button>
+            }
+        >
+            <p id="bring-sync-status" className={muted} role="status">
+                {syncStatusText(state, new Date())}
+            </p>
+            {error && (
+                <p role="alert" className={cx(notice({ tone: 'error' }), css({ mt: '3' }))}>
+                    {error}
+                </p>
+            )}
 
-                    {!state.connected ? (
-                        <p className={css({ mt: '4' })}>
-                            <Link href="/profile/integrations" className={linkClass}>
-                                Bring!-Konto verbinden
-                            </Link>
-                        </p>
-                    ) : (
-                        <div className={css({ mt: '4', display: 'grid', gap: '3' })}>
-                            <label
-                                className={css({
-                                    display: 'grid',
-                                    gap: '1',
-                                    fontWeight: '600',
-                                    fontSize: 'sm',
-                                })}
+            {!state.connected ? (
+                <p className={css({ mt: '4' })}>
+                    <Link href="/profile/integrations" className={linkClass}>
+                        Bring!-Konto verbinden
+                    </Link>
+                </p>
+            ) : (
+                <div className={css({ mt: '4', display: 'grid', gap: '3' })}>
+                    <label className={css({ display: 'grid', gap: '1' })}>
+                        <span className={fieldLabel}>Bring!-Liste</span>
+                        <select
+                            className={cx(input, css({ w: '100%', minH: '44px' }))}
+                            value={listId}
+                            onChange={(event) => setListId(event.target.value)}
+                            disabled={busy || state.enabled || !lists}
+                        >
+                            {!lists && <option value="">Lädt …</option>}
+                            {lists?.map((list) => (
+                                <option key={list.listUuid} value={list.listUuid}>
+                                    {list.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
+                        {state.enabled ? (
+                            <Button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => void run(() => disableBringSync())}
                             >
-                                Bring!-Liste
-                                <select
-                                    className={selectClass}
-                                    value={listId}
-                                    onChange={(event) => setListId(event.target.value)}
-                                    disabled={busy || state.enabled || !lists}
-                                >
-                                    {!lists && <option value="">Lädt …</option>}
-                                    {lists?.map((list) => (
-                                        <option key={list.listUuid} value={list.listUuid}>
-                                            {list.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                            <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
-                                {state.enabled ? (
-                                    <button
-                                        type="button"
-                                        className={button}
-                                        disabled={busy}
-                                        onClick={() => void run(() => disableBringSync())}
-                                    >
-                                        Abgleich ausschalten
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        className={`${button} ${primaryButton}`}
-                                        disabled={busy || !listId}
-                                        onClick={() => void run(() => enableBringSync(listId))}
-                                    >
-                                        Abgleich einschalten
-                                    </button>
-                                )}
-                                {state.enabled && state.status !== 'AUTH_FAILED' && (
-                                    <button
-                                        type="button"
-                                        className={button}
-                                        disabled={busy}
-                                        onClick={async () => {
-                                            if (await run(() => syncBringNow()))
-                                                window.setTimeout(onSynced, 4000);
-                                        }}
-                                    >
-                                        <RefreshCw size={14} aria-hidden="true" /> Jetzt abgleichen
-                                    </button>
-                                )}
-                            </div>
-                            {state.status === 'AUTH_FAILED' && (
-                                <Link href="/profile/integrations" className={linkClass}>
-                                    Bring!-Konto neu verbinden
-                                </Link>
-                            )}
-                            <p className={muted}>
-                                Abhaken in Bring! oder hier gilt auf beiden Seiten. Bei
-                                verschiedenen Mengen gewinnt die neuere Änderung. Das Konto
-                                verwaltest du unter{' '}
-                                <Link href="/profile/integrations" className={linkClass}>
-                                    Verknüpfte Dienste
-                                </Link>
-                                .
-                            </p>
-                        </div>
+                                Abgleich ausschalten
+                            </Button>
+                        ) : (
+                            <Button
+                                type="button"
+                                variant="primary"
+                                disabled={busy || !listId}
+                                onClick={() => void run(() => enableBringSync(listId))}
+                            >
+                                Abgleich einschalten
+                            </Button>
+                        )}
+                        {state.enabled && state.status !== 'AUTH_FAILED' && (
+                            <Button
+                                type="button"
+                                disabled={busy}
+                                onClick={async () => {
+                                    if (await run(() => syncBringNow()))
+                                        window.setTimeout(onSynced, 4000);
+                                }}
+                            >
+                                <RefreshCw size={14} aria-hidden="true" /> Jetzt abgleichen
+                            </Button>
+                        )}
+                    </div>
+                    {state.status === 'AUTH_FAILED' && (
+                        <Link href="/profile/integrations" className={linkClass}>
+                            Bring!-Konto neu verbinden
+                        </Link>
                     )}
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+                    <p className={muted}>
+                        Abhaken in Bring! oder hier gilt auf beiden Seiten. Bei verschiedenen Mengen
+                        gewinnt die neuere Änderung. Das Konto verwaltest du unter{' '}
+                        <Link href="/profile/integrations" className={linkClass}>
+                            Verknüpfte Dienste
+                        </Link>
+                        .
+                    </p>
+                </div>
+            )}
+        </Sheet>
     );
 }

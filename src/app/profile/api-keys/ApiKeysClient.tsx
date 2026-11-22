@@ -93,7 +93,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: Keys }) {
                         >
                             Kopieren
                         </Button>{' '}
-                        <Button variant="secondary" onClick={() => setSecret(null)}>
+                        <Button variant="outline" onClick={() => setSecret(null)}>
                             Schlüssel ausblenden
                         </Button>
                     </div>
@@ -227,7 +227,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: Keys }) {
                             </form>
                         ) : (
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 disabled={pending}
                                 onClick={() => {
                                     setEditing(key.id);

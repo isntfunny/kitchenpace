@@ -9,12 +9,13 @@ import {
     sharePlanWeek,
     type PlanShareState,
 } from '@app/app/plan/share-actions';
+import { Button } from '@app/components/atoms/Button';
+import { fieldLabel, input } from '@app/components/atoms/recipes';
 
 import { css, cx } from 'styled-system/css';
 
 import { muted } from './CopyPanel';
 import { Switch } from './FormParts';
-import { actionButton, fieldLabel, input } from './styles';
 import type { PlanWeekData } from './types';
 import { usePlanAction } from './usePlanAction';
 
@@ -117,14 +118,9 @@ export function ShareWeek({ data }: { data: PlanWeekData }) {
                     privat. Nicht veröffentlichte Rezepte werden nicht gezeigt.
                 </p>
                 {notesSwitch}
-                <button
-                    type="button"
-                    className={actionButton({ variant: 'primary' })}
-                    onClick={() => share()}
-                    disabled={busy}
-                >
+                <Button variant="primary" type="button" onClick={() => share()} disabled={busy}>
                     <Share2 size={16} aria-hidden /> Link erstellen
-                </button>
+                </Button>
             </div>
         );
 
@@ -145,24 +141,16 @@ export function ShareWeek({ data }: { data: PlanWeekData }) {
                         onFocus={(event) => event.target.select()}
                         className={cx(input, css({ flex: 1, minW: 0 }))}
                     />
-                    <button
-                        type="button"
-                        className={actionButton()}
-                        onClick={() => copy(state.token)}
-                    >
+                    <Button type="button" onClick={() => copy(state.token)}>
                         {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
                         {copied ? 'Kopiert' : 'Kopieren'}
-                    </button>
+                    </Button>
                 </div>
             </div>
             {canSystemShare && (
-                <button
-                    type="button"
-                    className={actionButton()}
-                    onClick={() => systemShare(state.token)}
-                >
+                <Button type="button" onClick={() => systemShare(state.token)}>
                     <Share2 size={16} aria-hidden /> Teilen …
-                </button>
+                </Button>
             )}
             {hint && (
                 <p
@@ -182,31 +170,16 @@ export function ShareWeek({ data }: { data: PlanWeekData }) {
                 Änderungen an Notizen oder Mahlzeitennamen erscheinen erst nach erneuter Prüfung.
             </p>
             <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
-                <button
-                    type="button"
-                    className={actionButton()}
-                    onClick={() => share()}
-                    disabled={busy}
-                >
+                <Button type="button" onClick={() => share()} disabled={busy}>
                     <RefreshCw size={16} aria-hidden /> Erneut prüfen
-                </button>
-                <button
-                    type="button"
-                    className={actionButton()}
-                    onClick={() => share(true)}
-                    disabled={busy}
-                >
+                </Button>
+                <Button type="button" onClick={() => share(true)} disabled={busy}>
                     Neuen Link erzeugen
-                </button>
-                <button
-                    type="button"
-                    className={actionButton({ variant: 'ghost' })}
-                    onClick={revoke}
-                    disabled={busy}
-                >
+                </Button>
+                <Button variant="ghost" type="button" onClick={revoke} disabled={busy}>
                     <Link2Off size={16} aria-hidden className={css({ color: 'status.error' })} />{' '}
                     Teilen beenden
-                </button>
+                </Button>
             </div>
         </div>
     );

@@ -534,7 +534,7 @@ export default async function ProfilePage() {
                                     </Button>
                                 </Link>
                                 <Link href="/profile/settings" style={{ width: '100%' }}>
-                                    <Button variant="secondary" size="sm" style={{ width: '100%' }}>
+                                    <Button variant="outline" size="sm" style={{ width: '100%' }}>
                                         <Settings size={15} />
                                         Einstellungen
                                     </Button>
@@ -542,7 +542,7 @@ export default async function ProfilePage() {
                                 {profile.userId && (
                                     <Link href={`/user/${profile.slug}`} style={{ width: '100%' }}>
                                         <Button
-                                            variant="secondary"
+                                            variant="outline"
                                             size="sm"
                                             style={{ width: '100%' }}
                                         >

@@ -294,7 +294,7 @@ export function PasskeySettingsCard() {
                         </Button>
                         <Button
                             type="button"
-                            variant="secondary"
+                            variant="outline"
                             onClick={() => {
                                 setShowAddForm(false);
                                 setAddingName('');
@@ -309,7 +309,7 @@ export function PasskeySettingsCard() {
 
             {!showAddForm && !loading && (
                 <div className={css({ mt: '5' })}>
-                    <Button type="button" variant="secondary" onClick={() => setShowAddForm(true)}>
+                    <Button type="button" variant="outline" onClick={() => setShowAddForm(true)}>
                         <Plus size={18} />
                         Passkey hinzufügen
                     </Button>

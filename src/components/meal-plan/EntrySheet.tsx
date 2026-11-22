@@ -12,15 +12,16 @@ import {
     swapPlanCells,
     undoCookForTwo,
 } from '@app/app/plan/edit-actions';
+import { button } from '@app/components/atoms/recipes';
+import { Sheet } from '@app/components/ui/Sheet';
 import { builtInMarkers, weekdayShort } from '@app/lib/meal-plan/view';
 import { addDays } from '@app/lib/meal-plan/week';
+
 
 import { css } from 'styled-system/css';
 
 import { DishMarkers } from './DishCard';
 import { CookedSection, EntryFields } from './EntryParts';
-import { SheetFrame } from './SheetFrame';
-import { actionButton } from './styles';
 import { dishesIn, TargetPicker, type Cell } from './TargetPicker';
 import type { PlanDish, PlanSlot, PlanWeekData } from './types';
 import { usePlanAction } from './usePlanAction';
@@ -37,7 +38,7 @@ interface EntrySheetProps {
 /** Slot menu of one planned dish (KUC-101) with "Gekocht" (KUC-103). */
 export function EntrySheet({ dish, data, onClose, returnFocus }: EntrySheetProps) {
     return (
-        <SheetFrame
+        <Sheet
             open={!!dish}
             onOpenChange={(open) => !open && onClose()}
             title={dish?.recipe.title ?? ''}
@@ -51,7 +52,7 @@ export function EntrySheet({ dish, data, onClose, returnFocus }: EntrySheetProps
             }}
         >
             {dish && <EntryBody key={dish.id} dish={dish} data={data} onClose={onClose} />}
-        </SheetFrame>
+        </Sheet>
     );
 }
 
@@ -116,14 +117,14 @@ function EntryBody({
             <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
                 <Link
                     href={`/recipe/${dish.recipe.slug}?portionen=${dish.servings}`}
-                    className={actionButton()}
+                    className={button()}
                 >
                     <BookOpen size={16} aria-hidden /> Rezept öffnen
                 </Link>
                 {dish.recipeAvailable && (
                     <Link
                         href={`/recipe/${dish.recipe.slug}/mobile?servings=${dish.servings}`}
-                        className={actionButton({ variant: 'primary' })}
+                        className={button({ variant: 'primary' })}
                     >
                         <ChefHat size={16} aria-hidden /> Kochen starten
                     </Link>
@@ -145,24 +146,20 @@ function EntryBody({
                     borderColor: 'border.muted',
                 })}
             >
-                <button type="button" className={actionButton()} onClick={() => setMode('move')}>
+                <button type="button" className={button()} onClick={() => setMode('move')}>
                     <MoveRight size={16} aria-hidden /> Verschieben …
                 </button>
-                <button type="button" className={actionButton()} onClick={() => setMode('copy')}>
+                <button type="button" className={button()} onClick={() => setMode('copy')}>
                     <Copy size={16} aria-hidden /> Kopieren …
                 </button>
                 {!dish.isLeftover && dish.recipeAvailable && (
-                    <button
-                        type="button"
-                        className={actionButton()}
-                        onClick={() => setMode('leftover')}
-                    >
+                    <button type="button" className={button()} onClick={() => setMode('leftover')}>
                         <CopyPlus size={16} aria-hidden /> Für 2 Mahlzeiten kochen …
                     </button>
                 )}
                 <button
                     type="button"
-                    className={actionButton({ variant: 'ghost' })}
+                    className={button({ variant: 'ghost' })}
                     onClick={remove}
                     disabled={busy}
                 >
@@ -254,18 +251,14 @@ function TargetStep({
                 ignoreId={dish.id}
             />
             <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
-                <button
-                    type="button"
-                    className={actionButton({ variant: 'ghost' })}
-                    onClick={onBack}
-                >
+                <button type="button" className={button({ variant: 'ghost' })} onClick={onBack}>
                     Zurück
                 </button>
                 <span className={css({ flex: 1 })} />
                 {mode === 'move' && taken.length > 0 && (
                     <button
                         type="button"
-                        className={actionButton()}
+                        className={button()}
                         onClick={() => submit(true)}
                         disabled={busy}
                     >
@@ -274,7 +267,7 @@ function TargetStep({
                 )}
                 <button
                     type="button"
-                    className={actionButton({ variant: 'primary' })}
+                    className={button({ variant: 'primary' })}
                     onClick={() => submit()}
                     disabled={busy || (same && mode !== 'copy')}
                 >

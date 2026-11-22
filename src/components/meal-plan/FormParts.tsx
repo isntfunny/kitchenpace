@@ -1,75 +1,10 @@
 'use client';
 
-import { Minus, Plus } from 'lucide-react';
 import { useId } from 'react';
 
+import { fieldLabel, input } from '@app/components/atoms/recipes';
+
 import { css } from 'styled-system/css';
-
-import { fieldLabel, iconButton, input } from './styles';
-
-export function ServingsStepper({
-    value,
-    onChange,
-    householdSize,
-    label = 'Portionen',
-    max = 100,
-}: {
-    value: number;
-    onChange: (value: number) => void;
-    householdSize?: number | null;
-    label?: string;
-    /** Highest allowed value (the week selection limits it by free slots) */
-    max?: number;
-}) {
-    const id = useId();
-    return (
-        <div className={css({ display: 'flex', flexDirection: 'column', gap: '1.5' })}>
-            <span id={id} className={fieldLabel}>
-                {label}
-            </span>
-            <div
-                role="group"
-                aria-labelledby={id}
-                className={css({ display: 'flex', alignItems: 'center', gap: '2' })}
-            >
-                <button
-                    type="button"
-                    className={iconButton}
-                    onClick={() => onChange(Math.max(1, value - 1))}
-                    disabled={value <= 1}
-                    aria-label="Eine Portion weniger"
-                >
-                    <Minus size={16} />
-                </button>
-                <output
-                    aria-live="polite"
-                    className={css({
-                        minW: '7',
-                        textAlign: 'center',
-                        fontWeight: '700',
-                        fontSize: 'lg',
-                    })}
-                >
-                    {value}
-                </output>
-                <button
-                    type="button"
-                    className={iconButton}
-                    onClick={() => onChange(Math.min(max, value + 1))}
-                    disabled={value >= max}
-                    aria-label="Eine Portion mehr"
-                >
-                    <Plus size={16} />
-                </button>
-                {householdSize != null && value === householdSize && (
-                    <span className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
-                        Haushalt
-                    </span>
-                )}
-            </div>
-        </div>
-    );
-}
 
 export function TimeField({
     value,

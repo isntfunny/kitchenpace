@@ -29,7 +29,7 @@ export function AddIngredientToListButton({ id, name }: { id: string; name: stri
         });
 
     return (
-        <Button variant="secondary" size="sm" onClick={add} disabled={pending}>
+        <Button variant="outline" size="sm" onClick={add} disabled={pending}>
             <ShoppingBasket size={16} aria-hidden="true" />
             Auf die Einkaufsliste
         </Button>

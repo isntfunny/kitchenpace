@@ -53,7 +53,7 @@ export function RecipeActionButtons({
                         {(triggerSparkle) => (
                             <Button
                                 type="button"
-                                variant={isFavorite ? 'secondary' : 'primary'}
+                                variant={isFavorite ? 'outline' : 'primary'}
                                 onClick={() => {
                                     if (!isFavorite) triggerSparkle();
                                     onFavoriteToggle();

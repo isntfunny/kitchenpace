@@ -9,12 +9,14 @@ import {
     unmarkPlanEntryCooked,
     updatePlanEntry,
 } from '@app/app/plan/edit-actions';
+import { button, fieldLabel, input } from '@app/components/atoms/recipes';
+import { ServingsStepper } from '@app/components/ui/ServingsStepper';
 import { needsCookedAnswer } from '@app/lib/meal-plan/view';
+
 
 import { css, cx } from 'styled-system/css';
 
-import { ServingsStepper, Switch, TimeField } from './FormParts';
-import { actionButton, fieldLabel, input } from './styles';
+import { Switch, TimeField } from './FormParts';
 import type { PlanDish } from './types';
 import { usePlanAction } from './usePlanAction';
 
@@ -65,7 +67,7 @@ export function CookedSection({ dish, today }: { dish: PlanDish; today: string }
                 </span>
                 <button
                     type="button"
-                    className={actionButton({ variant: 'ghost' })}
+                    className={button({ variant: 'ghost' })}
                     onClick={uncook}
                     disabled={busy}
                 >
@@ -77,7 +79,7 @@ export function CookedSection({ dish, today }: { dish: PlanDish; today: string }
         return (
             <div className={box}>
                 <span className={text}>Nicht {eaten.toLowerCase()}</span>
-                <button type="button" className={actionButton()} onClick={cook} disabled={busy}>
+                <button type="button" className={button()} onClick={cook} disabled={busy}>
                     Doch {eaten.toLowerCase()}
                 </button>
             </div>
@@ -90,13 +92,13 @@ export function CookedSection({ dish, today }: { dish: PlanDish; today: string }
                 </span>
                 <button
                     type="button"
-                    className={actionButton({ variant: 'primary' })}
+                    className={button({ variant: 'primary' })}
                     onClick={cook}
                     disabled={busy}
                 >
                     <Check size={16} aria-hidden /> Ja
                 </button>
-                <button type="button" className={actionButton()} onClick={skip} disabled={busy}>
+                <button type="button" className={button()} onClick={skip} disabled={busy}>
                     Nein
                 </button>
             </div>
@@ -105,7 +107,7 @@ export function CookedSection({ dish, today }: { dish: PlanDish; today: string }
     return (
         <button
             type="button"
-            className={actionButton({ variant: 'outline' })}
+            className={button({ variant: 'outline' })}
             onClick={cook}
             disabled={busy}
         >
@@ -176,7 +178,7 @@ export function EntryFields({
             {dirty && (
                 <button
                     type="button"
-                    className={actionButton({ variant: 'primary' })}
+                    className={button({ variant: 'primary' })}
                     onClick={save}
                     disabled={busy || (ownTime && !time)}
                 >

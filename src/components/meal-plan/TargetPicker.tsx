@@ -3,11 +3,12 @@
 import { AlertTriangle } from 'lucide-react';
 import { useId } from 'react';
 
+import { fieldLabel, input } from '@app/components/atoms/recipes';
 import { cellKey, shortDate, weekdayLong, weekdayShort } from '@app/lib/meal-plan/view';
+
 
 import { css } from 'styled-system/css';
 
-import { fieldLabel, input } from './styles';
 import type { PlanDish, PlanSlot } from './types';
 
 export interface Cell {

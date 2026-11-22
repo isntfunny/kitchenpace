@@ -1,10 +1,10 @@
 import Link from 'next/link';
 
+import { chip } from '@app/components/atoms/recipes';
 import type { InspirationItem } from '@shared/meal-planning/inspiration';
 
-import { css } from 'styled-system/css';
 
-import { chip } from '../styles';
+import { css } from 'styled-system/css';
 
 /** Chips below the toolbar: a tap opens /recipes with the matching filter. */
 export function InspirationStrip({ items }: { items: InspirationItem[] }) {

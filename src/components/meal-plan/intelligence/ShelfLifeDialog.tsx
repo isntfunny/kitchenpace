@@ -9,13 +9,13 @@ import {
     applyShelfLifeOrderAction,
     previewShelfLifeOrderAction,
 } from '@app/app/plan/intelligence-actions';
+import { button, sheet, sheetOverlay } from '@app/components/atoms/recipes';
 import type { ShelfLifeProposalDTO } from '@app/lib/meal-plan/intelligence/week-planner';
 import { MEAL_TYPE_LABELS } from '@app/lib/meal-plan/slots';
 import { weekdayShort } from '@app/lib/meal-plan/view';
 
-import { css, cx } from 'styled-system/css';
 
-import { actionButton, overlay, sheet } from '../styles';
+import { css, cx } from 'styled-system/css';
 
 const place = (ref: { date: string; slot: string }) =>
     `${weekdayShort(ref.date)} ${MEAL_TYPE_LABELS[ref.slot as keyof typeof MEAL_TYPE_LABELS] ?? ref.slot}`;
@@ -63,7 +63,7 @@ export function ShelfLifeDialog({ startDate }: { startDate: string }) {
                 if (next) void load();
             }}
         >
-            <Dialog.Trigger className={actionButton()}>
+            <Dialog.Trigger className={button()}>
                 <Clock size={16} aria-hidden />
                 <span className={css({ display: { base: 'none', sm: 'inline' } })}>
                     Nach Haltbarkeit ordnen
@@ -73,8 +73,8 @@ export function ShelfLifeDialog({ startDate }: { startDate: string }) {
                 </span>
             </Dialog.Trigger>
             <Dialog.Portal>
-                <Dialog.Overlay className={overlay} />
-                <Dialog.Content className={sheet} aria-describedby={undefined}>
+                <Dialog.Overlay className={sheetOverlay} />
+                <Dialog.Content className={sheet()} aria-describedby={undefined}>
                     <div className={css({ display: 'flex', alignItems: 'center', mb: '3' })}>
                         <Dialog.Title
                             className={css({
@@ -87,7 +87,7 @@ export function ShelfLifeDialog({ startDate }: { startDate: string }) {
                             Nach Haltbarkeit ordnen
                         </Dialog.Title>
                         <Dialog.Close
-                            className={actionButton({ variant: 'ghost' })}
+                            className={button({ variant: 'ghost' })}
                             aria-label="Schließen"
                         >
                             <X size={18} />
@@ -155,7 +155,7 @@ export function ShelfLifeDialog({ startDate }: { startDate: string }) {
                                     gap: '2',
                                 })}
                             >
-                                <Dialog.Close className={actionButton({ variant: 'outline' })}>
+                                <Dialog.Close className={button({ variant: 'outline' })}>
                                     {proposal.changed ? 'Abbrechen' : 'Schließen'}
                                 </Dialog.Close>
                                 {proposal.changed && (
@@ -163,7 +163,7 @@ export function ShelfLifeDialog({ startDate }: { startDate: string }) {
                                         type="button"
                                         disabled={saving}
                                         onClick={apply}
-                                        className={cx(actionButton({ variant: 'primary' }))}
+                                        className={cx(button({ variant: 'primary' }))}
                                     >
                                         Übernehmen
                                     </button>

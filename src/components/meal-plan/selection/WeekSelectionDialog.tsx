@@ -11,6 +11,7 @@ import { searchSortOptions, type SortChoice } from '@app/app/recipes/components/
 import { useRecipeFilterState } from '@app/app/recipes/components/useRecipeFilterState';
 import { useRecipeSearch } from '@app/app/recipes/components/useRecipeSearch';
 import { addMealPlanEntriesToShoppingList } from '@app/app/shopping-list/actions';
+import { sheetOverlay } from '@app/components/atoms/recipes';
 import type { RecipeCardSelection } from '@app/components/features/RecipeCard';
 import { QueryProvider } from '@app/components/providers/QueryProvider';
 import { useToastContext } from '@app/components/providers/ToastProvider';
@@ -18,9 +19,8 @@ import { weekRangeLabel } from '@app/lib/meal-plan/view';
 import type { RecipeSearchContext } from '@app/lib/recipeSearchContext';
 import type { MealKind } from '@shared/meal-planning/meal-kind';
 
-import { css } from 'styled-system/css';
 
-import { overlay } from '../styles';
+import { css } from 'styled-system/css';
 
 import { KindTabs } from './KindTabs';
 import { appliedMessage, canIncrement, canPick } from './selection-state';
@@ -79,7 +79,7 @@ export function WeekSelectionDialog({
     return (
         <Dialog.Root open={open} onOpenChange={onOpenChange}>
             <Dialog.Portal>
-                <Dialog.Overlay className={overlay} />
+                <Dialog.Overlay className={sheetOverlay} />
                 <Dialog.Content className={shell} aria-describedby={undefined}>
                     {open && (
                         <QueryProvider>

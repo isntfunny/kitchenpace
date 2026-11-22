@@ -2,9 +2,10 @@
 
 import { Check, Plus } from 'lucide-react';
 
+import { ServingsStepper } from '@app/components/ui/ServingsStepper';
+
 import { css } from 'styled-system/css';
 
-import { ServingsStepper } from '../FormParts';
 
 import { leftoverLabel, type Pick } from './selection-state';
 

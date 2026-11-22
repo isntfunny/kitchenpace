@@ -9,11 +9,11 @@ import {
     dismissLeftoverAction,
     planLeftoverRecipeAction,
 } from '@app/app/plan/intelligence-actions';
+import { button } from '@app/components/atoms/recipes';
 import type { LeftoverNoticeDTO } from '@app/lib/meal-plan/intelligence/week-planner';
 
-import { css } from 'styled-system/css';
 
-import { actionButton } from '../styles';
+import { css } from 'styled-system/css';
 
 /** Hints for leftovers that expire soon: up to three recipes each, "Einplanen" or "Ablehnen". */
 export function LeftoverNotices({ notices }: { notices: LeftoverNoticeDTO[] }) {
@@ -115,7 +115,7 @@ export function LeftoverNotices({ notices }: { notices: LeftoverNoticeDTO[] }) {
                                     type="button"
                                     disabled={busy}
                                     onClick={() => plan(notice, recipe.id)}
-                                    className={actionButton({ variant: 'outline' })}
+                                    className={button({ variant: 'outline' })}
                                 >
                                     Für {notice.dayLabel} einplanen
                                 </button>
@@ -127,7 +127,7 @@ export function LeftoverNotices({ notices }: { notices: LeftoverNoticeDTO[] }) {
                             type="button"
                             disabled={busy}
                             onClick={() => dismiss(notice)}
-                            className={actionButton({ variant: 'ghost' })}
+                            className={button({ variant: 'ghost' })}
                         >
                             Ablehnen
                         </button>

@@ -259,7 +259,7 @@ export function ActiveSessionsCard() {
                 <div className={css({ mt: '5' })}>
                     <Button
                         type="button"
-                        variant="secondary"
+                        variant="outline"
                         onClick={handleRevokeAll}
                         disabled={isPending}
                     >

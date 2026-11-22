@@ -253,7 +253,7 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
                     {lists?.length === 0 && (
                         <Button
                             type="button"
-                            variant="secondary"
+                            variant="outline"
                             disabled={busy}
                             onClick={() => void reloadLists()}
                         >
@@ -263,7 +263,7 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
                     {connected && (
                         <Button
                             type="button"
-                            variant="secondary"
+                            variant="outline"
                             disabled={busy}
                             onClick={() => {
                                 setEditing(true);

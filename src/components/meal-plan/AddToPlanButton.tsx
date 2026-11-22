@@ -8,16 +8,25 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { addPlanEntries, getPlanContext, type PlanContext } from '@app/app/plan/actions';
 import { Button } from '@app/components/atoms/Button';
+import {
+    button,
+    chip,
+    fieldLabel,
+    iconButton,
+    sheet,
+    sheetOverlay,
+} from '@app/components/atoms/recipes';
 import { useToastContext } from '@app/components/providers/ToastProvider';
+import { ServingsStepper } from '@app/components/ui/ServingsStepper';
 import { defaultServings, slotLabel } from '@app/lib/meal-plan/slots';
 import { shortDate, weekNumber, weekParam, weekdayShort } from '@app/lib/meal-plan/view';
 import { addDays, weekDays } from '@app/lib/meal-plan/week';
 
+
 import { css, cx } from 'styled-system/css';
 
-import { ServingsStepper, TimeField } from './FormParts';
+import { TimeField } from './FormParts';
 import { HouseholdPrompt } from './HouseholdPrompt';
-import { actionButton, chip, fieldLabel, iconButton, overlay, sheet } from './styles';
 
 const OPEN_PARAM = 'zumPlan';
 
@@ -59,8 +68,8 @@ export function AddToPlanButton({ recipe, isAuthenticated }: AddToPlanButtonProp
                 </Button>
             </Dialog.Trigger>
             <Dialog.Portal>
-                <Dialog.Overlay className={overlay} />
-                <Dialog.Content className={sheet} aria-describedby={undefined}>
+                <Dialog.Overlay className={sheetOverlay} />
+                <Dialog.Content className={sheet()} aria-describedby={undefined}>
                     {open && <AddToPlanBody recipe={recipe} onDone={() => setOpen(false)} />}
                 </Dialog.Content>
             </Dialog.Portal>
@@ -159,7 +168,7 @@ function AddToPlanBody({
                     {recipe.title}
                 </p>
             </div>
-            <Dialog.Close className={actionButton({ variant: 'ghost' })} aria-label="Schließen">
+            <Dialog.Close className={button({ variant: 'ghost' })} aria-label="Schließen">
                 <X size={18} />
             </Dialog.Close>
         </div>
@@ -211,7 +220,7 @@ function AddToPlanBody({
                     <span className={cx(fieldLabel, css({ flex: 1 }))}>Tag</span>
                     <button
                         type="button"
-                        className={iconButton}
+                        className={iconButton()}
                         aria-label="Vorherige Woche"
                         onClick={() => load(addDays(weekStart, -7))}
                     >
@@ -229,7 +238,7 @@ function AddToPlanBody({
                     </span>
                     <button
                         type="button"
-                        className={iconButton}
+                        className={iconButton()}
                         aria-label="Nächste Woche"
                         onClick={() => load(addDays(weekStart, 7))}
                     >
@@ -364,7 +373,7 @@ function AddToPlanBody({
             )}
             <button
                 type="button"
-                className={cx(actionButton({ variant: 'primary' }), css({ minH: '48px' }))}
+                className={cx(button({ variant: 'primary' }), css({ minH: '48px' }))}
                 disabled={busy || !slot || !effectiveTime}
                 onClick={submit}
             >

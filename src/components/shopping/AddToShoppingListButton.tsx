@@ -169,7 +169,7 @@ export function AddToShoppingListButton({
             }}
         >
             <Dialog.Trigger asChild>
-                <Button variant="secondary" size="sm" data-testid="add-to-shopping-list">
+                <Button variant="outline" size="sm" data-testid="add-to-shopping-list">
                     <ShoppingBasket size={16} aria-hidden="true" />
                     Auf die Einkaufsliste
                 </Button>

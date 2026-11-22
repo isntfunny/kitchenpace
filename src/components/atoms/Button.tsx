@@ -2,88 +2,59 @@
 
 import * as React from 'react';
 
-import { css } from 'styled-system/css';
+import { cx } from 'styled-system/css';
+
+import { button, iconButton } from './recipes';
+
+type ButtonVariants = NonNullable<Parameters<typeof button>[0]>;
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'ghost';
-    size?: 'sm' | 'md' | 'lg';
+    variant?: ButtonVariants['variant'];
+    size?: ButtonVariants['size'];
+    /** Full width */
+    block?: boolean;
     children: React.ReactNode;
 }
 
-export function Button({ variant = 'primary', size = 'md', children, ...props }: ButtonProps) {
-    const variantStyles = {
-        primary: css.raw({
-            bg: 'primary',
-            color: 'white',
-            _hover: {
-                bg: 'brand.primary-dark',
-            },
-        }),
-        secondary: css.raw({
-            bg: 'transparent',
-            color: 'text',
-            border: '1px solid',
-            borderColor: 'border',
-            _dark: {
-                borderColor: 'rgba(255,255,255,0.18)',
-            },
-            _hover: {
-                bg: 'accent.soft',
-                borderColor: 'primary',
-                color: 'primary',
-            },
-        }),
-        ghost: css.raw({
-            bg: 'transparent',
-            color: 'text',
-            _hover: {
-                bg: 'background',
-            },
-        }),
-    };
-
-    const sizeStyles = {
-        sm: css.raw({
-            px: '3',
-            py: '1.5',
-            fontSize: 'sm',
-        }),
-        md: css.raw({
-            px: '4',
-            py: '2',
-            fontSize: 'md',
-        }),
-        lg: css.raw({
-            px: '6',
-            py: '3',
-            fontSize: 'lg',
-        }),
-    };
-
+/** Text button of the design system (recipe `button`). */
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+    { variant, size, block, className, children, ...props },
+    ref,
+) {
     return (
         <button
-            className={css(
-                {
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '2',
-                    fontWeight: '500',
-                    fontFamily: 'body',
-                    transition: 'all 150ms ease-in-out',
-                    cursor: 'pointer',
-                    borderRadius: 'md',
-                    _disabled: {
-                        opacity: 0.5,
-                        cursor: 'not-allowed',
-                    },
-                },
-                variantStyles[variant],
-                sizeStyles[size],
-            )}
+            ref={ref}
+            className={cx(button({ variant, size, block }), className)}
             {...props}
         >
             {children}
         </button>
     );
+});
+
+type IconButtonVariants = NonNullable<Parameters<typeof iconButton>[0]>;
+
+interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    /** Required: the button has no visible text */
+    'aria-label': string;
+    variant?: IconButtonVariants['variant'];
+    size?: IconButtonVariants['size'];
+    children: React.ReactNode;
 }
+
+/** Round button with only an icon (recipe `iconButton`). */
+export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
+    { variant, size, className, type = 'button', children, ...props },
+    ref,
+) {
+    return (
+        <button
+            ref={ref}
+            type={type}
+            className={cx(iconButton({ variant, size }), className)}
+            {...props}
+        >
+            {children}
+        </button>
+    );
+});

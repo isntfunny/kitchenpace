@@ -9,12 +9,12 @@ import {
     sharePlanWeek,
     type PlanShareState,
 } from '@app/app/plan/share-actions';
+import { button, fieldLabel, input } from '@app/components/atoms/recipes';
 
 import { css, cx } from 'styled-system/css';
 
 import { muted } from './CopyPanel';
 import { Switch } from './FormParts';
-import { actionButton, fieldLabel, input } from './styles';
 import type { PlanWeekData } from './types';
 import { usePlanAction } from './usePlanAction';
 
@@ -119,7 +119,7 @@ export function ShareWeek({ data }: { data: PlanWeekData }) {
                 {notesSwitch}
                 <button
                     type="button"
-                    className={actionButton({ variant: 'primary' })}
+                    className={button({ variant: 'primary' })}
                     onClick={() => share()}
                     disabled={busy}
                 >
@@ -145,22 +145,14 @@ export function ShareWeek({ data }: { data: PlanWeekData }) {
                         onFocus={(event) => event.target.select()}
                         className={cx(input, css({ flex: 1, minW: 0 }))}
                     />
-                    <button
-                        type="button"
-                        className={actionButton()}
-                        onClick={() => copy(state.token)}
-                    >
+                    <button type="button" className={button()} onClick={() => copy(state.token)}>
                         {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
                         {copied ? 'Kopiert' : 'Kopieren'}
                     </button>
                 </div>
             </div>
             {canSystemShare && (
-                <button
-                    type="button"
-                    className={actionButton()}
-                    onClick={() => systemShare(state.token)}
-                >
+                <button type="button" className={button()} onClick={() => systemShare(state.token)}>
                     <Share2 size={16} aria-hidden /> Teilen …
                 </button>
             )}
@@ -182,17 +174,12 @@ export function ShareWeek({ data }: { data: PlanWeekData }) {
                 Änderungen an Notizen oder Mahlzeitennamen erscheinen erst nach erneuter Prüfung.
             </p>
             <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
-                <button
-                    type="button"
-                    className={actionButton()}
-                    onClick={() => share()}
-                    disabled={busy}
-                >
+                <button type="button" className={button()} onClick={() => share()} disabled={busy}>
                     <RefreshCw size={16} aria-hidden /> Erneut prüfen
                 </button>
                 <button
                     type="button"
-                    className={actionButton()}
+                    className={button()}
                     onClick={() => share(true)}
                     disabled={busy}
                 >
@@ -200,7 +187,7 @@ export function ShareWeek({ data }: { data: PlanWeekData }) {
                 </button>
                 <button
                     type="button"
-                    className={actionButton({ variant: 'ghost' })}
+                    className={button({ variant: 'ghost' })}
                     onClick={revoke}
                     disabled={busy}
                 >

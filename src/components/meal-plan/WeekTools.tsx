@@ -21,15 +21,16 @@ import {
     previewPlanTemplate,
     savePlanTemplate,
 } from '@app/app/plan/edit-actions';
+import { button, fieldLabel, input } from '@app/components/atoms/recipes';
+import { Sheet } from '@app/components/ui/Sheet';
 import { weekdayLong } from '@app/lib/meal-plan/view';
 import { addDays } from '@app/lib/meal-plan/week';
+
 
 import { css, cx } from 'styled-system/css';
 
 import { CopyPanel, DaySelect, muted, resultMessage, slotLabelFor, usePreview } from './CopyPanel';
 import { ShareWeek } from './ShareWeek';
-import { SheetFrame } from './SheetFrame';
-import { actionButton, fieldLabel, input } from './styles';
 import type { PlanWeekData } from './types';
 import { usePlanAction } from './usePlanAction';
 
@@ -69,7 +70,7 @@ export function WeekTools({ data }: { data: PlanWeekData }) {
     return (
         <>
             <DropdownMenu.Root>
-                <DropdownMenu.Trigger className={actionButton()}>
+                <DropdownMenu.Trigger className={button()}>
                     Woche <ChevronDown size={16} aria-hidden />
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
@@ -100,7 +101,7 @@ export function WeekTools({ data }: { data: PlanWeekData }) {
                     </DropdownMenu.Content>
                 </DropdownMenu.Portal>
             </DropdownMenu.Root>
-            <SheetFrame
+            <Sheet
                 open={!!tool}
                 onOpenChange={(open) => !open && setTool(null)}
                 title={tool ? titles[tool] : ''}
@@ -111,7 +112,7 @@ export function WeekTools({ data }: { data: PlanWeekData }) {
                 {tool === 'save' && <SaveTemplate data={data} onDone={() => setTool(null)} />}
                 {tool === 'apply' && <ApplyTemplate data={data} onDone={() => setTool(null)} />}
                 {tool === 'share' && <ShareWeek data={data} />}
-            </SheetFrame>
+            </Sheet>
         </>
     );
 }
@@ -229,7 +230,7 @@ function SaveTemplate({ data, onDone }: { data: PlanWeekData; onDone: () => void
             </p>
             <button
                 type="submit"
-                className={actionButton({ variant: 'primary' })}
+                className={button({ variant: 'primary' })}
                 disabled={busy || !name.trim()}
             >
                 Speichern
@@ -329,7 +330,7 @@ function ApplyTemplate({ data, onDone }: { data: PlanWeekData; onDone: () => voi
                         <button
                             type="button"
                             aria-label={`Vorlage „${template.name}“ löschen`}
-                            className={actionButton({ variant: 'ghost' })}
+                            className={button({ variant: 'ghost' })}
                             disabled={busy}
                             onClick={async () => {
                                 if (!(await call(() => deletePlanTemplate(template.id)))) return;

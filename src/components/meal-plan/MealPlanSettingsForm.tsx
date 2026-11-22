@@ -4,6 +4,8 @@ import { Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useId, useState, useSyncExternalStore } from 'react';
 
 import { savePlanSettings, saveWeekSlots } from '@app/app/plan/actions';
+import { button, fieldLabel, input } from '@app/components/atoms/recipes';
+import { ServingsStepper } from '@app/components/ui/ServingsStepper';
 import {
     customSlotKey,
     isFixedSlot,
@@ -13,10 +15,11 @@ import {
 } from '@app/lib/meal-plan/slots';
 import { weekdayNameLong } from '@app/lib/meal-plan/view';
 
+
 import { css, cx } from 'styled-system/css';
 
-import { ServingsStepper, Switch } from './FormParts';
-import { actionButton, fieldLabel, input } from './styles';
+import { Switch } from './FormParts';
+
 
 export interface MealPlanSettingsValues {
     householdSize: number | null;
@@ -245,7 +248,7 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                     <button
                         type="button"
                         className={cx(
-                            actionButton({ variant: 'ghost' }),
+                            button({ variant: 'ghost' }),
                             css({ alignSelf: 'flex-start' }),
                         )}
                         onClick={() => set('timezone', browserZone)}
@@ -327,7 +330,7 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                             ) : (
                                 <button
                                     type="button"
-                                    className={actionButton({ variant: 'ghost' })}
+                                    className={button({ variant: 'ghost' })}
                                     onClick={() =>
                                         setSlots((current) =>
                                             current.filter((s) => s.key !== slot.key),
@@ -388,7 +391,7 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                     />
                     <button
                         type="button"
-                        className={actionButton()}
+                        className={button()}
                         onClick={addSlot}
                         disabled={!newName.trim() || slots.length >= 12}
                     >
@@ -399,7 +402,7 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                     <button
                         type="button"
                         className={cx(
-                            actionButton({ variant: 'ghost' }),
+                            button({ variant: 'ghost' }),
                             css({ alignSelf: 'flex-start' }),
                         )}
                         onClick={() => {
@@ -525,11 +528,7 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                     borderColor: 'border.muted',
                 })}
             >
-                <button
-                    type="submit"
-                    className={actionButton({ variant: 'primary' })}
-                    disabled={busy}
-                >
+                <button type="submit" className={button({ variant: 'primary' })} disabled={busy}>
                     Speichern
                 </button>
                 {status && (

@@ -3,11 +3,12 @@
 import { useEffect, useId, useState } from 'react';
 
 import type { PlanActionResult } from '@app/app/plan/run';
+import { button, fieldLabel, input } from '@app/components/atoms/recipes';
 import { shortDate, weekdayLong, weekdayShort } from '@app/lib/meal-plan/view';
+
 
 import { css } from 'styled-system/css';
 
-import { actionButton, fieldLabel, input } from './styles';
 import type { PlanWeekData } from './types';
 
 // Shared parts of the week tools (KUC-101): conflict preview and the copy confirmation.
@@ -134,7 +135,7 @@ export function CopyPanel({
             )}
             <button
                 type="button"
-                className={actionButton({ variant: 'primary' })}
+                className={button({ variant: 'primary' })}
                 onClick={() => onConfirm(mode)}
                 disabled={busy}
             >

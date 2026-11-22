@@ -6,13 +6,14 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { importSharedPlan, previewSharedPlanImport } from '@app/app/plan/share-actions';
+import { button, chip } from '@app/components/atoms/recipes';
+import { Sheet } from '@app/components/ui/Sheet';
 import { weekNumber, weekParam, weekRangeLabel } from '@app/lib/meal-plan/view';
+
 
 import { css } from 'styled-system/css';
 
 import { CopyPanel, resultMessage, usePreview } from './CopyPanel';
-import { SheetFrame } from './SheetFrame';
-import { actionButton, chip } from './styles';
 import { usePlanAction } from './usePlanAction';
 
 /** "In meinen Plan übernehmen" on a shared week (KUC-110). */
@@ -33,7 +34,7 @@ export function ImportSharedWeek({
         return (
             <Link
                 href={`/auth/signin?callbackUrl=${encodeURIComponent(`/plan/shared/${token}`)}`}
-                className={actionButton({ variant: 'primary' })}
+                className={button({ variant: 'primary' })}
             >
                 <CalendarPlus size={16} aria-hidden /> Anmelden und übernehmen
             </Link>
@@ -42,14 +43,14 @@ export function ImportSharedWeek({
         <>
             <button
                 type="button"
-                className={actionButton({ variant: 'primary' })}
+                className={button({ variant: 'primary' })}
                 onClick={() => setOpen(true)}
             >
                 <CalendarPlus size={16} aria-hidden /> In meinen Plan übernehmen
             </button>
-            <SheetFrame open={open} onOpenChange={setOpen} title="In meinen Plan übernehmen">
+            <Sheet open={open} onOpenChange={setOpen} title="In meinen Plan übernehmen">
                 {open && <ImportBody token={token} targets={targets} slotLabels={slotLabels} />}
-            </SheetFrame>
+            </Sheet>
         </>
     );
 }

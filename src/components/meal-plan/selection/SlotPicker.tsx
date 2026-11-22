@@ -3,11 +3,11 @@
 import { CalendarDays, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
+import { chip } from '@app/components/atoms/recipes';
 import { weekdayShort } from '@app/lib/meal-plan/view';
 
-import { css, cx } from 'styled-system/css';
 
-import { chip } from '../styles';
+import { css, cx } from 'styled-system/css';
 
 import { slotSummary } from './selection-state';
 import type { WeekSelection } from './useWeekSelection';

@@ -13,15 +13,16 @@ import {
 } from 'react';
 
 import { movePlanEntry, swapPlanCells } from '@app/app/plan/edit-actions';
+import { button } from '@app/components/atoms/recipes';
+import { Sheet } from '@app/components/ui/Sheet';
 import type { DishMarker } from '@app/lib/meal-plan/view';
 import { cellKey, weekdayShort } from '@app/lib/meal-plan/view';
+
 
 import { css, cx } from 'styled-system/css';
 
 import { DishCard } from './DishCard';
 import { EntrySheet } from './EntrySheet';
-import { SheetFrame } from './SheetFrame';
-import { actionButton } from './styles';
 import { dishesIn, type Cell } from './TargetPicker';
 import type { PlanDish, PlanDisplay, PlanWeekData } from './types';
 import { usePlanAction } from './usePlanAction';
@@ -203,7 +204,7 @@ function DropDialog({
 }) {
     const taken = pending ? dishesIn(data.dishes, pending.target, pending.dish.id) : [];
     return (
-        <SheetFrame
+        <Sheet
             open={!!pending}
             onOpenChange={(open) => !open && onClose()}
             title="Mahlzeit ist schon belegt"
@@ -218,7 +219,7 @@ function DropDialog({
                     <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap' })}>
                         <button
                             type="button"
-                            className={actionButton({ variant: 'ghost' })}
+                            className={button({ variant: 'ghost' })}
                             onClick={onClose}
                         >
                             Abbrechen
@@ -227,7 +228,7 @@ function DropDialog({
                         {!pending.copy && (
                             <button
                                 type="button"
-                                className={actionButton()}
+                                className={button()}
                                 onClick={() => onSwap(pending)}
                             >
                                 <ArrowRightLeft size={16} aria-hidden /> Tauschen
@@ -235,7 +236,7 @@ function DropDialog({
                         )}
                         <button
                             type="button"
-                            className={actionButton({ variant: 'primary' })}
+                            className={button({ variant: 'primary' })}
                             onClick={() => onAdd(pending)}
                         >
                             Dazulegen
@@ -243,7 +244,7 @@ function DropDialog({
                     </div>
                 </div>
             )}
-        </SheetFrame>
+        </Sheet>
     );
 }
 

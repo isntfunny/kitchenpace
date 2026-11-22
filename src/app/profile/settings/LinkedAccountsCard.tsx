@@ -185,7 +185,7 @@ export function LinkedAccountsCard({
                                 </Button>
                             ) : (
                                 <Button
-                                    variant="secondary"
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => handleLink(provider.id)}
                                     disabled={isLoading}

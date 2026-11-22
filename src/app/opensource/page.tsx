@@ -180,13 +180,13 @@ export default function OpenSourcePage() {
                         style={
                             activeGroup === null
                                 ? {
-                                      background: 'var(--colors-palette-orange)',
+                                      background: 'var(--colors-palette\\.orange)',
                                       color: '#fff',
-                                      borderColor: 'var(--colors-palette-orange)',
+                                      borderColor: 'var(--colors-palette\\.orange)',
                                   }
                                 : {
                                       background: 'transparent',
-                                      color: 'var(--colors-text-muted)',
+                                      color: 'var(--colors-text\\.muted)',
                                       borderColor: 'var(--colors-border)',
                                   }
                         }
@@ -210,13 +210,13 @@ export default function OpenSourcePage() {
                             style={
                                 activeGroup === group
                                     ? {
-                                          background: 'var(--colors-palette-orange)',
+                                          background: 'var(--colors-palette\\.orange)',
                                           color: '#fff',
-                                          borderColor: 'var(--colors-palette-orange)',
+                                          borderColor: 'var(--colors-palette\\.orange)',
                                       }
                                     : {
                                           background: 'transparent',
-                                          color: 'var(--colors-text-muted)',
+                                          color: 'var(--colors-text\\.muted)',
                                           borderColor: 'var(--colors-border)',
                                       }
                             }

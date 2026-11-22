@@ -157,7 +157,7 @@ export function Avatar({
                             justifyContent: 'center',
                         })}
                     >
-                        <User size={Math.round(px * 0.45)} color="var(--colors-text-muted)" />
+                        <User size={Math.round(px * 0.45)} color="var(--colors-text\.muted)" />
                     </div>
                 ) : fallbackType === 'icon' ? (
                     <div

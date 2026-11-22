@@ -111,7 +111,7 @@ export function SelectionBar({ picks, tabs, onApply, applying, error }: Selectio
                         className={css({
                             fontSize: 'xs',
                             fontWeight: '600',
-                            color: tab.full ? 'status.success' : 'text-muted',
+                            color: tab.full ? 'status.success' : 'text.muted',
                             whiteSpace: 'nowrap',
                         })}
                     >

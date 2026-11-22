@@ -103,7 +103,7 @@ export default function ActivateClient({ error }: ActivateClientProps) {
                         <>
                             <XCircle
                                 size={64}
-                                color="var(--colors-status-error, #ef4444)"
+                                color="var(--colors-status\.error)"
                                 className={css({ marginBottom: '4' })}
                             />
                             <h1

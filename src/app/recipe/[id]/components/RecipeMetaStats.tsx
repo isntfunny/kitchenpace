@@ -46,7 +46,7 @@ export function RecipeMetaStats({ prepTime, cookTime }: RecipeMetaStatsProps) {
             })}
         >
             <div className={statStyle}>
-                <Clock size={16} color="var(--colors-palette-orange, #e07b53)" />
+                <Clock size={16} color="var(--colors-palette\.orange)" />
                 <span className={labelStyle}>Gesamt</span>
                 <span className={valueStyle}>{totalTime} Min.</span>
             </div>

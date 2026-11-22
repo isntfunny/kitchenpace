@@ -252,7 +252,7 @@ export function InboxItemCard({
                                 fontWeight: emphasized ? '700' : '500',
                                 fontSize: dense ? 'xs' : 'sm',
                                 lineHeight: '1.3',
-                                color: emphasized ? 'text' : 'text-muted',
+                                color: emphasized ? 'text' : 'text.muted',
                                 truncate: true,
                             })}
                         >
@@ -264,7 +264,7 @@ export function InboxItemCard({
                                 whiteSpace: 'nowrap',
                                 fontWeight: emphasized ? '600' : '400',
                                 flexShrink: 0,
-                                color: emphasized ? undefined : 'text-muted',
+                                color: emphasized ? undefined : 'text.muted',
                             })}
                             style={emphasized ? { color: iconBg } : undefined}
                         >

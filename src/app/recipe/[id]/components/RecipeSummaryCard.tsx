@@ -194,14 +194,14 @@ export function RecipeSummaryCard({
                                     size={22}
                                     fill={
                                         value <= activeStarValue
-                                            ? 'var(--colors-palette-gold, #d9ad36)'
+                                            ? 'var(--colors-palette\\.gold)'
                                             : 'none'
                                     }
                                     className={css({
                                         color:
                                             value <= activeStarValue
                                                 ? 'palette.gold'
-                                                : 'text-muted',
+                                                : 'text.muted',
                                         opacity: value <= activeStarValue ? 1 : 0.35,
                                     })}
                                 />

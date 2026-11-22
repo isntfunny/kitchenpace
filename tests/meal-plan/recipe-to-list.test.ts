@@ -133,6 +133,7 @@ function seed() {
             { id: 'mon', userId: 'alice', recipeId: 'pasta', servings: 4 },
             { id: 'tue', userId: 'alice', recipeId: 'soup', servings: 4 },
             { id: 'foreign', userId: 'bob', recipeId: 'pasta', servings: 2 },
+            { id: 'wed', userId: 'alice', recipeId: 'pasta', servings: 2, leftoverOfId: 'mon' },
         ],
     });
 }
@@ -228,6 +229,16 @@ test('two lines of one ingredient in a plan entry add up under one source', asyn
     assert.equal(sources.length, 1);
     assert.equal(sources[0].quantity, 6);
     assert.equal(db.tables.shoppingHistory.filter((h: any) => h.itemKey === 'i:onion').length, 1);
+});
+
+test('leftover entries need no shopping: their original has the servings', async () => {
+    const db = seed();
+    const result = await addMealPlanEntriesToList(db, 'alice', ['mon', 'wed']);
+    assert.equal(item(db, 'i:flour').quantity, 400);
+    assert.deepEqual(result.skipped, []);
+
+    const only = await addMealPlanEntriesToList(db, 'alice', ['wed']);
+    assert.equal(only.added, 0);
 });
 
 test('the same plan entry never adds its amounts twice', async () => {

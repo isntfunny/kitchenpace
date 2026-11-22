@@ -130,16 +130,19 @@ export async function loadShoppingPlanStatus(
         covered.get(source.mealPlanRecipeId)!.add(ingredientId);
     }
 
-    const entries: PlanEntryInput[] = week.entries.map((entry) => ({
-        id: entry.id,
-        date: formatIsoDate(entry.date),
-        recipeId: entry.recipeId,
-        title: entry.recipe.title,
-        imageKey: entry.recipe.imageKey ?? null,
-        servings: entry.servings,
-        status: entry.status,
-        recipeAvailable: entry.recipeAvailable,
-    }));
+    // Leftover meals (KUC-101) need no shopping: their original has the doubled servings
+    const entries: PlanEntryInput[] = week.entries
+        .filter((entry) => !entry.leftoverOfId)
+        .map((entry) => ({
+            id: entry.id,
+            date: formatIsoDate(entry.date),
+            recipeId: entry.recipeId,
+            title: entry.recipe.title,
+            imageKey: entry.recipe.imageKey ?? null,
+            servings: entry.servings,
+            status: entry.status,
+            recipeAvailable: entry.recipeAvailable,
+        }));
     return { ...computePlanStatus(entries, linesByRecipe, covered, today), startDate: start };
 }
 

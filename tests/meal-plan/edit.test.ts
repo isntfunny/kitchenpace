@@ -24,6 +24,8 @@ import { builtInMarkers } from '../../src/lib/meal-plan/view';
 
 import { createFakeDb } from './fake-db';
 
+type Row = Record<string, any>;
+
 const day = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
 
 const source = (id: string, extra: Partial<CopySource> = {}): CopySource => ({
@@ -213,7 +215,7 @@ test('cookForTwoMeals doubles the servings; the leftover is eaten without a seco
         slot: 'LUNCH',
     });
     assert.equal(db.tables.mealPlanRecipe[0].servings, 4);
-    const leftover = db.tables.mealPlanRecipe.find((e) => e.id === result.leftoverId)!;
+    const leftover = db.tables.mealPlanRecipe.find((e: Row) => e.id === result.leftoverId)!;
     assert.equal(leftover.leftoverOfId, 'e1');
     assert.equal(leftover.servings, 2);
 
@@ -255,10 +257,10 @@ test('move, copy and swap entries', async () => {
         a: { date: '2026-11-23', slot: 'DINNER' },
         b: { date: '2026-11-25', slot: 'LUNCH' },
     });
-    const original = db.tables.mealPlanRecipe.find((e) => e.id === 'e1')!;
+    const original = db.tables.mealPlanRecipe.find((e: Row) => e.id === 'e1')!;
     assert.equal(original.mealType, 'LUNCH');
     assert.equal(original.date.toISOString().slice(0, 10), '2026-11-25');
-    const copied = db.tables.mealPlanRecipe.find((e) => e.id === copy.id)!;
+    const copied = db.tables.mealPlanRecipe.find((e: Row) => e.id === copy.id)!;
     assert.equal(copied.mealType, 'DINNER');
     assert.equal(copied.date.toISOString().slice(0, 10), '2026-11-23');
 
@@ -302,9 +304,9 @@ test('copying a week carries leftover links and leaves out unavailable recipes',
     });
     assert.equal(result.created, 2);
     assert.equal(result.skipped, 1);
-    const copies = db.tables.mealPlanRecipe.filter((e) => e.date >= day('2026-11-30'));
-    const origin = copies.find((e) => !e.leftoverOfId)!;
-    const rest = copies.find((e) => e.leftoverOfId)!;
+    const copies = db.tables.mealPlanRecipe.filter((e: Row) => e.date >= day('2026-11-30'));
+    const origin = copies.find((e: Row) => !e.leftoverOfId)!;
+    const rest = copies.find((e: Row) => e.leftoverOfId)!;
     assert.equal(origin.status, 'PLANNED');
     assert.equal(rest.leftoverOfId, origin.id);
     assert.notEqual(rest.id, leftoverId);
@@ -353,7 +355,10 @@ test('undo of deleting an origin relinks its leftovers', async () => {
     const snapshot = await deleteMealPlanEntry(db as any, 'alice', 'e1');
     assert.deepEqual((snapshot as { leftoverIds?: string[] }).leftoverIds, [leftoverId]);
     // The database sets the link to null on delete
-    db.tables.mealPlanRecipe.find((e) => e.id === leftoverId)!.leftoverOfId = null;
+    db.tables.mealPlanRecipe.find((e: Row) => e.id === leftoverId)!.leftoverOfId = null;
     await restoreMealPlanEntry(db as any, 'alice', snapshot);
-    assert.equal(db.tables.mealPlanRecipe.find((e) => e.id === leftoverId)!.leftoverOfId, 'e1');
+    assert.equal(
+        db.tables.mealPlanRecipe.find((e: Row) => e.id === leftoverId)!.leftoverOfId,
+        'e1',
+    );
 });

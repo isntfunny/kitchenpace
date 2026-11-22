@@ -62,11 +62,14 @@ export async function addMealPlanEntriesToList(
 ): Promise<AddToListResult> {
     const owner = userIdSchema.parse(userId);
     const ids = [...new Set(z.array(idSchema).min(1).max(200).parse(entryIds))];
-    const entries = await db.mealPlanRecipe.findMany({
+    const found = await db.mealPlanRecipe.findMany({
         where: { id: { in: ids }, userId: owner },
-        select: { id: true, recipeId: true, servings: true },
+        select: { id: true, recipeId: true, servings: true, leftoverOfId: true },
     });
-    if (entries.length !== ids.length) throw notFound('Eintrag');
+    if (found.length !== ids.length) throw notFound('Eintrag');
+    // Leftover meals (KUC-101) are covered by the doubled servings of their original
+    const entries = found.filter((entry) => !entry.leftoverOfId);
+    if (entries.length === 0) return { added: 0, itemIds: [], skipped: [] };
     const recipes = await loadRecipeLines(
         db,
         owner,

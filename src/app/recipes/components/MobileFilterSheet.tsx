@@ -9,7 +9,7 @@ import { css } from 'styled-system/css';
 
 import type { CategoryOption } from '../actions';
 
-import { FilterSidebar } from './FilterSidebar';
+import { FilterSidebar, type FilterSectionId } from './FilterSidebar';
 import type { RecipeSearchFacets } from './useRecipeSearch';
 
 type FilterOptions = {
@@ -28,6 +28,7 @@ type MobileFilterSheetProps = {
     loading: boolean;
     onFiltersChange: (next: Partial<RecipeFilterSearchParams>) => void;
     onReset: () => void;
+    hiddenSections?: FilterSectionId[];
 };
 
 export function MobileFilterSheet({
@@ -40,6 +41,7 @@ export function MobileFilterSheet({
     loading,
     onFiltersChange,
     onReset,
+    hiddenSections,
 }: MobileFilterSheetProps) {
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -169,6 +171,7 @@ export function MobileFilterSheet({
                                     onFiltersChange={onFiltersChange}
                                     loading={loading}
                                     embedded
+                                    hiddenSections={hiddenSections}
                                 />
                             </div>
                         </motion.div>

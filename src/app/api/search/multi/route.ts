@@ -20,6 +20,9 @@ type RecipeHit = {
     rating: number;
     imageKey: string | null;
     description: string;
+    /** For the meal kind rule of the slot search (KUC-126) */
+    categorySlugs: string[];
+    tags: string[];
 };
 
 type SuggestItem = { name: string; count: number };
@@ -140,6 +143,8 @@ export async function GET(request: NextRequest) {
                         rating: Number(doc!.rating ?? 0),
                         imageKey: (doc!.imageKey as string) ?? null,
                         description: (doc!.description as string) || '',
+                        categorySlugs: (doc!.categorySlugs as string[] | undefined) ?? [],
+                        tags: (doc!.tags as string[] | undefined) ?? [],
                     })),
             );
         }

@@ -45,7 +45,7 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'feat',
             },
             {
-                text: '„Plan mir die Woche“ füllt freie Plätze mit Vorschlägen, die zu deinem Geschmack, zur Saison und zum Wochentag passen – du entscheidest, was übernommen wird.',
+                text: '„Plan mir die Woche“ öffnet jetzt eine Auswahl wie bei einer Kochbox: Gerichte wählen, Portionen anpassen, „Übernehmen“ verteilt sie auf die Woche.',
                 tag: 'feat',
             },
             {

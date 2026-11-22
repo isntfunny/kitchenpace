@@ -28,7 +28,8 @@ const DEFAULT_PAGE = 1;
 const DEFAULT_FILTER_MODE: RecipeFilterSearchParams['filterMode'] = 'and';
 const DEFAULT_SORT: RecipeSortOption = 'rating';
 
-export type RecipeSortOption = 'rating' | 'newest' | 'fastest' | 'popular' | 'taste';
+/** `week`: "Passt zu deiner Woche" in the week selection dialog (KUC-126) */
+export type RecipeSortOption = 'rating' | 'newest' | 'fastest' | 'popular' | 'taste' | 'week';
 
 export type RecipeFilterParams = {
     query?: string;
@@ -96,7 +97,14 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
     const limitValue = toNumber(params.get('limit'));
     const modeParam = params.get('mode');
     const sortParam = params.get('sort');
-    const validSorts: RecipeSortOption[] = ['rating', 'newest', 'fastest', 'popular', 'taste'];
+    const validSorts: RecipeSortOption[] = [
+        'rating',
+        'newest',
+        'fastest',
+        'popular',
+        'taste',
+        'week',
+    ];
     const sort = validSorts.includes(sortParam as RecipeSortOption)
         ? (sortParam as RecipeSortOption)
         : DEFAULT_SORT;

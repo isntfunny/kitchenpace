@@ -66,9 +66,7 @@ export interface PlanWeekData {
  * Extension points for later tickets; the view renders what it gets and
  * otherwise leaves the space empty:
  * - markers: status markers per entry id (freshness KUC-96, pantry KUC-107, start time KUC-109)
- * - suggestions: content per cell key `date|slot` ("Plan mir die Woche", KUC-113)
  */
 export interface PlanExtensions {
     markers?: Record<string, DishMarker[]>;
-    suggestions?: Record<string, React.ReactNode>;
 }

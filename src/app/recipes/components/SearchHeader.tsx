@@ -1,4 +1,5 @@
 import { LayoutGrid, List, Search, SlidersHorizontal, X } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
 import { PALETTE } from '@app/lib/palette';
@@ -7,6 +8,19 @@ import type { RecipeFilterSearchParams, RecipeSortOption } from '@app/lib/recipe
 import { css } from 'styled-system/css';
 
 import { ActiveFilters } from './ActiveFilters';
+
+export type SortChoice = { value: RecipeSortOption; label: string };
+
+/** Sorts of the recipe page; "Passt zu dir" only for logged-in users. */
+export function searchSortOptions(isLoggedIn: boolean): SortChoice[] {
+    return [
+        { value: 'rating', label: 'Beste Bewertung' },
+        { value: 'newest', label: 'Neueste' },
+        { value: 'fastest', label: 'Schnellste' },
+        { value: 'popular', label: 'Beliebteste' },
+        ...(isLoggedIn ? [{ value: 'taste' as const, label: 'Passt zu dir ✨' }] : []),
+    ];
+}
 
 type SearchHeaderProps = {
     filters: RecipeFilterSearchParams;
@@ -22,6 +36,13 @@ type SearchHeaderProps = {
     onFiltersChange: (next: Partial<RecipeFilterSearchParams>) => void;
     onReset: () => void;
     isLoggedIn?: boolean;
+    /** Heading; the week selection dialog shows the tab name (KUC-126) */
+    title?: string;
+    titleAs?: 'h1' | 'h2';
+    /** Default: searchSortOptions(isLoggedIn) */
+    sortOptions?: SortChoice[];
+    /** Extra content at the right of the title row */
+    headerExtra?: ReactNode;
 };
 
 export function SearchHeader({
@@ -37,8 +58,13 @@ export function SearchHeader({
     onViewModeChange,
     onFiltersChange,
     onReset,
-    isLoggedIn,
+    isLoggedIn = false,
+    title = 'Rezepte entdecken',
+    titleAs: Heading = 'h1',
+    sortOptions,
+    headerExtra,
 }: SearchHeaderProps) {
+    const sorts = sortOptions ?? searchSortOptions(isLoggedIn);
     const resultStatusText = loading
         ? 'Rezepte laden…'
         : totalResults > 0
@@ -73,7 +99,7 @@ export function SearchHeader({
                                 size={18}
                                 style={{ color: PALETTE.orange, flexShrink: 0 }}
                             />
-                            <h1
+                            <Heading
                                 className={css({
                                     fontSize: { base: 'lg', md: 'xl' },
                                     fontWeight: '800',
@@ -81,8 +107,8 @@ export function SearchHeader({
                                     color: 'text',
                                 })}
                             >
-                                Rezepte entdecken
-                            </h1>
+                                {title}
+                            </Heading>
                         </div>
                         <p className={css({ fontSize: 'xs', color: 'text-muted' })}>
                             {activeFilterCount > 0 ? `${activeFilterCount} Filter aktiv · ` : ''}
@@ -97,6 +123,7 @@ export function SearchHeader({
                             flexShrink: 0,
                         })}
                     >
+                        {headerExtra}
                         {activeFilterCount > 0 && (
                             <Button variant="ghost" size="sm" onClick={onReset}>
                                 Zurücksetzen
@@ -198,11 +225,11 @@ export function SearchHeader({
                             _focus: { borderColor: 'accent' },
                         })}
                     >
-                        <option value="rating">Beste Bewertung</option>
-                        <option value="newest">Neueste</option>
-                        <option value="fastest">Schnellste</option>
-                        <option value="popular">Beliebteste</option>
-                        {isLoggedIn && <option value="taste">Passt zu dir ✨</option>}
+                        {sorts.map((sort) => (
+                            <option key={sort.value} value={sort.value}>
+                                {sort.label}
+                            </option>
+                        ))}
                     </select>
 
                     <div className={css({ display: 'flex', gap: '1' })}>

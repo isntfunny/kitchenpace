@@ -1,4 +1,4 @@
-// "Plan mir die Woche" (KUC-113), "Nach Haltbarkeit ordnen" (KUC-96) and leftover hints
+// "Nach Haltbarkeit ordnen" (KUC-96) and leftover hints
 // (KUC-108) on the plan page: loads the week, runs the pure logic of `shared/meal-planning`
 // and returns plain DTOs. Nothing here writes to the plan except `applyShelfLifeOrder`,
 // which the user confirms first. Pass `prisma` as `db`.
@@ -16,15 +16,9 @@ import {
     type ShelfLifeInput,
     type ShelfLifeRecipe,
 } from '@shared/meal-planning/shelf-life';
-import {
-    suggestWeek,
-    swapSuggestion,
-    type SuggestWeekInput,
-    type WeekSuggestion,
-} from '@shared/meal-planning/suggest-week';
 import type { IsoDate, SlotRef } from '@shared/meal-planning/types';
 
-import { loadRecipeRows, toCandidates, type RankByTaste, type RecipeCard } from './candidates';
+import { loadRecipeRows, toCandidates, type RecipeCard } from './candidates';
 import {
     buildPlannedSlots,
     freshnessMarkers,
@@ -69,138 +63,6 @@ export async function loadWeekContext(
             status: entry.status,
         })),
     };
-}
-
-// ── "Plan mir die Woche" ────────────────────────────────────────────────────
-
-export interface SuggestionDTO extends SlotRef {
-    recipeId: string;
-    title: string;
-    slug: string;
-    imageKey: string | null;
-    totalTime: number;
-    reasons: string[];
-}
-
-export interface WeekSuggestionsDTO {
-    suggestions: SuggestionDTO[];
-    /** Empty slots without any remaining recipe */
-    unfilled: number;
-    /** Free slots of the week that the planner tried to fill */
-    freeSlots: number;
-}
-
-/** Stable seed per user and week: same week, same proposal (until the plan changes). */
-export function seedOf(text: string): number {
-    let hash = 2166136261;
-    for (let i = 0; i < text.length; i++) {
-        hash ^= text.charCodeAt(i);
-        hash = Math.imul(hash, 16777619);
-    }
-    return hash >>> 0;
-}
-
-async function buildSuggestInput(
-    db: Db,
-    userId: string,
-    ctx: WeekContext,
-    sets: readonly TimeSeasonSet[],
-    seedSalt = 0,
-    rank?: RankByTaste,
-): Promise<{ input: SuggestWeekInput; cards: Map<string, RecipeCard> }> {
-    const plannedIds = [...new Set(ctx.entries.map((entry) => entry.recipeId))];
-    const [{ rows, cards }, leftovers] = await Promise.all([
-        loadRecipeRows(db, userId, { includeIds: plannedIds, rank }),
-        getLeftoverHints(db, userId, ctx.today),
-    ]);
-    const candidates = toCandidates(rows, sets, ctx.householdSize);
-    const planned = new Set(plannedIds);
-    return {
-        cards,
-        input: {
-            slots: buildPlannedSlots(ctx.days, ctx.slotKeys, ctx.entries, { today: ctx.today }),
-            candidates,
-            plannedRecipes: candidates.filter((candidate) => planned.has(candidate.id)),
-            expiring: leftovers.flatMap((leftover) =>
-                leftover.expiresOn
-                    ? [
-                          {
-                              ingredientId: leftover.ingredientId,
-                              name: leftover.name,
-                              expiresOn: leftover.expiresOn,
-                          },
-                      ]
-                    : [],
-            ),
-            seed: seedOf(`${userId}:${ctx.startDate}`) + seedSalt,
-        },
-    };
-}
-
-export function toSuggestionDTO(
-    suggestion: WeekSuggestion,
-    cards: ReadonlyMap<string, RecipeCard>,
-): SuggestionDTO | null {
-    const card = cards.get(suggestion.recipeId);
-    if (!card) return null;
-    return {
-        date: suggestion.date,
-        slot: suggestion.slot,
-        recipeId: suggestion.recipeId,
-        title: card.title,
-        slug: card.slug,
-        imageKey: card.imageKey,
-        totalTime: card.totalTime,
-        reasons: suggestion.reasons,
-    };
-}
-
-export async function suggestForWeek(
-    db: Db,
-    userId: string,
-    startDate: IsoDate,
-    sets: readonly TimeSeasonSet[],
-    options: { reroll?: number; rank?: RankByTaste } = {},
-): Promise<WeekSuggestionsDTO> {
-    const ctx = await loadWeekContext(db, userId, startDate);
-    const { input, cards } = await buildSuggestInput(
-        db,
-        userId,
-        ctx,
-        sets,
-        options.reroll ?? 0,
-        options.rank,
-    );
-    const result = suggestWeek(input);
-    return {
-        suggestions: result.suggestions.flatMap((s) => {
-            const dto = toSuggestionDTO(s, cards);
-            return dto ? [dto] : [];
-        }),
-        unfilled: result.unfilled.length,
-        freeSlots: input.slots.filter((slot) => !slot.recipeId).length,
-    };
-}
-
-/** Next best recipe for one suggested slot; `null` if nothing is left. */
-export async function swapForWeek(
-    db: Db,
-    userId: string,
-    startDate: IsoDate,
-    sets: readonly TimeSeasonSet[],
-    current: readonly { date: IsoDate; slot: SlotRef['slot']; recipeId: string }[],
-    target: SlotRef,
-    rejectedRecipeIds: readonly string[],
-): Promise<SuggestionDTO | null> {
-    const ctx = await loadWeekContext(db, userId, startDate);
-    const { input, cards } = await buildSuggestInput(db, userId, ctx, sets);
-    const next = swapSuggestion(
-        input,
-        current.map((c) => ({ ...c, score: 0, reasons: [] })),
-        target,
-        { rejectedRecipeIds },
-    );
-    return next ? toSuggestionDTO(next, cards) : null;
 }
 
 // ── Freshness (KUC-96) ──────────────────────────────────────────────────────

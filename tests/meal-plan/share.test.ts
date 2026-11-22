@@ -180,12 +180,12 @@ test('"In meinen Plan übernehmen" copies published dishes without notes', async
 
     const result = await importSharedWeek(db as any, 'bob', { token, startDate: '2026-11-30' });
     assert.equal(result.created, 3);
-    const bobs = db.tables.mealPlanRecipe.filter((e) => e.userId === 'bob');
+    const bobs = db.tables.mealPlanRecipe.filter((e: Row) => e.userId === 'bob');
     assert.equal(bobs.length, 3);
-    assert.ok(bobs.every((e) => e.notes === null && e.recipeId !== 'secret'));
-    const origin = bobs.find((e) => e.servings === 4)!;
-    assert.equal(bobs.find((e) => e.leftoverOfId)!.leftoverOfId, origin.id);
-    const brunch = bobs.find((e) => e.recipeId === 'pancakes')!;
+    assert.ok(bobs.every((e: Row) => e.notes === null && e.recipeId !== 'secret'));
+    const origin = bobs.find((e: Row) => e.servings === 4)!;
+    assert.equal(bobs.find((e: Row) => e.leftoverOfId)!.leftoverOfId, origin.id);
+    const brunch = bobs.find((e: Row) => e.recipeId === 'pancakes')!;
     assert.equal(brunch.mealType, 'LUNCH');
     assert.equal(brunch.date.toISOString().slice(0, 10), '2026-12-06');
 });

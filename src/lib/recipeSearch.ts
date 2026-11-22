@@ -1,16 +1,21 @@
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import { RECIPE_FILTER_DEFAULT_LIMIT } from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
-import { paginate, resolveEffectiveSort, TASTE_POOL_SIZE } from '@app/lib/recipes/taste-ranking';
+import { rankedSearch } from '@app/lib/recipes/ranked-search';
+import {
+    knnRecipeIds,
+    loadExpiringStock,
+    loadGlobalMeanRating,
+    loadRankingRecipes,
+} from '@app/lib/recipes/ranking-features.server';
+import { resolveEffectiveSort } from '@app/lib/recipes/taste-ranking';
 import { loadTasteEmbedding, rankRecipeIdsByTaste } from '@app/lib/recipes/taste-ranking.server';
+import { buildRecipeBoolQuery, type RecipeSearchContext } from '@app/lib/recipeSearchQuery';
 import type { RecipeSearchFacets, RecipeSearchMeta, TermFacet } from '@app/lib/recipeSearchTypes';
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
 import { createLogger } from '@shared/logger';
-import {
-    buildRecipeTextQuery,
-    opensearchClient,
-    OPENSEARCH_INDEX,
-} from '@shared/opensearch/client';
+import { seasonOf, toBerlinDate } from '@shared/meal-planning/dates';
+import { opensearchClient, OPENSEARCH_INDEX } from '@shared/opensearch/client';
 
 const log = createLogger('recipeSearch');
 
@@ -70,51 +75,95 @@ const buildHistogramFacet = (agg: HistogramAggregation | undefined, interval: nu
 
 const SEMANTIC_MIN_WORD_COUNT = 4;
 
+/** Ids fetched for the ranked sorts (taste, week): kNN and scoring pick from these. */
+const RANKED_POOL_SIZE = 1000;
+
+/** Ranked order for "Passt zu dir" / "Passt zu deiner Woche" (KUC-126). */
+async function rankIds(
+    idsByRating: string[],
+    options: {
+        userId: string;
+        profile: number[] | null;
+        context?: RecipeSearchContext;
+        withReasons: boolean;
+    },
+): Promise<{ id: string; reason?: string }[]> {
+    const { userId, profile, context, withReasons } = options;
+    const week = context?.week ?? toBerlinDate(new Date());
+    try {
+        const [picksById, globalMean, expiring] = await Promise.all([
+            loadRankingRecipes(context?.pickIds ?? []),
+            loadGlobalMeanRating(),
+            context ? loadExpiringStock(userId, toBerlinDate(new Date())) : Promise.resolve([]),
+        ]);
+        return await rankedSearch(
+            {
+                idsByRating,
+                profile,
+                picks: (context?.pickIds ?? []).flatMap((id) => picksById.get(id) ?? []),
+                excludeIds: context?.excludeIds ?? [],
+                expiring,
+                season: seasonOf(week),
+                withReasons,
+                globalMean,
+            },
+            {
+                knn: knnRecipeIds,
+                load: (ids) => loadRankingRecipes(ids),
+                tasteFallback: (ids) =>
+                    rankRecipeIdsByTaste(userId, ids, { taste: profile ?? undefined }),
+            },
+        );
+    } catch (err) {
+        log.warn('Ranking failed, keeping rating order', {
+            error: err instanceof Error ? err.message : String(err),
+        });
+        return idsByRating.map((id) => ({ id }));
+    }
+}
+
+/** Recipe cards for the given ranked ids, in that order, with the ranking reason. */
+async function loadCards(order: { id: string; reason?: string }[]): Promise<RecipeCardData[]> {
+    if (order.length === 0) return [];
+    const response = await opensearchClient.search({
+        index: OPENSEARCH_INDEX,
+        body: { query: { ids: { values: order.map((o) => o.id) } }, size: order.length },
+    });
+    const byId = new Map(
+        ((response.body.hits?.hits ?? []) as Array<{ _source?: Record<string, unknown> }>)
+            .filter((hit) => hit._source)
+            .map((hit) => [hit._source!.id as string, mapDocumentToRecipeCard(hit._source!)]),
+    );
+    return order.flatMap(({ id, reason }) => {
+        const card = byId.get(id);
+        return card ? [reason ? { ...card, reason } : card] : [];
+    });
+}
+
 export async function queryRecipes(
     filters: RecipeFilterSearchParams,
     userId?: string | null,
+    context?: RecipeSearchContext,
 ): Promise<RecipeSearchResult> {
-    const {
-        query,
-        tags = [],
-        categories = [],
-        ingredients = [],
-        excludeIngredients = [],
-        difficulty = [],
-        minTotalTime,
-        maxTotalTime,
-        minPrepTime,
-        maxPrepTime,
-        minCookTime,
-        maxCookTime,
-        minRating,
-        minCookCount,
-        minStepCount,
-        maxStepCount,
-        minCalories,
-        maxCalories,
-        page = 1,
-        limit = RECIPE_FILTER_DEFAULT_LIMIT,
-        filterMode = 'and',
-        sort = 'rating',
-    } = filters;
+    const { query, page = 1, limit = RECIPE_FILTER_DEFAULT_LIMIT, sort = 'rating' } = filters;
 
     // "Passt zu dir" needs a logged-in user with a taste profile; otherwise fall back to popular.
+    // "Passt zu deiner Woche" also works without a profile (neutral taste).
     let tasteEmbedding: number[] | null = null;
-    if (sort === 'taste' && userId) {
+    if ((sort === 'taste' || sort === 'week') && userId) {
         try {
             tasteEmbedding = await loadTasteEmbedding(userId);
         } catch (err) {
-            log.warn('Loading taste profile failed, falling back to popular sort', {
+            log.warn('Loading taste profile failed', {
                 error: err instanceof Error ? err.message : String(err),
             });
         }
     }
     const effectiveSort = resolveEffectiveSort(sort, {
         isLoggedIn: !!userId,
-        hasTasteProfile: !!tasteEmbedding,
+        hasTasteProfile: sort === 'taste' ? !!tasteEmbedding : undefined,
     });
-    const isTasteSort = effectiveSort === 'taste';
+    const isRanked = effectiveSort === 'taste' || effectiveSort === 'week';
 
     const sortMap: Record<string, Record<string, unknown>[]> = {
         rating: [{ rating: 'desc' }, { publishedAt: 'desc' }],
@@ -122,107 +171,18 @@ export async function queryRecipes(
         fastest: [{ totalTime: 'asc' }, { rating: 'desc' }],
         popular: [{ cookCount: 'desc' }, { rating: 'desc' }],
     };
-    // Taste re-ranking works on the top pool by rating (after all other filters).
-    const osSort = sortMap[isTasteSort ? 'rating' : effectiveSort] ?? sortMap.rating;
-
-    type BoolClause = Record<string, unknown>;
-    type BoolQuery = {
-        bool: {
-            must: BoolClause[];
-            filter: BoolClause[];
-            should: BoolClause[];
-            must_not: BoolClause[];
-            minimum_should_match?: number;
-        };
-    };
-
-    const boolQuery: BoolQuery = {
-        bool: { must: [], filter: [], should: [], must_not: [] },
-    };
-
-    // status:PUBLISHED must ALWAYS be in filter (never in should/or-mode)
-    boolQuery.bool.filter.push({ term: { status: 'PUBLISHED' } });
-
-    const clauses: Record<string, unknown>[] = [];
-    const pushClause = (clause: Record<string, unknown>) => clauses.push(clause);
-
-    if (query) {
-        boolQuery.bool.must.push({
-            bool: {
-                should: buildRecipeTextQuery(query),
-                minimum_should_match: 1,
-            },
-        });
-    }
-
-    if (categories.length > 0) pushClause({ terms: { categorySlug: categories } });
-
-    if (tags.length > 0) {
-        pushClause({ bool: { must: tags.map((tag) => ({ term: { tags: tag } })) } });
-    }
-
-    if (ingredients.length > 0) {
-        pushClause({
-            bool: {
-                must: ingredients.map((ingredient) => ({ term: { ingredients: ingredient } })),
-            },
-        });
-    }
-
-    if (difficulty.length > 0) {
-        pushClause({ terms: { difficulty: difficulty.map((d) => d.toUpperCase()) } });
-    }
-
-    const addRange = (field: string, gte?: number, lte?: number) => {
-        const range: Record<string, number> = {};
-        if (typeof gte === 'number') range.gte = gte;
-        if (typeof lte === 'number') range.lte = lte;
-        if (Object.keys(range).length === 0) return;
-        pushClause({ range: { [field]: range } });
-    };
-
-    addRange('totalTime', minTotalTime, maxTotalTime);
-    addRange('prepTime', minPrepTime, maxPrepTime);
-    addRange('cookTime', minCookTime, maxCookTime);
-    addRange('stepCount', minStepCount, maxStepCount);
-    addRange('calories', minCalories, maxCalories);
-    if (typeof minRating === 'number') addRange('rating', minRating, undefined);
-    if (typeof minCookCount === 'number') addRange('cookCount', minCookCount, undefined);
-
-    if (excludeIngredients.length > 0) {
-        boolQuery.bool.must_not.push({ terms: { ingredients: excludeIngredients } });
-    }
-
-    if (clauses.length > 0) {
-        if (filterMode === 'or') {
-            boolQuery.bool.should = clauses;
-            boolQuery.bool.minimum_should_match = 1;
-        } else {
-            boolQuery.bool.filter.push(...clauses);
-        }
-    }
-
-    const hasClauses =
-        boolQuery.bool.must.length > 0 ||
-        boolQuery.bool.filter.length > 0 ||
-        boolQuery.bool.should.length > 0 ||
-        boolQuery.bool.must_not.length > 0 ||
-        typeof boolQuery.bool.minimum_should_match === 'number';
-
-    const sanitizedQuery = hasClauses ? boolQuery : { match_all: {} };
+    // Ranked sorts work on all matching ids by rating (after all filters)
+    const osSort = sortMap[isRanked ? 'rating' : effectiveSort] ?? sortMap.rating;
     const from = Math.max(0, page - 1) * limit;
-
-    // Taste sort: fetch a larger pool (200) from offset 0 for server-side re-ranking
-    const osFrom = isTasteSort ? 0 : from;
-    const osSize = isTasteSort ? TASTE_POOL_SIZE : limit;
 
     const response = await opensearchClient.search({
         index: OPENSEARCH_INDEX,
         body: {
-            query: sanitizedQuery,
+            query: buildRecipeBoolQuery(filters, context),
             sort: osSort,
-            from: osFrom,
-            size: osSize,
+            from: isRanked ? 0 : from,
+            size: isRanked ? RANKED_POOL_SIZE : limit,
+            ...(isRanked ? { _source: ['id'] } : {}),
             track_total_hits: true,
             aggs: {
                 tags: { terms: { field: 'tags', size: 60 } },
@@ -298,28 +258,19 @@ export async function queryRecipes(
         .filter(Boolean)
         .map((source) => mapDocumentToRecipeCard(source ?? {}));
 
-    // Taste sort: re-rank the pool (max. TASTE_POOL_SIZE) by cosine similarity to the taste profile
-    let tasteTotal = total;
-    if (isTasteSort) {
-        tasteTotal = Math.min(TASTE_POOL_SIZE, total);
-        let ranked = data;
-        try {
-            const scored = await rankRecipeIdsByTaste(
-                userId!,
-                data.map((recipe) => recipe.id),
-                { taste: tasteEmbedding ?? undefined },
-            );
-            if (scored) {
-                const byId = new Map(data.map((recipe) => [recipe.id, recipe]));
-                ranked = scored.map(({ id }) => byId.get(id)!);
-            }
-        } catch (err) {
-            log.warn('Taste re-ranking failed, keeping rating order', {
-                error: err instanceof Error ? err.message : String(err),
-            });
-        }
-        // The pool was fetched from offset 0, so paginate it here.
-        data = paginate(ranked, page, limit);
+    let rankedTotal = total;
+    if (isRanked) {
+        const idsByRating = hits.flatMap((hit) =>
+            typeof hit._source?.id === 'string' ? [hit._source.id as string] : [],
+        );
+        const order = await rankIds(idsByRating, {
+            userId: userId!,
+            profile: tasteEmbedding,
+            context: effectiveSort === 'week' ? context : undefined,
+            withReasons: effectiveSort === 'week',
+        });
+        rankedTotal = order.length;
+        data = await loadCards(order.slice(from, from + limit));
     }
 
     // Semantic search: prepend embedding-based hits on first page for 4+ word queries
@@ -357,7 +308,7 @@ export async function queryRecipes(
 
     return {
         data,
-        meta: { total: isTasteSort ? tasteTotal : total, page, limit, facets },
+        meta: { total: isRanked ? rankedTotal : total, page, limit, facets },
     };
 }
 

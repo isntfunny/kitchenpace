@@ -42,6 +42,8 @@ export function resolveEffectiveSort(
     sort: RecipeSortOption,
     options: { isLoggedIn: boolean; hasTasteProfile?: boolean },
 ): RecipeSortOption {
+    // "Passt zu deiner Woche" works without a taste profile (neutral taste), not for guests
+    if (sort === 'week') return options.isLoggedIn ? 'week' : 'popular';
     if (sort !== 'taste') return sort;
     if (!options.isLoggedIn) return 'popular';
     if (options.hasTasteProfile === false) return 'popular';

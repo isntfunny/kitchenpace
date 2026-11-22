@@ -73,7 +73,8 @@ function mergeFilterSetIntoFilters(
 }
 
 export default async function RecipesPage({ searchParams }: RecipesPageProps) {
-    const initialFilters = parseRecipeFilterParams(await toURLSearchParams(searchParams));
+    const urlParams = await toURLSearchParams(searchParams);
+    const initialFilters = parseRecipeFilterParams(urlParams);
     const queryClient = getQueryClient();
 
     const session = await getServerAuthSession('recipes-page');
@@ -112,6 +113,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
                         currentSeason={currentSeason}
                         themes={themes}
                         isLoggedIn={!!session?.user}
+                        sortLocked={urlParams.has('sort')}
                     />
                 </HydrationBoundary>
             </QueryProvider>

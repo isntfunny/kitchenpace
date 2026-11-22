@@ -61,3 +61,11 @@ test('counts arrays, numbers and query', () => {
     assert.equal(countActiveFilters({ tags: ['a', 'b'], minRating: 4, query: '  ' }), 3);
     assert.equal(countActiveFilters({ query: 'x', excludeIngredients: ['y'] }), 2);
 });
+
+test('history mode: first write, typing and restore replace; a discrete change pushes', async () => {
+    const { historyModeFor } = await import('../../src/app/recipes/components/filter-state');
+    assert.equal(historyModeFor('user', true), 'replace');
+    assert.equal(historyModeFor('typing', false), 'replace');
+    assert.equal(historyModeFor('restore', false), 'replace');
+    assert.equal(historyModeFor('user', false), 'push');
+});

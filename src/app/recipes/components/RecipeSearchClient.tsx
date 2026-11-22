@@ -2,14 +2,17 @@
 
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { Loader2 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import { RecipeCard } from '@app/components/features/RecipeCard';
 import { RecipeCardSkeleton } from '@app/components/features/RecipeCardSkeleton';
+import { useLocalStorage } from '@app/hooks/useLocalStorage';
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import type { Season } from '@app/lib/fits-now/labels';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import { STORAGE_KEYS } from '@app/lib/storageKeys';
 import type { ThemeChip } from '@shared/theme-clusters/release';
 
 import { css } from 'styled-system/css';
@@ -22,9 +25,10 @@ import { FilterSidebar } from './FilterSidebar';
 import { MobileFilterSheet } from './MobileFilterSheet';
 import { SearchEmptyState } from './SearchEmptyState';
 import { SearchHeader } from './SearchHeader';
+import { useFilterUrlSync } from './useFilterUrlSync';
+import { useRecipeFilterState } from './useRecipeFilterState';
 import type { InitialSearchData } from './useRecipeSearch';
 import { useRecipeSearch } from './useRecipeSearch';
-import { useSearchFilters } from './useSearchFilters';
 import { useStableFacets } from './useStableFacets';
 
 type FilterOptions = {
@@ -82,6 +86,8 @@ type RecipeSearchClientProps = {
     currentSeason?: Season;
     themes?: ThemeChip[];
     isLoggedIn?: boolean;
+    /** The URL sets ?sort=, so the remembered sort must not override it */
+    sortLocked?: boolean;
 };
 
 export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
@@ -91,21 +97,32 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     filterSets,
     currentSeason,
     themes,
-    isLoggedIn,
+    isLoggedIn = false,
+    sortLocked = false,
 }) => {
+    const filterState = useRecipeFilterState({
+        initialFilters,
+        filterSets,
+        isLoggedIn,
+        sortStorageKey: STORAGE_KEYS.searchSort,
+        sortLocked,
+    });
+    useFilterUrlSync(filterState, { pathname: usePathname(), initialFilters });
     const {
         filters,
         queryInput,
         setQueryInput,
-        viewMode,
-        setViewMode,
         updateFilters,
         resetFilters,
         handleSortChange,
         handleFilterSetToggle,
         handleThemeToggle,
         activeFilterCount,
-    } = useSearchFilters(initialFilters, filterSets, isLoggedIn);
+    } = filterState;
+    const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>(
+        STORAGE_KEYS.searchViewMode,
+        'grid',
+    );
 
     const { data, meta, loading, refreshing, loadingMore, hasMore, fetchNextPage, error } =
         useRecipeSearch(filters, { initialData });

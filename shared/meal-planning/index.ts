@@ -6,5 +6,4 @@ export * from './meal-kind';
 export * from './scoring';
 export * from './shelf-life';
 export * from './side-dish';
-export * from './suggest-week';
 export * from './types';

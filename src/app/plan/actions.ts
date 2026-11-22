@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 
+import { recipesForSlot } from '@app/lib/meal-plan/picker';
 import {
     addMealPlanEntry,
     getMealPlanSettings,
@@ -32,7 +33,32 @@ const pickerSelect = {
     imageKey: true,
     totalTime: true,
     rating: true,
+    categories: { select: { category: { select: { slug: true } } } },
+    tags: { select: { tag: { select: { name: true } } } },
 } as const;
+
+type PickerRow = {
+    id: string;
+    slug: string;
+    title: string;
+    imageKey: string | null;
+    totalTime: number | null;
+    rating: number | null;
+    categories: { category: { slug: string } | null }[];
+    tags: { tag: { name: string } | null }[];
+};
+
+const toPicker = ({ categories, tags, ...recipe }: PickerRow) => ({
+    ...(recipe as PickerRecipe),
+    categorySlugs: categories.flatMap((c) => (c.category ? [c.category.slug] : [])),
+    tags: tags.flatMap((t) => (t.tag ? [t.tag.name] : [])),
+});
+
+const LIST_SIZE = 24;
+const pickerSlotSchema = z
+    .object({ slotKey: z.string().min(1).max(80), time: z.string().max(5) })
+    .strict()
+    .optional();
 
 export interface PlanContext {
     settings: MealPlanSettings;
@@ -69,9 +95,13 @@ export async function getPlanContext(input: unknown) {
     });
 }
 
-/** Favorites and recently cooked recipes for the slot search (KUC-100). */
-export async function getPickerLists() {
+/**
+ * Favorites and recently cooked recipes for the slot search (KUC-100); with a slot only
+ * recipes allowed for its meal kind (KUC-126), so no sauce is offered as dinner.
+ */
+export async function getPickerLists(input?: { slotKey: string; time: string }) {
     return run(async (userId) => {
+        const slot = pickerSlotSchema.parse(input);
         const visible = {
             OR: [{ status: 'PUBLISHED' as const }, { authorId: userId }],
             moderationStatus: { not: 'REJECTED' as const },
@@ -80,24 +110,27 @@ export async function getPickerLists() {
             prisma.favorite.findMany({
                 where: { userId, recipe: visible },
                 orderBy: { createdAt: 'desc' },
-                take: 24,
+                take: 80,
                 select: { recipe: { select: pickerSelect } },
             }),
             prisma.userCookHistory.findMany({
                 where: { userId, recipe: visible },
                 orderBy: { cookedAt: 'desc' },
-                take: 60,
+                take: 120,
                 select: { recipe: { select: pickerSelect } },
             }),
         ]);
         const seen = new Set<string>();
         const recentlyCooked = cooked
             .map((row) => row.recipe)
-            .filter((recipe) => !seen.has(recipe.id) && !!seen.add(recipe.id))
-            .slice(0, 24);
+            .filter((recipe) => !seen.has(recipe.id) && !!seen.add(recipe.id));
+        const forSlot = (rows: PickerRow[]): PickerRecipe[] =>
+            recipesForSlot(rows.map(toPicker), slot)
+                .slice(0, LIST_SIZE)
+                .map(({ categorySlugs: _c, tags: _t, ...recipe }) => recipe);
         return {
-            favorites: favorites.map((row) => row.recipe) as PickerRecipe[],
-            recentlyCooked: recentlyCooked as PickerRecipe[],
+            favorites: forSlot(favorites.map((row) => row.recipe)),
+            recentlyCooked: forSlot(recentlyCooked),
         };
     });
 }

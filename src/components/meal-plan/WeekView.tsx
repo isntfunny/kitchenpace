@@ -55,7 +55,6 @@ function WeekGrid({
     notices,
     shoppingPanel,
     markers = {},
-    suggestions = {},
 }: WeekViewProps) {
     const [target, setTargetState] = useState<Target>(null);
     const opener = useRef<HTMLElement | null>(null);
@@ -96,7 +95,6 @@ function WeekGrid({
 
     const renderCell = (day: string, slot: PlanSlot, compact: boolean) => {
         const dishes = cells.get(cellKey(day, slot.key)) ?? [];
-        const suggestion = suggestions[cellKey(day, slot.key)];
         const label = `${weekdayLong(day)}, ${slot.label}: Gericht hinzufügen`;
         return (
             <div className={css({ display: 'flex', flexDirection: 'column', minW: 0 })}>
@@ -112,8 +110,7 @@ function WeekGrid({
                         today={data.today}
                     />
                 ))}
-                {dishes.length === 0 && suggestion}
-                {dishes.length === 0 && !suggestion ? (
+                {dishes.length === 0 ? (
                     <button
                         type="button"
                         className={emptySlot}

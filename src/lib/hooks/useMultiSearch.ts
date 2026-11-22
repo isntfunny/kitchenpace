@@ -11,6 +11,9 @@ export type MultiSearchRecipe = {
     rating: number;
     imageKey: string | null;
     description: string;
+    /** All category slugs and tags (KUC-126); missing in documents indexed before */
+    categorySlugs?: string[];
+    tags?: string[];
 };
 
 export type SuggestItem = { name: string; count: number };

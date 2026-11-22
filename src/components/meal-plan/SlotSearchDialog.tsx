@@ -9,6 +9,7 @@ import { addPlanEntries, getPickerLists, type PickerRecipe } from '@app/app/plan
 import { SmartImage } from '@app/components/atoms/SmartImage';
 import { useToastContext } from '@app/components/providers/ToastProvider';
 import { useMultiSearch } from '@app/lib/hooks/useMultiSearch';
+import { recipesForSlot } from '@app/lib/meal-plan/picker';
 import { defaultServings } from '@app/lib/meal-plan/slots';
 import { weekdayLong, weekdayShort } from '@app/lib/meal-plan/view';
 
@@ -103,13 +104,13 @@ function SlotSearchBody({
 
     useEffect(() => {
         let active = true;
-        getPickerLists().then((result) => {
+        getPickerLists({ slotKey: target.slot.key, time: target.slot.time }).then((result) => {
             if (active && result.ok) setLists(result.data);
         });
         return () => {
             active = false;
         };
-    }, []);
+    }, [target.slot.key, target.slot.time]);
 
     const plannedOn = useMemo(() => {
         const map = new Map<string, string[]>();
@@ -120,7 +121,11 @@ function SlotSearchBody({
 
     const results: PickerRecipe[] =
         trimmed.length >= 2
-            ? found.map((recipe) => ({
+            ? recipesForSlot(
+                  found,
+                  { slotKey: target.slot.key, time: target.slot.time },
+                  { keepUnknown: true },
+              ).map((recipe) => ({
                   id: recipe.id,
                   slug: recipe.slug,
                   title: recipe.title,

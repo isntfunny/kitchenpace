@@ -5,16 +5,10 @@ import { z } from 'zod';
 import { getServerAuthSession } from '@app/lib/auth';
 import { DataAccessError } from '@app/lib/meal-plan/db';
 import { leftoverPlanSlot } from '@app/lib/meal-plan/intelligence/mappers';
-import { loadTimeSeasonSets } from '@app/lib/meal-plan/intelligence/sets';
 import {
     applyShelfLifeOrder,
-    loadWeekContext,
     previewShelfLifeOrder,
-    suggestForWeek,
-    swapForWeek,
     type ShelfLifeProposalDTO,
-    type SuggestionDTO,
-    type WeekSuggestionsDTO,
 } from '@app/lib/meal-plan/intelligence/week-planner';
 import {
     addMealPlanEntry,
@@ -84,74 +78,7 @@ async function run<T>(work: (userId: string) => Promise<T>): Promise<Result<T>> 
     }
 }
 
-const slotType = z.enum(['BREAKFAST', 'LUNCH', 'SNACK', 'DINNER']);
 const weekInput = z.object({ startDate: isoDateSchema }).strict();
-const placement = z.object({ date: isoDateSchema, slot: slotType, recipeId: idSchema }).strict();
-
-/** Proposal for the free slots of the week. Writes nothing. */
-export async function planWeekAction(input: unknown): Promise<Result<WeekSuggestionsDTO>> {
-    return run(async (userId) => {
-        const { startDate, reroll } = weekInput
-            .extend({ reroll: z.number().int().min(0).max(1000).optional() })
-            .parse(input);
-        return suggestForWeek(prisma, userId, startDate, await loadTimeSeasonSets(), { reroll });
-    });
-}
-
-/** "Tauschen": the next best recipe for one suggested slot. Writes nothing. */
-export async function swapSuggestionAction(input: unknown): Promise<Result<SuggestionDTO | null>> {
-    return run(async (userId) => {
-        const { startDate, current, target, rejected } = weekInput
-            .extend({
-                current: z.array(placement).max(60),
-                target: z.object({ date: isoDateSchema, slot: slotType }).strict(),
-                rejected: z.array(idSchema).max(200).default([]),
-            })
-            .parse(input);
-        return swapForWeek(
-            prisma,
-            userId,
-            startDate,
-            await loadTimeSeasonSets(),
-            current,
-            target,
-            rejected,
-        );
-    });
-}
-
-/**
- * "Übernehmen" / "Alle übernehmen": plans the accepted suggestions. Slots that were filled
- * in the meantime are skipped, nothing is overwritten.
- */
-export async function acceptSuggestionsAction(
-    input: unknown,
-): Promise<Result<{ planned: number; skipped: number }>> {
-    return runWrite(async (userId) => {
-        const { startDate, suggestions } = weekInput
-            .extend({ suggestions: z.array(placement).min(1).max(30) })
-            .parse(input);
-        const ctx = await loadWeekContext(prisma, userId, startDate);
-        let planned = 0;
-        let skipped = 0;
-        for (const suggestion of suggestions) {
-            const taken = ctx.entries.some(
-                (e) =>
-                    e.date === suggestion.date &&
-                    e.slot === suggestion.slot &&
-                    e.status !== 'CANCELLED',
-            );
-            if (taken || !ctx.days.includes(suggestion.date)) {
-                skipped++;
-                continue;
-            }
-            await addMealPlanEntry(prisma, userId, suggestion);
-            planned++;
-        }
-        return { planned, skipped };
-    });
-}
-
 /** "Nach Haltbarkeit ordnen": the proposal with reasons. Writes nothing. */
 export async function previewShelfLifeOrderAction(
     input: unknown,

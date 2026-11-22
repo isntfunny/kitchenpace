@@ -5,7 +5,6 @@ import {
     applyShelfLifeOrder,
     getFreshnessMarkers,
     previewShelfLifeOrder,
-    suggestForWeek,
 } from '../../../src/lib/meal-plan/intelligence/week-planner';
 import { addDays, todayIn } from '../../../src/lib/meal-plan/week';
 import { createFakeDb } from '../fake-db';
@@ -187,32 +186,5 @@ describe('shelf-life ordering on the plan', () => {
             undefined,
         );
         assert.notEqual(proposal.signature, fixed.signature);
-    });
-});
-
-describe('suggestForWeek', () => {
-    it('fills only free slots with unplanned recipes and saves nothing', async () => {
-        const db = seed([entry('pasta', 0), entry('rice', 1)]);
-        const before = JSON.stringify(db.tables.mealPlanRecipe);
-        const result = await suggestForWeek(db, USER, today, [], { rank: async () => null });
-        assert.equal(JSON.stringify(db.tables.mealPlanRecipe), before);
-        assert.ok(result.suggestions.length > 0);
-        assert.ok(result.freeSlots >= result.suggestions.length);
-        const planned = new Set(['pasta', 'rice']);
-        for (const s of result.suggestions) {
-            assert.ok(!planned.has(s.recipeId));
-            assert.ok(s.reasons.length >= 1);
-            assert.ok(s.date >= today);
-        }
-        const cells = result.suggestions.map((s) => `${s.date}|${s.slot}`);
-        assert.equal(new Set(cells).size, cells.length);
-        assert.ok(!cells.includes(`${day(0)}|DINNER`));
-    });
-
-    it('is stable for the same week (same seed)', async () => {
-        const db = seed([]);
-        const a = await suggestForWeek(db, USER, today, [], { rank: async () => null });
-        const b = await suggestForWeek(db, USER, today, [], { rank: async () => null });
-        assert.deepEqual(a.suggestions, b.suggestions);
     });
 });

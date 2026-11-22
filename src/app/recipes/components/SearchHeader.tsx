@@ -250,7 +250,7 @@ export function SearchHeader({
                                     border: '1px solid',
                                     borderColor: viewMode === mode ? 'accent' : 'border.muted',
                                     bg: viewMode === mode ? 'accent' : 'surface',
-                                    color: viewMode === mode ? 'white' : 'text-muted',
+                                    color: viewMode === mode ? 'white' : 'text.muted',
                                     cursor: 'pointer',
                                     transition: 'all 150ms ease',
                                     _hover: {

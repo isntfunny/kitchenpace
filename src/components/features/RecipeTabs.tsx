@@ -317,7 +317,7 @@ function RecipeChip({
                         borderColor: isPinned ? 'rgba(248,181,0,0.3)' : 'transparent',
                         fontSize: { base: 'xs', md: 'sm' },
                         fontWeight: isPinned ? '500' : '400',
-                        color: isPinned ? 'text' : 'text-muted',
+                        color: isPinned ? 'text' : 'text.muted',
                         cursor: 'pointer',
                         textDecoration: 'none',
                         position: 'relative',
@@ -386,7 +386,9 @@ function RecipeChip({
                         })}
                         variants={{
                             rest: {
-                                color: isPinned ? 'var(--colors-text)' : 'var(--colors-text-muted)',
+                                color: isPinned
+                                    ? 'var(--colors-text)'
+                                    : 'var(--colors-text\\.muted)',
                             },
                             hover: { color: 'var(--colors-text)' },
                         }}

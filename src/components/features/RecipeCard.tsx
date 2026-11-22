@@ -460,7 +460,7 @@ export function RecipeCard({
                         fontWeight: isCompact ? '600' : '700',
                         fontFamily: 'heading',
                         color: 'text',
-                        fontSize: isCompact ? 'sm' : 'base',
+                        fontSize: isCompact ? 'sm' : 'md',
                         lineHeight: 'tight',
                         lineClamp: isCompact ? 1 : 2,
                         mb: isCompact ? '1' : undefined,

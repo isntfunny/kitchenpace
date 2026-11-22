@@ -41,12 +41,22 @@ const RULES: { kind: string; props: string; tokens: Set<string> }[] = [
     { kind: 'font size', props: 'fontSize', tokens: tokensOf('FontSizeToken') },
 ];
 
-function* sourceFiles(dir: string): Generator<string> {
+function* sourceFiles(dir: string, pattern = /\.(ts|tsx)$/): Generator<string> {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
         const path = join(dir, entry.name);
-        if (entry.isDirectory()) yield* sourceFiles(path);
-        else if (/\.(ts|tsx)$/.test(entry.name) && !entry.name.includes('.test.')) yield path;
+        if (entry.isDirectory()) yield* sourceFiles(path, pattern);
+        else if (pattern.test(entry.name) && !entry.name.includes('.test.')) yield path;
     }
+}
+
+/** CSS variables Panda emits for tokens, e.g. `--colors-text\\.muted` (dots are escaped). */
+function tokenVariables(): Set<string> {
+    const source = readFileSync(join(ROOT, 'styled-system/tokens/index.mjs'), 'utf8');
+    return new Set(
+        [...source.matchAll(/"variable": "var\((--[^)]+)\)"/g)].map((m) =>
+            m[1].replace(/\\\\/g, '\\'),
+        ),
+    );
 }
 
 test('every named style token exists', () => {
@@ -55,16 +65,39 @@ test('every named style token exists', () => {
         const text = readFileSync(file, 'utf8');
         if (!text.includes('styled-system')) continue;
         for (const rule of RULES) {
-            const pattern = new RegExp(
-                `\\b(?:${rule.props})\\s*:\\s*'([a-zA-Z][\\w.-]*)(?:/\\d+)?'`,
-                'g',
-            );
-            for (const match of text.matchAll(pattern)) {
-                const value = match[1];
-                if (rule.tokens.has(value) || CSS_WORDS.has(value)) continue;
-                const line = text.slice(0, match.index).split('\n').length;
-                found.push(`${relative(ROOT, file)}:${line} ${rule.kind} '${value}'`);
+            // The value up to the end of the property; a ternary yields every branch:
+            // `color: active ? 'text' : 'text.muted'`
+            const property = new RegExp(`\\b(?:${rule.props})\\s*:\\s*([^,\\n{}]+)`, 'g');
+            for (const match of text.matchAll(property)) {
+                const expression = match[1];
+                const values = /^'/.test(expression)
+                    ? [expression]
+                    : [...expression.matchAll(/[?:]\s*('[^']*')/g)].map((m) => m[1]);
+                for (const literal of values) {
+                    const value = /^'([a-zA-Z][\w.-]*)(?:\/\d+)?'/.exec(literal)?.[1];
+                    if (!value || rule.tokens.has(value) || CSS_WORDS.has(value)) continue;
+                    const line = text.slice(0, match.index).split('\n').length;
+                    found.push(`${relative(ROOT, file)}:${line} ${rule.kind} '${value}'`);
+                }
             }
+        }
+    }
+    assert.deepEqual(found, []);
+});
+
+test('every var(--colors-…) points at a Panda token variable', () => {
+    const variables = tokenVariables();
+    const found: string[] = [];
+    for (const file of sourceFiles(join(ROOT, 'src'), /\.(ts|tsx|css)$/)) {
+        const text = readFileSync(file, 'utf8');
+        for (const match of text.matchAll(/(=")?var\((--colors-[\w\\.-]+)/g)) {
+            // JSX attributes (`color="…"`) and CSS take the text as is; in JS strings the
+            // escape is doubled: 'var(--colors-text\\.muted)'
+            const literal = Boolean(match[1]) || file.endsWith('.css');
+            const name = literal ? match[2] : match[2].replace(/\\\\/g, '\\');
+            if (variables.has(name)) continue;
+            const line = text.slice(0, match.index).split('\n').length;
+            found.push(`${relative(ROOT, file)}:${line} ${name}`);
         }
     }
     assert.deepEqual(found, []);

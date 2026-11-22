@@ -211,7 +211,7 @@ export function PushSubscriptionToggle() {
                     background: endpoint
                         ? 'rgba(220,38,38,0.15)'
                         : `linear-gradient(135deg, ${PALETTE.orange} 0%, ${PALETTE.gold} 100%)`,
-                    color: endpoint ? 'red' : 'white',
+                    color: endpoint ? 'status.error' : 'white',
                     fontWeight: '700',
                     cursor: status === 'loading' ? 'not-allowed' : 'pointer',
                     transition: 'transform 150ms ease',

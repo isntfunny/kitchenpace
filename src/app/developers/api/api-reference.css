@@ -3,8 +3,8 @@
 .kuechentakt-api-reference.light-mode,
 .kuechentakt-api-reference.dark-mode {
     --scalar-color-1: var(--colors-text);
-    --scalar-color-2: var(--colors-text-muted);
-    --scalar-color-3: var(--colors-text-muted);
+    --scalar-color-2: var(--colors-text\.muted);
+    --scalar-color-3: var(--colors-text\.muted);
     --scalar-color-accent: var(--colors-primary);
     --scalar-background-1: var(--colors-surface);
     --scalar-background-2: var(--colors-background);
@@ -12,7 +12,7 @@
     --scalar-border-color: var(--colors-border);
     --scalar-sidebar-background-1: var(--colors-surface);
     --scalar-sidebar-color-1: var(--colors-text);
-    --scalar-sidebar-color-2: var(--colors-text-muted);
+    --scalar-sidebar-color-2: var(--colors-text\.muted);
     --scalar-sidebar-color-active: var(--colors-primary);
     --scalar-sidebar-border-color: var(--colors-border);
 }

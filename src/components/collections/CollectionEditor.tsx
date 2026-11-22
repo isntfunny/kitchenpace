@@ -122,7 +122,7 @@ export function CollectionEditor({ initialData }: CollectionEditorProps) {
                 <span
                     className={css({
                         fontSize: 'xs',
-                        color: autoSave.autoSaveStatus === 'error' ? 'red.500' : 'text-muted',
+                        color: autoSave.autoSaveStatus === 'error' ? 'red.500' : 'text.muted',
                     })}
                 >
                     {isPublished ? null : autoSave.autoSaveLabel}

@@ -59,6 +59,7 @@ type RecipeWithRelations = {
     cookTime: number | null;
     caloriesPerServing: number | null;
     rating: number | null;
+    ratingCount: number | null;
     cookCount: number | null;
     imageKey: string | null;
     publishedAt: Date | null;
@@ -76,6 +77,8 @@ type RecipeDocument = {
     description: string;
     category?: string;
     categorySlug?: string;
+    /** All category slugs; categorySlug is only the first (KUC-126) */
+    categorySlugs: string[];
     tags: string[];
     ingredients: string[];
     difficulty: string;
@@ -84,6 +87,7 @@ type RecipeDocument = {
     cookTime: number;
     calories?: number;
     rating: number;
+    ratingCount: number;
     cookCount: number;
     stepCount: number;
     imageKey?: string;
@@ -151,7 +155,7 @@ function buildIngredientBulkOperations(ingredients: IngredientWithDetails[]): Bu
     return operations;
 }
 
-function transformToDocument(recipe: RecipeWithRelations): RecipeDocument {
+export function transformToDocument(recipe: RecipeWithRelations): RecipeDocument {
     const tags = normalizeStringArray(recipe.tags.map((entry) => entry.tag?.name));
     const ingredients = normalizeStringArray(
         recipe.recipeIngredients.map((entry) => entry.ingredient?.name),
@@ -181,6 +185,7 @@ function transformToDocument(recipe: RecipeWithRelations): RecipeDocument {
         description: recipe.description ?? '',
         category: category?.name ?? undefined,
         categorySlug: category?.slug ?? undefined,
+        categorySlugs: normalizeStringArray(recipe.categories.map((entry) => entry.category?.slug)),
         tags,
         ingredients,
         difficulty: recipe.difficulty,
@@ -189,6 +194,7 @@ function transformToDocument(recipe: RecipeWithRelations): RecipeDocument {
         cookTime: recipe.cookTime ?? 0,
         calories: recipe.caloriesPerServing ?? undefined,
         rating: recipe.rating ?? 0,
+        ratingCount: recipe.ratingCount ?? 0,
         cookCount: recipe.cookCount ?? 0,
         stepCount: Array.isArray(recipe.flowNodes) ? recipe.flowNodes.length : 0,
         imageKey: recipe.imageKey ?? undefined,
@@ -368,6 +374,7 @@ export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ sy
                     cookTime: true,
                     caloriesPerServing: true,
                     rating: true,
+                    ratingCount: true,
                     cookCount: true,
                     flowNodes: true,
                     imageKey: true,
@@ -567,6 +574,7 @@ export async function processSyncRecipeToOpenSearch(
                 cookTime: true,
                 caloriesPerServing: true,
                 rating: true,
+                ratingCount: true,
                 cookCount: true,
                 flowNodes: true,
                 imageKey: true,

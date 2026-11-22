@@ -30,7 +30,6 @@
         "lint:fix": "eslint --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "test:bring:ui": "mkdir -p .superpowers && panda cssgen --outfile .superpowers/bring-ui.css && node --test tests/bring/ui.test.mjs",
         "test:bring": "node --import tsx --test tests/bring/*.test.ts",
         "test:icons": "node --import tsx --test tests/ingredients/icons.test.ts tests/ingredients/icon-component.test.ts tests/ingredients/category-icons.test.ts worker/queues/icon-backfill.test.ts",
         "test:meal-plan": "node --import tsx --test tests/meal-plan/*.test.ts",

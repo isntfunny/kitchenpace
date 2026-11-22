@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { Dialog } from 'radix-ui';
 import { useMemo, useState, type ReactNode } from 'react';
 
-import { AddToListButton } from '@app/components/bring/AddToListButton';
 import { AddToShoppingListButton } from '@app/components/shopping/AddToShoppingListButton';
 import { ingredientDisplayName, parseAmount } from '@app/lib/ingredient-display';
 import { scaleQuantity, portionFactor } from '@app/lib/ingredients/quantities';
@@ -240,11 +239,6 @@ export function IngredientList({
 
             {recipeId && <AddToShoppingListButton recipeId={recipeId} servings={servings} />}
 
-            <AddToListButton
-                ingredients={ingredients}
-                servings={servings}
-                originalServings={originalServings}
-            />
 
             <ul>
                 {ingredients.map((ingredient, index) => (

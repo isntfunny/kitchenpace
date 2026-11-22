@@ -39,17 +39,6 @@ export const field = css({
     _focusVisible: { outline: '2px solid', outlineColor: 'primary', outlineOffset: '2px' },
     _disabled: { opacity: 0.5, cursor: 'not-allowed' },
 });
-export const checkbox = css({
-    width: '5',
-    height: '5',
-    flexShrink: 0,
-    accentColor: 'primary',
-    _dark: { colorScheme: 'dark' },
-    cursor: 'pointer',
-    _focusVisible: { outline: '2px solid', outlineColor: 'primary', outlineOffset: '3px' },
-    _disabled: { cursor: 'not-allowed', opacity: 0.5 },
-});
-export const muted = css({ color: 'text-muted', fontFamily: 'body', fontSize: 'sm' });
 export const link = css({
     color: 'primary',
     fontFamily: 'body',
@@ -59,44 +48,4 @@ export const link = css({
     borderRadius: 'sm',
     _focusVisible: { outline: '2px solid', outlineColor: 'primary', outlineOffset: '3px' },
 });
-export const itemRow = css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '3',
-    flexWrap: 'wrap',
-    p: '3',
-    border: '1px solid',
-    borderColor: 'border',
-    borderRadius: 'xl',
-    bg: 'background',
-});
 
-export const dialogOverlay = css({
-    position: 'fixed',
-    inset: 0,
-    bg: 'surface.overlay',
-    backdropFilter: 'blur(8px)',
-    zIndex: 70,
-});
-
-export const dialogContent = css({
-    position: 'fixed',
-    zIndex: 71,
-    bg: 'surface',
-    color: 'text',
-    p: { base: '4', md: '6' },
-    pb: 'max(24px, env(safe-area-inset-bottom))',
-    fontFamily: 'body',
-    overscrollBehavior: 'contain',
-    boxShadow: 'shadow.medium',
-    overflowY: 'auto',
-    maxH: '90dvh',
-    width: { base: '100%', md: 'min(560px, 90vw)' },
-    bottom: { base: 0, md: 'auto' },
-    top: { md: '50%' },
-    left: { base: 0, md: '50%' },
-    transform: { md: 'translate(-50%, -50%)' },
-    borderTopRadius: '2xl',
-    borderBottomRadius: { base: '0', md: '2xl' },
-});

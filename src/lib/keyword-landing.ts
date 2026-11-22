@@ -63,10 +63,11 @@ export async function fetchTagLanding(slug: string): Promise<KeywordLandingData 
 
 export async function fetchIngredientLanding(
     slug: string,
-): Promise<(KeywordLandingData & { shelfLife: ShelfLifeSummary | null }) | null> {
+): Promise<(KeywordLandingData & { id: string; shelfLife: ShelfLifeSummary | null }) | null> {
     const ingredient = await prisma.ingredient.findUnique({
         where: { slug },
         select: {
+            id: true,
             name: true,
             slug: true,
             shelfLifeSource: true,
@@ -95,6 +96,7 @@ export async function fetchIngredientLanding(
     if (totalCount === 0) return null;
 
     return {
+        id: ingredient.id,
         name: ingredient.name,
         slug: ingredient.slug,
         totalCount,

@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
-import { AddToListButton } from '@app/components/bring/AddToListButton';
 import { KeywordLandingContent } from '@app/components/features/KeywordLandingContent';
 import { ShelfLifeHint } from '@app/components/features/ShelfLifeHint';
 import { PageShell } from '@app/components/layouts/PageShell';
+import { AddIngredientToListButton } from '@app/components/shopping/AddIngredientToListButton';
 import { fetchIngredientLanding } from '@app/lib/keyword-landing';
 import { APP_URL } from '@app/lib/url';
 
@@ -112,7 +112,7 @@ export default async function IngredientLandingPage({ params }: Props) {
             />
             <KeywordLandingContent
                 data={data}
-                action={<AddToListButton ingredients={[{ name: data.name }]} />}
+                action={<AddIngredientToListButton id={data.id} name={data.name} />}
                 details={
                     data.shelfLife ? (
                         <ShelfLifeHint name={data.name} summary={data.shelfLife} />

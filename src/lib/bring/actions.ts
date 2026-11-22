@@ -14,11 +14,6 @@ import type { ActionResult } from './types';
 
 const listId = z.string().min(1).max(200);
 const credentials = z.object({ email: z.email().max(254), password: z.string().min(1).max(1024) });
-const item = z.object({
-    id: z.string().min(1).max(100),
-    name: z.string().trim().min(1).max(200),
-    specification: z.string().trim().max(500),
-});
 
 async function run<T>(
     work: (userId: string) => Promise<T>,
@@ -73,53 +68,6 @@ export async function getBringLists() {
 }
 export async function setBringDefault(input: unknown) {
     return run((userId) => service.chooseDefault(userId, listId.parse(input)));
-}
-export async function getBringItems(input: unknown) {
-    return run((userId) => service.readList(userId, listId.parse(input)));
-}
-export async function changeBringItem(input: unknown) {
-    return run((userId) => {
-        const parsed = z
-            .object({
-                listUuid: listId,
-                operation: z.enum(['add', 'complete', 'remove']),
-                name: item.shape.name,
-                specification: item.shape.specification,
-                previousSpecification: z.string().max(500).optional(),
-                restore: z.boolean().optional(),
-            })
-            .parse(input);
-        return service.mutateItem(userId, parsed);
-    });
-}
-export async function transferToBring(input: unknown) {
-    return run((userId) => {
-        const parsed = z
-            .object({
-                operationId: z.uuid(),
-                listUuid: listId,
-                items: z
-                    .array(item)
-                    .min(1)
-                    .max(50)
-                    .refine((items) => new Set(items.map((item) => item.id)).size === items.length),
-            })
-            .parse(input);
-        return service.transfer(userId, parsed.operationId, parsed.listUuid, parsed.items);
-    });
-}
-
-export async function createBringList(input: unknown) {
-    return run((userId) => {
-        const parsed = z
-            .object({ operationId: z.uuid(), name: z.string().trim().min(1).max(100) })
-            .parse(input);
-        return service.createList(userId, parsed.operationId, parsed.name);
-    });
-}
-
-export async function getBringSyncState() {
-    return run((userId) => loadBringSyncState(prisma, userId));
 }
 
 /** Turns the two-way sync on for the chosen Bring! list and starts the first run. */

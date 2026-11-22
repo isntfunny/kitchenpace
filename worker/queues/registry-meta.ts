@@ -10,6 +10,9 @@
 
 import type { WorkerOptions } from 'bullmq';
 
+import { isAiAutomationEnabled } from '../../shared/ai-automation';
+
+import { buildScheduledJobDefinitions } from './schedule-definitions';
 import { QueueName, type JobPayloadSchema } from './types';
 
 // ── Worker definitions (static, no registry import) ─────────────────
@@ -474,14 +477,9 @@ const JOB_CATALOG: Record<
     },
 };
 
+/** Same schedule as the worker uses (AI jobs without repeat when AI_AUTOMATION=off). */
 export function getScheduledJobDefinitions(): ScheduledJobDefinition[] {
-    return Object.entries(JOB_CATALOG).map(([name, def]) => ({
-        name,
-        queue: def.queue,
-        data: def.defaultData,
-        schema: def.schema,
-        options: def.repeat ? { repeat: def.repeat } : undefined,
-    }));
+    return buildScheduledJobDefinitions(JOB_CATALOG, isAiAutomationEnabled());
 }
 
 /** Check whether a job name exists in the catalog. */

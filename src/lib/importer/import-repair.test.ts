@@ -4,6 +4,8 @@ import { test } from 'node:test';
 
 import type OpenAI from 'openai';
 
+import { contentText } from '@shared/prompt-cache';
+
 import {
     buildFlowOnlyRequestBody,
     buildImportRequestBody,
@@ -83,10 +85,10 @@ test('import body: system prompt, tag list and known ingredients as context, str
         sourceUrl: 'https://x.test',
         context: { availableTags: ['Vegan', 'Winter'], topIngredients: ['Mehl'] },
     });
-    assert.equal(withContext.messages[0].content, IMPORT_SYSTEM_PROMPT);
-    assert.match(String(withContext.messages[1].content), /<tag_liste>[\s\S]*Vegan\nWinter/);
-    assert.match(String(withContext.messages[1].content), /<bekannte_zutaten>\nMehl/);
-    assert.match(String(withContext.messages[2].content), /<rezept>\n# Brot\n<\/rezept>/);
+    assert.equal(contentText(withContext.messages[0].content), IMPORT_SYSTEM_PROMPT);
+    assert.match(contentText(withContext.messages[1].content), /<tag_liste>[\s\S]*Vegan\nWinter/);
+    assert.match(contentText(withContext.messages[1].content), /<bekannte_zutaten>\nMehl/);
+    assert.match(contentText(withContext.messages[2].content), /<rezept>\n# Brot\n<\/rezept>/);
     const format = withContext.response_format as unknown as {
         json_schema: { strict: boolean; schema: { required: string[] } };
     };
@@ -108,9 +110,9 @@ test('flow-only body shares the flow rules and lists the fixed ingredients', () 
             { id: 'ingredient-0', name: 'Butter', amount: '30', unit: 'g', notes: 'weich' },
         ],
     });
-    assert.equal(flow.messages[0].content, FLOW_ONLY_SYSTEM_PROMPT);
+    assert.equal(contentText(flow.messages[0].content), FLOW_ONLY_SYSTEM_PROMPT);
     assert.equal(
-        flow.messages[1].content,
+        contentText(flow.messages[1].content),
         '<zutaten>\ningredient-0: 30 g Butter (weich)\n</zutaten>\n\n<rezept>\nText\n</rezept>',
     );
     const rulesStart = IMPORT_SYSTEM_PROMPT.indexOf('# Wofür der Ablauf da ist');

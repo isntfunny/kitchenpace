@@ -14,6 +14,7 @@
 import type OpenAI from 'openai';
 
 import { AI_TEXT_MODEL } from '@shared/ai-models';
+import { EXPLICIT_CACHE_OPTIONS, cachedTextPart } from '@shared/prompt-cache';
 
 import { getFlowOnlyResponseFormat, getOpenAIResponseFormat } from './openai-recipe-schema';
 
@@ -227,6 +228,13 @@ export function buildFlowOnlyMessage(markdown: string, ingredients: PromptIngred
 
 export type ChatRequestBody = OpenAI.ChatCompletionCreateParamsNonStreaming;
 
+/**
+ * Prompt caching (KUC-128): the system prompt and the context (tags, known
+ * ingredients) each end in an explicit cache breakpoint, so both are read from
+ * the cache across recipes; only the recipe text is billed at the normal rate.
+ * Before, only the system prompt was cached and every request wrote the whole
+ * prompt to the cache at the higher write rate.
+ */
 export function buildImportRequestBody(input: {
     markdown: string;
     sourceUrl: string;
@@ -236,9 +244,12 @@ export function buildImportRequestBody(input: {
     const contextMessage = buildContextMessage(input.context);
     return {
         model: input.model ?? AI_TEXT_MODEL,
+        ...EXPLICIT_CACHE_OPTIONS,
         messages: [
-            { role: 'system', content: IMPORT_SYSTEM_PROMPT },
-            ...(contextMessage ? [{ role: 'user' as const, content: contextMessage }] : []),
+            { role: 'system', content: [cachedTextPart(IMPORT_SYSTEM_PROMPT)] },
+            ...(contextMessage
+                ? [{ role: 'user' as const, content: [cachedTextPart(contextMessage)] }]
+                : []),
             { role: 'user', content: buildRecipeMessage(input.markdown, input.sourceUrl) },
         ],
         response_format: getOpenAIResponseFormat(),
@@ -252,8 +263,9 @@ export function buildFlowOnlyRequestBody(input: {
 }): ChatRequestBody {
     return {
         model: input.model ?? AI_TEXT_MODEL,
+        ...EXPLICIT_CACHE_OPTIONS,
         messages: [
-            { role: 'system', content: FLOW_ONLY_SYSTEM_PROMPT },
+            { role: 'system', content: [cachedTextPart(FLOW_ONLY_SYSTEM_PROMPT)] },
             { role: 'user', content: buildFlowOnlyMessage(input.markdown, input.ingredients) },
         ],
         response_format: getFlowOnlyResponseFormat(),

@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { contentText } from '@shared/prompt-cache';
+
 import {
     buildRefreshRequest,
     evaluateRefreshEntry,
@@ -78,8 +80,11 @@ const goodEdges = [
 
 test('request: flow-only prompt, fixed ingredient list with temporary ids mapped to the rows', () => {
     const { body, request } = buildRefreshRequest(recipe, '# Seite', 'scrape');
-    assert.equal(body.messages[0].content, FLOW_ONLY_SYSTEM_PROMPT);
-    assert.match(String(body.messages[1].content), /ingredient-1: 400 ml Milch \(zimmerwarm\)/);
+    assert.equal(contentText(body.messages[0].content), FLOW_ONLY_SYSTEM_PROMPT);
+    assert.match(
+        contentText(body.messages[1].content),
+        /ingredient-1: 400 ml Milch \(zimmerwarm\)/,
+    );
     assert.deepEqual(request.idMap, { 'ingredient-0': 'row-flour', 'ingredient-1': 'row-milk' });
     assert.equal(request.customId, 'flow-r1');
 });

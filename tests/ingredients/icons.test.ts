@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { contentText } from '@shared/prompt-cache';
+
 import {
     extractIconAnswers,
     getIconBackfillResponseFormat,
@@ -242,5 +244,5 @@ test('the nutrition request for new ingredients and the daily batch asks for an 
     };
     assert.ok(schema.required.includes('icon'));
     assert.deepEqual(schema.properties.icon.enum, [...ENRICHMENT_ICON_NAMES, null]);
-    assert.ok(request.instructions.includes(buildIconPromptRules()));
+    assert.ok(contentText(request.input[0].content).includes(buildIconPromptRules()));
 });

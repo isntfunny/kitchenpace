@@ -4,8 +4,10 @@
 //
 // One run does one step and re-enqueues itself to poll:
 //   no saved batch   → select ingredients, submit one batch with a nutrition
-//                      request (web search) per ingredient and shelf-life
-//                      requests for those without shelf life or name
+//                      request per ingredient (web search only when nutrition
+//                      values or units are missing, otherwise a category-only
+//                      request) and shelf-life requests for those without
+//                      shelf life or name
 //   batch running    → poll again later (no second poll chain)
 //   batch completed  → import nutrition first, then shelf life (same order as
 //                      enrich-ingredient-nutrition, so LOW confidence keeps
@@ -13,8 +15,9 @@
 // Ingredients with a single enrich-ingredient-nutrition job still waiting or
 // running are left out (no double enrichment). Whatever is still incomplete
 // after the retry rounds is left out for ATTEMPT_COOLDOWN_MS (so it does not
-// block older ingredients) and then selected again, so no ingredient stays
-// without enrichment.
+// block older ingredients) and then selected again; after MAX_ATTEMPTS such
+// runs it is left out for good (KUC-128: e.g. "Muffinblech" never gets a
+// category and was asked again every week).
 //
 // Request bodies and result import are the ones of the direct job
 // (nutrition-processor.ts, shelf-life-processor.ts).
@@ -42,10 +45,11 @@ import {
 } from './batch-job';
 import { getRedis } from './connection';
 import {
-    buildNutritionRequest,
+    buildEnrichmentRequest,
     importNutritionResult,
     loadEnrichmentContext,
     needsNutritionEnrichment,
+    needsWebSearch,
     parseNutritionAnswer,
 } from './nutrition-processor';
 import { prisma as workerPrisma } from './prisma';
@@ -69,6 +73,8 @@ const SHELF_LIFE_CHUNK_SIZE = 50;
  * ingredients do not block older ones; afterwards they are asked again.
  */
 export const ATTEMPT_COOLDOWN_MS = 7 * 24 * 3600_000;
+/** Runs after which a still incomplete ingredient is no longer selected */
+export const MAX_ATTEMPTS = 2;
 /** BullMQ states of a single enrich-ingredient-nutrition job that will still run */
 const PENDING_JOB_STATES = new Set([
     'waiting',
@@ -99,6 +105,7 @@ export interface EnrichmentDeps {
 }
 
 export interface AttemptLog {
+    /** Ids to leave out: tried within the cooldown, or given up after MAX_ATTEMPTS */
     recent(now: Date): Promise<string[]>;
     mark(ingredientIds: string[], now: Date): Promise<void>;
 }
@@ -107,6 +114,8 @@ interface Candidate {
     id: string;
     name: string;
     nutrition: boolean;
+    /** Nutrition values or units missing (not only categories) */
+    webSearch: boolean;
     shelfLife: boolean;
 }
 
@@ -134,6 +143,7 @@ function toCandidates(
             id: row.id,
             name: row.name,
             nutrition: needsNutritionEnrichment(row),
+            webSearch: needsWebSearch(row),
             shelfLife: needsShelfLifeEnrichment(row),
         }))
         .filter((candidate) => candidate.nutrition || candidate.shelfLife);
@@ -188,7 +198,10 @@ export async function selectEnrichmentCandidates(
 
 // ── Requests ────────────────────────────────────────────────────────────
 
-/** One batch file: a nutrition request per ingredient plus shelf-life requests. */
+/**
+ * One batch file: a nutrition request per ingredient (category-only without
+ * web search when that is all that is missing) plus shelf-life requests.
+ */
 export async function buildEnrichmentBatch(
     prisma: PrismaClient,
     candidates: Candidate[],
@@ -208,7 +221,7 @@ export async function buildEnrichmentBatch(
             nutrition[customId] = candidate.id;
             nutritionLines.push({
                 customId,
-                body: buildNutritionRequest(candidate.name, context),
+                body: buildEnrichmentRequest(candidate.name, candidate.webSearch, context),
             });
         });
     }
@@ -351,6 +364,8 @@ export async function runEnrichmentBackfill(
             skippedRecentlyTried: recentlyTried.length,
             total: candidates.length,
             nutrition: candidates.filter((candidate) => candidate.nutrition).length,
+            webSearch: candidates.filter((candidate) => candidate.nutrition && candidate.webSearch)
+                .length,
             shelfLife: candidates.filter((candidate) => candidate.shelfLife).length,
         };
         if (options.dryRun) {
@@ -454,21 +469,70 @@ export async function runEnrichmentBackfill(
     };
 }
 
+/** One attempt-log entry: last run and number of runs that left it incomplete. */
+export interface AttemptEntry {
+    at: string;
+    count: number;
+}
+
+/** Reads a stored entry; a bare timestamp (before KUC-128) counts as one run. */
+export function parseAttemptEntry(raw: string): AttemptEntry | null {
+    if (!raw.startsWith('{')) return Number.isNaN(Date.parse(raw)) ? null : { at: raw, count: 1 };
+    try {
+        const parsed = JSON.parse(raw) as Partial<AttemptEntry>;
+        if (typeof parsed.at !== 'string' || typeof parsed.count !== 'number') return null;
+        return { at: parsed.at, count: parsed.count };
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Which stored entries to leave out now, and unreadable ones to delete. An
+ * entry past the cooldown stays stored (not excluded), so its count goes on.
+ */
+export function evaluateAttempts(
+    all: Record<string, string>,
+    now: Date,
+): { excluded: string[]; invalid: string[] } {
+    const excluded: string[] = [];
+    const invalid: string[] = [];
+    for (const [id, raw] of Object.entries(all)) {
+        const entry = parseAttemptEntry(raw);
+        if (!entry) invalid.push(id);
+        else if (entry.count >= MAX_ATTEMPTS) excluded.push(id);
+        else if (now.getTime() - Date.parse(entry.at) <= ATTEMPT_COOLDOWN_MS) excluded.push(id);
+    }
+    return { excluded, invalid };
+}
+
+/** Entry after one more incomplete run. */
+export function nextAttemptEntry(previous: string | null | undefined, now: Date): AttemptEntry {
+    const entry = previous ? parseAttemptEntry(previous) : null;
+    return { at: now.toISOString(), count: (entry?.count ?? 0) + 1 };
+}
+
 function redisAttemptLog(): AttemptLog {
     const redis = getRedis();
     const key = `${ENRICHMENT_STORE_NAME}:attempts`;
     return {
         async recent(now) {
-            const all = await redis.hgetall(key);
-            const expired = Object.keys(all).filter(
-                (id) => now.getTime() - Date.parse(all[id]) > ATTEMPT_COOLDOWN_MS,
-            );
-            if (expired.length > 0) await redis.hdel(key, ...expired);
-            return Object.keys(all).filter((id) => !expired.includes(id));
+            const { excluded, invalid } = evaluateAttempts(await redis.hgetall(key), now);
+            if (invalid.length > 0) await redis.hdel(key, ...invalid);
+            return excluded;
         },
         async mark(ingredientIds, now) {
-            const stamp = now.toISOString();
-            await redis.hset(key, Object.fromEntries(ingredientIds.map((id) => [id, stamp])));
+            if (ingredientIds.length === 0) return;
+            const previous = await redis.hmget(key, ...ingredientIds);
+            await redis.hset(
+                key,
+                Object.fromEntries(
+                    ingredientIds.map((id, index) => [
+                        id,
+                        JSON.stringify(nextAttemptEntry(previous[index], now)),
+                    ]),
+                ),
+            );
         },
     };
 }

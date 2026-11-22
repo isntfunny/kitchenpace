@@ -7,6 +7,8 @@ import { after, test } from 'node:test';
 
 import type { Job } from 'bullmq';
 
+import { contentText } from '@shared/prompt-cache';
+
 const url = process.env.SHELF_LIFE_TEST_DATABASE_URL;
 const skip = url ? false : 'SHELF_LIFE_TEST_DATABASE_URL not set';
 const PREFIX = 'slenrich-';
@@ -44,7 +46,10 @@ if (url) {
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
         const body = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
         activeRequests.push({ url: String(input), body });
-        const inputText = String(body.input ?? '');
+        // input is the cached developer message plus the user text (KUC-128)
+        const inputText = Array.isArray(body.input)
+            ? contentText((body.input as Array<{ content: unknown }>).at(-1)?.content)
+            : String(body.input ?? '');
         const match = inputText.match(/"id":"([^"]+)"/);
         const targetId = match ? match[1] : ID;
         const text = JSON.stringify({ items: [activeItemForId(targetId)] });

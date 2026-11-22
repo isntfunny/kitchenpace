@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 import { buildRecipeFilterQuery } from '@app/lib/recipeFilters';
-import { appendRecipeSearchContext, type RecipeSearchContext } from '@app/lib/recipeSearchQuery';
+import { appendRecipeSearchContext, type RecipeSearchContext } from '@app/lib/recipeSearchContext';
 import type { RecipeSearchMeta } from '@app/lib/recipeSearchTypes';
 
 export type {

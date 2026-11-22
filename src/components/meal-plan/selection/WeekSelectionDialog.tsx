@@ -15,7 +15,7 @@ import type { RecipeCardSelection } from '@app/components/features/RecipeCard';
 import { QueryProvider } from '@app/components/providers/QueryProvider';
 import { useToastContext } from '@app/components/providers/ToastProvider';
 import { weekRangeLabel } from '@app/lib/meal-plan/view';
-import type { RecipeSearchContext } from '@app/lib/recipeSearchQuery';
+import type { RecipeSearchContext } from '@app/lib/recipeSearchContext';
 import type { MealKind } from '@shared/meal-planning/meal-kind';
 
 import { css } from 'styled-system/css';

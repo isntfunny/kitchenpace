@@ -8,6 +8,7 @@ import {
     appendRecipeSearchContext,
     buildRecipeBoolQuery,
     parseRecipeSearchContext,
+    semanticPrependAllowed,
 } from '../../src/lib/recipeSearchQuery';
 
 const roundTrip = (ctx: Parameters<typeof appendRecipeSearchContext>[1]) => {
@@ -81,4 +82,14 @@ test('same clauses as before without context', () => {
         { terms: { difficulty: ['EASY'] } },
         { range: { rating: { gte: 4 } } },
     ]);
+});
+
+test('semantic hits are never prepended under a base filter (week selection)', () => {
+    const base = { query: 'schnelles abendessen mit hähnchen', userId: 'u1', page: 1 };
+    assert.equal(semanticPrependAllowed(base), true);
+    assert.equal(semanticPrependAllowed({ ...base, context: { kind: 'main' } }), false);
+    assert.equal(semanticPrependAllowed({ ...base, context: { excludeIds: ['r1'] } }), false);
+    assert.equal(semanticPrependAllowed({ ...base, query: 'hähnchen curry' }), false);
+    assert.equal(semanticPrependAllowed({ ...base, page: 2 }), false);
+    assert.equal(semanticPrependAllowed({ ...base, userId: undefined }), false);
 });

@@ -10,7 +10,11 @@ import {
 } from '@app/lib/recipes/ranking-features.server';
 import { resolveEffectiveSort } from '@app/lib/recipes/taste-ranking';
 import { loadTasteEmbedding, rankRecipeIdsByTaste } from '@app/lib/recipes/taste-ranking.server';
-import { buildRecipeBoolQuery, type RecipeSearchContext } from '@app/lib/recipeSearchQuery';
+import {
+    buildRecipeBoolQuery,
+    semanticPrependAllowed,
+    type RecipeSearchContext,
+} from '@app/lib/recipeSearchQuery';
 import type { RecipeSearchFacets, RecipeSearchMeta, TermFacet } from '@app/lib/recipeSearchTypes';
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
 import { createLogger } from '@shared/logger';
@@ -72,8 +76,6 @@ const buildHistogramFacet = (agg: HistogramAggregation | undefined, interval: nu
     const max = sorted[sorted.length - 1].key;
     return { buckets: sorted, min, max, interval };
 };
-
-const SEMANTIC_MIN_WORD_COUNT = 4;
 
 /** Ids of published recipes matching `query`, best rated first (week selection helpers). */
 export async function searchRecipeIds(
@@ -290,8 +292,7 @@ export async function queryRecipes(
     }
 
     // Semantic search: prepend embedding-based hits on first page for 4+ word queries
-    const wordCount = query ? query.split(/\s+/).length : 0;
-    if (query && wordCount >= SEMANTIC_MIN_WORD_COUNT && userId && page === 1) {
+    if (query && userId && semanticPrependAllowed({ query, userId, page, context })) {
         try {
             const existingIds = new Set(data.map((r) => r.id));
             const { recipes: semanticHits } = await semanticRecipeSearch(

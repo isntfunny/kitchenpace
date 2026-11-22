@@ -1,6 +1,14 @@
 'use client';
 
-import { CalendarRange, ChevronDown, Copy, LayoutTemplate, Save, Trash2 } from 'lucide-react';
+import {
+    CalendarRange,
+    ChevronDown,
+    Copy,
+    LayoutTemplate,
+    Save,
+    Share2,
+    Trash2,
+} from 'lucide-react';
 import { DropdownMenu } from 'radix-ui';
 import { useEffect, useId, useState } from 'react';
 
@@ -19,14 +27,15 @@ import { addDays } from '@app/lib/meal-plan/week';
 import { css, cx } from 'styled-system/css';
 
 import { CopyPanel, DaySelect, muted, resultMessage, slotLabelFor, usePreview } from './CopyPanel';
+import { ShareWeek } from './ShareWeek';
 import { SheetFrame } from './SheetFrame';
 import { actionButton, fieldLabel, input } from './styles';
 import type { PlanWeekData } from './types';
 import { usePlanAction } from './usePlanAction';
 
-// "Letzte Woche übernehmen", "Tag kopieren" and week templates (KUC-101).
+// "Letzte Woche übernehmen", "Tag kopieren", week templates (KUC-101) and sharing (KUC-110).
 
-type Tool = 'week' | 'day' | 'save' | 'apply';
+type Tool = 'week' | 'day' | 'save' | 'apply' | 'share';
 
 const menuItem = css({
     display: 'flex',
@@ -48,12 +57,14 @@ export function WeekTools({ data }: { data: PlanWeekData }) {
         ['day', 'Tag kopieren …', Copy],
         ['save', 'Als Vorlage speichern …', Save],
         ['apply', 'Vorlage anwenden …', LayoutTemplate],
+        ['share', 'Teilen …', Share2],
     ];
     const titles: Record<Tool, string> = {
         week: 'Letzte Woche übernehmen',
         day: 'Tag kopieren',
         save: 'Woche als Vorlage speichern',
         apply: 'Vorlage anwenden',
+        share: 'Woche teilen',
     };
     return (
         <>
@@ -99,6 +110,7 @@ export function WeekTools({ data }: { data: PlanWeekData }) {
                 {tool === 'day' && <CopyDay data={data} onDone={() => setTool(null)} />}
                 {tool === 'save' && <SaveTemplate data={data} onDone={() => setTool(null)} />}
                 {tool === 'apply' && <ApplyTemplate data={data} onDone={() => setTool(null)} />}
+                {tool === 'share' && <ShareWeek data={data} />}
             </SheetFrame>
         </>
     );

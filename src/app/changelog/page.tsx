@@ -49,6 +49,10 @@ const CHANGELOG: ChangelogEntry[] = [
                 tag: 'feat',
             },
             {
+                text: 'Bring! bleibt jetzt automatisch in beiden Richtungen auf dem gleichen Stand wie deine Einkaufsliste – was du unterwegs in Bring! abhakst, ist auch in KochTakt erledigt.',
+                tag: 'feat',
+            },
+            {
                 text: 'Was du regelmäßig kaufst, schlägt dir die Liste rechtzeitig vor – zum Beispiel Bananen jede Woche.',
                 tag: 'feat',
             },

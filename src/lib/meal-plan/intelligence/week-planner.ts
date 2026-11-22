@@ -7,8 +7,8 @@ import { getMealPlanWeek } from '@app/lib/meal-plan/repository';
 import { DEFAULT_HOUSEHOLD_SIZE } from '@app/lib/meal-plan/slots';
 import type { DishMarker } from '@app/lib/meal-plan/view';
 import { getLeftoverHints } from '@app/lib/pantry/leftovers';
-import { todayIn } from '@shared/dates';
-import { weekdayLong } from '@shared/dates';
+import { todayIn, weekdayLong } from '@shared/dates';
+import { loadShelfLifeDays } from '@shared/ingredient-shelf-life/storage-life';
 import { suggestLeftoverRecipes, type LeftoverHint } from '@shared/meal-planning/leftovers';
 import {
     analyzeShelfLife,
@@ -77,25 +77,14 @@ async function loadShelfLifeInput(db: Db, ctx: WeekContext): Promise<ShelfLifeIn
           })
         : [];
     const ingredientIds = [...new Set(lines.map((line) => line.ingredientId))];
-    const [ingredients, lives, titles] = await Promise.all([
+    const [ingredients, days, titles] = await Promise.all([
         ingredientIds.length
             ? db.ingredient.findMany({
                   where: { id: { in: ingredientIds } },
-                  select: {
-                      id: true,
-                      name: true,
-                      normalizedName: true,
-                      defaultStorage: true,
-                      shelfLifeSource: true,
-                  },
+                  select: { id: true, name: true, normalizedName: true },
               })
             : Promise.resolve([]),
-        ingredientIds.length
-            ? db.ingredientStorageLife.findMany({
-                  where: { ingredientId: { in: ingredientIds } },
-                  select: { ingredientId: true, storage: true, days: true },
-              })
-            : Promise.resolve([]),
+        loadShelfLifeDays(db, ingredientIds),
         recipeIds.length
             ? db.recipe.findMany({
                   where: { id: { in: recipeIds } },
@@ -103,16 +92,6 @@ async function loadShelfLifeInput(db: Db, ctx: WeekContext): Promise<ShelfLifeIn
               })
             : Promise.resolve([]),
     ]);
-    const days = new Map<string, number>();
-    for (const ingredient of ingredients) {
-        if (!ingredient.shelfLifeSource) continue; // not assessed: unknown, never critical
-        const own = lives.filter((life) => life.ingredientId === ingredient.id);
-        const pick =
-            own.find((life) => life.storage === ingredient.defaultStorage) ??
-            own.find((life) => life.storage === 'FRIDGE') ??
-            own.find((life) => life.storage === 'PANTRY');
-        if (pick) days.set(ingredient.id, pick.days);
-    }
     const info = new Map(ingredients.map((i) => [i.id, i.normalizedName?.trim() || i.name]));
     const recipes: ShelfLifeRecipe[] = recipeIds.map((id) => ({
         id,

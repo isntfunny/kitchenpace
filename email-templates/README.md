@@ -56,7 +56,7 @@ Each recipe in `latest_recipes`, `top_recipes`, and `trending_recipes` should ha
     "name": "Pasta Carbonara",
     "description": "Cremige Pasta mit Speck und Parmesan",
     "image_url": "https://example.com/recipes/pasta-carbonara.jpg",
-    "url": "https://kitchenpace.de/recipe/pasta-carbonara",
+    "url": "https://kochtakt.de/recipe/pasta-carbonara",
     "time_minutes": 25,
     "difficulty": "Einfach",
     "rating": 4.8
@@ -72,24 +72,24 @@ Each recipe in `latest_recipes`, `top_recipes`, and `trending_recipes` should ha
         {
             "name": "Spaghetti Carbonara",
             "description": "Cremige italienische Pasta mit Eiern, Käse und knusprigem Speck",
-            "image_url": "https://kitchenpace.de/images/carbonara.jpg",
-            "url": "https://kitchenpace.de/recipe/spaghetti-carbonara",
+            "image_url": "https://kochtakt.de/images/carbonara.jpg",
+            "url": "https://kochtakt.de/recipe/spaghetti-carbonara",
             "time_minutes": 25,
             "difficulty": "Einfach"
         },
         {
             "name": "Ramen Suppe",
             "description": "Traditionelle japanische Brühe mit Nudeln",
-            "image_url": "https://kitchenpace.de/images/ramen.jpg",
-            "url": "https://kitchenpace.de/recipe/ramen-suppe",
+            "image_url": "https://kochtakt.de/images/ramen.jpg",
+            "url": "https://kochtakt.de/recipe/ramen-suppe",
             "time_minutes": 45,
             "difficulty": "Mittel"
         },
         {
             "name": "Pizza Margherita",
             "description": "Klassische italienische Pizza mit Tomaten und Mozzarella",
-            "image_url": "https://kitchenpace.de/images/pizza.jpg",
-            "url": "https://kitchenpace.de/recipe/pizza-margherita",
+            "image_url": "https://kochtakt.de/images/pizza.jpg",
+            "url": "https://kochtakt.de/recipe/pizza-margherita",
             "time_minutes": 60,
             "difficulty": "Mittel"
         }
@@ -98,8 +98,8 @@ Each recipe in `latest_recipes`, `top_recipes`, and `trending_recipes` should ha
         {
             "name": "Boeuf Bourguignon",
             "description": "Französisches Rindfleischgericht mit Rotwein",
-            "image_url": "https://kitchenpace.de/images/boeuf.jpg",
-            "url": "https://kitchenpace.de/recipe/boeuf-bourguignon",
+            "image_url": "https://kochtakt.de/images/boeuf.jpg",
+            "url": "https://kochtakt.de/recipe/boeuf-bourguignon",
             "time_minutes": 180,
             "difficulty": "Schwer",
             "rating": 4.9
@@ -107,8 +107,8 @@ Each recipe in `latest_recipes`, `top_recipes`, and `trending_recipes` should ha
         {
             "name": "Tiramisu",
             "description": "Italienisches Dessert mit Mascarpone und Espresso",
-            "image_url": "https://kitchenpace.de/images/tiramisu.jpg",
-            "url": "https://kitchenpace.de/recipe/tiramisu",
+            "image_url": "https://kochtakt.de/images/tiramisu.jpg",
+            "url": "https://kochtakt.de/recipe/tiramisu",
             "time_minutes": 30,
             "difficulty": "Einfach",
             "rating": 4.8
@@ -116,17 +116,17 @@ Each recipe in `latest_recipes`, `top_recipes`, and `trending_recipes` should ha
         {
             "name": "Sushi",
             "description": "Japanische Reisspezialität mit frischem Fisch",
-            "image_url": "https://kitchenpace.de/images/sushi.jpg",
-            "url": "https://kitchenpace.de/recipe/sushi",
+            "image_url": "https://kochtakt.de/images/sushi.jpg",
+            "url": "https://kochtakt.de/recipe/sushi",
             "time_minutes": 60,
             "difficulty": "Schwer",
             "rating": 4.7
         }
     ],
-    "categoryCookingUrl": "https://kitchenpace.de/category/kochen",
-    "categoryBakingUrl": "https://kitchenpace.de/category/backen",
-    "categorySideDishUrl": "https://kitchenpace.de/category/beilage",
-    "unsubscribe_url": "https://kitchenpace.de/unsubscribe"
+    "categoryCookingUrl": "https://kochtakt.de/category/kochen",
+    "categoryBakingUrl": "https://kochtakt.de/category/backen",
+    "categorySideDishUrl": "https://kochtakt.de/category/beilage",
+    "unsubscribe_url": "https://kochtakt.de/unsubscribe"
 }
 ```
 

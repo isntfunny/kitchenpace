@@ -61,7 +61,7 @@
 ./k6/run-dashboard.sh                    # All scenarios
 ./k6/run-dashboard.sh heavy              # Only heavy load
 ./k6/run-dashboard.sh granular           # Find breaking point
-./k6/run-dashboard.sh prod https://kitchenpace.app  # Production
+./k6/run-dashboard.sh prod https://kochtakt.de  # Production
 npm run test:load:dashboard              # Via npm
 
 # SAVE RESULTS TO FILES (JSON + CSV + HTML report)

@@ -119,7 +119,8 @@ export const laneColClass = css({
 export const progressWrapClass = css({
     p: '4',
     bg: 'surface',
-    borderBottom: '1px solid',
+    borderBottomWidth: '1px',
+    borderBottomStyle: 'solid',
     borderColor: 'border',
     flexShrink: '0',
 });

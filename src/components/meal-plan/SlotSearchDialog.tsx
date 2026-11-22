@@ -425,7 +425,8 @@ function SlotSearchBody({
                             alignItems: 'flex-end',
                             gap: '4',
                             pt: '3',
-                            borderTop: '1px solid',
+                            borderTopWidth: '1px',
+                            borderTopStyle: 'solid',
                             borderColor: 'border.muted',
                         })}
                     >

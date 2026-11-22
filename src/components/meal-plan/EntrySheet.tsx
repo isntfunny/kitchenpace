@@ -140,7 +140,8 @@ function EntryBody({
                     gridTemplateColumns: { base: '1fr', sm: '1fr 1fr' },
                     gap: '2',
                     pt: '4',
-                    borderTop: '1px solid',
+                    borderTopWidth: '1px',
+                    borderTopStyle: 'solid',
                     borderColor: 'border.muted',
                 })}
             >

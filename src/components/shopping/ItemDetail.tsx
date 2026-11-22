@@ -67,7 +67,8 @@ const row = css({
     alignItems: 'flex-start',
     gap: '3',
     py: '3',
-    borderTop: '1px solid',
+    borderTopWidth: '1px',
+    borderTopStyle: 'solid',
     borderColor: 'border.muted',
 });
 const rowLabel = css({

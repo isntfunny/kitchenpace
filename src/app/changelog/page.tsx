@@ -858,7 +858,8 @@ export default function ChangelogPage() {
                                 className={css({
                                     position: 'relative',
                                     pl: '6',
-                                    borderLeft: '2px solid',
+                                    borderLeftWidth: '2px',
+                                    borderLeftStyle: 'solid',
                                     borderColor: 'border',
                                 })}
                             >

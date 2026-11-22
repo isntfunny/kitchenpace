@@ -47,7 +47,8 @@ export function AddIngredientForm({ onClose }: { onClose: () => void }) {
         <div
             className={css({
                 padding: '4',
-                borderBottom: '1px solid',
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
                 borderColor: 'border.muted',
                 bg: { base: 'rgba(224,123,83,0.04)', _dark: 'rgba(224,123,83,0.06)' },
                 display: 'flex',

@@ -398,7 +398,8 @@ function CategoryEditPanel({
                     justifyContent: 'flex-end',
                     gap: '2',
                     paddingTop: '2',
-                    borderTop: '1px solid',
+                    borderTopWidth: '1px',
+                    borderTopStyle: 'solid',
                     borderColor: 'border.muted',
                 })}
             >
@@ -444,7 +445,8 @@ function AddCategoryForm({ onClose }: { onClose: () => void }) {
         <div
             className={css({
                 padding: '4',
-                borderBottom: '1px solid',
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
                 borderColor: 'border.muted',
                 bg: { base: 'rgba(224,123,83,0.04)', _dark: 'rgba(224,123,83,0.06)' },
                 display: 'flex',

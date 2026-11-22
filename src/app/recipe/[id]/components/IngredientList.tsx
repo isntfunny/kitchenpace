@@ -173,7 +173,8 @@ export function IngredientList({
                     align: 'center',
                     mb: '2',
                     pb: '3',
-                    borderBottom: '1px solid',
+                    borderBottomWidth: '1px',
+                    borderBottomStyle: 'solid',
                     borderColor: 'border',
                 })}
             >
@@ -328,7 +329,8 @@ export function IngredientList({
                     className={css({
                         mt: '4',
                         pt: '4',
-                        borderTop: '1px solid',
+                        borderTopWidth: '1px',
+                        borderTopStyle: 'solid',
                         borderColor: 'border',
                     })}
                 >
@@ -498,7 +500,8 @@ export function IngredientList({
                                         <thead>
                                             <tr
                                                 className={css({
-                                                    borderBottom: '1px solid',
+                                                    borderBottomWidth: '1px',
+                                                    borderBottomStyle: 'solid',
                                                     borderColor: 'border',
                                                     position: 'sticky',
                                                     top: '0',
@@ -521,7 +524,8 @@ export function IngredientList({
                                                 <tr
                                                     key={row.ingredient.id}
                                                     className={css({
-                                                        borderBottom: '1px solid',
+                                                        borderBottomWidth: '1px',
+                                                        borderBottomStyle: 'solid',
                                                         borderColor: 'border.muted',
                                                     })}
                                                 >

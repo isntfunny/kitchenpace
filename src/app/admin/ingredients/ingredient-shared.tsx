@@ -66,7 +66,8 @@ export function TableToolbar({
                 alignItems: 'center',
                 gap: '2',
                 padding: '4',
-                borderBottom: '1px solid',
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
                 borderColor: 'border.muted',
             })}
         >
@@ -156,7 +157,8 @@ export function SimpleTable<T>({
                         <tr
                             key={hg.id}
                             className={css({
-                                borderBottom: '1px solid',
+                                borderBottomWidth: '1px',
+                                borderBottomStyle: 'solid',
                                 borderColor: 'border.muted',
                             })}
                         >
@@ -179,7 +181,8 @@ export function SimpleTable<T>({
                             key={row.id}
                             onClick={() => onRowClick(row.original)}
                             className={css({
-                                borderBottom: '1px solid',
+                                borderBottomWidth: '1px',
+                                borderBottomStyle: 'solid',
                                 borderColor: 'border.muted',
                                 cursor: 'pointer',
                                 transition: 'background 0.1s ease',

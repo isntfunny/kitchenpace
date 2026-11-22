@@ -279,7 +279,8 @@ export default function OpenSourcePage() {
                                 <tr
                                     className={css({
                                         background: 'surface-raised',
-                                        borderBottom: '1px solid',
+                                        borderBottomWidth: '1px',
+                                        borderBottomStyle: 'solid',
                                         borderColor: 'border',
                                     })}
                                 >
@@ -308,7 +309,8 @@ export default function OpenSourcePage() {
                                     <tr
                                         key={pkg.nameVersion}
                                         className={css({
-                                            borderBottom: '1px solid',
+                                            borderBottomWidth: '1px',
+                                            borderBottomStyle: 'solid',
                                             borderColor: 'border',
                                             _last: { borderBottom: 'none' },
                                             _hover: { background: 'surface-raised' },

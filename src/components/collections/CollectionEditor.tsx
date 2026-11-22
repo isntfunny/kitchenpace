@@ -97,7 +97,8 @@ export function CollectionEditor({ initialData }: CollectionEditorProps) {
             <div
                 className={css({
                     p: '4',
-                    borderBottom: '1px solid',
+                    borderBottomWidth: '1px',
+                    borderBottomStyle: 'solid',
                     borderColor: 'border',
                     display: 'flex',
                     alignItems: 'center',
@@ -180,7 +181,8 @@ export function CollectionEditor({ initialData }: CollectionEditorProps) {
                 className={css({
                     px: '4',
                     py: '2',
-                    borderBottom: '1px solid',
+                    borderBottomWidth: '1px',
+                    borderBottomStyle: 'solid',
                     borderColor: 'border',
                 })}
             >

@@ -127,7 +127,8 @@ export const sidebarStatsClass = css({
     flexDirection: 'column',
     gap: '2',
     pt: '4',
-    borderTop: '1px solid',
+    borderTopWidth: '1px',
+    borderTopStyle: 'solid',
     borderColor: { base: 'rgba(0,0,0,0.06)', _dark: 'rgba(255,255,255,0.08)' },
 });
 

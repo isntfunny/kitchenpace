@@ -259,7 +259,8 @@ export function HeaderSearch() {
                             }
                             className={css({
                                 width: '100%',
-                                borderTop: '1px solid',
+                                borderTopWidth: '1px',
+                                borderTopStyle: 'solid',
                                 borderColor: 'border',
                                 px: '4',
                                 py: '2.5',
@@ -328,7 +329,13 @@ function RecipeSkeletonSection({
     count: number;
 }) {
     return (
-        <div className={css({ borderBottom: '1px solid', borderColor: 'border' })}>
+        <div
+            className={css({
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
+                borderColor: 'border',
+            })}
+        >
             <SectionHeader icon={icon} title={title} />
             <div className={css({ px: '2', pb: '2', display: 'grid', gap: '1' })}>
                 {Array.from({ length: count }).map((_, i) => (
@@ -370,7 +377,13 @@ function RecipeSkeletonSection({
 
 function SuggestSkeletonSection() {
     return (
-        <div className={css({ borderBottom: '1px solid', borderColor: 'border' })}>
+        <div
+            className={css({
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
+                borderColor: 'border',
+            })}
+        >
             <SectionHeader icon={<Carrot size={14} />} title="Zutaten" />
             <div className={css({ px: '2', pb: '2', display: 'grid', gap: '1' })}>
                 {[0, 1].map((i) => (
@@ -397,7 +410,13 @@ function RecipeSection({
     onSelect: (slug: string) => void;
 }) {
     return (
-        <div className={css({ borderBottom: '1px solid', borderColor: 'border' })}>
+        <div
+            className={css({
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
+                borderColor: 'border',
+            })}
+        >
             <SectionHeader icon={icon} title={title} />
             <div className={css({ px: '2', pb: '2', display: 'grid', gap: '1' })}>
                 {recipes.map((recipe) => (
@@ -477,7 +496,8 @@ function UserSection({
     return (
         <div
             className={css({
-                borderBottom: '1px solid',
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
                 borderColor: 'border',
                 _last: { borderBottom: 'none' },
             })}
@@ -551,7 +571,8 @@ function SuggestSection({
     return (
         <div
             className={css({
-                borderBottom: '1px solid',
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
                 borderColor: 'border',
                 _last: { borderBottom: 'none' },
             })}

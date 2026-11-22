@@ -340,7 +340,8 @@ export function ModerationDetailDialog({
                     {item.status === 'PENDING' && (
                         <div
                             className={css({
-                                borderTop: '1px solid',
+                                borderTopWidth: '1px',
+                                borderTopStyle: 'solid',
                                 borderColor: 'border.muted',
                                 pt: '4',
                             })}

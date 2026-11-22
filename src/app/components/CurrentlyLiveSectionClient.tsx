@@ -56,7 +56,8 @@ function StreamRow({
                 alignItems: 'center',
                 gap: '3',
                 py: '2.5',
-                borderBottom: '1px solid',
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
                 borderColor: 'border.muted',
                 _last: { borderBottom: 'none' },
             })}

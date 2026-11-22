@@ -36,7 +36,8 @@ const row = css({
     gap: '3',
     px: '4',
     py: '3',
-    borderTop: '1px solid',
+    borderTopWidth: '1px',
+    borderTopStyle: 'solid',
     borderColor: 'border.muted',
     _first: { borderTop: 'none' },
 });

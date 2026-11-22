@@ -36,7 +36,8 @@ export function NodeWrapper({ icon: Icon, label, selected, onDelete, children }:
                     px: '3',
                     py: '2',
                     bg: 'surface.muted',
-                    borderBottom: '1px solid',
+                    borderBottomWidth: '1px',
+                    borderBottomStyle: 'solid',
                     borderColor: 'border',
                     cursor: 'grab',
                 })}

@@ -175,7 +175,8 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: Keys }) {
                         key={key.id}
                         className={css({
                             py: '3',
-                            borderTop: '1px solid',
+                            borderTopWidth: '1px',
+                            borderTopStyle: 'solid',
                             borderColor: 'border',
                             display: 'flex',
                             flexDir: 'column',

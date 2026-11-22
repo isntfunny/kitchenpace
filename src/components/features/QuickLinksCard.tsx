@@ -88,7 +88,8 @@ export function QuickLinksCard({ userSlug: _userSlug }: { userSlug?: string }) {
                     className={css({
                         pt: '3',
                         mt: '5',
-                        borderTop: '1px solid',
+                        borderTopWidth: '1px',
+                        borderTopStyle: 'solid',
                         borderColor: 'border',
                     })}
                 >

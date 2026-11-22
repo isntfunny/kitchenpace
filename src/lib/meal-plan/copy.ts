@@ -1,8 +1,9 @@
 // Pure planning of "Letzte Woche übernehmen", "Tag kopieren" and templates (KUC-101):
 // which entries are created where, which target cells already hold dishes, and how
 // "Rest von" links are carried over. The data access in edit.ts only executes the plan.
+import { addDays } from '@shared/dates';
+
 import { cellKey } from './view';
-import { addDays } from './week';
 
 /** What to do with target cells that already hold dishes */
 export type ConflictMode = 'add' | 'skip' | 'replace';

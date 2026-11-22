@@ -1,11 +1,12 @@
 import { TZDate } from '@date-fns/tz';
 import { cache } from 'react';
 
+import { detectSeason } from '@shared/meal-planning/season';
+
 import { inRange, resolveDisplayWindow } from './date-resolver';
 import { type FilterSetWithRelations, getFoodPeriodFilterSets } from './db-queries';
 import { SEASON_LABELS, TIME_SLOT_LABELS, type Season, type TimeSlot } from './labels';
 import { toFilterCriteria, type FilterCriteria } from './mappings';
-import { detectSeason } from './season';
 
 export type { Season, TimeSlot } from './labels';
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it } from 'node:test';
 
-import { zonedTimeToUtc } from '../../shared/meal-reminders';
+import { zonedTimeToUtc } from '../../shared/dates';
 import {
     sendReminder,
     syncUserReminders,

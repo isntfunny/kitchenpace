@@ -1,6 +1,6 @@
 // Display rules of the pantry page (KUC-107): amount text with "~" for uncertain amounts,
 // expiry hints and the three groups. Pure; dates are compared as Berlin calendar days.
-import { diffDays, toBerlinDate } from '@shared/meal-planning/dates';
+import { diffDays, toBerlinDate } from '@shared/dates';
 
 export type PantryUnit = 'G' | 'ML' | 'PIECE';
 
@@ -53,7 +53,7 @@ export function expiryHint(
     now: Date,
 ): { label: string; tone: ExpiryTone; days: number } | null {
     if (!expiresAt) return null;
-    const days = diffDays(toBerlinDate(expiresAt), toBerlinDate(now));
+    const days = diffDays(toBerlinDate(now), toBerlinDate(expiresAt));
     if (days < 0) {
         return {
             label: days === -1 ? 'seit gestern abgelaufen' : `seit ${-days} T. abgelaufen`,

@@ -11,10 +11,10 @@ import {
     packHint,
     sourceQuantityLabel,
     stepQuantity,
-    weekdayShort,
     type QuantityChange,
     type ShoppingItemView,
 } from '@app/lib/shopping/list-view';
+import { weekdayShort } from '@shared/dates';
 
 import { css } from 'styled-system/css';
 

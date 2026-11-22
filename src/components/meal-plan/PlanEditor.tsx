@@ -14,7 +14,8 @@ import {
 
 import { movePlanEntry, swapPlanCells } from '@app/app/plan/edit-actions';
 import type { DishMarker } from '@app/lib/meal-plan/view';
-import { cellKey, weekdayShort } from '@app/lib/meal-plan/view';
+import { cellKey } from '@app/lib/meal-plan/view';
+import { weekdayShort } from '@shared/dates';
 
 import { css, cx } from 'styled-system/css';
 

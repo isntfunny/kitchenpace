@@ -4,6 +4,8 @@ import { randomBytes } from 'node:crypto';
 
 import { z } from 'zod';
 
+import { formatIsoDate } from '@shared/dates';
+
 import type { CopySource } from './copy';
 import { type Db, inTransaction, notFound } from './db';
 import { executeCopy, previewFor } from './edit';
@@ -17,7 +19,7 @@ import {
     type SlotConfig,
     type SlotKey,
 } from './slots';
-import { formatIsoDate, toDbDate, weekDays, weekRange } from './week';
+import { toDbDate, weekDays, weekRange } from './week';
 
 /** Moderation queue content type of a shared week (KUC-110) */
 export const SHARE_CONTENT_TYPE = 'meal_plan_share';

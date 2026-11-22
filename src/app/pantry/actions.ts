@@ -3,10 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-import { getServerAuthSession } from '@app/lib/auth';
-import { DataAccessError } from '@app/lib/meal-plan/db';
 import { addPantryItem, setPantryItemStatus } from '@app/lib/pantry/repository';
-import { checkRateLimit } from '@app/lib/rate-limit';
+import { createActionRunner } from '@app/lib/server-action.server';
 import { toBaseQuantity } from '@app/lib/shopping/quantity';
 import { prisma } from '@shared/prisma';
 
@@ -20,37 +18,18 @@ export type PantryActionResult =
           error: string;
       };
 
+const runAction = createActionRunner<'VALIDATION'>({
+    scope: 'pantry',
+    rateLimit: 'shopping',
+    logLabel: '[Pantry] action failed',
+    invalidCode: 'VALIDATION',
+    failedMessage: 'Die Aktion konnte nicht abgeschlossen werden. Bitte versuche es erneut.',
+    after: () => revalidatePath('/pantry'),
+});
+
 async function run(work: (userId: string) => Promise<unknown>): Promise<PantryActionResult> {
-    try {
-        const session = await getServerAuthSession('pantry');
-        if (!session?.user?.id || session.user.role === 'banned' || session.user.banned)
-            return { ok: false, code: 'SIGN_IN', error: 'Bitte melde dich an.' };
-        const limit = await checkRateLimit('shopping', session.user.id);
-        if (!limit.allowed)
-            return {
-                ok: false,
-                code: 'RATE_LIMIT',
-                error: 'Zu viele Anfragen. Bitte warte einen Moment.',
-            };
-        await work(session.user.id);
-        revalidatePath('/pantry');
-        return { ok: true };
-    } catch (error) {
-        if (error instanceof DataAccessError)
-            return {
-                ok: false,
-                code: error.code === 'NOT_FOUND' ? 'NOT_FOUND' : 'FAILED',
-                error: error.message,
-            };
-        if (error instanceof z.ZodError)
-            return { ok: false, code: 'VALIDATION', error: 'Bitte prüfe deine Eingaben.' };
-        console.error('[Pantry] action failed', error);
-        return {
-            ok: false,
-            code: 'FAILED',
-            error: 'Die Aktion konnte nicht abgeschlossen werden. Bitte versuche es erneut.',
-        };
-    }
+    const result = await runAction(work);
+    return result.ok ? { ok: true } : result;
 }
 
 /** "aufgebraucht" / "weggeworfen" in one tap; AVAILABLE undoes it. */

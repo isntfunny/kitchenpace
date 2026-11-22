@@ -1,6 +1,7 @@
 import { prisma } from '@shared/prisma';
+import { hasTasteProfile } from '@shared/recipe-ranking/vector';
 
-import { hasTasteProfile, rankByTaste } from './taste-ranking';
+import { rankByTaste } from './taste-ranking';
 
 /** Loads `Profile.tasteEmbedding`; `null` when the user has no (usable) taste profile. */
 export async function loadTasteEmbedding(userId: string): Promise<number[] | null> {

@@ -12,7 +12,8 @@ import {
     type MealPlanSettings,
 } from '@app/lib/meal-plan/repository';
 import { idSchema, isoDateSchema } from '@app/lib/meal-plan/schemas';
-import { todayIn, weekRange, weekStartFor } from '@app/lib/meal-plan/week';
+import { weekRange, weekStartFor } from '@app/lib/meal-plan/week';
+import { todayIn } from '@shared/dates';
 import { prisma } from '@shared/prisma';
 
 import { run, runWrite } from './run';

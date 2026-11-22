@@ -8,9 +8,6 @@ import {
     leftoverPlanSlot,
     movesToEntryUpdates,
     purchaseDateFor,
-    seasonsAndSlots,
-    tasteScoreOf,
-    toCandidate,
     type PlanEntryLite,
 } from '../../../src/lib/meal-plan/intelligence/mappers';
 
@@ -119,68 +116,6 @@ describe('shelf-life moves and markers', () => {
         assert.notEqual(ricePair[0].date, '2026-03-09');
     });
 });
-
-describe('seasonsAndSlots', () => {
-    const sets = [
-        { timeSlot: 'abend', season: 'winter', tagIds: ['t-winter'], categoryIds: [] },
-        { timeSlot: 'fruehstueck', season: 'sommer', tagIds: [], categoryIds: ['c-bowl'] },
-    ];
-    it('derives seasons and meal types from matching sets', () => {
-        assert.deepEqual(seasonsAndSlots({ tagIds: ['t-winter'], categoryIds: [] }, sets), {
-            seasons: ['winter'],
-            slots: ['DINNER'],
-        });
-        assert.deepEqual(seasonsAndSlots({ tagIds: [], categoryIds: ['c-bowl'] }, sets), {
-            seasons: ['sommer'],
-            slots: ['BREAKFAST'],
-        });
-    });
-    it('leaves recipes without a match unrestricted', () => {
-        assert.deepEqual(seasonsAndSlots({ tagIds: ['x'], categoryIds: [] }, sets), {});
-    });
-    it('treats all four seasons as year-round', () => {
-        const all = ['fruehling', 'sommer', 'herbst', 'winter'].map((season) => ({
-            timeSlot: 'mittag',
-            season,
-            tagIds: ['t'],
-            categoryIds: [],
-        }));
-        assert.deepEqual(seasonsAndSlots({ tagIds: ['t'], categoryIds: [] }, all), {
-            slots: ['LUNCH'],
-        });
-    });
-});
-
-describe('toCandidate and taste', () => {
-    it('scales amounts to the household and maps taste to 0..1', () => {
-        const candidate = toCandidate(
-            {
-                id: 'r1',
-                title: 'Sahnesauce',
-                totalTime: 30,
-                servings: 4,
-                categoryId: null,
-                tagIds: [],
-                categoryIds: [],
-                cosine: 0.5,
-                ingredients: [
-                    { ingredientId: 'sahne', name: 'Sahne', amount: 200, unit: 'ml' },
-                    { ingredientId: 'salz' },
-                ],
-            },
-            [],
-            2,
-        );
-        assert.equal(candidate.categoryId, 'none');
-        assert.equal(candidate.tasteScore, 0.75);
-        assert.deepEqual(candidate.ingredients, [
-            { ingredientId: 'sahne', name: 'Sahne', amountBase: 100, unitBase: 'ml' },
-            { ingredientId: 'salz' },
-        ]);
-        assert.equal(tasteOfNull(), undefined);
-    });
-});
-const tasteOfNull = () => tasteScoreOf(null);
 
 describe('leftoverPlanSlot', () => {
     it('prefers a free dinner, then lunch', () => {

@@ -1,6 +1,15 @@
 // Pure helpers for the week view (KUC-99): week URL parameter, labels, day
 // calories and the built-in status markers of a planned dish.
-import { addDays, isoWeekday, isoWeekNumber, parseIsoDate, weekStartFor } from './week';
+import {
+    addDays,
+    isoWeek,
+    isoWeekday,
+    isoWeekNumber,
+    parseIsoDate,
+    weekdayShort,
+} from '@shared/dates';
+
+import { weekStartFor } from './week';
 
 const WEEK_PARAM = /^(\d{4})-W(\d{2})$/;
 
@@ -38,9 +47,8 @@ export function weekLabelDate(startDate: string): string {
 
 /** URL parameter for a week, e.g. "2026-W48"; round-trips with resolveWeekStart. */
 export function weekParam(startDate: string): string {
-    const mid = weekLabelDate(startDate);
-    const thursday = addDays(mid, 4 - isoWeekday(mid));
-    return `${thursday.slice(0, 4)}-W${String(isoWeekNumber(mid)).padStart(2, '0')}`;
+    const { year, week } = isoWeek(weekLabelDate(startDate));
+    return `${year}-W${String(week).padStart(2, '0')}`;
 }
 
 export function weekNumber(startDate: string): number {
@@ -75,19 +83,12 @@ const MONTHS_SHORT = [
     'Nov',
     'Dez',
 ];
-const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
-const WEEKDAYS_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
 const parts = (date: string) => ({
     year: Number(date.slice(0, 4)),
     month: Number(date.slice(5, 7)) - 1,
     day: Number(date.slice(8, 10)),
 });
-
-export const weekdayShort = (date: string) => WEEKDAYS_SHORT[isoWeekday(date) - 1];
-export const weekdayLong = (date: string) => WEEKDAYS[isoWeekday(date) - 1];
-export const weekdayNameShort = (isoDay: number) => WEEKDAYS_SHORT[isoDay - 1];
-export const weekdayNameLong = (isoDay: number) => WEEKDAYS[isoDay - 1];
 
 /** "24. Nov" */
 export function shortDate(date: string): string {

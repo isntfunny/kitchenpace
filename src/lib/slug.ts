@@ -1,8 +1,6 @@
-import slugifyLib from 'slugify';
+import { slugify } from '@shared/slug';
 
-export function slugify(text: string): string {
-    return slugifyLib(text, { lower: true, strict: true, locale: 'de' });
-}
+export { slugify };
 
 export async function generateUniqueSlug(
     title: string,

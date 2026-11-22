@@ -10,8 +10,10 @@ import { addPlanEntries, getPlanContext, type PlanContext } from '@app/app/plan/
 import { Button } from '@app/components/atoms/Button';
 import { useToastContext } from '@app/components/providers/ToastProvider';
 import { defaultServings, slotLabel } from '@app/lib/meal-plan/slots';
-import { shortDate, weekNumber, weekParam, weekdayShort } from '@app/lib/meal-plan/view';
-import { addDays, weekDays } from '@app/lib/meal-plan/week';
+import { shortDate, weekNumber, weekParam } from '@app/lib/meal-plan/view';
+import { weekDays } from '@app/lib/meal-plan/week';
+import { weekdayShort } from '@shared/dates';
+import { addDays } from '@shared/dates';
 
 import { css, cx } from 'styled-system/css';
 

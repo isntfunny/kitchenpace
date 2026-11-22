@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { zonedTimeToUtc } from '../dates';
+
 import { applyQuietHours, isQuietMinute, parseQuietHours } from './quiet';
-import { zonedTimeToUtc } from './time';
 
 const BERLIN = 'Europe/Berlin';
 const night = parseQuietHours('22:00', '07:00');

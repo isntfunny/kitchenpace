@@ -1,6 +1,7 @@
 // View model and pure logic of the shopping list page (KUC-105): grouping into
 // open / bought, origin badges, quantity labels and the stepper. No React, no
 // database; the server turns Prisma rows into ShoppingItemView.
+import { weekdayNameShort, weekdayShort } from '@shared/dates';
 import type { IngredientIconName } from '@shared/ingredient-icons/names';
 
 import {
@@ -70,17 +71,11 @@ export function groupItems(items: readonly ShoppingItemView[], limit = BOUGHT_LI
 
 // ── Origin badges ───────────────────────────────────────────────────────
 
-const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'] as const;
-
-/** Two-letter weekday of a yyyy-mm-dd date (calendar date, no time zone involved). */
-export function weekdayShort(isoDate: string): string {
-    const [y, m, d] = isoDate.split('-').map(Number);
-    return WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
-}
-
-/** Two-letter weekday of an ISO weekday number (1 = Monday … 7 = Sunday). */
+/** Two-letter weekday of an ISO weekday number (1 = Monday … 7 = Sunday); null when out of range. */
 export function isoWeekdayShort(weekday: number): string | null {
-    return Number.isInteger(weekday) && weekday >= 1 && weekday <= 7 ? WEEKDAYS[weekday % 7] : null;
+    return Number.isInteger(weekday) && weekday >= 1 && weekday <= 7
+        ? weekdayNameShort(weekday)
+        : null;
 }
 
 export interface OriginBadge {

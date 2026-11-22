@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { slugify } from '../../src/lib/slug';
+import { slugify } from '../slug';
 
 import {
     DROPPED_TAGS,

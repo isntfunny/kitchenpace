@@ -1,8 +1,15 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { isReliableLeftover, suggestLeftoverRecipes, type Leftover } from './leftovers';
-import type { Candidate } from './types';
+import type { RankingRecipe } from '../recipe-ranking/features';
+
+import {
+    isReliableLeftover,
+    neededAmount,
+    suggestLeftoverRecipes,
+    tasteScoreOf,
+    type Leftover,
+} from './leftovers';
 
 const TODAY = '2026-11-24'; // Tuesday
 const cream: Leftover = {
@@ -14,19 +21,42 @@ const cream: Leftover = {
     expiresOn: '2026-11-26', // Thursday
 };
 
+/** Unit taste profile; a recipe embedding at angle acos(2t − 1) has the taste score t. */
+const PROFILE = [1, 0];
+const embeddingFor = (taste: number) => {
+    const cos = 2 * taste - 1;
+    return [cos, Math.sqrt(1 - cos * cos)];
+};
+/** Household = the recipes' servings, so the amounts are taken as they are. */
+const SETUP = { profile: PROFILE, household: 4 };
+
 function dish(
     id: string,
     amount: number | undefined,
-    patch: Partial<Candidate> = {},
+    patch: { taste?: number; totalTime?: number; servings?: number } = {},
     unit: 'ml' | 'g' = 'ml',
-): Candidate {
+): RankingRecipe {
     return {
         id,
-        categoryId: 'c',
-        totalTime: 30,
-        tasteScore: 0.5,
-        ingredients: [{ ingredientId: 'sahne', amountBase: amount, unitBase: unit }],
-        ...patch,
+        title: id,
+        categorySlugs: [],
+        tags: [],
+        ingredients: [
+            {
+                id: 'sahne',
+                name: 'sahne',
+                root: null,
+                optional: false,
+                ...(amount !== undefined && { amount, unit }),
+            },
+        ],
+        servings: patch.servings ?? 4,
+        rating: 0,
+        ratingCount: 0,
+        totalTime: patch.totalTime ?? 30,
+        difficulty: 'MEDIUM',
+        stepCount: 3,
+        embedding: patch.taste === undefined ? null : embeddingFor(patch.taste),
     };
 }
 
@@ -34,7 +64,8 @@ test('offers up to three recipes whose need fits the leftover, best use first', 
     const [hint] = suggestLeftoverRecipes({
         leftovers: [cream],
         today: TODAY,
-        candidates: [
+        ...SETUP,
+        recipes: [
             dish('full', 100),
             dish('half', 50),
             dish('quarter', 25),
@@ -43,10 +74,17 @@ test('offers up to three recipes whose need fits the leftover, best use first', 
             dish('no-amount', undefined),
             dish('wrong-unit', 100, {}, 'g'),
             {
-                id: 'unrelated',
-                categoryId: 'c',
-                totalTime: 20,
-                ingredients: [{ ingredientId: 'mehl', amountBase: 100, unitBase: 'g' }],
+                ...dish('unrelated', undefined, { totalTime: 20 }),
+                ingredients: [
+                    {
+                        id: 'mehl',
+                        name: 'mehl',
+                        root: null,
+                        optional: false,
+                        amount: 100,
+                        unit: 'g',
+                    },
+                ],
             },
         ],
     });
@@ -64,7 +102,8 @@ test('the hint targets the day before the expiry and names the leftover in Germa
     const [hint] = suggestLeftoverRecipes({
         leftovers: [cream],
         today: TODAY,
-        candidates: [dish('a', 50)],
+        ...SETUP,
+        recipes: [dish('a', 50)],
     });
     assert.equal(hint.suggestedDate, '2026-11-25');
     assert.equal(hint.expiresOn, '2026-11-26');
@@ -73,7 +112,8 @@ test('the hint targets the day before the expiry and names the leftover in Germa
     const [soon] = suggestLeftoverRecipes({
         leftovers: [{ ...cream, expiresOn: TODAY }],
         today: TODAY,
-        candidates: [dish('a', 50)],
+        ...SETUP,
+        recipes: [dish('a', 50)],
     });
     assert.equal(soon.suggestedDate, TODAY, 'never in the past');
     assert.match(soon.message, /heute ablaufen/);
@@ -83,10 +123,11 @@ test('taste and duration break ties between equally fitting recipes', () => {
     const [hint] = suggestLeftoverRecipes({
         leftovers: [cream],
         today: TODAY,
-        candidates: [
-            dish('meh', 50, { tasteScore: 0.2 }),
-            dish('fav', 50, { tasteScore: 0.95 }),
-            dish('slow', 50, { tasteScore: 0.95, totalTime: 120 }),
+        ...SETUP,
+        recipes: [
+            dish('meh', 50, { taste: 0.2 }),
+            dish('fav', 50, { taste: 0.95 }),
+            dish('slow', 50, { taste: 0.95, totalTime: 120 }),
         ],
     });
     assert.deepEqual(
@@ -97,7 +138,7 @@ test('taste and duration break ties between equally fitting recipes', () => {
 });
 
 test('no hint without reliable data', () => {
-    const candidates = [dish('a', 50)];
+    const recipes = [dish('a', 50)];
     const cases: Leftover[] = [
         { ...cream, amountBase: undefined },
         { ...cream, amountBase: 0 },
@@ -107,7 +148,7 @@ test('no hint without reliable data', () => {
     for (const leftover of cases) {
         assert.equal(isReliableLeftover(leftover), false);
         assert.deepEqual(
-            suggestLeftoverRecipes({ leftovers: [leftover], today: TODAY, candidates }),
+            suggestLeftoverRecipes({ ...SETUP, leftovers: [leftover], today: TODAY, recipes }),
             [],
         );
     }
@@ -115,7 +156,7 @@ test('no hint without reliable data', () => {
 });
 
 test('rejected leftovers never come back', () => {
-    const input = { leftovers: [cream], today: TODAY, candidates: [dish('a', 50)] };
+    const input = { ...SETUP, leftovers: [cream], today: TODAY, recipes: [dish('a', 50)] };
     assert.equal(suggestLeftoverRecipes(input).length, 1);
     assert.deepEqual(suggestLeftoverRecipes({ ...input, rejectedLeftoverIds: ['left-1'] }), []);
     // another leftover of the same ingredient is a different leftover
@@ -132,7 +173,7 @@ test('rejected leftovers never come back', () => {
 });
 
 test('only soon-expiring leftovers, never expired ones; most urgent first', () => {
-    const base = { today: TODAY, candidates: [dish('a', 50)] };
+    const base = { ...SETUP, today: TODAY, recipes: [dish('a', 50)] };
     assert.deepEqual(
         suggestLeftoverRecipes({ ...base, leftovers: [{ ...cream, expiresOn: '2026-11-23' }] }),
         [],
@@ -168,7 +209,8 @@ test('maxRecipes is respected and no match means no hint', () => {
     const [hint] = suggestLeftoverRecipes({
         leftovers: [cream],
         today: TODAY,
-        candidates: many,
+        ...SETUP,
+        recipes: many,
         maxRecipes: 2,
     });
     assert.equal(hint.recipes.length, 2);
@@ -176,8 +218,55 @@ test('maxRecipes is respected and no match means no hint', () => {
         suggestLeftoverRecipes({
             leftovers: [cream],
             today: TODAY,
-            candidates: [dish('big', 500)],
+            ...SETUP,
+            recipes: [dish('big', 500)],
         }),
         [],
     );
+});
+
+test('amounts are scaled from the recipe servings to the household; the first line decides', () => {
+    const recipe = dish('r', 100, { servings: 4 });
+    assert.deepEqual(neededAmount(recipe, 'sahne', 2), { amount: 50, unit: 'ml' });
+    assert.deepEqual(neededAmount(recipe, 'sahne', 3), { amount: 75, unit: 'ml' });
+    assert.deepEqual(neededAmount({ ...recipe, servings: 0 }, 'sahne', 2), {
+        amount: 100,
+        unit: 'ml',
+    });
+    // Two lines of one ingredient: the first counts, even without an amount
+    const twice: RankingRecipe = {
+        ...recipe,
+        ingredients: [
+            { id: 'sahne', name: 'sahne', root: null, optional: false },
+            { id: 'sahne', name: 'sahne', root: null, optional: false, amount: 50, unit: 'ml' },
+        ],
+    };
+    assert.equal(neededAmount(twice, 'sahne', 4), null);
+    // Optional lines are not needed
+    const optional: RankingRecipe = {
+        ...recipe,
+        ingredients: [{ ...recipe.ingredients[0]!, optional: true }],
+    };
+    assert.equal(neededAmount(optional, 'sahne', 4), null);
+
+    // 200 ml for 4 is 100 ml for 2: fits the leftover exactly
+    const [hint] = suggestLeftoverRecipes({
+        leftovers: [cream],
+        today: TODAY,
+        profile: null,
+        household: 2,
+        recipes: [dish('big', 200)],
+    });
+    assert.match(hint!.recipes[0]!.reasons[0]!, /Verbraucht Sahne komplett/);
+});
+
+test('taste is the cosine of profile and embedding mapped to 0..1; unknown is undefined', () => {
+    assert.equal(tasteScoreOf(PROFILE, [1, 0]), 1);
+    assert.equal(tasteScoreOf(PROFILE, [-1, 0]), 0);
+    assert.equal(tasteScoreOf(PROFILE, [0, 1]), 0.5);
+    assert.ok(Math.abs(tasteScoreOf(PROFILE, embeddingFor(0.8))! - 0.8) < 1e-9);
+    assert.equal(tasteScoreOf(null, [1, 0]), undefined);
+    assert.equal(tasteScoreOf(PROFILE, null), undefined);
+    assert.equal(tasteScoreOf(PROFILE, []), undefined);
+    assert.equal(tasteScoreOf(PROFILE, [1, 0, 0]), 0.5, 'other lengths compare as cosine 0');
 });

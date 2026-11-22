@@ -1,6 +1,7 @@
+import { addDays, isoWeekday, todayIn, zonedTimeToUtc } from '../dates';
+
 import { weeklyFingerprint } from './fingerprint';
 import { applyQuietHours } from './quiet';
-import { addIsoDays, toLocalParts, zonedTimeToUtc } from './time';
 import type { DesiredReminder, QuietHours } from './types';
 
 /** Default time of the weekly reminder: the day before the week starts, 17:00 local. */
@@ -8,20 +9,14 @@ export const WEEKLY_REMINDER_TIME = '17:00';
 /** A planner is "active" when they planned something in the last 4 weeks. */
 export const ACTIVE_PLANNER_DAYS = 28;
 
-function isoWeekday(date: string): number {
-    const [y, m, d] = date.split('-').map(Number);
-    const day = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-    return day === 0 ? 7 : day;
-}
-
 /** First day after "today" (local) that is a week start. */
 export function nextWeekStart(now: Date, weekStartDay: number, timeZone: string): string {
-    const today = toLocalParts(now, timeZone).date;
+    const today = todayIn(timeZone, now);
     for (let offset = 1; offset <= 7; offset++) {
-        const date = addIsoDays(today, offset);
+        const date = addDays(today, offset);
         if (isoWeekday(date) === weekStartDay) return date;
     }
-    return addIsoDays(today, 7);
+    return addDays(today, 7);
 }
 
 export interface WeeklyPlanOptions {
@@ -38,11 +33,7 @@ export function weeklyReminderSlot(
     options: WeeklyPlanOptions,
 ): { weekStart: string; sendAt: Date } | null {
     const weekStart = nextWeekStart(options.now, options.weekStartDay, options.timeZone);
-    const planned = zonedTimeToUtc(
-        addIsoDays(weekStart, -1),
-        WEEKLY_REMINDER_TIME,
-        options.timeZone,
-    );
+    const planned = zonedTimeToUtc(addDays(weekStart, -1), WEEKLY_REMINDER_TIME, options.timeZone);
     // Latest useful moment: noon of the first day of the week
     const latest = zonedTimeToUtc(weekStart, '12:00', options.timeZone);
     const sendAt = applyQuietHours(planned, latest, options.quiet, options.timeZone);

@@ -3,7 +3,7 @@
 // list has an entry with a source from that very plan entry (bought entries
 // keep their sources, so they stay covered). Optional ingredients are not
 // counted as missing. Pure; the server loads entries, lines and sources.
-import { weekdayShort } from './list-view';
+import { weekdayShort } from '@shared/dates';
 
 export interface PlanEntryInput {
     id: string;

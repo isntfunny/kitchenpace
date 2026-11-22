@@ -3,7 +3,7 @@
 import { CalendarDays, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
-import { weekdayShort } from '@app/lib/meal-plan/view';
+import { weekdayShort } from '@shared/dates';
 
 import { css, cx } from 'styled-system/css';
 

@@ -2,7 +2,8 @@
  * Distributes the dishes chosen in the week dialog onto the chosen slots (KUC-126).
  * Pure and deterministic: greedy over all (dish, slot) pairs of the same kind, best fit first.
  */
-import { addDays, diffDays, isWeekend } from './dates';
+import { addDays, diffDays, isWeekend } from '../dates';
+
 import type { MealKind } from './meal-kind';
 import { clamp01, durationFit } from './scoring';
 import type { IsoDate } from './types';
@@ -35,10 +36,18 @@ export type PlannedEntry = {
 /** Weights of the fit of a dish to a slot */
 const FIT = { effort: 1, duration: 1, fresh: 1.5, variety: 1 };
 
+// The leftover rule (KUC-108, KUC-126, KUC-137): a meal for `eaters` people uses `eaters`
+// servings, each further day of leftovers another `eaters`.
+
 /** Whole extra days a dish feeds the household after the first meal. */
 export function leftoverDays(servings: number, household: number): number {
     const h = Math.max(1, household);
     return Math.max(0, Math.floor((servings - h) / h));
+}
+
+/** Servings to cook so that `eaters` people eat once plus `days` leftover days (inverse of `leftoverDays`). */
+export function servingsForLeftoverDays(eaters: number, days: number): number {
+    return Math.max(1, eaters) * (1 + Math.max(0, days));
 }
 
 type Placed = { date: IsoDate; kind: MealKind; mainCategory: string | null; dishType: string };
@@ -92,7 +101,7 @@ export function distributeSelection(
         placed.some(
             (p) =>
                 p.kind === pick.kind &&
-                Math.abs(diffDays(p.date, date)) === 1 &&
+                Math.abs(diffDays(date, p.date)) === 1 &&
                 ((pick.mainCategory !== null && p.mainCategory === pick.mainCategory) ||
                     p.dishType === pick.dishType),
         )
@@ -103,7 +112,7 @@ export function distributeSelection(
         const effortFit = isWeekend(date) ? pick.effort : 1 - pick.effort;
         const perishable =
             pick.shortestShelfLifeDays == null ? 0 : clamp01(1 - pick.shortestShelfLifeDays / 7);
-        const freshFit = 1 - perishable * clamp01(diffDays(date, ctx.purchaseDate) / 6);
+        const freshFit = 1 - perishable * clamp01(diffDays(ctx.purchaseDate, date) / 6);
         return (
             FIT.effort * effortFit +
             FIT.duration * durationFit(pick.totalTime, date) +

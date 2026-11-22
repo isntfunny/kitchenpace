@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
     distributeSelection,
     leftoverDays,
+    servingsForLeftoverDays,
     type SelectionPick,
     type SelectionSlot,
 } from './distribute';
@@ -195,4 +196,16 @@ test('is deterministic', () => {
         distributeSelection(picks, slots, ctx),
         distributeSelection(picks, slots, ctx),
     );
+});
+
+test('servingsForLeftoverDays is the inverse of leftoverDays', () => {
+    assert.equal(servingsForLeftoverDays(2, 0), 2);
+    assert.equal(servingsForLeftoverDays(2, 1), 4);
+    assert.equal(servingsForLeftoverDays(3, 2), 9);
+    // "Für 2 Mahlzeiten": the entry's servings are the eaters, so it doubles
+    for (const portion of [1, 2, 3, 5, 7])
+        assert.equal(servingsForLeftoverDays(portion, 1), portion * 2);
+    for (const household of [1, 2, 4])
+        for (const days of [0, 1, 2, 3])
+            assert.equal(leftoverDays(servingsForLeftoverDays(household, days), household), days);
 });

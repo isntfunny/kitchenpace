@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { cosine, hasTasteProfile } from '../../shared/recipe-ranking/vector';
 import {
-    cosine,
-    hasTasteProfile,
     MISSING_EMBEDDING_SCORE,
     paginate,
     rankByTaste,

@@ -1,6 +1,4 @@
 import type { RecipeCardData } from '@app/app/actions/recipes';
-import { RECIPE_FILTER_DEFAULT_LIMIT } from '@app/lib/recipeFilters';
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 import { rankedSearch } from '@app/lib/recipes/ranked-search';
 import {
     knnRecipeIds,
@@ -17,9 +15,12 @@ import {
 } from '@app/lib/recipeSearchQuery';
 import type { RecipeSearchFacets, RecipeSearchMeta, TermFacet } from '@app/lib/recipeSearchTypes';
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
+import { toBerlinDate } from '@shared/dates';
 import { createLogger } from '@shared/logger';
-import { seasonOf, toBerlinDate } from '@shared/meal-planning/dates';
+import { seasonOf } from '@shared/meal-planning/season';
 import { opensearchClient, OPENSEARCH_INDEX } from '@shared/opensearch/client';
+import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
+import { RECIPE_FILTER_DEFAULT_LIMIT } from '@shared/recipe-filters';
 
 const log = createLogger('recipeSearch');
 

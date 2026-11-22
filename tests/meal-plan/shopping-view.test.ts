@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { weekdayShort } from '../../shared/dates';
 import {
     groupItems,
     itemQuantityLabel,
@@ -9,7 +10,6 @@ import {
     relativeDays,
     sourceQuantityLabel,
     stepQuantity,
-    weekdayShort,
     type ShoppingItemView,
     type SourceView,
 } from '../../src/lib/shopping/list-view';

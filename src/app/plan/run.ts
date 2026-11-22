@@ -1,19 +1,12 @@
-// Shared wrapper of the plan server actions: session, ban, rate limit and error
-// mapping to a German message. Not a 'use server' module itself.
-import { z } from 'zod';
-
-import { getServerAuthSession } from '@app/lib/auth';
+// Wrapper of the plan server actions on top of the shared action runner (KUC-137).
+// Not a 'use server' module itself.
 import { DataAccessError } from '@app/lib/meal-plan/db';
-import { checkRateLimit } from '@app/lib/rate-limit';
+import { createActionRunner, type ActionResult } from '@app/lib/server-action.server';
 import { addSyncMealRemindersJob } from '@worker/queues/index';
 
-export type PlanActionResult<T> =
-    | { ok: true; data: T }
-    | {
-          ok: false;
-          code: 'SIGN_IN' | 'RATE_LIMIT' | 'NOT_FOUND' | 'INVALID' | 'FAILED';
-          error: string;
-      };
+type PlanCode = 'SIGN_IN' | 'RATE_LIMIT' | 'NOT_FOUND' | 'INVALID' | 'FAILED';
+
+export type PlanActionResult<T> = ActionResult<T, PlanCode>;
 
 /**
  * Re-plans the user's reminders (KUC-109) right after a plan change instead of waiting
@@ -25,44 +18,20 @@ export function scheduleReminderSync(userId: string): void {
     );
 }
 
-/** `run` for actions that change plan entries, times or slots: also re-plans reminders. */
-export async function runWrite<T>(
-    work: (userId: string) => Promise<T>,
-): Promise<PlanActionResult<T>> {
-    return run(async (userId) => {
-        const data = await work(userId);
-        scheduleReminderSync(userId);
-        return data;
-    });
-}
+export const run = createActionRunner<'INVALID'>({
+    scope: 'meal-plan',
+    rateLimit: 'mealPlan',
+    logLabel: '[meal-plan] action failed',
+    invalidCode: 'INVALID',
+    failedMessage: 'Das hat nicht geklappt. Bitte versuche es erneut.',
+    // A conflict or invalid change is the user's input: show the message as INVALID
+    mapError: (error) =>
+        error instanceof DataAccessError && error.code !== 'NOT_FOUND'
+            ? { ok: false, code: 'INVALID', error: error.message }
+            : undefined,
+});
 
-export async function run<T>(work: (userId: string) => Promise<T>): Promise<PlanActionResult<T>> {
-    try {
-        const session = await getServerAuthSession('meal-plan');
-        if (!session?.user?.id || session.user.role === 'banned' || session.user.banned)
-            return { ok: false, code: 'SIGN_IN', error: 'Bitte melde dich an.' };
-        const limit = await checkRateLimit('mealPlan', session.user.id);
-        if (!limit.allowed)
-            return {
-                ok: false,
-                code: 'RATE_LIMIT',
-                error: 'Zu viele Anfragen. Bitte warte einen Moment.',
-            };
-        return { ok: true, data: await work(session.user.id) };
-    } catch (error) {
-        if (error instanceof z.ZodError)
-            return { ok: false, code: 'INVALID', error: 'Bitte prüfe deine Eingaben.' };
-        if (error instanceof DataAccessError)
-            return {
-                ok: false,
-                code: error.code === 'NOT_FOUND' ? 'NOT_FOUND' : 'INVALID',
-                error: error.message,
-            };
-        console.error('[meal-plan] action failed', error);
-        return {
-            ok: false,
-            code: 'FAILED',
-            error: 'Das hat nicht geklappt. Bitte versuche es erneut.',
-        };
-    }
+/** `run` for actions that change plan entries, times or slots: also re-plans reminders. */
+export function runWrite<T>(work: (userId: string) => Promise<T>): Promise<PlanActionResult<T>> {
+    return run(work, { after: scheduleReminderSync });
 }

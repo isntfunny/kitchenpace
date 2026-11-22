@@ -11,7 +11,7 @@
  * Not suggested any more after `staleFactor` (3) intervals without a purchase: the habit has
  * probably ended.
  */
-import { addDays, diffDays, isoWeekday } from '../meal-planning/dates';
+import { addDays, diffDays, isoWeekday } from '../dates';
 
 import { DEFAULT_RHYTHM_CONFIG, type IsoDate, type RhythmConfig } from './types';
 
@@ -37,7 +37,7 @@ export interface DueResult {
 
 export function checkDue(input: DueCheck, config: Partial<RhythmConfig> = {}): DueResult {
     const cfg = { ...DEFAULT_RHYTHM_CONFIG, ...config };
-    const daysSince = diffDays(input.today, input.lastPurchaseDate);
+    const daysSince = diffDays(input.lastPurchaseDate, input.today);
     const { intervalDays } = input;
 
     if (daysSince < 0 || daysSince > intervalDays * cfg.staleFactor) {

@@ -5,15 +5,9 @@
 // filled with suggestions nor reordered, but their recipes still count as "already planned".
 import { MEAL_TYPES } from '@app/lib/meal-plan/slots';
 import type { DishMarker } from '@app/lib/meal-plan/view';
-import { addDays, isoWeekday } from '@shared/meal-planning/dates';
+import { addDays, isoWeekday } from '@shared/dates';
 import type { DishFreshness, ShelfLifeMove } from '@shared/meal-planning/shelf-life';
-import type {
-    Candidate,
-    IsoDate,
-    MealSlotType,
-    PlannedSlot,
-    Season,
-} from '@shared/meal-planning/types';
+import type { IsoDate, MealSlotType, PlannedSlot } from '@shared/meal-planning/types';
 
 export const isFixedSlotType = (key: string): key is MealSlotType =>
     (MEAL_TYPES as readonly string[]).includes(key);
@@ -124,111 +118,6 @@ export function freshnessMarkers(
         ];
     }
     return markers;
-}
-
-// ── Candidates ──────────────────────────────────────────────────────────────
-
-/** FilterSet reduced to what the season/meal derivation needs. */
-export interface TimeSeasonSet {
-    timeSlot: string | null;
-    season: string | null;
-    tagIds: readonly string[];
-    categoryIds: readonly string[];
-}
-
-const SEASONS: readonly Season[] = ['fruehling', 'sommer', 'herbst', 'winter'];
-
-const MEAL_OF_TIME_SLOT: Record<string, MealSlotType> = {
-    fruehstueck: 'BREAKFAST',
-    brunch: 'BREAKFAST',
-    mittag: 'LUNCH',
-    nachmittag: 'SNACK',
-    spaet: 'SNACK',
-    abend: 'DINNER',
-};
-
-/**
- * Seasons and meal types of a recipe, derived from the TIME_SEASON FilterSets it matches
- * (it carries one of the set's tags or categories). Nothing matched = no restriction
- * (`undefined`), so recipes without tags are never excluded.
- */
-export function seasonsAndSlots(
-    recipe: { tagIds: readonly string[]; categoryIds: readonly string[] },
-    sets: readonly TimeSeasonSet[],
-): { seasons?: Season[]; slots?: MealSlotType[] } {
-    const tags = new Set(recipe.tagIds);
-    const categories = new Set(recipe.categoryIds);
-    const seasons = new Set<Season>();
-    const slots = new Set<MealSlotType>();
-    for (const set of sets) {
-        const matches =
-            set.tagIds.some((id) => tags.has(id)) ||
-            set.categoryIds.some((id) => categories.has(id));
-        if (!matches) continue;
-        if (set.season && (SEASONS as readonly string[]).includes(set.season))
-            seasons.add(set.season as Season);
-        const meal = set.timeSlot ? MEAL_OF_TIME_SLOT[set.timeSlot] : undefined;
-        if (meal) slots.add(meal);
-    }
-    return {
-        ...(seasons.size > 0 && seasons.size < SEASONS.length && { seasons: [...seasons] }),
-        ...(slots.size > 0 && { slots: [...slots] }),
-    };
-}
-
-/** Cosine similarity (-1..1) mapped to a 0..1 taste score; no profile or embedding = undefined. */
-export function tasteScoreOf(cosine: number | null | undefined): number | undefined {
-    if (cosine === null || cosine === undefined || !Number.isFinite(cosine)) return undefined;
-    return Math.min(1, Math.max(0, (cosine + 1) / 2));
-}
-
-export interface CandidateRow {
-    id: string;
-    title: string;
-    totalTime: number;
-    servings: number;
-    categoryId: string | null;
-    categoryName?: string | null;
-    tagIds: readonly string[];
-    categoryIds: readonly string[];
-    cosine?: number | null;
-    /** Base amounts for the recipe's own servings */
-    ingredients: readonly {
-        ingredientId: string;
-        name?: string;
-        amount?: number;
-        unit?: 'g' | 'ml' | 'Stk';
-    }[];
-}
-
-/**
- * Candidate for the logic. Amounts are scaled from the recipe's servings to `servings`
- * (the household), because that is what actually gets cooked.
- */
-export function toCandidate(
-    row: CandidateRow,
-    sets: readonly TimeSeasonSet[],
-    servings: number,
-): Candidate {
-    const factor = row.servings > 0 ? servings / row.servings : 1;
-    return {
-        id: row.id,
-        title: row.title,
-        categoryId: row.categoryId ?? 'none',
-        ...(row.categoryName && { categoryName: row.categoryName }),
-        totalTime: row.totalTime,
-        tasteScore: tasteScoreOf(row.cosine),
-        ...seasonsAndSlots(row, sets),
-        ingredients: row.ingredients.map((ingredient) => ({
-            ingredientId: ingredient.ingredientId,
-            ...(ingredient.name && { name: ingredient.name }),
-            ...(ingredient.amount !== undefined &&
-                ingredient.unit && {
-                    amountBase: Math.round(ingredient.amount * factor * 1000) / 1000,
-                    unitBase: ingredient.unit,
-                }),
-        })),
-    };
 }
 
 /** Day and meal type where a leftover recipe is planned: first free dinner/lunch, else dinner. */

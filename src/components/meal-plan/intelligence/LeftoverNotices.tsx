@@ -9,7 +9,7 @@ import {
     dismissLeftoverAction,
     planLeftoverRecipeAction,
 } from '@app/app/plan/intelligence-actions';
-import type { LeftoverNoticeDTO } from '@app/lib/meal-plan/intelligence/week-planner';
+import type { LeftoverNoticeDTO } from '@app/lib/meal-plan/intelligence/leftover-notices.server';
 
 import { css } from 'styled-system/css';
 

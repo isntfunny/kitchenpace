@@ -12,8 +12,9 @@ import {
     swapPlanCells,
     undoCookForTwo,
 } from '@app/app/plan/edit-actions';
-import { builtInMarkers, weekdayShort } from '@app/lib/meal-plan/view';
-import { addDays } from '@app/lib/meal-plan/week';
+import { builtInMarkers } from '@app/lib/meal-plan/view';
+import { weekdayShort } from '@shared/dates';
+import { addDays } from '@shared/dates';
 
 import { css } from 'styled-system/css';
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
-import { buildRecipeFilterQuery, parseRecipeFilterParams } from '@app/lib/recipeFilters';
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import { buildRecipeFilterQuery, parseRecipeFilterParams } from '@shared/recipe-filters';
+import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
 
 import { historyModeFor } from './filter-state';
 import type { RecipeFilterState } from './useRecipeFilterState';

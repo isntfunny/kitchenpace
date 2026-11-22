@@ -4,7 +4,7 @@
 // Each tag lists the old tag names that get merged into it. Old names are
 // matched case-insensitively. DROPPED_TAGS lists old tags that are removed
 // without replacement, grouped by the reason.
-import slugifyLib from 'slugify';
+import { slugify } from '../slug';
 
 export const TAG_GROUPS = {
     Mahlzeit: {
@@ -316,9 +316,9 @@ export interface TagDefinition {
     aliases: readonly string[];
 }
 
-/** Same rules as src/lib/slug.ts (checked by a test), kept local so shared/ has no src/ import. */
+/** Slug of a tag name: the app's slug rule. */
 export function tagSlug(name: string): string {
-    return slugifyLib(name, { lower: true, strict: true, locale: 'de' });
+    return slugify(name);
 }
 
 const key = (name: string) => name.trim().toLowerCase();

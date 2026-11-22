@@ -7,9 +7,10 @@
  * Pure: no DB, no UI; the caller loads the inputs and may cache the result per user and week
  * (`inspirationCacheKey`).
  */
-import { cosine, hasTasteProfile } from '../../src/lib/recipes/taste-ranking';
+import { isoWeek } from '../dates';
+import { cosine, hasTasteProfile } from '../recipe-ranking/vector';
 
-import { addDays, diffDays, isoWeekday, seasonOf } from './dates';
+import { seasonOf } from './season';
 import type { IsoDate } from './types';
 
 export const MAX_SEASON_CHIPS = 2;
@@ -179,9 +180,7 @@ export function pickInspiration(input: InspirationInput): InspirationItem[] {
 
 /** ISO 8601 week of a date, e.g. `2026-W48` (the week belongs to the year of its Thursday). */
 export function isoWeekOf(date: IsoDate): string {
-    const thursday = addDays(date, 4 - isoWeekday(date));
-    const year = thursday.slice(0, 4);
-    const week = Math.floor(diffDays(thursday, `${year}-01-01`) / 7) + 1;
+    const { year, week } = isoWeek(date);
     return `${year}-W${String(week).padStart(2, '0')}`;
 }
 

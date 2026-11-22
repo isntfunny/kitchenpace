@@ -1,5 +1,4 @@
 export * from './types';
-export * from './time';
 export * from './duration';
 export * from './quiet';
 export * from './fingerprint';

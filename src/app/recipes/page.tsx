@@ -6,10 +6,10 @@ import { QueryProvider } from '@app/components/providers/QueryProvider';
 import { getServerAuthSession } from '@app/lib/auth';
 import { type FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import { toFilterCriteria } from '@app/lib/fits-now/mappings';
-import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
 import { APP_URL } from '@app/lib/url';
 import { getQueryClient } from '@app/trpc/server';
+import { parseRecipeFilterParams } from '@shared/recipe-filters';
 
 import { RecipeSearchClient } from './components/RecipeSearchClient';
 import { loadSearchStartData } from './start-data';

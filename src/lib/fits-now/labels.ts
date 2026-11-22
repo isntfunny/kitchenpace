@@ -1,5 +1,7 @@
 export type TimeSlot = 'fruehstueck' | 'brunch' | 'mittag' | 'nachmittag' | 'abend' | 'spaet';
-export type Season = 'fruehling' | 'sommer' | 'herbst' | 'winter';
+import type { Season } from '@shared/meal-planning/season';
+
+export type { Season };
 
 export const TIME_SLOT_LABELS: Record<TimeSlot, string> = {
     fruehstueck: 'Fruehstueck',

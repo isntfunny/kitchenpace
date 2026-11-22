@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getServerAuthSession } from '@app/lib/auth';
-import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
 import { parseRecipeSearchContext } from '@app/lib/recipeSearchContext';
 import { createLogger } from '@shared/logger';
+import { parseRecipeFilterParams } from '@shared/recipe-filters';
 
 const log = createLogger('filter');
 

@@ -5,7 +5,7 @@
  * its DB rows to these shapes. Calendar dates are `YYYY-MM-DD` strings in Europe/Berlin
  * (see `dates.ts`), so no function in this module depends on the server's time zone.
  */
-import type { Season } from '../../src/lib/fits-now/labels';
+import type { Season } from './season';
 
 export type { Season };
 
@@ -34,24 +34,6 @@ export interface IngredientAmount {
     /** Amount for the recipe's default servings, in the base unit */
     amountBase?: number;
     unitBase?: BaseUnit;
-}
-
-/** A recipe the planner may suggest, with all scores precomputed by the caller. */
-export interface Candidate {
-    id: string;
-    title?: string;
-    categoryId: string;
-    /** Display name of the category, only used for reasons */
-    categoryName?: string;
-    /** Total time in minutes */
-    totalTime: number;
-    /** Seasons the recipe fits; missing or empty = year-round */
-    seasons?: Season[];
-    /** Taste score 0..1 (e.g. cosine similarity mapped to 0..1); missing = neutral 0.5 */
-    tasteScore?: number;
-    ingredients: IngredientAmount[];
-    /** Meal types the recipe suits; missing = any */
-    slots?: MealSlotType[];
 }
 
 /** Leftover / soon-expiring ingredient that the planner should try to use up. */

@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { itemKeyFor, normalizeItemName } from '../../shared/shopping/item-key';
 import {
     expiresAfterOpening,
     isLeftoverHintEligible,
     remainingAfterUse,
 } from '../../src/lib/pantry/rules';
-import { itemKeyFor, normalizeItemName } from '../../src/lib/shopping/item-key';
 import {
     addToQuantity,
     EMPTY_QUANTITY,

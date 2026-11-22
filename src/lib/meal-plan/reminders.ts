@@ -9,6 +9,7 @@
 // match, so a moved, changed, cooked or deleted entry never triggers an old push.
 import type { Prisma } from '@prisma/client';
 
+import { formatIsoDate, todayIn } from '@shared/dates';
 import {
     cookDurationMinutes,
     diffReminders,
@@ -28,7 +29,7 @@ import {
 
 import type { Db } from './db';
 import { resolveSlots, slotKeyOf } from './slots';
-import { formatIsoDate, toDbDate, todayIn, weekStartFor } from './week';
+import { toDbDate, weekStartFor } from './week';
 
 const DAYS_BEFORE = 1;
 const DAYS_AFTER = 2;

@@ -1,4 +1,5 @@
-import { parseTime, toLocalParts, zonedTimeToUtc } from './time';
+import { parseTime, toLocalParts, zonedTimeToUtc } from '../dates';
+
 import type { QuietHours } from './types';
 
 /** Parses profile fields; both must be valid and different, else there are no quiet hours. */

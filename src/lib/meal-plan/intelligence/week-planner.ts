@@ -6,10 +6,8 @@ import type { Db } from '@app/lib/meal-plan/db';
 import { getMealPlanWeek } from '@app/lib/meal-plan/repository';
 import { DEFAULT_HOUSEHOLD_SIZE } from '@app/lib/meal-plan/slots';
 import type { DishMarker } from '@app/lib/meal-plan/view';
-import { todayIn } from '@app/lib/meal-plan/week';
-import { getLeftoverHints } from '@app/lib/pantry/leftovers';
-import { weekdayNameDe } from '@shared/meal-planning/dates';
-import { suggestLeftoverRecipes, type LeftoverHint } from '@shared/meal-planning/leftovers';
+import { todayIn } from '@shared/dates';
+import { loadShelfLifeDays } from '@shared/ingredient-shelf-life/storage-life';
 import {
     analyzeShelfLife,
     suggestShelfLifeOrder,
@@ -18,14 +16,12 @@ import {
 } from '@shared/meal-planning/shelf-life';
 import type { IsoDate, SlotRef } from '@shared/meal-planning/types';
 
-import { loadRecipeRows, toCandidates, type RecipeCard } from './candidates';
 import {
     buildPlannedSlots,
     freshnessMarkers,
     movesToEntryUpdates,
     purchaseDateFor,
     type PlanEntryLite,
-    type TimeSeasonSet,
 } from './mappers';
 
 export interface WeekContext {
@@ -77,25 +73,14 @@ async function loadShelfLifeInput(db: Db, ctx: WeekContext): Promise<ShelfLifeIn
           })
         : [];
     const ingredientIds = [...new Set(lines.map((line) => line.ingredientId))];
-    const [ingredients, lives, titles] = await Promise.all([
+    const [ingredients, days, titles] = await Promise.all([
         ingredientIds.length
             ? db.ingredient.findMany({
                   where: { id: { in: ingredientIds } },
-                  select: {
-                      id: true,
-                      name: true,
-                      normalizedName: true,
-                      defaultStorage: true,
-                      shelfLifeSource: true,
-                  },
+                  select: { id: true, name: true, normalizedName: true },
               })
             : Promise.resolve([]),
-        ingredientIds.length
-            ? db.ingredientStorageLife.findMany({
-                  where: { ingredientId: { in: ingredientIds } },
-                  select: { ingredientId: true, storage: true, days: true },
-              })
-            : Promise.resolve([]),
+        loadShelfLifeDays(db, ingredientIds),
         recipeIds.length
             ? db.recipe.findMany({
                   where: { id: { in: recipeIds } },
@@ -103,16 +88,6 @@ async function loadShelfLifeInput(db: Db, ctx: WeekContext): Promise<ShelfLifeIn
               })
             : Promise.resolve([]),
     ]);
-    const days = new Map<string, number>();
-    for (const ingredient of ingredients) {
-        if (!ingredient.shelfLifeSource) continue; // not assessed: unknown, never critical
-        const own = lives.filter((life) => life.ingredientId === ingredient.id);
-        const pick =
-            own.find((life) => life.storage === ingredient.defaultStorage) ??
-            own.find((life) => life.storage === 'FRIDGE') ??
-            own.find((life) => life.storage === 'PANTRY');
-        if (pick) days.set(ingredient.id, pick.days);
-    }
     const info = new Map(ingredients.map((i) => [i.id, i.normalizedName?.trim() || i.name]));
     const recipes: ShelfLifeRecipe[] = recipeIds.map((id) => ({
         id,
@@ -201,42 +176,4 @@ export async function applyShelfLifeOrder(
     for (const update of updates)
         await move(update.entryId, { date: update.date, slot: update.slot });
     return { moved: updates.length };
-}
-
-// ── Leftovers (KUC-108) ─────────────────────────────────────────────────────
-
-export interface LeftoverNoticeDTO {
-    leftoverId: string;
-    message: string;
-    suggestedDate: IsoDate;
-    /** "Donnerstag" */
-    dayLabel: string;
-    recipes: (RecipeCard & { reasons: string[] })[];
-}
-
-/** Hints for leftovers that expire soon, each with up to three matching recipes. */
-export async function getLeftoverNotices(
-    db: Db,
-    userId: string,
-    sets: readonly TimeSeasonSet[],
-    ctx: Pick<WeekContext, 'today' | 'householdSize'>,
-): Promise<LeftoverNoticeDTO[]> {
-    const leftovers = await getLeftoverHints(db, userId, ctx.today);
-    if (leftovers.length === 0) return [];
-    const { rows, cards } = await loadRecipeRows(db, userId);
-    const hints: LeftoverHint[] = suggestLeftoverRecipes({
-        leftovers,
-        candidates: toCandidates(rows, sets, ctx.householdSize),
-        today: ctx.today,
-    });
-    return hints.map((hint) => ({
-        leftoverId: hint.leftoverId,
-        message: hint.message,
-        suggestedDate: hint.suggestedDate,
-        dayLabel: weekdayNameDe(hint.suggestedDate),
-        recipes: hint.recipes.flatMap((recipe) => {
-            const card = cards.get(recipe.recipeId);
-            return card ? [{ ...card, reasons: recipe.reasons }] : [];
-        }),
-    }));
 }

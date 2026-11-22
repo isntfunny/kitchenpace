@@ -21,8 +21,8 @@ import {
     previewPlanTemplate,
     savePlanTemplate,
 } from '@app/app/plan/edit-actions';
-import { weekdayLong } from '@app/lib/meal-plan/view';
-import { addDays } from '@app/lib/meal-plan/week';
+import { weekdayLong } from '@shared/dates';
+import { addDays } from '@shared/dates';
 
 import { css, cx } from 'styled-system/css';
 

@@ -1,11 +1,29 @@
-/** What the ranking needs to know about a recipe, and the features derived from it. */
+/**
+ * What the planning logic knows about a recipe, and the features derived from it: the one
+ * recipe model of the ranking (KUC-126) and the leftover suggestions (KUC-108, KUC-137).
+ */
+
+/** Base units of ingredient amounts: grams, millilitres, pieces. */
+export type RankingBaseUnit = 'g' | 'ml' | 'Stk';
+
+export type RankingIngredient = {
+    id: string;
+    name: string;
+    root: string | null;
+    optional: boolean;
+    /** Amount in `unit` for the recipe's own `servings`; only loaded on request, missing = unknown */
+    amount?: number;
+    unit?: RankingBaseUnit;
+};
 
 export type RankingRecipe = {
     id: string;
     title: string;
     categorySlugs: string[];
     tags: string[];
-    ingredients: { id: string; name: string; root: string | null; optional: boolean }[];
+    ingredients: RankingIngredient[];
+    /** Servings the amounts are for; only loaded together with the amounts */
+    servings?: number;
     rating: number;
     ratingCount: number;
     totalTime: number;

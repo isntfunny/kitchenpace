@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useLocalStorage } from '@app/hooks/useLocalStorage';
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
-import type { RecipeFilterSearchParams, RecipeSortOption } from '@app/lib/recipeFilters';
 import { resolveEffectiveSort } from '@app/lib/recipes/taste-ranking';
+import type { RecipeFilterSearchParams, RecipeSortOption } from '@shared/recipe-filters';
 import type { ThemeChip } from '@shared/theme-clusters/release';
 
 import {

@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect -- This hook's purpose is syncing facet state from async search responses */
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
 
 import type { RecipeSearchFacets } from './useRecipeSearch';
 

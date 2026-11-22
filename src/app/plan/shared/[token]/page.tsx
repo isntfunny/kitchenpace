@@ -9,7 +9,8 @@ import { getMealPlanSettings } from '@app/lib/meal-plan/repository';
 import { getSharedMealPlanWeek } from '@app/lib/meal-plan/share';
 import { slotLabel } from '@app/lib/meal-plan/slots';
 import { weekNumber, weekRangeLabel } from '@app/lib/meal-plan/view';
-import { addDays, todayIn, weekStartFor } from '@app/lib/meal-plan/week';
+import { weekStartFor } from '@app/lib/meal-plan/week';
+import { addDays, todayIn } from '@shared/dates';
 import { prisma } from '@shared/prisma';
 
 import { css } from 'styled-system/css';

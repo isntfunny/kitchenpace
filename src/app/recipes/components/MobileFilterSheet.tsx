@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
 import { PALETTE } from '@app/lib/palette';
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
 
 import { css } from 'styled-system/css';
 

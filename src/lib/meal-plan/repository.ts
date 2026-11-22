@@ -2,6 +2,8 @@
 // validates its input with Zod; pass `prisma` from '@shared/prisma' as `db`.
 import { Prisma, type MealPlanRecipe } from '@prisma/client';
 
+import { formatIsoDate } from '@shared/dates';
+
 import { DataAccessError, type Db, notFound } from './db';
 import {
     addEntrySchema,
@@ -24,7 +26,7 @@ import {
     type SlotConfig,
     type SlotKey,
 } from './slots';
-import { formatIsoDate, toDbDate, weekDays, weekRange } from './week';
+import { toDbDate, weekDays, weekRange } from './week';
 
 export const recipeSummary = {
     select: {

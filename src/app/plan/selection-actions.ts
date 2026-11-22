@@ -14,17 +14,17 @@ import {
 } from '@app/lib/meal-plan/selection';
 import { loadPickInfo } from '@app/lib/meal-plan/selection-loader.server';
 import { MEAL_TYPE_LABELS, isFixedSlot } from '@app/lib/meal-plan/slots';
-import {
-    buildRecipeFilterQuery,
-    parseRecipeFilterParams,
-    type RecipeFilterSearchParams,
-} from '@app/lib/recipeFilters';
 import { loadGlobalMeanRating, loadRankingRecipes } from '@app/lib/recipes/ranking-features.server';
 import { loadTasteEmbedding } from '@app/lib/recipes/taste-ranking.server';
 import { loadCards, searchRecipeIds } from '@app/lib/recipeSearch';
 import { buildRecipeBoolQuery } from '@app/lib/recipeSearchQuery';
 import { pickSide } from '@shared/meal-planning/side-dish';
 import { prisma } from '@shared/prisma';
+import {
+    buildRecipeFilterQuery,
+    parseRecipeFilterParams,
+    type RecipeFilterSearchParams,
+} from '@shared/recipe-filters';
 import { pickTryAlso } from '@shared/recipe-ranking/try-also';
 
 import { run, runWrite, type PlanActionResult } from './run';

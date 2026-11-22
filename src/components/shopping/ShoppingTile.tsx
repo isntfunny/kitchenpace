@@ -90,7 +90,7 @@ const badge = css({
     fontSize: '10px',
     fontWeight: '700',
     lineHeight: '1',
-    bg: 'rgba(255, 255, 255, 0.28)',
+    bg: 'white/28',
     color: 'white',
     borderRadius: 'md',
     px: '1',
@@ -114,7 +114,7 @@ const cornerButton = css({
     transition: 'opacity 120ms ease, background 120ms ease',
     _focusVisible: { opacity: 1, outline: '2px solid', outlineColor: 'foreground' },
 });
-const cornerOpen = css({ color: 'white', _hover: { bg: 'rgba(255, 255, 255, 0.25)' } });
+const cornerOpen = css({ color: 'white', _hover: { bg: 'white/25' } });
 const cornerDone = css({ color: 'foreground.muted', _hover: { bg: 'surface.muted' } });
 const showOnHover = css({
     '&:hover > button[data-corner], &:focus-within > button[data-corner]': { opacity: 1 },

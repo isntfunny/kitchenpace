@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition, type FormEvent } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
+import { input } from '@app/components/atoms/recipes';
 import { IngredientIcon } from '@app/components/ingredients/IngredientIcon';
 import {
     expiryHint,
@@ -12,7 +13,7 @@ import {
     type PantryViewInput,
 } from '@app/lib/pantry/view';
 
-import { css } from 'styled-system/css';
+import { css, cx } from 'styled-system/css';
 
 import { addManualPantryItem, setPantryStatus, type PantryActionResult } from './actions';
 
@@ -50,16 +51,6 @@ const groupTitle = css({
     letterSpacing: '0.04em',
     mb: '2',
     mt: '5',
-});
-const field = css({
-    bg: 'background',
-    color: 'text',
-    border: '1px solid',
-    borderColor: 'border',
-    borderRadius: 'md',
-    px: '3',
-    py: '2',
-    minW: 0,
 });
 const TONE_COLOR = { ok: 'text.muted', soon: 'status.warning', expired: 'status.error' } as const;
 
@@ -122,7 +113,7 @@ export function PantryClient({ entries }: { entries: PantryEntry[] }) {
                 })}
             >
                 <input
-                    className={css({ flex: '1 1 10rem' }) + ' ' + field}
+                    className={cx(input, css({ flex: '1 1 10rem', minW: 0 }))}
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     placeholder="Etwas hinzufügen, z. B. Sahne"
@@ -130,7 +121,7 @@ export function PantryClient({ entries }: { entries: PantryEntry[] }) {
                     maxLength={200}
                 />
                 <input
-                    className={css({ w: '5rem' }) + ' ' + field}
+                    className={cx(input, css({ w: '5rem', minW: 0 }))}
                     value={amount}
                     onChange={(event) => setAmount(event.target.value)}
                     placeholder="Menge"
@@ -139,7 +130,7 @@ export function PantryClient({ entries }: { entries: PantryEntry[] }) {
                     maxLength={20}
                 />
                 <select
-                    className={field}
+                    className={input}
                     value={unit}
                     onChange={(event) => setUnit(event.target.value as (typeof UNITS)[number])}
                     aria-label="Einheit"

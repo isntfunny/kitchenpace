@@ -16,6 +16,8 @@ export interface RecipeCardData {
     description?: string;
     stepCount?: number;
     difficulty?: string;
+    /** Why the card is listed, only for the week selection sort (KUC-126) */
+    reason?: string;
     cookCount?: number;
     ratingCount?: number;
     viewCount?: number;

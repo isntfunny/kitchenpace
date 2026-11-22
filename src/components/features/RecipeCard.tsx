@@ -58,7 +58,19 @@ interface RecipeCardProps {
     /** Extra overlay on the image (e.g. status icon, time badge) */
     imageOverlay?: ReactNode;
     className?: string;
+    /** Selection mode (week selection dialog, KUC-126): a tap toggles instead of navigating */
+    selection?: RecipeCardSelection;
 }
+
+export type RecipeCardSelection = {
+    selected: boolean;
+    disabled?: boolean;
+    onToggle: () => void;
+    /** Short reason under the card, e.g. "Passt zu deinem Geschmack" */
+    reason?: string;
+    /** Servings stepper, side dish suggestion */
+    footer?: ReactNode;
+};
 
 // ---------------------------------------------------------------------------
 // Star rating sub-component
@@ -159,7 +171,56 @@ export function RecipeCard({
     footer,
     imageOverlay,
     className,
+    selection,
 }: RecipeCardProps) {
+    const target = (content: ReactNode) =>
+        selection ? (
+            <button
+                type="button"
+                aria-pressed={selection.selected}
+                disabled={selection.disabled}
+                onClick={selection.onToggle}
+                className={css({
+                    display: 'block',
+                    width: 'full',
+                    p: 0,
+                    border: 'none',
+                    bg: 'transparent',
+                    textAlign: 'left',
+                    color: 'inherit',
+                    font: 'inherit',
+                    cursor: 'pointer',
+                    borderRadius: 'xl',
+                    outlineOffset: '2px',
+                    _pressed: { outline: '3px solid', outlineColor: 'primary' },
+                    _disabled: { opacity: 0.45, cursor: 'not-allowed' },
+                    _focusVisible: { outline: '2px solid', outlineColor: 'primary' },
+                })}
+            >
+                {content}
+            </button>
+        ) : (
+            <Link
+                href={`/recipe/${recipe.slug}`}
+                className={css({ textDecoration: 'none', color: 'inherit' })}
+            >
+                {content}
+            </Link>
+        );
+    const below = selection ? (
+        selection.reason || selection.footer ? (
+            <>
+                {selection.reason && (
+                    <p className={css({ fontSize: 'xs', color: 'text-muted', px: '1' })}>
+                        {selection.reason}
+                    </p>
+                )}
+                {selection.footer}
+            </>
+        ) : null
+    ) : (
+        footer
+    );
     const isCompact = variant === 'compact';
     const isList = variant === 'list';
     const color = recipe.categoryColor || categoryColors[recipe.category] || PALETTE.orange;
@@ -320,28 +381,16 @@ export function RecipeCard({
             </div>
         );
 
-        if (footer) {
+        if (below) {
             return (
                 <div className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
-                    <Link
-                        href={`/recipe/${recipe.slug}`}
-                        className={css({ textDecoration: 'none', color: 'inherit' })}
-                    >
-                        {listCard}
-                    </Link>
-                    {footer}
+                    {target(listCard)}
+                    {below}
                 </div>
             );
         }
 
-        return (
-            <Link
-                href={`/recipe/${recipe.slug}`}
-                className={css({ textDecoration: 'none', color: 'inherit' })}
-            >
-                {listCard}
-            </Link>
-        );
+        return target(listCard);
     }
 
     const card = (
@@ -484,26 +533,14 @@ export function RecipeCard({
         </div>
     );
 
-    if (footer) {
+    if (below) {
         return (
             <div className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
-                <Link
-                    href={`/recipe/${recipe.slug}`}
-                    className={css({ textDecoration: 'none', color: 'inherit' })}
-                >
-                    {card}
-                </Link>
-                {footer}
+                {target(card)}
+                {below}
             </div>
         );
     }
 
-    return (
-        <Link
-            href={`/recipe/${recipe.slug}`}
-            className={css({ textDecoration: 'none', color: 'inherit' })}
-        >
-            {card}
-        </Link>
-    );
+    return target(card);
 }

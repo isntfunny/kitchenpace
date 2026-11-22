@@ -26,6 +26,8 @@ type FilterSidebarProps = {
     loading?: boolean;
     /** Strip container chrome (border, shadow, scroll) when embedded inside another panel */
     embedded?: boolean;
+    /** Sections not shown, e.g. 'categories' in the week selection dialog (KUC-126) */
+    hiddenSections?: FilterSectionId[];
 };
 
 const DIFFICULTY_OPTIONS = [
@@ -44,7 +46,7 @@ const RANGE_FALLBACKS = {
     cookCount: { min: 0, max: 200, interval: 10 },
 };
 
-const FILTER_SECTION_IDS = {
+export const FILTER_SECTION_IDS = {
     tags: 'tags',
     categories: 'categories',
     ingredients: 'ingredients',
@@ -53,6 +55,8 @@ const FILTER_SECTION_IDS = {
     timing: 'timing',
     rating: 'rating',
 } as const;
+
+export type FilterSectionId = keyof typeof FILTER_SECTION_IDS;
 
 const normalizeTag = (value: string) => value.trim().toLowerCase();
 
@@ -223,6 +227,7 @@ export function FilterSidebar({
     onFiltersChange,
     loading,
     embedded,
+    hiddenSections = [],
 }: FilterSidebarProps) {
     const ingredients = options.ingredients;
     const tags = options.tags;
@@ -426,33 +431,35 @@ export function FilterSidebar({
                         />
                     </FilterSection>
 
-                    <FilterSection
-                        value={FILTER_SECTION_IDS.categories}
-                        title="Kategorien"
-                        activeCount={activeSectionCounts.categories}
-                    >
-                        <ToggleGroup.Root
-                            type="multiple"
-                            className={chipGroupClass}
-                            aria-label="Kategorien filtern"
-                            value={filters.categories ?? []}
-                            onValueChange={(next: string[]) =>
-                                onFiltersChange({
-                                    categories: next,
-                                } as Partial<RecipeFilterSearchParams>)
-                            }
+                    {!hiddenSections.includes('categories') && (
+                        <FilterSection
+                            value={FILTER_SECTION_IDS.categories}
+                            title="Kategorien"
+                            activeCount={activeSectionCounts.categories}
                         >
-                            {options.categories.map((cat) => (
-                                <ToggleGroup.Item
-                                    key={cat.slug}
-                                    value={cat.slug}
-                                    className={chipItemClass}
-                                >
-                                    {cat.name}
-                                </ToggleGroup.Item>
-                            ))}
-                        </ToggleGroup.Root>
-                    </FilterSection>
+                            <ToggleGroup.Root
+                                type="multiple"
+                                className={chipGroupClass}
+                                aria-label="Kategorien filtern"
+                                value={filters.categories ?? []}
+                                onValueChange={(next: string[]) =>
+                                    onFiltersChange({
+                                        categories: next,
+                                    } as Partial<RecipeFilterSearchParams>)
+                                }
+                            >
+                                {options.categories.map((cat) => (
+                                    <ToggleGroup.Item
+                                        key={cat.slug}
+                                        value={cat.slug}
+                                        className={chipItemClass}
+                                    >
+                                        {cat.name}
+                                    </ToggleGroup.Item>
+                                ))}
+                            </ToggleGroup.Root>
+                        </FilterSection>
+                    )}
 
                     <FilterSection
                         value={FILTER_SECTION_IDS.ingredients}

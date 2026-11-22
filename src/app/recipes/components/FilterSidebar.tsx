@@ -90,7 +90,8 @@ const accordionTriggerClass = css({
     transition: 'background 150ms ease',
     '&[data-state="open"]': {
         background: 'surface',
-        borderBottom: '1px solid',
+        borderBottomWidth: '1px',
+        borderBottomStyle: 'solid',
         borderColor: 'border.muted',
     },
     '& svg': {

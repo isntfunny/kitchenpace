@@ -173,7 +173,8 @@ function UnitCard({ unit }: { unit: UnitWithDetails }) {
                                     paddingY: '2',
                                     bg: 'surface.muted',
                                     border: 'none',
-                                    borderTop: '1px solid',
+                                    borderTopWidth: '1px',
+                                    borderTopStyle: 'solid',
                                     borderColor: 'border.muted',
                                     cursor: 'pointer',
                                     fontSize: 'xs',
@@ -391,7 +392,8 @@ function EditUnitForm({ unit, onClose }: { unit: UnitWithDetails; onClose: () =>
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     paddingTop: '2',
-                    borderTop: '1px solid',
+                    borderTopWidth: '1px',
+                    borderTopStyle: 'solid',
                     borderColor: 'border.muted',
                 })}
             >

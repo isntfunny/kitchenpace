@@ -104,8 +104,10 @@ export function ToastBubble({
                         width: '18px',
                         height: '18px',
                         rotate: '45deg',
-                        borderTop: '1px solid',
-                        borderRight: '1px solid',
+                        borderTopWidth: '1px',
+                        borderTopStyle: 'solid',
+                        borderRightWidth: '1px',
+                        borderRightStyle: 'solid',
                         borderColor: 'border',
                         // matches card gradient start color
                         background: {

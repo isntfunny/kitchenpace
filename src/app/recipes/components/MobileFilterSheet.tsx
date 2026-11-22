@@ -188,7 +188,8 @@ export function MobileFilterSheet({
                     gap: '2',
                     padding: '3',
                     background: 'surface.elevated',
-                    borderTop: '1px solid',
+                    borderTopWidth: '1px',
+                    borderTopStyle: 'solid',
                     borderColor: 'light',
                 })}
             >

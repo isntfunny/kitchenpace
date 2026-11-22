@@ -122,7 +122,8 @@ export function CookDialog({
                                 justifyContent: 'space-between',
                                 px: '5',
                                 py: '4',
-                                borderBottom: '1px solid',
+                                borderBottomWidth: '1px',
+                                borderBottomStyle: 'solid',
                                 borderColor: 'border.muted',
                             })}
                         >

@@ -52,7 +52,8 @@ const servingsRow = css({
     gap: '3',
     px: '5',
     pb: '3',
-    borderBottom: '1px solid',
+    borderBottomWidth: '1px',
+    borderBottomStyle: 'solid',
     borderColor: 'border.muted',
 });
 const stepButton = css({
@@ -76,7 +77,8 @@ const lineRow = css({
     alignItems: 'center',
     gap: '3',
     py: '2.5',
-    borderBottom: '1px solid',
+    borderBottomWidth: '1px',
+    borderBottomStyle: 'solid',
     borderColor: 'border.muted',
     cursor: 'pointer',
 });

@@ -262,7 +262,8 @@ export function StepCard({
                 {stepIngredients.length > 0 && !compact && (
                     <div
                         className={css({
-                            borderTop: '1px solid',
+                            borderTopWidth: '1px',
+                            borderTopStyle: 'solid',
                             borderColor: {
                                 base: 'rgba(0,0,0,0.06)',
                                 _dark: 'rgba(255,255,255,0.08)',

@@ -498,7 +498,8 @@ const amountInputClass = css({
     ...amountInputBase,
     width: '50%',
     flexShrink: 0,
-    borderRight: '1px solid',
+    borderRightWidth: '1px',
+    borderRightStyle: 'solid',
     borderRightColor: 'palette.orange',
 });
 

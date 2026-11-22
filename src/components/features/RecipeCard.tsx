@@ -322,7 +322,8 @@ export function RecipeCard({
                         alignItems: 'flex-end',
                         justifyContent: 'center',
                         gap: '2',
-                        borderLeft: '1px solid',
+                        borderLeftWidth: '1px',
+                        borderLeftStyle: 'solid',
                         borderColor: 'rgba(255,255,255,0.05)',
                         minWidth: '110px',
                     })}

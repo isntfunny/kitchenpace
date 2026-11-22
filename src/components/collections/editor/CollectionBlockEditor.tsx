@@ -58,7 +58,8 @@ export function CollectionBlockEditor({ initialContent, onUpdate }: CollectionBl
                     '& p': { mb: '3' },
                     '& ul, & ol': { pl: '6', mb: '3' },
                     '& blockquote': {
-                        borderLeft: '3px solid',
+                        borderLeftWidth: '3px',
+                        borderLeftStyle: 'solid',
                         borderColor: 'accent',
                         pl: '4',
                         color: 'foreground.muted',

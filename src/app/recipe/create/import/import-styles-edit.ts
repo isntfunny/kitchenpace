@@ -92,7 +92,8 @@ export const editActionsClass = css({
     alignItems: 'center',
     justifyContent: 'space-between',
     p: '6',
-    borderTop: '1px solid',
+    borderTopWidth: '1px',
+    borderTopStyle: 'solid',
     borderTopColor: { base: 'rgba(224,123,83,0.1)', _dark: 'rgba(224,123,83,0.15)' },
     backgroundColor: { base: 'rgba(224,123,83,0.02)', _dark: 'rgba(224,123,83,0.04)' },
 });

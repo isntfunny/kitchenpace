@@ -292,7 +292,8 @@ function WeekGrid({
                                     px: '2',
                                     pt: '3',
                                     pb: '2.5',
-                                    borderLeft: '1px solid',
+                                    borderLeftWidth: '1px',
+                                    borderLeftStyle: 'solid',
                                     borderColor: 'border.muted',
                                     minW: 0,
                                 }),
@@ -444,7 +445,8 @@ function WeekGrid({
                                     gridTemplateColumns: '76px minmax(0, 1fr)',
                                     gap: '2',
                                     py: '2',
-                                    borderTop: '1px solid',
+                                    borderTopWidth: '1px',
+                                    borderTopStyle: 'solid',
                                     borderColor: 'border.muted',
                                     _first: { borderTop: 0 },
                                 })}
@@ -502,7 +504,8 @@ function SlotRow({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderTop: '1px solid',
+                    borderTopWidth: '1px',
+                    borderTopStyle: 'solid',
                     borderColor: 'border.muted',
                     fontSize: '10px',
                     fontWeight: '700',
@@ -525,8 +528,10 @@ function SlotRow({
                     className={cx(
                         css({
                             p: '1.5',
-                            borderTop: '1px solid',
-                            borderLeft: '1px solid',
+                            borderTopWidth: '1px',
+                            borderTopStyle: 'solid',
+                            borderLeftWidth: '1px',
+                            borderLeftStyle: 'solid',
                             borderColor: 'border.muted',
                             minW: 0,
                             '&[data-drop-over]': {

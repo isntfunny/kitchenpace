@@ -145,7 +145,8 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
         flexDirection: 'column',
         gap: '3',
         py: '4',
-        borderTop: '1px solid',
+        borderTopWidth: '1px',
+        borderTopStyle: 'solid',
         borderColor: 'border.muted',
         _first: { borderTop: 0, pt: 0 },
     });
@@ -519,7 +520,8 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                     alignItems: 'center',
                     gap: '3',
                     pt: '4',
-                    borderTop: '1px solid',
+                    borderTopWidth: '1px',
+                    borderTopStyle: 'solid',
                     borderColor: 'border.muted',
                 })}
             >

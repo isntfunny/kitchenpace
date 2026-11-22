@@ -35,7 +35,8 @@ const day = css({
     display: 'flex',
     gap: '3',
     py: '3',
-    borderTop: '1px solid',
+    borderTopWidth: '1px',
+    borderTopStyle: 'solid',
     borderColor: 'border.muted',
 });
 const dayLabel = css({ w: '10', flexShrink: 0, textAlign: 'center', lineHeight: '1.2' });

@@ -76,7 +76,8 @@ export function ProfileTwitchSection({
                             width: '340px',
                             flexShrink: 0,
                             bg: '#18181b',
-                            borderLeft: '1px solid',
+                            borderLeftWidth: '1px',
+                            borderLeftStyle: 'solid',
                             borderColor: 'border',
                         })}
                     >

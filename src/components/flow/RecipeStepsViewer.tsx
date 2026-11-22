@@ -589,7 +589,8 @@ export function RecipeStepsViewer({
                             }}
                             className={css({
                                 bg: 'background',
-                                borderBottom: '1px solid',
+                                borderBottomWidth: '1px',
+                                borderBottomStyle: 'solid',
                                 borderColor: {
                                     base: 'rgba(224,123,83,0.1)',
                                     _dark: 'rgba(224,123,83,0.15)',

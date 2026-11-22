@@ -41,7 +41,8 @@ export function EditorToolbar({ editor, onInsertBlock }: EditorToolbarProps) {
                 gap: '1',
                 px: '3',
                 py: '2',
-                borderBottom: '1px solid',
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
                 borderColor: 'border',
                 bg: 'surface.muted',
                 flexWrap: 'wrap',
@@ -109,7 +110,8 @@ export function EditorToolbar({ editor, onInsertBlock }: EditorToolbarProps) {
 
             <div
                 className={css({
-                    borderLeft: '1px solid',
+                    borderLeftWidth: '1px',
+                    borderLeftStyle: 'solid',
                     borderColor: 'border',
                     h: '20px',
                     mx: '1',

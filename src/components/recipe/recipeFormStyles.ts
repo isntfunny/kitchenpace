@@ -16,7 +16,8 @@ export const autoSaveBarClass = (status: AutoSaveStatus) =>
                 ? { base: 'rgba(239,68,68,0.08)', _dark: 'rgba(239,68,68,0.12)' }
                 : { base: 'rgba(224,123,83,0.06)', _dark: 'rgba(224,123,83,0.1)' },
         color: status === 'error' ? 'red.500' : 'text.muted',
-        borderBottom: '1px solid',
+        borderBottomWidth: '1px',
+        borderBottomStyle: 'solid',
         borderBottomColor:
             status === 'error'
                 ? { base: 'rgba(239,68,68,0.15)', _dark: 'rgba(239,68,68,0.25)' }

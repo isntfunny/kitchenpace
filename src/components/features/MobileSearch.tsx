@@ -328,7 +328,8 @@ function MobileSearchContent({ onClose }: { onClose: () => void }) {
                         }
                         className={css({
                             width: '100%',
-                            borderTop: '1px solid',
+                            borderTopWidth: '1px',
+                            borderTopStyle: 'solid',
                             borderColor: 'border',
                             px: '4',
                             py: '3',
@@ -340,8 +341,6 @@ function MobileSearchContent({ onClose }: { onClose: () => void }) {
                             cursor: 'pointer',
                             background: 'transparent',
                             border: 'none',
-                            borderTopWidth: '1px',
-                            borderTopStyle: 'solid',
                             transition: 'background 150ms ease',
                             _hover: { bg: 'accent.soft' },
                         })}
@@ -399,7 +398,13 @@ function MobileRecipeSection({
     onSelect: (slug: string) => void;
 }) {
     return (
-        <div className={css({ borderBottom: '1px solid', borderColor: 'border.subtle' })}>
+        <div
+            className={css({
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
+                borderColor: 'border.subtle',
+            })}
+        >
             <MobileSectionHeader icon={icon} title={title} />
             <div className={css({ px: '3', pb: '3', display: 'grid', gap: '1' })}>
                 {recipes.map((recipe) => (
@@ -476,7 +481,13 @@ function MobileUserSection({
     onSelect: (slug: string) => void;
 }) {
     return (
-        <div className={css({ borderBottom: '1px solid', borderColor: 'border.subtle' })}>
+        <div
+            className={css({
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
+                borderColor: 'border.subtle',
+            })}
+        >
             <MobileSectionHeader icon={<User size={14} />} title="Profile" />
             <div className={css({ px: '3', pb: '3', display: 'grid', gap: '1' })}>
                 {users.map((user) => (
@@ -546,7 +557,13 @@ function MobileSuggestSection({
     onSelect: (name: string) => void;
 }) {
     return (
-        <div className={css({ borderBottom: '1px solid', borderColor: 'border.subtle' })}>
+        <div
+            className={css({
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
+                borderColor: 'border.subtle',
+            })}
+        >
             <MobileSectionHeader icon={icon} title={title} />
             <div className={css({ px: '3', pb: '3', display: 'grid', gap: '1' })}>
                 {items.map((item) => (

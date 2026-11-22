@@ -75,7 +75,8 @@ export function SharedWeekView({ week }: { week: SharedMealPlanWeek }) {
                                     gridTemplateColumns: '84px minmax(0, 1fr)',
                                     gap: '2',
                                     py: '2',
-                                    borderTop: '1px solid',
+                                    borderTopWidth: '1px',
+                                    borderTopStyle: 'solid',
                                     borderColor: 'border.muted',
                                 })}
                             >

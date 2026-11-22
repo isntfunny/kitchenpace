@@ -76,7 +76,8 @@ export function IngredientReviewTable({ ingredients }: { ingredients: Ingredient
                         <tr
                             key={ing.id}
                             className={css({
-                                borderTop: '1px solid',
+                                borderTopWidth: '1px',
+                                borderTopStyle: 'solid',
                                 borderColor: 'border.muted',
                                 _hover: { bg: 'surface.muted' },
                             })}

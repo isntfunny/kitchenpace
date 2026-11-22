@@ -334,6 +334,37 @@ const JOB_CATALOG: Record<
         },
         repeat: { pattern: '30 3 * * *', tz: 'Europe/Berlin' },
     },
+    'reconcile-meal-reminders': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { dryRun: false, limit: 2000, userId: '' },
+        schema: {
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (report only, schedule nothing)',
+                default: false,
+            },
+            limit: {
+                type: 'number',
+                label: 'Max. users per run',
+                default: 2000,
+                min: 1,
+                max: 20000,
+            },
+            userId: { type: 'string', label: 'Only this user (empty = all)', placeholder: 'cuid' },
+        },
+        repeat: { pattern: '*/15 * * * *', tz: 'Europe/Berlin' },
+    },
+    'send-meal-reminder': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { reminderId: '' },
+        schema: {
+            reminderId: {
+                type: 'string',
+                label: 'Reminder ID',
+                placeholder: 'MealPlanReminder id',
+            },
+        },
+    },
 
     'cluster-recipe-themes': {
         queue: QueueName.SCHEDULED,

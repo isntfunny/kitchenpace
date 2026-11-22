@@ -27,6 +27,11 @@ export interface MealPlanSettingsValues {
     mealPlanShowServings: boolean;
     mealPlanShowCalories: boolean;
     slots: SlotConfig[];
+    /** Reminders (KUC-109): only passed by the profile settings, the section is hidden without them */
+    notifyOnCookStart?: boolean;
+    notifyOnWeeklyPlanReminder?: boolean;
+    quietHoursStart?: string | null;
+    quietHoursEnd?: string | null;
 }
 
 interface MealPlanSettingsFormProps {
@@ -60,7 +65,17 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
         () => null,
     );
     const browserZone = deviceZone && deviceZone !== initial.timezone ? deviceZone : null;
-    const ids = { start: useId(), shopping: useId(), zone: useId(), name: useId(), time: useId() };
+    const ids = {
+        start: useId(),
+        shopping: useId(),
+        zone: useId(),
+        name: useId(),
+        time: useId(),
+        quietFrom: useId(),
+        quietTo: useId(),
+    };
+    const showReminders = initial.notifyOnCookStart !== undefined;
+    const quietOn = !!values.quietHoursStart && !!values.quietHoursEnd;
 
     const set = <K extends keyof MealPlanSettingsValues>(
         key: K,
@@ -417,6 +432,86 @@ export function MealPlanSettingsForm({ initial, week, onSaved }: MealPlanSetting
                     description="Ungefähre kcal pro Person und Tag"
                 />
             </fieldset>
+
+            {showReminders && (
+                <fieldset className={section}>
+                    <legend className={cx(fieldLabel, css({ mb: '2' }))}>Erinnerungen</legend>
+                    <Switch
+                        checked={values.notifyOnCookStart ?? true}
+                        onChange={(v) => set('notifyOnCookStart', v)}
+                        label="Zeit anzufangen"
+                        description="Mitteilung vor der geplanten Mahlzeit, rechtzeitig vor dem Kochen"
+                    />
+                    <Switch
+                        checked={values.notifyOnWeeklyPlanReminder ?? true}
+                        onChange={(v) => set('notifyOnWeeklyPlanReminder', v)}
+                        label="Wochenplan erinnern"
+                        description="Am Tag vor dem Wochenstart um 17 Uhr, wenn die neue Woche noch leer ist"
+                    />
+                    <Switch
+                        checked={quietOn}
+                        onChange={(on) => {
+                            setValues((current) => ({
+                                ...current,
+                                quietHoursStart: on ? '22:00' : null,
+                                quietHoursEnd: on ? '07:00' : null,
+                            }));
+                            setStatus(null);
+                        }}
+                        label="Ruhezeiten"
+                        description="In dieser Zeit kommen keine Erinnerungen"
+                    />
+                    {quietOn && (
+                        <div className={css({ display: 'flex', gap: '3', flexWrap: 'wrap' })}>
+                            <label
+                                htmlFor={ids.quietFrom}
+                                className={css({
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '1.5',
+                                    fontSize: 'sm',
+                                })}
+                            >
+                                Von
+                                <input
+                                    id={ids.quietFrom}
+                                    type="time"
+                                    required
+                                    value={values.quietHoursStart ?? ''}
+                                    onChange={(e) => set('quietHoursStart', e.target.value)}
+                                    className={cx(input, css({ w: '120px' }))}
+                                />
+                            </label>
+                            <label
+                                htmlFor={ids.quietTo}
+                                className={css({
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '1.5',
+                                    fontSize: 'sm',
+                                })}
+                            >
+                                Bis
+                                <input
+                                    id={ids.quietTo}
+                                    type="time"
+                                    required
+                                    value={values.quietHoursEnd ?? ''}
+                                    onChange={(e) => set('quietHoursEnd', e.target.value)}
+                                    className={cx(input, css({ w: '120px' }))}
+                                />
+                            </label>
+                        </div>
+                    )}
+                    <p className={css({ fontSize: 'xs', color: 'foreground.muted' })}>
+                        Erinnerungen kommen in der App und als Push-Mitteilung, sobald du Push im
+                        Bereich Benachrichtigungen aktiviert hast. Auf dem iPhone und iPad
+                        funktioniert Web-Push nur, wenn KochTakt als App zum Home-Bildschirm
+                        hinzugefügt ist. Eine Erinnerung, die in die Ruhezeiten fällt, kommt danach,
+                        sofern die Mahlzeit dann noch nicht begonnen hat.
+                    </p>
+                </fieldset>
+            )}
 
             <div
                 className={css({

@@ -29,7 +29,7 @@ export function MealPlanSettingsCard({ initial }: { initial: MealPlanSettingsVal
                         Wochenplan
                     </Heading>
                     <Text color="muted" size="sm">
-                        Haushalt, Wochenstart, Mahlzeiten und was im Plan angezeigt wird.
+                        Haushalt, Wochenstart, Mahlzeiten, Anzeige und Erinnerungen.
                     </Text>
                 </div>
             </div>

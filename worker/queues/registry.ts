@@ -4,6 +4,7 @@ import { runDatabaseBackup } from './backup-processor';
 import { processPollOpenAIBatches } from './batch-poll';
 import { processBackfillIngredientEnrichment } from './enrichment-backfill';
 import { processBackfillIngredientIcons } from './icon-backfill';
+import { processReconcileMealReminders, processSendMealReminder } from './meal-reminder-processor';
 import { processEnrichIngredientNutrition } from './nutrition-processor';
 import {
     processBackfillEmbeddings,
@@ -416,6 +417,41 @@ export const JOB_REGISTRY = defineJobs({
             },
         },
         repeat: { pattern: '30 3 * * *', tz: 'Europe/Berlin' },
+    },
+
+    'reconcile-meal-reminders': {
+        queue: QueueName.SCHEDULED,
+        processor: (job) => processReconcileMealReminders(job),
+        defaultData: { dryRun: false, limit: 2000, userId: '' },
+        schema: {
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (report only, schedule nothing)',
+                default: false,
+            },
+            limit: {
+                type: 'number',
+                label: 'Max. users per run',
+                default: 2000,
+                min: 1,
+                max: 20000,
+            },
+            userId: { type: 'string', label: 'Only this user (empty = all)', placeholder: 'cuid' },
+        },
+        repeat: { pattern: '*/15 * * * *', tz: 'Europe/Berlin' },
+    },
+
+    'send-meal-reminder': {
+        queue: QueueName.SCHEDULED,
+        processor: (job) => processSendMealReminder(job),
+        defaultData: { reminderId: '' },
+        schema: {
+            reminderId: {
+                type: 'string',
+                label: 'Reminder ID',
+                placeholder: 'MealPlanReminder id',
+            },
+        },
     },
 
     // ── Backup queue ────────────────────────────────────────────────

@@ -71,3 +71,12 @@ export async function addEnrichIngredientNutritionJob(ingredientId: string): Pro
         },
     );
 }
+
+/**
+ * Re-syncs the meal plan reminders of one user (KUC-109). Call it after a plan entry was added,
+ * moved or deleted so the push is planned right away; the 15-minute cron catches up otherwise.
+ */
+export async function addSyncMealRemindersJob(userId: string): Promise<void> {
+    const queue = getQueueForName(QueueName.SCHEDULED);
+    await queue.add('reconcile-meal-reminders', { userId, dryRun: false, limit: 1 });
+}

@@ -144,6 +144,10 @@ const ManageProfilePage = async () => {
                             mealPlanShowServings: mealPlan.mealPlanShowServings,
                             mealPlanShowCalories: mealPlan.mealPlanShowCalories,
                             slots: mealPlan.slots,
+                            notifyOnCookStart: mealPlan.notifyOnCookStart,
+                            notifyOnWeeklyPlanReminder: mealPlan.notifyOnWeeklyPlanReminder,
+                            quietHoursStart: mealPlan.quietHoursStart,
+                            quietHoursEnd: mealPlan.quietHoursEnd,
                         }}
                     />
 

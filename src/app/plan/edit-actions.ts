@@ -35,7 +35,7 @@ import { todayIn } from '@app/lib/meal-plan/week';
 import { bookCookedEntry } from '@app/lib/pantry/book';
 import { prisma } from '@shared/prisma';
 
-import { run } from './run';
+import { run, runWrite } from './run';
 
 /** Only what the entry sheet edits; moving goes through movePlanEntry */
 const entryFieldsSchema = z
@@ -48,7 +48,7 @@ const entryFieldsSchema = z
     .strict();
 
 export async function updatePlanEntry(entryId: string, input: unknown) {
-    return run(async (userId) => {
+    return runWrite(async (userId) => {
         const fields = entryFieldsSchema.parse(input);
         if (fields.notes === '') fields.notes = null;
         const entry = await updateMealPlanEntry(prisma, userId, idSchema.parse(entryId), fields);
@@ -57,34 +57,34 @@ export async function updatePlanEntry(entryId: string, input: unknown) {
 }
 
 export async function movePlanEntry(entryId: string, input: unknown) {
-    return run(async (userId) => {
+    return runWrite(async (userId) => {
         const entry = await moveMealPlanEntry(prisma, userId, idSchema.parse(entryId), input);
         return { id: entry.id };
     });
 }
 
 export async function swapPlanCells(input: unknown) {
-    return run((userId) => swapMealPlanCells(prisma, userId, input));
+    return runWrite((userId) => swapMealPlanCells(prisma, userId, input));
 }
 
 /** Returns the snapshot for "Rückgängig" */
 export async function deletePlanEntry(entryId: string) {
-    return run((userId) => deleteMealPlanEntry(prisma, userId, idSchema.parse(entryId)));
+    return runWrite((userId) => deleteMealPlanEntry(prisma, userId, idSchema.parse(entryId)));
 }
 
 export async function restorePlanEntry(snapshot: unknown) {
-    return run(async (userId) => {
+    return runWrite(async (userId) => {
         const entry = await restoreMealPlanEntry(prisma, userId, snapshot);
         return { id: entry.id };
     });
 }
 
 export async function cookPlanEntryForTwo(entryId: string, target: unknown) {
-    return run((userId) => cookForTwoMeals(prisma, userId, idSchema.parse(entryId), target));
+    return runWrite((userId) => cookForTwoMeals(prisma, userId, idSchema.parse(entryId), target));
 }
 
 export async function undoCookForTwo(leftoverId: string, originServings: unknown) {
-    return run((userId) =>
+    return runWrite((userId) =>
         removeLeftover(prisma, userId, idSchema.parse(leftoverId), originServings),
     );
 }
@@ -94,7 +94,7 @@ export async function previewPlanCopy(input: unknown) {
 }
 
 export async function copyPlanDays(input: unknown) {
-    return run((userId) => copyMealPlanDays(prisma, userId, input));
+    return runWrite((userId) => copyMealPlanDays(prisma, userId, input));
 }
 
 export async function getPlanTemplates() {
@@ -110,7 +110,7 @@ export async function previewPlanTemplate(input: unknown) {
 }
 
 export async function applyPlanTemplate(input: unknown) {
-    return run((userId) => applyMealPlanTemplate(prisma, userId, input));
+    return runWrite((userId) => applyMealPlanTemplate(prisma, userId, input));
 }
 
 export async function deletePlanTemplate(templateId: string) {
@@ -127,7 +127,7 @@ export interface CookedResult extends CookResult {
  * A failing booking never blocks the mark; the nightly job books it later.
  */
 export async function markPlanEntryCooked(entryId: string) {
-    return run(async (userId): Promise<CookedResult> => {
+    return runWrite(async (userId): Promise<CookedResult> => {
         const id = idSchema.parse(entryId);
         const now = new Date();
         const settings = await getMealPlanSettings(prisma, userId);
@@ -188,10 +188,10 @@ async function announceCook(userId: string, recipeId: string, cookHistoryId: str
 }
 
 export async function unmarkPlanEntryCooked(entryId: string) {
-    return run((userId) => uncookMealPlanEntry(prisma, userId, idSchema.parse(entryId)));
+    return runWrite((userId) => uncookMealPlanEntry(prisma, userId, idSchema.parse(entryId)));
 }
 
 /** "Nicht gekocht" for a past dish */
 export async function skipPlanEntry(entryId: string) {
-    return run((userId) => skipMealPlanEntry(prisma, userId, idSchema.parse(entryId)));
+    return runWrite((userId) => skipMealPlanEntry(prisma, userId, idSchema.parse(entryId)));
 }

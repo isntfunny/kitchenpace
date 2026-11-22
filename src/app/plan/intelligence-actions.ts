@@ -27,6 +27,8 @@ import { dismissLeftoverHint } from '@app/lib/pantry/repository';
 import { checkRateLimit } from '@app/lib/rate-limit';
 import { prisma } from '@shared/prisma';
 
+import { scheduleReminderSync } from './run';
+
 // Server actions of the plan helpers (KUC-96, KUC-108, KUC-113). Suggestions and previews
 // only read; entries are written only by the accept/apply/plan actions after a user tap.
 
@@ -39,6 +41,15 @@ type Result<T> =
           code: 'SIGN_IN' | 'RATE_LIMIT' | 'NOT_FOUND' | 'INVALID' | 'STALE' | 'FAILED';
           error: string;
       };
+
+/** `run` for actions that write plan entries: also re-plans reminders (KUC-109). */
+function runWrite<T>(work: (userId: string) => Promise<T>): Promise<Result<T>> {
+    return run(async (userId) => {
+        const data = await work(userId);
+        scheduleReminderSync(userId);
+        return data;
+    });
+}
 
 async function run<T>(work: (userId: string) => Promise<T>): Promise<Result<T>> {
     try {
@@ -116,7 +127,7 @@ export async function swapSuggestionAction(input: unknown): Promise<Result<Sugge
 export async function acceptSuggestionsAction(
     input: unknown,
 ): Promise<Result<{ planned: number; skipped: number }>> {
-    return run(async (userId) => {
+    return runWrite(async (userId) => {
         const { startDate, suggestions } = weekInput
             .extend({ suggestions: z.array(placement).min(1).max(30) })
             .parse(input);
@@ -155,7 +166,7 @@ export async function previewShelfLifeOrderAction(
 export async function applyShelfLifeOrderAction(
     input: unknown,
 ): Promise<Result<{ moved: number }>> {
-    return run(async (userId) => {
+    return runWrite(async (userId) => {
         const { startDate, signature } = weekInput
             .extend({ signature: z.string().max(4000) })
             .parse(input);
@@ -173,7 +184,7 @@ export async function applyShelfLifeOrderAction(
 export async function planLeftoverRecipeAction(
     input: unknown,
 ): Promise<Result<{ date: string; slot: string }>> {
-    return run(async (userId) => {
+    return runWrite(async (userId) => {
         const { recipeId, date } = z
             .object({ recipeId: idSchema, date: isoDateSchema })
             .strict()

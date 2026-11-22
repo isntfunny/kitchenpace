@@ -14,7 +14,7 @@ import { idSchema, isoDateSchema } from '@app/lib/meal-plan/schemas';
 import { todayIn, weekRange, weekStartFor } from '@app/lib/meal-plan/week';
 import { prisma } from '@shared/prisma';
 
-import { run } from './run';
+import { run, runWrite } from './run';
 
 export interface PickerRecipe {
     id: string;
@@ -104,7 +104,7 @@ export async function getPickerLists() {
 
 /** Plans one or more dishes; the dialog's "Weitere hinzufügen" sends several. */
 export async function addPlanEntries(input: unknown) {
-    return run(async (userId) => {
+    return runWrite(async (userId) => {
         const entries = z.array(z.unknown()).min(1).max(10).parse(input);
         const created = [];
         for (const entry of entries)
@@ -114,12 +114,12 @@ export async function addPlanEntries(input: unknown) {
 }
 
 export async function savePlanSettings(input: unknown) {
-    return run((userId) => updateMealPlanSettings(prisma, userId, input));
+    return runWrite((userId) => updateMealPlanSettings(prisma, userId, input));
 }
 
 /** Slot configuration for one week only; null restores the user default. */
 export async function saveWeekSlots(input: unknown) {
-    return run(async (userId) => {
+    return runWrite(async (userId) => {
         const { startDate, slots } = z
             .object({ startDate: isoDateSchema, slots: z.unknown() })
             .strict()

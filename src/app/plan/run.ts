@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { getServerAuthSession } from '@app/lib/auth';
 import { DataAccessError } from '@app/lib/meal-plan/db';
 import { checkRateLimit } from '@app/lib/rate-limit';
+import { addSyncMealRemindersJob } from '@worker/queues/index';
 
 export type PlanActionResult<T> =
     | { ok: true; data: T }
@@ -13,6 +14,27 @@ export type PlanActionResult<T> =
           code: 'SIGN_IN' | 'RATE_LIMIT' | 'NOT_FOUND' | 'INVALID' | 'FAILED';
           error: string;
       };
+
+/**
+ * Re-plans the user's reminders (KUC-109) right after a plan change instead of waiting
+ * for the 15-minute reconcile. Never fails the action.
+ */
+export function scheduleReminderSync(userId: string): void {
+    addSyncMealRemindersJob(userId).catch((error) =>
+        console.error('[meal-plan] scheduling the reminder sync failed', error),
+    );
+}
+
+/** `run` for actions that change plan entries, times or slots: also re-plans reminders. */
+export async function runWrite<T>(
+    work: (userId: string) => Promise<T>,
+): Promise<PlanActionResult<T>> {
+    return run(async (userId) => {
+        const data = await work(userId);
+        scheduleReminderSync(userId);
+        return data;
+    });
+}
 
 export async function run<T>(work: (userId: string) => Promise<T>): Promise<PlanActionResult<T>> {
     try {

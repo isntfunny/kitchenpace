@@ -2,6 +2,7 @@
 
 import { useId } from 'react';
 
+import { fieldLabel } from '@app/components/atoms/recipes';
 import {
     Select,
     SelectContent,
@@ -11,7 +12,7 @@ import {
 } from '@app/components/features/Select';
 import type { BringList } from '@app/lib/bring/types';
 
-import { label } from './styles';
+import { fieldGroup } from './styles';
 
 export function ListSelect({
     label: caption,
@@ -30,8 +31,10 @@ export function ListSelect({
 }) {
     const id = useId();
     return (
-        <div className={label}>
-            <label htmlFor={id}>{caption}</label>
+        <div className={fieldGroup}>
+            <label htmlFor={id} className={fieldLabel}>
+                {caption}
+            </label>
             <Select
                 value={value}
                 onValueChange={onValueChange}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@app/components/atoms/Button';
+import { fieldLabel, input } from '@app/components/atoms/recipes';
 import { Heading, Text } from '@app/components/atoms/Typography';
 import {
     connectBring,
@@ -15,9 +16,11 @@ import {
 } from '@app/lib/bring/actions';
 import type { BringList } from '@app/lib/bring/types';
 
+import { css, cx } from 'styled-system/css';
+
 import { Feedback, LoadingState, EmptyState } from './Feedback';
 import { ListSelect } from './ListSelect';
-import { card, field, label, link, row, stack } from './styles';
+import { card, fieldGroup, link, row, stack } from './styles';
 
 export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
     const [initialLoading, setInitialLoading] = useState(true);
@@ -179,10 +182,10 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
                             Melde dich mit deinen Bring!-Zugangsdaten an. KochTakt speichert sie
                             verschlüsselt, damit du deine Listen hier nutzen kannst.
                         </Text>
-                        <label className={label}>
-                            E-Mail bei Bring!
+                        <label className={fieldGroup}>
+                            <span className={fieldLabel}>E-Mail bei Bring!</span>
                             <input
-                                className={field}
+                                className={cx(input, css({ width: '100%' }))}
                                 type="email"
                                 autoComplete="username"
                                 required
@@ -196,10 +199,10 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
                                 }}
                             />
                         </label>
-                        <label className={label}>
-                            Bring!-Passwort
+                        <label className={fieldGroup}>
+                            <span className={fieldLabel}>Bring!-Passwort</span>
                             <input
-                                className={field}
+                                className={cx(input, css({ width: '100%' }))}
                                 type="password"
                                 autoComplete="current-password"
                                 required
@@ -236,6 +239,7 @@ export function ConnectionCard({ onConnected }: { onConnected?: () => void }) {
                 <div className={row}>
                     <Button
                         type="submit"
+                        variant="primary"
                         disabled={
                             busy ||
                             ((!!lists || (connected && !editing)) &&

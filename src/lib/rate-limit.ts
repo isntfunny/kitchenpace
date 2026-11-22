@@ -4,7 +4,7 @@ import { getRealtimeRedis } from './realtime/redis';
 // Configuration
 // ---------------------------------------------------------------------------
 
-type RateLimitBucket =
+export type RateLimitBucket =
     | 'auth'
     | 'upload'
     | 'ai'

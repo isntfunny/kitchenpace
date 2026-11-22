@@ -2,7 +2,6 @@
 
 import { z } from 'zod';
 
-import { getServerAuthSession } from '@app/lib/auth';
 import { DataAccessError } from '@app/lib/meal-plan/db';
 import { leftoverPlanSlot } from '@app/lib/meal-plan/intelligence/mappers';
 import {
@@ -18,7 +17,7 @@ import {
 } from '@app/lib/meal-plan/repository';
 import { idSchema, isoDateSchema } from '@app/lib/meal-plan/schemas';
 import { dismissLeftoverHint } from '@app/lib/pantry/repository';
-import { checkRateLimit } from '@app/lib/rate-limit';
+import { ActionError, createActionRunner, type ActionResult } from '@app/lib/server-action.server';
 import { prisma } from '@shared/prisma';
 
 import { scheduleReminderSync } from './run';
@@ -26,56 +25,29 @@ import { scheduleReminderSync } from './run';
 // Server actions of the plan helpers (KUC-96, KUC-108, KUC-113). Suggestions and previews
 // only read; entries are written only by the accept/apply/plan actions after a user tap.
 
-class StaleProposal extends Error {}
+type Result<T> = ActionResult<
+    T,
+    'SIGN_IN' | 'RATE_LIMIT' | 'NOT_FOUND' | 'INVALID' | 'STALE' | 'FAILED'
+>;
 
-type Result<T> =
-    | { ok: true; data: T }
-    | {
-          ok: false;
-          code: 'SIGN_IN' | 'RATE_LIMIT' | 'NOT_FOUND' | 'INVALID' | 'STALE' | 'FAILED';
-          error: string;
-      };
+const STALE_MESSAGE = 'Der Plan hat sich geändert. Bitte öffne den Vorschlag noch einmal.';
+
+const run = createActionRunner<'INVALID' | 'STALE'>({
+    scope: 'meal-plan',
+    rateLimit: 'mealPlan',
+    logLabel: '[meal-plan] helper action failed',
+    invalidCode: 'INVALID',
+    failedMessage: 'Das hat nicht geklappt. Bitte versuche es erneut.',
+    // Only a missing row is shown as such; any other data error counts as unexpected
+    mapError: (error, unexpected) =>
+        error instanceof DataAccessError && error.code !== 'NOT_FOUND'
+            ? unexpected(error)
+            : undefined,
+});
 
 /** `run` for actions that write plan entries: also re-plans reminders (KUC-109). */
 function runWrite<T>(work: (userId: string) => Promise<T>): Promise<Result<T>> {
-    return run(async (userId) => {
-        const data = await work(userId);
-        scheduleReminderSync(userId);
-        return data;
-    });
-}
-
-async function run<T>(work: (userId: string) => Promise<T>): Promise<Result<T>> {
-    try {
-        const session = await getServerAuthSession('meal-plan');
-        if (!session?.user?.id || session.user.role === 'banned' || session.user.banned)
-            return { ok: false, code: 'SIGN_IN', error: 'Bitte melde dich an.' };
-        const limit = await checkRateLimit('mealPlan', session.user.id);
-        if (!limit.allowed)
-            return {
-                ok: false,
-                code: 'RATE_LIMIT',
-                error: 'Zu viele Anfragen. Bitte warte einen Moment.',
-            };
-        return { ok: true, data: await work(session.user.id) };
-    } catch (error) {
-        if (error instanceof StaleProposal)
-            return {
-                ok: false,
-                code: 'STALE',
-                error: 'Der Plan hat sich geändert. Bitte öffne den Vorschlag noch einmal.',
-            };
-        if (error instanceof z.ZodError)
-            return { ok: false, code: 'INVALID', error: 'Bitte prüfe deine Eingaben.' };
-        if (error instanceof DataAccessError && error.code === 'NOT_FOUND')
-            return { ok: false, code: 'NOT_FOUND', error: error.message };
-        console.error('[meal-plan] helper action failed', error);
-        return {
-            ok: false,
-            code: 'FAILED',
-            error: 'Das hat nicht geklappt. Bitte versuche es erneut.',
-        };
-    }
+    return run(work, { after: scheduleReminderSync });
 }
 
 const weekInput = z.object({ startDate: isoDateSchema }).strict();
@@ -102,7 +74,7 @@ export async function applyShelfLifeOrderAction(
                 updateMealPlanEntry(tx, userId, entryId, to),
             ),
         );
-        if ('stale' in outcome) throw new StaleProposal();
+        if ('stale' in outcome) throw new ActionError('STALE', STALE_MESSAGE);
         return outcome;
     });
 }

@@ -4,10 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { searchIngredients } from '@app/components/recipe/actions';
-import { getServerAuthSession } from '@app/lib/auth';
 import { requestBringSync } from '@app/lib/bring/sync-trigger';
-import { DataAccessError } from '@app/lib/meal-plan/db';
-import { checkRateLimit } from '@app/lib/rate-limit';
+import { createActionRunner, type ActionResult } from '@app/lib/server-action.server';
 import { loadShoppingPageData } from '@app/lib/shopping/page-data';
 import { loadRecipeLines } from '@app/lib/shopping/recipe-lines';
 import { addMealPlanEntriesToList, addRecipeToList } from '@app/lib/shopping/recipe-to-list';
@@ -24,50 +22,31 @@ import { prisma } from '@shared/prisma';
 // Server actions of the own shopping list (KUC-104). The list page and its
 // dialogs come with KUC-105; these actions are the whole write side.
 
-export type ShoppingActionResult<T> =
-    | { ok: true; data: T }
-    | {
-          ok: false;
-          code: 'SIGN_IN' | 'RATE_LIMIT' | 'NOT_FOUND' | 'VALIDATION' | 'FAILED';
-          error: string;
-      };
+export type ShoppingActionResult<T> = ActionResult<
+    T,
+    'SIGN_IN' | 'RATE_LIMIT' | 'NOT_FOUND' | 'VALIDATION' | 'FAILED'
+>;
 
-async function run<T>(
+const revalidateList = () => revalidatePath('/shopping-list');
+
+const runAction = createActionRunner<'VALIDATION'>({
+    scope: 'shopping-list',
+    rateLimit: 'shopping',
+    logLabel: '[ShoppingList] action failed',
+    invalidCode: 'VALIDATION',
+    failedMessage: 'Die Aktion konnte nicht abgeschlossen werden. Bitte versuche es erneut.',
+    after: (userId) => {
+        revalidateList();
+        // Changes reach Bring! within seconds (debounced, no-op without sync)
+        void requestBringSync(prisma, userId);
+    },
+});
+
+function run<T>(
     work: (userId: string) => Promise<T>,
     { writes = true }: { writes?: boolean } = {},
 ): Promise<ShoppingActionResult<T>> {
-    try {
-        const session = await getServerAuthSession('shopping-list');
-        if (!session?.user?.id || session.user.role === 'banned' || session.user.banned)
-            return { ok: false, code: 'SIGN_IN', error: 'Bitte melde dich an.' };
-        const limit = await checkRateLimit('shopping', session.user.id);
-        if (!limit.allowed)
-            return {
-                ok: false,
-                code: 'RATE_LIMIT',
-                error: 'Zu viele Anfragen. Bitte warte einen Moment.',
-            };
-        const data = await work(session.user.id);
-        revalidatePath('/shopping-list');
-        // Changes reach Bring! within seconds (debounced, no-op without sync)
-        if (writes) void requestBringSync(prisma, session.user.id);
-        return { ok: true, data };
-    } catch (error) {
-        if (error instanceof DataAccessError)
-            return {
-                ok: false,
-                code: error.code === 'NOT_FOUND' ? 'NOT_FOUND' : 'FAILED',
-                error: error.message,
-            };
-        if (error instanceof z.ZodError)
-            return { ok: false, code: 'VALIDATION', error: 'Bitte prüfe deine Eingaben.' };
-        console.error('[ShoppingList] action failed', error);
-        return {
-            ok: false,
-            code: 'FAILED',
-            error: 'Die Aktion konnte nicht abgeschlossen werden. Bitte versuche es erneut.',
-        };
-    }
+    return runAction(work, writes ? undefined : { after: revalidateList });
 }
 
 const idSchema = z.string().trim().min(1).max(64);

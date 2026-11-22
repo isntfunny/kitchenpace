@@ -56,7 +56,7 @@ export function BulkProgressTable({ items, abortRef }: BulkProgressTableProps) {
                     {currentItem && (
                         <p className={processingSubtitleClass}>
                             Lade Seite...{' '}
-                            <span className={css({ color: 'text.dimmed', fontSize: 'xs' })}>
+                            <span className={css({ color: 'text.subtle', fontSize: 'xs' })}>
                                 {new URL(currentItem.url).hostname}
                             </span>
                         </p>
@@ -81,7 +81,7 @@ export function BulkProgressTable({ items, abortRef }: BulkProgressTableProps) {
                     >
                         <div className={urlItemIconClass}>
                             {item.status === 'pending' && (
-                                <Circle size={16} className={css({ color: 'text.dimmed' })} />
+                                <Circle size={16} className={css({ color: 'text.subtle' })} />
                             )}
                             {item.status === 'scraping' && (
                                 <motion.div
@@ -94,7 +94,7 @@ export function BulkProgressTable({ items, abortRef }: BulkProgressTableProps) {
                                 >
                                     <LoaderCircle
                                         size={16}
-                                        className={css({ color: 'palette.blue' })}
+                                        className={css({ color: 'blue.500' })}
                                     />
                                 </motion.div>
                             )}

@@ -28,7 +28,7 @@ const textLink = css({
     color: 'primary',
     textDecoration: 'underline',
     textUnderlineOffset: '3px',
-    _hover: { color: 'primary-dark' },
+    _hover: { color: 'brand.primary-dark' },
 });
 export default function ApiDocsPage() {
     return (
@@ -63,7 +63,7 @@ export default function ApiDocsPage() {
                                 py: '0.5',
                                 borderRadius: 'full',
                                 bg: 'accent.soft',
-                                color: 'text-muted',
+                                color: 'text.muted',
                             })}
                         >
                             API v1
@@ -103,7 +103,7 @@ export default function ApiDocsPage() {
                                 color: 'white',
                                 borderRadius: 'lg',
                                 fontWeight: '600',
-                                _hover: { bg: 'primary-dark' },
+                                _hover: { bg: 'brand.primary-dark' },
                             })}
                         >
                             <KeyRound size={16} aria-hidden="true" /> API-Key erstellen{' '}
@@ -134,7 +134,7 @@ export default function ApiDocsPage() {
                                 gap: '2',
                                 px: '2',
                                 py: '2.5',
-                                color: 'text-muted',
+                                color: 'text.muted',
                                 _hover: { color: 'primary' },
                             })}
                         >
@@ -172,7 +172,7 @@ export default function ApiDocsPage() {
                                 fontFamily: 'body',
                                 fontSize: 'sm',
                                 lineHeight: 'relaxed',
-                                color: 'text-muted',
+                                color: 'text.muted',
                             })}
                         >
                             {[

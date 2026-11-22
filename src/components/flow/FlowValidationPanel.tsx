@@ -132,7 +132,7 @@ const validationPanelEyebrowClass = css({
 const validationPanelSummaryClass = css({
     fontSize: 'sm',
     fontWeight: '600',
-    color: 'text.primary',
+    color: 'text',
 });
 
 const validationPanelCountsClass = css({
@@ -222,13 +222,13 @@ const validationItemTitleClass = css({
     fontSize: 'xs',
     fontWeight: '500',
     backgroundColor: 'rgba(224,123,83,0.18)',
-    color: 'text.primary',
+    color: 'text',
     borderRadius: 'full',
     px: '2.5',
 });
 
 const validationItemTextClass = css({
     fontSize: 'xs',
-    color: 'text.secondary',
+    color: 'text.muted',
     lineHeight: '1.45',
 });

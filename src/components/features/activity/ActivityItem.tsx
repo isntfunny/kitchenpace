@@ -40,7 +40,7 @@ const ACTIVITY_ICON_MAP: Record<ActivityIconName, LucideIcon> = {
 };
 
 const linkCss = css({ color: 'primary', fontWeight: '600', textDecoration: 'none' });
-const mutedCss = css({ fontWeight: '400', color: 'text-muted' });
+const mutedCss = css({ fontWeight: '400', color: 'text.muted' });
 
 function parseDetail(detail?: string): Record<string, unknown> | null {
     if (!detail) return null;

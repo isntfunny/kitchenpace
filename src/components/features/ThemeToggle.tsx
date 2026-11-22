@@ -17,7 +17,7 @@ const toggleStyles = css({
     minWidth: '44px',
     minHeight: '44px',
     border: '1px solid',
-    borderColor: 'border.milk',
+    borderColor: 'border',
     background: 'surface.elevated',
     color: 'foreground',
     boxShadow: 'shadow.medium',

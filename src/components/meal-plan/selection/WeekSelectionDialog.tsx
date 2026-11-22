@@ -120,7 +120,7 @@ function DialogHead({ startDate, onClose }: { startDate: string; onClose: () => 
                 <Dialog.Title className={css({ fontSize: 'xl', fontWeight: '700' })}>
                     Woche planen
                 </Dialog.Title>
-                <p className={css({ fontSize: 'sm', color: 'text-muted' })}>
+                <p className={css({ fontSize: 'sm', color: 'text.muted' })}>
                     {weekRangeLabel(startDate)}
                 </p>
             </div>
@@ -180,7 +180,7 @@ function WeekSelectionLoader({ startDate, ...props }: BodyProps & { startDate: s
                         aria-label="Lädt"
                         className={css({
                             animation: 'spin 1s linear infinite',
-                            color: 'text-muted',
+                            color: 'text.muted',
                         })}
                     />
                 )}
@@ -292,7 +292,7 @@ function WeekSelectionBody({ data, onClose, onApplied }: BodyProps & { data: Wee
                 })}
             >
                 {tabs.length === 0 ? (
-                    <p className={css({ py: '10', textAlign: 'center', color: 'text-muted' })}>
+                    <p className={css({ py: '10', textAlign: 'center', color: 'text.muted' })}>
                         {Object.keys(selection.free).length === 0
                             ? 'In dieser Woche ist kein Platz mehr frei.'
                             : 'Wähle oben mindestens eine Mahlzeit und einen Tag.'}

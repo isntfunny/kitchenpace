@@ -43,7 +43,7 @@ export default function AuthErrorClient({ error }: AuthErrorClientProps) {
             </h1>
             <p
                 className={css({
-                    color: 'text-muted',
+                    color: 'text.muted',
                     marginBottom: '6',
                 })}
             >
@@ -86,7 +86,7 @@ export default function AuthErrorClient({ error }: AuthErrorClientProps) {
                 <Link
                     href="/auth/register"
                     className={css({
-                        color: 'text-muted',
+                        color: 'text.muted',
                         fontSize: 'sm',
                         textDecoration: 'none',
                         _hover: { color: 'palette.orange' },

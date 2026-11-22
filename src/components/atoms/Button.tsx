@@ -16,7 +16,7 @@ export function Button({ variant = 'primary', size = 'md', children, ...props }:
             bg: 'primary',
             color: 'white',
             _hover: {
-                bg: 'primary-dark',
+                bg: 'brand.primary-dark',
             },
         }),
         secondary: css.raw({
@@ -37,7 +37,7 @@ export function Button({ variant = 'primary', size = 'md', children, ...props }:
             bg: 'transparent',
             color: 'text',
             _hover: {
-                bg: 'light',
+                bg: 'background',
             },
         }),
     };

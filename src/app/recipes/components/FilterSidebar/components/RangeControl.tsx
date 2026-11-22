@@ -214,7 +214,7 @@ export function RangeControl({
             <div className={css({ display: 'flex', justifyContent: 'space-between', gap: '4' })}>
                 <p className={css({ fontWeight: '600', fontSize: 'sm' })}>{label}</p>
                 {description && (
-                    <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{description}</p>
+                    <p className={css({ fontSize: 'xs', color: 'text.muted' })}>{description}</p>
                 )}
             </div>
             {facet && facet.buckets && facet.buckets.length > 0 && (

@@ -74,7 +74,7 @@ export default async function AccountPage() {
                                     w: '12',
                                     h: '12',
                                     borderRadius: 'xl',
-                                    bg: 'secondary',
+                                    bg: 'brand.secondary',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',

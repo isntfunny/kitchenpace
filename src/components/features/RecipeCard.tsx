@@ -90,7 +90,7 @@ function StarRating({ rating }: { rating: number }) {
                     />
                 ))}
             </div>
-            <span className={css({ fontSize: 'xs', color: 'text-muted' })}>{rating}</span>
+            <span className={css({ fontSize: 'xs', color: 'text.muted' })}>{rating}</span>
         </div>
     );
 }
@@ -211,7 +211,7 @@ export function RecipeCard({
         selection.reason || selection.footer ? (
             <>
                 {selection.reason && (
-                    <p className={css({ fontSize: 'xs', color: 'text-muted', px: '1' })}>
+                    <p className={css({ fontSize: 'xs', color: 'text.muted', px: '1' })}>
                         {selection.reason}
                     </p>
                 )}
@@ -301,7 +301,7 @@ export function RecipeCard({
                         <p
                             className={css({
                                 fontSize: 'xs',
-                                color: 'text-muted',
+                                color: 'text.muted',
                                 lineClamp: 1,
                                 lineHeight: '1.4',
                             })}
@@ -333,7 +333,7 @@ export function RecipeCard({
                             align: 'center',
                             gap: '1',
                             fontSize: 'xs',
-                            color: 'text-muted',
+                            color: 'text.muted',
                         })}
                     >
                         <Star size={12} className={css({ color: 'palette.gold' })} />
@@ -345,7 +345,7 @@ export function RecipeCard({
                                 align: 'center',
                                 gap: '1',
                                 fontSize: 'xs',
-                                color: 'text-muted',
+                                color: 'text.muted',
                             })}
                         >
                             <Clock size={12} />
@@ -358,7 +358,7 @@ export function RecipeCard({
                                 align: 'center',
                                 gap: '1',
                                 fontSize: 'xs',
-                                color: 'text-muted',
+                                color: 'text.muted',
                             })}
                         >
                             <ListOrdered size={12} />
@@ -371,7 +371,7 @@ export function RecipeCard({
                                 align: 'center',
                                 gap: '1',
                                 fontSize: 'xs',
-                                color: 'text-muted',
+                                color: 'text.muted',
                             })}
                         >
                             <ChefHat size={12} />
@@ -474,7 +474,7 @@ export function RecipeCard({
                         className={css({
                             fontFamily: 'body',
                             fontSize: 'sm',
-                            color: 'text-muted',
+                            color: 'text.muted',
                             mt: '1',
                             lineClamp: 2,
                             lineHeight: '1.5',
@@ -493,7 +493,7 @@ export function RecipeCard({
                         pt: isCompact ? undefined : '3',
                         fontFamily: 'body',
                         fontSize: isCompact ? '0.75rem' : 'sm',
-                        color: 'text-muted',
+                        color: 'text.muted',
                     })}
                 >
                     {starRating ? (
@@ -502,7 +502,7 @@ export function RecipeCard({
                         ) : (
                             <span className={flex({ align: 'center', gap: '1' })}>
                                 <Star size={14} className={css({ color: 'palette.gold' })} />
-                                <span className={css({ fontSize: 'xs', color: 'text-muted' })}>
+                                <span className={css({ fontSize: 'xs', color: 'text.muted' })}>
                                     —
                                 </span>
                             </span>

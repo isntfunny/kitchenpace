@@ -176,7 +176,7 @@ function RemoveButton({
                         alignItems: 'center',
                         gap: '1',
                         fontSize: 'xs',
-                        color: 'text-muted',
+                        color: 'text.muted',
                         cursor: 'pointer',
                         bg: 'transparent',
                         border: 'none',

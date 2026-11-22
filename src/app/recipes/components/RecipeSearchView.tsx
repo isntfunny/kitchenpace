@@ -206,7 +206,7 @@ export function RecipeSearchView({
                 {leading.length > 0 && <div className={rowClass}>{leading.map(card)}</div>}
 
                 {error ? (
-                    <p className={css({ fontSize: 'sm', color: 'text-muted' })}>{error}</p>
+                    <p className={css({ fontSize: 'sm', color: 'text.muted' })}>{error}</p>
                 ) : !loading && data.length === 0 ? (
                     <SearchEmptyState hasFilters={activeFilterCount > 0} onReset={resetFilters} />
                 ) : showSkeletons ? (
@@ -238,7 +238,7 @@ export function RecipeSearchView({
                                     size={24}
                                     className={css({
                                         animation: 'spin 1s linear infinite',
-                                        color: 'text-muted',
+                                        color: 'text.muted',
                                     })}
                                 />
                             </div>

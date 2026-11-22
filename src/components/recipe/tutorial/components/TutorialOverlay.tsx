@@ -347,7 +347,7 @@ function TutorialCardContent({
                     fontSize: { base: 'lg', md: 'xl' },
                     fontWeight: '700',
                     marginBottom: '1.5',
-                    color: 'text.primary',
+                    color: 'text',
                     lineHeight: '1.2',
                 })}
             >
@@ -459,7 +459,7 @@ function TutorialCardContent({
                         cursor: 'pointer',
                         transition: 'all 150ms ease',
                         fontSize: 'sm',
-                        _hover: { color: 'text.primary', backgroundColor: 'rgba(0,0,0,0.05)' },
+                        _hover: { color: 'text', backgroundColor: 'rgba(0,0,0,0.05)' },
                     })}
                     onClick={onSkip}
                 >

@@ -90,7 +90,7 @@ export function FitsNowClient({ initialRecipes, initialContext }: FitsNowClientP
             {isPending ? (
                 <div className={css({ py: '8', textAlign: 'center' })}>Lädt...</div>
             ) : recipes.length === 0 ? (
-                <div className={css({ py: '8', textAlign: 'center', color: 'text-muted' })}>
+                <div className={css({ py: '8', textAlign: 'center', color: 'text.muted' })}>
                     Keine Rezepte für diese Zeit gefunden.
                 </div>
             ) : (

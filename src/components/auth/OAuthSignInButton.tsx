@@ -24,7 +24,7 @@ const OUTLINED_STYLE: OAuthButtonStyle = {
     border: '1px solid',
     borderColor: 'border',
     hoverEffect: {
-        borderColor: 'border.hover',
+        borderColor: 'primary',
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         transform: 'translateY(-1px)',
     },
@@ -213,7 +213,7 @@ export function PasskeySignInButton({ callbackUrl = '/' }: { callbackUrl?: strin
                     _hover: loading
                         ? {}
                         : {
-                              borderColor: 'border.hover',
+                              borderColor: 'primary',
                               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                               transform: 'translateY(-1px)',
                           },

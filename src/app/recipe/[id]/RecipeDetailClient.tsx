@@ -613,7 +613,7 @@ export function RecipeDetailClient({
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '2',
-                                    color: 'fg.muted',
+                                    color: 'foreground.muted',
                                     textStyle: 'sm',
                                 })}
                             >
@@ -624,7 +624,7 @@ export function RecipeDetailClient({
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className={css({
-                                        color: 'fg.default',
+                                        color: 'foreground',
                                         textDecoration: 'underline',
                                     })}
                                 >

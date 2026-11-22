@@ -92,7 +92,7 @@ export function BulkDoneSummary({
                             </span>
                             <ArrowRight
                                 size={14}
-                                className={css({ color: 'text.dimmed', ml: 'auto' })}
+                                className={css({ color: 'text.subtle', ml: 'auto' })}
                             />
                         </a>
                     ))}
@@ -118,7 +118,7 @@ export function BulkDoneSummary({
                                 <span
                                     className={css({
                                         fontSize: 'xs',
-                                        color: 'text.dimmed',
+                                        color: 'text.subtle',
                                         display: 'block',
                                     })}
                                 >

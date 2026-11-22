@@ -842,7 +842,7 @@ export default function ChangelogPage() {
                     </h1>
                 </FadeIn>
                 <FadeIn delay={0.1}>
-                    <p className={css({ color: 'text-muted', fontSize: 'sm', mb: '8' })}>
+                    <p className={css({ color: 'text.muted', fontSize: 'sm', mb: '8' })}>
                         Was gibt es Neues bei KochTakt?
                     </p>
                 </FadeIn>
@@ -891,7 +891,7 @@ export default function ChangelogPage() {
                                     <span
                                         className={css({
                                             fontSize: 'xs',
-                                            color: 'text-muted',
+                                            color: 'text.muted',
                                             fontWeight: '500',
                                         })}
                                     >
@@ -949,7 +949,7 @@ export default function ChangelogPage() {
                                                 delay={0.4 + entryIndex * 0.15 + itemIndex * 0.04}
                                                 className={css({
                                                     fontSize: 'sm',
-                                                    color: 'text-muted',
+                                                    color: 'text.muted',
                                                     lineHeight: '1.5',
                                                     display: 'flex',
                                                     alignItems: 'baseline',

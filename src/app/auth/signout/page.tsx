@@ -35,7 +35,7 @@ const SignOutPage = () => {
                     <h1 className={css({ fontSize: '2xl', fontWeight: '700', mb: '3' })}>
                         Abmelden
                     </h1>
-                    <p className={css({ color: 'text-muted', mb: '6' })}>
+                    <p className={css({ color: 'text.muted', mb: '6' })}>
                         Du wirst abgemeldet und zur Startseite geleitet.
                     </p>
                     <button

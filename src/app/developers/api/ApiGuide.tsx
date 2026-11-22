@@ -7,7 +7,7 @@ const detailText = css({
     fontFamily: 'body',
     fontSize: 'sm',
     lineHeight: '1.8',
-    color: 'text-muted',
+    color: 'text.muted',
     '& p + p': { mt: '3' },
     '& code': {
         color: 'text',
@@ -70,7 +70,7 @@ export function ApiGuide({
                     <span
                         className={css({
                             display: 'block',
-                            color: 'text-muted',
+                            color: 'text.muted',
                             fontSize: 'xs',
                             mt: '1',
                         })}

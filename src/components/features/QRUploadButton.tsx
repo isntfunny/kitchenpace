@@ -239,7 +239,7 @@ export function QRUploadButton({
                             <>
                                 <h3
                                     className={css({
-                                        fontSize: 'base',
+                                        fontSize: 'md',
                                         fontWeight: '700',
                                         color: 'text',
                                         m: 0,

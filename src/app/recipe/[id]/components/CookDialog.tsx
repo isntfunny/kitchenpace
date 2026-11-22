@@ -129,7 +129,7 @@ export function CookDialog({
                         >
                             <h3
                                 className={css({
-                                    fontSize: 'base',
+                                    fontSize: 'md',
                                     fontWeight: '700',
                                     fontFamily: 'heading',
                                     display: 'flex',

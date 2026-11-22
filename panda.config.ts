@@ -143,6 +143,44 @@ export default defineConfig({
             tokens: themeTokens,
 
             semanticTokens: {
+                // Box shadows (KUC-135): were colours before, so `boxShadow: 'shadow.small'` was invalid CSS
+                shadows: {
+                    'shadow.small': {
+                        value: {
+                            base: SHADOWS.small,
+                            _dark: SHADOWS.smallDark,
+                            _retro: 'none',
+                        },
+                    },
+                    'shadow.medium': {
+                        value: {
+                            base: SHADOWS.medium,
+                            _dark: SHADOWS.mediumDark,
+                            _retro: 'none',
+                        },
+                    },
+                    'shadow.large': {
+                        value: {
+                            base: SHADOWS.large,
+                            _dark: SHADOWS.largeDark,
+                            _retro: 'none',
+                        },
+                    },
+                    'shadow.dialog': {
+                        value: {
+                            base: '0 24px 64px rgba(0,0,0,0.22)',
+                            _dark: '0 24px 64px rgba(0,0,0,0.4)',
+                            _retro: 'none',
+                        },
+                    },
+                    'shadow.dialogLg': {
+                        value: {
+                            base: '0 24px 80px rgba(0,0,0,0.18)',
+                            _dark: '0 24px 80px rgba(0,0,0,0.4)',
+                            _retro: 'none',
+                        },
+                    },
+                },
                 colors: {
                     background: {
                         value: {
@@ -341,41 +379,6 @@ export default defineConfig({
                         value: {
                             base: STATUS.danger,
                             _dark: STATUS.errorDark,
-                        },
-                    },
-                    'shadow.small': {
-                        value: {
-                            base: SHADOWS.small,
-                            _dark: SHADOWS.smallDark,
-                            _retro: 'none',
-                        },
-                    },
-                    'shadow.medium': {
-                        value: {
-                            base: SHADOWS.medium,
-                            _dark: SHADOWS.mediumDark,
-                            _retro: 'none',
-                        },
-                    },
-                    'shadow.large': {
-                        value: {
-                            base: SHADOWS.large,
-                            _dark: SHADOWS.largeDark,
-                            _retro: 'none',
-                        },
-                    },
-                    'shadow.dialog': {
-                        value: {
-                            base: '0 24px 64px rgba(0,0,0,0.22)',
-                            _dark: '0 24px 64px rgba(0,0,0,0.4)',
-                            _retro: 'none',
-                        },
-                    },
-                    'shadow.dialogLg': {
-                        value: {
-                            base: '0 24px 80px rgba(0,0,0,0.18)',
-                            _dark: '0 24px 80px rgba(0,0,0,0.4)',
-                            _retro: 'none',
                         },
                     },
                     'text.subtle': {

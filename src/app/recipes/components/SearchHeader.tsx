@@ -110,7 +110,7 @@ export function SearchHeader({
                                 {title}
                             </Heading>
                         </div>
-                        <p className={css({ fontSize: 'xs', color: 'text-muted' })}>
+                        <p className={css({ fontSize: 'xs', color: 'text.muted' })}>
                             {activeFilterCount > 0 ? `${activeFilterCount} Filter aktiv · ` : ''}
                             {resultStatusText}
                         </p>
@@ -188,7 +188,7 @@ export function SearchHeader({
                                 alignItems: 'center',
                                 p: '1',
                                 borderRadius: 'full',
-                                color: 'text-muted',
+                                color: 'text.muted',
                                 _hover: { color: 'text' },
                             })}
                         >

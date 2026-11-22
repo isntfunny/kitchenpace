@@ -37,7 +37,7 @@ export const textareaClass = css({
         },
     },
     _placeholder: {
-        color: 'text.dimmed',
+        color: 'text.subtle',
     },
 });
 
@@ -175,7 +175,7 @@ export const urlItemContentClass = css({
 
 export const urlItemUrlClass = css({
     fontSize: 'xs',
-    color: 'text.dimmed',
+    color: 'text.subtle',
     display: 'block',
     overflow: 'hidden',
     textOverflow: 'ellipsis',

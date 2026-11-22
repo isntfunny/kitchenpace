@@ -180,7 +180,7 @@ export function IngredientList({
                 <span
                     className={css({
                         fontSize: 'sm',
-                        color: 'text-muted',
+                        color: 'text.muted',
                         fontFamily: 'body',
                     })}
                 >
@@ -194,7 +194,7 @@ export function IngredientList({
                             w: '8',
                             h: '8',
                             borderRadius: 'full',
-                            bg: 'light',
+                            bg: 'background',
                             border: '1px solid',
                             borderColor: 'border',
                             cursor: 'pointer',
@@ -223,7 +223,7 @@ export function IngredientList({
                             w: '8',
                             h: '8',
                             borderRadius: 'full',
-                            bg: 'light',
+                            bg: 'background',
                             border: '1px solid',
                             borderColor: 'border',
                             cursor: 'pointer',
@@ -238,7 +238,6 @@ export function IngredientList({
             </div>
 
             {recipeId && <AddToShoppingListButton recipeId={recipeId} servings={servings} />}
-
 
             <ul>
                 {ingredients.map((ingredient, index) => (
@@ -283,7 +282,7 @@ export function IngredientList({
                                         className={css({
                                             ml: '1.5',
                                             fontSize: 'xs',
-                                            color: 'text-muted',
+                                            color: 'text.muted',
                                             fontStyle: 'italic',
                                         })}
                                     >
@@ -293,7 +292,7 @@ export function IngredientList({
                             </div>
                             <span
                                 className={css({
-                                    color: 'text-muted',
+                                    color: 'text.muted',
                                     whiteSpace: 'nowrap',
                                 })}
                             >
@@ -378,7 +377,7 @@ export function IngredientList({
                     <p
                         className={css({
                             fontSize: 'xs',
-                            color: 'text-muted',
+                            color: 'text.muted',
                             mt: '2',
                             display: 'flex',
                             alignItems: 'center',
@@ -398,7 +397,7 @@ export function IngredientList({
                                 className={css({
                                     mt: '2',
                                     fontSize: 'xs',
-                                    color: 'text-muted',
+                                    color: 'text.muted',
                                     textDecoration: 'underline',
                                     textUnderlineOffset: '2px',
                                     cursor: 'pointer',
@@ -456,7 +455,7 @@ export function IngredientList({
                                             type="button"
                                             className={css({
                                                 cursor: 'pointer',
-                                                color: 'text-muted',
+                                                color: 'text.muted',
                                                 _hover: { color: 'text' },
                                             })}
                                         >
@@ -467,7 +466,7 @@ export function IngredientList({
                                 <p
                                     className={css({
                                         fontSize: 'xs',
-                                        color: 'text-muted',
+                                        color: 'text.muted',
                                         mb: '3',
                                     })}
                                 >
@@ -577,7 +576,7 @@ export function IngredientList({
                                             <tr
                                                 className={css({
                                                     fontWeight: '600',
-                                                    bg: 'light',
+                                                    bg: 'background',
                                                 })}
                                             >
                                                 <TableCell>Gesamt</TableCell>
@@ -664,7 +663,7 @@ function NutritionItem({
         <div
             className={css({
                 p: '2',
-                bg: 'light',
+                bg: 'background',
                 borderRadius: 'lg',
                 textAlign: 'center',
             })}
@@ -678,7 +677,7 @@ function NutritionItem({
             >
                 {value} {unit}
             </div>
-            <div className={css({ fontSize: 'xs', color: 'text-muted' })}>{label}</div>
+            <div className={css({ fontSize: 'xs', color: 'text.muted' })}>{label}</div>
         </div>
     );
 }
@@ -690,7 +689,7 @@ function TableHeader({ children }: { children: ReactNode }) {
                 textAlign: 'left',
                 py: '2',
                 px: '2',
-                color: 'text-muted',
+                color: 'text.muted',
                 fontWeight: '600',
                 whiteSpace: 'nowrap',
             })}

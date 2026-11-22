@@ -251,7 +251,7 @@ export function SearchableFilterChips({
                 <p className={css({ fontSize: 'xs', color: 'foreground.muted' })}>Suche...</p>
             )}
             {displayItems.length === 0 && !suggestPending ? (
-                <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{emptyMessage}</p>
+                <p className={css({ fontSize: 'xs', color: 'text.muted' })}>{emptyMessage}</p>
             ) : (
                 <div className={scrollContainerClass}>
                     <ToggleGroup.Root

@@ -116,7 +116,7 @@ export function ShareButton({ title, slug, imageKey }: ShareButtonProps) {
                     borderRadius: 'md',
                     cursor: 'pointer',
                     transition: 'all 150ms ease-in-out',
-                    _hover: { bg: 'light' },
+                    _hover: { bg: 'background' },
                 })}
             >
                 <Share2 size={16} />

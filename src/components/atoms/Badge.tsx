@@ -17,13 +17,13 @@ export function Badge({ children, variant = 'default' }: BadgeProps) {
         }),
         accent: css.raw({
             bg: 'accent',
-            color: 'secondary',
+            color: 'brand.secondary',
         }),
         outline: css.raw({
             bg: 'transparent',
             color: 'text',
             border: '1px solid',
-            borderColor: 'text-muted',
+            borderColor: 'text.muted',
         }),
     };
 

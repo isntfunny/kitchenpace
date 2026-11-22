@@ -127,7 +127,7 @@ export function SearchableSelect({
                         background: 'surface',
                         fontSize: 'sm',
                         outline: 'none',
-                        _focus: { borderColor: 'border.accent' },
+                        _focus: { borderColor: 'primary' },
                     })}
                 />
             </div>

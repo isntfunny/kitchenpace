@@ -150,7 +150,7 @@ export default function OpenSourcePage() {
                     >
                         Open-Source-Bibliotheken
                     </h1>
-                    <p className={css({ color: 'text-muted', fontSize: 'sm', lineHeight: '1.7' })}>
+                    <p className={css({ color: 'text.muted', fontSize: 'sm', lineHeight: '1.7' })}>
                         KochTakt basiert auf {ALL_PACKAGES.length} Open-Source-Paketen. Wir danken
                         allen Entwickler·innen, die diese Projekte ermöglichen.
                     </p>
@@ -240,7 +240,7 @@ export default function OpenSourcePage() {
                             borderRadius: 'md',
                             border: '1px solid',
                             borderColor: 'border',
-                            background: 'surface-raised',
+                            background: 'surface.elevated',
                             color: 'text',
                             fontSize: 'sm',
                             outline: 'none',
@@ -250,7 +250,7 @@ export default function OpenSourcePage() {
                 </div>
 
                 {/* Result count */}
-                <p className={css({ fontSize: 'xs', color: 'text-muted', mb: '3' })}>
+                <p className={css({ fontSize: 'xs', color: 'text.muted', mb: '3' })}>
                     {filtered.length} Pakete angezeigt
                 </p>
 
@@ -278,7 +278,7 @@ export default function OpenSourcePage() {
                             <thead>
                                 <tr
                                     className={css({
-                                        background: 'surface-raised',
+                                        background: 'surface.elevated',
                                         borderBottomWidth: '1px',
                                         borderBottomStyle: 'solid',
                                         borderColor: 'border',
@@ -313,7 +313,7 @@ export default function OpenSourcePage() {
                                             borderBottomStyle: 'solid',
                                             borderColor: 'border',
                                             _last: { borderBottom: 'none' },
-                                            _hover: { background: 'surface-raised' },
+                                            _hover: { background: 'surface.elevated' },
                                             transition: 'background 0.1s',
                                         })}
                                         style={
@@ -354,7 +354,7 @@ export default function OpenSourcePage() {
                                             className={css({
                                                 px: '4',
                                                 py: '2.5',
-                                                color: 'text-muted',
+                                                color: 'text.muted',
                                                 whiteSpace: 'nowrap',
                                                 fontFamily: 'mono',
                                             })}
@@ -374,7 +374,7 @@ export default function OpenSourcePage() {
                                             className={css({
                                                 px: '4',
                                                 py: '2.5',
-                                                color: 'text-muted',
+                                                color: 'text.muted',
                                                 maxW: '200px',
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
@@ -393,7 +393,7 @@ export default function OpenSourcePage() {
                                                 px: '4',
                                                 py: '10',
                                                 textAlign: 'center',
-                                                color: 'text-muted',
+                                                color: 'text.muted',
                                                 fontSize: 'sm',
                                             })}
                                         >

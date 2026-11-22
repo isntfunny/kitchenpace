@@ -44,7 +44,7 @@ export function SearchEmptyState({ hasFilters, onReset }: SearchEmptyStateProps)
                 <p
                     className={css({
                         fontSize: 'sm',
-                        color: 'text-muted',
+                        color: 'text.muted',
                         maxWidth: '300px',
                         lineHeight: '1.6',
                     })}

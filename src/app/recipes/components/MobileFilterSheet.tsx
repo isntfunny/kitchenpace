@@ -190,7 +190,7 @@ export function MobileFilterSheet({
                     background: 'surface.elevated',
                     borderTopWidth: '1px',
                     borderTopStyle: 'solid',
-                    borderColor: 'light',
+                    borderColor: 'border.muted',
                 })}
             >
                 <button

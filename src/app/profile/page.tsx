@@ -108,7 +108,7 @@ function RecipeMiniCard({
                 >
                     {title}
                 </p>
-                {meta && <p className={css({ fontSize: 'xs', color: 'text-muted' })}>{meta}</p>}
+                {meta && <p className={css({ fontSize: 'xs', color: 'text.muted' })}>{meta}</p>}
             </div>
         </Link>
     );
@@ -224,7 +224,7 @@ function DraftSection({ drafts }: { drafts: DraftRecipe[] }) {
                         <p
                             className={css({
                                 fontSize: 'xs',
-                                color: 'text-muted',
+                                color: 'text.muted',
                                 mt: 'auto',
                                 pt: '1',
                             })}
@@ -459,7 +459,7 @@ export default async function ProfilePage() {
                                         flexWrap: 'wrap',
                                         gap: '3',
                                         fontSize: 'xs',
-                                        color: 'text-muted',
+                                        color: 'text.muted',
                                         justifyContent: { base: 'center', sm: 'flex-start' },
                                     })}
                                 >

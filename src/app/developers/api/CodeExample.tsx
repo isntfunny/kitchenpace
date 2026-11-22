@@ -45,7 +45,7 @@ export function CodeExample() {
                     borderColor: 'border',
                     fontFamily: 'body',
                     fontSize: 'sm',
-                    color: 'text-muted',
+                    color: 'text.muted',
                 })}
             >
                 <span className={css({ display: 'inline-flex', alignItems: 'center', gap: '2' })}>
@@ -78,7 +78,7 @@ export function CodeExample() {
                     fontFamily: 'body',
                     fontSize: 'xs',
                     lineHeight: 'relaxed',
-                    color: 'text-muted',
+                    color: 'text.muted',
                 })}
             >
                 Setze KUECHENTAKT_URL auf die Adresse dieser Website und KUECHENTAKT_API_KEY auf

@@ -42,7 +42,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                                 gap: '4',
                                 align: 'flex-start',
                                 p: '4',
-                                bg: 'light',
+                                bg: 'background',
                                 borderRadius: 'xl',
                             })}
                         >
@@ -62,7 +62,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                                 </p>
                                 <p
                                     className={css({
-                                        color: 'text-muted',
+                                        color: 'text.muted',
                                         fontFamily: 'body',
                                     })}
                                 >
@@ -72,7 +72,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                                     <p
                                         className={css({
                                             mt: '2',
-                                            color: 'text-muted',
+                                            color: 'text.muted',
                                         })}
                                     >
                                         {activity.content}
@@ -82,7 +82,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                             <div
                                 className={css({
                                     fontSize: 'sm',
-                                    color: 'text-muted',
+                                    color: 'text.muted',
                                     fontFamily: 'body',
                                 })}
                             >

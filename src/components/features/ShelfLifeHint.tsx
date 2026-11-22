@@ -63,7 +63,7 @@ export function ShelfLifeHint({ name, summary }: { name: string; summary: ShelfL
                             fontSize: 'sm',
                         })}
                     >
-                        <span className={css({ color: 'text-muted' })}>{entry.label}: </span>
+                        <span className={css({ color: 'text.muted' })}>{entry.label}: </span>
                         <span
                             className={css({ fontWeight: entry.isDefault ? 'semibold' : 'normal' })}
                         >
@@ -81,12 +81,12 @@ export function ShelfLifeHint({ name, summary }: { name: string; summary: ShelfL
                             fontSize: 'sm',
                         })}
                     >
-                        <span className={css({ color: 'text-muted' })}>Angebrochen: </span>
+                        <span className={css({ color: 'text.muted' })}>Angebrochen: </span>
                         {summary.opened}
                     </li>
                 )}
             </ul>
-            <p className={css({ mt: '2', fontSize: 'xs', color: 'text-muted' })}>
+            <p className={css({ mt: '2', fontSize: 'xs', color: 'text.muted' })}>
                 Richtwerte für frisch gekaufte Ware im Haushalt.
             </p>
         </section>

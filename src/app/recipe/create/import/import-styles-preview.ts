@@ -59,7 +59,7 @@ export const imageRemoveButtonClass = css({
     py: '1',
     fontSize: 'xs',
     fontWeight: '500',
-    color: 'text.dimmed',
+    color: 'text.subtle',
     backgroundColor: 'transparent',
     border: '1px solid',
     borderColor: 'border',

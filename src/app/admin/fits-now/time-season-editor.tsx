@@ -200,7 +200,7 @@ const headerStyle = css({
 });
 
 const headingStyle = css({
-    fontSize: 'base',
+    fontSize: 'md',
     fontWeight: '600',
     color: 'foreground',
 });

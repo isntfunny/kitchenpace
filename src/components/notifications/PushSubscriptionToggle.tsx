@@ -173,7 +173,7 @@ export function PushSubscriptionToggle() {
                     borderColor: 'border',
                     padding: '4',
                     background: 'surface.elevated',
-                    color: 'text-muted',
+                    color: 'text.muted',
                     fontSize: 'sm',
                 })}
             >
@@ -196,7 +196,7 @@ export function PushSubscriptionToggle() {
         >
             <div>
                 <p className={css({ fontWeight: '700', margin: 0 })}>Browser-Push aktivieren</p>
-                <p className={css({ color: 'text-muted', fontSize: 'sm' })}>
+                <p className={css({ color: 'text.muted', fontSize: 'sm' })}>
                     Erhalte Updates selbst dann, wenn du gerade keine App geöffnet hast.
                 </p>
             </div>

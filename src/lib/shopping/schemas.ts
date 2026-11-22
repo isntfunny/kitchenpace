@@ -1,14 +1,13 @@
 // Zod schemas for shopping list input (KUC-98 / KUC-104).
 import { z } from 'zod';
 
-import { idSchema } from '@app/lib/meal-plan/schemas';
+import { idSchema, quantitySchema } from '@app/lib/schemas';
 
 export const BASE_UNITS = ['G', 'ML', 'PIECE'] as const;
 export const ITEM_STATUSES = ['OPEN', 'PURCHASED', 'DORMANT'] as const;
 export const SOURCE_KINDS = ['RECIPE', 'MEAL_PLAN', 'MANUAL', 'SUGGESTION', 'BRING'] as const;
 
 export const itemKeySchema = z.string().regex(/^[it]:.{1,218}$/);
-const quantitySchema = z.number().finite().min(0).max(1_000_000);
 
 export const addItemSchema = z
     .object({

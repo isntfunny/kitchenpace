@@ -2,15 +2,14 @@
 // in prisma/migrations/20261121210000_meal_plan_shopping_pantry.
 import { z } from 'zod';
 
+import { idSchema, servingsSchema } from '@app/lib/schemas';
 import { isIsoDate, isValidTimeZone } from '@shared/dates';
 
 import { slotKeySchema, slotListSchema, timeSchema } from './slots';
 
-export const idSchema = z.string().trim().min(1).max(64);
 export const userIdSchema = idSchema;
 export const isoDateSchema = z.string().refine(isIsoDate, 'Datum im Format JJJJ-MM-TT');
 export const weekdaySchema = z.number().int().min(1).max(7);
-export const servingsSchema = z.number().int().min(1).max(100);
 export const notesSchema = z.string().trim().max(500);
 
 export const mealPlanSettingsSchema = z

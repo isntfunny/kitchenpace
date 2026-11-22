@@ -4,13 +4,12 @@
 import { z } from 'zod';
 
 import { type Db, notFound } from '@app/lib/meal-plan/db';
-import { idSchema, userIdSchema } from '@app/lib/meal-plan/schemas';
+import { userIdSchema } from '@app/lib/meal-plan/schemas';
+import { idSchema, servingsSchema } from '@app/lib/schemas';
 
 import { buildShoppingInputs, selectRecipeLines, type RecipeLineSelection } from './recipe-items';
 import { loadRecipeLines } from './recipe-lines';
 import { addShoppingItems } from './repository';
-
-const servingsSchema = z.number().int().min(1).max(100);
 
 export interface AddToListResult {
     /** Number of recipe lines added (several lines can end up in one entry) */

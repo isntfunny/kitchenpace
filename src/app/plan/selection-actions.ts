@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
 import { loadSearchStartData, type SearchStartData } from '@app/app/recipes/start-data';
-import { idSchema, isoDateSchema } from '@app/lib/meal-plan/schemas';
+import { isoDateSchema } from '@app/lib/meal-plan/schemas';
 import {
     loadWeekSelection,
     planWeekSelection,
@@ -18,6 +18,7 @@ import { loadGlobalMeanRating, loadRankingRecipes } from '@app/lib/recipes/ranki
 import { loadTasteEmbedding } from '@app/lib/recipes/taste-ranking.server';
 import { loadCards, searchRecipeIds } from '@app/lib/recipeSearch';
 import { buildRecipeBoolQuery } from '@app/lib/recipeSearchQuery';
+import { idSchema } from '@app/lib/schemas';
 import { pickSide } from '@shared/meal-planning/side-dish';
 import { prisma } from '@shared/prisma';
 import {

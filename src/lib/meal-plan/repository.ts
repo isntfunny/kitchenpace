@@ -2,13 +2,13 @@
 // validates its input with Zod; pass `prisma` from '@shared/prisma' as `db`.
 import { Prisma, type MealPlanRecipe } from '@prisma/client';
 
+import { idSchema } from '@app/lib/schemas';
 import { formatIsoDate } from '@shared/dates';
 
 import { DataAccessError, type Db, notFound } from './db';
 import {
     addEntrySchema,
     entrySnapshotSchema,
-    idSchema,
     isoDateSchema,
     listEntriesSchema,
     markCookedSchema,

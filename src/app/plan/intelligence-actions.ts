@@ -15,8 +15,9 @@ import {
     listMealPlanEntries,
     updateMealPlanEntry,
 } from '@app/lib/meal-plan/repository';
-import { idSchema, isoDateSchema } from '@app/lib/meal-plan/schemas';
+import { isoDateSchema } from '@app/lib/meal-plan/schemas';
 import { dismissLeftoverHint } from '@app/lib/pantry/repository';
+import { idSchema } from '@app/lib/schemas';
 import { ActionError, createActionRunner, type ActionResult } from '@app/lib/server-action.server';
 import { prisma } from '@shared/prisma';
 

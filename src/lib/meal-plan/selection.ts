@@ -3,6 +3,7 @@
 // Recipe features come in through `loadPicks`, so this file stays testable with the fake db.
 import { z } from 'zod';
 
+import { idSchema } from '@app/lib/schemas';
 import { todayIn } from '@shared/dates';
 import { distributeSelection, type SelectionSlot } from '@shared/meal-planning/distribute';
 import { effortOf } from '@shared/meal-planning/effort';
@@ -11,7 +12,7 @@ import { allowedFor, mealKindOf, type MealKind } from '@shared/meal-planning/mea
 import { DataAccessError, type Db, inTransaction } from './db';
 import { purchaseDateFor } from './intelligence/mappers';
 import { getMealPlanWeek } from './repository';
-import { idSchema, isoDateSchema } from './schemas';
+import { isoDateSchema } from './schemas';
 import { DEFAULT_HOUSEHOLD_SIZE, slotColumns, slotKeyOf, type SlotKey } from './slots';
 import { toDbDate } from './week';
 

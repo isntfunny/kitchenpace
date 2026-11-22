@@ -3,7 +3,8 @@
 // `bookPastEntries` for plan days that passed without a booking.
 // Pure rules: `booking.ts`. Pass `prisma` from '@shared/prisma' as `db`.
 import { type Db, inTransaction, notFound } from '@app/lib/meal-plan/db';
-import { idSchema, userIdSchema } from '@app/lib/meal-plan/schemas';
+import { userIdSchema } from '@app/lib/meal-plan/schemas';
+import { idSchema } from '@app/lib/schemas';
 import type { ConversionContext } from '@app/lib/shopping/quantity';
 import type { RecipeLine } from '@app/lib/shopping/recipe-items';
 import { toBerlinDate } from '@shared/dates';

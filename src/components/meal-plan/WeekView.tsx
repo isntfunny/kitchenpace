@@ -155,7 +155,7 @@ function WeekGrid({
 
     const dayHead = (day: string) => {
         const isToday = day === data.today;
-        const kcal = calories[day];
+        const kcal = calories[day] ?? { kcal: null, incomplete: false };
         return (
             <>
                 <div
@@ -191,9 +191,10 @@ function WeekGrid({
         );
     };
 
-    const [mobileDay, setMobileDay] = useState(() =>
-        data.days.includes(data.today) ? data.today : data.days[0],
-    );
+    const defaultDay = data.days.includes(data.today) ? data.today : data.days[0];
+    const [pickedDay, setMobileDay] = useState(defaultDay);
+    // After switching weeks the picked day belongs to the old week: fall back to today/Monday
+    const mobileDay = data.days.includes(pickedDay) ? pickedDay : defaultDay;
 
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
@@ -424,7 +425,7 @@ function WeekGrid({
                             <span className={css({ fontSize: 'sm', color: 'foreground.muted' })}>
                                 {shortDate(mobileDay)}
                             </span>
-                            {data.display.showCalories && calories[mobileDay].kcal !== null && (
+                            {data.display.showCalories && calories[mobileDay]?.kcal != null && (
                                 <span
                                     className={css({
                                         ml: 'auto',

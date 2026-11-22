@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
     theme: 'kitchenpace-theme',
     searchViewMode: 'kitchenpace-search-view',
     searchSort: 'kitchenpace-search-sort',
+    weekSelectionFilters: 'kitchenpace-week-selection-filters',
 
     // Flow editor panel layout
     flowLeftWidth: 'flow-left-width',

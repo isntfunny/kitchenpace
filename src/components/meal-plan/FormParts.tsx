@@ -12,11 +12,14 @@ export function ServingsStepper({
     onChange,
     householdSize,
     label = 'Portionen',
+    max = 100,
 }: {
     value: number;
     onChange: (value: number) => void;
     householdSize?: number | null;
     label?: string;
+    /** Highest allowed value (the week selection limits it by free slots) */
+    max?: number;
 }) {
     const id = useId();
     return (
@@ -52,8 +55,8 @@ export function ServingsStepper({
                 <button
                     type="button"
                     className={iconButton}
-                    onClick={() => onChange(Math.min(100, value + 1))}
-                    disabled={value >= 100}
+                    onClick={() => onChange(Math.min(max, value + 1))}
+                    disabled={value >= max}
                     aria-label="Eine Portion mehr"
                 >
                     <Plus size={16} />

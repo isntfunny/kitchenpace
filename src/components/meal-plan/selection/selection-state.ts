@@ -8,6 +8,7 @@ import type { RecipeCardData } from '@app/app/actions/recipes';
 // Relative on purpose: the unit tests run without the path aliases
 import { leftoverDays } from '../../../../shared/meal-planning/distribute';
 import { MEAL_KIND_LABELS, type MealKind } from '../../../../shared/meal-planning/meal-kind';
+import { weekdayShort } from '../../../lib/meal-plan/view';
 
 export type Pick = {
     recipe: RecipeCardData;
@@ -150,4 +151,71 @@ export function selectionReducer(s: SelectionState, a: SelectionAction): Selecti
                 p.side ? { ...p, side: { ...p.side, accepted: a.accepted } } : p,
             );
     }
+}
+
+const cell = (date: string, slotKey: string) => `${date}|${slotKey}`;
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** Every day × slot of the week without an entry, with the kind of its slot. */
+export function freeCells(
+    days: string[],
+    slots: { key: string; kind: MealKind }[],
+    occupied: string[],
+): Record<string, MealKind> {
+    const taken = new Set(occupied);
+    const free: Record<string, MealKind> = {};
+    for (const date of days)
+        for (const slot of slots)
+            if (!taken.has(cell(date, slot.key))) free[cell(date, slot.key)] = slot.kind;
+    return free;
+}
+
+/** Free cells of the chosen meal and day chips, by day, then in slot order. */
+export function cellsFor(
+    meals: string[],
+    days: string[],
+    free: Record<string, MealKind>,
+): string[] {
+    return days.flatMap((date) => meals.map((key) => cell(date, key)).filter((key) => key in free));
+}
+
+/** Collapsed slot head on phones: "4 Plätze · Abendessen, Frühstück So". */
+export function slotSummary(
+    chosen: string[],
+    free: Record<string, MealKind>,
+    labels: Record<string, string>,
+): string {
+    if (chosen.length === 0) return 'Keine Plätze gewählt';
+    const daysOf = (keys: string[], slotKey: string) =>
+        keys.filter((key) => key.split('|')[1] === slotKey).map((key) => key.split('|')[0]!);
+    const parts = Object.keys(labels).flatMap((slotKey) => {
+        const picked = daysOf(chosen, slotKey);
+        if (picked.length === 0) return [];
+        const all = daysOf(Object.keys(free), slotKey);
+        const label = labels[slotKey]!;
+        return [
+            picked.length === all.length
+                ? label
+                : `${label} ${[...picked].sort().map(weekdayShort).join('/')}`,
+        ];
+    });
+    return `${plural(chosen.length, 'Platz', 'Plätze')} · ${parts.join(', ')}`;
+}
+
+/** Toast after "Übernehmen". */
+export function appliedMessage(result: { planned: number; skipped: number }): string {
+    const planned = `${plural(result.planned, 'Gericht', 'Gerichte')} eingeplant`;
+    if (result.skipped === 0) return planned;
+    const taken =
+        result.skipped === 1
+            ? '1 Platz war inzwischen belegt'
+            : `${result.skipped} Plätze waren inzwischen belegt`;
+    return `${planned} · ${taken}`;
+}
+
+/** "+1 Reste-Tag" under a pick with more servings than the household eats. */
+export function leftoverLabel(servings: number, household: number): string | null {
+    const days = leftoverDays(servings, household);
+    if (days === 0) return null;
+    return `+${days} ${days === 1 ? 'Reste-Tag' : 'Reste-Tage'}`;
 }

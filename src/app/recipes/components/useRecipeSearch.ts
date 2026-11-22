@@ -1,6 +1,6 @@
 'use client';
 
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
@@ -79,9 +79,11 @@ export function useRecipeSearch(
         initialData?: InitialSearchData;
         /** Hidden base filter (week selection dialog, KUC-126); part of the query key */
         context?: RecipeSearchContext;
+        /** Keep showing the previous results while a changed query loads (dialog picks) */
+        keepPrevious?: boolean;
     },
 ): RecipeSearchState {
-    const { initialData, context } = options ?? {};
+    const { initialData, context, keepPrevious = false } = options ?? {};
     const fp = useMemo(() => filterFingerprint(filters, context), [filters, context]);
 
     // Capture SSR data once on mount. React Query only consumes initialData when
@@ -111,6 +113,7 @@ export function useRecipeSearch(
             return loaded < lastPage.meta.total ? allPages.length + 1 : undefined;
         },
         initialData: fp === initialFp ? ssrSnapshot : undefined,
+        placeholderData: keepPrevious ? keepPreviousData : undefined,
     });
 
     const data = useMemo(() => infiniteData?.pages.flatMap((p) => p.data) ?? [], [infiniteData]);

@@ -3,7 +3,12 @@ import test from 'node:test';
 
 import type { RecipeCardData } from '../../src/app/actions/recipes';
 import {
+    appliedMessage,
     canIncrement,
+    cellsFor,
+    freeCells,
+    leftoverLabel,
+    slotSummary,
     canPick,
     capacityOf,
     selectionReducer,
@@ -199,4 +204,74 @@ test('the reducer does not mutate', () => {
         { type: 'toggleSlot', key: MAIN_SLOTS[0]! },
     );
     assert.equal(JSON.stringify(s), frozen);
+});
+
+test('freeCells: every day × slot without an entry, with the kind of its slot', () => {
+    const free = freeCells(
+        ['2026-11-23', '2026-11-24'],
+        [
+            { key: 'BREAKFAST', kind: 'breakfast' },
+            { key: 'DINNER', kind: 'main' },
+        ],
+        ['2026-11-24|DINNER'],
+    );
+    assert.deepEqual(free, {
+        '2026-11-23|BREAKFAST': 'breakfast',
+        '2026-11-23|DINNER': 'main',
+        '2026-11-24|BREAKFAST': 'breakfast',
+    });
+});
+
+test('cellsFor: free cells of the chosen meals and days, occupied ones left out', () => {
+    const free = {
+        '2026-11-23|BREAKFAST': 'breakfast' as const,
+        '2026-11-23|DINNER': 'main' as const,
+        '2026-11-24|BREAKFAST': 'breakfast' as const,
+    };
+    assert.deepEqual(cellsFor(['DINNER'], ['2026-11-23', '2026-11-24'], free), [
+        '2026-11-23|DINNER',
+    ]);
+    assert.deepEqual(cellsFor(['BREAKFAST', 'DINNER'], ['2026-11-24'], free), [
+        '2026-11-24|BREAKFAST',
+    ]);
+    assert.deepEqual(cellsFor([], ['2026-11-23'], free), []);
+});
+
+test('slotSummary: count, then every meal in slot order with its days unless all its free days are chosen', () => {
+    const free = {
+        '2026-11-28|BREAKFAST': 'breakfast' as const,
+        '2026-11-29|BREAKFAST': 'breakfast' as const,
+        '2026-11-23|DINNER': 'main' as const,
+        '2026-11-24|DINNER': 'main' as const,
+        '2026-11-25|DINNER': 'main' as const,
+    };
+    const labels = { BREAKFAST: 'Frühstück', DINNER: 'Abendessen' };
+    assert.equal(
+        slotSummary(
+            ['2026-11-23|DINNER', '2026-11-24|DINNER', '2026-11-25|DINNER', '2026-11-29|BREAKFAST'],
+            free,
+            labels,
+        ),
+        '4 Plätze · Frühstück So, Abendessen',
+    );
+    assert.equal(slotSummary(['2026-11-23|DINNER'], free, labels), '1 Platz · Abendessen Mo');
+    assert.equal(slotSummary([], free, labels), 'Keine Plätze gewählt');
+});
+
+test('appliedMessage: planned dishes, plus taken slots when some were skipped', () => {
+    assert.equal(appliedMessage({ planned: 5, skipped: 0 }), '5 Gerichte eingeplant');
+    assert.equal(
+        appliedMessage({ planned: 1, skipped: 1 }),
+        '1 Gericht eingeplant · 1 Platz war inzwischen belegt',
+    );
+    assert.equal(
+        appliedMessage({ planned: 3, skipped: 2 }),
+        '3 Gerichte eingeplant · 2 Plätze waren inzwischen belegt',
+    );
+});
+
+test('leftoverLabel: shown from one leftover day on', () => {
+    assert.equal(leftoverLabel(2, 2), null);
+    assert.equal(leftoverLabel(4, 2), '+1 Reste-Tag');
+    assert.equal(leftoverLabel(6, 2), '+2 Reste-Tage');
 });

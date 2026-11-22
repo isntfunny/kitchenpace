@@ -2,6 +2,8 @@
  * Tunable numbers of the shared recipe ranking (KUC-126). Start values come from
  * `scripts/probe-week-selection.mjs` (`CONFIG`); `expiring` is new. They are meant to be
  * tuned on beta with the user, so nothing else in this module hard-codes them.
+ * 22.11.2026: MMR penalties raised with the user (variant C, more variety) after a
+ * read-only comparison on beta.
  */
 
 export type RankingConfig = {
@@ -52,10 +54,10 @@ export const RANKING_CONFIG: RankingConfig = {
     ratingReasonMin: 3,
     mmr: {
         cosStart: 0.5,
-        cosWeightPick: 0.5,
-        cosWeightList: 0.4,
-        artPick: 0.12,
-        artList: 0.07,
+        cosWeightPick: 0.7,
+        cosWeightList: 0.6,
+        artPick: 0.18,
+        artList: 0.12,
         artListCap: 3,
         jaccardStart: 0.3,
         jaccardWeight: 0.2,

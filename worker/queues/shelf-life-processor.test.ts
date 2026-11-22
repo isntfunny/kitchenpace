@@ -12,13 +12,13 @@ import {
     getShelfLifeResponseFormat,
     type ShelfLifeItem,
 } from '@shared/ingredient-shelf-life/schema';
+import type { OpenAIBatchApi } from '@shared/openai-batch';
 
 import {
     buildBatchRequests,
     missingAfterImport,
     parseBatchOutput,
     runShelfLifeBackfill,
-    type ShelfLifeBatchApi,
     type ShelfLifeBatchState,
     type ShelfLifeStateStore,
 } from './shelf-life-processor';
@@ -141,12 +141,16 @@ test(
         const uploads: string[] = [];
         let status = 'in_progress';
         let output = '';
-        const api: ShelfLifeBatchApi = {
+        const endpoints: string[] = [];
+        const api: OpenAIBatchApi = {
             uploadJsonl: async (content) => {
                 uploads.push(content);
                 return `file-${uploads.length}`;
             },
-            createBatch: async () => ({ id: `batch-${uploads.length}` }),
+            createBatch: async (_file, endpoint) => {
+                endpoints.push(endpoint);
+                return { id: `batch-${uploads.length}` };
+            },
             retrieveBatch: async () => ({ status, output_file_id: 'out' }),
             fileText: async () => output,
         };
@@ -197,6 +201,7 @@ test(
         );
         assert.ok(written.retryBatchId);
         const retryLines = uploads.at(-1)!.trim().split('\n');
+        assert.deepEqual(new Set(endpoints), new Set(['/v1/responses']));
         const retriedOurs = retryLines.filter((line) => line.includes(ids[7]));
         assert.equal(retriedOurs.length, 1);
         assert.equal(state!.round, 1);

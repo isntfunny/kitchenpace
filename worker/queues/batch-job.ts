@@ -6,7 +6,11 @@
 // Each job keeps its own request building and result import; only this
 // bookkeeping is shared.
 
-import { BATCH_RUNNING_STATUSES, type OpenAIBatchApi } from '@shared/openai-batch';
+import {
+    BATCH_RUNNING_STATUSES,
+    type BatchEndpoint,
+    type OpenAIBatchApi,
+} from '@shared/openai-batch';
 
 import { getRedis } from './connection';
 
@@ -31,6 +35,41 @@ export interface BatchStateStore<T> {
     clear(): Promise<void>;
     lock(): Promise<boolean>;
     unlock(): Promise<void>;
+}
+
+/** Job options of the backfills that write to the database after a dry run (KUC-94, KUC-125). */
+export const BATCH_BACKFILL_DEFAULTS = { write: false, limit: 0, pollMinutes: 10, reset: false };
+
+/**
+ * Uploads the batch input, creates the batch and saves its state: the fields of
+ * `SavedBatch` plus the job's own `extra` (model, requests …). Returns the saved state.
+ */
+export async function submitBatch<T extends SavedBatch>(
+    deps: {
+        api: Pick<OpenAIBatchApi, 'uploadJsonl' | 'createBatch'>;
+        store: Pick<BatchStateStore<T>, 'set'>;
+        now?: () => Date;
+    },
+    input: {
+        jsonl: string;
+        filename: string;
+        endpoint: BatchEndpoint;
+        metadata: Record<string, string>;
+        round: number;
+        extra: Omit<T, keyof SavedBatch>;
+    },
+): Promise<T> {
+    const inputFileId = await deps.api.uploadJsonl(input.jsonl, input.filename);
+    const batch = await deps.api.createBatch(inputFileId, input.endpoint, input.metadata);
+    const state = {
+        batchId: batch.id,
+        inputFileId,
+        ...input.extra,
+        createdAt: (deps.now?.() ?? new Date()).toISOString(),
+        round: input.round,
+    } as T;
+    await deps.store.set(state);
+    return state;
 }
 
 const LOCK_SECONDS = 600;

@@ -30,13 +30,16 @@ import {
     createOpenAIBatchApi,
     parseBatchOutputJsonl,
     responsesOutputText,
+    type OpenAIBatchApi,
 } from '@shared/openai-batch';
 import { EXPLICIT_CACHE_OPTIONS, cachedResponsesInput } from '@shared/prompt-cache';
 
 import {
+    BATCH_BACKFILL_DEFAULTS,
     checkBatch,
     redisBatchStore,
     schedulePollIfDue,
+    submitBatch,
     withBatchLock,
     LOCKED_REQUEUE_DELAY_MS,
     type BatchStateStore,
@@ -65,23 +68,11 @@ export interface ShelfLifeBatchState extends SavedBatch {
     dryRunReportedAt?: string;
 }
 
-export interface ShelfLifeBatchApi {
-    uploadJsonl(content: string, filename: string): Promise<string>;
-    createBatch(inputFileId: string, metadata: Record<string, string>): Promise<{ id: string }>;
-    retrieveBatch(batchId: string): Promise<{
-        status: string;
-        output_file_id?: string | null;
-        error_file_id?: string | null;
-        request_counts?: { total: number; completed: number; failed: number } | null;
-    }>;
-    fileText(fileId: string): Promise<string>;
-}
-
 export type ShelfLifeStateStore = BatchStateStore<ShelfLifeBatchState>;
 
 export interface ShelfLifeDeps {
     prisma: PrismaClient;
-    api: ShelfLifeBatchApi;
+    api: OpenAIBatchApi;
     store: ShelfLifeStateStore;
     schedulePoll(delayMs: number, data: BackfillIngredientShelfLifeJob): Promise<void>;
     now?: () => Date;
@@ -233,31 +224,23 @@ export async function importShelfLifeBatchOutput(
 
 // ── Steps ───────────────────────────────────────────────────────────────
 
-const DEFAULTS = { write: false, limit: 0, chunkSize: 50, pollMinutes: 10, reset: false };
+const DEFAULTS = { ...BATCH_BACKFILL_DEFAULTS, chunkSize: 50 };
 
-async function submit(
+function submit(
     deps: ShelfLifeDeps,
     ingredients: Array<{ id: string; name: string }>,
     chunkSize: number,
     round: number,
 ) {
     const { jsonl, requests } = buildBatchRequests(ingredients, chunkSize, round);
-    const inputFileId = await deps.api.uploadJsonl(jsonl, `shelf-life-r${round}.jsonl`);
-    const batch = await deps.api.createBatch(inputFileId, {
-        purpose: 'KUC-94 shelf life',
-        round: String(round),
-    });
-    const state: ShelfLifeBatchState = {
-        batchId: batch.id,
-        inputFileId,
-        model: SHELF_LIFE_MODEL,
-        promptVersion: SHELF_LIFE_PROMPT_VERSION,
-        createdAt: (deps.now?.() ?? new Date()).toISOString(),
+    return submitBatch<ShelfLifeBatchState>(deps, {
+        jsonl,
+        filename: `shelf-life-r${round}.jsonl`,
+        endpoint: '/v1/responses',
+        metadata: { purpose: 'KUC-94 shelf life', round: String(round) },
         round,
-        requests,
-    };
-    await deps.store.set(state);
-    return state;
+        extra: { model: SHELF_LIFE_MODEL, promptVersion: SHELF_LIFE_PROMPT_VERSION, requests },
+    });
 }
 
 export async function runShelfLifeBackfill(
@@ -400,17 +383,6 @@ export async function enrichIngredientShelfLife(
 
 // ── Real dependencies ───────────────────────────────────────────────────
 
-function openAiBatchApi(): ShelfLifeBatchApi {
-    const api = createOpenAIBatchApi();
-    return {
-        uploadJsonl: api.uploadJsonl,
-        createBatch: (inputFileId, metadata) =>
-            api.createBatch(inputFileId, '/v1/responses', metadata),
-        retrieveBatch: api.retrieveBatch,
-        fileText: api.fileText,
-    };
-}
-
 export async function processBackfillIngredientShelfLife(
     job: Job<BackfillIngredientShelfLifeJob>,
 ): Promise<Record<string, unknown>> {
@@ -421,7 +393,7 @@ export async function processBackfillIngredientShelfLife(
             const result = await runShelfLifeBackfill(
                 {
                     prisma: workerPrisma,
-                    api: openAiBatchApi(),
+                    api: createOpenAIBatchApi(),
                     store,
                     schedulePoll: async (delay, data) => {
                         // Poll jobs never reset the saved batch

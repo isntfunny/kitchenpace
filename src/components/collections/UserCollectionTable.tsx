@@ -265,6 +265,7 @@ function CollectionCardActions({ collection }: { collection: CollectionCardData 
                                 Abbrechen
                             </Button>
                             <Button
+                                variant="primary"
                                 onClick={handleDelete}
                                 disabled={isDeleting}
                                 className={css({

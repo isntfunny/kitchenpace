@@ -245,6 +245,7 @@ function RecipeCardActions({
                                 Abbrechen
                             </Button>
                             <Button
+                                variant="primary"
                                 onClick={handleDelete}
                                 disabled={isDeleting}
                                 className={css({

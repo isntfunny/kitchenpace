@@ -82,6 +82,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: Keys }) {
                             {secret}
                         </code>
                         <Button
+                            variant="primary"
                             onClick={() => {
                                 navigator.clipboard
                                     .writeText(secret)
@@ -160,6 +161,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: Keys }) {
                         Aktivitätsmeldung.
                     </p>
                     <Button
+                        variant="primary"
                         disabled={pending || scopes.length === 0 || Boolean(secret)}
                         type="submit"
                     >
@@ -223,7 +225,9 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: Keys }) {
                                         maxLength={60}
                                     />
                                 </label>
-                                <Button disabled={pending}>Speichern</Button>
+                                <Button variant="primary" disabled={pending}>
+                                    Speichern
+                                </Button>
                             </form>
                         ) : (
                             <Button
@@ -241,6 +245,7 @@ export function ApiKeysClient({ initialKeys }: { initialKeys: Keys }) {
                             <div>
                                 <p>Die verbundene Anwendung verliert sofort den Zugriff.</p>
                                 <Button
+                                    variant="primary"
                                     disabled={pending}
                                     onClick={() =>
                                         run(async () => {

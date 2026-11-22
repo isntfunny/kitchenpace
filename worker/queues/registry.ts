@@ -2,6 +2,7 @@ import type { Job } from 'bullmq';
 
 import { runDatabaseBackup } from './backup-processor';
 import { processPollOpenAIBatches } from './batch-poll';
+import { processBringSync, processBringSyncConnection } from './bring-sync-processor';
 import { processBackfillIngredientEnrichment } from './enrichment-backfill';
 import { processBackfillIngredientIcons } from './icon-backfill';
 import { processEnrichIngredientNutrition } from './nutrition-processor';
@@ -416,6 +417,42 @@ export const JOB_REGISTRY = defineJobs({
             },
         },
         repeat: { pattern: '30 3 * * *', tz: 'Europe/Berlin' },
+    },
+
+    'bring-sync': {
+        queue: QueueName.SCHEDULED,
+        processor: (job) => processBringSync(job),
+        defaultData: { dryRun: false, limit: 500 },
+        schema: {
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (list connections due, enqueue nothing)',
+                default: false,
+            },
+            limit: {
+                type: 'number',
+                label: 'Max. connections per run',
+                default: 500,
+                min: 1,
+                max: 5000,
+            },
+        },
+        // Fan-out: one bring-sync-connection job per active connection
+        repeat: { pattern: '*/5 * * * *', tz: 'Europe/Berlin' },
+    },
+
+    'bring-sync-connection': {
+        queue: QueueName.SCHEDULED,
+        processor: (job) => processBringSyncConnection(job),
+        defaultData: { userId: '', dryRun: false },
+        schema: {
+            userId: { type: 'string', label: 'User ID', placeholder: 'cuid of the user' },
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (plan only, write nothing)',
+                default: false,
+            },
+        },
     },
 
     // ── Backup queue ────────────────────────────────────────────────

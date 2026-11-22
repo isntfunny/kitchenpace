@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { searchIngredients } from '@app/components/recipe/actions';
 import { getServerAuthSession } from '@app/lib/auth';
+import { requestBringSync } from '@app/lib/bring/sync-trigger';
 import { DataAccessError } from '@app/lib/meal-plan/db';
 import { checkRateLimit } from '@app/lib/rate-limit';
 import { loadShoppingPageData } from '@app/lib/shopping/page-data';
@@ -31,7 +32,10 @@ export type ShoppingActionResult<T> =
           error: string;
       };
 
-async function run<T>(work: (userId: string) => Promise<T>): Promise<ShoppingActionResult<T>> {
+async function run<T>(
+    work: (userId: string) => Promise<T>,
+    { writes = true }: { writes?: boolean } = {},
+): Promise<ShoppingActionResult<T>> {
     try {
         const session = await getServerAuthSession('shopping-list');
         if (!session?.user?.id || session.user.role === 'banned' || session.user.banned)
@@ -45,6 +49,8 @@ async function run<T>(work: (userId: string) => Promise<T>): Promise<ShoppingAct
             };
         const data = await work(session.user.id);
         revalidatePath('/shopping-list');
+        // Changes reach Bring! within seconds (debounced, no-op without sync)
+        if (writes) void requestBringSync(prisma, session.user.id);
         return { ok: true, data };
     } catch (error) {
         if (error instanceof DataAccessError)
@@ -73,43 +79,51 @@ const selectionSchema = z
     .strict();
 
 export async function getShoppingList() {
-    return run((userId) => listShoppingItems(prisma, userId));
+    return run((userId) => listShoppingItems(prisma, userId), { writes: false });
 }
 
 /** Everything the list page shows: items, suggestions and the plan column. */
 export async function getShoppingPageData() {
-    return run((userId) => loadShoppingPageData(prisma, userId));
+    return run((userId) => loadShoppingPageData(prisma, userId), { writes: false });
 }
 
 /** Ingredient lines of a recipe for the selection dialog (amounts for the recipe's own servings). */
 export async function getRecipeShoppingLines(recipeId: string) {
-    return run(async (userId) => {
-        const id = idSchema.parse(recipeId);
-        const recipe = (await loadRecipeLines(prisma, userId, [id])).get(id);
-        return recipe ? { servings: recipe.servings, lines: recipe.lines } : null;
-    });
+    return run(
+        async (userId) => {
+            const id = idSchema.parse(recipeId);
+            const recipe = (await loadRecipeLines(prisma, userId, [id])).get(id);
+            return recipe ? { servings: recipe.servings, lines: recipe.lines } : null;
+        },
+        { writes: false },
+    );
 }
 
 /** Autocomplete for the quick add: catalogue ingredients, plus the parsed amount ("500 g Mehl"). */
 export async function searchShoppingIngredients(query: string) {
-    return run(async () => {
-        const trimmed = z.string().trim().max(100).parse(query);
-        if (trimmed.length < 2) return { results: [], amount: null, unit: null };
-        const found = await searchIngredients(trimmed);
-        return {
-            results: found.results
-                .slice(0, 6)
-                .map((hit) => ({ id: hit.id, name: hit.name, pluralName: hit.pluralName })),
-            amount: found.parsed.amount || null,
-            unit: found.parsed.unit ?? null,
-        };
-    });
+    return run(
+        async () => {
+            const trimmed = z.string().trim().max(100).parse(query);
+            if (trimmed.length < 2) return { results: [], amount: null, unit: null };
+            const found = await searchIngredients(trimmed);
+            return {
+                results: found.results
+                    .slice(0, 6)
+                    .map((hit) => ({ id: hit.id, name: hit.name, pluralName: hit.pluralName })),
+                amount: found.parsed.amount || null,
+                unit: found.parsed.unit ?? null,
+            };
+        },
+        { writes: false },
+    );
 }
 
 /** "Nicht jetzt" on a suggestion tile. */
 export async function snoozeShoppingSuggestionTile(itemKey: string) {
-    return run((userId) =>
-        snoozeSuggestion(prisma, userId, z.string().min(3).max(220).parse(itemKey), new Date()),
+    return run(
+        (userId) =>
+            snoozeSuggestion(prisma, userId, z.string().min(3).max(220).parse(itemKey), new Date()),
+        { writes: false },
     );
 }
 

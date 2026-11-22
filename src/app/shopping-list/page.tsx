@@ -5,6 +5,7 @@ import { Heading } from '@app/components/atoms/Typography';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { ShoppingListView } from '@app/components/shopping/ShoppingListView';
 import { getServerAuthSession } from '@app/lib/auth';
+import { requestBringSync } from '@app/lib/bring/sync-trigger';
 import { isoWeekdayShort } from '@app/lib/shopping/list-view';
 import { loadShoppingPageData } from '@app/lib/shopping/page-data';
 import { prisma } from '@shared/prisma';
@@ -22,6 +23,8 @@ export default async function ShoppingListPage() {
     const session = await getServerAuthSession('shopping-list');
     if (!session?.user?.id) redirect('/auth/signin?callbackUrl=/shopping-list');
 
+    // Opening the list pulls changes made in Bring! (no wait: the page shows the current list)
+    void requestBringSync(prisma, session.user.id, { onlyIfStale: true, delayMs: 0 });
     const data = await loadShoppingPageData(prisma, session.user.id);
     const openCount = data.items.filter((item) => item.status === 'OPEN').length;
     const shoppingDay = data.shoppingDay ? isoWeekdayShort(data.shoppingDay) : null;

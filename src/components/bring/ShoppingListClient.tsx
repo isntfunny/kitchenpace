@@ -1,5 +1,9 @@
 'use client';
 
+// Not used by /shopping-list since KUC-105 (own list) and replaced by the two-way sync (KUC-106,
+// src/lib/bring/sync.ts). Kept only because tests/bring/ui.test.mjs still covers it; remove both
+// together once the sync is accepted live.
+
 import { RefreshCw, ShoppingBasket } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';

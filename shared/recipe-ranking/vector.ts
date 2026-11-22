@@ -6,6 +6,26 @@ export function dot(a: readonly number[], b: readonly number[]): number {
     return d;
 }
 
+/** Cosine similarity; 0 for vectors of different length or without magnitude. */
+export function cosine(a: readonly number[], b: readonly number[]): number {
+    if (a.length === 0 || a.length !== b.length) return 0;
+    let dotAB = 0;
+    let normA = 0;
+    let normB = 0;
+    for (let i = 0; i < a.length; i++) {
+        dotAB += a[i]! * b[i]!;
+        normA += a[i]! * a[i]!;
+        normB += b[i]! * b[i]!;
+    }
+    if (normA === 0 || normB === 0) return 0;
+    return dotAB / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+/** A usable taste profile (or embedding): present, not empty, not all zero. */
+export function hasTasteProfile<T extends readonly number[]>(v: T | null | undefined): v is T {
+    return !!v && v.length > 0 && v.some((x) => x !== 0);
+}
+
 export function normalize(v: number[]): number[] {
     const n = Math.sqrt(v.reduce((s, x) => s + x * x, 0));
     return n ? v.map((x) => x / n) : v;
@@ -14,9 +34,6 @@ export function normalize(v: number[]): number[] {
 export function meanVector(vs: number[][]): number[] {
     return vs[0]!.map((_, i) => vs.reduce((s, v) => s + v[i]!, 0) / vs.length);
 }
-
-const hasSignal = (v: number[] | null): v is number[] =>
-    !!v && v.length > 0 && v.some((x) => x !== 0);
 
 /**
  * `q = normalize(a · profile + b · mean(picks))` with `a = 1 − b` and
@@ -28,7 +45,7 @@ export function searchVector(
     picks: number[][],
     cfg: RankingConfig = RANKING_CONFIG,
 ): number[] | null {
-    const taste = hasSignal(profile) ? normalize(profile) : null;
+    const taste = hasTasteProfile(profile) ? normalize(profile) : null;
     if (!picks.length) return taste;
     const centre = meanVector(picks);
     if (!taste) return normalize(centre);

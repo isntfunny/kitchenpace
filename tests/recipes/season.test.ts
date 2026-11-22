@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { detectSeason, isSeasonalFilterSetHighlighted } from '../../src/lib/fits-now/season';
+import { detectSeason } from '../../shared/meal-planning/season';
+import { isSeasonalFilterSetHighlighted } from '../../src/lib/fits-now/season';
 
 test('detectSeason maps every month (0-indexed) to its season', () => {
     const expected = [

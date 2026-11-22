@@ -5,7 +5,7 @@
  * its DB rows to these shapes. Calendar dates are `YYYY-MM-DD` strings in Europe/Berlin
  * (see `dates.ts`), so no function in this module depends on the server's time zone.
  */
-import type { Season } from '../../src/lib/fits-now/labels';
+import type { Season } from './season';
 
 export type { Season };
 

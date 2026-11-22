@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 
 import { countActiveFilters, type FiltersWithSort } from '@app/app/recipes/components/filter-state';
+import { STORAGE_KEYS } from '@app/lib/storageKeys';
 import {
     buildRecipeFilterQuery,
     parseRecipeFilterParams,
     type RecipeFilterSearchParams,
-} from '@app/lib/recipeFilters';
-import { STORAGE_KEYS } from '@app/lib/storageKeys';
+} from '@shared/recipe-filters';
 
 const KEY = STORAGE_KEYS.weekSelectionFilters;
 

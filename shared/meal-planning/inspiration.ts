@@ -7,8 +7,8 @@
  * Pure: no DB, no UI; the caller loads the inputs and may cache the result per user and week
  * (`inspirationCacheKey`).
  */
-import { cosine, hasTasteProfile } from '../../src/lib/recipes/taste-ranking';
 import { isoWeek } from '../dates';
+import { cosine, hasTasteProfile } from '../recipe-ranking/vector';
 
 import { seasonOf } from './season';
 import type { IsoDate } from './types';

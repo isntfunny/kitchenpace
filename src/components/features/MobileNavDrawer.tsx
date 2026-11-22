@@ -21,7 +21,7 @@ import { type ComponentType, useState } from 'react';
 
 import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { useSession } from '@app/lib/auth-client';
-import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
+import { buildRecipeFilterHref } from '@shared/recipe-filters';
 
 import { css } from 'styled-system/css';
 

@@ -10,8 +10,8 @@ import {
     type FilterSetWithRelations,
 } from '@app/lib/fits-now/db-queries';
 import type { Season } from '@app/lib/fits-now/labels';
-import { detectSeason } from '@app/lib/fits-now/season';
 import { getThemeChips } from '@app/lib/theme-clusters/queries';
+import { detectSeason } from '@shared/meal-planning/season';
 import { prisma } from '@shared/prisma';
 import type { ThemeChip } from '@shared/theme-clusters/release';
 

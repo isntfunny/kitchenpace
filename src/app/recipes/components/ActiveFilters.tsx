@@ -2,7 +2,7 @@
 
 import { X } from 'lucide-react';
 
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
 
 import { css } from 'styled-system/css';
 

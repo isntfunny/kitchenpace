@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import { mealKindQuery } from '../../shared/meal-planning/meal-kind';
 import { buildRecipeTextQuery } from '../../shared/opensearch/client';
-import { buildRecipeFilterQuery } from '../../src/lib/recipeFilters';
+import { buildRecipeFilterQuery } from '../../shared/recipe-filters';
 import {
     appendRecipeSearchContext,
     buildRecipeBoolQuery,

@@ -1,4 +1,5 @@
-import type { RecipeSortOption } from '@app/lib/recipeFilters';
+import type { RecipeSortOption } from '@shared/recipe-filters';
+import { cosine } from '@shared/recipe-ranking/vector';
 
 /**
  * Taste ranking ("Passt zu dir"): re-ranks a candidate pool by cosine similarity between
@@ -14,24 +15,6 @@ export const TASTE_POOL_SIZE = 200;
 
 /** Score for candidates without an embedding: they rank after every scored candidate. */
 export const MISSING_EMBEDDING_SCORE = -2;
-
-export function cosine(a: readonly number[], b: readonly number[]): number {
-    if (a.length === 0 || a.length !== b.length) return 0;
-    let dot = 0;
-    let normA = 0;
-    let normB = 0;
-    for (let i = 0; i < a.length; i++) {
-        dot += a[i] * b[i];
-        normA += a[i] * a[i];
-        normB += b[i] * b[i];
-    }
-    if (normA === 0 || normB === 0) return 0;
-    return dot / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
-export function hasTasteProfile(taste: readonly number[] | null | undefined): boolean {
-    return !!taste && taste.length > 0 && taste.some((value) => value !== 0);
-}
 
 /**
  * Resolves the sort that is actually applied.

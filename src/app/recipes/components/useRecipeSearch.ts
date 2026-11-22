@@ -4,10 +4,10 @@ import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import type { RecipeCardData } from '@app/app/actions/recipes';
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
-import { buildRecipeFilterQuery } from '@app/lib/recipeFilters';
 import { appendRecipeSearchContext, type RecipeSearchContext } from '@app/lib/recipeSearchContext';
 import type { RecipeSearchMeta } from '@app/lib/recipeSearchTypes';
+import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
+import { buildRecipeFilterQuery } from '@shared/recipe-filters';
 
 export type {
     HistogramBucket,

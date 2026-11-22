@@ -3,7 +3,7 @@
 import { Slider, Tooltip } from 'radix-ui';
 import { useMemo, useState } from 'react';
 
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
 
 import { css } from 'styled-system/css';
 

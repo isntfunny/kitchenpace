@@ -4,7 +4,7 @@ import { Star, ChevronDown } from 'lucide-react';
 import { Accordion, ToggleGroup, Tooltip } from 'radix-ui';
 import { useMemo, type ReactNode } from 'react';
 
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
 
 import { css } from 'styled-system/css';
 

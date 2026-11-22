@@ -21,8 +21,8 @@ import { useFeatureFlag } from '@app/components/providers/FeatureFlagsProvider';
 import { useTheme } from '@app/components/providers/ThemeProvider';
 import { useSession } from '@app/lib/auth-client';
 import { PALETTE } from '@app/lib/palette';
-import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { getThemeConfig } from '@app/lib/themes/registry';
+import { buildRecipeFilterHref } from '@shared/recipe-filters';
 
 import { css } from 'styled-system/css';
 

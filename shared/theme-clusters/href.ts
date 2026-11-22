@@ -1,4 +1,4 @@
-import { buildRecipeFilterHref } from '../../src/lib/recipeFilters';
+import { buildRecipeFilterHref } from '../recipe-filters';
 
 import type { ClusterSearchFilter } from './profile';
 

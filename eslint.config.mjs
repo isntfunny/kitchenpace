@@ -75,6 +75,24 @@ const eslintConfig = defineConfig([
             ],
         },
     },
+    {
+        // Layers (KUC-137): shared/ is used by the app and the worker and never imports from src/
+        files: ['shared/**/*.{ts,tsx,js,mjs}'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: ['@app/*', '@app/**', '**/src/**', '**/src'],
+                            message:
+                                'shared/ must not import from src/. Move the logic into shared/.',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
     globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'styled-system/**', 'k6/**']),
 ]);
 

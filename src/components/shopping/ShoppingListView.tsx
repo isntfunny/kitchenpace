@@ -12,7 +12,6 @@ import {
     snoozeShoppingSuggestionTile,
     updateShoppingListItem,
 } from '@app/app/shopping-list/actions';
-import { ingredientIdFromKey } from '@app/lib/shopping/item-key';
 import {
     groupItems,
     type QuantityChange,
@@ -20,6 +19,7 @@ import {
 } from '@app/lib/shopping/list-view';
 import type { ShoppingPageData } from '@app/lib/shopping/page-data';
 import { BASE_UNIT_LABEL } from '@app/lib/shopping/quantity';
+import { ingredientIdFromKey } from '@shared/shopping/item-key';
 
 import { css, cx } from 'styled-system/css';
 

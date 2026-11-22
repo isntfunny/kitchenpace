@@ -12,7 +12,7 @@ import type {
     SuggestItem,
 } from '@app/lib/hooks/useStreamingSearch';
 import { useStreamingSearch } from '@app/lib/hooks/useStreamingSearch';
-import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
+import { buildRecipeFilterHref } from '@shared/recipe-filters';
 
 import { css } from 'styled-system/css';
 

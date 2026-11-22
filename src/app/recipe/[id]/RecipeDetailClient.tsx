@@ -17,9 +17,9 @@ import type { PersistedViewerState } from '@app/components/flow/viewer/viewerPer
 import { useRecipeTabs } from '@app/components/hooks/useRecipeTabs';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { RECIPE_CREATION_TUTORIAL_CELEBRATION_KEY } from '@app/components/recipe/tutorial/shared';
-import { buildRecipeFilterHref } from '@app/lib/recipeFilters';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { TROPHIES } from '@app/lib/trophies/registry';
+import { buildRecipeFilterHref } from '@shared/recipe-filters';
 
 import { css } from 'styled-system/css';
 import { grid, container } from 'styled-system/patterns';

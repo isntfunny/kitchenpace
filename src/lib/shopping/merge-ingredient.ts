@@ -4,7 +4,8 @@
 // kept ingredient absorbs the duplicate's entry instead of getting a second one.
 import type { Prisma } from '@prisma/client';
 
-import { itemKeyFor } from './item-key';
+import { itemKeyFor } from '@shared/shopping/item-key';
+
 import { BASE_UNIT_LABEL } from './quantity';
 
 type Tx = Prisma.TransactionClient;

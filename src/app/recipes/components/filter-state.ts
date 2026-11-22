@@ -1,8 +1,8 @@
 // Pure filter-state helpers shared by the recipe search page and the week selection
 // dialog (KUC-126). No React, no URL, no storage: the hooks wrap these.
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
-import { MULTI_VALUE_KEYS, NUMBER_KEYS } from '@app/lib/recipeFilters';
-import type { RecipeFilterSearchParams, RecipeSortOption } from '@app/lib/recipeFilters';
+import { MULTI_VALUE_KEYS, NUMBER_KEYS } from '@shared/recipe-filters';
+import type { RecipeFilterSearchParams, RecipeSortOption } from '@shared/recipe-filters';
 import { toggleThemeFilters, type ThemeChip } from '@shared/theme-clusters/release';
 
 export type FiltersWithSort = RecipeFilterSearchParams & { sort: RecipeSortOption };

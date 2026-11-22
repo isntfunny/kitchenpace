@@ -5,8 +5,8 @@ import type { FC } from 'react';
 
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import type { Season } from '@app/lib/fits-now/labels';
-import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
 import { STORAGE_KEYS } from '@app/lib/storageKeys';
+import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
 import type { ThemeChip } from '@shared/theme-clusters/release';
 
 import { RecipeSearchView, type FilterOptions } from './RecipeSearchView';

@@ -3,8 +3,8 @@
 // OpenSearch module; the browser uses `recipeSearchContext.ts`.
 import { mealKindQuery } from '@shared/meal-planning/meal-kind';
 import { buildRecipeTextQuery } from '@shared/opensearch/client';
+import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
 
-import type { RecipeFilterSearchParams } from './recipeFilters';
 import type { RecipeSearchContext } from './recipeSearchContext';
 
 export {

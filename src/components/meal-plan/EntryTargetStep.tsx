@@ -11,10 +11,10 @@ import {
 } from '@app/app/plan/edit-actions';
 import { Button } from '@app/components/atoms/Button';
 import { addDays, weekdayShort } from '@shared/dates';
+import { leftoverCookServings } from '@shared/meal-planning/distribute';
 
 import { css } from 'styled-system/css';
 
-import { leftoverCookServings } from './leftover-servings';
 import { dishesIn, TargetPicker, type Cell } from './TargetPicker';
 import type { PlanDish, PlanSlot, PlanWeekData } from './types';
 import { usePlanAction } from './usePlanAction';

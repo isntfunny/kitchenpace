@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { leftoverCookServings } from '../../src/components/meal-plan/leftover-servings';
+import { leftoverCookServings } from '../../shared/meal-planning/distribute';
 
 test('cooking for two meals doubles the servings like the server', () => {
     assert.equal(leftoverCookServings(2), 4);

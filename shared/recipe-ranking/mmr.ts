@@ -1,17 +1,10 @@
+import { clamp01, jaccard } from '../math';
+
 import { RANKING_CONFIG, type RankingConfig } from './config';
 import { dishTypeOf } from './dish-type';
 import { meaningfulIngredientIds, type RankingRecipe } from './features';
 import type { Scored } from './score';
 import { dot } from './vector';
-
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
-
-function jaccard(a: Set<string>, b: Set<string>): number {
-    let inter = 0;
-    for (const x of a) if (b.has(x)) inter++;
-    const union = a.size + b.size - inter;
-    return union ? inter / union : 0;
-}
 
 /**
  * Greedy MMR over the whole list: each next place goes to the candidate with the best
@@ -72,7 +65,10 @@ export function diversify(
             if (c.embedding && chosen!.embedding) {
                 c.simList = Math.max(c.simList, ramp(dot(c.embedding, chosen!.embedding)));
             }
-            c.jaccard = Math.max(c.jaccard, jaccard(c.ingredients, chosen!.ingredients));
+            c.jaccard = Math.max(
+                c.jaccard,
+                jaccard(c.ingredients, chosen!.ingredients, { bothEmpty: 0 }),
+            );
             if (c.card.dishType === chosen!.card.dishType) c.sameType++;
         }
     }

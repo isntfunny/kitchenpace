@@ -1,3 +1,5 @@
+import { plural } from '../text';
+
 import { perishability, type Perishability } from './perishability';
 import type { ShelfLifeSourceValue, StorageTypeValue } from './schema';
 
@@ -21,8 +23,6 @@ export const STORAGE_DISPLAY_LABELS: Record<StorageTypeValue, string> = {
 };
 
 const STORAGE_ORDER: StorageTypeValue[] = ['FRIDGE', 'PANTRY', 'FREEZER'];
-
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** Rounded, human duration: exact days for short spans, then weeks, months, years. */
 export function formatShelfLifeDays(days: number): string {

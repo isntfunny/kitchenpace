@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { assignmentStability, jaccard, keepStableLabel, matchClusters } from './match';
+import { jaccard } from '../math';
+
+import { assignmentStability, keepStableLabel, matchClusters } from './match';
 
 const prev = [
     { id: 'A', centroid: [1, 0, 0] },
@@ -56,9 +58,9 @@ test('matching handles empty sides', () => {
 });
 
 test('jaccard and label stabilisation', () => {
-    assert.equal(jaccard(['a', 'b'], ['a', 'b']), 1);
-    assert.equal(jaccard([], []), 1);
-    assert.ok(Math.abs(jaccard(['a', 'b', 'c'], ['b', 'c', 'd']) - 0.5) < 1e-12);
+    assert.equal(jaccard(['a', 'b'], ['a', 'b'], { bothEmpty: 1 }), 1);
+    assert.equal(jaccard([], [], { bothEmpty: 1 }), 1);
+    assert.ok(Math.abs(jaccard(['a', 'b', 'c'], ['b', 'c', 'd'], { bothEmpty: 1 }) - 0.5) < 1e-12);
 
     const previous = { label: 'Pasta & Italienisch', terms: ['Pasta', 'Italienisch', 'Tomate'] };
     assert.equal(

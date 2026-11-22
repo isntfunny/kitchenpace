@@ -1,5 +1,6 @@
 /** Small scoring helpers shared by the planner and the leftover suggestions. */
 import { isWeekend } from '../dates';
+import { clamp01 } from '../math';
 
 import type { IsoDate } from './types';
 
@@ -31,8 +32,6 @@ export function durationFit(
     if (totalTime <= config.weekdayMaxMinutes) return 1;
     return Math.max(0, 1 - (totalTime - config.weekdayMaxMinutes) / config.weekdayMaxMinutes);
 }
-
-export const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
 /** Missing or invalid taste scores are neutral. */
 export function tasteOf(score: number | undefined): number {

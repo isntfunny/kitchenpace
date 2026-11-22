@@ -3,6 +3,8 @@
 import { AlertCircle, Flame, Ruler, Tag, Weight } from 'lucide-react';
 import { memo, useCallback } from 'react';
 
+import { IngredientIcon } from '@app/components/ingredients/IngredientIcon';
+
 import { css, cx } from 'styled-system/css';
 
 import { type Ingredient } from './ingredient-types';
@@ -104,6 +106,10 @@ export const IngredientCard = memo(
                     ingredient.needsReview && !isSelected && rowNeedsReview,
                 )}
             >
+                <span className={css({ color: 'foreground.muted', display: 'inline-flex' })}>
+                    <IngredientIcon ingredient={ingredient} size={18} />
+                </span>
+
                 <div className={nameBlockStyle}>
                     <span
                         className={cx(nameStyle, css({ fontWeight: isSelected ? '600' : '400' }))}

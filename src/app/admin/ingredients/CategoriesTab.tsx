@@ -12,9 +12,13 @@ import { Check, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { useMemo, useState, useTransition } from 'react';
 
+import { IngredientIcon } from '@app/components/ingredients/IngredientIcon';
+import { resolveCategoryIcon } from '@shared/ingredient-icons/resolve';
+
 import { css } from 'styled-system/css';
 
 import { createCategory, deleteCategory, updateCategory } from './actions';
+import { IconPicker } from './IconPicker';
 import { DeleteButton, SimpleTable, SortHeader, TableToolbar } from './ingredient-shared';
 import {
     type IngredientCategory,
@@ -109,6 +113,20 @@ function CategoriesTabInner({ categories }: { categories: IngredientCategory[] }
                         })}
                     >
                         {row.original.name}
+                    </span>
+                ),
+            },
+            {
+                id: 'icon',
+                header: 'Icon',
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <span className={css({ display: 'inline-flex', color: 'foreground' })}>
+                        <IngredientIcon
+                            ingredient={{ categories: [row.original] }}
+                            icon={row.original.icon}
+                            size={22}
+                        />
                     </span>
                 ),
             },
@@ -245,6 +263,7 @@ function CategoryEditPanel({
 }) {
     const [name, setName] = useState(category.name);
     const [sortOrder, setSortOrder] = useState(category.sortOrder);
+    const [icon, setIcon] = useState<string | null>(category.icon);
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
 
@@ -252,7 +271,7 @@ function CategoryEditPanel({
         setError('');
         startTransition(async () => {
             try {
-                await updateCategory(category.id, { name: name.trim(), sortOrder });
+                await updateCategory(category.id, { name: name.trim(), sortOrder, icon });
                 onClose();
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Fehler');
@@ -337,6 +356,25 @@ function CategoryEditPanel({
                         style={{ width: 100 }}
                     />
                 </div>
+            </div>
+
+            <div>
+                <label
+                    className={css({
+                        fontSize: 'xs',
+                        color: 'foreground.muted',
+                        display: 'block',
+                        marginBottom: '1',
+                        fontWeight: '500',
+                    })}
+                >
+                    Icon (Unterkategorien erben es)
+                </label>
+                <IconPicker
+                    value={icon}
+                    onChange={setIcon}
+                    fallback={resolveCategoryIcon(category.parent) ?? undefined}
+                />
             </div>
 
             {error && (

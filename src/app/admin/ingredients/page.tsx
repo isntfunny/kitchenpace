@@ -17,6 +17,7 @@ async function getData() {
                 id: true,
                 name: true,
                 slug: true,
+                icon: true,
                 pluralName: true,
                 aliases: true,
                 needsReview: true,
@@ -39,7 +40,21 @@ async function getData() {
                 shelfLifeConfidence: true,
                 swissFoodId: true,
                 storageLives: { select: { storage: true, days: true } },
-                categories: { select: { id: true, name: true, slug: true } },
+                categories: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        icon: true,
+                        parent: {
+                            select: {
+                                slug: true,
+                                icon: true,
+                                parent: { select: { slug: true, icon: true } },
+                            },
+                        },
+                    },
+                },
                 ingredientUnits: {
                     select: {
                         grams: true,
@@ -56,6 +71,14 @@ async function getData() {
                 id: true,
                 name: true,
                 slug: true,
+                icon: true,
+                parent: {
+                    select: {
+                        slug: true,
+                        icon: true,
+                        parent: { select: { slug: true, icon: true } },
+                    },
+                },
                 sortOrder: true,
                 _count: { select: { ingredients: true } },
             },

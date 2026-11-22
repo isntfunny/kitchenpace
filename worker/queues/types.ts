@@ -77,8 +77,66 @@ export interface BackfillIngredientShelfLifeJob {
     reset?: boolean;
 }
 
+export interface BackfillIngredientIconsJob {
+    /** Write icons to the database; false = dry run report only */
+    write?: boolean;
+    /** Max ingredients for a new batch (0 = all without icon) */
+    limit?: number;
+    /** Ingredients per request */
+    chunkSize?: number;
+    /** Poll interval while the batch runs (0 = no automatic polling) */
+    pollMinutes?: number;
+    /** Forget the saved batch and start over */
+    reset?: boolean;
+}
+
 export interface ComputeTasteProfilesJob {
     batchSize?: number;
+}
+
+export interface BookAssumedCookedJob {
+    /** Compute and report only, book nothing */
+    dryRun?: boolean;
+    /** Max. plan entries per run */
+    limit?: number;
+}
+
+export interface ReconcileMealRemindersJob {
+    /** Compute and report only, schedule and write nothing */
+    dryRun?: boolean;
+    /** Max. users per run */
+    limit?: number;
+    /** Only this user (empty = everyone with a plan) */
+    userId?: string;
+}
+
+export interface SendMealReminderJob {
+    reminderId: string;
+}
+
+export interface BringSyncJob {
+    /** Report only: list who would be synced / what would change, write nothing */
+    dryRun?: boolean;
+    /** Max. connections per run */
+    limit?: number;
+}
+
+export interface BringSyncConnectionJob {
+    userId: string;
+    dryRun?: boolean;
+}
+
+export interface ClusterRecipeThemesJob {
+    /** Number of clusters (0 = automatic) */
+    clusters?: number;
+    /** Seed of the k-means initialisation (fixed seed = reproducible runs) */
+    seed?: number;
+    /** Min. centroid similarity to continue a cluster of the previous run */
+    minSimilarity?: number;
+    /** Clusters below this size are not eligible for release */
+    minClusterSize?: number;
+    /** Compute and report only, persist nothing */
+    dryRun?: boolean;
 }
 
 // ── Twitch jobs ──────────────────────────────────────────────────────

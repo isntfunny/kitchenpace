@@ -1,6 +1,7 @@
 'use client';
 
 import {
+    CalendarDays,
     Clock,
     LayoutGrid,
     Leaf,
@@ -9,6 +10,7 @@ import {
     Plus,
     Salad,
     Shield,
+    Package,
     ShoppingCart,
     ShieldCheck,
     Star,
@@ -49,10 +51,24 @@ const GENERAL_LINKS: (DrawerNavItem & { authOnly?: boolean; flag?: 'collections'
         flag: 'collections',
     },
     {
+        label: 'Wochenplan',
+        description: 'Deine Woche planen',
+        href: '/plan',
+        icon: CalendarDays,
+        authOnly: true,
+    },
+    {
         label: 'Einkaufsliste',
-        description: 'Deine Bring!-Listen',
+        description: 'Zutaten für Plan und Rezepte',
         href: '/shopping-list',
         icon: ShoppingCart,
+        authOnly: true,
+    },
+    {
+        label: 'Vorrat',
+        description: 'Was noch da ist',
+        href: '/pantry',
+        icon: Package,
         authOnly: true,
     },
     {

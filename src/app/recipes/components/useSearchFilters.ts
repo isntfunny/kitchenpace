@@ -10,7 +10,9 @@ import {
     parseRecipeFilterParams,
 } from '@app/lib/recipeFilters';
 import type { RecipeFilterSearchParams, RecipeSortOption } from '@app/lib/recipeFilters';
+import { resolveEffectiveSort } from '@app/lib/recipes/taste-ranking';
 import { STORAGE_KEYS } from '@app/lib/storageKeys';
+import { toggleThemeFilters, type ThemeChip } from '@shared/theme-clusters/release';
 
 type FiltersWithSort = RecipeFilterSearchParams & { sort: RecipeSortOption };
 
@@ -26,6 +28,7 @@ function extractFilterSetCriteria(fs: FilterSetWithRelations) {
 export function useSearchFilters(
     initialFilters: RecipeFilterSearchParams,
     filterSets?: FilterSetWithRelations[],
+    isLoggedIn = false,
 ) {
     const pathname = usePathname();
     const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>(
@@ -37,7 +40,9 @@ export function useSearchFilters(
         'rating',
     );
 
-    const resolveSort = (f: RecipeFilterSearchParams): RecipeSortOption => f.sort ?? savedSort;
+    // "Passt zu dir" is for logged-in users only: guests fall back to popular (no error)
+    const resolveSort = (f: RecipeFilterSearchParams): RecipeSortOption =>
+        resolveEffectiveSort(f.sort ?? savedSort, { isLoggedIn });
 
     const [filters, setFilters] = useState<FiltersWithSort>({
         ...initialFilters,
@@ -112,13 +117,20 @@ export function useSearchFilters(
     // Listen for browser back/forward to restore filter state from URL
     const savedSortRef = useRef(savedSort);
     savedSortRef.current = savedSort;
+    const isLoggedInRef = useRef(isLoggedIn);
+    isLoggedInRef.current = isLoggedIn;
 
     useEffect(() => {
         const onPopState = () => {
             fromPopStateRef.current = true;
             const params = new URLSearchParams(window.location.search);
             const parsed = parseRecipeFilterParams(params);
-            setFilters({ ...parsed, sort: parsed.sort ?? savedSortRef.current });
+            setFilters({
+                ...parsed,
+                sort: resolveEffectiveSort(parsed.sort ?? savedSortRef.current, {
+                    isLoggedIn: isLoggedInRef.current,
+                }),
+            });
             setQueryInput(parsed.query ?? '');
         };
 
@@ -155,8 +167,27 @@ export function useSearchFilters(
         }));
     }, []);
 
+    // Restore the saved sort (localStorage) once it is loaded, unless the URL sets a sort
+    // explicitly or the user already picked one. parseRecipeFilterParams always fills in a
+    // default sort, so the URL itself has to be checked.
+    const urlHasSortRef = useRef<boolean | null>(null);
+    const sortChosenRef = useRef(false);
+    useEffect(() => {
+        if (urlHasSortRef.current === null) {
+            urlHasSortRef.current = new URLSearchParams(window.location.search).has('sort');
+        }
+        if (urlHasSortRef.current || sortChosenRef.current) return;
+        const restored = resolveEffectiveSort(savedSort, { isLoggedIn });
+        setFilters((prev) => {
+            if (prev.sort === restored) return prev;
+            fromInitialSyncRef.current = true; // replaceState: restoring is not a history step
+            return { ...prev, sort: restored };
+        });
+    }, [savedSort, isLoggedIn]);
+
     const handleSortChange = useCallback(
         (sort: RecipeSortOption) => {
+            sortChosenRef.current = true;
             setSavedSort(sort);
             updateFilters({ sort });
         },
@@ -216,6 +247,11 @@ export function useSearchFilters(
         [filterSets],
     );
 
+    // Theme clusters act like FilterSets, but only add/remove their tags and categories
+    const handleThemeToggle = useCallback((theme: ThemeChip) => {
+        setFilters((prev) => ({ ...prev, ...toggleThemeFilters(prev, theme) }));
+    }, []);
+
     const activeFilterCount = useMemo(() => {
         const arrayCount = MULTI_VALUE_KEYS.reduce((sum, key) => {
             const value = filters[key];
@@ -239,6 +275,7 @@ export function useSearchFilters(
         resetFilters,
         handleSortChange,
         handleFilterSetToggle,
+        handleThemeToggle,
         activeFilterCount,
     };
 }

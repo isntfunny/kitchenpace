@@ -6,6 +6,7 @@ import { Button } from '@app/components/atoms/Button';
 import { SparkleEffect } from '@app/components/atoms/SparkleEffect';
 import { ReportButton } from '@app/components/features/ReportButton';
 import { ShareButton } from '@app/components/features/ShareButton';
+import { AddToPlanButton } from '@app/components/meal-plan/AddToPlanButton';
 
 import { css } from 'styled-system/css';
 
@@ -21,6 +22,7 @@ interface RecipeActionButtonsProps {
     isFavoritePending: boolean;
     isCookPending: boolean;
     isAuthor: boolean;
+    isAuthenticated: boolean;
     onFavoriteToggle: () => void;
     onCookToggle: () => void;
     onPrint: () => void;
@@ -38,6 +40,7 @@ export function RecipeActionButtons({
     isFavoritePending,
     isCookPending,
     isAuthor,
+    isAuthenticated,
     onFavoriteToggle,
     onCookToggle,
     onPrint,
@@ -125,10 +128,15 @@ export function RecipeActionButtons({
                 className={css({
                     display: 'flex',
                     gap: '1',
+                    flexWrap: 'wrap',
                     alignItems: 'center',
                     justifyContent: 'space-evenly',
                 })}
             >
+                <AddToPlanButton
+                    recipe={{ id: recipeId, title: recipeTitle }}
+                    isAuthenticated={isAuthenticated}
+                />
                 <Button type="button" variant="ghost" onClick={onPrint}>
                     <Printer size={16} />
                     Drucken

@@ -8,6 +8,7 @@ import type { Job } from 'bullmq';
 import { pollOverdueBatches, redisBatchStore, type PollTarget, type SavedBatch } from './batch-job';
 import { EMBEDDINGS_JOB_NAME, EMBEDDINGS_STORE_NAME } from './embeddings-backfill';
 import { ENRICHMENT_JOB_NAME, ENRICHMENT_STORE_NAME } from './enrichment-backfill';
+import { ICON_JOB_NAME, ICON_STORE_NAME } from './icon-backfill';
 import { getOpenSearchQueue, getScheduledQueue } from './queue';
 import { SHELF_LIFE_JOB_NAME, SHELF_LIFE_STORE_NAME } from './shelf-life-processor';
 
@@ -33,6 +34,7 @@ export async function processPollOpenAIBatches(_job: Job): Promise<Record<string
         [
             target(SHELF_LIFE_JOB_NAME, SHELF_LIFE_STORE_NAME, getScheduledQueue),
             target(ENRICHMENT_JOB_NAME, ENRICHMENT_STORE_NAME, getScheduledQueue),
+            target(ICON_JOB_NAME, ICON_STORE_NAME, getScheduledQueue),
             target(EMBEDDINGS_JOB_NAME, EMBEDDINGS_STORE_NAME, getOpenSearchQueue),
         ],
         new Date(),

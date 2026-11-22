@@ -1,6 +1,15 @@
 'use client';
 
-import { Bookmark, FileText, Settings, ShoppingCart, User, type LucideIcon } from 'lucide-react';
+import {
+    Bookmark,
+    CalendarDays,
+    FileText,
+    Package,
+    Settings,
+    ShoppingCart,
+    User,
+    type LucideIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
 
@@ -15,10 +24,22 @@ export type NavLinkItem = {
 
 export const PERSONAL_LINKS: NavLinkItem[] = [
     {
+        label: 'Wochenplan',
+        description: 'Deine Woche planen',
+        href: '/plan',
+        icon: CalendarDays,
+    },
+    {
         label: 'Einkaufsliste',
-        description: 'Deine Bring!-Listen',
+        description: 'Zutaten für Plan und Rezepte',
         href: '/shopping-list',
         icon: ShoppingCart,
+    },
+    {
+        label: 'Vorrat',
+        description: 'Was noch da ist',
+        href: '/pantry',
+        icon: Package,
     },
     {
         label: 'Profilübersicht',

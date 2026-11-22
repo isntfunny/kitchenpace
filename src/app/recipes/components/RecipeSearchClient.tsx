@@ -8,13 +8,16 @@ import type { RecipeCardData } from '@app/app/actions/recipes';
 import { RecipeCard } from '@app/components/features/RecipeCard';
 import { RecipeCardSkeleton } from '@app/components/features/RecipeCardSkeleton';
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
+import type { Season } from '@app/lib/fits-now/labels';
 import type { RecipeFilterSearchParams } from '@app/lib/recipeFilters';
+import type { ThemeChip } from '@shared/theme-clusters/release';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
 
 import type { CategoryOption } from '../actions';
 
+import { FilterSetChipBar } from './FilterSetChipBar';
 import { FilterSidebar } from './FilterSidebar';
 import { MobileFilterSheet } from './MobileFilterSheet';
 import { SearchEmptyState } from './SearchEmptyState';
@@ -76,6 +79,8 @@ type RecipeSearchClientProps = {
     filterOptions: FilterOptions;
     initialData?: InitialSearchData;
     filterSets?: FilterSetWithRelations[];
+    currentSeason?: Season;
+    themes?: ThemeChip[];
     isLoggedIn?: boolean;
 };
 
@@ -84,6 +89,8 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     filterOptions,
     initialData,
     filterSets,
+    currentSeason,
+    themes,
     isLoggedIn,
 }) => {
     const {
@@ -96,8 +103,9 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         resetFilters,
         handleSortChange,
         handleFilterSetToggle,
+        handleThemeToggle,
         activeFilterCount,
-    } = useSearchFilters(initialFilters, filterSets);
+    } = useSearchFilters(initialFilters, filterSets, isLoggedIn);
 
     const { data, meta, loading, refreshing, loadingMore, hasMore, fetchNextPage, error } =
         useRecipeSearch(filters, { initialData });
@@ -197,8 +205,6 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                     facets={stableFacets}
                     onFiltersChange={updateFilters}
                     loading={loading || refreshing}
-                    filterSets={filterSets}
-                    onFilterSetToggle={handleFilterSetToggle}
                 />
             </aside>
 
@@ -220,6 +226,16 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                     onFiltersChange={updateFilters}
                     onReset={resetFilters}
                     isLoggedIn={isLoggedIn}
+                />
+
+                <FilterSetChipBar
+                    filterSets={filterSets ?? []}
+                    activeFilterSetId={filters.filterSetId}
+                    currentSeason={currentSeason}
+                    onToggle={handleFilterSetToggle}
+                    themes={themes}
+                    filters={filters}
+                    onThemeToggle={handleThemeToggle}
                 />
 
                 {error ? (
@@ -311,8 +327,6 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
                 loading={loading || refreshing}
                 onFiltersChange={updateFilters}
                 onReset={resetFilters}
-                filterSets={filterSets}
-                onFilterSetToggle={handleFilterSetToggle}
             />
         </div>
     );

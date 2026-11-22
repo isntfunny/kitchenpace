@@ -7,7 +7,15 @@ import { ensureModeratorSession } from '@app/lib/admin/ensure-moderator';
 import { enqueueIngredientEnrichment } from '@app/lib/ingredients/enqueue-enrichment';
 import { mergeRecipeIngredientOccurrences } from '@app/lib/ingredients/merge-occurrences';
 import { slugify } from '@app/lib/slug';
+import { isIngredientIconName } from '@shared/ingredient-icons/names';
 import { prisma } from '@shared/prisma';
+
+/** An allowed IconOven name or null (none); anything else is rejected. */
+function parseIcon(icon: string | null): string | null {
+    if (icon === null) return null;
+    if (!isIngredientIconName(icon)) throw new Error('Unbekanntes Icon');
+    return icon;
+}
 
 function generateSlug(name: string): string {
     const slug = slugify(name);
@@ -49,6 +57,7 @@ export async function updateIngredient(
         name?: string;
         pluralName?: string | null;
         normalizedName?: string | null;
+        icon?: string | null;
         aliases?: string[];
         categoryIds?: string[];
         unitIds?: string[];
@@ -93,6 +102,10 @@ export async function updateIngredient(
             updateData.normalizedName = normalizedName;
             updateData.normalizedNameManual = normalizedName !== null;
         }
+    }
+
+    if (data.icon !== undefined) {
+        updateData.icon = parseIcon(data.icon);
     }
 
     if (data.aliases !== undefined) {
@@ -242,7 +255,10 @@ export async function createCategory(data: { name: string; slug?: string }) {
     revalidatePath('/admin/ingredients');
 }
 
-export async function updateCategory(id: string, data: { name?: string; sortOrder?: number }) {
+export async function updateCategory(
+    id: string,
+    data: { name?: string; sortOrder?: number; icon?: string | null },
+) {
     await ensureModeratorSession('update-category');
     const updateData: Record<string, unknown> = {};
     if (data.name !== undefined) {
@@ -250,6 +266,7 @@ export async function updateCategory(id: string, data: { name?: string; sortOrde
         updateData.slug = generateSlug(data.name);
     }
     if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
+    if (data.icon !== undefined) updateData.icon = parseIcon(data.icon);
     await prisma.ingredientCategory.update({ where: { id }, data: updateData });
     revalidatePath('/admin/ingredients');
 }

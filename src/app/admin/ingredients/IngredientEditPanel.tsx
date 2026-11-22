@@ -3,9 +3,12 @@
 import { Plus, Trash2, X } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
+import { resolveIngredientIcon } from '@shared/ingredient-icons/resolve';
+
 import { css } from 'styled-system/css';
 
 import { deleteIngredient, updateIngredient, updateIngredientUnits } from './actions';
+import { IconPicker } from './IconPicker';
 import {
     type Ingredient,
     type IngredientCategory,
@@ -41,6 +44,7 @@ export function IngredientEditPanel({
     const [name, setName] = useState(ingredient.name);
     const [pluralName, setPluralName] = useState(ingredient.pluralName ?? '');
     const displayName = useState(ingredient.normalizedName ?? '');
+    const [icon, setIcon] = useState<string | null>(ingredient.icon);
     const shelfLife = useShelfLifeForm(ingredient);
     const [aliases, setAliases] = useState<string[]>(ingredient.aliases);
     const [newAlias, setNewAlias] = useState('');
@@ -59,6 +63,11 @@ export function IngredientEditPanel({
         sugar: ingredient.sugar,
         sodium: ingredient.sodium,
         saturatedFat: ingredient.saturatedFat,
+    });
+
+    // Icon the ingredient shows without an own one: from the selected categories
+    const categoryFallbackIcon = resolveIngredientIcon({
+        categories: allCategories.filter((c) => selectedCatIds.has(c.id)),
     });
 
     const handleAddAlias = () => {
@@ -111,6 +120,7 @@ export function IngredientEditPanel({
                     name,
                     pluralName: pluralName.trim() || null,
                     normalizedName: displayName[0].trim() || null,
+                    icon,
                     aliases,
                     categoryIds: Array.from(selectedCatIds),
                     ...nutrition,
@@ -352,6 +362,12 @@ export function IngredientEditPanel({
                             </label>
                         ))}
                     </div>
+                </div>
+
+                {/* Section: Icon */}
+                <div>
+                    <label className={fieldLabelStyle}>Icon</label>
+                    <IconPicker value={icon} onChange={setIcon} fallback={categoryFallbackIcon} />
                 </div>
 
                 {/* Section: Einheiten */}

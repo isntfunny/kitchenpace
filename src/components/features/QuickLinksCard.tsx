@@ -9,6 +9,7 @@ import {
     Link2,
     Settings,
     Shield,
+    Package,
     ShoppingCart,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -23,6 +24,7 @@ import { css } from 'styled-system/css';
 const ALL_LINKS = [
     { href: '/profile/api-keys', label: 'API & Integrationen', IconEl: KeyRound },
     { href: '/shopping-list', label: 'Einkaufsliste', IconEl: ShoppingCart },
+    { href: '/pantry', label: 'Vorrat', IconEl: Package },
     { href: '/profile/integrations', label: 'Verknüpfte Dienste', IconEl: Link2 },
     { href: '/profile/edit', label: 'Profil bearbeiten', IconEl: Edit3 },
     { href: '/profile/account', label: 'Konto & Sicherheit', IconEl: Shield },

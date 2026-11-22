@@ -75,3 +75,6 @@ tools.yaml
 .superpowers/
 *.png
 /backups/
+
+# Design-Canvas-Mockups (lokal, werden nach Umsetzung verworfen)
+/design/

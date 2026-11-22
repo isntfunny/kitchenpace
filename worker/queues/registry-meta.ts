@@ -243,6 +243,35 @@ const JOB_CATALOG: Record<
         // the enqueue at creation time (KUC-94, KUC-114)
         repeat: { pattern: '30 5 * * *', tz: 'Europe/Berlin' },
     },
+    'backfill-ingredient-icons': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { write: false, limit: 0, chunkSize: 100, pollMinutes: 10, reset: false },
+        schema: {
+            write: { type: 'boolean', label: 'Write to DB (off = dry run report)', default: false },
+            limit: {
+                type: 'number',
+                label: 'Max ingredients (0 = all without icon)',
+                default: 0,
+                min: 0,
+                max: 5000,
+            },
+            chunkSize: {
+                type: 'number',
+                label: 'Ingredients per request',
+                default: 100,
+                min: 1,
+                max: 200,
+            },
+            pollMinutes: {
+                type: 'number',
+                label: 'Poll interval in minutes (0 = no polling)',
+                default: 10,
+                min: 0,
+                max: 1440,
+            },
+            reset: { type: 'boolean', label: 'Forget saved batch and start over', default: false },
+        },
+    },
     'poll-openai-batches': {
         queue: QueueName.SCHEDULED,
         defaultData: {},
@@ -285,6 +314,131 @@ const JOB_CATALOG: Record<
             batchSize: { type: 'number', label: 'Batch Size', default: 100, min: 10, max: 500 },
         },
         repeat: { pattern: '0 3 * * *', tz: 'Europe/Berlin' },
+    },
+    'book-assumed-cooked': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { dryRun: false, limit: 500 },
+        schema: {
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (report only, book nothing)',
+                default: false,
+            },
+            limit: {
+                type: 'number',
+                label: 'Max. plan entries per run',
+                default: 500,
+                min: 1,
+                max: 5000,
+            },
+        },
+        repeat: { pattern: '30 3 * * *', tz: 'Europe/Berlin' },
+    },
+    'reconcile-meal-reminders': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { dryRun: false, limit: 2000, userId: '' },
+        schema: {
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (report only, schedule nothing)',
+                default: false,
+            },
+            limit: {
+                type: 'number',
+                label: 'Max. users per run',
+                default: 2000,
+                min: 1,
+                max: 20000,
+            },
+            userId: { type: 'string', label: 'Only this user (empty = all)', placeholder: 'cuid' },
+        },
+        repeat: { pattern: '*/15 * * * *', tz: 'Europe/Berlin' },
+    },
+    'send-meal-reminder': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { reminderId: '' },
+        schema: {
+            reminderId: {
+                type: 'string',
+                label: 'Reminder ID',
+                placeholder: 'MealPlanReminder id',
+            },
+        },
+    },
+
+    'bring-sync': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { dryRun: false, limit: 500 },
+        schema: {
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (list connections due, enqueue nothing)',
+                default: false,
+            },
+            limit: {
+                type: 'number',
+                label: 'Max. connections per run',
+                default: 500,
+                min: 1,
+                max: 5000,
+            },
+        },
+        // Fan-out: one bring-sync-connection job per active connection
+        repeat: { pattern: '*/5 * * * *', tz: 'Europe/Berlin' },
+    },
+
+    'bring-sync-connection': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { userId: '', dryRun: false },
+        schema: {
+            userId: { type: 'string', label: 'User ID', placeholder: 'cuid of the user' },
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (plan only, write nothing)',
+                default: false,
+            },
+        },
+    },
+
+    'cluster-recipe-themes': {
+        queue: QueueName.SCHEDULED,
+        defaultData: {
+            clusters: 0,
+            seed: 42,
+            minSimilarity: 0.8,
+            minClusterSize: 5,
+            dryRun: false,
+        },
+        schema: {
+            clusters: {
+                type: 'number',
+                label: 'Number of clusters (0 = automatic)',
+                default: 0,
+                min: 0,
+                max: 60,
+            },
+            seed: { type: 'number', label: 'Seed (fixed = reproducible)', default: 42, min: 0 },
+            minSimilarity: {
+                type: 'number',
+                label: 'Min. centroid similarity to continue a cluster (%)',
+                default: 80,
+                min: 50,
+                max: 100,
+            },
+            minClusterSize: {
+                type: 'number',
+                label: 'Min. recipes per releasable cluster',
+                default: 5,
+                min: 1,
+                max: 200,
+            },
+            dryRun: {
+                type: 'boolean',
+                label: 'Dry run (report only, persist nothing)',
+                default: true,
+            },
+        },
+        repeat: { pattern: '30 4 * * 0', tz: 'Europe/Berlin' },
     },
     'database-backup': {
         queue: QueueName.BACKUP,

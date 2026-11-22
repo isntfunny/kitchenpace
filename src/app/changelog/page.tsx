@@ -32,6 +32,57 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '22. November 2026',
+        title: 'Wochenplan, Einkaufsliste und Vorrat',
+        emoji: '📅',
+        items: [
+            {
+                text: 'Neu: Plane deine Woche im Kalender. Rezepte landen per Klick im passenden Slot, lassen sich verschieben, kopieren, als Vorlage speichern oder für zwei Mahlzeiten kochen.',
+                tag: 'spotlight',
+            },
+            {
+                text: 'Teile deine Woche per Link – Freunde sehen den Plan ohne Anmeldung und können ihn mit einem Klick in ihren eigenen Plan übernehmen.',
+                tag: 'feat',
+            },
+            {
+                text: '„Plan mir die Woche“ füllt freie Plätze mit Vorschlägen, die zu deinem Geschmack, zur Saison und zum Wochentag passen – du entscheidest, was übernommen wird.',
+                tag: 'feat',
+            },
+            {
+                text: 'Die neue Einkaufsliste fasst gleiche Zutaten zusammen, rechnet Mengen um und zeigt, für welches Gericht du etwas brauchst. Fehlende Zutaten der Woche kommen mit einem Tipp dazu.',
+                tag: 'feat',
+            },
+            {
+                text: 'Bring! bleibt jetzt automatisch in beiden Richtungen auf dem gleichen Stand wie deine Einkaufsliste – was du unterwegs in Bring! abhakst, ist auch in KochTakt erledigt.',
+                tag: 'feat',
+            },
+            {
+                text: 'Was du regelmäßig kaufst, schlägt dir die Liste rechtzeitig vor – zum Beispiel Bananen jede Woche.',
+                tag: 'feat',
+            },
+            {
+                text: 'Dein Vorrat führt sich selbst: Eingekauftes und Gekochtes wird verbucht, angebrochene Reste mit Ablaufdatum findest du auf einen Blick, samt passenden Rezeptideen.',
+                tag: 'feat',
+            },
+            {
+                text: 'Der Wochenplan warnt, wenn frische Zutaten bis zum geplanten Tag nicht halten, und schlägt eine bessere Reihenfolge vor.',
+                tag: 'feat',
+            },
+            {
+                text: 'Auf Wunsch erinnert dich KochTakt, wann du mit dem Kochen anfangen solltest, und an die Planung der nächsten Woche.',
+                tag: 'feat',
+            },
+            {
+                text: 'In der Rezeptsuche findest du Themen und saisonale Schnell-Filter jetzt direkt über den Ergebnissen; „Passt zu dir“ sortiert genauer nach deinem Geschmack.',
+                tag: 'feat',
+            },
+            {
+                text: 'Zutaten haben jetzt eigene Icons.',
+                tag: 'feat',
+            },
+        ],
+    },
+    {
         date: '21. November 2026',
         title: 'Klarere Kochschritte',
         emoji: '🧭',

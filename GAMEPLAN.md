@@ -87,7 +87,7 @@ flowchart LR
     KUC89["KUC-89<br/>Bring!-Kontoverknüpfung<br/>und Einkaufslisten…"]:::todo
     KUC94["KUC-94<br/>Haltbarkeit roher<br/>Zutaten erfassen…"]:::done
     KUC114["KUC-114<br/>Zutaten normalisieren"]:::doing
-    KUC79[["KUC-79<br/>Wochenplan<br/><br/>0 von 17 erledigt"]]:::todo
+    KUC79[["KUC-79<br/>Wochenplan<br/><br/>0 von 19 erledigt"]]:::doing
     KUC78 -.-> KUC79
     KUC89 -.-> KUC79
     KUC94 -.-> KUC79
@@ -152,7 +152,7 @@ Keine sichtbaren Untertickets.
 
 ## KUC-79 · Wochenplan: planen, smart einkaufen, Reste verwerten und rechtzeitig kochen
 
-[KUC-79](https://youtrack.tecfriends.de/issue/KUC-79) · Todo · 0 von 17 erledigt
+[KUC-79](https://youtrack.tecfriends.de/issue/KUC-79) · Doing · 0 von 19 erledigt
 
 ```mermaid
 %%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
@@ -160,24 +160,26 @@ flowchart LR
     KUC78(["KUC-78<br/>Filterseite:<br/>FilterSet-Chips + „Passt<br/>zu dir#quot;-Sortierung"]):::doing
     KUC89(["KUC-89<br/>Bring!-Kontoverknüpfung<br/>und Einkaufslisten in<br/>KochTakt…"]):::todo
     KUC94(["KUC-94<br/>Haltbarkeit roher<br/>Zutaten erfassen<br/>#40;KI-Batch für den…"]):::done
-    KUC98["KUC-98<br/>Wochenplan S1:<br/>Datenmodell für Plan,<br/>Einkaufsliste und…"]:::todo
-    KUC99["KUC-99<br/>Wochenplan S2:<br/>Wochenansicht mit<br/>Navigation, Portionen…"]:::todo
-    KUC100["KUC-100<br/>Wochenplan S3: Rezepte<br/>einplanen per Slot-Suche<br/>und „Zum…"]:::todo
-    KUC101["KUC-101<br/>Wochenplan S4: Einträge<br/>bearbeiten, verschieben,<br/>Woche…"]:::todo
-    KUC102["KUC-102<br/>Wochenplan S5:<br/>Wochenplan-Einstellungen<br/>#40;Mahlzeiten…"]:::todo
-    KUC103["KUC-103<br/>Wochenplan S6: Kochen<br/>aus dem Plan und<br/>„Gekocht“ markieren"]:::todo
-    KUC109["KUC-109<br/>Wochenplan S12:<br/>Erinnerungen – Push<br/>„Zeit anzufangen“ und…"]:::todo
-    KUC110["KUC-110<br/>Wochenplan S13: Woche<br/>per Link teilen"]:::todo
-    KUC111["KUC-111<br/>Wochenplan S14:<br/>Themen-Cluster aus<br/>Rezept-Embeddings"]:::todo
-    KUC112["KUC-112<br/>Wochenplan S15:<br/>Inspirationsleiste im<br/>Wochenplan"]:::todo
+    KUC98["KUC-98<br/>Wochenplan S1:<br/>Datenmodell für Plan,<br/>Einkaufsliste und…"]:::doing
+    KUC99["KUC-99<br/>Wochenplan S2:<br/>Wochenansicht mit<br/>Navigation, Portionen…"]:::doing
+    KUC100["KUC-100<br/>Wochenplan S3: Rezepte<br/>einplanen per Slot-Suche<br/>und „Zum…"]:::doing
+    KUC101["KUC-101<br/>Wochenplan S4: Einträge<br/>bearbeiten, verschieben,<br/>Woche…"]:::doing
+    KUC102["KUC-102<br/>Wochenplan S5:<br/>Wochenplan-Einstellungen<br/>#40;Mahlzeiten…"]:::doing
+    KUC103["KUC-103<br/>Wochenplan S6: Kochen<br/>aus dem Plan und<br/>„Gekocht“ markieren"]:::doing
+    KUC109["KUC-109<br/>Wochenplan S12:<br/>Erinnerungen – Push<br/>„Zeit anzufangen“ und…"]:::doing
+    KUC110["KUC-110<br/>Wochenplan S13: Woche<br/>per Link teilen"]:::doing
+    KUC111["KUC-111<br/>Wochenplan S14:<br/>Themen-Cluster aus<br/>Rezept-Embeddings"]:::doing
+    KUC112["KUC-112<br/>Wochenplan S15:<br/>Inspirationsleiste im<br/>Wochenplan"]:::doing
     KUC114(["KUC-114<br/>Zutaten normalisieren:<br/>sauberer Anzeigename und<br/>Duplikate…"]):::doing
-    KUC104["KUC-104<br/>Wochenplan S7: Eigene<br/>fortlaufende<br/>Einkaufsliste…"]:::todo
-    KUC105["KUC-105<br/>Wochenplan S7b:<br/>Einkaufsliste neu<br/>gestalten und<br/>Bring-Code…"]:::todo
-    KUC106["KUC-106<br/>Wochenplan S8:<br/>Bring!-Synchronisation<br/>als Schalter an der…"]:::todo
-    KUC107["KUC-107<br/>Wochenplan S9: Vorrat –<br/>Reste aus Einkauf und<br/>Kochen…"]:::todo
-    KUC96["KUC-96<br/>Wochenplan nach<br/>Haltbarkeit der Zutaten<br/>ordnen und warnen"]:::todo
-    KUC108["KUC-108<br/>Wochenplan S10:<br/>Reste-Vorschläge beim<br/>Planen"]:::todo
-    KUC113["KUC-113<br/>Wochenplan S16: „Plan<br/>mir die Woche“<br/>#40;regelbasiert#41;"]:::todo
+    KUC125["KUC-125<br/>Wochenplan S18: Icons<br/>für Zutaten und<br/>Einkaufsliste…"]:::doing
+    KUC104["KUC-104<br/>Wochenplan S7: Eigene<br/>fortlaufende<br/>Einkaufsliste…"]:::doing
+    KUC105["KUC-105<br/>Wochenplan S7b:<br/>Einkaufsliste neu<br/>gestalten und<br/>Bring-Code…"]:::doing
+    KUC106["KUC-106<br/>Wochenplan S8:<br/>Bring!-Synchronisation<br/>als Schalter an der…"]:::doing
+    KUC107["KUC-107<br/>Wochenplan S9: Vorrat –<br/>Reste aus Einkauf und<br/>Kochen…"]:::doing
+    KUC96["KUC-96<br/>Wochenplan nach<br/>Haltbarkeit der Zutaten<br/>ordnen und warnen"]:::doing
+    KUC108["KUC-108<br/>Wochenplan S10:<br/>Reste-Vorschläge beim<br/>Planen"]:::doing
+    KUC113["KUC-113<br/>Wochenplan S16: „Plan<br/>mir die Woche“<br/>#40;regelbasiert#41;"]:::doing
+    KUC124["KUC-124<br/>Wochenplan S17:<br/>Kaufrhythmus erkennen<br/>und fällige Artikel…"]:::doing
     KUC78 --> KUC112
     KUC89 --> KUC106
     KUC94 --> KUC107
@@ -196,12 +198,14 @@ flowchart LR
     KUC104 --> KUC105
     KUC104 --> KUC106
     KUC104 --> KUC107
+    KUC104 --> KUC124
     KUC107 --> KUC96
     KUC107 --> KUC108
     KUC107 --> KUC113
     KUC111 --> KUC112
     KUC111 --> KUC113
     KUC114 --> KUC104
+    KUC125 --> KUC104
     click KUC78 "https://youtrack.tecfriends.de/issue/KUC-78"
     click KUC89 "https://youtrack.tecfriends.de/issue/KUC-89"
     click KUC94 "https://youtrack.tecfriends.de/issue/KUC-94"
@@ -223,6 +227,8 @@ flowchart LR
     click KUC112 "https://youtrack.tecfriends.de/issue/KUC-112"
     click KUC113 "https://youtrack.tecfriends.de/issue/KUC-113"
     click KUC114 "https://youtrack.tecfriends.de/issue/KUC-114"
+    click KUC124 "https://youtrack.tecfriends.de/issue/KUC-124"
+    click KUC125 "https://youtrack.tecfriends.de/issue/KUC-125"
     classDef ideas fill:#f3e8ff,stroke:#7e22ce,color:#3b0764,stroke-dasharray:2 4
     classDef backlog fill:#f1f5f9,stroke:#64748b,color:#0f172a,stroke-dasharray:6 4
     classDef todo fill:#2563eb,stroke:#1e3a8a,color:#ffffff,stroke-width:2px

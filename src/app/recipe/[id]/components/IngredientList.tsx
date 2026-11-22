@@ -6,6 +6,7 @@ import { Dialog } from 'radix-ui';
 import { useMemo, useState, type ReactNode } from 'react';
 
 import { AddToListButton } from '@app/components/bring/AddToListButton';
+import { AddToShoppingListButton } from '@app/components/shopping/AddToShoppingListButton';
 import { ingredientDisplayName, parseAmount } from '@app/lib/ingredient-display';
 import { scaleQuantity, portionFactor } from '@app/lib/ingredients/quantities';
 
@@ -30,6 +31,8 @@ interface Ingredient {
 }
 
 interface IngredientListProps {
+    /** Recipe id for "Auf die Einkaufsliste" (KUC-104); the button is hidden without it */
+    recipeId?: string;
     ingredients: Ingredient[];
     servings: number;
     originalServings: number;
@@ -42,6 +45,7 @@ interface IngredientListProps {
 }
 
 export function IngredientList({
+    recipeId,
     ingredients,
     servings,
     originalServings,
@@ -232,6 +236,8 @@ export function IngredientList({
                     </button>
                 </div>
             </div>
+
+            {recipeId && <AddToShoppingListButton recipeId={recipeId} servings={servings} />}
 
             <AddToListButton
                 ingredients={ingredients}

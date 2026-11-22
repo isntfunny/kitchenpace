@@ -6,6 +6,7 @@ import { registerImportCommand } from './commands/import.js';
 import { registerRemoteCommand } from './commands/remote.js';
 import { registerMentionRepairCommand } from './commands/repair-ingredient-mentions.js';
 import { registerSeedCommand } from './commands/seed.js';
+import { registerCategoryIconsCommand } from './commands/sync-category-icons.js';
 import { generateCompletions } from './lib/complete.js';
 import { db, RecipeStatus } from './lib/db.js';
 import { triggerJobNow, getJobDefinitions } from './lib/jobs.js';
@@ -488,6 +489,7 @@ program
 registerImportCommand(program);
 registerMentionRepairCommand(program);
 registerSeedCommand(program);
+registerCategoryIconsCommand(program);
 registerRemoteCommand(program);
 
 program

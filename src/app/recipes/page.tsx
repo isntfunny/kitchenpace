@@ -1,3 +1,4 @@
+import { TZDate } from '@date-fns/tz';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { Metadata } from 'next';
 
@@ -10,8 +11,10 @@ import {
     type FilterSetWithRelations,
 } from '@app/lib/fits-now/db-queries';
 import { toFilterCriteria } from '@app/lib/fits-now/mappings';
+import { detectSeason } from '@app/lib/fits-now/season';
 import { parseRecipeFilterParams } from '@app/lib/recipeFilters';
 import { queryRecipes } from '@app/lib/recipeSearch';
+import { getThemeChips } from '@app/lib/theme-clusters/queries';
 import { APP_URL } from '@app/lib/url';
 import { getQueryClient, trpc } from '@app/trpc/server';
 
@@ -55,7 +58,11 @@ function mergeFilterSetIntoFilters(
     if (!filters.filterSetId) return;
 
     const match = filterSets.find((fs) => fs.id === filters.filterSetId);
-    if (!match) return;
+    if (!match) {
+        // Unknown or deleted FilterSet: ignore the param instead of keeping a dead chip state
+        filters.filterSetId = undefined;
+        return;
+    }
 
     const criteria = toFilterCriteria(match);
     filters.tags = [...new Set([...(filters.tags ?? []), ...criteria.tagKeywords])];
@@ -71,13 +78,16 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
 
     const session = await getServerAuthSession('recipes-page');
 
-    const [tags, ingredients, categories, timeSeasonSets, foodPeriodSets] = await Promise.all([
-        fetchFilterTags(),
-        fetchFilterIngredients(),
-        queryClient.fetchQuery(trpc.filters.categories.queryOptions()),
-        getTimeSeasonFilterSets(),
-        getFoodPeriodFilterSets(),
-    ]);
+    const [tags, ingredients, categories, timeSeasonSets, foodPeriodSets, themes] =
+        await Promise.all([
+            fetchFilterTags(),
+            fetchFilterIngredients(),
+            queryClient.fetchQuery(trpc.filters.categories.queryOptions()),
+            getTimeSeasonFilterSets(),
+            getFoodPeriodFilterSets(),
+            // Released theme clusters; the page must keep working if the cluster tables are empty
+            getThemeChips().catch(() => []),
+        ]);
 
     const filterSets = [...timeSeasonSets, ...foodPeriodSets].sort(
         (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
@@ -85,6 +95,8 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
 
     // Merge FilterSet criteria into initial filters for correct SSR
     mergeFilterSetIntoFilters(initialFilters, filterSets);
+
+    const currentSeason = detectSeason(new TZDate(new Date(), 'Europe/Berlin').getMonth());
 
     const initialData = await queryRecipes(initialFilters, session?.user?.id);
 
@@ -97,6 +109,8 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
                         filterOptions={{ tags, ingredients, categories }}
                         initialData={initialData}
                         filterSets={filterSets}
+                        currentSeason={currentSeason}
+                        themes={themes}
                         isLoggedIn={!!session?.user}
                     />
                 </HydrationBoundary>

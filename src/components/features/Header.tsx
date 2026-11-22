@@ -1,6 +1,7 @@
 'use client';
 
 import {
+    CalendarDays,
     ChefHat,
     Egg,
     LayoutGrid,
@@ -9,6 +10,7 @@ import {
     Plus,
     Shield,
     ShieldCheck,
+    ShoppingCart,
     Zap,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -51,6 +53,13 @@ const GENERAL_NAV_LINKS: GeneralNavLinkItem[] = [
         href: '/collections',
         icon: Library,
         flag: 'collections',
+    },
+    {
+        label: 'Einkaufsliste',
+        description: 'Zutaten für Plan und Rezepte',
+        href: '/shopping-list',
+        icon: ShoppingCart,
+        authOnly: true,
     },
     {
         label: 'Rezept erstellen',
@@ -392,6 +401,32 @@ export function Header() {
                             isAdmin={isAdmin}
                             isModerator={isModerator}
                         />
+                        {isAuthenticated && (
+                            <Link
+                                href="/plan"
+                                className={css({
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '1.5',
+                                    px: '3.5',
+                                    py: '2',
+                                    borderRadius: 'control',
+                                    border: '1px solid',
+                                    borderColor: 'border',
+                                    fontSize: 'sm',
+                                    fontWeight: '600',
+                                    fontFamily: 'body',
+                                    color: 'text',
+                                    bg: 'surface',
+                                    textDecoration: 'none',
+                                    transition: 'all 150ms ease',
+                                    _hover: { borderColor: 'primary', color: 'primary' },
+                                })}
+                            >
+                                <CalendarDays size={15} />
+                                Plan
+                            </Link>
+                        )}
                         {isAuthenticated && (
                             <Link
                                 href="/recipe/create"

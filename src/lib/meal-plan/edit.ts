@@ -4,6 +4,7 @@
 import type { Prisma } from '@prisma/client';
 
 import { addDays, formatIsoDate } from '@shared/dates';
+import { servingsForLeftoverDays } from '@shared/meal-planning/distribute';
 
 import { planCopy, type ConflictMode, type CopySource, type CopyTarget } from './copy';
 import { DataAccessError, type Db, inTransaction, notFound } from './db';
@@ -108,10 +109,11 @@ export async function cookForTwoMeals(db: Db, userId: string, entryId: string, i
             throw new DataAccessError('INVALID', 'Der Rest kann nicht vor dem Kochen liegen');
         if (target.date === formatIsoDate(origin.date) && target.slot === slotKeyOf(origin))
             throw new DataAccessError('INVALID', 'Wähle eine andere Mahlzeit für den Rest');
+        // The entry's servings are the eaters of one meal; the leftover is one more meal
         const portion = origin.servings;
         await tx.mealPlanRecipe.update({
             where: { id: origin.id },
-            data: { servings: Math.min(100, portion * 2) },
+            data: { servings: Math.min(100, servingsForLeftoverDays(portion, 1)) },
         });
         const leftover = await tx.mealPlanRecipe.create({
             data: {

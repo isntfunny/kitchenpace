@@ -36,10 +36,18 @@ export type PlannedEntry = {
 /** Weights of the fit of a dish to a slot */
 const FIT = { effort: 1, duration: 1, fresh: 1.5, variety: 1 };
 
+// The leftover rule (KUC-108, KUC-126, KUC-137): a meal for `eaters` people uses `eaters`
+// servings, each further day of leftovers another `eaters`.
+
 /** Whole extra days a dish feeds the household after the first meal. */
 export function leftoverDays(servings: number, household: number): number {
     const h = Math.max(1, household);
     return Math.max(0, Math.floor((servings - h) / h));
+}
+
+/** Servings to cook so that `eaters` people eat once plus `days` leftover days (inverse of `leftoverDays`). */
+export function servingsForLeftoverDays(eaters: number, days: number): number {
+    return Math.max(1, eaters) * (1 + Math.max(0, days));
 }
 
 type Placed = { date: IsoDate; kind: MealKind; mainCategory: string | null; dishType: string };

@@ -27,10 +27,15 @@ export function parseQuantityNumber(raw: string): number | null {
     const result = Number(value.replace(',', '.'));
     return Number.isFinite(result) ? result : null;
 }
-function formatNumber(value: number): string {
+/**
+ * German number without grouping, at most two decimals ("1,25"). With `keepSmall`, values
+ * between 0 and 0.01 keep two significant digits instead of turning into "0": a scaled-down
+ * recipe amount must stay visible. Shopping amounts are base quantities and round as usual.
+ */
+export function formatNumber(value: number, options: { keepSmall?: boolean } = {}): string {
     return new Intl.NumberFormat('de-DE', {
         useGrouping: false,
-        ...(value > 0 && value < 0.01
+        ...(options.keepSmall && value > 0 && value < 0.01
             ? { maximumSignificantDigits: 2 }
             : { maximumFractionDigits: 2 }),
     }).format(value);
@@ -58,7 +63,7 @@ export function scaleQuantity(raw: string, factor: number): string {
     if (numbers.some((n) => n === null)) return raw;
     const scaled = (numbers as number[]).map((n) => n * factor);
     if (scaled.some((n) => !Number.isFinite(n))) return raw;
-    return scaled.map(formatNumber).join('–');
+    return scaled.map((n) => formatNumber(n, { keepSmall: true })).join('–');
 }
 export function scaleMentionOverride(raw: string, factor: number): string {
     // Only a numeric amount followed by a unit; prose is never rewritten.

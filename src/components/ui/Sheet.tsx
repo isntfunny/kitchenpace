@@ -46,6 +46,7 @@ export function Sheet({
     className,
     children,
     onCloseAutoFocus,
+    describedBy,
 }: {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -61,6 +62,8 @@ export function Sheet({
     className?: string;
     children: ReactNode;
     onCloseAutoFocus?: (event: Event) => void;
+    /** Id of an element inside that describes the sheet (e.g. a status line) */
+    describedBy?: string;
 }) {
     return (
         <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -69,7 +72,7 @@ export function Sheet({
                 <Dialog.Overlay className={sheetOverlay} />
                 <Dialog.Content
                     className={cx(sheet({ placement, size }), className)}
-                    aria-describedby={undefined}
+                    aria-describedby={describedBy}
                     onCloseAutoFocus={onCloseAutoFocus}
                 >
                     {header ? (

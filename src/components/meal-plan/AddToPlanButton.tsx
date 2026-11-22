@@ -1,27 +1,19 @@
 'use client';
 
-import { CalendarPlus, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Dialog } from 'radix-ui';
 import { useCallback, useEffect, useState } from 'react';
 
 import { addPlanEntries, getPlanContext, type PlanContext } from '@app/app/plan/actions';
-import { Button } from '@app/components/atoms/Button';
-import {
-    button,
-    chip,
-    fieldLabel,
-    iconButton,
-    sheet,
-    sheetOverlay,
-} from '@app/components/atoms/recipes';
+import { Button, IconButton } from '@app/components/atoms/Button';
+import { chip, fieldLabel } from '@app/components/atoms/recipes';
 import { useToastContext } from '@app/components/providers/ToastProvider';
 import { ServingsStepper } from '@app/components/ui/ServingsStepper';
+import { Sheet } from '@app/components/ui/Sheet';
 import { defaultServings, slotLabel } from '@app/lib/meal-plan/slots';
 import { shortDate, weekNumber, weekParam, weekdayShort } from '@app/lib/meal-plan/view';
 import { addDays, weekDays } from '@app/lib/meal-plan/week';
-
 
 import { css, cx } from 'styled-system/css';
 
@@ -60,20 +52,20 @@ export function AddToPlanButton({ recipe, isAuthenticated }: AddToPlanButtonProp
     };
 
     return (
-        <Dialog.Root open={open} onOpenChange={setOpen}>
-            <Dialog.Trigger asChild>
+        <Sheet
+            open={open}
+            onOpenChange={setOpen}
+            title="Zum Plan"
+            subtitle={recipe.title}
+            trigger={
                 <Button type="button" variant="ghost" onClick={start}>
                     <CalendarPlus size={16} />
                     Zum Plan
                 </Button>
-            </Dialog.Trigger>
-            <Dialog.Portal>
-                <Dialog.Overlay className={sheetOverlay} />
-                <Dialog.Content className={sheet()} aria-describedby={undefined}>
-                    {open && <AddToPlanBody recipe={recipe} onDone={() => setOpen(false)} />}
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+            }
+        >
+            {open && <AddToPlanBody recipe={recipe} onDone={() => setOpen(false)} />}
+        </Sheet>
     );
 }
 
@@ -156,56 +148,32 @@ function AddToPlanBody({
         router.refresh();
     };
 
-    const header = (
-        <div className={css({ display: 'flex', alignItems: 'flex-start', gap: '3', mb: '4' })}>
-            <div className={css({ flex: 1, minW: 0 })}>
-                <Dialog.Title
-                    className={css({ fontFamily: 'heading', fontSize: 'xl', fontWeight: '700' })}
-                >
-                    Zum Plan
-                </Dialog.Title>
-                <p className={css({ fontSize: 'sm', color: 'foreground.muted', lineClamp: 1 })}>
-                    {recipe.title}
-                </p>
-            </div>
-            <Dialog.Close className={button({ variant: 'ghost' })} aria-label="Schließen">
-                <X size={18} />
-            </Dialog.Close>
-        </div>
-    );
-
     if (!context || !weekStart || !date) {
         return (
-            <>
-                {header}
-                <p
-                    role={error ? 'alert' : 'status'}
-                    className={css({
-                        py: '6',
-                        textAlign: 'center',
-                        color: error ? 'status.error' : 'foreground.muted',
-                    })}
-                >
-                    {error ?? 'Lade …'}
-                </p>
-            </>
+            <p
+                role={error ? 'alert' : 'status'}
+                className={css({
+                    py: '6',
+                    textAlign: 'center',
+                    color: error ? 'status.error' : 'foreground.muted',
+                })}
+            >
+                {error ?? 'Lade …'}
+            </p>
         );
     }
 
     if (context.settings.householdSize === null) {
         return (
-            <>
-                {header}
-                <HouseholdPrompt
-                    onSaved={(size) => {
-                        setServings(size);
-                        setContext({
-                            ...context,
-                            settings: { ...context.settings, householdSize: size },
-                        });
-                    }}
-                />
-            </>
+            <HouseholdPrompt
+                onSaved={(size) => {
+                    setServings(size);
+                    setContext({
+                        ...context,
+                        settings: { ...context.settings, householdSize: size },
+                    });
+                }}
+            />
         );
     }
 
@@ -214,18 +182,15 @@ function AddToPlanBody({
 
     return (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
-            {header}
             <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
                 <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
                     <span className={cx(fieldLabel, css({ flex: 1 }))}>Tag</span>
-                    <button
-                        type="button"
-                        className={iconButton()}
+                    <IconButton
                         aria-label="Vorherige Woche"
                         onClick={() => load(addDays(weekStart, -7))}
                     >
                         <ChevronLeft size={16} />
-                    </button>
+                    </IconButton>
                     <span
                         className={css({
                             fontSize: 'sm',
@@ -236,14 +201,12 @@ function AddToPlanBody({
                     >
                         KW {weekNumber(weekStart)}
                     </span>
-                    <button
-                        type="button"
-                        className={iconButton()}
+                    <IconButton
                         aria-label="Nächste Woche"
                         onClick={() => load(addDays(weekStart, 7))}
                     >
                         <ChevronRight size={16} />
-                    </button>
+                    </IconButton>
                 </div>
                 <div
                     role="radiogroup"
@@ -371,14 +334,15 @@ function AddToPlanBody({
                     {error}
                 </p>
             )}
-            <button
+            <Button
                 type="button"
-                className={cx(button({ variant: 'primary' }), css({ minH: '48px' }))}
+                variant="primary"
+                size="lg"
                 disabled={busy || !slot || !effectiveTime}
                 onClick={submit}
             >
                 Zum Plan · {weekdayShort(date)}, {shortDate(date)}
-            </button>
+            </Button>
             <Link
                 href={`/plan?week=${weekParam(weekStart)}`}
                 className={css({

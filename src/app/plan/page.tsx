@@ -124,6 +124,8 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
         <PageShell>
             <div className={css({ maxW: '1400px', mx: 'auto', py: { base: '4', md: '6' } })}>
                 <IntelligentWeekView
+                    // New week = fresh client state (picked day, suggestions)
+                    key={startDate}
                     data={data}
                     markers={markers}
                     inspiration={

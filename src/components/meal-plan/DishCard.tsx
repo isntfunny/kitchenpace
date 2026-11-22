@@ -27,8 +27,22 @@ export function DishMarkers({ markers }: { markers: DishMarker[] }) {
     );
 }
 
+/** What the card shows of a dish; the shared week passes the same fields */
+export type DishCardDish = Pick<
+    PlanDish,
+    | 'date'
+    | 'time'
+    | 'servings'
+    | 'status'
+    | 'notes'
+    | 'isLeftover'
+    | 'leftoverOfDate'
+    | 'leftoverForDate'
+    | 'recipeAvailable'
+> & { recipe: Pick<PlanDish['recipe'], 'slug' | 'title'> };
+
 interface DishCardProps {
-    dish: PlanDish;
+    dish: DishCardDish;
     slotTime: string;
     display: PlanDisplay;
     /** Second and further dishes of a slot are sides, shown indented */

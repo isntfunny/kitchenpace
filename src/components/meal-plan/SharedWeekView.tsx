@@ -1,14 +1,49 @@
-import Link from 'next/link';
-
 import type { SharedMealPlanWeek } from '@app/lib/meal-plan/share';
 import { cellKey, shortDate } from '@app/lib/meal-plan/view';
 import { weekdayLong } from '@shared/dates';
 
 import { css } from 'styled-system/css';
 
-/** Read-only week of a share link (KUC-110): days with their meals, no editing. */
+import { DayCard, DaySlotRow } from './DayCard';
+import { DishCard, type DishCardDish } from './DishCard';
+import type { PlanDisplay } from './types';
+
+type SharedEntry = SharedMealPlanWeek['entries'][number];
+
+const DISPLAY: PlanDisplay = { showTime: true, showServings: true, showCalories: false };
+
+const empty = css({ color: 'foreground.muted' });
+const grid = css({
+    display: 'grid',
+    gridTemplateColumns: {
+        base: '1fr',
+        md: 'repeat(2, minmax(0, 1fr))',
+        xl: 'repeat(4, minmax(0, 1fr))',
+    },
+    gap: '3',
+});
+const dishes = css({ display: 'flex', flexDirection: 'column', minW: 0 });
+const none = css({ pt: '2.5', fontSize: 'sm', color: 'foreground.muted' });
+
+/** A shared entry as a plan dish: planned, available, no leftover links. */
+function asDish(entry: SharedEntry): DishCardDish {
+    return {
+        date: entry.date,
+        time: entry.time,
+        servings: entry.servings,
+        status: 'PLANNED',
+        notes: 'notes' in entry && entry.notes ? entry.notes : null,
+        isLeftover: false,
+        leftoverOfDate: null,
+        leftoverForDate: null,
+        recipeAvailable: true,
+        recipe: entry.recipe,
+    };
+}
+
+/** Read-only week of a share link (KUC-110): the day cards of the plan, no editing. */
 export function SharedWeekView({ week }: { week: SharedMealPlanWeek }) {
-    const cells = new Map<string, SharedMealPlanWeek['entries']>();
+    const cells = new Map<string, SharedEntry[]>();
     for (const entry of week.entries) {
         const key = cellKey(entry.date, entry.slot);
         cells.set(key, [...(cells.get(key) ?? []), entry]);
@@ -17,159 +52,39 @@ export function SharedWeekView({ week }: { week: SharedMealPlanWeek }) {
     const slots = week.slots.filter((slot) => slot.enabled || used.has(slot.key));
 
     if (week.entries.length === 0)
-        return (
-            <p className={css({ color: 'foreground.muted' })}>
-                In dieser Woche ist noch nichts geplant.
-            </p>
-        );
+        return <p className={empty}>In dieser Woche ist noch nichts geplant.</p>;
 
     return (
-        <div
-            className={css({
-                display: 'grid',
-                gridTemplateColumns: {
-                    base: '1fr',
-                    md: 'repeat(2, minmax(0, 1fr))',
-                    xl: 'repeat(4, minmax(0, 1fr))',
-                },
-                gap: '3',
-            })}
-        >
+        <div className={grid}>
             {week.days.map((day) => (
-                <section
+                <DayCard
                     key={day}
+                    role="region"
                     aria-label={`${weekdayLong(day)}, ${shortDate(day)}`}
-                    className={css({
-                        bg: 'surface',
-                        borderRadius: 'surface',
-                        border: '1px solid',
-                        borderColor: 'border.muted',
-                        boxShadow: 'shadow.small',
-                        p: '3',
-                    })}
+                    heading="h2"
+                    title={weekdayLong(day)}
+                    date={shortDate(day)}
                 >
-                    <h2
-                        className={css({
-                            fontFamily: 'heading',
-                            fontWeight: '700',
-                            fontSize: 'lg',
-                        })}
-                    >
-                        {weekdayLong(day)}{' '}
-                        <span
-                            className={css({
-                                fontSize: 'sm',
-                                fontWeight: '400',
-                                color: 'foreground.muted',
-                            })}
-                        >
-                            {shortDate(day)}
-                        </span>
-                    </h2>
                     {slots.map((slot) => {
-                        const dishes = cells.get(cellKey(day, slot.key)) ?? [];
+                        const entries = cells.get(cellKey(day, slot.key)) ?? [];
                         return (
-                            <div
-                                key={slot.key}
-                                className={css({
-                                    display: 'grid',
-                                    gridTemplateColumns: '84px minmax(0, 1fr)',
-                                    gap: '2',
-                                    py: '2',
-                                    borderTopWidth: '1px',
-                                    borderTopStyle: 'solid',
-                                    borderColor: 'border.muted',
-                                })}
-                            >
-                                <span
-                                    className={css({
-                                        pt: '1',
-                                        fontSize: '10px',
-                                        fontWeight: '700',
-                                        color: 'foreground.muted',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.05em',
-                                        overflowWrap: 'anywhere',
-                                    })}
-                                >
-                                    {slot.label}
-                                </span>
-                                <div
-                                    className={css({
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '1.5',
-                                    })}
-                                >
-                                    {dishes.length === 0 && (
-                                        <span
-                                            className={css({
-                                                fontSize: 'sm',
-                                                color: 'foreground.muted',
-                                            })}
-                                        >
-                                            –
-                                        </span>
-                                    )}
-                                    {dishes.map((dish) => (
-                                        <Link
-                                            key={`${dish.recipe.id}-${dish.position}`}
-                                            href={`/recipe/${dish.recipe.slug}?portionen=${dish.servings}`}
-                                            className={css({
-                                                display: 'block',
-                                                px: '2.5',
-                                                py: '1.5',
-                                                borderRadius: 'lg',
-                                                border: '1px solid',
-                                                borderColor: 'border.muted',
-                                                bg: 'surface.muted',
-                                                color: 'text',
-                                                textDecoration: 'none',
-                                                _hover: { borderColor: 'primary' },
-                                                _focusVisible: {
-                                                    outline: '2px solid',
-                                                    outlineColor: 'primary',
-                                                    outlineOffset: '2px',
-                                                },
-                                            })}
-                                        >
-                                            <span
-                                                className={css({
-                                                    display: 'block',
-                                                    fontSize: '11px',
-                                                    color: 'foreground.muted',
-                                                })}
-                                            >
-                                                {dish.time ?? slot.time} · {dish.servings} Port.
-                                            </span>
-                                            <span
-                                                className={css({
-                                                    display: 'block',
-                                                    fontSize: 'sm',
-                                                    fontWeight: '600',
-                                                    overflowWrap: 'anywhere',
-                                                })}
-                                            >
-                                                {dish.recipe.title}
-                                            </span>
-                                            {'notes' in dish && dish.notes && (
-                                                <span
-                                                    className={css({
-                                                        display: 'block',
-                                                        fontSize: '11px',
-                                                        color: 'foreground.muted',
-                                                    })}
-                                                >
-                                                    {dish.notes}
-                                                </span>
-                                            )}
-                                        </Link>
+                            <DaySlotRow key={slot.key} label={slot.label}>
+                                <div className={dishes}>
+                                    {entries.length === 0 && <span className={none}>–</span>}
+                                    {entries.map((entry, index) => (
+                                        <DishCard
+                                            key={`${entry.recipe.id}-${entry.position}`}
+                                            dish={asDish(entry)}
+                                            slotTime={slot.time}
+                                            display={DISPLAY}
+                                            side={index > 0}
+                                        />
                                     ))}
                                 </div>
-                            </div>
+                            </DaySlotRow>
                         );
                     })}
-                </section>
+                </DayCard>
             ))}
         </div>
     );
